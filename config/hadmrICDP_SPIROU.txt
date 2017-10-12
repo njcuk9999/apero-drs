@@ -1,7 +1,32 @@
 # This is the hadmr ICDP SPIROU config file
 
+
 # -----------------------------------------------------------------------------
-#  settings
+#  CCD variables
 # -----------------------------------------------------------------------------
-test = 1
+
+#   Resize blue window (for dark)
+ic_ccdx_blue_low = 2048-200
+ic_ccdx_blue_high = 2048-1500
+ic_ccdy_blue_low = 2048-20
+ic_ccdy_blue_high = 2048-350
+
+#   Resize red window (for dark)
+ic_ccdx_red_low = 2048-20
+ic_ccdx_red_high = 2048-1750
+ic_ccdy_red_low = 2048-1570
+ic_ccdy_red_high = 2048-1910
+
+#   Resize window custom (not for dark)
+ic_ccdx_low = 5
+ic_ccdx_high = 2040
+ic_ccdy_low = 5
+ic_ccdy_high = 1935
+
+# -----------------------------------------------------------------------------
+#  Quality control settings
+# -----------------------------------------------------------------------------
+
+#   Min dark exposure time
+qc_dark_time = 1.0
 

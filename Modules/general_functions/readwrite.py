@@ -13,7 +13,7 @@ Created on 2017-10-12 at 15:32
 
 Version 0.0.0
 """
-
+import numpy as np
 from astropy.io import fits
 import os
 import sys
@@ -114,6 +114,53 @@ def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
             sys.exit(1)
 
     return value
+
+
+def keyslookup(p, d=None, keys=None, name=None, has_default=False,
+               defaults=None):
+    """
+    Looks for keys in dictionary p, named 'name'
+    if has_default sets value of key to 'default' if not found
+    else logs an error
+
+    :param p: dictionary, any dictionary
+    :param d: dictionary, any dictionary, if None uses parameter dictionary
+    :param keys: list of strings, keys in the dictionary to find
+    :param name: string, the name of the dictionary (for log)
+    :param has_default: bool, if True uses "default" as the value if key
+                        not found
+    :param default: list of objects or None, values of the keys if not
+                    found and has_default is True
+
+    :return values: list of objects, values of p[key] for key in keys
+                    or default value for each key (if has_default=True)
+    """
+
+    # make sure keys is a list
+    try:
+        keys = list(keys)
+    except TypeError:
+        raise ValueError('"keys" must be a list')
+    # if defaults is None --> list of Nones else make sure defaults is a list
+    if defaults is None:
+        defaults = list(np.repeat([None], len(keys)))
+    else:
+        try:
+            defaults = list(defaults)
+            if len(defaults) != len(keys):
+                raise ValueError('"defaults" must be same length as "keys"')
+        except TypeError:
+            raise ValueError('"defaults" must be a list')
+
+    # loop around keys and look up each key
+    values = []
+    for k_it, key in enumerate(keys):
+        # get the value for key
+        v = keylookup(p, d, key, name, has_default, default=defaults[k_it])
+        # append value to values list
+        values.append(v)
+    # return values
+    return values
 
 
 # =============================================================================

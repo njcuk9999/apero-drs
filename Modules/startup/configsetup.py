@@ -43,6 +43,8 @@ def read_config_file(config_file=None):
     # get keys and values from config file
     keys, values = gettxt(config_file)
     # convert key value pairs into dictionary
+    # TODO: use default parameters to check format/range etc for config
+    # TODO: return error if user defined config file is wrong
     params = dict(zip(keys, values))
     # return dictionary
     return params
@@ -60,7 +62,7 @@ def gettxt(filename):
     """
     # read raw config file as strings
     raw = np.genfromtxt(filename, comments="#", delimiter='=',
-                        dtype=None).astype(str)
+                        dtype=str).astype(str)
     # check that we have open config file correctly
     try:
         lraw = len(raw)
@@ -75,7 +77,7 @@ def gettxt(filename):
         # add key.upper() to keys
         keys.append(key.upper())
         # add value to values
-        values.append(value)
+        values.append(evaluate_value(value))
     # return keys and values
     return keys, values
 
@@ -104,6 +106,26 @@ def check_config(params, keys):
             return config_error(key)
     # if everything fine return None
     return None
+
+
+def evaluate_value(value):
+    """
+    Takes a value and tries to interpret it as an INT/FLOAT/BOOL etc
+    any strings will throw a NameError and thus be returned as a string
+
+    :param value: string, any string value to be interpreted by python
+
+    :return: object, if eval(value) works returns properly formated object
+             else returns the value as a string
+    """
+    try:
+        newvalue = eval(value)
+        if type(newvalue) not in [int, float, bool, complex]:
+            return value
+        else:
+            return newvalue
+    except Exception:
+        return value
 
 
 # =============================================================================
