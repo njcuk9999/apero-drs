@@ -17,7 +17,7 @@ from . import log
 
 __all__ = ['ReadConfigFile', 'RunInitialStartup', 'RunStartup', 'wlog']
 __author__ = 'Neil Cook'
-
+__version__ = '0.0.1'
 
 # =============================================================================
 # Define functions
