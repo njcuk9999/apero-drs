@@ -1,50 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+__init__.py
 
-# CODE DESCRIPTION HERE
+general functions controller
 
-Created on 2017-10-11 at 16:33
+Created on 2017-10-12 15:51:49
 
 @author: cook
 
-
-
-Version 0.0.0
+Version 0.0.1
 """
+from . import readwrite
 
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
+__all__ = ['ReadImage']
+__author__ = 'Neil Cook'
 
-
-# =============================================================================
-# Define variables
-# =============================================================================
-
-# -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def function1():
-    return 0
+# Reads the image 'fitsfilename' defined in p and adds files defined in
+# 'arg_file_names' if add is True
+ReadImage = readwrite.readimage
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
-
-# =============================================================================
-# End of code
-# =============================================================================
+# Looks for a key in dictionary p, named 'name'
+#     if has_default sets value of key to 'default' if not found
+#     else logs an error
+GetKey = readwrite.keylookup

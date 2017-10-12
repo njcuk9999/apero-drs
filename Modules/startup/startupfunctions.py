@@ -109,6 +109,11 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
 
     # -------------------------------------------------------------------------
     # check that fitsfilename exists
+    if fits_fn is None:
+        WLOG('error', log_opt, 'No fits file defined in run time argument'
+                               ' format must be: {0}.py [FOLDER] [FILES]'
+                               ''.format(p['program']))
+        sys.exit(1)
     if not os.path.exists(fits_fn):
         WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
         sys.exit(1)
@@ -232,7 +237,11 @@ def run_time_args(p):
         log_opt = '{0}:{1}+[...]'.format(*lo_arg)
 
     # construct fits file name (full path + first file in arguments)
-    fits_fn = os.path.join(p['DRS_DATA_RAW'], arg_night_name, arg_file_names[0])
+    if len(arg_file_names) > 0:
+        fits_fn = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
+                               arg_file_names[0])
+    else:
+        fits_fn = None
 
     # add to parameter dictionary
     p['log_opt'] = log_opt
@@ -270,7 +279,7 @@ def load_other_config_file(p, key, logthis=True, required=False):
             # log error
             WLOG('error', p['log_opt'],
                  'Config file: {0} not found'.format(filename))
-            sys.exit(0)
+            sys.exit(1)
     return p
 
 
@@ -441,7 +450,7 @@ def display_help_file(p):
         else:
             WLOG('info', p['log_opt'], 'INFO file is not found for this recipe')
         # exit after help printed
-        sys.exit(0)
+        sys.exit(1)
 
 
 # =============================================================================
