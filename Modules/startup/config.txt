@@ -1,0 +1,84 @@
+# This is the main config file
+
+
+# -----------------------------------------------------------------------------
+# global settings
+# -----------------------------------------------------------------------------
+# Define the DRS name
+DRS_NAME = SPIROU
+
+# Define the DRS version
+DRS_VERSION = 0.0.1
+
+# -----------------------------------------------------------------------------
+# path settings
+# -----------------------------------------------------------------------------
+
+#   Define the DATA directory
+TDATA = /scratch/Projects/spirou_py3/data/
+
+#   Define the root installation directory
+DRS_ROOT = /scratch/Projects/spirou_py3/
+
+#   Define the folder with the raw data files in
+DRS_DATA_RAW = /scratch/Projects/spirou_py3/data/raw
+
+#   Define the directory that the reduced data are stored in
+DRS_DATA_REDUC = /scratch/Projects/spirou_py3/data/reduced
+
+#   Define the directory that the calibration files are stored in
+DRS_CALIB_DB = /scratch/Projects/spirou_py3/data/calibDB
+
+#   Define the directory that the log messages are stored in
+DRS_DATA_MSG = /scratch/Projects/spirou_py3/data/msg
+
+#   Define the working directory
+DRS_DATA_WORKING = /scratch/Projects/spirou_py3/data/tmp/
+
+# -----------------------------------------------------------------------------
+# Logging settings
+# -----------------------------------------------------------------------------
+
+#   Level at which to print, values can be:
+#       'all' - to print all events
+#       'info' - to print info/warning/error events
+#       'warning' - to print warning/error events
+#       'error' - to print only error events
+PRINT_LEVEL = "all"
+
+#   Level at which to log in log file, values can be:
+#       'all' - to print all events
+#       'info' - to print info/warning/error events
+#       'warning' - to print warning/error events
+#       'error' - to print only error events
+LOG_LEVEL = 'all'
+
+# -----------------------------------------------------------------------------
+# config file locations
+# -----------------------------------------------------------------------------
+# Special config file - doesn't exist and not used
+# SPECIAL_NAME = 'special_config_SPIROU.py'
+
+#   Define the ICDP configuration file
+#       (located at DRS_CONFIG or DRS_ROOT/config if DRS_CONFIG not defined)
+ICDP_NAME = 'hadmrICDP_SPIROU.txt'
+
+# -----------------------------------------------------------------------------
+# Misc/ unneccessary / unsorted
+# -----------------------------------------------------------------------------
+
+# Set the plot level
+#   value must be "defined"/"undefined"/"trigger
+# DRS_PLOT = undefined
+
+# Set the log date?
+#  value must be "YY-MM-DD" or "None"
+# DRS_USED_DATE = None
+
+# DRS_INTERACTIVE = 0
+
+# DRS_DEBUG = 0
+
+# DRS_CONFIG = ./
+
+# DRS_MAN = ./
