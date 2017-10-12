@@ -14,13 +14,13 @@ Version 0.0.1
 Last modified: 2017-10-11 at 10:49
 """
 
-from startup import RunInitialStartup, RunStartup
-from startup import log
+import startup
+import general_functions as gf
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = log.logger
+WLOG = startup.log.logger
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -38,13 +38,23 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    pp = RunInitialStartup()
+    pp = startup.RunInitialStartup()
     # run specific start up
-    pp = RunStartup(pp, kind='dark', prefixes=['dark_dark'])
+    pp = startup.RunStartup(pp, kind='dark', prefixes=['dark_dark'])
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
-    # TODO: code
+    # read the image data
+    data, header, nx, ny = gf.ReadImage(pp, framemath='average')
+    # get ccd sig det value
+
+    pp['ccdsigdet'] = gf.GetKey(pp, header, 'RDNOISE', header['@@@hname'])
+    # get exposure time
+    pp['exptime'] = gf.GetKey(pp, header, 'EXPTIME', header['@@@hname'])
+    # get gain
+    pp['gain'] = gf.GetKey(pp, header, 'GAIN', header['@@@hname'])
+
+    pp['test'] = gf.GetKey(pp, header, 'ttt', header['@@@hname'])
 
     # ----------------------------------------------------------------------
     # Resize image
