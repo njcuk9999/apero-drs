@@ -18,7 +18,7 @@ DRS_VERSION = 0.0.1
 TDATA = /scratch/Projects/spirou_py3/data/
 
 #   Define the root installation directory
-DRS_ROOT = /scratch/Projects/spirou_py3/
+DRS_ROOT = /scratch/Projects/spirou_py3/INTROOT/
 
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = /scratch/Projects/spirou_py3/data/raw
