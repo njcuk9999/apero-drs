@@ -2,7 +2,7 @@
 
 
 # -----------------------------------------------------------------------------
-#  CCD variables
+#  CCD variables (cal_DARK_spirou)
 # -----------------------------------------------------------------------------
 
 #   Resize blue window (for dark)
@@ -17,6 +17,26 @@ ic_ccdx_red_high = 2048-1750
 ic_ccdy_red_low = 2048-1570
 ic_ccdy_red_high = 2048-1910
 
+#   dark histogram variables
+#       the lower percentile (0 - 100)
+dark_qmin = 5
+
+#       the upper percentile (0 - 100)
+dark_qmax = 95
+
+#       the number of bins in dark histogram
+histo_bins = 200
+
+#       the range of the histogram in ADU/s
+histo_range_low = -0.5
+histo_range_high = 5
+
+#       define a bad pixel cut limit (in ADU/s)
+dark_cutlimit = 100.0
+
+# -----------------------------------------------------------------------------
+#  CCD variables (Other)
+# -----------------------------------------------------------------------------
 #   Resize window custom (not for dark)
 ic_ccdx_low = 5
 ic_ccdx_high = 2040
