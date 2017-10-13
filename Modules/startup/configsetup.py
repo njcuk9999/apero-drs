@@ -31,6 +31,8 @@ __CONFIG_FILE__ = 'config.txt'
 # Define functions
 # =============================================================================
 def read_config_file(config_file=None):
+    # TODO: store user config in /home/$USER/.spirou_config
+    # TODO: This will avoid having to rewrite config for every update
     # TODO: Read default parameters and then add "user parameters" to them
 
     if config_file is None:
