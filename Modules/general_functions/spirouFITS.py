@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-readwrite.py
+spirouFITS.py
 
 read and writing functions
 
@@ -17,6 +17,7 @@ import numpy as np
 from astropy.io import fits
 import os
 import sys
+from collections import OrderedDict
 
 from startup import log
 
@@ -26,6 +27,11 @@ from startup import log
 # =============================================================================
 WLOG = log.logger
 # -----------------------------------------------------------------------------
+FORBIDDEN_COPY_KEY = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
+                      'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
+                      'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
+                      'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
+
 
 # =============================================================================
 # Define user functions
@@ -46,7 +52,7 @@ def readimage(p, framemath='+'):
                 'divide' or '/'        - divides the frames
                 'none'                 - does not add
 
-    :return data: numpy array (2D), the image
+    :return image: numpy array (2D), the image
     :return header: dictionary, the header file of the image
     :return nx: int, the shape in the first dimension, i.e. data.shape[0]
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
@@ -56,21 +62,22 @@ def readimage(p, framemath='+'):
     log_opt = p['log_opt']
     # log that we are reading the image
     WLOG('', log_opt, 'Reading Image ' + fitsfilename)
-    # read data from fits file
-    data, header, nx, ny = read_raw_data(fitsfilename)
+    # read image from fits file
+    image, imageheader, nx, ny = read_raw_data(fitsfilename)
     # log that we have loaded the image
     WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
     # if we have more than one frame and add is True then add the rest of the
     #    frames
-    data = math_controler(p, data, framemath)
+    image = math_controller(p, image, framemath)
     # convert header to python dictionary
-    header = dict(zip(header.keys(), header.values()))
-    # # add some keys to the header
+    header = dict(zip(imageheader.keys(), imageheader.values()))
+    comments = dict(zip(imageheader.keys(), imageheader.comments))
+    # # add some keys to the header-
     header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
     header['@@@fname'] = fitsfilename
 
     # return data, header, data.shape[0], data.shape[1]
-    return data, header, nx, ny
+    return image, header, comments, nx, ny
 
 
 def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
@@ -163,6 +170,77 @@ def keyslookup(p, d=None, keys=None, name=None, has_default=False,
     return values
 
 
+def writeimage(filename, image, hdict):
+    """
+    Writes an image and its header to file
+
+    :param filename: string, filename to save the fits file to
+    :param image: numpy array (2D), the image
+    :param hdict: dictionary, header dictionary to write to fits file
+
+                Must be in form:
+
+                        hdict[key] = (value, comment)
+                or
+                        hdict[key] = value     (comment will be equal to
+                                                "UNKNOWN"
+    :return:
+    """
+
+    # check if file exists and remove it if it does
+    if os.path.exists(filename):
+        os.remove(filename)
+    # create the primary hdu
+    hdu = fits.PrimaryHDU(image)
+    # add header keys to the hdu header
+    for key in list(hdict.keys()):
+        hdu.header[key] = hdict[key]
+    # write to file
+    hdu.writeto(filename)
+
+
+def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
+    """
+    Copies keys from hdr dictionary to hdict, if forbid_keys is True some
+    keys will not be copies (defined in python code)
+
+    :param header: header dictionary from readimage (ReadImage) function
+
+    :param comments: comment dictionary from readimage (ReadImage) function
+
+    :param hdict: dictionary or None, header dictionary to write to fits file
+                  if None hdict is created
+
+                Must be in form:
+
+                        hdict[key] = (value, comment)
+                or
+                        hdict[key] = value     (comment will be equal to
+                                                "UNKNOWN"
+
+    :return:
+    """
+    if hdict is None:
+        hdict = OrderedDict()
+
+    for key in list(header.keys()):
+        # skip if key is forbidden keys
+        if forbid_keys and (key in FORBIDDEN_COPY_KEY):
+            continue
+        # skip if key added temporarily in code (denoted by @@@)
+        elif '@@@' in key:
+            continue
+        # else add key to hdict
+        else:
+            # if key in "comments" add it as a tuple else comment_ is blank
+            if key in comments:
+                hdict[key] = (header[key], comments[key])
+            else:
+                hdict[key] = (header[key], '')
+    # return the hdict ready to write to fits file
+    return hdict
+
+
 # =============================================================================
 # Define pyfits functions
 # =============================================================================
@@ -210,7 +288,7 @@ def read_raw_data(filename, getheader=True, getshape=True):
         return data
 
 
-def math_controler(p, data, framemath='+'):
+def math_controller(p, data, framemath='+'):
     """
     uses the framemath key to decide how 'arg_file_names' files are added to
     data (fitfilename)
@@ -294,7 +372,6 @@ def math_controler(p, data, framemath='+'):
         data /= nbframes
     # return data
     return data
-
 
 
 # =============================================================================
