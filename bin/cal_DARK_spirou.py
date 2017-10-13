@@ -13,10 +13,12 @@ Version 0.0.1
 
 Last modified: 2017-10-11 at 10:49
 """
-import sys
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import os
+import sys
 import warnings
 
 import startup
@@ -27,19 +29,21 @@ import general_functions as gf
 # =============================================================================
 WLOG = startup.log.logger
 # -----------------------------------------------------------------------------
-INTERACTIVE_PLOTS = False
+INTERACTIVE_PLOTS = True
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_dark(pp, image, image_name):
+def measure_dark(pp, image, image_name, short_name):
     """
     Measure the dark pixels in "image"
 
     :param pp: dictionary, parameter dictionary
     :param image: numpy array (2D), the image
-    :param image_name: string, the name of the image (for logging and parameter
-                       naming - parmaeters added to pp with suffix)
+    :param image_name: string, the name of the image (for logging)
+    :param short_name: string, suffix (for parameter naming -
+                        parmaeters added to pp with suffix i)
     :return pp: dictionary, parameter dictionary
     """
 
@@ -59,15 +63,16 @@ def measure_dark(pp, image, image_name):
     # get the fraction of dead pixels as a percentage
     dadead = imax * 100 / np.product(image.shape)
     # log the dark statistics
-    logargs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
+    largs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
                pp['DARK_QMAX'], qmin, qmax]
     WLOG('info', pp['log_opt'], ('{0:12s}: Frac dead pixels= {1:.1f} % - '
                                  'Median= {2:.2f} ADU/s - '
                                  'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s'
-                                 '').format(*logargs))
+                                 '').format(*largs))
     # add required variables to pp
-    pp['histo {0}'.format(image_name)] = histo
-    pp['med {0}'.format(image_name)] = med
+    pp['histo_{0}'.format(short_name)] = histo
+    pp['med_{0}'.format(short_name)] = med
+    pp['dadead_{0}'.format(short_name)] = dadead
 
     return pp
 
@@ -88,8 +93,8 @@ def plot_image_and_regions(pp, image):
     # set up axis
     frame = plt.subplot(111)
     # plot the image
-    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med Whole det']),
-               cmap='jet')
+    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med_full']),
+                      cmap='jet')
     # plot the colorbar
     plt.colorbar(im, ax=frame)
     # get the blue region
@@ -118,11 +123,10 @@ def plot_image_and_regions(pp, image):
     frame.add_patch(rrec)
 
 
-def plot_datacut(pp, imagecut):
+def plot_datacut(imagecut):
     """
     Plot the data cut mask
 
-    :param pp: dictionary, parameter dictionary
     :param imagecut: numpy array (2D), the data cut mask
 
     :return:
@@ -149,9 +153,9 @@ def plot_histograms(pp):
     # set up axis
     frame = plt.subplot(111)
     # get variables from property dictionary
-    histo_f, edge_f = pp['histo Whole det']
-    histo_b, edge_b = pp['histo Blue part']
-    histo_r, edge_r = pp['histo Red part']
+    histo_f, edge_f = pp['histo_full']
+    histo_b, edge_b = pp['histo_blue']
+    histo_r, edge_r = pp['histo_red']
     # plot the main histogram
     xf = np.repeat(edge_f, 2)
     yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
@@ -183,7 +187,7 @@ if __name__ == "__main__":
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, nx, ny = gf.ReadImage(p, framemath='average')
+    data, hdr, cdr, nx, ny = gf.ReadImage(p, framemath='average')
     # get ccd sig det value
     p['ccdsigdet'] = float(gf.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
     # get exposure time
@@ -228,11 +232,11 @@ if __name__ == "__main__":
     # Log that we are doing dark measurement
     WLOG('', p['log_opt'], 'Doing Dark measurement')
     # measure dark for whole frame
-    p = measure_dark(p, data, 'Whole det')
+    p = measure_dark(p, data, 'Whole det', 'full')
     # measure dark for blue part
-    p = measure_dark(p, datablue, 'Blue part')
+    p = measure_dark(p, datablue, 'Blue part', 'blue')
     # measure dark for rede part
-    p = measure_dark(p, datared, 'Red part')
+    p = measure_dark(p, datared, 'Red part', 'red')
 
     # ----------------------------------------------------------------------
     # Identification of bad pixels
@@ -243,9 +247,9 @@ if __name__ == "__main__":
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
-    dadeadall = n_bad_pix * 100 / np.product(data.shape)
+    p['dadeadall'] = n_bad_pix * 100 / np.product(data.shape)
     # log fraction of dead pixels + dark > cut
-    logargs = [p['DARK_CUTLIMIT'], dadeadall]
+    logargs = [p['DARK_CUTLIMIT'], p['dadeadall']]
     WLOG('info', p['log_opt'], ('Total Frac dead pixels (N.A.N) + DARK > '
                                 '{0:.1f} ADU/s = {1:.1f} %').format(*logargs))
 
@@ -259,7 +263,7 @@ if __name__ == "__main__":
         # plot the image with blue and red regions
         plot_image_and_regions(p, data)
         # plot the data cut
-        plot_datacut(p, datacutmask)
+        plot_datacut(datacutmask)
         # plot histograms
         plot_histograms(p)
         # turn off interactive plotting
@@ -270,17 +274,78 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
-    # TODO: code
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    # check that med < qc_max_darklevel
+    if p['med_full'] > p['QC_MAX_DARKLEVEL']:
+        # add failed message to fail message list
+        fmsg = 'Unexpected Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
+        fail_msg.append(fmsg.format(p['med_full'], p['QC_MAX_DARKLEVEL']))
+        passed = False
+    # check that fraction of dead pixels < qc_max_dead
+    if p['dadeadall'] > p['QC_MAX_DEAD']:
+        # add failed message to fail message list
+        fmsg = 'Unexpected Fraction of dead pixels ({0:5.2f} > {1:5.2f} %)'
+        fail_msg.append(fmsg.format(p['dadeadall'], p['QC_MAX_DEAD']))
+        passed = False
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+    else:
+        fargs = [', '.join(fail_msg)]
+        WLOG('info', p['log_opt'], 'QUALITY CONTROL FAILED: {0}'.format(*fargs))
+        p['QC'] = 0
 
     # ----------------------------------------------------------------------
-    # Save dark to calibDB
+    # Save dark to file
     # ----------------------------------------------------------------------
-    # TODO: code
+
+    # construst folder and filename
+    reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    darkfits = p['arg_file_names'][0]
+    # log saving dark frame
+    WLOG('', p['log_opt'], 'Saving Dark frame in ' + darkfits)
+    # add keys from original header file
+    hdict = gf.CopyOriginalKeys(hdr, cdr)
+    # define new keys to add
+    hdict['DADEAD'] = (p['dadead_full'], 'Fraction dead pixels [%]')
+    hdict['DAMED'] = (p['med_full'], 'median dark level [ADU/s]')
+    hdict['DABDEAD'] = (p['dadead_blue'], 'Fraction dead pixels blue part [%]')
+    hdict['DABMED'] = (p['med_blue'], 'median dark level blue part [ADU/s]')
+    hdict['DARDEAD'] = (p['dadead_red'], 'Fraction dead pixels red part [%]')
+    hdict['DARMED'] = (p['med_red'], 'median dark level red part [ADU/s]')
+    hdict['DACUT'] = (p['DARK_CUTLIMIT'],
+                      'Threshold of dark level retain [ADU/s]')
+    # write to file
+    gf.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
-    # TODO: code
+    # construct bad pixel file name
+    badpixelfits = p['arg_file_names'][0].replace('.fits', '_badpixel.fits')
+    # log that we are saving bad pixel map in dir
+    WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
+    # add keys from original header file
+    hdict = gf.CopyOriginalKeys(hdr, cdr)
+    # define new keys to add
+    hdict['DACUT'] = (p['DARK_CUTLIMIT'],
+                      'Threshold of dark level retain [ADU/s]')
+    # write to file
+    datacutmask = np.array(datacutmask, dtype=int)
+    gf.WriteImage(os.path.join(reducedfolder, badpixelfits), datacutmask, hdict)
+
+    # ----------------------------------------------------------------------
+    # Move to calibDB and update calibDB
+    # ----------------------------------------------------------------------
+    if p['QC']:
+        keydb = 'DARK'
+        # copy dark fits file to the calibDB folder
+        startup.PutFile(p, os.path.join(reducedfolder, darkfits))
+        # update the master calib DB file with new key
+        startup.UpdateMaster(p, 'DARK', darkfits, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
