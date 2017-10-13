@@ -15,6 +15,9 @@ Last modified: 2017-10-11 at 10:49
 """
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+import warnings
 
 import startup
 import general_functions as gf
@@ -24,7 +27,7 @@ import general_functions as gf
 # =============================================================================
 WLOG = startup.log.logger
 # -----------------------------------------------------------------------------
-
+INTERACTIVE_PLOTS = False
 
 # =============================================================================
 # Define functions
@@ -64,8 +67,104 @@ def measure_dark(pp, image, image_name):
                                  '').format(*logargs))
     # add required variables to pp
     pp['histo {0}'.format(image_name)] = histo
+    pp['med {0}'.format(image_name)] = med
 
     return pp
+
+
+def plot_image_and_regions(pp, image):
+    """
+    Plot the image and the red and plot regions
+
+    :param pp: dictionary, parameter dictionary
+    :param image: numpy array (2D), the image
+
+    :return:
+    """
+    # set up figure
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot the image
+    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med Whole det']),
+               cmap='jet')
+    # plot the colorbar
+    plt.colorbar(im, ax=frame)
+    # get the blue region
+    bxlow, bxhigh = pp['IC_CCDX_BLUE_LOW'], pp['IC_CCDX_BLUE_HIGH']
+    bylow, byhigh = pp['IC_CCDY_BLUE_LOW'], pp['IC_CCDY_BLUE_HIGH']
+    # adjust for backwards limits
+    if bxlow > bxhigh:
+        bxlow, bxhigh = bxhigh-1, bxlow-1
+    if bylow > byhigh:
+        bylow, byhigh = byhigh-1, bylow-1
+    # plot blue rectangle
+    brec = Rectangle((bxlow, bylow), bxhigh-bxlow, byhigh-bylow,
+                     edgecolor='b', facecolor='None')
+    frame.add_patch(brec)
+    # get the red region
+    rxlow, rxhigh = pp['IC_CCDX_RED_LOW'], pp['IC_CCDX_RED_HIGH']
+    rylow, ryhigh = pp['IC_CCDY_RED_LOW'], pp['IC_CCDY_RED_HIGH']
+    # adjust for backwards limits
+    if rxlow > rxhigh:
+        rxlow, rxhigh = rxhigh-1, rxlow-1
+    if rylow > ryhigh:
+        rylow, ryhigh = ryhigh-1, rylow-1
+    # plot blue rectangle
+    rrec = Rectangle((rxlow, rylow), rxhigh-rxlow, ryhigh-rylow,
+                     edgecolor='r', facecolor='None')
+    frame.add_patch(rrec)
+
+
+def plot_datacut(pp, imagecut):
+    """
+    Plot the data cut mask
+
+    :param pp: dictionary, parameter dictionary
+    :param imagecut: numpy array (2D), the data cut mask
+
+    :return:
+    """
+    # set up figure
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot the image cut
+    im = frame.imshow(imagecut, origin='lower', cmap='gray')
+    # plot the colorbar
+    plt.colorbar(im, ax=frame)
+    # make sure image is bounded by shape
+    plt.axis([0, imagecut.shape[0], 0, imagecut.shape[1]])
+
+
+def plot_histograms(pp):
+    # set up figure
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # get variables from property dictionary
+    histo_f, edge_f = pp['histo Whole det']
+    histo_b, edge_b = pp['histo Blue part']
+    histo_r, edge_r = pp['histo Red part']
+    # plot the main histogram
+    xf = np.repeat(edge_f, 2)
+    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
+    frame.plot(xf, yf, color='green')
+    # plot the blue histogram
+    xb = np.repeat(edge_b, 2)
+    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
+    frame.plot(xb, yb, color='blue')
+    # plot the red histogram
+    xr = np.repeat(edge_r, 2)
+    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
+    frame.plot(xr, yr, color='red')
+
 
 # =============================================================================
 # Start of code
@@ -102,7 +201,8 @@ if __name__ == "__main__":
     # Resize image
     # ----------------------------------------------------------------------
     # convert NaN to zeros
-    data0 = np.where(~np.isfinite(data), 0.0, data)
+    nanmask = ~np.isfinite(data)
+    data0 = np.where(nanmask, 0.0, data)
     # resize blue image
     bkwargs = dict(xlow=p['IC_CCDX_BLUE_LOW'], xhigh=p['IC_CCDX_BLUE_HIGH'],
                    ylow=p['IC_CCDY_BLUE_LOW'], yhigh=p['IC_CCDY_BLUE_HIGH'])
@@ -138,7 +238,8 @@ if __name__ == "__main__":
     # Identification of bad pixels
     # ----------------------------------------------------------------------
     # define mask for values above cut limit or NaN
-    datacutmask = data[np.isfinite(data)] <= p['DARK_CUTLIMIT']
+    with warnings.catch_warnings(record=True) as w:
+        datacutmask = ~((data > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
@@ -151,7 +252,20 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
-    # TODO: code
+    if p['DRS_PLOT']:
+        # start interactive plot
+        if INTERACTIVE_PLOTS:
+            plt.ion()
+        # plot the image with blue and red regions
+        plot_image_and_regions(p, data)
+        # plot the data cut
+        plot_datacut(p, datacutmask)
+        # plot histograms
+        plot_histograms(p)
+        # turn off interactive plotting
+        if not INTERACTIVE_PLOTS:
+            plt.show()
+            plt.close()
 
     # ----------------------------------------------------------------------
     # Quality control
