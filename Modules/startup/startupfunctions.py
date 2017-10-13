@@ -106,7 +106,7 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
 
     log_opt = p['log_opt']
     fits_fn = p['fitsfilename']
-
+    arg_nn = p['arg_night_name']
     # -------------------------------------------------------------------------
     # check that fitsfilename exists
     if fits_fn is None:
@@ -122,6 +122,21 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
     # if add_to_params is defined then add params to p accordingly
     p = deal_with_prefixes(p, kind, prefixes, add_to_p)
     # -------------------------------------------------------------------------
+    # Reduced directory
+    # construct reduced directory
+    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], arg_nn)
+    # if reduced directory does not exist create it
+    if not os.path.isdir(p['DRS_DATA_REDUC']):
+        os.makedirs(p['DRS_DATA_REDUC'])
+    if not os.path.isdir(reduced_dir):
+        os.makedirs(reduced_dir)
+    # -------------------------------------------------------------------------
+    # Calib DB setup
+    calib_dir = os.path.join(p['DRS_CALIB_DB'])
+    # if reduced directory does not exist create it
+    if not os.path.isdir(calib_dir):
+        os.makedirs(calib_dir)
+
 
     # TODO: Need to do calibDB stuff
 
