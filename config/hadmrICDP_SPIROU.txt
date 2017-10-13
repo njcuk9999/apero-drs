@@ -17,22 +17,35 @@ ic_ccdx_red_high = 2048-1750
 ic_ccdy_red_low = 2048-1570
 ic_ccdy_red_high = 2048-1910
 
-#   dark histogram variables
-#       the lower percentile (0 - 100)
+# -----------------------------------------------------------------------------
+#   Dark histogram variables
+# -----------------------------------------------------------------------------
+
+#   The lower percentile (0 - 100)
 dark_qmin = 5
 
-#       the upper percentile (0 - 100)
+#   The upper percentile (0 - 100)
 dark_qmax = 95
 
-#       the number of bins in dark histogram
+#   The number of bins in dark histogram
 histo_bins = 200
 
-#       the range of the histogram in ADU/s
+#   The range of the histogram in ADU/s
 histo_range_low = -0.5
 histo_range_high = 5
 
-#       define a bad pixel cut limit (in ADU/s)
+#   Define a bad pixel cut limit (in ADU/s)
 dark_cutlimit = 100.0
+
+# -----------------------------------------------------------------------------
+#   Dark Quality control parameters
+# -----------------------------------------------------------------------------
+
+# Max dark median level [ADU/s]
+qc_max_darklevel = 1.0
+
+# Max fraction of dead pixels
+qc_max_dead = 25.0
 
 # -----------------------------------------------------------------------------
 #  CCD variables (Other)
@@ -50,3 +63,12 @@ ic_ccdy_high = 1935
 #   Min dark exposure time
 qc_dark_time = 1.0
 
+# -----------------------------------------------------------------------------
+#  Calib DB settings
+# -----------------------------------------------------------------------------
+
+# Define calibd DB master filename
+ic_calibDB_filename = master_calib_SPIROU.txt
+
+# Max wait time for calib DB (in seconds)
+calib_max_wait = 3600
