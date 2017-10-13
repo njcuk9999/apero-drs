@@ -11,25 +11,34 @@ Created on 2017-10-12 15:51:49
 
 Version 0.0.1
 """
-from . import readwrite
+from . import spirouFITS
 from . import image
 
-__all__ = ['ReadImage', 'GetKey', 'GetKeys', 'ResizeImage']
+__all__ = ['CopyOriginalKeys', 'GetKey', 'GetKeys', 'ReadImage', 'ResizeImage',
+           'WriteImage']
 __author__ = 'Neil Cook'
 __version__ = '0.0.1'
 
 # =============================================================================
 # Define functions
 # =============================================================================
-# Reads the image 'fitsfilename' defined in p and adds files defined in
-# 'arg_file_names' if add is True
-ReadImage = readwrite.readimage
+
+# Copies keys from hdr dictionary to hdict, if forbid_keys is True some
+#     keys will not be copies (defined in python code)
+CopyOriginalKeys = spirouFITS.copy_original_keys
 
 # Looks for a key(s) in dictionary p, named 'name'
 #     if has_default sets value of key to 'default' if not found
 #     else logs an error
-GetKey = readwrite.keylookup
-GetKeys = readwrite.keyslookup
+GetKey = spirouFITS.keylookup
+GetKeys = spirouFITS.keyslookup
+
+# Reads the image 'fitsfilename' defined in p and adds files defined in
+# 'arg_file_names' if add is True
+ReadImage = spirouFITS.readimage
 
 # Resize an image based on a pixel values
 ResizeImage = image.resize
+
+# Write the image to file and adds header file
+WriteImage = spirouFITS.writeimage
