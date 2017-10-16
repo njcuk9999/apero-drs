@@ -17,6 +17,17 @@ ic_ccdx_red_high = 2048-1750
 ic_ccdy_red_low = 2048-1570
 ic_ccdy_red_high = 2048-1910
 
+# fiber variables (cal_loc)
+nbfib_AB = 1
+nbfib_C = 2
+ic_first_order_jump_AB = 2
+ic_first_order_jump_C = 0
+ic_locnbmaxo_AB = 72
+ic_locnbmaxo_C = 36
+qc_loc_nbo_AB = 72
+qc_loc_nbo_C = 36
+
+
 # -----------------------------------------------------------------------------
 #   Dark histogram variables
 # -----------------------------------------------------------------------------
