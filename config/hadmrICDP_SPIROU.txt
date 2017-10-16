@@ -78,6 +78,9 @@ qc_dark_time = 1.0
 #  Calib DB settings
 # -----------------------------------------------------------------------------
 
+# define the HEADER key for acquisition time
+ACQTIME_KEY = ACQTIME1
+
 # Define calibd DB master filename
 ic_calibDB_filename = master_calib_SPIROU.txt
 
