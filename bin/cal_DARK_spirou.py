@@ -204,6 +204,8 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
+    # # rotate the image and conver from ADU/s to e-
+    # data = data[::-1, ::-1] * p['exptime'] * p['gain']
     # convert NaN to zeros
     nanmask = ~np.isfinite(data)
     data0 = np.where(nanmask, 0.0, data)
