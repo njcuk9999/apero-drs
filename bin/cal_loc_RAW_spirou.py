@@ -80,6 +80,43 @@ if __name__ == "__main__":
                            prefixes=['dark_flat', 'flat_dark'],
                            add_to_p=params2add, calibdb=True)
 
+    # ----------------------------------------------------------------------
+    # Read image file
+    # ----------------------------------------------------------------------
+    # read the image data
+    data, hdr, cdr, nx, ny = gf.ReadImage(p, framemath='add')
+    # get ccd sig det value
+    p['ccdsigdet'] = float(gf.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    # get exposure time
+    p['exptime'] = float(gf.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
+    # get gain
+    p['gain'] = float(gf.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
+    # log the Dark exposure time
+    WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
+    # Quality control: make sure the exposure time is longer than qc_dark_time
+    if p['exptime'] < p['QC_DARK_TIME']:
+        WLOG('error', p['log_opt'], 'Dark exposure time too short')
+        sys.exit(1)
+
+    # ----------------------------------------------------------------------
+    # Correction of DARK
+    # ----------------------------------------------------------------------
+    datac = gf.CorrectForDark(p, data, hdr)
+
+    # ----------------------------------------------------------------------
+    # Resize image
+    # ----------------------------------------------------------------------
+    # rotate the image and conver from ADU/s to e-
+    data = datac[::-1, ::-1] * p['exptime'] * p['gain']
+    # convert NaN to zeros
+    nanmask = ~np.isfinite(data)
+    data0 = np.where(nanmask, 0.0, data)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'])
+    data2, nx2, ny2 = gf.ResizeImage(data, **bkwargs)
+    # log change in data size
+    WLOG('', p['log_opt'], 'Image format changed to {0}x{1}'.format(nx2, ny2))
 
     # ----------------------------------------------------------------------
     # End Message
