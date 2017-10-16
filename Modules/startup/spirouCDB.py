@@ -13,11 +13,12 @@ Created on 2017-10-13 at 13:54
 
 Version 0.0.0
 """
-import datetime
-import time
+import numpy as np
 import sys
 import os
 import shutil
+import datetime
+import time
 
 from startup import log
 
@@ -26,7 +27,6 @@ from startup import log
 # Define variables
 # =============================================================================
 WLOG = log.logger
-ACQTIME_KEY = 'ACQTIME1'
 DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
 # -----------------------------------------------------------------------------
 
@@ -61,6 +61,11 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
 
     :return:
     """
+    if 'ACQTIME_KEY' not in p:
+        WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
+                                     ' config files'))
+        sys.exit(1)
+
     # deal with single entry
     if type(keys) != list:
         keys = [keys]
@@ -68,8 +73,10 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         hdrs = [hdrs]
     # deal with unequal length filenames/hdrs/keys being entered
     if len(filenames) != len(keys) or len(hdrs) != len(keys):
-        raise ValueError('"filenames" and "hdrs" must be lists as "keys" is a'
-                         'list and must be the same length as "keys"')
+        emsg = ('"filenames" and "hdrs" must be lists as "keys" is a'
+                'list and must be the same length as "keys"')
+        WLOG('error', p['log_opt'], emsg)
+        sys.exit(1)
     # get and check the lock file
     lock, lock_file = get_check_lock_file(p)
     # construct lines for each key in keys
@@ -79,13 +86,13 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         key, filename, hdr = keys[k_it], filenames[k_it], hdrs[k_it]
 
         # get ACQT time from header or
-        if ACQTIME_KEY in hdr:
-            t = time2unixtime(hdr[ACQTIME_KEY])
+        if p['ACQTIME_KEY'] in hdr:
+            t = time2unixtime(hdr[p['ACQTIME_KEY']])
             t_fmt = time.strftime('%D/%H:%M:%S', time.gmtime(t))
         else:
             emsg = 'File {0} has no Header keyword {1}'
             WLOG('error', p['log_opt'], emsg.format(hdr['@@@hname'],
-                                                    ACQTIME_KEY))
+                                                    p['ACQTIME_KEY']))
             sys.exit(1)
         # construct database line entry
         lineargs = [key, p['arg_night_name'], filename, t_fmt, t]
@@ -97,6 +104,87 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     # finally close the lock file and remove it for next access
     lock.close()
     os.remove(lock_file)
+
+
+def get_database(p, max_time):
+    """
+    Gets all entries from calibDB where unix time <= max_time
+
+    :param p: dictionary, parameter dictionary
+    :param max_time: str, maximum time allowed for all calibDB entries
+                     format = (YYYY-MM-DD HH:MM:SS.MS)
+
+    :return c_database: dictionary, the calibDB database in form:
+
+                    c_database[key] = [dirname, filename]
+
+        lines in calibDB must be in form:
+
+            {key} {dirname} {filename} {human_time} {unix_time}
+    """
+    # check that max_time is a valid unix time (i.e. a float)
+    try:
+        max_time = time2unixtime(max_time)
+    except ValueError:
+        WLOG('error', p['log_opt'], ('max_time {0} is not a valid float.'
+                                     '').format(max_time))
+        sys.exit(1)
+
+    # get and check the lock file
+    lock, lock_file = get_check_lock_file(p)
+    # try to open the master file
+    lines = read_master_file(p, lock, lock_file)
+    # store all lines that have unix time <= max_time
+    keys, dirnames, filenames, utimes = [], [], [], []
+    for l_it, line in enumerate(lines):
+        # get elements from database
+        try:
+            key, dirname, filename, t_fmt, t = line.split()
+        # will crash if we don't have 5 variables --> thus log and exit
+        except ValueError:
+            WLOG('error', p['log_opt'], ('Incorrectly formatted line in '
+                                         'calibDB (Line {0} = {1})'
+                                         '').format(l_it+1, line))
+            # Must close and remove lock file before exiting
+            lock.close()
+            os.remove(lock_file)
+            sys.exit(1)
+        # only keep those entries earlier or equal to "max_time"
+        # note t must be a float here --> exception
+        try:
+            if float(t) <= max_time:
+                # append unix time, key, directory name and filename
+                utimes.append(t)
+                keys.append(key)
+                dirnames.append(dirname)
+                filenames.append(filename)
+        except ValueError:
+            WLOG('error', p['log_opt'], ('unix time {0} is not a valid float.'
+                                         '').format(t))
+            # Must close and remove lock file before exiting
+            lock.close()
+            os.remove(lock_file)
+            sys.exit(1)
+    # Need to check if lists are empty after loop
+    if len(keys) == 0:
+        WLOG('error', p['log_opt'], ('There are no entries in calibDB with '
+                                     'time <= {0}').format(max_time))
+        # Must close and remove lock file before exiting
+        lock.close()
+        os.remove(lock_file)
+        sys.exit(1)
+    # Finally we only want to keep the most recent key of each time so
+    #     write all keys (in sorted unix time order) to a dictionary
+    #     all keys currently in dictionary will be overwritten thus keeping
+    #     newest key only
+    c_database = dict()
+    for it in np.argsort(utimes):
+        c_database[keys[it]] = [dirnames[it], filenames[it]]
+    # Must close and remove lock file before continuing
+    lock.close()
+    os.remove(lock_file)
+    # return calibDB dictionary
+    return c_database
 
 
 def put_file(p, inputfile):
@@ -187,6 +275,27 @@ def write_files_to_master(p, lines, lock, lock_file):
             os.chmod(masterfile, 0o666)
         except OSError:
             pass
+
+
+def read_master_file(p, lock, lock_file):
+    # construct master filename
+    masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+    # try to
+    try:
+        f = open(masterfile, 'r')
+    except IOError:
+        WLOG('error', p['log_opt'],
+             'CalibDB master file: {0} can not be found!'.format(masterfile))
+        lock.close()
+        os.remove(lock_file)
+        sys.exit(1)
+    else:
+        # write database line entry to file
+        lines = list(f.readlines())
+        f.close()
+        return lines
+
+
 
 
 def time2unixtime(t):
