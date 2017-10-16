@@ -144,9 +144,6 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
         if not os.path.isdir(calib_dir):
             os.makedirs(calib_dir)
 
-
-    # TODO: Need to do calibDB stuff
-
     # TODO: anything else that needs adding to start up
     # -------------------------------------------------------------------------
     # return the parameter dictionary
@@ -272,6 +269,7 @@ def run_time_args(p):
     p['str_file_names'] = ', '.join(arg_file_names)
     p['arg_file_names'] = arg_file_names
     p['fitsfilename'] = fits_fn
+    p['nbframes'] = len(arg_file_names)
 
     return p
 
