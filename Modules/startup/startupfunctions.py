@@ -99,7 +99,9 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
             i.e. if prefix1 is found key "value3" and "value4" above are added
             (with "key3" and "key4") to the parameter dictionary p
 
-    :param calibdb: bool, whether to search for and load the calibDB
+    :param calibdb: bool, if True calibDB folder and files are required and
+                    program will log and exit if they are not found
+                    if False, program will create calibDB folder
 
     :return p: dictionary, parameter dictionary
     """
@@ -132,13 +134,15 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
         os.makedirs(reduced_dir)
     # -------------------------------------------------------------------------
     # Calib DB setup
-    calib_dir = os.path.join(p['DRS_CALIB_DB'])
-    # if reduced directory does not exist create it
-    if not os.path.isdir(calib_dir):
-        os.makedirs(calib_dir)
-
-
-    # TODO: Need to do calibDB stuff
+    if calibdb:
+        if not os.path.exists(p['DRS_CALIB_DB']):
+            WLOG('error', log_opt,
+                 'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
+    else:
+        calib_dir = os.path.join(p['DRS_CALIB_DB'])
+        # if reduced directory does not exist create it
+        if not os.path.isdir(calib_dir):
+            os.makedirs(calib_dir)
 
     # TODO: anything else that needs adding to start up
     # -------------------------------------------------------------------------
@@ -265,6 +269,7 @@ def run_time_args(p):
     p['str_file_names'] = ', '.join(arg_file_names)
     p['arg_file_names'] = arg_file_names
     p['fitsfilename'] = fits_fn
+    p['nbframes'] = len(arg_file_names)
 
     return p
 

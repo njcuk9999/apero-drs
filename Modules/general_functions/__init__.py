@@ -27,6 +27,9 @@ __version__ = '0.0.1'
 #     keys will not be copies (defined in python code)
 CopyOriginalKeys = spirouFITS.copy_original_keys
 
+# Corrects an image for darks (using calibDB)
+CorrectForDark = image.correct_for_dark
+
 # Looks for a key(s) in dictionary p, named 'name'
 #     if has_default sets value of key to 'default' if not found
 #     else logs an error

@@ -288,14 +288,14 @@ def read_raw_data(filename, getheader=True, getshape=True):
         return data
 
 
-def math_controller(p, data, framemath='+'):
+def math_controller(p, data, framemath=None):
     """
     uses the framemath key to decide how 'arg_file_names' files are added to
     data (fitfilename)
 
     :param p: dictionary, parameter dictionary
     :param data: numpy array (2D), the image
-    :param framemath: string, controls how files should be added
+    :param framemath: string, or None controls how files should be added
 
                 currently supported are:
                 'add' or '+'           - adds the frames
@@ -303,13 +303,16 @@ def math_controller(p, data, framemath='+'):
                 'average' or 'mean'    - averages the frames
                 'multiply' or '*'      - multiplies the frames
                 'divide' or '/'        - divides the frames
-                'none'                 - does not add
+                'none' or None         - does not do any math
 
     :return data: numpy array (2D), the image
     """
+    if framemath is None:
+        return data
+
     # set up frequently used variables
     log_opt = p['log_opt']
-    nbframes = len(p['arg_file_names'])
+    nbframes = p['nbframes']
     acceptable_math = ['ADD', '+', 'SUB', '-', 'AVERAGE', 'MEAN',
                        'MULTIPLY', '*', 'DIVIDE', '/', 'NONE']
 
