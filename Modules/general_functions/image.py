@@ -15,12 +15,17 @@ Version 0.0.0
 """
 
 import numpy as np
+import sys
+import os
 
+from startup import log
+from startup import spirouCDB
+from . import spirouFITS
 
 # =============================================================================
 # Define variables
 # =============================================================================
-
+WLOG = log.logger
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -67,14 +72,18 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         if xlow > xhigh:
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
-            raise ValueError('"xlow" and "xhigh" cannot have the same values')
+            emsg = '"xlow" and "xhigh" cannot have the same values'
+            WLOG('error', '', emsg)
+            sys.exit(1)
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
         if ylow > yhigh:
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
-            raise ValueError('"ylow" and "yhigh" cannot have the same values')
+            emsg = '"ylow" and "yhigh" cannot have the same values'
+            WLOG('error', '', emsg)
+            sys.exit(1)
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image
@@ -85,6 +94,55 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
     else:
         # return new image
         return newimage
+
+
+def correct_for_dark(p, image, header):
+    """
+    Corrects "data" for "dark" using calibDB file (header must contain
+        value of p['ACQTIME_KEY'] as a keyword
+
+    :param p: dictionary, parameter dictionary
+    :param image: numpy array (2D), the image
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+
+    :return corrected_image: numpy array (2D), the dark corrected image
+    """
+
+    # key acqtime_key from parameter dictionary
+    if 'ACQTIME_KEY' not in p:
+        WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
+                                     ' config files'))
+        sys.exit(1)
+    else:
+        acqtime_key = p['ACQTIME_KEY']
+
+    # get max_time from file
+    if acqtime_key not in header:
+        eargs = [acqtime_key, p['arg_file_names'][0]]
+        WLOG('error', p['log_opt'], ('Key {0} not in HEADER file of {1}'
+                                     ''.format(*eargs)))
+        sys.exit(1)
+    else:
+        acqtime = header[acqtime_key]
+
+    # get calibDB
+    cdb = spirouCDB.get_database(p, acqtime)
+
+    # try to read 'DARK' from cdb
+    if 'DARK' in cdb:
+        darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
+        WLOG('', p['log_opt'], 'Doing Dark Correction using ' + darkfile)
+        darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
+        corrected_image = image - (darkimage * p['nbframes'])
+    else:
+        masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+        emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
+        WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
+        sys.exit(1)
+
+    # finally return datac
+    return corrected_image
 
 
 
