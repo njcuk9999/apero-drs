@@ -65,7 +65,7 @@ LOG_LEVEL = 'all'
 
 #   Define the ICDP configuration file
 #       (located at DRS_CONFIG or DRS_ROOT/config if DRS_CONFIG not defined)
-ICDP_NAME = 'hadmrICDP_SPIROU.txt'
+ICDP_NAME = 'constants_SPIROU.txt'
 
 # -----------------------------------------------------------------------------
 # Misc/ unneccessary / unsorted

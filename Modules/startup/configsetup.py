@@ -22,6 +22,8 @@ import pkg_resources
 # Define variables
 # =============================================================================
 __PACKAGE__ = 'startup'
+__INIT__ = '__init__.py'
+__CONFIGFOLDER__ = 'config'
 __CONFIG_FILE__ = 'config.txt'
 # -----------------------------------------------------------------------------
 
@@ -37,8 +39,12 @@ def read_config_file(config_file=None):
 
     if config_file is None:
         # get config file path
-        config_file = pkg_resources.resource_filename(__PACKAGE__,
-                                                      __CONFIG_FILE__)
+        init = pkg_resources.resource_filename(__PACKAGE__, __INIT__)
+        installfolder = init.split('/')[-4]
+        config_file = os.path.join(init.split(installfolder)[0],
+                                   installfolder, __CONFIGFOLDER__,
+                                   __CONFIG_FILE__)
+
     # make sure config file exists
     if not os.path.exists(config_file):
         raise IOError("Config file doesn't exists at {0}".format(config_file))
@@ -86,7 +92,12 @@ def gettxt(filename):
 
 def config_error(key):
     # get config file path
-    config_file = pkg_resources.resource_filename(__PACKAGE__, __CONFIG_FILE__)
+    init = pkg_resources.resource_filename(__PACKAGE__, __INIT__)
+    installfolder = init.split('/')[-4]
+    config_file = os.path.join(init.split(installfolder)[0],
+                               installfolder, __CONFIGFOLDER__,
+                               __CONFIG_FILE__)
+
     # construct new error message
     emsg = 'key "{0}" must be defined in config file (located at {1})'
     # return error message
