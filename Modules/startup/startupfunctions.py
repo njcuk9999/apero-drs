@@ -373,7 +373,6 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
     else:
         WLOG('error', log_opt, ('Wrong type of image for {0}, should be {1}'
                                 '').format(kind, ' or '.join(prefixes)))
-        sys.exit(1)
 
 
 # =============================================================================
@@ -468,10 +467,8 @@ def display_help_file(p):
                 print(line)
         # else print that we have no man file
         else:
+            # log and exit
             WLOG('info', p['log_opt'], 'INFO file is not found for this recipe')
-        # exit after help printed
-        sys.exit(1)
-
 
 # =============================================================================
 # Start of code

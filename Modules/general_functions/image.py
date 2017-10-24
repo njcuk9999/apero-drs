@@ -74,7 +74,6 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif xlow == xhigh:
             emsg = '"xlow" and "xhigh" cannot have the same values'
             WLOG('error', '', emsg)
-            sys.exit(1)
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -83,7 +82,6 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif ylow == yhigh:
             emsg = '"ylow" and "yhigh" cannot have the same values'
             WLOG('error', '', emsg)
-            sys.exit(1)
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image
@@ -113,7 +111,6 @@ def correct_for_dark(p, image, header):
     if 'ACQTIME_KEY' not in p:
         WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
                                      ' config files'))
-        sys.exit(1)
     else:
         acqtime_key = p['ACQTIME_KEY']
 
@@ -122,7 +119,6 @@ def correct_for_dark(p, image, header):
         eargs = [acqtime_key, p['arg_file_names'][0]]
         WLOG('error', p['log_opt'], ('Key {0} not in HEADER file of {1}'
                                      ''.format(*eargs)))
-        sys.exit(1)
     else:
         acqtime = header[acqtime_key]
 
@@ -139,7 +135,6 @@ def correct_for_dark(p, image, header):
         masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
         emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
         WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
-        sys.exit(1)
 
     # finally return datac
     return corrected_image

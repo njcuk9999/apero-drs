@@ -29,6 +29,19 @@ WRITE_LEVEL = dict(error=3, warning=2, info=1, graph=0, all=0)
 # Get config parameters
 CPARAMS = configsetup.read_config_file()
 
+# Config exit (sys = sys.exit(1), os = os._exit(1) anything else and error
+#     does not exit
+# TODO: should this be defined in the config?
+EXIT = 'os'
+if EXIT == 'sys':
+    EXIT_TYPE = sys.exit
+elif EXIT == 'os':
+    EXIT_TYPE = os._exit
+else:
+    EXIT_TYPE = lambda x: None
+
+WARN = True
+
 
 # =============================================================================
 # Define functions
@@ -72,6 +85,18 @@ def logger(key='', option='', message=''):
     logfilepath = get_logfilepath(unix_time)
     # write to log file
     writelog(cmd, ecmd, key, logfilepath)
+    # deal with errors
+    if key == 'error':
+        EXIT_TYPE(1)
+
+
+def warninglogger(w):
+    # deal with warnings
+    if WARN and (len(w) > 0):
+        for wi in w:
+            wargs = [wi.lineno, wi.message]
+            logger('warning', 'python warning',
+                   'Line {0} warning reads: {1}'.format(*wargs))
 
 
 def get_logfilepath(utime):
@@ -83,7 +108,7 @@ def get_logfilepath(utime):
         # if TDATA path does not exists - exit with error
         if not os.path.exists(CPARAMS.get('TDATA', '')):
             print(configsetup.config_error("TDATA"))
-            sys.exit(1)
+            EXIT_TYPE(1)
         # if TDATA does exist then create a /msg/ sub-directory
         dir_data_msg = os.path.join(CPARAMS['TDATA'], 'msg', '')
         os.makedirs(dir_data_msg)
