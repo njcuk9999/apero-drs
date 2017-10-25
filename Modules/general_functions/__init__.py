@@ -59,6 +59,9 @@ FlipImage = spirouImage.flip_image
 GetKey = spirouFITS.keylookup
 GetKeys = spirouFITS.keyslookup
 
+
+LocateCentralPositions = spirouLOCOR.locate_central_positions
+
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
 ReadImage = spirouFITS.readimage

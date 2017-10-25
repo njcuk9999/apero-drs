@@ -118,6 +118,22 @@ def measure_box_min_max(image, size):
     # return arrays for minimum and maximum (box smoothed)
     return min_image, max_image
 
+
+def locate_order_positions(cvalues, threshold):
+    """
+    Takes the central pixel values and finds orders by looking for the start
+    and end above threshold
+
+    :param cvalues: numpy array (1D) size = number of rows,
+                    the central pixel values
+    :param threshold: float, the threshold above which to find pixels as being
+                      part of an order
+
+    :return positions: numpy array (1D), size= number of rows,
+                       the pixel positions in cvalues where the centers of each
+                       order should be
+    """
+
 # =============================================================================
 # End of code
 # =============================================================================
