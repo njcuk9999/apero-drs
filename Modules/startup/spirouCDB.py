@@ -99,7 +99,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         # add line to lines list
         lines.append(line)
     # write lines to master
-    write_files_to_master(p, lines, lock, lock_file)
+    write_files_to_master(p, lines, keys, lock, lock_file)
     # finally close the lock file and remove it for next access
     lock.close()
     os.remove(lock_file)
@@ -240,7 +240,7 @@ def get_check_lock_file(p):
     return lock, lock_file
 
 
-def write_files_to_master(p, lines, lock, lock_file):
+def write_files_to_master(p, lines, keys, lock, lock_file):
     """
     writes database entries to master file
 
@@ -249,6 +249,7 @@ def write_files_to_master(p, lines, lock, lock_file):
 
     :param p: dictionary, parameter dictionary
     :param lines: list of strings, entries to add to the master file
+    :param keys: list of strings, the keys that are to be added to master file
     :param lock: file, the lock file (for closing if error occurs)
     :param lock_file: string, the lock file name (for deleting once an error
                       occurs)
@@ -269,6 +270,8 @@ def write_files_to_master(p, lines, lock, lock_file):
         # write database line entry to file
         f.writelines(lines)
         f.close()
+        WLOG('info', p['log_opt'], ('Updating Calib Data Base '
+                                    'with {0}').format(', '.join(keys)))
         try:
             os.chmod(masterfile, 0o666)
         except OSError:
