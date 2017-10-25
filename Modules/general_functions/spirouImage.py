@@ -114,56 +114,11 @@ def flip_image(image, flipx=True, flipy=True):
         return image
 
 
-def smoothed_boxmean_image(image, size, weighted=True):
-    """
-    Produce a (box) smoothed image, smoothed by the mean of a box of
-        size=2*"size" pixels, edges are dealt with by expanding the size of the
-        box from or to the edge - essentially expanding/shrinking the box as
-        it leaves/approaches the edges. Performed along the columns.
-        pixel values less than 0 are given a weight of 1e-6, pixel values
-        above 0 are given a weight of 1
-
-    :param image: numpy array (2D), the image
-    :param size: int, the number of pixels to mask before and after pixel
-                 (for every row)
-                 i.e. box runs from  "pixel-size" to "pixel+size" unless
-                 near an edge
-    :param weighted: bool, if True pixel values less than zero are weighted to
-                     a value of 1e-6 and values above 0 are weighted to a value
-                     of 1
-
-    :return newimage: numpy array (2D), the smoothed image
-    """
-    newimage = np.zeros_like(image)
-
-    # loop around each pixel column
-    for it in range(0, image.shape[1], 1):
-        # deal with leading edge --> i.e. box expands until it is full size
-        if it < size:
-            # get the subimage defined by the box for all rows
-            part = image[:, 0:it + size + 1]
-        # deal with main part (where box is of size="size"
-        elif size <= it <= image.shape[1]-size:
-            # get the subimage defined by the box for all rows
-            part = image[:, it - size: it + size + 1]
-        # deal with the trailing edge --> i.e. box shrinks from full size
-        elif it > image.shape[1]-size:
-            # get the subimage defined by the box for all rows
-            part = image[:, it - size: it + size + 1]
-        # get the weights (pixels below 0 are set to 1e-6, pixels above to 1)
-        if weighted:
-            weights = np.where(part > 0, 1, 1.e-6)
-        else:
-            weights = np.ones(len(part))
-        # apply the weighted mean for this column
-        newimage[:, it] = np.average(part, axis=1, weights=weights)
-    # return the new smoothed image
-    return newimage
 
 
 def convert_to_e(image, p=None, gain=None, exptime=None):
     """
-    Converts from ADU/s into e-
+    Converts image from ADU/s into e-
 
     :param image:
     :param p: dictionary or None, parameter dictionary, must contain 'exptime'
