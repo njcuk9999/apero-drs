@@ -344,7 +344,7 @@ if __name__ == "__main__":
         # copy dark fits file to the calibDB folder
         startup.PutFile(p, os.path.join(reducedfolder, darkfits))
         # update the master calib DB file with new key
-        startup.UpdateMaster(p, 'DARK', darkfits, hdr)
+        startup.UpdateMaster(p, keydb, darkfits, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
