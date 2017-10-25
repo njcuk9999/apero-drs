@@ -29,7 +29,7 @@ WLOG = log.logger
 # -----------------------------------------------------------------------------
 
 # =============================================================================
-# Define functions
+# Define Image modification function
 # =============================================================================
 def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
            getshape=True):
@@ -74,7 +74,6 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif xlow == xhigh:
             emsg = '"xlow" and "xhigh" cannot have the same values'
             WLOG('error', '', emsg)
-            sys.exit(1)
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -83,7 +82,6 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif ylow == yhigh:
             emsg = '"ylow" and "yhigh" cannot have the same values'
             WLOG('error', '', emsg)
-            sys.exit(1)
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image
@@ -96,6 +94,61 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         return newimage
 
 
+def flip_image(image, flipx=True, flipy=True):
+    """
+    Flips the image in the x and/or the y direction
+
+    :param image: numpy array (2D), the image
+    :param flipx: bool, if True flips in x direction (axis = 0)
+    :param flipy: bool, if True flips in y direction (axis = 1)
+
+    :return newimage: numpy array (2D), the flipped image
+    """
+    if flipx and flipy:
+        return image[::-1, ::-1]
+    elif flipx:
+        return image[::-1, :]
+    elif flipy:
+        return image[:, ::-1]
+    else:
+        return image
+
+
+
+
+def convert_to_e(image, p=None, gain=None, exptime=None):
+    """
+    Converts image from ADU/s into e-
+
+    :param image:
+    :param p: dictionary or None, parameter dictionary, must contain 'exptime'
+              and 'gain', if None gain and exptime must not be None
+
+    :return newimage: numpy array (2D), the image in e-
+    """
+    newimage = None
+    if p is not None:
+        try:
+            newimage = image * p['exptime'] * p['gain']
+        except KeyError:
+            emsg = ('If parameter dictionary is defined keys "exptime" '
+                    'and "gain" must be defined.')
+            WLOG('error', '', emsg)
+    elif gain is not None and exptime is not None:
+        try:
+            gain, exptime = float(gain), float(exptime)
+            newimage = image * gain * exptime
+        except ValueError:
+            emsg = ('"gain" and "exptime" must be floats if parameter '
+                    'dictionary is None.')
+            WLOG('error', '', emsg)
+
+    return newimage
+
+
+# =============================================================================
+# Define Image correction functions
+# =============================================================================
 def correct_for_dark(p, image, header):
     """
     Corrects "data" for "dark" using calibDB file (header must contain
@@ -113,7 +166,6 @@ def correct_for_dark(p, image, header):
     if 'ACQTIME_KEY' not in p:
         WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
                                      ' config files'))
-        sys.exit(1)
     else:
         acqtime_key = p['ACQTIME_KEY']
 
@@ -122,7 +174,6 @@ def correct_for_dark(p, image, header):
         eargs = [acqtime_key, p['arg_file_names'][0]]
         WLOG('error', p['log_opt'], ('Key {0} not in HEADER file of {1}'
                                      ''.format(*eargs)))
-        sys.exit(1)
     else:
         acqtime = header[acqtime_key]
 
@@ -139,10 +190,12 @@ def correct_for_dark(p, image, header):
         masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
         emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
         WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
-        sys.exit(1)
 
     # finally return datac
     return corrected_image
+
+
+
 
 
 

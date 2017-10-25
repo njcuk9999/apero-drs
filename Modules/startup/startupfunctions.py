@@ -115,10 +115,8 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
         WLOG('error', log_opt, 'No fits file defined in run time argument'
                                ' format must be: {0}.py [FOLDER] [FILES]'
                                ''.format(p['program']))
-        sys.exit(1)
     if not os.path.exists(fits_fn):
         WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
-        sys.exit(1)
     # -------------------------------------------------------------------------
     # if we have prefixes defined then check that fitsfilename has them
     # if add_to_params is defined then add params to p accordingly
@@ -164,7 +162,6 @@ def check_params(p):
     tmp = configsetup.check_config(p, ['DRS_ROOT', 'TDATA'])
     if tmp is not None:
         WLOG('error', ' ', tmp)
-        sys.exit(1)
     # check whether we have drs_data_raw key
     tmp = os.path.join(p['TDATA'], 'raw', '')
     p['DRS_DATA_RAW'] = p.get('DRS_DATA_RAW', tmp)
@@ -279,7 +276,6 @@ def load_other_config_file(p, key, logthis=True, required=False):
     tmp = configsetup.check_config(p, key)
     if tmp is not None and required:
         WLOG('error', ' ', tmp)
-        sys.exit(1)
     elif tmp is not None:
         return p
     # construct icdp file name
@@ -290,6 +286,11 @@ def load_other_config_file(p, key, logthis=True, required=False):
         newparams = configsetup.read_config_file(filename)
         # merge with param file
         for newkey in list(newparams.keys()):
+            # Warn the user than key is being overwritten
+            if newkey in list(p.keys()):
+                wmsg = 'Warning key {0} overwritten by config: {1}'
+                WLOG('warning', p['log_opt'], wmsg.format(newkey, filename))
+            # Write key
             p[newkey] = newparams[newkey]
         # log output
         if logthis:
@@ -299,7 +300,6 @@ def load_other_config_file(p, key, logthis=True, required=False):
             # log error
             WLOG('error', p['log_opt'],
                  'Config file: {0} not found'.format(filename))
-            sys.exit(1)
     return p
 
 
@@ -373,7 +373,6 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
     else:
         WLOG('error', log_opt, ('Wrong type of image for {0}, should be {1}'
                                 '').format(kind, ' or '.join(prefixes)))
-        sys.exit(1)
 
 
 # =============================================================================
@@ -468,10 +467,8 @@ def display_help_file(p):
                 print(line)
         # else print that we have no man file
         else:
+            # log and exit
             WLOG('info', p['log_opt'], 'INFO file is not found for this recipe')
-        # exit after help printed
-        sys.exit(1)
-
 
 # =============================================================================
 # Start of code

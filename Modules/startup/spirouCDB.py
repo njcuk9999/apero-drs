@@ -64,7 +64,6 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     if 'ACQTIME_KEY' not in p:
         WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
                                      ' config files'))
-        sys.exit(1)
 
     # deal with single entry
     if type(keys) != list:
@@ -76,7 +75,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         emsg = ('"filenames" and "hdrs" must be lists as "keys" is a'
                 'list and must be the same length as "keys"')
         WLOG('error', p['log_opt'], emsg)
-        sys.exit(1)
+
     # get and check the lock file
     lock, lock_file = get_check_lock_file(p)
     # construct lines for each key in keys
@@ -93,14 +92,14 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
             emsg = 'File {0} has no Header keyword {1}'
             WLOG('error', p['log_opt'], emsg.format(hdr['@@@hname'],
                                                     p['ACQTIME_KEY']))
-            sys.exit(1)
+
         # construct database line entry
         lineargs = [key, p['arg_night_name'], filename, t_fmt, t]
         line = '{0} {1} {2} {3} {4}\n'.format(*lineargs)
         # add line to lines list
         lines.append(line)
     # write lines to master
-    write_files_to_master(p, lines, lock, lock_file)
+    write_files_to_master(p, lines, keys, lock, lock_file)
     # finally close the lock file and remove it for next access
     lock.close()
     os.remove(lock_file)
@@ -128,7 +127,7 @@ def get_database(p, max_time):
     except ValueError:
         WLOG('error', p['log_opt'], ('max_time {0} is not a valid float.'
                                      '').format(max_time))
-        sys.exit(1)
+
 
     # get and check the lock file
     lock, lock_file = get_check_lock_file(p)
@@ -142,13 +141,12 @@ def get_database(p, max_time):
             key, dirname, filename, t_fmt, t = line.split()
         # will crash if we don't have 5 variables --> thus log and exit
         except ValueError:
-            WLOG('error', p['log_opt'], ('Incorrectly formatted line in '
-                                         'calibDB (Line {0} = {1})'
-                                         '').format(l_it+1, line))
             # Must close and remove lock file before exiting
             lock.close()
             os.remove(lock_file)
-            sys.exit(1)
+            WLOG('error', p['log_opt'], ('Incorrectly formatted line in '
+                                         'calibDB (Line {0} = {1})'
+                                         '').format(l_it+1, line))
         # only keep those entries earlier or equal to "max_time"
         # note t must be a float here --> exception
         try:
@@ -159,20 +157,21 @@ def get_database(p, max_time):
                 dirnames.append(dirname)
                 filenames.append(filename)
         except ValueError:
-            WLOG('error', p['log_opt'], ('unix time {0} is not a valid float.'
-                                         '').format(t))
             # Must close and remove lock file before exiting
             lock.close()
             os.remove(lock_file)
-            sys.exit(1)
+            WLOG('error', p['log_opt'], ('unix time {0} is not a valid float.'
+                                         '').format(t))
+
+
     # Need to check if lists are empty after loop
     if len(keys) == 0:
-        WLOG('error', p['log_opt'], ('There are no entries in calibDB with '
-                                     'time <= {0}').format(max_time))
         # Must close and remove lock file before exiting
         lock.close()
         os.remove(lock_file)
-        sys.exit(1)
+        # log and exit
+        WLOG('error', p['log_opt'], ('There are no entries in calibDB with '
+                                     'time <= {0}').format(max_time))
     # Finally we only want to keep the most recent key of each time so
     #     write all keys (in sorted unix time order) to a dictionary
     #     all keys currently in dictionary will be overwritten thus keeping
@@ -203,7 +202,6 @@ def put_file(p, inputfile):
         os.chmod(outputfile, 0o0644)
     except IOError:
         WLOG('error', p['log_opt'], 'I/O problem on {0}'.format(outputfile))
-        sys.exit(0)
     except OSError:
         WLOG('', p['log_opt'], 'Unable to chmod on {0}'.format(outputfile))
 
@@ -236,14 +234,13 @@ def get_check_lock_file(p):
                 'exceeded. Please make sure CalibDB is not being used and '
                 'manually delete {0}').format(lock_file)
         WLOG('error', p['log_opt'], emsg)
-        sys.exit(1)
     # open the lock file
     lock = open(lock_file, 'w')
     # return lock file and name
     return lock, lock_file
 
 
-def write_files_to_master(p, lines, lock, lock_file):
+def write_files_to_master(p, lines, keys, lock, lock_file):
     """
     writes database entries to master file
 
@@ -252,6 +249,7 @@ def write_files_to_master(p, lines, lock, lock_file):
 
     :param p: dictionary, parameter dictionary
     :param lines: list of strings, entries to add to the master file
+    :param keys: list of strings, the keys that are to be added to master file
     :param lock: file, the lock file (for closing if error occurs)
     :param lock_file: string, the lock file name (for deleting once an error
                       occurs)
@@ -263,14 +261,17 @@ def write_files_to_master(p, lines, lock, lock_file):
     try:
         f = open(masterfile, 'a')
     except IOError:
-        WLOG('error', p['log_opt'], 'I/O Error on file: {0}'.format(masterfile))
+        # Must close and delete lock file
         lock.close()
         os.remove(lock_file)
-        sys.exit(1)
+        # log and exit
+        WLOG('error', p['log_opt'], 'I/O Error on file: {0}'.format(masterfile))
     else:
         # write database line entry to file
         f.writelines(lines)
         f.close()
+        WLOG('info', p['log_opt'], ('Updating Calib Data Base '
+                                    'with {0}').format(', '.join(keys)))
         try:
             os.chmod(masterfile, 0o666)
         except OSError:
@@ -284,11 +285,14 @@ def read_master_file(p, lock, lock_file):
     try:
         f = open(masterfile, 'r')
     except IOError:
-        WLOG('error', p['log_opt'],
-             'CalibDB master file: {0} can not be found!'.format(masterfile))
+        # Must close and delete lock file
         lock.close()
         os.remove(lock_file)
-        sys.exit(1)
+        # log and exit
+        WLOG('error', p['log_opt'],
+             'CalibDB master file: {0} can not be found!'.format(masterfile))
+
+
     else:
         # write database line entry to file
         lines = list(f.readlines())

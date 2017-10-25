@@ -199,8 +199,6 @@ if __name__ == "__main__":
     # Quality control: make sure the exposure time is longer than qc_dark_time
     if p['exptime'] < p['QC_DARK_TIME']:
         WLOG('error', p['log_opt'], 'Dark exposure time too short')
-        sys.exit(1)
-
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
@@ -217,7 +215,6 @@ if __name__ == "__main__":
     if nx2 == 0 or ny2 == 0:
         WLOG('error', p['log_opt'], ('IC_CCD(X/Y)_BLUE_(LOW/HIGH) remove '
                                      'all pixels from image.'))
-        sys.exit(1)
     # resize red image
     rkwargs = dict(xlow=p['IC_CCDX_RED_LOW'], xhigh=p['IC_CCDX_RED_HIGH'],
                    ylow=p['IC_CCDY_RED_LOW'], yhigh=p['IC_CCDY_RED_HIGH'])
@@ -226,7 +223,6 @@ if __name__ == "__main__":
     if nx3 == 0 or ny3 == 0:
         WLOG('error', p['log_opt'], ('IC_CCD(X/Y)_RED_(LOW/HIGH) remove '
                                      'all pixels from image.'))
-        sys.exit(1)
 
     # ----------------------------------------------------------------------
     # Dark Measurement
@@ -246,6 +242,7 @@ if __name__ == "__main__":
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
         datacutmask = ~((data > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
+    startup.log.warninglogger(w)
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
@@ -304,7 +301,7 @@ if __name__ == "__main__":
     # Save dark to file
     # ----------------------------------------------------------------------
 
-    # construst folder and filename
+    # construct folder and filename
     reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
     darkfits = p['arg_file_names'][0]
     # log saving dark frame
@@ -347,7 +344,7 @@ if __name__ == "__main__":
         # copy dark fits file to the calibDB folder
         startup.PutFile(p, os.path.join(reducedfolder, darkfits))
         # update the master calib DB file with new key
-        startup.UpdateMaster(p, 'DARK', darkfits, hdr)
+        startup.UpdateMaster(p, keydb, darkfits, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

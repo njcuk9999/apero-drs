@@ -17,6 +17,7 @@ import numpy as np
 from astropy.io import fits
 import os
 import sys
+import warnings
 from collections import OrderedDict
 
 from startup import log
@@ -118,7 +119,6 @@ def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
         except KeyError:
             emsg = 'Key "{0}" not found in "{1}"'.format(key, name)
             WLOG('error', p['log_opt'], emsg)
-            sys.exit(1)
 
     return value
 
@@ -196,7 +196,9 @@ def writeimage(filename, image, hdict):
     for key in list(hdict.keys()):
         hdu.header[key] = hdict[key]
     # write to file
-    hdu.writeto(filename)
+    with warnings.catch_warnings(record=True) as w:
+        hdu.writeto(filename)
+    log.warninglogger(w)
 
 
 def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
@@ -331,7 +333,7 @@ def math_controller(p, data, framemath=None):
     if nbframes < 2:
         return data
     # select text for logging
-    if fm in ['Adding', '+']:
+    if fm in ['ADD', '+']:
         kind = 'Adding'
     elif fm in ['MEAN', 'AVERAGE']:
         kind = 'Averaging'
@@ -355,7 +357,6 @@ def math_controller(p, data, framemath=None):
         if not os.path.exists(framefilename):
             WLOG('error', log_opt, ('File: {0} does not exist'
                                     ''.format(framefilename)))
-            sys.exit(1)
         else:
             # load that we are reading this file
             WLOG('', log_opt, 'Reading File: ' + framefilename)

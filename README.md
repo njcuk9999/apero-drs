@@ -3,9 +3,12 @@
 
 ## Change log from Version 43 of the DRS
 
-### cal_DARK_spirou.py
+### General
 
 - all import functions re-worked (removed or changed or updated)
+
+- `WLOG` function, if `key=="error"` now exits
+    - Maybe this should be configurable
 
 - execution of pythonstartup codes removed and replaced with functions
     - `startup.RunInitialStartup()` to replace `execfile(os.getenv('PYTHONSTARTUP))`
@@ -24,11 +27,14 @@
     - `gf.ResizeImage(data, xlow, xhigh, ylow, yhigh)`
     - `gf` is an alias to the module `generalfunctions`
 
-- dark measurement moved to internal function `measure_dark` (for clarity)
-     - This is, in part, due to the repetition of code for "Whole det", "Blue part" and "Red part"
-
 - plots are now only plotted if `DRS_PLOT` is True (or =1)
     - Can turn plotting off in `config.txt` =0 or =False
+
+
+### cal_DARK_spirou.py
+
+- dark measurement moved to internal function `measure_dark` (for clarity)
+     - This is, in part, due to the repetition of code for "Whole det", "Blue part" and "Red part"
 
 - all plotting moved to internal functions (for clarity)
     - `plot_image_and_regions(p, data)` for the image/region plot
@@ -66,6 +72,7 @@
 
 - added exception for empty calibDB/no entries <= max_time (after processing)
 
+### cal_loc_RAW_spirou.py
 
 
 
