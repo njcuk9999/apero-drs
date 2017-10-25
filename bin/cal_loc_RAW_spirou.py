@@ -106,11 +106,11 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
-    # rotate the image and conver from ADU/s to e-
-    data = datac[::-1, ::-1] * p['exptime'] * p['gain']
+    # rotate the image and convert from ADU/s to e-
+    data = gf.FlipImage(data)
+    data = gf.ConvertToE(p, data)
     # convert NaN to zeros
-    nanmask = ~np.isfinite(data)
-    data0 = np.where(nanmask, 0.0, data)
+    data0 = np.where(~np.isfinite(data), 0.0, data)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'])
@@ -121,14 +121,35 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
+    order_profile = gf.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'])
 
     # ----------------------------------------------------------------------
     # Write image order_profile to file
     # ----------------------------------------------------------------------
+    # Construct folder and filename
+    reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    newext = '_order_profile_{0}.fits'.format(p['fiber'])
+    rawfits = p['arg_file_names'][0].replace('.fits', newext)
+    # log saving order profile
+    WLOG('', p['log_opt'], 'Saving processed raw frame in {0}'.format(rawfits))
+    # add keys from original header file
+    hdict = gf.CopyOriginalKeys(hdr, cdr)
+    # write to file
+    gf.WriteImage(os.path.join(reducedfolder, rawfits), order_profile, hdict)
+
+    # ----------------------------------------------------------------------
+    # Move order_profile to calibDB and update calibDB
+    # ----------------------------------------------------------------------
+    keydb = 'ORDER_PROFILE_{0}'.format(p['fiber'])
+    # copy dark fits file to the calibDB folder
+    startup.PutFile(p, os.path.join(reducedfolder, rawfits))
+    # update the master calib DB file with new key
+    startup.UpdateMaster(p, 'DARK', rawfits, hdr)
 
     # ----------------------------------------------------------------------
     # Localization of orders on central column
     # ----------------------------------------------------------------------
+
 
     # ----------------------------------------------------------------------
     # Plots pixel number against flux value
