@@ -333,7 +333,7 @@ def math_controller(p, data, framemath=None):
     if nbframes < 2:
         return data
     # select text for logging
-    if fm in ['Adding', '+']:
+    if fm in ['ADD', '+']:
         kind = 'Adding'
     elif fm in ['MEAN', 'AVERAGE']:
         kind = 'Averaging'
