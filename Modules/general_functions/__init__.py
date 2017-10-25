@@ -13,8 +13,10 @@ Version 0.0.1
 """
 from . import spirouFITS
 from . import spirouImage
+from . import spirouLOCOR
 
 __all__ = ['BoxSmoothedImage',
+           'BoxSmoothedMinMax',
            'ConvertToE',
            'CopyOriginalKeys',
            'FlipImage ',
@@ -30,10 +32,15 @@ __version__ = '0.0.1'
 # Define functions
 # =============================================================================
 
-# Produce a (box) smoothed image
-BoxSmoothedImage = spirouImage.smoothed_boxmean_image
+# Produce a (box) smoothed image, smoothed by the mean of a box of
+#     size=2*"size" pixels
+BoxSmoothedImage = spirouLOCOR.smoothed_boxmean_image
 
-#
+# Measure the minimum and maximum pixel value for each row using a box which
+#     contains all pixels for rows:  row-size to row+size and all columns.
+BoxSmoothedMinMax = spirouLOCOR.measure_box_min_max
+
+# Converts image from ADU/s into e-
 ConvertToE = spirouImage.convert_to_e
 
 # Copies keys from hdr dictionary to hdict, if forbid_keys is True some
