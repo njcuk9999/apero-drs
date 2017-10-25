@@ -1,23 +1,61 @@
-# This is the hadmr ICDP SPIROU config file
-
+# -----------------------------------------------------------------------------
+#
+#   This is the SPIROU DRS constants config file
+#
+# -----------------------------------------------------------------------------
+#        Read Me:
+#
+#        Lines must either start with a # or be a key-value pair or be a blank
+#            line, blank lines and lines that start with a # will be ignored
+#
+#        Key value pairs are of the form:
+#                 key = value
+#
+#        Note python will try to interpret values so basic math is allowed:
+#
+#        i.e.   x = 10 + 10
+#
+#        will be interpreted in the parameter dictionary (p) as:
+#
+#        p['x'] = 100
+#
+#        and will be an integer.
+#
+#        Interpretation works as in eval('10 + 10')
+#
+#            [Try it in python for the result that will be passed to the
+#             parameter dictionary]
+#
 
 # -----------------------------------------------------------------------------
-#  CCD variables (cal_DARK_spirou)
+#  General variables
 # -----------------------------------------------------------------------------
 
-#   Resize blue window (for dark)
+# Enable debug mode                                             - [cal_loc]
+ic_debug = 0
+
+# -----------------------------------------------------------------------------
+#  image variables
+# -----------------------------------------------------------------------------
+
+#   Resize blue window                                          - [cal_dark]
 ic_ccdx_blue_low = 2048-200
 ic_ccdx_blue_high = 2048-1500
 ic_ccdy_blue_low = 2048-20
 ic_ccdy_blue_high = 2048-350
 
-#   Resize red window (for dark)
+#   Resize red window                                           - [cal_dark]
 ic_ccdx_red_low = 2048-20
 ic_ccdx_red_high = 2048-1750
 ic_ccdy_red_low = 2048-1570
 ic_ccdy_red_high = 2048-1910
 
-# fiber variables (cal_loc)
+# fiber variables                                              - [cal_loc]
+#    MUST have _"fiber" at the end
+#          i.e. "x_AB" or "x_C"
+#    final variable will be chosen based on fiber suffix
+#    and will have prefix as variable name
+#          i.e. "x_AB = 1" for fiber AB would lead to p['x'] = 1
 nbfib_AB = 1
 nbfib_C = 2
 ic_first_order_jump_AB = 2
@@ -27,70 +65,83 @@ ic_locnbmaxo_C = 36
 qc_loc_nbo_AB = 72
 qc_loc_nbo_C = 36
 
+#   Resize image                                                - [cal_loc]
+ic_ccdx_low = 5
+ic_ccdx_high = 2040
+ic_ccdy_low = 5
+ic_ccdy_high = 1935
+
 
 # -----------------------------------------------------------------------------
 #   Dark histogram variables
 # -----------------------------------------------------------------------------
 
-#   The lower percentile (0 - 100)
+#   The lower percentile (0 - 100)                              - [cal_dark]
 dark_qmin = 5
 
-#   The upper percentile (0 - 100)
+#   The upper percentile (0 - 100)                              - [cal_dark]
 dark_qmax = 95
 
-#   The number of bins in dark histogram
+#   The number of bins in dark histogram                        - [cal_dark]
 histo_bins = 200
 
-#   The range of the histogram in ADU/s
+#   The range of the histogram in ADU/s                         - [cal_dark]
 histo_range_low = -0.5
 histo_range_high = 5
 
-#   Define a bad pixel cut limit (in ADU/s)
+#   Define a bad pixel cut limit (in ADU/s)                     - [cal_dark]
 dark_cutlimit = 100.0
-
-# -----------------------------------------------------------------------------
-#   Dark Quality control parameters
-# -----------------------------------------------------------------------------
-
-# Max dark median level [ADU/s]
-qc_max_darklevel = 1.0
-
-# Max fraction of dead pixels
-qc_max_dead = 25.0
 
 
 # -----------------------------------------------------------------------------
 #   Localisation parameters
 # -----------------------------------------------------------------------------
 
-# Size of the order_profile smoothed box (from pixel - size to pixel + size)
+# Size of the order_profile smoothed box                        - [cal_loc]
+#     (from pixel - size to pixel + size)
 loc_box_size = 10
 
-# -----------------------------------------------------------------------------
-#  CCD variables (Other)
-# -----------------------------------------------------------------------------
-#   Resize window custom (not for dark)
-ic_ccdx_low = 5
-ic_ccdx_high = 2040
-ic_ccdy_low = 5
-ic_ccdy_high = 1935
+# row number of image to start processing at                    - [cal_loc]
+ic_offset = 40
+
+# Definition of the central column                              - [cal_loc]
+ic_cent_col = 1000
+
+# Half spacing between orders                                   - [cal_loc]
+ic_locnbpix = 45
+
+# Minimum amplitude to accept (in e-)                           - [cal_loc]
+ic_min_amplitude = 100
+
+# Normalised amplitude threshold to accept pixels               - [cal_loc]
+#    for background calculation
+ic_locseuil = 0.2
+
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
 # -----------------------------------------------------------------------------
 
-#   Min dark exposure time
+# Max dark median level [ADU/s]                                 - [cal_dark]
+qc_max_darklevel = 1.0
+
+# Max fraction of dead pixels                                   - [cal_dark]
+qc_max_dead = 25.0
+
+#   Min dark exposure time                                      - [cal_dark]
 qc_dark_time = 1.0
+
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings
 # -----------------------------------------------------------------------------
 
-# define the HEADER key for acquisition time
+# define the HEADER key for acquisition time                    - [cal_dark]
 ACQTIME_KEY = ACQTIME1
 
-# Define calibd DB master filename
+# Define calibd DB master filename                              - [cal_dark, cal_loc]
 ic_calibDB_filename = master_calib_SPIROU.txt
 
-# Max wait time for calib DB (in seconds)
+# Max wait time for calib DB (in seconds)                       - [cal_dark, cal_loc]
 calib_max_wait = 3600
+
