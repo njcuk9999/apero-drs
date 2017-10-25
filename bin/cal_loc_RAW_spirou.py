@@ -270,8 +270,13 @@ if __name__ == "__main__":
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
     if p['IC_DEBUG'] and p['DRS_PLOT']:
         plot_min_ycc_loc_threshold(p, ycc)
+    # find the central positions of the orders in the central
+    posc_all = gf.LocateCentralPositions(ycc, p['IC_LOCSEUIL'])
+    # depending on the fiber type we may need to skip some pixels and also
+    # we need to add back on the ic_offset applied
+    start = p['IC_FIRST_ORD_JUMP']
+    posc = posc_all[start: ] + p['IC_OFFSET']
 
-    # TODO: Stopped here and tested
 
     # ----------------------------------------------------------------------
     # Search for order center and profile on every column
