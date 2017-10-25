@@ -301,7 +301,7 @@ if __name__ == "__main__":
     # Save dark to file
     # ----------------------------------------------------------------------
 
-    # construst folder and filename
+    # construct folder and filename
     reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
     darkfits = p['arg_file_names'][0]
     # log saving dark frame
