@@ -74,8 +74,14 @@
 
 ### cal_loc_RAW_spirou.py
 
+- added different way to calculate order_profile
+    - `gf.BoxSmoothedImage(image, size, weighted=True, mode='convolve')` instead of 
+    manually working out the mean for each box you convolve the weighted image with a 
+    tophat function and the weights with a topcat function and then divide the two.
+    This gives approximately the same result (with small deviations due to the FT of a topcat function not being perfect).
+    The function can be turned back to the original 'manual' mode by using `mode='manual'`.
+    The figure below shows the differences (To view interactively use: `spirouLOCOR.__test_smoothed_boxmean_image(image, size)`).
 
-
-
+        ![picture alt](../documentation/figures/OrderProfileCreation_convolve_vs_manual.pdf "Produced by running spirouLOCOR.__test_smoothed_boxmean_image")
 
 
