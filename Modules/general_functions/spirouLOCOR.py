@@ -258,7 +258,40 @@ def measure_box_min_max(image, size):
     return min_image, max_image
 
 
-def locate_order_positions(cvalues, threshold):
+def locate_order_positions(cvalues, threshold, mode='convolve'):
+    """
+    Takes the central pixel values and finds orders by looking for the start
+    and end of orders above threshold
+
+        if mode='convolve' (default) then this is done
+        by convolving a top-hat function with a mask of cvalues>threshold (FAST)
+
+        if mode='manual' then this is done by working out the star and end
+        positions manually (SLOW)
+
+    :param cvalues: numpy array (1D) size = number of rows,
+                    the central pixel values
+    :param threshold: float, the threshold above which to find pixels as being
+                      part of an order
+    :param mode: string, if 'convolve' convolves a top-hat function with a mask
+                         of cvalues>threshold (FAST)
+
+                         if 'manual' manually counts every start and end (SLOW)
+
+    :return positions: numpy array (1D), size= number of rows,
+                       the pixel positions in cvalues where the centers of each
+                       order should be
+    """
+    if mode=='convolve':
+        return locate_order_positions2(cvalues, threshold)
+    if mode=='manual':
+        return locate_order_positions1(cvalues, threshold)
+    else:
+        emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
+        raise KeyError(emsg.format(mode))
+
+
+def locate_order_positions1(cvalues, threshold):
     """
     Takes the central pixel values and finds orders by looking for the start
     and end of orders above threshold
@@ -374,6 +407,7 @@ def locate_order_positions2(cvalues, threshold):
         positions.append(np.sum(lx * ly) / np.sum(ly))
     # return positions
     return positions
+
 
 
 # =============================================================================
