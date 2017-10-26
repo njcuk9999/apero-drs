@@ -60,7 +60,7 @@ GetKey = spirouFITS.keylookup
 GetKeys = spirouFITS.keyslookup
 
 
-LocateCentralPositions = spirouLOCOR.locate_central_positions
+LocCentralOrderPos = spirouLOCOR.locate_center_order_positions
 
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
