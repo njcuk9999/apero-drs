@@ -32,7 +32,7 @@ CPARAMS = configsetup.read_config_file()
 # Config exit (sys = sys.exit(1), os = os._exit(1) anything else and error
 #     does not exit
 # TODO: should this be defined in the config?
-EXIT = 'os'
+EXIT = 'sys'
 if EXIT == 'sys':
     EXIT_TYPE = sys.exit
 elif EXIT == 'os':
