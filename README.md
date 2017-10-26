@@ -75,13 +75,15 @@
 ### cal_loc_RAW_spirou.py
 
 - added different way to calculate order_profile
-    - `gf.BoxSmoothedImage(image, size, weighted=True, mode='convolve')` instead of 
-    manually working out the mean for each box you convolve the weighted image with a 
-    tophat function and the weights with a topcat function and then divide the two.
-    This gives approximately the same result (with small deviations due to the FT of a topcat function not being perfect).
-    The function can be turned back to the original 'manual' mode by using `mode='manual'`.
-    The figure below shows the differences (To view interactively use: `spirouLOCOR.__test_smoothed_boxmean_image(image, size)`).
+    - `gf.BoxSmoothedImage(image, size, weighted=True, mode='convolve')` 
+        - Instead of manually working out the mean for each box you convolve the weighted image with a tophat function and the weights with a topcat function and then divide the two.
+        - This gives approximately the same result (with small deviations due to the FT of a topcat function not being perfect).
+        - The function can be turned back to the original 'manual' mode by using `mode='manual'` but is slower ()by a factor of ~x8)
+        - The figure below shows the differences (To view interactively use: `spirouLOCOR.__test_smoothed_boxmean_image(image, size)`).
+        - ![picture alt](../documentation/figures/OrderProfileCreation_convolve_vs_manual.pdf "Produced by running spirouLOCOR.__test_smoothed_boxmean_image")
 
-        ![picture alt](../documentation/figures/OrderProfileCreation_convolve_vs_manual.pdf "Produced by running spirouLOCOR.__test_smoothed_boxmean_image")
-
-
+    - `gf.LocateCentralPositions(cvalues, threshold, mode='convolve')` 
+        - Instead of manually working out the starts and ends of each order (with while loops) convolves a mask of cvalues > threshold with a top-hat (size=3) function such that all edges are found
+        - i.e. `[False, True, True]` or `[True, True, False]` give a different value than `[True, True, True]` or `[False, False, False]` or `[False, False, True]`
+        - i.e. the convolution gives the sum of three elements, thus selected those elements with a sum of 2 give our edges
+        - The function can be turned back to the original 'manual' mode by using `mode='manual` but is slower (by a factor of x2)
