@@ -246,7 +246,7 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
 # =============================================================================
 # Define pyfits functions
 # =============================================================================
-def read_raw_data(filename, getheader=True, getshape=True):
+def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
     """
     Reads the raw data and possibly header using astropy.io.fits
 
@@ -256,6 +256,7 @@ def read_raw_data(filename, getheader=True, getshape=True):
     :param filename: string, the filename to open with astropy.io.fits
     :param getheader: bool, if True loads the filename header
     :param getshape: bool, if True returns the shape
+    :param headerext: int, the extension to read the header from
 
     if getheader = getshape = True
     :return data: numpy array (2D), the image
@@ -281,10 +282,15 @@ def read_raw_data(filename, getheader=True, getshape=True):
     # Get the data and header based on how many extensions there are
     if ext == 1:
         data = hdu[0].data
-        header = hdu[0].header
     else:
         data = hdu[1].data
-        header = hdu[1].data
+
+    hdu.close()
+    # get the header (if header extension is available else default to zero)
+    if headerext <= ext:
+        header = hdu[headerext].header
+    else:
+        header = hdu[0]
     # return based on whether header and shape are required
     if getheader and getshape:
         return data, header, data.shape[0], data.shape[1]
