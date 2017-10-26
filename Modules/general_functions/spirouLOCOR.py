@@ -60,9 +60,9 @@ def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
 
     :return newimage: numpy array (2D), the smoothed image
     """
-    if mode=='convolve':
+    if mode == 'convolve':
         return smoothed_boxmean_image2(image, size, weighted=weighted)
-    if mode=='manual':
+    if mode == 'manual':
         return smoothed_boxmean_image1(image, size, weighted=weighted)
     else:
         emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
@@ -180,7 +180,7 @@ def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
     image2 = smoothed_boxmean_image2(image, size)
     # set up the plot
     fsize = (4, 6)
-    fig = plt.figure()
+    plt.figure()
     frames = [plt.subplot2grid(fsize, (0, 0), colspan=2, rowspan=2),
               plt.subplot2grid(fsize, (0, 2), colspan=2, rowspan=2),
               plt.subplot2grid(fsize, (0, 4), colspan=2, rowspan=2),
@@ -258,7 +258,8 @@ def measure_box_min_max(image, size):
     return min_image, max_image
 
 
-def locate_order_positions(cvalues, threshold, mode='convolve'):
+def locate_center_order_positions(cvalues, threshold, mode='convolve',
+                                  min_width=None):
     """
     Takes the central pixel values and finds orders by looking for the start
     and end of orders above threshold
@@ -278,20 +279,26 @@ def locate_order_positions(cvalues, threshold, mode='convolve'):
 
                          if 'manual' manually counts every start and end (SLOW)
 
-    :return positions: numpy array (1D), size= number of rows,
+    :param min_width: int or None, if not None sets a minimum width requirement
+                      for the size of the order (disregards
+
+    :return positions: numpy array (1D), size=len(cvalues),
                        the pixel positions in cvalues where the centers of each
                        order should be
+
+    :return widths: numpy array (1D), size=len(cvalues), the widths of each
+                    order
     """
-    if mode=='convolve':
-        return locate_order_positions2(cvalues, threshold)
-    if mode=='manual':
-        return locate_order_positions1(cvalues, threshold)
+    if mode == 'convolve':
+        return locate_order_positions2(cvalues, threshold, min_width)
+    if mode == 'manual':
+        return locate_order_positions1(cvalues, threshold, min_width)
     else:
         emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
         raise KeyError(emsg.format(mode))
 
 
-def locate_order_positions1(cvalues, threshold):
+def locate_order_positions1(cvalues, threshold, min_width=None):
     """
     Takes the central pixel values and finds orders by looking for the start
     and end of orders above threshold
@@ -307,9 +314,11 @@ def locate_order_positions1(cvalues, threshold):
 
     For 1000 loops, best of 3: 771 µs per loop
     """
-
+    # deal with no min_width
+    if min_width is None:
+        min_width = 0
     # store the positions of the orders
-    positions, ends, starts = [], [], []
+    positions, widths = [], []
     # get the len of cvalues
     length = len(cvalues)
     # initialise the row number to zero
@@ -335,7 +344,7 @@ def locate_order_positions1(cvalues, threshold):
             # as we have reached the end we should not add to positions
             if row == length:
                 break
-            else:
+            elif (row - order_start) > min_width:
                 # else record the end position
                 order_end = row
                 # determine the center of gravity of the order
@@ -345,17 +354,19 @@ def locate_order_positions1(cvalues, threshold):
                 ly = cvalues[lx]
                 # position = sum of (lx * ly) / sum of sum(ly)
                 position = np.sum(lx * ly * 1.0) / np.sum(ly)
+                # width is just the distance from start to end
+                width = abs(order_end - order_start)
+                # append position and width to storage
                 positions.append(position)
-                ends.append(order_end)
-                starts.append(order_start)
+                widths.append(width)
         # if row is still below threshold then move the row number forward
         else:
             row += 1
     # finally return the positions
-    return positions
+    return np.array(positions), np.array(widths)
 
 
-def locate_order_positions2(cvalues, threshold):
+def locate_order_positions2(cvalues, threshold, min_width=None):
     """
     Test version
 
@@ -366,21 +377,28 @@ def locate_order_positions2(cvalues, threshold):
                     the central pixel values
     :param threshold: float, the threshold above which to find pixels as being
                       part of an order
+    :param min_width: int or None, if not None sets a minimum width requirement
+                      for the size of the order (disregards
 
-    :return positions: numpy array (1D), size= number of rows,
+    :return positions: numpy array (1D), size=len(cvalues),
                        the pixel positions in cvalues where the centers of each
                        order should be
 
+    :return widths: numpy array (1D), size=len(cvalues), the widths of each
+                    order
+
     For 1000 loops, best of 3: 401 µs per loop
     """
-
+    # deal with no min_width
+    if min_width is None:
+        min_width = 0
     # define a mask of cvalues < threshold
-    mask = cvalues > threshold
+    mask = np.array(cvalues) > threshold
     # if there is an order on the leading edge set ignore it (set to False)
     row = 0
     while mask[row]:
         mask[row] = False
-        row +=1
+        row += 1
     # define a box (of width 3) to smooth the mask
     box = np.ones(3)
     # convole box with mask
@@ -399,15 +417,19 @@ def locate_order_positions2(cvalues, threshold):
     # ends are the odd positions
     oends = raw_positions[1::2]
     # then loop around to calculate true positions
-    positions = []
+    positions, widths = [], []
     for start, end in zip(ostarts, oends):
-        # get x values and y values for order
-        lx = np.arange(start, end+1)
-        ly = cvalues[lx]
-        positions.append(np.sum(lx * ly) / np.sum(ly))
+        if (end - start) > min_width:
+            # get x values and y values for order
+            # add one to end to get full pixel range
+            lx = np.arange(start, end + 1)
+            ly = cvalues[lx]
+            # position = sum of (lx * ly) / sum of sum(ly)
+            positions.append(np.sum(lx * ly) / np.sum(ly))
+            # width = end - start, add one to end to get full pixel range
+            widths.append(abs((end +1) - start))
     # return positions
-    return positions
-
+    return np.array(positions), np.array(widths)
 
 
 # =============================================================================
