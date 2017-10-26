@@ -38,7 +38,8 @@ def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
         size=2*"size" pixels.
 
         if mode='convolve' (default) then this is done
-        by convolving a tophat function with the image (FAST)
+        by convolving a top-hat function with the image (FAST)
+        - note produces small inconsistencies due to FT of top-hat function
 
         if mode='manual' then this is done by working out the mean in each
         box manually (SLOW)
@@ -51,6 +52,11 @@ def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
     :param weighted: bool, if True pixel values less than zero are weighted to
                      a value of 1e-6 and values above 0 are weighted to a value
                      of 1
+    :param mode: string, if 'convolve' convoles with a top-hat function of the
+                         size "box" for each column (FAST) - note produces small
+                         inconsistencies due to FT of top-hat function
+
+                         if 'manual' calculates every box individually (SLOW)
 
     :return newimage: numpy array (2D), the smoothed image
     """
