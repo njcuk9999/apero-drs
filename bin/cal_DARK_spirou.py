@@ -18,7 +18,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import os
-import sys
 import warnings
 
 import startup
@@ -64,7 +63,7 @@ def measure_dark(pp, image, image_name, short_name):
     dadead = imax * 100 / np.product(image.shape)
     # log the dark statistics
     largs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
-               pp['DARK_QMAX'], qmin, qmax]
+             pp['DARK_QMAX'], qmin, qmax]
     WLOG('info', pp['log_opt'], ('{0:12s}: Frac dead pixels= {1:.1f} % - '
                                  'Median= {2:.2f} ADU/s - '
                                  'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s'
