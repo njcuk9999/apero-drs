@@ -138,14 +138,30 @@ ic_min_amplitude = 100
 #       for background calculation
 ic_locseuil = 0.2
 
-    # Saturation threshold on order profile plot                 - [cal_loc]
+#   Saturation threshold on order profile plot                   - [cal_loc]
 ic_satseuil = 64536
 
-# Order of polynomial to fit for positions                       - [cal_loc]
+#   Order of polynomial to fit for positions                     - [cal_loc]
 ic_locdfitc = 5
 
 # Order of polynomial to fit for widths                          - [cal_loc]
 ic_locdfitw = 5
+
+#   Maximum rms for sigma-clip order fit (center positions)      - [cal_loc]
+ic_max_rms_center = 0.2
+
+#   Maximum ptp for sigma-clip order fit (center positions)      - [cal_loc]
+ic_max_ptp_center = 0.200
+
+#   Maximum frac ptp/rms for sigma-clip order fit                - [cal_loc]
+#      (center positions)
+ic_ptporms_center = 8.0
+
+#   Maximum rms for sigma-clip order fit (width)                 - [cal_loc]
+ic_max_rms_fwhm = 1.0
+
+#   Maximum ptp for sigma-clip order fit (width)                 - [cal_loc]
+ic_max_ptp_fracfwhm = 10.0
 
 # -----------------------------------------------------------------------------
 #  Quality control settings

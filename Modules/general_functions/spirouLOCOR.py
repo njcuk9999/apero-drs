@@ -258,57 +258,128 @@ def measure_box_min_max(image, size):
     return min_image, max_image
 
 
-def locate_center_order_positions(cvalues, threshold, mode='convolve',
-                                  min_width=None):
+# def locate_center_order_positions(cvalues, threshold, mode='convolve',
+#                                   min_width=None):
+#     """
+#     Takes the central pixel values and finds orders by looking for the start
+#     and end of orders above threshold
+#
+#         if mode='convolve' (default) then this is done
+#         by convolving a top-hat function with a mask of cvalues>threshold (FAST)
+#
+#         if mode='manual' then this is done by working out the star and end
+#         positions manually (SLOW)
+#
+#     :param cvalues: numpy array (1D) size = number of rows,
+#                     the central pixel values
+#     :param threshold: float, the threshold above which to find pixels as being
+#                       part of an order
+#     :param mode: string, if 'convolve' convolves a top-hat function with a mask
+#                          of cvalues>threshold (FAST)
+#
+#                          if 'manual' manually counts every start and end (SLOW)
+#
+#     :param min_width: int or None, if not None sets a minimum width requirement
+#                       for the size of the order (disregards
+#
+#     :return positions: numpy array (1D), size=len(cvalues),
+#                        the pixel positions in cvalues where the centers of each
+#                        order should be
+#
+#     :return widths: numpy array (1D), size=len(cvalues), the widths of each
+#                     order
+#     """
+#     if mode == 'convolve':
+#         return locate_order_positions2(cvalues, threshold, min_width)
+#     if mode == 'manual':
+#         return locate_order_positions1(cvalues, threshold, min_width)
+#     else:
+#         emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
+#         raise KeyError(emsg.format(mode))
+
+
+def find_position_of_cent_col(values, threshold):
     """
-    Takes the central pixel values and finds orders by looking for the start
-    and end of orders above threshold
+    Finds the central positions based on the central column values
 
-        if mode='convolve' (default) then this is done
-        by convolving a top-hat function with a mask of cvalues>threshold (FAST)
-
-        if mode='manual' then this is done by working out the star and end
-        positions manually (SLOW)
-
-    :param cvalues: numpy array (1D) size = number of rows,
-                    the central pixel values
+    :param values: numpy array (1D) size = number of rows,
+                    the central column values
     :param threshold: float, the threshold above which to find pixels as being
                       part of an order
-    :param mode: string, if 'convolve' convolves a top-hat function with a mask
-                         of cvalues>threshold (FAST)
 
-                         if 'manual' manually counts every start and end (SLOW)
+    :return position: numpy array (1D), size= number of rows,
+                      the pixel positions in cvalues where the centers of each
+                      order should be
 
-    :param min_width: int or None, if not None sets a minimum width requirement
-                      for the size of the order (disregards
+    For 1000 loops, best of 3: 771 µs per loop
+    """
+    # store the positions of the orders
+    positions = []
+    # get the len of cvalues
+    length = len(values)
+    # initialise the row number to zero
+    row, order_end = 0, 0
+    # move the row number to the first row below threshold
+    # (avoids first order on the edge)
+    while values[row] > threshold:
+        row += 1
+        if row == length:
+            break
+    # continue to move through rows
+    while row < length:
+        # if row is above threshold then we have found a start point
+        if values[row] > threshold:
+            # save the start point
+            order_start = row
+            # continue to move through rows to find end (end of order defined
+            # as the point at which it slips below the threshold)
+            while values[row] >= threshold:
+                row += 1
+                # if we have reached the end of cvalues stop (it is an end of
+                # an order by definition
+                if row == length:
+                    break
+            # as we have reached the end we should not add to positions
+            if row == length:
+                break
+            else:
+                # else record the end position
+                order_end = row
+                # determine the center of gravity of the order
+                # lx is the pixels in this order
+                lx = np.arange(order_start, order_end, 1)
+                # ly is the cvalues values in this order (use lx to get them)
+                ly = values[lx]
+                # position = sum of (lx * ly) / sum of sum(ly)
+                position = np.sum(lx * ly * 1.0) / np.sum(ly)
+                # append position and width to storage
+                positions.append(position)
+        # if row is still below threshold then move the row number forward
+        else:
+            row += 1
+    # finally return the positions
+    return np.array(positions)
 
-    :return positions: numpy array (1D), size=len(cvalues),
+
+
+def locate_order_center(values, threshold, min_width=None):
+    """
+    Takes the values across the oder and finds the order center by looking for
+    the start and end of the order (and thus the center) above threshold
+
+    :param values: numpy array (1D) size = number of rows, the pixels in an
+                    order
+
+    :param threshold: float, the threshold above which to find pixels as being
+                      part of an order
+
+    :param min_width: float, the minimum width for an order to be accepted
+
+    :return positions: numpy array (1D), size= number of rows,
                        the pixel positions in cvalues where the centers of each
                        order should be
 
-    :return widths: numpy array (1D), size=len(cvalues), the widths of each
-                    order
-    """
-    if mode == 'convolve':
-        return locate_order_positions2(cvalues, threshold, min_width)
-    if mode == 'manual':
-        return locate_order_positions1(cvalues, threshold, min_width)
-    else:
-        emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
-        raise KeyError(emsg.format(mode))
-
-
-def locate_order_positions1(cvalues, threshold, min_width=None):
-    """
-    Takes the central pixel values and finds orders by looking for the start
-    and end of orders above threshold
-
-    :param cvalues: numpy array (1D) size = number of rows,
-                    the central pixel values
-    :param threshold: float, the threshold above which to find pixels as being
-                      part of an order
-
-    :return positions: numpy array (1D), size= number of rows,
+    :return widths:    numpy array (1D), size= number of rows,
                        the pixel positions in cvalues where the centers of each
                        order should be
 
@@ -317,25 +388,26 @@ def locate_order_positions1(cvalues, threshold, min_width=None):
     # deal with no min_width
     if min_width is None:
         min_width = 0
-    # store the positions of the orders
-    positions, widths = [], []
     # get the len of cvalues
-    length = len(cvalues)
+    length = len(values)
     # initialise the row number to zero
-    row = 0
+    row, order_end = 0, 0
+    position, width = 0, 0
     # move the row number to the first row below threshold
     # (avoids first order on the edge)
-    while cvalues[row] > threshold:
+    while values[row] > threshold:
         row += 1
+        if row == length:
+            break
     # continue to move through rows
-    while row < length:
+    while row < length and (order_end == 0):
         # if row is above threshold then we have found a start point
-        if cvalues[row] > threshold:
+        if values[row] > threshold:
             # save the start point
             order_start = row
             # continue to move through rows to find end (end of order defined
             # as the point at which it slips below the threshold)
-            while cvalues[row] >= threshold:
+            while values[row] >= threshold:
                 row += 1
                 # if we have reached the end of cvalues stop (it is an end of
                 # an order by definition
@@ -351,85 +423,82 @@ def locate_order_positions1(cvalues, threshold, min_width=None):
                 # lx is the pixels in this order
                 lx = np.arange(order_start, order_end, 1)
                 # ly is the cvalues values in this order (use lx to get them)
-                ly = cvalues[lx]
+                ly = values[lx]
                 # position = sum of (lx * ly) / sum of sum(ly)
                 position = np.sum(lx * ly * 1.0) / np.sum(ly)
                 # width is just the distance from start to end
                 width = abs(order_end - order_start)
-                # append position and width to storage
-                positions.append(position)
-                widths.append(width)
         # if row is still below threshold then move the row number forward
         else:
             row += 1
     # finally return the positions
-    return np.array(positions), np.array(widths)
+    return position, width
 
 
-def locate_order_positions2(cvalues, threshold, min_width=None):
-    """
-    Test version
-
-    Takes the central pixel values and finds orders by looking for the start
-    and end of orders above threshold
-
-    :param cvalues: numpy array (1D) size = number of rows,
-                    the central pixel values
-    :param threshold: float, the threshold above which to find pixels as being
-                      part of an order
-    :param min_width: int or None, if not None sets a minimum width requirement
-                      for the size of the order (disregards
-
-    :return positions: numpy array (1D), size=len(cvalues),
-                       the pixel positions in cvalues where the centers of each
-                       order should be
-
-    :return widths: numpy array (1D), size=len(cvalues), the widths of each
-                    order
-
-    For 1000 loops, best of 3: 401 µs per loop
-    """
-    # deal with no min_width
-    if min_width is None:
-        min_width = 0
-    # define a mask of cvalues < threshold
-    mask = np.array(cvalues) > threshold
-    # if there is an order on the leading edge set ignore it (set to False)
-    row = 0
-    while mask[row]:
-        mask[row] = False
-        row += 1
-    # define a box (of width 3) to smooth the mask
-    box = np.ones(3)
-    # convole box with mask
-    smoothmask = np.convolve(mask, box, mode='same')
-    # now where the array was [True, True, True] gives a value of 3 at the
-    #     center
-    # now where the array was [True, True, False] or [False, True, True] or
-    #     [True, False, True] gives a value of 2 at the center
-    # now where the array was [False, False, True] or [True, True, False] or
-    #     [False, True, False] gives a value of 1
-    # now where the array was [False, False, False] gives a value of 0
-    # --> we want the positions where the value==2
-    raw_positions = np.where(smoothmask == 2)[0]
-    # starts are the even positions
-    ostarts = raw_positions[::2]
-    # ends are the odd positions
-    oends = raw_positions[1::2]
-    # then loop around to calculate true positions
-    positions, widths = [], []
-    for start, end in zip(ostarts, oends):
-        if (end - start) > min_width:
-            # get x values and y values for order
-            # add one to end to get full pixel range
-            lx = np.arange(start, end + 1)
-            ly = cvalues[lx]
-            # position = sum of (lx * ly) / sum of sum(ly)
-            positions.append(np.sum(lx * ly) / np.sum(ly))
-            # width = end - start, add one to end to get full pixel range
-            widths.append(abs((end +1) - start))
-    # return positions
-    return np.array(positions), np.array(widths)
+# def locate_order_positions2(cvalues, threshold, min_width=None):
+#     """
+#     Test version
+#
+#     Takes the central pixel values and finds orders by looking for the start
+#     and end of orders above threshold
+#
+#     :param cvalues: numpy array (1D) size = number of rows,
+#                     the central pixel values
+#     :param threshold: float, the threshold above which to find pixels as being
+#                       part of an order
+#     :param min_width: int or None, if not None sets a minimum width requirement
+#                       for the size of the order (disregards
+#
+#     :return positions: numpy array (1D), size=len(cvalues),
+#                        the pixel positions in cvalues where the centers of each
+#                        order should be
+#
+#     :return widths: numpy array (1D), size=len(cvalues), the widths of each
+#                     order
+#
+#     For 1000 loops, best of 3: 401 µs per loop
+#     """
+#     # deal with no min_width
+#     if min_width is None:
+#         min_width = 0
+#     # define a mask of cvalues < threshold
+#     mask = np.array(cvalues) > threshold
+#     # if there is an order on the leading edge set ignore it (set to False)
+#     row = 0
+#     while mask[row]:
+#         mask[row] = False
+#         row += 1
+#     # define a box (of width 3) to smooth the mask
+#     box = np.ones(3)
+#     # convole box with mask
+#     smoothmask = np.convolve(mask, box, mode='same')
+#     # now where the array was [True, True, True] gives a value of 3 at the
+#     #     center
+#     # now where the array was [True, True, False] or [False, True, True] or
+#     #     [True, False, True] gives a value of 2 at the center
+#     # now where the array was [False, False, True] or [True, True, False] or
+#     #     [False, True, False] gives a value of 1
+#     # now where the array was [False, False, False] gives a value of 0
+#     # --> we want the positions where the value==2
+#     raw_positions = np.where(smoothmask == 2)[0]
+#     # starts are the even positions
+#     ostarts = raw_positions[::2]
+#     # ends are the odd positions
+#     oends = raw_positions[1::2]
+#     # then loop around to calculate true positions
+#     positions, widths = [], []
+#     for start, end in zip(ostarts, oends):
+#         if (end - start) > min_width:
+#             # get x values and y values for order
+#             # add one to end to get full pixel range
+#             lx = np.arange(start, end + 1)
+#             ly = cvalues[lx]
+#             # position = sum of (lx * ly) / sum of sum(ly)
+#             positions.append(np.sum(lx * ly) / np.sum(ly))
+#             # width = end - start, add one to end to get full pixel range
+#             widths.append(abs((end + 1 ) - start))
+#     # return positions
+#     return np.array(positions), np.array(widths)
 
 
 # =============================================================================
