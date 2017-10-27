@@ -50,6 +50,9 @@ CopyOriginalKeys = spirouFITS.copy_original_keys
 # Corrects an image for darks (using calibDB)
 CorrectForDark = spirouImage.correct_for_dark
 
+# Finds the central positions based on the central column values
+FindPosCentCol = spirouLOCOR.find_position_of_cent_col
+
 # Flips the image in the x and/or the y direction
 FlipImage = spirouImage.flip_image
 
@@ -59,8 +62,9 @@ FlipImage = spirouImage.flip_image
 GetKey = spirouFITS.keylookup
 GetKeys = spirouFITS.keyslookup
 
-
-LocCentralOrderPos = spirouLOCOR.locate_center_order_positions
+# Takes the values across the oder and finds the order center by looking for
+#     the start and end of the order (and thus the center) above threshold
+LocCentralOrderPos = spirouLOCOR.locate_order_center
 
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
