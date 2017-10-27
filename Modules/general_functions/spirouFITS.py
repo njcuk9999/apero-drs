@@ -68,14 +68,16 @@ def readimage(p, framemath='+'):
     # log that we have loaded the image
     WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
     # if we have more than one frame and add is True then add the rest of the
-    #    frames
-    image = math_controller(p, image, framemath)
+    #    frames, currently we overwrite p['fitsfilename'] and header with
+    #    last entry
+    # TODO: Do we want to overwrite header/fitsfilename with last entry?
+    p, image, imageheader = math_controller(p, image, imageheader, framemath)
     # convert header to python dictionary
     header = dict(zip(imageheader.keys(), imageheader.values()))
     comments = dict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
     header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
-    header['@@@fname'] = fitsfilename
+    header['@@@fname'] = p['fitsfilename']
 
     # return data, header, data.shape[0], data.shape[1]
     return image, header, comments, nx, ny
@@ -302,7 +304,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         return data
 
 
-def math_controller(p, data, framemath=None):
+def math_controller(p, data, header, framemath=None):
     """
     uses the framemath key to decide how 'arg_file_names' files are added to
     data (fitfilename)
@@ -360,6 +362,7 @@ def math_controller(p, data, framemath=None):
     # log that we are adding frames
     WLOG('info', log_opt, '{0} frames'.format(kind))
     # loop around each frame
+
     for f_it in range(1, nbframes):
         # construct frame file name
         framefilename = os.path.join(p['DRS_DATA_RAW'],
@@ -372,22 +375,28 @@ def math_controller(p, data, framemath=None):
         else:
             # load that we are reading this file
             WLOG('', log_opt, 'Reading File: ' + framefilename)
+            # get data and override header
+            dtmp, htmp = read_raw_data(framefilename, True, False)
+            header = htmp
+            # currently we overwrite fitsfilename with last framefilename
+            p['fitsfilename'] = framefilename
             # finally add/subtract/multiple/divide data
             if fm in ['ADD', '+', 'MEAN', 'AVERAGE']:
-                data += read_raw_data(framefilename, False, False)
+                data += dtmp
             elif fm in ['SUB', '-']:
-                data -= read_raw_data(framefilename, False, False)
+                data -= dtmp
             elif fm in ['MULTIPLY', '*']:
-                data *= read_raw_data(framefilename, False, False)
+                data *= dtmp
             elif fm in ['DIVIDE', '/']:
-                data /= read_raw_data(framefilename, False, False)
+                data /= dtmp
             else:
                 continue
     # if we need to average data then divide by nbframes
     if fm in ['MEAN', 'AVERAGE']:
         data /= nbframes
+
     # return data
-    return data
+    return p, data, header
 
 
 # =============================================================================
