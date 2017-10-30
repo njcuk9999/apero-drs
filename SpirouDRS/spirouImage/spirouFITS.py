@@ -20,13 +20,13 @@ import sys
 import warnings
 from collections import OrderedDict
 
-from startup import log
+from SpirouDRS import spirouCore
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = log.logger
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                       'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
@@ -200,7 +200,7 @@ def writeimage(filename, image, hdict):
     # write to file
     with warnings.catch_warnings(record=True) as w:
         hdu.writeto(filename)
-    log.warninglogger(w)
+    spirouCore.spirouLog.warninglogger(w)
 
 
 def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
@@ -342,10 +342,10 @@ def math_controller(p, data, header, framemath=None):
                          '"{1}"'.format(*eargs))
     # if we have no math don't continue
     if fm == 'NONE':
-        return data
+        return p, data, header
     # if we have only one frame don't continue
     if nbframes < 2:
-        return data
+        return p, data, header
     # select text for logging
     if fm in ['ADD', '+']:
         kind = 'Adding'

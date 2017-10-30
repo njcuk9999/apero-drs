@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-startupfunctions.py
+spirouStartup.py
 
 Start up to be executed at beginning of all codes
 
@@ -16,14 +16,14 @@ Last modified: 2017-10-11 at 10:49
 import os
 import sys
 
-from . import configsetup
-from . import log
+from . import spirouConfig
+from . import spirouLog
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = log.logger
-LOGLEVELS = list(log.TRIG_KEY.keys())
+WLOG = spirouLog.logger
+LOGLEVELS = list(spirouLog.TRIG_KEY.keys())
 # -----------------------------------------------------------------------------
 
 
@@ -46,9 +46,9 @@ def run_inital_startup():
     """
 
     # Get config parameters
-    cparams = configsetup.read_config_file()
+    cparams = spirouConfig.read_config_file()
     # check that drs_name and drs_version exist
-    tmp = configsetup.check_config(cparams, ['DRS_NAME', 'DRS_VERSION'])
+    tmp = spirouConfig.check_config(cparams, ['DRS_NAME', 'DRS_VERSION'])
     if tmp is not None:
         WLOG('error', ' ', tmp)
         sys.exit(1)
@@ -159,7 +159,7 @@ def check_params(p):
     :return p: dictionary, the updated parameter dictionary
     """
     # check that the drs_root and tdata variables are named
-    tmp = configsetup.check_config(p, ['DRS_ROOT', 'TDATA'])
+    tmp = spirouConfig.check_config(p, ['DRS_ROOT', 'TDATA'])
     if tmp is not None:
         WLOG('error', ' ', tmp)
     # check whether we have drs_data_raw key
@@ -273,7 +273,7 @@ def run_time_args(p):
 
 def load_other_config_file(p, key, logthis=True, required=False):
     # Check that key  exists in config file
-    tmp = configsetup.check_config(p, key)
+    tmp = spirouConfig.check_config(p, key)
     if tmp is not None and required:
         WLOG('error', ' ', tmp)
     elif tmp is not None:
@@ -283,7 +283,7 @@ def load_other_config_file(p, key, logthis=True, required=False):
     # try to open file
     if os.path.exists(filename):
         # read config file into new dictionary
-        newparams = configsetup.read_config_file(filename)
+        newparams = spirouConfig.read_config_file(filename)
         # merge with param file
         for newkey in list(newparams.keys()):
             # Warn the user than key is being overwritten
