@@ -20,13 +20,14 @@ from matplotlib.patches import Rectangle
 import os
 import warnings
 
-import startup
-import general_functions as gf
+from SpirouDRS import spirouCDB
+from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = startup.log.logger
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = True
 
@@ -178,21 +179,21 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = startup.RunInitialStartup()
+    p = spirouCore.RunInitialStartup()
     # run specific start up
-    p = startup.RunStartup(p, kind='dark', prefixes=['dark_dark'])
+    p = spirouCore.RunStartup(p, kind='dark', prefixes=['dark_dark'])
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = gf.ReadImage(p, framemath='average')
+    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='average')
     # get ccd sig det value
-    p['ccdsigdet'] = float(gf.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
     # get exposure time
-    p['exptime'] = float(gf.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
+    p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
     # get gain
-    p['gain'] = float(gf.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
+    p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
     # log the Dark exposure time
     WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
@@ -209,7 +210,7 @@ if __name__ == "__main__":
     # resize blue image
     bkwargs = dict(xlow=p['IC_CCDX_BLUE_LOW'], xhigh=p['IC_CCDX_BLUE_HIGH'],
                    ylow=p['IC_CCDY_BLUE_LOW'], yhigh=p['IC_CCDY_BLUE_HIGH'])
-    datablue, nx2, ny2 = gf.ResizeImage(data, **bkwargs)
+    datablue, nx2, ny2 = spirouImage.ResizeImage(data, **bkwargs)
     # Make sure we have data in the blue image
     if nx2 == 0 or ny2 == 0:
         WLOG('error', p['log_opt'], ('IC_CCD(X/Y)_BLUE_(LOW/HIGH) remove '
@@ -217,7 +218,7 @@ if __name__ == "__main__":
     # resize red image
     rkwargs = dict(xlow=p['IC_CCDX_RED_LOW'], xhigh=p['IC_CCDX_RED_HIGH'],
                    ylow=p['IC_CCDY_RED_LOW'], yhigh=p['IC_CCDY_RED_HIGH'])
-    datared, nx3, ny3 = gf.ResizeImage(data, **rkwargs)
+    datared, nx3, ny3 = spirouImage.ResizeImage(data, **rkwargs)
     # Make sure we have data in the red image
     if nx3 == 0 or ny3 == 0:
         WLOG('error', p['log_opt'], ('IC_CCD(X/Y)_RED_(LOW/HIGH) remove '
@@ -241,7 +242,7 @@ if __name__ == "__main__":
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
         datacutmask = ~((data > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
-    startup.log.warninglogger(w)
+    spirouCore.spirouLog.warninglogger(w)
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
@@ -306,7 +307,7 @@ if __name__ == "__main__":
     # log saving dark frame
     WLOG('', p['log_opt'], 'Saving Dark frame in ' + darkfits)
     # add keys from original header file
-    hdict = gf.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict['DADEAD'] = (p['dadead_full'], 'Fraction dead pixels [%]')
     hdict['DAMED'] = (p['med_full'], 'median dark level [ADU/s]')
@@ -317,7 +318,7 @@ if __name__ == "__main__":
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file
-    gf.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
+    spirouImage.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
@@ -327,13 +328,14 @@ if __name__ == "__main__":
     # log that we are saving bad pixel map in dir
     WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
     # add keys from original header file
-    hdict = gf.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file
     datacutmask = np.array(datacutmask, dtype=int)
-    gf.WriteImage(os.path.join(reducedfolder, badpixelfits), datacutmask, hdict)
+    spirouImage.WriteImage(os.path.join(reducedfolder, badpixelfits),
+                           datacutmask, hdict)
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
@@ -341,9 +343,9 @@ if __name__ == "__main__":
     if p['QC']:
         keydb = 'DARK'
         # copy dark fits file to the calibDB folder
-        startup.PutFile(p, os.path.join(reducedfolder, darkfits))
+        spirouCDB.PutFile(p, os.path.join(reducedfolder, darkfits))
         # update the master calib DB file with new key
-        startup.UpdateMaster(p, keydb, darkfits, hdr)
+        spirouCDB.UpdateMaster(p, keydb, darkfits, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
