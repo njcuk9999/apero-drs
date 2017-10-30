@@ -20,13 +20,16 @@ import os
 import sys
 import time
 
-import startup
-import general_functions as gf
+from SpirouDRS import spirouCDB
+from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
+from SpirouDRS import spirouLOCOR
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = startup.log.logger
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = True
 # These must exist in a config file
@@ -80,7 +83,7 @@ def measure_background_and_get_central_pixels(pp, image):
     # deal with the central column column=ic_cent_col
     y = image[pp['IC_OFFSET']:, pp['IC_CENT_COL']]
     # Get the box-smoothed min and max for the central column
-    miny, maxy = gf.BoxSmoothedMinMax(y, pp['IC_LOCNBPIX'])
+    miny, maxy = spirouLOCOR.BoxSmoothedMinMax(y, pp['IC_LOCNBPIX'])
     # record the maximum signal in the central column
     # QUESTION: Why the third biggest?
     max_signal = np.sort(y)[-3]
@@ -191,7 +194,7 @@ def find_order_centers(pp, image, loc, order_num):
             # for this column
             lkwargs = dict(values=ovalues, threshold=threshold,
                            min_width=widthmin)
-            center, width = gf.LocCentralOrderPos(**lkwargs)
+            center, width = spirouLOCOR.LocCentralOrderPos(**lkwargs)
             # need to add on row top (as centers are relative positions)
             center = center + rowtop
             # if the width is zero set the position back to the original
@@ -369,6 +372,9 @@ def calculate_fit(x, y, f):
     return a, fit, res, abs_res, rms, max_ptp
 
 
+# =============================================================================
+# Define plot functions
+# =============================================================================
 def plot_order(fig, frame, x, y):
     frame.plot(x, y)
 
@@ -407,6 +413,56 @@ def plot_y_miny_maxy(y, miny=None, maxy=None):
         plt.close()
 
 
+def plot_image_with_saturation_threshold(image, threshold):
+    """
+    Plots the image (order_profile) below the saturation threshold
+
+    :param image: numpy array (2D), the image
+    :param threshold: float, the saturation threshold
+    :return None:
+    """
+    # set up fig
+    fig = plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='pink')
+    # set the limits
+    frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
+    # return fig and frame
+    return fig, frame
+
+
+def plot_order_number_against_rms(pp, loc, rnum):
+    """
+
+    :param pp:
+    :param loc:
+    :param rnum:
+    :return:
+    """
+    # set up fig
+    fig = plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot image
+    frame.plot(np.arange(rnum), loc['rms_center'][0:rnum], label='fwhm')
+    frame.plot(np.arange(rnum), loc['rms_fwhm'][0:rnum], label='fwhm')
+    # set title labels limits
+    frame.set(xlim=(0, rnum), ylim=(0, 0.1),
+              xlabel='Order number', ylabel='RMS [pixel]',
+              title=('Dispersion of localization parameters fiber {0}'
+                     '').format(pp['fiber']))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 def debug_plot_min_ycc_loc_threshold(pp, cvalues):
     """
     Plots the minimum value between the value in ycc and ic_loc_seuil (the
@@ -436,30 +492,20 @@ def debug_plot_min_ycc_loc_threshold(pp, cvalues):
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
 
 
-def plot_image_with_saturation_threshold(image, threshold):
-    """
-    Plots the image (order_profile) below the saturation threshold
-
-    :param image: numpy array (2D), the image
-    :param threshold: float, the saturation threshold
-    :return None:
-    """
-    # set up fig
-    fig = plt.figure()
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
-    # plot image
-    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='pink')
-    # set the limits
-    frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
-    # return fig and frame
-    return fig, frame
-
-
 def debug_plot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
+    """
 
+    :param pp:
+    :param no:
+    :param ncol:
+    :param ind0:
+    :param ind1:
+    :param ind2:
+    :param cgx:
+    :param wx:
+    :param ycc:
+    :return:
+    """
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
     WLOG('', pp['log_opt'], '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
@@ -485,7 +531,14 @@ def debug_plot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
 
 
 def debug_plot_fit_residual(pp, loc, rnum, kind):
+    """
 
+    :param pp:
+    :param loc:
+    :param rnum:
+    :param kind:
+    :return:
+    """
     # get variables from loc dictionary
     x = loc['x']
     xo = loc['ctro'][rnum]
@@ -521,26 +574,27 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = startup.RunInitialStartup()
+    p = spirouCore.RunInitialStartup()
     # run specific start up
     params2add = dict()
     params2add['dark_flat'] = fiber_params(p, 'C')
     params2add['flat_dark'] = fiber_params(p, 'AB')
-    p = startup.RunStartup(p, kind='localisation',
-                           prefixes=['dark_flat', 'flat_dark'],
-                           add_to_p=params2add, calibdb=True)
+    p = spirouCore.RunStartup(p, kind='localisation',
+                              prefixes=['dark_flat', 'flat_dark'],
+                              add_to_p=params2add, calibdb=True)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = gf.ReadImage(p, framemath='add')
+    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
     # get ccd sig det value
-    p['ccdsigdet'] = float(gf.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE',
+                                              hdr['@@@hname']))
     # get exposure time
-    p['exptime'] = float(gf.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
+    p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
     # get gain
-    p['gain'] = float(gf.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
+    p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
     # log the Dark exposure time
     WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
@@ -551,20 +605,20 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    datac = gf.CorrectForDark(p, data, hdr)
+    datac = spirouImage.CorrectForDark(p, data, hdr)
 
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = gf.ConvertToE(gf.FlipImage(datac), p=p)
+    data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), 0.0, data)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = gf.ResizeImage(data0, **bkwargs)
+    data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
     WLOG('', p['log_opt'], ('Image format changed to '
                             '{0}x{1}').format(*data2.shape))
@@ -572,7 +626,8 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
-    order_profile = gf.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'], mode='manual')
+    order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
+                                                 mode='manual')
     # data 2 is now set to the order profile
     data2 = order_profile.copy()
 
@@ -586,9 +641,10 @@ if __name__ == "__main__":
     # log saving order profile
     WLOG('', p['log_opt'], 'Saving processed raw frame in {0}'.format(rawfits))
     # add keys from original header file
-    hdict = gf.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # write to file
-    gf.WriteImage(os.path.join(reducedfolder, rawfits), order_profile, hdict)
+    rawpath = os.path.join(reducedfolder, rawfits)
+    spirouImage.WriteImage(rawpath, order_profile, hdict)
 
     # ----------------------------------------------------------------------
     # Move order_profile to calibDB and update calibDB
@@ -596,9 +652,9 @@ if __name__ == "__main__":
     # set key for calibDB
     keydb = 'ORDER_PROFILE_{0}'.format(p['fiber'])
     # copy dark fits file to the calibDB folder
-    startup.PutFile(p, os.path.join(reducedfolder, rawfits))
+    spirouCDB.PutFile(p, os.path.join(reducedfolder, rawfits))
     # update the master calib DB file with new key
-    startup.UpdateMaster(p, keydb, rawfits, hdr)
+    spirouCDB.UpdateMaster(p, keydb, rawfits, hdr)
 
     # ######################################################################
     # Localization of orders on central column
@@ -620,7 +676,7 @@ if __name__ == "__main__":
     if p['IC_DEBUG'] and p['DRS_PLOT']:
         debug_plot_min_ycc_loc_threshold(p, ycc)
     # find the central positions of the orders in the central
-    posc_all = gf.FindPosCentCol(ycc, p['IC_LOCSEUIL'])
+    posc_all = spirouLOCOR.FindPosCentCol(ycc, p['IC_LOCSEUIL'])
     # depending on the fiber type we may need to skip some pixels and also
     # we need to add back on the ic_offset applied
     start = p['IC_FIRST_ORDER_JUMP']
@@ -733,12 +789,24 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Plot of RMS for positions and widths
     # ----------------------------------------------------------------------
-
-
+    if p['DRS_PLOT']:
+        plot_order_number_against_rms(p, loc, rorder_num)
 
     # ----------------------------------------------------------------------
     # Save and record of image of localization
     # ----------------------------------------------------------------------
+
+    # construct folder and filename
+    reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    locoext =  '_loco_{0}.fits'.format(p['fiber'])
+    locofits = p['arg_file_names'][0].replace('.fits', locoext)
+
+    # log that we are saving localization file
+    WLOG('', p['log_opt'], ('Saving localization information '
+                            'in file: {0}').format(locofits))
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # define new keys to add
 
 
     # ----------------------------------------------------------------------

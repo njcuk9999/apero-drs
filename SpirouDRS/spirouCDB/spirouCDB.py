@@ -20,13 +20,13 @@ import shutil
 import datetime
 import time
 
-from startup import log
+from SpirouDRS import spirouCore
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = log.logger
+WLOG = spirouCore.wlog
 DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
 # -----------------------------------------------------------------------------
 

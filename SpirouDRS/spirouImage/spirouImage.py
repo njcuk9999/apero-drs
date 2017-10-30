@@ -18,14 +18,14 @@ import numpy as np
 import sys
 import os
 
-from startup import log
-from startup import spirouCDB
+from SpirouDRS import spirouCDB
+from SpirouDRS import spirouCore
 from . import spirouFITS
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = log.logger
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -178,7 +178,7 @@ def correct_for_dark(p, image, header):
         acqtime = header[acqtime_key]
 
     # get calibDB
-    cdb = spirouCDB.get_database(p, acqtime)
+    cdb = spirouCDB.GetDatabase(p, acqtime)
 
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:

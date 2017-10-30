@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-log.py
+spirouCore.py
 
 Logging related functions
 
@@ -16,7 +16,7 @@ import time
 import os
 import sys
 
-from . import configsetup
+from . import spirouConfig
 
 # =============================================================================
 # Define variables
@@ -27,7 +27,7 @@ TRIG_KEY = dict(all=' ', error='!', warning='@', info='*', graph='~')
 WRITE_LEVEL = dict(error=3, warning=2, info=1, graph=0, all=0)
 # -----------------------------------------------------------------------------
 # Get config parameters
-CPARAMS = configsetup.read_config_file()
+CPARAMS = spirouConfig.read_config_file()
 
 # Config exit (sys = sys.exit(1), os = os._exit(1) anything else and error
 #     does not exit
@@ -107,7 +107,7 @@ def get_logfilepath(utime):
     if not os.path.exists(dir_data_msg):
         # if TDATA path does not exists - exit with error
         if not os.path.exists(CPARAMS.get('TDATA', '')):
-            print(configsetup.config_error("TDATA"))
+            print(spirouConfig.config_error("TDATA"))
             EXIT_TYPE(1)
         # if TDATA does exist then create a /msg/ sub-directory
         dir_data_msg = os.path.join(CPARAMS['TDATA'], 'msg', '')

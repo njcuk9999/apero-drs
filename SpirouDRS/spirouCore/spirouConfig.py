@@ -21,7 +21,7 @@ import pkg_resources
 # =============================================================================
 # Define variables
 # =============================================================================
-__PACKAGE__ = 'startup'
+__PACKAGE__ = 'SpirouDRS'
 __INIT__ = '__init__.py'
 __CONFIGFOLDER__ = 'config'
 __CONFIG_FILE__ = 'config.txt'
@@ -40,7 +40,7 @@ def read_config_file(config_file=None):
     if config_file is None:
         # get config file path
         init = pkg_resources.resource_filename(__PACKAGE__, __INIT__)
-        installfolder = init.split('/')[-4]
+        installfolder = init.split('/')[-3]
         config_file = os.path.join(init.split(installfolder)[0],
                                    installfolder, __CONFIGFOLDER__,
                                    __CONFIG_FILE__)
