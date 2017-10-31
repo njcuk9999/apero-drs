@@ -70,11 +70,12 @@ def fiber_params(pp, fiber):
     return fparam
 
 
-def measure_background_and_get_central_pixels(pp, image):
+def measure_background_and_get_central_pixels(pp, loc, image):
     """
     Takes the image and measure the background
 
     :param pp: dictionary, parameter dictionary
+    :param loc: dictionary, localisation parameter dictionary
     :param image: numpy array (2D), the image
 
     :return ycc: the normalised values the central pixels
@@ -111,8 +112,13 @@ def measure_background_and_get_central_pixels(pp, image):
         plot_y_miny_maxy(y, miny, maxy)
     if pp['DRS_PLOT']:
         plot_y_miny_maxy(y)
-    # return the normalised central pixel values
-    return ycc
+
+    # Add to loc
+    loc['ycc'] = ycc
+    loc['mean_backgrd'] = mean_backgrd
+    loc['max_signal'] = max_signal
+    # return the localisation dictionary
+    return loc
 
 
 def find_order_centers(pp, image, loc, order_num):
@@ -124,14 +130,7 @@ def find_order_centers(pp, image, loc, order_num):
 
     :param pp: dictionary, parameter dictionary
     :param image: numpy array (2D), the image
-    :param cpos_orders: numpy array (2D)
-                        size = (number of orders x image.data[1])
-                        storage array for the central positions along all the
-                        orders
-    :param cwid_orders: numpy array (2D)
-                        size = (number of orders x image.data[1])
-                        storage array for the order widths along all the
-                        orders
+    :param loc: dictionary, localisation parameter dictionary
     :param order_num: int, the current order to process
 
     :return cpos_orders: numpy array (2D)
@@ -629,6 +628,7 @@ if __name__ == "__main__":
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
                                                  mode='manual')
     # data 2 is now set to the order profile
+    data2o = data2.copy()
     data2 = order_profile.copy()
 
     # ----------------------------------------------------------------------
@@ -659,14 +659,15 @@ if __name__ == "__main__":
     # ######################################################################
     # Localization of orders on central column
     # ######################################################################
-
+    # storage dictionary for localization parameters
+    loc = dict()
     # Plots setup: start interactive plot
     if p['DRS_PLOT'] and INTERACTIVE_PLOTS:
         plt.ion()
     # ----------------------------------------------------------------------
     # Measurement and correction of background on the central column
     # ----------------------------------------------------------------------
-    ycc = measure_background_and_get_central_pixels(p, data2)
+    loc = measure_background_and_get_central_pixels(p, loc, data2)
     # ----------------------------------------------------------------------
     # Search for order center on the central column - quick estimation
     # ----------------------------------------------------------------------
@@ -674,9 +675,9 @@ if __name__ == "__main__":
     WLOG('', p['log_opt'], 'Searching order center on central column')
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
     if p['IC_DEBUG'] and p['DRS_PLOT']:
-        debug_plot_min_ycc_loc_threshold(p, ycc)
+        debug_plot_min_ycc_loc_threshold(p, loc['ycc'])
     # find the central positions of the orders in the central
-    posc_all = spirouLOCOR.FindPosCentCol(ycc, p['IC_LOCSEUIL'])
+    posc_all = spirouLOCOR.FindPosCentCol(loc['ycc'], p['IC_LOCSEUIL'])
     # depending on the fiber type we may need to skip some pixels and also
     # we need to add back on the ic_offset applied
     start = p['IC_FIRST_ORDER_JUMP']
@@ -703,8 +704,6 @@ if __name__ == "__main__":
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # get fit polynomial orders for position and width
     fitpos, fitwid = p['IC_LOCDFITC'], p['IC_LOCDFITW']
-    # storage dictionary for localization parameters
-    loc = dict()
     # Create arrays to store position and width of order for each order
     loc['ctro'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
     loc['sigo'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
@@ -793,11 +792,10 @@ if __name__ == "__main__":
         plot_order_number_against_rms(p, loc, rorder_num)
 
     # ----------------------------------------------------------------------
-    # Save and record of image of localization
+    # Save and record of image of localization with order center and keywords
     # ----------------------------------------------------------------------
 
-    # construct folder and filename
-    reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    # construct filename
     locoext =  '_loco_{0}.fits'.format(p['fiber'])
     locofits = p['arg_file_names'][0].replace('.fits', locoext)
 
@@ -807,12 +805,79 @@ if __name__ == "__main__":
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-
+    hdict = spirouImage.AddNewKey(hdict, p['kw_version'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_CCD_SIGDET'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_CCD_CONAD'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_BCKGRD'],
+                                  value=loc['mean_backgrd'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_NBO'],
+                                  value=rorder_num)
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DEG_C'],
+                                  value=p['IC_LOCDFITC'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DEG_W'],
+                                  value=p['IC_LOCDFITW'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DEG_E'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DELTA'])
+    # write 2D list of position fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
+                                     values=loc['ac'][0:rorder_num])
+    # write 2D list of width fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
+                                     values=loc['ass'][0:rorder_num])
+    # write image and add header keys (via hdict)
+    spirouImage.WriteImage(os.path.join(reducedfolder, locofits),
+                           loc['ac'][0:rorder_num], hdict)
 
     # ----------------------------------------------------------------------
     # Save and record of image of sigma
     # ----------------------------------------------------------------------
+    # construct filename
+    locoext =  '_fwhm-order_{0}.fits'.format(p['fiber'])
+    locofits2 = p['arg_file_names'][0].replace('.fits', locoext)
 
+    # log that we are saving localization file
+    WLOG('', p['log_opt'], ('Saving FWHM information '
+                            'in file: {0}').format(locofits))
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # define new keys to add
+    hdict = spirouImage.AddNewKey(hdict, p['kw_version'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_CCD_SIGDET'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_CCD_CONAD'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_BCKGRD'],
+                                  value=loc['mean_backgrd'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_NBO'],
+                                  value=rorder_num)
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DEG_C'],
+                                  value=p['IC_LOCDFITC'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DEG_W'],
+                                  value=p['IC_LOCDFITW'])
+    hdict = spirouImage.AddNewKey(hdict, p['kw_LOCO_DEG_E'])
+    # write 2D list of position fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
+                                     values=loc['ac'][0:rorder_num])
+    # write 2D list of width fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
+                                     values=loc['ass'][0:rorder_num])
+    # write image and add header keys (via hdict)
+    spirouImage.WriteImage(os.path.join(reducedfolder, locofits),
+                           loc['ass'][0:rorder_num], hdict)
+
+    # ----------------------------------------------------------------------
+    # Save and Record of image of localization
+    # ----------------------------------------------------------------------
+    if p['IC_LOCOPT1']:
+        # construct filename
+        locoext = '_with-order_{0}.fits'.format(p['fiber'])
+        locofits3 = p['arg_file_names'][0].replace('.fits', locoext)
+        locopath = os.path.join(reducedfolder, locofits3)
+        # log that we are saving localization file
+        WLOG('', p['log_opt'], ('Saving localization image with superposition '
+                                'of orders in file: {0}').format(locofits))
+
+        # TODO: Start from here!
+        sys.exit()
+        spirouLOCOR.imaloco2(data2o, loc['ac'][0:rorder_num], locopath)
     # ----------------------------------------------------------------------
     # Update the calibration database
     # ----------------------------------------------------------------------

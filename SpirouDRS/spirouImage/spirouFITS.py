@@ -35,7 +35,7 @@ FORBIDDEN_COPY_KEY = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
 
 
 # =============================================================================
-# Define user functions
+# Define Read/Write User
 # =============================================================================
 def readimage(p, framemath='+'):
     """
@@ -83,6 +83,40 @@ def readimage(p, framemath='+'):
     return image, header, comments, nx, ny
 
 
+def writeimage(filename, image, hdict):
+    """
+    Writes an image and its header to file
+
+    :param filename: string, filename to save the fits file to
+    :param image: numpy array (2D), the image
+    :param hdict: dictionary, header dictionary to write to fits file
+
+                Must be in form:
+
+                        hdict[key] = (value, comment)
+                or
+                        hdict[key] = value     (comment will be equal to
+                                                "UNKNOWN"
+    :return:
+    """
+
+    # check if file exists and remove it if it does
+    if os.path.exists(filename):
+        os.remove(filename)
+    # create the primary hdu
+    hdu = fits.PrimaryHDU(image)
+    # add header keys to the hdu header
+    for key in list(hdict.keys()):
+        hdu.header[key] = hdict[key]
+    # write to file
+    with warnings.catch_warnings(record=True) as w:
+        hdu.writeto(filename)
+    spirouCore.spirouLog.warninglogger(w)
+
+
+# =============================================================================
+# Define header User functions
+# =============================================================================
 def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
     """
     Looks for a key in dictionary p, named 'name'
@@ -172,37 +206,6 @@ def keyslookup(p, d=None, keys=None, name=None, has_default=False,
     return values
 
 
-def writeimage(filename, image, hdict):
-    """
-    Writes an image and its header to file
-
-    :param filename: string, filename to save the fits file to
-    :param image: numpy array (2D), the image
-    :param hdict: dictionary, header dictionary to write to fits file
-
-                Must be in form:
-
-                        hdict[key] = (value, comment)
-                or
-                        hdict[key] = value     (comment will be equal to
-                                                "UNKNOWN"
-    :return:
-    """
-
-    # check if file exists and remove it if it does
-    if os.path.exists(filename):
-        os.remove(filename)
-    # create the primary hdu
-    hdu = fits.PrimaryHDU(image)
-    # add header keys to the hdu header
-    for key in list(hdict.keys()):
-        hdu.header[key] = hdict[key]
-    # write to file
-    with warnings.catch_warnings(record=True) as w:
-        hdu.writeto(filename)
-    spirouCore.spirouLog.warninglogger(w)
-
-
 def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     """
     Copies keys from hdr dictionary to hdict, if forbid_keys is True some
@@ -245,8 +248,72 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     return hdict
 
 
+def add_new_key(hdict, keywordstore, value=None):
+    """
+
+    :param hdict: dictionary, storage for adding to FITS rec
+    :param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                         must be in form [string, value, string]
+    :param value: object or None, if any python object (other than None) will
+                  replace the value in keywordstore (i.e. keywordstore[1]) with
+                  value, if None uses the value = keywordstore[1]
+    :return hdict: dictionary, storage for adding to FITS rec
+    """
+    # extract keyword, value and comment and put it into hdict
+    key, dvalue, comment = keywordstore
+    # set the value to default value if value is None
+    if value is None:
+        value = dvalue
+    # add to the hdict dictionary in form (value, comment)
+    hdict[key] = (value, comment)
+    # return hdict
+    return hdict
+
+def add_key_2d_list(hdict, keywordstore, values=None):
+    """
+    Add a new 2d list to key using the keywordstorage[0] as prefix in form
+    keyword = kewordstoreage + number
+
+    where number = (row number * number of columns) + column number
+
+    :param hdict: dictionary, storage for adding to FITS rec
+    :param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                         must be in form [string, value, string]
+    :param value: numpy array or 2D list of keys or None
+
+                  if numpy array or 2D list will create a set of keys in form
+                  keyword = kewordstoreage + number
+                  where number = (row number * number of columns) + column number
+                  with value = values[row number][column number]
+
+                  if None uses the value = keywordstore[1]
+
+    :return hdict: dictionary, storage for adding to FITS rec
+    """
+    # extract keyword, value and comment and put it into hdict
+    key, dvalue, comment = keywordstore
+    # set the value to default value if value is None
+    if values is None:
+        values = [[dvalue]]
+    # convert to a numpy array
+    values = np.array(values)
+    # loop around the 2D array
+    dim1, dim2 = values.shape
+    for i_it in range(dim1):
+        for j_it in range(dim2):
+            # construct the key name
+            keyname = '{0}{1}'.format(key, i_it * dim2 + j_it)
+            # get the value
+            value = values[i_it, j_it]
+            # construct the comment name
+            comm = '{0} order={1} coeff={2}'.format(comment, i_it, j_it)
+            # add to header dictionary
+            hdict[keyname] = (value, comm)
+    # return the header dictionary
+    return hdict
+
 # =============================================================================
-# Define pyfits functions
+# Define pyfits worker functions
 # =============================================================================
 def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
     """

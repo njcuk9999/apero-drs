@@ -61,7 +61,7 @@ LOG_LEVEL = 'all'
 # config file locations
 # -----------------------------------------------------------------------------
 # Special config file - doesn't exist and not used
-# SPECIAL_NAME = 'special_config_SPIROU.py'
+SPECIAL_NAME = 'special_config_SPIROU.py'
 
 #   Define the ICDP configuration file
 #       (located at DRS_CONFIG or DRS_ROOT/config if DRS_CONFIG not defined)

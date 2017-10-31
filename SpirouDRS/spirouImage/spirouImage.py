@@ -163,11 +163,11 @@ def correct_for_dark(p, image, header):
     """
 
     # key acqtime_key from parameter dictionary
-    if 'ACQTIME_KEY' not in p:
-        WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
-                                     ' config files'))
+    if 'kw_ACQTIME_KEY' not in p:
+        WLOG('error', p['log_opt'], ('Error kw_ACQTIME_KEY not defined in'
+                                     ' config files (Keywords)'))
     else:
-        acqtime_key = p['ACQTIME_KEY']
+        acqtime_key = p['kw_ACQTIME_KEY'][0]
 
     # get max_time from file
     if acqtime_key not in header:

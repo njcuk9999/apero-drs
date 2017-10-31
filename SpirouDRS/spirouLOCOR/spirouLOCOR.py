@@ -504,3 +504,15 @@ def locate_order_center(values, threshold, min_width=None):
 # =============================================================================
 # End of code
 # =============================================================================
+
+
+def image_localazation_super(image, coeffs, filename):
+
+    # construct a new image of zeros
+    newimage = np.zeros_like(image)
+
+
+
+
+
+
