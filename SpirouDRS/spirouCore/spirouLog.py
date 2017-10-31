@@ -16,23 +16,23 @@ import time
 import os
 import sys
 
-from . import spirouConfig
+from SpirouDRS import spirouConfig
 
 # =============================================================================
 # Define variables
 # =============================================================================
-# The trigger character to display for each
-TRIG_KEY = dict(all=' ', error='!', warning='@', info='*', graph='~')
-# The write level
-WRITE_LEVEL = dict(error=3, warning=2, info=1, graph=0, all=0)
+
 # -----------------------------------------------------------------------------
 # Get config parameters
-CPARAMS = spirouConfig.read_config_file()
+CPARAMS = spirouConfig.ReadConfigFile()
+TRIG_KEY = spirouConfig.spirouConfig.TRIG_KEY
+WRITE_LEVEL = spirouConfig.spirouConfig.WRITE_LEVEL
+EXIT = spirouConfig.spirouConfig.EXIT
 
 # Config exit (sys = sys.exit(1), os = os._exit(1) anything else and error
 #     does not exit
 # TODO: should this be defined in the config?
-EXIT = 'sys'
+
 if EXIT == 'sys':
     EXIT_TYPE = sys.exit
 elif EXIT == 'os':
