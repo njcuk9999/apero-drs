@@ -16,14 +16,14 @@ Last modified: 2017-10-11 at 10:49
 import os
 import sys
 
-from . import spirouConfig
+from SpirouDRS import spirouConfig
 from . import spirouLog
 
 # =============================================================================
 # Define variables
 # =============================================================================
 WLOG = spirouLog.logger
-LOGLEVELS = list(spirouLog.TRIG_KEY.keys())
+
 # -----------------------------------------------------------------------------
 
 
@@ -46,16 +46,13 @@ def run_inital_startup():
     """
 
     # Get config parameters
-    cparams = spirouConfig.read_config_file()
+    cparams = spirouConfig.ReadConfigFile()
     # check that drs_name and drs_version exist
-    tmp = spirouConfig.check_config(cparams, ['DRS_NAME', 'DRS_VERSION'])
-    if tmp is not None:
-        WLOG('error', ' ', tmp)
-        sys.exit(1)
+    spirouConfig.CheckConfig(cparams, ['DRS_NAME', 'DRS_VERSION'])
     # display title
     display_title(cparams)
     # check input parameters
-    cparams = check_params(cparams)
+    cparams = spirouConfig.CheckCparams(cparams)
     # display initial parameterisation
     display_initial_parameterisation(cparams)
     # deal with run time arguments
@@ -69,6 +66,14 @@ def run_inital_startup():
     cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=False)
     # load ICDP config file
     cparams = load_other_config_file(cparams, 'ICDP_NAME', required=True)
+    # load keywords
+    try:
+        cparams, warnlogs = spirouConfig.GetKeywordArguments(cparams)
+        # print warning logs
+        for warnlog in warnlogs:
+            WLOG('warning', '', warnlog)
+    except spirouConfig.ConfigError as e:
+        WLOG(e.level, '', e.message)
     # return parameter dictionary
     return cparams
 
@@ -151,73 +156,6 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
 # =============================================================================
 # Define general functions
 # =============================================================================
-def check_params(p):
-    """
-    Check the parameter dictionary has certain required values
-
-    :param p: dictionary, parameter dictionary
-    :return p: dictionary, the updated parameter dictionary
-    """
-    # check that the drs_root and tdata variables are named
-    tmp = spirouConfig.check_config(p, ['DRS_ROOT', 'TDATA'])
-    if tmp is not None:
-        WLOG('error', ' ', tmp)
-    # check whether we have drs_data_raw key
-    tmp = os.path.join(p['TDATA'], 'raw', '')
-    p['DRS_DATA_RAW'] = p.get('DRS_DATA_RAW', tmp)
-
-    # check whether we have drs_data_reduc key
-    tmp = os.path.join(p['TDATA'], 'reduced', '')
-    p['DRS_DATA_REDUC'] = p.get('DRS_DATA_REDUC', tmp)
-
-    # check whether we have drs_data_msg key
-    tmp = os.path.join(p['TDATA'], 'msg', '')
-    p['DRS_DATA_MSG'] = p.get('DRS_DATA_MSG', tmp)
-
-    # check whether we have drs_calib_db key
-    tmp = os.path.join(p['TDATA'], 'calibDB', '')
-    p['DRS_CALIB_DB'] = p.get('DRS_CALIB_DB', tmp)
-
-    # check whether we have a drs_config key
-    tmp = os.path.join(p['DRS_ROOT'], 'config', '')
-    p['DRS_CONFIG'] = p.get('DRS_CONFIG', tmp)
-
-    # check whether we have a drs_man key
-    tmp = os.path.join(p['DRS_ROOT'], 'man', '')
-    p['DRS_MAN'] = p.get('DRS_MAN', tmp)
-
-    # check that drs_log exists else set to 1
-    # cparams['DRS_LOG'] = cparams.get('DRS_LOG', 1)
-
-    # check that drs_plot exists else set to 'NONE'
-    p['DRS_PLOT'] = p.get('DRS_PLOT', 'undefined')
-
-    # check whether we have a drs_config key
-    p['DRS_DATA_WORKING'] = p.get('DRS_DATA_WORKING', None)
-
-    # check that drs_used_date exists else set to 'undefined'
-    p['DRS_USED_DATE'] = p.get('DRS_USED_DATE', 'undefined')
-
-    # check that drs_debug exists else set to 0
-    p['DRS_DEBUG'] = p.get('DRS_DEBUG', 0)
-
-    # check that drs_interactive set else set to 0
-    p['DRS_INTERACTIVE'] = p.get('DRS_INTERACTIVE', 0)
-
-    # check that print_level is defined and make sure it is in defined levels
-    #    default value is 'all' if doesnt exist or wrong
-    p['PRINT_LEVEL'] = p.get('PRINT_LEVEL', 'all')
-    if p['PRINT_LEVEL'] not in LOGLEVELS:
-        p['PRINT_LEVEL'] = 'all'
-
-    # check that print_level is defined and make sure it is in defined levels
-    #    default value is 'all' if doesnt exist or wrong
-    p['LOG_LEVEL'] = p.get('LOG_LEVEL', 'all')
-    if p['LOG_LEVEL'] not in LOGLEVELS:
-        p['LOG_LEVEL'] = 'all'
-    # return parameters
-    return p
-
 
 def run_time_args(p):
     """
@@ -272,34 +210,13 @@ def run_time_args(p):
 
 
 def load_other_config_file(p, key, logthis=True, required=False):
-    # Check that key  exists in config file
-    tmp = spirouConfig.check_config(p, key)
-    if tmp is not None and required:
-        WLOG('error', ' ', tmp)
-    elif tmp is not None:
-        return p
-    # construct icdp file name
-    filename = os.path.join(p['DRS_CONFIG'], p[key])
-    # try to open file
-    if os.path.exists(filename):
-        # read config file into new dictionary
-        newparams = spirouConfig.read_config_file(filename)
-        # merge with param file
-        for newkey in list(newparams.keys()):
-            # Warn the user than key is being overwritten
-            if newkey in list(p.keys()):
-                wmsg = 'Warning key {0} overwritten by config: {1}'
-                WLOG('warning', p['log_opt'], wmsg.format(newkey, filename))
-            # Write key
-            p[newkey] = newparams[newkey]
-        # log output
-        if logthis:
-            WLOG('', p['log_opt'], '{0} loaded from: {1}'.format(key, filename))
-    else:
-        if required:
-            # log error
-            WLOG('error', p['log_opt'],
-                 'Config file: {0} not found'.format(filename))
+    # try to load config file from file
+    try:
+        p = spirouConfig.LoadConfigFromFile(p, key, required=required,
+                                            logthis=logthis)
+    except spirouConfig.ConfigError as e:
+        WLOG(e.level, p['log_opt'], e.message)
+
     return p
 
 

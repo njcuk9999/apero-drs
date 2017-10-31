@@ -14,13 +14,13 @@ Created on 2017-10-12 at 15:21
 Version 0.0.1
 """
 
-from startup import RunInitialStartup, RunStartup
-from startup import spirouLog
+
+from SpirouDRS import spirouCore
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = spirouLog.logger
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    pp = RunInitialStartup()
+    pp = spirouCore.RunInitialStartup()
 
     # TODO: add code
 

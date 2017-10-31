@@ -17,7 +17,11 @@ Version 0.0.0
 from . import spirouFITS
 from . import spirouImage
 
+# add a new key to hdict from keywordstorage
+AddNewKey = spirouFITS.add_new_key
 
+# add a new 2d list to key using the keywordstorage[0] as prefix
+AddKey2DList = spirouFITS.add_key_2d_list
 
 # Converts image from ADU/s into e-
 ConvertToE = spirouImage.convert_to_e

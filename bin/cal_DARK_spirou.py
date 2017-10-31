@@ -309,15 +309,14 @@ if __name__ == "__main__":
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict['DADEAD'] = (p['dadead_full'], 'Fraction dead pixels [%]')
-    hdict['DAMED'] = (p['med_full'], 'median dark level [ADU/s]')
-    hdict['DABDEAD'] = (p['dadead_blue'], 'Fraction dead pixels blue part [%]')
-    hdict['DABMED'] = (p['med_blue'], 'median dark level blue part [ADU/s]')
-    hdict['DARDEAD'] = (p['dadead_red'], 'Fraction dead pixels red part [%]')
-    hdict['DARMED'] = (p['med_red'], 'median dark level red part [ADU/s]')
-    hdict['DACUT'] = (p['DARK_CUTLIMIT'],
-                      'Threshold of dark level retain [ADU/s]')
-    # write to file
+    spirouImage.AddNewKey(hdict, p['kw_DARK_DEAD'], value=p['dadead_full'])
+    spirouImage.AddNewKey(hdict, p['kw_DAMED'], value=p['med_full'])
+    spirouImage.AddNewKey(hdict, p['kw_DABDEAD'], value=p['dadead_blue'])
+    spirouImage.AddNewKey(hdict, p['kw_DABMED'], value=p['med_blue'])
+    spirouImage.AddNewKey(hdict, p['kw_DARDEAD'], value=p['dadead_red'])
+    spirouImage.AddNewKey(hdict, p['kw_DARMED'], value=p['med_red'])
+    spirouImage.AddNewKey(hdict, p['kw_DACUT'], value=p['DARK_CUTLIMIT'])
+    # write image and add header keys (via hdict)
     spirouImage.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
 
     # ----------------------------------------------------------------------

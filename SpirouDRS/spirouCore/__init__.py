@@ -14,13 +14,11 @@ Created on 2017-10-30 at 17:10
 Version 0.0.0
 """
 
-from . import spirouConfig
 from . import spirouLog
 from . import spirouStartup
 
 
-# Reads the config file and loads all variables into dictionary
-ReadConfigFile = spirouConfig.read_config_file
+
 
 # Runs the initial start up script (checking of parameters and title)
 RunInitialStartup = spirouStartup.run_inital_startup
