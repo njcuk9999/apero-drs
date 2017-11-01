@@ -21,15 +21,20 @@ import os
 import warnings
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# Get Logging function
 WLOG = spirouCore.wlog
+# Name of program
+__NAME__ = 'cal_DARK_spirou.py'
 # -----------------------------------------------------------------------------
-INTERACTIVE_PLOTS = True
+# whether to use plt.ion or plt.show
+INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
 
 
 # =============================================================================
@@ -70,9 +75,13 @@ def measure_dark(pp, image, image_name, short_name):
                                  'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s'
                                  '').format(*largs))
     # add required variables to pp
+    source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
     pp['histo_{0}'.format(short_name)] = histo
+    pp.set_source('histo_{0}'.format(short_name), source)
     pp['med_{0}'.format(short_name)] = med
+    pp.set_source('med_{0}'.format(short_name), source)
     pp['dadead_{0}'.format(short_name)] = dadead
+    pp.set_source('dadead_{0}'.format(short_name), source)
 
     return pp
 
@@ -190,10 +199,13 @@ if __name__ == "__main__":
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='average')
     # get ccd sig det value
     p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    p.set_source('ccdsigdet', __NAME__ + '/__main__')
     # get exposure time
     p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
+    p.set_source('exptime', __NAME__ + '/__main__')
     # get gain
     p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
+    p.set_source('gain', __NAME__ + '/__main__')
     # log the Dark exposure time
     WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
@@ -247,6 +259,7 @@ if __name__ == "__main__":
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
     p['dadeadall'] = n_bad_pix * 100 / np.product(data.shape)
+    p.set_source('dadeadall', __NAME__ + '/__main__')
     # log fraction of dead pixels + dark > cut
     logargs = [p['DARK_CUTLIMIT'], p['dadeadall']]
     WLOG('info', p['log_opt'], ('Total Frac dead pixels (N.A.N) + DARK > '
@@ -292,10 +305,12 @@ if __name__ == "__main__":
     if passed:
         WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/__main__')
     else:
         fargs = [', '.join(fail_msg)]
         WLOG('info', p['log_opt'], 'QUALITY CONTROL FAILED: {0}'.format(*fargs))
         p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/__main__')
 
     # ----------------------------------------------------------------------
     # Save dark to file
@@ -310,12 +325,12 @@ if __name__ == "__main__":
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     spirouImage.AddNewKey(hdict, p['kw_DARK_DEAD'], value=p['dadead_full'])
-    spirouImage.AddNewKey(hdict, p['kw_DAMED'], value=p['med_full'])
-    spirouImage.AddNewKey(hdict, p['kw_DABDEAD'], value=p['dadead_blue'])
-    spirouImage.AddNewKey(hdict, p['kw_DABMED'], value=p['med_blue'])
-    spirouImage.AddNewKey(hdict, p['kw_DARDEAD'], value=p['dadead_red'])
-    spirouImage.AddNewKey(hdict, p['kw_DARMED'], value=p['med_red'])
-    spirouImage.AddNewKey(hdict, p['kw_DACUT'], value=p['DARK_CUTLIMIT'])
+    spirouImage.AddNewKey(hdict, p['kw_DARK_MED'], value=p['med_full'])
+    spirouImage.AddNewKey(hdict, p['kw_DARK_B_DEAD'], value=p['dadead_blue'])
+    spirouImage.AddNewKey(hdict, p['kw_DARK_B_MED'], value=p['med_blue'])
+    spirouImage.AddNewKey(hdict, p['kw_DARK_R_DEAD'], value=p['dadead_red'])
+    spirouImage.AddNewKey(hdict, p['kw_DARK_R_MED'], value=p['med_red'])
+    spirouImage.AddNewKey(hdict, p['kw_DARK_CUT'], value=p['DARK_CUTLIMIT'])
     # write image and add header keys (via hdict)
     spirouImage.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
 
