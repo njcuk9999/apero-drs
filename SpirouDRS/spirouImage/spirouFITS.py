@@ -27,6 +27,7 @@ from SpirouDRS import spirouCore
 # Define variables
 # =============================================================================
 WLOG = spirouCore.wlog
+__NAME__ = 'spirouFITS.py'
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                       'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
@@ -447,6 +448,7 @@ def math_controller(p, data, header, framemath=None):
             header = htmp
             # currently we overwrite fitsfilename with last framefilename
             p['fitsfilename'] = framefilename
+            p.set_source('fitsfilename', __NAME__)
             # finally add/subtract/multiple/divide data
             if fm in ['ADD', '+', 'MEAN', 'AVERAGE']:
                 data += dtmp

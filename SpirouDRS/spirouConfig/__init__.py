@@ -33,5 +33,8 @@ GetKeywordArguments = spirouKeywords.get_keywords
 # Load a config file from given filename
 LoadConfigFromFile = spirouConfig.load_config_from_file
 
+# Custom dictionary class - parameter dictionary
+ParamDict = spirouConfig.ParamDict
+
 # Reads the config file and loads all variables into dictionary
 ReadConfigFile = spirouConfig.read_config_file

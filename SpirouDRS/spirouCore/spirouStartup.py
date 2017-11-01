@@ -22,8 +22,10 @@ from . import spirouLog
 # =============================================================================
 # Define variables
 # =============================================================================
+# Get Logging function
 WLOG = spirouLog.logger
-
+# Name of program
+__NAME__ = 'spirouStarup.py'
 # -----------------------------------------------------------------------------
 
 
@@ -206,6 +208,10 @@ def run_time_args(p):
     p['fitsfilename'] = fits_fn
     p['nbframes'] = len(arg_file_names)
 
+    skeys = ['log_opt', 'program', 'arg_night_name', 'str_file_names',
+             'arg_file_names', 'fitsfilename', 'nbframes']
+    p.set_sources(keys=skeys, sources=__NAME__ + '/run_time_args()')
+
     return p
 
 
@@ -283,6 +289,9 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
                 # add parameters from correct a2p dictionary to parameters
                 for param in add_to_p[fprefix]:
                     p[param] = add_to_p[fprefix][param]
+                    # set the source for parameter
+                    source = add_to_p[fprefix].get_source(param)
+                    p.set_source(param, source=source)
                 return p
         else:
             return p
