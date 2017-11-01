@@ -21,12 +21,13 @@ import datetime
 import time
 
 from SpirouDRS import spirouCore
-
+from SpirouDRS.spirouConfig import ParamDict
 
 # =============================================================================
 # Define variables
 # =============================================================================
 WLOG = spirouCore.wlog
+__NAME__ = 'spirouCDB.py'
 DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
 # -----------------------------------------------------------------------------
 
@@ -176,9 +177,11 @@ def get_database(p, max_time):
     #     write all keys (in sorted unix time order) to a dictionary
     #     all keys currently in dictionary will be overwritten thus keeping
     #     newest key only
-    c_database = dict()
+    c_database = ParamDict()
     for it in np.argsort(utimes):
         c_database[keys[it]] = [dirnames[it], filenames[it]]
+        # add source
+        c_database.set_source(keys[it], __NAME__)
     # Must close and remove lock file before continuing
     lock.close()
     os.remove(lock_file)
