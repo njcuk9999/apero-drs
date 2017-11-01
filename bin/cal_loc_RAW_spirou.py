@@ -21,6 +21,7 @@ import sys
 import time
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
@@ -29,9 +30,15 @@ from SpirouDRS import spirouLOCOR
 # =============================================================================
 # Define variables
 # =============================================================================
+# Get Logging function
 WLOG = spirouCore.wlog
+# Name of program
+__NAME__ = 'cal_loc_RAW_spirou.py'
 # -----------------------------------------------------------------------------
-INTERACTIVE_PLOTS = True
+# whether to use plt.ion or plt.show
+INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
+# Custom parameter dictionary
+ParamDict = spirouConfig.ParamDict
 # These must exist in a config file
 FIBER_PARAMS = 'nbfib', 'ic_first_order_jump', 'ic_locnbmaxo', 'qc_loc_nbo'
 
@@ -52,7 +59,7 @@ def fiber_params(pp, fiber):
     :return fparam: dictionary, the fiber parameter dictionary
     """
     # set up the fiber parameter directory
-    fparam = dict()
+    fparam = ParamDict()
     # loop around keys in FIBER_PARAMS
     for key in FIBER_PARAMS:
         # construct the parameter key (must ex
@@ -64,8 +71,11 @@ def fiber_params(pp, fiber):
                                           '').format(configkey))
 
         fparam[key.upper()] = pp[configkey]
+        fparam.set_source(key.upper(), __NAME__ + '/fiber_params()')
+
     # add fiber to the parameters
     fparam['fiber'] = fiber
+    fparam.set_source('fiber', __NAME__ + '/fiber_params()')
     # return fiber dictionary
     return fparam
 
@@ -590,10 +600,13 @@ if __name__ == "__main__":
     # get ccd sig det value
     p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE',
                                               hdr['@@@hname']))
+    p.set_source('ccdsigdet', __NAME__ + '/__main__')
     # get exposure time
     p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
+    p.set_source('exptime', __NAME__ + '/__main__')
     # get gain
     p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
+    p.set_source('gain', __NAME__ + '/__main__')
     # log the Dark exposure time
     WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
@@ -660,7 +673,7 @@ if __name__ == "__main__":
     # Localization of orders on central column
     # ######################################################################
     # storage dictionary for localization parameters
-    loc = dict()
+    loc = ParamDict()
     # Plots setup: start interactive plot
     if p['DRS_PLOT'] and INTERACTIVE_PLOTS:
         plt.ion()
@@ -723,6 +736,8 @@ if __name__ == "__main__":
     loc['max_rmpts_wid'] = np.zeros(number_of_orders)
     # set the central col centers in the cpos_orders array
     loc['ctro'][:, p['IC_CENT_COL']] = posc[0:number_of_orders]
+    # set source for all locs
+    loc.set_all_sources(__NAME__ + '/__main__')
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # loop around each order
     rorder_num = 0
@@ -732,6 +747,7 @@ if __name__ == "__main__":
         # only keep the orders with non-zero width
         mask = loc['sigo'][order_num, :] != 0
         loc['x'] = np.arange(data2.shape[1])[mask]
+        loc.set_source('x', __NAME__ + '/__main__')
         # check that we have enough data points to fit data
         if len(loc['x']) > (fitpos + 1):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

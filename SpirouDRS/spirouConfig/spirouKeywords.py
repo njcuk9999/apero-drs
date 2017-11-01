@@ -231,6 +231,8 @@ def get_keywords(pp=None):
             warnlog.append(wmsg.format(key, __NAME__))
         # finally add to dictionary
         pp[key] = value
+        # add source
+        pp.set_source(key, __NAME__)
     # return pp and warning log
     return pp, warnlog
 
