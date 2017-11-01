@@ -355,71 +355,71 @@ def check_params(p):
     # check whether we have drs_data_raw key
     tmp = os.path.join(p['TDATA'], 'raw', '')
     p['DRS_DATA_RAW'] = p.get('DRS_DATA_RAW', tmp)
-    p = set_source(p, 'DRS_DATA_RAW', tmp)
+    p = set_source_for_defaulting_statements(p, 'DRS_DATA_RAW', tmp)
 
     # check whether we have drs_data_reduc key
     tmp = os.path.join(p['TDATA'], 'reduced', '')
     p['DRS_DATA_REDUC'] = p.get('DRS_DATA_REDUC', tmp)
-    p = set_source(p, 'DRS_DATA_REDUC', tmp)
+    p = set_source_for_defaulting_statements(p, 'DRS_DATA_REDUC', tmp)
 
     # check whether we have drs_data_msg key
     tmp = os.path.join(p['TDATA'], 'msg', '')
     p['DRS_DATA_MSG'] = p.get('DRS_DATA_MSG', tmp)
-    p = set_source(p, 'DRS_DATA_MSG', tmp)
+    p = set_source_for_defaulting_statements(p, 'DRS_DATA_MSG', tmp)
 
     # check whether we have drs_calib_db key
     tmp = os.path.join(p['TDATA'], 'calibDB', '')
     p['DRS_CALIB_DB'] = p.get('DRS_CALIB_DB', tmp)
-    p = set_source(p, 'DRS_CALIB_DB', tmp)
+    p = set_source_for_defaulting_statements(p, 'DRS_CALIB_DB', tmp)
 
     # check whether we have a drs_config key
     tmp = os.path.join(p['DRS_ROOT'], 'config', '')
     p['DRS_CONFIG'] = p.get('DRS_CONFIG', tmp)
-    p = set_source(p, 'DRS_CONFIG', tmp)
+    p = set_source_for_defaulting_statements(p, 'DRS_CONFIG', tmp)
 
     # check whether we have a drs_man key
     tmp = os.path.join(p['DRS_ROOT'], 'man', '')
     p['DRS_MAN'] = p.get('DRS_MAN', tmp)
-    p = set_source(p, 'DRS_MAN', tmp)
+    p = set_source_for_defaulting_statements(p, 'DRS_MAN', tmp)
 
     # check that drs_log exists else set to 1
     # cparams['DRS_LOG'] = cparams.get('DRS_LOG', 1)
 
     # check that drs_plot exists else set to 'NONE'
     p['DRS_PLOT'] = p.get('DRS_PLOT', 'undefined')
-    p = set_source(p, 'DRS_PLOT', 'undefined')
+    p = set_source_for_defaulting_statements(p, 'DRS_PLOT', 'undefined')
 
     # check whether we have a drs_config key
     p['DRS_DATA_WORKING'] = p.get('DRS_DATA_WORKING', None)
-    p = set_source(p, 'DRS_DATA_WORKING', None)
+    p = set_source_for_defaulting_statements(p, 'DRS_DATA_WORKING', None)
 
     # check that drs_used_date exists else set to 'undefined'
     p['DRS_USED_DATE'] = p.get('DRS_USED_DATE', 'undefined')
-    p = set_source(p, 'DRS_USED_DATE', 'undefined')
+    p = set_source_for_defaulting_statements(p, 'DRS_USED_DATE', 'undefined')
 
     # check that drs_debug exists else set to 0
     p['DRS_DEBUG'] = p.get('DRS_DEBUG', 0)
-    p = set_source(p, 'DRS_DEBUG', 0)
+    p = set_source_for_defaulting_statements(p, 'DRS_DEBUG', 0)
 
     # check that drs_interactive set else set to 0
     p['DRS_INTERACTIVE'] = p.get('DRS_INTERACTIVE', 0)
-    p = set_source(p, 'DRS_INTERACTIVE', 0)
+    p = set_source_for_defaulting_statements(p, 'DRS_INTERACTIVE', 0)
 
     # check that print_level is defined and make sure it is in defined levels
     #    default value is 'all' if doesnt exist or wrong
     p['PRINT_LEVEL'] = p.get('PRINT_LEVEL', 'all')
-    p = set_source(p, 'PRINT_LEVEL', 'all')
+    p = set_source_for_defaulting_statements(p, 'PRINT_LEVEL', 'all')
     if p['PRINT_LEVEL'] not in loglevels:
         p['PRINT_LEVEL'] = 'all'
-        p = set_source(p, 'PRINT_LEVEL', 'all')
+        p = set_source_for_defaulting_statements(p, 'PRINT_LEVEL', 'all')
 
     # check that print_level is defined and make sure it is in defined levels
     #    default value is 'all' if doesnt exist or wrong
     p['LOG_LEVEL'] = p.get('LOG_LEVEL', 'all')
-    p = set_source(p, 'LOG_LEVEL', 'all')
+    p = set_source_for_defaulting_statements(p, 'LOG_LEVEL', 'all')
     if p['LOG_LEVEL'] not in loglevels:
         p['LOG_LEVEL'] = 'all'
-        p = set_source(p, 'LOG_LEVEL', 'all')
+        p = set_source_for_defaulting_statements(p, 'LOG_LEVEL', 'all')
     # return parameters
     return p
 
@@ -471,7 +471,7 @@ def get_default_config_file():
     return config_file
 
 
-def set_source(p, key, dvalue):
+def set_source_for_defaulting_statements(p, key, dvalue):
     if p[key] == dvalue:
         p.set_source(key, __NAME__ + '/check_params()')
     return p
