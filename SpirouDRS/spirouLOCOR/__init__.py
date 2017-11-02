@@ -25,9 +25,22 @@ BoxSmoothedImage = spirouLOCOR.smoothed_boxmean_image
 #     contains all pixels for rows:  row-size to row+size and all columns.
 BoxSmoothedMinMax = spirouLOCOR.measure_box_min_max
 
+FiberParams = spirouLOCOR.fiber_params
+
 # Finds the central positions based on the central column values
 FindPosCentCol = spirouLOCOR.find_position_of_cent_col
+
+FindOrderCtrs = spirouLOCOR.find_order_centers
+
+imageLocSuperimp = spirouLOCOR.image_localazation_superposition
+
+InitialOrderFit = spirouLOCOR.initial_order_fit
 
 # Takes the values across the oder and finds the order center by looking for
 #     the start and end of the order (and thus the center) above threshold
 LocCentralOrderPos = spirouLOCOR.locate_order_center
+
+
+MeasureBkgrdGetCentPixs = spirouLOCOR.measure_background_and_get_central_pixels
+
+SigClipOrderFit = spirouLOCOR.sigmaclip_order_fit
