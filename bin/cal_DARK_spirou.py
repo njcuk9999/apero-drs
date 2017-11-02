@@ -15,15 +15,16 @@ Last modified: 2017-10-11 at 10:49
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 import os
 import warnings
 
 from SpirouDRS import spirouCDB
-from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore import spirouPlot as sPlt
+
+import time
+neilstart = time.time()
 
 # =============================================================================
 # Define variables
@@ -33,8 +34,6 @@ WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'cal_DARK_spirou.py'
 # -----------------------------------------------------------------------------
-# whether to use plt.ion or plt.show
-INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
 
 
 # =============================================================================
@@ -86,99 +85,6 @@ def measure_dark(pp, image, image_name, short_name):
     return pp
 
 
-def plot_image_and_regions(pp, image):
-    """
-    Plot the image and the red and plot regions
-
-    :param pp: dictionary, parameter dictionary
-    :param image: numpy array (2D), the image
-
-    :return:
-    """
-    # set up figure
-    plt.figure()
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
-    # plot the image
-    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med_full']),
-                      cmap='jet')
-    # plot the colorbar
-    plt.colorbar(im, ax=frame)
-    # get the blue region
-    bxlow, bxhigh = pp['IC_CCDX_BLUE_LOW'], pp['IC_CCDX_BLUE_HIGH']
-    bylow, byhigh = pp['IC_CCDY_BLUE_LOW'], pp['IC_CCDY_BLUE_HIGH']
-    # adjust for backwards limits
-    if bxlow > bxhigh:
-        bxlow, bxhigh = bxhigh-1, bxlow-1
-    if bylow > byhigh:
-        bylow, byhigh = byhigh-1, bylow-1
-    # plot blue rectangle
-    brec = Rectangle((bxlow, bylow), bxhigh-bxlow, byhigh-bylow,
-                     edgecolor='b', facecolor='None')
-    frame.add_patch(brec)
-    # get the red region
-    rxlow, rxhigh = pp['IC_CCDX_RED_LOW'], pp['IC_CCDX_RED_HIGH']
-    rylow, ryhigh = pp['IC_CCDY_RED_LOW'], pp['IC_CCDY_RED_HIGH']
-    # adjust for backwards limits
-    if rxlow > rxhigh:
-        rxlow, rxhigh = rxhigh-1, rxlow-1
-    if rylow > ryhigh:
-        rylow, ryhigh = ryhigh-1, rylow-1
-    # plot blue rectangle
-    rrec = Rectangle((rxlow, rylow), rxhigh-rxlow, ryhigh-rylow,
-                     edgecolor='r', facecolor='None')
-    frame.add_patch(rrec)
-
-
-def plot_datacut(imagecut):
-    """
-    Plot the data cut mask
-
-    :param imagecut: numpy array (2D), the data cut mask
-
-    :return:
-    """
-    # set up figure
-    plt.figure()
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
-    # plot the image cut
-    im = frame.imshow(imagecut, origin='lower', cmap='gray')
-    # plot the colorbar
-    plt.colorbar(im, ax=frame)
-    # make sure image is bounded by shape
-    plt.axis([0, imagecut.shape[0], 0, imagecut.shape[1]])
-
-
-def plot_histograms(pp):
-    # set up figure
-    plt.figure()
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
-    # get variables from property dictionary
-    histo_f, edge_f = pp['histo_full']
-    histo_b, edge_b = pp['histo_blue']
-    histo_r, edge_r = pp['histo_red']
-    # plot the main histogram
-    xf = np.repeat(edge_f, 2)
-    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
-    frame.plot(xf, yf, color='green')
-    # plot the blue histogram
-    xb = np.repeat(edge_b, 2)
-    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
-    frame.plot(xb, yb, color='blue')
-    # plot the red histogram
-    xr = np.repeat(edge_r, 2)
-    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
-    frame.plot(xr, yr, color='red')
-
-
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -198,7 +104,8 @@ if __name__ == "__main__":
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='average')
     # get ccd sig det value
-    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE',
+                                              hdr['@@@hname']))
     p.set_source('ccdsigdet', __NAME__ + '/__main__')
     # get exposure time
     p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
@@ -218,7 +125,7 @@ if __name__ == "__main__":
     # data = data[::-1, ::-1] * p['exptime'] * p['gain']
     # convert NaN to zeros
     nanmask = ~np.isfinite(data)
-    data0 = np.where(nanmask, 0.0, data)
+    data0 = np.where(nanmask, np.zeros_like(data), data)
     # resize blue image
     bkwargs = dict(xlow=p['IC_CCDX_BLUE_LOW'], xhigh=p['IC_CCDX_BLUE_HIGH'],
                    ylow=p['IC_CCDY_BLUE_LOW'], yhigh=p['IC_CCDY_BLUE_HIGH'])
@@ -270,18 +177,15 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     if p['DRS_PLOT']:
         # start interactive plot
-        if INTERACTIVE_PLOTS:
-            plt.ion()
+        sPlt.start_interactive_session()
         # plot the image with blue and red regions
-        plot_image_and_regions(p, data)
+        sPlt.darkplot_image_and_regions(p, data)
         # plot the data cut
-        plot_datacut(datacutmask)
+        sPlt.darkplot_datacut(datacutmask)
         # plot histograms
-        plot_histograms(p)
-        # turn off interactive plotting
-        if not INTERACTIVE_PLOTS:
-            plt.show()
-            plt.close()
+        sPlt.darkplot_histograms(p)
+        # end interactive session
+        sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -307,8 +211,9 @@ if __name__ == "__main__":
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/__main__')
     else:
-        fargs = [', '.join(fail_msg)]
-        WLOG('info', p['log_opt'], 'QUALITY CONTROL FAILED: {0}'.format(*fargs))
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/__main__')
 
@@ -324,13 +229,13 @@ if __name__ == "__main__":
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    spirouImage.AddNewKey(hdict, p['kw_DARK_DEAD'], value=p['dadead_full'])
-    spirouImage.AddNewKey(hdict, p['kw_DARK_MED'], value=p['med_full'])
-    spirouImage.AddNewKey(hdict, p['kw_DARK_B_DEAD'], value=p['dadead_blue'])
-    spirouImage.AddNewKey(hdict, p['kw_DARK_B_MED'], value=p['med_blue'])
-    spirouImage.AddNewKey(hdict, p['kw_DARK_R_DEAD'], value=p['dadead_red'])
-    spirouImage.AddNewKey(hdict, p['kw_DARK_R_MED'], value=p['med_red'])
-    spirouImage.AddNewKey(hdict, p['kw_DARK_CUT'], value=p['DARK_CUTLIMIT'])
+    spirouImage.AddKey(hdict, p['kw_DARK_DEAD'], value=p['dadead_full'])
+    spirouImage.AddKey(hdict, p['kw_DARK_MED'], value=p['med_full'])
+    spirouImage.AddKey(hdict, p['kw_DARK_B_DEAD'], value=p['dadead_blue'])
+    spirouImage.AddKey(hdict, p['kw_DARK_B_MED'], value=p['med_blue'])
+    spirouImage.AddKey(hdict, p['kw_DARK_R_DEAD'], value=p['dadead_red'])
+    spirouImage.AddKey(hdict, p['kw_DARK_R_MED'], value=p['med_red'])
+    spirouImage.AddKey(hdict, p['kw_DARK_CUT'], value=p['DARK_CUTLIMIT'])
     # write image and add header keys (via hdict)
     spirouImage.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
 
@@ -366,6 +271,9 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
                                 '').format(p['program']))
+
+    neilend = time.time()
+    print('Time taken (py3) = {0}'.format(neilend - neilstart))
 
 # =============================================================================
 # End of code

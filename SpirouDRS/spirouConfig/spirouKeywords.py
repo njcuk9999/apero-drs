@@ -20,6 +20,8 @@ from . import spirouConfig
 # Define program variables (do not change)
 # =============================================================================
 __NAME__ = 'spirouKeywords.py'
+# Get param dict
+ParamDict = spirouConfig.ParamDict
 # get default config file
 p = spirouConfig.read_config_file()
 # check input parameters
@@ -36,24 +38,29 @@ p = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True)
 # ---------------------------------------------------------------
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['kw_ACQTIME_KEY',
-            'kw_CCD_CONAD',
-            'kw_CCD_SIGDET',
-            'kw_DARK_B_DEAD',
-            'kw_DARK_B_MED',
-            'kw_DARK_CUT',
-            'kw_DARK_DEAD',
-            'kw_DARK_MED',
-            'kw_DARK_R_DEAD',
-            'kw_DARK_R_MED',
-            'kw_LOCO_BCKGRD',
-            'kw_LOCO_CTR_COEFF',
-            'kw_LOCO_DEG_C',
-            'kw_LOCO_DEG_E',
-            'kw_LOCO_DEG_W',
-            'kw_LOCO_DELTA',
-            'kw_LOCO_FWHM_COEFF',
-            'kw_LOCO_NBO',
-            'kw_version']
+             'kw_CCD_CONAD',
+             'kw_CCD_SIGDET',
+             'kw_DARK_B_DEAD',
+             'kw_DARK_B_MED',
+             'kw_DARK_CUT',
+             'kw_DARK_DEAD',
+             'kw_DARK_MED',
+             'kw_DARK_R_DEAD',
+             'kw_DARK_R_MED',
+             'kw_LOCO_BCKGRD',
+             'kw_LOCO_CTR_COEFF',
+             'kw_LOCO_DEG_C',
+             'kw_LOCO_DEG_E',
+             'kw_LOCO_DEG_W',
+             'kw_LOCO_DELTA',
+             'kw_LOCO_FWHM_COEFF',
+             'kw_LOCO_NBO',
+             'kw_LOC_MAXFLX',
+             'kw_LOC_RMS_CTR',
+             'kw_LOC_RMS_WID',
+             'kw_LOC_SMAXPTS_CTR',
+             'kw_LOC_SMAXPTS_WID',
+             'kw_version']
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
               'DRS_VERSION',
@@ -172,12 +179,26 @@ kw_LOCO_DELTA = [root_drs_loc + 'PRODEL', p['IC_LOC_DELTA_WIDTH'],
                  'param model 3gau']
 
 # Coeff width order
-kw_LOCO_FWHM_COEFF = [root_drs_flat + 'FW', 0, 'Coeff fwhm order']
+kw_LOCO_FWHM_COEFF = [root_drs_loc + 'FW', 0, 'Coeff fwhm order']
 
 # Number of orders located
 kw_LOCO_NBO = [root_drs_loc + 'NBO', 0, 'nb orders localised']
 
+# Maximum flux in order
+kw_LOC_MAXFLX = [root_drs_loc + 'FLXMAX', 0, 'max flux in order [ADU]']
 
+# Maximum number of removed points allowed for location fit
+kw_LOC_SMAXPTS_CTR = [root_drs_loc + 'CTRMAX', 0, 'max rm pts ctr']
+
+# Maximum number of removed points allowed for width fit
+#    (formally kw_LOC_Smaxpts_width)
+kw_LOC_SMAXPTS_WID = [root_drs_loc + 'WIDMAX', 0, 'max rm pts width']
+
+# Maximum rms allowed for location fit
+kw_LOC_RMS_CTR = [root_drs_loc + 'RMSCTR', 0, 'max rms ctr']
+
+# Maximum rms alloed for width fit (formally kw_LOC_rms_fwhm)
+kw_LOC_RMS_WID = [root_drs_loc + 'RMSWID', 0, 'max rms width']
 
 
 # =============================================================================
@@ -209,7 +230,7 @@ def get_keywords(pp=None):
     """
     # if we have no previous dictionary create it
     if pp is None:
-        pp = dict()
+        pp = ParamDict()
     # loop around each key in USE_KEY
     warnlog = []
     for key in USE_KEYS:
@@ -227,8 +248,8 @@ def get_keywords(pp=None):
         check_keyword_format(key, value)
         # warn if we are overwritting previous key
         if key in pp:
-            wmsg = 'Warning key {0} overwritten in {1}'
-            warnlog.append(wmsg.format(key, __NAME__))
+            wmsg = 'Warning key {0} from {1} overwritten in {2}'
+            warnlog.append(wmsg.format(key, pp.get_source(key), __NAME__))
         # finally add to dictionary
         pp[key] = value
         # add source
