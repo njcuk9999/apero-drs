@@ -53,32 +53,43 @@ ic_ccdx_red_high = 2048-1750
 ic_ccdy_red_low = 2048-1570
 ic_ccdy_red_high = 2048-1910
 
-#   fiber variables                                              - [cal_loc]
-#    MUST have _"fiber" at the end
-#          i.e. "x_AB" or "x_C"
-#    final variable will be chosen based on fiber suffix
-#    and will have prefix as variable name
-#          i.e. "x_AB = 1" for fiber AB would lead
-#               to p['x'] = 1
-#   Number of fibers                                             - [cal_loc]
-nbfib_AB = 2
-nbfib_C = 1
-#   Number of orders to skip at start of image                   - [cal_loc]
-ic_first_order_jump_AB = 2
-ic_first_order_jump_C = 0
-#   Maximum number of order to use                               - [cal_loc]
-ic_locnbmaxo_AB = 72
-ic_locnbmaxo_C = 36
-#   ??                                                           - [cal_loc]
-qc_loc_nbo_AB = 72
-qc_loc_nbo_C = 36
-
 #   Resize image                                                 - [cal_loc]
 ic_ccdx_low = 5
 ic_ccdx_high = 2040
 ic_ccdy_low = 5
 ic_ccdy_high = 1935
 
+
+# -----------------------------------------------------------------------------
+#   fiber variables
+# -----------------------------------------------------------------------------
+#    MUST have _"fiber" at the end
+#          i.e. "x_AB" or "x_C"
+#    final variable will be chosen based on fiber suffix
+#    and will have prefix as variable name
+#          i.e. "x_AB = 1" for fiber AB would lead
+#               to p['x'] = 1
+
+#    fiber params - all parameters for fibers must be defined    - [cal_loc]
+#        here as a python list of strings
+#        must be ONE line only!
+fiber_params = ['nbfib', 'ic_first_order_jump', 'ic_locnbmaxo', 'qc_loc_nbo']
+
+#   Number of fibers                                             - [cal_loc]
+nbfib_AB = 2
+nbfib_C = 1
+
+#   Number of orders to skip at start of image                   - [cal_loc]
+ic_first_order_jump_AB = 2
+ic_first_order_jump_C = 0
+
+#   Maximum number of order to use                               - [cal_loc]
+ic_locnbmaxo_AB = 72
+ic_locnbmaxo_C = 36
+
+#   Quality control "normal" number of orders on fiber           - [cal_loc]
+qc_loc_nbo_AB = 72
+qc_loc_nbo_C = 36
 
 # -----------------------------------------------------------------------------
 #   Dark histogram variables
@@ -188,6 +199,20 @@ qc_max_dead = 25.0
 
 #   Min dark exposure time                                      - [cal_dark]
 qc_dark_time = 1.0
+
+#   Maximum points removed in location fit                      - [cal_loc]
+qc_loc_maxlocfit_removed_ctr = 1500
+
+#   Maximum points removed in width fit                         - [cal_loc]
+qc_loc_maxlocfit_removed_wid = 105
+
+#   Maximum rms allowed in fitting location                     - [cal_loc]
+qc_loc_rmsmax_center = 100
+
+#   Maximum rms allowed in fitting width                        - [cal_loc]
+qc_loc_rmsmax_fwhm = 500
+
+
 
 
 # -----------------------------------------------------------------------------

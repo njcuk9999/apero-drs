@@ -251,6 +251,9 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
 
 def add_new_key(hdict, keywordstore, value=None):
     """
+    Add a new key to hdict from keywordstore, if value is not None then the
+    keywordstore value is updated. Each keywordstore is in form:
+            [key, value, comment]    where key and comment are strings
 
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
@@ -258,6 +261,7 @@ def add_new_key(hdict, keywordstore, value=None):
     :param value: object or None, if any python object (other than None) will
                   replace the value in keywordstore (i.e. keywordstore[1]) with
                   value, if None uses the value = keywordstore[1]
+
     :return hdict: dictionary, storage for adding to FITS rec
     """
     # extract keyword, value and comment and put it into hdict
@@ -269,6 +273,36 @@ def add_new_key(hdict, keywordstore, value=None):
     hdict[key] = (value, comment)
     # return hdict
     return hdict
+
+
+def add_new_keys(hdict, keywordstores, values=None):
+    """
+    Add a set of new key to hdict from keywordstores, if values is not None,
+    then all values are set to None, keywordstores is a list of keywordstore
+    objects. Each keywordstore is in form:
+            [key, value, comment]    where key and comment are strings
+
+    :param hdict: dictionary, storage for adding to FITS rec
+    :param keywordstores: list of lists, list of "keyword list" lists
+                          (defined in spirouKeywords.py)
+                          each "keyword list" must be in form:
+                          [string, value, string]
+    :param values: list of objects or None, if any python object
+                   (other than None) will replace the values in keywordstores
+                   (i.e. keywordstore[1]) with value[i], if None uses the
+                   value = keywordstore[1] for each keywordstores
+
+    :return hdict: dictionary, storage for adding to FITS rec
+    """
+    # deal with no values
+    if values is None:
+        values = np.repeat([None], len(keywordstores))
+    # loop around keywordstores and pipe to add_new_key for each iteration
+    for k_it, keywordstore in enumerate(keywordstores):
+        hdict = add_new_key(hdict, keywordstore, values[k_it])
+    # return hdict
+    return hdict
+
 
 def add_key_2d_list(hdict, keywordstore, values=None):
     """

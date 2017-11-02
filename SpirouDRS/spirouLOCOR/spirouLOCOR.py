@@ -16,22 +16,359 @@ Version 0.0.0
 
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
 
+from SpirouDRS import spirouConfig
+from SpirouDRS import spirouCore
+from SpirouDRS.spirouCore import spirouPlot as splt
 
 # =============================================================================
 # Define variables
 # =============================================================================
-
+# Define the name of this module
+__NAME__ = 'spirouLOCOR.py'
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+# get the logging function
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def fiber_params(pp, fiber):
+    """
+    Takes the parameters defined in FIBER_PARAMS from parameter dictionary
+    (i.e. from config files) and adds the correct parameter to a fiber
+    parameter dictionary
+
+    :param pp: dictionary, parameter dictionary
+    :param fiber: string, the fiber type (and suffix used in confiruation file)
+                  i.e. for fiber AB fiber="AB" and nbfib_AB should be present
+                  in config if "nbfib" is in FIBER_PARAMS
+    :return fparam: dictionary, the fiber parameter dictionary
+    """
+    # set up the fiber parameter directory
+    fparam = ParamDict()
+    # loop around keys in FIBER_PARAMS
+    for key in pp['FIBER_PARAMS']:
+        # construct the parameter key (must ex
+        configkey = ('{0}_{1}'.format(key, fiber)).upper()
+        # check that key (in _fiber form) is in parameter dictionary
+        if configkey not in pp:
+            WLOG('error', pp['log_opt'], ('Config Error: Key {0} does not '
+                                          'exist in parameter dictionary'
+                                          '').format(configkey))
+
+        fparam[key.upper()] = pp[configkey]
+        fparam.set_source(key.upper(), __NAME__ + '/fiber_params()')
+
+    # add fiber to the parameters
+    fparam['fiber'] = fiber
+    fparam.set_source('fiber', __NAME__ + '/fiber_params()')
+    # return fiber dictionary
+    return fparam
+
+
+def measure_background_and_get_central_pixels(pp, loc, image):
+    """
+    Takes the image and measure the background
+
+    :param pp: dictionary, parameter dictionary
+    :param loc: dictionary, localisation parameter dictionary
+    :param image: numpy array (2D), the image
+
+    :return ycc: the normalised values the central pixels
+    """
+    # clip the data - start with the ic_offset row and only
+    # deal with the central column column=ic_cent_col
+    y = image[pp['IC_OFFSET']:, pp['IC_CENT_COL']]
+    # Get the box-smoothed min and max for the central column
+    miny, maxy = measure_box_min_max(y, pp['IC_LOCNBPIX'])
+    # record the maximum signal in the central column
+    # QUESTION: Why the third biggest?
+    max_signal = np.sort(y)[-3]
+    # get the difference between max and min pixel values
+    diff_maxmin = maxy - miny
+    # normalised the central pixel values above the minimum amplitude
+    #   zero by miny and normalise by (maxy - miny)
+    #   Set all values below ic_min_amplitude to zero
+    max_amp = pp['IC_MIN_AMPLITUDE']
+    ycc = np.where(diff_maxmin > max_amp, (y - miny)/diff_maxmin, 0)
+    # get the normalised minimum values for those rows above threshold
+    #   i.e. good background measurements
+    normed_miny = miny/diff_maxmin
+    goodback = np.compress(ycc > pp['IC_LOCSEUIL'], normed_miny)
+    # measure the mean good background as a percentage
+    # (goodback and ycc are between 0 and 1)
+    mean_backgrd = np.mean(goodback) * 100
+    # Log the maximum signal and the mean background
+    WLOG('info', pp['log_opt'], ('Maximum flux/pixel in the spectrum: '
+                                 '{0:.1f} [e-]').format(max_signal))
+    WLOG('info', pp['log_opt'], ('Average background level: '
+                                 '{0:.2f} [%]').format(mean_backgrd))
+    # if in debug mode plot y, miny and maxy else just plot y
+    if pp['IC_DEBUG'] and pp['DRS_PLOT']:
+        splt.locplot_y_miny_maxy(y, miny, maxy)
+    if pp['DRS_PLOT']:
+        splt.locplot_y_miny_maxy(y)
+
+    # set function name (for source)
+    __funcname__ = '/measure_background_and_get_central_pixels()'
+    # Add to loc
+    loc['ycc'] = ycc
+    loc.set_source('ycc', __NAME__ + __funcname__)
+    loc['mean_backgrd'] = mean_backgrd
+    loc.set_source('mean_backgrd', __NAME__ + __funcname__)
+    loc['max_signal'] = max_signal
+    loc.set_source('max_signal', __NAME__ + __funcname__)
+    # return the localisation dictionary
+    return loc
+
+
+def find_order_centers(pp, image, loc, order_num):
+    """
+    Find the center pixels at specific points along this order="order_num"
+
+    specific points are defined by steps (ic_locstepc) away from the
+    central pixel (ic_cent_col)
+
+    :param pp: dictionary, parameter dictionary
+    :param image: numpy array (2D), the image
+    :param loc: dictionary, localisation parameter dictionary
+    :param order_num: int, the current order to process
+
+    :return loc: dictionary, parameter dictionary
+    """
+
+    # get constants from parameter dictionary
+    locstep, centralcol = pp['IC_LOCSTEPC'], pp['IC_CENT_COL']
+    ext_window, image_gap = pp['IC_EXT_WINDOW'], pp['IC_IMAGE_GAP']
+    sigdet, locthreshold = pp['ccdsigdet'], pp['IC_LOCSEUIL']
+    widthmin = pp['IC_WIDTHMIN']
+    nx2 = image.shape[1]
+    # get columns (start from the center and work outwards right side first
+    # the left side) the order of these seems weird but we calculate row centers
+    # from the central col (posc) to the RIGHT edge then calculate the center
+    # pixel again from the "central col+locstep" pixel (first column calculated)
+    # then we calculate row centers to the LEFT edge
+    #   - hence the order of columns
+    columns = list(range(centralcol + locstep, nx2 - locstep, locstep))
+    columns += list(range(centralcol, locstep, -locstep))
+    # loop around each column to get the order row center position from
+    # previous central measurement.
+    # For the first iteration this uses "posc" for all other iterations
+    # uses the central position found at the nearest column to it
+    # must also correct for conversion to int by adding 0.5
+    center, width = 0, 0
+    for col in columns:
+        # for pixels>central pixel we need to get row center from last
+        # iteration (or posc) this is to the LEFT
+        if col > centralcol:
+            rowcenter = int(loc['ctro'][order_num, col - locstep] + 0.5)
+        # for pixels<=central pixel we need to get row center from last
+        # iteration this ir to the RIGHT
+        else:
+            rowcenter = int(loc['ctro'][order_num, col + locstep] + 0.5)
+        # need to define the extraction window edges
+        rowtop, rowbottom = (rowcenter - ext_window), (rowcenter + ext_window)
+        # now make sure our extraction isn't out of bounds
+        if rowtop <= 0 or rowbottom >= nx2:
+            break
+        # make sure we are not in the image_gap
+        # Question: Not sure what this is for
+        if rowtop < image_gap and rowbottom > image_gap:
+            break
+        # get the pixel values between row bottom and row top for
+        # this column
+        ovalues = image[rowtop:rowbottom, col]
+        # only use if max - min above threshold = 100 * sigdet
+        if np.max(ovalues) - np.min(ovalues) > (100.0 * sigdet):
+            # as we are not normalised threshold needs multiplying by
+            # the maximum value
+            threshold = np.max(ovalues) * locthreshold
+            # find the row center position and the width of the order
+            # for this column
+            lkwargs = dict(values=ovalues, threshold=threshold,
+                           min_width=widthmin)
+            center, width = locate_order_center(**lkwargs)
+            # need to add on row top (as centers are relative positions)
+            center = center + rowtop
+            # if the width is zero set the position back to the original
+            # position
+            if width == 0:
+                center = float(rowcenter)
+        # add these positions to storage
+        loc['ctro'][order_num, col] = center
+        loc['sigo'][order_num, col] = width
+        # debug plot
+        if pp['IC_DEBUG'] == 2 and pp['DRS_PLOT']:
+            dvars = [pp, order_num, col, rowcenter, rowtop, rowbottom,
+                     center, width, ovalues]
+            splt.debug_locplot_finding_orders(*dvars)
+    # return the storage dictionary
+    return loc
+
+
+def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
+    # deal with kind
+    if kind not in ['center', 'fwhm']:
+        WLOG('error', pp['log_opt'], ('Error: sigma_clip "kind" must be '
+                                      'either "center" or "fwhm"'))
+    # get variables that are independent of kind
+    x = loc['x']
+    # get variables dependent on kind
+    if kind == 'center':
+        # constants
+        f_order = pp['IC_LOCDFITC']
+        # variables
+        y = loc['ctro'][onum, :][mask]
+    else:
+        # constants
+        f_order = pp['IC_LOCDFITW']
+        # variables
+        y = loc['sigo'][onum, :][mask]
+    # -------------------------------------------------------------------------
+    # calculate fit - coefficients, fit y params, residuals, absolute residuals,
+    #                 rms and max_ptp
+    # -------------------------------------------------------------------------
+    acoeffs, fit, res, abs_res, rms, max_ptp = calculate_fit(x, y, f_order)
+    # max_ptp_frac is different for different cases
+    if kind == 'center':
+        max_ptp_frac = max_ptp / rms
+    else:
+        max_ptp_frac = np.max(abs_res/y) * 100
+    # -------------------------------------------------------------------------
+    # plot order on image plot (if drs_plot is true)
+    if pp['DRS_PLOT'] and kind == 'center':
+        if fig is not None and frame is not None:
+            splt.locplot_order(frame, x, y)
+    # -------------------------------------------------------------------------
+    # Work out the fit value at ic_cent_col (for logging)
+    cfitval = np.polyval(acoeffs[::-1], pp['IC_CENT_COL'])
+    # -------------------------------------------------------------------------
+    # return fit data
+    fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,
+                   max_ptp=max_ptp, max_ptp_frac=max_ptp_frac, cfitval=cfitval)
+    return fitdata
+
+
+def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
+    # deal with kind
+    if kind not in ['center', 'fwhm']:
+        WLOG('error', pp['log_opt'], ('Error: sigma_clip "kind" must be '
+                                      'either "center" or "fwhm"'))
+    # extract constants from fitdata
+    acoeffs = fitdata['a']
+    fit = fitdata['fit']
+    res = fitdata['res']
+    abs_res = fitdata['abs_res']
+    rms = fitdata['rms']
+    max_ptp = fitdata['max_ptp']
+    max_ptp_frac = fitdata['max_ptp_frac']
+    # get variables that are independent of kind
+    x = loc['x']
+    ic_max_rms = pp['IC_MAX_RMS_{0}'.format(kind.upper())]
+    # get variables dependent on kind
+    if kind == 'center':
+        # constants
+        f_order = pp['IC_LOCDFITC']
+        ic_max_ptp = pp['IC_MAX_PTP_{0}'.format(kind.upper())]
+        ic_max_ptp_frac = None
+        ic_ptporms_center = pp['IC_PTPORMS_CENTER']
+        # variables
+        y = loc['ctro'][onum, :][mask]
+        max_rmpts = loc['max_rmpts_pos'][rnum]
+        kind2, ptpfrackind = 'center', 'sigrms'
+    else:
+        # constants
+        f_order = pp['IC_LOCDFITW']
+        ic_max_ptp = -np.inf
+        ic_max_ptp_frac = pp['IC_MAX_PTP_FRAC{0}'.format(kind.upper())]
+        ic_ptporms_center = None
+        # variables
+        y = loc['sigo'][onum, :][mask]
+        max_rmpts = loc['max_rmpts_wid'][rnum]
+        kind2, ptpfrackind = 'width ', 'ptp%'
+    # -------------------------------------------------------------------------
+    # Need to do sigma clip fit
+    # -------------------------------------------------------------------------
+    # define clipping mask
+    wmask = np.ones(len(abs_res), dtype=bool)
+    # get condition for doing sigma clip
+    cond = rms > ic_max_rms
+    if kind == 'center':
+        cond |= max_ptp > ic_max_ptp
+        cond |= (max_ptp_frac > ic_ptporms_center)
+    else:
+        cond |= (max_ptp_frac > ic_max_ptp_frac)
+    # keep clipping until cond is met
+    xo, yo = np.array(x), np.array(y)
+    while cond:
+        # Log that we are clipping the fit
+        wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
+        WLOG('', pp['log_opt'], ('      {0} fit converging with rms/ptp/{1}:'
+                                 ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
+        # debug plot
+        if pp['DRS_PLOT'] and pp['IC_DEBUG']:
+            splt.debug_locplot_fit_residual(pp, loc, rnum, kind)
+        # add one to the max rmpts
+        max_rmpts += 1
+        # remove the largest residual (set wmask = 0 at that position)
+        wmask[np.argmax(abs_res)] = False
+        # get the new x and y values (without largest residual)
+        xo, yo = xo[wmask], yo[wmask]
+        # fit the new x and y
+        acoeffs, fit, res, abs_res, rms, max_ptp = calculate_fit(xo, yo, f_order)
+        # max_ptp_frac is different for different cases
+        if kind == 'center':
+            max_ptp_frac = max_ptp / rms
+        else:
+            max_ptp_frac = np.max(abs_res / yo) * 100
+        # recalculate condition for doing sigma clip
+        cond = rms > ic_max_rms
+        if kind == 'center':
+            cond |= (max_ptp > ic_max_ptp)
+            cond |= (max_ptp_frac > ic_ptporms_center)
+        else:
+            cond |= (max_ptp_frac > ic_max_ptp_frac)
+        # reform wmask
+        wmask = wmask[wmask]
+    else:
+        wargs = [kind2, ptpfrackind, rms, max_ptp, max_ptp_frac, int(max_rmpts)]
+        WLOG('', pp['log_opt'], (' - {0} fit rms/ptp/{1}: {2:.3f}/{3:.3f}/'
+                                 '{4:.3f} with {5} rejected points'
+                                 '').format(*wargs))
+    # if max_rmpts > 50:
+    #     stats = ('\n\tacoeffs={0}, \n\tfit={1}, \n\tres={2}, '
+    #              '\t\tabs_res={3}, \n\trms={4}, \n\tmax_pt={5}'
+    #              ''.format(acoeffs, fit, res, abs_res, rms, max_ptp))
+    #     print('{0} fit did not converge stats: {1}'.format(kind, stats))
+    #     sys.exit()
+    # return fit data
+    fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,
+                   max_ptp=max_ptp, max_ptp_frac=max_ptp_frac,
+                   max_rmpts=max_rmpts)
+    return fitdata
+
+
+def calculate_fit(x, y, f):
+    # Do initial fit (revere due to fortran compatibility)
+    a = np.polyfit(x, y, deg=f)[::-1]
+    # Get the intial fit data
+    fit = np.polyval(a[::-1], x)
+    # work out residuals
+    res = y - fit
+    # Work out absolute residuals
+    abs_res = abs(res)
+    # work out rms
+    rms = np.std(res)
+    # work out max point to point of residuals
+    max_ptp = np.max(abs_res)
+    # return all
+    return a, fit, res, abs_res, rms, max_ptp
+
+
 def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
@@ -256,6 +593,43 @@ def measure_box_min_max(image, size):
     max_image[ny-size:] = max_image[ny-size-1]
     # return arrays for minimum and maximum (box smoothed)
     return min_image, max_image
+
+
+def image_localization_superposition(image, coeffs):
+    """
+    Take an image
+    :param image:
+    :param coeffs:
+    :return:
+    """
+
+
+    # copy the old image
+    newimage = image.copy()
+    # get the number of orders
+    n_orders = len(coeffs)
+    # get the pixel positions along the order
+    xdata = np.arange(image.shape[1])
+    # loop around each order
+    fitxarray, fityarray = [], []
+    for order_num in range(n_orders):
+        # get the pixel positions across the order (from fit coeffs in position)
+        # add 0.5 to account for later conversion to int
+        fity = np.polyval(coeffs[order_num][::-1], xdata) + 0.5
+        # elements must be > 0 and less than image.shape[0]
+        mask = (fity > 0) & (fity < image.shape[0])
+        # Add good values to storage array
+        fityarray = np.append(fityarray, fity[mask])
+        fitxarray = np.append(fitxarray, xdata[mask])
+
+    # convert fitxarray and fityarra to integers
+    fitxarray = np.array(fitxarray, dtype=int)
+    fityarray = np.array(fityarray, dtype=int)
+    # use fitxarray and fityarray as positions to set 0 in newimage
+    newimage[fityarray, fitxarray] = 0
+    # return newimage
+    return newimage
+
 
 
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',
@@ -504,15 +878,5 @@ def locate_order_center(values, threshold, min_width=None):
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-def image_localazation_super(image, coeffs, filename):
-
-    # construct a new image of zeros
-    newimage = np.zeros_like(image)
-
-
-
-
 
 

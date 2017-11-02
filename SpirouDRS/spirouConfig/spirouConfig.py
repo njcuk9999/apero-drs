@@ -95,7 +95,7 @@ class ConfigError(ConfigException):
 class ParamDict(dict):
     """
     Custom dictionary to retain source of a parameter (added via setSource,
-    retreived via getSource)
+    retreived via getSource). String keys are case insensitive.
     """
     def __init__(self, *arg, **kw):
         """
@@ -107,6 +107,16 @@ class ParamDict(dict):
         """
         self.sources = dict()
         super(ParamDict, self).__init__(*arg, **kw)
+        self.__capitalise_keys__()
+
+    def __getitem__(self, key):
+        oldkey = key
+        key = self.__capitalise_key__(key)
+        try:
+            return super(ParamDict, self).__getitem__(key)
+        except KeyError:
+            emsg = 'Parameter "{0}" not found in parameter dictionary'
+            raise ConfigError(emsg.format(oldkey), level='error')
 
     def __setitem__(self, key, value, source=None):
         """
@@ -117,6 +127,8 @@ class ParamDict(dict):
         :param source: string, the source for the parameter
         :return:
         """
+        # capitalise string keys
+        key = self.__capitalise_key__(key)
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -126,9 +138,21 @@ class ParamDict(dict):
         # then do the normal dictionary setting
         super(ParamDict, self).__setitem__(key, value)
 
+    def __contains__(self, key):
+        key = self.__capitalise_key__(key)
+        return super(ParamDict, self).__contains__(key)
+
+    def __delitem__(self, key):
+        key = self.__capitalise_key__(key)
+        super(ParamDict, self).__delitem__(key)
+
     def get(self, key, default=None):
+        # capitalise string keys
+        key = self.__capitalise_key__(key)
+        # if we have the key return the value
         if key in self.keys():
             return self.__getitem__(key)
+        # else return the default key (None if not defined)
         else:
             self.sources[key] = None
             return default
@@ -143,6 +167,8 @@ class ParamDict(dict):
         :param source: string, the source to set
         :return:
         """
+        # capitalise string keys
+        key = self.__capitalise_key__(key)
         # only add if key is in main dictionary
         if key in self.keys():
             self.sources[key] = source
@@ -169,6 +195,8 @@ class ParamDict(dict):
         for k_it in range(len(keys)):
             # assign the key from k_it
             key = keys[k_it]
+            # capitalise string keys
+            key = self.__capitalise_key__(key)
             # Get soure for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -206,21 +234,53 @@ class ParamDict(dict):
 
         :return source: string, the source of the parameter
         """
+        # capitalise string keys
+        key = self.__capitalise_key__(key)
+        # if key in keys and sources then return source
         if key in self.keys() and key in self.sources.keys():
-            source = self.sources[key]
+            return self.sources[key]
+        # else raise a Config Error
         else:
             emsg = ('No source set for key={0}')
             raise ConfigError(emsg.format(key), level='error')
-        return source
+
+    def source_keys(self):
+        """
+        Get a dict_keys for the sources for this parameter dictionary
+        order the same as self.keys()
+
+        :return sources: values of sources dictionary
+        """
+        return self.sources.keys
 
     def source_values(self):
         """
-        Get a list of sources for this parameter dictionary
+        Get a dict_values for the sources for this parameter dictionary
         order the same as self.keys()
 
-        :return sources: list, source values in self.keys() order
+        :return sources: values of sources dictionary
         """
-        return list(self.sources.values())
+        return self.sources.values
+
+    def __capitalise_keys__(self):
+        keys = list(self.keys())
+        for key in keys:
+            # check if key is a string
+            if type(key) == str:
+                # get value
+                value = super(ParamDict, self).__getitem__(key)
+                # delete old key
+                super(ParamDict, self).__delitem__(key)
+                # if it is a string set it to upper case
+                key = key.upper()
+                # set the new key
+                super(ParamDict, self).__setitem__(key, value)
+
+    def __capitalise_key__(self, key):
+        # capitalise string keys
+        if type(key) == str:
+            key = key.upper()
+        return key
 
 
 # =============================================================================
@@ -439,7 +499,7 @@ def evaluate_value(value):
     """
     try:
         newvalue = eval(value)
-        if type(newvalue) not in [int, float, bool, complex]:
+        if type(newvalue) not in [int, float, bool, complex, list]:
             return value
         else:
             return newvalue

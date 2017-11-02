@@ -369,8 +369,8 @@ def display_run_files(p):
     :param p: dictionary, parameter dictionary
     :return:
     """
-    WLOG('', p['log_opt'], ('Now running : {program} on file(s): '
-                            '{str_file_names}').format(**p))
+    WLOG('', p['log_opt'], ('Now running : {PROGRAM} on file(s): '
+                            '{STR_FILE_NAMES}').format(**p))
     tmp = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
     WLOG('', p['log_opt'], 'On directory {0}'.format(tmp))
 
