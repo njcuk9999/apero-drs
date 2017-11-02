@@ -595,6 +595,43 @@ def measure_box_min_max(image, size):
     return min_image, max_image
 
 
+def image_localization_superposition(image, coeffs):
+    """
+    Take an image
+    :param image:
+    :param coeffs:
+    :return:
+    """
+
+
+    # copy the old image
+    newimage = image.copy()
+    # get the number of orders
+    n_orders = len(coeffs)
+    # get the pixel positions along the order
+    xdata = np.arange(image.shape[1])
+    # loop around each order
+    fitxarray, fityarray = [], []
+    for order_num in range(n_orders):
+        # get the pixel positions across the order (from fit coeffs in position)
+        # add 0.5 to account for later conversion to int
+        fity = np.polyval(coeffs[order_num][::-1], xdata) + 0.5
+        # elements must be > 0 and less than image.shape[0]
+        mask = (fity > 0) & (fity < image.shape[0])
+        # Add good values to storage array
+        fityarray = np.append(fityarray, fity[mask])
+        fitxarray = np.append(fitxarray, xdata[mask])
+
+    # convert fitxarray and fityarra to integers
+    fitxarray = np.array(fitxarray, dtype=int)
+    fityarray = np.array(fityarray, dtype=int)
+    # use fitxarray and fityarray as positions to set 0 in newimage
+    newimage[fityarray, fitxarray] = 0
+    # return newimage
+    return newimage
+
+
+
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',
 #                                   min_width=None):
 #     """
@@ -843,37 +880,3 @@ def locate_order_center(values, threshold, min_width=None):
 # =============================================================================
 
 
-def image_localazation_superposition(image, coeffs):
-    """
-    Take an image
-    :param image:
-    :param coeffs:
-    :return:
-    """
-
-
-    # copy the old image
-    newimage = image.copy()
-    # get the number of orders
-    n_orders = len(coeffs)
-    # get the pixel positions along the order
-    xdata = np.arange(image.shape[1])
-    # loop around each order
-    fitxarray, fityarray = [], []
-    for order_num in range(n_orders):
-        # get the pixel positions across the order (from fit coeffs in position)
-        # add 0.5 to account for later conversion to int
-        fity = np.polyval(coeffs[order_num][::-1], xdata) + 0.5
-        # elements must be > 0 and less than image.shape[0]
-        mask = (fity > 0) & (fity < image.shape[0])
-        # Add good values to storage array
-        fityarray = np.append(fityarray, fity[mask])
-        fitxarray = np.append(fitxarray, xdata[mask])
-
-    # convert fitxarray and fityarra to integers
-    fitxarray = np.array(fitxarray, dtype=int)
-    fityarray = np.array(fityarray, dtype=int)
-    # use fitxarray and fityarray as positions to set 0 in newimage
-    newimage[fityarray, fitxarray] = 0
-    # return newimage
-    return newimage
