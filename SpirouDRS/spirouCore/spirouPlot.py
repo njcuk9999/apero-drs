@@ -145,8 +145,8 @@ def darkplot_histograms(pp):
 # =============================================================================
 # localization plotting functions
 # =============================================================================
-def locplot_order(frame, x, y):
-    frame.plot(x, y)
+def locplot_order(frame, x, y, label):
+    frame.plot(x, y, label=label)
 
 
 def locplot_y_miny_maxy(y, miny=None, maxy=None):

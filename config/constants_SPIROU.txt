@@ -32,9 +32,11 @@
 # -----------------------------------------------------------------------------
 
 # Enable debug modes                                            - [cal_loc]
+#    formally DRS_DEBUG
 ic_debug = 0
 
-# Inverval between plots (for certain iteractive graphs)        - [cal_loc]
+#    Interval between plots (for certain iteractive graphs)      - [cal_loc]
+#       formally ic_disptimeout
 ic_display_timeout = 0.5
 
 # -----------------------------------------------------------------------------
@@ -223,6 +225,7 @@ qc_loc_rmsmax_fwhm = 500
 ACQTIME_KEY = ACQTIME1
 
 #   Define calibd DB master filename                          - [cal_dark, cal_loc]
+#      (formally ic_calib_db_master_file)
 ic_calibDB_filename = master_calib_SPIROU.txt
 
 #   Max wait time for calib DB (in seconds)                   - [cal_dark, cal_loc]
