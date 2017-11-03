@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS.spirouCore import spirouPlot as splt
+from SpirouDRS.spirouCore import spirouPlot as sPlt
 
 # =============================================================================
 # Define variables
@@ -109,9 +109,9 @@ def measure_background_and_get_central_pixels(pp, loc, image):
                                  '{0:.2f} [%]').format(mean_backgrd))
     # if in debug mode plot y, miny and maxy else just plot y
     if pp['IC_DEBUG'] and pp['DRS_PLOT']:
-        splt.locplot_y_miny_maxy(y, miny, maxy)
+        sPlt.locplot_y_miny_maxy(y, miny, maxy)
     if pp['DRS_PLOT']:
-        splt.locplot_y_miny_maxy(y)
+        sPlt.locplot_y_miny_maxy(y)
 
     # set function name (for source)
     __funcname__ = '/measure_background_and_get_central_pixels()'
@@ -177,7 +177,7 @@ def find_order_centers(pp, image, loc, order_num):
             break
         # make sure we are not in the image_gap
         # Question: Not sure what this is for
-        if rowtop < image_gap and rowbottom > image_gap:
+        if (rowtop < image_gap) and (rowbottom > image_gap):
             break
         # get the pixel values between row bottom and row top for
         # this column
@@ -205,7 +205,7 @@ def find_order_centers(pp, image, loc, order_num):
         if pp['IC_DEBUG'] == 2 and pp['DRS_PLOT']:
             dvars = [pp, order_num, col, rowcenter, rowtop, rowbottom,
                      center, width, ovalues]
-            splt.debug_locplot_finding_orders(*dvars)
+            sPlt.debug_locplot_finding_orders(*dvars)
     # return the storage dictionary
     return loc
 
@@ -242,7 +242,7 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     # plot order on image plot (if drs_plot is true)
     if pp['DRS_PLOT'] and kind == 'center':
         if fig is not None and frame is not None:
-            splt.locplot_order(frame, x, y)
+            sPlt.locplot_order(frame, x, y, rnum)
     # -------------------------------------------------------------------------
     # Work out the fit value at ic_cent_col (for logging)
     cfitval = np.polyval(acoeffs[::-1], pp['IC_CENT_COL'])
@@ -311,7 +311,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
         # debug plot
         if pp['DRS_PLOT'] and pp['IC_DEBUG']:
-            splt.debug_locplot_fit_residual(pp, loc, rnum, kind)
+            sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)
         # add one to the max rmpts
         max_rmpts += 1
         # remove the largest residual (set wmask = 0 at that position)
@@ -319,7 +319,8 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         # get the new x and y values (without largest residual)
         xo, yo = xo[wmask], yo[wmask]
         # fit the new x and y
-        acoeffs, fit, res, abs_res, rms, max_ptp = calculate_fit(xo, yo, f_order)
+        fdata = calculate_fit(xo, yo, f_order)
+        acoeffs, fit, res, abs_res, rms, max_ptp = fdata
         # max_ptp_frac is different for different cases
         if kind == 'center':
             max_ptp_frac = max_ptp / rms
@@ -631,7 +632,6 @@ def image_localization_superposition(image, coeffs):
     return newimage
 
 
-
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',
 #                                   min_width=None):
 #     """
@@ -733,7 +733,6 @@ def find_position_of_cent_col(values, threshold):
             row += 1
     # finally return the positions
     return np.array(positions)
-
 
 
 def locate_order_center(values, threshold, min_width=None):
@@ -878,5 +877,4 @@ def locate_order_center(values, threshold, min_width=None):
 # =============================================================================
 # End of code
 # =============================================================================
-
 
