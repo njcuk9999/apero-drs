@@ -42,6 +42,13 @@ INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
 
+
+import sys
+if len(sys.argv) == 1:
+    sys.argv = ['test.py', '20170710', 'flat_dark02f10.fits',
+                'flat_dark03f10.fits', 'flat_dark04f10.fits',
+                'flat_dark05f10.fits', 'flat_dark06f10.fits']
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -183,7 +190,7 @@ if __name__ == "__main__":
     loc['ctro'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
     loc['sigo'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
     # Create arrays to store coefficients for position and width
-    loc['ac'] = np.zeros((number_of_orders, fitpos + 1))
+    loc['acc'] = np.zeros((number_of_orders, fitpos + 1))
     loc['ass'] = np.zeros((number_of_orders, fitpos + 1))
     # Create arrays to store rms values for position and width
     loc['rms_center'] = np.zeros(number_of_orders)
@@ -233,14 +240,14 @@ if __name__ == "__main__":
             # sigma clip fit for center positions for this order
             cf_data = spirouLOCOR.SigClipOrderFit(*sigfargs, kind='center')
             # load results into storage arrags for this order
-            loc['ac'][rorder_num] = cf_data['a']
+            loc['acc'][rorder_num] = cf_data['a']
             loc['rms_center'][rorder_num] = cf_data['rms']
             loc['max_ptp_center'][rorder_num] = cf_data['max_ptp']
             loc['max_ptp_fraccenter'][rorder_num] = cf_data['max_ptp_frac']
             loc['max_rmpts_pos'][rorder_num] = cf_data['max_rmpts']
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # sigma fit params
-            sigfargs = [p, loc, cf_data, mask, order_num, rorder_num]
+            sigfargs = [p, loc, wf_data, mask, order_num, rorder_num]
             # sigma clip fit for width positions for this order
             wf_data = spirouLOCOR.SigClipOrderFit(*sigfargs, kind='fwhm')
             # load results into storage arrags for this order
@@ -313,13 +320,14 @@ if __name__ == "__main__":
                                value=mean_rms_fwhm)
     # write 2D list of position fit coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
-                                     values=loc['ac'][0:rorder_num])
+                                     values=loc['acc'][0:rorder_num])
     # write 2D list of width fit coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
                                      values=loc['ass'][0:rorder_num])
-    # write image and add header keys (via hdict)
+    # write center fits and add header keys (via hdict)
+    center_fits = spirouLOCOR.CalcLocoFits(loc['acc'], data2.shape[1])
     spirouImage.WriteImage(os.path.join(reducedfolder, locofits),
-                           loc['ac'][0:rorder_num], hdict)
+                           center_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and record of image of sigma
@@ -358,13 +366,14 @@ if __name__ == "__main__":
                                value=mean_rms_fwhm)
     # write 2D list of position fit coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
-                                     values=loc['ac'][0:rorder_num])
+                                     values=loc['acc'][0:rorder_num])
     # write 2D list of width fit coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
                                      values=loc['ass'][0:rorder_num])
     # write image and add header keys (via hdict)
+    width_fits = spirouLOCOR.CalcLocoFits(loc['ass'], data2.shape[1])
     spirouImage.WriteImage(os.path.join(reducedfolder, locofits),
-                           loc['ass'][0:rorder_num], hdict)
+                           width_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and Record of image of localization
@@ -377,7 +386,7 @@ if __name__ == "__main__":
         WLOG('', p['log_opt'], ('Saving localization image with superposition '
                                 'of orders in file: {0}').format(locofits))
         # superpose zeros over the fit in the image
-        data4 = spirouLOCOR.imageLocSuperimp(data2o, loc['ac'][0:rorder_num])
+        data4 = spirouLOCOR.imageLocSuperimp(data2o, loc['acc'][0:rorder_num])
         # save this image to file
         spirouImage.WriteImage(os.path.join(reducedfolder, locofits3), data4,
                                hdict)
