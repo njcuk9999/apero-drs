@@ -16,9 +16,12 @@ Version 0.0.0
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
+from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 from SpirouDRS.spirouCore import spirouPlot as sPlt
 
 # =============================================================================
@@ -69,6 +72,45 @@ def fiber_params(pp, fiber):
     # return fiber dictionary
     return fparam
 
+
+def get_loc_coefficients(p, hdr=None):
+    # get acquisition time
+    acqtime = spirouCDB.GetAcqTime(p, hdr)
+
+    # get calibDB
+    c_database = spirouCDB.GetDatabase(p, acqtime)
+
+    # get the reduced dir name
+    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+
+    # set up the loc param dict
+    loc = ParamDict()
+
+    # check for localization file for this fiber
+    if not ('LOC_' + p['fiber']) in c_database:
+        emsg = 'No order geometry deined in the calibDB for fiber: {0}'
+        WLOG('info', p['log_opt'], emsg.format(p['fiber']))
+        WLOG('error', p['log_opt'], 'Unable to complete the recipe, FATAL')
+    # else log that we are reading localization parameters
+    wmsg = 'Reading localization parameters of Fiber {0}'
+    WLOG('', p['log_opt'], wmsg.format(p['fiber']))
+    # construct the localization file name
+    loco_file = os.path.join(reduced_dir, c_database['LOC_' + p['fiber']][1])
+    # get header for loco file
+    hdict = spirouImage.ReadHeader(p, loco_file)
+    # Get number of orders from header
+    loc['number_orders'] = spirouImage.ReadKey(p, hdict, p['kw_LOCO_NBO'][0])
+    # Get the number of fit coefficients from header
+    loc['nbcoeff_ctr'] = spirouImage.ReadKey(p, hdict, p['kw_LOCO_DEG_C'][0])
+    loc['nbcoeff_wid'] = spirouImage.ReadKey(p, hdict, p['kw_LOCO_DEG_W'][0])
+    # Read the coefficients from header
+    loc['ac'] = spirouImage.Read2Dkey(p, hdict, p['kw_LOCO_CTR_COEFF'][0],
+                                      loc['number_orders'], loc['nbcoeff_ctr'])
+    loc['ass'] = spirouImage.Read2Dkey(p, hdict, p['kw_LOCO_FWHM_COEFF'][0],
+                                      loc['number_orders'], loc['nbcoeff_wid'])
+    loc.set_all_sources(__NAME__ + '/get_loc_coefficients()')
+    # return the loc param dict
+    return loc
 
 def measure_background_and_get_central_pixels(pp, loc, image):
     """

@@ -75,12 +75,6 @@ if __name__ == "__main__":
     # get gain
     p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
     p.set_source('gain', __NAME__ + '/__main__')
-    # log the Dark exposure time
-    WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
-    # Quality control: make sure the exposure time is longer than qc_dark_time
-    if p['exptime'] < p['QC_DARK_TIME']:
-        WLOG('error', p['log_opt'], 'Dark exposure time too short')
-        sys.exit(1)
 
     # ----------------------------------------------------------------------
     # Correction of DARK

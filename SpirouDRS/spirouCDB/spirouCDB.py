@@ -15,6 +15,8 @@ Version 0.0.0
 """
 import numpy as np
 import sys
+import filecmp
+from astropy.io import fits
 import os
 import shutil
 import datetime
@@ -106,6 +108,44 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     os.remove(lock_file)
 
 
+def get_acquision_time(p, header=None):
+    """
+    Get the acquision time from the header file, if there is not header file
+    use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+    :param p: dictionary, parameter dictionary
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+
+    :return:
+    """
+
+    acqtime = None
+
+    # key acqtime_key from parameter dictionary
+    if 'kw_ACQTIME_KEY' not in p:
+        WLOG('error', p['log_opt'], ('Error kw_ACQTIME_KEY not defined in'
+                                     ' config files (Keywords)'))
+    else:
+        acqtime_key = p['kw_ACQTIME_KEY'][0]
+
+    # if we don't have header get it (using 'fitsfilename')
+    if header is None:
+        rawdir = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
+        rawfile = os.path.join(rawdir, p['arg_file_names'][0])
+        header = fits.getheader(rawfile, ext=0)
+
+    # get max_time from file
+    if acqtime_key not in header:
+        eargs = [acqtime_key, p['arg_file_names'][0]]
+        WLOG('error', p['log_opt'], ('Key {0} not in HEADER file of {1}'
+                                     ''.format(*eargs)))
+    else:
+        acqtime = header[acqtime_key]
+
+    return acqtime
+
+
 def get_database(p, max_time):
     """
     Gets all entries from calibDB where unix time <= max_time
@@ -128,7 +168,6 @@ def get_database(p, max_time):
     except ValueError:
         WLOG('error', p['log_opt'], ('max_time {0} is not a valid float.'
                                      '').format(max_time))
-
 
     # get and check the lock file
     lock, lock_file = get_check_lock_file(p)
@@ -208,6 +247,63 @@ def put_file(p, inputfile):
     except OSError:
         WLOG('', p['log_opt'], 'Unable to chmod on {0}'.format(outputfile))
 
+
+def copy_files(p, header=None):
+    """
+    Copy the files from calibDB to the reduced folder
+       p['DRS_DATA_REDUC']/p['arg_night_name']
+    based on the latest calibDB files from header, if there is not header file
+    use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+    :param p: dictionary, parameter dictionary
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+
+    :return:
+    """
+    # get acquisition time
+    acqtime = get_acquision_time(p, header)
+
+    # get calibDB
+    c_database = get_database(p, acqtime)
+
+    # construct reduced directory path
+    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    calib_dir = p['DRS_CALIB_DB']
+
+    # loop around the files in Calib database
+    for row in range(len(c_database)):
+        # Get the file name for this row
+        filename = list(c_database.values())[row][1]
+        # Construct the old and new locations of this file from filename
+        newloc = os.path.join(reduced_dir, filename)
+        oldloc = os.path.join(calib_dir, filename)
+        # if the file exists in the new location
+        if os.path.exists(newloc):
+            # check if it is the same
+            if filecmp.cmp(newloc, oldloc):
+                wmsg = 'Calibration file: {0} already exists - not copied'
+                WLOG('', p['log_opt'], wmsg.format(filename))
+            # if it isn't then copy over it
+            else:
+                # try to copy --> if not raise an error and log it
+                try:
+                    shutil.copyfile(oldloc, newloc)
+                    wmsg = 'Calibration file: {0} copied in dir {1}'
+                    WLOG('', p['log_opt'], wmsg.format(filename, reduced_dir))
+                except IOError:
+                    emsg = 'I/O problem on {0} or {1}'
+                    WLOG('error', p['log_opt'], emsg.format(oldloc, newloc))
+        # else if the file doesn't exist
+        else:
+            # try to copy --> if not raise an error and log it
+            try:
+                shutil.copyfile(oldloc, newloc)
+                wmsg = 'Calib file: {0} copied in dir {1}'
+                WLOG('', p['log_opt'], wmsg.format(filename, reduced_dir))
+            except IOError:
+                emsg = 'I/O problem on {0} or {1}'
+                WLOG('error', p['log_opt'], emsg.format(oldloc, newloc))
 
 
 # =============================================================================

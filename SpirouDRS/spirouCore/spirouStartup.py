@@ -16,6 +16,7 @@ Last modified: 2017-10-11 at 10:49
 import os
 import sys
 
+from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from . import spirouLog
 
@@ -143,13 +144,14 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
         if not os.path.exists(p['DRS_CALIB_DB']):
             WLOG('error', log_opt,
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
+        # then make sure files are copied
+        spirouCDB.CopyCDBfiles(p)
     else:
         calib_dir = os.path.join(p['DRS_CALIB_DB'])
         # if reduced directory does not exist create it
         if not os.path.isdir(calib_dir):
             os.makedirs(calib_dir)
 
-    # TODO: anything else that needs adding to start up
     # -------------------------------------------------------------------------
     # return the parameter dictionary
     return p
