@@ -160,7 +160,7 @@ kw_CCD_CONAD = ['CONAD', 0, 'CCD conv factor [e-/ADU]']
 kw_CCD_SIGDET = ['SIGDET', 0, 'CCD Readout Noise [e-]']
 
 # Coeff center order
-kw_LOCO_CTR_COEFF = [root_drs_loc + 'CTR', 0, 'Coeff center order']
+kw_LOCO_CTR_COEFF = [root_drs_loc + 'CTR', 0, 'Coeff center']
 
 # fit degree for order centers
 kw_LOCO_DEG_C = [root_drs_loc + 'DEGCTR',  p['IC_LOCDFITC'],
@@ -179,7 +179,7 @@ kw_LOCO_DELTA = [root_drs_loc + 'PRODEL', p['IC_LOC_DELTA_WIDTH'],
                  'param model 3gau']
 
 # Coeff width order
-kw_LOCO_FWHM_COEFF = [root_drs_loc + 'FW', 0, 'Coeff fwhm order']
+kw_LOCO_FWHM_COEFF = [root_drs_loc + 'FW', 0, 'Coeff fwhm']
 
 # Number of orders located
 kw_LOCO_NBO = [root_drs_loc + 'NBO', 0, 'nb orders localised']
