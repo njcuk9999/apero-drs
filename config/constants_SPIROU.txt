@@ -125,7 +125,7 @@ loc_box_size = 10
 #   row number of image to start processing at                   - [cal_loc]
 ic_offset = 40
 
-#   Definition of the central column (formally ic_ccdcolc)       - [cal_loc]
+#   Definition of the central column (formally ic_ccdcolc)       - [cal_loc, cal_slit]
 ic_cent_col = 1000
 
 #   Definition of the extraction window size (half size)         - [cal_loc]
@@ -186,6 +186,28 @@ ic_loc_delta_width = 1.85
 
 #   Localisation option 1: Option for archiving the location image - [cal_loc]
 ic_locopt1 = 1
+
+# -----------------------------------------------------------------------------
+#   Slit parameters
+# -----------------------------------------------------------------------------
+
+#   Extraction option:                                          - [cal_slit]
+#      if 0 extraction by summation over constant range
+#      if 1 extraction by summation over constant sigma
+#      if 2 Horne extraction without cosmic elimination
+#      if 3 Horne extraction with cosmic elimination
+ic_extopt = 0
+
+# distance away from center to extract out to +/-               - [cal_slit]
+ic_extnbsig = 2.5
+
+
+delta_gau = 0
+
+coi = 10.0
+
+#   Offset multiplicative factor (for width)                    - [cal_slit]
+ic_facdec = 1.6
 
 
 
