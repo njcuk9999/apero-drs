@@ -15,6 +15,7 @@ import numpy as np
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 
@@ -29,13 +30,58 @@ __NAME__ = 'cal_SLIT_spirou.py'
 # whether to use plt.ion or plt.show
 INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
 # -----------------------------------------------------------------------------
-# import sys
-# sys.argv += ['20170710', 'fp_fp02a203.fits', 'fp_fp03a203.fits',
-#              'fp_fp04a203.fits']
+import sys
+if len(sys.argv) == 1:
+    sys.argv = ['test.py', '20170710', 'fp_fp02a203.fits', 'fp_fp03a203.fits',
+                'fp_fp04a203.fits']
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def extract(pp, lloc, image):
+    nbo = lloc['number_orders']
+    nx2, ny2 = image.shape
+    # storage for extraction
+    e2ds = np.zeros((nbo, ny2), dtype=float)
+    e2ds_weight = np.zeros((nbo, ny2), dtype=float)
+    # storage for flat
+    flat = np.zeros((nbo, ny2), dtype=float)
+    # storage for snr
+    snr = np.zeros(nbo, dtype=float)
+    # storage for ??
+    nbcos = np.zeros(nbo, dtype=int)
+    # storage for blaze
+    blaze = np.zeros((nbo, ny2), dtype=float)
+    # storage for rms
+    rms = np.zeros(nbo, dtype=float)
+    # storage for tilt
+    tilt = np.zeros(int(nbo/2), dtype=float)
+
+    # loop around each order
+    for order_num in range(0, nbo, 2):
+        # get the width fit coefficients for this fit
+        assi = lloc['ass'][order_num]
+        # --------------------------------------------------------------------
+        # Center the central pixel (using the width fit)
+        # get the width of the central pixel of this order
+        width_cent = np.polyval(assi[::-1], pp['IC_CENT_COL'])
+        # work out the offset in width for the center pixel
+        offset = width_cent * p['IC_FACDEC']
+        # --------------------------------------------------------------------
+        # deal with fiber A:
+        # move the intercept of the center fit by -offset
+        acci = lloc['acc'][order_num]    # Get the center coeffs for this order
+        acci[0] -= offset
+        # extract the data
+        cent1, nbcos[order_num] = spirouEXTOR.Extraction(p, data2, acci, assi)
+        # --------------------------------------------------------------------
+        # deal with fiber B:
+        # move the intercept of the center fit by +offset
+        acci = lloc['acc'][order_num]    # Get the center coeffs for this order
+        acci[0] += offset
+        # extract the data
+        cent2, nbcos[order_num] = spirouEXTOR.Extraction(p, data2, acci, assi)
+
 
 
 # =============================================================================
@@ -96,7 +142,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # get the number of bad pixels
     n_bad_pix = np.sum(data2 <= 0)
-    n_bad_pix_frac = n_bad_pix * 100/ np.product(data2.shape)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
     WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
@@ -110,7 +156,13 @@ if __name__ == "__main__":
     # get localisation fit coefficients
     loc = spirouLOCOR.GetCoeffs(p, hdr)
 
+    # ----------------------------------------------------------------------
+    # Order extraction
+    # ----------------------------------------------------------------------
+    """
+    loc = extract(p, loc)
 
+    """
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------

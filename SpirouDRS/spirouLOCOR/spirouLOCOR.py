@@ -74,6 +74,23 @@ def fiber_params(pp, fiber):
 
 
 def get_loc_coefficients(p, hdr=None):
+    """
+    Extracts loco coefficients from parameters keys (uses header="hdr" provided
+    to get acquisition time or uses p['fitsfilename'] to get acquisition time if
+    "hdr" is None
+
+    :param pp: dictionary, parameter dictionary
+    :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
+
+    :return loc: dictionary, parameter dictionary containing the coefficients,
+                 the number of orders and the number of coeffiecients from
+                 center and width localization fits
+    """
+    # get keywords
+    loco_nbo = p['kw_LOCO_NBO'][0]
+    loco_deg_c, loco_deg_w = p['kw_LOCO_DEG_C'][0], p['kw_LOCO_DEG_W'][0]
+    loco_ctr_coeff = p['kw_LOCO_CTR_COEFF'][0]
+    loco_fwhm_coeff = p['kw_LOCO_FWHM_COEFF'][0]
     # get acquisition time
     acqtime = spirouCDB.GetAcqTime(p, hdr)
 
@@ -99,18 +116,19 @@ def get_loc_coefficients(p, hdr=None):
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header
-    loc['number_orders'] = spirouImage.ReadKey(p, hdict, p['kw_LOCO_NBO'][0])
+    loc['number_orders'] = spirouImage.ReadKey(p, hdict, loco_nbo)
     # Get the number of fit coefficients from header
-    loc['nbcoeff_ctr'] = spirouImage.ReadKey(p, hdict, p['kw_LOCO_DEG_C'][0])
-    loc['nbcoeff_wid'] = spirouImage.ReadKey(p, hdict, p['kw_LOCO_DEG_W'][0])
+    loc['nbcoeff_ctr'] = spirouImage.ReadKey(p, hdict, loco_deg_c) + 1
+    loc['nbcoeff_wid'] = spirouImage.ReadKey(p, hdict, loco_deg_w) + 1
     # Read the coefficients from header
-    loc['ac'] = spirouImage.Read2Dkey(p, hdict, p['kw_LOCO_CTR_COEFF'][0],
-                                      loc['number_orders'], loc['nbcoeff_ctr'])
-    loc['ass'] = spirouImage.Read2Dkey(p, hdict, p['kw_LOCO_FWHM_COEFF'][0],
+    loc['acc'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
+                                       loc['number_orders'], loc['nbcoeff_ctr'])
+    loc['ass'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
                                       loc['number_orders'], loc['nbcoeff_wid'])
     loc.set_all_sources(__NAME__ + '/get_loc_coefficients()')
     # return the loc param dict
     return loc
+
 
 def measure_background_and_get_central_pixels(pp, loc, image):
     """
@@ -170,7 +188,8 @@ def measure_background_and_get_central_pixels(pp, loc, image):
 
 def find_order_centers(pp, image, loc, order_num):
     """
-    Find the center pixels at specific points along this order="order_num"
+    Find the center pixels and widths of this order at specific points
+    along this order="order_num"
 
     specific points are defined by steps (ic_locstepc) away from the
     central pixel (ic_cent_col)
@@ -180,7 +199,8 @@ def find_order_centers(pp, image, loc, order_num):
     :param loc: dictionary, localisation parameter dictionary
     :param order_num: int, the current order to process
 
-    :return loc: dictionary, parameter dictionary
+    :return loc: dictionary, parameter dictionary with updates center and width
+                 positions
     """
 
     # get constants from parameter dictionary
@@ -253,10 +273,55 @@ def find_order_centers(pp, image, loc, order_num):
 
 
 def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
+    """
+    Performs a crude initial fit for this order, uses the ctro positions or
+    sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
+    the fit
+
+    :param pp: dictionary, parameter dictionary containing constants and
+               keywords
+    :param loc: dictionary, parameter dictionary containing the localization
+                data "ctro" and "sigo"
+    :param mask: numpy array (1D) of booleans, True where we have non-zero
+                 widths
+    :param onum: int, order iteration number (running number over all
+                 iterations)
+    :param rnum: int, order number (running number of successful order
+                 iterations only)
+    :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
+                 the central positions, if 'fwhm' this fit is for the width of
+                 the orders
+    :param fig: plt.figure, the figure to plot initial fit on
+    :param frame: matplotlib axis i.e. plt.subplot(), the axis on which to plot
+                  the initial fit on (carries the plt.imshow(image))
+    :return fitdata: dictionary, contains the fit data key value pairs for this
+                     initial fit. keys are as follows:
+
+            a = coefficients of the fit from key
+
+            size = 'ic_locdfitc' [for kind='center'] or
+                 = 'ic_locdftiw' [for kind='fwhm']
+
+            fit = the fity values for the fit (for x = loc['x'])
+                where fity = Sum(a[i] * x^i)
+
+            res = the residuals from y - fity
+                 where y = ctro [kind='center'] or
+                         = sigo [kind='fwhm'])
+
+            abs_res = abs(res)
+
+            rms = the standard deviation of the residuals
+
+            max_ptp = maximum residual value max(res)
+
+            max_ptp_frac = max_ptp / rms  [kind='center']
+                         = max(abs_res/y) * 100   [kind='fwhm']
+    """
     # deal with kind
     if kind not in ['center', 'fwhm']:
-        WLOG('error', pp['log_opt'], ('Error: sigma_clip "kind" must be '
-                                      'either "center" or "fwhm"'))
+        emsg = 'Error: sigma_clip "kind" must be either "center" or "fwhm"'
+        WLOG('error', pp['log_opt'], emsg)
     # get variables that are independent of kind
     x = loc['x']
     # get variables dependent on kind
@@ -296,6 +361,79 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
 
 
 def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
+    """
+    Performs a sigma clip fit for this order, uses the ctro positions or
+    sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
+    the fit. Removes the largest residual from the initial fit (or subsequent
+    sigmaclips) value in x and y and recalculates the fit.
+
+    Does this until all the following conditions are NOT met:
+           rms > 'ic_max_rms'   [kind='center' or kind='fwhm']
+        or max_ptp > 'ic_max_ptp [kind='center']
+        or max_ptp_frac > 'ic_ptporms_center'   [kind='center']
+        or max_ptp_frac > 'ic_max_ptp_frac'     [kind='fwhm'
+
+    :param pp: dictionary, parameter dictionary containing constants and
+               keywords
+    :param loc: dictionary, parameter dictionary containing the localization
+                data "ctro" and "sigo"
+    :param fitdata: dictionary, contains the fit data key value pairs for this
+                     initial fit. keys are as follows:
+
+            a = coefficients of the fit from key
+
+            size = 'ic_locdfitc' [for kind='center'] or
+                 = 'ic_locdftiw' [for kind='fwhm']
+
+            fit = the fity values for the fit (for x = loc['x'])
+                where fity = Sum(a[i] * x^i)
+
+            res = the residuals from y - fity
+                 where y = ctro [kind='center'] or
+                         = sigo [kind='fwhm'])
+
+            abs_res = abs(res)
+
+            rms = the standard deviation of the residuals
+
+            max_ptp = maximum residual value max(res)
+
+            max_ptp_frac = max_ptp / rms  [kind='center']
+                         = max(abs_res/y) * 100   [kind='fwhm']
+
+    :param mask: numpy array (1D) of booleans, True where we have non-zero
+                 widths
+    :param onum: int, order iteration number (running number over all
+                 iterations)
+    :param rnum: int, order number (running number of successful order
+                 iterations only)
+    :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
+                 the central p
+
+    :return fitdata: dictionary, contains the fit data key value pairs for this
+                     initial fit. keys are as follows:
+
+            a = coefficients of the fit from key
+
+            size = 'ic_locdfitc' [for kind='center'] or
+                 = 'ic_locdftiw' [for kind='fwhm']
+
+            fit = the fity values for the fit (for x = loc['x'])
+                where fity = Sum(a[i] * x^i)
+
+            res = the residuals from y - fity
+                 where y = ctro [kind='center'] or
+                         = sigo [kind='fwhm'])
+
+            abs_res = abs(res)
+
+            rms = the standard deviation of the residuals
+
+            max_ptp = maximum residual value max(res)
+
+            max_ptp_frac = max_ptp / rms  [kind='center']
+                         = max(abs_res/y) * 100   [kind='fwhm']
+    """
     # deal with kind
     if kind not in ['center', 'fwhm']:
         WLOG('error', pp['log_opt'], ('Error: sigma_clip "kind" must be '
@@ -410,6 +548,31 @@ def calculate_fit(x, y, f):
     max_ptp = np.max(abs_res)
     # return all
     return a, fit, res, abs_res, rms, max_ptp
+
+
+def calculate_location_fits(coeffs, dim):
+    """
+    Calculates all fits in coeffs array across pixels of size=dim
+
+    :param coeffs: coefficient array,
+                   size = (number of orders x number of coefficients in fit)
+                   output array will be size = (number of orders x dim)
+    :param dim: int, number of pixels to calculate fit for
+                fit will be done over x = 0 to dim in steps of 1
+    :return yfits: array,
+                   size = (number of orders x dim)
+                   the fit for each order at each pixel values from 0 to dim
+    """
+    # create storage array
+    yfits = np.zeros((len(coeffs), dim))
+    # get pixel range for dimension
+    xfit = np.arange(0, dim, 1)
+    # loop around each fit and fit
+    for j_it in range(len(coeffs)):
+        yfits[j_it] = np.polyval(coeffs[j_it][::-1], xfit)
+    # return fits
+    return yfits
+
 
 
 def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
@@ -640,10 +803,15 @@ def measure_box_min_max(image, size):
 
 def image_localization_superposition(image, coeffs):
     """
-    Take an image
-    :param image:
-    :param coeffs:
-    :return:
+    Take an image and superimpose zeros over the positions in the image where
+    the central fits where found to be
+
+    :param image: numpy array (2D), the image
+    :param coeffs: coefficient array,
+                   size = (number of orders x number of coefficients in fit)
+                   output array will be size = (number of orders x dim)
+    :return newimage: numpy array (2D), the image with super-imposed zero filled
+                      fits
     """
 
 

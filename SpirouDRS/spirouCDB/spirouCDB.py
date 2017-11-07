@@ -146,7 +146,7 @@ def get_acquision_time(p, header=None):
     return acqtime
 
 
-def get_database(p, max_time):
+def get_database(p, max_time=None):
     """
     Gets all entries from calibDB where unix time <= max_time
 
@@ -162,6 +162,8 @@ def get_database(p, max_time):
 
             {key} {dirname} {filename} {human_time} {unix_time}
     """
+    if max_time is None:
+        max_time = get_acquision_time(p)
     # check that max_time is a valid unix time (i.e. a float)
     try:
         max_time = time2unixtime(max_time)
