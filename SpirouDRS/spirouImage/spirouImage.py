@@ -162,20 +162,8 @@ def correct_for_dark(p, image, header):
     :return corrected_image: numpy array (2D), the dark corrected image
     """
 
-    # key acqtime_key from parameter dictionary
-    if 'kw_ACQTIME_KEY' not in p:
-        WLOG('error', p['log_opt'], ('Error kw_ACQTIME_KEY not defined in'
-                                     ' config files (Keywords)'))
-    else:
-        acqtime_key = p['kw_ACQTIME_KEY'][0]
-
-    # get max_time from file
-    if acqtime_key not in header:
-        eargs = [acqtime_key, p['arg_file_names'][0]]
-        WLOG('error', p['log_opt'], ('Key {0} not in HEADER file of {1}'
-                                     ''.format(*eargs)))
-    else:
-        acqtime = header[acqtime_key]
+    # get acquisition time
+    acqtime = spirouCDB.GetAcqTime(p, header)
 
     # get calibDB
     cdb = spirouCDB.GetDatabase(p, acqtime)
