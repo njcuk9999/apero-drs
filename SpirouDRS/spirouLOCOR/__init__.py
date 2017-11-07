@@ -32,6 +32,8 @@ FindPosCentCol = spirouLOCOR.find_position_of_cent_col
 
 FindOrderCtrs = spirouLOCOR.find_order_centers
 
+GetCoeffs = spirouLOCOR.get_loc_coefficients
+
 imageLocSuperimp = spirouLOCOR.image_localization_superposition
 
 InitialOrderFit = spirouLOCOR.initial_order_fit

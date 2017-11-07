@@ -347,6 +347,53 @@ def add_key_2d_list(hdict, keywordstore, values=None):
     # return the header dictionary
     return hdict
 
+
+def read_header(p, filepath, ext=0):
+    """
+    Read the header from a file at "filepath" with extention "ext" (default=0)
+
+    :param p: dictionary, parameter dictionary
+    :param filepath: string, filename and path of FITS file to open
+    :param ext: int, extension in FITS rec to open (default = 0)
+    :return hdict: dictionary, the dictionary with key value pairs
+    """
+    # if we don't have header get it (using 'fitsfilename')
+    header = dict()
+    try:
+        header = fits.getheader(filepath)
+    except IOError:
+        emsg = 'Cannot open header of file {0}'
+        WLOG('error', p['log_opt'], emsg.format(filepath))
+    # load in to dictionary
+    hdict = dict(zip(header.keys(), header.values()))
+    # return hdict
+    return hdict
+
+
+def read_key(p, hdict, key):
+    return keylookup(p, hdict, key=key)
+
+
+def read_key_2d_list(p, hdict, key, dim1, dim2):
+    # create 2d list
+    values = np.zeros((dim1, dim2), dtype=float)
+    # loop around the 2D array
+    dim1, dim2 = values.shape
+    for i_it in range(dim1):
+        for j_it in range(dim2):
+            # construct the key name
+            keyname = '{0}{1}'.format(key, i_it * dim2 + j_it)
+            # try to get the values
+            try:
+                # set the value
+                values[i_it][j_it] = float(hdict[keyname])
+            except KeyError:
+                emsg = 'Cannot find key: {0} nbo={1} nbc={2} in hdict'
+                WLOG('error', p['log_opt'], emsg.format(keyname, dim1, dim2))
+    # return values
+    return values
+
+
 # =============================================================================
 # Define pyfits worker functions
 # =============================================================================

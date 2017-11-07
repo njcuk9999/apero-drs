@@ -16,6 +16,13 @@ Version 0.0.0
 
 from . import spirouCDB
 
+
+
+CopyCDBfiles = spirouCDB.copy_files
+
+GetAcqTime = spirouCDB.get_acquision_time
+
+
 # Gets all entries from calibDB where unix time <= max_time
 GetDatabase = spirouCDB.get_database
 

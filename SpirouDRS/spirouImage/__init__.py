@@ -46,6 +46,15 @@ GetKeys = spirouFITS.keyslookup
 # 'arg_file_names' if add is True
 ReadImage = spirouFITS.readimage
 
+# Read Header
+ReadHeader = spirouFITS.read_header
+
+# Read key
+ReadKey = spirouFITS.read_key
+
+# Read 2D key list
+Read2Dkey = spirouFITS.read_key_2d_list
+
 # Resize an image based on a pixel values
 ResizeImage = spirouImage.resize
 
