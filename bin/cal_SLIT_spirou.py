@@ -41,138 +41,6 @@ if len(sys.argv) == 1:
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_tilt(pp, lloc, image):
-    """
-    Get the tilt by correlating the extracted fibers
-
-    :param pp: dictionary, parameter dictionary
-    :param lloc: dictionary, parameter dictionary containing the data
-    :param image: numpy array (2D), the image
-
-    :return lloc: dictionary, parameter dictionary containing the data
-    """
-    nbo = lloc['number_orders']
-    nx2, ny2 = image.shape
-    # storage for "nbcos"
-    # Question: what is nbcos?
-    lloc['nbcos'] = np.zeros(nbo, dtype=int)
-    lloc.set_source('nbcos', __NAME__ + '/get_tilt()')
-    # storage for blaze
-    blaze = np.zeros((nbo, ny2), dtype=float)
-    # storage for rms
-    rms = np.zeros(nbo, dtype=float)
-    # storage for tilt
-    lloc['tilt'] = np.zeros(int(nbo/2), dtype=float)
-    lloc.set_source('tilt', __NAME__ + '/get_tilt()')
-    # loop around each order
-    for order_num in range(0, nbo, 2):
-        # extract this AB order
-        lloc = extract_AB_order(pp, lloc, order_num)
-        # --------------------------------------------------------------------
-        # Over sample the data and interpolate new extraction values
-        pixels = np.arange(data2.shape[1])
-        os_pixels = np.arange(data2.shape[1] * p['COI']) / p['COI']
-        cent1i = np.interp(os_pixels, pixels, lloc['cent1'])
-        cent2i = np.interp(os_pixels, pixels, lloc['cent2'])
-        # --------------------------------------------------------------------
-        # get the correlations between cent2i and cent1i
-        cori = np.correlate(cent2i, cent1i, mode='same')
-        # --------------------------------------------------------------------
-        # get the tilt - the maximum correlation between the middle pixel
-        #   and the middle pixel + 50 * p['COI']
-        coi = int(p['COI'])
-        pos = int(data2.shape[1] * coi / 2)
-        delta = np.argmax(cori[pos:pos + 50 * coi]) / coi
-        # get the angle of the tilt
-        angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['offset'])))
-        # log the tilt and angle
-        wmsg = 'Order {0}: Tilt = {1:.2f} on pixel {2:.1f} = {3:.2f} deg'
-        wargs = [order_num / 2, delta, 2 * lloc['offset'], angle]
-        WLOG('', p['log_opt'], wmsg.format(*wargs))
-        # save tilt angle to lloc
-        lloc['tilt'][int(order_num / 2)] = angle
-    # return the lloc
-    return lloc
-
-
-def extract_AB_order(pp, lloc, order_num):
-    """
-    Perform the extraction on the AB fibers separately using the summation
-    over constant range
-
-    :param pp: dictionary, parameter dictionary
-    :param lloc: dictionary, parameter dictionary containing the data
-    :param order_num: int, the order number for this iteration
-    :return lloc: dictionary, parameter dictionary containing the data
-    """
-    # get the width fit coefficients for this fit
-    assi = lloc['ass'][order_num]
-    # --------------------------------------------------------------------
-    # Center the central pixel (using the width fit)
-    # get the width of the central pixel of this order
-    width_cent = np.polyval(assi[::-1], pp['IC_CENT_COL'])
-    # work out the offset in width for the center pixel
-    lloc['offset'] = width_cent * p['IC_FACDEC']
-    lloc.set_source('offset', __NAME__ + '/extract_AB_order()')
-    # --------------------------------------------------------------------
-    # deal with fiber A:
-
-    # Get the center coeffs for this order
-    acci = np.array(lloc['acc'][order_num])
-    # move the intercept of the center fit by -offset
-    acci[0] -= lloc['offset']
-    # extract the data
-    lloc['cent1'], cpt = spirouEXTOR.Extraction(p, data2, acci, assi)
-    lloc.set_source('cent1', __NAME__ + '/extract_AB_order()')
-    lloc['nbcos'][order_num] = cpt
-    # --------------------------------------------------------------------
-    # deal with fiber B:
-
-    # Get the center coeffs for this order
-    acci = np.array(lloc['acc'][order_num])
-    # move the intercept of the center fit by -offset
-    acci[0] += lloc['offset']
-    # extract the data
-    lloc['cent2'], cpt = spirouEXTOR.Extraction(p, data2, acci, assi)
-    lloc.set_source('cent2', __NAME__ + '/extract_AB_order()')
-    lloc['nbcos'][order_num] = cpt
-
-    # return loc dictionary
-    return lloc
-
-
-def fit_tilt(pp, lloc):
-    """
-    Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
-    return the coefficients, fit and residual rms in lloc dictionary
-
-    :param pp: dictionary, parameter dictionary
-    :param lloc: dictionary, parameter dictionary containing the data
-    :return lloc: dictionary, parameter dictionary containing the data
-    """
-
-    # get the x values for
-    xfit = np.arange(lloc['number_orders']/2)
-    # get fit coefficients for the tilt polynomial fit
-    atc = np.polyfit(xfit, lloc['tilt'], p['IC_TILT_FIT'])[::-1]
-    # get the yfit values for the fit
-    yfit = np.polyval(atc[::-1], xfit)
-    # get the rms for the residuls of the fit and the data
-    rms = np.std(lloc['tilt'] - yfit)
-    # store the fit data in lloc
-    lloc['xfit_tilt'] = xfit
-    lloc.set_source('xfit_tilt', __NAME__ + '/fit_tilt()')
-    lloc['yfit_tilt'] = yfit
-    lloc.set_source('yfit_tilt', __NAME__ + '/fit_tilt()')
-    lloc['a_tilt'] = atc
-    lloc.set_source('a_tilt', __NAME__ + '/fit_tilt()')
-    lloc['rms_tilt'] = rms
-    lloc.set_source('rms_tilt', __NAME__ + '/fit_tilt()')
-
-    # return lloc
-    return lloc
-
-
 
 # =============================================================================
 # Start of code
@@ -250,9 +118,9 @@ if __name__ == "__main__":
     # Calculating the tilt
     # ----------------------------------------------------------------------
     # get the tilt by extracting the AB fibers and correlating them
-    loc = get_tilt(p, loc, data2)
+    loc = spirouImage.GetTilt(p, loc, data2)
     # fit the tilt with a polynomial
-    loc = fit_tilt(p, loc)
+    loc = spirouImage.FitTilt(p, loc)
     # log the tilt dispersion
     wmsg = 'Tilt dispersion = {0:.3f} deg'
     WLOG('info', p['log_opt'] + p['fiber'], wmsg.format(loc['rms_tilt']))

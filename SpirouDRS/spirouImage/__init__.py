@@ -33,6 +33,8 @@ CopyOriginalKeys = spirouFITS.copy_original_keys
 # Corrects an image for darks (using calibDB)
 CorrectForDark = spirouImage.correct_for_dark
 
+FitTilt = spirouImage.fit_tilt
+
 # Flips the image in the x and/or the y direction
 FlipImage = spirouImage.flip_image
 
@@ -41,6 +43,9 @@ FlipImage = spirouImage.flip_image
 #     else logs an error
 GetKey = spirouFITS.keylookup
 GetKeys = spirouFITS.keyslookup
+
+
+GetTilt = spirouImage.get_tilt
 
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
