@@ -337,6 +337,62 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
 
 
 # =============================================================================
+# slit plotting function
+# =============================================================================
+def selected_order_plot(pp, loc, image):
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # get selected order
+    order = pp['IC_SLIT_ORDER_PLOT']
+    # work out offset for this order
+    offset = np.polyval(loc['ass'][order][::-1], pp['IC_CENT_COL'])
+    offset *= pp['IC_FACDEC']
+    offsetarray = np.zeros(len(loc['ass'][order]))
+    offsetarray[0] = -2*offset
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., 30000.))
+    # calculate selected order fit
+    xfit = np.arange(image.shape[1])
+    yfit1 = np.polyval(loc['acc'][order][::-1], xfit)
+    yfit2 = np.polyval((loc['acc'][order] + offsetarray)[::-1], xfit)
+    # plot selected order fit
+    frame.plot(xfit, yfit1, color='red')
+    frame.plot(xfit, yfit2, color='red')
+    # set axis limits to image
+    frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def slit_tilt_angle_and_fit_plot(pp, loc):
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot tilt
+    frame.plot(loc['xfit_tilt'], loc['tilt'])
+    # plot tilt fit
+    frame.plot(loc['xfit_tilt'], loc['yfit_tilt'])
+    # set title and labels
+    frame.set(title='SLIT TILT ANGLE', xlabel='Order number',
+              ylabel='Slit angle [deg]')
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
