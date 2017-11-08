@@ -203,13 +203,17 @@ ic_extnbsig = 2.5
 
 
 delta_gau = 0
-
-coi = 10.0
+#   oversampling factor (for tilt finding)
+coi = 10
 
 #   Offset multiplicative factor (for width)                    - [cal_slit]
 ic_facdec = 1.6
 
+#   Order of polynomial to fit for tilt                         - [cal_slit]
+ic_tilt_fit = 3
 
+#   Order to plot on slit image plot                            - [cal_slit]
+ic_slit_order_plot = 10
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
