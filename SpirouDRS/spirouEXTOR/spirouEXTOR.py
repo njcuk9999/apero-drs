@@ -28,11 +28,61 @@ from SpirouDRS.spirouCore import spirouMath as sm
 # =============================================================================
 # Define variables
 # =============================================================================
-
+__NAME__ = 'spirouEXTOR.py'
 # -----------------------------------------------------------------------------
 
+
 # =============================================================================
-# Define functions
+# Worker functions
+# =============================================================================
+def extract_AB_order(pp, lloc, image, order_num):
+    """
+    Perform the extraction on the AB fibers separately using the summation
+    over constant range
+
+    :param pp: dictionary, parameter dictionary
+    :param lloc: dictionary, parameter dictionary containing the data
+    :param order_num: int, the order number for this iteration
+    :return lloc: dictionary, parameter dictionary containing the data
+    """
+    # get the width fit coefficients for this fit
+    assi = lloc['ass'][order_num]
+    # --------------------------------------------------------------------
+    # Center the central pixel (using the width fit)
+    # get the width of the central pixel of this order
+    width_cent = np.polyval(assi[::-1], pp['IC_CENT_COL'])
+    # work out the offset in width for the center pixel
+    lloc['offset'] = width_cent * pp['IC_FACDEC']
+    lloc.set_source('offset', __NAME__ + '/extract_AB_order()')
+    # --------------------------------------------------------------------
+    # deal with fiber A:
+
+    # Get the center coeffs for this order
+    acci = np.array(lloc['acc'][order_num])
+    # move the intercept of the center fit by -offset
+    acci[0] -= lloc['offset']
+    # extract the data
+    lloc['cent1'], cpt = extract_wrapper(pp, image, acci, assi)
+    lloc.set_source('cent1', __NAME__ + '/extract_AB_order()')
+    lloc['nbcos'][order_num] = cpt
+    # --------------------------------------------------------------------
+    # deal with fiber B:
+
+    # Get the center coeffs for this order
+    acci = np.array(lloc['acc'][order_num])
+    # move the intercept of the center fit by -offset
+    acci[0] += lloc['offset']
+    # extract the data
+    lloc['cent2'], cpt = extract_wrapper(pp, image, acci, assi)
+    lloc.set_source('cent2', __NAME__ + '/extract_AB_order()')
+    lloc['nbcos'][order_num] = cpt
+
+    # return loc dictionary
+    return lloc
+
+
+# =============================================================================
+# Worker functions
 # =============================================================================
 def extract_wrapper(p, image, pos, sig, tilt=False, weighted=False):
     """

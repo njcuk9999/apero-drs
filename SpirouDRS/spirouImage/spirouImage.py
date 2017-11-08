@@ -20,12 +20,16 @@ import os
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouEXTOR
 from . import spirouFITS
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# Get Logging function
 WLOG = spirouCore.wlog
+# Name of program
+__NAME__ = 'spirouImage.py'
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -183,8 +187,85 @@ def correct_for_dark(p, image, header):
     return corrected_image
 
 
+def get_tilt(pp, lloc, image):
+    """
+    Get the tilt by correlating the extracted fibers
+
+    :param pp: dictionary, parameter dictionary
+    :param lloc: dictionary, parameter dictionary containing the data
+    :param image: numpy array (2D), the image
+
+    :return lloc: dictionary, parameter dictionary containing the data
+    """
+    nbo = lloc['number_orders']
+    # storage for "nbcos"
+    # Question: what is nbcos?
+    lloc['nbcos'] = np.zeros(nbo, dtype=int)
+    lloc.set_source('nbcos', __NAME__ + '/get_tilt()')
+    # storage for tilt
+    lloc['tilt'] = np.zeros(int(nbo/2), dtype=float)
+    lloc.set_source('tilt', __NAME__ + '/get_tilt()')
+    # loop around each order
+    for order_num in range(0, nbo, 2):
+        # extract this AB order
+        lloc = spirouEXTOR.ExtractABorder(pp, lloc, order_num)
+        # --------------------------------------------------------------------
+        # Over sample the data and interpolate new extraction values
+        pixels = np.arange(image.shape[1])
+        os_pixels = np.arange(image.shape[1] * pp['COI']) / pp['COI']
+        cent1i = np.interp(os_pixels, pixels, lloc['cent1'])
+        cent2i = np.interp(os_pixels, pixels, lloc['cent2'])
+        # --------------------------------------------------------------------
+        # get the correlations between cent2i and cent1i
+        cori = np.correlate(cent2i, cent1i, mode='same')
+        # --------------------------------------------------------------------
+        # get the tilt - the maximum correlation between the middle pixel
+        #   and the middle pixel + 50 * p['COI']
+        coi = int(pp['COI'])
+        pos = int(image.shape[1] * coi / 2)
+        delta = np.argmax(cori[pos:pos + 50 * coi]) / coi
+        # get the angle of the tilt
+        angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['offset'])))
+        # log the tilt and angle
+        wmsg = 'Order {0}: Tilt = {1:.2f} on pixel {2:.1f} = {3:.2f} deg'
+        wargs = [order_num / 2, delta, 2 * lloc['offset'], angle]
+        WLOG('', pp['log_opt'], wmsg.format(*wargs))
+        # save tilt angle to lloc
+        lloc['tilt'][int(order_num / 2)] = angle
+    # return the lloc
+    return lloc
 
 
+def fit_tilt(pp, lloc):
+    """
+    Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
+    return the coefficients, fit and residual rms in lloc dictionary
+
+    :param pp: dictionary, parameter dictionary
+    :param lloc: dictionary, parameter dictionary containing the data
+    :return lloc: dictionary, parameter dictionary containing the data
+    """
+
+    # get the x values for
+    xfit = np.arange(lloc['number_orders']/2)
+    # get fit coefficients for the tilt polynomial fit
+    atc = np.polyfit(xfit, lloc['tilt'], pp['IC_TILT_FIT'])[::-1]
+    # get the yfit values for the fit
+    yfit = np.polyval(atc[::-1], xfit)
+    # get the rms for the residuls of the fit and the data
+    rms = np.std(lloc['tilt'] - yfit)
+    # store the fit data in lloc
+    lloc['xfit_tilt'] = xfit
+    lloc.set_source('xfit_tilt', __NAME__ + '/fit_tilt()')
+    lloc['yfit_tilt'] = yfit
+    lloc.set_source('yfit_tilt', __NAME__ + '/fit_tilt()')
+    lloc['a_tilt'] = atc
+    lloc.set_source('a_tilt', __NAME__ + '/fit_tilt()')
+    lloc['rms_tilt'] = rms
+    lloc.set_source('rms_tilt', __NAME__ + '/fit_tilt()')
+
+    # return lloc
+    return lloc
 
 
 # =============================================================================

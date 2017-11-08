@@ -87,3 +87,18 @@
         - i.e. `[False, True, True]` or `[True, True, False]` give a different value than `[True, True, True]` or `[False, False, False]` or `[False, False, True]`
         - i.e. the convolution gives the sum of three elements, thus selected those elements with a sum of 2 give our edges
         - The function can be turned back to the original 'manual' mode by using `mode='manual` but is slower (by a factor of x2)
+        
+### cal_SLIT_spirou.py
+
+Need to update this section
+
+
+
+### Progress:
+
+[x] - cal_dark_spirou
+[x] - cal_loc_RAW_spioru
+[x] - cal_SLIT_spirou
+[ ] - cal_FF_RAW_spirou
+[ ] - cal_extract_RAW_spirou
+[ ] - cal_DRIFT_RAW_spirou

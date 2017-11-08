@@ -340,6 +340,16 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
 # slit plotting function
 # =============================================================================
 def selected_order_plot(pp, loc, image):
+    """
+    Plot the image array and overplot the polyfit for the order defined in
+    p['ic_slit_order_plot']
+
+    :param pp: dictionary, parameter dictionary
+    :param loc: dictionary, localisation parameter dictionary
+    :param image: numpy array (2D), the image
+
+    :return None:
+    """
     # set up fig
     plt.figure()
     # clear the current figure
@@ -371,6 +381,13 @@ def selected_order_plot(pp, loc, image):
 
 
 def slit_tilt_angle_and_fit_plot(pp, loc):
+    """
+    Plot the slit tilt angle and its fit
+
+    :param pp: dictionary, parameter dictionary
+    :param loc: dictionary, localisation parameter dictionary
+    :return None:
+    """
     # set up fig
     plt.figure()
     # clear the current figure
