@@ -36,13 +36,10 @@ neilstart = time.time()
 WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'cal_loc_RAW_spirou.py'
-# -----------------------------------------------------------------------------
-# whether to use plt.ion or plt.show
-INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
-
-
+# -----------------------------------------------------------------------------
+# Remove this for final (only for testing)
 import sys
 if len(sys.argv) == 1:
     sys.argv = ['test.py', '20170710', 'flat_dark02f10.fits',
@@ -144,8 +141,8 @@ if __name__ == "__main__":
     # storage dictionary for localization parameters
     loc = ParamDict()
     # Plots setup: start interactive plot
-    if p['DRS_PLOT'] and INTERACTIVE_PLOTS:
-        plt.ion()
+    if p['DRS_PLOT']:
+        sPlt.start_interactive_session()
     # ----------------------------------------------------------------------
     # Measurement and correction of background on the central column
     # ----------------------------------------------------------------------
