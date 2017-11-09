@@ -3,6 +3,14 @@
 ![picture alt](./documentation/figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
 
 
+## Table of Contents
+- [1 Change log from Version 43 of the Drs](#1-change-log-from-version-43-of-the-drs)
+    - [1.1 General](#11-general)
+    - [1.2 cal_DARK_spirou](#12-cal_dark_spiroupy)
+    - [1.3 cal_loc_RAW_spirou](#13-cal_loc_raw_spiroupy)
+    - [1.4 cal_SLIT_spirou](#14-cal_slit_spiroupy)
+    
+- [2 Progress](#2-progress)
 
 
 ## 1 Change log from Version 43 of the DRS
