@@ -22,37 +22,36 @@
         - `warning` displays '@' in the trigger column
         - `info` displays '*' in the trigger column
         - `graph` displays '~' in the trigger column
-```python
-from SpirouDRS import spirouCore
+        ```python
+        from SpirouDRS import spirouCore
+        
+        WLOG = spirouCore.wlog
+        
+        WLOG('all', 'Program', 'This produces a normal message')
 
-WLOG = spirouCore.wlog
+        >>> HH:MM:DD -   | Program | This produces a warning
 
-WLOG('all', 'Program', 'This produces a normal message')
-"""
->>> HH:MM:DD -   | Program | This produces a warning
-"""
+        
+        WLOG('warning', 'Program', 'This produces a warning')
 
-WLOG('warning', 'Program', 'This produces a warning')
-"""
->>> HH:MM:DD - @ | Program | This produces a warning
-"""
+        >>> HH:MM:DD - @ | Program | This produces a warning
 
-WLOG('info', 'Program', 'This produces an info message')
-"""
->>> HH:MM:DD - * | Program | This produces an info message
-"""
+        
+        WLOG('info', 'Program', 'This produces an info message')
 
-WLOG('graph', 'Program', 'This produces a graph message')
-"""
->>> HH:MM:DD - ~ | Program | This produces a graph message
-"""
+        >>> HH:MM:DD - * | Program | This produces an info message
 
-WLOG('error', 'Program', 'This produces an error')
-"""
->>> HH:MM:DD - ! | Program | This produces an error
->>> [sys.exit(1)] OR [os_exit(1)] OR [None]
-"""
-```
+        
+        WLOG('graph', 'Program', 'This produces a graph message')
+
+        >>> HH:MM:DD - ~ | Program | This produces a graph message
+
+        
+        WLOG('error', 'Program', 'This produces an error')
+
+        >>> HH:MM:DD - ! | Program | This produces an error
+        >>> sys.exit(1) or os._exit(1) or None
+        ```
 
 - execution of pythonstartup codes removed and replaced with functions
     - `spirouCore.RunInitialStartup()` to replace `execfile(os.getenv('PYTHONSTARTUP))`
