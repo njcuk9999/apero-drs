@@ -295,9 +295,9 @@ To do
 
 ## 2 Progress:
 
-- [x] - cal_dark_spirou
-- [x] - cal_loc_RAW_spioru
-- [x] - cal_SLIT_spirou
+- [x] - ~~cal_dark_spirou~~
+- [x] - ~~cal_loc_RAW_spioru~~
+- [x] - ~~cal_SLIT_spirou~~
 - [ ] - cal_FF_RAW_spirou
 - [ ] - cal_extract_RAW_spirou
 - [ ] - cal_DRIFT_RAW_spirou
