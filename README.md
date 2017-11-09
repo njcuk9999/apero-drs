@@ -8,8 +8,51 @@
 
 - all import functions re-worked (removed or changed or updated)
 
-- `WLOG` function, if `key=="error"` now exits
-    - Maybe this should be configurable
+- `WLOG` function overhaul (now in `spirouCore.spirouLog.logger)`
+    - `WLOG(key, option, message)` or `logger(key, option, message)`
+    - produces print out (to log and console) of the following:
+        `HH:MM:SS - trigger |option|message`
+    - keys allowed are set in `spirouConfig.spirouConfig` as a dictionary
+        - `all`   displays ' ' in the trigger column
+        - `error`  displays '!' in the trigger column
+            - will exit if `spirouConfig.spirouConfig.EXIT` is set
+            - via `sys.exit(1)` (soft exit) if `EXIT = 'sys'`
+            - via `os._exit(1)` (hard exit) if `EXIT = 'os'`
+            - else will not exit on error triggered (*NOT RECOMMENDED*)
+        - `warning` displays '@' in the trigger column
+        - `info` displays '*' in the trigger column
+        - `graph` displays '~' in the trigger column
+```python
+from SpirouDRS import spirouCore
+
+WLOG = spirouCore.wlog
+
+WLOG('all', 'Program', 'This produces a normal message')
+"""
+>>> HH:MM:DD -   | Program | This produces a warning
+"""
+
+WLOG('warning', 'Program', 'This produces a warning')
+"""
+>>> HH:MM:DD - @ | Program | This produces a warning
+"""
+
+WLOG('info', 'Program', 'This produces an info message')
+"""
+>>> HH:MM:DD - * | Program | This produces an info message
+"""
+
+WLOG('graph', 'Program', 'This produces a graph message')
+"""
+>>> HH:MM:DD - ~ | Program | This produces a graph message
+"""
+
+WLOG('error', 'Program', 'This produces an error')
+"""
+>>> HH:MM:DD - ! | Program | This produces an error
+>>> [sys.exit(1)] OR [os_exit(1)] OR [None]
+"""
+```
 
 - execution of pythonstartup codes removed and replaced with functions
     - `spirouCore.RunInitialStartup()` to replace `execfile(os.getenv('PYTHONSTARTUP))`
@@ -76,19 +119,40 @@
                 allsources = x.sources
             ```
            
-           
 - all hard coded constants (i.e. ints/floats/strings) that may be changed moved into config files
     - `config.txt` - This contains all the variables previously defined as environmental variables
         - i.e. this will allow functionality across platforms and avoid having many variables defined in the environment (fine for a dedicated machine but a nightmare for anyone else)
     - `hadmrICDP_SPIROU.txt` - final location can be changed by all other variables are currently in this file (loaded in previous versions as a python code loading variables into the memory). This is dangerous as any variable can be overwritten/previously defined.
 
+- *ConfigError* overrides *ConfigException* - new classes to handle errors due to the config file or calling a config parameter from config file (also used in *ParamDict*)
+    - Most importantly interacts nicely with WLOG() function (in `spirouCore.spirouLog`)
+    - Use is as follows:
+        ```python
+        def a_function():
+            try:
+                # some_code that causes an exception
+                x = dict()
+                y = x['a']
+                return y
+            except KeyError:
+                # define a log message
+                message = 'a was not found in dictionary x'
+                raise ConfigError(message, level='error')
+
+        # Main code:
+        try:
+            a_function()
+        except ConfigError as e:
+            WLOG(e.level, 'program', e.message)
+        ```
+    - as well as a message (stored in `e.message`) a level can also be set, which in turn can be used in `WLOG` function (recall with WLOG is `level=error` the code will exit)
+        
 - moved resizing of image to function
     - `spirouImage.ResizeImage(data, xlow, xhigh, ylow, yhigh)`
 
 - plots are now only plotted if `DRS_PLOT` is True (or =1)
     - Can turn plotting off in `config.txt` =0 or =False
 
-- 
 
 
 
