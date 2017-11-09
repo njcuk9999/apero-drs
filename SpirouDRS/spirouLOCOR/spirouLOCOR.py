@@ -719,7 +719,7 @@ def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
     :return None:
     """
     # get the new images
-    image1 = smoothed_boxmean_image(image, size)
+    image1 = smoothed_boxmean_image1(image, size)
     image2 = smoothed_boxmean_image2(image, size)
     # set up the plot
     fsize = (4, 6)
