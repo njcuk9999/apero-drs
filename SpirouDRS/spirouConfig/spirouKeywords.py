@@ -201,8 +201,12 @@ kw_LOC_RMS_CTR = [root_drs_loc + 'RMSCTR', 0, 'max rms ctr']
 # Maximum rms alloed for width fit (formally kw_LOC_rms_fwhm)
 kw_LOC_RMS_WID = [root_drs_loc + 'RMSWID', 0, 'max rms width']
 
+# -----------------------------------------------------------------------------
+# Define cal_SLIT variables
+# -----------------------------------------------------------------------------
 # Tilt order keyword prefix
 kw_TILT = [root_drs_loc + 'TILT', 0, 'Tilt order']
+
 
 # =============================================================================
 # Define functions (Do not change)

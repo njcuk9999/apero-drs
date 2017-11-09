@@ -191,7 +191,7 @@ ic_locopt1 = 1
 #   Slit parameters
 # -----------------------------------------------------------------------------
 
-#   Extraction option:                                          - [cal_slit]
+#   Extraction option in tilt file:                             - [cal_slit]
 #      if 0 extraction by summation over constant range
 #      if 1 extraction by summation over constant sigma
 #      if 2 Horne extraction without cosmic elimination
