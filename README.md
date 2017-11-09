@@ -2,9 +2,12 @@
 
 ![picture alt](./documentation/figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
 
-## Change log from Version 43 of the DRS
 
-### General
+
+
+## 1 Change log from Version 43 of the DRS
+
+### 1.1 General
 
 - all import functions re-worked (removed or changed or updated)
 
@@ -155,7 +158,7 @@
 
 
 
-### cal_DARK_spirou.py
+### 1.2 cal_DARK_spirou.py
 
 - dark measurement moved to internal function `measure_dark` (for clarity)
      - This is, in part, due to the repetition of code for "Whole det", "Blue part" and "Red part"
@@ -175,7 +178,7 @@
 
 
 
-### cal_loc_RAW_spirou.py
+### 1.3 cal_loc_RAW_spirou.py
 
 
 - added function to convert from ADU/s to electrons
@@ -233,7 +236,7 @@
 
 
 
-### cal_SLIT_spirou.py
+### 1.4 cal_SLIT_spirou.py
 
 Need to update this section
 
@@ -245,7 +248,7 @@ Need to update this section
 
 
 
-### Progress:
+## 2 Progress:
 
 - [x] - cal_dark_spirou
 - [x] - cal_loc_RAW_spioru
