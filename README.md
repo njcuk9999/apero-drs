@@ -197,6 +197,12 @@
     
 - writing of data is sped up by caching all HEADER keys and writing to file **once** with the write of the data.
 
+- *speed up*
+
+	- AT-4 v44: 4.88102817535 seconds
+	
+	- py3: 1.8896541595458984 seconds
+
 
 [Back to top](#table-of-contents)
 
@@ -257,13 +263,39 @@
     - this is many times faster than before - due to optimisation
     - `spirouLOCOR.imageLocSuperimp(image, coefficients_of_fit)`
 
+- *speed up*
+
+	- AT-4 v44: 5.69740796089 seconds
+	
+    - py3:  2.2549290657043457 seconds
+
+
+
 [Back to top](#table-of-contents)
 
 - - - -
 
 ### 1.4 cal_SLIT_spirou.py
 
-Need to update this section
+- added storage dictionary to store (and pass around) all variables created
+    - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+- Retrieval of coefficients from `_loco_` file moved to `spirouLOCOR.GetCoeffs`
+
+- Tilt finding is moved to function `spirouImage.GetTilt(p, loc, image)`
+
+- Fitting the tilt is moved to function `spirouImage.FitTilt(p, loc, image)`
+
+- selected order plot moved to `sPlt.selected_order_plot(o, loc, image)`
+
+- slit tilt angle and fit plot moved to `sPlt.slit_tilt_angle_and_fit_plot(p, loc)`
+
+- *speed up*
+
+    - AT-4 v44: 11.0713419914
+    
+    - py3: 4.385987043380737
+
 
 [Back to top](#table-of-contents)
 
