@@ -18,12 +18,15 @@
     
     1.6 [cal_extract_RAW_spirou](#16-cal_extract_raw_spiroupy)
     
-    1.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spirou)
+    1.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spiroupy)
   
 2 [Progress](#2-progress)
 
+- - - -
 
 ## 1 Change log from Version 43 of the DRS
+
+- - - -
 
 ### 1.1 General
 
@@ -176,7 +179,7 @@
 [Back to top](#table-of-contents)
 
 
-
+- - - -
 
 ### 1.2 cal_DARK_spirou.py
 
@@ -197,6 +200,7 @@
 
 [Back to top](#table-of-contents)
 
+- - - -
 
 ### 1.3 cal_loc_RAW_spirou.py
 
@@ -253,8 +257,9 @@
     - this is many times faster than before - due to optimisation
     - `spirouLOCOR.imageLocSuperimp(image, coefficients_of_fit)`
 
-
 [Back to top](#table-of-contents)
+
+- - - -
 
 ### 1.4 cal_SLIT_spirou.py
 
@@ -262,11 +267,15 @@ Need to update this section
 
 [Back to top](#table-of-contents)
 
+- - - -
+
 ### 1.5 cal_FF_RAW_spirou.py
 
 To do
 
 [Back to top](#table-of-contents)
+
+- - - -
 
 ### 1.6 cal_extract_RAW_spirou.py
 
@@ -274,11 +283,15 @@ To do
 
 [Back to top](#table-of-contents)
 
+- - - -
+
 ### 1.7 cal_DRIFT_RAW_spirou.py
 
 To do
 
 [Back to top](#table-of-contents)
+
+- - - -
 
 ## 2 Progress:
 
@@ -290,3 +303,5 @@ To do
 - [ ] - cal_DRIFT_RAW_spirou
 
 [Back to top](#table-of-contents)
+
+- - - -
