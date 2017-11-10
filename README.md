@@ -2,14 +2,80 @@
 
 ![picture alt](./documentation/figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
 
-## Change log from Version 43 of the DRS
 
-### General
+## Table of Contents
+1. [Change log from Version 43 of the Drs](#1-change-log-from-version-43-of-the-drs)
+
+    1.1 [General](#11-general)
+
+    1.2 [cal_DARK_spirou](#12-cal_dark_spiroupy)
+
+    1.3 [cal_loc_RAW_spirou](#13-cal_loc_raw_spiroupy)
+
+    1.4 [cal_SLIT_spirou](#14-cal_slit_spiroupy)
+    
+    1.5 [cal_FF_RAW_spirou](#15-cal_ff_raw_spiroupy)
+    
+    1.6 [cal_extract_RAW_spirou](#16-cal_extract_raw_spiroupy)
+    
+    1.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spiroupy)
+  
+2 [Progress](#2-progress)
+
+- - - -
+
+## 1 Change log from Version 43 of the DRS
+
+- - - -
+
+### 1.1 General
 
 - all import functions re-worked (removed or changed or updated)
 
-- `WLOG` function, if `key=="error"` now exits
-    - Maybe this should be configurable
+- `WLOG` function overhaul (now in `spirouCore.spirouLog.logger)`
+    - `WLOG(key, option, message)` or `logger(key, option, message)`
+    - produces print out (to log and console) of the following:
+        `HH:MM:SS - trigger |option|message`
+    - keys allowed are set in `spirouConfig.spirouConfig` as a dictionary
+        - `all`   displays ' ' in the trigger column
+        - `error`  displays '!' in the trigger column
+            - will exit if `spirouConfig.spirouConfig.EXIT` is set
+            - via `sys.exit(1)` (soft exit) if `EXIT = 'sys'`
+            - via `os._exit(1)` (hard exit) if `EXIT = 'os'`
+            - else will not exit on error triggered (*NOT RECOMMENDED*)
+        - `warning` displays '@' in the trigger column
+        - `info` displays '*' in the trigger column
+        - `graph` displays '~' in the trigger column
+        ```python
+        from SpirouDRS import spirouCore
+        
+        WLOG = spirouCore.wlog
+        
+        WLOG('all', 'Program', 'This produces a normal message')
+
+        >>> HH:MM:DD -   | Program | This produces a warning
+
+        
+        WLOG('warning', 'Program', 'This produces a warning')
+
+        >>> HH:MM:DD - @ | Program | This produces a warning
+
+        
+        WLOG('info', 'Program', 'This produces an info message')
+
+        >>> HH:MM:DD - * | Program | This produces an info message
+
+        
+        WLOG('graph', 'Program', 'This produces a graph message')
+
+        >>> HH:MM:DD - ~ | Program | This produces a graph message
+
+        
+        WLOG('error', 'Program', 'This produces an error')
+
+        >>> HH:MM:DD - ! | Program | This produces an error
+        >>> sys.exit(1) or os._exit(1) or None
+        ```
 
 - execution of pythonstartup codes removed and replaced with functions
     - `spirouCore.RunInitialStartup()` to replace `execfile(os.getenv('PYTHONSTARTUP))`
@@ -76,23 +142,46 @@
                 allsources = x.sources
             ```
            
-           
 - all hard coded constants (i.e. ints/floats/strings) that may be changed moved into config files
     - `config.txt` - This contains all the variables previously defined as environmental variables
         - i.e. this will allow functionality across platforms and avoid having many variables defined in the environment (fine for a dedicated machine but a nightmare for anyone else)
     - `hadmrICDP_SPIROU.txt` - final location can be changed by all other variables are currently in this file (loaded in previous versions as a python code loading variables into the memory). This is dangerous as any variable can be overwritten/previously defined.
 
+- *ConfigError* overrides *ConfigException* - new classes to handle errors due to the config file or calling a config parameter from config file (also used in *ParamDict*)
+    - Most importantly interacts nicely with WLOG() function (in `spirouCore.spirouLog`)
+    - Use is as follows:
+        ```python
+        def a_function():
+            try:
+                # some_code that causes an exception
+                x = dict()
+                y = x['a']
+                return y
+            except KeyError:
+                # define a log message
+                message = 'a was not found in dictionary x'
+                raise ConfigError(message, level='error')
+
+        # Main code:
+        try:
+            a_function()
+        except ConfigError as e:
+            WLOG(e.level, 'program', e.message)
+        ```
+    - as well as a message (stored in `e.message`) a level can also be set, which in turn can be used in `WLOG` function (recall with WLOG is `level=error` the code will exit)
+        
 - moved resizing of image to function
     - `spirouImage.ResizeImage(data, xlow, xhigh, ylow, yhigh)`
 
 - plots are now only plotted if `DRS_PLOT` is True (or =1)
     - Can turn plotting off in `config.txt` =0 or =False
 
-- 
+[Back to top](#table-of-contents)
 
 
+- - - -
 
-### cal_DARK_spirou.py
+### 1.2 cal_DARK_spirou.py
 
 - dark measurement moved to internal function `measure_dark` (for clarity)
      - This is, in part, due to the repetition of code for "Whole det", "Blue part" and "Red part"
@@ -108,11 +197,18 @@
     
 - writing of data is sped up by caching all HEADER keys and writing to file **once** with the write of the data.
 
+- *speed up*
+
+	- AT-4 v44: 4.88102817535 seconds
+	
+	- py3: 1.8896541595458984 seconds
 
 
+[Back to top](#table-of-contents)
 
+- - - -
 
-### cal_loc_RAW_spirou.py
+### 1.3 cal_loc_RAW_spirou.py
 
 
 - added function to convert from ADU/s to electrons
@@ -167,26 +263,77 @@
     - this is many times faster than before - due to optimisation
     - `spirouLOCOR.imageLocSuperimp(image, coefficients_of_fit)`
 
+- *speed up*
+
+	- AT-4 v44: 5.69740796089 seconds
+	
+    - py3:  2.2549290657043457 seconds
 
 
 
-### cal_SLIT_spirou.py
+[Back to top](#table-of-contents)
 
-Need to update this section
+- - - -
+
+### 1.4 cal_SLIT_spirou.py
+
+- added storage dictionary to store (and pass around) all variables created
+    - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+- Retrieval of coefficients from `_loco_` file moved to `spirouLOCOR.GetCoeffs`
+
+- Tilt finding is moved to function `spirouImage.GetTilt(p, loc, image)`
+
+- Fitting the tilt is moved to function `spirouImage.FitTilt(p, loc, image)`
+
+- selected order plot moved to `sPlt.selected_order_plot(o, loc, image)`
+
+- slit tilt angle and fit plot moved to `sPlt.slit_tilt_angle_and_fit_plot(p, loc)`
+
+- *speed up*
+
+    - AT-4 v44: 11.0713419914
+    
+    - py3: 4.385987043380737
 
 
+[Back to top](#table-of-contents)
 
+- - - -
 
+### 1.5 cal_FF_RAW_spirou.py
 
+To do
 
+[Back to top](#table-of-contents)
 
+- - - -
 
+### 1.6 cal_extract_RAW_spirou.py
 
-### Progress:
+To do
 
-- [x] - cal_dark_spirou
-- [x] - cal_loc_RAW_spioru
-- [x] - cal_SLIT_spirou
+[Back to top](#table-of-contents)
+
+- - - -
+
+### 1.7 cal_DRIFT_RAW_spirou.py
+
+To do
+
+[Back to top](#table-of-contents)
+
+- - - -
+
+## 2 Progress:
+
+- [x] - ~~cal_dark_spirou~~
+- [x] - ~~cal_loc_RAW_spioru~~
+- [x] - ~~cal_SLIT_spirou~~
 - [ ] - cal_FF_RAW_spirou
 - [ ] - cal_extract_RAW_spirou
 - [ ] - cal_DRIFT_RAW_spirou
+
+[Back to top](#table-of-contents)
+
+- - - -
