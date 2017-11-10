@@ -34,7 +34,10 @@ WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'cal_DARK_spirou.py'
 # -----------------------------------------------------------------------------
-
+# Remove this for final (only for testing)
+import sys
+if len(sys.argv) == 1:
+    sys.argv = ['test.py', '20170710', 'dark_dark02d406.fits']
 
 # =============================================================================
 # Define functions
@@ -104,9 +107,8 @@ if __name__ == "__main__":
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='average')
     # get ccd sig det value
-    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE',
-                                              hdr['@@@hname']))
-    p.set_source('ccdsigdet', __NAME__ + '/__main__')
+    p['sigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    p.set_source('sigdet', __NAME__ + '/__main__')
     # get exposure time
     p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
     p.set_source('exptime', __NAME__ + '/__main__')
