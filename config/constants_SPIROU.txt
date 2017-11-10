@@ -75,7 +75,7 @@ ic_ccdy_high = 1935
 #    fiber params - all parameters for fibers must be defined    - [cal_loc]
 #        here as a python list of strings
 #        must be ONE line only!
-fiber_params = ['nbfib', 'ic_first_order_jump', 'ic_locnbmaxo', 'qc_loc_nbo']
+fiber_params = ['nbfib', 'ic_first_order_jump', 'ic_locnbmaxo', 'qc_loc_nbo', 'fib_type']
 
 #   Number of fibers                                             - [cal_loc]
 nbfib_AB = 2
@@ -93,8 +93,12 @@ ic_locnbmaxo_C = 36
 qc_loc_nbo_AB = 72
 qc_loc_nbo_C = 36
 
+#   Fiber type                                                   - [cal_ff]
+fib_type_AB = AB
+fib_type_C = C
+
 # -----------------------------------------------------------------------------
-#   Dark histogram variables
+#   cal_dark histogram variables
 # -----------------------------------------------------------------------------
 
 #   The lower percentile (0 - 100)                               - [cal_dark]
@@ -115,7 +119,7 @@ dark_cutlimit = 100.0
 
 
 # -----------------------------------------------------------------------------
-#   Localisation parameters
+#   cal_loc parameters
 # -----------------------------------------------------------------------------
 
 #   Size of the order_profile smoothed box                       - [cal_loc]
@@ -188,7 +192,7 @@ ic_loc_delta_width = 1.85
 ic_locopt1 = 1
 
 # -----------------------------------------------------------------------------
-#   Slit parameters
+#   cal_slit parameters
 # -----------------------------------------------------------------------------
 
 #   Extraction option in tilt file:                             - [cal_slit]
@@ -216,6 +220,16 @@ ic_tilt_fit = 3
 ic_slit_order_plot = 10
 
 # -----------------------------------------------------------------------------
+#   cal_ff parameters
+# -----------------------------------------------------------------------------
+
+#    Do background measurement (True = 1, False = 0)            - [cal_ff]
+ic_do_bkgr_subtraction = 0
+
+# half-size of window for background measurements               - [cal_ff]
+ic_bkgr_window = 100
+
+# -----------------------------------------------------------------------------
 #  Quality control settings
 # -----------------------------------------------------------------------------
 
@@ -240,7 +254,8 @@ qc_loc_rmsmax_center = 100
 #   Maximum rms allowed in fitting width                        - [cal_loc]
 qc_loc_rmsmax_fwhm = 500
 
-
+#   Maximum signal allowed (set saturation limit)               - [cal_ff_raw]
+qc_max_signal = 65500
 
 
 # -----------------------------------------------------------------------------

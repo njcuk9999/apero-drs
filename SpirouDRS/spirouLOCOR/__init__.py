@@ -46,25 +46,6 @@ Produce a (box) smoothed image, smoothed by the mean of a box of
 :return newimage: numpy array (2D), the smoothed image
 """
 
-BoxSmoothedMinMax = spirouLOCOR.measure_box_min_max
-"""
-Measure the minimum and maximum pixel value for each row using a box which
-contains all pixels for rows:  row-size to row+size and all columns.
-
-Edge pixels (0-->size and (image.shape[0]-size)-->image.shape[0] are
-set to the values for row=size and row=(image.shape[0]-size)
-
-:param image: numpy array (2D), the image
-:param size: int, the half size of the box to use (half height)
-             so box is defined from  row-size to row+size
-
-:return min_image: numpy array (1D length = image.shape[0]), the row values
-                   for minimum pixel defined by a box of row-size to
-                   row+size for all columns
-:retrun max_image: numpy array (1D length = image.shape[0]), the row values
-                   for maximum pixel defined by a box of row-size to
-                   row+size for all columns
-"""
 
 CalcLocoFits = spirouLOCOR.calculate_location_fits
 """
@@ -224,16 +205,6 @@ the start and end of the order (and thus the center) above threshold
 For 1000 loops, best of 3: 771 µs per loop
 """
 
-MeasureBkgrdGetCentPixs = spirouLOCOR.measure_background_and_get_central_pixels
-"""
-Takes the image and measure the background
-
-:param pp: dictionary, parameter dictionary
-:param loc: dictionary, localisation parameter dictionary
-:param image: numpy array (2D), the image
-
-:return ycc: the normalised values the central pixels
-"""
 
 
 SigClipOrderFit = spirouLOCOR.sigmaclip_order_fit

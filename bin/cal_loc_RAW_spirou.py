@@ -20,6 +20,7 @@ import os
 import sys
 import time
 
+from SpirouDRS import spirouBACK
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -70,9 +71,8 @@ if __name__ == "__main__":
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
     # get ccd sig det value
-    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE',
-                                              hdr['@@@hname']))
-    p.set_source('ccdsigdet', __NAME__ + '/__main__')
+    p['sigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
+    p.set_source('sigdet', __NAME__ + '/__main__')
     # get exposure time
     p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
     p.set_source('exptime', __NAME__ + '/__main__')
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Measurement and correction of background on the central column
     # ----------------------------------------------------------------------
-    loc = spirouLOCOR.MeasureBkgrdGetCentPixs(p, loc, data2)
+    loc = spirouBACK.MeasureBkgrdGetCentPixs(p, loc, data2)
     # ----------------------------------------------------------------------
     # Search for order center on the central column - quick estimation
     # ----------------------------------------------------------------------
