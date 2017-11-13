@@ -17,7 +17,6 @@ import time
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS.spirouCore import spirouPlot as sPlt
@@ -143,7 +142,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     loc['tilt'] = loc['yfit_tilt']
     oldsource = loc.get_source('tilt')
-    loc.set_source('tilt',oldsource + '+{0}/__main__'.format(__NAME__))
+    loc.set_source('tilt', oldsource + '+{0}/__main__'.format(__NAME__))
 
     # ----------------------------------------------------------------------
     # Save and record of tilt table
