@@ -75,10 +75,16 @@ def extract_AB_order(pp, lloc, image, order_num):
     return lloc
 
 
+def extract_tilt_weight_order(pp, loc, image, orderp):
+    extargs = [pp, image, loc['acc'], loc['ass']]
+    extkwargs = dict(tilt=loc['tilt'], order_profile=orderp, use_weights=True)
+    loc['cent'] = extract_wrapper(*extargs, **extkwargs)
+    return loc
+
 # =============================================================================
 # Worker functions
 # =============================================================================
-def extract_wrapper(p, image, pos, sig, tilt=False, weighted=False):
+def extract_wrapper(p, image, pos, sig, **kwargs):
     """
 
     :param p: dictionary, parameter dictionary, containing constants and
@@ -93,8 +99,18 @@ def extract_wrapper(p, image, pos, sig, tilt=False, weighted=False):
                 size = number of coefficients for fit
     :param sig: numpy array (1D), the width fit coefficients
                 size = number of coefficients for fit
-    :param tilt: bool, whether to extract using a tilt (not used yet)
-    :param weighted: bool, whether to extract using weights (not used yet)
+    :param kwargs: additional keyword arguments
+
+    currently accepted keyword arguments are:
+
+        tilt:           numpy array (1D), the tilt for this order, if defined
+                        uses tilt, if not defined does not
+
+        use_weights:    bool, if True use weighted extraction, if False or not
+                        defined does not use weighted extraction
+
+        order_profile:  numpy array (2D), the image with fit superposed on top,
+                        required for tilt and or weighted fit
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -104,10 +120,21 @@ def extract_wrapper(p, image, pos, sig, tilt=False, weighted=False):
     extopt = p['IC_EXTOPT']
     nbsig = p['IC_EXTNBSIG']
     image_gain = p['gain']
+    image_sigdet = p['sigdet']
+    range1 = p['IC_EXT_RANGE1']
+    range2 = p['IC_EXT_RANGE2']
+    # get parameters from keyword arguments
+    tilt = kwargs.get('tilt', None)
+    use_weights = kwargs.get('use_weights', False)
+    order_profile = kwargs.get('order_profile', None)
 
     # Option 0: Extraction by summation over constant range
-    if extopt == 0 and not tilt and not weighted:
+    if extopt == 0 and (tilt is None) and not use_weights:
         return extract_const_range(image, pos, nbsig, image_gain)
+
+    elif tilt is not None and order_profile is not None:
+        return extract_tilt_weight(image, pos, sig, tilt, range1, range2,
+                                   order_profile, image_gain, image_sigdet)
 
 
 def extract_const_range(image, pos, nbsig, gain):
@@ -160,6 +187,11 @@ def extract_const_range(image, pos, nbsig, gain):
     spe *= gain
 
     return spe[::-1], nbcos
+
+
+def extract_tilt_weight(image, pos, sig, tilt, r1, r2, orderp, gain, sigdet):
+    # TODO: Write code
+    return 0
 
 
 # =============================================================================
