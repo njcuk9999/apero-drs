@@ -134,6 +134,7 @@ the central fits where found to be
                   fits
 """
 
+
 InitialOrderFit = spirouLOCOR.initial_order_fit
 """
 Performs a crude initial fit for this order, uses the ctro positions or
@@ -204,6 +205,9 @@ the start and end of the order (and thus the center) above threshold
 
 For 1000 loops, best of 3: 771 µs per loop
 """
+
+
+MergeCoefficients = spirouLOCOR.merge_coefficients
 
 
 SigClipOrderFit = spirouLOCOR.sigmaclip_order_fit

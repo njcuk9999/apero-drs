@@ -20,6 +20,7 @@ import sys
 import warnings
 from collections import OrderedDict
 
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouCDB
 
@@ -149,33 +150,29 @@ def read_tilt_file(p, hdr=None, filename=None):
 
     :return tilt: list of the tilt for each order
     """
-
-    # get acquisition time
-    acqtime = spirouCDB.GetAcqTime(p, hdr)
-    # get calibDB
-    c_database = spirouCDB.GetDatabase(p, acqtime)
-    # Check that "TILT" is in calib database and assign value if it is
-    if filename is not None:
-        tilt_file = filename
-    else:
-        if 'TILT' in c_database:
-            tiltfilename = c_database['TILT'][1]
-        else:
-            emsg = ('Calibration database has no valid "TILT" entry '
-                    'for time<{0}')
-            WLOG('error', p['log_opt'], emsg.format(acqtime))
-            tiltfilename = ''
-        # construct tilt foldername
-        reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
-        # construct tilt filename
-        tilt_file = os.path.join(reducedfolder, tiltfilename)
-    # read tilt file
-    rout = readimage(p, framemath='none', filename=tilt_file, log=False)
+    # get filename
+    read_file = spirouCDB.GetFile(p, 'TILT', hdr)
+    # read read_file
+    rout = readimage(p, framemath='none', filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
     # get the tilt keys
     tilt = read_key_2d_list(p, hdict, p['kw_TILT'][0], p['IC_TILT_NBO'], 1)
     # return the first set of keys
     return tilt[:, 0]
+
+
+def read_order_profile_superposition(p, hdr=None, filename=None):
+    # Log that we are reading the order profile
+    wmsg = 'Reading order profile of Fiber {0}'
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
+    # construct foldername
+    reducedfolder = p['reduced_dir']
+    # construct filename
+    read_file = spirouCDB.GetFile(p, 'ORDER_PROFILE_{0}' + p['fiber'], hdr)
+    # read read_file
+    rout = readimage(p, framemath='none', filename=read_file, log=False)
+    # return order profile (via readimage = image, hdict, commments, nx, ny
+    return rout
 
 
 # =============================================================================
@@ -577,9 +574,8 @@ def math_controller(p, data, header, framemath=None):
 
     for f_it in range(1, nbframes):
         # construct frame file name
-        framefilename = os.path.join(p['DRS_DATA_RAW'],
-                                     p['arg_night_name'],
-                                     p['arg_file_names'][f_it])
+        rawdir = spirouConfig.Constants.RAW_DIR(p)
+        framefilename = os.path.join(rawdir, p['arg_file_names'][f_it])
         # check whether frame file name exists, log and exit if not
         if not os.path.exists(framefilename):
             WLOG('error', log_opt, ('File: {0} does not exist'

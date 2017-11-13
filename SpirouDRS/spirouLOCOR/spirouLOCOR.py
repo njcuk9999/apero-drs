@@ -31,6 +31,7 @@ from SpirouDRS.spirouCore import spirouPlot as sPlt
 __NAME__ = 'spirouLOCOR.py'
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
+ConfigError = spirouConfig.ConfigError
 # get the logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
@@ -39,7 +40,7 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # Define functions
 # =============================================================================
-def fiber_params(pp, fiber):
+def fiber_params(pp, fiber, merge=False):
     """
     Takes the parameters defined in FIBER_PARAMS from parameter dictionary
     (i.e. from config files) and adds the correct parameter to a fiber
@@ -49,31 +50,23 @@ def fiber_params(pp, fiber):
     :param fiber: string, the fiber type (and suffix used in confiruation file)
                   i.e. for fiber AB fiber="AB" and nbfib_AB should be present
                   in config if "nbfib" is in FIBER_PARAMS
-    :return fparam: dictionary, the fiber parameter dictionary
+    :param merge: bool, if True merges with pp and returns
+
+    :return fparam: dictionary, the fiber parameter dictionary (if merge False)
+    :treun pp: dictionary, paramter dictionary (if merge True)
     """
-    # set up the fiber parameter directory
-    fparam = ParamDict()
-    # loop around keys in FIBER_PARAMS
-    for key in pp['FIBER_PARAMS']:
-        # construct the parameter key (must ex
-        configkey = ('{0}_{1}'.format(key, fiber)).upper()
-        # check that key (in _fiber form) is in parameter dictionary
-        if configkey not in pp:
-            WLOG('error', pp['log_opt'], ('Config Error: Key {0} does not '
-                                          'exist in parameter dictionary'
-                                          '').format(configkey))
-
-        fparam[key.upper()] = pp[configkey]
-        fparam.set_source(key.upper(), __NAME__ + '/fiber_params()')
-
-    # add fiber to the parameters
-    fparam['fiber'] = fiber
-    fparam.set_source('fiber', __NAME__ + '/fiber_params()')
+    # get dictionary parameters for suffix _fpall
+    try:
+        fparams = spirouConfig.ExtractDictParams(pp, '_fpall', fiber,
+                                                 merge=merge)
+    except ConfigError as e:
+        WLOG(e.level, pp['log_opt'], e.msg)
+        fparams = ParamDict()
     # return fiber dictionary
-    return fparam
+    return fparams
 
 
-def get_loc_coefficients(p, hdr=None):
+def get_loc_coefficients(p, hdr=None, loc=None):
     """
     Extracts loco coefficients from parameters keys (uses header="hdr" provided
     to get acquisition time or uses p['fitsfilename'] to get acquisition time if
@@ -81,6 +74,7 @@ def get_loc_coefficients(p, hdr=None):
 
     :param pp: dictionary, parameter dictionary
     :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
+    :param loc: dictionary, storage for arrays and variables
 
     :return loc: dictionary, parameter dictionary containing the coefficients,
                  the number of orders and the number of coeffiecients from
@@ -98,15 +92,18 @@ def get_loc_coefficients(p, hdr=None):
     c_database = spirouCDB.GetDatabase(p, acqtime)
 
     # get the reduced dir name
-    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    reduced_dir = p['reduced_dir']
 
     # set up the loc param dict
-    loc = ParamDict()
+    if loc is None:
+        loc = ParamDict()
 
     # check for localization file for this fiber
     if not ('LOC_' + p['fiber']) in c_database:
-        emsg = 'No order geometry deined in the calibDB for fiber: {0}'
-        WLOG('info', p['log_opt'], emsg.format(p['fiber']))
+        emsg1 = ('No order geometry defined in the calibDB for fiber: {0}')
+        emsg2 = '    requires key="LOC_{0}" in calibDB file.'
+        WLOG('info', p['log_opt'], emsg1.format(p['fiber']))
+        WLOG('info', p['log_opt'], emsg2.format(p['fiber']))
         WLOG('error', p['log_opt'], 'Unable to complete the recipe, FATAL')
     # else log that we are reading localization parameters
     wmsg = 'Reading localization parameters of Fiber {0}'
@@ -125,12 +122,26 @@ def get_loc_coefficients(p, hdr=None):
                                        loc['number_orders'], loc['nbcoeff_ctr'])
     loc['ass'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
                                       loc['number_orders'], loc['nbcoeff_wid'])
-    loc.set_all_sources(__NAME__ + '/get_loc_coefficients()')
+
+    added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass']
+    loc.set_sources(added, __NAME__ + '/get_loc_coefficients()')
     # return the loc param dict
     return loc
 
 
-
+def merge_coefficients(loc, coeffs, step):
+    # get number of orders
+    nbo = loc['number_orders']
+    # copy coeffs
+    newcoeffs = coeffs.copy()
+    # get sum of 0 to step pixels
+    cosum = np.array(coeffs[0:nbo:step, :])
+    for i_it in range(1, step):
+        cosum += coeffs[i_it:nbo:step, :]
+    # overwrite values into coeffs array
+    newcoeffs[0:int(nbo/step), :] = (1/step)*cosum
+    # return merged coeffients
+    return newcoeffs
 
 
 def find_order_centers(pp, image, loc, order_num):
@@ -747,6 +758,9 @@ def image_localization_superposition(image, coeffs):
     newimage[fityarray, fitxarray] = 0
     # return newimage
     return newimage
+
+
+
 
 
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',

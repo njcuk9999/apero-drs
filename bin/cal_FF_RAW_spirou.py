@@ -15,8 +15,9 @@ import numpy as np
 import time
 
 from SpirouDRS import spirouBACK
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS.spirouCore import spirouPlot as sPlt
@@ -26,10 +27,12 @@ neilstart = time.time()
 # =============================================================================
 # Define variables
 # =============================================================================
-# Get Logging function
-WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'cal_SLIT_spirou.py'
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+# Get Logging function
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 # Remove this for final (only for testing)
 import sys
@@ -65,15 +68,16 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
-    # get ccd sig det value
-    p['sigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
-    p.set_source('sigdet', __NAME__ + '/__main__')
+
+    # ----------------------------------------------------------------------
+    # Get basic image properties
+    # ----------------------------------------------------------------------
+    # get sig det value
+    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
     # get exposure time
-    p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
-    p.set_source('exptime', __NAME__ + '/__main__')
+    p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
-    p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
-    p.set_source('gain', __NAME__ + '/__main__')
+    p = spirouImage.GetGain(p, hdr, name='gain')
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -131,10 +135,52 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
-    tilt = spirouImage.ReadTiltFile(p, hdr)
+    # define loc storage parameter dictionary
+    loc = ParamDict()
+    # get tilts
+    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
+    loc.set_source('tilt', __NAME__ + '/__main__')
 
+    # ----------------------------------------------------------------------
+    # Fiber loop
+    # ----------------------------------------------------------------------
+    # loop around fiber types
+    for fiber in p['fib_type']:
+        # ------------------------------------------------------------------
+        # Get localisation coefficients
+        # ------------------------------------------------------------------
+        # get this fibers parameters
+        p = spirouLOCOR.FiberParams(p, fiber, merge=True)
+        # get localisation fit coefficients
+        loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+        # ------------------------------------------------------------------
+        # Read image order profile
+        # ------------------------------------------------------------------
+        order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p, hdr)
+        # ------------------------------------------------------------------
+        # Average AB into one fiber
+        # ------------------------------------------------------------------
+        # if we have an AB fiber merge fit coefficients by taking the average
+        # of the coefficients
+        # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
+        if fiber == 'AB':
+            # merge
+            loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
+            loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
+            # set the number of order to half of the original
+            loc['number_orders'] /= 2
+        # ------------------------------------------------------------------
+        # Set up Extract storage
+        # ------------------------------------------------------------------
 
-
+        # ------------------------------------------------------------------
+        # Extract orders
+        # ------------------------------------------------------------------
+        # loop around each order
+        for order_num in range(loc['number_orders']):
+            # extract the orders
+            eargs = [p, loc, data2, order_profile]
+            loc = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
 
     # ----------------------------------------------------------------------
     # Quality control

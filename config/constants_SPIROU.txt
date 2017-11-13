@@ -65,37 +65,32 @@ ic_ccdy_high = 1935
 # -----------------------------------------------------------------------------
 #   fiber variables
 # -----------------------------------------------------------------------------
-#    MUST have _"fiber" at the end
-#          i.e. "x_AB" or "x_C"
-#    final variable will be chosen based on fiber suffix
-#    and will have prefix as variable name
-#          i.e. "x_AB = 1" for fiber AB would lead
-#               to p['x'] = 1
-
-#    fiber params - all parameters for fibers must be defined    - [cal_loc]
-#        here as a python list of strings
-#        must be ONE line only!
-fiber_params = ['nbfib', 'ic_first_order_jump', 'ic_locnbmaxo', 'qc_loc_nbo', 'fib_type']
+#    MUST have "_fpall" at the end
+#    MUST be a dictionary in form:
+#         {"fibertype":value, "fibertype":value}
+#
+#    i.e.    {'AB':1, 'C':2, 'A':3}
 
 #   Number of fibers                                             - [cal_loc]
-nbfib_AB = 2
-nbfib_C = 1
+nbfib_fpall = {'AB':2, 'C':1}
 
 #   Number of orders to skip at start of image                   - [cal_loc]
-ic_first_order_jump_AB = 2
-ic_first_order_jump_C = 0
+ic_first_order_jump_fpall = {'AB':2, 'C':0}
 
 #   Maximum number of order to use                               - [cal_loc]
-ic_locnbmaxo_AB = 72
-ic_locnbmaxo_C = 36
+ic_locnbmaxo_fpall = {'AB':72, 'C':36}
 
 #   Quality control "normal" number of orders on fiber           - [cal_loc]
-qc_loc_nbo_AB = 72
-qc_loc_nbo_C = 36
+qc_loc_nbo_fpall = {'AB':72, 'C':36}
 
 #   Fiber type                                                   - [cal_ff]
-fib_type_AB = AB
-fib_type_C = C
+fib_type_fpall = {'AB':["AB"], 'C':["C"]}
+
+#   Half-zone extraction width left side (formally plage1)       - [cal_ff]
+ic_ext_range1_fpall = {'AB':14.5, 'C':7.5}
+
+#   Half-zone extraction width right side (formally plage2)      - [cal_ff]
+ic_ext_range2_fpall = {'AB':14.5, 'C':7.5}
 
 # -----------------------------------------------------------------------------
 #   cal_dark histogram variables

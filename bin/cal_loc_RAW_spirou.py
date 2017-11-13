@@ -70,15 +70,18 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
-    # get ccd sig det value
-    p['sigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
-    p.set_source('sigdet', __NAME__ + '/__main__')
+
+    # ----------------------------------------------------------------------
+    # Get basic image properties
+    # ----------------------------------------------------------------------
+    # get sig det value
+    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
     # get exposure time
-    p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
-    p.set_source('exptime', __NAME__ + '/__main__')
+    p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
-    p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
-    p.set_source('gain', __NAME__ + '/__main__')
+    p = spirouImage.GetGain(p, hdr, name='gain')
+
+
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -114,7 +117,7 @@ if __name__ == "__main__":
     # Write image order_profile to file
     # ----------------------------------------------------------------------
     # Construct folder and filename
-    reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    reducedfolder = p['reduced_dir']
     newext = '_order_profile_{0}.fits'.format(p['fiber'])
     rawfits = p['arg_file_names'][0].replace('.fits', newext)
     # log saving order profile

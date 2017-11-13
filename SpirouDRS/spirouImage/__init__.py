@@ -38,6 +38,12 @@ FitTilt = spirouImage.fit_tilt
 # Flips the image in the x and/or the y direction
 FlipImage = spirouImage.flip_image
 
+
+GetSigdet = spirouImage.get_sigdet
+GetExpTime = spirouImage.get_exptime
+GetGain = spirouImage.get_gain
+
+
 # Looks for a key(s) in dictionary p, named 'name'
 #     if has_default sets value of key to 'default' if not found
 #     else logs an error
@@ -60,8 +66,12 @@ ReadKey = spirouFITS.read_key
 # Read 2D key list
 Read2Dkey = spirouFITS.read_key_2d_list
 
+
 # Read the tilt file
 ReadTiltFile = spirouFITS.read_tilt_file
+
+# Read the order profile file
+ReadOrderProfile = spirouFITS.read_order_profile_superposition
 
 # Resize an image based on a pixel values
 ResizeImage = spirouImage.resize

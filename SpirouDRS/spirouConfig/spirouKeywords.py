@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+spirouKeywords
 
-# CODE DESCRIPTION HERE
+FITS rec header keywords (for reading headers and writing headers)
 
 Created on 2017-10-30 at 16:37
 
 @author: cook
 
-
-
-Version 0.0.0
+Version 0.0.1
 """
 from . import spirouConfig
 
@@ -47,6 +45,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_MED',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
+            'kw_EXPTIME',
+            'kw_GAIN',
             'kw_LOCO_BCKGRD',
             'kw_LOCO_CTR_COEFF',
             'kw_LOCO_DEG_C',
@@ -61,6 +61,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_LOC_SMAXPTS_CTR',
             'kw_LOC_SMAXPTS_WID',
             'kw_TILT',
+            'kw_RDNOISE',
             'kw_version']
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -118,9 +119,20 @@ root_drs_loc =  'LO'
 root_drs_flat = 'FF'
 root_drs_hc =   'LMP'
 
+# -----------------------------------------------------------------------------
+# Required header keys
+# -----------------------------------------------------------------------------
+# define the HEADER key for acquisition time (used to get value only)
+kw_ACQTIME_KEY = ['ACQTIME1', None, '']
 
-# define the HEADER key for acquisition time (used to get only)
-kw_ACQTIME_KEY = ['ACQTIME1', None, 'Only used to get acquistition time']
+# define the read noise HEADER key a.k.a sigdet (used to get value only)
+kw_RDNOISE = ['RDNOISE', None, '']
+
+# define the exposure time HEADER key (used to get value only)
+kw_GAIN = ['EXPTIME', None, '']
+
+# define the gain HEADER key (used to get value only)
+kw_EXPTIME = ['GAIN', None, '']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables

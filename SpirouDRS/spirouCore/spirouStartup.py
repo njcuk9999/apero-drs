@@ -116,7 +116,6 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
 
     log_opt = p['log_opt']
     fits_fn = p['fitsfilename']
-    arg_nn = p['arg_night_name']
     # -------------------------------------------------------------------------
     # check that fitsfilename exists
     if fits_fn is None:
@@ -132,7 +131,7 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
     # -------------------------------------------------------------------------
     # Reduced directory
     # construct reduced directory
-    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], arg_nn)
+    reduced_dir = p['reduced_dir']
     # if reduced directory does not exist create it
     if not os.path.isdir(p['DRS_DATA_REDUC']):
         os.makedirs(p['DRS_DATA_REDUC'])
@@ -147,7 +146,7 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
     else:
-        calib_dir = os.path.join(p['DRS_CALIB_DB'])
+        calib_dir = p['DRS_CALIB_DB']
         # if reduced directory does not exist create it
         if not os.path.isdir(calib_dir):
             os.makedirs(calib_dir)
@@ -169,50 +168,36 @@ def run_time_args(p):
     :param p: dictionary, parameter dictionary
     :return p: dictionary, the updated parameter dictionary
     """
-    # get run time parameters
-    rparams = list(sys.argv)
+    # get constants name
+    cname = spirouConfig.Constants.__NAME__
+
     # get program name
-    program = os.path.basename(rparams[0]).split('.py')[0]
+    p['program'] = spirouConfig.Constants.PROGRAM()
+    p.set_source('program', cname + '/PROGRAM()')
 
     # get night name and filenames
-    arg_file_names, arg_night_name = [], ''
-    if len(rparams) > 1:
-        arg_night_name = str(rparams[1])
-        for r_it in range(2, len(rparams)):
-            arg_file_names.append(str(rparams[r_it]))
+    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME()
+    p.set_source('arg_night_name', cname + '/ARG_NIGHT_NAME')
+    p['arg_file_names'] = spirouConfig.Constants.ARG_FILE_NAMES()
+    p.set_source('arg_file_names', cname + '/ARG_FILE_NAMES')
+    p['str_file_names'] = ', '.join(p['arg_file_names'])
+    p.set_source('str_file_names', __NAME__ + '/run_time_args()')
 
-    # deal with the log_opt "log option"
-    #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
-    if len(arg_file_names) == 0:
-        log_opt = program
-    elif len(arg_file_names) == 1:
-        index = arg_file_names[0].find('.')
-        lo_arg = [program, arg_file_names[0][index - 5: index]]
-        log_opt = '{0}:{1}'.format(*lo_arg)
-    else:
-        index = arg_file_names[0].find('.')
-        lo_arg = [program, arg_file_names[0][index - 5: index]]
-        log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+    # get fitsfilename
+    p['fitsfilename'] = spirouConfig.Constants.FITSFILENAME(p)
+    p.set_source('fitsfilename', cname + '/FITSFILENAME()')
 
-    # construct fits file name (full path + first file in arguments)
-    if len(arg_file_names) > 0:
-        fits_fn = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
-                               arg_file_names[0])
-    else:
-        fits_fn = None
+    # get the logging option
+    p['log_opt'] = spirouConfig.Constants.LOG_OPT(p)
+    p.set_source('log_opt', cname + '/LOG_OPT()')
 
-    # add to parameter dictionary
-    p['log_opt'] = log_opt
-    p['program'] = program
-    p['arg_night_name'] = arg_night_name
-    p['str_file_names'] = ', '.join(arg_file_names)
-    p['arg_file_names'] = arg_file_names
-    p['fitsfilename'] = fits_fn
-    p['nbframes'] = len(arg_file_names)
+    # Get number of frames
+    p['nbframes'] = spirouConfig.Constants.NBFRAMES(p)
+    p.set_source('nbframes', cname + '/NBFRAMES()')
 
-    skeys = ['log_opt', 'program', 'arg_night_name', 'str_file_names',
-             'arg_file_names', 'fitsfilename', 'nbframes']
-    p.set_sources(keys=skeys, sources=__NAME__ + '/run_time_args()')
+    # set reduced path
+    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
 
     return p
 
@@ -373,7 +358,7 @@ def display_run_files(p):
     """
     WLOG('', p['log_opt'], ('Now running : {PROGRAM} on file(s): '
                             '{STR_FILE_NAMES}').format(**p))
-    tmp = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
+    tmp = spirouConfig.Constants.RAW_DIR(p)
     WLOG('', p['log_opt'], 'On directory {0}'.format(tmp))
 
 
@@ -385,7 +370,7 @@ def display_help_file(p):
         # Log help file
         WLOG('', p['log_opt'], 'HELP mode for  ' + p['program'])
         # Get man file
-        man_file = os.path.join(p['DRS_MAN'].replace(p['program'], '.info'))
+        man_file = spirouConfig.Constants.MANUAL_FILE(p)
         # try to open man file
         if os.path.exists(man_file):
             f = open(man_file, 'r')

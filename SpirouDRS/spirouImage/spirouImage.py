@@ -18,6 +18,7 @@ import numpy as np
 import os
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from . import spirouFITS
@@ -180,7 +181,7 @@ def correct_for_dark(p, image, header):
         darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
         corrected_image = image - (darkimage * p['nbframes'])
     else:
-        masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
         WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
         corrected_image = image
@@ -268,6 +269,39 @@ def fit_tilt(pp, lloc):
 
     # return lloc
     return lloc
+
+
+
+# =============================================================================
+# Get basic image properties
+# =============================================================================
+def get_exptime(p, hdr, name=None):
+    # return param
+    return get_param(p, hdr, 'kw_rdnoise', name)
+
+
+def get_gain(p, hdr, name=None):
+    # return param
+    return get_param(p, hdr, 'kw_gain', name)
+
+
+def get_sigdet(p, hdr, name=None):
+    # return param
+    return get_param(p, hdr, 'kw_exptime', name)
+
+
+def get_param(p, hdr, keyword, name=None):
+    # get header keyword
+    key = p['kw_rdnoise'][0]
+    # deal with no name
+    if name is None:
+        name = key
+    # get value
+    p[name] = float(spirouFITS.keylookup(p, hdr, key, hdr['@@@hname']))
+    # set source
+    p.set_source(name, hdr['@@@hname'])
+    # return p
+    return p
 
 
 # =============================================================================

@@ -22,14 +22,16 @@ import shutil
 import datetime
 import time
 
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS.spirouConfig import ParamDict
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 WLOG = spirouCore.wlog
 __NAME__ = 'spirouCDB.py'
+ParamDict = spirouConfig.ParamDict
 DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
 # -----------------------------------------------------------------------------
 
@@ -131,7 +133,7 @@ def get_acquision_time(p, header=None):
 
     # if we don't have header get it (using 'fitsfilename')
     if header is None:
-        rawdir = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
+        rawdir = spirouConfig.Constants.RAW_DIR(p)
         rawfile = os.path.join(rawdir, p['arg_file_names'][0])
         header = fits.getheader(rawfile, ext=0)
 
@@ -270,7 +272,7 @@ def copy_files(p, header=None):
     c_database = get_database(p, acqtime)
 
     # construct reduced directory path
-    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    reduced_dir = p['reduced_dir']
     calib_dir = p['DRS_CALIB_DB']
 
     # loop around the files in Calib database
@@ -308,6 +310,29 @@ def copy_files(p, header=None):
                 WLOG('error', p['log_opt'], emsg.format(oldloc, newloc))
 
 
+def get_file_name(p, key, hdr=None, filename=None):
+    # get acquisition time
+    acqtime = get_acquision_time(p, hdr)
+    # get calibDB
+    c_database = get_database(p, acqtime)
+    # Check that "TILT" is in calib database and assign value if it is
+    if filename is not None:
+        read_file = filename
+    else:
+        if 'TILT' in c_database:
+            rawfilename = c_database['TILT'][1]
+        else:
+            emsg = (
+            'Calibration database has no valid "TILT" entry '
+            'for time<{0}')
+            WLOG('error', p['log_opt'], emsg.format(acqtime))
+            rawfilename = ''
+        # construct tilt filename
+        read_file = os.path.join(p['reduced_dir'], rawfilename)
+    # read file and return
+    return read_file
+
+
 # =============================================================================
 # Worker functions
 # =============================================================================
@@ -321,7 +346,7 @@ def get_check_lock_file(p):
     """
     # create lock file (to make sure database is only open once at a time)
     # construct lock file name
-    lock_file = os.path.join(p['DRS_CALIB_DB'], 'lock_calibDB')
+    lock_file = spirouConfig.Constants.CALIBDB_LOCKFILE(p)
     # check if lock file already exists
     if os.path.exists(lock_file):
         WLOG('warning', p['log_opt'], 'CalibDB locked. Waiting...')
@@ -357,7 +382,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file):
     :return:
     """
     # construct master filename
-    masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+    masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
     # try to
     try:
         f = open(masterfile, 'a')
@@ -381,7 +406,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file):
 
 def read_master_file(p, lock, lock_file):
     # construct master filename
-    masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+    masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
     # try to
     try:
         f = open(masterfile, 'r')
