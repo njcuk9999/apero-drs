@@ -206,7 +206,6 @@ For 1000 loops, best of 3: 771 µs per loop
 """
 
 
-
 SigClipOrderFit = spirouLOCOR.sigmaclip_order_fit
 """
 Performs a sigma clip fit for this order, uses the ctro positions or
