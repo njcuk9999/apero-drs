@@ -284,7 +284,7 @@ class ParamDict(dict):
 
 
 # =============================================================================
-#   Read/Write Functions
+#   Read/Write/Get Functions
 # =============================================================================
 def read_config_file(config_file=None):
     # TODO: store user config in /home/$USER/.spirou_config
@@ -368,6 +368,70 @@ def gettxt(filename):
         values.append(evaluate_value(value))
     # return keys and values
     return keys, values
+
+
+def extract_dict_params(pp, suffix, fiber, merge=False):
+
+    # make suffix uppercase
+    suffix = suffix.upper()
+    # set up the fiber parameter directory
+    fparam = ParamDict()
+    # get keys list
+    keys = list(pp.keys())
+    # loop around keys in FIBER_PARAMS
+    for key in keys:
+        # skip if suffix not in key
+        if suffix not in key:
+            continue
+        # skip if suffix not at the end of key
+        if key[-len(suffix):] != suffix:
+            continue
+        # try to evaluate key:
+        #    raise error if key does not evaluate to a dictionary
+        #    raise error if 'fiber' not in dictionary
+        try:
+            params = eval(pp[key])
+            if type(params) != dict:
+                raise NameError('')
+            if fiber not in params:
+                raise ConfigError('')
+        except NameError:
+            emsg = ('Key={0} has suffix="{1}" and must be a valid '
+                    'python dictionary in form {\'key\':value}')
+            raise ConfigError(emsg.format(key, suffix), level='error')
+        except ConfigError:
+            emsg = ('Key={0} has suffix="{1}" and must be a dictionary'
+                    'containing {2}')
+            raise ConfigError(emsg.format(key, suffix, fiber), level='error')
+        # we have dictionary with our fiber key so can now get value
+        value = params[fiber]
+        # get new key without the suffix
+        newkey = key[:-len(suffix)]
+        # get the old source
+        source = pp.get_source(key)
+        # construct new source
+        newsource = '{0}+{1}/fiber_params()'.format(source, __NAME__)
+        # add to pp (if merge) else add to new parameter dictionary
+        if merge:
+            pp[newkey] = value
+            pp.set_source(newkey, newsource)
+        else:
+            fparam[newkey] = value
+            fparam.set_source(newkey, newsource)
+
+    # add fiber to the parameters
+    if merge:
+        pp['fiber'] = fiber
+        pp.set_source('fiber', __NAME__ + '/fiber_params()')
+    else:
+        fparam['fiber'] = fiber
+        fparam.set_source('fiber', __NAME__ + '/fiber_params()')
+
+    # return pp if merge or fparam if not merge
+    if merge:
+        return pp
+    else:
+        return fparam
 
 
 # =============================================================================

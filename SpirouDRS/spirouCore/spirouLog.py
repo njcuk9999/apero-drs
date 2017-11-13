@@ -115,10 +115,11 @@ def get_logfilepath(utime):
     # Get the used date if it is not None
     CPARAMS['DRS_USED_DATE'] = CPARAMS.get('DRS_USED_DATE', 'None').upper()
     udate = CPARAMS['DRS_USED_DATE']
-    if (udate != 'undefined') or (udate != 'None'):
-        date = CPARAMS['DRS_USED_DATE']
-    else:
+    if udate == 'undefined' or udate == 'NONE':
         date = time.strftime('%Y-%m-%d', time.gmtime(utime - 43200))
+    else:
+        date = CPARAMS['DRS_USED_DATE']
+
     # Get the HOST name (if it does not exist host = 'HOST')
     host = os.environ.get('HOST', 'HOST')
     # construct the logfile path

@@ -19,6 +19,7 @@ import os
 import warnings
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS.spirouCore import spirouPlot as sPlt
@@ -106,20 +107,26 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='average')
-    # get ccd sig det value
-    p['sigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE', hdr['@@@hname']))
-    p.set_source('sigdet', __NAME__ + '/__main__')
+
+    # ----------------------------------------------------------------------
+    # Get basic image properties
+    # ----------------------------------------------------------------------
+    # get sig det value
+    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
     # get exposure time
-    p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
-    p.set_source('exptime', __NAME__ + '/__main__')
+    p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
-    p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
-    p.set_source('gain', __NAME__ + '/__main__')
+    p = spirouImage.GetGain(p, hdr, name='gain')
+
+    # ----------------------------------------------------------------------
+    # Dark exposure time check
+    # ----------------------------------------------------------------------
     # log the Dark exposure time
     WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
     if p['exptime'] < p['QC_DARK_TIME']:
         WLOG('error', p['log_opt'], 'Dark exposure time too short')
+
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
@@ -224,7 +231,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
 
     # construct folder and filename
-    reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    reducedfolder = p['reduced_dir']
     darkfits = p['arg_file_names'][0]
     # log saving dark frame
     WLOG('', p['log_opt'], 'Saving Dark frame in ' + darkfits)
