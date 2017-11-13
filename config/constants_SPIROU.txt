@@ -229,6 +229,11 @@ ic_do_bkgr_subtraction = 0
 # half-size of window for background measurements               - [cal_ff]
 ic_bkgr_window = 100
 
+# number of orders in tilt file (formally nbo)                  - [cal_ff]
+ic_tilt_nbo = 36
+
+#
+
 # -----------------------------------------------------------------------------
 #  Quality control settings
 # -----------------------------------------------------------------------------

@@ -15,7 +15,6 @@ Version 0.0.0
 """
 
 import numpy as np
-import sys
 import os
 
 from SpirouDRS import spirouCDB
@@ -31,6 +30,7 @@ WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'spirouImage.py'
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define Image modification function
@@ -118,8 +118,6 @@ def flip_image(image, flipx=True, flipy=True):
         return image
 
 
-
-
 def convert_to_e(image, p=None, gain=None, exptime=None):
     """
     Converts image from ADU/s into e-
@@ -127,6 +125,9 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
     :param image:
     :param p: dictionary or None, parameter dictionary, must contain 'exptime'
               and 'gain', if None gain and exptime must not be None
+    :param gain: float, if p is None, used as the gain to multiple the image by
+    :param exptime: float, if p is None, used as the exposure time the image
+                    is multiplied by
 
     :return newimage: numpy array (2D), the image in e-
     """
@@ -182,6 +183,7 @@ def correct_for_dark(p, image, header):
         masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
         emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
         WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
+        corrected_image = image
 
     # finally return datac
     return corrected_image
@@ -208,7 +210,7 @@ def get_tilt(pp, lloc, image):
     # loop around each order
     for order_num in range(0, nbo, 2):
         # extract this AB order
-        lloc = spirouEXTOR.ExtractABorder(pp, lloc, order_num)
+        lloc = spirouEXTOR.ExtractABorder(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
         # Over sample the data and interpolate new extraction values
         pixels = np.arange(image.shape[1])
