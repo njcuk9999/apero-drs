@@ -15,15 +15,6 @@ Version 0.0.0
 """
 
 import numpy as np
-from numexpr import evaluate as ne
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
-
-from SpirouDRS.spirouCore import spirouMath as sm
 
 # =============================================================================
 # Define variables
@@ -40,9 +31,12 @@ def extract_AB_order(pp, lloc, image, order_num):
     Perform the extraction on the AB fibers separately using the summation
     over constant range
 
+    :param image: numpy array (2D), the image
     :param pp: dictionary, parameter dictionary
     :param lloc: dictionary, parameter dictionary containing the data
+    :param image:
     :param order_num: int, the order number for this iteration
+
     :return lloc: dictionary, parameter dictionary containing the data
     """
     # get the width fit coefficients for this fit
@@ -94,7 +88,6 @@ def extract_wrapper(p, image, pos, sig, tilt=False, weighted=False):
                     'ic_extnbsig' gives the distance away from center to
                        extract out to +/-
                     'gain' is the image gain (used to convert from ADU/s to e-)
-
     :param image: numpy array (2D), the image
     :param pos: numpy array (1D), the position fit coefficients
                 size = number of coefficients for fit
@@ -167,7 +160,6 @@ def extract_const_range(image, pos, nbsig, gain):
     spe *= gain
 
     return spe[::-1], nbcos
-
 
 
 # =============================================================================

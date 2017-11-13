@@ -21,7 +21,7 @@ import warnings
 from collections import OrderedDict
 
 from SpirouDRS import spirouCore
-
+from SpirouDRS import spirouCDB
 
 # =============================================================================
 # Define variables
@@ -38,7 +38,7 @@ FORBIDDEN_COPY_KEY = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
 # =============================================================================
 # Define Read/Write User
 # =============================================================================
-def readimage(p, framemath='+'):
+def readimage(p, framemath='+', filename=None, log=True):
     """
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
@@ -53,6 +53,9 @@ def readimage(p, framemath='+'):
                 'multiply' or '*'      - multiplies the frames
                 'divide' or '/'        - divides the frames
                 'none'                 - does not add
+    :param filename: string or None, filename of the image to read, if None
+                     then p['fitsfilename'] is used
+    :param log: bool, if True logs opening and size
 
     :return image: numpy array (2D), the image
     :return header: dictionary, the header file of the image
@@ -60,25 +63,39 @@ def readimage(p, framemath='+'):
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
     """
     # set up frequently used variables
-    fitsfilename = p['fitsfilename']
     log_opt = p['log_opt']
+    # get file name
+    if filename is None:
+        try:
+            fitsfilename = p['fitsfilename']
+        except KeyError:
+            emsg = '"fitsfilename" is not defined in parameter dictionary'
+            WLOG('error', log_opt, emsg)
+            fitsfilename = ''
+    else:
+        fitsfilename = filename
     # log that we are reading the image
-    WLOG('', log_opt, 'Reading Image ' + fitsfilename)
+    if log:
+        WLOG('', log_opt, 'Reading Image ' + fitsfilename)
     # read image from fits file
     image, imageheader, nx, ny = read_raw_data(fitsfilename)
     # log that we have loaded the image
-    WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
+    if log:
+        WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
     # if we have more than one frame and add is True then add the rest of the
     #    frames, currently we overwrite p['fitsfilename'] and header with
     #    last entry
     # TODO: Do we want to overwrite header/fitsfilename with last entry?
-    p, image, imageheader = math_controller(p, image, imageheader, framemath)
+    if framemath is not None or framemath is not 'none':
+        p, image, imageheader = math_controller(p, image, imageheader,
+                                                framemath)
     # convert header to python dictionary
     header = dict(zip(imageheader.keys(), imageheader.values()))
     comments = dict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
-    header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
-    header['@@@fname'] = p['fitsfilename']
+    if filename is None:
+        header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
+        header['@@@fname'] = p['fitsfilename']
 
     # return data, header, data.shape[0], data.shape[1]
     return image, header, comments, nx, ny
@@ -113,6 +130,52 @@ def writeimage(filename, image, hdict):
     with warnings.catch_warnings(record=True) as w:
         hdu.writeto(filename)
     spirouCore.spirouLog.warninglogger(w)
+
+
+def read_tilt_file(p, hdr=None, filename=None):
+    """
+    Reads the tilt file (from calib database or filename) and using the
+    'kw_TILT' keyword-store extracts the tilts for each order
+
+    :param p: dictionary, parameter dictionary
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['fitsfilename']
+
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the TILT file from the calib database
+                     keyword "TILT"
+
+    :return tilt: list of the tilt for each order
+    """
+
+    # get acquisition time
+    acqtime = spirouCDB.GetAcqTime(p, hdr)
+    # get calibDB
+    c_database = spirouCDB.GetDatabase(p, acqtime)
+    # Check that "TILT" is in calib database and assign value if it is
+    if filename is not None:
+        tilt_file = filename
+    else:
+        if 'TILT' in c_database:
+            tiltfilename = c_database['TILT'][1]
+        else:
+            emsg = ('Calibration database has no valid "TILT" entry '
+                    'for time<{0}')
+            WLOG('error', p['log_opt'], emsg.format(acqtime))
+            tiltfilename = ''
+        # construct tilt foldername
+        reducedfolder = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+        # construct tilt filename
+        tilt_file = os.path.join(reducedfolder, tiltfilename)
+    # read tilt file
+    rout = readimage(p, framemath='none', filename=tilt_file, log=False)
+    image, hdict, _, nx, ny = rout
+    # get the tilt keys
+    tilt = read_key_2d_list(p, hdict, p['kw_TILT'][0], p['IC_TILT_NBO'], 1)
+    # return the first set of keys
+    return tilt[:, 0]
 
 
 # =============================================================================
