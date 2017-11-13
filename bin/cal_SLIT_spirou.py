@@ -16,6 +16,7 @@ import os
 import time
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
@@ -62,16 +63,16 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # read the image data
     data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
-    # get ccd sig det value
-    p['ccdsigdet'] = float(spirouImage.GetKey(p, hdr, 'RDNOISE',
-                                              hdr['@@@hname']))
-    p.set_source('ccdsigdet', __NAME__ + '/__main__')
+
+    # ----------------------------------------------------------------------
+    # Get basic image properties
+    # ----------------------------------------------------------------------
+    # get sig det value
+    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
     # get exposure time
-    p['exptime'] = float(spirouImage.GetKey(p, hdr, 'EXPTIME', hdr['@@@hname']))
-    p.set_source('exptime', __NAME__ + '/__main__')
+    p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
-    p['gain'] = float(spirouImage.GetKey(p, hdr, 'GAIN', hdr['@@@hname']))
-    p.set_source('gain', __NAME__ + '/__main__')
+    p = spirouImage.GetGain(p, hdr, name='gain')
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -105,11 +106,10 @@ if __name__ == "__main__":
     WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
-    # Get coefficients
+    # Get localisation coefficients
     # ----------------------------------------------------------------------
     # original there is a loop but it is not used --> removed
-    p['fiber'] = p['fib_typ'][0]
-    p.set_source('fiber', __NAME__ + '/__main__')
+    p = spirouLOCOR.FiberParams(p, p['fib_typ'][0], merge=True)
     # get localisation fit coefficients
     loc = spirouLOCOR.GetCoeffs(p, hdr)
 
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     tiltima *= loc['tilt'][:, None]
     # construct file name and path
     tiltfits = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
-    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    reduced_dir = p['reduced_dir']
     # Log that we are saving tilt file
     wmsg = 'Saving tilt  information in file: {0}'
     WLOG('', p['log_opt'], wmsg.format(tiltfits))
