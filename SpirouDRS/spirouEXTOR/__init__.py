@@ -41,6 +41,7 @@ Extraction = spirouEXTOR.extract_wrapper
 :return nbcos: int, zero in this case
 """
 
+
 ExtractABorder = spirouEXTOR.extract_AB_order
 """
 Perform the extraction on the AB fibers separately using the summation
@@ -51,3 +52,6 @@ over constant range
 :param order_num: int, the order number for this iteration
 :return lloc: dictionary, parameter dictionary containing the data
 """
+
+
+ExtractTiltWeightOrder = spirouEXTOR.extract_tilt_weight_order
