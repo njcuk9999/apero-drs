@@ -18,6 +18,7 @@ from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
+from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS.spirouCore import spirouPlot as sPlt
@@ -78,6 +79,9 @@ if __name__ == "__main__":
     p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
+    # set sigdet and conad keywords (sigdet is changed later)
+    p['kw_CCD_SIGDET'][1] = p['sigdet']
+    p['kw_CCD_CONAD'][1] = p['gain']
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -88,7 +92,7 @@ if __name__ == "__main__":
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
+    data = spirouImage.ConvertToADU(spirouImage.FlipImage(datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
@@ -98,13 +102,13 @@ if __name__ == "__main__":
     data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
     WLOG('', p['log_opt'], ('Image format changed to '
-                            '{0}x{1}').format(*data2.shape))
+                            '{0}x{1}').format(*data2.shape[::-1]))
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data2 <= 0)
+    n_bad_pix = np.sum(data2 == 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
@@ -168,19 +172,73 @@ if __name__ == "__main__":
             loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
             loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
             # set the number of order to half of the original
-            loc['number_orders'] /= 2
+            loc['number_orders'] = int(loc['number_orders']/2)
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
+        # Create array to store extraction (for each order and each pixel
+        # along order)
+        loc['e2ds'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        # Create array to store the blaze (for each order and at each pixel
+        # along order)
+        loc['blaze'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        # Create array to store the flat (for each order and at each pixel
+        # along order)
+        loc['flat'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        # Create array to store the signal to noise ratios for each order
+        loc['SNR'] = np.zeros(loc['number_orders'])
+        # Create array to store the rms for each order
+        loc['RMS'] = np.zeros(loc['number_orders'])
 
+
+        # Manually set the sigdet to be used in extraction weighting
+        if p['IC_FF_SIGDET'] > 0:
+            p['sigdet'] = float(p['IC_FF_SIGDET'])
         # ------------------------------------------------------------------
         # Extract orders
+        # old code time: 1 loop, best of 3: 22.3 s per loop
+        # new code time: 3.16 s ± 237 ms per loop
         # ------------------------------------------------------------------
         # loop around each order
         for order_num in range(loc['number_orders']):
-            # extract the orders
-            eargs = [p, loc, data2, order_profile]
-            loc = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
+            # extract this order
+            eargs = [p, loc, data2, order_profile, order_num]
+            e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
+            # calculate the noise
+            range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
+            noise = p['sigdet'] * np.sqrt(range1 + range2)
+            # get window size
+            blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
+            blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
+            # get average flux per pixel
+            flux = np.sum(e2ds[blaze_win1:blaze_win2])/ (2*p['IC_EXTFBLAZ'])
+            # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
+            snr = flux / np.sqrt(flux + noise**2)
+            # calcualte the blaze function
+            blaze = spirouFLAT.MeasureBlazeForOrder(e2ds, p['IC_BLAZE_FITN'])
+            # calculate the flat
+            flat = e2ds/blaze
+            # calculate the rms
+            rms = np.std(flat)
+            # log the SNR RMS
+            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}  - FF rms={3:.2f} %'
+            wargs = [fiber, order_num, snr, rms * 100.0]
+            WLOG('', p['log_opt'], wmsg.format(*wargs))
+            # add calculations to storage
+            loc['e2ds'][order_num] = e2ds
+            loc['SNR'][order_num] = snr
+            loc['RMS'][order_num] = rms
+            loc['blaze'][order_num] = blaze
+            loc['flat'][order_num] = flat
+            # set sources
+            source = __NAME__ + '/__main__()'
+            loc.set_sources(['e2ds', 'SNR', 'RMS', 'blaze', 'flat'], source)
+            # Log if saturation level reached
+            satvalue = (flux/p['gain'])/(range1 + range2)
+            if satvalue > (p['QC_LOC_FLUMAX'] * p['nbframes']):
+                wmsg = 'SATURATION LEVEL REACHED on Fiber {0}'
+                WLOG('warning', p['log_opt'], wmsg.format(fiber))
+
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -191,6 +249,9 @@ if __name__ == "__main__":
         fmsg = 'Too much flux in the image (max authorized={0})'
         fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
         passed = False
+        # Question: Why is this test ignored?
+        # For some reason this test is ignored in old code
+        passed = True
 
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
