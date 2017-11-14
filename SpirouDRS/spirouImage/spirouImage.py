@@ -151,6 +151,37 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
 
     return newimage
 
+def convert_to_adu(image, p=None, exptime=None):
+    """
+    Converts image from ADU/s into ADU
+
+    :param image:
+    :param p: dictionary or None, parameter dictionary, must contain 'exptime'
+              and 'gain', if None gain and exptime must not be None
+    :param exptime: float, if p is None, used as the exposure time the image
+                    is multiplied by
+
+    :return newimage: numpy array (2D), the image in e-
+    """
+    newimage = None
+    if p is not None:
+        try:
+            newimage = image * p['exptime']
+        except KeyError:
+            emsg = ('If parameter dictionary is defined keys "exptime" '
+                    'must be defined.')
+            WLOG('error', '', emsg)
+    elif exptime is not None:
+        try:
+            exptime = float(exptime)
+            newimage = image * exptime
+        except ValueError:
+            emsg = ('"exptime" must be a float if parameter '
+                    'dictionary is None.')
+            WLOG('error', '', emsg)
+
+    return newimage
+
 
 # =============================================================================
 # Define Image correction functions
@@ -277,7 +308,7 @@ def fit_tilt(pp, lloc):
 # =============================================================================
 def get_exptime(p, hdr, name=None):
     # return param
-    return get_param(p, hdr, 'kw_rdnoise', name)
+    return get_param(p, hdr, 'kw_exptime', name)
 
 
 def get_gain(p, hdr, name=None):
@@ -287,12 +318,12 @@ def get_gain(p, hdr, name=None):
 
 def get_sigdet(p, hdr, name=None):
     # return param
-    return get_param(p, hdr, 'kw_exptime', name)
+    return get_param(p, hdr, 'kw_rdnoise', name)
 
 
 def get_param(p, hdr, keyword, name=None):
     # get header keyword
-    key = p['kw_rdnoise'][0]
+    key = p[keyword][0]
     # deal with no name
     if name is None:
         name = key
