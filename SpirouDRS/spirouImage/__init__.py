@@ -25,6 +25,7 @@ AddKey2DList = spirouFITS.add_key_2d_list
 
 # Converts image from ADU/s into e-
 ConvertToE = spirouImage.convert_to_e
+ConvertToADU = spirouImage.convert_to_adu
 
 # Copies keys from hdr dictionary to hdict, if forbid_keys is True some
 #     keys will not be copies (defined in python code)

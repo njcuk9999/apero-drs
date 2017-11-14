@@ -129,10 +129,10 @@ kw_ACQTIME_KEY = ['ACQTIME1', None, '']
 kw_RDNOISE = ['RDNOISE', None, '']
 
 # define the exposure time HEADER key (used to get value only)
-kw_GAIN = ['EXPTIME', None, '']
+kw_GAIN = ['GAIN', None, '']
 
 # define the gain HEADER key (used to get value only)
-kw_EXPTIME = ['GAIN', None, '']
+kw_EXPTIME = ['EXPTIME', None, '']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables

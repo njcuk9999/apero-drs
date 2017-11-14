@@ -214,6 +214,7 @@ ic_tilt_fit = 3
 #   Order to plot on slit image plot                            - [cal_slit]
 ic_slit_order_plot = 10
 
+
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
 # -----------------------------------------------------------------------------
@@ -227,7 +228,16 @@ ic_bkgr_window = 100
 # number of orders in tilt file (formally nbo)                  - [cal_ff]
 ic_tilt_nbo = 36
 
-#
+#   Manually set the sigdet to use in weighted tilt extraction  - [cal_ff]
+#       set to -1 to use from fitsfilename HEADER
+#       (formally ccdsigdet)
+ic_ff_sigdet = 100.0
+
+# half size blaze smoothing window                              - [cal_ff]
+ic_extfblaz = 50
+
+# the blaze polynomial fit degree (formally harded coded = 5)   - [cal_ff]
+ic_blaze_fitn = 5
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
@@ -254,9 +264,11 @@ qc_loc_rmsmax_center = 100
 #   Maximum rms allowed in fitting width                        - [cal_loc]
 qc_loc_rmsmax_fwhm = 500
 
-#   Maximum signal allowed (set saturation limit)               - [cal_ff_raw]
+#   Maximum signal allowed (set saturation limit)               - [cal_ff]
 qc_max_signal = 65500
 
+#   Maximum value alled (saturation limit)                      - [cal_ff]
+qc_loc_flumax = 64500
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings

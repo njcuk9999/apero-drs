@@ -129,7 +129,6 @@ def measure_min_max(pp, y):
     return miny, maxy, max_signal, diff_maxmin
 
 
-
 def measure_box_min_max(image, size):
     """
     Measure the minimum and maximum pixel value for each row using a box which
