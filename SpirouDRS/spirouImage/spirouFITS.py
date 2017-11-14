@@ -165,10 +165,10 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
     # Log that we are reading the order profile
     wmsg = 'Reading order profile of Fiber {0}'
     WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
-    # construct foldername
-    reducedfolder = p['reduced_dir']
+    # construct key
+    key = 'ORDER_PROFILE_{0}'.format(p['fiber'])
     # construct filename
-    read_file = spirouCDB.GetFile(p, 'ORDER_PROFILE_{0}' + p['fiber'], hdr)
+    read_file = spirouCDB.GetFile(p, key, hdr)
     # read read_file
     rout = readimage(p, framemath='none', filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
