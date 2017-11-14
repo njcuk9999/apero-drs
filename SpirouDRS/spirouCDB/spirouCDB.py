@@ -319,13 +319,13 @@ def get_file_name(p, key, hdr=None, filename=None):
     if filename is not None:
         read_file = filename
     else:
-        if 'TILT' in c_database:
-            rawfilename = c_database['TILT'][1]
+        if key in c_database:
+            rawfilename = c_database[key][1]
         else:
             emsg = (
-            'Calibration database has no valid "TILT" entry '
-            'for time<{0}')
-            WLOG('error', p['log_opt'], emsg.format(acqtime))
+            'Calibration database has no valid "{0}" entry '
+            'for time<{1}')
+            WLOG('error', p['log_opt'], emsg.format(key, acqtime))
             rawfilename = ''
         # construct tilt filename
         read_file = os.path.join(p['reduced_dir'], rawfilename)
