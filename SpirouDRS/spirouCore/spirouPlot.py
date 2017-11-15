@@ -410,6 +410,101 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
 
 
 # =============================================================================
+# ff plotting function
+# =============================================================================
+def selected_order_fit_and_edges(p, loc, image):
+
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    acc = loc['acc'][selected_order]
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., 20000))
+    # get fit and edge fits
+    xfit = np.arange(image.shape[1])
+    yfit = np.polyval(acc, xfit)
+    yfitlow = np.polyval(acc, xfit) + range2
+    yfithigh = np.polyval(acc, xfit) - range1
+    # plot fits
+    plt.plot(xfit, yfit, color='white', label='fit')
+    plt.plot(xfit, yfitlow, color='white', label='Fit edge', linestyle='--')
+    plt.plot(xfit, yfithigh, color='white', linestyle='--')
+    # set title labels limits
+    title = 'Image fit for order {0} fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def selected_order_tilt_adjusted_e2ds_blaze(p, loc, image):
+
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    e2ds = loc['e2ds'][selected_order]
+    blaze = loc['blaze'][selected_order]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # get xrange
+    x = np.arange(image.shape[1])
+    # plot e2ds for selected order
+    frame.plot(x, e2ds, label='E2DS')
+    # plot blaze function
+    frame.plot(x, blaze, label='Blaze')
+    # set title labels limits
+    title = 'E2DS + BLAZE spectral order {0} fiber {1}'
+    frame.set(title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def selected_order_flat(p, loc, image):
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    flat = loc['flat'][selected_order]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # get xrange
+    x = np.arange(image.shape[1])
+    # plot e2ds for selected order
+    frame.plot(x, flat, label='E2DS')
+    # set title labels limits
+    title = 'FLAT spectral order {0} fiber {1}'
+    frame.set(title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here

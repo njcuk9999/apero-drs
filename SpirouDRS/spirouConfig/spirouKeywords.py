@@ -46,6 +46,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
             'kw_EXPTIME',
+            'kw_EXTRA_SN',
+            'kw_FLAT_RMS',
             'kw_GAIN',
             'kw_LOCO_BCKGRD',
             'kw_LOCO_CTR_COEFF',
@@ -115,9 +117,9 @@ kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
 # root keys (for use below)
-root_drs_loc =  'LO'
+root_drs_loc = 'LO'
 root_drs_flat = 'FF'
-root_drs_hc =   'LMP'
+root_drs_hc = 'LMP'
 
 # -----------------------------------------------------------------------------
 # Required header keys
@@ -210,7 +212,7 @@ kw_LOC_SMAXPTS_WID = [root_drs_loc + 'WIDMAX', 0, 'max rm pts width']
 # Maximum rms allowed for location fit
 kw_LOC_RMS_CTR = [root_drs_loc + 'RMSCTR', 0, 'max rms ctr']
 
-# Maximum rms alloed for width fit (formally kw_LOC_rms_fwhm)
+# Maximum rms allowed for width fit (formally kw_LOC_rms_fwhm)
 kw_LOC_RMS_WID = [root_drs_loc + 'RMSWID', 0, 'max rms width']
 
 # -----------------------------------------------------------------------------
@@ -218,6 +220,16 @@ kw_LOC_RMS_WID = [root_drs_loc + 'RMSWID', 0, 'max rms width']
 # -----------------------------------------------------------------------------
 # Tilt order keyword prefix
 kw_TILT = [root_drs_loc + 'TILT', 0, 'Tilt order']
+
+# -----------------------------------------------------------------------------
+# Define cal_FF variables
+# -----------------------------------------------------------------------------
+
+# Signal to noise ratio for order center
+kw_EXTRA_SN = ['EXTSN', 0, 'S_N order center']
+
+# Flat field RMS for order
+kw_FLAT_RMS = [root_drs_flat + 'RMS', 0, 'FF RMS order']
 
 
 # =============================================================================
@@ -293,6 +305,7 @@ def check_keyword_format(key, value):
                 'and \n\tstring is any valid python str object.')
         raise spirouConfig.ConfigError(emsg.format(key, __NAME__),
                                        level='error')
+
 
 # =============================================================================
 # Start of code

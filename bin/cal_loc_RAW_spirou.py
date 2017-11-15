@@ -287,7 +287,6 @@ if __name__ == "__main__":
     # construct filename
     locoext = '_loco_{0}.fits'.format(p['fiber'])
     locofits = p['arg_file_names'][0].replace('.fits', locoext)
-
     # log that we are saving localization file
     WLOG('', p['log_opt'], ('Saving localization information '
                             'in file: {0}').format(locofits))
