@@ -303,7 +303,33 @@
 
 ### 1.5 cal_FF_RAW_spirou.py
 
-To do
+- added function to replace measure_bkgr_FF, but incomplete (not currently used)
+    - would need to convert interpol.c to python (spline fitting)
+
+- added storage dictionary to store (and pass around) all variables created
+    - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+- Created function to read TILT file from calibDB (replaces `readkeyloco`)
+    - `spirouImage.ReadTiltFile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Created function to read order profile (replaces `read_data_raw` + pre-amble)
+    - `spirouImage.ReadOrderProfile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Used `spirouLOCOR.GetCoeffs(p, hdr, loc=loc)` to get the coefficients from file
+
+- Created merge coefficients function to perform AB coefficient merge
+    - `spirouLOCOR.MergeCoefficients`
+    
+- Updated extraction function `spirouEXTOR.ExtracTtiltWeightOrder()` - much faster as takes many of the calculations outside the pixel loop
+    - (i.e. calculating the pixel contribution due to tilt in array `ww`).
+        - `ww` is constant for an order, thus doesn't need to be worked out for each pixel in one order, just the multiplication between ww and the image
+    - up to 8 times faster with these improvements
+
+- `e2ds`, `SNR`, `RMS`, `blaze` and `flat` are stored in `loc` parameter dictionary
+
+- QC (max_signal > qc_max_signal * nbframes) moved to end, however in old code it is not used as a failure criteria so also not used to fail in new code
 
 [Back to top](#table-of-contents)
 
@@ -330,7 +356,7 @@ To do
 - [x] - ~~cal_dark_spirou~~
 - [x] - ~~cal_loc_RAW_spioru~~
 - [x] - ~~cal_SLIT_spirou~~
-- [ ] - cal_FF_RAW_spirou
+- [x] - ~~cal_FF_RAW_spirou~~
 - [ ] - cal_extract_RAW_spirou
 - [ ] - cal_DRIFT_RAW_spirou
 
