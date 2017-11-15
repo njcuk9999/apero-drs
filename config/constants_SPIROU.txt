@@ -239,6 +239,9 @@ ic_extfblaz = 50
 # the blaze polynomial fit degree (formally harded coded = 5)   - [cal_ff]
 ic_blaze_fitn = 5
 
+#   Order to plot on ff image plot (formally ic_order_plot)     - [cal_ff]
+ic_ff_order_plot = 5
+
 # -----------------------------------------------------------------------------
 #  Quality control settings
 # -----------------------------------------------------------------------------
