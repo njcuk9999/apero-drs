@@ -20,6 +20,8 @@ from . import spirouImage
 # add a new key to hdict from keywordstorage
 AddKey = spirouFITS.add_new_key
 
+AddKey1DList = spirouFITS.add_key_1d_list
+
 # add a new 2d list to key using the keywordstorage[0] as prefix
 AddKey2DList = spirouFITS.add_key_2d_list
 
