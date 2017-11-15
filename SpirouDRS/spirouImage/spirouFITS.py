@@ -364,7 +364,52 @@ def add_new_keys(hdict, keywordstores, values=None):
     return hdict
 
 
-def add_key_2d_list(hdict, keywordstore, values=None):
+def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
+    """
+    Add a new 1d list to key using the keywordstorage[0] as prefix in form
+    keyword = kewordstoreage + row number
+
+    :param hdict: dictionary, storage for adding to FITS rec
+    :param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                         must be in form [string, value, string]
+    :param value: numpy array or 1D list of keys or None
+
+                  if numpy array or 1D list will create a set of keys in form
+                  keyword = kewordstoreage + row number
+                  where row number is the position in values
+                  with value = values[row number][column number]
+
+                  if None uses the value = keywordstore[1]
+    :param dim1name: string, the name for dimension 1 (rows), used in FITS rec
+                     HEADER comments in form:
+          COMMENT = keywordstore[2] dim1name={row number}
+
+    :return hdict: dictionary, storage for adding to FITS rec
+    """
+    # extract keyword, value and comment and put it into hdict
+    key, dvalue, comment = keywordstore
+    # set the value to default value if value is None
+    if values is None:
+        values = [dvalue]
+    # convert to a numpy array
+    values = np.array(values)
+    # loop around the 2D array
+    dim1 = len(values)
+    for i_it in range(dim1):
+            # construct the key name
+            keyname = '{0}{1}'.format(key, i_it)
+            # get the value
+            value = values[i_it]
+            # construct the comment name
+            comm = '{0} {1}={2}'.format(comment, dim1name, i_it)
+            # add to header dictionary
+            hdict[keyname] = (value, comm)
+    # return the header dictionary
+    return hdict
+
+
+def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
+                    dim2name='coeff'):
     """
     Add a new 2d list to key using the keywordstorage[0] as prefix in form
     keyword = kewordstoreage + number
@@ -382,6 +427,12 @@ def add_key_2d_list(hdict, keywordstore, values=None):
                   with value = values[row number][column number]
 
                   if None uses the value = keywordstore[1]
+    :param dim1name: string, the name for dimension 1 (rows), used in FITS rec
+                     HEADER comments in form:
+          COMMENT = keywordstore[2] dim1name={row number} dim2name={col number}
+    :param dim2name: string, the name for dimension 2 (cols), used in FITS rec
+                     HEADER comments in form:
+          COMMENT = keywordstore[2] dim1name={row number} dim2name={col number}
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
@@ -401,7 +452,8 @@ def add_key_2d_list(hdict, keywordstore, values=None):
             # get the value
             value = values[i_it, j_it]
             # construct the comment name
-            comm = '{0} order={1} coeff={2}'.format(comment, i_it, j_it)
+            cargs = [comment, dim1name, i_it, dim2name, j_it]
+            comm = '{0} {1}={2} {3}={5}'.format(*cargs)
             # add to header dictionary
             hdict[keyname] = (value, comm)
     # return the header dictionary

@@ -12,6 +12,7 @@ Created on 2017-11-06 11:32
 Version 0.0.1
 """
 import numpy as np
+import os
 import time
 
 from SpirouDRS import spirouBACK
@@ -239,6 +240,58 @@ if __name__ == "__main__":
                 wmsg = 'SATURATION LEVEL REACHED on Fiber {0}'
                 WLOG('warning', p['log_opt'], wmsg.format(fiber))
 
+        # ----------------------------------------------------------------------
+        # Plots
+        # ----------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # start interactive session if needed
+            sPlt.start_interactive_session()
+            # plot image with selected order fit and edge fit
+            sPlt.selected_order_fit_and_edges(p, loc, data2)
+            # plot tilt adjusted e2ds and blaze for selected order
+            sPlt.selected_order_tilt_adjusted_e2ds_blaze(p, loc, data2)
+            # plot flat for selected order
+            sPlt.selected_order_flat(p, loc, data2)
+
+        # ----------------------------------------------------------------------
+        # Store Blaze in file
+        # ----------------------------------------------------------------------
+        # construct filename
+        reducedfolder = p['reduced_dir']
+        blazeext = '_blaze_{0}.fits'.format(p['fiber'])
+        blazefits = p['arg_file_names'][0].replace('.fits', blazeext)
+        # log that we are saving blaze file
+        wmsg = 'Saving blaze spectrum for fiber: {0} in {1}'
+        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, blazefits))
+        # add keys from original header file
+        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        # define new keys to add
+        hdict = spirouImage.AddKey(hdict, p['kw_version'])
+        hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
+        hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
+        # write 1D list of the SNR
+        hdict = spirouImage.AddKey1DList(hdict, p['kw_EXTRA_SN'],
+                                         values=loc['SNR'])
+        # write center fits and add header keys (via hdict)
+        spirouImage.WriteImage(os.path.join(reducedfolder, blazefits),
+                               loc['blaze'], hdict)
+
+        # ----------------------------------------------------------------------
+        # Store Flat-field in file
+        # ----------------------------------------------------------------------
+        # construct filename
+        reducedfolder = p['reduced_dir']
+        flatext = '_flat_{0}.fits'.format(p['fiber'])
+        flatfits = p['arg_file_names'][0].replace('.fits', flatext)
+        # log that we are saving blaze file
+        wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
+        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, flatfits))
+        # write 1D list of the RMS (add to hdict from blaze)
+        hdict = spirouImage.AddKey1DList(hdict, p['kw_FLAT_RMS'],
+                                         values=loc['RMS'])
+        # write center fits and add header keys (via same hdict as blaze)
+        spirouImage.WriteImage(os.path.join(reducedfolder, flatfits),
+                               loc['flat'], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -252,6 +305,7 @@ if __name__ == "__main__":
         # Question: Why is this test ignored?
         # For some reason this test is ignored in old code
         passed = True
+        WLOG('info', p['log_opt'], fail_msg[-1])
 
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -271,6 +325,9 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
                                 '').format(p['program']))
+
+    neilend = time.time()
+    print('Time taken (py3) = {0}'.format(neilend - neilstart))
 
 # =============================================================================
 # End of code
