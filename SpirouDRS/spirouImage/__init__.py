@@ -56,6 +56,8 @@ GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
 
+GetTypeFromHeader = spirouFITS.get_type_from_header
+
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
 ReadImage = spirouFITS.readimage

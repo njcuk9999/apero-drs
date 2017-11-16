@@ -39,7 +39,7 @@ WLOG = spirouCore.wlog
 # Remove this for final (only for testing)
 import sys
 if len(sys.argv) == 1:
-    sys.argv = ['test.py', '20170710', 'flat_dark02f10.fits',
+    sys.argv = ['test: ' + __NAME__, '20170710', 'flat_dark02f10.fits',
                 'flat_dark03f10.fits', 'flat_dark04f10.fits',
                 'flat_dark05f10.fits', 'flat_dark06f10.fits']
 
@@ -83,6 +83,11 @@ if __name__ == "__main__":
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
+    # log processing image type
+    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
+    p.set_source('dprtype', __NAME__ + '/__main__')
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
     # ----------------------------------------------------------------------
     # Correction of DARK

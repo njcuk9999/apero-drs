@@ -322,7 +322,7 @@
 - Created merge coefficients function to perform AB coefficient merge
     - `spirouLOCOR.MergeCoefficients`
     
-- Updated extraction function `spirouEXTOR.ExtracTtiltWeightOrder()` - much faster as takes many of the calculations outside the pixel loop
+- Updated extraction function `spirouEXTOR.ExtracTiltWeightOrder()` - much faster as takes many of the calculations outside the pixel loop
     - (i.e. calculating the pixel contribution due to tilt in array `ww`).
         - `ww` is constant for an order, thus doesn't need to be worked out for each pixel in one order, just the multiplication between ww and the image
     - up to 8 times faster with these improvements

@@ -85,11 +85,15 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     loco_deg_c, loco_deg_w = p['kw_LOCO_DEG_C'][0], p['kw_LOCO_DEG_W'][0]
     loco_ctr_coeff = p['kw_LOCO_CTR_COEFF'][0]
     loco_fwhm_coeff = p['kw_LOCO_FWHM_COEFF'][0]
-    # get acquisition time
-    acqtime = spirouCDB.GetAcqTime(p, hdr)
 
     # get calibDB
-    c_database = spirouCDB.GetDatabase(p, acqtime)
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouCDB.GetAcqTime(p, hdr)
+        # get calibDB
+        c_database = spirouCDB.GetDatabase(p, acqtime)
+    else:
+        c_database = p['calibDB']
 
     # get the reduced dir name
     reduced_dir = p['reduced_dir']

@@ -70,6 +70,15 @@ def CALIBDB_LOCKFILE(p):
     return lockfilename
 
 
+def FORBIDDEN_COPY_KEYS():
+    forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
+                      'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
+                      'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
+                      'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
+    # return keys
+    return forbidden_keys
+
+
 def FITSFILENAME(p):
 
     arg_file_names = p['arg_file_names']
@@ -138,6 +147,8 @@ def REDUCED_DIR(p):
     reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
     # return reduced directory
     return reduced_dir
+
+
 
 
 # =============================================================================
