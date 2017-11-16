@@ -33,7 +33,7 @@ __NAME__ = 'spirouStarup.py'
 # =============================================================================
 # Define run functions
 # =============================================================================
-def run_inital_startup():
+def run_inital_startup(customargs=None):
     """
     Run initial start up:
 
@@ -42,8 +42,22 @@ def run_inital_startup():
     3) display title
     4) display initial parameterisation
     5) display help file (if requested and exists)
-    6) loads run time arguments
+    6) loads run time arguments (and custom arguments, see below)
     7) loads other config files
+
+    :param customargs: None or list of strings, if list of strings then instead
+                       of getting the standard runtime arguments
+
+           i.e. in form:
+
+                program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+
+           loads all arguments into customargs
+
+           i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+           expects command line arguments to be:
+
+                program.py rawdir filename a b c
 
     :return p: dictionary, parameter dictionary
     """
@@ -59,11 +73,17 @@ def run_inital_startup():
     # display initial parameterisation
     display_initial_parameterisation(cparams)
     # deal with run time arguments
-    cparams = run_time_args(cparams)
+    if customargs is None:
+        cparams = run_time_args(cparams)
+    else:
+        cparams = run_time_custom_args(cparams, customargs)
     # Display help file if needed
     display_help_file(cparams)
     # display run file
-    display_run_files(cparams)
+    if customargs is None:
+        display_run_files(cparams)
+    else:
+        display_custom_args(cparams, customargs)
     # load special config file
     # TODO: is this needed as special_config_SPIROU does not exist
     cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=False)
@@ -81,7 +101,7 @@ def run_inital_startup():
     return cparams
 
 
-def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
+def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
     """
     Run start up code (based on program and parameters defined in p before)
 
@@ -125,6 +145,10 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
     if not os.path.exists(fits_fn):
         WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
     # -------------------------------------------------------------------------
+    # try to get type from header
+
+
+    # -------------------------------------------------------------------------
     # if we have prefixes defined then check that fitsfilename has them
     # if add_to_params is defined then add params to p accordingly
     p = deal_with_prefixes(p, kind, prefixes, add_to_p)
@@ -145,6 +169,9 @@ def run_startup(p, kind, prefixes=None, add_to_p=None, calibdb=False):
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
+        # then load the calibdb into p
+        p['calibDB'] = spirouCDB.GetDatabase(p)
+        p.set_source('calibDB', __NAME__ + '/run_startup()')
     else:
         calib_dir = p['DRS_CALIB_DB']
         # if reduced directory does not exist create it
@@ -198,6 +225,46 @@ def run_time_args(p):
     # set reduced path
     p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
     p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
+
+    return p
+
+
+def run_time_custom_args(p, customargs):
+
+    rparams = list(sys.argv)
+    p['program'] = spirouConfig.Constants.PROGRAM()
+    p['log_opt'] = p['program']
+    p.set_source('log_opt', __NAME__ + '/run_time_custom_args()')
+
+    if len(rparams) == 1:
+        WLOG('error', '', 'No arguments defined - cannot used customargs')
+    if len(rparams) > 1:
+        # loop around defined run time arguments
+        for r_it in range(1, len(rparams)):
+            # try to get the custom name for this argument (from customargs)
+            try:
+                customarg = str(customargs[r_it - 1])
+            # if there are too many run time arguments then create an error
+            except IndexError:
+                emsg = ('Too many arguments defined there must be {0} defined')
+                WLOG('error', p['log_opt'], emsg.format(len(customargs)))
+                customarg = None
+            except SyntaxError:
+                emsg = ('Invalid string in customargs. Please redefine')
+                WLOG('error', p['log_opt'], emsg)
+
+            # try to evaluate the argument (int/float/list/bool)
+            try:
+                value = eval(str(rparams[r_it]))
+                # if not int/float/list/bool set to string
+                if type(value) not in [int, float, list, bool]:
+                    value = str(rparams[r_it])
+            # if we cannot evaluate set to a string
+            except NameError:
+                value = str(rparams[r_it])
+            # set the value
+            p[customarg] = value
+            p.set_source(customarg, 'From run time arguments (sys.argv)')
 
     return p
 
@@ -259,8 +326,8 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             fprefix = prefix
     # if found log that we found image
     if found:
-        WLOG('info', log_opt, ('Now processing Image TYPE {0} with {1} '
-                               'recipe').format(kind, program))
+        wmsg = 'Correct type of image for {0} ({1})'
+        WLOG('info', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
         # if a2p is not None we have some variables that need added to
         # parameter dictionary based on the prefix found
         if add_to_p is not None:
@@ -284,8 +351,8 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             return p
     # Else if we don't have the correct prefix then log and exit
     else:
-        WLOG('error', log_opt, ('Wrong type of image for {0}, should be {1}'
-                                '').format(kind, ' or '.join(prefixes)))
+        wmsg = 'Wrong type of image for {0}, should be {1}'
+        WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
 
 
 # =============================================================================
@@ -362,7 +429,19 @@ def display_run_files(p):
     WLOG('', p['log_opt'], 'On directory {0}'.format(tmp))
 
 
+def display_custom_args(p, customargs):
+
+    wmsg = 'Now running : {0} with '.format(p['program'])
+    for customarg in customargs:
+        wmsg += '{0}={1} '.format(customarg, p[customarg])
+    WLOG('', p['log_opt'], wmsg)
+
+
 def display_help_file(p):
+
+    if 'arg_night_name' not in list(p.keys()):
+        if 'HELP' not in list(p.keys()):
+            return 0
 
     if p['arg_night_name'] != "HELP":
         return 0
