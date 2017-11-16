@@ -27,13 +27,14 @@ from SpirouDRS import spirouCDB
 # =============================================================================
 # Define variables
 # =============================================================================
+# get the logging function
 WLOG = spirouCore.wlog
+# set the name
 __NAME__ = 'spirouFITS.py'
+# get the parameter dictionary object
+ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
-FORBIDDEN_COPY_KEY = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
-                      'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
-                      'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
-                      'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
+FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
 
 
 # =============================================================================
@@ -460,6 +461,35 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
     return hdict
 
 
+def get_type_from_header(p, keywordstore, hdict=None, filename=None):
+    # set up frequently used variables
+    log_opt = p['log_opt']
+    # if we don't have the hdict then we need to load the header from file
+    if hdict is None:
+        # get file name
+        if filename is None:
+            try:
+                fitsfilename = p['fitsfilename']
+            except KeyError:
+                emsg = '"fitsfilename" is not defined in parameter dictionary'
+                WLOG('error', log_opt, emsg)
+                fitsfilename = ''
+        else:
+            fitsfilename = filename
+        # get the hdict
+        hdict, _ = read_raw_header(fitsfilename, headerext=0)
+    else:
+        if type(hdict) not in [dict, ParamDict]:
+            emsg = ('"hdict" must be None or a valid python dictionary or '
+                    'Parameter Dictionary')
+            WLOG('error', log_opt, emsg)
+    # get the key from header dictionary
+    if keywordstore[0] in hdict:
+        return hdict[keywordstore[0]]
+    else:
+        return 'UNKNOWN'
+
+
 def read_header(p, filepath, ext=0):
     """
     Read the header from a file at "filepath" with extention "ext" (default=0)
@@ -564,6 +594,22 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
     else:
         return data
 
+
+def read_raw_header(filename, headerext=0):
+    # get the data
+    hdu = fits.open(filename)
+    ext = len(hdu)
+    # get the header (if header extension is available else default to zero)
+    if headerext <= ext:
+        header = hdu[headerext].header
+    else:
+        header = hdu[0]
+    # convert header to python dictionary
+    hdr = dict(zip(header.keys(), header.values()))
+    cmt = dict(zip(header.keys(), header.comments))
+
+    # return header dictionaries
+    return hdr, cmt
 
 def math_controller(p, data, header, framemath=None):
     """
