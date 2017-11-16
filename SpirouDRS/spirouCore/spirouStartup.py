@@ -145,10 +145,6 @@ def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
     if not os.path.exists(fits_fn):
         WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
     # -------------------------------------------------------------------------
-    # try to get type from header
-
-
-    # -------------------------------------------------------------------------
     # if we have prefixes defined then check that fitsfilename has them
     # if add_to_params is defined then add params to p accordingly
     p = deal_with_prefixes(p, kind, prefixes, add_to_p)
@@ -170,7 +166,8 @@ def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
         # then load the calibdb into p
-        p['calibDB'] = spirouCDB.GetDatabase(p)
+        calibDB = spirouCDB.GetDatabase(p)
+        p['calibDB'] = calibDB
         p.set_source('calibDB', __NAME__ + '/run_startup()')
     else:
         calib_dir = p['DRS_CALIB_DB']
