@@ -148,13 +148,16 @@ def get_acquision_time(p, header=None):
     return acqtime
 
 
-def get_database(p, max_time=None):
+def get_database(p, max_time=None, update=False):
     """
-    Gets all entries from calibDB where unix time <= max_time
+    Gets all entries from calibDB where unix time <= max_time. If update is
+    False then will first search for and use 'calibDB' in p (if it exists)
 
     :param p: dictionary, parameter dictionary
     :param max_time: str, maximum time allowed for all calibDB entries
                      format = (YYYY-MM-DD HH:MM:SS.MS)
+    :param update: bool, if False looks for "calibDB' in p, and if found does
+                   not load new database
 
     :return c_database: dictionary, the calibDB database in form:
 
@@ -164,6 +167,10 @@ def get_database(p, max_time=None):
 
             {key} {dirname} {filename} {human_time} {unix_time}
     """
+    # if we already have calib database don't load it
+    if 'calibDB' in p and not update:
+        return p['calibDB']
+
     if max_time is None:
         max_time = get_acquision_time(p)
     # check that max_time is a valid unix time (i.e. a float)
@@ -265,11 +272,14 @@ def copy_files(p, header=None):
 
     :return:
     """
-    # get acquisition time
-    acqtime = get_acquision_time(p, header)
-
     # get calibDB
-    c_database = get_database(p, acqtime)
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = get_acquision_time(p, header)
+        # get calibDB
+        c_database = get_database(p, acqtime)
+    else:
+        c_database = p['calibDB']
 
     # construct reduced directory path
     reduced_dir = p['reduced_dir']
@@ -311,10 +321,15 @@ def copy_files(p, header=None):
 
 
 def get_file_name(p, key, hdr=None, filename=None):
-    # get acquisition time
-    acqtime = get_acquision_time(p, hdr)
     # get calibDB
-    c_database = get_database(p, acqtime)
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = get_acquision_time(p, hdr)
+        # get calibDB
+        c_database = get_database(p, acqtime)
+    else:
+        c_database = p['calibDB']
+
     # Check that "TILT" is in calib database and assign value if it is
     if filename is not None:
         read_file = filename

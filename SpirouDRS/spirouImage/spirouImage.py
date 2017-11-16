@@ -199,11 +199,16 @@ def correct_for_dark(p, image, header):
     :return corrected_image: numpy array (2D), the dark corrected image
     """
 
-    # get acquisition time
-    acqtime = spirouCDB.GetAcqTime(p, header)
+
 
     # get calibDB
-    cdb = spirouCDB.GetDatabase(p, acqtime)
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouCDB.GetAcqTime(p, header)
+        # get calibDB
+        cdb = spirouCDB.GetDatabase(p, acqtime)
+    else:
+        cdb = p['calibDB']
 
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:

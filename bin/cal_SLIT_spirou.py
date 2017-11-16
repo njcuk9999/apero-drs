@@ -35,8 +35,8 @@ __NAME__ = 'cal_SLIT_spirou.py'
 # Remove this for final (only for testing)
 import sys
 if len(sys.argv) == 1:
-    sys.argv = ['test.py', '20170710', 'fp_fp02a203.fits', 'fp_fp03a203.fits',
-                'fp_fp04a203.fits']
+    sys.argv = ['test: ' + __NAME__, '20170710', 'fp_fp02a203.fits',
+                'fp_fp03a203.fits', 'fp_fp04a203.fits']
 
 # =============================================================================
 # Define functions
@@ -58,6 +58,13 @@ if __name__ == "__main__":
     # set the fiber type
     p['fib_typ'] = ['AB']
     p.set_source('fib_typ', __NAME__ + '/__main__')
+
+    # log processing image type
+    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
+    p.set_source('dprtype', __NAME__ + '/__main__')
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------

@@ -38,7 +38,7 @@ __NAME__ = 'cal_DARK_spirou.py'
 # Remove this for final (only for testing)
 import sys
 if len(sys.argv) == 1:
-    sys.argv = ['test.py', '20170710', 'dark_dark02d406.fits']
+    sys.argv = ['test: ' + __NAME__, '20170710', 'dark_dark02d406.fits']
 
 # =============================================================================
 # Define functions
@@ -101,6 +101,11 @@ if __name__ == "__main__":
     p = spirouCore.RunInitialStartup()
     # run specific start up
     p = spirouCore.RunStartup(p, kind='dark', prefixes=['dark_dark'])
+    # log processing image type
+    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
+    p.set_source('dprtype', __NAME__ + '/__main__')
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
     # ----------------------------------------------------------------------
     # Read image file

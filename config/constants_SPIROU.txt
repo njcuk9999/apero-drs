@@ -222,10 +222,10 @@ ic_slit_order_plot = 10
 #    Do background measurement (True = 1, False = 0)            - [cal_ff]
 ic_do_bkgr_subtraction = 0
 
-# half-size of window for background measurements               - [cal_ff]
+#    Half-size of window for background measurements            - [cal_ff]
 ic_bkgr_window = 100
 
-# number of orders in tilt file (formally nbo)                  - [cal_ff]
+#    Number of orders in tilt file (formally nbo)               - [cal_ff]
 ic_tilt_nbo = 36
 
 #   Manually set the sigdet to use in weighted tilt extraction  - [cal_ff]
@@ -233,10 +233,11 @@ ic_tilt_nbo = 36
 #       (formally ccdsigdet)
 ic_ff_sigdet = 100.0
 
-# half size blaze smoothing window                              - [cal_ff]
+#    Half size blaze smoothing window                           - [cal_ff]
 ic_extfblaz = 50
 
-# the blaze polynomial fit degree (formally harded coded = 5)   - [cal_ff]
+#    The blaze polynomial fit degree                            - [cal_ff]
+# (formally harded coded = 5)
 ic_blaze_fitn = 5
 
 #   Order to plot on ff image plot (formally ic_order_plot)     - [cal_ff]
@@ -270,15 +271,12 @@ qc_loc_rmsmax_fwhm = 500
 #   Maximum signal allowed (set saturation limit)               - [cal_ff]
 qc_max_signal = 65500
 
-#   Maximum value alled (saturation limit)                      - [cal_ff]
+#   Saturation level reached warning                            - [cal_ff]
 qc_loc_flumax = 64500
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings
 # -----------------------------------------------------------------------------
-
-#   define the HEADER key for acquisition time                - [cal_dark]
-ACQTIME_KEY = ACQTIME1
 
 #   Define calibd DB master filename                          - [cal_dark, cal_loc]
 #      (formally ic_calib_db_master_file)

@@ -45,6 +45,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_MED',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
+            'kw_DPRTYPE',
             'kw_EXPTIME',
             'kw_EXTRA_SN',
             'kw_FLAT_RMS',
@@ -124,6 +125,10 @@ root_drs_hc = 'LMP'
 # -----------------------------------------------------------------------------
 # Required header keys
 # -----------------------------------------------------------------------------
+
+# Define the key to get the data fits file type
+kw_DPRTYPE = ['TPL_NAME', None, '']
+
 # define the HEADER key for acquisition time (used to get value only)
 kw_ACQTIME_KEY = ['ACQTIME1', None, '']
 
