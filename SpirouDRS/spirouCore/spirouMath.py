@@ -9,21 +9,23 @@ Created on 2017-11-07 at 17:28
 
 @author: cook
 
-
+Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.0
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
 
+from SpirouDRS import spirouConfig
 
-
+# =============================================================================
+# Define variables
+# =============================================================================
+# Define the name of this module
+__NAME__ = 'spirouMath.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # =============================================================================
 # Define functions
 # =============================================================================
