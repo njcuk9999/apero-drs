@@ -134,7 +134,7 @@ def writeimage(filename, image, hdict):
     spirouCore.spirouLog.warninglogger(w)
 
 
-def read_tilt_file(p, hdr=None, filename=None):
+def read_tilt_file(p, hdr=None, filename=None, key=None):
     """
     Reads the tilt file (from calib database or filename) and using the
     'kw_TILT' keyword-store extracts the tilts for each order
@@ -149,10 +149,15 @@ def read_tilt_file(p, hdr=None, filename=None):
                      if None gets the TILT file from the calib database
                      keyword "TILT"
 
+    :param key: string or None, if None key='TILT' else uses string as key
+                from calibDB (first entry) to get tilt file
+
     :return tilt: list of the tilt for each order
     """
+    if key is None:
+        key = 'TILT'
     # get filename
-    read_file = spirouCDB.GetFile(p, 'TILT', hdr)
+    read_file = spirouCDB.GetFile(p, key, hdr)
     # read read_file
     rout = readimage(p, framemath='none', filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
@@ -162,12 +167,47 @@ def read_tilt_file(p, hdr=None, filename=None):
     return tilt[:, 0]
 
 
+def read_wave_file(p, hdr=None, filename=None, key=None):
+    """
+    Reads the wave file (from calib database or filename)
+
+    :param p: dictionary, parameter dictionary
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['fitsfilename']
+
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the TILT file from the calib database
+                     keyword "TILT"
+
+    :param key: string or None, if None key='WAVE' else uses string as key
+                from calibDB (first entry) to get wave file
+
+    :return wave: list of the tilt for each order
+    """
+    if key is None:
+        key = 'WAVE'
+    # get filename
+    read_file = spirouCDB.GetFile(p, key, hdr)
+    # read read_file
+    rout = readimage(p, framemath='none', filename=read_file, log=False)
+    wave, hdict, _, nx, ny = rout
+    # return the wave file
+    return wave
+
+
 def read_order_profile_superposition(p, hdr=None, filename=None):
     # Log that we are reading the order profile
     wmsg = 'Reading order profile of Fiber {0}'
     WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
     # construct key
-    key = 'ORDER_PROFILE_{0}'.format(p['fiber'])
+    # get loc file
+    if 'ORDERP_FILE' in p:
+        key = 'ORDER_PROFILE_{0}'.format(p['ORDERP_FILE'])
+    else:
+        key = 'ORDER_PROFILE_{0}'.format(p['fiber'])
+
     # construct filename
     read_file = spirouCDB.GetFile(p, key, hdr)
     # read read_file
