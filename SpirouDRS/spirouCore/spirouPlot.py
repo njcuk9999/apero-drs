@@ -426,7 +426,7 @@ def selected_order_fit_and_edges(p, loc, image):
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
-    acc = loc['acc'][selected_order]
+
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
     plt.figure()
@@ -435,18 +435,71 @@ def selected_order_fit_and_edges(p, loc, image):
     # set up axis
     frame = plt.subplot(111)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000))
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    # loop around the order numbers
+    acc = loc['acc'][selected_order]
     # get fit and edge fits
     xfit = np.arange(image.shape[1])
-    yfit = np.polyval(acc, xfit)
-    yfitlow = np.polyval(acc, xfit) + range2
-    yfithigh = np.polyval(acc, xfit) - range1
+    yfit = np.polyval(acc[::-1], xfit)
+    yfitlow = np.polyval(acc[::-1], xfit) + range2
+    yfithigh = np.polyval(acc[::-1], xfit) - range1
     # plot fits
-    plt.plot(xfit, yfit, color='white', label='fit')
-    plt.plot(xfit, yfitlow, color='white', label='Fit edge', linestyle='--')
-    plt.plot(xfit, yfithigh, color='white', linestyle='--')
+    frame.plot(xfit, yfit, color='red', label='fit')
+    frame.plot(xfit, yfitlow, color='blue', label='Fit edge',
+               linestyle='--')
+    frame.plot(xfit, yfithigh, color='blue', linestyle='--')
     # set title labels limits
     title = 'Image fit for order {0} fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def all_order_fit_and_edges(p, loc, image):
+
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    # loop around the order numbers
+    for order_num in range(len(loc['acc'])):
+        acc = loc['acc'][order_num]
+        # get fit and edge fits
+        xfit = np.arange(image.shape[1])
+        yfit = np.polyval(acc[::-1], xfit)
+        yfitlow = np.polyval(acc[::-1], xfit) + range2
+        yfithigh = np.polyval(acc[::-1], xfit) - range1
+        # plot fits
+        if order_num == selected_order:
+            frame.plot(xfit, yfit, color='orange', label='Selected Order fit')
+            frame.plot(xfit, yfitlow, color='green', linestyle='--',
+                       label='Selected Order fit edge')
+            frame.plot(xfit, yfithigh, color='green', linestyle='--')
+        elif order_num == 0:
+            frame.plot(xfit, yfit, color='red', label='fit')
+            frame.plot(xfit, yfitlow, color='blue', label='fit edge',
+                       linestyle='--')
+            frame.plot(xfit, yfithigh, color='blue', linestyle='--')
+        else:
+            frame.plot(xfit, yfit, color='red')
+            frame.plot(xfit, yfitlow, color='blue', linestyle='--')
+            frame.plot(xfit, yfithigh, color='blue', linestyle='--')
+    # set title labels limits
+    title = 'Image fit for orders (highlighted order={0}) fiber {1}'
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
               title=title.format(selected_order, fiber))
     # Add legend
