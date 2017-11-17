@@ -13,10 +13,24 @@ Created on 2017-11-07 13:45
 
 Version 0.0.0
 """
-
+from SpirouDRS.spirouConfig import Constants
 from . import spirouEXTOR
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouEXTOR.__init__()'
+# Get version and author
+__version__ = Constants.VERSION()
+__author__ = Constants.AUTHORS()
+__all__ = ['Extraction', 'ExtractABOrderOffset', 'ExtractOrder',
+           'ExtractOrder0', 'ExtractTiltOrder', 'ExtractTiltWeightOrder',
+           'ExtractWeightOrder']
 
+# =============================================================================
+# Function aliases
+# =============================================================================
 Extraction = spirouEXTOR.extract_wrapper
 """
 
@@ -42,7 +56,7 @@ Extraction = spirouEXTOR.extract_wrapper
 """
 
 
-ExtractABorder = spirouEXTOR.extract_AB_order
+ExtractABOrderOffset = spirouEXTOR.extract_AB_order
 """
 Perform the extraction on the AB fibers separately using the summation
 over constant range
@@ -53,5 +67,12 @@ over constant range
 :return lloc: dictionary, parameter dictionary containing the data
 """
 
+ExtractOrder = spirouEXTOR.extract_order
+
+ExtractOrder0 = spirouEXTOR.extract_order_0
+
+ExtractTiltOrder = spirouEXTOR.extract_tilt_order
 
 ExtractTiltWeightOrder = spirouEXTOR.extract_tilt_weight_order
+
+ExtractWeightOrder = spirouEXTOR.extract_weight_order

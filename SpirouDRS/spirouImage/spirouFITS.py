@@ -9,7 +9,7 @@ Created on 2017-10-12 at 15:32
 
 @author: cook
 
-
+Import rules: Not spirouLOCOR
 
 Version 0.0.0
 """
@@ -31,6 +31,9 @@ from SpirouDRS import spirouCDB
 WLOG = spirouCore.wlog
 # set the name
 __NAME__ = 'spirouFITS.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # get the parameter dictionary object
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------

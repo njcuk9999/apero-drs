@@ -9,6 +9,8 @@ Created on 2017-10-30 at 16:37
 
 @author: cook
 
+Import rules: Only from spirouConfig
+
 Version 0.0.1
 """
 from . import spirouConfig
@@ -18,6 +20,9 @@ from . import spirouConfig
 # Define program variables (do not change)
 # =============================================================================
 __NAME__ = 'spirouKeywords.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Get param dict
 ParamDict = spirouConfig.ParamDict
 # get default config file

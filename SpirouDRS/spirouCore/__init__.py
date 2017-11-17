@@ -13,18 +13,31 @@ Created on 2017-10-30 at 17:10
 
 Version 0.0.0
 """
-
+from SpirouDRS import spirouConfig
 from . import spirouLog
-from . import spirouStartup
+from . import spirouPlot
+from . import spirouMath
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouCore.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__all__ = ['wlog',
+           'sPlt']
 
-
-
-# Runs the initial start up script (checking of parameters and title)
-RunInitialStartup = spirouStartup.run_inital_startup
-
-# Runs the start up script
-RunStartup = spirouStartup.run_startup
-
+# =============================================================================
+# Function aliases
+# =============================================================================
 # The stdout/log file controller
 wlog = spirouLog.logger
+
+# Plotting functions alias
+sPlt = spirouPlot
+
+# =============================================================================
+# End of code
+# =============================================================================

@@ -13,11 +13,34 @@ Created on 2017-10-31 at 12:12
 
 Version 0.0.0
 """
-
 from . import spirouConfig
 from . import spirouKeywords
-from . import spirouConst as Constants
+from . import spirouConst
+from . import spirouConst
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouConfig.__init__()'
+# Define alias for constants
+Constants = spirouConst
+# Get version and author
+__version__ = Constants.VERSION()
+__author__ = Constants.AUTHORS()
+__all__ = ['ConfigError',
+           'CheckCparams',
+           'CheckConfig',
+           'ExtractDictParams',
+           'GetKeywordArguments',
+           'LoadConfigFromFile',
+           'ParamDict',
+           'ReadConfigFile']
+
+
+# =============================================================================
+# Function aliases
+# =============================================================================
 # Custom config exception
 ConfigError = spirouConfig.ConfigError
 
@@ -41,3 +64,7 @@ ParamDict = spirouConfig.ParamDict
 
 # Reads the config file and loads all variables into dictionary
 ReadConfigFile = spirouConfig.read_config_file
+
+# =============================================================================
+# End of code
+# =============================================================================

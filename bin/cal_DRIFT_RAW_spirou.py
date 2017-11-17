@@ -15,11 +15,15 @@ Version 0.0.1
 """
 
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouStartup
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -37,7 +41,7 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    pp = spirouCore.RunInitialStartup()
+    pp = spirouStartup.RunInitialStartup()
 
     # TODO: add code
 

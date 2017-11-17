@@ -9,7 +9,7 @@ Created on 2017-11-02 at 16:29
 
 @author: cook
 
-
+Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.0
 """
@@ -26,9 +26,18 @@ from . import spirouLog
 # =============================================================================
 # Define variables
 # =============================================================================
+# Define the name of this module
+__NAME__ = 'spirouPlot.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+# Get Logging function
 WLOG = spirouLog.logger
 # -----------------------------------------------------------------------------
-INTERACTIVE_PLOTS = spirouConfig.spirouConfig.INTERACTIVE_PLOTS
+INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
+
 
 # =============================================================================
 # General plotting functions

@@ -13,10 +13,31 @@ Created on 2017-10-30 at 17:09
 
 Version 0.0.0
 """
-
+from SpirouDRS import spirouConfig
 from . import spirouFITS
 from . import spirouImage
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouImage.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
+           'ConvertToE', 'ConvertToADU',
+           'CopyOriginalKeys', 'CorrectForDark',
+           'FitTilt', 'FlipImage',
+           'GetSigdet', 'GetExpTime', 'GetGain',
+           'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
+           'ReadImage', 'ReadHeader', 'ReadKey', 'Read2Dkey',
+           'ReadTiltFile', 'ReadWaveFile', 'ReadOrderProfile',
+           'ResizeImage', 'WriteImage']
+
+# =============================================================================
+# Function aliases
+# =============================================================================
 # add a new key to hdict from keywordstorage
 AddKey = spirouFITS.add_new_key
 
@@ -41,11 +62,9 @@ FitTilt = spirouImage.fit_tilt
 # Flips the image in the x and/or the y direction
 FlipImage = spirouImage.flip_image
 
-
 GetSigdet = spirouImage.get_sigdet
 GetExpTime = spirouImage.get_exptime
 GetGain = spirouImage.get_gain
-
 
 # Looks for a key(s) in dictionary p, named 'name'
 #     if has_default sets value of key to 'default' if not found
@@ -70,7 +89,6 @@ ReadKey = spirouFITS.read_key
 
 # Read 2D key list
 Read2Dkey = spirouFITS.read_key_2d_list
-
 
 # Read the tilt file
 ReadTiltFile = spirouFITS.read_tilt_file

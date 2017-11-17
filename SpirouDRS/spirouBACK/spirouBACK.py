@@ -15,24 +15,25 @@ Version 0.0.0
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-import os
 
-from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouImage
-from SpirouDRS.spirouCore import spirouPlot as sPlt
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Define the name of this module
 __NAME__ = 'spirouBACK.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
-# get the logging function
+# Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
 
 # =============================================================================

@@ -26,7 +26,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
-from SpirouDRS.spirouCore import spirouPlot as sPlt
+from SpirouDRS import spirouStartup
 
 neilstart = time.time()
 
@@ -35,6 +35,8 @@ neilstart = time.time()
 # =============================================================================
 # Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # Name of program
 __NAME__ = 'cal_loc_RAW_spirou.py'
 # Custom parameter dictionary
@@ -56,12 +58,12 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouCore.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup()
     # run specific start up
     params2add = dict()
     params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
     params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-    p = spirouCore.RunStartup(p, kind='localisation',
+    p = spirouStartup.RunStartup(p, kind='localisation',
                               prefixes=['dark_flat', 'flat_dark'],
                               add_to_p=params2add, calibdb=True)
     # log processing image type
@@ -85,8 +87,6 @@ if __name__ == "__main__":
     p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
-
-
 
     # ----------------------------------------------------------------------
     # Correction of DARK

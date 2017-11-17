@@ -15,19 +15,20 @@ Version 0.0.0
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
 
+from SpirouDRS import spirouConfig
 
 # =============================================================================
 # Define variables
 # =============================================================================
-
+# Name of program
+__NAME__ = 'spirouFLAT.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__all__ = ['measure_blaze_for_order']
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define functions

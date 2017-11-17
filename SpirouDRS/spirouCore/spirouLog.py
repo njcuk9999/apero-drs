@@ -9,6 +9,8 @@ Created on 2017-10-11 at 10:59
 
 @author: cook
 
+Import rules: Only from spirouConfig and spirouCore
+
 Version 0.0.1
 """
 
@@ -21,18 +23,23 @@ from SpirouDRS import spirouConfig
 # =============================================================================
 # Define variables
 # =============================================================================
-
+# Name of program
+__NAME__ = 'spirouLog.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # -----------------------------------------------------------------------------
-# Get config parameters
+# Get constant parameters
 CPARAMS = spirouConfig.ReadConfigFile()
-TRIG_KEY = spirouConfig.spirouConfig.TRIG_KEY
-WRITE_LEVEL = spirouConfig.spirouConfig.WRITE_LEVEL
-EXIT = spirouConfig.spirouConfig.EXIT
-
+TRIG_KEY = spirouConfig.Constants.LOG_TRIG_KEYS()
+WRITE_LEVEL = spirouConfig.Constants.WRITE_LEVEL()
+EXIT = spirouConfig.Constants.LOG_EXIT_TYPE()
+# Boolean for whether we log caught warnings
+WARN = spirouConfig.Constants.LOG_CAUGHT_WARNINGS()
+# -----------------------------------------------------------------------------
 # Config exit (sys = sys.exit(1), os = os._exit(1) anything else and error
 #     does not exit
 # TODO: should this be defined in the config?
-
 if EXIT == 'sys':
     EXIT_TYPE = sys.exit
 elif EXIT == 'os':
@@ -40,7 +47,6 @@ elif EXIT == 'os':
 else:
     EXIT_TYPE = lambda x: None
 
-WARN = True
 
 
 # =============================================================================
@@ -107,7 +113,7 @@ def get_logfilepath(utime):
     if not os.path.exists(dir_data_msg):
         # if TDATA path does not exists - exit with error
         if not os.path.exists(CPARAMS.get('TDATA', '')):
-            print(spirouConfig.config_error("TDATA"))
+            print(spirouConfig.Constants.CONFIG_KEY_ERROR('TDATA'))
             EXIT_TYPE(1)
         # if TDATA does exist then create a /msg/ sub-directory
         dir_data_msg = os.path.join(CPARAMS['TDATA'], 'msg', '')

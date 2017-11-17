@@ -12,31 +12,75 @@ Created on 2017-10-11 at 10:43
 Version 0.0.1
 """
 
+from . import spirouBACK
 from . import spirouCDB
+from . import spirouConfig
+from . import spirouCore
+from . import spirouEXTOR
+from . import spirouFLAT
 from . import spirouImage
 from . import spirouLOCOR
-from . import spirouCore
+from . import spirouStartup
 
-__name__ = 'SpirouDRS'
-__all__ = ['spirouCDB', 'spirouCore', 'spirouImage', 'spirouLOCOR']
-__author__ = 'Neil Cook'
-__version__ = '0.0.1'
 
 # =============================================================================
-# Define functions
+# Define variables
 # =============================================================================
+__NAME__ = 'SpirouDRS'
+__all__ = ['spirouBACK',
+           'spirouCDB',
+           'spirouConfig',
+           'spirouCore',
+           'spirouEXTOR',
+           'spirouFLAT',
+           'spirouImage',
+           'spirouLOCOR',
+           'spirouStartup']
+# These three must also be changed in spirouConfig.spirouConstant to update
+#    all sub-packages
+__author__ = spirouConfig.Constants.AUTHORS()
+__version__ = spirouConfig.Constants.VERSION()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
 
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    print('Loaded modules:')
+    # spirouBACK
+    print('\n\t' + spirouBACK.__NAME__)
+    print('\t\t--' + spirouBACK.spirouBACK.__NAME__)
+    # spirouCDB
+    print('\n\t' + spirouCDB.__NAME__)
+    print('\t\t--' + spirouCDB.spirouCDB.__NAME__)
+    # spirouConfig
+    print('\n\t' + spirouConfig.__NAME__)
+    print('\t\t--' + spirouConfig.spirouConfig.__NAME__)
+    print('\t\t--' + spirouConfig.spirouKeywords.__NAME__)
+    print('\t\t--' + spirouConfig.spirouConst.__NAME__)
+    # spirouCore
+    print('\n\t' + spirouCore.__NAME__)
+    print('\t\t--' + spirouCore.spirouLog.__NAME__)
+    print('\t\t--' + spirouCore.spirouPlot.__NAME__)
+    print('\t\t--' + spirouCore.spirouMath.__NAME__)
+    # spirouEXTOR
+    print('\n\t' + spirouEXTOR.__NAME__)
+    print('\t\t--' + spirouEXTOR.spirouEXTOR.__NAME__)
+    # spirouFLAT
+    print('\n\t' + spirouFLAT.__NAME__)
+    print('\t\t--' + spirouFLAT.spirouFLAT.__NAME__)
+    # spirouImage
+    print('\n\t' + spirouImage.__NAME__)
+    print('\t\t--' + spirouImage.spirouImage.__NAME__)
+    print('\t\t--' + spirouImage.spirouFITS.__NAME__)
+    # spirouLOCOR
+    print('\n\t' + spirouLOCOR.__NAME__)
+    print('\t\t--' + spirouLOCOR.spirouLOCOR.__NAME__)
+    # spirouStartup
+    print('\n\t' + spirouStartup.__NAME__)
+    print('\t\t--' + spirouStartup.spirouStartup.__NAME__)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+# =============================================================================
+# End of Code
+# =============================================================================

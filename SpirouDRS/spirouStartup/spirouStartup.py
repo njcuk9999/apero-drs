@@ -18,15 +18,18 @@ import sys
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
-from . import spirouLog
+from SpirouDRS import spirouCore
 
 # =============================================================================
 # Define variables
 # =============================================================================
-# Get Logging function
-WLOG = spirouLog.logger
 # Name of program
 __NAME__ = 'spirouStarup.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+# Get Logging function
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 
 
@@ -458,6 +461,7 @@ def display_help_file(p):
         else:
             # log and exit
             WLOG('info', p['log_opt'], 'INFO file is not found for this recipe')
+
 
 # =============================================================================
 # Start of code
