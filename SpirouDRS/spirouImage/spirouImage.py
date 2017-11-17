@@ -209,7 +209,7 @@ def correct_for_dark(p, image, header):
         # get acquisition time
         acqtime = spirouCDB.GetAcqTime(p, header)
         # get calibDB
-        cdb = spirouCDB.GetDatabase(p, acqtime)
+        cdb, p = spirouCDB.GetDatabase(p, acqtime)
     else:
         cdb = p['calibDB']
 
@@ -250,7 +250,7 @@ def get_tilt(pp, lloc, image):
     # loop around each order
     for order_num in range(0, nbo, 2):
         # extract this AB order
-        lloc = spirouEXTOR.ExtractOrder(pp, lloc, image, order_num)
+        lloc = spirouEXTOR.ExtractABOrderOffset(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
         # Over sample the data and interpolate new extraction values
         pixels = np.arange(image.shape[1])
