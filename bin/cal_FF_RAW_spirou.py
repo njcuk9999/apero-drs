@@ -16,6 +16,7 @@ import os
 import time
 
 from SpirouDRS import spirouBACK
+from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
@@ -43,10 +44,15 @@ sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
 # Remove this for final (only for testing)
 import sys
-if len(sys.argv) == 1:
+run = 2
+if len(sys.argv) == 1 and run == 1:
     sys.argv = ['test: ' + __NAME__, '20170710', 'flat_dark02f10.fits',
                 'flat_dark03f10.fits', 'flat_dark04f10.fits',
                 'flat_dark05f10.fits', 'flat_dark06f10.fits']
+if len(sys.argv) == 1 and run == 2:
+    sys.argv = ['test: ' + __NAME__, '20170710', 'dark_flat02f10.fits',
+                'dark_flat03f10.fits', 'dark_flat04f10.fits',
+                'dark_flat05f10.fits', 'dark_flat06f10.fits']
 
 # =============================================================================
 # Define functions
@@ -255,8 +261,13 @@ if __name__ == "__main__":
         if p['DRS_PLOT']:
             # start interactive session if needed
             sPlt.start_interactive_session()
-            # plot image with selected order fit and edge fit
-            sPlt.selected_order_fit_and_edges(p, loc, data2)
+            # plot all orders or one order
+            if p['IC_FF_PLOT_ALL_ORDERS']:
+                # plot image with all order fits (slower)
+                sPlt.all_order_fit_and_edges(p, loc, data2)
+            else:
+                # plot image with selected order fit and edge fit (faster)
+                sPlt.selected_order_fit_and_edges(p, loc, data2)
             # plot tilt adjusted e2ds and blaze for selected order
             sPlt.selected_order_tilt_adjusted_e2ds_blaze(p, loc, data2)
             # plot flat for selected order
@@ -302,32 +313,44 @@ if __name__ == "__main__":
         spirouImage.WriteImage(os.path.join(reducedfolder, flatfits),
                                loc['flat'], hdict)
 
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-    passed, fail_msg = True, []
-    # saturation check: check that the max_signal is lower than qc_max_signal
-    if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
-        fmsg = 'Too much flux in the image (max authorized={0})'
-        fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
-        passed = False
-        # Question: Why is this test ignored?
-        # For some reason this test is ignored in old code
-        passed = True
-        WLOG('info', p['log_opt'], fail_msg[-1])
+        # ------------------------------------------------------------------
+        # Quality control
+        # ------------------------------------------------------------------
+        passed, fail_msg = True, []
+        # saturation check: check that the max_signal is lower than
+        # qc_max_signal
+        if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
+            fmsg = 'Too much flux in the image (max authorized={0})'
+            fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
+            passed = False
+            # Question: Why is this test ignored?
+            # For some reason this test is ignored in old code
+            passed = True
+            WLOG('info', p['log_opt'], fail_msg[-1])
 
-    # finally log the failed messages and set QC = 1 if we pass the
-    # quality control QC = 0 if we fail quality control
-    if passed:
-        WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
-        p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/__main__')
-    else:
-        for farg in fail_msg:
-            wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('info', p['log_opt'], wmsg.format(farg))
-        p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/__main__')
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if passed:
+            wmsg = 'QUALITY CONTROL SUCCESSFUL - Well Done -'
+            WLOG('info', p['log_opt'], wmsg)
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/__main__')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG('info', p['log_opt'], wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/__main__')
+
+        # ------------------------------------------------------------------
+        # Update the calibration database
+        # ------------------------------------------------------------------
+        if p['QC'] == 1:
+            keydb = 'FLAT_' + p['fiber']
+            # copy localisation file to the calibDB folder
+            spirouCDB.PutFile(p, os.path.join(reducedfolder, flatfits))
+            # update the master calib DB file with new key
+            spirouCDB.UpdateMaster(p, keydb, flatfits, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
