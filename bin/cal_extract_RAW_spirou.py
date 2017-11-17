@@ -15,17 +15,15 @@ Version 0.0.1
 """
 
 import numpy as np
-import os
 import time
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
-from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
-from SpirouDRS.spirouCore import spirouPlot as sPlt
+from SpirouDRS import spirouStartup
 
 neilstart = time.time()
 
@@ -38,6 +36,8 @@ __NAME__ = 'cal_extract_RAW_spirou.py'
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
 # Remove this for final (only for testing)
 import sys
@@ -61,9 +61,9 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouCore.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup()
     # run specific start up
-    p = spirouCore.RunStartup(p, kind='Flat-field', calibdb=True)
+    p = spirouStartup.RunStartup(p, kind='Flat-field', calibdb=True)
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
     p.set_source('dprtype', __NAME__ + '/__main__')
@@ -202,14 +202,41 @@ if __name__ == "__main__":
             p['sigdet'] = float(p['IC_FF_SIGDET'])
         # ------------------------------------------------------------------
         # Extract orders
-        # old code time: 1 loop, best of 3: 22.3 s per loop
-        # new code time: 3.16 s ± 237 ms per loop
         # ------------------------------------------------------------------
         # loop around each order
         for order_num in range(loc['number_orders']):
+            # extract this order
 
-            # do the extraction
-            e2ds = np.array([])
+            # -------------------------------------------------------------
+            # Extract
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_num]
+            spe1, cpt = spirouEXTOR.ExtractOrder(*eargs)
+
+            # -------------------------------------------------------------
+            # Extract
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_num]
+            spe2, cpt = spirouEXTOR.ExtractOrder0(*eargs)
+
+            # -------------------------------------------------------------
+            # Extract with Tilt
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_profile, order_num]
+            spe3, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
+
+            # -------------------------------------------------------------
+            # Extract with Tilt + Weight
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_profile, order_num]
+            spe4, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
+
+            # -------------------------------------------------------------
+            # Extract with Weight
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_profile, order_num]
+            e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
+
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             noise = p['sigdet'] * np.sqrt(range1 + range2)
