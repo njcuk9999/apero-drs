@@ -24,7 +24,7 @@ import time
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-
+from SpirouDRS.spirouCore import spirouMath
 
 # =============================================================================
 # Define variables
@@ -40,8 +40,6 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# Date format
-DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -75,9 +73,12 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
 
     :return:
     """
-    if 'ACQTIME_KEY' not in p:
-        WLOG('error', p['log_opt'], ('Error ACQTIME_KEY not defined in'
-                                     ' config files'))
+    # key acqtime_key from parameter dictionary
+    if 'kw_ACQTIME_KEY' not in p:
+        WLOG('error', p['log_opt'], ('Error "kw_ACQTIME_KEY" not defined in'
+                                     ' keyword config files'))
+    else:
+        acqtime_key = p['kw_ACQTIME_KEY'][0]
 
     # deal with single entry
     if type(keys) != list:
@@ -99,13 +100,21 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         key, filename, hdr = keys[k_it], filenames[k_it], hdrs[k_it]
 
         # get ACQT time from header or
-        if p['ACQTIME_KEY'] in hdr:
-            t = time2unixtime(hdr[p['ACQTIME_KEY']])
-            t_fmt = time.strftime('%D/%H:%M:%S', time.gmtime(t))
+        if acqtime_key in hdr:
+            # get the header time
+            header_time = hdr[acqtime_key]
+            # get the header format for dates
+            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
+            # get the calib DB format for dates
+            calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
+            # get the unix time from header time
+            t = spirouMath.stringtime2unixtime(header_time, header_fmt)
+            # get the formatted string time for calib DB
+            t_fmt = spirouMath.unixtime2stringtime(t, calibdb_fmt)
         else:
             emsg = 'File {0} has no Header keyword {1}'
             WLOG('error', p['log_opt'], emsg.format(hdr['@@@hname'],
-                                                    p['ACQTIME_KEY']))
+                                                    acqtime_key))
 
         # construct database line entry
         lineargs = [key, p['arg_night_name'], filename, t_fmt, t]
@@ -135,8 +144,8 @@ def get_acquision_time(p, header=None):
 
     # key acqtime_key from parameter dictionary
     if 'kw_ACQTIME_KEY' not in p:
-        WLOG('error', p['log_opt'], ('Error kw_ACQTIME_KEY not defined in'
-                                     ' config files (Keywords)'))
+        WLOG('error', p['log_opt'], ('Error "kw_ACQTIME_KEY" not defined in'
+                                     ' keyword config files'))
     else:
         acqtime_key = p['kw_ACQTIME_KEY'][0]
 
@@ -182,13 +191,21 @@ def get_database(p, max_time=None, update=False):
 
     if max_time is None:
         max_time = get_acquision_time(p)
+    # add max_time to p
+    p['max_time_human'] = max_time
+    p.set_source('max_time_human', __NAME__ + '/get_database()')
     # check that max_time is a valid unix time (i.e. a float)
     try:
-        max_time = time2unixtime(max_time)
+        # get the header format for dates
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
+        # get the unix time from header time
+        max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:
         WLOG('error', p['log_opt'], ('max_time {0} is not a valid float.'
                                      '').format(max_time))
-
+    # add max_time to p
+    p['max_time_unix'] = max_time
+    p.set_source('max_time_unix', __NAME__ + '/get_database()')
     # get and check the lock file
     lock, lock_file = get_check_lock_file(p)
     # try to open the master file
@@ -199,6 +216,7 @@ def get_database(p, max_time=None, update=False):
         # get elements from database
         try:
             key, dirname, filename, t_fmt, t = line.split()
+            t = float(t)
         # will crash if we don't have 5 variables --> thus log and exit
         except ValueError:
             # Must close and remove lock file before exiting
@@ -207,10 +225,19 @@ def get_database(p, max_time=None, update=False):
             WLOG('error', p['log_opt'], ('Incorrectly formatted line in '
                                          'calibDB (Line {0} = {1})'
                                          '').format(l_it+1, line))
+
+        # Make sure unix time and t_fmt agree
+        calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
+        t_fmt_unix = spirouMath.stringtime2unixtime(t_fmt, calibdb_fmt)
+        t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
+        if  t_fmt_unix != t:
+            emsg = 'Human time = {0} does not match unix time = {1} in calibDB'
+            WLOG('error', p['log_opt'], emsg.format(t_fmt, t_human))
+
         # only keep those entries earlier or equal to "max_time"
         # note t must be a float here --> exception
         try:
-            if float(t) <= max_time:
+            if t <= max_time:
                 # append unix time, key, directory name and filename
                 utimes.append(t)
                 keys.append(key)
@@ -245,7 +272,7 @@ def get_database(p, max_time=None, update=False):
     lock.close()
     os.remove(lock_file)
     # return calibDB dictionary
-    return c_database
+    return c_database, p
 
 
 def put_file(p, inputfile):
@@ -286,7 +313,7 @@ def copy_files(p, header=None):
         # get acquisition time
         acqtime = get_acquision_time(p, header)
         # get calibDB
-        c_database = get_database(p, acqtime)
+        c_database, p = get_database(p, acqtime)
     else:
         c_database = p['calibDB']
 
@@ -335,7 +362,7 @@ def get_file_name(p, key, hdr=None, filename=None):
         # get acquisition time
         acqtime = get_acquision_time(p, hdr)
         # get calibDB
-        c_database = get_database(p, acqtime)
+        c_database, p = get_database(p, acqtime)
     else:
         c_database = p['calibDB']
 
@@ -349,7 +376,7 @@ def get_file_name(p, key, hdr=None, filename=None):
             emsg = (
             'Calibration database has no valid "{0}" entry '
             'for time<{1}')
-            WLOG('error', p['log_opt'], emsg.format(key, acqtime))
+            WLOG('error', p['log_opt'], emsg.format(key, p['max_time_human']))
             rawfilename = ''
         # construct tilt filename
         read_file = os.path.join(p['reduced_dir'], rawfilename)
@@ -452,8 +479,6 @@ def read_master_file(p, lock, lock_file):
 
 
 
-def time2unixtime(t):
-    return time.mktime(datetime.datetime.strptime(t, DATE_FMT).timetuple())
 
 # =============================================================================
 # End of code

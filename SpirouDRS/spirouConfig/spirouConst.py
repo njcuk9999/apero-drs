@@ -220,6 +220,15 @@ def CONFIG_KEY_ERROR(key, location=None):
         return cmsg.format(key, location)
 
 
+def DATE_FMT_HEADER():
+    date_fmt =  '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt
+
+def DATE_FMT_CALIBDB():
+
+    date_fmt = '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt
+
 # =============================================================================
 # Start of code
 # =============================================================================

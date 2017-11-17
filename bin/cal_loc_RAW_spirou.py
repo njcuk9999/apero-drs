@@ -39,15 +39,23 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Name of program
 __NAME__ = 'cal_loc_RAW_spirou.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
 # Remove this for final (only for testing)
 import sys
-if len(sys.argv) == 1:
+run = 1
+if len(sys.argv) == 1 and run == 1:
     sys.argv = ['test: ' + __NAME__, '20170710', 'flat_dark02f10.fits',
                 'flat_dark03f10.fits', 'flat_dark04f10.fits',
                 'flat_dark05f10.fits', 'flat_dark06f10.fits']
+if len(sys.argv) == 1 and run == 2:
+    sys.argv = ['test: ' + __NAME__, '20170710', 'dark_flat02f10.fits',
+                'dark_flat03f10.fits', 'dark_flat04f10.fits',
+                'dark_flat05f10.fits', 'dark_flat06f10.fits']
 
 # =============================================================================
 # Start of code

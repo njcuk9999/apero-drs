@@ -16,6 +16,7 @@ import os
 import time
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
@@ -26,12 +27,16 @@ neilstart = time.time()
 # =============================================================================
 # Define variables
 # =============================================================================
+# Name of program
+__NAME__ = 'cal_SLIT_spirou.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# Name of program
-__NAME__ = 'cal_SLIT_spirou.py'
+
 # -----------------------------------------------------------------------------
 # Remove this for final (only for testing)
 import sys
