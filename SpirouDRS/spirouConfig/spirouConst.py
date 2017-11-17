@@ -10,31 +10,92 @@ Created on 2017-11-13 at 14:22
 
 @author: cook
 
+Import rules: Only from spirouConfig
+
 Version 0.0.1
 """
 
 import sys
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
 __NAME__ = 'spirouConst.py'
-# -----------------------------------------------------------------------------
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
+def PACKAGE():
+    # Module package name (Used in code so MUST equal name of parent package)
+    package = 'SpirouDRS'
+    return package
+
+
+def VERSION():
+    # Module Version (Used in all sub-packages)
+    version = '0.0.1'
+    return version
+
+
+def AUTHORS():
+    # Module Authors (Used in all sub-packages)
+    authors = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
+    return authors
+
+
+def LATEST_EDIT():
+    # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
+    date = '2017-11-17'
+    return date
+
+
+def CONFIGFOLDER():
+    # Name of main config folder (relative to PACKAGE() level)
+    config_folder = '../config'
+    return config_folder
+
+
+def CONFIGFILE():
+    # Name of main config file (in CONFIGFOLDER() )
+    config_file = 'config.txt'
+    return config_file
+
+
+def INTERACITVE_PLOTS_ENABLED():
+    # Whether to use plt.ion (if True) or to use plt.show (if False)
+    interactive_plots = True
+    return interactive_plots
+
+
+def LOG_TRIG_KEYS():
+    # The trigger character to display for each
+    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
+    return trig_key
+
+
+def WRITE_LEVEL():
+    write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
+    return write_level
+
+
+def LOG_EXIT_TYPE():
+    # The exit style (on log exit)
+    #  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
+    #  if 'os' exits via os._exit    - hard exit (complete exit)
+    exit = 'os'
+    exit = 'sys'
+    return exit
+
+
+def LOG_CAUGHT_WARNINGS():
+    # Define whether we warn
+    warn = True
+    return warn
+
+
 def ARG_FILE_NAMES():
     # empty file names
     arg_file_names = []
@@ -149,11 +210,23 @@ def REDUCED_DIR(p):
     return reduced_dir
 
 
+def CONFIG_KEY_ERROR(key, location=None):
+
+    if location is None:
+        cmsg = 'key "{0}" is not defined'
+        return cmsg.format(key)
+    else:
+        cmsg = 'key "{0}" must be defined in file (located at {1})'
+        return cmsg.format(key, location)
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
+# Get version and author
+__version__ = VERSION()
+__author__ = AUTHORS()
+
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
