@@ -64,6 +64,11 @@ if __name__ == "__main__":
     p = spirouCore.RunStartup(p, kind='Flat-field',
                               prefixes=['dark_flat', 'flat_dark'],
                               add_to_p=params2add, calibdb=True)
+    # log processing image type
+    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
+    p.set_source('dprtype', __NAME__ + '/__main__')
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -83,11 +88,6 @@ if __name__ == "__main__":
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
-    # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if fiber == 'AB':
+        if fiber in ['A', 'B', 'AB']:
             # merge
             loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
             loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
@@ -195,7 +195,6 @@ if __name__ == "__main__":
         loc['SNR'] = np.zeros(loc['number_orders'])
         # Create array to store the rms for each order
         loc['RMS'] = np.zeros(loc['number_orders'])
-
 
         # Manually set the sigdet to be used in extraction weighting
         if p['IC_FF_SIGDET'] > 0:
