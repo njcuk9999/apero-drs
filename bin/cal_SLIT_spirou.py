@@ -16,11 +16,10 @@ import os
 import time
 
 from SpirouDRS import spirouCDB
-from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
-from SpirouDRS.spirouCore import spirouPlot as sPlt
+from SpirouDRS import spirouStartup
 
 neilstart = time.time()
 
@@ -29,6 +28,8 @@ neilstart = time.time()
 # =============================================================================
 # Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # Name of program
 __NAME__ = 'cal_SLIT_spirou.py'
 # -----------------------------------------------------------------------------
@@ -51,9 +52,9 @@ if __name__ == "__main__":
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouCore.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup()
     # run specific start up
-    p = spirouCore.RunStartup(p, kind='slit', prefixes='fp_fp',
+    p = spirouStartup.RunStartup(p, kind='slit', prefixes='fp_fp',
                               calibdb=True)
     # set the fiber type
     p['fib_typ'] = ['AB']
