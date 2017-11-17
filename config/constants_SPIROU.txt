@@ -72,25 +72,32 @@ ic_ccdy_high = 1935
 #    i.e.    {'AB':1, 'C':2, 'A':3}
 
 #   Number of fibers                                             - [cal_loc]
-nbfib_fpall = {'AB':2, 'C':1}
+nbfib_fpall = {'AB':2, 'A':1, 'B':1, 'C':1}
 
 #   Number of orders to skip at start of image                   - [cal_loc]
-ic_first_order_jump_fpall = {'AB':2, 'C':0}
+ic_first_order_jump_fpall = {'AB':2, 'A':0, 'B':0, 'C':0}
 
 #   Maximum number of order to use                               - [cal_loc]
-ic_locnbmaxo_fpall = {'AB':72, 'C':36}
+ic_locnbmaxo_fpall = {'AB':72, 'A':36, 'B':36, 'C':36}
 
 #   Quality control "normal" number of orders on fiber           - [cal_loc]
-qc_loc_nbo_fpall = {'AB':72, 'C':36}
+qc_loc_nbo_fpall = {'AB':72, 'A':36, 'B':36, 'C':36}
 
 #   Fiber type                                                   - [cal_ff]
-fib_type_fpall = {'AB':["AB"], 'C':["C"]}
+fib_type_fpall = {'AB':["AB"], 'A':["A"], 'B':["B"], 'C':["C"]}
 
 #   Half-zone extraction width left side (formally plage1)       - [cal_ff]
-ic_ext_range1_fpall = {'AB':14.5, 'C':7.5}
+ic_ext_range1_fpall = {'AB':14.5, 'A':0.0, 'B':14.5, 'C':7.5}
 
 #   Half-zone extraction width right side (formally plage2)      - [cal_ff]
-ic_ext_range2_fpall = {'AB':14.5, 'C':7.5}
+ic_ext_range2_fpall = {'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5}
+
+#   Localisation fiber for extraction                            - [cal_extract]
+loc_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB, 'C':'C'}
+
+#   Order profile fiber for extraction
+orderp_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB, 'C':'C'}      - [cal_extract]
+
 
 # -----------------------------------------------------------------------------
 #   cal_dark histogram variables
