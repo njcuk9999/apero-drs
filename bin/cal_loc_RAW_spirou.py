@@ -39,6 +39,9 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Name of program
 __NAME__ = 'cal_loc_RAW_spirou.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------

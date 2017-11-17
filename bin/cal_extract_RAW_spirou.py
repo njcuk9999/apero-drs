@@ -32,6 +32,9 @@ neilstart = time.time()
 # =============================================================================
 # Name of program
 __NAME__ = 'cal_extract_RAW_spirou.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
