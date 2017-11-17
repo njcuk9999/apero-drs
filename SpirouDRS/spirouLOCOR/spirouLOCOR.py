@@ -86,6 +86,12 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     loco_ctr_coeff = p['kw_LOCO_CTR_COEFF'][0]
     loco_fwhm_coeff = p['kw_LOCO_FWHM_COEFF'][0]
 
+    # get loc file
+    if 'LOC_FILE' in p:
+        loc_file = 'LOC_' + p['LOC_FILE']
+    else:
+        loc_file = 'LOC_' + p['fiber']
+
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
@@ -103,7 +109,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
         loc = ParamDict()
 
     # check for localization file for this fiber
-    if not ('LOC_' + p['fiber']) in c_database:
+    if not (loc_file in c_database):
         emsg1 = ('No order geometry defined in the calibDB for fiber: {0}')
         emsg2 = '    requires key="LOC_{0}" in calibDB file.'
         WLOG('info', p['log_opt'], emsg1.format(p['fiber']))

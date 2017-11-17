@@ -75,6 +75,8 @@ Read2Dkey = spirouFITS.read_key_2d_list
 # Read the tilt file
 ReadTiltFile = spirouFITS.read_tilt_file
 
+ReadWaveFile = spirouFITS.read_wave_file
+
 # Read the order profile file
 ReadOrderProfile = spirouFITS.read_order_profile_superposition
 
