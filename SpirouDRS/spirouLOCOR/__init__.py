@@ -13,10 +13,27 @@ Created on 2017-10-30 at 17:09
 
 Version 0.0.0
 """
-
+from SpirouDRS import spirouConfig
 from . import spirouLOCOR
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouLOCOR.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__all__ = ['BoxSmoothedImage', 'CalcLocoFits',
+           'FiberParams', 'FindPosCentCol',
+           'FindOrderCtrs', 'GetCoeffs',
+           'imageLocSuperimp', 'InitialOrderFit',
+           'LocCentralOrderPos', 'MergeCoefficients',
+           'SigClipOrderFit']
 
+# =============================================================================
+# Function aliases
+# =============================================================================
 BoxSmoothedImage = spirouLOCOR.smoothed_boxmean_image
 """
 Produce a (box) smoothed image, smoothed by the mean of a box of
