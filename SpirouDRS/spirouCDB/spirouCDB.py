@@ -9,7 +9,7 @@ Created on 2017-10-13 at 13:54
 
 @author: cook
 
-
+Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.0
 """
@@ -29,9 +29,18 @@ from SpirouDRS import spirouCore
 # =============================================================================
 # Define variables
 # =============================================================================
-WLOG = spirouCore.wlog
+# Define the name of this module
 __NAME__ = 'spirouCDB.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+# Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
+# Get Logging function
+WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
+# Date format
 DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
 # -----------------------------------------------------------------------------
 

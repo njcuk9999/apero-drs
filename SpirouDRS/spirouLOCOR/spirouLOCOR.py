@@ -22,18 +22,23 @@ from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS.spirouCore import spirouPlot as sPlt
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Define the name of this module
 __NAME__ = 'spirouLOCOR.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 ConfigError = spirouConfig.ConfigError
-# get the logging function
+# Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
 
 

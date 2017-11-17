@@ -16,63 +16,103 @@ Version 0.0.0
 
 import numpy as np
 
+from SpirouDRS import spirouCore
+from SpirouDRS import spirouConfig
+
 # =============================================================================
 # Define variables
 # =============================================================================
+# Name of program
 __NAME__ = 'spirouEXTOR.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+# Get Logging function
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 
 
 # =============================================================================
 # User functions
 # =============================================================================
-def extract_AB_order(pp, lloc, image, order_num):
+def extract_AB_order(pp, loc, image, rnum):
     """
     Perform the extraction on the AB fibers separately using the summation
     over constant range
 
     :param image: numpy array (2D), the image
     :param pp: dictionary, parameter dictionary
-    :param lloc: dictionary, parameter dictionary containing the data
+    :param loc: dictionary, parameter dictionary containing the data
     :param image:
-    :param order_num: int, the order number for this iteration
+    :param rnum: int, the order number for this iteration
 
-    :return lloc: dictionary, parameter dictionary containing the data
+    :return loc: dictionary, parameter dictionary containing the data
     """
     # get the width fit coefficients for this fit
-    assi = lloc['ass'][order_num]
+    assi = loc['ass'][rnum]
     # --------------------------------------------------------------------
     # Center the central pixel (using the width fit)
     # get the width of the central pixel of this order
     width_cent = np.polyval(assi[::-1], pp['IC_CENT_COL'])
     # work out the offset in width for the center pixel
-    lloc['offset'] = width_cent * pp['IC_FACDEC']
-    lloc.set_source('offset', __NAME__ + '/extract_AB_order()')
+    loc['offset'] = width_cent * pp['IC_FACDEC']
+    loc.set_source('offset', __NAME__ + '/extract_AB_order()')
     # --------------------------------------------------------------------
     # deal with fiber A:
 
     # Get the center coeffs for this order
-    acci = np.array(lloc['acc'][order_num])
+    acci = np.array(loc['acc'][rnum])
     # move the intercept of the center fit by -offset
-    acci[0] -= lloc['offset']
+    acci[0] -= loc['offset']
     # extract the data
-    lloc['cent1'], cpt = extract_wrapper(pp, image, acci, assi)
-    lloc.set_source('cent1', __NAME__ + '/extract_AB_order()')
-    lloc['nbcos'][order_num] = cpt
+    loc['cent1'], cpt = extract_wrapper(pp, image, acci, assi)
+    loc.set_source('cent1', __NAME__ + '/extract_AB_order()')
+    loc['nbcos'][rnum] = cpt
     # --------------------------------------------------------------------
     # deal with fiber B:
 
     # Get the center coeffs for this order
-    acci = np.array(lloc['acc'][order_num])
+    acci = np.array(loc['acc'][rnum])
     # move the intercept of the center fit by -offset
-    acci[0] += lloc['offset']
+    acci[0] += loc['offset']
     # extract the data
-    lloc['cent2'], cpt = extract_wrapper(pp, image, acci, assi)
-    lloc.set_source('cent2', __NAME__ + '/extract_AB_order()')
-    lloc['nbcos'][order_num] = cpt
+    loc['cent2'], cpt = extract_wrapper(pp, image, acci, assi)
+    loc.set_source('cent2', __NAME__ + '/extract_AB_order()')
+    loc['nbcos'][rnum] = cpt
 
     # return loc dictionary
-    return lloc
+    return loc
+
+
+def extract_order(pp, loc, image, rnum):
+    # construct the args and keyword args for extract wrapper
+    extargs = [pp, image, loc['acc'][rnum], loc['ass'][rnum]]
+    extkwargs = dict(extopt=0)
+    # get the extraction for this order using the extract wrapper
+    cent, cpt = extract_wrapper(*extargs, **extkwargs)
+    # return 
+    return cent, cpt
+
+
+def extract_order_0(pp, loc, image, rnum):
+    # construct the args and keyword args for extract wrapper
+    extargs = [pp, image, loc['acc'][rnum], loc['ass'][rnum]]
+    extkwargs = dict(extopt=1)
+    # get the extraction for this order using the extract wrapper
+    cent, cpt = extract_wrapper(*extargs, **extkwargs)
+    # return 
+    return cent, cpt
+
+
+def extract_tilt_order(pp, loc, image, orderp, rnum):
+    # construct the args and keyword args for extract wrapper
+    extargs = [pp, image, loc['acc'][rnum], loc['ass'][rnum]]
+    extkwargs = dict(tilt=loc['tilt'][rnum], order_profile=orderp,
+                     use_weights=False)
+    # get the extraction for this order using the extract wrapper
+    cent, cpt = extract_wrapper(*extargs, **extkwargs)
+    # return 
+    return cent, cpt
 
 
 def extract_tilt_weight_order(pp, loc, image, orderp, rnum):
@@ -81,7 +121,19 @@ def extract_tilt_weight_order(pp, loc, image, orderp, rnum):
     extkwargs = dict(tilt=loc['tilt'][rnum], order_profile=orderp,
                      use_weights=True)
     # get the extraction for this order using the extract wrapper
-    return extract_wrapper(*extargs, **extkwargs)
+    cent, cpt = extract_wrapper(*extargs, **extkwargs)
+    # return 
+    return cent, cpt
+
+
+def extract_weight_order(pp, loc, image, orderp, rnum):
+    # construct the args and keyword args for extract wrapper
+    extargs = [pp, image, loc['acc'][rnum], loc['ass'][rnum]]
+    extkwargs = dict(tilt=None, order_profile=orderp, use_weights=True)
+    # get the extraction for this order using the extract wrapper
+    cent, cpt = extract_wrapper(*extargs, **extkwargs)
+    # return 
+    return cent, cpt
 
 
 # =============================================================================
@@ -106,6 +158,34 @@ def extract_wrapper(p, image, pos, sig, **kwargs):
 
     currently accepted keyword arguments are:
 
+        extopt:         int, Extraction option in tilt file:
+                         if 0 extraction by summation over constant range
+                         if 1 extraction by summation over constant sigma
+                            (not currently available)
+                         if 2 Horne extraction without cosmic elimination
+                            (not currently available)
+                         if 3 Horne extraction with cosmic elimination
+                            (not currently available)
+
+        nbsig:          float,  distance away from center to extract out to +/-
+                        defaults to p['nbsig'] from constants_SPIROU.txt
+
+        gain:           float, gain of the image
+                        defaults to p['gain'] from fitsfilename HEADER
+
+        sigdet:         float, the sigdet of the image
+                        defaults to p['sigdet'] from fitsfilename HEADER
+
+        range1:         float, Half-zone extraction width left side
+                        (formally plage1)
+                        defaults to p['ic_ext_range1'] from fiber parameters in
+                        constatns_SPIROU.txt
+
+        range2:         float, Half-zone extraction width left side
+                        (formally plage2)
+                        defaults to p['ic_ext_range2'] from fiber parameters in
+                        constatns_SPIROU.txt
+
         tilt:           numpy array (1D), the tilt for this order, if defined
                         uses tilt, if not defined does not
 
@@ -127,13 +207,13 @@ def extract_wrapper(p, image, pos, sig, **kwargs):
                  size = image.shape[1] (along the order direction)
     :return nbcos: int, zero in this case
     """
-    # get parameters from parameter dictionary
-    extopt = p['IC_EXTOPT']
-    nbsig = p['IC_EXTNBSIG']
-    image_gain = p['gain']
-    image_sigdet = p['sigdet']
-    range1 = p['IC_EXT_RANGE1']
-    range2 = p['IC_EXT_RANGE2']
+    # get parameters from keywordargs but default to parameter dictionary
+    extopt = kwargs.get('extopt', p['IC_EXTOPT'])
+    nbsig = kwargs.get('nbsig', p['IC_EXTNBSIG'])
+    image_gain = kwargs.get('gain', p['gain'])
+    image_sigdet = kwargs.get('sigdet', p['sigdet'])
+    range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
+    range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
     mode = kwargs.get('mode', 'new')
     # get parameters from keyword arguments
     tilt = kwargs.get('tilt', None)
@@ -154,6 +234,8 @@ def extract_wrapper(p, image, pos, sig, **kwargs):
         else:
             return extract_tilt_weight(*args)
 
+    else:
+        WLOG('error', p['log_opt'], 'Extraction type invalid')
 
 
 def extract_const_range(image, pos, nbsig, gain):

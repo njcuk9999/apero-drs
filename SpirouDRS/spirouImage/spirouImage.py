@@ -9,7 +9,7 @@ Created on 2017-10-12 at 17:47
 
 @author: cook
 
-
+Import rules: Not spirouLOCOR
 
 Version 0.0.0
 """
@@ -30,6 +30,9 @@ from . import spirouFITS
 WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'spirouImage.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # -----------------------------------------------------------------------------
 
 
@@ -247,7 +250,7 @@ def get_tilt(pp, lloc, image):
     # loop around each order
     for order_num in range(0, nbo, 2):
         # extract this AB order
-        lloc = spirouEXTOR.ExtractABorder(pp, lloc, image, order_num)
+        lloc = spirouEXTOR.ExtractOrder(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
         # Over sample the data and interpolate new extraction values
         pixels = np.arange(image.shape[1])

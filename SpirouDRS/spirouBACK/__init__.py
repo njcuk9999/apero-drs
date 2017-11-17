@@ -14,9 +14,26 @@ Created on 2017-11-10 at 14:33
 Version 0.0.0
 """
 
+from SpirouDRS import spirouConfig
 from . import spirouBACK
 
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouBACK.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__all__ = ['BoxSmoothedMinMax',
+           'MeasureBackgroundFF',
+           'MeasureMinMax',
+           'MeasureBkgrdGetCentPixs']
+
+# =============================================================================
+# Function aliases
+# =============================================================================
 BoxSmoothedMinMax = spirouBACK.measure_box_min_max
 """
 Measure the minimum and maximum pixel value for each row using a box which
@@ -37,13 +54,9 @@ set to the values for row=size and row=(image.shape[0]-size)
                    row+size for all columns
 """
 
-
 MeasureBackgroundFF = spirouBACK.measure_background_flatfield
 
-
 MeasureMinMax = spirouBACK.measure_min_max
-
-
 
 MeasureBkgrdGetCentPixs = spirouBACK.measure_background_and_get_central_pixels
 """
@@ -55,8 +68,6 @@ Takes the image and measure the background
 
 :return ycc: the normalised values the central pixels
 """
-
-
 
 # =============================================================================
 # End of code

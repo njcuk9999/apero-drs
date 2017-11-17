@@ -14,9 +14,27 @@ Created on 2017-10-30 at 17:08
 Version 0.0.0
 """
 
+from SpirouDRS import spirouConfig
 from . import spirouCDB
 
+# =============================================================================
+# Define variables
+# =============================================================================
+# Name of program
+__NAME__ = 'spirouCDB.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__all__ = ['CopyCDBfiles',
+           'GetAcqTime',
+           'GetDatabase',
+           'GetFile',
+           'PutFile',
+           'UpdateMaster']
 
+# =============================================================================
+# Function aliases
+# =============================================================================
 # copy calib database files to folder
 CopyCDBfiles = spirouCDB.copy_files
 
@@ -35,3 +53,7 @@ PutFile = spirouCDB.put_file
 # Updates (or creates) the calibDB with an entry or entries in the form:
 #    {key} {arg_night_name} {filename} {human_time} {unix_time}
 UpdateMaster = spirouCDB.update_datebase
+
+# =============================================================================
+# End of code
+# =============================================================================

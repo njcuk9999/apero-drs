@@ -9,7 +9,7 @@ Created on 2017-10-11 at 13:09
 
 @author: cook
 
-
+Import rules: Only from spirouConfig
 
 Version 0.0.0
 """
@@ -17,30 +17,22 @@ Version 0.0.0
 import numpy as np
 import os
 import pkg_resources
+from . import spirouConst as Constants
 
 # =============================================================================
 # Define variables
 # =============================================================================
-# Module package name
-__PACKAGE__ = 'SpirouDRS'
-# Program name
+# Name of program
 __NAME__ = 'spirouConfig.py'
-# Name of main config folder (relative to package level)
-__CONFIGFOLDER__ = '../config'
-# Name of main config file
-__CONFIG_FILE__ = 'config.txt'
+# Get version and author
+__version__ = Constants.VERSION()
+__author__ = Constants.AUTHORS()
 # -----------------------------------------------------------------------------
-# Whether to use plt.ion (if True) or to use plt.show (if False)
-INTERACTIVE_PLOTS = True
-# The trigger character to display for each
-TRIG_KEY = dict(all=' ', error='!', warning='@', info='*', graph='~')
-# The write level
-WRITE_LEVEL = dict(error=3, warning=2, info=1, graph=0, all=0)
-# The exit style (on log exit)
-#  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
-#  if 'os' exits via os._exit    - hard exit (complete exit)
-EXIT = 'sys'
-
+# Get constant parameters
+PACKAGE = Constants.PACKAGE()
+CONFIG_FILE = Constants.CONFIGFILE()
+CONFIGFOLDER = Constants.CONFIGFOLDER()
+TRIG_KEY = Constants.LOG_TRIG_KEYS()
 
 # =============================================================================
 # Define Custom classes
@@ -568,7 +560,7 @@ def evaluate_value(value):
         else:
             return newvalue
     except Exception:
-        return value
+        return str(value)
 
 
 def get_default_config_file():
@@ -579,14 +571,14 @@ def get_default_config_file():
     :return config_file: string, the path and filename of the default config
                          file
     """
-    init = pkg_resources.resource_filename(__PACKAGE__, '__init__.py')
+    init = pkg_resources.resource_filename(PACKAGE, '__init__.py')
     # Get the config_folder from relative path
     current = os.getcwd()
     os.chdir(os.path.dirname(init))
-    config_folder = os.path.abspath(__CONFIGFOLDER__)
+    config_folder = os.path.abspath(CONFIGFOLDER)
     os.chdir(current)
     # Get the config file path
-    config_file = os.path.join(config_folder, __CONFIG_FILE__)
+    config_file = os.path.join(config_folder, CONFIG_FILE)
     # make sure config file exists
     if not os.path.exists(config_file):
         emsg = "Config file doesn't exists at {0}".format(config_file)
@@ -599,6 +591,7 @@ def set_source_for_defaulting_statements(p, key, dvalue):
     if p[key] == dvalue:
         p.set_source(key, __NAME__ + '/check_params()')
     return p
+
 
 # =============================================================================
 # Start of code
