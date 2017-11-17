@@ -93,10 +93,10 @@ ic_ext_range1_fpall = {'AB':14.5, 'A':0.0, 'B':14.5, 'C':7.5}
 ic_ext_range2_fpall = {'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5}
 
 #   Localisation fiber for extraction                            - [cal_extract]
-loc_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB, 'C':'C'}
+loc_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'}
 
-#   Order profile fiber for extraction
-orderp_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB, 'C':'C'}      - [cal_extract]
+#   Order profile fiber for extraction                           - [cal_extract]
+orderp_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'}
 
 
 # -----------------------------------------------------------------------------
@@ -251,6 +251,11 @@ ic_blaze_fitn = 5
 
 #   Order to plot on ff image plot (formally ic_order_plot)     - [cal_ff]
 ic_ff_order_plot = 5
+
+#   Plot all order fits (True = 1, False = 0)                   - [cal_ff]
+#        (takes slightly longer than just one example order)
+ic_ff_plot_all_orders = 1
+
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
