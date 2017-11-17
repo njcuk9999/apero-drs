@@ -19,6 +19,7 @@ import os
 import warnings
 
 from SpirouDRS import spirouCDB
+from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
@@ -29,12 +30,16 @@ neilstart = time.time()
 # =============================================================================
 # Define variables
 # =============================================================================
+# Name of program
+__NAME__ = 'cal_DARK_spirou.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# Name of program
-__NAME__ = 'cal_DARK_spirou.py'
+
 # -----------------------------------------------------------------------------
 # Remove this for final (only for testing)
 import sys

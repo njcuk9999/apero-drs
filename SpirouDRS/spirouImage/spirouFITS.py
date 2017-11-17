@@ -497,7 +497,7 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
             value = values[i_it, j_it]
             # construct the comment name
             cargs = [comment, dim1name, i_it, dim2name, j_it]
-            comm = '{0} {1}={2} {3}={5}'.format(*cargs)
+            comm = '{0} {1}={2} {3}={4}'.format(*cargs)
             # add to header dictionary
             hdict[keyname] = (value, comm)
     # return the header dictionary

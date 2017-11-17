@@ -169,7 +169,7 @@ def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
         # then load the calibdb into p
-        calibDB = spirouCDB.GetDatabase(p)
+        calibDB, p = spirouCDB.GetDatabase(p)
         p['calibDB'] = calibDB
         p.set_source('calibDB', __NAME__ + '/run_startup()')
     else:
