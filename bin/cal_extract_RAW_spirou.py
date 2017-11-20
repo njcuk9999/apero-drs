@@ -15,6 +15,7 @@ Version 0.0.1
 """
 
 import numpy as np
+import os
 import time
 
 from SpirouDRS import spirouBACK
@@ -191,6 +192,7 @@ if __name__ == "__main__":
             loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
             # set the number of order to half of the original
             loc['number_orders'] = int(loc['number_orders'] / 2)
+
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
@@ -200,49 +202,51 @@ if __name__ == "__main__":
         # Create array to store the signal to noise ratios for each order
         loc['SNR'] = np.zeros(loc['number_orders'])
 
-        # Manually set the sigdet to be used in extraction weighting
-        if p['IC_FF_SIGDET'] > 0:
-            p['sigdet'] = float(p['IC_FF_SIGDET'])
         # ------------------------------------------------------------------
         # Extract orders
         # ------------------------------------------------------------------
         # loop around each order
         for order_num in range(loc['number_orders']):
             # extract this order
-
             # -------------------------------------------------------------
-            # Extract
+            # Extract (extract and extract0)
             # -------------------------------------------------------------
+            time1 = time.time()
             eargs = [p, loc, data2, order_num]
             spe1, cpt = spirouEXTOR.ExtractOrder(*eargs)
-
-            # -------------------------------------------------------------
-            # Extract
-            # -------------------------------------------------------------
-            eargs = [p, loc, data2, order_num]
-            spe2, cpt = spirouEXTOR.ExtractOrder0(*eargs)
-
             # -------------------------------------------------------------
             # Extract with Tilt
             # -------------------------------------------------------------
-            eargs = [p, loc, data2, order_profile, order_num]
+            time2 = time.time()
+            eargs = [p, loc, data2, order_num]
             spe3, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
-
             # -------------------------------------------------------------
             # Extract with Tilt + Weight
             # -------------------------------------------------------------
+            time3 = time.time()
             eargs = [p, loc, data2, order_profile, order_num]
             spe4, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
-
             # -------------------------------------------------------------
             # Extract with Weight
             # -------------------------------------------------------------
+            time4 = time.time()
             eargs = [p, loc, data2, order_profile, order_num]
             e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
 
+            time5 = time.time()
+            timing = ("Timing: \n\t "
+                      "ExtractOrder = {0} s \n\t "
+                      "ExtractTiltOrder = {1} s \n\t "
+                      "ExtractTiltWeightOrder = {2} s \n\t "
+                      "ExtractWeightOrder = {3} s")
+            timing = timing.format(time2-time1, time3-time2, time4-time3,
+                                   time5-time4)
+
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
-            noise = p['sigdet'] * np.sqrt(range1 + range2)
+            # Question: Why is this different from cal_ff
+            # Question:  there: noise = p['sigdet'] * np.sqrt(range1 + range2)
+            noise = p['sigdet'] * np.sqrt(p['IC_EXTMEANZONE'])
             # get window size
             blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
@@ -251,15 +255,15 @@ if __name__ == "__main__":
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # log the SNR RMS
-            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}  - FF rms={3:.2f} %'
-            wargs = [fiber, order_num, snr, rms * 100.0]
+            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}'
+            wargs = [fiber, order_num, snr]
             WLOG('', p['log_opt'], wmsg.format(*wargs))
             # add calculations to storage
             loc['e2ds'][order_num] = e2ds
             loc['SNR'][order_num] = snr
             # set sources
             source = __NAME__ + '/__main__()'
-            loc.set_sources(['e2ds', 'SNR', 'RMS', 'blaze', 'flat'], source)
+            loc.set_sources(['e2ds', 'SNR'], source)
             # Log if saturation level reached
             satvalue = (flux/p['gain'])/(range1 + range2)
             if satvalue > (p['QC_LOC_FLUMAX'] * p['nbframes']):
@@ -269,13 +273,41 @@ if __name__ == "__main__":
         # ------------------------------------------------------------------
         # Plots
         # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # start interactive session if needed
+            sPlt.start_interactive_session()
+            # plot all orders or one order
+            if p['IC_FF_PLOT_ALL_ORDERS']:
+                # plot image with all order fits (slower)
+                sPlt.all_order_fit(p, loc, data2)
+            else:
+                # plot image with selected order fit and edge fit (faster)
+                sPlt.selected_order_fit(p, loc, data2)
+            # plot e2ds against wavelength
+            sPlt.spectral_order_plot(p, loc)
 
         # ------------------------------------------------------------------
         # Store extraction in file
         # ------------------------------------------------------------------
-
-
-
+        # construct filename
+        reducedfolder = p['reduced_dir']
+        e2ds_ext = '_e2ds_{0}.fits'.format(p['fiber'])
+        e2dsfits = p['arg_file_names'][0].replace('.fits', e2ds_ext)
+        # log that we are saving E2DS spectrum
+        wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
+        WLOG('', p['log_opt'], wmsg.format(p['fiber'], e2dsfits))
+        # add keys from original header file
+        hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        # add localization file name to header
+        loco_file = p['calibDB']['LOC_{0}'.format(p['fiber'])][1]
+        hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
+                                   value=loco_file)
+        # add localization file keys to header
+        locosavepath = os.path.join(reducedfolder, loco_file)
+        hdict = spirouImage.CopyRootKeys(hdict, locosavepath)
+        # Save E2DS file
+        spirouImage.WriteImage(os.path.join(reducedfolder, e2dsfits),
+                               loc['e2ds'], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
