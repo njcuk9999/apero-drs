@@ -33,20 +33,9 @@ __author__ = spirouConfig.Constants.AUTHORS()
 CPARAMS = spirouConfig.ReadConfigFile()
 TRIG_KEY = spirouConfig.Constants.LOG_TRIG_KEYS()
 WRITE_LEVEL = spirouConfig.Constants.WRITE_LEVEL()
-EXIT = spirouConfig.Constants.LOG_EXIT_TYPE()
+EXIT_TYPE = spirouConfig.Constants.EXIT()
 # Boolean for whether we log caught warnings
 WARN = spirouConfig.Constants.LOG_CAUGHT_WARNINGS()
-# -----------------------------------------------------------------------------
-# Config exit (sys = sys.exit(1), os = os._exit(1) anything else and error
-#     does not exit
-# TODO: should this be defined in the config?
-if EXIT == 'sys':
-    EXIT_TYPE = sys.exit
-elif EXIT == 'os':
-    EXIT_TYPE = os._exit
-else:
-    EXIT_TYPE = lambda x: None
-
 
 
 # =============================================================================
