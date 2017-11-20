@@ -229,6 +229,17 @@ def DATE_FMT_CALIBDB():
     date_fmt = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt
 
+
+def EXIT():
+    my_exit = LOG_EXIT_TYPE()
+    if my_exit == 'sys':
+        my_exit = sys.exit
+    elif EXIT == 'os':
+        my_exit = os._exit
+    else:
+        my_exit = lambda x: None
+    return my_exit
+
 # =============================================================================
 # Start of code
 # =============================================================================
