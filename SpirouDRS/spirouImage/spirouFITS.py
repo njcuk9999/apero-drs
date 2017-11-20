@@ -353,6 +353,32 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     return hdict
 
 
+def copy_root_keys(hdict=None, filename=None, ext=0):
+    """
+    Copy keys from a filename to hdict
+
+    :param hdict: dictionary or None, header dictionary to write to fits file
+                  if None hdict is created
+    :param filename: string, location and filename of the FITS rec to open
+
+    :param ext: int, the extension of the FITS rec to open header from
+                (defaults to 0)
+    :return:
+    """
+    # deal with no hdict and no filename
+    if hdict is None:
+        hdict = OrderedDict()
+    if filename is None:
+        WLOG('error', '', 'Filename required for "copy_root_keys"')
+    # read header file
+    hdr, cmts = read_raw_header(filename=filename, headerext=ext)
+    # loop around header keys
+    for key in list(hdr.keys()):
+        hdict[key] = (hdr[key], cmts[key])
+    # return header
+    return hdict
+
+
 def add_new_key(hdict, keywordstore, value=None):
     """
     Add a new key to hdict from keywordstore, if value is not None then the
@@ -533,7 +559,7 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
         return 'UNKNOWN'
 
 
-def read_header(p, filepath, ext=0):
+def read_header(p=None, filepath=None, ext=0):
     """
     Read the header from a file at "filepath" with extention "ext" (default=0)
 
@@ -542,13 +568,21 @@ def read_header(p, filepath, ext=0):
     :param ext: int, extension in FITS rec to open (default = 0)
     :return hdict: dictionary, the dictionary with key value pairs
     """
+    # if p is None
+    if p is None:
+        log_opt = ''
+    else:
+        log_opt = p['log_opt']
+    # if filepath is None raise error
+    if filepath is None:
+        WLOG('error', log_opt, 'filepath required for "read_header"')
     # if we don't have header get it (using 'fitsfilename')
     header = dict()
     try:
         header = fits.getheader(filepath)
     except IOError:
         emsg = 'Cannot open header of file {0}'
-        WLOG('error', p['log_opt'], emsg.format(filepath))
+        WLOG('error', log_opt, emsg.format(filepath))
     # load in to dictionary
     hdict = dict(zip(header.keys(), header.values()))
     # return hdict
