@@ -219,7 +219,7 @@ if __name__ == "__main__":
         for order_num in range(loc['number_orders']):
             # extract this order
             eargs = [p, loc, data2, order_profile, order_num]
-            e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
+            e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             noise = p['sigdet'] * np.sqrt(range1 + range2)
