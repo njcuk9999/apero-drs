@@ -61,6 +61,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_LOCO_DEG_E',
             'kw_LOCO_DEG_W',
             'kw_LOCO_DELTA',
+            'kw_LOCO_FILE',
             'kw_LOCO_FWHM_COEFF',
             'kw_LOCO_NBO',
             'kw_LOC_MAXFLX',
@@ -241,6 +242,12 @@ kw_EXTRA_SN = ['EXTSN', 0, 'S_N order center']
 # Flat field RMS for order
 kw_FLAT_RMS = [root_drs_flat + 'RMS', 0, 'FF RMS order']
 
+# -----------------------------------------------------------------------------
+# Define cal_EXTRACT variables
+# -----------------------------------------------------------------------------
+
+# localization file used
+kw_LOCO_FILE = [root_drs_loc + 'FILE', '', 'Localization file used']
 
 # =============================================================================
 # Define functions (Do not change)

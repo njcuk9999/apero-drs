@@ -337,7 +337,7 @@
 
 ### 1.6 cal_extract_RAW_spirou.py
 
-To do
+Code written, need to update this section
 
 [Back to top](#table-of-contents)
 
@@ -357,7 +357,7 @@ To do
 - [x] - ~~cal_loc_RAW_spioru~~
 - [x] - ~~cal_SLIT_spirou~~
 - [x] - ~~cal_FF_RAW_spirou~~
-- [ ] - cal_extract_RAW_spirou
+- [x] - ~~cal_extract_RAW_spirou~~
 - [ ] - cal_DRIFT_RAW_spirou
 
 [Back to top](#table-of-contents)

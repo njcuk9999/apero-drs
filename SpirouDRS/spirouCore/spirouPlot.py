@@ -567,6 +567,105 @@ def selected_order_flat(p, loc, image):
 
 
 # =============================================================================
+# extract plotting function
+# =============================================================================
+def selected_order_fit(p, loc, image):
+
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='jet')
+    # loop around the order numbers
+    acc = loc['acc'][selected_order]
+    # get fit and edge fits
+    xfit = np.arange(image.shape[1])
+    yfit = np.polyval(acc[::-1], xfit)
+    # plot fits
+    frame.plot(xfit, yfit, color='red', label='fit')
+    # set title labels limits
+    title = 'Image fit for order {0} fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def all_order_fit(p, loc, image):
+
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot image
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    # loop around the order numbers
+    for order_num in range(len(loc['acc'])):
+        acc = loc['acc'][order_num]
+        # get fit and edge fits
+        xfit = np.arange(image.shape[1])
+        yfit = np.polyval(acc[::-1], xfit)
+        # plot fits
+        if order_num == selected_order:
+            frame.plot(xfit, yfit, color='orange',
+                       label='Selected Order fit')
+        elif order_num == 0:
+            frame.plot(xfit, yfit, color='red', label='fit')
+        else:
+            frame.plot(xfit, yfit, color='red')
+    # set title labels limits
+    title = 'Image fit for orders (highlighted order={0}) fiber {1}'
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
+              title=title.format(selected_order, fiber))
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def spectral_order_plot(p, loc):
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    # get data from loc
+    wave = loc['wave'][selected_order]
+    extraction = loc['e2ds'][selected_order]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(wave, extraction, color='red')
+    # set title labels limits
+    title = 'Spectral order {0} fiber {1}'
+    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+              title=title.format(selected_order, fiber))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
