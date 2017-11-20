@@ -27,7 +27,7 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
            'ConvertToE', 'ConvertToADU',
-           'CopyOriginalKeys', 'CorrectForDark',
+           'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
            'FitTilt', 'FlipImage',
            'GetSigdet', 'GetExpTime', 'GetGain',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
@@ -49,6 +49,9 @@ AddKey2DList = spirouFITS.add_key_2d_list
 # Converts image from ADU/s into e-
 ConvertToE = spirouImage.convert_to_e
 ConvertToADU = spirouImage.convert_to_adu
+
+
+CopyRootKeys = spirouFITS.copy_root_keys
 
 # Copies keys from hdr dictionary to hdict, if forbid_keys is True some
 #     keys will not be copies (defined in python code)
