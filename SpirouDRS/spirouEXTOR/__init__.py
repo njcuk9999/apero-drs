@@ -69,10 +69,10 @@ over constant range
 
 ExtractOrder = spirouEXTOR.extract_order
 
-ExtractOrder0 = spirouEXTOR.extract_order_0
-
 ExtractTiltOrder = spirouEXTOR.extract_tilt_order
 
 ExtractTiltWeightOrder = spirouEXTOR.extract_tilt_weight_order
+
+ExtractTiltWeightOrder2 = spirouEXTOR.extract_tilt_weight_order2
 
 ExtractWeightOrder = spirouEXTOR.extract_weight_order
