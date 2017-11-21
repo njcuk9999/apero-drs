@@ -286,7 +286,7 @@
 
 - Fitting the tilt is moved to function `spirouImage.FitTilt(p, loc, image)`
 
-- selected order plot moved to `sPlt.selected_order_plot(o, loc, image)`
+- selected order plot moved to `sPlt.slit_sorder_plot(o, loc, image)`
 
 - slit tilt angle and fit plot moved to `sPlt.slit_tilt_angle_and_fit_plot(p, loc)`
 
