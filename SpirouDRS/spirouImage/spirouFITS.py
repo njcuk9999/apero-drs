@@ -43,7 +43,54 @@ FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
 # =============================================================================
 # Define Read/Write User
 # =============================================================================
-def readimage(p, framemath='+', filename=None, log=True):
+def readimage(p, filename=None, log=True):
+    """
+    Reads the image 'fitsfilename' defined in p and adds files defined in
+    'arg_file_names' if add is True
+
+    :param p: dictionary, parameter dictionary
+    :param filename: string or None, filename of the image to read, if None
+                     then p['fitsfilename'] is used
+    :param log: bool, if True logs opening and size
+
+    :return image: numpy array (2D), the image
+    :return header: dictionary, the header file of the image
+    :return nx: int, the shape in the first dimension, i.e. data.shape[0]
+    :return ny: int, the shape in the second dimension, i.e. data.shape[1]
+    """
+    # set up frequently used variables
+    log_opt = p['log_opt']
+    # get file name
+    if filename is None:
+        try:
+            fitsfilename = p['fitsfilename']
+        except KeyError:
+            emsg = '"fitsfilename" is not defined in parameter dictionary'
+            WLOG('error', log_opt, emsg)
+            fitsfilename = ''
+    else:
+        fitsfilename = filename
+    # log that we are reading the image
+    if log:
+        WLOG('', log_opt, 'Reading Image ' + fitsfilename)
+    # read image from fits file
+    image, imageheader, nx, ny = read_raw_data(fitsfilename)
+    # log that we have loaded the image
+    if log:
+        WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
+    # convert header to python dictionary
+    header = dict(zip(imageheader.keys(), imageheader.values()))
+    comments = dict(zip(imageheader.keys(), imageheader.comments))
+    # # add some keys to the header-
+    if filename is None:
+        header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
+        header['@@@fname'] = p['fitsfilename']
+
+    # return data, header, data.shape[0], data.shape[1]
+    return image, header, comments, nx, ny
+
+
+def readimage_and_combine(p, framemath='+', filename=None, log=True):
     """
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
@@ -162,7 +209,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     # get filename
     read_file = spirouCDB.GetFile(p, key, hdr)
     # read read_file
-    rout = readimage(p, framemath='none', filename=read_file, log=False)
+    rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
     # get the tilt keys
     tilt = read_key_2d_list(p, hdict, p['kw_TILT'][0], p['IC_TILT_NBO'], 1)
@@ -194,7 +241,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None):
     # get filename
     read_file = spirouCDB.GetFile(p, key, hdr)
     # read read_file
-    rout = readimage(p, framemath='none', filename=read_file, log=False)
+    rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
     # return the wave file
     return wave
@@ -214,7 +261,7 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
     # construct filename
     read_file = spirouCDB.GetFile(p, key, hdr)
     # read read_file
-    rout = readimage(p, framemath='none', filename=read_file, log=False)
+    rout = readimage(p, filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
     return rout
 
