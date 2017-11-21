@@ -60,7 +60,7 @@ if __name__ == "__main__":
     p = spirouStartup.RunInitialStartup()
     # run specific start up
     p = spirouStartup.RunStartup(p, kind='slit', prefixes='fp_fp',
-                              calibdb=True)
+                                 calibdb=True)
     # set the fiber type
     p['fib_typ'] = ['AB']
     p.set_source('fib_typ', __NAME__ + '/__main__')
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
+    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -144,7 +144,7 @@ if __name__ == "__main__":
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
         # plot image with selected order shown
-        sPlt.selected_order_plot(p, loc, data2)
+        sPlt.slit_sorder_plot(p, loc, data2)
         # plot slit tilt angle and fit
         sPlt.slit_tilt_angle_and_fit_plot(p, loc)
         # end interactive section

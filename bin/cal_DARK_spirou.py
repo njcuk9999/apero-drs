@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='average')
+    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='average')
 
     # ----------------------------------------------------------------------
     # Get basic image properties

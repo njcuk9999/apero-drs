@@ -29,9 +29,11 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
            'ConvertToE', 'ConvertToADU',
            'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
            'FitTilt', 'FlipImage',
+           'GetAllSimilarFiles', 'GetAcqTime'
            'GetSigdet', 'GetExpTime', 'GetGain',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
-           'ReadImage', 'ReadHeader', 'ReadKey', 'Read2Dkey',
+           'ReadImage', 'ReadImageAndCombine',
+           'ReadHeader', 'ReadKey', 'Read2Dkey',
            'ReadTiltFile', 'ReadWaveFile', 'ReadOrderProfile',
            'ResizeImage', 'WriteImage']
 
@@ -65,9 +67,12 @@ FitTilt = spirouImage.fit_tilt
 # Flips the image in the x and/or the y direction
 FlipImage = spirouImage.flip_image
 
+GetAllSimilarFiles = spirouImage.get_all_similar_files
+
 GetSigdet = spirouImage.get_sigdet
 GetExpTime = spirouImage.get_exptime
 GetGain = spirouImage.get_gain
+GetAcqTime = spirouImage.get_acqtime
 
 # Looks for a key(s) in dictionary p, named 'name'
 #     if has_default sets value of key to 'default' if not found
@@ -75,14 +80,15 @@ GetGain = spirouImage.get_gain
 GetKey = spirouFITS.keylookup
 GetKeys = spirouFITS.keyslookup
 
-
 GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
+ReadImage = spirouFITS.readimage
+
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
-ReadImage = spirouFITS.readimage
+ReadImageAndCombine = spirouFITS.readimage_and_combine
 
 # Read Header
 ReadHeader = spirouFITS.read_header

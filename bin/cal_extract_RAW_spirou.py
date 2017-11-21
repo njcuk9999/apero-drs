@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
+    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -169,11 +169,14 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['fib_type']:
+        # set fiber
+        p['fiber'] = fiber
+        p.set_source('fiber', __NAME__ + '/__main__()')
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
         # get this fibers parameters
-        p = spirouLOCOR.FiberParams(p, fiber, merge=True)
+        p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
         # get localisation fit coefficients
         loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
         # ------------------------------------------------------------------
@@ -186,7 +189,7 @@ if __name__ == "__main__":
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if fiber in ['A', 'B', 'AB']:
+        if p['fiber'] in ['A', 'B', 'AB']:
             # merge
             loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
             loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
@@ -256,7 +259,7 @@ if __name__ == "__main__":
             snr = flux / np.sqrt(flux + noise**2)
             # log the SNR RMS
             wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}'
-            wargs = [fiber, order_num, snr]
+            wargs = [p['fiber'], order_num, snr]
             WLOG('', p['log_opt'], wmsg.format(*wargs))
             # add calculations to storage
             loc['e2ds'][order_num] = e2ds
@@ -279,12 +282,12 @@ if __name__ == "__main__":
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)
-                sPlt.all_order_fit(p, loc, data2)
+                sPlt.ext_aorder_fit(p, loc, data2)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                sPlt.selected_order_fit(p, loc, data2)
+                sPlt.ext_sorder_fit(p, loc, data2)
             # plot e2ds against wavelength
-            sPlt.spectral_order_plot(p, loc)
+            sPlt.ext_spectral_order_plot(p, loc)
 
         # ------------------------------------------------------------------
         # Store extraction in file
