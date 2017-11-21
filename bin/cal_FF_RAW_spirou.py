@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p, framemath='add')
+    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -264,14 +264,14 @@ if __name__ == "__main__":
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)
-                sPlt.all_order_fit_and_edges(p, loc, data2)
+                sPlt.ff_aorder_fit_edges(p, loc, data2)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                sPlt.selected_order_fit_and_edges(p, loc, data2)
+                sPlt.ff_sorder_fit_edges(p, loc, data2)
             # plot tilt adjusted e2ds and blaze for selected order
-            sPlt.selected_order_tilt_adjusted_e2ds_blaze(p, loc, data2)
+            sPlt.ff_sorder_tiltadj_e2ds_blaze(p, loc, data2)
             # plot flat for selected order
-            sPlt.selected_order_flat(p, loc, data2)
+            sPlt.ff_sorder_flat(p, loc, data2)
 
         # ----------------------------------------------------------------------
         # Store Blaze in file
