@@ -94,7 +94,7 @@ ic_ext_range2_fpall = {'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
 #       (formally ic_ext_nbsig)
-ic_ext_range_fpall = {'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5}
+ic_ext_range_fpall = {'AB':14.5, 'A':14.5, 'B':14.5, 'C':7.5}
 
 #   Localisation fiber for extraction                            - [cal_extract]
 loc_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'}
@@ -102,6 +102,9 @@ loc_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'}
 #   Order profile fiber for extraction                           - [cal_extract]
 orderp_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'}
 
+#   Half-zone extract width for right and left side              - [cal_drift]
+#       (formally ic_extnbsig)
+ic_ext_d_range_fpall = {'AB':14.0, 'A':14.0, 'B':14.0, 'C':7.0}
 
 # -----------------------------------------------------------------------------
 #   cal_dark histogram variables
@@ -266,6 +269,27 @@ ic_ff_plot_all_orders = 0
 # -----------------------------------------------------------------------------
 #   Mean window of extraction                                   - [cal_extract]
 ic_extmeanzone = 16
+
+# -----------------------------------------------------------------------------
+#   cal_drift parameters
+# -----------------------------------------------------------------------------
+#   The value of the noise for SNR calculation                  - [cal_drift]
+#      snr = flux/sqrt(flux + noise^2)
+ic_drift_noise = 100.0
+
+#   The maximum flux for a good (unsaturated) pixel             - [cal_drift]
+ic_dv_maxflux = 1.e9
+
+#   The size around a saturated pixel to flag as unusable       - [cal_drift]
+ic_dv_boxsize = 12
+
+#   Define large number of files for which skip will be used    - [cal_drift]
+drift_nlarge = 300
+
+#   Skip (for large number of files this is the iterator to     - [cal_drift]
+#      skip over) - i.e. do every "ic_drift_skip" files
+#      also allows quick speed up of code
+drift_file_skip = 3
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
