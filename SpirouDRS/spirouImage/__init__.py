@@ -29,9 +29,11 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
            'ConvertToE', 'ConvertToADU',
            'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
            'FitTilt', 'FlipImage',
+           'GetAllSimilarFiles', 'GetAcqTime'
            'GetSigdet', 'GetExpTime', 'GetGain',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
-           'ReadImageAndCombine', 'ReadHeader', 'ReadKey', 'Read2Dkey',
+           'ReadImage', 'ReadImageAndCombine',
+           'ReadHeader', 'ReadKey', 'Read2Dkey',
            'ReadTiltFile', 'ReadWaveFile', 'ReadOrderProfile',
            'ResizeImage', 'WriteImage']
 
