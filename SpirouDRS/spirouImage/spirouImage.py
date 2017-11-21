@@ -16,6 +16,7 @@ Version 0.0.0
 
 import numpy as np
 import os
+import glob
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -154,6 +155,7 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
 
     return newimage
 
+
 def convert_to_adu(image, p=None, exptime=None):
     """
     Converts image from ADU/s into ADU
@@ -186,10 +188,28 @@ def convert_to_adu(image, p=None, exptime=None):
     return newimage
 
 
+def get_all_similar_files(p):
+
+    # get path
+    rawdir = spirouConfig.Constants.RAW_DIR(p)
+    # get file prefix and suffix
+    prefix = p['arg_file_names'][0][0:5]
+    suffix = p['arg_file_names'][0][-8:]
+    # constrcut file string
+    filestring = '{0}*{1}'.format(prefix, suffix)
+    locstring = os.path.join(rawdir, filestring)
+    # get all files
+    filelist = glob.glob(locstring)
+    # remove fitsfilename (reference file)
+    filelist.remove(p['fitsfilename'])
+    # sort list
+    filelist = np.sort(filelist)
+
+
 # =============================================================================
 # Define Image correction functions
 # =============================================================================
-def correct_for_dark(p, image, header):
+def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     """
     Corrects "data" for "dark" using calibDB file (header must contain
         value of p['ACQTIME_KEY'] as a keyword
@@ -198,11 +218,20 @@ def correct_for_dark(p, image, header):
     :param image: numpy array (2D), the image
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
+    :param nfiles: int or None, number of files that created image (need to
+                   multiply by this to get the total dark) if None uses
+                   p['nbframes']
+    :param return_dark: bool, if True returns corrected_image and dark
+                        if False (default) returns corrected_image
 
     :return corrected_image: numpy array (2D), the dark corrected image
+
+    only returned if return_dark = True:
+
+    :return dark: numpy array (2D), the dark
     """
-
-
+    if nfiles is None:
+        nfiles = p['nbframes']
 
     # get calibDB
     if 'calibDB' not in p:
@@ -218,15 +247,17 @@ def correct_for_dark(p, image, header):
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
         WLOG('', p['log_opt'], 'Doing Dark Correction using ' + darkfile)
         darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
-        corrected_image = image - (darkimage * p['nbframes'])
+        corrected_image = image - (darkimage * nfiles)
     else:
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
         WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
-        corrected_image = image
 
     # finally return datac
-    return corrected_image
+    if return_dark:
+        return corrected_image, darkimage
+    else:
+        return corrected_image
 
 
 def get_tilt(pp, lloc, image):
@@ -314,33 +345,54 @@ def fit_tilt(pp, lloc):
 # =============================================================================
 # Get basic image properties
 # =============================================================================
-def get_exptime(p, hdr, name=None):
+def get_exptime(p, hdr, name=None, return_value=False):
     # return param
-    return get_param(p, hdr, 'kw_exptime', name)
+    return get_param(p, hdr, 'kw_exptime', name, return_value)
 
 
-def get_gain(p, hdr, name=None):
+def get_gain(p, hdr, name=None, return_value=False):
     # return param
-    return get_param(p, hdr, 'kw_gain', name)
+    return get_param(p, hdr, 'kw_gain', name, return_value)
 
 
-def get_sigdet(p, hdr, name=None):
+def get_sigdet(p, hdr, name=None, return_value=False):
     # return param
-    return get_param(p, hdr, 'kw_rdnoise', name)
+    return get_param(p, hdr, 'kw_rdnoise', name, return_value)
 
 
-def get_param(p, hdr, keyword, name=None):
+def get_param(p, hdr, keyword, name=None, return_value=False):
     # get header keyword
     key = p[keyword][0]
     # deal with no name
     if name is None:
         name = key
     # get value
-    p[name] = float(spirouFITS.keylookup(p, hdr, key, hdr['@@@hname']))
-    # set source
-    p.set_source(name, hdr['@@@hname'])
-    # return p
-    return p
+    value = float(spirouFITS.keylookup(p, hdr, key, hdr['@@@hname']))
+    # deal with return value
+    if return_value:
+        return value
+    else:
+        # assign value to p[name]
+        p[name] = value
+        # set source
+        p.set_source(name, hdr['@@@hname'])
+        # return p
+        return p
+
+
+def get_acqtime(p, hdr, name=None, return_value=False):
+    # get header keyword
+    value = spirouCDB.GetAcqTime(p, hdr)
+    # deal with return value
+    if return_value:
+        return value
+    else:
+        # assign value to p[name]
+        p[name] = value
+        # set source
+        p.set_source(name, hdr['@@@hname'])
+        # return p
+        return p
 
 
 # =============================================================================

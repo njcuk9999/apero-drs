@@ -94,83 +94,83 @@ def extract_AB_order(pp, loc, image, rnum):
     return loc
 
 
-def extract_order(pp, loc, image, rnum):
+def extract_order(pp, loc, image, rnum, **kwargs):
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=False, 
                    use_weight=False,
                    extopt=pp['IC_EXTOPT'],
-                   range1=pp['IC_EXT_RANGE'],
-                   range2=pp['IC_EXT_RANGE'],
-                   gain=pp['gain'])
+                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+                   gain=kwargs.get('gain', pp['gain']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
     return cent, cpt
 
 
-def extract_tilt_order(pp, loc, image, rnum):
+def extract_tilt_order(pp, loc, image, rnum, **kwargs):
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=True, 
                    use_weight=False,
                    tilt=loc['tilt'][rnum],
-                   range1=pp['IC_EXT_RANGE'],
-                   range2=pp['IC_EXT_RANGE'],
-                   gain=pp['gain'])
+                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+                   gain=kwargs.get('gain', pp['gain']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
     return cent, cpt
 
 
-def extract_tilt_weight_order(pp, loc, image, orderp, rnum):
+def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=True, 
                    use_weight=True,
                    tilt=loc['tilt'][rnum], 
                    order_profile=orderp,
-                   range1=pp['IC_EXT_RANGE'],
-                   range2=pp['IC_EXT_RANGE'],
+                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
                    mode=1,
-                   gain=pp['gain'],
-                   sigdet=pp['sigdet'])
+                   gain=kwargs.get('gain', pp['gain']),
+                   sigdet=kwargs.get('sigdet', pp['sigdet']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
     return cent, cpt
 
 
-def extract_tilt_weight_order2(pp, loc, image, orderp, rnum):
+def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=True,
                    use_weight=True,
                    tilt=loc['tilt'][rnum], 
                    order_profile=orderp,
-                   range1=pp['IC_EXT_RANGE1'],
-                   range2=pp['IC_EXT_RANGE2'],
+                   range1=kwargs.get('range1', pp['IC_EXT_RANGE1']),
+                   range2=kwargs.get('range2', pp['IC_EXT_RANGE2']),
                    mode=2,
-                   gain=pp['gain'],
-                   sigdet=pp['sigdet'])
+                   gain=kwargs.get('gain', pp['gain']),
+                   sigdet=kwargs.get('sigdet', pp['sigdet']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
     return cent, cpt
 
 
-def extract_weight_order(pp, loc, image, orderp, rnum):
+def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=False,
                    use_weight=True,
                    tilt=None, 
                    order_profile=orderp,
-                   range1=pp['IC_EXT_RANGE'],
-                   range2=pp['IC_EXT_RANGE'],
-                   gain=pp['gain'],
-                   sigdet=pp['sigdet'])
+                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+                   gain=kwargs.get('gain', pp['gain']),
+                   sigdet=kwargs.get('sigdet', pp['sigdet']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 

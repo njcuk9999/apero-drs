@@ -128,7 +128,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     os.remove(lock_file)
 
 
-def get_acquision_time(p, header=None):
+def get_acquision_time(p, header=None, filename=None):
     """
     Get the acquision time from the header file, if there is not header file
     use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
@@ -136,6 +136,7 @@ def get_acquision_time(p, header=None):
     :param p: dictionary, parameter dictionary
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
+    :param filename: string or None, location of the file if header is None
 
     :return:
     """
@@ -149,10 +150,15 @@ def get_acquision_time(p, header=None):
     else:
         acqtime_key = p['kw_ACQTIME_KEY'][0]
 
-    # if we don't have header get it (using 'fitsfilename')
-    if header is None:
+    # deal with no filename
+    if filename is None:
         rawdir = spirouConfig.Constants.RAW_DIR(p)
         rawfile = os.path.join(rawdir, p['arg_file_names'][0])
+    else:
+        rawfile = filename
+
+    # if we don't have header get it (using 'fitsfilename')
+    if header is None:
         header = fits.getheader(rawfile, ext=0)
 
     # get max_time from file

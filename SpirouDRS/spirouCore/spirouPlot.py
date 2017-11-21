@@ -348,7 +348,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
 # =============================================================================
 # slit plotting function
 # =============================================================================
-def selected_order_plot(pp, loc, image):
+def slit_sorder_plot(pp, loc, image):
     """
     Plot the image array and overplot the polyfit for the order defined in
     p['ic_slit_order_plot']
@@ -421,7 +421,7 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
 # =============================================================================
 # ff plotting function
 # =============================================================================
-def selected_order_fit_and_edges(p, loc, image):
+def ff_sorder_fit_edges(p, loc, image):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -460,7 +460,7 @@ def selected_order_fit_and_edges(p, loc, image):
         plt.close()
 
 
-def all_order_fit_and_edges(p, loc, image):
+def ff_aorder_fit_edges(p, loc, image):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -510,7 +510,7 @@ def all_order_fit_and_edges(p, loc, image):
         plt.close()
 
 
-def selected_order_tilt_adjusted_e2ds_blaze(p, loc, image):
+def ff_sorder_tiltadj_e2ds_blaze(p, loc, image):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -540,7 +540,7 @@ def selected_order_tilt_adjusted_e2ds_blaze(p, loc, image):
         plt.close()
 
 
-def selected_order_flat(p, loc, image):
+def ff_sorder_flat(p, loc, image):
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
@@ -569,7 +569,7 @@ def selected_order_flat(p, loc, image):
 # =============================================================================
 # extract plotting function
 # =============================================================================
-def selected_order_fit(p, loc, image):
+def ext_sorder_fit(p, loc, image):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -601,7 +601,7 @@ def selected_order_fit(p, loc, image):
         plt.close()
 
 
-def all_order_fit(p, loc, image):
+def ext_aorder_fit(p, loc, image):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -640,7 +640,7 @@ def all_order_fit(p, loc, image):
         plt.close()
 
 
-def spectral_order_plot(p, loc):
+def ext_spectral_order_plot(p, loc):
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
@@ -659,6 +659,56 @@ def spectral_order_plot(p, loc):
     title = 'Spectral order {0} fiber {1}'
     frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
               title=title.format(selected_order, fiber))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+# =============================================================================
+# extract plotting function
+# =============================================================================
+def drift_plot_selected_wave_ref(p, loc):
+    # get constants
+    selected_order = p['IC_FF_ORDER_PLOT']
+    fiber = p['fiber']
+    # get data from loc
+    wave = loc['wave'][selected_order]
+    extraction = loc['speref'][selected_order]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(wave, extraction)
+    # set title labels limits
+    title = 'FP spectral order {0} fiber {1}'
+    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+              title=title.format(selected_order, fiber))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def drift_plot_photon_uncertainty(p, loc):
+    # get data from loc
+    x = np.arange(p['number_orders'])
+    y = loc['dvrmsref']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(x, y)
+    # set title labels limits
+    title = 'Photon noise uncertainty versus spectral order'
+    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
+              title=title)
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
