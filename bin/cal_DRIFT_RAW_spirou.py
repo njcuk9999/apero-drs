@@ -175,7 +175,6 @@ if __name__ == "__main__":
     # Create array to store extraction (for each order and each pixel
     # along order)
     loc['speref'] = np.zeros((loc['number_orders'], data2.shape[1]))
-    loc['spe'] = np.zeros((loc['number_orders'], data2.shape[1]))
     # Create array to store the signal to noise ratios for each order
     loc['SNR'] = np.zeros(loc['number_orders'])
 
@@ -220,7 +219,7 @@ if __name__ == "__main__":
     # save to loc
     loc['dvrmsref'], loc['wmeanref'] = dvrmsref, wmeanref
     # log the estimated RV uncertainty
-    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {0:.3f m/s}'
+    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
     WLOG('info', p['log_opt'], wmsg.format(p['fiber'], wmeanref))
 
     # ------------------------------------------------------------------
@@ -244,7 +243,6 @@ if __name__ == "__main__":
     wmsg = 'Nb fp_fp files found on directory = {0}'
     WLOG('info', p['log_opt'], wmsg.format(Nfiles))
 
-
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
     # ------------------------------------------------------------------
@@ -255,10 +253,12 @@ if __name__ == "__main__":
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((Nfiles+1, p['number_orders']))
-    loc['errdrift'] = np.zeros((Nfiles+1, p['number_orders']))
-    loc['deltatime'] = np.zeros((Nfiles+1, p['number_orders']))
+    loc['drift'] = np.zeros((Nfiles+1, loc['number_orders']))
+    loc['errdrift'] = np.zeros((Nfiles+1, loc['number_orders']))
+    loc['deltatime'] = np.zeros((Nfiles+1, loc['number_orders']))
 
+
+    spirouConfig.Constants.EXIT()(1)
     # ------------------------------------------------------------------
     # Loop around all files: correct for dark, reshape, extract and
     #     calculate dvrms and meanpond
@@ -268,7 +268,7 @@ if __name__ == "__main__":
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading
         wmsg = 'Reading file {0}'
-        WLOG('', p['log_opt'], wmsg.format(os.path.split(fpfile)))
+        WLOG('', p['log_opt'], wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
         # read, correct for dark and reshape iteration file
         # ------------------------------------------------------------------
@@ -288,6 +288,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------------------
         # Extract iteration file
         # ------------------------------------------------------------------
+        loc['spe'] = np.zeros((loc['number_orders'], data2.shape[1]))
         # loop around each order
         for order_num in range(loc['number_orders']):
             # Extract with Weight
@@ -295,19 +296,43 @@ if __name__ == "__main__":
             ekwargs = dict(range1=p['ic_ext_d_range'],
                            range2=p['ic_ext_d_range'])
             e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs, **ekwargs)
+            # save in loc
+            loc['spe'][order_num] = e2ds
         # ------------------------------------------------------------------
         # Compute photon noise uncertainty for iteration file
         # ------------------------------------------------------------------
         # set up the arguments for DeltaVrms2D
-        dargs = [e2ds, loc['wave']]
-        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DV_BOXSIZE'],
-                       threshold=p['IC_DV_MAXFLUX'])
+        dargs = [loc['spe'], loc['wave']]
+        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'],
+                       size=p['IC_DRIFT_BOXSIZE'],
+                       threshold=p['IC_DRIFT_MAXFLUX'])
         # run DeltaVrms2D
-        dvrsmspe, wmodespe = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+        dvrmsspe, wmodespe = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
 
+        # ------------------------------------------------------------------
+        # Compute the correction of the cosmics and re-normalisation by
+        #   comparison with the reference spectrum
+        # ------------------------------------------------------------------
         # correction of the cosmics and renomalisation by comparison with
         #   the reference spectrum
+        dargs = [loc['speref'], loc['spe']]
+        dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
+                       size=p['IC_DRIFT_BOXSIZE'],
+                       cut=p['IC_DRIFT_CUT'])
+        spen, cnormspe, cpt = spirouRV.ReNormCosmic2D(*dargs, **dkwargs)
 
+        # Calculate the RV drift
+        dargs = [loc['speref'], spen, loc['wave']]
+        dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
+                       size=p['IC_DRIFT_BOXSIZE'],
+                       cut=p['IC_DRIFT_CUT'])
+        rv = spirouRV.CalcRVdrift2D(*dargs)
+
+        # Calculate mean RV
+
+    # Plot of mean drift
+
+    # Save drift values to file
 
     # ----------------------------------------------------------------------
     # End Message
