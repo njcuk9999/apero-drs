@@ -695,7 +695,7 @@ def drift_plot_selected_wave_ref(p, loc):
 
 def drift_plot_photon_uncertainty(p, loc):
     # get data from loc
-    x = np.arange(p['number_orders'])
+    x = np.arange(loc['number_orders'])
     y = loc['dvrmsref']
     # set up fig
     plt.figure()
