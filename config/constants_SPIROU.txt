@@ -278,10 +278,10 @@ ic_extmeanzone = 16
 ic_drift_noise = 100.0
 
 #   The maximum flux for a good (unsaturated) pixel             - [cal_drift]
-ic_dv_maxflux = 1.e9
+ic_drift_maxflux = 1.e9
 
 #   The size around a saturated pixel to flag as unusable       - [cal_drift]
-ic_dv_boxsize = 12
+ic_drift_boxsize = 12
 
 #   Define large number of files for which skip will be used    - [cal_drift]
 drift_nlarge = 300
@@ -290,6 +290,10 @@ drift_nlarge = 300
 #      skip over) - i.e. do every "ic_drift_skip" files
 #      also allows quick speed up of code
 drift_file_skip = 3
+
+#   Define the number of standard deviations cut at in          - [cal_drift]
+#       cosmic renormalisation
+ic_drift_cut = 3
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
