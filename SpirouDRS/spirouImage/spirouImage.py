@@ -204,7 +204,8 @@ def get_all_similar_files(p):
     filelist.remove(p['fitsfilename'])
     # sort list
     filelist = np.sort(filelist)
-
+    # return file list
+    return filelist
 
 # =============================================================================
 # Define Image correction functions
