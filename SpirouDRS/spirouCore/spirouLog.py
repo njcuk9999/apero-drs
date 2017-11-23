@@ -13,7 +13,7 @@ Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.1
 """
-
+from __future__ import division
 import time
 import os
 import sys

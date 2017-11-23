@@ -13,7 +13,7 @@ Created on 2017-11-23 at 12:14
 
 Version 0.0.0
 """
-
+from __future__ import division
 import time
 
 import cal_DARK_spirou

@@ -13,7 +13,7 @@ Version 0.0.1
 
 Last modified: 2017-10-11 at 10:49
 """
-
+from __future__ import division
 import numpy as np
 import os
 import warnings

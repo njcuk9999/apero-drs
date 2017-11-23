@@ -13,7 +13,7 @@ Import rules: Not spirouLOCOR
 
 Version 0.0.0
 """
-
+from __future__ import division
 import numpy as np
 import os
 import glob
@@ -207,6 +207,7 @@ def get_all_similar_files(p):
     # return file list
     return filelist
 
+
 # =============================================================================
 # Define Image correction functions
 # =============================================================================
@@ -256,7 +257,6 @@ def measure_dark(pp, image, image_name, short_name):
     return pp
 
 
-
 def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     """
     Corrects "data" for "dark" using calibDB file (header must contain
@@ -289,6 +289,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         cdb, p = spirouCDB.GetDatabase(p, acqtime)
     else:
         cdb = p['calibDB']
+        acqtime = p['max_time_unix']
 
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:
@@ -300,6 +301,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
         WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
+        corrected_image, darkimage = None, None
 
     # finally return datac
     if return_dark:
@@ -389,7 +391,6 @@ def fit_tilt(pp, lloc):
     return lloc
 
 
-
 # =============================================================================
 # Get basic image properties
 # =============================================================================
@@ -436,6 +437,8 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
     :param p: dictionary, parameter dictionary
     :param hdr: dictionary, the header dictionary created by
                 spirouFITS.ReadImage
+    :param name: string, the name in parameter dictionary to give to value
+                 if return_value is False (i.e. p[name] = value)
     :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
                  for time since 1970-01-01
     :param return_value: bool, if False value is returned in p as p[name]
@@ -446,6 +449,9 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
                         True and kind=='human' returns a string, if return_value
                         is True and kind=='unix' returns a float
     """
+    # deal with no name
+    if name is None:
+        name = 'acqtime'
     # get header keyword
     value = spirouCDB.GetAcqTime(p, hdr, kind=kind)
     # deal with return value
