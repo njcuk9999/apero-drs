@@ -26,7 +26,7 @@ __version__ = Constants.VERSION()
 __author__ = Constants.AUTHORS()
 __all__ = ['Extraction', 'ExtractABOrderOffset', 'ExtractOrder',
            'ExtractOrder0', 'ExtractTiltOrder', 'ExtractTiltWeightOrder',
-            'ExtractTiltWeightOrder2', 'ExtractWeightOrder']
+           'ExtractTiltWeightOrder2', 'ExtractWeightOrder']
 
 # =============================================================================
 # Function aliases
