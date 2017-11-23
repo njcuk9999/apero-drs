@@ -13,7 +13,7 @@ Created on 2017-10-25 at 11:31
 
 Version 0.0.0
 """
-
+from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -77,7 +77,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     to get acquisition time or uses p['fitsfilename'] to get acquisition time if
     "hdr" is None
 
-    :param pp: dictionary, parameter dictionary
+    :param p: dictionary, parameter dictionary
     :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
     :param loc: dictionary, storage for arrays and variables
 
@@ -115,7 +115,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
 
     # check for localization file for this fiber
     if not (loc_file in c_database):
-        emsg1 = ('No order geometry defined in the calibDB for fiber: {0}')
+        emsg1 = 'No order geometry defined in the calibDB for fiber: {0}'
         emsg2 = '    requires key="{0}" in calibDB file (time < {1}).'
         WLOG('info', p['log_opt'], emsg1.format(p['fiber']))
         WLOG('info', p['log_opt'], emsg2.format(loc_file, p['max_time_human']))
@@ -136,7 +136,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     loc['acc'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
                                        loc['number_orders'], loc['nbcoeff_ctr'])
     loc['ass'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
-                                      loc['number_orders'], loc['nbcoeff_wid'])
+                                       loc['number_orders'], loc['nbcoeff_wid'])
 
     added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass']
     loc.set_sources(added, __NAME__ + '/get_loc_coefficients()')
@@ -152,7 +152,7 @@ def merge_coefficients(loc, coeffs, step):
     # get sum of 0 to step pixels
     cosum = np.array(coeffs[0:nbo:step, :])
     for i_it in range(1, step):
-        cosum += coeffs[i_it:nbo:step, :]
+        cosum = cosum + coeffs[i_it:nbo:step, :]
     # overwrite values into coeffs array
     newcoeffs[0:int(nbo/step), :] = (1/step)*cosum
     # return merged coeffients
@@ -547,7 +547,6 @@ def calculate_location_fits(coeffs, dim):
     return yfits
 
 
-
 def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
@@ -746,8 +745,6 @@ def image_localization_superposition(image, coeffs):
     :return newimage: numpy array (2D), the image with super-imposed zero filled
                       fits
     """
-
-
     # copy the old image
     newimage = image.copy()
     # get the number of orders
@@ -775,9 +772,6 @@ def image_localization_superposition(image, coeffs):
     return newimage
 
 
-
-
-
 # def locate_center_order_positions(cvalues, threshold, mode='convolve',
 #                                   min_width=None):
 #     """
@@ -785,7 +779,8 @@ def image_localization_superposition(image, coeffs):
 #     and end of orders above threshold
 #
 #         if mode='convolve' (default) then this is done
-#         by convolving a top-hat function with a mask of cvalues>threshold (FAST)
+#         by convolving a top-hat function with a mask of
+#         cvalues>threshold (FAST)
 #
 #         if mode='manual' then this is done by working out the star and end
 #         positions manually (SLOW)
@@ -794,17 +789,18 @@ def image_localization_superposition(image, coeffs):
 #                     the central pixel values
 #     :param threshold: float, the threshold above which to find pixels as being
 #                       part of an order
-#     :param mode: string, if 'convolve' convolves a top-hat function with a mask
-#                          of cvalues>threshold (FAST)
+#     :param mode: string, if 'convolve' convolves a top-hat function with
+#                          a mask of cvalues>threshold (FAST)
 #
-#                          if 'manual' manually counts every start and end (SLOW)
+#                          if 'manual' manually counts every start
+#                          and end (SLOW)
 #
-#     :param min_width: int or None, if not None sets a minimum width requirement
-#                       for the size of the order (disregards
+#     :param min_width: int or None, if not None sets a minimum width
+#                       requirement for the size of the order
 #
 #     :return positions: numpy array (1D), size=len(cvalues),
-#                        the pixel positions in cvalues where the centers of each
-#                        order should be
+#                        the pixel positions in cvalues where the centers of
+#                        each order should be
 #
 #     :return widths: numpy array (1D), size=len(cvalues), the widths of each
 #                     order
@@ -965,12 +961,12 @@ def locate_order_center(values, threshold, min_width=None):
 #                     the central pixel values
 #     :param threshold: float, the threshold above which to find pixels as being
 #                       part of an order
-#     :param min_width: int or None, if not None sets a minimum width requirement
-#                       for the size of the order (disregards
+#     :param min_width: int or None, if not None sets a minimum width
+#                       requirement for the size of the order
 #
 #     :return positions: numpy array (1D), size=len(cvalues),
-#                        the pixel positions in cvalues where the centers of each
-#                        order should be
+#                        the pixel positions in cvalues where the centers of
+#                        each  order should be
 #
 #     :return widths: numpy array (1D), size=len(cvalues), the widths of each
 #                     order
@@ -1019,8 +1015,6 @@ def locate_order_center(values, threshold, min_width=None):
 #     # return positions
 #     return np.array(positions), np.array(widths)
 
-
 # =============================================================================
 # End of code
 # =============================================================================
-

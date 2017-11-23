@@ -13,7 +13,7 @@ Import rules: Only from spirouConfig
 
 Version 0.0.0
 """
-
+from __future__ import division
 import numpy as np
 import os
 import pkg_resources

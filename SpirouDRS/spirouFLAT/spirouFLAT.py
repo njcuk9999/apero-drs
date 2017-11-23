@@ -13,7 +13,7 @@ Created on 2017-11-14 at 15:37
 
 Version 0.0.0
 """
-
+from __future__ import division
 import numpy as np
 
 from SpirouDRS import spirouConfig

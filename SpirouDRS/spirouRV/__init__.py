@@ -38,7 +38,7 @@ DeltaVrms2D = spirouRV.delta_v_rms_2d
 ReNormCosmic2D = spirouRV.renormalise_cosmic2d
 
 # Compute radial velocity drift between reference spectrum and current spectrum
-CalcRVdrift2D = spirouRV.calculate_RV_drifts_2D
+CalcRVdrift2D = spirouRV.calculate_rv_drifts_2d
 
 
 # =============================================================================
