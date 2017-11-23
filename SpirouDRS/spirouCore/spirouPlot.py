@@ -714,6 +714,28 @@ def drift_plot_photon_uncertainty(p, loc):
         plt.show()
         plt.close()
 
+def drift_plot_dtime_against_mdrift(p, loc):
+    # get data from loc
+    deltatime = loc['deltatime']
+    mdrift = loc['mdrift']
+    merrdrift = loc['merrdrift']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.errorbar(deltatime, mdrift, yerr=merrdrift)
+    # set title labels limits
+    title = 'Median drift (with uncertainties) against time from reference'
+    frame.set(xlabel='$\Delta$ time [hours]', ylabel='Median drift [m/s]',
+              title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
 
 # =============================================================================
 # Start of code
