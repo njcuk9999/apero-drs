@@ -210,6 +210,53 @@ def get_all_similar_files(p):
 # =============================================================================
 # Define Image correction functions
 # =============================================================================
+def measure_dark(pp, image, image_name, short_name):
+    """
+    Measure the dark pixels in "image"
+
+    :param pp: dictionary, parameter dictionary
+    :param image: numpy array (2D), the image
+    :param image_name: string, the name of the image (for logging)
+    :param short_name: string, suffix (for parameter naming -
+                        parmaeters added to pp with suffix i)
+    :return pp: dictionary, parameter dictionary
+    """
+
+    # flatten the image
+    fimage = image.flat
+    # get the finite (non-NaN) mask
+    fimage = fimage[np.isfinite(fimage)]
+    # get the number of NaNs
+    imax = image.size - len(fimage)
+    # get the median value of the non-NaN data
+    med = np.median(fimage)
+    # get the 5th and 95h percentile qmin
+    qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
+    # get the histogram for flattened data
+    histo = np.histogram(fimage, bins=pp['HISTO_BINS'],
+                         range=(pp['HISTO_RANGE_LOW'], pp['HISTO_RANGE_HIGH']))
+    # get the fraction of dead pixels as a percentage
+    dadead = imax * 100 / np.product(image.shape)
+    # log the dark statistics
+    largs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
+             pp['DARK_QMAX'], qmin, qmax]
+    WLOG('info', pp['log_opt'], ('{0:12s}: Frac dead pixels= {1:.1f} % - '
+                                 'Median= {2:.2f} ADU/s - '
+                                 'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s'
+                                 '').format(*largs))
+    # add required variables to pp
+    source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
+    pp['histo_{0}'.format(short_name)] = histo
+    pp.set_source('histo_{0}'.format(short_name), source)
+    pp['med_{0}'.format(short_name)] = med
+    pp.set_source('med_{0}'.format(short_name), source)
+    pp['dadead_{0}'.format(short_name)] = dadead
+    pp.set_source('dadead_{0}'.format(short_name), source)
+
+    return pp
+
+
+
 def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     """
     Corrects "data" for "dark" using calibDB file (header must contain
@@ -381,9 +428,26 @@ def get_param(p, hdr, keyword, name=None, return_value=False):
         return p
 
 
-def get_acqtime(p, hdr, name=None, return_value=False):
+def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
+    """
+    Get the acquision time from the header file, if there is not header file
+    use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+    :param p: dictionary, parameter dictionary
+    :param hdr: dictionary, the header dictionary created by
+                spirouFITS.ReadImage
+    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
+                 for time since 1970-01-01
+    :param return_value: bool, if False value is returned in p as p[name]
+                         if True value is returned
+
+    :return p or value: dictionary or string or float, if return_value is False
+                        parameter dictionary is returned, if return_value is
+                        True and kind=='human' returns a string, if return_value
+                        is True and kind=='unix' returns a float
+    """
     # get header keyword
-    value = spirouCDB.GetAcqTime(p, hdr)
+    value = spirouCDB.GetAcqTime(p, hdr, kind=kind)
     # deal with return value
     if return_value:
         return value
