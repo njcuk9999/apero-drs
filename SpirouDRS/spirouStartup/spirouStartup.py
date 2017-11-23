@@ -36,7 +36,7 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # Define run functions
 # =============================================================================
-def run_inital_startup(night_name=None, files=None, customargs=None):
+def run_initial_startup(night_name=None, files=None, customargs=None):
     """
     Run initial start up:
 

@@ -30,7 +30,7 @@ __all__ = ['RunInitialStartup', 'RunStartup']
 # Function aliases
 # =============================================================================
 # Runs the initial start up script (checking of parameters and title)
-RunInitialStartup = spirouStartup.run_inital_startup
+RunInitialStartup = spirouStartup.run_initial_startup
 
 # Runs the start up script
 RunStartup = spirouStartup.run_startup
