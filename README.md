@@ -587,13 +587,46 @@ Needs to be run
 
 ## 3 Progress:
 
-- [x] - ~~cal_dark_spirou~~
-- [x] - ~~cal_loc_RAW_spioru~~
-- [x] - ~~cal_SLIT_spirou~~
-- [x] - ~~cal_FF_RAW_spirou~~
-- [x] - ~~cal_extract_RAW_spirou~~
-- [ ] - cal_DRIFT_RAW_spirou
+- main codes:
 
+    - [x] - ~~cal_dark_spirou~~
+    
+    - [x] - ~~cal_loc_RAW_spioru~~
+    
+    - [x] - ~~cal_SLIT_spirou~~
+    
+    - [x] - ~~cal_FF_RAW_spirou~~
+    
+    - [x] - ~~cal_extract_RAW_spirou~~
+    
+    - [x] - ~~cal_DRIFT_RAW_spirou~~
+    
+- unit test:
+
+    - [x] - ~~cal_dark_spirou~~
+    
+    - [x] - ~~cal_loc_RAW_spioru~~
+    
+    - [x] - ~~cal_SLIT_spirou~~
+    
+    - [x] - ~~cal_FF_RAW_spirou~~
+    
+    - [x] - ~~cal_extract_RAW_spirou~~
+    
+    - [x] - ~~cal_DRIFT_RAW_spirou~~
+    
+- new codes:
+
+    - [ ] - cal_HC_E2DS_spirou
+    
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+    
+    - [ ] - cal_WAVE_E2DS_spirou
+    
+    - [ ] - cal_BADPIX_spirou
+    
+    - [ ] - cal_CCF_E2DS_spirou
+    
 [Back to top](#table-of-contents)
 
 - - - -

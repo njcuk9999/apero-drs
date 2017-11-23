@@ -15,6 +15,7 @@ Version 0.0.0
 """
 from __future__ import division
 import time
+import sys
 
 import cal_DARK_spirou
 import cal_loc_RAW_spirou
@@ -23,6 +24,9 @@ import cal_FF_RAW_spirou
 import cal_extract_RAW_spirou
 import cal_DRIFT_RAW_spirou
 import matplotlib.pyplot as plt
+
+if sys.version_info.major == 2:
+    from collections import OrderedDict as dict
 
 # =============================================================================
 # Define variables
