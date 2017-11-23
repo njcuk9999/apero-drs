@@ -128,7 +128,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     os.remove(lock_file)
 
 
-def get_acquision_time(p, header=None, filename=None):
+def get_acquision_time(p, header=None, kind='human', filename=None):
     """
     Get the acquision time from the header file, if there is not header file
     use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
@@ -136,6 +136,8 @@ def get_acquision_time(p, header=None, filename=None):
     :param p: dictionary, parameter dictionary
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
+    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
+                 for time since 1970-01-01
     :param filename: string or None, location of the file if header is None
 
     :return:
@@ -143,12 +145,18 @@ def get_acquision_time(p, header=None, filename=None):
 
     acqtime = None
 
-    # key acqtime_key from parameter dictionary
-    if 'kw_ACQTIME_KEY' not in p:
-        WLOG('error', p['log_opt'], ('Error "kw_ACQTIME_KEY" not defined in'
-                                     ' keyword config files'))
+    # deal with kinds
+    if kind == 'human':
+        kwakey = 'kw_ACQTIME_KEY'
     else:
-        acqtime_key = p['kw_ACQTIME_KEY'][0]
+        kwakey = 'kw_ACQTIME_KEY_UNIX'
+
+    # key acqtime_key from parameter dictionary
+    if kwakey not in p and kind == 'human':
+        WLOG('error', p['log_opt'], ('Error "{0}" not defined in'
+                                     ' keyword config files').format(kwakey))
+    else:
+        acqtime_key = p[kwakey][0]
 
     # deal with no filename
     if filename is None:
