@@ -37,27 +37,16 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-# -----------------------------------------------------------------------------
-# Remove this for final (only for testing)
-import sys
-if len(sys.argv) == 1:
-    sys.argv = ['test: ' + __NAME__, '20170710', 'fp_fp02a203.fits',
-                'fp_fp03a203.fits', 'fp_fp04a203.fits']
 
 # =============================================================================
 # Define functions
 # =============================================================================
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
+def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup(night_name, files)
     # run specific start up
     p = spirouStartup.RunStartup(p, kind='slit', prefixes='fp_fp',
                                  calibdb=True)
@@ -204,11 +193,17 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
-                                '').format(p['program']))
+    wmsg = 'Recipe {0} has been succesfully completed'
+    WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
-    neilend = time.time()
-    print('Time taken (py3) = {0}'.format(neilend - neilstart))
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    main()
 
 # =============================================================================
 # End of code
