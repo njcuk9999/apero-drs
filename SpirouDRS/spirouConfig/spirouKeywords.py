@@ -13,6 +13,9 @@ Import rules: Only from spirouConfig
 
 Version 0.0.1
 """
+from __future__ import division
+import numpy as np
+
 from . import spirouConfig
 
 
@@ -266,7 +269,6 @@ def test_keywords():
 
 
 def generate_use_keys():
-    import numpy as np
     all_locals = np.sort(list(globals().keys()))
     use_keys = []
     for lkey in all_locals:

@@ -11,6 +11,7 @@ Created on 2017-11-06 11:32
 
 Version 0.0.1
 """
+from __future__ import division
 import numpy as np
 import os
 

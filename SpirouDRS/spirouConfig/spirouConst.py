@@ -14,7 +14,7 @@ Import rules: Only from spirouConfig
 
 Version 0.0.1
 """
-
+from __future__ import division
 import sys
 import os
 

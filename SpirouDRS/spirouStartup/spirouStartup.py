@@ -13,6 +13,7 @@ Version 0.0.1
 
 Last modified: 2017-10-11 at 10:49
 """
+from __future__ import division
 import os
 import sys
 
@@ -195,8 +196,8 @@ def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
         # then load the calibdb into p
-        calibDB, p = spirouCDB.GetDatabase(p)
-        p['calibDB'] = calibDB
+        calib_db, p = spirouCDB.GetDatabase(p)
+        p['calibDB'] = calib_db
         p.set_source('calibDB', __NAME__ + '/run_startup()')
     else:
         calib_dir = p['DRS_CALIB_DB']
@@ -272,11 +273,11 @@ def run_time_custom_args(p, customargs):
                 customarg = str(customargs[r_it - 1])
             # if there are too many run time arguments then create an error
             except IndexError:
-                emsg = ('Too many arguments defined there must be {0} defined')
+                emsg = 'Too many arguments defined there must be {0} defined'
                 WLOG('error', p['log_opt'], emsg.format(len(customargs)))
                 customarg = None
             except SyntaxError:
-                emsg = ('Invalid string in customargs. Please redefine')
+                emsg = 'Invalid string in customargs. Please redefine'
                 WLOG('error', p['log_opt'], emsg)
 
             # try to evaluate the argument (int/float/list/bool)
@@ -336,11 +337,9 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
     """
     if prefixes is None:
         return p
-
+    # get variables from p
     log_opt = p['log_opt']
     arg_fn1 = p['arg_file_names'][0]
-    program = p['program']
-
     # set up found variables
     found, fprefix = False, None
     # loop around prefixes

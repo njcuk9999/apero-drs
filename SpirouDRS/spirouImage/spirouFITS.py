@@ -13,6 +13,7 @@ Import rules: Not spirouLOCOR
 
 Version 0.0.0
 """
+from __future__ import division
 import numpy as np
 from astropy.io import fits
 import os
@@ -207,7 +208,10 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     if key is None:
         key = 'TILT'
     # get filename
-    read_file = spirouCDB.GetFile(p, key, hdr)
+    if filename is None:
+        read_file = spirouCDB.GetFile(p, key, hdr)
+    else:
+        read_file = filename
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
@@ -239,7 +243,10 @@ def read_wave_file(p, hdr=None, filename=None, key=None):
     if key is None:
         key = 'WAVE'
     # get filename
-    read_file = spirouCDB.GetFile(p, key, hdr)
+    if filename is None:
+        read_file = spirouCDB.GetFile(p, key, hdr)
+    else:
+        read_file = filename
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -259,7 +266,10 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
         key = 'ORDER_PROFILE_{0}'.format(p['fiber'])
 
     # construct filename
-    read_file = spirouCDB.GetFile(p, key, hdr)
+    if filename is None:
+        read_file = spirouCDB.GetFile(p, key, hdr)
+    else:
+        read_file = filename
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
@@ -297,8 +307,8 @@ def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
     # deal with no key
     if key is None:
         WLOG('error', p['log_opt'], 'Must define key')
-        raise ValueError('Must define key')
     # if we have default value use get else try standard call or log if error
+    value = None
     if has_default:
         value = d.get(key, default)
     else:
@@ -324,8 +334,8 @@ def keyslookup(p, d=None, keys=None, name=None, has_default=False,
     :param name: string, the name of the dictionary (for log)
     :param has_default: bool, if True uses "default" as the value if key
                         not found
-    :param default: list of objects or None, values of the keys if not
-                    found and has_default is True
+    :param defaults: list of objects or None, values of the keys if not
+                     found and has_default is True
 
     :return values: list of objects, values of p[key] for key in keys
                     or default value for each key (if has_default=True)
@@ -376,6 +386,10 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
                 or
                         hdict[key] = value     (comment will be equal to
                                                 "UNKNOWN"
+    :param forbid_keys: bool, if True uses the forbidden copy keys (defined in
+                        spirouConfig.Constants.FORBIDDEN_COPY_KEYS() to remove
+                        certain keys from those being copied, if False copies
+                        all keys from input header
 
     :return:
     """
@@ -489,7 +503,7 @@ def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
-    :param value: numpy array or 1D list of keys or None
+    :param values: numpy array or 1D list of keys or None
 
                   if numpy array or 1D list will create a set of keys in form
                   keyword = kewordstoreage + row number
@@ -536,11 +550,11 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
     :param hdict: dictionary, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
-    :param value: numpy array or 2D list of keys or None
+    :param values: numpy array or 2D list of keys or None
 
                   if numpy array or 2D list will create a set of keys in form
                   keyword = kewordstoreage + number
-                  where number = (row number * number of columns) + column number
+                  where number = (row number*number of columns)+column number
                   with value = values[row number][column number]
 
                   if None uses the value = keywordstore[1]
@@ -626,7 +640,7 @@ def read_header(p=None, filepath=None, ext=0):
     # if we don't have header get it (using 'fitsfilename')
     header = dict()
     try:
-        header = fits.getheader(filepath)
+        header = fits.getheader(filepath, ext=ext)
     except IOError:
         emsg = 'Cannot open header of file {0}'
         WLOG('error', log_opt, emsg.format(filepath))
@@ -735,6 +749,7 @@ def read_raw_header(filename, headerext=0):
     # return header dictionaries
     return hdr, cmt
 
+
 def math_controller(p, data, header, framemath=None):
     """
     uses the framemath key to decide how 'arg_file_names' files are added to
@@ -742,6 +757,7 @@ def math_controller(p, data, header, framemath=None):
 
     :param p: dictionary, parameter dictionary
     :param data: numpy array (2D), the image
+    :param header: header dictionary from readimage (ReadImage) function
     :param framemath: string, or None controls how files should be added
 
                 currently supported are:
@@ -752,25 +768,25 @@ def math_controller(p, data, header, framemath=None):
                 'divide' or '/'        - divides the frames
                 'none' or None         - does not do any math
 
+    :return p: dictionary, parameter dictionary
     :return data: numpy array (2D), the image
+    :return header: header dictionary from readimage (ReadImage) function
     """
     if framemath is None:
-        return data
-
+        return p, data, header
     # set up frequently used variables
     log_opt = p['log_opt']
     nbframes = p['nbframes']
     acceptable_math = ['ADD', '+', 'SUB', '-', 'AVERAGE', 'MEAN',
                        'MULTIPLY', '*', 'DIVIDE', '/', 'NONE']
-
     # convert add to upper case
     fm = framemath.upper()
     # check that frame math is acceptable
-
     if fm not in acceptable_math:
-        eargs = [fm, '", "'.join(acceptable_math)]
-        raise ValueError('framemath="{0}" has to be one of the following:\n\t\t'
-                         '"{1}"'.format(*eargs))
+        eargs = [fm, '", "'.join(acceptable_math), __NAME__]
+        emsg = ('framemath="{0}" has to be one of the following:\n\t\t"{1}"'
+                ' (in {2}.math_controller()')
+        WLOG('error', p['log_opt'], emsg.format(*eargs))
     # if we have no math don't continue
     if fm == 'NONE':
         return p, data, header

@@ -13,13 +13,12 @@ Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.0
 """
+from __future__ import division
 import numpy as np
-import sys
 import filecmp
 from astropy.io import fits
 import os
 import shutil
-import datetime
 import time
 
 from SpirouDRS import spirouConfig
@@ -40,7 +39,7 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Usable functions
@@ -73,12 +72,17 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
 
     :return:
     """
-    # key acqtime_key from parameter dictionary
-    if 'kw_ACQTIME_KEY' not in p:
-        WLOG('error', p['log_opt'], ('Error "kw_ACQTIME_KEY" not defined in'
-                                     ' keyword config files'))
+    # deal with time key
+    if timekey is None:
+        kwacqkey = 'kw_ACQTIME_KEY'
     else:
-        acqtime_key = p['kw_ACQTIME_KEY'][0]
+        kwacqkey = timekey
+    # key acqtime_key from parameter dictionary
+    if kwacqkey not in p:
+        WLOG('error', p['log_opt'], ('Error "{0}" not defined in'
+                                     ' keyword config files').format(kwacqkey))
+    else:
+        acqtime_key = p[kwacqkey][0]
 
     # deal with single entry
     if type(keys) != list:
@@ -100,6 +104,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         key, filename, hdr = keys[k_it], filenames[k_it], hdrs[k_it]
 
         # get ACQT time from header or
+        t, t_fmt = None, None
         if acqtime_key in hdr:
             # get the header time
             header_time = hdr[acqtime_key]
@@ -155,6 +160,7 @@ def get_acquision_time(p, header=None, kind='human', filename=None):
     if kwakey not in p and kind == 'human':
         WLOG('error', p['log_opt'], ('Error "{0}" not defined in'
                                      ' keyword config files').format(kwakey))
+        acqtime_key = None
     else:
         acqtime_key = p[kwakey][0]
 
@@ -198,10 +204,12 @@ def get_database(p, max_time=None, update=False):
         lines in calibDB must be in form:
 
             {key} {dirname} {filename} {human_time} {unix_time}
+
+    :return p: dictionary, parameter dictionary
     """
     # if we already have calib database don't load it
     if 'calibDB' in p and not update:
-        return p['calibDB']
+        return p['calibDB'], p
 
     if max_time is None:
         max_time = get_acquision_time(p)
@@ -239,12 +247,13 @@ def get_database(p, max_time=None, update=False):
             WLOG('error', p['log_opt'], ('Incorrectly formatted line in '
                                          'calibDB (Line {0} = {1})'
                                          '').format(l_it+1, line))
+            key, dirname, filename, t_fmt, t = None, None, None, None, None
 
         # Make sure unix time and t_fmt agree
         calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
         t_fmt_unix = spirouMath.stringtime2unixtime(t_fmt, calibdb_fmt)
         t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
-        if  t_fmt_unix != t:
+        if t_fmt_unix != t:
             emsg = 'Human time = {0} does not match unix time = {1} in calibDB'
             WLOG('error', p['log_opt'], emsg.format(t_fmt, t_human))
 
@@ -263,7 +272,6 @@ def get_database(p, max_time=None, update=False):
             os.remove(lock_file)
             WLOG('error', p['log_opt'], ('unix time {0} is not a valid float.'
                                          '').format(t))
-
 
     # Need to check if lists are empty after loop
     if len(keys) == 0:
@@ -387,9 +395,8 @@ def get_file_name(p, key, hdr=None, filename=None):
         if key in c_database:
             rawfilename = c_database[key][1]
         else:
-            emsg = (
-            'Calibration database has no valid "{0}" entry '
-            'for time<{1}')
+            emsg = ('Calibration database has no valid "{0}" entry '
+                    'for time<{1}')
             WLOG('error', p['log_opt'], emsg.format(key, p['max_time_human']))
             rawfilename = ''
         # construct tilt filename
@@ -482,16 +489,11 @@ def read_master_file(p, lock, lock_file):
         # log and exit
         WLOG('error', p['log_opt'],
              'CalibDB master file: {0} can not be found!'.format(masterfile))
-
-
     else:
         # write database line entry to file
         lines = list(f.readlines())
         f.close()
         return lines
-
-
-
 
 
 # =============================================================================

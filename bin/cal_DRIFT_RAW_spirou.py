@@ -13,6 +13,7 @@ Created on 2017-10-12 at 15:21
 
 Version 0.0.1
 """
+from __future__ import division
 import numpy as np
 import os
 

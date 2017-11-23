@@ -13,7 +13,7 @@ Created on 2017-11-07 at 13:46
 
 Version 0.0.0
 """
-
+from __future__ import division
 import numpy as np
 
 from SpirouDRS import spirouCore
@@ -182,14 +182,9 @@ def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
 # =============================================================================
 def extract_wrapper(image, pos, sig, **kwargs):
     """
+    Extraction wrapper - takes in image, pos, sig and kwargs and decides
+    which extraction process to use.
 
-    :param p: dictionary, parameter dictionary, containing constants and
-              variables (at least 'ic_extopt', 'ic_extnbsig' and 'gain')
-
-              where 'ic_extopt' gives the extraction option
-                    'ic_extnbsig' gives the distance away from center to
-                       extract out to +/-
-                    'gain' is the image gain (used to convert from ADU/s to e-)
     :param image: numpy array (2D), the image
     :param pos: numpy array (1D), the position fit coefficients
                 size = number of coefficients for fit
@@ -260,6 +255,10 @@ def extract_wrapper(image, pos, sig, **kwargs):
     # get parameters from keyword arguments but default to False
     use_tilt = kwargs.get('use_tilt', False)
     use_weight = kwargs.get('use_weight', False)
+    # check len of pos and sig are the same
+    if pos.shape != sig.shape:
+        WLOG('error', '', ('"pos" and "sig" do not have the same shape '
+                           '({0}.extract_wrapper())'.format(__NAME__)))
     # ----------------------------------------------------------------------
     # Extract  no tilt no weight extopt = 0
     # ----------------------------------------------------------------------
@@ -482,14 +481,14 @@ def extract_tilt(image, pos, tilt, r1, r2, gain):
     #   due to rounding)
     for ic in ics[2:-2]:
         # multiple the image by the rotation matrix
-        Sx = image[j1s[ic]+1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
-        spe[ic] = np.sum(Sx)
+        sx = image[j1s[ic]+1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
+        spe[ic] = np.sum(sx)
         # add the main order pixels
         # add the bits missing due to rounding
-        Sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0]
-        spe[ic] += lower[ic] * np.sum(Sxl)
-        Sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1]
-        spe[ic] += upper[ic] * np.sum(Sxu)
+        sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0]
+        spe[ic] += lower[ic] * np.sum(sxl)
+        sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1]
+        spe[ic] += upper[ic] * np.sum(sxu)
     # convert to e-
     spe *= gain
     # return spe and nbcos
@@ -509,10 +508,6 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
                across the orders direction
     :param orderp: numpy array (2D), the image with fit superposed (zero filled)
     :param gain: float, the gain of the image (for conversion from ADU/s to e-)
-    :param sigdet: float, the sigdet to use in the weighting
-                   weights = 1/(signal*gain + sigdet^2) with bad pixels
-                   multiplied by a weight of 1e-9 and good pixels
-                   multiplied by 1
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -545,20 +540,20 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
     for ic in ics:
         if mask[ic]:
             # Get the extraction of the main profile
-            Sx = image[j1s[ic] + 1: j2s[ic], ic]
-            Sx1 = image[j1s[ic]: j2s[ic] + 1, ic]
+            sx = image[j1s[ic] + 1: j2s[ic], ic]
+            sx1 = image[j1s[ic]: j2s[ic] + 1, ic]
             # Get the extraction of the order_profile
-            Fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
             # Renormalise the order_profile
-            Fx = Fx / np.sum(Fx)
+            fx = fx / np.sum(fx)
             # get the weights
             # weight values less than 0 to 0.000001
-            raw_weights = np.where(Sx1 > 0, 1, 0.000001)
-            weights = Fx * raw_weights
+            raw_weights = np.where(sx1 > 0, 1, 0.000001)
+            weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
             norm = np.sum(weights**2)
             # add the main extraction to array
-            spe[ic] =  np.sum(Sx * weights[1:-1])
+            spe[ic] = np.sum(sx * weights[1:-1])
             # add the bits missing due to rounding
             # Question: this differs from tilt+weight
             # Question:    this one adds only 1 contribution on to value of spe
@@ -658,17 +653,17 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     # loop around each pixel along the order
     for ic in ics[2:-2]:
         # multiple the image by the rotation matrix
-        Sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+        sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
         # multiple the order_profile by the rotation matrix
-        Fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+        fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
         # Renormalise the rotated order profile
-        Fx = Fx / np.sum(Fx)
+        fx = fx / np.sum(fx)
         # weight values less than 0 to 1e-9
-        raw_weights = np.where(Sx > 0, 1, 1e-9)
+        raw_weights = np.where(sx > 0, 1, 1e-9)
         # weights are then modified by the gain and sigdet added in quadrature
-        weights = raw_weights / ((Sx * gain) + sigdet**2)
+        weights = raw_weights / ((sx * gain) + sigdet**2)
         # set the value of this pixel to the weighted sum
-        spe[ic] = np.sum(weights * Sx * Fx)/np.sum(weights * Fx**2)
+        spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
@@ -756,17 +751,17 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
         ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
         ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
         # multiple the image by the rotation matrix
-        Sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+        sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
         # multiple the order_profile by the rotation matrix
-        Fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+        fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
         # Renormalise the rotated order profile
-        Fx = Fx / np.sum(Fx)
+        fx = fx / np.sum(fx)
         # weight values less than 0 to 1e-9
-        raw_weights = np.where(Sx > 0, 1, 1e-9)
+        raw_weights = np.where(sx > 0, 1, 1e-9)
         # weights are then modified by the gain and sigdet added in quadrature
-        weights = raw_weights / ((Sx * gain) + sigdet**2)
+        weights = raw_weights / ((sx * gain) + sigdet**2)
         # set the value of this pixel to the weighted sum
-        spe[ic] = np.sum(weights * Sx * Fx)/np.sum(weights * Fx**2)
+        spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
@@ -864,25 +859,25 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     #   due to rounding)
     for ic in ics[2:-2]:
         # Get the extraction of the main profile
-        Sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic]+1] * ww[1:-1]
-        Sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
+        sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic]+1] * ww[1:-1]
+        sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
         # Get the extraction of the order_profile
-        Fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
+        fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
         # Renormalise the order_profile
-        Fx = Fx/np.sum(Fx)
+        fx = fx/np.sum(fx)
         # get the weights
         # weight values less than 0 to 0.000001
-        raw_weights = np.where(Sx1 > 0, 1, 0.000001)
-        weights = Fx * raw_weights
+        raw_weights = np.where(sx1 > 0, 1, 0.000001)
+        weights = fx * raw_weights
         # get the normalisation (equal to the sum of the weights squared)
         norm = np.sum(weights**2)
         # add the main extraction to array
-        mainvalues = np.sum(Sx * weights[1:-1], 1)
+        mainvalues = np.sum(sx * weights[1:-1], 1)
         # add the bits missing due to rounding
-        Sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0] * weights[0]
-        lowervalue = lower[ic] * np.sum(Sxl)
-        Sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1] * weights[-1]
-        uppervalue = upper[ic] * np.sum(Sxu)
+        sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0] * weights[0]
+        lowervalue = lower[ic] * np.sum(sxl)
+        sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1] * weights[-1]
+        uppervalue = upper[ic] * np.sum(sxu)
         # add lower and upper constants to array and sum over all
         # Question: Is this correct or a typo?
         # Question: Is the intention to add contribution due to lower and upper

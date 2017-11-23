@@ -11,8 +11,10 @@ Created on 2017-11-06 11:32
 
 Version 0.0.1
 """
+from __future__ import division
 import numpy as np
 import os
+
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouCDB
@@ -170,7 +172,7 @@ def main(night_name=None, files=None):
             loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
             loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
             # set the number of order to half of the original
-            loc['number_orders'] = int(loc['number_orders']/2)
+            loc['number_orders'] = int(loc['number_orders']/2.0)
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
@@ -208,7 +210,7 @@ def main(night_name=None, files=None):
             blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
-            flux = np.sum(e2ds[blaze_win1:blaze_win2])/ (2*p['IC_EXTFBLAZ'])
+            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2*p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # calcualte the blaze function
