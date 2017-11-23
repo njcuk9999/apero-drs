@@ -26,7 +26,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
 
-neilstart = time.time()
 
 # =============================================================================
 # Define variables
@@ -42,30 +41,17 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# -----------------------------------------------------------------------------
-# Remove this for final (only for testing)
-import sys
-if len(sys.argv) == 1:
-    sys.argv = ['test: ' + __NAME__, '20170710', 'hcone_dark02c61.fits',
-                'hcone_dark03c61.fits', 'hcone_dark04c61.fits',
-                'hcone_dark05c61.fits', 'hcone_dark06c61.fits']
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
-
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
+def main(night_name=None, files=None, fiber_type='AB'):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup(night_name, files)
     # run specific start up
     p = spirouStartup.RunStartup(p, kind='Flat-field', calibdb=True)
     # log processing image type
@@ -74,8 +60,11 @@ if __name__ == "__main__":
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
-    fib_typ = ['AB', 'A', 'B', 'C']
-    p['fib_type'] = ['AB']
+    # fib_typ = ['AB', 'A', 'B', 'C']
+    if type(fiber_type) == str:
+        fiber_type = [fiber_type]
+    # set fiber type
+    p['fib_type'] = fiber_type
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -339,15 +328,21 @@ if __name__ == "__main__":
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/__main__')
 
-
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
-                                '').format(p['program']))
+    wmsg = 'Recipe {0} has been succesfully completed'
+    WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
-    neilend = time.time()
-    print('Time taken (py3) = {0}'.format(neilend - neilstart))
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    main()
+
 # =============================================================================
 # End of code
 # =============================================================================

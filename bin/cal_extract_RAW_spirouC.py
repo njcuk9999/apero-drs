@@ -1,39 +1,45 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+cal_extract_RAW_spirou
 
 # CODE DESCRIPTION HERE
 
-Created on 2017-11-17 at 13:38
+Created on 2017-10-12 at 15:21
 
 @author: cook
 
 
 
-Version 0.0.0
+Version 0.0.1
 """
+import cal_extract_RAW_spirou
 from SpirouDRS import spirouConfig
-from . import spirouStartup
+from SpirouDRS import spirouCore
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'spirouCore.__init__()'
+__NAME__ = 'cal_extract_RAW_spirouC.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
-__all__ = ['RunInitialStartup', 'RunStartup']
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+# Get Logging function
+WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
 
 # =============================================================================
-# Function aliases
+# Start of code
 # =============================================================================
-# Runs the initial start up script (checking of parameters and title)
-RunInitialStartup = spirouStartup.run_initial_startup
-
-# Runs the start up script
-RunStartup = spirouStartup.run_startup
+# Main code here
+if __name__ == "__main__":
+    # run cal_extract_RAW_spirou main with fibertype set
+    # (get other arguments from command line - sys.argv)
+    cal_extract_RAW_spirou.main(fiber_type='C')
 
 # =============================================================================
 # End of code

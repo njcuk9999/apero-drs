@@ -44,29 +44,17 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
-# -----------------------------------------------------------------------------
-# Remove this for final (only for testing)
-import sys
-run = 1
-if len(sys.argv) == 1 and run == 1:
-    sys.argv = ['test: ' + __NAME__, '20170710', 'flat_dark02f10.fits',
-                'flat_dark03f10.fits', 'flat_dark04f10.fits',
-                'flat_dark05f10.fits', 'flat_dark06f10.fits']
-if len(sys.argv) == 1 and run == 2:
-    sys.argv = ['test: ' + __NAME__, '20170710', 'dark_flat02f10.fits',
-                'dark_flat03f10.fits', 'dark_flat04f10.fits',
-                'dark_flat05f10.fits', 'dark_flat06f10.fits']
+
 
 # =============================================================================
-# Start of code
+# Define functions
 # =============================================================================
-# Main code here
-if __name__ == "__main__":
+def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup(night_name, files)
     # run specific start up
     params2add = dict()
     params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
@@ -460,11 +448,19 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
-                                '').format(p['program']))
+    wmsg = 'Recipe {0} has been succesfully completed'
+    WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
-    neilend = time.time()
-    print('Time taken (py3) = {0}'.format(neilend-neilstart))
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # Main code here
+    if __name__ == "__main__":
+        # run main with no arguments (get from command line - sys.argv)
+        main()
 
 # =============================================================================
 # End of code

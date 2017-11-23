@@ -84,6 +84,8 @@ GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
+MeasureDark = spirouImage.measure_dark
+
 ReadImage = spirouFITS.readimage
 
 # Reads the image 'fitsfilename' defined in p and adds files defined in

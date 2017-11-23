@@ -15,9 +15,7 @@ Version 0.0.1
 """
 import numpy as np
 import os
-import time
 
-from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
@@ -25,8 +23,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
-
-neilstart = time.time()
 
 # =============================================================================
 # Define variables
@@ -43,32 +39,21 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-# -----------------------------------------------------------------------------
-# Remove this for final (only for testing)
-import sys
-if len(sys.argv) == 1:
-    sys.argv = ['test: ' + __NAME__, '20170710', 'fp_fp02a203.fits',
-                'fp_fp03a203.fits', 'fp_fp04a203.fits']
 
 # =============================================================================
 # Define functions
 # =============================================================================
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-if __name__ == "__main__":
+def main(night_name=None, files=None, fiber='AB'):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup(night_name, files)
     # run specific start up
     p = spirouStartup.RunStartup(p, kind='Drift', prefixes='fp_fp',
                                  calibdb=True)
     # set the fiber type
-    p['fiber'] = 'AB'
+    p['fiber'] = fiber
     p.set_source('fiber', __NAME__ + '/__main__')
 
     # log processing image type
@@ -93,7 +78,8 @@ if __name__ == "__main__":
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime')
+    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    bjdref = p['acqtime']
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
@@ -177,6 +163,8 @@ if __name__ == "__main__":
     loc['speref'] = np.zeros((loc['number_orders'], data2.shape[1]))
     # Create array to store the signal to noise ratios for each order
     loc['SNR'] = np.zeros(loc['number_orders'])
+    # set loc sources
+    loc.set_sources(['speref', 'SNR'], __NAME__ + '/__main__()')
 
     # ------------------------------------------------------------------
     # Extract reference file
@@ -212,12 +200,13 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------
     # set up the arguments for DeltaVrms2D
     dargs = [loc['speref'], loc['wave']]
-    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DV_BOXSIZE'],
-                   threshold=p['IC_DV_MAXFLUX'])
+    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                   threshold=p['IC_DRIFT_MAXFLUX'])
     # run DeltaVrms2D
     dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
     # save to loc
     loc['dvrmsref'], loc['wmeanref'] = dvrmsref, wmeanref
+    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/__main__()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
     WLOG('info', p['log_opt'], wmsg.format(p['fiber'], wmeanref))
@@ -240,7 +229,7 @@ if __name__ == "__main__":
     listfiles = spirouImage.GetAllSimilarFiles(p)
     Nfiles = len(listfiles)
     # Log the number of files found
-    wmsg = 'Nb fp_fp files found on directory = {0}'
+    wmsg = 'Number of fp_fp files found on directory = {0}'
     WLOG('info', p['log_opt'], wmsg.format(Nfiles))
 
     # ------------------------------------------------------------------
@@ -255,10 +244,10 @@ if __name__ == "__main__":
     # set up storage
     loc['drift'] = np.zeros((Nfiles+1, loc['number_orders']))
     loc['errdrift'] = np.zeros((Nfiles+1, loc['number_orders']))
-    loc['deltatime'] = np.zeros((Nfiles+1, loc['number_orders']))
-
-
-    spirouConfig.Constants.EXIT()(1)
+    loc['deltatime'] = np.zeros(Nfiles+1)
+    # set loc sources
+    keys = ['drift', 'errdrift', 'deltatime']
+    loc.set_sources(keys, __NAME__ + '/__main__()')
     # ------------------------------------------------------------------
     # Loop around all files: correct for dark, reshape, extract and
     #     calculate dvrms and meanpond
@@ -276,7 +265,8 @@ if __name__ == "__main__":
         datai, hdri, cdri, nxi, nyi = spirouImage.ReadImage(p, filename=fpfile,
                                                             log=False)
         # get acqtime
-        bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', return_value=1)
+        bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
+                                        return_value=1)
         # correct for dark (using dark from reference file)
         dataci = datai - dark
         # rotate the image and convert from ADU/s to e-
@@ -289,12 +279,13 @@ if __name__ == "__main__":
         # Extract iteration file
         # ------------------------------------------------------------------
         loc['spe'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc.set_source('spe', __NAME__ + '/__main__()')
         # loop around each order
         for order_num in range(loc['number_orders']):
             # Extract with Weight
             eargs = [p, loc, data2i, order_profile, order_num]
-            ekwargs = dict(range1=p['ic_ext_d_range'],
-                           range2=p['ic_ext_d_range'])
+            ekwargs = dict(range1=p['IC_EXT_D_RANGE'],
+                           range2=p['IC_EXT_D_RANGE'])
             e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs, **ekwargs)
             # save in loc
             loc['spe'][order_num] = e2ds
@@ -319,34 +310,94 @@ if __name__ == "__main__":
         dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'],
                        cut=p['IC_DRIFT_CUT'])
-        spen, cnormspe, cpt = spirouRV.ReNormCosmic2D(*dargs, **dkwargs)
+        spen, cfluxr, cpt = spirouRV.ReNormCosmic2D(*dargs, **dkwargs)
 
         # ------------------------------------------------------------------
         # Calculate the RV drift
         # ------------------------------------------------------------------
         dargs = [loc['speref'], spen, loc['wave']]
-        dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
-                       size=p['IC_DRIFT_BOXSIZE'],
-                       cut=p['IC_DRIFT_CUT'])
-        rv = spirouRV.CalcRVdrift2D(*dargs)
+        dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'],
+                       threshold=p['IC_DRIFT_MAXFLUX'],
+                       size=p['IC_DRIFT_BOXSIZE'])
+        rv = spirouRV.CalcRVdrift2D(*dargs, **dkwargs)
 
         # ------------------------------------------------------------------
-        # Calculate mean RV
+        # Calculate RV properties
         # ------------------------------------------------------------------
+        # calculate the mean flux ratio
+        meanfratio = np.mean(cfluxr)
+        # calculate the weighted mean radial velocity
+        wref = 1.0/dvrmsref
+        meanrv = np.sum(rv * wref)/np.sum(wref)
+        err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
+        # calculate the time from reference (in hours)
+        deltatime = (bjdspe - bjdref) * 24
+        # Log the RV properties
+        wmsg = ('Time from ref={0:.2f} h  - Drift mean={1:.2f} m/s - Flux '
+                'ratio={2:.2f} = Nb Comsic={3}')
+        WLOG('', p['log_opt'], wmsg.format(deltatime, meanrv, meanfratio, cpt))
+        # add this iteration to storage
+        loc['drift'][i_it] = rv
+        loc['errdrift'][i_it] = err_meanrv
+        loc['deltatime'][i_it] = deltatime
+
+    # ------------------------------------------------------------------
+    # Calculate drift properties
+    # ------------------------------------------------------------------
+    # get the maximum number of orders to use
+    nomax = p['IC_DRIFT_N_ORDER_MAX']
+    # median drift
+    loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
+    # median err drift
+    loc['merrdrift'] = np.median(loc['errdrift'][:, :nomax], 1)
+    # peak to peak drift
+    driftptp = np.max(loc['mdrift']) - np.min(loc['mdrift'])
+    driftrms = np.std(loc['mdrift'])
+    # log th etotal drift peak-to-peak and rms
+    wmsg = ('Total drift Peak-to_peak={0:.3f} m/s RMS={1:.3f} m/s in '
+            '{2:.2f} hour')
+    wargs = [driftptp, driftrms, np.max(loc['deltatime'])]
+    WLOG('', p['log_opt'], wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Plot of mean drift
     # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive session if needed
+        sPlt.start_interactive_session()
+        # plot delta time against median drift
+        sPlt.drift_plot_dtime_against_mdrift(p, loc)
 
     # ------------------------------------------------------------------
     # Save drift values to file
     # ------------------------------------------------------------------
+    # construct filename
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
+    driftfits = p['arg_file_names'][0].replace('.fits', drift_ext)
+    # log that we are saving drift values
+    wmsg = 'Saving drift values of Fiber {0} in {1}'
+    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfits))
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # save drift values
+    spirouImage.WriteImage(os.path.join(reducedfolder, driftfits),
+                           loc['drift'], hdict)
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
-                                 '').format(p['program']))
+    wmsg = 'Recipe {0} has been succesfully completed'
+    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    main()
+
 
 # =============================================================================
 # End of code

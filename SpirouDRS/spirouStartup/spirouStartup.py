@@ -36,7 +36,7 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # Define run functions
 # =============================================================================
-def run_inital_startup(customargs=None):
+def run_initial_startup(night_name=None, files=None, customargs=None):
     """
     Run initial start up:
 
@@ -47,6 +47,26 @@ def run_inital_startup(customargs=None):
     5) display help file (if requested and exists)
     6) loads run time arguments (and custom arguments, see below)
     7) loads other config files
+
+    :param night_name: string or None, the name of the directory in DRS_DATA_RAW
+                       to find the files in
+
+                       if None (undefined) uses the first argument in command
+                       line (i.e. sys.argv[1])
+
+                       if defined overwrites call from
+                       command line (i.e. overwrites sys.argv)
+
+                       stored in p['arg_night_name']
+
+    :param files: list of strings or None, the files to use for this program
+
+                  if None (undefined) uses the second and all other arguments in
+                  the command line (i.e. sys.argv[2:])
+
+                  if defined overwrites call from command line
+
+                  stored in p['arg_file_names']
 
     :param customargs: None or list of strings, if list of strings then instead
                        of getting the standard runtime arguments
@@ -75,6 +95,12 @@ def run_inital_startup(customargs=None):
     cparams = spirouConfig.CheckCparams(cparams)
     # display initial parameterisation
     display_initial_parameterisation(cparams)
+    # deal with arg_night_name defined in call
+    if night_name is not None:
+        cparams['ARG_NIGHT_NAME'] = night_name
+    # deal with files being defined in call
+    if files is not None:
+        cparams['ARG_FILE_NAMES'] = files
     # deal with run time arguments
     if customargs is None:
         cparams = run_time_args(cparams)
@@ -203,9 +229,9 @@ def run_time_args(p):
     p.set_source('program', cname + '/PROGRAM()')
 
     # get night name and filenames
-    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME()
+    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
     p.set_source('arg_night_name', cname + '/ARG_NIGHT_NAME')
-    p['arg_file_names'] = spirouConfig.Constants.ARG_FILE_NAMES()
+    p['arg_file_names'] = spirouConfig.Constants.ARG_FILE_NAMES(p)
     p.set_source('arg_file_names', cname + '/ARG_FILE_NAMES')
     p['str_file_names'] = ', '.join(p['arg_file_names'])
     p.set_source('str_file_names', __NAME__ + '/run_time_args()')
