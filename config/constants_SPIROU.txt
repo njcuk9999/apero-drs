@@ -39,6 +39,7 @@ ic_debug = 0
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
 
+
 # -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
@@ -105,6 +106,7 @@ orderp_file_fpall = {'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'}
 #   Half-zone extract width for right and left side              - [cal_drift]
 #       (formally ic_extnbsig)
 ic_ext_d_range_fpall = {'AB':14.0, 'A':14.0, 'B':14.0, 'C':7.0}
+
 
 # -----------------------------------------------------------------------------
 #   cal_dark histogram variables
@@ -200,6 +202,7 @@ ic_loc_delta_width = 1.85
 #   Localisation option 1: Option for archiving the location image - [cal_loc]
 ic_locopt1 = 1
 
+
 # -----------------------------------------------------------------------------
 #   cal_slit parameters
 # -----------------------------------------------------------------------------
@@ -270,10 +273,11 @@ ic_ff_plot_all_orders = 0
 #   Mean window of extraction                                   - [cal_extract]
 ic_extmeanzone = 16
 
+
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
 # -----------------------------------------------------------------------------
-#   The value of the noise for SNR calculation                  - [cal_drift]
+#   The value of the noise for drift calculation                - [cal_drift]
 #      snr = flux/sqrt(flux + noise^2)
 ic_drift_noise = 100.0
 
@@ -294,6 +298,11 @@ drift_file_skip = 3
 #   Define the number of standard deviations cut at in          - [cal_drift]
 #       cosmic renormalisation
 ic_drift_cut = 3
+
+#   Define the number of orders to use (starting from 0 to max) - [cal_drift]
+#       used to get median drift  median(order0 --> order max)
+ic_drift_n_order_max = 28
+
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
@@ -325,6 +334,7 @@ qc_max_signal = 65500
 
 #   Saturation level reached warning                            - [cal_ff]
 qc_loc_flumax = 64500
+
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings

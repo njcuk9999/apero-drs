@@ -40,71 +40,16 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-# -----------------------------------------------------------------------------
-# Remove this for final (only for testing)
-import sys
-if len(sys.argv) == 1:
-    sys.argv = ['test: ' + __NAME__, '20170710', 'dark_dark02d406.fits']
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_dark(pp, image, image_name, short_name):
-    """
-    Measure the dark pixels in "image"
-
-    :param pp: dictionary, parameter dictionary
-    :param image: numpy array (2D), the image
-    :param image_name: string, the name of the image (for logging)
-    :param short_name: string, suffix (for parameter naming -
-                        parmaeters added to pp with suffix i)
-    :return pp: dictionary, parameter dictionary
-    """
-
-    # flatten the image
-    fimage = image.flat
-    # get the finite (non-NaN) mask
-    fimage = fimage[np.isfinite(fimage)]
-    # get the number of NaNs
-    imax = image.size - len(fimage)
-    # get the median value of the non-NaN data
-    med = np.median(fimage)
-    # get the 5th and 95h percentile qmin
-    qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
-    # get the histogram for flattened data
-    histo = np.histogram(fimage, bins=p['HISTO_BINS'],
-                         range=(pp['HISTO_RANGE_LOW'], pp['HISTO_RANGE_HIGH']))
-    # get the fraction of dead pixels as a percentage
-    dadead = imax * 100 / np.product(image.shape)
-    # log the dark statistics
-    largs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
-             pp['DARK_QMAX'], qmin, qmax]
-    WLOG('info', pp['log_opt'], ('{0:12s}: Frac dead pixels= {1:.1f} % - '
-                                 'Median= {2:.2f} ADU/s - '
-                                 'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s'
-                                 '').format(*largs))
-    # add required variables to pp
-    source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
-    pp['histo_{0}'.format(short_name)] = histo
-    pp.set_source('histo_{0}'.format(short_name), source)
-    pp['med_{0}'.format(short_name)] = med
-    pp.set_source('med_{0}'.format(short_name), source)
-    pp['dadead_{0}'.format(short_name)] = dadead
-    pp.set_source('dadead_{0}'.format(short_name), source)
-
-    return pp
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
+def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup()
+    p = spirouStartup.RunInitialStartup(night_name, files)
     # run specific start up
     p = spirouStartup.RunStartup(p, kind='dark', prefixes=['dark_dark'])
     # log processing image type
@@ -117,7 +62,8 @@ if __name__ == "__main__":
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='average')
+    rout = spirouImage.ReadImageAndCombine(p, framemath='average')
+    data, hdr, cdr, nx, ny = rout
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -169,11 +115,11 @@ if __name__ == "__main__":
     # Log that we are doing dark measurement
     WLOG('', p['log_opt'], 'Doing Dark measurement')
     # measure dark for whole frame
-    p = measure_dark(p, data, 'Whole det', 'full')
+    p = spirouImage.MeasureDark(p, data, 'Whole det', 'full')
     # measure dark for blue part
-    p = measure_dark(p, datablue, 'Blue part', 'blue')
+    p = spirouImage.MeasureDark(p, datablue, 'Blue part', 'blue')
     # measure dark for rede part
-    p = measure_dark(p, datared, 'Red part', 'red')
+    p = spirouImage.MeasureDark(p, datared, 'Red part', 'red')
 
     # ----------------------------------------------------------------------
     # Identification of bad pixels
@@ -289,11 +235,17 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    WLOG('info', p['log_opt'], ('Recipe {0} has been succesfully completed'
-                                '').format(p['program']))
+    wmsg = 'Recipe {0} has been succesfully completed'
+    WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
-    neilend = time.time()
-    print('Time taken (py3) = {0}'.format(neilend - neilstart))
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    main()
 
 # =============================================================================
 # End of code

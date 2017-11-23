@@ -96,7 +96,10 @@ def LOG_CAUGHT_WARNINGS():
     return warn
 
 
-def ARG_FILE_NAMES():
+def ARG_FILE_NAMES(p):
+    # see if already defined
+    if 'ARG_FILE_NAMES' in p:
+        return p['ARG_FILE_NAMES']
     # empty file names
     arg_file_names = []
     # get run time parameters
@@ -109,8 +112,11 @@ def ARG_FILE_NAMES():
     return arg_file_names
 
 
-def ARG_NIGHT_NAME():
-    # st
+def ARG_NIGHT_NAME(p):
+    # see if already defined
+    if 'ARG_NIGHT_NAME' in p:
+        return p['ARG_NIGHT_NAME']
+    # set up empty string
     arg_night_name = ''
     # get run time parameters
     rparams = list(sys.argv)
