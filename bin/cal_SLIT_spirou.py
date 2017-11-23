@@ -13,7 +13,6 @@ Version 0.0.1
 """
 import numpy as np
 import os
-import time
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -22,7 +21,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
 
-neilstart = time.time()
 
 # =============================================================================
 # Define variables

@@ -26,7 +26,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
 
-
 # =============================================================================
 # Define variables
 # =============================================================================

@@ -24,9 +24,6 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 
-import time
-neilstart = time.time()
-
 # =============================================================================
 # Define variables
 # =============================================================================

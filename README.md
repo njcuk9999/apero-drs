@@ -32,6 +32,22 @@
 
 - all import functions re-worked (removed or changed or updated)
 
+- all recipes main body of code is now in a `main()` function and called in `__main__`
+    - This allows recipes to be called as functions 
+    - i.e. in python for cal_DARK_spirou.py:
+        ```python
+        import cal_DARK_spirou
+            
+        files = ['dark_dark02d406.fits']
+        night_name = '20170710'
+        cal_DARK_spirou.main(night_name=night_name, files=files)
+    
+        ```
+        Will run the exact same procedure as:
+        ```bash
+        cal_DARK_spirou.py 201707 dark_dark02d406.fits
+        ```
+
 - `WLOG` function overhaul (now in `spirouCore.spirouLog.logger)`
     - `WLOG(key, option, message)` or `logger(key, option, message)`
     - produces print out (to log and console) of the following:
@@ -263,6 +279,8 @@
     - this is many times faster than before - due to optimisation
     - `spirouLOCOR.imageLocSuperimp(image, coefficients_of_fit)`
 
+- Writing of fits file cleaned up (header keywords written during data write)
+
 - *speed up*
 
 	- AT-4 v44: 5.69740796089 seconds
@@ -290,11 +308,13 @@
 
 - slit tilt angle and fit plot moved to `sPlt.slit_tilt_angle_and_fit_plot(p, loc)`
 
+- Writing of fits file cleaned up (header keywords written during data write)
+
 - *speed up*
 
-    - AT-4 v44: 11.0713419914
+    - AT-4 v44: 11.0713419914 seconds
     
-    - py3: 4.385987043380737
+    - py3: 4.385987043380737 seconds
 
 
 [Back to top](#table-of-contents)
@@ -322,14 +342,26 @@
 - Created merge coefficients function to perform AB coefficient merge
     - `spirouLOCOR.MergeCoefficients`
     
-- Updated extraction function `spirouEXTOR.ExtracTiltWeightOrder()` - much faster as takes many of the calculations outside the pixel loop
+- Updated extraction function `spirouEXTOR.ExtracTiltWeightOrder2()` - much faster as takes many of the calculations outside the pixel loop
     - (i.e. calculating the pixel contribution due to tilt in array `ww`).
         - `ww` is constant for an order, thus doesn't need to be worked out for each pixel in one order, just the multiplication between ww and the image
     - up to 8 times faster with these improvements
 
 - `e2ds`, `SNR`, `RMS`, `blaze` and `flat` are stored in `loc` parameter dictionary
 
+- Plotting code moved to `spirouCore.spirouPlot` functions
+
+- Writing of fits file cleaned up (header keywords written during data write)
+
 - QC (max_signal > qc_max_signal * nbframes) moved to end, however in old code it is not used as a failure criteria so also not used to fail in new code
+
+- **speed up*
+
+    - AT-4 v44: 25.9624619484 seconds
+    
+    - py3: 4.675365924835205 seconds
+
+
 
 [Back to top](#table-of-contents)
 
@@ -337,7 +369,83 @@
 
 ### 1.6 cal_extract_RAW_spirou.py
 
-Code written, need to update this section
+- Merged `cal_extract_RAW_spirouAB`, `cal_extract_RAW_spirouC` and `cal_extract_RAW_spirouALL`
+    - can still access `cal_extract_RAW_spirouAB` and `cal_extract_RAW_spirouC` but instead of being modified copies of the code they are just wrappers for `cal_extract_RAW_spirou.py` (i.e. they forward the fiber type)
+
+- added storage dictionary to store (and pass around) all variables created
+    - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+- Created function to read TILT file from calibDB (replaces `readkeyloco`)
+    - `spirouImage.ReadTiltFile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Created function to read WAVE file from calibDB (replaces `read_data_raw(`)
+    - `spirouImage.ReadWaveFile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Used `spirouLOCOR.GetCoeffs(p, hdr, loc=loc)` to get the coefficients from file
+
+- Created function to read order profile (replaces `read_data_raw` + pre-amble)
+    - `spirouImage.ReadOrderProfile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Created merge coefficients function to perform AB coefficient merge
+    - `spirouLOCOR.MergeCoefficients`
+
+- New structures above replace the need for specific fiber sections ('AB', 'C', 'A', 'B') (In `cal_extract_RAW_spirouALL` and individual setups for `cal_extract_RAW_spirouAB` and `cal_extract_RAW_spirouC`)
+
+- all extraction functions passed into spirouEXTOR to wrapper functions (`spirouEXTOR.ExtractOrder`, `spirouEXTOR.ExtractTiltOrder`, `spirouEXTOR.ExtractTiltWeightOrder` and `spirouEXTOR.ExtractWeightOrder`) these are then run into `spirouEXTOR.ExtractionWrapper` and processed accordingly
+
+- Added a timing string (to record timings of all extraction processes)
+    - use `print(timing))` to view
+    
+- `e2ds` and `SNR` stored in `loc`
+
+- Plotting code moved to `spirouCore.spirouPlot` functions
+
+- Writing of fits file cleaned up (header keywords written during data write)
+
+- QC (max_signal > qc_max_signal * nbframes) moved to end, however in old code it is not used as a failure criteria so also not used to fail in new code
+
+- **speed up**
+
+	- AT-4 v44: 60.8522210121
+	
+	- py3: 8.693637132644653
+
+	- Extraction timing Py3:
+
+         - ExtractOrder = 0.02470088005065918 s
+         
+         - ExtractTiltOrder = 0.05955362319946289 s
+         
+         - ExtractTiltWeightOrder = 0.14079713821411133 s
+         
+         - ExtractWeightOrder = 0.06998181343078613 s
+
+	- Extraction timing AT-4 v46:
+
+         - ExtractOrder (Fortran) = 0.0191688537598 s
+         
+         - ExtractOrder (Py2) = 0.0850250720978 s
+         
+         - ExtractTiltOrder = 0.765933990479 s
+         
+         - ExtractTiltWeightOrder = 0.83994603157 s
+         
+         - ExtractWeightOrder = 0.155860900879 s
+
+	- Speed increase (Py3 over AT-4 v46)
+
+		- ExtractOrder (Py3 --> Fortran) = slower    x 1.3 times slower
+		
+		- ExtractOrder (Py3 --> Py3) = faster     x 3.4 times faster
+		
+		- ExtractTiltOrder (Py3 --> Py3) = faster     x12.9 times faster
+		
+		- ExtractTiltWeightOrder (Py3 --> Py3) = faster    x6.0 times faster
+		
+		- ExtractWeightOrder (Py3 --> Py3) = faster    x2.2 times faster
 
 [Back to top](#table-of-contents)
 
@@ -345,13 +453,121 @@ Code written, need to update this section
 
 ### 1.7 cal_DRIFT_RAW_spirou.py
 
-To do
+- acqtime (bjdref) got from header using `spirouImage.GetAcqTime`
+    - `spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')`
+    - can be used to get both `human` readible and `unix` time (use key kind=`human` or kind=`unix)
+    
+- Created function to read TILT file from calibDB (replaces `readkeyloco`)
+    - `spirouImage.ReadTiltFile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Created function to read WAVE file from calibDB (replaces `read_data_raw(`)
+    - `spirouImage.ReadWaveFile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Used `spirouLOCOR.GetCoeffs(p, hdr, loc=loc)` to get the coefficients from file
+
+- Created function to read order profile (replaces `read_data_raw` + pre-amble)
+    - `spirouImage.ReadOrderProfile(p, hdr)`
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry) 
+
+- Created merge coefficients function to perform AB coefficient merge
+    - `spirouLOCOR.MergeCoefficients`
+
+- all extraction functions passed into spirouEXTOR to wrapper functions (`spirouEXTOR.ExtractOrder`, `spirouEXTOR.ExtractTiltOrder`, `spirouEXTOR.ExtractTiltWeightOrder` and `spirouEXTOR.ExtractWeightOrder`) these are then run into `spirouEXTOR.ExtractionWrapper` and processed accordingly
+
+- delta RV RMS calculation in `spirouRV.DeltaVrms2D`
+    - `dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)`
+    - where arguments are `speref` and `wave` (stored in `loc`)
+    - where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
+
+- all functionality to do with listing files moved to `spirouImage.GetAllSimilarFiles`
+    - no need for "alphanumeric short"/"nice sort" - `np.sort(x)` does this
+    
+- Renormlisation and cosmics correction in `spirouRV.ReNormCosmic2D`
+    - `spen, cfluxr, cpt = spirouRV.ReNormCosmic2D(*dargs, **dkwargs)`
+    - where arguments are `speref` and `spe` (stored in `loc`)
+    - where keyword arguments are `cut`, `size` and `threshold` (stored in p)
+
+- RV drift calculated in `CalcRVdrift2D`
+    - `rv = spirouRV.CalcRVdrift2D(*dargs, **dkwargs)`
+    - where arguments are `speref`, `spen` and `wave` (`speref` and `spen` stored in loc)
+    - where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
+
+- `drift`, `errdrift`, `deltatime`, `mdrift`, `merrdrift` stored in loc
+
+- Writing of fits file cleaned up (header keywords written during data write)
+
+- **speed up**
+
+    - AT-4 v44: 22.556137085 s
+    
+	- py3:  8.14345932006836 s
+
 
 [Back to top](#table-of-contents)
 
+- - - - 
+
+## 2 Timing:
+
+### 2.1 Full unit test in python 3:
+
+- cal_DARK_spirou Time taken = 1.9380855560302734 s
+
+- cal_loc_RAW_spirou (flat_dark) Time taken = 3.441340923309326 s
+
+- cal_loc_RAW_spirou (dark_flat) Time taken = 2.4142377376556396 s
+
+- cal_SLIT_spirou Time taken = 4.222239971160889 s
+
+- cal_FF_RAW_spirou (flat_dark) Time taken = 3.570744037628174 s
+
+- cal_FF_RAW_spirou (dark_flat) Time taken = 9.419541597366333 s
+
+- cal_extract_RAW_spirou (hcone_dark) Time taken = 11.370218515396118 s
+
+- cal_extract_RAW_spirou (dark_hcone) Time taken = 9.537896633148193 s
+
+- cal_extract_RAW_spirou (hcone_hcone AB) Time taken = 9.245945453643799 s
+
+- cal_extract_RAW_spirou (hcone_hcone C) Time taken = 8.644787311553955 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC1 AB) Time taken = 10.836067914962769 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC1 C) Time taken = 9.403579711914062 s
+
+- cal_extract_RAW_spirou (hctwo_dark AB) Time taken = 10.018811702728271 s
+
+- cal_extract_RAW_spirou (hctwo_dark C) Time taken = 9.053685188293457 s
+
+- cal_extract_RAW_spirou (dark_hctwo AB) Time taken = 9.156369686126709 s
+
+- cal_extract_RAW_spirou (dark_hctwo C) Time taken = 9.04840898513794 s
+
+- cal_extract_RAW_spirou (hctwo-hctwo AB) Time taken = 9.757892847061157 s
+
+- cal_extract_RAW_spirou (hctwo-hctwo C) Time taken = 8.941854476928711 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC2 AB) Time taken = 9.564498662948608 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC2 C) Time taken = 8.380988836288452 s
+
+- cal_extract_RAW_spirou (fp_fp AB) Time taken = 9.21746039390564 s
+
+- cal_extract_RAW_spirou (fp_fp C) Time taken = 9.07800817489624 s
+
+- cal_DRIFT_RAW_spirou Time taken = 7.3363037109375 s
+
+- **Total Time taken** = 187.53734183311462 s
+
+### 2.2 Full unit test python 2:
+
+Needs to be run
+
 - - - -
 
-## 2 Progress:
+## 3 Progress:
 
 - [x] - ~~cal_dark_spirou~~
 - [x] - ~~cal_loc_RAW_spioru~~
