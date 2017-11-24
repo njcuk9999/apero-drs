@@ -4,39 +4,103 @@
 
 
 ## Table of Contents
-1. [Change log from Version 43 of the Drs](#1-change-log-from-version-43-of-the-drs)
+1. [Installation process](#0-installation-process)
 
-    1.1 [General](#11-general)
+2. [Change log from Version 43 of the Drs](#1-change-log-from-version-43-of-the-drs)
 
-    1.2 [cal_DARK_spirou](#12-cal_dark_spiroupy)
+    2.1 [General](#11-general)
 
-    1.3 [cal_loc_RAW_spirou](#13-cal_loc_raw_spiroupy)
+    2.2 [cal_DARK_spirou](#12-cal_dark_spiroupy)
 
-    1.4 [cal_SLIT_spirou](#14-cal_slit_spiroupy)
+    2.3 [cal_loc_RAW_spirou](#13-cal_loc_raw_spiroupy)
+
+    2.4 [cal_SLIT_spirou](#14-cal_slit_spiroupy)
     
-    1.5 [cal_FF_RAW_spirou](#15-cal_ff_raw_spiroupy)
+    2.5 [cal_FF_RAW_spirou](#15-cal_ff_raw_spiroupy)
     
-    1.6 [cal_extract_RAW_spirou](#16-cal_extract_raw_spiroupy)
+    2.6 [cal_extract_RAW_spirou](#16-cal_extract_raw_spiroupy)
     
-    1.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spiroupy)
+    2.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spiroupy)
 
-2. [Timing](#2-timing)
+3. [Timing](#2-timing)
 
-    2.1 [Full unit test in python 3](#21-full-unit-test-in-python-3)
+    3.1 [Full unit test in python 3](#21-full-unit-test-in-python-3)
     
-    2.2 [Full unit test in python 2](#22-full-unit-test-python-2)
+    3.2 [Full unit test in python 2](#22-full-unit-test-python-2)
     
-    2.3 [Full unit test in AT4 V46](#23-full-unit-test-at4-v46)
+    3.3 [Full unit test in AT4 V46](#23-full-unit-test-at4-v46)
 
-3. [Progress](#2-progress)
+4. [Progress](#2-progress)
+
 
 - - - -
 
-## 1 Change log from Version 43 of the DRS
+## 1 Installation process
 
 - - - -
 
-### 1.1 General
+- Prerequisites: latest version of anaconda (python 2 or python 3)
+
+- Step 1: Download this repository (say to directory at /home/user/spirou_drs/INTROOT)
+
+- Step 2: Add download path to your PYTHONPATH environmental variable
+    ```bash
+    export PYTHONPATH=/home/user/spirou_drs/INTROOT/:$PYTHONPATH
+    ```
+
+- Step 3: Add download /bin path to your PATH environmental variable
+    ```bash
+    export PYTHONPATH=/home/user/spirou_drs/INTROOT/bin/:$PATH
+    ```
+
+- Step 4a: If you want to run files as executables run `chmod +x` on all files in /bin/ folder
+    - One can then run codes as `cal_DARK_spirou.py NIGHTNAME [files]`
+
+- Step 4b: To run from python or ipython
+    - start up 
+    ```bash
+    ipython
+    ```  
+  - type 
+    ```python
+    run cal_DARK_spirou NIGHTNAME [files]
+    ```
+
+- Step 4c: To run from python scription
+    - in a python code:
+    ```python
+    import cal_DARK_spirou
+    
+    NIGHTNAME = '20170710'
+    FILES = ['dark_dark02d406.fits']
+  
+    cal_DARK_spirou.main(night_name=NIGHTNAME, files=FILES)
+    ```
+
+- Extra steps
+    - Currently due to the set up of calibDB all dates (TILT, LOC_AB, LOC_C etc) must be acquired earlier than (or equal to) the file defined at run time (FILES). Therefore codes will crash if this is not the case. To fix this just edit both the human formatted time and the unix time to be older than that of the file defined at run time
+        
+        - open /data/calibDB/master_calib_SPIROU.txt
+        
+        - set all files date to ```2000-01-01 00:00:00.00 946684800```
+        
+        - i.e. ```DARK 20170710 dark_dark02d406.fits 2000-01-01 00:00:00.00 946684800```
+
+    - Currently no wave solution is generated and has to be added manually to the calibDB file
+    
+        - open /data/calibDB/master_calib_SPIROU.txt
+        
+        - add row: ```WAVE 20170710 spirou_wave_ini3.fits 2000-01-01 00:00:00.00 946684800```
+
+        - put ```spirou_wave_ini3.fits``` in the data/calibDB/ directory
+
+- - - -
+
+## 2 Change log from Version 43 of the DRS
+
+- - - -
+
+### 2.1 General
 
 - all import functions re-worked (removed or changed or updated)
 
@@ -205,7 +269,7 @@
 
 - - - -
 
-### 1.2 cal_DARK_spirou.py
+### 2.2 cal_DARK_spirou.py
 
 - dark measurement moved to internal function `measure_dark` (for clarity)
      - This is, in part, due to the repetition of code for "Whole det", "Blue part" and "Red part"
@@ -232,7 +296,7 @@
 
 - - - -
 
-### 1.3 cal_loc_RAW_spirou.py
+### 2.3 cal_loc_RAW_spirou.py
 
 
 - added function to convert from ADU/s to electrons
@@ -301,7 +365,7 @@
 
 - - - -
 
-### 1.4 cal_SLIT_spirou.py
+### 2.4 cal_SLIT_spirou.py
 
 - added storage dictionary to store (and pass around) all variables created
     - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
@@ -329,7 +393,7 @@
 
 - - - -
 
-### 1.5 cal_FF_RAW_spirou.py
+### 2.5 cal_FF_RAW_spirou.py
 
 - added function to replace measure_bkgr_FF, but incomplete (not currently used)
     - would need to convert interpol.c to python (spline fitting)
@@ -375,7 +439,7 @@
 
 - - - -
 
-### 1.6 cal_extract_RAW_spirou.py
+### 2.6 cal_extract_RAW_spirou.py
 
 - Merged `cal_extract_RAW_spirouAB`, `cal_extract_RAW_spirouC` and `cal_extract_RAW_spirouALL`
     - can still access `cal_extract_RAW_spirouAB` and `cal_extract_RAW_spirouC` but instead of being modified copies of the code they are just wrappers for `cal_extract_RAW_spirou.py` (i.e. they forward the fiber type)
@@ -459,7 +523,7 @@
 
 - - - -
 
-### 1.7 cal_DRIFT_RAW_spirou.py
+### 2.7 cal_DRIFT_RAW_spirou.py
 
 - acqtime (bjdref) got from header using `spirouImage.GetAcqTime`
     - `spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')`
@@ -517,9 +581,9 @@
 
 - - - - 
 
-## 2 Timing:
+## 3 Timing:
 
-### 2.1 Full unit test in python 3:
+### 3.1 Full unit test in python 3:
 
 - cal_DARK_spirou Time taken = 4.265186309814453 s
 
@@ -572,7 +636,7 @@
 
 [Back to top](#table-of-contents)
 
-### 2.2 Full unit test python 2:
+### 3.2 Full unit test python 2:
 
 - cal_DARK_spirou Time taken = 3.1798491478 s
 
@@ -626,7 +690,7 @@
 
 [Back to top](#table-of-contents)
 
-### 2.3 Full unit test in AT4 V46
+### 3.3 Full unit test in AT4 V46
 
 - cal_DARK_spirou Time taken = 4.96914315224 s
 
@@ -681,7 +745,7 @@
 
 - - - -
 
-## 3 Progress:
+## 4 Progress:
 
 - main codes:
 

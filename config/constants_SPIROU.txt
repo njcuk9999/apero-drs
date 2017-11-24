@@ -273,6 +273,9 @@ ic_ff_plot_all_orders = 0
 #   Mean window of extraction                                   - [cal_extract]
 ic_extmeanzone = 16
 
+#   Whether to extract all types of extraction                  - [cal_extract]
+#        (simple, tilt, tiltweight, weight)
+ic_ext_all = 0
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
