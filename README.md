@@ -4,36 +4,38 @@
 
 
 ## Table of Contents
-1. [Change log from Version 43 of the Drs](#1-change-log-from-version-43-of-the-drs)
+1. [Installation process](#0-installation-process)
 
-    1.1 [General](#11-general)
+2. [Change log from Version 43 of the Drs](#1-change-log-from-version-43-of-the-drs)
 
-    1.2 [cal_DARK_spirou](#12-cal_dark_spiroupy)
+    2.1 [General](#11-general)
 
-    1.3 [cal_loc_RAW_spirou](#13-cal_loc_raw_spiroupy)
+    2.2 [cal_DARK_spirou](#12-cal_dark_spiroupy)
 
-    1.4 [cal_SLIT_spirou](#14-cal_slit_spiroupy)
+    2.3 [cal_loc_RAW_spirou](#13-cal_loc_raw_spiroupy)
+
+    2.4 [cal_SLIT_spirou](#14-cal_slit_spiroupy)
     
-    1.5 [cal_FF_RAW_spirou](#15-cal_ff_raw_spiroupy)
+    2.5 [cal_FF_RAW_spirou](#15-cal_ff_raw_spiroupy)
     
-    1.6 [cal_extract_RAW_spirou](#16-cal_extract_raw_spiroupy)
+    2.6 [cal_extract_RAW_spirou](#16-cal_extract_raw_spiroupy)
     
-    1.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spiroupy)
+    2.7 [cal_DRIFT_RAW_spirou](#17-cal_drift_raw_spiroupy)
 
-2. [Timing](#2-timing)
+3. [Timing](#2-timing)
 
-    2.1 [Full unit test in python 3](#21-full-unit-test-in-python-3)
+    3.1 [Full unit test in python 3](#21-full-unit-test-in-python-3)
     
-    2.2 [Full unit test in python 2](#22-full-unit-test-python-2)
+    3.2 [Full unit test in python 2](#22-full-unit-test-python-2)
     
-    2.3 [Full unit test in AT4 V46](#23-full-unit-test-at4-v46)
+    3.3 [Full unit test in AT4 V46](#23-full-unit-test-at4-v46)
 
-3. [Progress](#2-progress)
+4. [Progress](#2-progress)
 
 
 - - - -
 
-## 0 Installation process
+## 1 Installation process
 
 - - - -
 
@@ -94,11 +96,11 @@
 
 - - - -
 
-## 1 Change log from Version 43 of the DRS
+## 2 Change log from Version 43 of the DRS
 
 - - - -
 
-### 1.1 General
+### 2.1 General
 
 - all import functions re-worked (removed or changed or updated)
 
@@ -267,7 +269,7 @@
 
 - - - -
 
-### 1.2 cal_DARK_spirou.py
+### 2.2 cal_DARK_spirou.py
 
 - dark measurement moved to internal function `measure_dark` (for clarity)
      - This is, in part, due to the repetition of code for "Whole det", "Blue part" and "Red part"
@@ -294,7 +296,7 @@
 
 - - - -
 
-### 1.3 cal_loc_RAW_spirou.py
+### 2.3 cal_loc_RAW_spirou.py
 
 
 - added function to convert from ADU/s to electrons
@@ -363,7 +365,7 @@
 
 - - - -
 
-### 1.4 cal_SLIT_spirou.py
+### 2.4 cal_SLIT_spirou.py
 
 - added storage dictionary to store (and pass around) all variables created
     - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
@@ -391,7 +393,7 @@
 
 - - - -
 
-### 1.5 cal_FF_RAW_spirou.py
+### 2.5 cal_FF_RAW_spirou.py
 
 - added function to replace measure_bkgr_FF, but incomplete (not currently used)
     - would need to convert interpol.c to python (spline fitting)
@@ -437,7 +439,7 @@
 
 - - - -
 
-### 1.6 cal_extract_RAW_spirou.py
+### 2.6 cal_extract_RAW_spirou.py
 
 - Merged `cal_extract_RAW_spirouAB`, `cal_extract_RAW_spirouC` and `cal_extract_RAW_spirouALL`
     - can still access `cal_extract_RAW_spirouAB` and `cal_extract_RAW_spirouC` but instead of being modified copies of the code they are just wrappers for `cal_extract_RAW_spirou.py` (i.e. they forward the fiber type)
@@ -521,7 +523,7 @@
 
 - - - -
 
-### 1.7 cal_DRIFT_RAW_spirou.py
+### 2.7 cal_DRIFT_RAW_spirou.py
 
 - acqtime (bjdref) got from header using `spirouImage.GetAcqTime`
     - `spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')`
@@ -579,9 +581,9 @@
 
 - - - - 
 
-## 2 Timing:
+## 3 Timing:
 
-### 2.1 Full unit test in python 3:
+### 3.1 Full unit test in python 3:
 
 - cal_DARK_spirou Time taken = 4.265186309814453 s
 
@@ -634,7 +636,7 @@
 
 [Back to top](#table-of-contents)
 
-### 2.2 Full unit test python 2:
+### 3.2 Full unit test python 2:
 
 - cal_DARK_spirou Time taken = 3.1798491478 s
 
@@ -688,7 +690,7 @@
 
 [Back to top](#table-of-contents)
 
-### 2.3 Full unit test in AT4 V46
+### 3.3 Full unit test in AT4 V46
 
 - cal_DARK_spirou Time taken = 4.96914315224 s
 
@@ -743,7 +745,7 @@
 
 - - - -
 
-## 3 Progress:
+## 4 Progress:
 
 - main codes:
 
