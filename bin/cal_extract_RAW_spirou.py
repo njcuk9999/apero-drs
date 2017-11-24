@@ -228,14 +228,18 @@ def main(night_name=None, files=None, fiber_type='AB'):
             e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
 
             time5 = time.time()
-            timing = ("Timing: \n\t "
-                      "ExtractOrder = {0} s \n\t "
-                      "ExtractTiltOrder = {1} s \n\t "
-                      "ExtractTiltWeightOrder = {2} s \n\t "
-                      "ExtractWeightOrder = {3} s")
-            timing = timing.format(time2-time1, time3-time2, time4-time3,
-                                   time5-time4)
-
+            # -------------------------------------------------------------
+            # If in Debug mode log timings
+            if p['IC_DEBUG']:
+                WLOG('info', p['log_opt'], "Timings:")
+                WLOG('info', p['log_opt'], ("        ExtractOrder = {0} s "
+                                            "").format(time2-time1))
+                WLOG('info', p['log_opt'], ("        ExtractTiltOrder = {0} s "
+                                            "").format(time3 - time2))
+                WLOG('info', p['log_opt'], ("        ExtractTiltWeightOrder "
+                                            "= {0} s ").format(time4 - time3))
+                WLOG('info', p['log_opt'], ("        ExtractWeightOrder = {0} "
+                                            "s ").format(time5 - time4))
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             # Question: Why is this different from cal_ff
@@ -245,7 +249,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
             blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
-            flux = np.sum(e2ds[blaze_win1:blaze_win2])/ (2*p['IC_EXTFBLAZ'])
+            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2*p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # log the SNR RMS
@@ -309,6 +313,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
         # ------------------------------------------------------------------
         # Store other extractions in files
         # ------------------------------------------------------------------
+        # only store all is ic_ext_all = 1
         if p['IC_EXT_ALL']:
             ext_names = ['simple', 'tilt', 'tiltweight', 'weight']
             ext_files = ['spe1', 'spe3', 'spe4', 'e2ds']
@@ -318,11 +323,12 @@ def main(night_name=None, files=None, fiber_type='AB'):
                 extfile, extname = ext_files[ext_no], ext_names[ext_no]
                 # construct filename
                 reducedfolder = p['reduced_dir']
-                e2ds_ext = '_e2ds_{0}_{1}.fits'.format(p['fiber'], extname)
-                e2dsfits = p['arg_file_names'][0].replace('.fits', e2ds_ext)
+                ext_ext = '_e2ds_{0}_{1}.fits'.format(p['fiber'], extname)
+                extfits = p['arg_file_names'][0].replace('.fits', ext_ext)
                 # log that we are saving E2DS spectrum
-                wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
-                WLOG('', p['log_opt'], wmsg.format(p['fiber'], e2dsfits))
+                wmsg = 'Saving E2DS {0} spectrum of Fiber {1} in {2}'
+                wargs = [extname, p['fiber'], ]
+                WLOG('', p['log_opt'], wmsg.format(p['fiber'], extfits))
                 # add keys from original header file
                 hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
                 # add localization file name to header
@@ -333,7 +339,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
                 locosavepath = os.path.join(reducedfolder, loco_file)
                 hdict = spirouImage.CopyRootKeys(hdict, locosavepath)
                 # Save E2DS file
-                spirouImage.WriteImage(os.path.join(reducedfolder, e2dsfits),
+                spirouImage.WriteImage(os.path.join(reducedfolder, extfits),
                                        loc[extfile], hdict)
 
     # ----------------------------------------------------------------------
