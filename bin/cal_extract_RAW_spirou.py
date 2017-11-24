@@ -190,6 +190,9 @@ def main(night_name=None, files=None, fiber_type='AB'):
         # Create array to store extraction (for each order and each pixel
         # along order)
         loc['e2ds'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['spe1'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['spe3'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['spe4'] = np.zeros((loc['number_orders'], data2.shape[1]))
         # Create array to store the signal to noise ratios for each order
         loc['SNR'] = np.zeros(loc['number_orders'])
 
@@ -251,10 +254,13 @@ def main(night_name=None, files=None, fiber_type='AB'):
             WLOG('', p['log_opt'], wmsg.format(*wargs))
             # add calculations to storage
             loc['e2ds'][order_num] = e2ds
+            loc['spe1'][order_num] = spe1
+            loc['spe3'][order_num] = spe3
+            loc['spe4'][order_num] = spe4
             loc['SNR'][order_num] = snr
             # set sources
             source = __NAME__ + '/__main__()'
-            loc.set_sources(['e2ds', 'SNR'], source)
+            loc.set_sources(['e2ds', 'SNR', 'spe1', 'spe3', 'spe4'], source)
             # Log if saturation level reached
             satvalue = (flux/p['gain'])/(range1 + range2)
             if satvalue > (p['QC_LOC_FLUMAX'] * p['nbframes']):
@@ -278,7 +284,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
             sPlt.ext_spectral_order_plot(p, loc)
 
         # ------------------------------------------------------------------
-        # Store extraction in file
+        # Store extraction in file(s)
         # ------------------------------------------------------------------
         # construct filename
         reducedfolder = p['reduced_dir']
@@ -299,6 +305,36 @@ def main(night_name=None, files=None, fiber_type='AB'):
         # Save E2DS file
         spirouImage.WriteImage(os.path.join(reducedfolder, e2dsfits),
                                loc['e2ds'], hdict)
+
+        # ------------------------------------------------------------------
+        # Store other extractions in files
+        # ------------------------------------------------------------------
+        if p['IC_EXT_ALL']:
+            ext_names = ['simple', 'tilt', 'tiltweight', 'weight']
+            ext_files = ['spe1', 'spe3', 'spe4', 'e2ds']
+            # loop around the various extraction files
+            for ext_no in range(len(ext_files)):
+                # get extname and extfile
+                extfile, extname = ext_files[ext_no], ext_names[ext_no]
+                # construct filename
+                reducedfolder = p['reduced_dir']
+                e2ds_ext = '_e2ds_{0}_{1}.fits'.format(p['fiber'], extname)
+                e2dsfits = p['arg_file_names'][0].replace('.fits', e2ds_ext)
+                # log that we are saving E2DS spectrum
+                wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
+                WLOG('', p['log_opt'], wmsg.format(p['fiber'], e2dsfits))
+                # add keys from original header file
+                hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+                # add localization file name to header
+                loco_file = p['calibDB']['LOC_{0}'.format(p['fiber'])][1]
+                hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
+                                           value=loco_file)
+                # add localization file keys to header
+                locosavepath = os.path.join(reducedfolder, loco_file)
+                hdict = spirouImage.CopyRootKeys(hdict, locosavepath)
+                # Save E2DS file
+                spirouImage.WriteImage(os.path.join(reducedfolder, e2dsfits),
+                                       loc[extfile], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
