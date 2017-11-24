@@ -30,6 +30,68 @@
 
 3. [Progress](#2-progress)
 
+
+- - - -
+
+## 0 Installation process
+
+- - - -
+
+- Prerequisites: latest version of anaconda (python 2 or python 3)
+
+- Step 1: Download this repository (say to directory at /home/user/spirou_drs/INTROOT)
+
+- Step 2: Add download path to your PYTHONPATH environmental variable
+    ```bash
+    export PYTHONPATH=/home/user/spirou_drs/INTROOT/:$PYTHONPATH
+    ```
+
+- Step 3: Add download /bin path to your PATH environmental variable
+    ```bash
+    export PYTHONPATH=/home/user/spirou_drs/INTROOT/bin/:$PATH
+    ```
+
+- Step 4a: If you want to run files as executables run `chmod +x` on all files in /bin/ folder
+    - One can then run codes as `cal_DARK_spirou.py NIGHTNAME [files]`
+
+- Step 4b: To run from python or ipython
+    - start up 
+    ```bash
+    ipython
+    ```  
+  - type 
+    ```python
+    run cal_DARK_spirou NIGHTNAME [files]
+    ```
+
+- Step 4c: To run from python scription
+    - in a python code:
+    ```python
+    import cal_DARK_spirou
+    
+    NIGHTNAME = '20170710'
+    FILES = ['dark_dark02d406.fits']
+  
+    cal_DARK_spirou.main(night_name=NIGHTNAME, files=FILES)
+    ```
+
+- Extra steps
+    - Currently due to the set up of calibDB all dates (TILT, LOC_AB, LOC_C etc) must be acquired earlier than (or equal to) the file defined at run time (FILES). Therefore codes will crash if this is not the case. To fix this just edit both the human formatted time and the unix time to be older than that of the file defined at run time
+        
+        - open /data/calibDB/master_calib_SPIROU.txt
+        
+        - set all files date to ```2000-01-01 00:00:00.00 946684800```
+        
+        - i.e. ```DARK 20170710 dark_dark02d406.fits 2000-01-01 00:00:00.00 946684800```
+
+    - Currently no wave solution is generated and has to be added manually to the calibDB file
+    
+        - open /data/calibDB/master_calib_SPIROU.txt
+        
+        - add row: ```WAVE 20170710 spirou_wave_ini3.fits 2000-01-01 00:00:00.00 946684800```
+
+        - put ```spirou_wave_ini3.fits``` in the data/calibDB/ directory
+
 - - - -
 
 ## 1 Change log from Version 43 of the DRS
