@@ -174,23 +174,6 @@ if __name__ == "__main__":
     # test cal_extract_RAW_spirou - hcone_dark
     # ----------------------------------------------------------------------
     # set name and print progress
-    name = 'cal_FF_RAW_spirou (dark_flat)'
-    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_extract_RAW_spirou.main(NIGHT_NAME, files, 'AB')
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
-    test += 1
-
-    # ----------------------------------------------------------------------
-    # test cal_extract_RAW_spirou - hcone_dark
-    # ----------------------------------------------------------------------
-    # set name and print progress
     name = 'cal_extract_RAW_spirou (hcone_dark)'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
     # set up files

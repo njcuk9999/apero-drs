@@ -521,65 +521,161 @@
 
 ### 2.1 Full unit test in python 3:
 
-- cal_DARK_spirou Time taken = 1.9380855560302734 s
+- cal_DARK_spirou Time taken = 4.265186309814453 s
 
-- cal_loc_RAW_spirou (flat_dark) Time taken = 3.441340923309326 s
+- cal_loc_RAW_spirou (flat_dark) Time taken = 3.7583842277526855 s
 
-- cal_loc_RAW_spirou (dark_flat) Time taken = 2.4142377376556396 s
+- cal_loc_RAW_spirou (dark_flat) Time taken = 2.230999231338501 s
 
-- cal_SLIT_spirou Time taken = 4.222239971160889 s
+- cal_SLIT_spirou Time taken = 5.18412446975708 s
 
-- cal_FF_RAW_spirou (flat_dark) Time taken = 3.570744037628174 s
+- cal_FF_RAW_spirou (flat_dark) Time taken = 4.059345960617065 s
 
-- cal_FF_RAW_spirou (dark_flat) Time taken = 9.419541597366333 s
+- cal_FF_RAW_spirou (dark_flat) Time taken = 3.144118547439575 s
 
-- cal_extract_RAW_spirou (hcone_dark) Time taken = 11.370218515396118 s
+- cal_extract_RAW_spirou (hcone_dark) Time taken = 8.436801671981812 s
 
-- cal_extract_RAW_spirou (dark_hcone) Time taken = 9.537896633148193 s
+- cal_extract_RAW_spirou (dark_hcone) Time taken = 8.53130316734314 s
 
-- cal_extract_RAW_spirou (hcone_hcone AB) Time taken = 9.245945453643799 s
+- cal_extract_RAW_spirou (hcone_hcone AB) Time taken = 8.019875049591064 s
 
-- cal_extract_RAW_spirou (hcone_hcone C) Time taken = 8.644787311553955 s
+- cal_extract_RAW_spirou (hcone_hcone C) Time taken = 8.143184423446655 s
 
-- cal_extract_RAW_spirou (dark_dark_AHC1 AB) Time taken = 10.836067914962769 s
+- cal_extract_RAW_spirou (dark_dark_AHC1 AB) Time taken = 8.70938754081726 s
 
-- cal_extract_RAW_spirou (dark_dark_AHC1 C) Time taken = 9.403579711914062 s
+- cal_extract_RAW_spirou (dark_dark_AHC1 C) Time taken = 7.307146787643433 s
 
-- cal_extract_RAW_spirou (hctwo_dark AB) Time taken = 10.018811702728271 s
+- cal_extract_RAW_spirou (hctwo_dark AB) Time taken = 7.910982608795166 s
 
-- cal_extract_RAW_spirou (hctwo_dark C) Time taken = 9.053685188293457 s
+- cal_extract_RAW_spirou (hctwo_dark C) Time taken = 7.214818239212036 s
 
-- cal_extract_RAW_spirou (dark_hctwo AB) Time taken = 9.156369686126709 s
+- cal_extract_RAW_spirou (dark_hctwo AB) Time taken = 9.284996032714844 s
 
-- cal_extract_RAW_spirou (dark_hctwo C) Time taken = 9.04840898513794 s
+- cal_extract_RAW_spirou (dark_hctwo C) Time taken = 8.095324277877808 s
 
-- cal_extract_RAW_spirou (hctwo-hctwo AB) Time taken = 9.757892847061157 s
+- cal_extract_RAW_spirou (hctwo-hctwo AB) Time taken = 7.679980993270874 s
 
-- cal_extract_RAW_spirou (hctwo-hctwo C) Time taken = 8.941854476928711 s
+- cal_extract_RAW_spirou (hctwo-hctwo C) Time taken = 6.652430534362793 s
 
-- cal_extract_RAW_spirou (dark_dark_AHC2 AB) Time taken = 9.564498662948608 s
+- cal_extract_RAW_spirou (dark_dark_AHC2 AB) Time taken = 7.698842525482178 s
 
-- cal_extract_RAW_spirou (dark_dark_AHC2 C) Time taken = 8.380988836288452 s
+- cal_extract_RAW_spirou (dark_dark_AHC2 C) Time taken = 7.389096260070801 s
 
-- cal_extract_RAW_spirou (fp_fp AB) Time taken = 9.21746039390564 s
+- cal_extract_RAW_spirou (fp_fp AB) Time taken = 7.700818777084351 s
 
-- cal_extract_RAW_spirou (fp_fp C) Time taken = 9.07800817489624 s
+- cal_extract_RAW_spirou (fp_fp C) Time taken = 7.595874547958374 s
 
-- cal_DRIFT_RAW_spirou Time taken = 7.3363037109375 s
+- cal_DRIFT_RAW_spirou Time taken = 6.379834890365601 s
 
-- **Total Time taken** = 187.53734183311462 s
+- **Total Time taken** = 155.42251753807068 s
+
 
 [Back to top](#table-of-contents)
 
 ### 2.2 Full unit test python 2:
 
-Needs to be run
+- cal_DARK_spirou Time taken = 3.1798491478 s
+
+- cal_loc_RAW_spirou (flat_dark) Time taken = 6.40095114708 s
+
+- cal_loc_RAW_spirou (dark_flat) Time taken = 3.44882392883 s
+
+- cal_SLIT_spirou Time taken = 5.83366394043 s
+
+- cal_FF_RAW_spirou (flat_dark) Time taken = 4.56528401375 s
+
+- cal_FF_RAW_spirou (dark_flat) Time taken = 4.36482381821 s
+
+- cal_extract_RAW_spirou (hcone_dark) Time taken = 9.87302112579 s
+
+- cal_extract_RAW_spirou (dark_hcone) Time taken = 10.0084240437 s
+
+- cal_extract_RAW_spirou (hcone_hcone AB) Time taken = 10.2958710194 s
+
+- cal_extract_RAW_spirou (hcone_hcone C) Time taken = 8.27689790726 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC1 AB) Time taken = 10.073319912 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC1 C) Time taken = 7.87540793419 s
+
+- cal_extract_RAW_spirou (hctwo_dark AB) Time taken = 9.89485096931 s
+
+- cal_extract_RAW_spirou (hctwo_dark C) Time taken = 7.43826508522 s
+
+- cal_extract_RAW_spirou (dark_hctwo AB) Time taken = 9.87350988388 s
+
+- cal_extract_RAW_spirou (dark_hctwo C) Time taken = 7.1852619648 s
+
+- cal_extract_RAW_spirou (hctwo-hctwo AB) Time taken = 9.37891101837 s
+
+- cal_extract_RAW_spirou (hctwo-hctwo C) Time taken = 7.4923620224 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC2 AB) Time taken = 9.52454400063 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC2 C) Time taken = 7.53619909286 s
+
+- cal_extract_RAW_spirou (fp_fp AB) Time taken = 8.90776896477 s
+
+- cal_extract_RAW_spirou (fp_fp C) Time taken = 8.34801197052 s
+
+- cal_DRIFT_RAW_spirou Time taken = 6.39085698128 s
+
+- **Total Time taken** = 176.209826231 s
+
+
 
 [Back to top](#table-of-contents)
 
 ### 2.3 Full unit test in AT4 V46
 
-Needs to be run
+- cal_DARK_spirou Time taken = 4.96914315224 s
+
+- cal_loc_RAW_spirou (flat_dark) Time taken = 7.34097385406 s
+
+- cal_loc_RAW_spirou (dark_flat) Time taken = 6.64635396004 s
+
+- cal_FF_RAW_spirou (flat_dark) Time taken = 27.31854105 s
+
+- cal_FF_RAW_spirou (dark_flat) Time taken = 25.1645009518 s
+
+- cal_SLIT_spirou Time taken = 8.83131313324 s
+
+- cal_extract_RAW_spirou (hcone_dark) Time taken = 59.4400849342 s
+
+- cal_extract_RAW_spirou (dark_hcone) Time taken = 60.0921180248 s
+
+- cal_extract_RAW_spirou (hcone_hcone AB) Time taken = 58.6570830345 s
+
+- cal_extract_RAW_spirou (hcone_hcone C) Time taken = 51.9204559326 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC1 AB) Time taken = 58.6610798836 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC1 C) Time taken = 58.7274119854 s
+
+- cal_extract_RAW_spirou (hctwo_dark AB) Time taken = 60.0075399876 s
+
+- cal_extract_RAW_spirou (hctwo_dark C) Time taken = 57.5560529232 s
+
+- cal_extract_RAW_spirou (dark_hctwo AB) Time taken = 65.7684230804 s
+
+- cal_extract_RAW_spirou (dark_hctwo C) Time taken = 57.0358560085 s
+
+- cal_extract_RAW_spirou (hctwo-hctwo AB) Time taken = 0.00649285316467 s
+
+- cal_extract_RAW_spirou (hctwo-hctwo C) Time taken = 61.2897648811 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC2 AB) Time taken = 61.0548040867 s
+
+- cal_extract_RAW_spirou (dark_dark_AHC2 C) Time taken = 59.3190112114 s
+
+- cal_extract_RAW_spirou (fp_fp AB) Time taken = 65.0505418777 s
+
+- cal_extract_RAW_spirou (fp_fp C) Time taken = 59.2866010666 s
+
+- cal_DRIFT_RAW_spirou Time taken = 25.8372788429 s
+
+- **Total Time taken** = 1001.15767193 s
+
 
 [Back to top](#table-of-contents)
 
