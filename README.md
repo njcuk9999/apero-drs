@@ -50,7 +50,7 @@
 
 - Step 3: Add download /bin path to your PATH environmental variable
     ```bash
-    export PYTHONPATH=/home/user/spirou_drs/INTROOT/bin/:$PATH
+    export PYTHON=/home/user/spirou_drs/INTROOT/bin/:$PATH
     ```
 
 - Step 4a: If you want to run files as executables run `chmod +x` on all files in /bin/ folder
@@ -747,7 +747,7 @@
 
 ## 4 Progress:
 
-- main codes:
+- main codes (Done):
 
     - [x] - ~~cal_dark_spirou~~
     
@@ -761,7 +761,7 @@
     
     - [x] - ~~cal_DRIFT_RAW_spirou~~
     
-- unit test:
+- unit test (Done):
 
     - [x] - ~~cal_dark_spirou~~
     
@@ -775,7 +775,7 @@
     
     - [x] - ~~cal_DRIFT_RAW_spirou~~
     
-- new codes:
+- New codes:
 
     - [ ] - cal_HC_E2DS_spirou
     
@@ -786,6 +786,49 @@
     - [ ] - cal_BADPIX_spirou
     
     - [ ] - cal_CCF_E2DS_spirou
+    
+- Documentation:
+
+    - User guide:
+    
+        - [ ] Introduction
+        
+        - [ ] 1 Installation and prerequisites 
+        
+        - [ ] 2 Data Architecture
+        
+        - [ ] 3 Using the DRS
+        
+        - [ ] 4 User modifiable variables
+        
+        - [ ] 5 The recipes
+        
+        - [ ] 6 Quality control
+        
+    - Developer guide:
+    
+        - [ ] Introduction
+        
+        - [ ] 1 Installation and prerequisites
+        
+        - [ ] 2 Data Architecture
+
+        - [ ] 3 Using the DRS
+        
+        - [ ] 4 Changelog (This version and AT-4)
+        
+        - [ ] 5 Coding rules and standardisation
+        
+        - [ ] 6 Required input header keywords
+        
+        - [ ] 7 Descriptions of constants and variables
+        
+        - [ ] 8 The recipes
+        
+        - [ ] 9 The modules
+               
+        - [ ] 10 Quality control
+        
     
 [Back to top](#table-of-contents)
 
