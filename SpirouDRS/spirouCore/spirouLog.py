@@ -121,6 +121,15 @@ def get_logfilepath(utime):
     return os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
 
 
+def correct_level(key, level):
+    # get numeric value for out level
+    outlevel = WRITE_LEVEL[level]
+    # get numeric value for this level
+    thislevel = WRITE_LEVEL[key]
+    # return whether we are printing or not
+    return thislevel >= outlevel
+
+
 def printlog(message, key):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
@@ -132,12 +141,9 @@ def printlog(message, key):
     """
     # get out level key
     level = CPARAMS.get('PRINT_LEVEL', 'all')
-    # get numeric value for out level
-    outlevel = WRITE_LEVEL[level]
-    # get numeric value for this level
-    thislevel = WRITE_LEVEL[key]
+
     # if this level is greater than or equal to out level then print to stdout
-    if thislevel >= outlevel:
+    if correct_level(key, level):
         print(message)
 
 
@@ -157,13 +163,9 @@ def writelog(message, errormessage, key, logfilepath):
     """
     # -------------------------------------------------------------------------
     # get out level key
-    level = CPARAMS.get('PRINT_LEVEL', 'all')
-    # get numeric value for out level
-    outlevel = WRITE_LEVEL[level]
-    # get numeric value for this level
-    thislevel = WRITE_LEVEL[key]
+    level = CPARAMS.get('LOG_LEVEL', 'all')
     # if this level is less than out level then do not log
-    if thislevel < outlevel:
+    if not correct_level(key, level):
         return 0
     # -------------------------------------------------------------------------
     # Check if logfile path exists

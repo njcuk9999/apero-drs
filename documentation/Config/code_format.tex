@@ -1,0 +1,137 @@
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{darkgray}{rgb}{0.18,0.31,0.31}
+\definecolor{backcolour1}{rgb}{0.95,0.95,0.92}
+\definecolor{backcolour2}{rgb}{1,0.977,0.801}
+\definecolor{backcolour3}{rgb}{0.79,0.88,1}
+
+\lstdefinestyle{text}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    moredelim=**[is][\color{OliveGreen}]{<}{>},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+	  literate={\\@}{{\unichar{"0040}}}1
+			 {\\<}{{\unichar{"003C}}}1 
+			 {\\>}{{\unichar{"003E}}}1
+}
+
+\lstdefinestyle{bashstyle}{
+	language=bash,  
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1,
+}
+
+
+\lstdefinestyle{cmdstyle}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{white},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+}
+
+
+
+\tcbuselibrary{listings}
+
+
+\newtcblisting{textbox}{
+      colback=backcolour1,
+      colframe=backcolour1!75!black,
+      listing only,
+      listing options={style=text},
+}
+
+\newtcblisting{bashbox}{
+      colback=darkgray,
+      colframe=darkgray!75!black,,
+      listing only,
+      listing options={style=bashstyle},
+}
+
+
+\newtcblisting{cmdbox}{
+      colback=darkgray,
+      colframe=darkgray!75!black,,
+      listing only,
+      listing options={style=cmdstyle},
+}
+
+\newtcblisting{pythonbox}{
+      colback=backcolour3,
+      colframe=backcolour3!75!black,
+      listing only,
+      listing options={style=pythonstyle},
+}

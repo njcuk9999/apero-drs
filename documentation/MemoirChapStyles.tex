@@ -1,0 +1,1407 @@
+%%
+%% This file can be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2003/12/01 or later.
+%% 
+%% This work has the LPPL maintenance status "maintained".
+%% 
+%% The Current Maintainer of this work is Lars Madsen (daleif@imf.au.dk).
+%%
+%% $LastChangedDate: 2012-04-11 14:02:16 +0200 (Wed, 11 Apr 2012) $
+%% $LastChangedRevision: 1483 $
+%%
+\begin{filecontents}{chapterexample.tex}
+\let\clearforchapter\par % cheating, but saves some space
+\chapter{A chapter title}
+Nam dui ligula, fringilla a, euismod sodales, sollicitudin vel,
+wisi. Morbi auctor lorem non justo. Nam lacus libero, pretium at,
+lobortis vitae, ultricies et, tellus. Donec aliquet, tortor sed
+accumsan bibendum, erat ligula aliquet magna, vitae ornare odio metus
+a mi.
+\par\fancybreak{$***$}\par
+\chapter*{A non-numbered chapter title}
+Nam dui ligula, fringilla a, euismod sodales, sollicitudin vel,
+wisi. Morbi auctor lorem non justo. Nam lacus libero, pretium at,
+lobortis vitae, ultricies et, tellus. Donec aliquet, tortor sed
+accumsan bibendum, erat ligula aliquet magna, vitae ornare odio metus
+a mi.  \thispagestyle{empty}
+\end{filecontents}
+\begin{filecontents*}{process.pl}
+#!/usr/bin/perl
+# licensed under the GPL, by Lars Madsen, 2008/03/25
+use Getopt::Long;
+my $f = '';
+my $k = '';
+my $p = '';
+my $tmppdf  = 'tmp.pdf';
+my $postfix = '-style';
+GetOptions('f:s' => \$f,'k:s' => \$k,'p:s' => \$p);
+my @styles = ();
+my %pages  = ();
+print <<END if ! $f;
+Usage:
+
+   $0 -f MemoirChapStyles.styles
+
+END
+exit if ! $f;
+
+if ( $k ) { compile_file("$k$postfix"); exit ;}
+open my $file ,'<', $f or die "Cannot open '$f': $!";
+for my $l (<$file>) {
+    chomp $l;
+    next if $l =~ /^\s*$/;
+    if ( $l =~ / page/ ) {
+	($Page) = ( $l =~ / page (.*)/ ) ;
+	$l =~ s/ page.*//;
+	$pages{$l} = $Page;
+    }
+    push @styles,$l;
+}
+close $file;
+for my $style ( @styles ) {
+    compile_file($style);
+}
+print "done\n\n";
+sub compile_file {
+    my $style = shift;
+    my @tmp = ();
+    system("pdflatex", "$style.tex")          == 0 or warn "$!";
+    system("pdfcrop", "$style.pdf","$tmppdf") == 0 or warn "$!";
+    system("mv", "$tmppdf","$style.pdf")      == 0 or warn "$!";
+    if ( $pages{$style} || $p ) {
+	@tmp = split /\,/,  $pages{$style} ? $pages{$style} : $p ;
+	for my $p ( @tmp ) {
+	    system("pdftops", "-eps","-f","$p","-l","$p", "$style.pdf", "$style-$p.eps" )   == 0 or warn "$!";
+	    warn "Created $style-$p.eps\n";
+	}
+    }
+    else {
+	system("pdftops", "-eps", "$style.pdf")   == 0 or warn "$!";
+    }
+    print "Done converting $style.pdf\n";
+    return;
+}
+\end{filecontents*}
+%$
+\documentclass[a4paper,11pt,openany]{memoir}
+\def\MyFileVersion{Version 1.7e, 2012/04/11}
+\setlrmarginsandblock{2.5cm}{*}{1} 
+\setulmarginsandblock{2.5cm}{2.5cm}{*}
+\setmarginnotes{2.5mm}{2cm}{1em}
+\checkandfixthelayout
+\usepackage[latin1]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{
+  calc,
+  graphicx,
+  url,
+  fancyvrb,
+  multicol,
+  kvsetkeys
+}
+\usepackage[svgnames,dvipsnames]{xcolor}
+\definecolor{felinesrcbgcolor}{rgb}{1,1,0.85}
+\definecolor{felinesrcbgcolor}{rgb}{0.94,0.97,1}
+\definecolor{felineframe}{rgb}{0.79,0.88,1}
+\definecolor{myorange}{rgb}{1,0.375,0}
+
+% \usepackage[draft]{fixme}
+% \usepackage{fourier}
+% \usepackage[scaled]{luximono}
+\newcommand\starbreak{\fancybreak{\decosix\quad\decosix\quad\decosix}}
+
+%\newcommand\starbreak{\fancybreak{$*\quad*\quad*$}}
+
+\usepackage[scaled]{berasans}
+
+\chapterstyle{ell}
+\renewcommand\tocheadstart{}
+\renewcommand\printtoctitle[1]{}
+
+\raggedbottom
+\fvset{frame=lines,
+  framesep=3mm,
+  framerule=3pt,
+  fontsize=\small,
+  rulecolor=\color{myorange},
+  formatcom=\color{DarkGreen},
+}
+\newoutputstream{StyleList}
+ \newoutputstream{OutputStyle}%
+ \openoutputfile{\jobname.styles}{StyleList}
+\def\OutputStylePostfix{-style}
+\def\CurrentChapterStyle{}
+\makeatletter
+\kv@set@family@handler{MCS}{%
+  \xdef\CurrentChapterStyle{#1}%
+}
+\define@key{MCS}{pages}{%\typeout{xxx: #1}
+  \global\@namedef{MCS@pages@\CurrentChapterStyle}{#1}%
+}
+\define@key{MCS}{trim}{%\typeout{xxx: #1}
+  \global\@namedef{MCS@trim@\CurrentChapterStyle}{#1}%
+}
+\def\defaulttrim{0 0 0 0}
+\newif\ifSCS@full
+\newcounter{MCS}
+\newenvironment{@showchapterstyle}[1]{%
+  \kvsetkeys{MCS}{#1}%
+  \ifSCS@full%
+    \edef\hest{\CurrentChapterStyle\OutputStylePostfix\space page \@nameuse{MCS@pages@\CurrentChapterStyle}}
+    \addtostream{StyleList}{\hest}%
+  \else%
+    \addtostream{StyleList}{\CurrentChapterStyle\OutputStylePostfix}%
+  \fi%
+  \openoutputfile{\CurrentChapterStyle\OutputStylePostfix.tex}{OutputStyle}%
+  \ifSCS@full%
+    \addtostream{OutputStyle}{%
+      \protect\let\protect\STARTCODE\relax^^J%
+      \protect\let\protect\STOPCODE\relax^^J%
+      \protect\STARTCODE%
+    }%
+  \else%
+    \addtostream{OutputStyle}{%
+      \protect\documentclass{memoir}^^J%
+      \protect\let\protect\STARTCODE\relax^^J%
+      \protect\let\protect\STOPCODE\relax^^J%
+      \protect\STARTCODE%
+    }%
+  \fi%
+  \writeverbatim{OutputStyle}%
+}{%
+  \endwriteverbatim\relax%
+  \ifSCS@full%
+    \addtostream{OutputStyle}{%
+      \protect\STOPCODE%
+    }
+  \else% 
+    \addtostream{OutputStyle}{%
+      \protect\chapterstyle{\CurrentChapterStyle}^^J%
+      \protect\STOPCODE^^J%
+      \protect\setlength\afterchapskip{\onelineskip}^^J%
+      \protect\setlength\beforechapskip{\onelineskip}^^J%
+      \protect\usepackage{lipsum}^^J%
+      \protect\begin{document}^^J%
+      \protect\input{chapterexample.tex}^^J%
+      \protect\end{document}%
+    }%
+  \fi%
+  \closeoutputstream{OutputStyle}%
+  \edef\FancyVerbStartString{\string\STARTCODE}%
+  \edef\FancyVerbStopString{\string\STOPCODE}%
+  \vskip\z@\@plus\bottomsectionskip
+  \penalty\z@
+  \vskip\z@\@plus -\bottomsectionskip
+  \phantomsection
+  \addcontentsline{toc}{section}{\CurrentChapterStyle}
+  \VerbatimInput[label={\small Source for the \textsf{\CurrentChapterStyle} style}]{\CurrentChapterStyle-style.tex}%%
+  \par\noindent%
+  \IfFileExists{\CurrentChapterStyle\OutputStylePostfix.pdf}{%
+    \fboxsep=4pt%
+    \begin{adjustwidth}{-\fboxsep-\fboxrule}{-\fboxsep-\fboxrule}%
+%      \begin{framed}%
+      \@ifundefined{MCS@pages@\CurrentChapterStyle}{%
+          \fcolorbox{felineframe}{felinesrcbgcolor}{%
+            \includegraphics[width=\textwidth,clip]{%
+              \CurrentChapterStyle\OutputStylePostfix}}%
+        }{%
+          \edef\nisse{\@nameuse{MCS@pages@\CurrentChapterStyle}}
+          \@for\ITEM:=\nisse\do{
+            \ifpdf%
+              \fcolorbox{felineframe}{felinesrcbgcolor}{\includegraphics%
+              [width=\textwidth,page=\ITEM,clip]%
+              {\CurrentChapterStyle\OutputStylePostfix}}%
+            \else%
+              \fcolorbox{felineframe}{felinesrcbgcolor}{\includegraphics%
+              [width=\textwidth,clip]%
+              {\CurrentChapterStyle\OutputStylePostfix-\ITEM}}%
+            \fi%
+            \bigskip%
+            \fancybreak{$***$}%
+            \bigskip
+          }%
+        }%
+%      \end{framed}%
+    \end{adjustwidth}
+  }{\fbox{File \CurrentChapterStyle-style.* does not exist}}
+  \vskip1em plus 1em minus -.5em\noindent%
+}
+% the two actual environments, the stared one will let you add entire
+% documents, while the unstared one will only display sniplets
+\newenvironment{showchapterstyle}[1]{%
+\SCS@fullfalse\@showchapterstyle{#1}}{\end@showchapterstyle}
+\newenvironment{showchapterstyle*}[1]{%
+\SCS@fulltrue\@showchapterstyle{#1}}{\end@showchapterstyle\SCS@fullfalse}
+\newcommand\@Arg[1]{\textnormal{$\langle$\textit{#1}$\rangle$}}
+\newcommand\@Args[1]{\texttt{\{\textnormal{$\langle$\textit{#1}$\rangle$}\}}}
+\newcommand\Arg{\@ifstar{\@Args}{\@Arg}}
+\renewcommand\cs[1]{\texttt{\textbackslash #1}}
+\makeatother
+\newenvironment{syntax}{%
+  \vskip.5\onelineskip%
+  \begin{adjustwidth}{0pt}{0pt}
+    \parindent=0pt%
+    \obeylines%
+    \let\\=\relax%
+  }{%
+  \end{adjustwidth}%
+  \vskip.5\onelineskip%
+}
+\newenvironment{syntax*}{%
+  \vskip.5\onelineskip%
+  \begin{adjustwidth}{0pt}{0pt}
+    \parindent=0pt%
+  }{%
+  \end{adjustwidth}%
+  \vskip.5\onelineskip%
+}
+
+\newtheorem{remark}{Remark}
+
+\AtEndDocument{\closeoutputstream{StyleList}}
+\pagestyle{plain}
+
+\ifpdf
+\usepackage[colorlinks]{hyperref}
+\fi
+
+
+
+\begin{document}
+
+\title{Various chapter styles for the memoir class\thanks{\MyFileVersion}}
+\author{Lars Madsen\thanks{Email: \protect\url{daleif@imf.au.dk}}}
+\maketitle
+
+The main idea behind this document is to demonstrate various either
+contributed or inspired chapter styles for the memoir class.
+
+If you have style you would like to contribute a style/implementation,
+please send it with a minimal example to \url{daleif+memoir@imf.au.dk}
+and I will include it into this document.
+
+% \bigskip
+% \starbreak
+
+% \bigskip
+
+
+\noindent The visual examples you will find later in this document
+have all been made using external documents and included as images
+(eps or pdf). As such, all images are scaled to have the same width as
+the  text in this document, therefore some images are scaled down.
+
+Also, please do not trust the spacing between the chapter title and
+the start of the following text. This \verb+\afterchapskip+-spacing is
+silently reduced (to \verb+\onelineskip+) in order to save space, the
+same goes for \verb+\beforechapskip+.
+
+% \starbreak
+
+In any good chapter style design one should have given a thought at
+both the normal numbered style as well as the unnumbered
+style. Therefore the example text features both a numbered chapter and
+an unnumbered. (I have relaxed \verb+\clearforchapter+ in order to
+have both on the same side.)
+
+The sample text used is
+\VerbatimInput[
+label={chapterexample.tex},
+fontsize=\small
+]{chapterexample.tex}
+
+% \starbreak
+
+If you want to use one of the styles presented in this document, 
+then there is no need to start retyping it all your self. Simply
+download the source for this document (\texttt{\jobname.tex}) from
+\url{http://mirror.ctan.org/info/MemoirChapStyles/}. Run it
+once through \LaTeX, then you will 
+get a file called \Arg{Name of style}\texttt{-style.tex}, which is the
+source code for example displaying that particular style. Then just
+copy the code from there.
+
+Please note that in the code you will find stuff like
+\begin{Verbatim}
+\let\STARTCODE\relax 
+\let\STOPCODE\relax 
+\STARTCODE
+...
+\STOPCODE  
+\end{Verbatim}
+This code can just be removed, it is used by this document as an easy
+manner to include certain parts of a given source code.
+
+\section*{Acknowledgement}
+
+Acknowledgement goes (of course) to Peter Wilson for creating the
+memoir class in the first place. But also to the people who
+contributed with styles or comments: Danie Els, David Chadd, Pluton
+(name used on \textsc{ctt}), Erik Quaeghebeur, Donald Arseneau plus
+the those who posted memoir chapter styles on news groups, I hope it
+is okay that I include them here.
+
+
+
+
+\section*{TODO}
+\label{sec:todo}
+
+Have a look at the chapter styles offered by \texttt{fncychap} and
+\texttt{titlesec}. 
+
+
+\newpage
+
+\chapter*{\contentsname}
+
+
+\setlength\columnsep{8mm}
+\begin{multicols}{2}
+  \tableofcontents*
+\end{multicols}
+
+\newpage
+
+\chapter{A little background}
+\label{cha:little-background}
+
+As you might already know the memoir class includes a feature to
+switch the look and feel of a chapter title on a chapter to chapter
+basis. This is achieved by using \verb+\chapterstyle+\Arg*{style}. The
+most extreme use of this is seen in \emph{The Memoir class For
+  Configurable Typesetting -- User Guide} by Peter Wilson, also know
+as the \emph{Memoir manual}, \cite{memman}.
+
+
+In general, \LaTeX\ classes use \verb+\@makechapterhead+ to print a
+chapter title specified my \verb|chapter|, and
+\verb+\@makeschapterhead+ for \verb+\chapter*+. In memoir Peter Wilson
+made these two macros a bit more flexible than usual. The idea is
+that for numbered chapters (i.e. \verb+\chapter+ and
+$\texttt{secnumdepth}\geq\nobreak 0$) one should think of the chapter title as
+build by:
+\begin{Verbatim}
+\chapterheadstart
+\printchaptername \chapternamenum \printchapternum
+\afterchapternum
+\printchaptertitle{The title}  
+\afterchaptertitle
+\end{Verbatim}
+For unnumbered (i.e. \verb+\chapter*+ and \verb+\chapter+ width
+$\texttt{secnumdepth}<0$): 
+\begin{Verbatim}
+\chapterheadstart
+\printchapternonum
+\printchaptertitle{The title}
+\afterchaptertitle  
+\end{Verbatim}
+Note that \verb+\printchaptertitle+ is the only macro that takes an
+argument. At the start of every memoir chapter style these macros are
+initialised to
+\begin{Verbatim}
+\renewcommand\chapterheadstart{\vspace*{\beforechapskip}}
+\renewcommand\printchaptername{\chapnamefont \@chapapp}
+\renewcommand\chapternamenum{\space}
+\renewcommand\printchapternum{\chapnumfont \thechapter}
+\renewcommand\afterchapternum{\par\nobreak\vskip \midchapskip}
+\renewcommand\printchapternonum{}
+\renewcommand\printchaptertitle[1]{\chaptitlefont #1}
+\renewcommand\afterchaptertitle{\par\nobreak\vskip \afterchapskip}
+\end{Verbatim}
+In the design og these styles it is also worth noting that the
+contents of \verb|\afterchapternum| is not included within
+\verb|\printchapternonum|, which become important when designing the
+non-numbered part of the style. If one does not remember to add say 
+\verb|\par\nobreak\vskip \midchapskip| or similar to
+\verb|\printchapternonum| the title part may be placed differently
+when there is no number.
+
+One might ask what \verb+\printchapternonum+ is good for when it is
+always initialised to nothing. Well if a design need to one could use
+it to insert a phantom width as wide as the chapter name plus number
+would have been. If on the other hand one is creating a style where
+the chapter name and number is actually typeset using
+\verb+\printchaptertitle+ (like a framed one) then one could first
+define a new if construction, say, \verb+\ifNoChapNum+ and then let
+\verb+\printchapternonum+ set this to true and so on.
+
+
+So one just have to change the ones one need. There are a few other
+macros that are nice to know the meaning of. Remember that these are
+\emph{not} reset at the start of a new chapter style.
+\begingroup
+\renewcommand\descriptionlabel[1]{\hspace\labelsep\cs{#1}}
+\begin{description}\firmlist
+\item[beforechapskip] length, self explanatory,usually set using
+  \verb+\chapterheadstart+, default 50pt
+\item[midchapskip] length, distance between the chapter name / number and the
+title, usually set using \verb+\afterchapternum+, default 20pt
+\item[afterchapskip] length, distance between the chapter title and
+  the following text, usually set using \verb+\afterchaptertitle+,
+  default 40pt
+\item[chapnamefont] the font setting used for \emph{Chapter} or
+  similar, default \verb+\normalfont\huge\bfseries+
+\item[chapnumfont] same for the chapter number, default
+  \verb+\normalfont\huge\bfseries+
+\item[chaptitlefont] same for the chapter title, default
+  \verb+\normalfont\Huge\bfseries+ 
+\end{description}
+\endgroup
+
+In memoir a new chapter style is defined as
+\begin{syntax}
+\cs{makechapterstyle}\Arg*{name}\texttt{\{}  
+\Arg{code}
+\texttt{\}}
+\end{syntax}
+Where \Arg{code} is redefinitions of the macros mentioned
+above. (Remember that if you redefine\linebreak \verb+\printchaptertitle+ then
+you have to use \texttt{\#\#1} to represent the title.)
+Activating a given style is done by simply issuing
+\begin{syntax}
+  \cs{chapterstyle}\Arg*{name}
+\end{syntax}
+By the way, if you happen to like a given style but wanted to, say,
+add color to the chapter title, you could just refine
+\verb+\chaptitlefont+ after you have issued \verb+\chapterstyle+. (Even
+simpler to just use \verb+\addtodef\chaptitlefont{}{\color{nicered}}+.)
+
+As a simple example, here is the code for the \texttt{section} chapter
+style
+\begin{Verbatim}[label={Source code for the \textsf{section} chapter style}]
+\makechapterstyle{section}{%
+  \renewcommand{\printchaptername}{}
+  \renewcommand{\chapternamenum}{}
+  \renewcommand{\chapnumfont}{\normalfont\Huge\bfseries}
+  \renewcommand{\printchapternum}{\chapnumfont \thechapter\space}
+  \renewcommand{\afterchapternum}{}
+}
+\end{Verbatim}
+
+
+
+\clearpage
+
+\chapter{Styles included in memoir}
+\label{cha:defa-styl-incl}
+
+First we have the six default chapterstyles in the memoir class. The
+source code for these can be found in \texttt{memoir.cls}.
+
+
+\begin{showchapterstyle}{default}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{section}
+\end{showchapterstyle}
+\begin{showchapterstyle}{article}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{reparticle}
+\end{showchapterstyle}
+\begin{showchapterstyle}{hangnum}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{companion}
+\end{showchapterstyle}
+\begin{showchapterstyle}{demo}
+\end{showchapterstyle}
+If you want to use this in a different lanugage, then that a look at
+the implementation in the memoir source. You will need your own
+version of \cs{numtoName}
+
+\begin{showchapterstyle}{bianchi}
+\end{showchapterstyle}
+
+
+\begin{showchapterstyle}{bringhurst}
+\end{showchapterstyle}
+\begin{showchapterstyle}{brotherton}
+\end{showchapterstyle}
+As with \texttt{demo}, you will need to define your own suitable
+version of \cs{numtoName}
+
+
+\newpage
+
+\begin{showchapterstyle}{chappell}
+\end{showchapterstyle}
+\begin{showchapterstyle}{culver}
+\end{showchapterstyle}
+\begin{showchapterstyle}{dash}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{demo2}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{demo3}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{ell}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{ger}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{lyhne}
+\usepackage{graphicx}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{madsen}
+\usepackage{graphicx}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{pedersen}
+\usepackage{color,graphicx}
+\definecolor{ared}{rgb}{.647,.129,.149}
+\renewcommand\colorchapnum{\color{ared}}
+\renewcommand\colorchaptitle{\color{ared}}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{southall}
+\end{showchapterstyle}
+\begin{showchapterstyle}{thatcher}
+\end{showchapterstyle}
+\begin{showchapterstyle}{veelo}
+\usepackage{graphicx}
+\end{showchapterstyle}
+
+The idea behind \emph{veelo} is that the black marker is printed to
+the edge of the page and one is then able to see the star of the
+chapter by just looking at the edge of the book.
+
+\begin{showchapterstyle}{verville}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{crosshead}
+\end{showchapterstyle}
+\begin{showchapterstyle}{dowding}
+\end{showchapterstyle}
+\begin{showchapterstyle}{komalike}
+\end{showchapterstyle}
+\begin{showchapterstyle}{ntglike}
+\end{showchapterstyle}
+
+\newpage
+
+\begin{showchapterstyle}{tandh}
+\end{showchapterstyle}
+\begin{showchapterstyle}{wilsondob}
+\end{showchapterstyle}
+
+
+
+
+
+
+\chapter{Found or contributed styles}
+
+Please note that most of the styles that were mentioned here in
+earlier versions of this document, are now a part of memoir and
+therefore removed.
+
+
+%
+By Alexander Grebenkov 2004/11/25, found via Google Groups on fido.ru.tex.
+\begin{showchapterstyle}{AlexanderGrebenkov}
+   \makechapterstyle{AlexanderGrebenkov}{%
+  \renewcommand{\chapterheadstart}{\vspace*{\beforechapskip}\hrule\medskip}
+  \renewcommand{\chapnamefont}{\normalfont\large\scshape}
+  \renewcommand{\chapnumfont}{\normalfont\large\scshape}
+  \renewcommand{\chaptitlefont}{\normalfont\large\scshape}
+  \renewcommand{\printchaptername}{\S}
+  \renewcommand{\chapternamenum}{ }
+  \renewcommand{\printchapternum}{\chapnumfont \thechapter}
+  \renewcommand{\afterchapternum}{. }
+  \renewcommand{\afterchaptertitle}{\par\nobreak\medskip\hrule\vskip
+\afterchapskip}
+} 
+\end{showchapterstyle}
+
+\clearpage
+
+
+\begin{showchapterstyle}{daleif1}
+\usepackage{color,calc,graphicx,soul,fourier}
+\definecolor{nicered}{rgb}{.647,.129,.149}
+\makeatletter
+\newlength\dlf@normtxtw
+\setlength\dlf@normtxtw{\textwidth}
+\def\myhelvetfont{\def\sfdefault{mdput}}
+\newsavebox{\feline@chapter}
+\newcommand\feline@chapter@marker[1][4cm]{%
+  \sbox\feline@chapter{%
+    \resizebox{!}{#1}{\fboxsep=1pt%
+      \colorbox{nicered}{\color{white}\bfseries\sffamily\thechapter}%
+    }}%
+  \rotatebox{90}{%
+    \resizebox{%
+      \heightof{\usebox{\feline@chapter}}+\depthof{\usebox{\feline@chapter}}}%
+    {!}{\scshape\so\@chapapp}}\quad%
+  \raisebox{\depthof{\usebox{\feline@chapter}}}{\usebox{\feline@chapter}}% 
+}
+\newcommand\feline@chm[1][4cm]{%
+  \sbox\feline@chapter{\feline@chapter@marker[#1]}%
+  \makebox[0pt][l]{% aka \rlap
+    \makebox[1cm][r]{\usebox\feline@chapter}%
+  }}
+\makechapterstyle{daleif1}{
+  \renewcommand\chapnamefont{\normalfont\Large\scshape\raggedleft\so}
+  \renewcommand\chaptitlefont{\normalfont\huge\bfseries\scshape\color{nicered}}
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{\null\hfill\feline@chm[2.5cm]\par}
+  \renewcommand\afterchapternum{\par\vskip\midchapskip}
+  \renewcommand\printchaptertitle[1]{\chaptitlefont\raggedleft ##1\par}
+}
+\makeatother
+\end{showchapterstyle}
+
+%
+Style build upon \texttt{VZ15b}, see later.
+\begin{showchapterstyle}{{daleif3}}
+\usepackage{fourier}
+\makeatletter
+\newif\iffelinenonum
+\newcommand\MyNumToName[1]{%
+  \ifcase#1\relax % case 0
+  \or First\or Second\or Third%
+  \else Not implemented\fi}
+\makechapterstyle{daleif3}{
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\chapnamefont{\small\itshape\centering} 
+  \setlength\midchapskip{7pt}
+  \renewcommand\printchapternum{%
+    \par\chapnamefont\decofourleft\enspace%
+    \ifanappendix
+    \appendixname\space\thechapter%
+    \else%
+    \MyNumToName{\thechapter}\space\chaptername%
+    \fi%
+    \/\enspace\decofourright}
+  \renewcommand\printchapternonum{\par\felinenonumtrue}
+  \renewcommand\chaptitlefont{\huge\itshape\centering}
+  \renewcommand\afterchapternum{%
+    \par\nobreak\vskip-5pt%
+  }
+  \renewcommand\afterchaptertitle{%
+    \par\vskip-2\midchapskip%
+    \rule\textwidth\normalrulethickness
+    \felinenonumfalse
+    \nobreak\vskip\afterchapskip%
+  }
+}
+\makeatother
+\end{showchapterstyle}
+
+
+
+
+Danie Els contributed the following style along with the BlueBox style
+on page \pageref{BlueBox}.
+\begin{showchapterstyle}{GreyNum}
+\usepackage{fix-cm}
+\usepackage{fourier}%................... Roman+math - Utopia
+\usepackage[scaled=.92]{helvet}%........ Sans serif - Helvetica
+\usepackage[T1]{fontenc}
+\usepackage{color}
+\definecolor{ChapGrey}{rgb}{0.6,0.6,0.6}
+\newcommand{\LargeFont}{% Needs a 'stretchable' font
+      \usefont{\encodingdefault}{\rmdefault}{b}{n}%
+      \fontsize{60}{80}\selectfont\color{ChapGrey}}
+\makeatletter
+\makechapterstyle{GreyNum}{%
+  \renewcommand{\chapnamefont}{\large\sffamily\bfseries\itshape}
+  \renewcommand{\chapnumfont}{\LargeFont}
+  \renewcommand{\chaptitlefont}{\Huge\sffamily\bfseries\itshape}
+  \setlength{\beforechapskip}{0pt}
+  \setlength{\midchapskip}{40pt}
+  \setlength{\afterchapskip}{60pt}
+  \renewcommand\chapterheadstart{\vspace*{\beforechapskip}}
+  \renewcommand\printchaptername{%
+    \begin{tabular}{@{}c@{}}
+      \chapnamefont \@chapapp\\}
+    \renewcommand\chapternamenum{\noalign{\vskip 2ex}}
+    \renewcommand\printchapternum{\chapnumfont\thechapter\par}
+    \renewcommand\afterchapternum{%
+    \end{tabular}
+    \par\nobreak\vskip\midchapskip}
+  \renewcommand\printchapternonum{}
+  \renewcommand\printchaptertitle[1]{%
+    {\chaptitlefont{##1}\par}}
+  \renewcommand\afterchaptertitle{\par\nobreak\vskip \afterchapskip}
+}
+\makeatother
+\end{showchapterstyle}
+Danie notes:
+\begin{adjustwidth}{1em}{0pt}
+  \itshape
+  This looks a lot better with real italics sans-serif
+  fonts such as Lucida Sans\\
+  \verb|\usepackage[expert,vargreek]{lucidabr}%.. Lucida Bright + Expert (commercial)|
+  \\
+  or Myrad\\
+  \verb|\usepackage{charter}%........... Roman      - Charter|\\
+  \verb|\renewcommand{\sfdefault}{fmy}%. Sans serif - Myrad (Springer bundle)|
+\end{adjustwidth}
+
+% \starbreak
+
+\newpage
+
+This next style is inspired by a mail I recieved from Erik
+Quaeghebeur. It took me a little while to actually get this working as
+I wanted it to, partly because apparently there is a small issue
+regarding \cs{thispagestyle} and \cs{pagestyle} as to which
+\cs{chaptermark} gets used (I got around this by using the
+\texttt{afterpage} package). This style is designed to be used with
+\texttt{openleft} (i.e. chapters starting on even pages). And since
+the design uses pagestyles, we need to show several seperate pages.
+
+
+\begin{showchapterstyle*}{EQ,pages={2,4,6}}
+\documentclass[openleft]{memoir}
+\usepackage{calc}
+\usepackage{afterpage}
+\copypagestyle{EQ-pagestyle}{companion}
+\setlength{\headwidth}{\textwidth}
+\addtolength{\headwidth}{.382\foremargin}
+\makerunningwidth{EQ-pagestyle}{\headwidth}
+\makeheadposition{EQ-pagestyle}{flushright}{flushleft}{}{}
+\makeevenhead{EQ-pagestyle}{\normalfont\bfseries\thepage}{}{\normalfont\bfseries\leftmark}
+\makeoddhead{EQ-pagestyle}{\normalfont\bfseries\rightmark}{}{\normalfont\bfseries\thepage}
+\newif\ifNoChapNum
+\makeatletter
+% chapterpage layout
+\copypagestyle{EQ-chapterstyle}{EQ-pagestyle}
+\makeheadposition{EQ-chapterstyle}{flushright}{flushleft}{}{}
+\makeevenhead{EQ-chapterstyle}{%
+  \normalfont\bfseries\thepage}{}{%
+  \ifnum \c@secnumdepth>\m@ne%
+    \ifNoChapNum%
+      \raisebox{-4.5pt}[0pt][0pt]{\chapnamefont \rightmark}%
+    \else%
+      \raisebox{-4.5pt}[0pt][0pt]{\chapnamefont\@chapapp\ \thechapter}%
+    \fi%
+  \else%
+    \raisebox{-4.5pt}[0pt][0pt]{\chapnamefont\rightmark}%
+  \fi%
+  }
+\makeoddhead{EQ-chapterstyle}{\rightmark}{}{\normalfont\bfseries\thepage}
+% build in the shorter headline
+\@namedef{EQ-chapterstyleheadrule}{%
+  \ifnum \c@secnumdepth>\m@ne%
+    \ifNoChapNum%
+      \settowidth\@tempdimc{\quad\chapnamefont\rightmark}%
+    \else%
+      \settowidth\@tempdimc{\quad\chapnamefont\@chapapp\ \thechapter}%
+    \fi%
+  \else%
+  \settowidth\@tempdimc{\quad\chapnamefont\rightmark}%
+  \fi%
+  \setlength\@tempdimc{\headwidth-\@tempdimc}%
+  \hrule\@width \@tempdimc\@height \normalrulethickness \vskip-\normalrulethickness%
+}
+\aliaspagestyle{chapter}{EQ-chapterstyle}
+\pagestyle{EQ-pagestyle}
+\makechapterstyle{EQ}{
+  \renewcommand{\chapnamefont}{\raggedleft\bfseries\huge} 
+  \renewcommand{\chapternamenum}{}
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{}
+  \renewcommand\printchaptertitle[1]{%
+    \ifnum \c@secnumdepth>\m@ne%
+    \ifNoChapNum\else\chaptitlefont ##1\fi%
+    \fi%
+    \ifNoChapNum%
+    \markboth{##1}{##1}%
+    \fi%
+    \afterpage{\global\NoChapNumfalse}%
+  }
+  \renewcommand\afterchapternum{}
+  \renewcommand\afterchaptertitle{%
+    \ifnum \c@secnumdepth>\m@ne%
+    \ifNoChapNum\else\par\nobreak\vskip\afterchapskip\fi%
+    \fi}
+  \setlength\beforechapskip{15pt}
+  \renewcommand\printchapternonum{\global\NoChapNumtrue}
+  \renewcommand{\chaptitlefont}{\raggedleft\normalfont\Huge\bfseries}
+}
+\makeatother
+\chapterstyle{EQ}
+\begin{document}
+\frontmatter
+\chapter{Preface}
+
+Some text at the beginning of a chapter. And we add a lot of text to
+make sure that it spans more than one line.
+
+\mainmatter
+
+\chapter{A chapter title}
+Some text at the beginning of a chapter. And we add a lot of text to
+make sure that it spans more than one line.
+
+\chapter*{A non-numbered chapter title}
+Some text at the beginning of a chapter. And we add a lot of text to
+make sure that it spans more than one line.
+
+\end{document}
+\end{showchapterstyle*}
+Remember that the line you see is actually the header.
+
+\newpage
+
+\noindent
+This next style is a modified version of a style requested on a danish
+forum. 
+
+\begin{showchapterstyle}{jenor}
+\usepackage{xcolor,fix-cm}
+\definecolor{numbercolor}{gray}{0.7}
+\newif\ifchapternonum
+\makechapterstyle{jenor}{
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{}
+  \renewcommand\printchapternonum{\chapternonumtrue}
+  \renewcommand\chaptitlefont{\fontfamily{pbk}\fontseries{db}%
+    \fontshape{n}\fontsize{25}{35}\selectfont\raggedleft}
+  \renewcommand\chapnumfont{\fontfamily{pbk}\fontseries{m}\fontshape{n}%
+    \fontsize{1in}{0in}\selectfont\color{numbercolor}}
+  \renewcommand\printchaptertitle[1]{%
+    \noindent%
+    \ifchapternonum%
+    \begin{tabularx}{\textwidth}{X}%
+    {\parbox[b]{\linewidth}{\chaptitlefont ##1}%
+      \vphantom{\raisebox{-15pt}{\chapnumfont 1}}}
+    \end{tabularx}%
+    \else
+    \begin{tabularx}{\textwidth}{Xl}
+    {\parbox[b]{\linewidth}{\chaptitlefont ##1}} 
+    & \raisebox{-15pt}{\chapnumfont \thechapter}%
+    \end{tabularx}%
+    \fi
+    \par\vskip2mm\hrule
+  }
+} 
+\end{showchapterstyle}
+
+
+This next style originates from
+\url{http://texblog.net/latex-archive/layout/fancy-chapter-tikz/} and
+thus makes this interesting style available for memoir users.
+\begin{showchapterstyle*}{texblogtikz,pages={1,3}}
+\documentclass{memoir}
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+% helper macros
+\newcommand{\ChapWithNumber}[1]{
+\begin{tikzpicture}[remember picture,overlay]
+    \node[yshift=-3cm] at (current page.north west)
+      {\begin{tikzpicture}[remember picture, overlay]
+        \draw[fill=LightSkyBlue] (0,0) rectangle
+          (\stockwidth,3cm);
+        \node[anchor=east,xshift=.9\stockwidth,rectangle,
+              rounded corners=20pt,inner sep=11pt,
+              fill=MidnightBlue]
+              {\color{white}\chapnamefont\thechapter\space #1};
+       \end{tikzpicture}
+      };
+   \end{tikzpicture}
+}
+\newcommand{\ChapWithoutNumber}[1]{
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[yshift=-3cm] at (current page.north west)
+    {\begin{tikzpicture}[remember picture, overlay]
+        \draw[fill=LightSkyBlue] (0,0) rectangle
+        (\stockwidth,3cm);
+        \node[anchor=east,xshift=.9\stockwidth,rectangle,
+        rounded corners=20pt,inner sep=11pt,
+        fill=MidnightBlue]
+        {\color{white}\chapnamefont#1};
+      \end{tikzpicture}
+    };
+  \end{tikzpicture}
+}
+\newif\ifnumberedchap
+\numberedchaptrue
+\makechapterstyle{texblogtikz}{
+  \renewcommand\chapnamefont{\normalfont\sffamily\Huge\bfseries}
+  \renewcommand\chapnumfont{\normalfont\sffamily\Huge\bfseries}
+  \renewcommand\chaptitlefont{\normalfont\sffamily\Huge\bfseries}
+  \renewcommand\chapternamenum{}
+  \renewcommand{\afterchapternum}{}
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{}
+  \renewcommand\printchapternonum{\global\numberedchapfalse}
+  \renewcommand\printchaptertitle[1]{%
+    \ifnumberedchap
+    \ChapWithNumber{##1}
+    \else
+    \ChapWithoutNumber{##1}
+    \fi
+    \global\numberedchaptrue
+  }
+}
+\chapterstyle{texblogtikz}
+\aliaspagestyle{chapter}{empty} % just to save some space
+\begin{document}
+\chapter{A chapter title}
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus
+elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur
+dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id,
+vulputate a, magna.
+
+
+\chapter*{A non-numbered chapter title}
+Nam dui ligula, fringilla a, euismod sodales, sollicitudin vel,
+wisi. Morbi auctor lorem non justo. Nam lacus libero, pretium at,
+lobortis vitae, ultricies et, tellus. Donec aliquet, tortor sed
+accumsan bibendum, erat ligula aliquet magna, vitae ornare odio metus
+a mi.  
+
+\end{document}
+\end{showchapterstyle*}
+
+In reality, the blue box, covers the with of the paper, but do not
+extend to the top op the paper, leaving a white ribbon.
+
+
+% \starbreak
+
+Here is a variation over the \texttt{texblogtikz} style, provided by
+Verliya Gadis. Note that the text is being cut off on the right due to
+the process used to create the sample images..
+
+\begingroup
+
+\setkeys{Gin}{trim=0 16cm 0 0}
+
+\begin{showchapterstyle*}{verly,pages={1,3}}
+\documentclass{memoir}
+\setlrmarginsandblock{6cm}{3cm}{*}
+\checkandfixthelayout
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+% helper macros
+\newcommand{\ChapWithNumber}[1]{
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[yshift=-3cm] at (current page.north west)
+    {\begin{tikzpicture}[remember picture, overlay]
+	\draw[fill=gray!30!white] (0,-26) rectangle (5,5)
+        (\stockwidth,3cm);
+        \node[anchor=north,xshift=6cm,rectangle,
+	rounded corners=20pt,inner sep=11pt,
+	fill=gray]
+	{\color{white}\chapnamefont\thechapter\space #1};
+      \end{tikzpicture}};
+  \end{tikzpicture}}
+\newcommand{\ChapWithoutNumber}[1]{
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[yshift=-3cm] at (current page.north west)
+    {\begin{tikzpicture}[remember picture, overlay]
+        \draw[fill=gray!30!white] (0,-26) rectangle (5,5)
+        (\stockwidth,3cm);
+        \node[anchor=north,xshift=6cm,rectangle,
+        rounded corners=20pt,inner sep=11pt,
+        fill=gray]{\color{white}\chapnamefont#1};
+      \end{tikzpicture}};
+  \end{tikzpicture}}
+\newif\ifnumberedchap
+\numberedchaptrue
+\makechapterstyle{verly}{
+  \renewcommand\chapnamefont{\normalfont\sffamily\Huge\bfseries}
+  \renewcommand\chapnumfont{\normalfont\sffamily\Huge\bfseries}
+  \renewcommand\chaptitlefont{\normalfont\sffamily\Huge\bfseries}
+  \renewcommand\chapternamenum{}
+  \renewcommand{\afterchapternum}{}
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{}
+  \renewcommand\printchapternonum{\global\numberedchapfalse}
+  \renewcommand\printchaptertitle[1]{%
+    \ifnumberedchap\ChapWithNumber{##1}\else\ChapWithoutNumber{##1}\fi
+    \global\numberedchaptrue
+  }
+}
+\chapterstyle{verly}
+\aliaspagestyle{chapter}{empty} % just to save some space
+\begin{document}
+\chapter{A chapter title}
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus
+elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur
+dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id,
+vulputate a, magna.
+
+
+\chapter*{A non-numbered chapter title}
+Nam dui ligula, fringilla a, euismod sodales, sollicitudin vel,
+wisi. Morbi auctor lorem non justo. Nam lacus libero, pretium at,
+lobortis vitae, ultricies et, tellus. Donec aliquet, tortor sed
+accumsan bibendum, erat ligula aliquet magna, vitae ornare odio metus
+a mi.  
+
+\end{document}
+\end{showchapterstyle*}
+
+\endgroup
+
+
+% \starbreak
+
+I made this next style for a book project to be published in Aarhus
+University Press. The author requested a style without the word
+\emph{Chapter}, and I'd like to do something slightly different,
+something that might be useful for Bachelors projects and other
+similar student projects. In this particular book, chapter titles are
+at most two lines. So the design is made such that if it is two lines
+then the second line stand on the same baseline as the number.
+
+As it is for a book project the specific design depends on the font
+used, the font size, and the line spread. 
+
+Since this is a style without the word \emph{Chapter}, it is of course
+a good idea to remove this from the headers. Here is an easy example
+showing how to do this with the default page style:
+\begin{verbatim}
+\addtopsmarks{heading}{}{%
+  \createmark{chapter}{both}{shownumber}{}{. \ }
+}
+\pagestyle{headings}
+\end{verbatim}
+
+
+\begin{showchapterstyle*}{hansen}
+\documentclass[12pt]{memoir}
+\usepackage[T1]{fontenc}
+\usepackage{kpfonts}
+\setSingleSpace{1.1}
+\SingleSpacing
+\usepackage{xcolor,calc}
+
+\definecolor{chaptercolor}{gray}{0.8}
+% helper macros
+\newcommand\numlifter[1]{\raisebox{-2cm}[0pt][0pt]{\smash{#1}}}
+\newcommand\numindent{\kern37pt}
+\newlength\chaptertitleboxheight
+
+\makechapterstyle{hansen}{
+  \renewcommand\printchaptername{\raggedleft}
+  \renewcommand\printchapternum{%
+    \begingroup%
+    \leavevmode%
+    \chapnumfont%
+    \strut%
+    \numlifter{\thechapter}%
+    \numindent%
+    \endgroup%
+  }
+  \renewcommand*{\printchapternonum}{%
+    \vphantom{\begingroup%
+      \leavevmode%
+      \chapnumfont%
+      \numlifter{\vphantom{9}}%
+      \numindent%
+      \endgroup}
+    \afterchapternum}
+  \setlength\midchapskip{0pt}
+  \setlength\beforechapskip{0.5\baselineskip}
+  \setlength{\afterchapskip}{3\baselineskip}
+  \renewcommand\chapnumfont{%
+    \fontsize{4cm}{0cm}%
+    \bfseries%
+    \sffamily%
+    \color{chaptercolor}%
+  }
+  \renewcommand\chaptitlefont{%
+    \normalfont%
+    \huge%
+    \bfseries%
+    \raggedleft%
+  }%
+  \settototalheight\chaptertitleboxheight{%
+    \parbox{\textwidth}{\chaptitlefont \strut bg\\bg\strut}}
+  \renewcommand\printchaptertitle[1]{%
+    \parbox[t][\chaptertitleboxheight][t]{\textwidth}{%
+      %\microtypesetup{protrusion=false}% add this if you use microtype
+      \chaptitlefont\strut ##1\strut}%
+  }
+}
+\chapterstyle{hansen}
+\aliaspagestyle{chapter}{empty} % just to save some space
+\begin{document}
+\let\clearforchapter\par % cheating, but saves some space
+\chapter{A chapter title}
+Nam dui ligula, fringilla a, euismod sodales, sollicitudin vel,
+wisi. Morbi auctor lorem non justo. Nam lacus libero, pretium at,
+lobortis vitae, ultricies et, tellus. Donec aliquet, tortor sed
+accumsan bibendum, erat ligula aliquet magna, vitae ornare odio metus
+a mi.
+\par\fancybreak{$***$}\par
+\chapter*{A non-numbered chapter title}
+Nam dui ligula, fringilla a, euismod sodales, sollicitudin vel,
+wisi. Morbi auctor lorem non justo. Nam lacus libero, pretium at,
+lobortis vitae, ultricies et, tellus. Donec aliquet, tortor sed
+accumsan bibendum, erat ligula aliquet magna, vitae ornare odio metus
+a mi.
+\end{document}
+\end{showchapterstyle*}
+
+
+
+
+
+
+\chapter{Vincent Zoonekynd}
+\label{sec:vincent-zoonekynd}
+
+Some time ago Vincent Zoonekynd published a long list of general
+chapter styles for \LaTeX, see
+\url{http://zoonek.free.fr/LaTeX/LaTeX_samples_chapter/0.html}. 
+In this section we implement several of these styles. Special thanks
+to Danie Els for the BlueBox style (aka VZ39).
+
+The styles are named after Vincent Zoonekynd (VZ) and the number on
+the mentioned page.
+\begin{showchapterstyle}{VZ14}
+\makeatletter
+\newcommand\thickhrulefill{\leavevmode \leaders \hrule height 1ex \hfill \kern \z@}
+\setlength\midchapskip{10pt}
+\makechapterstyle{VZ14}{
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\chapnamefont{\Large\scshape}
+  \renewcommand\printchapternum{%
+    \chapnamefont\null\thickhrulefill\quad
+    \@chapapp\space\thechapter\quad\thickhrulefill}
+  \renewcommand\printchapternonum{%
+    \par\thickhrulefill\par\vskip\midchapskip
+    \hrule\vskip\midchapskip
+  }
+  \renewcommand\chaptitlefont{\Huge\scshape\centering}
+  \renewcommand\afterchapternum{%
+    \par\nobreak\vskip\midchapskip\hrule\vskip\midchapskip}
+  \renewcommand\afterchaptertitle{%
+    \par\vskip\midchapskip\hrule\nobreak\vskip\afterchapskip}
+}
+\makeatother
+\end{showchapterstyle}
+Variation over VZ15.
+\begin{showchapterstyle}{VZ15b}
+\usepackage{pifont,graphicx}
+\newcommand\mylleaf{\ding{'247}}
+\newcommand\myrleaf{\reflectbox{\mylleaf}}
+\newcommand\MyNumToName[1]{%
+  \ifcase#1\relax % case 0
+  \or First\or Second\or Third%
+  \else Not implemented\fi}
+\makeatletter
+\setlength\midchapskip{10pt}
+\makechapterstyle{VZ15b}{
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\chapnamefont{\Large\scshape}
+  \renewcommand\printchapternum{%
+    \chapnamefont\null\hfill\mylleaf\quad
+    \MyNumToName{\thechapter}\space\@chapapp\quad\myrleaf\hfill\null}
+  \renewcommand\printchapternonum{%
+    \par\hrule\vskip\midchapskip}
+  \renewcommand\chaptitlefont{\Huge\scshape\centering}
+  \renewcommand\afterchapternum{%
+    \par\nobreak\vskip\midchapskip\hrule\vskip\midchapskip}
+  \renewcommand\afterchaptertitle{%
+    \par\vskip\midchapskip\hrule\nobreak\vskip\afterchapskip}
+}
+\makeatother
+\end{showchapterstyle}
+Though I believe this style would look better without the lines. 
+
+Variation over VZ21. Note the use of two different tabulars depending
+upon the length of the title. Also note that we use the build-in
+booktabs rules, and note that the thickness of these rules can be
+individually adjusted. 
+\begin{showchapterstyle}{VZ21}
+\usepackage{calc,fourier}
+\usepackage[T1]{fontenc}
+\makeatletter
+\setlength\midchapskip{7pt}
+\makechapterstyle{VZ21}{
+  \renewcommand\chapnamefont{\Large\scshape}
+  \renewcommand\chapnumfont{\Large\scshape\centering}
+  \renewcommand\chaptitlefont{\huge\bfseries\centering}
+  \renewcommand\printchaptertitle[1]{%
+    \setlength\tabcolsep{7pt}% used as indentation on both sides
+    \settowidth\@tempdimc{\chaptitlefont ##1}%
+    \setlength\@tempdimc{\textwidth-\@tempdimc-2\tabcolsep}%
+    \chaptitlefont
+    \ifdim\@tempdimc > 0pt\relax% one line
+    \begin{tabular}{c}
+      \toprule  ##1\\ \bottomrule
+    \end{tabular}
+    \else% two+ lines
+    \begin{tabular}{%
+        >{\chaptitlefont\arraybackslash}p{\textwidth-2\tabcolsep}}
+      \toprule ##1\\ \bottomrule
+    \end{tabular}
+    \fi
+  }
+}
+\makeatother
+\end{showchapterstyle}
+Next up is VZ23.
+\begin{showchapterstyle}{VZ23}
+\setlength\midchapskip{10pt}
+\makechapterstyle{VZ23}{
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\chapnumfont{\Huge\bfseries\centering}
+  \renewcommand\chaptitlefont{\Huge\scshape\centering}
+  \renewcommand\afterchapternum{%
+    \par\nobreak\vskip\midchapskip\hrule\vskip\midchapskip}
+  \renewcommand\printchapternonum{%
+    \vphantom{\chapnumfont \thechapter}
+    \par\nobreak\vskip\midchapskip\hrule\vskip\midchapskip}
+}  
+\end{showchapterstyle}
+A variation over VZ34 (in the original the first cell in the tabular
+adjusts to the width of the chapter number, here it does not).
+\begin{showchapterstyle}{VZ34}
+\usepackage{calc}
+\newif\ifNoChapNumber
+\makeatletter
+\makechapterstyle{VZ34}{
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{}
+  \renewcommand\chapnumfont{\Huge\bfseries}
+  \renewcommand\chaptitlefont{\Huge\bfseries\raggedright}
+  \renewcommand\printchaptertitle[1]{%
+    \begin{tabular}{@{}p{1cm}|!{\quad}p{\textwidth-1cm-2em-4\tabcolsep }}
+      \ifNoChapNumber\relax\else\chapnumfont \thechapter\fi
+      & \chaptitlefont ##1
+    \end{tabular}
+    \NoChapNumberfalse
+  }
+  \renewcommand\printchapternonum{\NoChapNumbertrue}
+}
+\end{showchapterstyle}
+Variation over VZ39, contributed by Danie Els.\label{BlueBox}
+\begin{showchapterstyle}{BlueBox}
+\usepackage{fourier} % or what ever
+\usepackage[scaled=.92]{helvet}%. Sans serif - Helvetica
+\usepackage{color,calc}
+\newsavebox{\ChpNumBox}
+\definecolor{ChapBlue}{rgb}{0.00,0.65,0.65}
+\makeatletter
+\newcommand*{\thickhrulefill}{%
+  \leavevmode\leaders\hrule height 1\p@ \hfill \kern \z@}
+\newcommand*\BuildChpNum[2]{%
+  \begin{tabular}[t]{@{}c@{}}
+    \makebox[0pt][c]{#1\strut}  \\[.5ex]
+    \colorbox{ChapBlue}{%
+      \rule[-10em]{0pt}{0pt}%
+      \rule{1ex}{0pt}\color{black}#2\strut
+      \rule{1ex}{0pt}}%
+  \end{tabular}}
+\makechapterstyle{BlueBox}{%
+  \renewcommand{\chapnamefont}{\large\scshape}
+  \renewcommand{\chapnumfont}{\Huge\bfseries}
+  \renewcommand{\chaptitlefont}{\raggedright\Huge\bfseries}
+  \setlength{\beforechapskip}{20pt}
+  \setlength{\midchapskip}{26pt}
+  \setlength{\afterchapskip}{40pt}
+  \renewcommand{\printchaptername}{}
+  \renewcommand{\chapternamenum}{}
+  \renewcommand{\printchapternum}{%
+    \sbox{\ChpNumBox}{%
+      \BuildChpNum{\chapnamefont\@chapapp}%
+      {\chapnumfont\thechapter}}}
+  \renewcommand{\printchapternonum}{%
+    \sbox{\ChpNumBox}{%
+      \BuildChpNum{\chapnamefont\vphantom{\@chapapp}}%
+      {\chapnumfont\hphantom{\thechapter}}}}
+  \renewcommand{\afterchapternum}{}
+  \renewcommand{\printchaptertitle}[1]{%
+    \usebox{\ChpNumBox}\hfill
+    \parbox[t]{\hsize-\wd\ChpNumBox-1em}{%
+      \vspace{\midchapskip}%
+      \thickhrulefill\par
+      \chaptitlefont ##1\par}}%
+}
+\end{showchapterstyle}
+Style inspired by VZ43
+\begin{showchapterstyle}{VZ43}
+\usepackage{calc,color}
+\newif\ifNoChapNumber
+\newcommand\Vlines{%
+  \def\VL{\rule[-2cm]{1pt}{5cm}\hspace{1mm}\relax}
+  \VL\VL\VL\VL\VL\VL\VL}
+\makeatletter
+\setlength\midchapskip{0pt}
+\makechapterstyle{VZ43}{
+  \renewcommand\chapternamenum{}
+  \renewcommand\printchaptername{}
+  \renewcommand\printchapternum{}
+  \renewcommand\chapnumfont{\Huge\bfseries\centering}
+  \renewcommand\chaptitlefont{\Huge\bfseries\raggedright}
+  \renewcommand\printchaptertitle[1]{%
+    \Vlines\hspace*{-2em}%
+    \begin{tabular}{@{}p{1cm} p{\textwidth-3cm}}%
+      \ifNoChapNumber\relax\else%
+      \colorbox{black}{\color{white}%
+        \makebox[.8cm]{\chapnumfont\strut \thechapter}}
+      \fi
+      & \chaptitlefont ##1
+    \end{tabular}
+    \NoChapNumberfalse
+  }
+  \renewcommand\printchapternonum{\NoChapNumbertrue}
+}
+\makeatother
+\end{showchapterstyle}
+
+\begin{thebibliography}{9}
+\bibitem{memman} Peter Wilson, \emph{The Memoir Class for Configurable
+  Typesetting -- User Guide}, 2010.
+\bibitem{VZ} Vincent Zoonekynd. On-line list of different chapter
+  styles for \LaTeX. Available at
+  \url{http://zoonek.free.fr/LaTeX/LaTeX_samples_chapter/0.html}. 
+\end{thebibliography}
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
