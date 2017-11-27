@@ -27,10 +27,10 @@ DRS_ROOT = /scratch/Projects/spirou_py3/INTROOT/
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = /scratch/Projects/spirou_py3/data/raw
 
-#   Define the directory that the reduced data are stored in
+#   Define the directory that the reduced data should be saved to/read from
 DRS_DATA_REDUC = /scratch/Projects/spirou_py3/data/reduced
 
-#   Define the directory that the calibration files are stored in
+#   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = /scratch/Projects/spirou_py3/data/calibDB
 
 #   Define the directory that the log messages are stored in

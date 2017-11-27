@@ -1,0 +1,52 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%  formatting constants
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% formatting the named variables (from user setup)
+\newcommand{\definevariable}[1]{\textcolor{blue}{\{#1\}}}
+
+% --------------------------------------------------------
+% formatting the named keywords 
+\newcommand{\definekeyword}[1]{\textcolor{red}{\{#1\}}}
+
+
+% --------------------------------------------------------
+% formatting the TODO command
+\newcommand{\TODO}[1]{\vspace{0.5cm}\colorbox{black}{\parbox{0.9\textwidth}{\textcolor{green}{!!!! TODO !!!! #1 !!!!}}}\vspace{0.5cm}}
+
+% --------------------------------------------------------
+% formatting the Note command
+\newcommand{\NOTE}[1]{\noindent\textbf{\textcolor{red}{#1}}}
+
+% --------------------------------------------------------
+% Program should be in small caps
+\newcommand{\Program}[1]{\textsc{#1}}
+
+% --------------------------------------------------------
+% Double underscore
+\newlength\dunder
+\settowidth{\dunder}{\_}
+\newcommand{\twound}{\rule{1.5\dunder}{0.4pt}}
+
+% --------------------------------------------------------
+% formatting for the directories trees
+\newcommand{\customdirtree}[1]{
+\vspace{-0.25cm}
+\definecolor{shadecolor}{rgb}{0.85,0.85,0.82}
+\begin{shaded}
+\renewcommand*\DTstylecomment{\ttfamily\textcolor{black}}
+\renewcommand*\DTstyle{\ttfamily\textcolor{blue}}
+\dirtree{%
+#1}
+\end{shaded}
+}
+
+
+% --------------------------------------------------------
+% highligh box
+\definecolor{hcolour}{rgb}{1,0.977,0.801}
+\newcommand{\highlight}[3]{
+\noindent\fboxsep=0pt%
+\colorbox{hcolour}{\parbox[c][#1\textwidth][c]{#2\textwidth}{#3}}}
