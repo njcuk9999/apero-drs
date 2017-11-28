@@ -1,0 +1,148 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Data Architecture}
+\label{chapter:data_architecture}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Described below is the file structure, after correct installation (Chapter \ref{chapter:installation}).
+
+% ---------------------------------------------------------
+\section{Installed file structure}
+\label{chapter:data_architecture:folder_layout}
+% ---------------------------------------------------------
+
+The file structure should look as follows:
+\begin{tcustomdir}
+\customdirtree{%
+.1 \{dir\}.
+.2 \{DRS\_ROOT\}.
+.3 bin.
+.4 \DTcomment{Recipes}.
+.3 config.
+.4 \DTcomment{Configuration files}.
+.3 documentation.
+.4 \DTcomment{Documentation files}.
+.3 SpirouDRS.
+.4 \DTcomment{The DRS Module}.
+.1 \{DATA\_ROOT\}*.
+.2 calibDB.
+.2 msg.
+.2 raw.
+.3 YYYYMMDD \DTcomment{Observation directory}.
+.4 \DTcomment{Raw observation files}. 
+.2 reduced.
+.2 tmp.
+}
+\vspace{0.5cm}
+\noindent * This is the recommended file structure and raw, reduced, calibDB, msg and tmp can be changed using the \definevariable{DATA\_ROOT\_RAW}, \definevariable{DATA\_ROOT\_REDUCED}, \definevariable{DATA\_ROOT\_CALIB}, \definevariable{DATA\_ROOT\_MSG}, and \definevariable{DATA\_ROOT\_TMP} variables in Section \ref{ch:install:setup}.
+\end{tcustomdir}
+
+\newpage
+\noindent i.e. for the paths given in Section \ref{ch:install:setup} this would be:
+\begin{tcustomdir}
+\customdirtree{%
+.1 drs.
+.2 INTROOT.
+.3 bin.
+.4 \DTcomment{Recipes}.
+.3 config.
+.4 \DTcomment{Configuration files}.
+.3 documentation.
+.4 \DTcomment{Documentation files}.
+.3 SpirouDRS.
+.4 \DTcomment{The DRS Module}.
+.2 data.
+.3 calibDB.
+.3 msg.
+.3 raw.
+.4 YYYYMMDD \DTcomment{Observation directory}.
+.5 \DTcomment{Raw observation files}. 
+.3 reduced.
+.3 tmp.
+}
+\end{tcustomdir}
+
+
+% ------------------------------------------------------------------------
+\section{The Installation root directory}
+\label{chapter:data_architecture:install_root_folder}
+% ------------------------------------------------------------------------
+
+The \definevariable{INSTALL\_ROOT} contains all the installed recipes, modules functions, documentation and configuration files needed to run the DRS. The file structure is set up as below: 
+
+\begin{tcustomdir}
+\customdirtree{%
+.1 \{dir\}.
+.2 \{DRS\_ROOT\}.
+.3 bin.
+.4 \DTcomment{Recipes}.
+.3 config.
+.4 \DTcomment{Configuration files}.
+.3 documentation.
+.4 \DTcomment{Documentation files}.
+.3 SpirouDRS.
+.4 \DTcomment{The DRS Module}.
+}
+\end{tcustomdir}
+
+% ------------------------------------------------------------------------
+\subsection{The bin directory}
+\label{chapter:data_architecture:install_root_folder:bin_folder}
+% ------------------------------------------------------------------------
+
+The bin directory is located in the \definevariable{INSTALL\_ROOT} directory. This contains all the recipes that can be used. A detailed description of all recipes can be found in Chapter \ref{ch:the_recipes} but are listed here for completeness.
+
+\begin{thighlight}
+\begin{itemize}
+\item \calDARK
+\item \calDRIFTRAW
+\item \calextractRAW
+\item \calextractRAWAB
+\item \calextractRAWC
+\item \calFFraw
+\item \callocRAW
+\item \calSLIT
+\item \calvalidate
+\end{itemize}
+\end{thighlight}
+
+
+% ------------------------------------------------------------------------
+\subsection{The SPIROU module directory}
+\label{chapter:data_architecture:install_root_folder:module_folder}
+% ------------------------------------------------------------------------
+
+The SpirouDRS directory is the SPIROU DRS package, it contains all sub-packages that contain all the worker functions and code associated with the recipes. The file structure is as follows:
+
+\begin{tcustomdir}
+\customdirtree{%
+.1 SpirouDRS.
+.2 spirouBACK.
+.3 \DTcomment{The SPIRou background module}.
+.2 spirouCDB.
+.3 \DTcomment{The SPIRou calibration database module}.
+.2 spirouConfig.
+.3 \DTcomment{The SPIRou configuration tools module}.
+.2 spirouEXTOR.
+.3 \DTcomment{The SPIRou extraction module}.
+.2 spirouFLAT.
+.3 \DTcomment{The SPIRou Flat field module}.
+.2 spirouImage.
+.3 \DTcomment{The SPIRou image module}.
+.2 spirouLOCOR.
+.3 \DTcomment{The SPIRou localization module}.
+.2 spirouRV.
+.3 \DTcomment{The SPIRou radial velocity module}.
+.2 spirouStartup.
+.3 \DTcomment{The SPIRou start up tools module}.
+}
+\end{tcustomdir}
+
+The modules are described in detail in Chapter \ref{ch:the_module}.
+
+
+% ------------------------------------------------------------------------
+\subsection{The SPIROU module directory}
+\label{chapter:data_architecture:install_root_folder:module_folder}
+% ------------------------------------------------------------------------
