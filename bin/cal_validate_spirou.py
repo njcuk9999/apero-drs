@@ -22,7 +22,7 @@ import os
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_validate_drs.py'
+__NAME__ = 'cal_validate_spirou.py'
 # Whether be default we run debug mode
 DEBUG = 0
 

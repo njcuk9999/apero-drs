@@ -21,17 +21,12 @@ openany, % A chapter may start on either a recto or verso page.
 \usepackage[T1]{fontenc}    %
 \usepackage[english]{babel} % English please
 \usepackage[final]{microtype} % Less badboxes
-
 % \usepackage{kpfonts} %Font
-
 \usepackage{amsmath,amssymb,mathtools} % Math
-
 % \usepackage{tikz} % Figures
 \usepackage{graphicx} % Include figures
-
 \usepackage{listings}    % Add code snippets
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
-
 \usepackage[linktocpage=true]{hyperref} % Extensive support for hypertext in LaTeX
 \usepackage[usenames,dvipsnames]{xcolor} %used for font color
 \usepackage{dirtree} % Make directory trees easily
@@ -39,8 +34,9 @@ openany, % A chapter may start on either a recto or verso page.
 \usepackage{multirow}  % use rows spanning multiple columns in tables
 \usepackage{float}
 \usepackage[all]{background}
-\usepackage[hyphenbreaks]{breakurl}
-\usepackage{tcolorbox}
+\usepackage[most]{tcolorbox}
+\usepackage{hyperref}
+
 %%% PAGE LAYOUT 
 %%%------------------------------------------------------------------------------
 
@@ -221,7 +217,7 @@ openany, % A chapter may start on either a recto or verso page.
 \vspace{1cm}
 
 \begin{abstract}
-This is the guide to coding the DRS (including installation, running, rules and stardisation approaches). This document is not intended for the general used of the DRS, instead it is intended for those who wish to develop the software further and understand the changes between this version and previous versions.
+\noindent This is the guide to coding the DRS (including installation, running, rules and stardisation approaches). This document is not intended for the general used of the DRS, instead it is intended for those who wish to develop the software further and understand the changes between this version and previous versions.
 \end{abstract}
 \clearpage
 

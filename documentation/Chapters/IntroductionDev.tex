@@ -1,6 +1,57 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \chapter{Introduction}
-\label{chapter:introduction}
+\label{chapter:intro}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Code blocks}
+\label{ch:intro:codeblocks}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Certain sections will be written in code blocks, these imply text that is written into a text editor, the command shell console, or a python terminal/script. Below explains how one can distinguish these in this document. \\
+
+\noindent The following denotes a line of text (or lines of text) that are to be edited in a text editor.
+\begin{textbox}
+<# A variable name that can be changes to a specific value>
+@VARIABLE_NAME@ = "Variable Value"
+\end{textbox}
+
+\noindent These can also be shell scripts in a certain language:
+\begin{bashbox}
+#!/usr/bin/bash
+# Find out which console you are using
+echo $0
+# Set environment Hello
+export Hello="Hello"
+\end{bashbox}
+\begin{cshbox}
+#!/usr/bin/tcsh
+# Find out which console you are using
+echo $0
+# Set environment Hello
+setenv Hello "Hello"
+\end{cshbox}
+
+\noindent The following denotes a command to run in the command shell console 
+\begin{cmdbox}
+cd (*$\sim$*)/Downloads
+\end{cmdbox}
+
+\noindent The following denotes a command line print out
+\begin{cmdboxprint}
+ This is a print out in the command line
+ produced by using the echo command
+\end{cmdboxprint}
+
+\noindent The following denotes a python terminal or python script
+\begin{pythonbox}
+import numpy as np
+print("Hello world")
+print("{0} seconds".format(np.sqrt(25)))
+\end{pythonbox}
