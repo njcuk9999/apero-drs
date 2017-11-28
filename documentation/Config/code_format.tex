@@ -1,7 +1,7 @@
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{darkgray}{rgb}{0.18,0.31,0.31}
+\definecolor{darkgray}{rgb}{0.20,0.20,0.20}
 \definecolor{backcolour1}{rgb}{0.95,0.95,0.92}
 \definecolor{backcolour2}{rgb}{1,0.977,0.801}
 \definecolor{backcolour3}{rgb}{0.79,0.88,1}
@@ -50,16 +50,47 @@
     showtabs=false,                  
     tabsize=2,
     moredelim=**[is][\color{red}]{@}{@},
+    moredelim=**[is][\color{OliveGreen}]{<}{>},
     extendedchars=false,
     columns=fullflexible,
     escapeinside={(*}{*)},%
-    literate={\\@}{{\unichar{"0040}}}1,
+    literate={\\@}{{\unichar{"0040}}}1
+       {\\<}{{\unichar{"003C}}}1 
+       {\\>}{{\unichar{"003E}}}1
 }
 
 
-\lstdefinestyle{cmdstyle}{
+\lstdefinestyle{cshstyle}{
+  language=sh,  
     commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    moredelim=**[is][\color{red}]{@}{@},
+    moredelim=**[is][\color{OliveGreen}]{<}{>},
+    extendedchars=false,
+    columns=fullflexible,
+    escapeinside={(*}{*)},%
+    literate={\\@}{{\unichar{"0040}}}1
+       {\\<}{{\unichar{"003C}}}1 
+       {\\>}{{\unichar{"003E}}}1
+}
+
+\lstdefinestyle{cmdstyle}{
+    language=command.com,
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue!35!white},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
     basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{white},
@@ -75,6 +106,29 @@
     tabsize=2,
     extendedchars=false,
     columns=fullflexible,
+    morekeywords={chmod, unzip},
+    escapeinside={(*}{*)},%
+}
+
+\lstdefinestyle{cmdstyleprint}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue!35!white},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{white},
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    % numbers=left,                    
+    % numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    extendedchars=false,
+    columns=fullflexible,
+    morekeywords={chmod, unzip},
     escapeinside={(*}{*)},%
 }
 
@@ -103,35 +157,153 @@
 }
 
 
-
 \tcbuselibrary{listings}
+
+% example:
+% \newtcblisting{mylisting}{
+%       arc=0pt,
+%       top=0mm,
+%       bottom=0mm,
+%       left=0mm,
+%       right=0mm,
+%       boxrule=0pt,
+%       colback=black,
+%       listing only,
+%       listing options={style=mystyle},
+%       hbox
+% }
 
 
 \newtcblisting{textbox}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=0mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
       colback=backcolour1,
       colframe=backcolour1!75!black,
+      fonttitle={\footnotesize\bfseries},
+      title={text},  % Fixed title
       listing only,
       listing options={style=text},
 }
 
 \newtcblisting{bashbox}{
-      colback=darkgray,
-      colframe=darkgray!75!black,,
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=backcolour1,
+      colframe=backcolour1!75!black,
+      fonttitle={\footnotesize\bfseries},
+      title={bash},  % Fixed title
       listing only,
       listing options={style=bashstyle},
 }
 
+\newtcblisting{cshbox}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=0mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=backcolour1,
+      colframe=backcolour1!75!black,
+      fonttitle={\footnotesize\bfseries},
+      title={tcsh/csh},  % Fixed title
+      listing only,
+      listing options={style=cshstyle},
+}
 
 \newtcblisting{cmdbox}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
       colback=darkgray,
-      colframe=darkgray!75!black,,
+      colframe=darkgray!75!black,
+      fonttitle={\footnotesize\bfseries},
+      title={CMD input},  % Fixed title
       listing only,
       listing options={style=cmdstyle},
+      every listing line={\textcolor{red}{\small\ttfamily\bfseries \textgreater{\textgreater}\,\,\,}}
+}
+
+\newtcblisting{cmdboxprint}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=darkgray,
+      colframe=darkgray!75!black,
+      fonttitle={\footnotesize\bfseries},
+      title={Command line output},  % Fixed title
+      listing only,
+      listing options={style=cmdstyleprint}
 }
 
 \newtcblisting{pythonbox}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
       colback=backcolour3,
       colframe=backcolour3!75!black,
+      fonttitle={\footnotesize\bfseries},
+      title={Python/Ipython},  % Fixed title
       listing only,
       listing options={style=pythonstyle},
+}
+
+\newtcolorbox{note}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  borderline west={2pt}{0pt}{red}, % straigh vertical line at the left edge
+  sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  fonttitle={\large\bfseries},
+  coltitle={black},  % Black colour for title
+  title={Note:\ },  % Fixed title
+  attach title to upper, % Move the title into the box
+  #1
+}
+
+\newtcolorbox{todo}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  borderline west={2pt}{0pt}{green}, % straigh vertical line at the left edge
+  sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  fonttitle={\large\bfseries},
+  coltitle={black},  % Black colour for title
+  title={TODO:\ },  % Fixed title
+  attach title to upper, % Move the title into the box
+  #1
+}
+
+
+\newtcolorbox{thighlight}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  before skip=3pt,
+  after skip=6pt,
+  borderline west={2pt}{0pt}{orange}, % straigh vertical line at the left edge
+  sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  colback=yellow!10!white,
+  attach title to upper, % Move the title into the box
+  #1
+}
+
+\newtcolorbox{tcustomdir}[1][]{%
+  enhanced jigsaw, % better frame drawing
+  before skip=3pt,
+  after skip=6pt,
+  borderline west={2pt}{0pt}{blue}, % straigh vertical line at the left edge
+  %sharp corners, % No rounded corners
+  boxrule=0pt, % no real frame,
+  colback=blue!10!white,
+  attach title to upper, % Move the title into the box
+  #1
 }
