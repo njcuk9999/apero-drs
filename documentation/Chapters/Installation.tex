@@ -14,7 +14,9 @@
 
 Once finialised the installation should just be a download, run setup.py and configure the DRS directories, however, during development the following stages are required.
 
-\NOTE{Currently the download repositry on github is private and requires a github account, and the user to be added to the list of collaborators. To be added to the collaborators please email \url{neil.james.cook@gmail.com} with your github username.}
+\begin{note}
+Currently the download repositry on github is private and requires a github account, and the user to be added to the list of collaborators. To be added to the collaborators please email \url{neil.james.cook@gmail.com} with your github username.
+\end{note}
 
 
 
@@ -63,37 +65,51 @@ scp -r (*\DRSsshURL*)
 
 It is recommended to install the latest version of Anaconda python distribution, available for Windows, \mac and Linux (here: \url{https://www.anaconda.com/download/}). However one can run the DRS on a native python installation. \\
 
-\noindent We recommend python 3 over python 2 for long term continued support (however the latest version of the DRS supports the newest versions of python 2.7). \\
+\noindent We recommend python 3 over python 2 for long term continued support (however the latest version of the DRS supports the newest versions of python 2.7).
 
-\NOTE{Before installing the DRS you must have one of the following:} \\
-
-\noindent EITHER (RECOMMENDED)
+\begin{note}
+Before installing the DRS you must have one of the following:
 \begin{itemize}
-\item A valid version of the Anaconda python distribution (for python2 or python 3)
-	\noindent Currently tested version of python are:
-	\begin{itemize}
-	\item Python 2.7.13 and Anaconda 4.4.0
-	\item Python 3.6.3 and Anaconda 5.0.1 --- RECOMMENDED
-	\end{itemize}
+\item Latest version of Anaconda (for python 2 or python 3) --- RECOMMENDED
+\item An Up-to-date version of python (python 2 or python 3)
 \end{itemize}
-\noindent OR
+\end{note}
+
+
+% -------------------------------------------------------
+\subsection{Anaconda python distribution}
+\label{ch:install:prerequisites:anaconda}
+% -------------------------------------------------------
+
+A valid version of the Anaconda python distribution (for python2 or python 3)
+\noindent Currently tested version of python are:
 \begin{itemize}
-\item An up-to-date version of python and the following python modules (for either python 2 or python 3)
+\item Python 2.7.13 and Anaconda 4.4.0
+\item Python 3.6.3 and Anaconda 5.0.1 --- RECOMMENDED
+\end{itemize}
+
+
+
+% -------------------------------------------------------
+\subsection{Separate python installation}
+\label{ch:install:prerequisites:separate_python}
+% -------------------------------------------------------
+
+An up-to-date version of python (either python 2 or python 3) and the following python modules (with version of python they were tested with).
+\begin{itemize}
+\item Python 3.6
 	\begin{itemize}
-	\item Python 3.6
-		\begin{itemize}
-		\item \Program{astropy} (tested with version 2.0.2)
-		\item \Program{matplotlib} (tested with version 2.1.0)
-		\item \Program{numpy} (tested with version 1.13.3)
-		\item and the following built-in modules (comes with python): \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pkg\_resources}, \Program{shutil}, \Program{sys}, \Program{time}, \Program{warnings}
-		\end{itemize}
-	\item Python 2.7
-		\begin{itemize}
-		\item astropy (tested with version 1.3.2)
-		\item matplotlib (tested with version 2.0.2)
-		\item numpy (tested with version 1.12.1)
-		\item and the following built-in modules (comes with python): \Program{\twound{future}\twound}, \Program{collections}, \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pkg\_resources}, \Program{shutil}, \Program{sys}, \Program{time}, \Program{warnings}
-		\end{itemize}
+	\item \Program{astropy} (tested with version 2.0.2)
+	\item \Program{matplotlib} (tested with version 2.1.0)
+	\item \Program{numpy} (tested with version 1.13.3)
+	\item and the following built-in modules (comes with python): \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pkg\_resources}, \Program{shutil}, \Program{sys}, \Program{time}, \Program{warnings}
+	\end{itemize}
+\item Python 2.7
+	\begin{itemize}
+	\item astropy (tested with version 1.3.2)
+	\item matplotlib (tested with version 2.0.2)
+	\item numpy (tested with version 1.12.1)
+	\item and the following built-in modules (comes with python): \Program{\twound{future}\twound}, \Program{collections}, \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pkg\_resources}, \Program{shutil}, \Program{sys}, \Program{time}, \Program{warnings}
 	\end{itemize}
 \end{itemize}
 
@@ -103,7 +119,7 @@ It is recommended to install the latest version of Anaconda python distribution,
 %%
 \clearpage
 \newpage
-\section{Installation Linux and \mac}
+\section{Installation Linux and macOS}
 \label{ch:install:installunix}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -124,7 +140,7 @@ The first step is to extract the DRS into a folder (the \InstallDIR).
 
 \noindent Do this by using the following commands:
 \begin{cmdbox}
-cd INSTALL_DIR 
+cd (*\InstallDIRcmd*)
 unzip DRS.zip
 \end{cmdbox}
 
@@ -138,19 +154,19 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 \begin{itemize}
 	\item In bash open the `.bashrc' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
-	\begin{textbox}
-	@export@ PATH=(*\InstallDIR*)/bin/:$PATH
+	\begin{bashbox}
+	@export@ <PATH>=(*\InstallDIR*)/bin/:<$PATH>
 
-	@export@ PYTHONPATH=(*\InstallDIR*):(*\InstallDIR*)/bin/:$PYTHONPATH
-	\end{textbox}
+	@export@ <PYTHONPATH>=(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>
+	\end{bashbox}
 
 	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
 
-	\begin{textbox}
-	@setenv@ PATH (*\InstallDIR*)/bin/:@${PATH}@
+	\begin{cshbox}
+	@setenv@ <PATH> (*\InstallDIR*)/bin/:<${PATH}>
 
-	@setenv@ PYTHONPATH (*\InstallDIR*):(*\InstallDIR*)/bin/:${PYTHONPATH}
-	\end{textbox}
+	@setenv@ <PYTHONPATH> (*\InstallDIR*):(*\InstallDIR*)/bin/:<${PYTHONPATH}>
+	\end{cshbox}
 
 \end{itemize}
 
@@ -160,9 +176,9 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 % -------------------------------------------------------
 
 \noindent To run the recipes from the command line (without starting python) one must make them executable. Do this by using the following command:
-\begin{bashbox}
-chmod +x (*\InstallDIR*)/bin/*.py
-\end{bashbox}
+\begin{cmdbox}
+chmod +x (*\InstallDIRcmd*)/bin/*.py
+\end{cmdbox}
 
 
 
@@ -197,7 +213,7 @@ This process is a little more convoluted than on Linux or \mac system.
 \noindent i.e.
 
 \begin{textbox}
-C:\Python27;(*\InstallDIR;*)
+C:\Python27;(*\InstallDIR*);
 \end{textbox}
 
 \item if under system variables `PythonPath' does not exist create a new variable called `PythonPath' and add:
@@ -223,42 +239,16 @@ C:\Python27;(*\InstallDIR;*)
 
 Before running the DRS one must set the data paths. \\
 
-% This can be done two ways:
-
-% \noindent EITHER
-% \begin{itemize}
-% 	\item Run the `DRS\_setup.py' script (Section \ref{ch:install:setup:drs_setup_script}).
-% \end{itemize}
-% \noindent OR
-% \begin{itemize}
-% 	\item Manually edit the config.txt file (Section \ref{ch:install:setup:manual_edit_textfile}).
-% \end{itemize}
-
-
-% % -------------------------------------------------------
-% \subsection{Running the `DRS\_setup.py' script}
-% \label{ch:install:setup:drs_setup_script}
-% % -------------------------------------------------------
-
-% DRS\_setup.py script not yet written please use manual editting of config.txt file.
-
-% % -------------------------------------------------------
-% \subsection{Manually editting the config.txt file}
-% \label{ch:install:setup:manual_edit_textfile}
-% % -------------------------------------------------------
-
-\noindent The `config.txt' file is located in the \InstallDIR in the config folder. \\
+\noindent The `config.txt' file is located in the \InstallDIR in the config folder.
 
 i.e. at \InstallDIR{/config/config.txt} \\
 
-\noindent The following keywords must be changed (and must be a valid path):
-
-\noindent\fboxsep=0pt%
-
-\highlight{0.6}{1.1}{
+\noindent The following keywords \textbf{must} be changed (and must be a valid path):
+\begin{thighlight}
 \begin{table}[H]
-\begin{tabular}{l c l c p{6.25cm}}
+\begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{4.5cm}}
 \definevariable{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
+&&&&\\
 \definevariable{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory (\InstallDIR) \\
 \definevariable{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
 \definevariable{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
@@ -268,16 +258,15 @@ i.e. at \InstallDIR{/config/config.txt} \\
 \end{tabular}
 \end{table}
 
-\setlength{\leftskip}{0.5 cm}
+\vspace{0.1cm}
+\noindent The directories here are for linux and \mac\, systems another example would be `/home/user/INTROOT' for the \InstallDIR\, directory. 
 
-\noindent The directories here are for linux and \mac systems another example would be `/home/user/INTROOT' for the \InstallDIR directory. On Windows machines this would be equivalent to `C:\textbackslash{Users}\textbackslash{<username>}\textbackslash{INTROOT}' in Windows Vista, 7, 8 and 10 or `C:\textbackslash{Documents and Settings}\textbackslash{<username>}\textbackslash{INTROOT}' on early versions of Windows. \\
-} \\
-
-\setlength{\leftskip}{0pt}
+\noindent On Windows machines this would be equivalent to `C:\textbackslash{Users}\textbackslash{<username>}\textbackslash{INTROOT}' in Windows Vista, 7, 8 and 10 or `C:\textbackslash{Documents and Settings}\textbackslash{<username>}\textbackslash{INTROOT}' on early versions of Windows. \\
+\end{thighlight}
+\vspace{0.25cm}
 
 \noindent The following keywords can be changed: \\
-
-\highlight{0.4}{1.1}{
+\begin{thighlight}
 \begin{table}[H]
 \begin{tabular}{>{\color{red}}l c r c p{5cm}}
 \definevariable{DRS\_PLOT}    & = & 1     & / & Whether to show plots \\
@@ -293,121 +282,119 @@ i.e. at \InstallDIR{/config/config.txt} \\
 	\item "warning" -- prints warning and error events
 	\item "error" -- print only error events
 \end{itemize}
-}
+\end{thighlight}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
 \newpage
-\section{Validating Installion on Linux and macOS}
+\section{Validating Installation on Linux and macOS}
 \label{ch:install:validating_installunix}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Note one must install the DRS (Section \ref{ch:install:installunix}) AND set up the DRS (Section \ref{ch:install:setup}). \\
+\begin{note}
+One must install the DRS (Section \ref{ch:install:installunix}) AND set up the DRS (Section \ref{ch:install:setup}) before validation will be successful.
+\end{note}
 
-There are four ways to run the DRS in Linux and \mac (thus four ways to verify installation was correct).
+\noindent There are four ways to run the DRS in Linux and \mac (thus four ways to verify installation was correct).
 
 \begin{itemize}
 
 \item To validate running from command line type:
 \begin{cmdbox}
-cal_validate_drs.py
+(*\calvalidate*)
 \end{cmdbox}
 
 \item To validate running from python/ipython from the command line type:
 \begin{cmdbox}
-python cal_validate_drs.py
-
-ipython cal_validate_drs.py
+python (*\calvalidate*)
+ipython (*\calvalidate*)
 \end{cmdbox}
 
 \item To validate running from ipython, open ipython and type:
 \begin{pythonbox}
-@run@ cal_validate_drs.main()
+@run@ (*\calvalidate*)
 \end{pythonbox}
 
 \item To validate running from import from python/ipython, open python/ipython and type:
 \begin{pythonbox}
-import cal_validate_drs
-
-cal_validate_drs.main()
+import cal_validate_spirou
+cal_validate_spirou.main()
 \end{pythonbox}
 
 \end{itemize}
 
 \noindent If validation is successful the following should appear:
 
-\begin{cmdbox}
-22:11:44.1 -   || *****************************************
-22:11:44.1 -   || * SPIROU @(#) Geneva Observatory (0.0.1)
-22:11:44.1 -   || *****************************************
-22:11:44.1 -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
-22:11:44.1 -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
-22:11:44.1 -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
-22:11:44.1 -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
-22:11:44.1 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
-22:11:44.1 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
-22:11:44.1 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
-22:11:44.1 -   ||(used_date)         DRS_USED_DATE=undefined
-22:11:44.1 -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
-22:11:44.1 -   ||                    DRS_INTERACTIVE is not set, running on-line mode
-22:11:44.1 -   ||
-22:11:44.1 -   ||Validation successful. DRS installed corrected.
-\end{cmdbox}
+\begin{cmdboxprint}
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   || * SPIROU @(#) Geneva Observatory (0.0.1)
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
+HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
+HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
+HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
+HH:MM:SS.S -   ||
+HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
+\end{cmdboxprint}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
 \newpage
-\section{Validating Installion on Windows}
+\section{Validating Installation on Windows}
 \label{ch:install:validating_installwin}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Note one must install the DRS (Section \ref{ch:install:install_win}) AND set up the DRS (Section \ref{ch:install:setup}). \\
+\begin{note}
+One must install the DRS (Section \ref{ch:install:install_win}) AND set up the DRS (Section \ref{ch:install:setup}) before validation will be successful.
+\end{note}
 
-In windows there are currently 3 ways to run the RS (running in python/ipython).
+\noindent In windows there are currently 3 ways to run the RS (running in python/ipython).
 
 \begin{itemize}
-
 \item To validate running from python/ipython from the command line type:
 \begin{cmdbox}
-python cal_validate_drs.py
-
-ipython cal_validate_drs.py
+python (*\calvalidate*)
+ipython (*\calvalidate*)
 \end{cmdbox}
 
 \item To validate running from ipython, open ipython and type:
 \begin{pythonbox}
-@run@ cal_validate_drs.main()
+@run@ (*\calvalidate*)
 \end{pythonbox}
 
 \item To validate running from import from python/ipython, open python/ipython and type:
 \begin{pythonbox}
-import cal_validate_drs
-
-cal_validate_drs.main()
+import cal_validate_spirou
+cal_validate_spirou.main()
 \end{pythonbox}
 
 \end{itemize}
 
 \noindent If validation is successful the following should appear:
-
-\begin{cmdbox}
-22:11:44.1 -   || *****************************************
-22:11:44.1 -   || * SPIROU @(#) Geneva Observatory (0.0.1)
-22:11:44.1 -   || *****************************************
-22:11:44.1 -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
-22:11:44.1 -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
-22:11:44.1 -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
-22:11:44.1 -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
-22:11:44.1 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
-22:11:44.1 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
-22:11:44.1 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
-22:11:44.1 -   ||(used_date)         DRS_USED_DATE=undefined
-22:11:44.1 -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
-22:11:44.1 -   ||                    DRS_INTERACTIVE is not set, running on-line mode
-22:11:44.1 -   ||
-22:11:44.1 -   ||Validation successful. DRS installed corrected.
-\end{cmdbox}
+\begin{cmdboxprint}
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   || * SPIROU @(#) Geneva Observatory (0.0.1)
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
+HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
+HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
+HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
+HH:MM:SS.S -   ||
+HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
+\end{cmdboxprint}
