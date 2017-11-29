@@ -15,182 +15,44 @@ openany, % A chapter may start on either a recto or verso page.
 
 %%% PACKAGES 
 %%%------------------------------------------------------------------------------
-\usepackage[utf8x]{inputenc} % If utf8 encoding
-% \usepackage[lantin1]{inputenc} % If not utf8 encoding, then this is probably the way to go
-\usepackage[T1]{fontenc}    %
-\usepackage[english]{babel} % English please
-\usepackage[final]{microtype} % Less badboxes
-% \usepackage{kpfonts} %Font
-\usepackage{amsmath,amssymb,mathtools} % Math
-% \usepackage{tikz} % Figures
-\usepackage{graphicx} % Include figures
-\usepackage{listings}    % Add code snippets
-\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
-\usepackage[linktocpage=true]{hyperref} % Extensive support for hypertext in LaTeX
-\usepackage[usenames,dvipsnames]{xcolor} %used for font color
-\usepackage{dirtree} % Make directory trees easily
-\usepackage{framed} % shade in a region of the page
-\usepackage{multirow}  % use rows spanning multiple columns in tables
-\usepackage{float}
-\usepackage[all]{background}
-\usepackage[most]{tcolorbox}
-
-%%% PAGE LAYOUT 
-%%%------------------------------------------------------------------------------
-
-\setlrmarginsandblock{0.15\paperwidth}{*}{1} % Left and right margin
-\setulmarginsandblock{0.2\paperwidth}{*}{1}  % Upper and lower margin
-\checkandfixthelayout
-
-%%% SECTIONAL DIVISIONS
-%%%------------------------------------------------------------------------------
-
-\maxsecnumdepth{subsubsection} % Subsections (and higher) are numbered
-\setsecnumdepth{subsubsection}
-
-\makeatletter %
-\makechapterstyle{standard}{
-  \setlength{\beforechapskip}{0\baselineskip}
-  \setlength{\midchapskip}{1\baselineskip}
-  \setlength{\afterchapskip}{2\baselineskip}
-  \renewcommand{\chapterheadstart}{\vspace*{\beforechapskip}}
-  \renewcommand{\chapnamefont}{\centering\normalfont\huge}
-  \renewcommand{\printchaptername}{\chapnamefont \@chapapp}
-  \renewcommand{\chapternamenum}{\space}
-  \renewcommand{\chapnumfont}{\normalfont\huge}
-  \renewcommand{\printchapternum}{\chapnumfont \thechapter}
-  \renewcommand{\afterchapternum}{\par\nobreak\vskip \midchapskip}
-  \renewcommand{\printchapternonum}{\vspace*{\midchapskip}\vspace*{5mm}}
-  \renewcommand{\chaptitlefont}{\centering\bfseries\HUGE}
-  \renewcommand{\printchaptertitle}[1]{\chaptitlefont ##1}
-  \renewcommand{\afterchaptertitle}{\par\nobreak\vskip \afterchapskip}
-}
-\makeatother
-
-\chapterstyle{standard}
-
-\setsecheadstyle{\normalfont\huge\bfseries}
-\setsubsecheadstyle{\normalfont\large\bfseries}
-\setparaheadstyle{\normalfont\normalsize\bfseries}
-\setparaindent{0pt}\setafterparaskip{0pt}
-
-%%% FLOATS AND CAPTIONS
-%%%------------------------------------------------------------------------------
-
-\makeatletter                  % You do not need to write [htpb] all the time
-\renewcommand\fps@figure{htbp} %
-\renewcommand\fps@table{htbp}  %
-\makeatother                   %
-
-\captiondelim{\space } % A space between caption name and text
-\captionnamefont{\small\bfseries} % Font of the caption name
-\captiontitlefont{\small\normalfont} % Font of the caption text
-
-\changecaptionwidth          % Change the width of the caption
-\captionwidth{1\textwidth} %
-
-%%% ABSTRACT
-%%%------------------------------------------------------------------------------
-
-\renewcommand{\abstractnamefont}{\normalfont\small\bfseries} % Font of abstract title
-\setlength{\absleftindent}{0.1\textwidth} % Width of abstract
-\setlength{\absrightindent}{\absleftindent}
-
-%%% HEADER AND FOOTER 
-%%%------------------------------------------------------------------------------
-
-\makepagestyle{standard} % Make standard pagestyle
-
-\makeatletter                 % Define standard pagestyle
-\makeevenfoot{standard}{}{}{} %
-\makeoddfoot{standard}{}{}{}  %
-\makeevenhead{standard}{\bfseries\thepage\normalfont\qquad\small\leftmark}{}{}
-\makeoddhead{standard}{}{}{\small\rightmark\qquad\bfseries\thepage}
-% \makeheadrule{standard}{\textwidth}{\normalrulethickness}
-\makeatother                  %
-
-\makeatletter
-\makepsmarks{standard}{
-\createmark{chapter}{both}{shownumber}{\@chapapp\ }{ \quad }
-\createmark{section}{right}{shownumber}{}{ \quad }
-\createplainmark{toc}{both}{\contentsname}
-\createplainmark{lof}{both}{\listfigurename}
-\createplainmark{lot}{both}{\listtablename}
-\createplainmark{bib}{both}{\bibname}
-\createplainmark{index}{both}{\indexname}
-\createplainmark{glossary}{both}{\glossaryname}
-}
-\makeatother                               %
-
-\makepagestyle{chap} % Make new chapter pagestyle
-
-\makeatletter
-\makeevenfoot{chap}{}{\small\bfseries\thepage}{} % Define new chapter pagestyle
-\makeoddfoot{chap}{}{\small\bfseries\thepage}{}  %
-\makeevenhead{chap}{}{}{}   %
-\makeoddhead{chap}{}{}{}    %
-% \makeheadrule{chap}{\textwidth}{\normalrulethickness}
-\makeatother
-
-\nouppercaseheads
-\pagestyle{standard}               % Choosing pagestyle and chapter pagestyle
-\aliaspagestyle{chapter}{chap} %
-
-%%% NEW COMMANDS
-%%%------------------------------------------------------------------------------
-% custom commands defined in here (must be called before constants)
-\input{Config/commands}
-% get code highlighting parameters
-\input{Config/code_format}
-% custom constants defined in here
-\input{Config/constants}
-
-% Not mine
-\newcommand{\p}{\partial} %Partial
-% Or what ever you want
+\input{Config/packages}
 
 
-%%% MARGIN
+%%% Developer or User doc
+%%%-------------------------------------------------------------------------------
+\newif\ifdevguide
+\devguidefalse
+
+%%% Preample
+%%%-------------------------------------------------------------------------------
+\input{Config/preamble}
+
+%%% MARGIN TEXT
 %%%------------------------------------------------------------------------------
 \SetBgContents{\MyIDuser}% Set contents
-\SetBgPosition{-0.75cm,-0.3\textheight}% Select location
+\SetBgPosition{-1.5cm,-0.3\textheight}% Select location
 \SetBgOpacity{1.0}% Select opacity
 \SetBgAngle{90.0}% Select rotation of logo
 \SetBgScale{1.25}% Select scale factor of logo
 
-%%% TABLE OF CONTENTS
+
+%%% MARGIN COLOR
 %%%------------------------------------------------------------------------------
 
-\maxtocdepth{subsection} % Only parts, chapters and sections in the table of contents
-\settocdepth{subsection}
+\newlength\myborder
+\myborder=40pt%please adjust the border width :-)
 
-% \maxtocdepth{section} % Only parts, chapters and sections in the table of contents
-% \settocdepth{section}
+\pagecolor{yellow!20}
 
-\AtEndDocument{\addtocontents{toc}{\par}} % Add a \par to the end of the TOC
-
-\renewcommand*{\cftappendixname}{Appendix\space}
-
-%%% INTERNAL HYPERLINKS
-%%%-------------------------------------------------------------------------------
-
-\usepackage{hyperref}   % Internal hyperlinks
-\hypersetup{
-    pdfauthor={Neil James Cook},
-    pdfcreator={Neil James Cook},
-    pdftitle={SPIRou User Guide},
-    pdfsubject={SPIRou DRS},
-    pdfkeywords={SPIRou, DRS, Pipeline},
-    colorlinks=true,         % false: boxed links; true: colored links
-    linkcolor=blue,          % color of internal links (change box color with linkbordercolor)
-    citecolor=Maroon,        % color of links to bibliography
-    filecolor=blue,          % color of file links
-    urlcolor=blue,           % color of external links
-    plainpages=false,       
+\AddToShipoutPictureBG
+{%
+    \AtPageLowerLeft
+    {%
+        \color{white}%
+    \hspace{\myborder}%
+    \rule[\myborder]{\paperwidth-2\myborder}{\paperheight-2\myborder}%
+  }%
 }
-\usepackage{memhfixc}   %
-
-
 
 %%% THE DOCUMENT
 %%% Where all the important stuff is included!
@@ -223,29 +85,29 @@ openany, % A chapter may start on either a recto or verso page.
 \tableofcontents*
 \clearpage
 
-% Introduction
-\input{Chapters/IntroductionUser}
-
 
 %%%-------------------------------------------------------------------------------
 \mainmatter
 % Define the chapters here
 %%%-------------------------------------------------------------------------------
 
-% Chapter 1: Installation guide
+% Chapter: Introduction
+\input{Chapters/Introduction}
+
+% Chapter: Installation guide
 \input{Chapters/Installation}
 
-% Chapter 2: Data Architecture
+% Chapter: Data Architecture
 \input{Chapters/Data_Architecture}
 
-% Chapter 3: Using the DRS
+% Chapter: Using the DRS
 \input{Chapters/Using_the_DRS}
 
-% Chapter 4: User Modifiable Variables
-\input{Chapters/User_modifiable_variables}
+% Chapter: User Modifiable Variables
+\input{Chapters/Variables}
 
-% Chapter 5: The Recipes
-\input{Chapters/The_recipes_user}
+% Chapter: The Recipes
+\input{Chapters/The_recipes}
 
 % % Appendi
 % \appendix

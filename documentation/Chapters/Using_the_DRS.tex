@@ -4,3 +4,252 @@
 \label{chapter:using_the_drs}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+There are two ways to run the DRS recipes. The first (described in Section \ref{chapter:using_the_drs:direct}) directly calls the code and inputs arguments (either from the command line or from python), the second way is to import the recipes in a python script and define arguments in a call to a function (see Section \ref{chapter:using_the_drs:script}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Running the DRS recipes directly}
+\label{chapter:using_the_drs:direct}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As in Chapter \ref{chapter:installation}, using Linux or \mac one can run DRS recipes from the command line or from python, in windows one is required to be in python before running the scipts. Below we use \calDARK as an example:
+\begin{itemize}
+\item To run from command line type:
+\begin{cmdbox}
+(*\calDARK*) (*\definevariablecmd{YYMMDD}*) (*\definevariablecmd{Filenames}) 
+\end{cmdbox}
+
+\item To run from python/ipython from the command line type:
+\begin{cmdbox}
+python (*\calDARK*) (*\definevariablecmd{YYMMDD}*) (*\definevariablecmd{Filenames}) 
+ipython (*\calDARK*) (*\definevariablecmd{YYMMDD}*) (*\definevariablecmd{Filenames})
+\end{cmdbox}
+
+\item To run from ipython, open ipython and type:
+\begin{pythonbox}
+@run@ (*\calDARK*) (*\definevariable{YYMMDD}*) (*\definevariable{Filenames})
+\end{pythonbox}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Running the DRS recipes from a python script}
+\label{chapter:using_the_drs:script}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In any operating system one can also import a recipe and call a function to run the code. This is useful in batch operations, timing tests and unit tests for example. Below we use \calDARK as an example:
+
+\begin{pythonbox}
+# import the recipe
+import cal_DARK_spirou
+# define the night folder name
+night_name = "20170710"
+# define the file(s) to run through the code
+files = ['dark_dark02d406.fits']
+# run code
+cal_validate_spirou.main(night_name=night_name, files=files)
+\end{pythonbox}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Working example of the code for SPIRou}
+\label{chapter:using_the_drs:working_example}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ----------------------------------------------
+\subsection{Overview}
+\label{chapter:using_the_drs:working_example:overview}
+% ----------------------------------------------
+
+For this example all files are from:
+\begin{cmdbox}
+spirou@10.102.14.81:/data/RawImages/H2RG-AT4/AT4-04/2017-07-10_15-36-18/ramps/
+\end{cmdbox} 
+
+\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicity in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{DATA\_RAW\_ROOT} (\textcolor{blue}{/drs/data/raw} in our case).
+
+\noindent and we will also need the current WAVE file from here:
+\begin{cmdbox}
+spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
+\end{cmdbox}
+
+\noindent which needs to be placed in the \definevariable{DRS\_CALIB\_DB} dirctory (\textcolor{blue}{/drs/data/calibDB} in our case).
+
+\noindent Starting with RAMP files and ending with extracted orders and calculated drifts we need to run six codes:
+\begin{enumerate}
+\item \calDARK \hfill (See Section \ref{ch:the_recipes:cal_DARK_spirou})
+\item \callocRAW ($\times$2) \hfill (See Section \ref{ch:the_recipes:cal_loc_RAW_spirou})
+\item \calSLIT \hfill (See Section \ref{ch:the_recipes:cal_SLIT_spirou})
+\item \calFFraw ($\times$2) \hfill (See Section \ref{ch:the_recipes:cal_FF_RAW_spirou})
+\item (add spirou\_wave\_ini3.fits to calibDB) 
+\item \calextractRAWAB and \calextractRAWC (many times) \hfill (See Section \ref{ch:the_recipes:cal_extract_RAW_spirou})
+\item \calDRIFTRAW \hfill (See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou})
+\end{enumerate}
+
+
+
+
+
+% ----------------------------------------------
+\subsection{Run through from command line/python shell (Linux and macOS)}
+\label{chapter:using_the_drs:working_example:run_cmd}
+% ----------------------------------------------
+
+As long as all codes are excutable (see Section \ref{ch:install:installunix:executable}) one can run all codes from the command line or if not excutable or one has a preference for python one can run the following with `python \{command\}', `ipython \{command\}' or indeed through an interactive ipython session using `run \{command\}'.
+
+\begin{enumerate}
+
+\item run the dark extraction on the `dark\_dark' file:
+\begin{cmdbox}
+cal_DARK_spirou.py 20170710 dark_dark02d406.fits
+\end{cmdbox}
+
+\item run the order localisation on the `dark\_flat' files:
+\begin{cmdbox}
+cal_loc_RAW_spirou.py 20170710 dark_flat02f10.fits dark_flat03f10.fits dark_flat04f10.fits dark_flat05f10.fits dark_flat06f10.fits
+\end{cmdbox}
+
+\item run the order localisation on the `flat\_dark' files:
+\begin{cmdbox}
+cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits flat_dark03f10.fits flat_dark04f10.fits flat_dark05f10.fits flat_dark06f10.fits
+\end{cmdbox}
+
+\item run the slit calibration on the `fp\_fp' files.
+\begin{cmdbox}
+cal_SLIT_spirou.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+\end{cmdbox}
+
+\item run the flat field creation on the `dark\_flat' files:
+
+\begin{note}
+if using same files as above you will get an error message when running the file.
+
+\noindent To solve this open the `\masterCALIBDBfile' file located in \textcolor{blue}{\{DATA\_ROOT\_CALIB\}}. Edit the unix date in the line that begins `TILT' so that it is less than or equal to the unix date on rows `ORDER\_PROFIL\_AB' (i.e. easiest to change it to the date on the `ORDER\_PROFIL\_AB')
+
+\noindent The human date format must match the unix date thus both must be changed if one is modified.
+
+\noindent i.e. the `\masterCALIBDBfile' file should look go from
+\begin{textbox}
+DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
+ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
+LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
+ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
+LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
+TILT 20170710 fp_fp02a203_tilt.fits @07/10/17/17:25:15 1499707515.0@
+\end{textbox}
+\noindent to this:
+\begin{textbox}
+DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
+ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
+LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
+ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
+LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
+TILT 20170710 fp_fp02a203_tilt.fits @07/10/17/17:07:08 1499706428.0@
+\end{textbox}
+\end{note}
+
+\begin{cmdbox}
+cal_FF_RAW_spirou.py 20170710 dark_flat02f10.fits dark_flat03f10.fits dark_flat04f10.fits dark_flat05f10.fits dark_flat06f10.fits
+\end{cmdbox}
+
+\newpage
+
+\item Currently we do not create a new wavelength calibration file for this run. Therefore we need one (as stated in the above section). We use the one from here:
+\begin{cmdbox}
+spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
+\end{cmdbox}
+
+\noindent then place it in the \definevariable{DATA\_ROOT\_CALIB} folder. You will also need to edit the `\masterCALIBDBfile' file located in \definevariable{DATA\_ROOT\_CALIB}. 
+
+\noindent Add the folloing line to `\masterCALIBDBfile'
+\begin{textbox}
+@WAVE 20170710 spirou_wave_ini3.fits 07/10/17/17:03:50 1499706230.0@
+\end{textbox}
+
+\noindent and the `master\_calib\_SPIROU.txt' should look like this:
+\begin{textbox}
+DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
+ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
+LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
+ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
+LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
+TILT 20170710 fp_fp02a203_tilt.fits 07/10/17/17:07:08 1499706428.0
+@WAVE 20170710 spirou_wave_ini3.fits 07/10/17/17:03:50 1499706230.0@
+\end{textbox}
+
+\item run the extraction files on the `hcone\_dark', `dark\_hcone', `hcone\_hcone', `dark\_dark\_AHC1', `hctwo\_dark', `dark\_hctwo', `hctwo-hctwo', `dark\_dark\_AHC2' and `fp\_fp'  files. For example for the `fp\_fp' files:
+\begin{cmdbox}
+cal_extract_RAW_spirouAB.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+cal_extract_RAW_spirouC.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+\end{cmdbox}
+
+\item run the drift calculation on the `fp\_fp' files:
+\begin{cmdbox}
+@cal_DRIFT_RAW_spirou.py 20170710 @fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+\end{cmdbox}
+
+\end{enumerate}
+
+% ----------------------------------------------
+\clearpage
+\newpage
+\subsection{Run through python script}
+\label{chapter:using_the_drs:working_example:run_python}
+% ----------------------------------------------
+
+The process is in the same order as Section \ref{chapter:using_the_drs:working_example:run_cmd}, including changing the date on the `TILT' keyword and adding the `WAVE' line, and adding the wave file to the calibDB folder).
+
+\begin{pythonbox}
+import cal_DARK_spirou, cal_loc_RAW_spirou
+import cal_SLIT_spirou, cal_FF_RAW_spirou
+import cal_extract_RAW_spirou, cal_DRIFT_RAW_spirou
+import matplotlib.pyplot as plt
+# define constants
+NIGHT_NAME = '20170710'
+# cal_dark_spirou
+files = ['dark_dark02d406.fits']          # set up files
+cal_DARK_spirou.main(NIGHT_NAME, files)   # run cal_dark_spirou
+plt.close('all')                          # close graphs
+# cal_loc_RAW_spirou - flat_dark
+files = ['flat_dark02f10.fits', 'flat_dark03f10.fits', 'flat_dark04f10.fits',
+         'flat_dark05f10.fits','flat_dark06f10.fits']
+cal_loc_RAW_spirou.main(NIGHT_NAME, files)
+plt.close('all')
+# cal_loc_RAW_spirou - dark_flat
+files = ['dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits', 
+         'dark_flat05f10.fits', 'dark_flat06f10.fits']
+cal_loc_RAW_spirou.main(NIGHT_NAME, files)
+plt.close('all')
+# cal_SLIT_spirou
+files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
+cal_SLIT_spirou.main(NIGHT_NAME, files)
+plt.close('all')
+# cal_FF_RAW_spirou - flat_dark
+files = ['flat_dark02f10.fits', 'flat_dark03f10.fits','flat_dark04f10.fits',
+         'flat_dark05f10.fits', 'flat_dark06f10.fits']
+cal_FF_RAW_spirou.main(NIGHT_NAME, files)
+plt.close('all')
+# cal_FF_RAW_spirou - dark_flat
+files = ['dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits', 
+         'dark_flat05f10.fits', 'dark_flat06f10.fits']
+cal_FF_RAW_spirou.main(NIGHT_NAME, files)
+plt.close('all')
+# cal_extract_RAW_spirou - fp_fp AB
+files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
+cal_extract_RAW_spirou.main(NIGHT_NAME, files, 'AB')
+plt.close('all')
+# cal_extract_RAW_spirou - fp_fp C
+files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
+cal_extract_RAW_spirou.main(NIGHT_NAME, files, 'C')
+plt.close('all')
+# test cal_DRIFT_RAW_spirou
+files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
+cal_DRIFT_RAW_spirou.main(NIGHT_NAME, files)
+plt.close('all')
+
+\end{pythonbox}

@@ -1,6 +1,6 @@
 # SPIRou DRS in python 3
 
-![picture alt](./documentation/figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
+![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
 
 
 ## Table of Contents
@@ -312,7 +312,7 @@
         - This gives approximately the same result (with small deviations due to the FT of a topcat function not being perfect).
         - The function can be turned back to the original 'manual' mode by using `mode='manual'` but is slower ()by a factor of ~x8)
         - The figure below shows the differences (To view interactively use: `spirouLOCOR.__test_smoothed_boxmean_image(image, size)`).
-            ![picture alt](./documentation/figures/OrderProfileCreation_convolve_vs_manual.jpg "Produced by running spirouLOCOR.__test_smoothed_boxmean_image")
+            ![picture alt](./documentation/Figures/OrderProfileCreation_convolve_vs_manual.jpg "Produced by running spirouLOCOR.__test_smoothed_boxmean_image")
 
 - added storage dictionary to store (and pass around) all variables created
     - `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
