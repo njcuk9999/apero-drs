@@ -1,16 +1,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \chapter{Data Architecture}
-\label{chapter:data_architecture}
+\label{ch:data_architecture}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Described below is the file structure, after correct installation (Chapter \ref{chapter:installation}).
 
-% ---------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
 \section{Installed file structure}
-\label{chapter:data_architecture:folder_layout}
-% ---------------------------------------------------------
+\label{ch:data_architecture:folder_layout}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The file structure should look as follows:
 \begin{tcustomdir}
@@ -38,36 +41,33 @@ The file structure should look as follows:
 \noindent * This is the recommended file structure and raw, reduced, calibDB, msg and tmp can be changed using the \definevariable{DATA\_ROOT\_RAW}, \definevariable{DATA\_ROOT\_REDUCED}, \definevariable{DATA\_ROOT\_CALIB}, \definevariable{DATA\_ROOT\_MSG}, and \definevariable{DATA\_ROOT\_TMP} variables in Section \ref{ch:install:setup}.
 \end{tcustomdir}
 
-\newpage
 \noindent i.e. for the paths given in Section \ref{ch:install:setup} this would be:
 \begin{tcustomdir}
 \customdirtree{%
 .1 drs.
 .2 INTROOT.
 .3 bin.
-.4 \DTcomment{Recipes}.
 .3 config.
-.4 \DTcomment{Configuration files}.
 .3 documentation.
-.4 \DTcomment{Documentation files}.
 .3 SpirouDRS.
-.4 \DTcomment{The DRS Module}.
 .2 data.
 .3 calibDB.
 .3 msg.
 .3 raw.
-.4 YYYYMMDD \DTcomment{Observation directory}.
-.5 \DTcomment{Raw observation files}. 
+.4 YYYYMMDD.
 .3 reduced.
 .3 tmp.
 }
 \end{tcustomdir}
 
 
-% ------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
 \section{The Installation root directory}
-\label{chapter:data_architecture:install_root_folder}
-% ------------------------------------------------------------------------
+\label{ch:data_architecture:install_root_folder}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The \definevariable{INSTALL\_ROOT} contains all the installed recipes, modules functions, documentation and configuration files needed to run the DRS. The file structure is set up as below: 
 
@@ -75,20 +75,16 @@ The \definevariable{INSTALL\_ROOT} contains all the installed recipes, modules f
 \customdirtree{%
 .1 \{dir\}.
 .2 \{DRS\_ROOT\}.
-.3 bin.
-.4 \DTcomment{Recipes}.
-.3 config.
-.4 \DTcomment{Configuration files}.
-.3 documentation.
-.4 \DTcomment{Documentation files}.
-.3 SpirouDRS.
-.4 \DTcomment{The DRS Module}.
+.3 bin \DTcomment{Recipes}.
+.3 config \DTcomment{Configuration files}.
+.3 documentation \DTcomment{Documentation files}.
+.3 SpirouDRS \DTcomment{The DRS Module}.
 }
 \end{tcustomdir}
 
 % ------------------------------------------------------------------------
 \subsection{The bin directory}
-\label{chapter:data_architecture:install_root_folder:bin_folder}
+\label{ch:data_architecture:install_root_folder:bin_folder}
 % ------------------------------------------------------------------------
 
 The bin directory is located in the \definevariable{INSTALL\_ROOT} directory. This contains all the recipes that can be used. A detailed description of all recipes can be found in Chapter \ref{ch:the_recipes} but are listed here for completeness.
@@ -107,9 +103,12 @@ The bin directory is located in the \definevariable{INSTALL\_ROOT} directory. Th
 \end{itemize}
 \end{thighlight}
 
+% only show this section is developer guide
+\ifdevguide
+
 % ------------------------------------------------------------------------
 \subsection{The SPIROU module directory}
-\label{chapter:data_architecture:install_root_folder:module_folder}
+\label{ch:data_architecture:install_root_folder:module_folder}
 % ------------------------------------------------------------------------
 
 The SpirouDRS directory is the SPIROU DRS package, it contains all sub-packages that contain all the worker functions and code associated with the recipes. The file structure is as follows:
@@ -117,23 +116,109 @@ The SpirouDRS directory is the SPIROU DRS package, it contains all sub-packages 
 \begin{tcustomdir}
 \customdirtree{%
 .1 SpirouDRS.
-.2 spirouBACK.
-.3 \DTcomment{The SPIRou background module}.
-.2 spirouCDB.
-.3 \DTcomment{The SPIRou calibration database module}.
-.2 spirouConfig.
-.3 \DTcomment{The SPIRou configuration tools module}.
-.2 spirouEXTOR.
-.3 \DTcomment{The SPIRou extraction module}.
-.2 spirouFLAT.
-.3 \DTcomment{The SPIRou Flat field module}.
-.2 spirouImage.
-.3 \DTcomment{The SPIRou image module}.
-.2 spirouLOCOR.
-.3 \DTcomment{The SPIRou localization module}.
-.2 spirouRV.
-.3 \DTcomment{The SPIRou radial velocity module}.
-.2 spirouStartup.
-.3 \DTcomment{The SPIRou start up tools module}.
+.2 spirouBACK \DTcomment{The SPIRou background module}.
+.2 spirouCDB \DTcomment{The SPIRou calibration database module}.
+.2 spirouConfig \DTcomment{The SPIRou configuration tools module}.
+.2 spirouEXTOR \DTcomment{The SPIRou extraction module}.
+.2 spirouFLAT \DTcomment{The SPIRou Flat field module}.
+.2 spirouImage \DTcomment{The SPIRou image module}.
+.2 spirouLOCOR \DTcomment{The SPIRou localization module}.
+.2 spirouRV \DTcomment{The SPIRou radial velocity module}.
+.2 spirouStartup \DTcomment{The SPIRou start up tools module}.
 }
 \end{tcustomdir}
+
+The modules are described in detail in Chapter \ref{ch:the_module}.
+
+% end developer guide only
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{The data root directory}
+\label{ch:data_architecture:data_root_folder}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This is the directory where all the data should be stored. The default and recommended design is to have \definevariable{DATA\_ROOT\_RAW}, \definevariable{DATA\_ROOT\_REDUCED}, \definevariable{DATA\_ROOT\_CALIB}, 
+\definevariable{DATA\_ROOT\_MSG}, and \definevariable{DATA\_ROOT\_TMP} as sub-directories of \definevariable{DATA\_ROOT}. However as in Section \ref{ch:install:setup}. these sub-directories can be defined elsewhere.
+
+% ------------------------------------------------------------------------
+\subsection{The raw and reduced data directories}
+\label{ch:data_architecture:data_root_folderraw_folder}
+% ------------------------------------------------------------------------
+The raw observed data is stored under the \definevariable{DATA\_ROOT\_RAW} path, the files are stored by night in the form \constantFolderDateFormat. \\
+
+\noindent The file structure can be seen below:
+\begin{tcustomdir}
+\customdirtree{%
+.1 \{DATA\_ROOT\_RAW\}.
+.2 YYYYMMDD \DTcomment{night\_repository}.
+.3 \DTcomment{Raw observation files}. 
+.3 dark\_dark\{name\}.fits.
+.3 dark\_flat\{name\}.fits.
+.3 flat\_dark\{name\}.fits.
+.3 fp\_fp\{name\}.fits.
+}
+\end{tcustomdir}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{The calibration database directory}
+\label{ch:data_architecture:calibDB}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{tcustomdir}
+\customdirtree{%
+.1 \{DATA\_ROOT\}.
+.2 calibDB or \{DATA\_ROOT\_CALIB\}.
+.3 master\_calib\_SPIROU.txt.
+.3 \DTcomment{The calibration fits files}. 
+}
+\end{tcustomdir}
+\noindent The calibDB contains all the calibration files that pass the quality tests and a test file `\masterCALIBDBfile'. It is located at \definevariable{DATA\_ROOT\_CALIB} or if this is not defined is located by default at the \definevariable{DATA\_ROOT} directory.
+
+\noindent Each line in this file is a unique calibration file and lines are formatted in the following manner:
+
+\begin{textbox}
+@{key}@ @{night_repository}@ @{filename}@ @{human readable date}@ @{unix time}@ 
+\end{textbox}
+\begin{thighlight}
+\noindent where
+\begin{itemize}
+\item \definekeyword{key} is a code assigned for each type of calibration file. Currently accepted keys are:
+\begin{itemize}
+\item DARK - Created from \calDARK
+\item ORDER\_PROFIL\_\definevariable{fiber} - Created in \callocRAW
+\item LOC\_C - Created in \callocRAW
+\item TILT - Created in \calSLIT
+\item FLAT\_\definevariable{fiber} - Created in \calFFraw
+\item WAVE - Currently manually added
+\end{itemize}
+
+\item \definekeyword{night\_repository} is the raw data observation directory (in \definevariable{DATA\_ROOT\_RAW}) normally in the form \constantFolderDateFormat.
+
+\item \definekeyword{filename} is the filename of the calibration file (located in the calibDB).
+
+\item \definekeyword{human readable date} is the date in DD/MM/YY/HH:MM:SS.ss format taken from the header keyword `\constantAcqtimeKey' of the file that created the calibration file.
+
+\item \definekeyword{unix time} is the time (as in \definekeyword{human readable date}) but in unix time (in seconds).
+
+\end{itemize}
+\end{thighlight}
+
+\noindent An example working \masterCALIBDBfile is shown below (assuming the listed files are present in \definevariable{DATA\_ROOT\_CALIB})
+\begin{textbox}
+@DARK@ 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
+@ORDER_PROFIL_C@ 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
+@LOC_C@ 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
+@ORDER_PROFIL_AB@ 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
+@LOC_AB@ 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
+@TILT@ 20170710 fp_fp02a203_tilt.fits 07/10/17/17:25:15 1499705515.0
+@FLAT_C@ 20170710 dark_flat02f10_flat_C.fits 07/10/17/17:03:50 1499706230.0
+@WAVE@ 20170710 spirou_wave_ini3.fits 07/10/17/17:03:50 1499706230.0
+\end{textbox}

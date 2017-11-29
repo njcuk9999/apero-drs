@@ -1,0 +1,116 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\ifdevguide
+\chapter{Variables}
+\label{ch:variables}
+\else
+\chapter{User modifiable variables}
+\label{ch:variables}
+\fi
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+To better understand the variables in the DRS we have laid out each variable in the following way:
+
+\begin{itemize}
+\item \ParameterEntry{Variable title}{Description of the variable}{VARIABLE\_NAME}
+{Default Value}{The code used a variable is used in}{The place where the variable can be found}
+{
+Who should be able to change this variable, levels are as follows:
+\begin{itemize}
+	\item Public: Everyone (including the user)
+	\item Private: Only the developer
+\end{itemize}
+}
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Global variables}
+\label{ch:variables:global}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{itemize}
+
+\item \ParameterEntry{DRS Name}
+{Defines the data reduction software name}
+{DRS\_NAME}{SPIROU}{All Recipes}{\configtxtfile}{Public}
+\DevNote{Currently Public variable should be private.}
+
+\item \ParameterEntry{Plotting switch}
+{Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots)}
+{DRS\_PLOT}{1}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{Print message level}
+{The level of messages to print, values can be as follows:
+\begin{itemize}
+	\item "all" -- prints all events
+	\item "info" -- prints info, warning and error events
+	\item "warning" -- prints warning and error events
+	\item "error" -- print only error events
+\end{itemize}
+}
+{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{Log message level}
+{The level of messages to print, values can be as follows:
+\begin{itemize}
+	\item "all" -- prints all events
+	\item "info" -- prints info, warning and error events
+	\item "warning" -- prints warning and error events
+	\item "error" -- print only error events
+\end{itemize}
+}
+{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}
+
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Directory variables}
+\label{ch:variables:directory}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+These were mentioned in Section \ref{ch:install:setup} and are located in teh `\configtxtfile' file. The `\configtxtfile' file is located in the \InstallDIR in the config folder (i.e. at \InstallDIR{/config/config.txt}). \\
+
+Currently the directory variables are:
+
+\begin{itemize}
+
+\item \ParameterEntry{The data directory}
+{Defines the path to the data directory}
+{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{The installation directory}
+{Defines the instllation directory (\InstallDIR)}
+{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{The raw data directory}
+{Defines the directory that the reduced data should be saved to/read from}
+{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{The reduced data directory}
+{Defines the directory that the reduced data should be saved to/read from}
+{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{The calibration database and calibration file directory}
+{Defines the directory that the calibration files and database should be saved to/read from}
+{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{The log directory}
+{Defines the directory that the log messages are stored in}
+{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}
+
+\item \ParameterEntry{The working directory}
+{Defines the working directory}
+{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}
+
+\end{itemize}
+
