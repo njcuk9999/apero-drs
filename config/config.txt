@@ -4,13 +4,6 @@
 # -----------------------------------------------------------------------------
 # global settings
 # -----------------------------------------------------------------------------
-
-# Define the DRS name
-DRS_NAME = SPIROU
-
-# Define the DRS version
-DRS_VERSION = 0.0.1
-
 # Whether to plot (True or 1 to plot)
 DRS_PLOT = 1
 
