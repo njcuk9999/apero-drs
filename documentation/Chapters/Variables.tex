@@ -100,33 +100,6 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 {Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots). Value must be an integer (0 or 1) or boolean (True or False)}
 {DRS\_PLOT}{1}{All Recipes}{\configtxtfile}{Public}
 
-% PRINT_LEVEL
-\item \ParameterEntry{Print message level}
-{The level of messages to print, values can be as follows:
-\begin{itemize}
-	\item "all" -- prints all events
-	\item "info" -- prints info, warning and error events
-	\item "warning" -- prints warning and error events
-	\item "error" -- print only error events
-\end{itemize}
-Value must be a valid string.
-}
-{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
-
-% LOG_LEVEL
-\item \ParameterEntry{Log message level}
-{The level of messages to print, values can be as follows:
-\begin{itemize}
-	\item "all" -- prints all events
-	\item "info" -- prints info, warning and error events
-	\item "warning" -- prints warning and error events
-	\item "error" -- print only error events
-\end{itemize}
-Value must be a valid string.
-}
-{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
-
-
 % ic_debug
 \item \ParameterEntry{Debug mode}
 {Enable various numeric debug codes (0 for no debug). Value must be an integer where:
@@ -429,8 +402,185 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \end{itemize}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Localization calibration variables}
+\label{ch:variables:localization}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
 % % 
 % \item \ParameterEntry{}
 % {}
 % {}{}
 % {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Slit calibration variables}
+\label{ch:variables:slit}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Flat fielding calibration variables}
+\label{ch:variables:flatfielding}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Extraction calibration variables}
+\label{ch:variables:extraction}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Drift calibration variables}
+\label{ch:variables:drift}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Quality control variables}
+\label{ch:variables:qualitycontrol}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+\ifdevguide
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Formatting variables}
+\label{ch:variables:qualitycontrol}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Logging and printing variables}
+\label{ch:variables:qualitycontrol}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% PRINT_LEVEL
+\item \ParameterEntry{Print message level}
+{The level of messages to print, values can be as follows:
+\begin{itemize}
+	\item "all" -- prints all events
+	\item "info" -- prints info, warning and error events
+	\item "warning" -- prints warning and error events
+	\item "error" -- print only error events
+\end{itemize}
+Value must be a valid string.
+}
+{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
+
+% LOG_LEVEL
+\item \ParameterEntry{Log message level}
+{The level of messages to print, values can be as follows:
+\begin{itemize}
+	\item "all" -- prints all events
+	\item "info" -- prints info, warning and error events
+	\item "warning" -- prints warning and error events
+	\item "error" -- print only error events
+\end{itemize}
+Value must be a valid string.
+}
+{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
+
+\end{itemize}
