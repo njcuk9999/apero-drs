@@ -35,16 +35,26 @@ Who should be able to change this variable, levels are as follows:
 
 
 \begin{itemize}
-
+% DRS_NAME
+\ifdevguide
 \item \ParameterEntry{DRS Name}
 {Defines the data reduction software name}
-{DRS\_NAME}{SPIROU}{All Recipes}{\configtxtfile}{Public}
-\DevNote{Currently Public variable should be private.}
+{DRS\_NAME}{SPIROU}{All Recipes}{\spirouCONST}{Private}
+\fi
 
+% DRS_VERSION
+\ifdevguide
+\item \ParameterEntry{DRS Version}
+{Defines the data reduction software version}
+{DRS\_VERSION}{SPIROU}{All Recipes}{\spirouCONST}{Private}
+\fi
+
+% DRS_PLOT
 \item \ParameterEntry{Plotting switch}
 {Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots)}
-{DRS\_PLOT}{1}{All Recipes}{\configtxtfile}
+{DRS\_PLOT}{1}{All Recipes}{\configtxtfile}{Public}
 
+% PRINT_LEVEL
 \item \ParameterEntry{Print message level}
 {The level of messages to print, values can be as follows:
 \begin{itemize}
@@ -54,8 +64,9 @@ Who should be able to change this variable, levels are as follows:
 	\item "error" -- print only error events
 \end{itemize}
 }
-{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}
+{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
 
+% LOG_LEVEL
 \item \ParameterEntry{Log message level}
 {The level of messages to print, values can be as follows:
 \begin{itemize}
@@ -65,7 +76,7 @@ Who should be able to change this variable, levels are as follows:
 	\item "error" -- print only error events
 \end{itemize}
 }
-{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}
+{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
 
 
 \end{itemize}
@@ -84,33 +95,34 @@ Currently the directory variables are:
 
 \begin{itemize}
 
+
 \item \ParameterEntry{The data directory}
 {Defines the path to the data directory}
-{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}
+{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}{Public}
 
 \item \ParameterEntry{The installation directory}
 {Defines the instllation directory (\InstallDIR)}
-{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}
+{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}{Public}
 
 \item \ParameterEntry{The raw data directory}
 {Defines the directory that the reduced data should be saved to/read from}
-{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}
+{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}{Public}
 
 \item \ParameterEntry{The reduced data directory}
 {Defines the directory that the reduced data should be saved to/read from}
-{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}
+{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}{Public}
 
 \item \ParameterEntry{The calibration database and calibration file directory}
 {Defines the directory that the calibration files and database should be saved to/read from}
-{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}
+{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}{Public}
 
 \item \ParameterEntry{The log directory}
 {Defines the directory that the log messages are stored in}
-{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}
+{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}{Public}
 
 \item \ParameterEntry{The working directory}
 {Defines the working directory}
-{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}
+{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}{Public}
 
 \end{itemize}
 

@@ -33,6 +33,10 @@ def PACKAGE():
     package = 'SpirouDRS'
     return package
 
+def NAME():
+    drs_name = 'SPIROU'
+    return drs_name
+
 
 def VERSION():
     # Module Version (Used in all sub-packages)
