@@ -14,6 +14,7 @@
 To better understand the variables in the DRS we have laid out each variable in the following way:
 
 \begin{itemize}
+
 \item \ParameterEntry{Variable title}{Description of the variable}{VARIABLE\_NAME}
 {Default Value}{The code used a variable is used in}{The place where the variable can be found}
 {
@@ -23,8 +24,53 @@ Who should be able to change this variable, levels are as follows:
 	\item Private: Only the developer
 \end{itemize}
 }
+
 \end{itemize}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Variable file locations}
+\label{ch:variables:location}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ifdevguide
+\subsection{User modifiable variables}
+\fi
+
+The variables are currently stored in two places. The first (\configtxtfile) contains constants that deal with initial set up. These were mentioned in Section \ref{ch:install:setup} and are located in \configtxtfilepath. \\
+
+\noindent The other variables modify how the DRS runs. These are located in \constantsfile\, (located at \constantsfilepath).  \\
+
+
+\ifdevguide
+\subsection{Private variables}
+
+\noindent In addition to the above (user modifiable public variable files) there are several files that will contain all constants that should not be changed by a user (i.e. static variables that are set and changed only in development). These are described below:
+
+\begin{itemize}
+
+	\item \textbf{Keywords:} The keywords for header input and output are stored in \spirouKeywords. This contains keyword definitions in the form of a python list:  \\
+
+	\begin{pythonbox}
+	kw_VARIABLE = ['KEYWORD', 'Default value', 'Comment']
+	\end{pythonbox}
+
+	\noindent where the 'KEYWORD' is the key in the FITs REC header file, with the value and comment defined in the next positions. i.e. in a FITs REC header reader one would expect
+
+	\begin{thighlight}
+	\begin{tabular}{l c r c l}
+	KEYWORD & = & Default value & / Comment \\
+	\end{tabular}
+	\end{thighlight}
+
+
+	\item \textbf{Constants and Pseudo-constants:} These are stored in \spirouCONST, they range from simple objects (strings, integers, float, lists, python dictionaries etc) to more complicated `pseudo-constants' that are constructed themselves from other constants. These are kept private (i.e. no mentioned in the user manual) as they should not need be changed by the average user.
+
+\end{itemize}
+
+\fi
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -38,21 +84,478 @@ Who should be able to change this variable, levels are as follows:
 % DRS_NAME
 \ifdevguide
 \item \ParameterEntry{DRS Name}
-{Defines the data reduction software name}
+{Defines the data reduction software name. Value must be a valid string.}
 {DRS\_NAME}{SPIROU}{All Recipes}{\spirouCONST}{Private}
 \fi
 
 % DRS_VERSION
 \ifdevguide
 \item \ParameterEntry{DRS Version}
-{Defines the data reduction software version}
+{Defines the data reduction software version. Value must be a valid string.}
 {DRS\_VERSION}{SPIROU}{All Recipes}{\spirouCONST}{Private}
 \fi
 
 % DRS_PLOT
 \item \ParameterEntry{Plotting switch}
-{Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots)}
+{Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots). Value must be an integer (0 or 1) or boolean (True or False)}
 {DRS\_PLOT}{1}{All Recipes}{\configtxtfile}{Public}
+
+% ic_debug
+\item \ParameterEntry{Debug mode}
+{Enable various numeric debug codes (0 for no debug). Value must be an integer where:
+\begin{itemize}
+\item 0 = No debug
+\item 1 = Level 1 debug \begin{todo}Define level 1 debug\end{todo}
+\item 2 = Level 2 debug \begin{todo}Define level 2 debug\end{todo}
+\end{itemize}
+}
+{ic\_debug}{0}{\callocRAW}{\constantsfile}{Public}
+\DevNote{Should this be public?}
+
+% ic_display_timeout
+\item \ParameterEntry{Plot interval}
+{Set the interval between plots in seconds (for certain interactive graphs). Value must be a valid float larger than zero.}
+{ic\_display\_timeout}{0.5}{\callocRAW}{\constantsfile}{Public}
+\DevNote{Should this be public?}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Directory variables}
+\label{ch:variables:directory}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+\item \ParameterEntry{The data directory}
+{Defines the path to the data directory. Value must be a string containing a valid file location.}
+{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}{Public}
+
+\item \ParameterEntry{The installation directory}
+{Defines the instllation directory (\InstallDIR). Value must be a string containing a valid file location.}
+{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}{Public}
+
+\item \ParameterEntry{The raw data directory}
+{Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
+{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}{Public}
+
+\item \ParameterEntry{The reduced data directory}
+{Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
+{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}{Public}
+
+\item \ParameterEntry{The calibration database and calibration file directory}
+{Defines the directory that the calibration files and database will be saved to/read from. Value must be a string containing a valid file location.}
+{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}{Public}
+
+\item \ParameterEntry{The log directory}
+{Defines the directory that the log messages are stored in. Value must be a string containing a valid file location.}
+{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}{Public}
+
+\item \ParameterEntry{The working directory}
+{Defines the working directory. Value must be a string containing a valid file location.}
+{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Image variables}
+\label{ch:variables:image}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% Resize blue window (has to be defined manually)
+\item 
+\begin{minipage}[t]{\textwidth}
+\textbf{Resizing blue window}
+
+\begin{thighlight}
+\textcolor{brown}{The blue window used in \calDARK. Each value must be a integer between 0 and the maximum array size in each dimension.} 
+
+\begin{tabular}{>{\color{red}}l c l}
+&&\\
+ic\_ccdx\_blue\_low &=& 2048-200 \\
+ic\_ccdx\_blue\_high &=& 2048-1500 \\
+ic\_ccdy\_blue\_low &=& 2048-20 \\
+ic\_ccdy\_blue\_high &=& 2048-350 \\
+&&\\
+\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
+\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
+\ifdevguide
+\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
+\fi
+\end{tabular}
+\end{thighlight}
+\end{minipage}
+
+
+% Resize red window (has to be defined manually)
+\item 
+\begin{minipage}[t]{\textwidth}
+\textbf{Resizing red window}
+
+\begin{thighlight}
+\textcolor{brown}{The blue window used in \calDARK. Each value must be a integer between 0 and the maximum array size in each dimension.} 
+
+\begin{tabular}{>{\color{red}}l c l}
+&&\\
+ic\_ccdx\_red\_low  & =  & 2048-20 \\
+ic\_ccdx\_red\_high &  = &  2048-1750 \\
+ic\_ccdy\_red\_low  & =  & 2048-1570 \\
+ic\_ccdy\_red\_high &  = &  2048-1910 \\
+&&\\
+\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
+\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
+\ifdevguide
+\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
+\fi
+\end{tabular}
+\end{thighlight}
+\end{minipage}
+
+
+
+% Resize image (has to be defined manually)
+\item 
+\begin{minipage}[t]{\textwidth}
+\textbf{Resizing red window}
+
+\begin{thighlight}
+\textcolor{brown}{The blue window used in \calDARK. Each value must be a integer between 0 and the maximum array size in each dimension.} 
+
+\begin{tabular}{>{\color{red}}l c l}
+&&\\
+ic\_ccdx\_low &=& 5 \\
+ic\_ccdx\_high &=& 2040 \\
+ic\_ccdy\_low &=& 5 \\
+ic\_ccdy\_high &=& 1935 \\
+
+\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\AllRecipes} \\
+\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
+\ifdevguide
+\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
+\fi
+\end{tabular}
+\end{thighlight}
+\end{minipage}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Fiber variables}
+\label{ch:variables:fiber}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+These variables are defined for each type of fiber and thus are defined as a python dictionary of values \ifdevguide (read using the python `eval' function) \fi. As such they all must contain the same dictionary keys (currently `AB', `A', `B' and `C'). 
+
+\DevNote{For python to combine these at run time the suffix `\_fpall' must be used (thus once a fiber is defined the code will know to extract the key before the suffix). i.e. for variable `nbfib\_fpall' and a fiber `AB' the extracted parameter will be `nbfib' with the value in the dictionary corresponding to the `AB' key.}
+
+\begin{itemize}
+
+% nbfib
+\item \ParameterEntry{Number of fibers}
+{This describes the number of fibers of a given type. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
+{nbfib\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':2, 'A':1, 'B':1, 'C':1\} |}
+{\callocRAW}{\constantsfile}{Public}
+
+% ic_first_order_jump_fpall
+\item \ParameterEntry{Order skip number}
+{Describes the number of orders to skip at the start of an image. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
+{ic\_first\_order\_jump\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':2, 'A':0, 'B':0, 'C':0\} |}
+{\callocRAW}{\constantsfile}{Public}
+
+% ic_locnbmaxo_fpall
+\item \ParameterEntry{Maximum order numbers}
+{Describes the maximum allowed number of orders. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
+{ic\_locnbmaxo\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':72, 'A':36, 'B':36, 'C':36\} |}
+{\callocRAW}{\constantsfile}{Public}
+
+% qc_loc_nbo_fpall
+\item \ParameterEntry{Number of orders to fit (QC)}
+{Quality control parameter for the number of orders on fiber to fit. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
+{qc\_loc\_nbo\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':72, 'A':36, 'B':36, 'C':36\} |}
+{\callocRAW}{\constantsfile}{Public}
+\DevNote{Should this be merged with `ic\_locnbmaxo\_fpall'?}
+
+
+% fib_type_fpall
+\item \ParameterEntry{Fiber types for this fiber}
+{The fiber type(s) -- as a list -- for this fiber. Must be a python dictionary with identical keys to all other fiber parameters (each value must be a list of strings).}
+{fib\_type\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':["AB"], 'A':["A"], 'B':["B"], 'C':["C"]\} |}
+{\calFFraw}{\constantsfile}{Public}
+\DevNote{This must not be needed but is in here due to a loop in \calFFraw}
+
+% ic_ext_range1_fpall
+\item \ParameterEntry{Half-zone extraction width (left/top)}
+{The pixels are extracted from the center of the order out to the edges - defined by `top' and `bottom' - width (illuminated part of the order) - this number defines the \textbf{top} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
+{ic\_ext\_range1\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':14.5, 'A':0.0, 'B':14.5, 'C':7.5\} |}
+{\calFFraw}{\constantsfile}{Public}
+\DevNote{Formally this was called `plage1' in \calFFraw}
+
+% ic_ext_range2_fpall
+\item \ParameterEntry{Half-zone extraction width (right/bottom)}
+{The pixels are extracted from the center of the order out to the edges - defined by `top' and `botto'm - width (illuminated part of the order) - this number defines the \textbf{bottom} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
+{ic\_ext\_range2\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5\} |}
+{\calFFraw}{\constantsfile}{Public}
+\DevNote{Formally this was called `plage2' in \calFFraw}
+
+% ic_ext_range_fpall
+\item \ParameterEntry{Half-zone extraction width for full extraction}
+{The pixels are extracted from the center of the order out to the edges - defined by the left and right - or top and bottom - width (illuminated part of the order). In \calextractRAW both sides of the fit order are extracted at with the same width (symmetric). Must be a python dictionary with identical keys to all other fiber parameters.}
+{ic\_ext\_range\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':14.5, 'C':7.5\} |}
+{\calextractRAW}{\constantsfile}{Public}
+\DevNote{Formally this was called `plage' in \calextractRAW}
+
+% loc_file_fpall
+\item \ParameterEntry{Localization fiber for extraction  }
+{Defines the localization fiber to use for each fiber type. This is the file in calibDB that is used i.e. the keyword \masterCALIBDBfile used will be \`LOC\_\{loc\_file\_fpall\}' (e.g. for fiber=`AB' use `LOC\_AB'). Must be a python dictionary with identical keys to all other fiber parameters.}
+{loc\_file\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'\} |}
+{\calextractRAW}{\constantsfile}{Public}
+
+% orderp_file_fpall
+\item \ParameterEntry{Order profile fiber for extraction}
+{Defines the order profile fiber to use for each fiber type. This is the file in calibDB that is used i.e. the keyword \masterCALIBDBfile used will be \`ORDER\_PROFILE\_\{orderp\_file\_fpall\}' (e.g. for fiber=`AB' use `ORDER\_PROFILE\_AB'). Must be a python dictionary with identical keys to all other fiber parameters.}
+{orderp\_file\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'\} |}
+{\calextractRAW}{\constantsfile}{Public}
+
+% ic_ext_d_range_fpall
+\item \ParameterEntry{Half-zone extract width \calDRIFTRAW}
+{The size in pixels of the extraction away from the order localization fit (to the top and bottom) - defines the illuminated area of the order for extraction. Must be a python dictionary with identical keys to all other fiber parameters.}
+{ic\_ext\_d\_range\_fpall}
+{\lstinline[style=pythoninline]| \{'AB':14.0, 'A':14.0, 'B':14.0, 'C':7.0\} |}
+{\calDRIFTRAW}{\constantsfile}{Public}
+\DevNote{Formally this was called `ic\_extnbsig' in \calDRIFTRAW}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Dark calibration variables}
+\label{ch:variables:dark}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% dark_qmin
+\item \ParameterEntry{Lower percentile for dead pixel stats}
+{This defines the lower percentile to be logged for the fraction of dead pixels statistics. Value must be an integer between 0 and 100 (1 sigma below the mean is $\sim$16).}
+{dark\_qmin}{5}
+{\calDARK}{\constantsfile}{Public}
+
+% dark_qmax
+\item \ParameterEntry{Upper percentile for dead pixel stats}
+{This defines the upper percentile to be logged for the fraction of dead pixels statistics. Value must be an integer between 0 and 100 (1 sigma above the mean is $\sim$84).}
+{dark\_qmax}{95}
+{\calDARK}{\constantsfile}{Public}
+
+% histo\_bins
+\item \ParameterEntry{Dark stat histogram bins}
+{Defines the number of bins to use in the dark histogram plot. Value must be a positive integer.}
+{histo\_bins}{200}
+{\calDARK}{\constantsfile}{Public}
+
+% histo_range_low
+\item \ParameterEntry{Lower bound for the Dark stat histogram}
+{Defines the lower bound for the dark statistic histogram. Value must be a float less than (no equal to) the value of `histo\_range\_high'}
+{histo\_range\_low}{-0.5}
+{\calDARK}{\constantsfile}{Public}
+
+% histo_range_high
+\item \ParameterEntry{Upper bound for the Dark stat histogram}
+{Defines the upper bound for the dark statistic histogram. Value must be a float greater than (not equal to) the value of `histo\_range\_low'}
+{histo\_range\_high}{5}
+{\calDARK}{\constantsfile}{Public}
+
+% dark_cutlimit
+\item \ParameterEntry{Bad pixel cut limit}
+{Defines the bad pixel cut limit in ADU/s. 
+\begin{equation}
+badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
+\end{equation}}
+{dark\_cutlimit}{100.0}
+{\calDARK}{\constantsfile}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Localization calibration variables}
+\label{ch:variables:localization}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Slit calibration variables}
+\label{ch:variables:slit}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Flat fielding calibration variables}
+\label{ch:variables:flatfielding}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Extraction calibration variables}
+\label{ch:variables:extraction}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Drift calibration variables}
+\label{ch:variables:drift}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Quality control variables}
+\label{ch:variables:qualitycontrol}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+
+\ifdevguide
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Formatting variables}
+\label{ch:variables:qualitycontrol}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% % 
+% \item \ParameterEntry{}
+% {}
+% {}{}
+% {}{}{Public}
+
+\end{itemize}
+
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Logging and printing variables}
+\label{ch:variables:qualitycontrol}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
 
 % PRINT_LEVEL
 \item \ParameterEntry{Print message level}
@@ -63,6 +566,7 @@ Who should be able to change this variable, levels are as follows:
 	\item "warning" -- prints warning and error events
 	\item "error" -- print only error events
 \end{itemize}
+Value must be a valid string.
 }
 {PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
 
@@ -75,54 +579,8 @@ Who should be able to change this variable, levels are as follows:
 	\item "warning" -- prints warning and error events
 	\item "error" -- print only error events
 \end{itemize}
+Value must be a valid string.
 }
 {LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
 
-
 \end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{Directory variables}
-\label{ch:variables:directory}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-These were mentioned in Section \ref{ch:install:setup} and are located in teh `\configtxtfile' file. The `\configtxtfile' file is located in the \InstallDIR in the config folder (i.e. at \InstallDIR{/config/config.txt}). \\
-
-Currently the directory variables are:
-
-\begin{itemize}
-
-
-\item \ParameterEntry{The data directory}
-{Defines the path to the data directory}
-{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}{Public}
-
-\item \ParameterEntry{The installation directory}
-{Defines the instllation directory (\InstallDIR)}
-{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}{Public}
-
-\item \ParameterEntry{The raw data directory}
-{Defines the directory that the reduced data should be saved to/read from}
-{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}{Public}
-
-\item \ParameterEntry{The reduced data directory}
-{Defines the directory that the reduced data should be saved to/read from}
-{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}{Public}
-
-\item \ParameterEntry{The calibration database and calibration file directory}
-{Defines the directory that the calibration files and database should be saved to/read from}
-{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}{Public}
-
-\item \ParameterEntry{The log directory}
-{Defines the directory that the log messages are stored in}
-{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}{Public}
-
-\item \ParameterEntry{The working directory}
-{Defines the working directory}
-{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}{Public}
-
-\end{itemize}
-

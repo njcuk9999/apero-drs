@@ -33,9 +33,9 @@
 
 % --------------------------------------------------------
 % Parameters
-% \Parameter{Name}{Description}{variable}{default value}{used in}{location}
-\ifdevguide
-	\newcommand{\ParameterEntry}[7]{
+% \ParameterEntry{Name}{Description}{variable}{default value}{used in}{location}{level (if dev)}
+
+\newcommand{\ParameterEntry}[7]{
 	\begin{minipage}[t]{\textwidth}
 	\textbf{#1}
 
@@ -45,33 +45,16 @@
 	\begin{tabular}{>{\color{red}}l c l}
 	&&\\
 	#3 & = & #4 \\
+	&&\\
 	\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{#5} \\
 	\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{#6} \\
+	\ifdevguide
 	\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{#7} \\
+	\fi
 	\end{tabular}
 	\end{thighlight}
 	\end{minipage}
-	}
-\else
-	\newcommand{\ParameterEntry}[7]{
-	\begin{minipage}[t]{\textwidth}
-	\textbf{#1}
-
-	\begin{thighlight}
-	\textcolor{brown}{#2} 
-
-	\begin{tabular}{>{\color{red}}l c l}
-	&&\\
-	#3 & = & #4 \\
-	\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{#5} \\
-	\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{#6} \\
-	\end{tabular}
-	\end{thighlight}
-	\end{minipage}
-	}
-	
-\fi
-
+}
 
 % --------------------------------------------------------
 % define dev sections notes etc

@@ -35,7 +35,7 @@
 #    formally DRS_DEBUG
 ic_debug = 0
 
-#    Interval between plots (for certain iteractive graphs)      - [cal_loc]
+#    Interval between plots (for certain interactive graphs)      - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
 
@@ -109,7 +109,7 @@ ic_ext_d_range_fpall = {'AB':14.0, 'A':14.0, 'B':14.0, 'C':7.0}
 
 
 # -----------------------------------------------------------------------------
-#   cal_dark histogram variables
+#   cal_dark parameters
 # -----------------------------------------------------------------------------
 
 #   The lower percentile (0 - 100)                               - [cal_dark]
