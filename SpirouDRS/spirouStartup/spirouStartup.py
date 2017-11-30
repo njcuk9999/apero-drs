@@ -88,8 +88,10 @@ def run_initial_startup(night_name=None, files=None, customargs=None):
 
     # Get config parameters
     cparams = spirouConfig.ReadConfigFile()
-    # check that drs_name and drs_version exist
-    spirouConfig.CheckConfig(cparams, ['DRS_NAME', 'DRS_VERSION'])
+    # get variables from spirouConst
+    cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
+    cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
+    cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
     # display title
     display_title(cparams)
     # check input parameters
