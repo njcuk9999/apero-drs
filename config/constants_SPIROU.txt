@@ -175,7 +175,7 @@ ic_locdfitc = 5
 #   Order of polynomial to fit for widths                        - [cal_loc]
 ic_locdfitw = 5
 
-#   Order of polynomial to fit for position error                - [None]
+#   Order of polynomial to fit for position error                - [spirouKeywords]
 #      Currently not used
 ic_locdfitp = 3
 
@@ -207,7 +207,7 @@ ic_locopt1 = 1
 #   cal_slit parameters
 # -----------------------------------------------------------------------------
 
-#   Extraction option in tilt file:                             - [cal_slit]
+#   Extraction option in tilt file:                             - [cal_slit, cal_FF]
 #             if 0 extraction by summation over constant range
 #             if 1 extraction by summation over constant sigma
 #                (not currently available)
@@ -220,9 +220,8 @@ ic_extopt = 0
 # distance away from center to extract out to +/-               - [cal_slit]
 ic_extnbsig = 2.5
 
-delta_gau = 0
 #   oversampling factor (for tilt finding)
-coi = 10
+ic_tilt_coi = 10
 
 #   Offset multiplicative factor (for width)                    - [cal_slit]
 ic_facdec = 1.6
