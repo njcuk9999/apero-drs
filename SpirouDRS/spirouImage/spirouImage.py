@@ -335,7 +335,8 @@ def get_tilt(pp, lloc, image):
         # --------------------------------------------------------------------
         # Over sample the data and interpolate new extraction values
         pixels = np.arange(image.shape[1])
-        os_pixels = np.arange(image.shape[1] * pp['COI']) / pp['COI']
+        os_fac = pp['ic_tilt_coi']
+        os_pixels = np.arange(image.shape[1] * os_fac) / os_fac
         cent1i = np.interp(os_pixels, pixels, lloc['cent1'])
         cent2i = np.interp(os_pixels, pixels, lloc['cent2'])
         # --------------------------------------------------------------------
@@ -344,7 +345,7 @@ def get_tilt(pp, lloc, image):
         # --------------------------------------------------------------------
         # get the tilt - the maximum correlation between the middle pixel
         #   and the middle pixel + 50 * p['COI']
-        coi = int(pp['COI'])
+        coi = int(os_fac)
         pos = int(image.shape[1] * coi / 2)
         delta = np.argmax(cori[pos:pos + 50 * coi]) / coi
         # get the angle of the tilt
