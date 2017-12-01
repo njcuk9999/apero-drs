@@ -30,6 +30,10 @@ __author__ = spirouConfig.Constants.AUTHORS()
 ParamDict = spirouConfig.ParamDict
 # get default config file
 p = spirouConfig.read_config_file()
+# get variables from spirouConst
+p['DRS_NAME'] = spirouConfig.Constants.NAME()
+p['DRS_VERSION'] = spirouConfig.Constants.VERSION()
+p.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
 # check input parameters
 p = spirouConfig.check_params(p)
 # load ICDP config file
