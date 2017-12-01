@@ -453,7 +453,7 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 {The column which is to be used as the central column (x-axis), this is the column that is initially used to find the order locations. Value must be an integer between 0 and the number of columns (x-axis dimension).}
 {ic\_cent\_col}{1000}
 {\callocRAW, \calFFraw, \calextractRAW}{\constantsfile}
-{\callocRAW.\progMAIN, \calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouBACK.measure\_background\_and\_get\_central\_pixels(), \spirouPlot.slit\_sorder\_plot(), \spirouEXTOR.extract\_AB\_order(), \spirouLOCOR.find\_order\_centers(), \spirouLOCOR.initial\_order\_fit()}{Public}
+{\callocRAW.\progMAIN, \calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouBACK.measure\_background\_{\hskip 0pt}and\_get\_central\_pixels(), \spirouPlot.slit\_sorder\_plot(), \spirouEXTOR.extract\_AB\_order(), \spirouLOCOR.find\_order\_centers(), \spirouLOCOR.initial\_order\_fit()}{Public}
 
 % ic_ext_window
 \item \ParameterEntry{Localization window row size}
@@ -504,14 +504,14 @@ Value must be an integer between zero and the number of rows (y-axis dimension).
 \item \ParameterEntry{Minimum signal amplitude}
 {Defines a cut off (in e-) where below this point the central pixel values will be set to zero. Value must be a float greater than zero.}
 {ic\_min\_amplitude}{100.0}
-{\callocRAW}{\constantsfile}{\spirouBACK.measure\_background\_and\_get\_central\_pixels()}
+{\callocRAW}{\constantsfile}{\spirouBACK.measure\_background\_{\hskip 0pt}and\_get\_central\_pixels()}
 {Public}
 
 % ic_locseuil
 \item \ParameterEntry{Normalized background amplitude threshold}
 {Defines the normalized amplitude threshold to accept pixels for background calculation (pixels below this normalized value will be used for the background calculation). Value must be a float between zero and one.}
 {ic\_locseuil}{0.2}
-{\callocRAW}{\constantsfile}{\spirouBACK.measure\_background\_and\_get\_central\_pixels()}
+{\callocRAW}{\constantsfile}{\spirouBACK.measure\_background\_{\hskip 0pt}and\_get\_central\_pixels()}
 {Public}
 
 % ic_satseuil
@@ -641,13 +641,13 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \item \ParameterEntry{Tilt oversampling factor}
 {Defines the oversampling factor used to work out the tilt of the slit. Value must be an integer value larger than zero.}
 {ic\_tilt\_coi}{10}
-{\calSLIT}{\constantsfile}{\spirouImage.get_tilt()}{Public}
+{\calSLIT}{\constantsfile}{\spirouImage.get\_tilt()}{Public}
 \DevNote{Formally this was called `coi' in \calSLIT.}
 
 
 % ic_facdec
 \item \ParameterEntry{Slit fit order plot offset factor}
-{Defines an offset of the position fit to show the edges of the illuminated area. (Final offset is $\pm$ \times 2 of this offset away from the order fit. Value must be a positive float.)}
+{Defines an offset of the position fit to show the edges of the illuminated area. (Final offset is $\pm \times$ 2 of this offset away from the order fit. Value must be a positive float.)}
 {ic\_facdec}{1.6}
 {\calSLIT}{\constantsfile}{\spirouPlot.slit\_sorder\_plot()}{Public}
 
