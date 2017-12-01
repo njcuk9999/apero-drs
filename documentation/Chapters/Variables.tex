@@ -14,9 +14,8 @@
 To better understand the variables in the DRS we have laid out each variable in the following way:
 
 \begin{itemize}
-
 \item \ParameterEntry{Variable title}{Description of the variable}{VARIABLE\_NAME}
-{Default Value}{The code used a variable is used in}{The place where the variable can be found}
+{Default Value}{The recipe used the variable is used in.}{The place where the variable is defined.}{The code (module + function) where variable is used.}
 {
 Who should be able to change this variable, levels are as follows:
 \begin{itemize}
@@ -85,20 +84,20 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \ifdevguide
 \item \ParameterEntry{DRS Name}
 {Defines the data reduction software name. Value must be a valid string.}
-{DRS\_NAME}{SPIROU}{All Recipes}{\spirouCONST}{Private}
+{DRS\_NAME}{SPIROU}{All Recipes}{\spirouCONST}{\spirouCONST}{Private}
 \fi
 
 % DRS_VERSION
 \ifdevguide
 \item \ParameterEntry{DRS Version}
 {Defines the data reduction software version. Value must be a valid string.}
-{DRS\_VERSION}{SPIROU}{All Recipes}{\spirouCONST}{Private}
+{DRS\_VERSION}{SPIROU}{All Recipes}{\spirouCONST}{\spirouCONST}{Private}
 \fi
 
 % DRS_PLOT
 \item \ParameterEntry{Plotting switch}
 {Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots). Value must be an integer (0 or 1) or boolean (True or False)}
-{DRS\_PLOT}{1}{All Recipes}{\configtxtfile}{Public}
+{DRS\_PLOT}{1}{All Recipes}{\configtxtfile}{All Recipes}{Public}
 
 % ic_debug
 \item \ParameterEntry{Debug mode}
@@ -109,13 +108,13 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \item 2 = Level 2 debug \begin{todo}Define level 2 debug\end{todo}
 \end{itemize}
 }
-{ic\_debug}{0}{\callocRAW}{\constantsfile}{Public}
+{ic\_debug}{0}{\callocRAW}{\constantsfile}{}{Public}
 \DevNote{Should this be public?}
 
 % ic_display_timeout
 \item \ParameterEntry{Plot interval}
 {Set the interval between plots in seconds (for certain interactive graphs). Value must be a valid float larger than zero.}
-{ic\_display\_timeout}{0.5}{\callocRAW}{\constantsfile}{Public}
+{ic\_display\_timeout}{0.5}{\callocRAW}{\constantsfile}{}{Public}
 \DevNote{Should this be public?}
 
 \end{itemize}
@@ -132,31 +131,31 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 \item \ParameterEntry{The data directory}
 {Defines the path to the data directory. Value must be a string containing a valid file location.}
-{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}{Public}
+{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \item \ParameterEntry{The installation directory}
 {Defines the instllation directory (\InstallDIR). Value must be a string containing a valid file location.}
-{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}{Public}
+{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \item \ParameterEntry{The raw data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}{Public}
+{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \item \ParameterEntry{The reduced data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}{Public}
+{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \item \ParameterEntry{The calibration database and calibration file directory}
 {Defines the directory that the calibration files and database will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}{Public}
+{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \item \ParameterEntry{The log directory}
 {Defines the directory that the log messages are stored in. Value must be a string containing a valid file location.}
-{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}{Public}
+{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \item \ParameterEntry{The working directory}
 {Defines the working directory. Value must be a string containing a valid file location.}
-{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}{Public}
+{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
 
 \end{itemize}
 
@@ -188,6 +187,7 @@ ic\_ccdy\_blue\_high &=& 2048-350 \\
 \textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
 \textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
 \ifdevguide
+\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{green}{\calDARK.\progMAIN}} \\
 \textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
 \fi
 \end{tabular}
@@ -210,10 +210,11 @@ ic\_ccdx\_red\_high &  = &  2048-1750 \\
 ic\_ccdy\_red\_low  & =  & 2048-1570 \\
 ic\_ccdy\_red\_high &  = &  2048-1910 \\
 &&\\
-\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
-\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
+\textcolor{red}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
+\textcolor{red}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
 \ifdevguide
-\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
+\textcolor{red}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{green}{\calDARK.\progMAIN}} \\
+\textcolor{red}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
 \fi
 \end{tabular}
 \end{thighlight}
@@ -236,9 +237,10 @@ ic\_ccdx\_high &=& 2040 \\
 ic\_ccdy\_low &=& 5 \\
 ic\_ccdy\_high &=& 1935 \\
 
-\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\AllRecipes} \\
+\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\callocRAW, \calSLIT, \calFFraw, \calextractRAW, \calDRIFTRAW} \\
 \textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
 \ifdevguide
+\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{green}{\callocRAW\progMAIN, \calSLIT\progMAIN, \calFFraw\progMAIN, \calextractRAW\progMAIN, \calDRIFTRAW.\progMAIN}} \\
 \textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
 \fi
 \end{tabular}
@@ -268,28 +270,32 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {This describes the number of fibers of a given type. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
 {nbfib\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':2, 'A':1, 'B':1, 'C':1\} |}
-{\callocRAW}{\constantsfile}{Public}
+{\callocRAW}{\constantsfile}
+{\callocRAW.\progMAIN}{Public}
 
 % ic_first_order_jump_fpall
 \item \ParameterEntry{Order skip number}
 {Describes the number of orders to skip at the start of an image. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
 {ic\_first\_order\_jump\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':2, 'A':0, 'B':0, 'C':0\} |}
-{\callocRAW}{\constantsfile}{Public}
+{\callocRAW}{\constantsfile}
+{\callocRAW.\progMAIN}{Public}
 
 % ic_locnbmaxo_fpall
 \item \ParameterEntry{Maximum order numbers}
 {Describes the maximum allowed number of orders. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
 {ic\_locnbmaxo\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':72, 'A':36, 'B':36, 'C':36\} |}
-{\callocRAW}{\constantsfile}{Public}
+{\callocRAW}{\constantsfile}
+{\callocRAW.\progMAIN}{Public}
 
 % qc_loc_nbo_fpall
 \item \ParameterEntry{Number of orders to fit (QC)}
 {Quality control parameter for the number of orders on fiber to fit. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
 {qc\_loc\_nbo\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':72, 'A':36, 'B':36, 'C':36\} |}
-{\callocRAW}{\constantsfile}{Public}
+{\callocRAW}{\constantsfile}
+{\callocRAW.\progMAIN}{Public}
 \DevNote{Should this be merged with `ic\_locnbmaxo\_fpall'?}
 
 
@@ -298,31 +304,35 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {The fiber type(s) -- as a list -- for this fiber. Must be a python dictionary with identical keys to all other fiber parameters (each value must be a list of strings).}
 {fib\_type\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':["AB"], 'A':["A"], 'B':["B"], 'C':["C"]\} |}
-{\calFFraw}{\constantsfile}{Public}
-\DevNote{This must not be needed but is in here due to a loop in \calFFraw}
+{\calFFraw}{\constantsfile}
+{\calFFraw.\progMAIN}{Public}
+\DevNote{This is not be needed but is in here due to a loop in \calFFraw}
 
 % ic_ext_range1_fpall
 \item \ParameterEntry{Half-zone extraction width (left/top)}
-{The pixels are extracted from the center of the order out to the edges - defined by `top' and `bottom' - width (illuminated part of the order) - this number defines the \textbf{top} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
+{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{top} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_range1\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':0.0, 'B':14.5, 'C':7.5\} |}
-{\calFFraw}{\constantsfile}{Public}
+{\calFFraw}{\constantsfile}
+{\calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2()}{Public}
 \DevNote{Formally this was called `plage1' in \calFFraw}
 
 % ic_ext_range2_fpall
 \item \ParameterEntry{Half-zone extraction width (right/bottom)}
-{The pixels are extracted from the center of the order out to the edges - defined by `top' and `botto'm - width (illuminated part of the order) - this number defines the \textbf{bottom} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
+{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{bottom} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_range2\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5\} |}
-{\calFFraw}{\constantsfile}{Public}
+{\calFFraw, \calextractRAW}{\constantsfile}
+{\calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2()}{Public}
 \DevNote{Formally this was called `plage2' in \calFFraw}
 
 % ic_ext_range_fpall
 \item \ParameterEntry{Half-zone extraction width for full extraction}
-{The pixels are extracted from the center of the order out to the edges - defined by the left and right - or top and bottom - width (illuminated part of the order). In \calextractRAW both sides of the fit order are extracted at with the same width (symmetric). Must be a python dictionary with identical keys to all other fiber parameters.}
+{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order. In \calextractRAW both sides of the fit order are extracted at with the same width (symmetric). Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_range\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':14.5, 'C':7.5\} |}
-{\calextractRAW}{\constantsfile}{Public}
+{\calextractRAW}{\constantsfile}
+{\spirouEXTOR.extract\_order(), \spirouEXTOR.extract\_tilt\_order(), \spirouEXTOR.extract\_tilt\_weight\_order(), \spirouEXTOR.extract\_weight\_order()}{Public}
 \DevNote{Formally this was called `plage' in \calextractRAW}
 
 % loc_file_fpall
@@ -330,21 +340,24 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {Defines the localization fiber to use for each fiber type. This is the file in calibDB that is used i.e. the keyword \masterCALIBDBfile used will be \`LOC\_\{loc\_file\_fpall\}' (e.g. for fiber=`AB' use `LOC\_AB'). Must be a python dictionary with identical keys to all other fiber parameters.}
 {loc\_file\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'\} |}
-{\calextractRAW}{\constantsfile}{Public}
+{\calextractRAW}{\constantsfile}
+{\spirouLOCOR.get\_loc\_coefficients()}{Public}
 
 % orderp_file_fpall
 \item \ParameterEntry{Order profile fiber for extraction}
 {Defines the order profile fiber to use for each fiber type. This is the file in calibDB that is used i.e. the keyword \masterCALIBDBfile used will be \`ORDER\_PROFILE\_\{orderp\_file\_fpall\}' (e.g. for fiber=`AB' use `ORDER\_PROFILE\_AB'). Must be a python dictionary with identical keys to all other fiber parameters.}
 {orderp\_file\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':'AB', 'A':'AB', 'B':'AB', 'C':'C'\} |}
-{\calextractRAW}{\constantsfile}{Public}
+{\calextractRAW}{\constantsfile}
+{\spirouFITS.read\_order\_profile\_superposition()}{Public}
 
 % ic_ext_d_range_fpall
 \item \ParameterEntry{Half-zone extract width \calDRIFTRAW}
 {The size in pixels of the extraction away from the order localization fit (to the top and bottom) - defines the illuminated area of the order for extraction. Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_d\_range\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.0, 'A':14.0, 'B':14.0, 'C':7.0\} |}
-{\calDRIFTRAW}{\constantsfile}{Public}
+{\calDRIFTRAW}{\constantsfile}
+{\calDRIFTRAW.\progMAIN}{Public}
 \DevNote{Formally this was called `ic\_extnbsig' in \calDRIFTRAW}
 
 \end{itemize}
@@ -365,31 +378,36 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 \item \ParameterEntry{Lower percentile for dead pixel stats}
 {This defines the lower percentile to be logged for the fraction of dead pixels statistics. Value must be an integer between 0 and 100 (1 sigma below the mean is $\sim$16).}
 {dark\_qmin}{5}
-{\calDARK}{\constantsfile}{Public}
+{\calDARK}{\constantsfile}
+{\spirouImage.measure\_dark()}{Public}
 
 % dark_qmax
 \item \ParameterEntry{Upper percentile for dead pixel stats}
 {This defines the upper percentile to be logged for the fraction of dead pixels statistics. Value must be an integer between 0 and 100 (1 sigma above the mean is $\sim$84).}
 {dark\_qmax}{95}
-{\calDARK}{\constantsfile}{Public}
+{\calDARK}{\constantsfile}
+{\spirouImage.measure\_dark()}{Public}
 
 % histo\_bins
 \item \ParameterEntry{Dark stat histogram bins}
 {Defines the number of bins to use in the dark histogram plot. Value must be a positive integer.}
 {histo\_bins}{200}
-{\calDARK}{\constantsfile}{Public}
+{\calDARK}{\constantsfile}
+{\spirouImage.measure\_dark()}{Public}
 
 % histo_range_low
 \item \ParameterEntry{Lower bound for the Dark stat histogram}
 {Defines the lower bound for the dark statistic histogram. Value must be a float less than (no equal to) the value of `histo\_range\_high'}
 {histo\_range\_low}{-0.5}
-{\calDARK}{\constantsfile}{Public}
+{\calDARK}{\constantsfile}
+{\spirouImage.measure\_dark()}{Public}
 
 % histo_range_high
 \item \ParameterEntry{Upper bound for the Dark stat histogram}
 {Defines the upper bound for the dark statistic histogram. Value must be a float greater than (not equal to) the value of `histo\_range\_low'}
 {histo\_range\_high}{5}
-{\calDARK}{\constantsfile}{Public}
+{\calDARK}{\constantsfile}
+{\spirouImage.measure\_dark()}{Public}
 
 % dark_cutlimit
 \item \ParameterEntry{Bad pixel cut limit}
@@ -398,7 +416,8 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 \end{equation}}
 {dark\_cutlimit}{100.0}
-{\calDARK}{\constantsfile}{Public}
+{\calDARK}{\constantsfile}
+{\calDARK.\progMAIN}{Public}
 
 \end{itemize}
 
@@ -414,14 +433,198 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \begin{itemize}
 
-% % 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{Public}
+% loc_box_size
+\item \ParameterEntry{Order profile smoothed box size}
+{Defines the size of the order profile smoothing box (from the central pixel minus size to the central pixel plus size). Value must be an integer larger than zero.}
+{loc\_box\_size}{10}
+{\callocRAW}{\constantsfile}
+{\callocRAW.\progMAIN}{Public}
+
+
+% ic_offset
+\item \ParameterEntry{Image row offset}
+{The row number (y axis) of the image to start localization at (below this row orders will not be fit). Value must be an integer equal to or larger than zero.}
+{ic\_offset}{40}
+{\callocRAW}{\constantsfile}
+{\callocRAW.\progMAIN }{Public}
+
+% ic_cent_col
+\item \ParameterEntry{Central column of the image}
+{The column which is to be used as the central column (x-axis), this is the column that is initially used to find the order locations. Value must be an integer between 0 and the number of columns (x-axis dimension).}
+{ic\_cent\_col}{1000}
+{\callocRAW, \calFFraw, \calextractRAW}{\constantsfile}
+{\callocRAW.\progMAIN, \calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouBACK.measure\_background\_and\_get\_central\_pixels(), \spirouPlot.slit\_sorder\_plot(), \spirouEXTOR.extract\_AB\_order(), \spirouLOCOR.find\_order\_centers(), \spirouLOCOR.initial\_order\_fit()}{Public}
+
+% ic_ext_window
+\item \ParameterEntry{Localization window row size}
+{Defines the size of the localization window in rows (y-axis). Value must be an integer larger than zero and less than the number of rows (y-axis dimension).}
+{ic\_ext\_window}{12}
+{\callocRAW}{\constantsfile}
+{\spirouLOCOR.find\_order\_centers}{Public}
+\DevNote{Formally this was called `ic\_ccdcolc' in \callocRAW}
+
+% ic_locstepc
+\item \ParameterEntry{Localization window column step}
+{For the initial localization procedure interval points along the order (x-axis) are defined and the centers are found, this is used as the first estimate of the order shape. This parameter defines that interval step in columns (x-axis). Value must be an integer larger than zero and less than the number of columns (x-axis dimension).}
+{ic\_locstepc}{12}
+{\callocRAW}{\constantsfile}
+{\spirouLOCOR.find\_order\_centers}{Public}
+
+% ic_image_gap
+\item \ParameterEntry{Image gap index}
+{Defines the image gap index. The order is skipped if the top of the row (row number - ic\_ext\_window) or bottom of the row (row number + ic\_ext\_window) is inside this image gap index. i.e. a order is skipped if:
+\begin{equation}
+(\text{top of the row} < \text{ic\_image\_gap})
+\text{ OR } 
+(\text{bottom of the row} > \text{ic\_image\_gap})
+\end{equation}
+Value must be an integer between zero and the number of rows (y-axis dimension).
+}
+{ic\_image\_gap}{0}
+{\callocRAW}{\constantsfile}
+{\spirouLOCOR.find\_order\_centers}{Public}
+\DevNote{This is set to zero and never used in a meaningful way, should it be removed?}
+
+
+% ic_widthmin
+\item \ParameterEntry{Minimum order row size}
+{Defines the minimum row width (width in y-axis) to accept an order as valid. If below this threshold order is not recorded. Value must be an integer between zero and the number of rows (y-axis dimension).}
+{ic\_widthmin}{5}
+{\callocRAW}{\constantsfile}
+{\spirouLOCOR.find\_order\_centers}{Public}
+
+% ic_locnbpix
+\item \ParameterEntry{Min/Max smoothing box size}
+{Defines the half-size of the rows to use when smoothing the image to work out the minimum and maximum pixel values. This defines the half-spacing between orders and is used to estimate background and the maximum signal. Value must be greater than zero and less than the number of rows (y-axis dimension).}
+{ic\_locnbpix}{45}
+{\callocRAW}{\constantsfile}
+{\spirouBACK.measure\_min\_max()}{Public}
+
+% ic_min_amplitude
+\item \ParameterEntry{Minimum signal amplitude}
+{Defines a cut off (in e-) where below this point the central pixel values will be set to zero. Value must be a float greater than zero.}
+{ic\_min\_amplitude}{100.0}
+{\callocRAW}{\constantsfile}{\spirouBACK.measure\_background\_and\_get\_central\_pixels()}
+{Public}
+
+% ic_locseuil
+\item \ParameterEntry{Normalized background amplitude threshold}
+{Defines the normalized amplitude threshold to accept pixels for background calculation (pixels below this normalized value will be used for the background calculation). Value must be a float between zero and one.}
+{ic\_locseuil}{0.2}
+{\callocRAW}{\constantsfile}{\spirouBACK.measure\_background\_and\_get\_central\_pixels()}
+{Public}
+
+% ic_satseuil
+\item \ParameterEntry{Saturation threshold on the order profile plot}
+{Defines the saturation threshold on the order profile plot, pixels above this value will be set this value (ic\_satseuil). Value must be a float greater than zero.}
+{ic\_satseuil}{64536}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
+
+
+% ic_locdfitc
+\item \ParameterEntry{Degree of the fitting polynomial for localization position}
+{Defines the degree of the fitting polynomial for locating the positions of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the column direction (x-axis direction).}
+{ic\_locdfitc}{5}
+{\callocRAW}{\constantsfile}{\spirouLOCOR.initial\_order\_fit(), \spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_locdfitw
+\item \ParameterEntry{Degree of the fitting polynomial for localization width}
+{Defines the degree of the fitting polynomial for measuring the width of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the row direction (y-axis direction).}
+{ic\_locdfitw}{5}
+{\callocRAW}{\constantsfile}{\spirouLOCOR.initial\_order\_fit(), \spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_locdfitp
+\item \ParameterEntry{Degree of the fitting polynomial for localization position}
+{Defines the degree of the fitting polynomial for locating the positions error of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the column direction (x-axis direction).}
+{ic\_locdfitp}{3}
+{\callocRAW}{\constantsfile}{\spirouKeywords, \callocRAW.\progMAIN, \spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+\DevNote{This is only currently used to add the value to the localization file (`\_loco\_\definevariable{fiber}.fits') but not used in any calculation. It could be removed?}
+
+
+% ic_max_rms_center
+\item \ParameterEntry{Maximum RMS for sigma-clipping order fit (positions)}
+{Defines the maximum RMS allowed for an order, if RMS is above this value the position with the highest residual is removed and the fit is recalculated without that position (sigma-clipped). Value must be a positive float.
+\vspace{0.5cm}
+i.e. position fit is recalculated if: 
+\begin{equation}
+max(RMS) > \text{ic\_max\_rms\_center}
+\end{equation}
+}
+{ic\_max\_rms\_center}{0.2}
+{\callocRAW}{\constantsfile}
+{\spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_max_ptp_center
+\item \ParameterEntry{Maximum peak-to-peak for sigma-clipping order fit (positions)}
+{Defines the maximum peak-to-peak value allowed for an order, if the peak to peak is above this value the position with the highest residual is removed and the fit is recalculated without that position (sigma-clipped). Value must be a positive float.
+\vspace{0.5cm}
+i.e. position fit is recalculated if: 
+\begin{equation}
+max(|\text{residuals}|) > \text{ic\_max\_ptp\_center}
+\end{equation}
+}
+{ic\_max\_ptp\_center}{0.2}
+{\callocRAW}{\constantsfile}{\spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_ptporms_center
+\item \ParameterEntry{Maximum peak-to-peak-RMS ratio for sigma-clipping order fit(positions)}
+{Defines the maximum ratio of peak-to-peak residuals and rms value allowed for an order, if the ratio is above this value the position with the highest residual is removed and the fit is recalculated without that position (sigma-clipped). Value must be a positive float.
+\vspace{0.5cm}
+i.e. position fit is recalculated if: 
+\begin{equation}
+max(|\text{residuals}|)/\text{RMS} > \text{ic\_ptporms\_center}
+\end{equation}
+}
+{ic\_ptporms\_center}{8.0}
+{\callocRAW}{\constantsfile}{\spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_max_rms_fwhm
+\item \ParameterEntry{Maximum RMS for sigma-clipping order fit (width)}
+{Defines the maximum RMS allowed for an order, if RMS is above this value the width with the highest residual is removed and the fit is recalculated without that width (sigma-clipped). Value must be a positive float.
+\vspace{0.5cm}
+i.e. width fit is recalculated if: 
+\begin{equation}
+max(RMS) > \text{ic\_max\_rms\_width}
+\end{equation}
+}
+{ic\_max\_rms\_fwhm}{1.0}
+{\callocRAW}{\constantsfile}{\spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_max_ptp_fracfwhm
+\item \ParameterEntry{Maximum peak-to-peak for sigma-clipping order fit (widths)}
+{Defines the maximum peak-to-peak value allowed for an order, if the peak to peak is above this value the width with the highest residual is removed and the fit is recalculated without that width (sigma-clipped). Value must be a positive float.
+\vspace{0.5cm}
+i.e. width fit is recalculated if: 
+\begin{equation}
+max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
+\end{equation}
+}
+{ic\_max\_ptp\_fracfwhm}{1.0}
+{\callocRAW}{\constantsfile}{\spirouLOCOR.sigmaclip\_order\_fit()}{Public}
+
+
+% ic_loc_delta_width
+\item \ParameterEntry{Delta width 3 convolve shape model}
+{Defines the delta width in pixels for the 3 convolve shape model - currently not used. Value must be a positive float.}
+{ic\_loc\_delta\_width}{1.85}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN, \spirouKeywords}{Public}
+\DevNote{This is currently not used (other than saving in the calibDB loco file. Can it be removed?).}
+
+
+% ic_locopt1
+\item \ParameterEntry{Localization archiving option}
+{Whether we save the location image with the superposition of the fit (zeros). If this option is 1 or True it will save the file to `\_with-order\_\definevariable{fiber}.fits' if 0 or False it will not save this file. Value must be 1, 0, True or False.}
+{ic\_locopt1}{1}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
+
 
 \end{itemize}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -434,11 +637,34 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \begin{itemize}
 
-% % 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{Public}
+% ic_tilt_coi
+\item \ParameterEntry{Tilt oversampling factor}
+{Defines the oversampling factor used to work out the tilt of the slit. Value must be an integer value larger than zero.}
+{ic\_tilt\_coi}{10}
+{\calSLIT}{\constantsfile}{\spirouImage.get_tilt()}{Public}
+\DevNote{Formally this was called `coi' in \calSLIT.}
+
+
+% ic_facdec
+\item \ParameterEntry{Slit fit order plot offset factor}
+{Defines an offset of the position fit to show the edges of the illuminated area. (Final offset is $\pm$ \times 2 of this offset away from the order fit. Value must be a positive float.)}
+{ic\_facdec}{1.6}
+{\calSLIT}{\constantsfile}{\spirouPlot.slit\_sorder\_plot()}{Public}
+
+
+% ic_tilt_fit
+\item \ParameterEntry{Degree of the fitting polynomial for the tilt}
+{Defines the degree of the fitting polynomial for determining the tilt i.e. i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit.  The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit).}
+{ic\_tilt\_fit}{3}
+{\calSLIT}{\constantsfile}{\spirouImage.fit\_tilt()}{Public}
+
+
+% ic_slit_order_plot
+\item \ParameterEntry{Selected order in Slit fit order plot}
+{Defines the selected order to plot the fit for in the Slit fir order plot. Value must be between zero and the maximum number of orders.}
+{ic\_slit\_order\_plot}{10}
+{\calSLIT}{\constantsfile}{\spirouPlot.slit\_sorder\_plot()}{Public}
+
 
 \end{itemize}
 
@@ -454,11 +680,13 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \begin{itemize}
 
-% % 
+\item Items here
+% 
 % \item \ParameterEntry{}
 % {}
 % {}{}
-% {}{}{Public}
+% {}{}{}{Public}
+
 
 \end{itemize}
 
@@ -474,11 +702,34 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \begin{itemize}
 
-% % 
+% ic_extopt
+\item \ParameterEntry{Extraction option - rough extraction}
+{Extraction option for rough extraction:
+\begin{itemize}
+\item if 0 extraction by summation over a constant range
+\item if 1 extraction by summation over constants sigma (not currently available)
+\item if 2 horne extraction without cosmic elimination (not currently available)
+\item if 3 horne extraction with cosmic elimination (not currently available)
+\end{itemize}
+ Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a integer between 0 and 3.
+}
+{ic\_extopt}{0}
+{\calSLIT, \calFFraw}{\constantsfile}
+{\spirouEXTOR.extract\_AB\_order(), \spirouEXTOR.extract\_order}{Public}
+
+% ic_extnbsig
+\item \ParameterEntry{Extraction distance - rough extraction}
+{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order). Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a positive float between 0 and the total number of rows (y-axis dimension).}
+{ic\_extnbsig}{2.5}
+{\calSLIT, \calFFraw}{}{}{Public}
+
+
+\item Items here
+% 
 % \item \ParameterEntry{}
 % {}
 % {}{}
-% {}{}{Public}
+% {}{}{}{Public}
 
 \end{itemize}
 
@@ -494,11 +745,13 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \begin{itemize}
 
-% % 
+\item Items here
+% 
 % \item \ParameterEntry{}
 % {}
 % {}{}
-% {}{}{Public}
+% {}{}{}{Public}
+
 
 \end{itemize}
 
@@ -514,11 +767,13 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 
 \begin{itemize}
 
-% % 
+\item Items here
+% 
 % \item \ParameterEntry{}
 % {}
 % {}{}
-% {}{}{Public}
+% {}{}{}{Public}
+
 
 \end{itemize}
 
@@ -530,17 +785,19 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 \clearpage
 \newpage
 \section{Formatting variables}
-\label{ch:variables:qualitycontrol}
+\label{ch:variables:formatting}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
 
-% % 
+\item Items here
+% 
 % \item \ParameterEntry{}
 % {}
 % {}{}
-% {}{}{Public}
+% {}{}{}{Public}
+
 
 \end{itemize}
 
@@ -551,7 +808,7 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 \clearpage
 \newpage
 \section{Logging and printing variables}
-\label{ch:variables:qualitycontrol}
+\label{ch:variables:log_print}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -568,7 +825,7 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 \end{itemize}
 Value must be a valid string.
 }
-{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
+{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{}{Public}
 
 % LOG_LEVEL
 \item \ParameterEntry{Log message level}
@@ -581,6 +838,6 @@ Value must be a valid string.
 \end{itemize}
 Value must be a valid string.
 }
-{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{Public}
+{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{}{Public}
 
 \end{itemize}
