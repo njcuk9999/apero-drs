@@ -345,6 +345,8 @@ def copy_files(p, header=None):
 
     # loop around the files in Calib database
     for row in range(len(c_database)):
+        # Get the key for this entry
+        key = list(c_database.values())[row][0]
         # Get the file name for this row
         filename = list(c_database.values())[row][1]
         # Construct the old and new locations of this file from filename
@@ -358,14 +360,21 @@ def copy_files(p, header=None):
                 WLOG('', p['log_opt'], wmsg.format(filename))
             # if it isn't then copy over it
             else:
+                # Make sure old path exists
+                if not os.path.exists(oldloc):
+                    emsg = ('Error file {0} define in calibDB (key={1}) '
+                            'does not exist')
+                    WLOG('error', p['log_opt'], emsg.format(oldloc, key))
                 # try to copy --> if not raise an error and log it
                 try:
                     shutil.copyfile(oldloc, newloc)
                     wmsg = 'Calibration file: {0} copied in dir {1}'
                     WLOG('', p['log_opt'], wmsg.format(filename, reduced_dir))
                 except IOError:
-                    emsg = 'I/O problem on {0} or {1}'
-                    WLOG('error', p['log_opt'], emsg.format(oldloc, newloc))
+                    emsg = 'I/O problem on input file from calibDB: {0}'
+                    WLOG('', p['log_opt'], emsg.format(oldloc))
+                    emsg = '   or problem on writing to outfile file: {0}'
+                    WLOG('error', p['log_opt'], emsg.format(newloc))
         # else if the file doesn't exist
         else:
             # try to copy --> if not raise an error and log it

@@ -64,6 +64,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
         fiber_type = [fiber_type]
     # set fiber type
     p['fib_type'] = fiber_type
+    p.set_source('fib_type', __NAME__ + '__main__()')
 
     # ----------------------------------------------------------------------
     # Read image file

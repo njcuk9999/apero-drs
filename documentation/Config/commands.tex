@@ -1,5 +1,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
+%%  New colours
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{darkgray}{rgb}{0.20,0.20,0.20}
+\definecolor{backcolour1}{rgb}{0.95,0.95,0.92}
+\definecolor{backcolour2}{rgb}{1,0.977,0.801}
+\definecolor{backcolour3}{rgb}{0.79,0.88,1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
 %%  formatting constants
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,7 +35,7 @@
 % Double underscore
 \newlength\dunder
 \settowidth{\dunder}{\_}
-\newcommand{\twound}{\rule{1.5\dunder}{0.4pt}}
+\newcommand{\twound}{\rule{1.25\dunder}{0.2pt}}
 
 % --------------------------------------------------------
 % formatting for the directories trees
@@ -35,7 +50,7 @@
 % Parameters
 % \ParameterEntry{Name}{Description}{variable}{default value}{used in}{location}{level (if dev)}
 
-\newcommand{\ParameterEntry}[7]{
+\newcommand{\ParameterEntry}[8]{
 	\begin{minipage}[t]{\textwidth}
 	\textbf{#1}
 
@@ -49,7 +64,8 @@
 	\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{#5} \\
 	\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{#6} \\
 	\ifdevguide
-	\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{#7} \\
+	\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{#7}} \\
+	\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{#8} \\
 	\fi
 	\end{tabular}
 	\end{thighlight}

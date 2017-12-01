@@ -61,6 +61,18 @@
 
 % Define all recipes
 \newcommand{\AllRecipes}{\calDARK, \calDRIFTRAW, \calextractRAW, \calFFraw, \callocRAW, \calSLIT}
+
+% Define modules
+\newcommand{\progMAIN}{\twound{main}\twound{()}}
+\newcommand{\spirouBACK}{SpirouDRS.spirouBACK{\hskip 0pt}.spirouBACK}
+\newcommand{\spirouEXTOR}{SpirouDRS.spirouEXTOR{\hskip 0pt}.spirouEXTOR}
+\newcommand{\spirouFITS}{SpirouDRS.spirouImage{\hskip 0pt}.spirouFITS}
+\newcommand{\spirouImage}{SpirouDRS.spirouImage{\hskip 0pt}.spirouImage}
+\newcommand{\spirouLOCOR}{SpirouDRS.spirouLOCOR{\hskip 0pt}.spirouLOCOR}
+\newcommand{\spirouPlot}{SpirouDRS.spirouCore{\hskip 0pt}.spirouPlot}
+
+
+
 % name of the master calibDB file
 \newcommand{\masterCALIBDBfile}{master\_calib\_SPIROU.txt }
 % name of the main config file
@@ -70,9 +82,9 @@
 \newcommand{\constantsfile}{constants\_SPIROU.txt}
 \newcommand{\constantsfilepath}{\InstallDIR/config/\constantsfile}
 % name of the spirou constants file
-\newcommand{\spirouCONST}{SpirouDRS.spirouConfig.spirouConst}
+\newcommand{\spirouCONST}{SpirouDRS.spirouConfig{\hskip 0pt}.spirouConst}
 % name of the spirou keywords file
-\newcommand{\spirouKeywords}{SpirouDRS.spirouConfig.spirouKeywords}
+\newcommand{\spirouKeywords}{SpirouDRS.spirouConfig{\hskip 0pt}.spirouKeywords}
 % This sets the header value for the time in calibDB
 \newcommand{\constantAcqtimeKey}{ACQTIME1}
 % This sets the folder name date format

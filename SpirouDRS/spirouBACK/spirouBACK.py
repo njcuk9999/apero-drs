@@ -145,7 +145,7 @@ def measure_box_min_max(image, size):
     :return min_image: numpy array (1D length = image.shape[0]), the row values
                        for minimum pixel defined by a box of row-size to
                        row+size for all columns
-    :retrun max_image: numpy array (1D length = image.shape[0]), the row values
+    :return max_image: numpy array (1D length = image.shape[0]), the row values
                        for maximum pixel defined by a box of row-size to
                        row+size for all columns
     """
