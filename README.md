@@ -1,24 +1,24 @@
 # SPIRou DRS in python 3
 
-![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
+![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3" =256x)
 
 
 
 # User manual
 
-![User manual](./documentation/User_guide_spirou_drs.pdf "User manual page")
+![User manual page](./documentation/User_guide_spirou_drs.pdf "User manual page")
 
 ## Download here:
 
-![User manual](https://github.com/njcuk9999/spirou_py3/raw/master/documentation/User_guide_spirou_drs.pdf "User manual pdf download")
+![User manual download](https://github.com/njcuk9999/spirou_py3/raw/master/documentation/User_guide_spirou_drs.pdf "User manual pdf download")
 
 # Developer manual
 
-![Dev manual](./documentation/Dev_guide_spirou_drs.pdf "Developer manual page")
+![Dev manual page](./documentation/Dev_guide_spirou_drs.pdf "Developer manual page")
 
 ## Download here: 
 
-![Dev manual](https://github.com/njcuk9999/spirou_py3/raw/master/documentation/Dev_guide_spirou_drs.pd "Developer manual pdf download")
+![Dev manual download](https://github.com/njcuk9999/spirou_py3/raw/master/documentation/Dev_guide_spirou_drs.pd "Developer manual pdf download")
 
 
 # Quick manual
