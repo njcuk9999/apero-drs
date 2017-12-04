@@ -49,38 +49,46 @@
 \newcommand{\mac}{macOS\,}
 
 % short cuts to the recipe names
-\newcommand{\calDARK}{cal\_DARK\_spirou.py}
-\newcommand{\calDRIFTRAW}{cal\_DRIFT\_RAW\_spirou.py}
-\newcommand{\calextractRAW}{cal\_extract\_RAW\_spirou.py}
-\newcommand{\calextractRAWAB}{cal\_extract\_RAW\_spirouAB.py}
-\newcommand{\calextractRAWC}{cal\_extract\_RAW\_spirouC.py}
-\newcommand{\calFFraw}{cal\_FF\_RAW\_spirou.py}
-\newcommand{\callocRAW}{cal\_loc\_RAW\_spirou.py}
-\newcommand{\calSLIT}{cal\_SLIT\_spirou.py}
-\newcommand{\calvalidate}{cal\_validate\_spirou.py}
+\newcommand{\calDARK}{cal\_DARK\_spirou}
+\newcommand{\calDRIFTRAW}{cal\_DRIFT\_RAW\_spirou}
+\newcommand{\calextractRAW}{cal\_extract\_RAW\_spirou}
+\newcommand{\calextractRAWAB}{cal\_extract\_RAW\_spirouAB}
+\newcommand{\calextractRAWC}{cal\_extract\_RAW\_spirouC}
+\newcommand{\calFFraw}{cal\_FF\_RAW\_spirou}
+\newcommand{\callocRAW}{cal\_loc\_RAW\_spirou}
+\newcommand{\calSLIT}{cal\_SLIT\_spirou}
+\newcommand{\calvalidate}{cal\_validate\_spirou}
 
 % Define all recipes
-\newcommand{\AllRecipes}{\calDARK, \calDRIFTRAW, \calextractRAW, \calFFraw, \callocRAW, \calSLIT}
+\newcommand{\AllRecipes}{All Recipes}
 
 % Define modules
-\newcommand{\progMAIN}{\twound{main}\twound{()}}
-\newcommand{\spirouBACK}{SpirouDRS.spirouBACK{\hskip 0pt}.spirouBACK}
-\newcommand{\spirouEXTOR}{SpirouDRS.spirouEXTOR{\hskip 0pt}.spirouEXTOR}
-\newcommand{\spirouFITS}{SpirouDRS.spirouImage{\hskip 0pt}.spirouFITS}
-\newcommand{\spirouImage}{SpirouDRS.spirouImage{\hskip 0pt}.spirouImage}
-\newcommand{\spirouLOCOR}{SpirouDRS.spirouLOCOR{\hskip 0pt}.spirouLOCOR}
-\newcommand{\spirouPlot}{SpirouDRS.spirouCore{\hskip 0pt}.spirouPlot}
-
+\newcommand{\progMAIN}{main()}
+\newcommand{\MAIN}{\twound{main}\twound{()}}
+\newcommand{\spirouBACK}{SpirouDRS{\hskip 0pt}.spirouBACK{\hskip 0pt}.spirouBACK}
+\newcommand{\spirouCDB}{SpirouDRS{\hskip 0pt}.spirouCDB{\hskip 0pt}.spirouCDB}
+\newcommand{\spirouEXTOR}{SpirouDRS{\hskip 0pt}.spirouEXTOR{\hskip 0pt}.spirouEXTOR}
+\newcommand{\spirouFITS}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouFITS}
+\newcommand{\spirouImage}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouImage}
+\newcommand{\spirouLOCOR}{SpirouDRS{\hskip 0pt}.spirouLOCOR{\hskip 0pt}.spirouLOCOR}
+\newcommand{\spirouLog}{SpirouDRS{\hskip 0pt}.spirouCore{\hskip 0pt}.spirouLog}
+\newcommand{\spirouPlot}{SpirouDRS{\hskip 0pt}.spirouCore{\hskip 0pt}.spirouPlot}
+\newcommand{\spirouRV}{SpirouDRS{\hskip 0pt}.spirouRV{\hskip 0pt}.spirouRV}
+\newcommand{\spirouStartup}{SpirouDRS{\hskip 0pt}.spirouStartup{\hskip 0pt}.spirouStartup}
 
 
 % name of the master calibDB file
-\newcommand{\masterCALIBDBfile}{master\_calib\_SPIROU.txt }
+\newcommand{\masterCALIBDBfile}{master\_calib{\hskip 0pt}\_SPIROU.txt }
+% name of the config directory
+\newcommand{\configdir}{config}
+\newcommand{\configdirrelpath}{../\configdir}
 % name of the main config file
-\newcommand{\configtxtfile}{config.txt}
-\newcommand{\configtxtfilepath}{\InstallDIR/config/\configtxtfile}
+\newcommand{\configtxtfile}{\configdirrelpath/config.txt}
+\newcommand{\configtxtfilerelpath}{\configtxtfile}
+\newcommand{\configtxtfilepath}{\InstallDIR/{\hskip 0pt}\configdir/{\hskip 0pt}\configtxtfile}
 % name of the user constants file
 \newcommand{\constantsfile}{constants\_SPIROU.txt}
-\newcommand{\constantsfilepath}{\InstallDIR/config/\constantsfile}
+\newcommand{\constantsfilepath}{\InstallDIR/{\hskip 0pt}\configdir/{\hskip 0pt}\constantsfile}
 % name of the spirou constants file
 \newcommand{\spirouCONST}{SpirouDRS.spirouConfig{\hskip 0pt}.spirouConst}
 % name of the spirou keywords file
