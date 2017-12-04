@@ -1,6 +1,374 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\chapter{Summary of changes (from version AT-4)}
-\label{chapter:the_changelog}
+\chapter{Summary of changes (AT-4)}
+\label{ch:changelog}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Below we describe breifly the main differences from AT-4 build.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{General}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{itemize}
+
+\item all recipes main body of code is now in a \definevariable{\progMAIN} function and this function is called in \definevariable{\MAIN} part of the code (the part that executes at run time). This allows recipes to be called as functions as well as being called as a standalone code or from the command line. i.e. for \calDARK:
+	\begin{pythonbox}
+	import cal_DARK_spirou
+	    
+	files = ['dark_dark02d406.fits']
+	night_name = '20170710'
+	cal_DARK_spirou.main(night_name=night_name, files=files)
+	\end{pythonbox}
+	will run the exact same procedure as:
+	\begin{bashbox}
+	cal_DARK_spirou.py 201707 dark_dark02d406.fits
+	\end{bashbox}
+
+\item \definevariable{WLOG} function overhal (now in \definevariable{\spirouLog.logger()}) but aliased in most codes back to \definevariable{WLOG}. This means one can use the same functionality as before:
+	\begin{pythonbox}
+	WLOG("warning", "program", "message")
+	\end{pythonbox}
+	However now when "error" is called an automatic exit routine is run (therefore there is no need for sys.exit after a WLOG("error", "", "") call).
+
+\item execution of pythonstartup codes removed and replaced with functions
+
+\item loading of many variables into python memory replaced with call to need dictionary object (parameter dictionary). Parameter dictionary is a custom dictionary object that as well as storing key and value pairs also can set a source for each key in the dictionary (hence the developer will always know where a variable was defined, if used correctly)
+
+\item All hard coded constants removed from running code and moved to configuration files, all variables have been described, noted their new definition locations and where they are used in the recipes and codes (see Section \ref{ch:variables}). This has allowed (and will allow) variables to either be public (i.e. in a location easily accessible by the user) or to be private (in files stored within the module). We can make many specific configuration files or a few, depending on which we deem best.
+
+\item Custom exception: \definevariable{ConfigError} and \definevariable{ConfigException} - designed specifically to be used with the WLOG() function 
+
+\item moved core functions used in multiple recipes to sub-modules
+
+\item all plotting taken out of main codes (call to specific sub-module)
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DARK\_spirou recipe}
+\label{ch:changelog:At4:cal_DARK_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+\item dark measurement moved to function \definevariable{\spirouImage.MeasureDark} (for clarity). This is, in part, due to the repetition of code for ``Whole det'', ``Blue part'' and ``Red part''.
+
+\item all plotting moved to internal functions (for clarity)
+	\begin{itemize}
+    \item \definevariable{\spirouPlot.darkplot\_image\_and\_regions} for the image/region plot
+    \item \definevariable{\spirouPlot.darkplot\_datacut} for the DARK cutlimit plot
+    \item \definevariable{\spirouPlot.darkplot\_histograms} for the histogram plots 
+    \end{itemize}
+
+\item histogram plot updated, original plot plotted bin centers as a smooth peak, simple modification to make sure histogram bars are present
+    
+\item writing of data is sped up by caching all HEADER keys and writing to file once with the write of the data.
+
+\item speed up
+	\begin{itemize}
+	\item AT-4 v44: 4.881 seconds
+	\item py3: 1.890 seconds
+	\end{itemize}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_loc\_RAW\_spirou recipe}
+\label{ch:changelog:At4:cal_loc_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+\item added function to convert from ADU/s to electrons \definevariable{\spirouImage.ConvertToE}
+    
+\item added function to flip image \definevariable{\spirouImage.FlipImage}
+
+\item smoothed image (by a box) is now in a function (creates order\_profile)
+	\begin{itemize}
+	\item added different way to calculate order\_profile - currently set to 'manual' be default
+	\item \definevariable{\spirouLOCOR.BoxSmoothedImage} 
+	\item Instead of manually working out the mean for each box you convolve the weighted image with a tophat function and the weights with a topcat function and then divide the two.
+	\item This gives approximately the same result (with small deviations due to the FT of a topcat function not being perfect).
+	\item The function can be turned back to the original manual mode by using `mode='manual'' but is slower (by a factor of $\sim\times$8)
+	\end{itemize}
+
+\item added storage dictionary to store (and pass around) all variables created `loc' - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+\item added function to measure background and get central pixel positions \definevariable{\spirouLOCOR.MeasureBkgrdGetCentPixs}
+
+\item debug plot added to plot the minimum of `ycc' and `ic\_locseuil' \definevariable{\spirouPlot.sPlt.debug\_locplot\_min\_ycc\_loc\_threshold}
+
+\item added function for locating central position (previously \definevariable{\spirouLOCOR.poscolc}) - currently set to 'manual' be default
+    \begin{itemize}
+    \item \definevariable{\spirouLOCOR.LocateCentralOrderPositions} 
+    \item  Instead of manually working out the starts and ends of each order (with while loops) convolves a mask of cvalues > threshold with a top-hat (size=3) function such that all edges are found
+    \item i.e. `[False, True, True]` or `[True, True, False]` give a different value than `[True, True, True]` or `[False, False, False]` or `[False, False, True]`
+    \item i.e. the convolution gives the sum of three elements, thus selected those elements with a sum of 2 give our edges
+    \item The function can be turned back to the original 'manual' mode by using `mode='manual` but is slower (by a factor of x2)
+	\end{itemize}
+
+\item debug plot added to plot the image above saturation threshold \definevariable{\spirouPlot.locplot\_im\_sat\_threshold}
+        
+\item moved `ctro`,`sigo`,`ac`,`ass` etc into loc (for storage and ease of use)        
+        
+\item the fit across each order has been split into functions
+    \begin{itemize}
+	\item the initial fit is done by \definevariable{\spirouLOCOR.InitialOrderFit}
+	\item This initial fit takes in the plotting args and thus as order is fit the fit is piped on to plot via \definevariable{\spirouPlot.locplot\_order}
+	\item the sigma clipping fit is done by \definevariable{\spirouLOCOR.SigClipOrderFit}
+	\item kind is used to change between 'center' and 'fwhm' fits (thus function is reused in both cases), kind will do the tiny bits of code which are different for each fit
+	\item all fit parameters are loaded into the `loc` parameter dictionary
+	\end{itemize}
+
+\item plot of order number against rms is move to \definevariable{\spirouPlot.locplot\_order{\hskip 0pt}\_number\_against\_rms}
+
+\item function created to add the 2Dlist (i.e. the coefficients) to hdict (the dictionary used to save keys to so that we only write to the fits file once)
+
+\item superimposed fit on the image is pushed into a function, this is many times faster than before - due to optimisation, \definevariable{\spirouLOCOR.imageLocSuperimp}
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item speed up
+	\begin{itemize}
+	\item AT-4 v44: 5.697 seconds
+	\item py3:  2.255 seconds
+    \end{itemize}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_SLIT\_spirou recipe}
+\label{ch:changelog:At4:cal_SLIT_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item added storage dictionary to store (and pass around) all variables created `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+\item Retrieval of coefficients from `\_loco\_` file moved to \definevariable{\spirouLOCOR.GetCoeffs}
+
+\item Tilt finding is moved to function \definevariable{\spirouImage.GetTilt}
+
+\item Fitting the tilt is moved to function \definevariable{\spirouImage.FitTilt}
+
+\item selected order plot moved to \definevariable{\spirouPlot.slit\_sorder\_plot}
+
+\item slit tilt angle and fit plot moved to \definevariable{\spirouPlot.slit\_tilt\_angle\_and\_fit\_plot}
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item speed up
+	\begin{itemize}
+	\item AT-4 v44: 11.071 seconds
+	\item py3: 4.386 seconds
+    \end{itemize}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_FF\_RAW\_spirou recipe}
+\label{ch:changelog:At4:cal_FF_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item added function to replace measure\_bkgr\_FF, but incomplete (not currently used) would need to convert interpol.c to python (spline fitting)
+
+\item added storage dictionary to store (and pass around) all variables created `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+\item Created function to read TILT file from calibDB (replaces `readkeyloco`)
+	\begin{itemize}
+    \item \definevariable{\spirouImage.ReadTiltFile}
+    \item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+    \end{itemize}
+\item Created function to read order profile (replaces `read\_data\_raw` + pre-amble)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadOrderProfile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+    \end{itemize}
+\item Used \definevariable{\spirouLOCOR.GetCoeffs} to get the coefficients from file
+
+\item Created merge coefficients function to perform AB coefficient merge \definevariable{\spirouLOCOR.MergeCoefficients}
+    
+\item Updated extraction function \definevariable{\spirouEXTOR.ExtracTiltWeightOrder2} - much faster as takes many of the calculations outside the pixel loop
+	\begin{itemize}
+	\item i.e. calculating the pixel contribution due to tilt in array `ww`
+	\item `ww` is constant for an order, thus doesn't need to be worked out for each pixel in one order, just the multiplication between ww and the image
+	\item up to 8 times faster with these improvements
+    \end{itemize}
+\item `e2ds`, `SNR`, `RMS`, `blaze` and `flat` are stored in `loc` parameter dictionary
+
+\item Plotting code moved to \definevariable{\spirouPlot} functions
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item QC (max\_signal $>$ qc\_max\_signal $\times$ nbframes) moved to end, however in old code it is not used as a failure criteria so also not used to fail in new code
+
+\item speed up
+	\begin{itemize}
+	\item AT-4 v44: 25.962 seconds
+	\item py3: 4.675 seconds
+    \end{itemize}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_extract\_RAW\_spirou recipes}
+\label{ch:changelog:At4:cal_extract_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item Merged \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouAB}, \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouC} and \definevariable{cal\_extract\_RAW{\hskip 0pt}\_spirouALL} can still access \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouAB} and \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouC} but instead of being modified copies of the code they are just wrappers for \definevariable{cal\_extract\_RAW{\hskip 0pt}\_spirou.py} (i.e. they forward the fiber type)
+
+\item added storage dictionary to store (and pass around) all variables created `loc` - a Parameter dictionary (thus source can be set for all variables to keep track of them)
+
+\item Created function to read TILT file from calibDB (replaces `readkeyloco`)
+    \begin{itemize}
+	\item \definevariable{\spirouImage.ReadTiltFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+    \end{itemize}
+
+\item Created function to read WAVE file from calibDB (replaces `read\_data\_raw(`)
+    \begin{itemize}
+	\item \definevariable{\spirouImage.ReadWaveFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+    \end{itemize}
+
+\item Used \definevariable{\spirouLOCOR.GetCoeffs} to get the coefficients from file
+
+\item Created function to read order profile (replaces `read\_data\_raw` + pre-amble)
+    \begin{itemize}
+	\item \definevariable{\spirouImage.ReadOrderProfile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+    \end{itemize}
+
+\item Created merge coefficients function to perform AB coefficient merge \definevariable{\spirouLOCOR.MergeCoefficients}
+
+\item New structures above replace the need for specific fiber sections ('AB', 'C', 'A', 'B') (In \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouALL} and individual setups for \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouAB} and \definevariable{cal\_extract{\hskip 0pt}\_RAW\_spirouC})
+
+\item all extraction functions passed into \definevariable{spirouEXTOR} to wrapper functions (\definevariable{\spirouEXTOR.ExtractOrder}, \definevariable{\spirouEXTOR.ExtractTiltOrder}, \definevariable{\spirouEXTOR.ExtractTiltWeightOrder} and \definevariable{\spirouEXTOR.ExtractWeightOrder}) these are then run into \definevariable{\spirouEXTOR.ExtractionWrapper} and processed accordingly
+
+\item Added a timing string (to record timings of all extraction processes) use `print(timing))` to view
+    
+\item `e2ds` and `SNR` stored in `loc`
+
+\item Plotting code moved to \definevariable{\spirouPlot} functions
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item QC (max\_signal $>$ qc\_max\_signal $\times$ nbframes) moved to end, however in old code it is not used as a failure criteria so also not used to fail in new code
+
+\item speed up
+	\begin{itemize}
+	\item AT-4 v44: 60.852
+	\item py3: 8.694
+
+	\item Extraction timing Py3:
+		\begin{itemize}
+		\item ExtractOrder = 0.025 s
+		\item ExtractTiltOrder = 0.060 s
+		\item ExtractTiltWeightOrder = 0.141 s
+		\item ExtractWeightOrder = 0.070 s
+         \end{itemize}
+
+	\item Extraction timing AT-4 v46:
+		\begin{itemize}
+		\item ExtractOrder (Fortran) = 0.019 s
+		\item ExtractOrder (Py2) = 0.085 s
+		\item ExtractTiltOrder = 0.766 s
+		\item ExtractTiltWeightOrder = 0.840 s
+		\item ExtractWeightOrder = 0.156 s
+         \end{itemize}
+
+	\item Speed increase (Py3 over AT-4 v46)
+		\begin{itemize}
+		\item ExtractOrder (Py3 $\rightarrow$ Fortran) = slower    x 1.3 times slower
+		\item ExtractOrder (Py3 $\rightarrow$ Py) = faster     x 3.4 times faster
+		\item ExtractTiltOrder (Py3 $\rightarrow$ Py = faster     x12.9 times faster
+		\item ExtractTiltWeightOrder (Py3 $\rightarrow$ Py) = faster    x6.0 times faster
+		\item ExtractWeightOrder (Py3 $\rightarrow$ Py) = faster    x2.2 times faster
+		\end{itemize}
+
+	\end{itemize}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DRIFT\_RAW\_spirou recipe}
+\label{ch:changelog:At4:cal_DRIFT_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item acqtime (bjdref) got from header using \definevariable{\spirouImage.GetAcqTime}
+	\begin{itemize}
+	\item can be used to get both `human` readible and `unix` time (use key kind=`human` or kind=`unix)
+	\end{itemize}
+
+\item Created function to read TILT file from calibDB (replaces `readkeyloco`)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadTiltFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+	\end{itemize}
+
+\item Created function to read WAVE file from calibDB (replaces `read\_data\_raw(`)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadWaveFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+	\end{itemize}
+
+\item Used \definevariable{\spirouLOCOR.GetCoeffs} to get the coefficients from file
+
+\item Created function to read order profile (replaces `read\_data\_raw` + pre-amble)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadOrderProfile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+	\end{itemize}
+
+\item new extraction (see \calextractRAW above).
+
+\item delta RV RMS calculation in \definevariable{\spirouRV.DeltaVrms2D}
+	\begin{itemize}
+	\item where arguments are `speref` and `wave` (stored in `loc`)
+	\item where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
+	\end{itemize}
+
+\item all functionality to do with listing files moved to \definevariable{\spirouImage{\hskip 0pt}.GetAllSimilarFiles} - no need for "alphanumeric short"/"nice sort" - `np.sort(x)` does this
+    
+\item Renormlisation and cosmics correction in \definevariable{\spirouRV.ReNormCosmic2D}
+	\begin{itemize}
+	\item where arguments are `speref` and `spe` (stored in `loc`)
+	\item where keyword arguments are `cut`, `size` and `threshold` (stored in p)
+	\end{itemize}
+
+\item RV drift calculated
+	\begin{itemize}
+	\item \definevariable{\spirouRV.CalcRVdrift2D}
+	\item where arguments are `speref`, `spen` and `wave` (`speref` and `spen` stored in loc)
+	\item where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
+	\end{itemize}
+
+\item `drift`, `errdrift`, `deltatime`, `mdrift`, `merrdrift` stored in loc
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item speed up
+	\begin{itemize}
+	\item AT-4 v44: 22.556 s
+	\item py3:  8.143 s
+	\end{itemize}
+
+\end{itemize}
