@@ -1,6 +1,6 @@
 # SPIRou DRS in python 3
 
-![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
+![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3" =256x)
 
 
 
