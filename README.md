@@ -3,6 +3,19 @@
 ![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3")
 
 
+
+# User manual
+
+![User manual](./documentation/User_guide_spirou_drs.pdf "User manual")
+
+# Developer manual
+
+![Dev manual](./documentation/Dev_guide_spirou_drs.pdf "Developer manual")
+
+
+# Quick manual
+
+
 ## Table of Contents
 1. [Installation process](#1-installation-process)
 
