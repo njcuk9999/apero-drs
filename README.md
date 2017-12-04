@@ -1,8 +1,6 @@
 # SPIRou DRS in python 3
 
-![picture alt](./documentation/Figures/Logo_SPIRou-22.jpg "SPIRou DRS in python 3" =256x)
-
-
+<img src="./documentation/Figures/Logo_SPIRou-22.jpg" alt="Drawing" style="width:128px;"/>
 
 # User manual
 
