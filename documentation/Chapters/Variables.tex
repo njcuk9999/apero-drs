@@ -2,11 +2,10 @@
 %%
 \ifdevguide
 \chapter{Variables}
-\label{ch:variables}
 \else
 \chapter{User modifiable variables}
-\label{ch:variables}
 \fi
+\label{ch:variables}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -71,6 +70,10 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 \fi
 
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \section{Global variables}
@@ -84,20 +87,61 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \ifdevguide
 \item \ParameterEntry{DRS Name}
 {Defines the data reduction software name. Value must be a valid string.}
-{DRS\_NAME}{SPIROU}{All Recipes}{\spirouCONST}{\spirouCONST}{Private}
+{DRS\_NAME}{SPIROU}
+{\AllRecipes}{\spirouCONST.NAME()}{\AllRecipes}{Private}
 \fi
 
 % DRS_VERSION
 \ifdevguide
 \item \ParameterEntry{DRS Version}
 {Defines the data reduction software version. Value must be a valid string.}
-{DRS\_VERSION}{SPIROU}{All Recipes}{\spirouCONST}{\spirouCONST}{Private}
+{DRS\_VERSION}{0.0.1}
+{\AllRecipes}{\spirouCONST.VERSION()}{\AllRecipes}{Private}
 \fi
+
+
+% package
+\ifdevguide
+\item \ParameterEntry{Package name}
+{Defines the name of the python package that all sub-modules are located in. Value must be a string and be the name of a valid python package.}
+{package}{SpirouDRS}
+{\AllRecipes}{\spirouCONST.PACKAGE()}{\AllRecipes}{Private}
+\fi
+
+
+% authors
+\ifdevguide
+\item \ParameterEntry{authors}
+{Defines the authors of the DRS. Value must be a string, author names separated by a comma.}
+{authors}{N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou}
+{\AllRecipes}{\spirouCONST.AUTHORS()}{\AllRecipes}{Private}
+\fi
+
+
+% date
+\ifdevguide
+\item \ParameterEntry{date}
+{Defines the last edited date for the DRS. Value must be a string in format YYYY-MM-DD format.}
+{date}{2017-11-17}
+{None}{\spirouCONST.LATEST\_EDIT()}{None}{Private}
+\fi
+
 
 % DRS_PLOT
 \item \ParameterEntry{Plotting switch}
 {Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots). Value must be an integer (0 or 1) or boolean (True or False)}
-{DRS\_PLOT}{1}{All Recipes}{\configtxtfile}{All Recipes}{Public}
+{DRS\_PLOT}{1}
+{\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
+
+
+
+% interactive_plots
+\ifdevguide
+\item \ParameterEntry{Use matplotlib interactive plot environment}
+{Defines whether to use the matplotlib interactive plot environment. If True or 1 uses `plot.ion()' and plots do not interrupt the running of code. If False or 0 all plots are run and `plt.show(), plt.close()' is used after each plot (pausing the code and destroying the plots after they are manually closed). This is mostly useful for debugging.}
+{interactive\_plots}{True}
+{\spirouPlot}{\spirouCONST.INTERACITVE\_PLOTS\_ENABLED()}{\spirouPlot variable definition}{Private}
+\fi
 
 % ic_debug
 \item \ParameterEntry{Debug mode}
@@ -108,8 +152,9 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \item 2 = Level 2 debug \begin{todo}Define level 2 debug\end{todo}
 \end{itemize}
 }
-{ic\_debug}{0}{\callocRAW}{\constantsfile}{}{Public}
+{ic\_debug}{0}{\callocRAW}{\constantsfile}{???}{Public}
 \DevNote{Should this be public?}
+
 
 % ic_display_timeout
 \item \ParameterEntry{Plot interval}
@@ -131,34 +176,40 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 \item \ParameterEntry{The data directory}
 {Defines the path to the data directory. Value must be a string containing a valid file location.}
-{TDATA}{/drs/data/}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{TDATA}{/drs/data/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \item \ParameterEntry{The installation directory}
-{Defines the instllation directory (\InstallDIR). Value must be a string containing a valid file location.}
-{DRS\_ROOT}{/drs/INTROOT/}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{Defines the installation directory (\InstallDIR). Value must be a string containing a valid file location.}
+{DRS\_ROOT}{/drs/INTROOT/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \item \ParameterEntry{The raw data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_DATA\_RAW}{/drs/data/raw}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_RAW}{/drs/data/raw}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \item \ParameterEntry{The reduced data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_DATA\_REDUC}{/drs/data/reduced}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_REDUC}{/drs/data/reduced}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \item \ParameterEntry{The calibration database and calibration file directory}
 {Defines the directory that the calibration files and database will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_CALIB\_DB}{/drs/data/calibDB}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_CALIB\_DB}{/drs/data/calibDB}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \item \ParameterEntry{The log directory}
 {Defines the directory that the log messages are stored in. Value must be a string containing a valid file location.}
-{DRS\_DATA\_MSG}{/drs/data/msg}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_MSG}{/drs/data/msg}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \item \ParameterEntry{The working directory}
 {Defines the working directory. Value must be a string containing a valid file location.}
-{DRS\_DATA\_WORKING}{/drs/data/tmp/}{All Recipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_WORKING}{/drs/data/tmp/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+
 
 \end{itemize}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -172,7 +223,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 % Resize blue window (has to be defined manually)
 \item 
 \begin{minipage}[t]{\textwidth}
-\textbf{Resizing blue window}
+\textbf{Resizing blue window (\textcolor{red}{ic\_ccd\{x/y\}\_blue\_\{low/high\}})}
 
 \begin{thighlight}
 \textcolor{brown}{The blue window used in \calDARK. Each value must be a integer between 0 and the maximum array size in each dimension.} 
@@ -187,7 +238,7 @@ ic\_ccdy\_blue\_high &=& 2048-350 \\
 \textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
 \textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
 \ifdevguide
-\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{green}{\calDARK.\progMAIN}} \\
+\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{\calDARK.\progMAIN}} \\
 \textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
 \fi
 \end{tabular}
@@ -198,7 +249,7 @@ ic\_ccdy\_blue\_high &=& 2048-350 \\
 % Resize red window (has to be defined manually)
 \item 
 \begin{minipage}[t]{\textwidth}
-\textbf{Resizing red window}
+\textbf{Resizing red window (\textcolor{red}{ic\_ccd\{x/y\}\_red\_\{low/high\}})}
 
 \begin{thighlight}
 \textcolor{brown}{The blue window used in \calDARK. Each value must be a integer between 0 and the maximum array size in each dimension.} 
@@ -210,11 +261,11 @@ ic\_ccdx\_red\_high &  = &  2048-1750 \\
 ic\_ccdy\_red\_low  & =  & 2048-1570 \\
 ic\_ccdy\_red\_high &  = &  2048-1910 \\
 &&\\
-\textcolor{red}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
-\textcolor{red}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
+\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\calDARK} \\
+\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
 \ifdevguide
-\textcolor{red}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{green}{\calDARK.\progMAIN}} \\
-\textcolor{red}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
+\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{\calDARK.\progMAIN}} \\
+\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
 \fi
 \end{tabular}
 \end{thighlight}
@@ -225,7 +276,7 @@ ic\_ccdy\_red\_high &  = &  2048-1910 \\
 % Resize image (has to be defined manually)
 \item 
 \begin{minipage}[t]{\textwidth}
-\textbf{Resizing red window}
+\textbf{Resizing red window (\textcolor{red}{ic\_ccd\{x/y\}\_\{low/high\}})}
 
 \begin{thighlight}
 \textcolor{brown}{The blue window used in \calDARK. Each value must be a integer between 0 and the maximum array size in each dimension.} 
@@ -236,11 +287,11 @@ ic\_ccdx\_low &=& 5 \\
 ic\_ccdx\_high &=& 2040 \\
 ic\_ccdy\_low &=& 5 \\
 ic\_ccdy\_high &=& 1935 \\
-
+&&\\
 \textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\callocRAW, \calSLIT, \calFFraw, \calextractRAW, \calDRIFTRAW} \\
 \textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\constantsfile} \\
 \ifdevguide
-\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{green}{\callocRAW\progMAIN, \calSLIT\progMAIN, \calFFraw\progMAIN, \calextractRAW\progMAIN, \calDRIFTRAW.\progMAIN}} \\
+\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{\callocRAW\progMAIN, \calSLIT\progMAIN, \calFFraw\progMAIN, \calextractRAW\progMAIN, \calDRIFTRAW.\progMAIN}} \\
 \textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Public} \\
 \fi
 \end{tabular}
@@ -314,7 +365,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {ic\_ext\_range1\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':0.0, 'B':14.5, 'C':7.5\} |}
 {\calFFraw}{\constantsfile}
-{\calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2()}{Public}
+{\calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2(), \spirouPlot.ff\_sorder\_fit\_edges()}{Public}
 \DevNote{Formally this was called `plage1' in \calFFraw}
 
 % ic_ext_range2_fpall
@@ -323,7 +374,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {ic\_ext\_range2\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5\} |}
 {\calFFraw, \calextractRAW}{\constantsfile}
-{\calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2()}{Public}
+{\calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2(), \spirouPlot.ff\_sorder\_fit\_edges()}{Public}
 \DevNote{Formally this was called `plage2' in \calFFraw}
 
 % ic_ext_range_fpall
@@ -680,13 +731,64 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 \begin{itemize}
 
-\item Items here
-% 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{}{Public}
+% ic_do_bkgr_subtraction
+\item \ParameterEntry{Measure background}
+{Define whether to measure the background and do a background subtraction. Value must be True or 1 to do the background measurement and subtraction or be False or 0 to not do the background measurement and subtraction.}
+{ic\_do\_bkgr\_subtraction}{0}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+\DevNote{Currently even if True or 1 the background is not calculated as the interpol function has not been converted to python.}
 
+
+% ic_bkgr_window
+\item \ParameterEntry{Half-size of background window}
+{Defines the half-size (in pixels) of the background window to create a sub-frame to find the minimum $2\times$ ic\_bkgr\_window pixels for which to calculate the background from. Size is used in both row and column (y and x) direction. Value must be an integer between zero and the minimum(row number, column number) (minimum(x-axis dimension, y-axis dimension)).}
+{ic\_bkgr\_window}{100}
+{\calFFraw}{\constantsfile}{\spirouBACK.measure\_background\_flatfield()}{Public}
+
+
+% ic_tilt_nbo
+\item \ParameterEntry{Number of orders in tilt measurement}
+{Defines the number of orders in the tilt measurement file (TILT key in the \masterCALIBDBfile). This is the number of tilts that will be extracted. Value must be an integer larger than zero and smaller than or equal to the total number of orders present in the TILT file.}
+{ic\_tilt\_nbo}{36}
+{\calFFraw}{\constantsfile}{\spirouFITS.read\_tilt\_file()}{Public}
+\DevNote{This can probably be removed and replaced with a check to the TILT file - to automatically determine how many orders there should be.}
+\DevNote{This was formally called `nbo' and was hard coded in \calFFraw.}
+
+
+% ic_ff_sigdet
+\item \ParameterEntry{The manually set sigdet for flat fielding.}
+{This defines the sigdet to use in the weighted tilt extraction. Set to -1 to use from the input file (`fitsfilename') HEADER. Value must be either -1 or a positive float.}
+{ic\_ff\_sigdet}{100.0}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+
+
+% ic_extfblaz
+\item \ParameterEntry{Half size blaze window}
+{Defines the distance from the central column that should be used to measure the blaze for each order. Value must be an integer greater than zero and less than half the number of columns (x-axis dimension).}
+{ic\_extfblaz}{50}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+
+
+% ic_blaze_fitn
+\item \ParameterEntry{Fit degree for the blaze polynomial fit}
+{Defines the degree of the fitting polynomial for fitting the blaze function of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the column direction (x-axis direction).}
+{ic\_blaze\_fitn}{5}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+
+
+% ic_ff_order_plot
+\item \ParameterEntry{Selected order for flat fielding plot}
+{Defines the selected order to plot on the flat fielding image plot. Value must be a integer between zero and the number of orders.}
+{ic\_ff\_order\_plot}{5}
+{\calFFraw}{\constantsfile}{\spirouPlot.ff\_sorder\_fit\_edges}{Public}
+\DevNote{This was formally called `ic\_plot\_order' in \calFFraw.}
+
+% ic_ff_plot_all_orders
+\item \ParameterEntry{Plot all order fits for flat fielding plot}
+{If True or 1, instead of plotting the selected order from ic\_ff\_order\_plot will plot the order fits (and edges) for all orders. This is slower than just plotting one. Value must be True or 1 or False or 0.}
+{ic\_ff\_plot\_all\_orders}{0}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+\DevNote{This is a new plot, instead of plotting one selected order plots all orders - this is obviously slightly slower than just plotting one example order.}
 
 \end{itemize}
 
@@ -721,15 +823,24 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \item \ParameterEntry{Extraction distance - rough extraction}
 {The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order). Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a positive float between 0 and the total number of rows (y-axis dimension).}
 {ic\_extnbsig}{2.5}
-{\calSLIT, \calFFraw}{}{}{Public}
+{\calSLIT, \calFFraw}{\constantsfile}{\spirouEXTOR.extract\_AB\_order}{Public}
 
 
-\item Items here
-% 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{}{Public}
+% ic_extmeanzone
+\item \ParameterEntry{Mean size of extraction window}
+{Sets the mean size of the extraction window for noise calculation. Noise is defined as `sigdet' $\times \sqrt(\text{ic\_extmeanzone})$ }
+{ic\_extmeanzone}{16}
+{\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
+\DevNote{This variable doesn't seem correct. It should probably be calculated as `ic\_ext\_range1' + `ic\_ext\_range2', not hard coded separately.}
+
+
+% ic_ext_all
+\item \ParameterEntry{Extract all}
+{Defines whether code just extracts the E2DS file (currently via just a weighted extraction process), or whether the code saves all extraction types (simple, tilt, tilt+weight, weight). Value must be True or 1 or False or 0.}
+{ic\_ext\_all}{0}
+{\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
+\DevNote{This, is just a temporary variable until we only calculate one type of extraction. Why is the E2DS weight only and not tilt weight in \calextractRAW?}
+
 
 \end{itemize}
 
@@ -745,12 +856,60 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 \begin{itemize}
 
-\item Items here
-% 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{}{Public}
+
+% ic_drift_noise
+\item \ParameterEntry{Noise value for SNR drift calculation}
+{Define the noise value for the signal to noise ratio in the drift calculation.
+\begin{equation}
+snr = flux/\sqrt(\text{flux} + \text{noise}^2)
+\end{equation}
+Value must be a float larger than zero.
+}
+{ic\_drift\_noise}{100.0}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_maxflux
+\item \ParameterEntry{The maximum flux for a good (unsaturated) pixel}
+{Defines the maximum flux to define a good pixel. This pixels and those that surround it will not be used in determining the RV parameters. Value must be a float greater than zero.}
+{ic\_drift\_maxflux}{1.e9}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_boxsize
+\item \ParameterEntry{Saturated pixel flag size}
+{Defines the number of pixels around a saturated pixel to flag as unusable (and hence not used in determining the RV parameters). Value must be a integer larger than zero.}
+{ic\_drift\_boxsize}{12}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% drift_nlarge
+\item \ParameterEntry{Large number of files for skip}
+{Defines the number of files that is large enough to require the `drift\_file\_skip' parameter (only uses one file in every `drift\_file\_skip' files). This is done to speed up the code and avoid a bug. Value must be an integer larger than zero.}
+{drift\_nlarge}{300}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+\DevNote{Has this bug been fixed, do we need to skip for a large number of files?}
+
+
+% drift_file_skip
+\item \ParameterEntry{Large number of files skip parameter}
+{Defines how many files we skip. This is done by selecting one file every `drift\_file\_skip' files. i.e. if skip is 3 the code uses every 3rd file to calculate the drift. Value must be an integer larger than zero. A value of 1 is equivalent to no skipping of files regardless of the file number.}
+{drift\_file\_skip}{3}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_cut
+\item \ParameterEntry{Number of sigmas to cut in cosmic renormalization}
+{Defines the number of standard deviations to remove fluxes at (and replace with the reference flux). Value must be a float larger than zero.}
+{ic\_drift\_cut}{3}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_n_order_max
+\item \ParameterEntry{Number of orders to use in drift}
+{Defines the number of orders to use (starting from zero to maximum number). This is used to get the median drift. Value must be an integer between 0 and the maximum number of orders.}
+{ic\_drift\_n\_order\_max}{28}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
 
 
 \end{itemize}
@@ -767,15 +926,238 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 \begin{itemize}
 
-\item Items here
-% 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{}{Public}
+% qc_max_darklevel
+\item \ParameterEntry{Maximum dark median level}
+{Defines the maximum dark median level in ADU/s. If this is greater than median flux it does not pass the quality control criteria:
+\begin{equation}
+\text{Median Flux} < \text{qc\_max\_darklevel}
+\end{equation}
+Value must be a float equal to or larger than zero. 
+}
+{qc\_max\_darklevel}{1.0}
+{\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
 
+
+% qc_max_dead
+\item \ParameterEntry{Maximum percentage of dead pixels}
+{Defines the maximum allowed percentage of dead pixels in a dark image. If the number of dead pixels is greater than this it does not pass the quality control criteria:
+\begin{equation}
+\text{Number of dead pixels} < \text{qc\_max\_dead}
+\end{equation}
+}
+{qc\_max\_dead}{25.0}
+{\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
+
+
+% qc_dark_time
+\item \ParameterEntry{Minimum dark exposure time}
+{Defines the minimum dark exposure time. If exposure time (from FITS rec HEADER) is below this the code will exit with `Dark exposure time too short' message. Value must be a float greater than zero.}
+{qc\_dark\_time}{1.0}
+{\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
+
+
+% qc_loc_maxlocfit_removed_ctr
+\item \ParameterEntry{Maximum points removed in localization position fit}
+{Defines the maximum allowed number of points removed in the position fitting process (during localization). If number is more than this it does not pass the quality control criteria: 
+\begin{equation}
+\text{Number of rejected orders in center fit} >\text{qc\_loc\_maxlocfit\_removed\_ctr}
+\end{equation}
+Value must be a integer greater than zero.
+}
+{qc\_loc\_maxlocfit\_removed\_ctr}{1500}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
+
+
+% qc_loc_maxlocfit_removed_wid
+\item \ParameterEntry{Maximum points removed in localization width fit}
+{Defines the maximum allowed number of points removed in the width fitting process (during localization). If number is more than this it does not pass the quality control criteria: 
+\begin{equation}
+\text{Number of rejected orders in width fit} >\text{qc\_loc\_maxlocfit\_removed\_width}
+\end{equation}
+Value must be a integer greater than zero.
+}
+{qc\_loc\_maxlocfit\_removed\_wid}{105}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
+
+
+% qc_loc_rmsmax_center
+\item \ParameterEntry{Maximum allowed RMS in fitting in localization position fit}
+{Defines the maximum RMS allowed in the position fitting process (during localization). If the RMs is higher than this value it does not pass the quality control criteria: 
+\begin{equation}
+\text{Mean rms center fit} > \text{qc\_loc\_rmsmax\_center}
+\end{equation}
+Value must be a float greater than zero.
+}
+{qc\_loc\_rmsmax\_center}{100}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
+
+
+% qc_loc_rmsmax_fwhm
+\item \ParameterEntry{Maximum allowed RMS in fitting in localization width fit}
+{Defines the maximum RMS allowed in the width fitting process (during localization). If the RMs is higher than this value it does not pass the quality control criteria: 
+\begin{equation}
+\text{Mean rms width fit} > \text{qc\_loc\_rmsmax\_fwhm}
+\end{equation}
+Value must be a float greater than zero.
+}
+{qc\_loc\_rmsmax\_fwhm}{500}
+{\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
+
+
+% qc_max_signal
+\item \ParameterEntry{Saturation point}
+{Defines the maximum signal allowed (when defining saturation limit). Currently this does not contribute to failing the quality test. Value must be a float greater than zero.}
+{qc\_max\_signal}{65500}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+\DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
+
+% qc_loc_flumax 
+\item \ParameterEntry{Saturation level reached warning}
+{Defines the level above which a warning is generated in the form `SATURATION LEVEL REACHED on Fiber \definevariable{fiber}'. Value must be a float greater than zero.}
+{qc\_loc\_flumax}{64500}
+{\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
 
 \end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Calibration database variables}
+\label{ch:variables:calibdb}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% ic_calibDB_filename
+\item \ParameterEntry{The calibration database master filename}
+{Defines the name of the master calibration database text file for use in all calibration database operation.}
+{ic\_calibDB\_filename}{\masterCALIBDBfile}
+{\AllRecipes}{\constantsfile}{\spirouCONST.CALIBDB\_MASTERFILE()}{Public}
+\DevNote{This should probably be private, unless we want the user to be able to change calibDB files.}
+
+
+% calib_max_wait
+\item \ParameterEntry{Maximum wait time for locked calibration database}
+{Defines the maximum time the code waits for the calibration database when it is locked. A locked file is created every time the calibration database is open (and subsequently closed when reading of the database was successful). If a lock file is present the code will wait a maximum of this many seconds and keep checking whether the lock file has been removed. After which time the code will exit with an error. Value must be a positive float greater than zero. Measured in seconds.}
+{calib\_max\_wait}{3600}
+{\AllRecipes}{\constantsfile}{\spirouCDB.get\_check\_lock\_file()}{Public}
+
+\end{itemize}
+
+
+
+
+\ifdevguide
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Startup variables}
+\label{ch:variables:startup}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+
+% config_folder
+\item \ParameterEntry{Configuration Folder Path}
+{Defines the location of the configuration directory relative to the module directory (defined in variable = `package'). Value must be a string containing a valid directory location.}
+{config\_folder}{\configdirrelpath}
+{\AllRecipes}{\spirouCONST.CONFIGFOLDER()}{\AllRecipes}{Private}
+
+
+% config_file
+\item \ParameterEntry{Configuration file name}
+{Defines the main configuration (containing the data directories etc).  Value must be a string containing a valid file name i.e. the main configuration file should be at \definevariable{INSTALL\_DIR}/\definevariable{config\_folder}/\definevariable{config\_file}.}
+{config\_file}{\configtxtfile}
+{\AllRecipes}{\spirouCONST.CONFIGFILE()}{\AllRecipes}{Private}
+
+
+% arg_file_names
+\item \PseudoParamEntry{Filenames from run time arguments}
+{Gets the filenames from run time arguments.}
+{arg\_file\_names}
+{\AllRecipes}{\spirouCONST.ARG\_FILE\_NAMES()}{\spirouStartup.run\_time\_args()}{Private}
+
+
+% arg_night_name
+\item \PseudoParamEntry{Night name from run time arguments}
+{Gets the night name from run time arguments.}
+{arg\_night\_name}
+{\AllRecipes}{\spirouCONST.ARG\_NIGHT\_NAME()}{\spirouStartup.run\_time\_args()}{Private}
+
+
+% calibdb_masterfile
+\item \PseudoParamEntry{Calibration database file path}
+{Gets the full calibration database file path}
+{masterfilepath}
+{\AllRecipes}{\spirouCONST.CALIBDB\_MASTERFILE()}{\spirouCDB.write\_files\_to\_master(), \spirouCDB.read\_master\_file(), \spirouImage.correct\_for\_dark()}{Private}
+
+
+% calibdb_lockfile
+\item \PseudoParamEntry{Calibration database lock file path}
+{Gets the full calibration database lock file path}
+{lockfilepath}
+{\AllRecipes}{\spirouCONST.CALIBDB\_LOCKFILE()}{\spirouCDB.get\_check\_lock\_file()}{Private}
+
+
+% fitsfilename
+\item \PseudoParamEntry{Fits file name}
+{Gets the full file path of the first file in `arg\_file\_names'}
+{fitsfilename}
+{\AllRecipes}{\spirouCONST.FITSFILENAME()}{\spirouStartup.run\_time\_args()}{Private}
+
+
+% log_opt
+\item \PseudoParamEntry{Log program name}
+{Chooses the display format for the program in the logging system.}
+{log\_opt}
+{\AllRecipes}{\spirouCONST.LOG\_OPT()}{\spirouStartup.run\_time\_args()}{Private}
+
+
+% manual_file
+\item \PseudoParamEntry{Documentation info manual file path}
+{Gets the full documentation info manual file path}
+{manual\_file}
+{\AllRecipes}{\spirouCONST.MANUAL\_FILE()}{\spirouStartup.display\_help\_file()}{Private}
+
+
+% nbframes
+\item \PseudoParamEntry{Number of frames}
+{Gets the number of frames from the list of files (`arg\_file\_names').}
+{nbframes}
+{\AllRecipes}{\spirouCONST.NBFRAMES}{\spirouStartup.run\_time\_args()}{Private}
+
+
+% program
+\item \PseudoParamEntry{Program name from run time}
+{Gets the run program name from run time.}
+{program}
+{\AllRecipes}{\spirouCONST.PROGRAM()}{\spirouStartup.run\_time\_args()}{Private}
+
+
+% raw_dir
+\item \PseudoParamEntry{Full path of raw data directory}
+{Gets the full path of the raw data directory.}
+{raw\_dir}
+{\AllRecipes}{\spirouCONST.RAW\_DIR()}{\spirouFITS.math\_controller(), \spirouImage.get\_all\_similar\_files(), \spirouStartup.display\_run\_files()}{Private}
+
+
+% reduced_dir
+\item \PseudoParamEntry{Full path of reduced data directory}
+{Gets the full path of the reduced data directory.}
+{reduced\_dir}
+{\AllRecipes}{\spirouCONST.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}{Private}
+
+\end{itemize}
+
+\fi
+
 
 
 \ifdevguide
@@ -791,13 +1173,63 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 \begin{itemize}
 
-\item Items here
-% 
-% \item \ParameterEntry{}
-% {}
-% {}{}
-% {}{}{}{Public}
+% date_fmt_header
+\item \ParameterEntry{Header date format}
+{Defines the format of the date in the FITS rec header files}
+{date\_fmt\_header}{\%Y-\%m-\%d-\%H:\%M:\%S.\%f}
+{\spirouCDB}{\spirouCONST.DATE\_FMT\_HEADER()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
 
+
+% date_fmt_header
+\item \ParameterEntry{Calibration database date format}
+{Defines the format of the date in the calibration database file}
+{date\_fmt\_calibdb}{\%Y-\%m-\%d-\%H:\%M:\%S.\%f}
+{\spirouCDB}{\spirouCONST.DATE\_FMT\_CALIBDB()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
+
+\end{itemize}
+
+\fi
+
+
+\ifdevguide
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{FITS rec variables}
+\label{ch:variables:fitsrec}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% forbidden_keys
+\item 
+\begin{minipage}[t]{\textwidth}
+\textbf{Forbidden copy keys}
+
+\begin{thighlight}
+
+\textcolor{brown}{Lists the keys that should not be copied when call to copy all FITS rec keys is made. Should be a list of python strings.} \\
+
+\begin{pythonboxblank}
+forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'EXTEND', 
+                  'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1', 'CRVAL2', 'CRPIX2', 
+                  'CDELT2', 'BSCALE', 'BZERO', 'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 
+                  'FRAC_BB']
+\end{pythonboxblank}
+\begin{tabular}{>{\color{red}}l c l}
+&&\\
+\textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\AllRecipes} \\
+\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\spirouCONST.FORBIDDEN\_COPY\_KEYS()} \\
+\ifdevguide
+\textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{\spirouFITS}} \\
+\textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Private} \\
+\fi
+\end{tabular}
+\end{thighlight}
+\end{minipage}
 
 \end{itemize}
 
@@ -825,7 +1257,7 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \end{itemize}
 Value must be a valid string.
 }
-{PRINT\_LEVEL}{all}{All Recipes}{\configtxtfile}{}{Public}
+{PRINT\_LEVEL}{all}{\AllRecipes}{\configtxtfile}{}{Public}
 
 % LOG_LEVEL
 \item \ParameterEntry{Log message level}
@@ -838,6 +1270,100 @@ Value must be a valid string.
 \end{itemize}
 Value must be a valid string.
 }
-{LOG\_LEVEL}{all}{All Recipes}{\configtxtfile}{}{Public}
+{LOG\_LEVEL}{all}{\AllRecipes}{\configtxtfile}{}{Public}
+
+
+% trig_keys
+\ifdevguide
+\item 
+\begin{minipage}[t]{\textwidth}
+\ParameterEntry{Logging keys}
+{Defines the logging keys to use for each logging levels. Value should be a dictionary of key value pairs (where all keys and values are strings). When using the \definevariable{\spirouLog.logger()} (aliases to \definevariable{WLOG} or \definevariable{wlog} in recipes) the first argument must be one of these keys and the returned string is the corresponding value.}
+{trig\_key}
+{\lstinline[style=pythoninline]| dict(all=' ', error='!', warning='@', info='*', graph='~') |}
+{\AllRecipes}{\spirouCONST.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
+\vspace{-0.25cm}
+\begin{thighlight}
+i.e.: 
+\begin{pythonbox}
+trig_key = dict(error='!')
+WLOG('error', 'program', 'Message')
+\end{pythonbox}
+returns
+\begin{cmdboxprint}
+HH:MM:SS.s - ! |program|Message
+\end{cmdboxprint}
+\end{thighlight}
+\end{minipage}
+\fi
+
+% write_level
+\ifdevguide
+\item 
+\begin{minipage}[t]{\textwidth}
+\ParameterEntry{Write level}
+{Defines the write levels to use for each write level. A write level is defined by a number. The higher the number to more exclusive the level i.e. if A and B are write levels and A $>$ B and write level is set to A, any log or print messages at level B will not be logged/printed. Printing is controlled by variable \definevariable{PRINT\_LEVEL} and logging by variable \definevariable{LOG\_LEVEL}.}
+{write\_level}
+{\lstinline[style=pythoninline]| dict(error=3, warning=2, info=1, graph=0, all=0) |}
+{\AllRecipes}{\spirouCONST.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
+\vspace{-0.25cm}
+\begin{thighlight}
+i.e.: 
+\begin{pythonbox}
+write_level = dict(error=3, warning=2, info=1)
+trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
+PRINT_LEVEL = 'warning'
+
+WLOG('error', 'program', 'Error message')
+WLOG('warning', 'program', 'Warning message')
+WLOG('info', 'program', 'Info message')
+\end{pythonbox}
+returns
+\begin{cmdboxprint}
+HH:MM:SS.s - ! |program|Error message
+HH:MM:SS.s - @ |program|Warning message
+\end{cmdboxprint}
+\begin{note}
+Note the info message was not shown.
+\end{note}
+\end{thighlight}
+\end{minipage}
+\fi
+
+
+% log_exit_type
+\ifdevguide
+\item \ParameterEntry{Logger exit type}
+{What to do when a logging `error' is raise. Options are: 'None', 'os' or 'sys'. If 'None' the code continues on an `error', if 'os' then python executes a `os.\_exit' command (a hard exit), if 'sys' then python executes a 'sys.exit' command (a soft exit).}
+{log\_exit\_type}{sys}
+{\AllRecipes}{\spirouCONST.LOG\_EXIT\_TYPE()}{\spirouCONST.EXIT() which is called in \spirouLog}{Private}
+\fi
+
+% reduced_dir
+\item \PseudoParamEntry{Exit controller}
+{Controls the exit type from `log\_exit\_type' and \definevariable{\spirouCONST.LOG\_EXIT\_TYPE()}.}
+{exit}
+{\AllRecipes}{\spirouCONST.EXIT()}{\spirouLog}{Private}
+
+
+% log_caught_warnings
+\ifdevguide
+\item \ParameterEntry{Log caught warnings}
+{If True or 1, then if warnings are passed to \definevariable{\spirouLog.warninglogger()} and there are warnings present, will attempt to log these warnings using the \definevariable{\spirouLog.logger} function. i.e. will print the warning to screen/log file depending on logging settings.}
+{log\_caught\_warnings}{True}
+{\AllRecipes}{\spirouCONST.LOG\_CAUGHT\_WARNINGS()}{\spirouLog}{Private}
+\fi
+
+% cmsg
+\ifdevguide
+\item \PseudoParamEntry{Configuration key error message}
+{Defines the message that is used when a configuration key is missing}
+{cerrmsg}
+{\AllRecipes}{\spirouCONST.CONFIG\_KEY\_ERROR}{\spirouLog.get\_logfilepath()}
+\fi
+
 
 \end{itemize}
+
+
+

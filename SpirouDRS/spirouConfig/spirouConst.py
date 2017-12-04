@@ -33,6 +33,7 @@ def PACKAGE():
     package = 'SpirouDRS'
     return package
 
+
 def NAME():
     drs_name = 'SPIROU'
     return drs_name
@@ -89,7 +90,11 @@ def LOG_EXIT_TYPE():
     # The exit style (on log exit)
     #  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
     #  if 'os' exits via os._exit    - hard exit (complete exit)
+    # Do nothing on exit call
+    exit = None
+    # Use os._exit
     exit = 'os'
+    # Use sys.exit
     exit = 'sys'
     return exit
 
@@ -132,13 +137,13 @@ def ARG_NIGHT_NAME(p):
 
 
 def CALIBDB_MASTERFILE(p):
-    masterfile = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
-    return masterfile
+    masterfilepath = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+    return masterfilepath
 
 
 def CALIBDB_LOCKFILE(p):
-    lockfilename = os.path.join(p['DRS_CALIB_DB'], 'lock_calibDB')
-    return lockfilename
+    lockfilepath = os.path.join(p['DRS_CALIB_DB'], 'lock_calibDB')
+    return lockfilepath
 
 
 def FORBIDDEN_COPY_KEYS():
@@ -156,12 +161,12 @@ def FITSFILENAME(p):
     arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
     if len(arg_file_names) > 0:
-        fits_fn = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
-                               arg_file_names[0])
+        fitsfilename = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
+                                    arg_file_names[0])
     else:
-        fits_fn = None
+        fitsfilename = None
     # return fitsfilename
-    return fits_fn
+    return fitsfilename
 
 
 def LOG_OPT(p):
@@ -223,22 +228,22 @@ def REDUCED_DIR(p):
 def CONFIG_KEY_ERROR(key, location=None):
 
     if location is None:
-        cmsg = 'key "{0}" is not defined'
-        return cmsg.format(key)
+        cerrmsg = 'key "{0}" is not defined'
+        return cerrmsg.format(key)
     else:
-        cmsg = 'key "{0}" must be defined in file (located at {1})'
-        return cmsg.format(key, location)
+        cerrmsg = 'key "{0}" must be defined in file (located at {1})'
+        return cerrmsg.format(key, location)
 
 
 def DATE_FMT_HEADER():
-    date_fmt =  '%Y-%m-%d-%H:%M:%S.%f'
-    return date_fmt
+    date_fmt_header =  '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt_header
 
 
 def DATE_FMT_CALIBDB():
 
-    date_fmt = '%Y-%m-%d-%H:%M:%S.%f'
-    return date_fmt
+    date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt_calibdb
 
 
 def EXIT():

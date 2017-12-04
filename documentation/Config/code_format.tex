@@ -311,7 +311,7 @@
   boxrule=0pt, % no real frame,
   colback=yellow!10!white,
   attach title to upper, % Move the title into the box
-  #1
+  {#1}
 }
 
 \newtcolorbox{tcustomdir}[1][]{%
@@ -324,4 +324,15 @@
   colback=blue!10!white,
   attach title to upper, % Move the title into the box
   #1
+}
+
+
+\newtcblisting{pythonboxblank}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      listing only,
+      listing options={style=pythonstyle},
 }
