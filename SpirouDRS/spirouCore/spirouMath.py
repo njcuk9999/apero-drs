@@ -30,6 +30,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 # Date format
 DATE_FMT = "%Y-%m-%d-%H:%M:%S.%f"
+
+
 # =============================================================================
 # Define functions
 # =============================================================================
