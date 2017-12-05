@@ -34,6 +34,7 @@ CPARAMS = spirouConfig.ReadConfigFile()
 TRIG_KEY = spirouConfig.Constants.LOG_TRIG_KEYS()
 WRITE_LEVEL = spirouConfig.Constants.WRITE_LEVEL()
 EXIT_TYPE = spirouConfig.Constants.EXIT()
+EXIT_LEVELS = spirouConfig.Constants.EXIT_LEVELS()
 # Boolean for whether we log caught warnings
 WARN = spirouConfig.Constants.LOG_CAUGHT_WARNINGS()
 
@@ -81,7 +82,7 @@ def logger(key='', option='', message=''):
     # write to log file
     writelog(cmd, ecmd, key, logfilepath)
     # deal with errors
-    if key == 'error':
+    if key in EXIT_LEVELS:
         EXIT_TYPE(1)
 
 

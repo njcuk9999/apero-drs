@@ -91,12 +91,12 @@ def LOG_EXIT_TYPE():
     #  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
     #  if 'os' exits via os._exit    - hard exit (complete exit)
     # Do nothing on exit call
-    exit = None
+    log_exit_type = None
     # Use os._exit
-    exit = 'os'
+    log_exit_type = 'os'
     # Use sys.exit
-    exit = 'sys'
-    return exit
+    log_exit_type = 'sys'
+    return log_exit_type
 
 
 def LOG_CAUGHT_WARNINGS():
@@ -255,6 +255,12 @@ def EXIT():
     else:
         my_exit = lambda x: None
     return my_exit
+
+
+def EXIT_LEVELS():
+    exit_levels = ['error']
+    return exit_levels
+
 
 # =============================================================================
 # Start of code
