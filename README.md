@@ -16,7 +16,7 @@
 
 ## Download here: 
 
-![Dev manual download](https://github.com/njcuk9999/spirou_py3/raw/master/documentation/Dev_guide_spirou_drs.pd "Developer manual pdf download")
+![Dev manual download](https://github.com/njcuk9999/spirou_py3/raw/master/documentation/Dev_guide_spirou_drs.pdf "Developer manual pdf download")
 
 <br>
 <br>
