@@ -95,6 +95,35 @@
 }
 
 
+\newcommand{\KeywordEntry}[9]{
+	\begin{minipage}[t]{\textwidth}
+	\textbf{#1 (\textcolor{red}{#3})}
+
+	\begin{thighlight}
+	\textcolor{brown}{#2 \\} 
+
+	\textcolor{red}{#3} = \textbf{[}\textcolor{magenta}{"#4"}, \textcolor{magenta}{"#5"}, \textcolor{magenta}{"#6"}\textbf{]}
+
+	\vspace{0.5cm}
+
+	\textcolor{brown}{HEADER file entry:} 
+
+	\begin{tabular}{l c r c l}
+	&&\\
+	#4 & = & #5 & \textbackslash & #6 \\
+	&&\\
+	\textcolor{blue}{Used in:}  & \multicolumn{4}{p{10cm}}{#7} \\
+	\textcolor{blue}{Defined in:} & \multicolumn{4}{p{10cm}}{#8} \\
+	\ifdevguide
+	\textcolor{blue}{Called in:} & \multicolumn{4}{p{10cm}}{\textcolor{codegreen}{#9}} \\
+	\fi
+	\end{tabular}
+	\end{thighlight}
+	\end{minipage}
+}
+
+
+
 % --------------------------------------------------------
 % define dev sections notes etc
 

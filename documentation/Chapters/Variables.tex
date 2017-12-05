@@ -13,8 +13,12 @@
 To better understand the variables in the DRS we have laid out each variable in the following way:
 
 \begin{itemize}
-\item \ParameterEntry{Variable title}{Description of the variable}{VARIABLE\_NAME}
-{Default Value}{The recipe used the variable is used in.}{The place where the variable is defined.}{The code (module + function) where variable is used.}
+\item \ParameterEntry{Variable title}
+{Description of the variable}
+{VARIABLE\_NAME}
+{Default Value}{The recipe used the variable is used in.}
+{The place where the variable is defined.}
+{The code (module + function) where variable is used.}
 {
 Who should be able to change this variable, levels are as follows:
 \begin{itemize}
@@ -25,6 +29,14 @@ Who should be able to change this variable, levels are as follows:
 
 \end{itemize}
 
+\ifdevguide
+\begin{note}
+All variable from all configuration files are (and should be) loaded into the main parameter dictionary `p' in all recipes and thus are accessed via: 
+\begin{pythonbox}
+variable = p["(*\textcolor{red}{VARIABLE\_NAME}*)"]
+\end{pythonbox}
+\end{note}
+\fi
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -587,7 +599,7 @@ Value must be an integer between zero and the number of rows (y-axis dimension).
 
 
 % ic_locdfitp
-\item \ParameterEntry{Degree of the fitting polynomial for localization position}
+\item \ParameterEntry{Degree of the fitting polynomial for localization position error}
 {Defines the degree of the fitting polynomial for locating the positions error of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the column direction (x-axis direction).}
 {ic\_locdfitp}{3}
 {\callocRAW}{\constantsfile}{\spirouKeywords, \callocRAW.\progMAIN, \spirouLOCOR.sigmaclip\_order\_fit()}{Public}
