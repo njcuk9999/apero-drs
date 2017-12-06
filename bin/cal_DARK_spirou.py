@@ -192,13 +192,20 @@ def main(night_name=None, files=None):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    spirouImage.AddKey(hdict, p['kw_DARK_DEAD'], value=p['dadead_full'])
-    spirouImage.AddKey(hdict, p['kw_DARK_MED'], value=p['med_full'])
-    spirouImage.AddKey(hdict, p['kw_DARK_B_DEAD'], value=p['dadead_blue'])
-    spirouImage.AddKey(hdict, p['kw_DARK_B_MED'], value=p['med_blue'])
-    spirouImage.AddKey(hdict, p['kw_DARK_R_DEAD'], value=p['dadead_red'])
-    spirouImage.AddKey(hdict, p['kw_DARK_R_MED'], value=p['med_red'])
-    spirouImage.AddKey(hdict, p['kw_DARK_CUT'], value=p['DARK_CUTLIMIT'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_DEAD'],
+                               value=p['dadead_full'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_MED'],
+                               value=p['med_full'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_B_DEAD'],
+                               value=p['dadead_blue'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_B_MED'],
+                               value=p['med_blue'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_R_DEAD'],
+                               value=p['dadead_red'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_R_MED'],
+                               value=p['med_red'])
+    hdict = spirouImage.AddKey(hdict, p['kw_DARK_CUT'],
+                               value=p['DARK_CUTLIMIT'])
     # write image and add header keys (via hdict)
     spirouImage.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
 
