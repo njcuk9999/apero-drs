@@ -29,6 +29,13 @@ __all__ = ['RunInitialStartup', 'RunStartup']
 # =============================================================================
 # Function aliases
 # =============================================================================
+
+# Get custom args from run time args (sys.argv)
+GetCustomFromRuntime = spirouStartup.get_custom_from_run_time_args
+
+# get a file from a dir name and file name + prefixes
+GetFile = spirouStartup.get_file
+
 # Runs the initial start up script (checking of parameters and title)
 RunInitialStartup = spirouStartup.run_initial_startup
 

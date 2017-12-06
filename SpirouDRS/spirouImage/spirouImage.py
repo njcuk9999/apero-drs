@@ -17,6 +17,8 @@ from __future__ import division
 import numpy as np
 import os
 import glob
+import warnings
+from scipy.ndimage import filters
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -308,6 +310,140 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         return corrected_image, darkimage
     else:
         return corrected_image
+
+
+def normalise_median_flat(p, image):
+
+    # log that we are normalising the flat
+    WLOG('', p['log_opt'], 'Normalising the flat')
+
+    # wmed: We construct a "simili" flat by taking the running median of the
+    # flag in the x dimension over a boxcar width of wmed (suggested
+    # value of ~7 pix). This assumes that the flux level varies only by
+    # a small amount over wmed pixels and that the badpixels are
+    # isolated enough that the median along that box will be representative
+    # of the flux they should have if they were not bad
+    wmed = p['FLAT_MEDIAN_WIDTH']
+
+    # create storage for median-filtered flat image
+    image_med = np.zeros_like(image)
+
+    # loop around x axis
+    for i_it in range(image.shape[1]):
+        # x-spatial filtering and insert filtering into image_med array
+        image_med[i_it, :] = filters.median_filter(image[i_it, :], wmed)
+
+    # get the 90th percentile of median image
+    norm = np.percentile(image_med, 90)
+
+    # apply to flat_med and flat_ref
+    return image_med/norm, image/norm
+
+
+def locate_bad_pixels(p, fimage, fmed, dimage):
+    """
+    Locate the bad pixels in the flat image and the dark image
+
+    :param p: dictionary, parameter dictionary
+    :param fimage: numpy array (2D), the flat normalised image
+    :param fmed: numpy array (2D), the flat median normalised image
+    :param dimage: numpy array (2D), the dark image
+
+    :return bad_pix_mask: numpy array (2D), the bad pixel mask image
+    :return badpix_stats: list of floats, the statistics array:
+                            Fraction of hot pixels from dark [%]
+                            Fraction of bad pixels from flat [%]
+                            Fraction of NaN pixels in dark [%]
+                            Fraction of NaN pixels in flat [%]
+                            Fraction of bad pixels with all criteria [%]
+    """
+    # log that we are looking for bad pixels
+    WLOG('', p['log_opt'], 'Looking for bad pixels')
+    # -------------------------------------------------------------------------
+    # wmed: We construct a "simili" flat by taking the running median of the
+    # flag in the x dimension over a boxcar width of wmed (suggested
+    # value of ~7 pix). This assumes that the flux level varies only by
+    # a small amount over wmed pixels and that the badpixels are
+    # isolated enough that the median along that box will be representative
+    # of the flux they should have if they were not bad
+    wmed = p['BADPIX_FLAT_MED_WID']
+
+    # maxi differential pixel response relative to the expected value
+    cut_ratio = p['BADPIX_FLAT_CUT_RATIO']
+
+    # illumination cut parameter. If we only cut the pixels that
+    # fractionnally deviate by more than a certain amount, we are going
+    # to have lots of bad pixels in unillumnated regions of the array.
+    # We therefore need to set a threshold below which a pixels is
+    # considered unilluminated. First of all, the flat field image is
+    # normalized by its 90th percentile. This sets the brighter orders
+    # to about 1. We then set an illumination threshold below which
+    # only the dark current will be a relevant parameter to decide that
+    #  a pixel is "bad"
+    illum_cut = p['BADPIX_ILLUM_CUT']
+
+    # hotpix. Max flux in ADU/s to be considered too hot to be used
+    max_hotpix = p['BADPIX_MAX_HOTPIX']
+    # -------------------------------------------------------------------------
+    # create storage for dark corrected image
+    dcorrect = np.zeros_like(dimage)
+    # create storage for ratio of flat_ref to flat_med
+    fratio = np.zeros_like(fimage)
+    # create storage for bad dark pixels
+    badpix_dark = np.zeros_like(dimage)
+    # -------------------------------------------------------------------------
+    # complain if the flat image and dark image do not have the same dimensions
+    if dimage.shape != fimage.shape:
+        eargs = np.array([fimage.shape, dimage.shape]).flatten()
+        emsg = ('Flat image ({0}x{1}) and Dark image ({2}x{3}) must have the '
+                'same shape.')
+        WLOG('error', p['log_opt'], emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # as there may be a small level of scattered light and thermal
+    # background in the dark  we subtract the running median to look
+    # only for isolate hot pixels
+    for i_it in range(fimage.shape[1]):
+        dmed = filters.median_filter(dimage[i_it, :], wmed)
+        dcorrect[i_it, :] = dimage[i_it, :] - dmed
+    # work out how much do flat pixels deviate compared to expected value
+    zmask = fmed != 0
+    fratio[zmask] = fimage[zmask] / fmed[zmask]
+    # catch the warnings
+    with warnings.catch_warnings(record=True) as w:
+        # if illumination is low, then consider pixel valid for this criterion
+        fratio[fmed < illum_cut] = 1
+    # catch the warnings
+    with warnings.catch_warnings(record=True) as w:
+        # where do pixels deviate too much
+        badpix_flat = (np.abs(fratio - 1)) > cut_ratio
+    # -------------------------------------------------------------------------
+    # get finite flat pixels
+    valid_flat = np.isfinite(fimage)
+    # -------------------------------------------------------------------------
+    # get finite dark pixels
+    valid_dark = np.isfinite(dimage)
+    # -------------------------------------------------------------------------
+    # select pixels that are hot
+    badpix_dark[valid_dark] = dimage[valid_dark] > max_hotpix
+    # -------------------------------------------------------------------------
+    # construct the bad pixel mask
+    badpix_map = badpix_flat & badpix_dark & ~valid_flat & ~valid_dark
+    # -------------------------------------------------------------------------
+    # log results
+    text = ['Fraction of hot pixels from dark: {0:.2f} %',
+            'Fraction of bad pixels from flat: {0:.2f} %',
+            'Fraction of non-finite pixels in dark: {0:.2f} %',
+            'Fraction of non-finite pixels in flat: {0:.2f} %',
+            'Fraction of bad pixels with all criteria: {0:.2f} %']
+    badpix_stats = [np.mean(badpix_dark) * 100, np.mean(badpix_flat) * 100,
+                    np.mean(~valid_dark) * 100, np.mean(~valid_flat) * 100,
+                    np.mean(badpix_map) * 100]
+
+    for it in range(len(text)):
+        WLOG('', p['log_opt'], text[it].format(badpix_stats[it]))
+    # -------------------------------------------------------------------------
+    # return bad pixel map
+    return badpix_map, badpix_stats
 
 
 def get_tilt(pp, lloc, image):

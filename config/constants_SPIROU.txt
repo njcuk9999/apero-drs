@@ -276,6 +276,7 @@ ic_extmeanzone = 16
 #        (simple, tilt, tiltweight, weight)
 ic_ext_all = 0
 
+
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
 # -----------------------------------------------------------------------------
@@ -304,6 +305,25 @@ ic_drift_cut = 3
 #   Define the number of orders to use (starting from 0 to max) - [cal_drift]
 #       used to get median drift  median(order0 --> order max)
 ic_drift_n_order_max = 28
+
+
+# -----------------------------------------------------------------------------
+#  cal_BADPIX parameters
+# -----------------------------------------------------------------------------
+
+#   Define the median image in the x dimension over a           - [cal_badpix]
+#       boxcar of this width
+badpix_flat_med_wid = 7
+
+#   Define the illumination cut parameter                       - [cal_badpix]
+badpix_illum_cut = 0.05
+
+#   Define the maximum differential pixel cut ratio             - [cal_badpix]
+cut_ratio = 0.5
+
+#   Define the maximum flux in ADU/s to be considered too       - [cal_badpix]
+#       hot to be used
+badpix_max_hotpix = 100.0
 
 
 # -----------------------------------------------------------------------------
