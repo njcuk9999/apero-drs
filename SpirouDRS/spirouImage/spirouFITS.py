@@ -44,7 +44,7 @@ FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
 # =============================================================================
 # Define Read/Write User
 # =============================================================================
-def readimage(p, filename=None, log=True):
+def readimage(p, filename=None, log=True, kind=None):
     """
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
@@ -53,12 +53,20 @@ def readimage(p, filename=None, log=True):
     :param filename: string or None, filename of the image to read, if None
                      then p['fitsfilename'] is used
     :param log: bool, if True logs opening and size
+    :param kind: string or None, if defined names the image else just image,
+                 used in logging (if log = True)
 
     :return image: numpy array (2D), the image
     :return header: dictionary, the header file of the image
     :return nx: int, the shape in the first dimension, i.e. data.shape[0]
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
     """
+
+    # sort out no kind
+    if kind is None:
+        kind = 'Image'
+    else:
+        kind += ' Image'
     # set up frequently used variables
     log_opt = p['log_opt']
     # get file name
@@ -73,12 +81,12 @@ def readimage(p, filename=None, log=True):
         fitsfilename = filename
     # log that we are reading the image
     if log:
-        WLOG('', log_opt, 'Reading Image ' + fitsfilename)
+        WLOG('', log_opt, 'Reading {0} '.format(kind) + fitsfilename)
     # read image from fits file
     image, imageheader, nx, ny = read_raw_data(fitsfilename)
     # log that we have loaded the image
     if log:
-        WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
+        WLOG('', log_opt, '{0} {1} x {2} loaded'.format(kind, nx, ny))
     # convert header to python dictionary
     header = dict(zip(imageheader.keys(), imageheader.values()))
     comments = dict(zip(imageheader.keys(), imageheader.comments))

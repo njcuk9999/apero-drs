@@ -14,6 +14,7 @@ Version 0.0.1
 Last modified: 2017-10-11 at 10:49
 """
 from __future__ import division
+import numpy as np
 import os
 import sys
 
@@ -254,46 +255,39 @@ def run_time_args(p):
     # set reduced path
     p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
     p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
+    # set raw path
+    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('raw_dir', cname + '/RAW_DIR()')
 
     return p
 
 
 def run_time_custom_args(p, customargs):
-
-    rparams = list(sys.argv)
+    # set source
+    source = __NAME__ + '/run_time_custom_args()'
+    sconst = 'spirouConfig.Constants.'
+    # get program name
     p['program'] = spirouConfig.Constants.PROGRAM()
+    p.set_source('program', source + ' & {0}PROGRAM()'.format(sconst))
+    # get the logging option
     p['log_opt'] = p['program']
-    p.set_source('log_opt', __NAME__ + '/run_time_custom_args()')
+    p.set_source('log_opt', source + ' & {0}PROGRAM()'.format(sconst))
+    # get night name and filenames
+    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
+    p.set_source('arg_night_name',
+                 source + ' & {0}ARG_NIGHT_NAME()'.format(sconst))
+    # set reduced path
+    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('reduced_dir', source + ' & {0}/REDUCED_DIR()')
+    # set raw path
+    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
 
-    if len(rparams) == 1:
-        WLOG('error', '', 'No arguments defined - cannot used customargs')
-    if len(rparams) > 1:
-        # loop around defined run time arguments
-        for r_it in range(1, len(rparams)):
-            # try to get the custom name for this argument (from customargs)
-            try:
-                customarg = str(customargs[r_it - 1])
-            # if there are too many run time arguments then create an error
-            except IndexError:
-                emsg = 'Too many arguments defined there must be {0} defined'
-                WLOG('error', p['log_opt'], emsg.format(len(customargs)))
-                customarg = None
-            except SyntaxError:
-                emsg = 'Invalid string in customargs. Please redefine'
-                WLOG('error', p['log_opt'], emsg)
-
-            # try to evaluate the argument (int/float/list/bool)
-            try:
-                value = eval(str(rparams[r_it]))
-                # if not int/float/list/bool set to string
-                if type(value) not in [int, float, list, bool]:
-                    value = str(rparams[r_it])
-            # if we cannot evaluate set to a string
-            except NameError:
-                value = str(rparams[r_it])
-            # set the value
-            p[customarg] = value
-            p.set_source(customarg, 'From run time arguments (sys.argv)')
+    # loop around defined run time arguments
+    for key in list(customargs.keys()):
+        # set the value
+        p[key] = customargs[key]
+        p.set_source(key, 'From run time arguments (sys.argv)')
 
     return p
 
@@ -382,6 +376,107 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
         WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
 
 
+def get_custom_from_run_time_args(positions, types, names):
+    """
+    Extract custom arguments from defined positions in sys.argv (defined at
+    run time)
+
+    :param positions: list of integers, the positions of the arguments
+                      (i.e. first argument is 0)
+
+    :param types: list of python types, the type (i.e. int, float) for each
+                  argument
+    :param names: list of strings, the names of each argument (to access in
+                  parameter dictionary once extracted)
+
+    :return values: dictionary, if run time arguments are correct python type
+                    the name-value pairs are returned
+    """
+    # set up the dictionary
+    customdict = dict()
+    # loop around positions test the type and add the value to dictionary
+    for pos in positions:
+        # deal with not having enough arguments
+        try:
+            # get from sys.argv
+            # first arg should be the program name
+            # second arg should be the night name
+            raw_value = sys.argv[pos + 2]
+        except IndexError:
+            emsg = 'Argument Error: There are not enough arguments defined'
+            WLOG('', sys.argv[0], emsg)
+            emsg = ' must be at least {0} arguments defined'
+            WLOG('error', sys.argv[0], emsg.format(len(positions)))
+            raw_value = None
+        # get the name
+        name = names[pos]
+        # get the type
+        kind = types[pos]
+        # test the raw_value
+        try:
+            value = kind(raw_value)
+        except ValueError:
+            emsg = 'Arguments Error: argument {0} should be a {1} (Value = {2})'
+            WLOG('error', sys.argv[0], emsg.format(pos, kind, raw_value))
+            value = None
+        # add value to dictionary
+        customdict[name] = value
+    # finally return dictionary
+    return customdict
+
+
+def get_file(p, path, name=None, prefix=None, kind=None):
+    """
+    Get full file path and check the path and file exist
+
+    :param p: parameter dictionary, the parameter dictionary
+    :param path: string, either the directory to the folder (if name is None) or
+                 the full path to the file
+    :param name: string or None, the name of the file, if None name is assumed
+                 to be in path
+    :param prefix: string or None, if not None this substring must be in the
+                   filename
+    :param kind: string or None, the type of file (for logging)
+    :return:
+    """
+
+    # if path is None and name is None
+    if path is None:
+        WLOG('error', p['log_opt'], 'No file defined')
+    # if name and path are not None
+    if name is None:
+        name = os.path.split(path)[-1]
+        path = path.split(name)[0]
+    # join path and name
+    location = os.path.join(path, name)
+    # test if path exists
+    if not os.path.exists(path):
+        emsg = 'Directory: {0} does not exist'
+        WLOG('error', p['log_opt'], emsg.format(path))
+    # test if path + file exits
+    if not os.path.exists(location):
+        emsg = 'File : {0} does not exist at location {1}'
+        WLOG('error', p['log_opt'], emsg.format(name, path))
+    # if prefix is defined make sure file conforms
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    if prefix is not None:
+        # deal with no kind
+        if kind is None:
+            kind = 'UNKNOWN'
+        # look for prefix in name
+        if prefix not in name:
+            emsg = 'Wrong type of image for {0}, should be {1}'
+            emsg2 = '  tried to load file: {0}'
+            WLOG('', p['log_opt'], emsg.format(kind, prefix))
+            WLOG('error', p['log_opt'], emsg2.format(location))
+        else:
+            WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
+    else:
+        WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
+    # if all conditions passed return full path
+    return location
+
+
 # =============================================================================
 # Define display functions
 # =============================================================================
@@ -458,10 +553,12 @@ def display_run_files(p):
 
 def display_custom_args(p, customargs):
 
-    wmsg = 'Now running : {0} with '.format(p['program'])
-    for customarg in customargs:
-        wmsg += '{0}={1} '.format(customarg, p[customarg])
+    wmsg = 'Now running : {0} with: '.format(p['program'])
+
     WLOG('', p['log_opt'], wmsg)
+    for customarg in customargs:
+        wmsg = '       -- {0}={1} '.format(customarg, p[customarg])
+        WLOG('', p['log_opt'], wmsg)
 
 
 def display_help_file(p):

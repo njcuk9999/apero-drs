@@ -49,6 +49,11 @@ p = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True)
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_UNIX',
+            'kw_BBAD',
+            'kw_BBFLAT'
+            'kw_BHOT',
+            'kw_BNDARK',
+            'kw_BNFLAT',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
             'kw_DARK_B_DEAD',
@@ -261,6 +266,25 @@ kw_FLAT_RMS = [root_drs_flat + 'RMS', 0, 'FF RMS order']
 
 # localization file used
 kw_LOCO_FILE = [root_drs_loc + 'FILE', '', 'Localization file used']
+
+# -----------------------------------------------------------------------------
+# Define cal_BADPIX variables
+# -----------------------------------------------------------------------------
+
+# fraction of hot pixels
+kw_BHOT = ['BHOT', '', 'Frac of hot px [%]']
+
+# fraction of bad pixels from flat
+kw_BBFLAT = ['BBFLAT', '', 'Frac of bad px from flat [%]']
+
+# fraction of non-finite pixels in dark
+kw_BNDARK = ['BNDARK', '', 'Frac of non-finite px in dark [%]']
+
+# fraction of non-finite pixels in flat
+kw_BNFLAT = ['BNFLAT', '', 'Frac of non-finite px in flat [%]']
+
+# fraction of bad pixels with all criteria
+kw_BBAD = ['BBAD', '', 'Frac of bad px with all criteria [%]']
 
 
 # =============================================================================

@@ -254,6 +254,27 @@ class ParamDict(dict):
         """
         return self.sources.values
 
+    def startswith(self, substring):
+        """
+        Return all keys that start with this substring
+
+        :param substring: string, the prefix that the keys start with
+
+        :return keys: list of strings, the keys with this substring at the start
+        """
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if str(key).startswith(substring.upper()):
+                return_keys.append(key)
+        # return keys
+        return return_keys
+
     def __capitalise_keys__(self):
         keys = list(self.keys())
         for key in keys:

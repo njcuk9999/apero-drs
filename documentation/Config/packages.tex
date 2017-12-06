@@ -1,24 +1,57 @@
+%%%---------------------------------------------------------------
 %%% PACKAGES 
-%%%------------------------------------------------------------------------------
+%%%---------------------------------------------------------------
 
-\usepackage[utf8x]{inputenc} % If utf8 encoding
-% \usepackage[lantin1]{inputenc} % If not utf8 encoding, then this is probably the way to go
-\usepackage[T1]{fontenc}    %
-\usepackage[english]{babel} % English please
-\usepackage[final]{microtype} % Less badboxes
-% \usepackage{kpfonts} %Font
-\usepackage{amsmath,amssymb,mathtools} % Math
-% \usepackage{tikz} % Figures
-\usepackage{memhfixc}   %
-\usepackage{graphicx} % Include figures
-\usepackage{listings}    % Add code snippets
-\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
-\usepackage[linktocpage=true]{hyperref} % Extensive support for hypertext in LaTeX
-\usepackage{dirtree} % Make directory trees easily
-\usepackage{framed} % shade in a region of the page
-\usepackage{multirow}  % use rows spanning multiple columns in tables
+% utf8 encoding
+\usepackage[utf8x]{inputenc}
+
+% Standard package for selecting font encodings           
+\usepackage[T1]{fontenc}   
+
+% Multilingual support for Plain \TeX or \LaTeX 
+\usepackage[english]{babel}
+
+%  Sublim­i­nal re­fine­ments to­wards ty­po­graph­i­cal per­fec­tion           
+\usepackage[final]{microtype}
+
+ % AMS Math packages        
+\usepackage{amsmath,amssymb,mathtools} 
+
+% Adjustment for using hyperref in memoir documents
+\usepackage{memhfixc}
+
+% Enhanced support for graphics                  
+\usepackage{graphicx}
+
+% Typeset source code listings using \LaTeX                 
+\usepackage{listings}
+
+% Driver-independent color extensions for \LaTeX and pdf\LaTeX
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}  
+
+% Extensive support for hypertext in \LaTeX
+\usepackage[linktocpage=true]{hyperref}
+
+% Display trees in the style of windows explorer
+\usepackage{dirtree}
+
+% Framed or shaded regions that can break across pages              
+\usepackage{framed}
+
+% Create tabular cells spanning multiple rows                    
+\usepackage{multirow}
+
+% Improved interface for floating objects                  
 \usepackage{float}
+
+% Placement of background material on pages of a document
 \usepackage[all]{background}
+
+% Coloured boxes, for \LaTeX examples and theorems
 \usepackage[most]{tcolorbox}
-\usepackage{eso-pic}
-\usepackage[normalem]{ulem}
+
+% Add picture commands (or backgrounds) to every page
+\usepackage{eso-pic}                    
+
+ % Package for underlining
+\usepackage[normalem]{ulem}            
