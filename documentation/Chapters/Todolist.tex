@@ -1,0 +1,227 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Current to do list}
+\label{ch:todo}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Below is the current to do list and any things that need to be addressed before release.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{General}
+\label{ch:todo:general}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item Write a setup.py installer / checker for prerequisites
+	\item Need to sort out public and private variables (and keywords)
+	\item Need to move user configuration file to, for example, \definevariable{/home/\$user/.spirou\_config} and call the default values from a private location
+	\item Check confirugation variable values are valid at startup of recipes (avoids crashes later)
+	\item \textcolor{red}{Can we remove `special\_config\_SPIROU' configuration file call as the file does not exist?}
+	\item \textcolor{red}{fitsfilename is the last file in a group of files - is this correct or should it be the first (as initially defined)?}
+	\item \textcolor{red}{`nbcos' in \definevariable{\spirouImage} is not used - what is it?}
+	\item \textcolor{red}{`image\_gap' in \definevariable{\spirouLOCOR} is set to zero, what is this?}
+	\item \textcolor{red}{Some keywords added to header but not updated in any recipe - should they be removed (or updated)?}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Documentation}
+\label{ch:todo:documentation}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item Write introduction (leading paragraph) \dotfill Dev
+	\item \sout{Write installation} \dotfill User + Dev
+	\item \sout{Write data architecture} \dotfill User + Dev
+	\item \sout{Write using the DRS} \dotfill User + Dev
+	\item \sout{Write summary of changes} \dotfill Dev
+	\item Write Todo chapter \dotfill Dev
+	\item \sout{Write coding style chapter} \dotfill Dev
+	\item Write documentation chapter (writing the documentation) \dotfill Dev
+	\item \sout{Write input keywords chapter} \dotfill Dev
+	\item \sout{Write variables chapter} \dotfill User + Dev
+	\item \sout{Write output keywords chapter} \dotfill Dev
+	\item Write recipes chapter \dotfill User + Dev
+	\item Write module chapter \dotfill Dev
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DARK\_spirou recipe}
+\label{ch:todo:cal_DARK_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \sout{convert code from AT-4 v43 to run on python 3}
+	\item Update from AT-4 v43 to current
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_loc\_RAW\_spirou recipe}
+\label{ch:todo:cal_loc_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \sout{convert code from AT-4 v43 to run on python 3}
+	\item Update from AT-4 v43 to current
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_SLIT\_spirou recipe}
+\label{ch:todo:cal_SLIT_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \sout{convert code from AT-4 v43 to run on python 3}
+	\item Update from AT-4 v43 to current
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_FF\_RAW\_spirou recipe}
+\label{ch:todo:cal_FF_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \sout{convert code from AT-4 v43 to run on python 3}
+	\item \definevariable{\spirouBACK.measure\_background\_flatfield()} needs converting from C to python (interpol.c) - currently not used so not converted  -- background set to zero.
+	\item \textcolor{red}{\definevariable{\spirouBACK.measure\_min\_max()} why is the max\_signal the third biggest value and not a percentile?}
+	\item \textcolor{red}{Quality control test \definevariable{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
+	\item Update from AT-4 v43 to current
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_extract\_RAW\_spirou recipes}
+\label{ch:todo:cal_extract_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \sout{convert code from AT-4 v43 to run on python 3}
+	\item \definevariable{\spirouBACK.measure\_background\_flatfield()} needs converting from C to python (interpol.c) - currently not used so not converted -- background set to zero.
+	\item \textcolor{red}{\definevariable{\spirouBACK.measure\_min\_max()} why is the max\_signal the third biggest value and not a percentile?}
+	\item \textcolor{red}{Quality control test \definevariable{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
+	\item \textcolor{red}{Inconsitency in adding ``lower'' and ``upper'' contribution due to pixel rounding in pixel extraction process.}
+	\item Update from AT-4 v43 to current
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DRIFT\_RAW\_spirou recipe}
+\label{ch:todo:cal_DRIFT_RAW_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item \sout{convert code from AT-4 v43 to run on python 3}
+	\item Update from AT-4 v43 to current
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_BADPIX\_spirou recipe}
+\label{ch:todo:cal_BADPIX_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DRIFT\_E2DS\_spirou recipe}
+\label{ch:todo:cal_DRIFT_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DRIFT-PEAK\_E2DS\_spirou recipe}
+\label{ch:todo:cal_DRIFTPEAK_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_HC\_E2DS\_spirou recipe}
+\label{ch:todo:cal_HC_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_WAVE\_E2DS\_spirou recipe}
+\label{ch:todo:cal_WAVE_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_CCF\_E2DS\_spirou recipe}
+\label{ch:todo:cal_CCF_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The pol\_spirou recipe}
+\label{ch:todo:pol_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item convert code from AT-4 to run on python 3
+	\item Unit test - comparing outputs this version to AT-4
+\end{itemize}

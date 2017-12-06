@@ -322,7 +322,7 @@ def get_tilt(pp, lloc, image):
     """
     nbo = lloc['number_orders']
     # storage for "nbcos"
-    # Question: what is nbcos?
+    # Question: what is nbcos? as it isn't used
     lloc['nbcos'] = np.zeros(nbo, dtype=int)
     lloc.set_source('nbcos', __NAME__ + '/get_tilt()')
     # storage for tilt
