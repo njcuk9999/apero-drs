@@ -84,7 +84,11 @@ GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
+LocateBadPixels = spirouImage.locate_bad_pixels
+
 MeasureDark = spirouImage.measure_dark
+
+NormMedianFlat = spirouImage.normalise_median_flat
 
 ReadImage = spirouFITS.readimage
 
