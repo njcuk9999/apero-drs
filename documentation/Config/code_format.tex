@@ -337,3 +337,36 @@
       listing only,
       listing options={style=pythonstyle},
 }
+
+
+\newtcblisting{latexbox}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=red!5!white,
+      colframe=red!75!black,
+      fonttitle={\tiny\bfseries},
+      title={\LaTeX},  % Fixed title
+}
+
+
+
+
+
+
+
+% only used to show example latexbox code in Documentation/Code formatting section
+% DO NOT USE IN GENERAL (use latexbox)
+\newtcblisting{latexbox1}{
+      before skip=3pt,
+      after skip=6pt,
+      %tcbox raise base,
+      top=0pt,bottom=0pt,left=2mm,right=0mm,
+      %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
+      colback=red!5!white,
+      colframe=red!75!black,
+      fonttitle={\tiny\bfseries},
+      title={\LaTeX},  % Fixed title
+}
