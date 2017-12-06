@@ -1094,77 +1094,76 @@ Value must be a float greater than zero.
 \item \PseudoParamEntry{Filenames from run time arguments}
 {Gets the filenames from run time arguments.}
 {arg\_file\_names}
-{\AllRecipes}{\spirouCONST.ARG\_FILE\_NAMES()}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.ARG\_FILE\_NAMES()}{\spirouStartup.run\_time\_args()}
 
 
 % arg_night_name
 \item \PseudoParamEntry{Night name from run time arguments}
 {Gets the night name from run time arguments.}
 {arg\_night\_name}
-{\AllRecipes}{\spirouCONST.ARG\_NIGHT\_NAME()}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.ARG\_NIGHT\_NAME()}{\spirouStartup.run\_time\_args()}
 
 
 % calibdb_masterfile
 \item \PseudoParamEntry{Calibration database file path}
 {Gets the full calibration database file path}
 {masterfilepath}
-{\AllRecipes}{\spirouCONST.CALIBDB\_MASTERFILE()}{\spirouCDB.write\_files\_to\_master(), \spirouCDB.read\_master\_file(), \spirouImage.correct\_for\_dark()}{Private}
+{\AllRecipes}{\spirouCONST.CALIBDB\_MASTERFILE()}{\spirouCDB.write\_files\_to\_master(), \spirouCDB.read\_master\_file(), \spirouImage.correct\_for\_dark()}
 
 
 % calibdb_lockfile
 \item \PseudoParamEntry{Calibration database lock file path}
 {Gets the full calibration database lock file path}
 {lockfilepath}
-{\AllRecipes}{\spirouCONST.CALIBDB\_LOCKFILE()}{\spirouCDB.get\_check\_lock\_file()}{Private}
-
+{\AllRecipes}{\spirouCONST.CALIBDB\_LOCKFILE()}{\spirouCDB.get\_check\_lock\_file()}
 
 % fitsfilename
 \item \PseudoParamEntry{Fits file name}
 {Gets the full file path of the first file in `arg\_file\_names'}
 {fitsfilename}
-{\AllRecipes}{\spirouCONST.FITSFILENAME()}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.FITSFILENAME()}{\spirouStartup.run\_time\_args()}
 
 
 % log_opt
 \item \PseudoParamEntry{Log program name}
 {Chooses the display format for the program in the logging system.}
 {log\_opt}
-{\AllRecipes}{\spirouCONST.LOG\_OPT()}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.LOG\_OPT()}{\spirouStartup.run\_time\_args()}
 
 
 % manual_file
 \item \PseudoParamEntry{Documentation info manual file path}
 {Gets the full documentation info manual file path}
 {manual\_file}
-{\AllRecipes}{\spirouCONST.MANUAL\_FILE()}{\spirouStartup.display\_help\_file()}{Private}
+{\AllRecipes}{\spirouCONST.MANUAL\_FILE()}{\spirouStartup.display\_help\_file()}
 
 
 % nbframes
 \item \PseudoParamEntry{Number of frames}
 {Gets the number of frames from the list of files (`arg\_file\_names').}
 {nbframes}
-{\AllRecipes}{\spirouCONST.NBFRAMES}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.NBFRAMES}{\spirouStartup.run\_time\_args()}
 
 
 % program
 \item \PseudoParamEntry{Program name from run time}
 {Gets the run program name from run time.}
 {program}
-{\AllRecipes}{\spirouCONST.PROGRAM()}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.PROGRAM()}{\spirouStartup.run\_time\_args()}
 
 
 % raw_dir
 \item \PseudoParamEntry{Full path of raw data directory}
 {Gets the full path of the raw data directory.}
 {raw\_dir}
-{\AllRecipes}{\spirouCONST.RAW\_DIR()}{\spirouFITS.math\_controller(), \spirouImage.get\_all\_similar\_files(), \spirouStartup.display\_run\_files()}{Private}
+{\AllRecipes}{\spirouCONST.RAW\_DIR()}{\spirouFITS.math\_controller(), \spirouImage.get\_all\_similar\_files(), \spirouStartup.display\_run\_files()}
 
 
 % reduced_dir
 \item \PseudoParamEntry{Full path of reduced data directory}
 {Gets the full path of the reduced data directory.}
 {reduced\_dir}
-{\AllRecipes}{\spirouCONST.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}{Private}
+{\AllRecipes}{\spirouCONST.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}
 
 \end{itemize}
 
@@ -1353,14 +1352,14 @@ Note the info message was not shown as info=1 and \definevariable{PRINT\_LEVEL} 
 \item \PseudoParamEntry{Exit controller}
 {Controls the exit type from `log\_exit\_type' and \definevariable{\spirouCONST.LOG\_EXIT\_TYPE()}.}
 {exit}
-{\AllRecipes}{\spirouCONST.EXIT()}{\spirouLog}{Private}
+{\AllRecipes}{\spirouCONST.EXIT()}{\spirouLog}
 
 
 % exit levels
 \item \PseudoParamEntry{Exit levels}
 {Controls which levels (defined in \definevariable{write\_level} and \definevariable{trig\_key}) will lead to the exit statement (given in \definevariable{exit} and \definevariable{log\_exit\_type}). Values must be a list of strings where each entry must be in \definevariable{write\_level} and \definevariable{trig\_key}.}
 {exit\_levels}
-{\AllRecipes}{\spirouCONST.EXIT\_LEVELS()}{\spirouLog}{Private}
+{\AllRecipes}{\spirouCONST.EXIT\_LEVELS()}{\spirouLog}
 
 
 % log_caught_warnings
