@@ -1,6 +1,6 @@
  
 %%% DOCUMENTCLASS 
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 
 \documentclass[
 a4paper, % Stock and paper size.
@@ -14,21 +14,21 @@ openany, % A chapter may start on either a recto or verso page.
 ]{memoir}
 
 %%% PACKAGES 
-%%%------------------------------------------------------------------------------
+%%%--------------------------------------------------------
 \input{Config/packages}
 
 
 %%% Developer or User doc
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 \newif\ifdevguide
 \devguidetrue
 
 %%% Preample
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 \input{Config/preamble}
 
 %%% INTERNAL HYPERLINKS
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 
 \hypersetup{
     pdfauthor={Neil James Cook},
@@ -46,7 +46,7 @@ openany, % A chapter may start on either a recto or verso page.
 
 
 %%% MARGIN TEXT
-%%%------------------------------------------------------------------------------
+%%%--------------------------------------------------------
 \SetBgContents{\MyIDuser}% Set contents
 \SetBgPosition{-1.5cm,-0.3\textheight}% Select location
 \SetBgOpacity{1.0}% Select opacity
@@ -55,7 +55,7 @@ openany, % A chapter may start on either a recto or verso page.
 
 
 %%% MARGIN COLOR
-%%%------------------------------------------------------------------------------
+%%%--------------------------------------------------------
 
 \newlength\myborder
 \myborder=40pt%please adjust the border width :-)
@@ -74,7 +74,7 @@ openany, % A chapter may start on either a recto or verso page.
 
 %%% THE DOCUMENT
 %%% Where all the important stuff is included!
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 
 \author{\MyAuthors}
 \title{{\Huge SPIRou Data Reduction Software} \vspace{1cm} \\ \HUGE{Developer Guide} \\ {\small \MyVersionDev} \\ For DRS \instrument \MyCodeVersion}
@@ -104,10 +104,10 @@ openany, % A chapter may start on either a recto or verso page.
 \clearpage
 
 
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 \mainmatter
 % Define the chapters here
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 
 % Chapter: Introduction
 \input{Chapters/Introduction}
@@ -158,7 +158,7 @@ openany, % A chapter may start on either a recto or verso page.
 % % Appendix A: env_setup.sh
 % \input{Chapters/appendix_env_setup_sh}
 
-%%%-------------------------------------------------------------------------------
+%%%---------------------------------------------------------
 
 \backmatter
 
