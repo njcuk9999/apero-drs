@@ -59,7 +59,7 @@ def main(night_name=None, files=None):
                               add_to_p=params2add, calibdb=True)
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
+    p.set_source('dprtype', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
@@ -202,7 +202,7 @@ def main(night_name=None, files=None):
     # set the central col centers in the cpos_orders array
     loc['ctro'][:, p['IC_CENT_COL']] = posc[0:number_of_orders]
     # set source for all locs
-    loc.set_all_sources(__NAME__ + '/__main__')
+    loc.set_all_sources(__NAME__ + '/main()')
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # loop around each order
     rorder_num = 0
@@ -212,7 +212,7 @@ def main(night_name=None, files=None):
         # only keep the orders with non-zero width
         mask = loc['sigo'][order_num, :] != 0
         loc['x'] = np.arange(data2.shape[1])[mask]
-        loc.set_source('x', __NAME__ + '/__main__')
+        loc.set_source('x', __NAME__ + '/main()')
         # check that we have enough data points to fit data
         if len(loc['x']) > (fitpos + 1):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -422,13 +422,13 @@ def main(night_name=None, files=None):
     if passed:
         WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Update the calibration database

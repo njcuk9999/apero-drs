@@ -60,7 +60,7 @@ def main(night_name=None, files=None):
                                  add_to_p=params2add, calibdb=True)
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
+    p.set_source('dprtype', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
@@ -143,7 +143,7 @@ def main(night_name=None, files=None):
     loc = ParamDict()
     # get tilts
     loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/__main__')
+    loc.set_source('tilt', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -230,7 +230,7 @@ def main(night_name=None, files=None):
             loc['blaze'][order_num] = blaze
             loc['flat'][order_num] = flat
             # set sources
-            source = __NAME__ + '/__main__()'
+            source = __NAME__ + '/main()()'
             loc.set_sources(['e2ds', 'SNR', 'RMS', 'blaze', 'flat'], source)
             # Log if saturation level reached
             satvalue = (flux/p['gain'])/(range1 + range2)
@@ -317,13 +317,13 @@ def main(night_name=None, files=None):
             wmsg = 'QUALITY CONTROL SUCCESSFUL - Well Done -'
             WLOG('info', p['log_opt'], wmsg)
             p['QC'] = 1
-            p.set_source('QC', __NAME__ + '/__main__')
+            p.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
                 wmsg = 'QUALITY CONTROL FAILED: {0}'
                 WLOG('info', p['log_opt'], wmsg.format(farg))
             p['QC'] = 0
-            p.set_source('QC', __NAME__ + '/__main__')
+            p.set_source('QC', __NAME__ + '/main()')
 
         # ------------------------------------------------------------------
         # Update the calibration database

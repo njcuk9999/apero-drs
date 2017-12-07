@@ -19,9 +19,7 @@ import os
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 
@@ -29,7 +27,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_DRIFT_RAW_spirou.py'
+__NAME__ = 'cal_DRIFT_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -44,30 +42,43 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None, fiber='AB'):
+# def main(night_name=None, reffile=None):
+if 1:
+    night_name, reffile = None, None
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
+    # deal with reference file being None (i.e. get from sys.argv)
+    if reffile is None:
+        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+    else:
+        customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
-    # run specific start up
-    p = spirouStartup.RunStartup(p, kind='Drift', prefixes='fp_fp',
-                                 calibdb=True)
-    # set the fiber type
-    p['fiber'] = fiber
-    p.set_source('fiber', __NAME__ + '/__main__')
+    p = spirouStartup.RunInitialStartup(night_name, customargs=customargs)
 
-    # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    # get reduced directory + night name
+    rdir = p['reduced_dir']
+    # construct and test the reffile
+    reffilename = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp',
+                                        'DRIFT')
+    # get the fiber type
+    p['fiber'] = spirouStartup.GetFiberType(p, reffilename)
+    fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
+    p.set_source('fiber', fsource)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImage(p)
+    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, reffilename)
+    # add to loc
+    loc = ParamDict()
+    loc['speref'] = speref
+    loc['number_orders'] = nbo
+    loc.set_sources(['speref', 'number_orders'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
@@ -86,116 +97,20 @@ def main(night_name=None, files=None, fiber='AB'):
     p['kw_CCD_CONAD'][1] = p['gain']
 
     # ----------------------------------------------------------------------
-    # Correction of DARK
-    # ----------------------------------------------------------------------
-    datac, dark = spirouImage.CorrectForDark(p, data, hdr, nfiles=1,
-                                             return_dark=True)
-
-    # ----------------------------------------------------------------------
-    # Resize image
-    # ----------------------------------------------------------------------
-    # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToADU(spirouImage.FlipImage(datac), p=p)
-    # convert NaN to zeros
-    data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
-    # resize image
-    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
-                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
-                   getshape=False)
-    data2 = spirouImage.ResizeImage(data0, **bkwargs)
-    # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
-                            '{0}x{1}').format(*data2.shape[::-1]))
-
-    # ----------------------------------------------------------------------
-    # Log the number of dead pixels
-    # ----------------------------------------------------------------------
-    # get the number of bad pixels
-    n_bad_pix = np.sum(data2 == 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
-    # Log number
-    wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
-
-    # ----------------------------------------------------------------------
-    # Get localisation coefficients
-    # ----------------------------------------------------------------------
-    # original there is a loop but it is not used --> removed
-    p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
-    # get localisation fit coefficients
-    loc = spirouLOCOR.GetCoeffs(p, hdr)
-
-    # ----------------------------------------------------------------------
-    # Read tilt slit angle
-    # ----------------------------------------------------------------------
-    # get tilts
-    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/__main__ + /spirouImage.ReadTiltFile')
-
-    # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
     loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/__main__ + /spirouImage.ReadWaveFile')
+    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
-    # ------------------------------------------------------------------
-    # Read image order profile
-    # ------------------------------------------------------------------
-    order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p, hdr)
-
-    # ------------------------------------------------------------------
-    # Average AB into one fiber for AB, A and B
-    # ------------------------------------------------------------------
-    # if we have an AB fiber merge fit coefficients by taking the average
-    # of the coefficients
-    # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-    if p['fiber'] in ['A', 'B', 'AB']:
-        # merge
-        loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
-        loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
-        # set the number of order to half of the original
-        loc['number_orders'] = int(loc['number_orders'] / 2)
-
-    # ------------------------------------------------------------------
-    # Set up Extract storage
-    # ------------------------------------------------------------------
-    # Create array to store extraction (for each order and each pixel
-    # along order)
-    loc['speref'] = np.zeros((loc['number_orders'], data2.shape[1]))
-    # Create array to store the signal to noise ratios for each order
-    loc['SNR'] = np.zeros(loc['number_orders'])
-    # set loc sources
-    loc.set_sources(['speref', 'SNR'], __NAME__ + '/__main__()')
-
-    # ------------------------------------------------------------------
-    # Extract reference file
-    # ------------------------------------------------------------------
-    # Log that we are extracting reference file
-    wmsg = 'Extraction Reference file {0}'
-    WLOG('', p['log_opt'], wmsg.format(p['fitsfilename']))
-
-    # loop around each order
-    for order_num in range(loc['number_orders']):
-        # Extract with Weight
-        eargs = [p, loc, data2, order_profile, order_num]
-        ekwargs = dict(range1=p['ic_ext_d_range'],
-                       range2=p['ic_ext_d_range'])
-        e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs, **ekwargs)
-        # get window size
-        blaze_win1 = int(data2.shape[0] / 2) - p['IC_EXTFBLAZ']
-        blaze_win2 = int(data2.shape[0] / 2) + p['IC_EXTFBLAZ']
-        # get average flux per pixel
-        flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
-        # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
-        snr = flux / np.sqrt(flux + p['IC_DRIFT_NOISE'] ** 2)
-        # add calculations to storage
-        loc['speref'][order_num] = e2ds
-        loc['SNR'][order_num] = snr
-        # log the SNR RMS
-        wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}'
-        wargs = [p['fiber'], order_num, snr]
-        WLOG('', p['log_opt'], wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
+    # Read Flat file
+    # ----------------------------------------------------------------------
+    # get flat
+    loc['flat'] = spirouImage.ReadFlatFile(p, hdr)
+    loc.set_source('flat', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+    # get all values in flat that are zero to 1
+    loc['flat'] = np.where(loc['flat'] == 0, 1.0, loc['flat'])
 
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -208,7 +123,7 @@ def main(night_name=None, files=None, fiber='AB'):
     dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
     # save to loc
     loc['dvrmsref'], loc['wmeanref'] = dvrmsref, wmeanref
-    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/__main__()')
+    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
     WLOG('info', p['log_opt'], wmsg.format(p['fiber'], wmeanref))
@@ -225,14 +140,13 @@ def main(night_name=None, files=None, fiber='AB'):
         sPlt.drift_plot_photon_uncertainty(p, loc)
 
     # ------------------------------------------------------------------
-    # Get all other fp_fp*[ext].fits files
+    # Get all other fp_fp*[ext]_e2ds.fits files
     # ------------------------------------------------------------------
     # get reduced folder
-    reffilename = p['fitsfilename']
-    rfolder = p['raw_dir']
+    rfolder = p['reduced_dir']
     # Get files, remove fitsfilename, and sort
-    prefix = p['arg_file_names'][0][0:5]
-    suffix = p['arg_file_names'][0][-8:]
+    prefix = p['reffile'][0:5]
+    suffix = '_e2ds_{0}.fits'.format(p['fiber'])
     listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
     # remove reference file
     try:
@@ -266,13 +180,13 @@ def main(night_name=None, files=None, fiber='AB'):
     loc['deltatime'] = np.zeros(Nfiles+1)
     # set loc sources
     keys = ['drift', 'errdrift', 'deltatime']
-    loc.set_sources(keys, __NAME__ + '/__main__()')
+    loc.set_sources(keys, __NAME__ + '/main()()')
 
     # ------------------------------------------------------------------
     # Loop around all files: correct for dark, reshape, extract and
     #     calculate dvrms and meanpond
     # ------------------------------------------------------------------
-    wref = 1.0
+    wref = 1
     for i_it in range(Nfiles):
         # get file for this iteration
         fpfile = listfiles[::skip][i_it]
@@ -283,33 +197,11 @@ def main(night_name=None, files=None, fiber='AB'):
         # read, correct for dark and reshape iteration file
         # ------------------------------------------------------------------
         # read data
-        datai, hdri, cdri, nxi, nyi = spirouImage.ReadImage(p, filename=fpfile,
-                                                            log=False)
+        rout = spirouImage.ReadData(p, filename=fpfile, log=False)
+        loc['spe'], hdri, cdri, nxi, nyi = rout
         # get acqtime
         bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
                                         return_value=1)
-        # correct for dark (using dark from reference file)
-        dataci = datai - dark
-        # rotate the image and convert from ADU/s to e-
-        datai = spirouImage.ConvertToADU(spirouImage.FlipImage(dataci), p=p)
-        # convert NaN to zeros
-        data0i = np.where(~np.isfinite(datai), np.zeros_like(datai), datai)
-        # resize image (using bkwargs from reference)
-        data2i = spirouImage.ResizeImage(data0i, **bkwargs)
-        # ------------------------------------------------------------------
-        # Extract iteration file
-        # ------------------------------------------------------------------
-        loc['spe'] = np.zeros((loc['number_orders'], data2.shape[1]))
-        loc.set_source('spe', __NAME__ + '/__main__()')
-        # loop around each order
-        for order_num in range(loc['number_orders']):
-            # Extract with Weight
-            eargs = [p, loc, data2i, order_profile, order_num]
-            ekwargs = dict(range1=p['IC_EXT_D_RANGE'],
-                           range2=p['IC_EXT_D_RANGE'])
-            e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs, **ekwargs)
-            # save in loc
-            loc['spe'][order_num] = e2ds
         # ------------------------------------------------------------------
         # Compute photon noise uncertainty for iteration file
         # ------------------------------------------------------------------
@@ -388,7 +280,7 @@ def main(night_name=None, files=None, fiber='AB'):
         loc['merrdrift'] = np.median(loc['errdrift'][:, :nomax], 1)
     # ------------------------------------------------------------------
     # set source
-    loc.set_sources(['mdrift', 'merrdrift'], __NAME__ + '/__main__()')
+    loc.set_sources(['mdrift', 'merrdrift'], __NAME__ + '/main()()')
     # ------------------------------------------------------------------
     # peak to peak drift
     driftptp = np.max(loc['mdrift']) - np.min(loc['mdrift'])
@@ -414,7 +306,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # construct filename
     reducedfolder = p['reduced_dir']
     drift_ext = '_drift_{0}.fits'.format(p['fiber'])
-    driftfits = p['arg_file_names'][0].replace('.fits', drift_ext)
+    driftfits = reffilename.replace('.fits', drift_ext)
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
     WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfits))
@@ -423,6 +315,25 @@ def main(night_name=None, files=None, fiber='AB'):
     # save drift values
     spirouImage.WriteImage(os.path.join(reducedfolder, driftfits),
                            loc['drift'], hdict)
+
+    # ------------------------------------------------------------------
+    # print .tbl result
+    # ------------------------------------------------------------------
+    # construct filename
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_drift_{0}.tbl'.format(p['fiber'])
+    drifttbl = reffilename.replace('.fits', drift_ext)
+    drifttblfilename = os.path.join(reducedfolder, drifttbl)
+    # construct and write table
+    columnnames = ['time', 'drift', 'drifterr']
+    columnformats = ['7.4f', '6.2f', '6.3f']
+    columnvalues = [loc['deltatime'], loc['mdrift'], loc['merrdrift']]
+    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # write table
+    wmsg = 'Average Drift saved in {0} Saved '
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(drifttblfilename))
+    spirouImage.WriteTable(table, drifttblfilename, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # End Message

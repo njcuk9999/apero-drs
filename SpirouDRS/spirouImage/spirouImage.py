@@ -190,24 +190,22 @@ def convert_to_adu(image, p=None, exptime=None):
     return newimage
 
 
-def get_all_similar_files(p):
+def get_all_similar_files(p, directory, prefix=None, suffix=None):
 
-    # get path
-    rawdir = spirouConfig.Constants.RAW_DIR(p)
     # get file prefix and suffix
-    prefix = p['arg_file_names'][0][0:5]
-    suffix = p['arg_file_names'][0][-8:]
+    if prefix is None:
+        prefix = p['arg_file_names'][0][0:5]
+    if suffix is None:
+        suffix = p['arg_file_names'][0][-8:]
     # constrcut file string
     filestring = '{0}*{1}'.format(prefix, suffix)
-    locstring = os.path.join(rawdir, filestring)
+    locstring = os.path.join(directory, filestring)
     # get all files
     filelist = glob.glob(locstring)
-    # remove fitsfilename (reference file)
-    filelist.remove(p['fitsfilename'])
     # sort list
     filelist = np.sort(filelist)
     # return file list
-    return filelist
+    return list(filelist)
 
 
 # =============================================================================
@@ -323,7 +321,7 @@ def normalise_median_flat(p, image):
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    wmed = p['FLAT_MEDIAN_WIDTH']
+    wmed = p['BADPIX_FLAT_MED_WID']
 
     # create storage for median-filtered flat image
     image_med = np.zeros_like(image)
@@ -334,7 +332,7 @@ def normalise_median_flat(p, image):
         image_med[i_it, :] = filters.median_filter(image[i_it, :], wmed)
 
     # get the 90th percentile of median image
-    norm = np.percentile(image_med, 90)
+    norm = np.percentile(image_med[np.isfinite(image_med)], 90)
 
     # apply to flat_med and flat_ref
     return image_med/norm, image/norm
@@ -390,7 +388,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     # create storage for ratio of flat_ref to flat_med
     fratio = np.zeros_like(fimage)
     # create storage for bad dark pixels
-    badpix_dark = np.zeros_like(dimage)
+    badpix_dark = np.zeros_like(dimage, dtype=bool)
     # -------------------------------------------------------------------------
     # complain if the flat image and dark image do not have the same dimensions
     if dimage.shape != fimage.shape:
@@ -427,7 +425,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     badpix_dark[valid_dark] = dimage[valid_dark] > max_hotpix
     # -------------------------------------------------------------------------
     # construct the bad pixel mask
-    badpix_map = badpix_flat & badpix_dark & ~valid_flat & ~valid_dark
+    badpix_map = badpix_flat | badpix_dark | ~valid_flat | ~valid_dark
     # -------------------------------------------------------------------------
     # log results
     text = ['Fraction of hot pixels from dark: {0:.2f} %',
