@@ -49,6 +49,8 @@
     
     2.7 [cal_DRIFT_RAW_spirou](#27-cal_drift_raw_spiroupy)
 
+    2.8 [cal_BADPIX_spirou](#28-cal_badpix_spiroupy)
+
 3. [Timing](#3-timing)
 
     3.1 [Full unit test in python 3](#31-full-unit-test-in-python-3)
@@ -606,6 +608,23 @@
 
 [Back to top](#table-of-contents)
 
+
+### 2.8 cal_BADPIX_spirou.py
+
+- loading of custom arguments moved to `spirouStartup.GetCustomFromRuntime`
+
+- loading of files moved to `spirouImage.ReadImage`
+
+- normalising flat and median of flat moved to `spirouImage.NormMedianFlat`
+
+- locating bad pixels moved to `spirouImage.LocateBadPixels`
+
+- instead of taking the 90th pixel in flattened meadian flat image now work out the 90th percentile of finite values (will lead to a slightly more correct normalisation value)
+
+- Writing of fits file cleaned up (header keywords written during data write)
+
+[Back to top](#table-of-contents)
+
 - - - - 
 
 ## 3 Timing:
@@ -788,73 +807,84 @@
     
     - [x] - ~~cal_DRIFT_RAW_spirou~~
     
-- unit test (Done):
-
-    - [x] - ~~cal_dark_spirou~~
-    
-    - [x] - ~~cal_loc_RAW_spioru~~
-    
-    - [x] - ~~cal_SLIT_spirou~~
-    
-    - [x] - ~~cal_FF_RAW_spirou~~
-    
-    - [x] - ~~cal_extract_RAW_spirou~~
-    
-    - [x] - ~~cal_DRIFT_RAW_spirou~~
-    
-- New codes:
-
     - [ ] - cal_HC_E2DS_spirou
-    
+
+    - [ ] - cal_DRIFT_E2DS_spirou
+ 
     - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+    
+    - [x] - ~~cal_BADPIX_spirou~~
     
     - [ ] - cal_WAVE_E2DS_spirou
     
+    - [ ] - cal_CCF_E2DS_spirou
+    
+    - [ ] - pol_spirou
+
+    
+- unit test run:
+
+    - [x] - cal_dark_spirou
+    
+    - [x] - cal_loc_RAW_spioru
+    
+    - [x] - cal_SLIT_spirou
+    
+    - [x] - cal_FF_RAW_spirou
+    
+    - [x] - cal_extract_RAW_spirou
+    
+    - [x] - cal_DRIFT_RAW_spirou
+    
+    - [ ] - cal_HC_E2DS_spirou
+
+    - [ ] - cal_DRIFT_E2DS_spirou
+ 
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+    
     - [ ] - cal_BADPIX_spirou
+    
+    - [ ] - cal_WAVE_E2DS_spirou
     
     - [ ] - cal_CCF_E2DS_spirou
     
-- Documentation:
-
-    - User guide:
+    - [ ] - pol_spirou
     
-        - [ ] Introduction
-        
-        - [ ] 1 Installation and prerequisites 
-        
-        - [ ] 2 Data Architecture
-        
-        - [ ] 3 Using the DRS
-        
-        - [ ] 4 User modifiable variables
-        
-        - [ ] 5 The recipes
-        
-        - [ ] 6 Quality control
-        
-    - Developer guide:
-    
-        - [ ] Introduction
-        
-        - [ ] 1 Installation and prerequisites
-        
-        - [ ] 2 Data Architecture
+- unit test outputs (Against AT-4 output)
 
-        - [ ] 3 Using the DRS
+    - [ ] - cal_dark_spirou
+    
+    - [ ] - cal_loc_RAW_spioru
+    
+    - [ ] - cal_SLIT_spirou
+    
+    - [ ] - cal_FF_RAW_spirou
+    
+    - [ ] - cal_extract_RAW_spirou
+    
+    - [ ] - cal_DRIFT_RAW_spirou
+    
+    - [ ] - cal_HC_E2DS_spirou
+
+    - [ ] - cal_DRIFT_E2DS_spirou
+ 
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+    
+    - [ ] - cal_BADPIX_spirou
+    
+    - [ ] - cal_WAVE_E2DS_spirou
+    
+    - [ ] - cal_CCF_E2DS_spirou
+    
+    - [ ] - pol_spirou
         
-        - [ ] 4 Changelog (This version and AT-4)
-        
-        - [ ] 5 Coding rules and standardisation
-        
-        - [ ] 6 Required input header keywords
-        
-        - [ ] 7 Descriptions of constants and variables
-        
-        - [ ] 8 The recipes
-        
-        - [ ] 9 The modules
-               
-        - [ ] 10 Quality control
+- Documentation
+
+    - [ ] - user guide
+    
+    - [ ] - developer guide
+
+
         
     
 [Back to top](#table-of-contents)
