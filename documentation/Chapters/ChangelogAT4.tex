@@ -372,3 +372,26 @@ Below we describe breifly the main differences from AT-4 build.
 	\end{itemize}
 
 \end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_BADPIX\_spirou recipe}
+\label{ch:changelog:At4:cal_BADPIX_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item loading of custom arguments moved to \definevariable{\spirouStartup.GetCustomFromRuntime}
+
+	\item loading of files moved to \definevariable{\spirouImage.ReadImage}
+
+	\item normalising flat and median of flat moved to \definevariable{\spirouImage.NormMedianFlat}
+
+	\item locating bad pixels moved to \definevariable{\spirouImage.LocateBadPixels}
+
+	\item instead of taking the 90th pixel in flattened meadian flat image now work out the 90th percentile of finite values (will lead to a slightly more correct normalisation value)
+
+	\item Writing of fits file cleaned up (header keywords written during data write)
+\end{itemize}

@@ -41,7 +41,8 @@ openany, % A chapter may start on either a recto or verso page.
     citecolor=Maroon,        % color of links to bibliography
     filecolor=blue,          % color of file links
     urlcolor=blue,           % color of external links
-    plainpages=false,       
+    plainpages=false,
+    bookmarksnumbered,    
 }
 
 %%% MARGIN TEXT
@@ -98,9 +99,14 @@ openany, % A chapter may start on either a recto or verso page.
 \noindent This is the guide to installing, running, and using the SPIRou DRS. 
 \end{abstract}
 \clearpage
+\newpage
 
+\pdfbookmark[1]{\contentsname}{toc}
 \tableofcontents*
+
+
 \clearpage
+
 
 
 %%%-------------------------------------------------------------------------------

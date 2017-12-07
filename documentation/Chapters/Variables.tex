@@ -931,6 +931,48 @@ Value must be a float larger than zero.
 %%
 \clearpage
 \newpage
+\section{Bad pixel calibration variables}
+\label{ch:variables:badpix}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+	% badpix_flat_med_wid
+	\item \ParameterEntry{Bad pixel median image box width}
+	{A similar flat is produced by taking the running median of the flat in the column direction (x-dimension) over a boxcar width of \definevariable{badpix\_flat\_med\_wid}. This assumes that the flux level varies only by a small amount over \definevariable{badpix\_flat\_med\_wid} pixels and that the bad pixels are isolated enough that the median along that box will be representative of the flux they should have if they were not bad. Value should be an integer larger than zero and less than the number of columns (x-axis dimension).}
+	{badpix\_flat\_med\_wid}{7}
+	{\calbadpix}{\constantsfile}{\spirouImage.normalise\_median\_flat(), \spirouImage.locate\_bad\_pixels()}{Public}
+	\DevNote{Formally this was called wmed in \calbadpix}
+
+	% badpix_illum_cut
+	\item \ParameterEntry{Bad pixel illumination cut parameter}
+	{Threshold below which a pixel is considered unilluminated. As we cut the pixels that fractionally deviate by more than a certain amount (\definevariable{badpix\_flat\_cut\_ratio}) this would lead to lots of bad pixels in unilluminated regions of the array. This parameter stops this, as the pixels are normalised this value must be a float greater than zero and less than 1.}
+	{badpix\_illum\_cut}{0.05}
+	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels()}{Public}
+	\DevNote{Formally this was called illum\_cut in \calbadpix}
+
+	% badpix_flat_cut_ratio
+	\item \ParameterEntry{Bad pixel maximum differential pixel cut ratio}{This sets the maximum differential pixel response relative to the expected value. Value must be a float larger than zero.}
+	{badpix\_flat\_cut\_ratio}{0.5}
+	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels()}{Public}
+	\DevNote{Formally this was called cut\_ratio in \calbadpix}
+
+	% badpix_max_hotpix
+	\item \ParameterEntry{Bad pixel maximum flux to considered too hot}
+	{Defines the maximum flux value to be considered too hot to user.}
+	{badpix\_max\_hotpix}{100.0}
+	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels()}{Public}
+	\DevNote{Formally this was called max\_hotpix in \calbadpix}
+
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
 \section{Quality control variables}
 \label{ch:variables:qualitycontrol}
 %%

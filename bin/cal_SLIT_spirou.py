@@ -51,11 +51,11 @@ def main(night_name=None, files=None):
                                  calibdb=True)
     # set the fiber type
     p['fib_typ'] = ['AB']
-    p.set_source('fib_typ', __NAME__ + '/__main__')
+    p.set_source('fib_typ', __NAME__ + '/main()')
 
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
+    p.set_source('dprtype', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
@@ -143,7 +143,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     loc['tilt'] = loc['yfit_tilt']
     oldsource = loc.get_source('tilt')
-    loc.set_source('tilt', oldsource + '+{0}/__main__'.format(__NAME__))
+    loc.set_source('tilt', oldsource + '+{0}/main()'.format(__NAME__))
 
     # ----------------------------------------------------------------------
     # Save and record of tilt table

@@ -284,7 +284,7 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 
 \begin{itemize}
 
-% 
+% TILT
 \item \KeywordEntry{Tilt order prefix}
 {Tilt order keyword prefix}
 {kw\_TILT}
@@ -302,7 +302,7 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 
 \begin{itemize}
 
-% 
+% EXTSN
 \item \KeywordEntry{SNR}
 {Signal to noise ratio for order center}
 {kw\_EXTRA\_SN}
@@ -310,7 +310,7 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 {\calFFraw}{\spirouKeywords}{\calFFraw.\progMAIN}
 
 
-% 
+% RMS
 \item \KeywordEntry{Flat field RMS}
 {Flat field RMS for order}
 {kw\_FLAT\_RMS}
@@ -328,11 +328,62 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 
 \begin{itemize}
 
-% 
+% FILE
 \item \KeywordEntry{Localization filename}
 {localization file used in extraction process}
 {kw\_LOCO\_FILE}
 {\rootdrsloc{FILE}}{0}{Localization file used}
 {\calextractRAW}{\spirouKeywords}{\calextractRAW.\progMAIN}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Bad pixel calibration keywords}
+\label{ch:output_keywords:badpix}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+	% BHOT
+	\item \KeywordEntry{Fraction of hot pixels}
+	{The Fraction of hot pixels on dark image (as a percentage)}
+	{kw\_BHOT}
+	{BHOT}{0}{Frac of hot px [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BBFLAT
+	\item \KeywordEntry{Fraction of bad pixels from flat}
+	{The Fraction of bad pixels from flat image (as a percentage)}
+	{kw\_BBFLAT}
+	{BBFLAT}{0}{Frac of bad px from flat [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BNDARK
+	\item \KeywordEntry{Fraction of non-finite pixels from dark}
+	{The Fraction of non-finite pixels from dark image (as a percentage)}
+	{kw\_BNDARK}
+	{BNDARK}{0}{Frac of non-finite px in dark [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BNFLAT
+	\item \KeywordEntry{Fraction of non-finite pixels from flat}
+	{The Fraction of non-finite pixels from flat image (as a percentage)}
+	{kw\_BNFLAT}
+	{BNFLAT}{0}{Frac of non-finite px in flat [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
+
+
+	% BBAD
+	\item \KeywordEntry{Fraction of bad pixels}
+	{The Fraction of bad pixels conforming to all criteria (as a percentage)}
+	{kw\_BBAD}
+	{BBAD}{0}{Frac of bad px with all criteria [\%]}
+	{\calbadpix}{\spirouKeywords}{\calbadpix.\progMAIN}
 
 \end{itemize}

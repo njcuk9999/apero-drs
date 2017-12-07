@@ -100,13 +100,13 @@ if __name__ == "__main__":
     if passed:
         WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # construct folder and filename
     reducedfolder = p['reduced_dir']
     # construct bad pixel file name
-    badpixelfits = p['arg_file_names'][0].replace('.fits', '_badpixel.fits')
+    badpixelfits = p['flatfile'].replace('.fits', '_badpixel.fits')
     # log that we are saving bad pixel map in dir
     WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
     # add keys from original header files

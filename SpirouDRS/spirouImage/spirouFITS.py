@@ -94,7 +94,41 @@ def readimage(p, filename=None, log=True, kind=None):
     if filename is None:
         header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
         header['@@@fname'] = p['fitsfilename']
+    else:
+        header['@@@hname'] = filename + ' Header File'
+        header['@@@fname'] = filename
+    # return data, header, data.shape[0], data.shape[1]
+    return image, header, comments, nx, ny
 
+
+
+def readdata(p, filename, log=True):
+    """
+    Reads the image 'fitsfilename' defined in p and adds files defined in
+    'arg_file_names' if add is True
+
+    :param p: dictionary, parameter dictionary
+    :param filename: string, filename of the image to read
+    :param log: bool, if True logs opening and size
+
+    :return image: numpy array (2D), the image
+    :return header: dictionary, the header file of the image
+    :return nx: int, the shape in the first dimension, i.e. data.shape[0]
+    :return ny: int, the shape in the second dimension, i.e. data.shape[1]
+    """
+    # set up frequently used variables
+    log_opt = p['log_opt']
+    # log that we are reading the image
+    if log:
+        WLOG('', log_opt, 'Reading File: {0} '.format(filename))
+    # read image from fits file
+    image, imageheader, nx, ny = read_raw_data(filename)
+    # convert header to python dictionary
+    header = dict(zip(imageheader.keys(), imageheader.values()))
+    comments = dict(zip(imageheader.keys(), imageheader.comments))
+    # # add some keys to the header-
+    header['@@@hname'] = filename + ' Header File'
+    header['@@@fname'] = filename
     # return data, header, data.shape[0], data.shape[1]
     return image, header, comments, nx, ny
 
@@ -260,6 +294,39 @@ def read_wave_file(p, hdr=None, filename=None, key=None):
     wave, hdict, _, nx, ny = rout
     # return the wave file
     return wave
+
+
+def read_flat_file(p, hdr=None, filename=None, key=None):
+    """
+    Reads the wave file (from calib database or filename)
+
+    :param p: dictionary, parameter dictionary
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['fitsfilename']
+
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the TILT file from the calib database
+                     keyword "TILT"
+
+    :param key: string or None, if None key='WAVE' else uses string as key
+                from calibDB (first entry) to get wave file
+
+    :return wave: list of the tilt for each order
+    """
+    if key is None:
+        key = 'FLAT_{0}'.format(p['fiber'])
+    # get filename
+    if filename is None:
+        read_file = spirouCDB.GetFile(p, key, hdr)
+    else:
+        read_file = filename
+    # read read_file
+    rout = readdata(p, filename=read_file, log=False)
+    flat, hdict, _, nx, ny = rout
+    # return the wave file
+    return flat
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None):

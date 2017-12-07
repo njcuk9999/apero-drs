@@ -165,7 +165,7 @@ def get_acquision_time(p, header=None, kind='human', filename=None):
         acqtime_key = p[kwakey][0]
 
     # deal with no filename
-    if filename is None:
+    if filename is None and header is None:
         rawdir = spirouConfig.Constants.RAW_DIR(p)
         rawfile = os.path.join(rawdir, p['arg_file_names'][0])
     else:

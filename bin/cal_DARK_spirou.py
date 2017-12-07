@@ -51,7 +51,7 @@ def main(night_name=None, files=None):
     p = spirouStartup.RunStartup(p, kind='dark', prefixes=['dark_dark'])
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
+    p.set_source('dprtype', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
@@ -129,7 +129,7 @@ def main(night_name=None, files=None):
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
     p['dadeadall'] = n_bad_pix * 100 / np.product(data.shape)
-    p.set_source('dadeadall', __NAME__ + '/__main__')
+    p.set_source('dadeadall', __NAME__ + '/main()')
     # log fraction of dead pixels + dark > cut
     logargs = [p['DARK_CUTLIMIT'], p['dadeadall']]
     WLOG('info', p['log_opt'], ('Total Frac dead pixels (N.A.N) + DARK > '
@@ -172,13 +172,13 @@ def main(night_name=None, files=None):
     if passed:
         WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Save dark to file

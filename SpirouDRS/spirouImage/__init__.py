@@ -16,6 +16,7 @@ Version 0.0.0
 from SpirouDRS import spirouConfig
 from . import spirouFITS
 from . import spirouImage
+from . import spirouTable
 
 # =============================================================================
 # Define variables
@@ -86,15 +87,21 @@ GetTypeFromHeader = spirouFITS.get_type_from_header
 
 LocateBadPixels = spirouImage.locate_bad_pixels
 
+MakeTable = spirouTable.make_table
+
 MeasureDark = spirouImage.measure_dark
 
 NormMedianFlat = spirouImage.normalise_median_flat
+
+ReadData = spirouFITS.readdata
 
 ReadImage = spirouFITS.readimage
 
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
 ReadImageAndCombine = spirouFITS.readimage_and_combine
+
+ReadFlatFile = spirouFITS.read_flat_file
 
 # Read Header
 ReadHeader = spirouFITS.read_header
@@ -118,3 +125,6 @@ ResizeImage = spirouImage.resize
 
 # Write the image to file and adds header file
 WriteImage = spirouFITS.writeimage
+
+# Write table
+WriteTable = spirouTable.write_table

@@ -50,7 +50,7 @@ p = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True)
 USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_UNIX',
             'kw_BBAD',
-            'kw_BBFLAT'
+            'kw_BBFLAT',
             'kw_BHOT',
             'kw_BNDARK',
             'kw_BNFLAT',
@@ -272,19 +272,19 @@ kw_LOCO_FILE = [root_drs_loc + 'FILE', '', 'Localization file used']
 # -----------------------------------------------------------------------------
 
 # fraction of hot pixels
-kw_BHOT = ['BHOT', '', 'Frac of hot px [%]']
+kw_BHOT = ['BHOT', 0, 'Frac of hot px [%]']
 
 # fraction of bad pixels from flat
-kw_BBFLAT = ['BBFLAT', '', 'Frac of bad px from flat [%]']
+kw_BBFLAT = ['BBFLAT', 0, 'Frac of bad px from flat [%]']
 
 # fraction of non-finite pixels in dark
-kw_BNDARK = ['BNDARK', '', 'Frac of non-finite px in dark [%]']
+kw_BNDARK = ['BNDARK', 0, 'Frac of non-finite px in dark [%]']
 
 # fraction of non-finite pixels in flat
-kw_BNFLAT = ['BNFLAT', '', 'Frac of non-finite px in flat [%]']
+kw_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
 
 # fraction of bad pixels with all criteria
-kw_BBAD = ['BBAD', '', 'Frac of bad px with all criteria [%]']
+kw_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
 
 
 # =============================================================================

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-cal_extract_RAW_spirou
-
-# CODE DESCRIPTION HERE
+cal_DRIFT_E2DS_spirou.py [night_directory] [REFfilename]
 
 Created on 2017-10-12 at 15:21
 
@@ -55,7 +53,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
     p = spirouStartup.RunStartup(p, kind='Flat-field', calibdb=True)
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/__main__')
+    p.set_source('dprtype', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
 
@@ -145,13 +143,13 @@ def main(night_name=None, files=None, fiber_type='AB'):
     loc = ParamDict()
     # get tilts
     loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/__main__ + /spirouImage.ReadTiltFile')
+    loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
     loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/__main__ + /spirouImage.ReadWaveFile')
+    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -160,7 +158,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
     for fiber in p['fib_type']:
         # set fiber
         p['fiber'] = fiber
-        p.set_source('fiber', __NAME__ + '/__main__()')
+        p.set_source('fiber', __NAME__ + '/main()()')
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
@@ -264,7 +262,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
             loc['spe4'][order_num] = spe4
             loc['SNR'][order_num] = snr
             # set sources
-            source = __NAME__ + '/__main__()'
+            source = __NAME__ + '/main()()'
             loc.set_sources(['e2ds', 'SNR', 'spe1', 'spe3', 'spe4'], source)
             # Log if saturation level reached
             satvalue = (flux/p['gain'])/(range1 + range2)
@@ -362,13 +360,13 @@ def main(night_name=None, files=None, fiber_type='AB'):
     if passed:
         WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # End Message
