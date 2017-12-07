@@ -135,6 +135,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # get wave image
     loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
     loc.set_source('wave', __NAME__ + '/__main__ + /spirouImage.ReadWaveFile')
 
@@ -226,12 +227,29 @@ def main(night_name=None, files=None, fiber='AB'):
     # ------------------------------------------------------------------
     # Get all other fp_fp*[ext].fits files
     # ------------------------------------------------------------------
+    # get reduced folder
+    reffilename = p['fitsfilename']
+    rfolder = p['raw_dir']
     # Get files, remove fitsfilename, and sort
-    listfiles = spirouImage.GetAllSimilarFiles(p)
+    prefix = p['arg_file_names'][0][0:5]
+    suffix = p['arg_file_names'][0][-8:]
+    listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
+    # remove reference file
+    try:
+        listfiles.remove(reffilename)
+    except ValueError:
+        emsg = 'File {0} not found in {1}'
+        WLOG('error', p['log_opt'], emsg.format(reffilename, rfolder))
+    # get length of files
     Nfiles = len(listfiles)
-    # Log the number of files found
-    wmsg = 'Number of fp_fp files found on directory = {0}'
-    WLOG('info', p['log_opt'], wmsg.format(Nfiles))
+    # make sure we have some files
+    if Nfiles == 0:
+        emsg = 'No additional {0}*{1} files found in {2}'
+        WLOG('error', p['log_opt'], emsg.format(prefix, suffix, rfolder))
+    else:
+        # else Log the number of files found
+        wmsg = 'Number of fp_fp files found on directory = {0}'
+        WLOG('info', p['log_opt'], wmsg.format(Nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -249,10 +267,12 @@ def main(night_name=None, files=None, fiber='AB'):
     # set loc sources
     keys = ['drift', 'errdrift', 'deltatime']
     loc.set_sources(keys, __NAME__ + '/__main__()')
+
     # ------------------------------------------------------------------
     # Loop around all files: correct for dark, reshape, extract and
     #     calculate dvrms and meanpond
     # ------------------------------------------------------------------
+    wref = 1.0
     for i_it in range(Nfiles):
         # get file for this iteration
         fpfile = listfiles[::skip][i_it]
@@ -347,10 +367,29 @@ def main(night_name=None, files=None, fiber='AB'):
     # ------------------------------------------------------------------
     # get the maximum number of orders to use
     nomax = p['IC_DRIFT_N_ORDER_MAX']
-    # median drift
-    loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
-    # median err drift
-    loc['merrdrift'] = np.median(loc['errdrift'][:, :nomax], 1)
+    # ------------------------------------------------------------------
+    # if use mean
+    if p['drift_type_raw'].upper() == 'WEIGHTED MEAN':
+        # mean radial velocity
+        sumwref = np.sum(wref[:nomax])
+        meanrv = np.sum(loc['drift'][:, :nomax] * wref[:nomax], 1)/sumwref
+        # error in mean radial velocity
+        errdrift2 = loc['errdrift'][:, :nomax]**2
+        meanerr = 1.0/np.sqrt(np.sum(1.0/errdrift2, 1))
+        # add to loc
+        loc['mdrift'] = meanrv
+        loc['merrdrift'] = meanerr
+    # ------------------------------------------------------------------
+    # else use median
+    if p['drift_type_raw'].upper() == 'MEDIAN':
+        # median drift
+        loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
+        # median err drift
+        loc['merrdrift'] = np.median(loc['errdrift'][:, :nomax], 1)
+    # ------------------------------------------------------------------
+    # set source
+    loc.set_sources(['mdrift', 'merrdrift'], __NAME__ + '/__main__()')
+    # ------------------------------------------------------------------
     # peak to peak drift
     driftptp = np.max(loc['mdrift']) - np.min(loc['mdrift'])
     driftrms = np.std(loc['mdrift'])
