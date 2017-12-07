@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # construct folder and filename
     reducedfolder = p['reduced_dir']
     # construct bad pixel file name
-    badpixelfits = p['arg_file_names'][0].replace('.fits', '_badpixel.fits')
+    badpixelfits = p['flatfile'].replace('.fits', '_badpixel.fits')
     # log that we are saving bad pixel map in dir
     WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
     # add keys from original header files
