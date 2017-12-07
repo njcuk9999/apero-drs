@@ -306,6 +306,16 @@ ic_drift_cut = 3
 #       used to get median drift  median(order0 --> order max)
 ic_drift_n_order_max = 28
 
+#   Define the way to calculate the drift                       - [cal_drift]
+#       either 'weighted mean' or 'median'
+#       for cal_drift_raw and cal_drift_e2ds
+drift_type_raw = 'median'
+drift_type_e2ds = 'weighted mean'
+
+#    Define the types of fiber to look for                      - [cal_drift]
+#       (earlier in list takes priority)
+drift_fiber_types = ['AB', 'A', 'B', 'C']
+
 
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters
