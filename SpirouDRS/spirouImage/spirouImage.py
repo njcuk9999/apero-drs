@@ -190,24 +190,22 @@ def convert_to_adu(image, p=None, exptime=None):
     return newimage
 
 
-def get_all_similar_files(p):
+def get_all_similar_files(p, directory, prefix=None, suffix=None):
 
-    # get path
-    rawdir = spirouConfig.Constants.RAW_DIR(p)
     # get file prefix and suffix
-    prefix = p['arg_file_names'][0][0:5]
-    suffix = p['arg_file_names'][0][-8:]
+    if prefix is None:
+        prefix = p['arg_file_names'][0][0:5]
+    if suffix is None:
+        suffix = p['arg_file_names'][0][-8:]
     # constrcut file string
     filestring = '{0}*{1}'.format(prefix, suffix)
-    locstring = os.path.join(rawdir, filestring)
+    locstring = os.path.join(directory, filestring)
     # get all files
     filelist = glob.glob(locstring)
-    # remove fitsfilename (reference file)
-    filelist.remove(p['fitsfilename'])
     # sort list
     filelist = np.sort(filelist)
     # return file list
-    return filelist
+    return list(filelist)
 
 
 # =============================================================================
