@@ -100,13 +100,13 @@ if __name__ == "__main__":
     if passed:
         WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
             WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
-        p.set_source('QC', __NAME__ + '/__main__')
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
