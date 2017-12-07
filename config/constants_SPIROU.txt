@@ -312,17 +312,19 @@ ic_drift_n_order_max = 28
 # -----------------------------------------------------------------------------
 
 #   Define the median image in the x dimension over a           - [cal_badpix]
-#       boxcar of this width
+#       boxcar of this width (formally wmed)
 badpix_flat_med_wid = 7
 
 #   Define the illumination cut parameter                       - [cal_badpix]
+#       (formally illum_cut)
 badpix_illum_cut = 0.05
 
 #   Define the maximum differential pixel cut ratio             - [cal_badpix]
-cut_ratio = 0.5
+#       (formally cut_ratio)
+badpix_flat_cut_ratio = 0.5
 
 #   Define the maximum flux in ADU/s to be considered too       - [cal_badpix]
-#       hot to be used
+#       hot to be used (formally max_hotpix)
 badpix_max_hotpix = 100.0
 
 
