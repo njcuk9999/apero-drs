@@ -261,9 +261,9 @@ def main(night_name=None, files=None, fiber='AB'):
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((Nfiles+1, loc['number_orders']))
-    loc['errdrift'] = np.zeros((Nfiles+1, loc['number_orders']))
-    loc['deltatime'] = np.zeros(Nfiles+1)
+    loc['drift'] = np.zeros((Nfiles, loc['number_orders']))
+    loc['errdrift'] = np.zeros((Nfiles, loc['number_orders']))
+    loc['deltatime'] = np.zeros(Nfiles)
     # set loc sources
     keys = ['drift', 'errdrift', 'deltatime']
     loc.set_sources(keys, __NAME__ + '/__main__()')
@@ -330,7 +330,7 @@ def main(night_name=None, files=None, fiber='AB'):
         dargs = [loc['speref'], loc['spe']]
         dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'],
-                       cut=p['IC_DRIFT_CUT'])
+                       cut=p['IC_DRIFT_CUT_RAW'])
         spen, cfluxr, cpt = spirouRV.ReNormCosmic2D(*dargs, **dkwargs)
 
         # ------------------------------------------------------------------
@@ -379,9 +379,8 @@ def main(night_name=None, files=None, fiber='AB'):
         # add to loc
         loc['mdrift'] = meanrv
         loc['merrdrift'] = meanerr
-    # ------------------------------------------------------------------
     # else use median
-    if p['drift_type_raw'].upper() == 'MEDIAN':
+    else:
         # median drift
         loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
         # median err drift
@@ -406,7 +405,7 @@ def main(night_name=None, files=None, fiber='AB'):
         # start interactive session if needed
         sPlt.start_interactive_session()
         # plot delta time against median drift
-        sPlt.drift_plot_dtime_against_mdrift(p, loc)
+        sPlt.drift_plot_dtime_against_mdrift(p, loc, kind='raw')
 
     # ------------------------------------------------------------------
     # Save drift values to file
@@ -430,13 +429,15 @@ def main(night_name=None, files=None, fiber='AB'):
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
+    return locals()
+
 
 # =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    main()
+    locals = main()
 
 
 # =============================================================================

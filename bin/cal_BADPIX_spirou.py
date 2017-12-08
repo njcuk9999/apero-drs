@@ -41,9 +41,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-# def main(night_name=None, darkfile=None, flatfile=None):
-if __name__ == "__main__":
-    darkfile, flatfile, night_name = None, None, None
+def main(night_name=None, darkfile=None, flatfile=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -151,16 +149,16 @@ if __name__ == "__main__":
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
+    return locals()
 
 # =============================================================================
 # Start of code
 # =============================================================================
-"""
-# Main code here
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    main()
-"""
+    locals = main()
+
+
 # =============================================================================
 # End of code
 # =============================================================================

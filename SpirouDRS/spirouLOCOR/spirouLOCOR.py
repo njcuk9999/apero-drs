@@ -124,7 +124,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     wmsg = 'Reading localization parameters of Fiber {0}'
     WLOG('', p['log_opt'], wmsg.format(p['fiber']))
     # construct the localization file name
-    loco_file = os.path.join(reduced_dir, c_database['LOC_' + p['fiber']][1])
+    loco_file = os.path.join(reduced_dir, c_database[loc_file][1])
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header

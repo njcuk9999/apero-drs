@@ -38,6 +38,10 @@ variable = p["(*\textcolor{red}{VARIABLE\_NAME}*)"]
 \end{note}
 \fi
 
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \section{Variable file locations}
@@ -177,6 +181,10 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \end{itemize}
 
 
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \section{Directory variables}
@@ -222,6 +230,10 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 
 \end{itemize}
+
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -310,7 +322,20 @@ ic\_ccdy\_high &=& 1935 \\
 \end{thighlight}
 \end{minipage}
 
+
+% Avaiable fiber types
+\item \ParameterEntry{Available fiber types}
+{Defines the type of fiber we have (used in various codes). Theses are define in a python list of string, where the earlier a fiber is in the list the more it takes priority in searches (i.e. AB over A or B if AB is first)}
+{fiber\_types}
+{\lstinline[style=pythoninline]| ['AB', 'A', 'B', 'C'] |}
+{\calextractRAW, \calDRIFTE}{\constantsfile}{\calextractRAW.\progMAIN, \spirouStartup.get\_fiber\_type()}{Public}
+
+
 \end{itemize}
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -426,6 +451,10 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 \end{itemize}
 
 
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -483,6 +512,10 @@ badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
 {\calDARK.\progMAIN}{Public}
 
 \end{itemize}
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -689,6 +722,11 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 \end{itemize}
 
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -730,6 +768,10 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 
 \end{itemize}
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -805,6 +847,12 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \end{itemize}
 
 
+
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -838,23 +886,40 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 {\calSLIT, \calFFraw}{\constantsfile}{\spirouEXTOR.extract\_AB\_order}{Public}
 
 
-% ic_extmeanzone
-\item \ParameterEntry{Mean size of extraction window}
-{Sets the mean size of the extraction window for noise calculation. Noise is defined as `sigdet' $\times \sqrt(\text{ic\_extmeanzone})$ }
-{ic\_extmeanzone}{16}
-{\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
-\DevNote{This variable doesn't seem correct. It should probably be calculated as `ic\_ext\_range1' + `ic\_ext\_range2', not hard coded separately.}
-
-
 % ic_ext_all
-\item \ParameterEntry{Extract all}
-{Defines whether code just extracts the E2DS file (currently via just a weighted extraction process), or whether the code saves all extraction types (simple, tilt, tilt+weight, weight). Value must be True or 1 or False or 0.}
-{ic\_ext\_all}{0}
+\item \ParameterEntry{Extraction type}
+{Defines which type of extract should be used in \calextractRAW. This variable is overwritten if using \calextractRAWAB or \calextractRAWC. The value must be one of the following:
+\begin{itemize}
+\item simple \dotfill just does extraction as is.
+\item tilt \dotfill does the extraction and corrects for tilt
+\item weight \dotfill does the extraction with a weighting for bad pixels
+\item tiltweight \dotfill does the extraction + `tilt' + `weight'
+\item all \dotfill performs all extractions (saves separately). The E2DS file=`weight'.
+\end{itemize}
+Value should be a python string with one of the above values only. Any other value will cause an error and a recipe to exit.
+}
+{ic\_extact\_type}{tiltweight}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
-\DevNote{This, is just a temporary variable until we only calculate one type of extraction. Why is the E2DS weight only and not tilt weight in \calextractRAW?}
+\DevNote{For all we should probably use tiltweight but as \calextractRAWAB and \calextractRAWC currently use weight for the E2DS this is set to reproduce this.}
 
+\item \ParameterEntry{Manually set the extraction sigdet}
+{Set the sigdet used in the extraction process instead of using the sigdet in the FITS rec HEADER file. If the value is set to -1 the sigdet from the HEADER is used instead.}
+{ic\_ext\_sigdet}{100}
+{\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
+\DevNote{Why is this value used and not the value in the header file?}
+
+% ic_drift_order_plot
+\item \ParameterEntry{Selected order in extract fit order plot}
+{Defines the selected order to plot the fit for in the extract fit order plot. Value must be between zero and the maximum number of orders.}
+{ic\_ext\_order\_plot}{20}
+{\calextractRAW}{\constantsfile}{\spirouPlot. ext\_selected\_order\_plot()}{Public}
 
 \end{itemize}
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -910,11 +975,18 @@ Value must be a float larger than zero.
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
 
 
-% ic_drift_cut
-\item \ParameterEntry{Number of sigmas to cut in cosmic renormalization}
-{Defines the number of standard deviations to remove fluxes at (and replace with the reference flux). Value must be a float larger than zero.}
-{ic\_drift\_cut}{3}
+% ic_drift_cut_raw
+\item \ParameterEntry{Number of sigmas to cut in cosmic renormalization (\calDRIFTRAW)}
+{Defines the number of standard deviations to remove fluxes at (and replace with the reference flux) for \calDRIFTRAW. Value must be a float larger than zero.}
+{ic\_drift\_cut\_raw}{3}
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_cut_e2ds
+\item \ParameterEntry{Number of sigmas to cut in cosmic renormalization (\calDRIFTE)}
+{Defines the number of standard deviations to remove fluxes at (and replace with the reference flux) for \calDRIFTE. Value must be a float larger than zero.}
+{ic\_drift\_cut\_e2ds}{4.5}
+{\calDRIFTE}{\constantsfile}{\calDRIFTE.\progMAIN}{Public}
 
 
 % ic_drift_n_order_max
@@ -924,7 +996,53 @@ Value must be a float larger than zero.
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
 
 
+% ic_drift_type_raw
+\item \ParameterEntry{Define the way to calculate the drift (for \calDRIFTRAW)}
+{Defines the way to calculate the drift parameter should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_1}) or 'median' (Equation \ref{equation:drift_type_median_1}) for \calDRIFTRAW.
+\begin{equation}
+\label{equation:drift_type_wmean_1}
+\text{drift} = \frac{\sum{(\text{drift}_i * w_i)}}{\sum{w_i}}
+\end{equation}
+\noindent where $w_i$ is $1/\Delta v_{rms}$
+\begin{equation}
+\label{equation:drift_type_median_1}
+\text{drift} = \text{median}(\text{drift}_i)
+\end{equation}
+\noindent Value should be a valid python string either `median' or `weighted mean'.
+}
+{ic\_drift\_type\_raw}{median}
+{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_type_e2ds
+\item \ParameterEntry{Define the way to calculate the drift (for \calDRIFTE)}
+{Defines the way to calculate the drift parameter should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_2}) or 'median' (Equation \ref{equation:drift_type_median_2}) for \calDRIFTE.
+\begin{equation}
+\label{equation:drift_type_wmean_2}
+\text{drift} = \frac{\sum{(\text{drift}_i * w_i)}}{\sum{w_i}}
+\end{equation}
+\noindent where $w_i$ is $1/\Delta v_{rms}$
+\begin{equation}
+\label{equation:drift_type_median_2}
+\text{drift} = \text{median}(\text{drift}_i)
+\end{equation}
+\noindent Value should be a valid python string either `median' or `weighted mean'.
+}
+{ic\_drift\_type\_e2ds}{weighted mean}
+{\calDRIFTE}{\constantsfile}{\calDRIFTE.\progMAIN}{Public}
+
+% ic_drift_order_plot
+\item \ParameterEntry{Selected order in drift fit order plot}
+{Defines the selected order to plot the fit for in the drift fit order plot. Value must be between zero and the maximum number of orders.}
+{ic\_drift\_order\_plot}{20}
+{\calDRIFTRAW, \calDRIFTE}{\constantsfile}{\spirouPlot. drift\_plot\_selected\_wave\_ref()}{Public}
+
+
+
 \end{itemize}
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -966,6 +1084,12 @@ Value must be a float larger than zero.
 	\DevNote{Formally this was called max\_hotpix in \calbadpix}
 
 \end{itemize}
+
+
+
+
+
+
 
 
 
@@ -1074,6 +1198,11 @@ Value must be a float greater than zero.
 \end{itemize}
 
 
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -1104,8 +1233,11 @@ Value must be a float greater than zero.
 
 
 
-\ifdevguide
 
+
+
+
+\ifdevguide
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -1213,8 +1345,12 @@ Value must be a float greater than zero.
 
 
 
-\ifdevguide
 
+
+
+
+
+\ifdevguide
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -1244,8 +1380,12 @@ Value must be a float greater than zero.
 \fi
 
 
-\ifdevguide
 
+
+
+
+
+\ifdevguide
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -1287,6 +1427,11 @@ forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'EXTEND',
 \end{itemize}
 
 \fi
+
+
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
