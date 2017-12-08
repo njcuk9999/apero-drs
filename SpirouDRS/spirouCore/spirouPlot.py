@@ -55,6 +55,10 @@ def end_interactive_session(interactive=False):
         plt.show()
         plt.close()
 
+
+def closeall():
+    plt.close('all')
+
 # =============================================================================
 # dark plotting functions
 # =============================================================================
@@ -642,7 +646,7 @@ def ext_aorder_fit(p, loc, image):
 
 def ext_spectral_order_plot(p, loc):
     # get constants
-    selected_order = p['IC_FF_ORDER_PLOT']
+    selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['fiber']
     # get data from loc
     wave = loc['wave'][selected_order]
@@ -670,7 +674,7 @@ def ext_spectral_order_plot(p, loc):
 # =============================================================================
 def drift_plot_selected_wave_ref(p, loc):
     # get constants
-    selected_order = p['IC_FF_ORDER_PLOT']
+    selected_order = p['IC_DRIFT_ORDER_PLOT']
     fiber = p['fiber']
     # get data from loc
     wave = loc['wave'][selected_order]
@@ -714,11 +718,26 @@ def drift_plot_photon_uncertainty(p, loc):
         plt.show()
         plt.close()
 
-def drift_plot_dtime_against_mdrift(p, loc):
+def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     # get data from loc
     deltatime = loc['deltatime']
     mdrift = loc['mdrift']
     merrdrift = loc['merrdrift']
+
+    if kind is None:
+        kindstr = p['drift_type_raw']
+    elif kind in ['raw', 'e2ds']:
+        kindstr = p['drift_type_{0}'.format(kind)]
+    else:
+        emsg = ('kind="{0}" not understood in sPlt.drift_plot_dtime_'
+                'against_mdrift')
+        WLOG('error', p['log_opt'], emsg.format(kind))
+        kindstr = None
+    # get mstr from kindstr
+    if kindstr == 'median':
+        mstr = 'Median'
+    else:
+        mstr = 'Mean'
     # set up fig
     plt.figure()
     # clear the current figure
@@ -726,11 +745,13 @@ def drift_plot_dtime_against_mdrift(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot fits
-    frame.errorbar(deltatime, mdrift, yerr=merrdrift)
+    frame.errorbar(deltatime, mdrift, yerr=merrdrift, linestyle='none',
+                   marker='x')
     # set title labels limits
-    title = 'Median drift (with uncertainties) against time from reference'
-    frame.set(xlabel='$\Delta$ time [hours]', ylabel='Median drift [m/s]',
-              title=title)
+    title = '{0} drift (with uncertainties) against time from reference'
+    frame.set(xlabel='$\Delta$ time [hours]',
+              ylabel='{0} drift [m/s]'.format(mstr),
+              title=title.format(mstr))
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
