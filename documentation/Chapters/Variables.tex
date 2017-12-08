@@ -997,8 +997,8 @@ Value must be a float larger than zero.
 
 
 % ic_drift_type_raw
-\item \ParameterEntry{Define the way to calculate the drift (for \calDRIFTRAW)}
-{Defines the way to calculate the drift parameter should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_1}) or 'median' (Equation \ref{equation:drift_type_median_1}) for \calDRIFTRAW.
+\item \ParameterEntry{Define the way to combine orders for drift (for \calDRIFTRAW)}
+{Defines the way to calculate the combine order drifts (to one drift per image) should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_1}) or 'median' (Equation \ref{equation:drift_type_median_1}) for \calDRIFTRAW.
 \begin{equation}
 \label{equation:drift_type_wmean_1}
 \text{drift} = \frac{\sum{(\text{drift}_i * w_i)}}{\sum{w_i}}
@@ -1015,8 +1015,8 @@ Value must be a float larger than zero.
 
 
 % ic_drift_type_e2ds
-\item \ParameterEntry{Define the way to calculate the drift (for \calDRIFTE)}
-{Defines the way to calculate the drift parameter should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_2}) or 'median' (Equation \ref{equation:drift_type_median_2}) for \calDRIFTE.
+\item \ParameterEntry{Define the way to combine orders for drift \calDRIFTE)}
+{Defines the way to calculate the combine order drifts (to one drift per image) should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_2}) or 'median' (Equation \ref{equation:drift_type_median_2}) for \calDRIFTE.
 \begin{equation}
 \label{equation:drift_type_wmean_2}
 \text{drift} = \frac{\sum{(\text{drift}_i * w_i)}}{\sum{w_i}}
