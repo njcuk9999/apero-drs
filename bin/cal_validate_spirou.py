@@ -183,13 +183,15 @@ def main(debug_mode=0):
         WLOG('', '', '')
         WLOG('', '', 'Validation successful. DRS installed corrected.')
 
+    return locals()
+
 # =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    main(debug_mode=DEBUG)
+    locals = main(debug_mode=DEBUG)
 
 
 # =============================================================================
