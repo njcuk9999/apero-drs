@@ -489,7 +489,7 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     return hdict
 
 
-def copy_root_keys(hdict=None, filename=None, ext=0):
+def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
     """
     Copy keys from a filename to hdict
 
@@ -510,7 +510,12 @@ def copy_root_keys(hdict=None, filename=None, ext=0):
     hdr, cmts = read_raw_header(filename=filename, headerext=ext)
     # loop around header keys
     for key in list(hdr.keys()):
-        hdict[key] = (hdr[key], cmts[key])
+        # if we have a root only copy those keys that start with root
+        if root is not None:
+            if key.startswith(root):
+                hdict[key] = (hdr[key], cmts[key])
+        else:
+            hdict[key] = (hdr[key], cmts[key])
     # return header
     return hdict
 
