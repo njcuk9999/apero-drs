@@ -361,6 +361,8 @@ Below we describe breifly the main differences from AT-4 build.
 	\item where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
 	\end{itemize}
 
+\item added an option (drift\_type\_e2ds) to decide between getting drift using a weighted mean or using a median (to combine all orders)
+
 \item `drift`, `errdrift`, `deltatime`, `mdrift`, `merrdrift` stored in loc
 
 \item Writing of fits file cleaned up (header keywords written during data write)
@@ -372,7 +374,6 @@ Below we describe breifly the main differences from AT-4 build.
 	\end{itemize}
 
 \end{itemize}
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -394,4 +395,63 @@ Below we describe breifly the main differences from AT-4 build.
 	\item instead of taking the 90th pixel in flattened meadian flat image now work out the 90th percentile of finite values (will lead to a slightly more correct normalisation value)
 
 	\item Writing of fits file cleaned up (header keywords written during data write)
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DRIFT-E2DS\_spirou recipe}
+\label{ch:changelog:At4:cal_DRIFT-E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item loading of custom arguments for reference file
+
+\item acqtime (bjdref) got from header using \definevariable{\spirouImage.GetAcqTime}
+	\begin{itemize}
+	\item can be used to get both `human` readible and `unix` time (use key kind=`human` or kind=`unix)
+	\end{itemize}
+
+\item Created function to read TILT file from calibDB (replaces `readkeyloco`)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadTiltFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+	\end{itemize}
+
+\item Created function to read WAVE file from calibDB (replaces `read\_data\_raw(`)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadWaveFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+	\end{itemize}
+
+\item delta RV RMS calculation in \definevariable{\spirouRV.DeltaVrms2D}
+	\begin{itemize}
+	\item where arguments are `speref` and `wave` (stored in `loc`)
+	\item where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
+	\end{itemize}
+
+\item all functionality to do with listing files moved to \definevariable{\spirouImage{\hskip 0pt}.GetAllSimilarFiles} - no need for "alphanumeric short"/"nice sort" - `np.sort(x)` does this
+    
+\item Renormlisation and cosmics correction in \definevariable{\spirouRV.ReNormCosmic2D}
+	\begin{itemize}
+	\item where arguments are `speref` and `spe` (stored in `loc`)
+	\item where keyword arguments are `cut`, `size` and `threshold` (stored in p)
+	\end{itemize}
+
+\item RV drift calculated
+	\begin{itemize}
+	\item \definevariable{\spirouRV.CalcRVdrift2D}
+	\item where arguments are `speref`, `spen` and `wave` (`speref` and `spen` stored in loc)
+	\item where keyword arguments are `sigdet`, `size` and `threshold` (stored in p)
+	\end{itemize}
+
+\item added an option (drift\_type\_e2ds) to decide between getting drift using a weighted mean or using a median (to combine all orders)
+
+\item `drift`, `errdrift`, `deltatime`, `mdrift`, `merrdrift` stored in loc
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item new functions to save to .tbl format (\spirouImage.MakeTable and \spirouImage.WriteTable)
+
 \end{itemize}
