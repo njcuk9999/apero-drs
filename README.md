@@ -809,7 +809,7 @@
     
     - [ ] - cal_HC_E2DS_spirou
 
-    - [ ] - cal_DRIFT_E2DS_spirou
+    - [x] - ~~cal_DRIFT_E2DS_spirou~~
  
     - [ ] - cal_DRIFT-PEAK_E2DS_spirou
     
