@@ -84,7 +84,10 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_LOC_SMAXPTS_WID',
             'kw_TILT',
             'kw_RDNOISE',
-            'kw_version']
+            'kw_version',
+            'kw_root_drs_loc',
+            'kw_root_drs_flat',
+            'kw_root_drs_hc']
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
               'DRS_VERSION',
@@ -136,10 +139,10 @@ spirouConfig.check_config(p, USE_PARAMS)
 kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
-# root keys (for use below)
-root_drs_loc = 'LO'
-root_drs_flat = 'FF'
-root_drs_hc = 'LMP'
+# root keys (for use below and in finding keys later)
+kw_root_drs_loc = ['LO', None, '']
+kw_root_drs_flat = ['FF', None, '']
+kw_root_drs_hc = ['LMP', None, '']
 
 # -----------------------------------------------------------------------------
 # Required header keys
@@ -195,7 +198,7 @@ kw_DARK_CUT = ['DACUT', p['DARK_CUTLIMIT'],
 # -----------------------------------------------------------------------------
 
 # Mean background (as percentage)
-kw_LOCO_BCKGRD = [root_drs_loc + 'BCKGRD', 0, 'mean background [%]']
+kw_LOCO_BCKGRD = [kw_root_drs_loc[0] + 'BCKGRD', 0, 'mean background [%]']
 
 # Image conversion factor [e-/ADU]
 kw_CCD_CONAD = ['CONAD', 0, 'CCD conv factor [e-/ADU]']
@@ -204,51 +207,51 @@ kw_CCD_CONAD = ['CONAD', 0, 'CCD conv factor [e-/ADU]']
 kw_CCD_SIGDET = ['SIGDET', 0, 'CCD Readout Noise [e-]']
 
 # Coeff center order
-kw_LOCO_CTR_COEFF = [root_drs_loc + 'CTR', 0, 'Coeff center']
+kw_LOCO_CTR_COEFF = [kw_root_drs_loc[0] + 'CTR', 0, 'Coeff center']
 
 # fit degree for order centers
-kw_LOCO_DEG_C = [root_drs_loc + 'DEGCTR',  p['IC_LOCDFITC'],
+kw_LOCO_DEG_C = [kw_root_drs_loc[0] + 'DEGCTR',  p['IC_LOCDFITC'],
                  'degree fit ctr ord']
 
 # fit degree for order widths
-kw_LOCO_DEG_W = [root_drs_loc + 'DEGFWH', p['IC_LOCDFITW'],
+kw_LOCO_DEG_W = [kw_root_drs_loc[0] + 'DEGFWH', p['IC_LOCDFITW'],
                  'degree fit width ord']
 
 # fit degree for profile error
-kw_LOCO_DEG_E = [root_drs_loc + 'DEGERR', p['IC_LOCDFITP'],
+kw_LOCO_DEG_E = [kw_root_drs_loc[0] + 'DEGERR', p['IC_LOCDFITP'],
                  'degree fit profile error']
 
 # delta width (pix) for 3 convol shape model (currently not used??)
-kw_LOCO_DELTA = [root_drs_loc + 'PRODEL', p['IC_LOC_DELTA_WIDTH'],
+kw_LOCO_DELTA = [kw_root_drs_loc[0] + 'PRODEL', p['IC_LOC_DELTA_WIDTH'],
                  'param model 3gau']
 
 # Coeff width order
-kw_LOCO_FWHM_COEFF = [root_drs_loc + 'FW', 0, 'Coeff fwhm']
+kw_LOCO_FWHM_COEFF = [kw_root_drs_loc[0] + 'FW', 0, 'Coeff fwhm']
 
 # Number of orders located
-kw_LOCO_NBO = [root_drs_loc + 'NBO', 0, 'nb orders localised']
+kw_LOCO_NBO = [kw_root_drs_loc[0] + 'NBO', 0, 'nb orders localised']
 
 # Maximum flux in order
-kw_LOC_MAXFLX = [root_drs_loc + 'FLXMAX', 0, 'max flux in order [ADU]']
+kw_LOC_MAXFLX = [kw_root_drs_loc[0] + 'FLXMAX', 0, 'max flux in order [ADU]']
 
 # Maximum number of removed points allowed for location fit
-kw_LOC_SMAXPTS_CTR = [root_drs_loc + 'CTRMAX', 0, 'max rm pts ctr']
+kw_LOC_SMAXPTS_CTR = [kw_root_drs_loc[0] + 'CTRMAX', 0, 'max rm pts ctr']
 
 # Maximum number of removed points allowed for width fit
 #    (formally kw_LOC_Smaxpts_width)
-kw_LOC_SMAXPTS_WID = [root_drs_loc + 'WIDMAX', 0, 'max rm pts width']
+kw_LOC_SMAXPTS_WID = [kw_root_drs_loc[0] + 'WIDMAX', 0, 'max rm pts width']
 
 # Maximum rms allowed for location fit
-kw_LOC_RMS_CTR = [root_drs_loc + 'RMSCTR', 0, 'max rms ctr']
+kw_LOC_RMS_CTR = [kw_root_drs_loc[0] + 'RMSCTR', 0, 'max rms ctr']
 
 # Maximum rms allowed for width fit (formally kw_LOC_rms_fwhm)
-kw_LOC_RMS_WID = [root_drs_loc + 'RMSWID', 0, 'max rms width']
+kw_LOC_RMS_WID = [kw_root_drs_loc[0] + 'RMSWID', 0, 'max rms width']
 
 # -----------------------------------------------------------------------------
 # Define cal_SLIT variables
 # -----------------------------------------------------------------------------
 # Tilt order keyword prefix
-kw_TILT = [root_drs_loc + 'TILT', 0, 'Tilt order']
+kw_TILT = [kw_root_drs_loc[0] + 'TILT', 0, 'Tilt order']
 
 # -----------------------------------------------------------------------------
 # Define cal_FF variables
@@ -258,14 +261,14 @@ kw_TILT = [root_drs_loc + 'TILT', 0, 'Tilt order']
 kw_EXTRA_SN = ['EXTSN', 0, 'S_N order center']
 
 # Flat field RMS for order
-kw_FLAT_RMS = [root_drs_flat + 'RMS', 0, 'FF RMS order']
+kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 
 # -----------------------------------------------------------------------------
 # Define cal_EXTRACT variables
 # -----------------------------------------------------------------------------
 
 # localization file used
-kw_LOCO_FILE = [root_drs_loc + 'FILE', '', 'Localization file used']
+kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
@@ -345,8 +348,8 @@ def get_keywords(pp=None):
 
 def check_keyword_format(key, value):
     if type(value) != list:
-        raise spirouConfig.ConfigError('Key {0} defined in {1} is not a list. '
-                                       'Please check', level='error')
+        emsg = 'Key {0} defined in {1} is not a list. Please check'
+        raise spirouConfig.ConfigError(emsg.format(key, __NAME__), level='error')
     # value must be a list of length 3
     if len(value) != 3:
         emsg = 'key {0} defined in {1} is not a length 3 list (len={2})'

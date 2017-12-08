@@ -62,6 +62,9 @@ ic_ccdx_high = 2040
 ic_ccdy_low = 5
 ic_ccdy_high = 1935
 
+#    Define the types of fiber to look for                      - [cal_extract, cal_drift]
+#       (earlier in list takes priority)
+fiber_types = ['AB', 'A', 'B', 'C']
 
 # -----------------------------------------------------------------------------
 #   fiber variables
@@ -207,19 +210,6 @@ ic_locopt1 = 1
 #   cal_slit parameters
 # -----------------------------------------------------------------------------
 
-#   Extraction option in tilt file:                             - [cal_slit, cal_FF]
-#             if 0 extraction by summation over constant range
-#             if 1 extraction by summation over constant sigma
-#                (not currently available)
-#             if 2 Horne extraction without cosmic elimination
-#                (not currently available)
-#             if 3 Horne extraction with cosmic elimination
-#                (not currently available)
-ic_extopt = 0
-
-# distance away from center to extract out to +/-               - [cal_slit]
-ic_extnbsig = 2.5
-
 #   oversampling factor (for tilt finding)
 ic_tilt_coi = 10
 
@@ -269,13 +259,35 @@ ic_ff_plot_all_orders = 0
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
 # -----------------------------------------------------------------------------
-#   Mean window of extraction                                   - [cal_extract]
-ic_extmeanzone = 16
+#   Extraction option in tilt file:                             - [cal_slit, cal_FF]
+#             if 0 extraction by summation over constant range
+#             if 1 extraction by summation over constant sigma
+#                (not currently available)
+#             if 2 Horne extraction without cosmic elimination
+#                (not currently available)
+#             if 3 Horne extraction with cosmic elimination
+#                (not currently available)
+ic_extopt = 0
 
-#   Whether to extract all types of extraction                  - [cal_extract]
-#        (simple, tilt, tiltweight, weight)
-ic_ext_all = 0
+# distance away from center to extract out to +/-               - [cal_slit]
+ic_extnbsig = 2.5
 
+#   Select extraction type                                      - [cal_extract]
+#        Should be one of the following:
+#                'simple'
+#                'tilt'
+#                'tiltweight'
+#                'weight'
+#                'all'    - for comparison (saves all)
+ic_extract_type = 'tiltweight'
+
+#   Set a custom noise level for extract (formally sigdet)      - [cal_extract]
+#       set to -1 to use sigdet from file header
+ic_ext_sigdet = 100
+
+
+#    Define order to plot                                        - [cal_extract]
+ic_ext_order_plot = 5
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
@@ -300,10 +312,12 @@ drift_file_skip = 3
 
 #   Define the number of standard deviations cut at in          - [cal_drift]
 #       cosmic renormalisation
-ic_drift_cut = 3
+ic_drift_cut_raw = 3
+ic_drift_cut_e2ds = 4.5
 
 #   Define the number of orders to use (starting from 0 to max) - [cal_drift]
 #       used to get median drift  median(order0 --> order max)
+#       (not used in drift_e2ds)
 ic_drift_n_order_max = 28
 
 #   Define the way to calculate the drift                       - [cal_drift]
@@ -312,10 +326,9 @@ ic_drift_n_order_max = 28
 drift_type_raw = 'median'
 drift_type_e2ds = 'weighted mean'
 
-#    Define the types of fiber to look for                      - [cal_drift]
-#       (earlier in list takes priority)
-drift_fiber_types = ['AB', 'A', 'B', 'C']
 
+#    Define order to plot
+ic_drift_order_plot = 20
 
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters

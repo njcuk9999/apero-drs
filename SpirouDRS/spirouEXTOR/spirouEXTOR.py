@@ -442,44 +442,17 @@ def extract_tilt(image, pos, tilt, r1, r2, gain):
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
     tiltshift = np.tan(np.deg2rad(tilt))
-    # check that ww0 and ww1 are constant (They should be)
-    if len(np.unique(ww0)) != 1:
-        raise ValueError('Neil error: Assumption that ww0 is constant is wrong'
-                         '(spirouEXTOR.py/extract_tilt_weight)')
-    # ww0 and ww1 are constant
-    ww0, ww1 = ww0[0], ww1[0]
-    # create a box of the correct size
-    ww = np.zeros((ww0, ww1))
-    # calculate the tilt shift for each pixel in the box
-    ff = tiltshift * (np.arange(ww0) - r1)
-    # normalise tilt shift between -0.5 and 0.5
-    rr = np.round(ff) - ff
-    # Set the masks for tilt values of ff
-    mask1 = (ff >= -2.0) & (ff < -1.5)
-    mask2 = (ff >= -1.5) & (ff < -1.0)
-    mask3 = (ff >= -1.0) & (ff < -0.5)
-    mask4 = (ff >= -0.5) & (ff < 0.0)
-    mask5 = (ff >= 0.0) & (ff < 0.5)
-    mask6 = (ff >= 0.5) & (ff < 1.0)
-    mask7 = (ff >= 1.0) & (ff < 1.5)
-    mask8 = (ff >= 1.5) & (ff < 2.0)
-    # get rra, rrb and rrc
-    rra, rrb, rrc = -rr, 1 - rr, 1 + rr
-    # modify the shift values in the box dependent on the mask
-    ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
-    ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
-    ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
-    ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
-    ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
-    ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
-    ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
-    ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
+    # get the weight contribution matrix (look up table)
+    wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # account for the missing fractional pixels (due to integer rounding)
     lower, upper = j1s + 0.5 - lim1s, lim2s - j2s + 0.5
     # loop around each pixel along the order and, if it is within the image,
     #   sum the values contained within the order (including the bits missing
     #   due to rounding)
     for ic in ics[2:-2]:
+        # get ww0i and ww1i for this iteration
+        ww0i, ww1i = ww0[ic], ww1[ic]
+        ww = wwa[(ww0i, ww1i)]
         # multiple the image by the rotation matrix
         sx = image[j1s[ic]+1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
         spe[ic] = np.sum(sx)
@@ -617,41 +590,13 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
     tiltshift = np.tan(np.deg2rad(tilt))
-    # check that ww0 and ww1 are constant (They should be)
-    if len(np.unique(ww0)) != 1:
-        raise ValueError('Neil error: Assumption that ww0 is constant is wrong'
-                         '(spirouEXTOR.py/extract_tilt_weight)')
-    # ww0 and ww1 are constant
-    ww0, ww1 = ww0[0], ww1[0]
-    # create a box of the correct size
-    ww = np.zeros((ww0, ww1))
-    # calculate the tilt shift for each pixel in the box
-    ff = tiltshift * (np.arange(ww0) - r1)
-    # normalise tilt shift between -0.5 and 0.5
-    rr = np.round(ff) - ff
-    # Set the masks for tilt values of ff
-    mask1 = (ff >= -2.0) & (ff < -1.5)
-    mask2 = (ff >= -1.5) & (ff < -1.0)
-    mask3 = (ff >= -1.0) & (ff < -0.5)
-    mask4 = (ff >= -0.5) & (ff < 0.0)
-    mask5 = (ff >= 0.0) & (ff < 0.5)
-    mask6 = (ff >= 0.5) & (ff < 1.0)
-    mask7 = (ff >= 1.0) & (ff < 1.5)
-    mask8 = (ff >= 1.5) & (ff < 2.0)
-    # get rra, rrb and rrc
-    rra, rrb, rrc = -rr, 1 - rr, 1 + rr
-    # modify the shift values in the box dependent on the mask
-    ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
-    ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
-    ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
-    ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
-    ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
-    ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
-    ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
-    ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
-
+    # get the weight contribution matrix (look up table)
+    wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # loop around each pixel along the order
     for ic in ics[2:-2]:
+        # get ww0i and ww1i for this iteration
+        ww0i, ww1i = ww0[ic], ww1[ic]
+        ww = wwa[(ww0i, ww1i)]
         # multiple the image by the rotation matrix
         sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
         # multiple the order_profile by the rotation matrix
@@ -669,6 +614,60 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
 
     return spe, 0
 
+
+def work_out_ww(ww0, ww1, tiltshift, r1):
+    """
+    Calculate the tilting contribution matrix
+
+    We only need to calculate the tilt contribution matrix for each unique
+    value in ww0 and ww1 (only changes by +/- 1 due to rounding)
+
+    :param ww0:
+    :param ww1:
+    :param tiltshift:
+    :param r1:
+    :return:
+    """
+    # find unique values of ww0 and ww1
+    uww0 = np.unique(ww0)
+    uww1 = np.unique(ww1)
+    # add dictionary for unique values in ww0 and ww1
+    wwall = dict()
+    # loop around unique values in ww0
+    for ww0i in uww0:
+        # loop around unique values in ww1
+        for ww1i in uww1:
+            # create a box of the correct size
+            ww = np.zeros((ww0i, ww1i))
+            # calculate the tilt shift for each pixel in the box
+            ff = tiltshift * (np.arange(ww0i) - r1)
+            # normalise tilt shift between -0.5 and 0.5
+            rr = np.round(ff) - ff
+            # Set the masks for tilt values of ff
+            mask1 = (ff >= -2.0) & (ff < -1.5)
+            mask2 = (ff >= -1.5) & (ff < -1.0)
+            mask3 = (ff >= -1.0) & (ff < -0.5)
+            mask4 = (ff >= -0.5) & (ff < 0.0)
+            mask5 = (ff >= 0.0) & (ff < 0.5)
+            mask6 = (ff >= 0.5) & (ff < 1.0)
+            mask7 = (ff >= 1.0) & (ff < 1.5)
+            mask8 = (ff >= 1.5) & (ff < 2.0)
+            # get rra, rrb and rrc
+            rra, rrb, rrc = -rr, 1 - rr, 1 + rr
+            # modify the shift values in the box dependent on the mask
+            ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
+            ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
+            ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
+            ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
+            ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
+            ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
+            ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
+            ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
+            # add to dictionary
+            wwall[(ww0i, ww1i)] = ww
+
+    # finally return the ww for all unique combinations
+    return wwall
 
 def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
                              gain, sigdet):
@@ -832,32 +831,17 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     ff = tiltshift * (np.arange(ww0) - r1)
     # normalise tilt shift between -0.5 and 0.5
     rr = np.round(ff) - ff
-    # Set the masks for tilt values of ff
-    mask1 = (ff >= -2.0) & (ff < -1.5)
-    mask2 = (ff >= -1.5) & (ff < -1.0)
-    mask3 = (ff >= -1.0) & (ff < -0.5)
-    mask4 = (ff >= -0.5) & (ff < 0.0)
-    mask5 = (ff >= 0.0) & (ff < 0.5)
-    mask6 = (ff >= 0.5) & (ff < 1.0)
-    mask7 = (ff >= 1.0) & (ff < 1.5)
-    mask8 = (ff >= 1.5) & (ff < 2.0)
-    # get rra, rrb and rrc
-    rra, rrb, rrc = -rr, 1 - rr, 1 + rr
-    # modify the shift values in the box dependent on the mask
-    ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
-    ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
-    ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
-    ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
-    ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
-    ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
-    ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
-    ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
+    # get the weight contribution matrix (look up table)
+    wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # account for the missing fractional pixels (due to integer rounding)
     lower, upper = j1s + 0.5 - lim1s, lim2s - j2s + 0.5
     # loop around each pixel along the order and, if it is within the image,
     #   sum the values contained within the order (including the bits missing
     #   due to rounding)
     for ic in ics[2:-2]:
+        # get ww0i and ww1i for this iteration
+        ww0i, ww1i = ww0[ic], ww1[ic]
+        ww = wwa[(ww0i, ww1i)]
         # Get the extraction of the main profile
         sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic]+1] * ww[1:-1]
         sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]

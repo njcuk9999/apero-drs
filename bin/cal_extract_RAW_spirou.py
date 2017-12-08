@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None, fiber_type='AB'):
+def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -56,13 +56,18 @@ def main(night_name=None, files=None, fiber_type='AB'):
     p.set_source('dprtype', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
-
-    # fib_typ = ['AB', 'A', 'B', 'C']
+    # deal with fiber type
+    if fiber_type is None:
+        fiber_type = p['FIBER_TYPES']
     if type(fiber_type) == str:
         fiber_type = [fiber_type]
     # set fiber type
     p['fib_type'] = fiber_type
     p.set_source('fib_type', __NAME__ + '__main__()')
+
+    # Overwrite keys from source
+    for kwarg in kwargs:
+        p[kwarg] = kwargs[kwarg]
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -82,6 +87,9 @@ def main(night_name=None, files=None, fiber_type='AB'):
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
+    # now change the value of sigdet if require
+    if p['ic_ext_sigdet'] > 0:
+        p['sigdet'] = float(p['ic_ext_sigdet'])
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -198,52 +206,100 @@ def main(night_name=None, files=None, fiber_type='AB'):
         # ------------------------------------------------------------------
         # Extract orders
         # ------------------------------------------------------------------
+        # source for parameter dictionary
+        source = __NAME__ + '/main()'
         # loop around each order
         for order_num in range(loc['number_orders']):
             # extract this order
-            # -------------------------------------------------------------
-            # Extract (extract and extract0)
-            # -------------------------------------------------------------
-            time1 = time.time()
-            eargs = [p, loc, data2, order_num]
-            spe1, cpt = spirouEXTOR.ExtractOrder(*eargs)
-            # -------------------------------------------------------------
-            # Extract with Tilt
-            # -------------------------------------------------------------
-            time2 = time.time()
-            eargs = [p, loc, data2, order_num]
-            spe3, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
-            # -------------------------------------------------------------
-            # Extract with Tilt + Weight
-            # -------------------------------------------------------------
-            time3 = time.time()
-            eargs = [p, loc, data2, order_profile, order_num]
-            spe4, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
-            # -------------------------------------------------------------
-            # Extract with Weight
-            # -------------------------------------------------------------
-            time4 = time.time()
-            eargs = [p, loc, data2, order_profile, order_num]
-            e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
+            if p['ic_extract_type'] == 'all':
+                # -------------------------------------------------------------
+                # Extract (extract and extract0)
+                # -------------------------------------------------------------
+                time1 = time.time()
+                eargs = [p, loc, data2, order_num]
+                spe1, cpt = spirouEXTOR.ExtractOrder(*eargs)
+                # -------------------------------------------------------------
+                # Extract with Tilt
+                # -------------------------------------------------------------
+                time2 = time.time()
+                eargs = [p, loc, data2, order_num]
+                spe3, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
+                # -------------------------------------------------------------
+                # Extract with Tilt + Weight
+                # -------------------------------------------------------------
+                time3 = time.time()
+                eargs = [p, loc, data2, order_profile, order_num]
+                spe4, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
+                # -------------------------------------------------------------
+                # Extract with Tilt + Weight
+                # -------------------------------------------------------------
+                time4 = time.time()
+                eargs = [p, loc, data2, order_profile, order_num]
+                spe5, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
+                # -------------------------------------------------------------
+                # Extract with Weight
+                # -------------------------------------------------------------
+                time5 = time.time()
+                eargs = [p, loc, data2, order_profile, order_num]
+                e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
 
-            time5 = time.time()
-            # -------------------------------------------------------------
-            # If in Debug mode log timings
-            if p['IC_DEBUG']:
-                WLOG('info', p['log_opt'], "Timings:")
-                WLOG('info', p['log_opt'], ("        ExtractOrder = {0} s "
-                                            "").format(time2-time1))
-                WLOG('info', p['log_opt'], ("        ExtractTiltOrder = {0} s "
-                                            "").format(time3 - time2))
-                WLOG('info', p['log_opt'], ("        ExtractTiltWeightOrder "
-                                            "= {0} s ").format(time4 - time3))
-                WLOG('info', p['log_opt'], ("        ExtractWeightOrder = {0} "
-                                            "s ").format(time5 - time4))
+                time6 = time.time()
+                # -------------------------------------------------------------
+                # If in Debug mode log timings
+                if p['IC_DEBUG']:
+                    WLOG('info', p['log_opt'], "Timings:")
+                    WLOG('info', p['log_opt'],
+                         ("        ExtractOrder = {0} s "
+                          "").format(time2 - time1))
+                    WLOG('info', p['log_opt'],
+                         ("        ExtractTiltOrder = {0} s "
+                          "").format(time3 - time2))
+                    WLOG('info', p['log_opt'],
+                         ("        ExtractTiltWeightOrder = {0} s "
+                          "").format(time4 - time3))
+                    WLOG('info', p['log_opt'],
+                         ("        ExtractTiltWeightOrder2 = {0} s "
+                          "").format(time5 - time4))
+                    WLOG('info', p['log_opt'],
+                         ("        ExtractWeightOrder = {0} s "
+                          "").format(time6 - time5))
+                # save to file
+                loc['spe1'][order_num] = spe1
+                loc['spe3'][order_num] = spe3
+                loc['spe4'][order_num] = spe4
+                loc['spe5'][order_num] = spe5
+                loc.set_sources(['spe1', 'spe3', 'spe4', 'spe5'], source)
+            elif p['ic_extract_type'] == 'simple':
+                # -------------------------------------------------------------
+                # Simple extraction
+                # -------------------------------------------------------------
+                eargs = [p, loc, data2, order_num]
+                e2ds, cpt = spirouEXTOR.ExtractOrder(*eargs)
+            elif p['ic_extract_type'] == 'tilt':
+                # -------------------------------------------------------------
+                # Extract with Tilt
+                # -------------------------------------------------------------
+                eargs = [p, loc, data2, order_num]
+                e2ds, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
+            elif p['ic_extract_type'] == 'tiltweight':
+                # -------------------------------------------------------------
+                # Extract with Tilt + Weight
+                # -------------------------------------------------------------
+                eargs = [p, loc, data2, order_profile, order_num]
+                e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
+            elif p['ic_extract_type'] == 'weight':
+                # -------------------------------------------------------------
+                # Extract with Weight
+                # -------------------------------------------------------------
+                eargs = [p, loc, data2, order_profile, order_num]
+                e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
+            else:
+                WLOG('error', p['log_opt'], 'ic_extract_type not understood')
+
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
-            # Question: Why is this different from cal_ff
-            # Question:  there: noise = p['sigdet'] * np.sqrt(range1 + range2)
-            noise = p['sigdet'] * np.sqrt(p['IC_EXTMEANZONE'])
+            # set the noise
+            noise = p['sigdet'] * np.sqrt(range1 + range2)
             # get window size
             blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
@@ -257,13 +313,9 @@ def main(night_name=None, files=None, fiber_type='AB'):
             WLOG('', p['log_opt'], wmsg.format(*wargs))
             # add calculations to storage
             loc['e2ds'][order_num] = e2ds
-            loc['spe1'][order_num] = spe1
-            loc['spe3'][order_num] = spe3
-            loc['spe4'][order_num] = spe4
             loc['SNR'][order_num] = snr
             # set sources
-            source = __NAME__ + '/main()()'
-            loc.set_sources(['e2ds', 'SNR', 'spe1', 'spe3', 'spe4'], source)
+            loc.set_sources(['e2ds', 'SNR'], source)
             # Log if saturation level reached
             satvalue = (flux/p['gain'])/(range1 + range2)
             if satvalue > (p['QC_LOC_FLUMAX'] * p['nbframes']):
@@ -299,12 +351,13 @@ def main(night_name=None, files=None, fiber_type='AB'):
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # add localization file name to header
-        loco_file = p['calibDB']['LOC_{0}'.format(p['fiber'])][1]
+        loco_file = p['calibDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
         hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
                                    value=loco_file)
         # add localization file keys to header
         locosavepath = os.path.join(reducedfolder, loco_file)
-        hdict = spirouImage.CopyRootKeys(hdict, locosavepath)
+        root = p['kw_root_drs_loc'][0]
+        hdict = spirouImage.CopyRootKeys(hdict, locosavepath, root=root)
         # Save E2DS file
         spirouImage.WriteImage(os.path.join(reducedfolder, e2dsfits),
                                loc['e2ds'], hdict)
@@ -313,9 +366,10 @@ def main(night_name=None, files=None, fiber_type='AB'):
         # Store other extractions in files
         # ------------------------------------------------------------------
         # only store all is ic_ext_all = 1
-        if p['IC_EXT_ALL']:
-            ext_names = ['simple', 'tilt', 'tiltweight', 'weight']
-            ext_files = ['spe1', 'spe3', 'spe4', 'e2ds']
+        if p['ic_extract_type'] == 'all':
+            ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
+                         'weight']
+            ext_files = ['spe1', 'spe3', 'spe4', 'spe5', 'e2ds']
             # loop around the various extraction files
             for ext_no in range(len(ext_files)):
                 # get extname and extfile
@@ -326,7 +380,6 @@ def main(night_name=None, files=None, fiber_type='AB'):
                 extfits = p['arg_file_names'][0].replace('.fits', ext_ext)
                 # log that we are saving E2DS spectrum
                 wmsg = 'Saving E2DS {0} spectrum of Fiber {1} in {2}'
-                wargs = [extname, p['fiber'], ]
                 WLOG('', p['log_opt'], wmsg.format(p['fiber'], extfits))
                 # add keys from original header file
                 hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
@@ -374,6 +427,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
+    return locals()
 
 # =============================================================================
 # Start of code
@@ -381,7 +435,7 @@ def main(night_name=None, files=None, fiber_type='AB'):
 # Main code here
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    main()
+    locals = main()
 
 # =============================================================================
 # End of code

@@ -341,14 +341,16 @@ def main(night_name=None, files=None):
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
+    return locals()
+
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    main()
+    locals = main()
+
 
 # =============================================================================
 # End of code

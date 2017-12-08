@@ -41,7 +41,9 @@ sPlt = spirouCore.sPlt
 if __name__ == "__main__":
     # run cal_extract_RAW_spirou main with fibertype set
     # (get other arguments from command line - sys.argv)
-    cal_extract_RAW_spirou.main(fiber_type='AB')
+    locals = cal_extract_RAW_spirou.main(fiber_type='AB',
+                                         ic_extract_type='all',
+                                         ic_ext_sigdet=-1)
 
 # =============================================================================
 # End of code
