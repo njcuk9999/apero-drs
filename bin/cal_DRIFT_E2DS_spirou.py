@@ -42,8 +42,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-# def main(night_name=None, reffile=None):
-if 1:
+def main(night_name=None, reffile=None):
     night_name, reffile = None, None
     # ----------------------------------------------------------------------
     # Set up
@@ -175,9 +174,9 @@ if 1:
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((Nfiles+1, loc['number_orders']))
-    loc['errdrift'] = np.zeros((Nfiles+1, loc['number_orders']))
-    loc['deltatime'] = np.zeros(Nfiles+1)
+    loc['drift'] = np.zeros((Nfiles, loc['number_orders']))
+    loc['errdrift'] = np.zeros((Nfiles, loc['number_orders']))
+    loc['deltatime'] = np.zeros(Nfiles)
     # set loc sources
     keys = ['drift', 'errdrift', 'deltatime']
     loc.set_sources(keys, __NAME__ + '/main()()')
@@ -222,7 +221,7 @@ if 1:
         dargs = [loc['speref'], loc['spe']]
         dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'],
-                       cut=p['IC_DRIFT_CUT'])
+                       cut=p['IC_DRIFT_CUT_E2DS'])
         spen, cfluxr, cpt = spirouRV.ReNormCosmic2D(*dargs, **dkwargs)
 
         # ------------------------------------------------------------------
@@ -241,16 +240,18 @@ if 1:
         meanfratio = np.mean(cfluxr)
         # calculate the weighted mean radial velocity
         wref = 1.0/dvrmsref
-        meanrv = np.sum(rv * wref)/np.sum(wref)
+        meanrv = -1.0 * np.sum(rv * wref)/np.sum(wref)
         err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
+        merr = 1./np.sqrt(np.sum((1./err_meanrv)**2))
         # calculate the time from reference (in hours)
         deltatime = (bjdspe - bjdref) * 24
         # Log the RV properties
-        wmsg = ('Time from ref={0:.2f} h  - Drift mean={1:.2f} m/s - Flux '
-                'ratio={2:.2f} = Nb Comsic={3}')
-        WLOG('', p['log_opt'], wmsg.format(deltatime, meanrv, meanfratio, cpt))
+        wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s '
+                '- Flux ratio= {3:.2f} - Nb Comsic= {4}')
+        WLOG('', p['log_opt'], wmsg.format(deltatime, meanrv, merr,
+                                           meanfratio, cpt))
         # add this iteration to storage
-        loc['drift'][i_it] = rv
+        loc['drift'][i_it] = -1.0 * rv
         loc['errdrift'][i_it] = err_meanrv
         loc['deltatime'][i_it] = deltatime
 
@@ -258,10 +259,10 @@ if 1:
     # Calculate drift properties
     # ------------------------------------------------------------------
     # get the maximum number of orders to use
-    nomax = p['IC_DRIFT_N_ORDER_MAX']
+    nomax = nbo    # p['IC_DRIFT_N_ORDER_MAX']
     # ------------------------------------------------------------------
     # if use mean
-    if p['drift_type_raw'].upper() == 'WEIGHTED MEAN':
+    if p['drift_type_e2ds'].upper() == 'WEIGHTED MEAN':
         # mean radial velocity
         sumwref = np.sum(wref[:nomax])
         meanrv = np.sum(loc['drift'][:, :nomax] * wref[:nomax], 1)/sumwref
@@ -271,9 +272,8 @@ if 1:
         # add to loc
         loc['mdrift'] = meanrv
         loc['merrdrift'] = meanerr
-    # ------------------------------------------------------------------
     # else use median
-    if p['drift_type_raw'].upper() == 'MEDIAN':
+    else:
         # median drift
         loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
         # median err drift
@@ -298,7 +298,7 @@ if 1:
         # start interactive session if needed
         sPlt.start_interactive_session()
         # plot delta time against median drift
-        sPlt.drift_plot_dtime_against_mdrift(p, loc)
+        sPlt.drift_plot_dtime_against_mdrift(p, loc, kind='e2ds')
 
     # ------------------------------------------------------------------
     # Save drift values to file
@@ -341,13 +341,14 @@ if 1:
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
+    return locals()
 
 # =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    main()
+    locals = main()
 
 
 # =============================================================================
