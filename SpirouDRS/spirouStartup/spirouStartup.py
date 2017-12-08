@@ -477,17 +477,19 @@ def get_file(p, path, name=None, prefix=None, kind=None):
     return location
 
 
-def get_fiber_type(p, filename):
+def get_fiber_type(p, filename, fibertypes=None):
     """
     Get fiber types and search for a valid fiber type in filename
 
     :param p: parameter dictionary, the parameter dictionary
     :param filename: string, the filename to search for fiber types in
+    :param fibertypes: list of strings, the fiber types to search for
 
     :return fiber: string, the fiber found (exits via WLOG if no fiber found)
     """
-
-    fibertypes = p['drift_fiber_types']
+    # deal with no fiber types
+    if fibertypes is None:
+        fibertypes = p['FIBER_TYPES']
     # loop around each fiber type
     for fiber in fibertypes:
         if fiber in filename:
