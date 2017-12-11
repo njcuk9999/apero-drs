@@ -793,7 +793,7 @@
 
 ## 4 Progress:
 
-- main codes (Done):
+- main codes (updated to V47):
 
     - [x] - ~~cal_dark_spirou~~
     
@@ -807,21 +807,20 @@
     
     - [x] - ~~cal_DRIFT_RAW_spirou~~
     
-    - [ ] - cal_HC_E2DS_spirou
-
+    - [x] - ~~cal_BADPIX_spirou~~
+    
     - [x] - ~~cal_DRIFT_E2DS_spirou~~
  
     - [ ] - cal_DRIFT-PEAK_E2DS_spirou
     
-    - [x] - ~~cal_BADPIX_spirou~~
-    
+    - [ ] - cal_HC_E2DS_spirou
+
     - [ ] - cal_WAVE_E2DS_spirou
     
     - [ ] - cal_CCF_E2DS_spirou
     
     - [ ] - pol_spirou
 
-    
 - unit test run:
 
     - [x] - cal_dark_spirou
@@ -836,14 +835,14 @@
     
     - [x] - cal_DRIFT_RAW_spirou
     
-    - [ ] - cal_HC_E2DS_spirou
-
-    - [ ] - cal_DRIFT_E2DS_spirou
- 
-    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
-    
     - [ ] - cal_BADPIX_spirou
     
+    - [x] - cal_DRIFT_E2DS_spirou
+    
+    - [ ] - cal_HC_E2DS_spirou
+ 
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+      
     - [ ] - cal_WAVE_E2DS_spirou
     
     - [ ] - cal_CCF_E2DS_spirou
@@ -864,14 +863,14 @@
     
     - [ ] - cal_DRIFT_RAW_spirou
     
-    - [ ] - cal_HC_E2DS_spirou
-
-    - [ ] - cal_DRIFT_E2DS_spirou
- 
-    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
-    
     - [ ] - cal_BADPIX_spirou
     
+    - [ ] - cal_DRIFT_E2DS_spirou
+    
+    - [ ] - cal_HC_E2DS_spirou
+ 
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+      
     - [ ] - cal_WAVE_E2DS_spirou
     
     - [ ] - cal_CCF_E2DS_spirou

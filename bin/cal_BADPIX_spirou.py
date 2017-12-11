@@ -9,9 +9,9 @@ Created on 2017-12-06 at 14:50
 
 @author: cook
 
-Version 0.0.1
+Last modified: 2017-12-11 at 15:23
 
-Last modified: 2017-12-06 at 14:50
+Up-to-date with cal_BADPIX_spirou AT-4 V47
 """
 from __future__ import division
 import numpy as np

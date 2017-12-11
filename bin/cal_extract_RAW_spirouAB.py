@@ -9,9 +9,9 @@ Created on 2017-10-12 at 15:21
 
 @author: cook
 
+Last modified: 2017-12-11 at 15:24
 
-
-Version 0.0.1
+Up-to-date with cal_extract_RAW_spirouAB AT-4 V47
 """
 from __future__ import division
 

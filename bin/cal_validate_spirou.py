@@ -173,8 +173,6 @@ def main(debug_mode=0):
     cparams = spirouConfig.CheckCparams(cparams)
     # display initial parameterisation
     ss.display_initial_parameterisation(cparams)
-    # see if we are logging all
-
     # log that validation was successful
     if not spirouLog.correct_level('all', cparams['PRINT_LEVEL']):
         print('\n')
