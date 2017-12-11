@@ -9,7 +9,9 @@ Created on 2017-11-06 11:32
 
 @author: cook
 
-Version 0.0.1
+Last modified: 2017-12-11 at 15:09
+
+Up-to-date with cal_SLIT_spirou AT-4 V47
 """
 from __future__ import division
 import numpy as np
