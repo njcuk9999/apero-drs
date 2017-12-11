@@ -53,7 +53,7 @@ def AUTHORS():
 
 def LATEST_EDIT():
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2017-11-17'
+    date = '2017-12-11'
     return date
 
 
