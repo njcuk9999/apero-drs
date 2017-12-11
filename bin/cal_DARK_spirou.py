@@ -3,15 +3,15 @@
 """
 cal_DARK_spirou.py [night_directory] [fitsfilename]
 
-Prepares the dark files for SPIRou
+Dark characterization + bad pixel map
 
 Created on 2017-10-11 at 10:45
 
 @author: cook
 
-Version 0.0.1
+Last modified: 2017-12-11 at 15:08
 
-Last modified: 2017-10-11 at 10:49
+Up-to-date with cal_DARK_spirou AT-4 V47
 """
 from __future__ import division
 import numpy as np
@@ -230,11 +230,18 @@ def main(night_name=None, files=None):
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
     if p['QC']:
+        # set dark key
         keydb = 'DARK'
         # copy dark fits file to the calibDB folder
         spirouCDB.PutFile(p, os.path.join(reducedfolder, darkfits))
         # update the master calib DB file with new key
         spirouCDB.UpdateMaster(p, keydb, darkfits, hdr)
+        # set badpix key
+        keydb = 'BADPIX'
+        # copy badpix fits file to calibDB folder
+        spirouCDB.PutFile(p, os.path.join(reducedfolder, badpixelfits))
+        # update the master calib DB file with new key
+        spirouCDB.UpdateMaster(p, keydb, badpixelfits, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
