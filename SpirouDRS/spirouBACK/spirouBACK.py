@@ -130,35 +130,35 @@ def measure_min_max(pp, y):
     return miny, maxy, max_signal, diff_maxmin
 
 
-def measure_box_min_max(image, size):
+def measure_box_min_max(y, size):
     """
-    Measure the minimum and maximum pixel value for each row using a box which
-    contains all pixels for rows:  row-size to row+size and all columns.
+    Measure the minimum and maximum pixel value for each pixel using a box which
+    surrounds that pixel by:  pixel-size to pixel+size.
 
-    Edge pixels (0-->size and (image.shape[0]-size)-->image.shape[0] are
-    set to the values for row=size and row=(image.shape[0]-size)
+    Edge pixels (0-->size and (len(y)-size)-->len(y) are
+    set to the values for pixel=size and pixel=(len(y)-size)
 
-    :param image: numpy array (2D), the image
+    :param y: numpy array (1D), the image
     :param size: int, the half size of the box to use (half height)
-                 so box is defined from  row-size to row+size
+                 so box is defined from  pixel-size to pixel+size
 
-    :return min_image: numpy array (1D length = image.shape[0]), the row values
-                       for minimum pixel defined by a box of row-size to
-                       row+size for all columns
-    :return max_image: numpy array (1D length = image.shape[0]), the row values
-                       for maximum pixel defined by a box of row-size to
-                       row+size for all columns
+    :return min_image: numpy array (1D length = len(y)), the values
+                       for minimum pixel defined by a box of pixel-size to
+                       pixel+size for all columns
+    :return max_image: numpy array (1D length = len(y)), the values
+                       for maximum pixel defined by a box of pixel-size to
+                       pixel+size for all columns
     """
     # get length of rows
-    ny = image.shape[0]
+    ny = y.shape[0]
     # Set up min and max arrays (length = number of rows)
     min_image = np.zeros(ny, dtype=float)
     max_image = np.zeros(ny, dtype=float)
     # loop around each pixel from "size" to length - "size" (non-edge pixels)
     # and get the minimum and maximum of each box
     for it in range(size, ny - size):
-        min_image[it] = np.min(image[it-size:it+size])
-        max_image[it] = np.max(image[it-size:it+size])
+        min_image[it] = np.min(y[it-size:it+size])
+        max_image[it] = np.max(y[it-size:it+size])
 
     # deal with leading edge --> set to value at size
     min_image[0:size] = min_image[size]
