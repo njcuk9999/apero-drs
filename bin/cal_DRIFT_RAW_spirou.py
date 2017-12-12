@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-cal_DRIFT_RAW_spirou.py
+cal_DRIFT_RAW_spirou.py [night_directory] [Reference file name]
 
 # CODE DESCRIPTION HERE
 
@@ -10,7 +10,7 @@ Created on 2017-10-12 at 15:21
 @author: cook
 
 
-Last modified: 2017-12-11 at 15:13
+Last modified: 2017-12-12 at 10:54
 
 Up-to-date with cal_DRIFT_RAW_spirou AT-4 V47
 """

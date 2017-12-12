@@ -169,6 +169,24 @@ class ParamDict(dict):
                     '[Not in parmeter dictionary]')
             raise ConfigError(emsg.format(key), level='error')
 
+    def append_source(self, key, source):
+        """
+        Adds source to the source of key (appends if exists)
+        i.e. sources[key] = oldsource + source
+
+        :param key: string, the main dictionary string
+        :param source: string, the source to set
+        :return:
+        """
+        # capitalise string keys
+        key = self.__capitalise_key__(key)
+        # if key exists append source to it
+        if key in self.keys() and key in list(self.sources.keys()):
+            self.sources[key] += ' {0}'.format(source)
+        else:
+            self.set_source(key, source)
+
+
     def set_sources(self, keys, sources):
         """
         Set a list of keys sources
@@ -187,22 +205,45 @@ class ParamDict(dict):
         for k_it in range(len(keys)):
             # assign the key from k_it
             key = keys[k_it]
-            # capitalise string keys
-            key = self.__capitalise_key__(key)
-            # Get soure for this iteration
+            # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
             elif type(sources) == dict:
                 source = sources[key]
             else:
                 source = str(sources)
-            # only add if key is in main dictionary
-            if key in self.keys():
-                self.sources[key] = source
+            # set source
+            self.set_source(key, source)
+
+
+    def append_sources(self, keys, sources):
+        """
+        Adds list of keys sources (appends if exists)
+
+        raises a ConfigError if key not found
+
+        :param keys: list of strings, the list of keys to add sources for
+        :param sources: string or list of strings or dictionary of strings,
+                        the source or sources to add,
+                        if a dictionary source = sources[key] for key = keys[i]
+                        if list source = sources[i]  for keys[i]
+                        if string all sources with these keys will = source
+        :return:
+        """
+        # loop around each key in keys
+        for k_it in range(len(keys)):
+            # assign the key from k_it
+            key = keys[k_it]
+            # Get source for this iteration
+            if type(sources) == list:
+                source = sources[k_it]
+            elif type(sources) == dict:
+                source = sources[key]
             else:
-                emsg = ('Source cannot be added for key {0} '
-                        '[Not in parmeter dictionary]')
-                raise ConfigError(emsg.format(key), level='error')
+                source = str(sources)
+            # append key
+            self.append_source(key, source)
+
 
     def set_all_sources(self, source):
         """
@@ -213,8 +254,19 @@ class ParamDict(dict):
         """
         # loop around each key in keys
         for key in self.keys():
+            # capitalise string keys
+            key = self.__capitalise_key__(key)
             # set key
             self.sources[key] = source
+
+    def append_all_sources(self, source):
+
+        # loop around each key in keys
+        for key in self.keys():
+            # capitalise string keys
+            key = self.__capitalise_key__(key)
+            # set key
+            self.sources[key] += ' {0}'.format(source)
 
     def get_source(self, key):
         """
