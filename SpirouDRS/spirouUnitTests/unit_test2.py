@@ -237,7 +237,7 @@ if __name__ == "__main__":
     name = 'cal_DRIFT_E2DS_spirou'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
     # set up files
-    files = ['fp_fp02a203.fits']
+    files = ['fp_fp02a203_e2ds_AB.fits']
     # start timer
     starttime = time.time()
     # run cal_dark_spirou

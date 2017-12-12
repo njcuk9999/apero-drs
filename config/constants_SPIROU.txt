@@ -309,6 +309,8 @@ drift_nlarge = 300
 #      skip over) - i.e. do every "ic_drift_skip" files
 #      also allows quick speed up of code
 drift_file_skip = 3
+drift_e2ds_file_skip = 1
+drift_peak_file_skip = 1
 
 #   Define the number of standard deviations cut at in          - [cal_drift]
 #       cosmic renormalisation
@@ -326,9 +328,42 @@ ic_drift_n_order_max = 28
 drift_type_raw = 'median'
 drift_type_e2ds = 'weighted mean'
 
-
-#    Define order to plot
+#    Define order to plot                                       - [cal_drift]
 ic_drift_order_plot = 20
+
+#    Define the size of the min max smoothing box for           - [cal_drift-peak]
+#        background subtraction
+drift_peak_minmax_boxsize = 6
+
+#    Define the border size (edges in x-direction) for the      - [cal_drift-peak]
+#        FP fitting algorithm
+drift_peak_border_size = 3
+
+#    Define the box half-size (in pixels) to fit an individual FP - [cal_drift-peak]
+#        peak to - a gaussian will be fit to +/- this size from
+#        the center of the FP peak
+drift_peak_fpbox_size = 3
+
+#    Define the minimum normalised flux a FP peak must have to    - [cal_drift-peak]
+#        be recognised as a FP peak (before fitting a gaussian)
+drift_peak_min_nfp_peak = 0.25
+
+#    Define the expected width of FP peaks - used to "normalise" - [cal_drift-peak]
+#        peaks (which are then subsequently removed
+#        if > drift_peak_norm_width_cut
+drift_peak_exp_width = 0.8
+
+#    Define the "normalised" width of FP peaks that is too large - [cal_drift-peak]
+#        normalised width = FP FWHM - drift_peak_exp_width
+#        cut is essentially:
+#           FP FWHM < (drift_peak_exp_width + drift_peak_norm_width_cut)
+drift_peak_norm_width_cut = 0.2
+
+
+#    Define whether to fit a gaussain (slow) or adjust a         - [cal_drift-peak]
+#        barycenter to get the drift
+drift_peak_getdrift_gaussfit = False
+
 
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters

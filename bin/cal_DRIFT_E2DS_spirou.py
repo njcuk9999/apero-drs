@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-cal_DRIFT_RAW_spirou.py
+cal_DRIFT_RAW_spirou.py [night_directory] [Reference file name]
 
 # CODE DESCRIPTION HERE
 
@@ -9,8 +9,7 @@ Created on 2017-10-12 at 15:21
 
 @author: cook
 
-
-Last modified: 2017-12-11 at 15:15
+Last modified: 2017-12-12 at 10:55
 
 Up-to-date with cal_DRIFT_E2DS_spirou AT-4 V47
 """
@@ -170,8 +169,8 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # decide whether we need to skip (for large number of files)
     if len(listfiles) >= p['DRIFT_NLARGE']:
-        Nfiles = int(Nfiles/p['DRIFT_FILE_SKIP'])
-        skip = p['DRIFT_FILE_SKIP']
+        skip = p['DRIFT_E2DS_FILE_SKIP']
+        Nfiles = int(Nfiles/skip)
     else:
         skip = 1
     # set up storage
@@ -194,7 +193,7 @@ def main(night_name=None, reffile=None):
         wmsg = 'Reading file {0}'
         WLOG('', p['log_opt'], wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
-        # read, correct for dark and reshape iteration file
+        # read e2ds files and get timestamp
         # ------------------------------------------------------------------
         # read data
         rout = spirouImage.ReadData(p, filename=fpfile, log=False)
@@ -233,7 +232,11 @@ def main(night_name=None, reffile=None):
                        threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'])
         rv = spirouRV.CalcRVdrift2D(*dargs, **dkwargs)
-
+        # ------------------------------------------------------------------
+        # Calculate delta time
+        # ------------------------------------------------------------------
+        # calculate the time from reference (in hours)
+        deltatime = (bjdspe - bjdref) * 24
         # ------------------------------------------------------------------
         # Calculate RV properties
         # ------------------------------------------------------------------
@@ -244,8 +247,6 @@ def main(night_name=None, reffile=None):
         meanrv = -1.0 * np.sum(rv * wref)/np.sum(wref)
         err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
         merr = 1./np.sqrt(np.sum((1./err_meanrv)**2))
-        # calculate the time from reference (in hours)
-        deltatime = (bjdspe - bjdref) * 24
         # Log the RV properties
         wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s '
                 '- Flux ratio= {3:.2f} - Nb Comsic= {4}')

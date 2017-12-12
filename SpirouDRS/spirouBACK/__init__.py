@@ -56,7 +56,9 @@ set to the values for row=size and row=(image.shape[0]-size)
 
 MeasureBackgroundFF = spirouBACK.measure_background_flatfield
 
-MeasureMinMax = spirouBACK.measure_min_max
+MeasureMinMax = spirouBACK.measure_box_min_max
+
+MeasureMinMaxSignal = spirouBACK.measure_min_max
 
 MeasureBkgrdGetCentPixs = spirouBACK.measure_background_and_get_central_pixels
 """
