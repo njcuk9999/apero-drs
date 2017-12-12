@@ -123,7 +123,7 @@ def main(night_name=None, files=None):
     # get the central column
     y = data2[p['IC_CENT_COL'], :]
     # get the min max and max signal using box smoothed approach
-    miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMax(p, y)
+    miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
     wmsg = 'Maximum average flux/pixel in the spectrum: {0:.1f} [ADU]'
     WLOG('info', p['log_opt'], wmsg.format(max_signal/p['nbframes']))
