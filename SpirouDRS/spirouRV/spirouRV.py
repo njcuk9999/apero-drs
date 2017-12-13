@@ -16,6 +16,7 @@ import numpy as np
 from astropy import constants
 from scipy.stats.stats import pearsonr
 from scipy.optimize import curve_fit
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -148,7 +149,8 @@ def create_drift_file(p, loc):
 
     :return loc: parameter dictionary, updated with new data
     """
-
+    # get gauss function
+    gf = gauss_function
     # get constants
     border = p['drift_peak_border_size']
     size = p['drift_peak_fpbox_size']
@@ -185,6 +187,7 @@ def create_drift_file(p, loc):
         maxtmp = np.max(tmp)
         # set up loop constants
         xprev, ipeak = -99, 0
+        nreject = 0
         # loop for peaks that are above a value of 0.25 (recall we normalized
         #     to the 98th percentile
         while maxtmp > minimum_norm_fp_peak:
@@ -198,13 +201,16 @@ def create_drift_file(p, loc):
                 p0 = [tmp[maxpos], maxpos, 1.0, np.min(tmp[index])]
                 # do gauss fit
                 #    gg = [mean, amplitude, sigma, dc]
-                gg, pcov = curve_fit(gauss_function, index, tmp[index], p0=p0)
+                with warnings.catch_warnings(record=True) as w:
+                    gg, pcov = curve_fit(gf, index, tmp[index], p0=p0)
+                spirouCore.spirouLog.warninglogger(w)
             except ValueError:
                 WLOG('warning', p['log_opt'], 'ydata or xdata contains NaNS')
                 gg = [np.nan, np.nan, np.nan, np.nan]
             except RuntimeError:
                 # WLOG('warning', p['log_opt'], 'Least-squares fails')
                 gg = [np.nan, np.nan, np.nan, np.nan]
+
             # little sanity check to be sure that the peak is not the same as
             #    we got before and that there is something fishy with the
             #    detection - dx is the distance from last peak
@@ -218,23 +224,32 @@ def create_drift_file(p, loc):
             #    cannot be fitted
             else:
                 tmp[index] = 0
+
+            # only keep peaks within +/- 1 pixel of original peak
+            #  (gaussian fit is to find sub-pixel value)
+            if np.abs(maxpos - gg[1]) < 1:
+                # work out the radial velocity of the peak
+                lambefore = wave[order_num, maxpos - 1]
+                lamafter = wave[order_num, maxpos + 1]
+                deltalam = lamafter - lambefore
+                rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
+                # add to storage
+                ordpeak.append(order_num)
+                xpeak.append(gg[1])
+                ewpeak.append(gg[2])
+                vrpeak.append(rv)
+            else:
+                # add to rejected
+                nreject += 1
             # recalculate the max peak
             maxtmp = np.max(tmp)
-            # work out the radial velocity of the peak
-            deltalam = wave[order_num, maxpos + 1] - wave[order_num, maxpos -1]
-            rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
-            # add to storage
-            ordpeak.append(order_num)
-            xpeak.append(gg[1])
-            ewpeak.append(gg[2])
-            vrpeak.append(rv)
             # set previous peak to this one
             xprev = gg[1]
             # iterator
             ipeak += 1
-        # log how many FPs were found
-        wmsg = 'Order {0} : {1} peaks found'
-        WLOG('', p['log_opt'], wmsg.format(order_num, ipeak))
+        # log how many FPs were found and how many rejected
+        wmsg = 'Order {0} : {1} peaks found, {2} peaks rejected'
+        WLOG('', p['log_opt'], wmsg.format(order_num, ipeak, nreject))
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
         allordpeak = np.append(allordpeak, np.array(ordpeak)[indsort])
@@ -295,7 +310,7 @@ def remove_wide_peaks(p, loc):
 
     # log number of lines removed
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
-    WLOG('info', p['log_opt'], wmsg.format(np.sum(mask)))
+    WLOG('info', p['log_opt'], wmsg.format(np.sum(~mask)))
 
     # return loc
     return loc
@@ -318,7 +333,7 @@ def remove_zero_peaks(p, loc):
 
     # log number of lines removed
     wmsg = 'Nb of lines removed with no width measurement = {0}'
-    WLOG('info', p['log_opt'], wmsg.format(np.sum(mask)))
+    WLOG('info', p['log_opt'], wmsg.format(np.sum(~mask)))
 
     # return loc
     return loc
@@ -345,7 +360,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
     xpeaks = np.zeros_like(xpeak0)
 
     # loop through peaks and measure position
-    for peak in range(len(xpeaks)):
+    for peak in range(len(xpeak0)):
         # if using gaussfit
         if gaussfit:
             # get the index from -size to +size in pixels from position of peak
@@ -368,7 +383,9 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
                     p0 = [1, xpeak0[peak], 0.8, 0]
                     # fit a gaussian to that peak
                     #    gg = [mean, amplitude, sigma, dc]
-                    gg, pcov = curve_fit(gauss_function, index, tmp, p0=p0)
+                    with warnings.catch_warnings(record=True) as w:
+                        gg, pcov = curve_fit(gauss_function, index, tmp, p0=p0)
+                    spirouCore.spirouLog.warninglogger(w)
                     # get position
                     xpeaks[peak] = gg[1]
                 except ValueError:
@@ -392,11 +409,11 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
     return xpeaks
 
 
-def pearson_rtest(p, spe, speref):
+def pearson_rtest(nbo, spe, speref):
     """
     Perform a Pearson R test on each order in spe against speref
 
-    :param p: parameter dictionary, parameter dictionary containing constants
+    :param nbo: int, the number of orders
     :param spe: numpy array (2D), the extracted array for this iteration
                 size = (number of orders x number of pixels in x-dim)
     :param speref: numpy array (2D), the extracted array for the reference
@@ -406,14 +423,102 @@ def pearson_rtest(p, spe, speref):
                        for each order, size = (number of orders)
     """
     # set up zero array
-    cc_orders = np.zeros(p['number_orders'])
+    cc_orders = np.zeros(nbo)
     # loop around orders
-    for order_num in range(p['number_orders']):
+    for order_num in range(nbo):
         spei = spe[order_num, :]
         sperefi = speref[order_num, :]
         cc_orders[order_num] = pearsonr(spei, sperefi)[0]
     # return cc orders
     return cc_orders
+
+
+def sigma_clip(loc, sigma=1.0):
+    """
+    Perform a sigma clip on dv
+
+    :param loc: parameter dictionary, data storage
+    :param sigma: float, the sigma of the clip (away from the median)
+    :return:
+    """
+    # get dv
+    dv = loc['dv']
+    # define a mask for sigma clip
+    mask = np.abs(dv - np.median(dv)) < sigma
+    # perform sigma clip and add to loc
+    loc['dvc'] = loc['dv'][mask]
+    loc['orderpeakc'] = loc['ordpeak'][mask]
+    # set the source for these new parameters
+    loc.set_sources(['dvc', 'orderpeakc'], __NAME__ + '/sigma_clip()')
+    # return to loc
+    return loc
+
+
+def drift_per_order(loc, fileno):
+    """
+    Calculate the individual drifts per order
+
+    :param loc: parameter dictionary, data storage
+    :param fileno: int, the file number (iterator number)
+
+    :return loc: parameter dictionary, the updated data storage dictionary
+    """
+
+    # loop around the orders
+    for order_num in range(loc['number_orders']):
+        # get the dv for this order
+        dv_order = loc['dvc'][loc['orderpeakc'] == order_num]
+        # get the number of dvs in this order
+        numdv = len(dv_order)
+        # get the drift for this order
+        drift = np.median(dv_order)
+        driftleft = np.median(dv_order[:int(numdv/2.0)])
+        driftright = np.median(dv_order[-int(numdv/2.0):])
+        # get the error in the drift
+        errdrift = np.std(dv_order) / np.sqrt(numdv)
+
+        # add to storage
+        loc['drift'][fileno, order_num] = drift
+        loc['drift_left'][fileno, order_num] = driftleft
+        loc['drift_right'][fileno, order_num] = driftright
+        loc['errdrift'][fileno, order_num] = errdrift
+
+        # return loc
+        return loc
+
+
+def drift_all_orders(loc, fileno, nomax):
+    """
+    Work out the weighted mean drift across all orders
+
+    :param loc: parameter dictionary, data storage
+    :param fileno: int, the file number (iterator number)
+    :param nomax: int, the maximum order to use (i.e. use from 0 to "nomax")
+
+    :return loc: parameter dictionary, the updated data storage dictionary
+    """
+
+    # get data from loc
+    drift = loc['drift'][fileno, :nomax]
+    driftleft = loc['drift_left'][fileno, :nomax]
+    driftright = loc['drift_right'][fileno, :nomax]
+    errdrift = loc['errdrift'][fileno, :nomax]
+
+    # work out weighted mean drift
+    sumerr = np.sum(1.0/errdrift)
+    meanvr = np.sum(drift/errdrift) / sumerr
+    meanvrleft = np.sum(driftleft/errdrift) / sumerr
+    meanvrright = np.sum(driftright/errdrift) / sumerr
+    merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+
+    # add to storage
+    loc['meanrv'][fileno] = meanvr
+    loc['meanrv_left'][fileno] = meanvrleft
+    loc['meanrv_right'][fileno] = meanvrright
+    loc['merrdrift'][fileno] = merrdrift
+
+    # return loc
+    return loc
 
 
 # =============================================================================
