@@ -359,10 +359,17 @@ drift_peak_exp_width = 0.8
 #           FP FWHM < (drift_peak_exp_width + drift_peak_norm_width_cut)
 drift_peak_norm_width_cut = 0.2
 
-
 #    Define whether to fit a gaussain (slow) or adjust a         - [cal_drift-peak]
 #        barycenter to get the drift
 drift_peak_getdrift_gaussfit = False
+
+#    Define the minimum Pearson R coefficient allowed in a       - [cal_drift-peak]
+#        file to obtain drifts from that order
+drift_peak_pearsonr_cut = 0.97
+
+#    Define the sigma for the sigma clip of found FP peaks       - [cal_drift-peak]
+drift_peak_sigmaclip = 1.0
+
 
 
 # -----------------------------------------------------------------------------
