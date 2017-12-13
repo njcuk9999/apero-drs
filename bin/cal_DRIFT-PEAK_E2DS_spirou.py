@@ -44,7 +44,8 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-# def main(night_name=None, reffile=None):
+def main(night_name=None, reffile=None):
+    pass
 if 1:
     night_name = '20170710'
     reffile = 'fp_fp02a203_e2ds_AB.fits'
@@ -116,7 +117,7 @@ if 1:
     # Loop around the orders
     for order_num in range(loc['number_orders']):
         miny, maxy = spirouBACK.MeasureMinMax(loc['speref'][order_num], bsize)
-        loc['speref'] -= miny
+        loc['speref'][order_num] = loc['speref'][order_num] - miny
 
     # ----------------------------------------------------------------------
     # Identify FP peaks in reference file
@@ -151,8 +152,6 @@ if 1:
         sPlt.start_interactive_session()
         # plot FP spectral order
         sPlt.drift_plot_selected_wave_ref(p, loc)
-        # plot photon noise uncertainty
-        sPlt.drift_plot_photon_uncertainty(p, loc)
 
     # ------------------------------------------------------------------
     # Get all other fp_fp*[ext]_e2ds.fits files
@@ -190,17 +189,15 @@ if 1:
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros(Nfiles, loc['number_orders'])
-    loc['drift_left'] = np.zeros(Nfiles, loc['number_orders'])
-    loc['drift_right'] = np.zeros(Nfiles, loc['number_orders'])
+    loc['drift'] = np.zeros((Nfiles, loc['number_orders']))
+    loc['drift_left'] = np.zeros((Nfiles, loc['number_orders']))
+    loc['drift_right'] = np.zeros((Nfiles, loc['number_orders']))
     loc['errdrift'] = np.zeros((Nfiles, loc['number_orders']))
     loc['deltatime'] = np.zeros(Nfiles)
     loc['meanrv'] = np.zeros(Nfiles)
-    loc['meanrvleft'] = np.zeros(Nfiles)
-    loc['meanrvright'] = np.zeros(Nfiles)
+    loc['meanrv_left'] = np.zeros(Nfiles)
+    loc['meanrv_right'] = np.zeros(Nfiles)
     loc['merrdrift'] = np.zeros(Nfiles)
-
-    WLOG('error', '', '')
 
     # ------------------------------------------------------------------
     # Loop around all files: correct for dark, reshape, extract and
@@ -208,7 +205,8 @@ if 1:
     # ------------------------------------------------------------------
     # get the maximum number of orders to use
     nomax = nbo    # p['IC_DRIFT_N_ORDER_MAX']
-    wref = 1
+
+    WLOG('error', '', '')
     # loop around files
     for i_it in range(Nfiles):
         # get file for this iteration
@@ -230,9 +228,9 @@ if 1:
         # ----------------------------------------------------------------------
         # Loop around the orders
         for order_num in range(loc['number_orders']):
-            miny, maxy = spirouBACK.MeasureMinMax(loc['speref'][order_num],
+            miny, maxy = spirouBACK.MeasureMinMax(loc['spe'][order_num],
                                                   bsize)
-            loc['spe'] -= miny
+            loc['spe'][order_num] = loc['spe'][order_num] - miny
         # ------------------------------------------------------------------
         # Calculate delta time
         # ------------------------------------------------------------------
@@ -241,23 +239,97 @@ if 1:
         # ------------------------------------------------------------------
         # Calculate PearsonR coefficient
         # ------------------------------------------------------------------
-        correlation_coeffs = spirouRV.PearsonRtest(p, loc['spe'], loc['speref'])
+        pargs = [loc['number_orders'], loc['spe'], loc['speref']]
+        correlation_coeffs = spirouRV.PearsonRtest(*pargs)
         # ----------------------------------------------------------------------
         # Get drift with comparison to the reference image
         # ----------------------------------------------------------------------
         # only calculate drift if the correlation between orders and
         #   reference file is above threshold
-        if np.min(correlation_coeffs[:nomax]) < 0.5:
-            continue
-        else:
+        prcut = p['drift_peak_pearsonr_cut']
+        if np.min(correlation_coeffs[:nomax]) > prcut:
             # get drifts for each order
-            x = spirouRV.GetDrift(p, loc['spe'], loc['ordpeak'], loc['xref'],
-                                  gaussfit = gaussfit)
+            dargs = [p, loc['spe'], loc['ordpeak'], loc['xref']]
+            x = spirouRV.GetDrift(*dargs, gaussfit=gaussfit)
             # get delta v
-            dv = (x - loc['xref'])
+            loc['dv'] = (x - loc['xref']) * loc['vrpeak']
             # sigma clip
-            mask = 0
+            loc = spirouRV.SigmaClip(loc, sigma=p['drift_peak_sigmaclip'])
+            # work out median drifts per order
+            loc = spirouRV.DriftPerOrder(loc, i_it)
+            # work out mean drift across all orders
+            loc = spirouRV.DriftAllOrders(loc, i_it, nomax)
+            # log the mean drift
+            wmsg = 'Time from ref= {0} h  - Drift mean= {1:.2f} +- {2:.2f} m/s'
+            wargs = [loc['deltatime'][i_it], loc['meanrv'][i_it],
+                     loc['merrdrift'][i_it]]
+            WLOG('info', p['log_opt'], wmsg.format(*wargs))
+        else:
+            if p['DRS_PLOT']:
+                # start interactive session if needed
+                sPlt.start_interactive_session()
+                # plot comparison between spe and ref
+                sPlt.drift_plot_correlation_comp(p, loc, correlation_coeffs)
 
+        # else we can't use this extract
+        wmsg1 = 'The correlation of some orders compared to the template is'
+        wmsg2 = '   < {0}, something went wrong in the extract.'
+        WLOG('warning', p['log_opt'], wmsg1)
+        WLOG('warning', p['log_opt'], wmsg2.format(prcut))
+    # ------------------------------------------------------------------
+    # peak to peak drift
+    driftptp = np.max(loc['meanrv']) - np.min(loc['meanrv'])
+    driftrms = np.std(loc['meanrv'])
+    # log th etotal drift peak-to-peak and rms
+    wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
+            '{2:.2f} hour')
+    wargs = [driftptp, driftrms, np.max(loc['deltatime'])]
+    WLOG('', p['log_opt'], wmsg.format(*wargs))
+
+    # ------------------------------------------------------------------
+    # Plot of mean drift
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive session if needed
+        sPlt.start_interactive_session()
+        # plot delta time against median drift
+        sPlt.drift_peak_plot_dtime_against_drift(p, loc)
+
+    # ------------------------------------------------------------------
+    # Save drift values to file
+    # ------------------------------------------------------------------
+    # construct filename
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_driftnew_{0}.fits'.format(p['fiber'])
+    driftfits = reffilename.replace('.fits', drift_ext)
+    # log that we are saving drift values
+    wmsg = 'Saving drift values of Fiber {0} in {1}'
+    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfits))
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # save drift values
+    spirouImage.WriteImage(os.path.join(reducedfolder, driftfits),
+                           loc['drift'], hdict)
+
+    # ------------------------------------------------------------------
+    # print .tbl result
+    # ------------------------------------------------------------------
+    # construct filename
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_driftnew_{0}.tbl'.format(p['fiber'])
+    drifttbl = reffilename.replace('.fits', drift_ext)
+    drifttblfilename = os.path.join(reducedfolder, drifttbl)
+    # construct and write table
+    columnnames = ['time', 'drift', 'drifterr', 'drift_left', 'drift_right']
+    columnformats = ['7.4f', '6.2f', '6.3f', '6.2f', '6.2f']
+    columnvalues = [loc['deltatime'], loc['meanrv'], loc['merrdrift'],
+                    loc['meanrv_left'], loc['meanrv_right']]
+    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # write table
+    wmsg = 'Average Drift saved in {0} Saved '
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(drifttblfilename))
+    spirouImage.WriteTable(table, drifttblfilename, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # End Message
@@ -267,16 +339,14 @@ if 1:
 
     # return locals()
 
-    # =============================================================================
-    # Start of code
-    # =============================================================================
 
-
+# =============================================================================
+# Start of code
+# =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     locals = main()
 
-
-    # =============================================================================
-    # End of code
-    # =============================================================================
+# =============================================================================
+# End of code
+# =============================================================================
