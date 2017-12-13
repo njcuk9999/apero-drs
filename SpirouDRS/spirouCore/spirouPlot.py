@@ -757,6 +757,196 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
         plt.show()
         plt.close()
 
+def drift_peak_plot_dtime_against_drift(p, loc):
+    # get data from loc
+    deltatime = loc['deltatime']
+    meanvr = loc['meanrv']
+    meanvrleft = loc['meanrv_left']
+    meanvrright = loc['meanrv_right']
+    # set up masks
+    mask1 = meanvr > 0
+    mask2 = meanvrleft > 0
+    mask3 = meanvrright > 0
+
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot mask1
+    frame.plot(deltatime[mask1], meanvr[mask1],
+               linestyle='none', marker='x', label='All orders', color='b')
+    # plot mask2
+    frame.plot(deltatime[mask2], meanvrleft[mask2],
+               linestyle='none', marker='x', label='half-left', color='g')
+    # plot mask3
+    frame.plot(deltatime[mask3], meanvrleft[mask3],
+               linestyle='none', marker='x', label='half-right', color='r')
+    # set title labels limits
+    title = 'Mean drift against time from reference'
+    frame.set(xlabel='$\Delta$ time [hours]', ylabel='Mean drift [m/s]',
+              title=title)
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def drift_plot_correlation_comp(p, loc, cc):
+
+    # get constants
+    prcut = p['drift_peak_pearsonr_cut']
+    nbo = loc['number_orders']
+    # get data
+    spe = loc['spe']
+    speref = loc['speref']
+
+    # scale images
+    spe_image, spe_scale = create_separated_scaled_image(spe)
+    speref_image, speref_scale = create_separated_scaled_image(speref)
+
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame1 = plt.subplot2grid((2,3), (0, 0))
+    frame2 = plt.subplot2grid((2,3), (1, 0))
+    frame3 = plt.subplot2grid((2,3), (0, 1), colspan=2)
+    frame4 = plt.subplot2grid((2,3), (1, 1), colspan=2)
+    # -------------------------------------------------------------------------
+    # order selection
+    # -------------------------------------------------------------------------
+    # mask
+    mask = cc > prcut
+    # select bad order
+    bad_orders = np.arange(nbo)[~mask]
+    bad_order = np.argmin(cc)
+    # select worse good order
+    good_order = np.argmin(cc[mask])
+    # select best order
+    best_order = np.argmax(cc[mask])
+
+    # -------------------------------------------------------------------------
+    # plot good order
+    label = 'Order {0} - Passes PearsonR test (best pass)'
+    frame4.plot(spe[best_order], color='green', zorder=0,
+                label=label.format(best_order), alpha=0.5)
+    frame3.plot(speref[best_order], color='green', zorder=0,
+                label=label.format(best_order), alpha=0.5)
+    # -------------------------------------------------------------------------
+    # plot good order
+    label = 'Order {0} - Passes PearsonR test (worst pass)'
+    frame4.plot(spe[good_order], color='orange', zorder=1,
+                label=label.format(good_order), alpha=0.5)
+    frame3.plot(speref[good_order], color='orange', zorder=1,
+                label=label.format(good_order), alpha=0.5)
+    # -------------------------------------------------------------------------
+    # plot worst order
+    label = 'Order {0} - Fails PearsonR test'
+    frame4.plot(spe[bad_order], zorder=2, color='r',
+                label=label.format(bad_order), alpha=1)
+    frame3.plot(speref[bad_order], zorder=2, color='r',
+                label=label.format(bad_order), alpha=1)
+    # -------------------------------------------------------------------------
+    # set titles
+    frame3.set_title('Reference frame')
+    frame4.set_title('Iteration frame')
+    # -------------------------------------------------------------------------
+    # set legends
+    frame3.legend(loc=0)
+    frame4.legend(loc=0)
+    # -------------------------------------------------------------------------
+    # set xlimits
+    frame3.set_xlim(0, speref.shape[1])
+    frame4.set_xlim(0, spe.shape[1])
+    # set ylimits
+    frame3.set_ylim(0)
+    frame4.set_ylim(0)
+    # -------------------------------------------------------------------------
+    # highlight good and bad orders
+    yticks, ytext = [], []
+    # add best order
+    ypos = speref_scale * (best_order + 0.5)
+    yticks.append(ypos)
+    ytext.append('Order {0} = PASSED (BEST)'.format(best_order))
+    # add good order
+    ypos = speref_scale * (good_order + 0.5)
+    yticks.append(ypos)
+    ytext.append('Order {0} = PASSED (WORST)'.format(good_order))
+    # add bad orders
+    for bad_order in bad_orders:
+        ypos = speref_scale * (bad_order + 0.5)
+        yticks.append(ypos)
+        ytext.append('Order {0} = FAILED'.format(bad_order))
+    # -------------------------------------------------------------------------
+    # plot the reference frame
+    frame1.imshow(speref_image)
+    frame1.set(title='Reference frame')
+    # turn off axis labels
+    frame1.set_yticks(yticks)
+    frame1.set_yticklabels(ytext)
+    frame1.set_xticklabels([])
+    # -------------------------------------------------------------------------
+    # plot the science frame
+    frame2.imshow(spe_image)
+    frame2.set(title='Iteration frame')
+    # turn off axis labels
+    frame2.set_yticks(yticks)
+    frame2.set_yticklabels(ytext)
+    frame2.set_xticklabels([])
+    # -------------------------------------------------------------------------
+    # set title
+    title = ('Pearson R test - example passed order vs failed order\n'
+             'PearsonR cut: {0}\n'
+             'Best result (Order {1}): {2}\n'
+             'Good result (Order {3}): {4}\n'
+             'Failed result (Order {5}): {6}')
+    targs = [prcut, best_order, cc[best_order],  good_order, cc[good_order],
+             bad_order, cc[bad_order]]
+    plt.suptitle(title.format(*targs))
+
+    # -------------------------------------------------------------------------
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def create_separated_scaled_image(image, axis=0):
+
+    if axis == 0:
+        dim1, dim2 = 0, 1
+    # get a scale for the pixels
+    scale = int(np.ceil(image.shape[dim2]/(image.shape[dim1])))
+    # get a new image
+    newimage = np.zeros((image.shape[dim1]*scale, image.shape[dim2]))
+    newimage -= np.max(image)
+    # add the old pixels, repeated
+
+    for pixel in range(image.shape[dim1]):
+
+        start = pixel*scale
+        end = scale*(pixel + 1)
+
+        if axis == 0:
+            repeat = np.tile(image[pixel,:], scale)
+            repeat = repeat.reshape((scale, image.shape[dim2]))
+            newimage[start:end, :] = repeat
+        if axis == 1:
+            repeat = np.tile(image[:, pixel], scale)
+            repeat = repeat.reshape((scale, image.shape[dim2]))
+            newimage[:, start:end] = repeat
+
+    return newimage, scale
+
+
+
+
+
 
 # =============================================================================
 # Start of code
