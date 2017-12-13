@@ -288,7 +288,7 @@ def main(night_name=None, reffile=None):
     driftptp = np.max(loc['mdrift']) - np.min(loc['mdrift'])
     driftrms = np.std(loc['mdrift'])
     # log th etotal drift peak-to-peak and rms
-    wmsg = ('Total drift Peak-to_peak={0:.3f} m/s RMS={1:.3f} m/s in '
+    wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
             '{2:.2f} hour')
     wargs = [driftptp, driftrms, np.max(loc['deltatime'])]
     WLOG('', p['log_opt'], wmsg.format(*wargs))

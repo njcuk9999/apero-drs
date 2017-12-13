@@ -41,6 +41,10 @@ CreateDriftFile = spirouRV.create_drift_file
 DeltaVrms2D = spirouRV.delta_v_rms_2d
 
 
+DriftPerOrder = spirouRV.drift_per_order
+
+DriftAllOrders = spirouRV.drift_all_orders
+
 GetDrift = spirouRV.get_drift
 
 
@@ -54,6 +58,8 @@ RemoveZeroPeaks = spirouRV.remove_zero_peaks
 #    reference spectrum
 ReNormCosmic2D = spirouRV.renormalise_cosmic2d
 
+
+SigmaClip = spirouRV.sigma_clip
 
 
 

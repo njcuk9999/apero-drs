@@ -811,7 +811,7 @@
     
     - [x] - ~~cal_DRIFT_E2DS_spirou~~
  
-    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+    - [x] - ~~cal_DRIFT-PEAK_E2DS_spirou~~
     
     - [ ] - cal_HC_E2DS_spirou
 
@@ -834,15 +834,15 @@
     - [x] - cal_extract_RAW_spirou
     
     - [x] - cal_DRIFT_RAW_spirou
-    
+
     - [ ] - cal_BADPIX_spirou
-    
+
     - [x] - cal_DRIFT_E2DS_spirou
+
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
     
     - [ ] - cal_HC_E2DS_spirou
- 
-    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
-      
+    
     - [ ] - cal_WAVE_E2DS_spirou
     
     - [ ] - cal_CCF_E2DS_spirou
