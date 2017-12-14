@@ -39,6 +39,10 @@ sPlt = spirouCore.sPlt
 # get speed of light
 CONSTANT_C = constants.c.value
 
+# switch between new and old
+# TODO: Should be new
+OLDCODEEXACT = False
+
 # =============================================================================
 # Define main functions
 # =============================================================================
@@ -156,7 +160,7 @@ def create_drift_file(p, loc):
     size = p['drift_peak_fpbox_size']
     minimum_norm_fp_peak = p['drift_peak_min_nfp_peak']
     # get the reference data and the wave data
-    speref = loc['speref']
+    speref = np.array(loc['speref'])
     wave = loc['wave']
 
     # storage for order of peaks
@@ -177,11 +181,22 @@ def create_drift_file(p, loc):
         # For numerical sanity all values less than zero set to zero
         tmp[tmp < 0] = 0
         # set border pixels to zero to avoid fit starting off the edge of image
-        tmp[0: border] = 0
-        tmp[speref.shape[1] - border:] = 0
+        # TODO: Change to constant border
+        if not OLDCODEEXACT:
+            tmp[0: border+1] = 0
+            tmp[-(border+1):] = 0
+        else:
+            tmp[0:3] = 0
+            tmp[speref.shape[1] - 5: speref.shape[1] -1] = 0
         # normalize by the 98th percentile - avoids super-spurois pixels but
         #   keeps the top of the blaze around 1
-        norm = np.percentile(tmp, 98)
+        # TODO: Change to np.percentile
+        if not OLDCODEEXACT:
+            norm = np.percentile(tmp, 98)
+        else:
+            tmp2 = np.sort(tmp)
+            norm = tmp2[int(len(tmp2)*0.98)]
+
         tmp /= norm
         # define the maximum pixel value of the normalized array
         maxtmp = np.max(tmp)
@@ -206,10 +221,14 @@ def create_drift_file(p, loc):
                 spirouCore.spirouLog.warninglogger(w)
             except ValueError:
                 WLOG('warning', p['log_opt'], 'ydata or xdata contains NaNS')
-                gg = [np.nan, np.nan, np.nan, np.nan]
+                # TODO: fix this
+                if not OLDCODEEXACT:
+                    gg = [np.nan, np.nan, np.nan, np.nan]
             except RuntimeError:
                 # WLOG('warning', p['log_opt'], 'Least-squares fails')
-                gg = [np.nan, np.nan, np.nan, np.nan]
+                # TODO: fix this
+                if not OLDCODEEXACT:
+                    gg = [np.nan, np.nan, np.nan, np.nan]
 
             # little sanity check to be sure that the peak is not the same as
             #    we got before and that there is something fishy with the
@@ -227,12 +246,22 @@ def create_drift_file(p, loc):
 
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
-            if np.abs(maxpos - gg[1]) < 1:
+            # TODO: fix this
+            if not OLDCODEEXACT:
+                cond = np.abs(maxpos - gg[1]) < 1
+            else:
+                cond = True
+
+            if cond:
                 # work out the radial velocity of the peak
                 lambefore = wave[order_num, maxpos - 1]
                 lamafter = wave[order_num, maxpos + 1]
                 deltalam = lamafter - lambefore
-                rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
+                # TODO: use CONSTANT_C
+                if not OLDCODEEXACT:
+                    rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
+                else:
+                    rv = 3.e8 * deltalam / (2.0 * wave[order_num, maxpos])
                 # add to storage
                 ordpeak.append(order_num)
                 xpeak.append(gg[1])
@@ -322,6 +351,7 @@ def remove_zero_peaks(p, loc):
     mask = loc['xref'] != 0
 
     # apply mask
+    loc['xref'] = loc['xref'][mask]
     loc['ordpeak'] = loc['ordpeak'][mask]
     loc['xpeak'] = loc['xpeak'][mask]
     loc['ewpeak'] = loc['ewpeak'][mask]
@@ -329,7 +359,7 @@ def remove_zero_peaks(p, loc):
 
     # append this function to sources
     source = __NAME__ + '/remove_zero_peaks()'
-    loc.append_sources(['ordpeak', 'xpeak', 'ewpeak', 'vrpeak'], source)
+    loc.append_sources(['xref', 'ordpeak', 'xpeak', 'ewpeak', 'vrpeak'], source)
 
     # log number of lines removed
     wmsg = 'Nb of lines removed with no width measurement = {0}'
@@ -366,18 +396,17 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
             # get the index from -size to +size in pixels from position of peak
             #   this allows one to have sufficient baseline on either side to
             #   adjust the DC level properly
-            index = np.array(range(-size, 1 + size, 1))
-            index += int(xpeak0[peak] + 0.5)
+            index = np.array(range(-size, size+1)) + int(xpeak0[peak] + 0.5)
 
             # get the sp values at this index and normalize them
-            tmp = sp[ordpeak[peak], index]
-            tmp = (tmp - np.min(tmp))/np.max(tmp)
+            tmp = np.array(sp[ordpeak[peak], index])
+            tmp = tmp - np.min(tmp)
+            tmp = tmp/np.max(tmp)
 
             # sanity check that peak is within 0.5 pix of the barycenter
-            v = np.sum(index * tmp) / np.sum(v)
-            if np.abs(v - xpeak0[peak]) > 0.5:
-                continue
-            else:
+            v = np.sum(index * tmp) / np.sum(tmp)
+            if np.abs(v - xpeak0[peak]) < 0.5:
+                # try to gauss fit
                 try:
                     # set initial guess
                     p0 = [1, xpeak0[peak], 0.8, 0]
@@ -400,7 +429,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
             # range from -2 to +2 pixels from position of peak
             # selects only the core of the line. Adding more aseline would
             # underestimate the offsets
-            index = np.array(range(-2, 2)) + int(xpeak0[peak] + 0.5)
+            index = np.array(range(-2, 3)) + int(xpeak0[peak] + 0.5)
             # get sp at indices
             tmp = sp[ordpeak[peak], index]
             # get position
@@ -444,7 +473,7 @@ def sigma_clip(loc, sigma=1.0):
     # get dv
     dv = loc['dv']
     # define a mask for sigma clip
-    mask = np.abs(dv - np.median(dv)) < sigma
+    mask = np.abs(dv - np.median(dv)) < sigma * np.std(dv)
     # perform sigma clip and add to loc
     loc['dvc'] = loc['dv'][mask]
     loc['orderpeakc'] = loc['ordpeak'][mask]
@@ -483,8 +512,8 @@ def drift_per_order(loc, fileno):
         loc['drift_right'][fileno, order_num] = driftright
         loc['errdrift'][fileno, order_num] = errdrift
 
-        # return loc
-        return loc
+    # return loc
+    return loc
 
 
 def drift_all_orders(loc, fileno, nomax):
