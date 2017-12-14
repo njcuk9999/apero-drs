@@ -24,6 +24,8 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 
+import time
+neilstart = time.time()
 
 # =============================================================================
 # Define variables
@@ -39,7 +41,9 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-
+# switch between new and old
+# TODO: Should be new
+OLDCODEEXACT = False
 
 # =============================================================================
 # Define functions
@@ -133,6 +137,7 @@ if 1:
     # ----------------------------------------------------------------------
     loc = spirouRV.RemoveWidePeaks(p, loc)
 
+
     # ----------------------------------------------------------------------
     # Get reference drift
     # ----------------------------------------------------------------------
@@ -141,6 +146,7 @@ if 1:
     # get drift
     loc['xref'] = spirouRV.GetDrift(p, loc['speref'], loc['ordpeak'],
                                     loc['xpeak'], gaussfit=gaussfit)
+    loc.set_source('xref', __NAME__ + '/main()')
     # remove any drifts that are zero (i.e. peak not measured
     loc = spirouRV.RemoveZeroPeaks(p, loc)
 
@@ -204,9 +210,7 @@ if 1:
     #     calculate dvrms and meanpond
     # ------------------------------------------------------------------
     # get the maximum number of orders to use
-    nomax = nbo    # p['IC_DRIFT_N_ORDER_MAX']
-
-    WLOG('error', '', '')
+    nomax = p['IC_DRIFT_PEAK_N_ORDER_MAX']
     # loop around files
     for i_it in range(Nfiles):
         # get file for this iteration
@@ -235,7 +239,7 @@ if 1:
         # Calculate delta time
         # ------------------------------------------------------------------
         # calculate the time from reference (in hours)
-        deltatime = (bjdspe - bjdref) * 24
+        loc['deltatime'][i_it] = (bjdspe - bjdref) * 24
         # ------------------------------------------------------------------
         # Calculate PearsonR coefficient
         # ------------------------------------------------------------------
@@ -260,22 +264,23 @@ if 1:
             # work out mean drift across all orders
             loc = spirouRV.DriftAllOrders(loc, i_it, nomax)
             # log the mean drift
-            wmsg = 'Time from ref= {0} h  - Drift mean= {1:.2f} +- {2:.2f} m/s'
+            wmsg = ('Time from ref= {0:.2f} h  - Drift mean= {1:.2f} +- '
+                    '{2:.2f} m/s')
             wargs = [loc['deltatime'][i_it], loc['meanrv'][i_it],
                      loc['merrdrift'][i_it]]
             WLOG('info', p['log_opt'], wmsg.format(*wargs))
+        # else we can't use this extract
         else:
             if p['DRS_PLOT']:
                 # start interactive session if needed
                 sPlt.start_interactive_session()
                 # plot comparison between spe and ref
                 sPlt.drift_plot_correlation_comp(p, loc, correlation_coeffs)
-
-        # else we can't use this extract
-        wmsg1 = 'The correlation of some orders compared to the template is'
-        wmsg2 = '   < {0}, something went wrong in the extract.'
-        WLOG('warning', p['log_opt'], wmsg1)
-        WLOG('warning', p['log_opt'], wmsg2.format(prcut))
+            # log that we cannot use this extraction
+            wmsg1 = 'The correlation of some orders compared to the template is'
+            wmsg2 = '   < {0}, something went wrong in the extract.'
+            WLOG('warning', p['log_opt'], wmsg1)
+            WLOG('warning', p['log_opt'], wmsg2.format(prcut))
     # ------------------------------------------------------------------
     # peak to peak drift
     driftptp = np.max(loc['meanrv']) - np.min(loc['meanrv'])
@@ -346,6 +351,8 @@ if 1:
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     locals = main()
+
+    print('Neil timing: AT-4 took {0} seconds'.format(time.time() - neilstart))
 
 # =============================================================================
 # End of code
