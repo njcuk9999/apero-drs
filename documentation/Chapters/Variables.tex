@@ -964,15 +964,22 @@ Value must be a float larger than zero.
 \item \ParameterEntry{Large number of files for skip}
 {Defines the number of files that is large enough to require the `drift\_file\_skip' parameter (only uses one file in every `drift\_file\_skip' files). This is done to speed up the code and avoid a bug. Value must be an integer larger than zero.}
 {drift\_nlarge}{300}
-{\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+{\calDRIFTRAW, \calDRIFTE, \calDRIFTPEAK}{\constantsfile}{\calDRIFTRAW.\progMAIN, \calDRIFTE.\progMAIN, \calDRIFTPEAK.\progMAIN}{Public}
 \DevNote{Has this bug been fixed, do we need to skip for a large number of files?}
 
 
 % drift_file_skip
-\item \ParameterEntry{Large number of files skip parameter}
+\item \ParameterEntry{Large number of files skip parameter (\calDRIFTRAW)}
 {Defines how many files we skip. This is done by selecting one file every `drift\_file\_skip' files. i.e. if skip is 3 the code uses every 3rd file to calculate the drift. Value must be an integer larger than zero. A value of 1 is equivalent to no skipping of files regardless of the file number.}
 {drift\_file\_skip}{3}
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% drift_e2ds_file_skip
+\item \ParameterEntry{Large number of files skip parameter (\calDRIFTE)}
+{Defines how many files we skip. This is done by selecting one file every `drift\_file\_skip' files. i.e. if skip is 3 the code uses every 3rd file to calculate the drift. Value must be an integer larger than zero. A value of 1 is equivalent to no skipping of files regardless of the file number.}
+{drift\_e2ds\_file\_skip}{1}
+{\calDRIFTE}{\constantsfile}{\calDRIFTE.\progMAIN}{Public}
 
 
 % ic_drift_cut_raw
@@ -1036,6 +1043,112 @@ Value must be a float larger than zero.
 {Defines the selected order to plot the fit for in the drift fit order plot. Value must be between zero and the maximum number of orders.}
 {ic\_drift\_order\_plot}{20}
 {\calDRIFTRAW, \calDRIFTE}{\constantsfile}{\spirouPlot. drift\_plot\_selected\_wave\_ref()}{Public}
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Drift-Peak calibration variables}
+\label{ch:variables:driftpeak}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+
+% ic_drift_peak_n_order_max
+\item \ParameterEntry{Number of orders to use in drift-peak}
+{Defines the number of orders to use (starting from zero to maximum number). This is used to get the median drift. Value must be an integer between 0 and the maximum number of orders.}
+{ic\_drift\_peak\_n\_order\_max}{30}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+
+% drift_peak_file_skip
+\item \ParameterEntry{Large number of files skip parameter (\calDRIFTE)}
+{Defines how many files we skip. This is done by selecting one file every `drift\_file\_skip' files. i.e. if skip is 3 the code uses every 3rd file to calculate the drift. Value must be an integer larger than zero. A value of 1 is equivalent to no skipping of files regardless of the file number.}
+{drift\_e2ds\_file\_skip}{1}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+
+% drift_peak_minmax_boxsize
+\item \ParameterEntry{Minimum box size for min max smoothing}
+{Defines the minimum size of the box used to get the minimum and maximum pixel values (specifically minimum pixel values). Each box (defined as the pixel position $\pm$box size) is used to work out the background value for that pixel. Value must be an integer larger than zero and less than half the number of columns (x-dimension).}
+{drift\_peak\_minmax\_boxsize}{6}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+
+% drift_peak_border_size
+\item \ParameterEntry{Image column (x-dim) border size}
+{Defines the number of pixels on either side of an image that should not be used to find FP peaks. This size must be larger to or equal to \definevariable{drift\_peak\_fpbox\_size}, therefore the fit to an individual FP does not go off the edge of the image. Value must be an integer larger to or equal to \definevariable{drift\_peak\_fpbox\_size} and less than and less than half the number of columns (x-dimension).}
+{drift\_peak\_border\_size}{3}
+{\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
+
+% drift_peak_fpbox_size
+\item \ParameterEntry{Box size for fitting individual FP peak.}
+{Defines the half-box size (i.e. central position $\pm$box size) of the box used to fit an individual FP peak. This size must be large enough to fit a peak but not too large as to encompass multiple FP peaks. The value must be an integer larger than zero and smaller than or equal to \definevariable{drift\_peak\_border\_size} (to avoid fitting off the edges of the image).}
+{drift\_peak\_fpbox\_size}{3}
+{\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file(), \spirouRV.get\_drift()}{Public}
+
+% drift_peak_min_nfp_peak
+\item \ParameterEntry{Minimum normalized flux for valid FP peak}
+{Defines the minimum normalized flux a valid FP peak must have in order to be recognized as an FP peak (before the peak fitting is done). At this point the FP peak is normalised so the maximum is around a value of 1.0. If a peaks maximum is below this threshold it will not be used as a valid FP in finding the drifts. Value must be a float larger than zero and less than 1.0}
+{drift\_peak\_min\_nfp\_peak}{0.25}
+{\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
+
+% drift_peak_exp_width
+\item \ParameterEntry{Expected width of FP peaks}
+{Defines the expected width of the FP peaks. Parameter is used to `normalise' the peaks which are then subsequently removed if:
+\begin{equation}
+\text{normalized FP FWHM} > \text{drift\_peak\_norm\_width\_cut}
+\end{equation}
+this is equivalent to:
+\begin{equation}
+\text{FP FWHM} > (\text{drift\_peak\_exp\_width} + \text{drift\_peak\_norm\_width\_cut})
+\end{equation}
+Value must be a float larger than zero and less than the number of columns (x-dimension).
+}
+{drift\_peak\_exp\_width}{0.8}
+{\calDRIFTPEAK}{\constantsfile}{\spirouRV.remove\_wide\_peaks(), \spirouRV.get\_drift()}{Public}
+
+% drift_peak_norm_width_cut
+\item \ParameterEntry{Normalized FP width threshold}
+{Defines the maximum `normalized' width of FP peaks that is acceptable for a valid FP peak. i.e. widths above this threshold are rejected as valid FP peaks.
+This works as follows:
+\begin{equation}
+\text{normalized FP FWHM} > \text{drift\_peak\_norm\_width\_cut}
+\end{equation}
+this is equivalent to:
+\begin{equation}
+\text{FP FWHM} > (\text{drift\_peak\_exp\_width} + \text{drift\_peak\_norm\_width\_cut})
+\end{equation}
+Value must be a float larger than zero and less than the number of columns (x-dimension) but if \definevariable{drift\_peak\_exp\_width} is defined sensibly then this number should be small.
+}
+{drift\_peak\_norm\_width\_cut}{0.2}
+{\calDRIFTPEAK}{\constantsfile}{\spirouRV.remove\_wide\_peaks()}{Public}
+
+% drift_peak_getdrift_gaussfit
+\item \ParameterEntry{Get drift via a Gaussian fitting process}
+{Defines whether the drift is calculated via a Gaussian fitting process (fitting the targeted order with a Gaussian) -- $\sim\times$10 slower, or adjusts a barycenter to get the drift. Value must be True or 1 to do the Gaussian fit, or False or 0 to use the barycenter adjustment.}
+{drift\_peak\_getdrift\_gaussfit}{False}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+
+% drift_peak_pearsonr_cut
+\item \ParameterEntry{Pearson R coefficient (between reference and image)}
+{Defines the threshold below which a image is deemed to dissimilar from the reference image to be used. A Pearson R test is performed between the reference image (e2ds file) and the current iteration image (e2ds file), the minimum of all usable orders is then tested. If any order does not pass the criteria:
+\begin{equation}
+\text{coefficient}_{\text{order}} > \text{drift\_peak\_pearsonr\_cut}
+\end{equation}
+then the whole image (e2ds file) is rejected. Value must be a float larger than zero and less than 1.0, values should be close to unity for a good fit i.e. 0.97.
+}
+{drift\_peak\_pearsonr\_cut}{0.5}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+\DevNote{This value is currently set below a recommended level and should be set back to 0.97 as soon as possible, even coefficients at 0.95 are from very bad orders, and orders should be removed. A plot currently is made when a bad file is found (i.e. when the above cut is not met).}
+
+% drift_peak_sigmaclip
+\item \ParameterEntry{Sigma clip for found FP peaks}
+{Defines the number of sigmas above the median that is used to remove bad FP peaks from the drift calculation process. Value must be a float larger than zero.}
+{drift\_peak\_sigmaclip}{1.0}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+
 
 
 

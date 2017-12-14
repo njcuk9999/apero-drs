@@ -385,6 +385,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
     """
     # get the size of the peak
     size = p['drift_peak_fpbox_size']
+    width = p['drift_peak_exp_width']
 
     # measured x position of FP peaks
     xpeaks = np.zeros_like(xpeak0)
@@ -409,7 +410,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
                 # try to gauss fit
                 try:
                     # set initial guess
-                    p0 = [1, xpeak0[peak], 0.8, 0]
+                    p0 = [1, xpeak0[peak], width, 0]
                     # fit a gaussian to that peak
                     #    gg = [mean, amplitude, sigma, dc]
                     with warnings.catch_warnings(record=True) as w:
