@@ -322,6 +322,11 @@ ic_drift_cut_e2ds = 4.5
 #       (not used in drift_e2ds)
 ic_drift_n_order_max = 28
 
+#   Define the number of orders to use (starting from 0 to max) - [cal_drift-peak]
+#       used to get median drift  median(order0 --> order max)
+#       (used in drift-peak_e2ds)
+ic_drift_peak_n_order_max = 30
+
 #   Define the way to calculate the drift                       - [cal_drift]
 #       either 'weighted mean' or 'median'
 #       for cal_drift_raw and cal_drift_e2ds
@@ -361,11 +366,11 @@ drift_peak_norm_width_cut = 0.2
 
 #    Define whether to fit a gaussain (slow) or adjust a         - [cal_drift-peak]
 #        barycenter to get the drift
-drift_peak_getdrift_gaussfit = False
+drift_peak_getdrift_gaussfit = True
 
 #    Define the minimum Pearson R coefficient allowed in a       - [cal_drift-peak]
 #        file to obtain drifts from that order
-drift_peak_pearsonr_cut = 0.97
+drift_peak_pearsonr_cut = 0.5
 
 #    Define the sigma for the sigma clip of found FP peaks       - [cal_drift-peak]
 drift_peak_sigmaclip = 1.0

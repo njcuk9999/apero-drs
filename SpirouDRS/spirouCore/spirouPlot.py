@@ -764,9 +764,9 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     meanvrleft = loc['meanrv_left']
     meanvrright = loc['meanrv_right']
     # set up masks
-    mask1 = meanvr > 0
-    mask2 = meanvrleft > 0
-    mask3 = meanvrright > 0
+    mask1 = meanvr > -999
+    mask2 = meanvrleft > -999
+    mask3 = meanvrright > -999
 
     # set up fig
     plt.figure()
@@ -776,13 +776,13 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     frame = plt.subplot(111)
     # plot mask1
     frame.plot(deltatime[mask1], meanvr[mask1],
-               linestyle='none', marker='x', label='All orders', color='b')
+               marker='x', label='All orders', color='b')
     # plot mask2
     frame.plot(deltatime[mask2], meanvrleft[mask2],
-               linestyle='none', marker='x', label='half-left', color='g')
+               marker='x', label='half-left', color='g')
     # plot mask3
-    frame.plot(deltatime[mask3], meanvrleft[mask3],
-               linestyle='none', marker='x', label='half-right', color='r')
+    frame.plot(deltatime[mask3], meanvrright[mask3],
+               marker='x', label='half-right', color='r')
     # set title labels limits
     title = 'Mean drift against time from reference'
     frame.set(xlabel='$\Delta$ time [hours]', ylabel='Mean drift [m/s]',

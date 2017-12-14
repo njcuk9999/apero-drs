@@ -455,3 +455,47 @@ Below we describe breifly the main differences from AT-4 build.
 \item new functions to save to .tbl format (\spirouImage.MakeTable and \spirouImage.WriteTable)
 
 \end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_DRIFT-PEAK\_E2DS\_spirou recipe}
+\label{ch:changelog:At4:cal_DRIFT-PEAK_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item loading of custom arguments for reference file
+
+\item acqtime (bjdref) got from header using \definevariable{\spirouImage.GetAcqTime}
+	\begin{itemize}
+	\item can be used to get both `human` readible and `unix` time (use key kind=`human` or kind=`unix)
+	\end{itemize}
+
+\item Created function to read WAVE file from calibDB (replaces `read\_data\_raw(`)
+	\begin{itemize}
+	\item \definevariable{\spirouImage.ReadWaveFile}
+	\item takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max\_time of calibDB entry) 
+	\end{itemize}
+
+\item FP identification moved to \definevariable{\spirouRV{.CreateDriftFile()}}
+
+\item Removal of wide peaks moved to \definevariable{\spirouRV{.RemoveWidePeaks()}}
+
+\item Drift calcualtion moved to \definevariable{\spirouRV{.GetDrift()}}
+
+\item Removal of zero drifts moved to \definevariable{\spirouRV{.RemoveZeroPeaks()}}
+
+\item all functionality to do with listing files moved to \definevariable{\spirouImage{\hskip 0pt}.GetAllSimilarFiles} - no need for "alphanumeric short"/"nice sort" - `np.sort(x)` does this
+    
+\item Pearson R test moved to \definevariable{\spirouRV{.PearsonRtest()}}
+
+\item Sigma clipping moved to \definevariable{\spirouRV{.SigmaClip()}}
+
+\item Drift calculation moved to \definevariable{\spirouRV{.DriftPerOrder()}} (for per order drifts) and \definevariable{\spirouRV{.DriftAllOrders()}} (for drift per file)
+
+\item Writing of fits file cleaned up (header keywords written during data write)
+
+\item new functions to save to .tbl format (\spirouImage.MakeTable and \spirouImage.WriteTable)
+
+\end{itemize}
