@@ -366,7 +366,7 @@ drift_peak_norm_width_cut = 0.2
 
 #    Define whether to fit a gaussain (slow) or adjust a         - [cal_drift-peak]
 #        barycenter to get the drift
-drift_peak_getdrift_gaussfit = True
+drift_peak_getdrift_gaussfit = False
 
 #    Define the minimum Pearson R coefficient allowed in a       - [cal_drift-peak]
 #        file to obtain drifts from that order
