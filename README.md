@@ -50,6 +50,10 @@
     2.7 [cal_DRIFT_RAW_spirou](#27-cal_drift_raw_spiroupy)
 
     2.8 [cal_BADPIX_spirou](#28-cal_badpix_spiroupy)
+    
+    2.9 [cal_DRIFT_E2DS_spirou](#209-cal_drift_e2ds_spiroupy)
+    
+    2.10 [cal_DRIFT-PEAK_E2DS_spirou](#210-cal_drift-peak_e2ds_spiroupy)
 
 3. [Timing](#3-timing)
 
@@ -622,6 +626,99 @@
 - instead of taking the 90th pixel in flattened meadian flat image now work out the 90th percentile of finite values (will lead to a slightly more correct normalisation value)
 
 - Writing of fits file cleaned up (header keywords written during data write)
+
+[Back to top](#table-of-contents)
+
+
+### 2.9 cal_DRIFT_E2DS_spirou.py
+
+- loading of custom arguments for reference file
+
+- acqtime (bjdref) got from header using `SpirouDRS.spirouImage.spirouImage.GetAcqTime`
+
+    - can be used to get both ‘human‘ readible and ‘unix‘ time (use key kind=`human` or kind=`unix`)
+
+- Created function to read TILT file from calibDB (replaces `readkeyloco`)
+
+    - `SpirouDRS.spirouImage.spirouImage.ReadTiltFile`
+
+- takes in header dictionary from ‘fitsfilename‘ in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry)
+
+- Created function to read WAVE file from calibDB (replaces `read_data_raw`)
+    
+    - `SpirouDRS.spirouImage.spirouImage.ReadWaveFile`
+
+    - takes in header dictionary from `fitsfilename` in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry)
+
+- delta RV RMS calculation in `SpirouDRS.spirouRV.spirouRV.DeltaVrms2D`
+
+    - where arguments are ‘speref‘ and ‘wave‘ (stored in ‘loc‘)
+
+    - where keyword arguments are ‘sigdet‘, ‘size‘ and ‘threshold‘ (stored in p)26
+
+- all functionality to do with listing files moved to `SpirouDRS.spirouImage.spirouImage.GetAllSimilarFiles` - no need for "alphanumeric short"/"nice sort" - ‘np.sort(x)‘ does this
+
+- Renormlisation and cosmics correction in `SpirouDRS.spirouRV.spirouRV.ReNormCosmic2D`
+
+    - where arguments are ‘speref‘ and ‘spe‘ (stored in ‘loc‘)
+
+    - where keyword arguments are ‘cut‘, ‘size‘ and ‘threshold‘ (stored in p)
+
+
+- RV drift calculated
+
+    - `SpirouDRS.spirouRV.spirouRV.CalcRVdrift2D`
+
+    - where arguments are ‘speref‘, ‘spen‘ and ‘wave‘ (‘speref‘ and ‘spen‘ stored in loc)
+
+    - where keyword arguments are ‘sigdet‘, ‘size‘ and ‘threshold‘ (stored in p)
+
+- added an option (drift_type_e2ds) to decide between getting drift using a weighted mean or using a median (to combine all orders)
+
+- ‘drift‘, ‘errdrift‘, ‘deltatime‘, ‘mdrift‘, ‘merrdrift‘ stored in loc
+
+- Writing of fits file cleaned up (header keywords written during data write)
+
+- new functions to save to .tbl format (`SpirouDRS.spirouImage.spirouImage.MakeTable` and `SpirouDRS.spirouImage.spirouImage.WriteTable`)
+
+[Back to top](#table-of-contents)
+
+
+### 2.10 cal_DRIFT-PEAK_E2DS_spirou.py
+
+
+- loading of custom arguments for reference file
+
+- acqtime (bjdref) got from header using `SpirouDRS.spirouImage.spirouImage.GetAcqTime`
+
+    - can be used to get both ‘human‘ readible and ‘unix‘ time (use key kind=‘human‘ or kind=‘unix)
+
+- Created function to read WAVE file from calibDB (replaces ‘read_data_raw(‘)
+
+    - `SpirouDRS.spirouImage.spirouImage.ReadWaveFile`
+
+    - takes in header dictionary from ‘fitsfilename‘ in order to avoid re-opening FITS rec (acqutime used in calibDB to get max_time of calibDB entry)
+
+- FP identification moved to `SpirouDRS.spirouRV.spirouRV.CreateDriftFile()`
+
+- Removal of wide peaks moved to `SpirouDRS.spirouRV.spirouRV.RemoveWidePeaks()`
+
+- Drift calcualtion moved to `SpirouDRS.spirouRV.spirouRV.GetDrift()`
+
+- Removal of zero drifts moved to `SpirouDRS.spirouRV.spirouRV.RemoveZeroPeaks()`
+
+- all functionality to do with listing files moved to `SpirouDRS.spirouImage.spirouImage.GetAllSim-ilarFiles` - no need for "alphanumeric short"/"nice sort" - ‘np.sort(x)‘ does this
+
+- Pearson R test moved to `SpirouDRS.spirouRV.spirouRV.PearsonRtest()`
+
+- Sigma clipping moved to `SpirouDRS.spirouRV.spirouRV.SigmaClip()`
+
+- Drift calculation moved to `SpirouDRS.spirouRV.spirouRV.DriftPerOrder()` (for per order drifts) and `SpirouDRS.spirouRV.spirouRV.DriftAllOrders()` (for drift per file)
+
+- Writing of fits file cleaned up (header keywords written during data write)
+
+- new functions to save to .tbl format (`SpirouDRS.spirouImage.spirouImage.MakeTable` and `SpirouDRS.spirouImage.spirouImage.WriteTable`)
+
 
 [Back to top](#table-of-contents)
 
