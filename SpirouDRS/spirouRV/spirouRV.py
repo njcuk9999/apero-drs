@@ -552,6 +552,20 @@ def drift_all_orders(loc, fileno, nomax):
 
 
 # =============================================================================
+# Define ccf used functions
+# =============================================================================
+
+def get_ccf_mask(p, loc):
+
+    # get constants from p
+    mask_min = p['ic_w_mask_min']
+    mask_width = p['ic_mask_width']
+    filename = p['ccf_mask']
+
+
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 # Main code here

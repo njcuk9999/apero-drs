@@ -33,7 +33,7 @@ __author__ = spirouConfig.Constants.AUTHORS()
 # Get Logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
-
+typenames = {int:'integer', float:'float', list:'list', bool:'bool', str:'str'}
 
 # =============================================================================
 # Define run functions
@@ -376,7 +376,9 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
         WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
 
 
-def get_custom_from_run_time_args(positions, types, names):
+def get_custom_from_run_time_args(positions=None, types=None, names=None,
+                                  required=None, calls=None, cprior=None,
+                                  lognames=None):
     """
     Extract custom arguments from defined positions in sys.argv (defined at
     run time)
@@ -389,9 +391,43 @@ def get_custom_from_run_time_args(positions, types, names):
     :param names: list of strings, the names of each argument (to access in
                   parameter dictionary once extracted)
 
+    :param required: list of bools or None, states whether the program
+                     should exit if runtime argument not found
+
+    :param calls: list of objects or None, if define these are the values that
+                  come from a function call (overwrite command line arguments)
+
+    :param lognames: list of strings, the names displayed in the log (on error)
+                     theses should be similar to "names" but in a form the
+                     user can easily understand for each variable
+
     :return values: dictionary, if run time arguments are correct python type
                     the name-value pairs are returned
     """
+    # deal with no positions (use length of types or names or exit with error)
+    if positions is None:
+        if types is not None:
+            positions = range(len(types))
+        elif names is not None:
+            positions = range(len(names))
+        else:
+            emsg = ('Either "positions", "name" or "types" must be defined to'
+                    'get custom arguments.')
+            WLOG('', sys.argv[0], emsg)
+    # deal with no types (set to strings)
+    if types is None:
+        types = [str]*len(positions)
+    # deal with no names (set to Arg0, Arg1, Arg2 etc)
+    if names is None:
+        names = ['Arg{0}'.format(pos) for pos in positions]
+    if lognames is None:
+        lognames = names
+    # deal with no required (set all to be required)
+    if required is None:
+        required = [True]*len(positions)
+    # deal with no calls priority (set priority for calls to False)
+    if cprior is None:
+        cprior = [False]*len(positions)
     # set up the dictionary
     customdict = dict()
     # loop around positions test the type and add the value to dictionary
@@ -403,11 +439,26 @@ def get_custom_from_run_time_args(positions, types, names):
             # second arg should be the night name
             raw_value = sys.argv[pos + 2]
         except IndexError:
-            emsg = 'Argument Error: There are not enough arguments defined'
-            WLOG('', sys.argv[0], emsg)
-            emsg = ' must be at least {0} arguments defined'
-            WLOG('error', sys.argv[0], emsg.format(len(positions)))
-            raw_value = None
+            # if not required then it is okay to not find it
+            if not required[pos]:
+                raw_value = None
+            # if calls is None and required = True then we should exit now
+            elif calls is None or calls[pos] is None:
+                emsg = ('Argument Error: "{0}" is not defined ')
+                WLOG('', sys.argv[0], emsg.format(lognames[pos]))
+                emsg = '   (must be Arg number {0}) format:'
+                WLOG('', sys.argv[0], emsg.format(pos + 1))
+                emsg = '   >>> {0} NIGHT_NAME {1}'
+                eargs = [sys.argv[0], ' '.join(lognames)]
+                WLOG('error', sys.argv[0], emsg.format(*eargs))
+                raw_value = None
+            # else we must use the value from calls
+            else:
+                raw_value = calls[pos]
+        # if calls priority is True then override value with that in calls
+        if calls is not None:
+            if calls[pos] is not None and cprior[pos]:
+                raw_value = calls[pos]
         # get the name
         name = names[pos]
         # get the type
@@ -415,14 +466,70 @@ def get_custom_from_run_time_args(positions, types, names):
         # test the raw_value
         try:
             value = kind(raw_value)
+            # add value to dictionary
+            customdict[name] = value
         except ValueError:
-            emsg = 'Arguments Error: argument {0} should be a {1} (Value = {2})'
-            WLOG('error', sys.argv[0], emsg.format(pos, kind, raw_value))
-            value = None
-        # add value to dictionary
-        customdict[name] = value
+            emsg = ('Arguments Error: "{0}" should be a {1} (Value = {2})')
+            eargs = [lognames[pos], typenames[kind], raw_value]
+            WLOG('error', sys.argv[0], emsg.format(*eargs))
+        except TypeError:
+            pass
+
     # finally return dictionary
     return customdict
+
+
+
+# def get_custom_from_run_time_args(positions, types, names, required=None):
+#     """
+#     Extract custom arguments from defined positions in sys.argv (defined at
+#     run time)
+#
+#     :param positions: list of integers, the positions of the arguments
+#                       (i.e. first argument is 0)
+#
+#     :param types: list of python types, the type (i.e. int, float) for each
+#                   argument
+#     :param names: list of strings, the names of each argument (to access in
+#                   parameter dictionary once extracted)
+#
+#     :param required: list of bools or None, if not None states whether the
+#                      program should exit if runtime argument not found
+#
+#     :return values: dictionary, if run time arguments are correct python type
+#                     the name-value pairs are returned
+#     """
+#     # set up the dictionary
+#     customdict = dict()
+#     # loop around positions test the type and add the value to dictionary
+#     for pos in positions:
+#         # deal with not having enough arguments
+#         try:
+#             # get from sys.argv
+#             # first arg should be the program name
+#             # second arg should be the night name
+#             raw_value = sys.argv[pos + 2]
+#         except IndexError:
+#             emsg = 'Argument Error: There are not enough arguments defined'
+#             WLOG('', sys.argv[0], emsg)
+#             emsg = ' must be at least {0} arguments defined'
+#             WLOG('error', sys.argv[0], emsg.format(len(positions)))
+#             raw_value = None
+#         # get the name
+#         name = names[pos]
+#         # get the type
+#         kind = types[pos]
+#         # test the raw_value
+#         try:
+#             value = kind(raw_value)
+#         except ValueError:
+#             emsg = 'Arguments Error: argument {0} should be a {1} (Value = {2})'
+#             WLOG('error', sys.argv[0], emsg.format(pos, kind, raw_value))
+#             value = None
+#         # add value to dictionary
+#         customdict[name] = value
+#     # finally return dictionary
+#     return customdict
 
 
 def get_file(p, path, name=None, prefix=None, kind=None):

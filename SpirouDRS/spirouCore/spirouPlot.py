@@ -672,13 +672,19 @@ def ext_spectral_order_plot(p, loc):
 # =============================================================================
 # extract plotting function
 # =============================================================================
-def drift_plot_selected_wave_ref(p, loc):
+def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     # get constants
     selected_order = p['IC_DRIFT_ORDER_PLOT']
     fiber = p['fiber']
     # get data from loc
-    wave = loc['wave'][selected_order]
-    extraction = loc['speref'][selected_order]
+    if x is None:
+        wave = loc['wave'][selected_order]
+    else:
+        wave = np.array(x)[selected_order]
+    if y is None:
+        extraction = loc['speref'][selected_order]
+    else:
+        extraction = np.array(y)[selected_order]
     # set up fig
     plt.figure()
     # clear the current figure
@@ -697,10 +703,12 @@ def drift_plot_selected_wave_ref(p, loc):
         plt.close()
 
 
-def drift_plot_photon_uncertainty(p, loc):
+def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     # get data from loc
-    x = np.arange(loc['number_orders'])
-    y = loc['dvrmsref']
+    if x is None:
+        x = np.arange(loc['number_orders'])
+    if y is None:
+        y = loc['dvrmsref']
     # set up fig
     plt.figure()
     # clear the current figure
