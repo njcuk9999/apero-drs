@@ -47,6 +47,7 @@ DriftAllOrders = spirouRV.drift_all_orders
 
 GetDrift = spirouRV.get_drift
 
+GetCCFMask = spirouRV.get_ccf_mask
 
 PearsonRtest = spirouRV.pearson_rtest
 
