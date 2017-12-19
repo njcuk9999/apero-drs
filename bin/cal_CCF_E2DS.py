@@ -22,6 +22,8 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTHORCA
+
 
 # =============================================================================
 # Define variables
@@ -47,7 +49,7 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     pass
 if 1:
     night_name, reffile = '20170710', 'fp_fp02a203_e2ds_AB.fits'
-    mask, rv, width, step = None, None, None, None
+    mask, rv, width, step = 'UrNe.mas', 0, 10, 0.1
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -114,7 +116,10 @@ if 1:
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
+    wave, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
+
+    # save to storage
+    loc['wave'] = wave
     loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
@@ -167,13 +172,23 @@ if 1:
         sPlt.drift_plot_photon_uncertainty(p, loc)
 
     # ------------------------------------------------------------------
-    # Do correlation
+    # Get template RV (from ccf_mask)
     # ------------------------------------------------------------------
     # log that we are getting the template used for CCF computation
     wmsg = 'Template used for CCF computation: {0}'
     WLOG('info', p['log_opt'], wmsg.format(p['ccf_mask']))
     # get the CCF mask from file
     loc = spirouRV.GetCCFMask(p, loc)
+
+    # check and deal with mask in microns (should be in nm)
+    if np.mean(loc['ll_mask_ctr']) < 2.0:
+        loc['ll_mask_ctr'] *= 1000.0
+        loc['ll_mask_d'] *= 1000.0
+
+    # ------------------------------------------------------------------
+    # Do correlation
+    # ------------------------------------------------------------------
+    # TODO: finish code
 
 
     # ----------------------------------------------------------------------

@@ -13,19 +13,15 @@ Created on 2017-12-07 at 16:14
 
 Version 0.0.0
 """
-
+from __future__ import division
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
+import os
 from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
+from astropy.io.registry import IORegistryError, get_formats
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from astropy.table import Table
-from astropy.io.registry import IORegistryError
+
 
 # =============================================================================
 # Define variables
@@ -37,10 +33,11 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 # get the logging function
 WLOG = spirouCore.wlog
+
 # -----------------------------------------------------------------------------
 
 # =============================================================================
-# Define functions
+# Define usable functions
 # =============================================================================
 def make_table(columns, values, formats=None, units=None):
 
@@ -85,14 +82,133 @@ def make_table(columns, values, formats=None, units=None):
 
 
 def write_table(table, filename, fmt='fits'):
+    """
+    Writes a table to file "filename" with format "fmt"
+
+    :param filename: string, the filename and location of the table to read
+    :param fmt: string, the format of the table to read from (must be valid
+                for astropy.table to read - see below)
+    :param colnames:
+    :return:
+
+    astropy.table writeable formats are as follows:
+
+    """
+    # get format table
+    ftable = list_of_formats()
+
+    # check that format in format_table
+    if fmt not in ftable['Format']:
+        wmsg = 'fmt={0} not valid for astropy.table reading (in {1})'
+        WLOG('error', '', wmsg.format(fmt, __NAME__ + '/write_table()'))
+    # else check that we can read file
+    else:
+        pos = np.where(ftable['Format'] == fmt)[0][0]
+        if not ftable['read?'][pos]:
+            wmsg = 'fmt={0} cannot be read by astropy.table (in {1})'
+            WLOG('error', '', wmsg.format(fmt, __NAME__ + '/write_table()'))
+
     try:
         table.write(filename, format=fmt, overwrite=True)
     except IORegistryError:
-        emsg = 'Table format {0} not understood, cannot write.'
-        WLOG('error', '', emsg.format(fmt))
+        emsg = 'Cannot write to file IO error in {0}'
+        WLOG('error', '', emsg.format(__NAME__ + '/write_table'))
 
 
+def read_table(filename, fmt, colnames=None):
+    """
+    Reads a table from file "filename" in format "fmt", if colnames are defined
+    renames the columns to these name
 
+    :param filename: string, the filename and location of the table to read
+    :param fmt: string, the format of the table to read from (must be valid
+                for astropy.table to read - see below)
+    :param colnames: list of strings or None, if not None renames all columns
+                     to these strings, must be the same length as columns
+                     in file that is read
+    :return:
+
+    astropy.table readable formats are as follows:
+
+    """
+    # get format table
+    ftable = list_of_formats()
+
+
+    # check that format in format_table
+    if fmt not in ftable['Format']:
+        wmsg = 'fmt={0} not valid for astropy.table reading (in {1})'
+        WLOG('error', '', wmsg.format(fmt, __NAME__ + '/read_table()'))
+    # else check that we can read file
+    else:
+        pos = np.where(ftable['Format'] == fmt)[0][0]
+        if not ftable['read?'][pos]:
+            wmsg = 'fmt={0} cannot be read by astropy.table (in {1})'
+            WLOG('error', '', wmsg.format(fmt, __NAME__ + '/read_table()'))
+
+    # check that filename exists
+    if not os.path.exists(filename):
+        raise IOError('File {0} does not exist'.format(filename))
+
+    # load file using astropy table
+    table = Table.read(filename, format='ascii')
+
+    # if we have colnames rename the columns
+    if colnames is not None:
+        if len(colnames) != len(table.colnames):
+            wmsg = ''
+            WLOG('error', '', wmsg.format())
+
+        for c_it, col in enumerate(colnames):
+            table[col] = np.array(table[table.colnames[c_it]])
+            del table[table.colnames[c_it]]
+
+    # return table
+    return table
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def list_of_formats():
+    ftable = get_formats(Table)
+
+    ftable['read?'] = ftable['Read'] == 'Yes'
+    ftable['write?'] = ftable['Write'] == 'Yes'
+
+    # return format table
+    return ftable
+
+
+def string_formats(ftable=None, mask=None):
+    # deal with no format table
+    if ftable is None:
+        ftable = list_of_formats()
+    # deal with no mask
+    if mask is None:
+        mask = np.ones(len(ftable), dtype=bool)
+    # construct the top
+    string = '\n\t Format \n\t ----------------------'
+    # loop around the rows in Formats
+    for row, fmt in enumerate(ftable['Format']):
+        # only append if mask is True for this row
+        if mask[row]:
+            string += '\n\t {0}'.format(fmt)
+    # return the string
+    return string
+
+def update_docs():
+    # get ftable
+    ftable = list_of_formats()
+    # update doc for write_table
+    writemask = ftable['write?']
+    write_table.__doc__ += string_formats(ftable, mask=writemask)
+    # update doc for read_table
+    readmask = ftable['read?']
+    read_table.__doc__ += string_formats(ftable, mask=readmask)
+
+
+# global call update the docs
+update_docs()
 
 # =============================================================================
 # Start of code

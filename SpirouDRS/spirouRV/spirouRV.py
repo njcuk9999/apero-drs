@@ -17,9 +17,11 @@ from astropy import constants
 from scipy.stats.stats import pearsonr
 from scipy.optimize import curve_fit
 import warnings
+import os
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -42,6 +44,7 @@ CONSTANT_C = constants.c.value
 # switch between new and old
 # TODO: Should be new
 OLDCODEEXACT = False
+
 
 # =============================================================================
 # Define main functions
@@ -561,8 +564,66 @@ def get_ccf_mask(p, loc):
     mask_min = p['ic_w_mask_min']
     mask_width = p['ic_mask_width']
     filename = p['ccf_mask']
+    # speed of light in km/s
+    c = constants.c.value / 1000.0
+    # Question: Where is the mask file supposed to be located?
+    # get table if not found raise error
+    try:
+        cols = ['ll_mask_s', 'll_mask_e', 'w_mask']
+        ccfmask = spirouImage.ReadTable(filename, fmt='ascii', colnames=cols)
+    except IOError:
+        emsg = 'Template file: {0} not found, unstable to proceed'
+        WLOG('error', p['log_opt'], emsg.format(filename))
+        ccfmask = None
+    # log that we are using a specific RV template with x rows
+    wmsg = 'Using RV template: {0} ({1} rows)'
+    wargs = [os.path.split(filename)[-1], len(ccfmask['ll_mask_s'])]
+    WLOG('', p['log_opt'], wmsg.format(*wargs))
+    # calculate the difference in mask_e and mask_s
+    ll_mask_d = np.array(ccfmask['ll_mask_e']) - np.array(ccfmask['ll_mask_s'])
+    ll_mask_ctr = np.array(ccfmask['ll_mask_s']) + ll_mask_d*0.5
+    # if mask_width > 0 ll_mask_d is multiplied by mask_width/c
+    if mask_width > 0:
+        ll_mask_d = mask_width * np.array(ccfmask['ll_mask_s']) / c
+    # make w_mask an array
+    w_mask = np.array(ccfmask['w_mask'])
+    # use w_min to select on w_mask or keep all if w_mask_min >= 1
+    if mask_min < 1.0:
+        mask = w_mask > mask_min
+        ll_mask_d = ll_mask_d[mask]
+        ll_mask_ctr = ll_mask_ctr[mask]
+        w_mask = w_mask[mask]
+    # else set all w_mask to one (and use all lines in file)
+    else:
+        w_mask = np.ones(len(ll_mask_d))
+    # add to loc
+    loc['ll_mask_d'] = ll_mask_d
+    loc['ll_mask_ctr'] = ll_mask_ctr
+    loc['w_mask'] = w_mask
+    # set source
+    source = __NAME__ + '/get_ccf_mask()'
+    loc.set_sources(['ll_mask_d', 'll_mask_ctr, w_mask'], source)
+    # return loc
+    return loc
 
 
+def coravelation(p, loc):
+
+    # get constants from p
+    berv = p['berv']
+
+    # get data from loc
+    ll_map = loc['wave']
+    coeff_ll = loc['param_ll']
+
+    # speed of light in km/s
+    c = constants.c.value / 1000.0
+
+    # calculate modified map
+    ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
+
+    # TODO: finish function
 
 
 # =============================================================================

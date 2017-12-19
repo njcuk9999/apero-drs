@@ -56,6 +56,9 @@ ExtractDictParams = spirouConfig.extract_dict_params
 # get the keywords from keywords file
 GetKeywordArguments = spirouKeywords.get_keywords
 
+# get the keyword values from a header/dictionary
+GetKwValues = spirouKeywords.get_keyword_values_from_header
+
 # Load a config file from given filename
 LoadConfigFromFile = spirouConfig.load_config_from_file
 

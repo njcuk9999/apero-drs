@@ -263,7 +263,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     return tilt[:, 0]
 
 
-def read_wave_file(p, hdr=None, filename=None, key=None):
+def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
     """
     Reads the wave file (from calib database or filename)
 
@@ -280,6 +280,9 @@ def read_wave_file(p, hdr=None, filename=None, key=None):
     :param key: string or None, if None key='WAVE' else uses string as key
                 from calibDB (first entry) to get wave file
 
+    :param return_header: bool, if True returns header file else just returns
+                          wave file
+
     :return wave: list of the tilt for each order
     """
     if key is None:
@@ -292,8 +295,12 @@ def read_wave_file(p, hdr=None, filename=None, key=None):
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
-    # return the wave file
-    return wave
+
+    if return_header:
+        return wave, hdict
+    else:
+        # return the wave file
+        return wave
 
 
 def read_flat_file(p, hdr=None, filename=None, key=None):
