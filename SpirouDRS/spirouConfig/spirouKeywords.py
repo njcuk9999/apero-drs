@@ -87,7 +87,12 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_version',
             'kw_root_drs_loc',
             'kw_root_drs_flat',
-            'kw_root_drs_hc']
+            'kw_root_drs_hc',
+            'kw_TH_LL_D',
+            'kw_TH_NAXIS1',
+            'kw_TH_NAXIS2',
+            'kw_TH_ORD_N']
+
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
               'DRS_VERSION',
