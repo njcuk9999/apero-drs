@@ -397,7 +397,7 @@ def get_file_name(p, key, hdr=None, filename=None):
     else:
         c_database = p['calibDB']
 
-    # Check that "TILT" is in calib database and assign value if it is
+    # Check that "KEY" is in calib database and assign value if it is
     if filename is not None:
         read_file = filename
     else:
@@ -408,7 +408,7 @@ def get_file_name(p, key, hdr=None, filename=None):
                     'for time<{1}')
             WLOG('error', p['log_opt'], emsg.format(key, p['max_time_human']))
             rawfilename = ''
-        # construct tilt filename
+        # construct filename
         read_file = os.path.join(p['reduced_dir'], rawfilename)
     # read file and return
     return read_file

@@ -87,7 +87,12 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_version',
             'kw_root_drs_loc',
             'kw_root_drs_flat',
-            'kw_root_drs_hc']
+            'kw_root_drs_hc',
+            'kw_TH_LL_D',
+            'kw_TH_NAXIS1',
+            'kw_TH_NAXIS2',
+            'kw_TH_ORD_N']
+
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
               'DRS_VERSION',
@@ -145,7 +150,7 @@ kw_root_drs_flat = ['FF', None, '']
 kw_root_drs_hc = ['LMP', None, '']
 
 # -----------------------------------------------------------------------------
-# Required header keys
+# Required header keys (main fits file)
 # -----------------------------------------------------------------------------
 
 # Define the key to get the data fits file type
@@ -167,6 +172,23 @@ kw_GAIN = ['GAIN', None, '']
 
 # define the gain HEADER key (used to get value only)
 kw_EXPTIME = ['EXPTIME', None, '']
+
+
+# -----------------------------------------------------------------------------
+# Required header keys (other files)
+# -----------------------------------------------------------------------------
+
+# the number of orders used in the TH line list                      [WAVE_AB]
+kw_TH_ORD_N = ['TH_ORD_N', None, '']
+
+# the number of fit coefficients from the TH line list fit           [WAVE_AB]
+kw_TH_LL_D = ['TH_LL_D', None, '']
+
+# the x-axis dimension size for the TH line list file                [WAVE_AB]
+kw_TH_NAXIS1 = ['NAXIS1', None, '']
+
+# the y-axis dimension size for the THE line list file               [WAVE_AB]
+kw_TH_NAXIS2 = ['NAXIS2', None, '']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -362,6 +384,54 @@ def check_keyword_format(key, value):
                 'and \n\tstring is any valid python str object.')
         raise spirouConfig.ConfigError(emsg.format(key, __NAME__),
                                        level='error')
+
+
+def get_keyword_values_from_header(p, hdict, keys, filename=None):
+    """
+    Gets a keyword or keywords from a header or dictionary
+
+    :param p: parameter dictionary, the constants parameter dictionary
+    :param hdict: dictionary, raw dictionary or FITS rec header file containing
+                  all the keys in "keys" (spirouConfig.ConfigError raised if
+                  any key does not exist)
+    :param keys: list of strings or list of lists, the keys to find in "hdict"
+                 OR a list of keyword lists ([key, value, comment])
+    :param filename: string or None, if defined when an error is caught the
+                     filename is logged, this filename should be where the
+                     fits rec header is from (or where the dictionary was
+                     compiled from) - if not from a file this should be left
+                     as None
+    :return values: list, the values in the header for the keys
+                    (size = len(keys))
+    """
+
+    # deal with a non-list set of keys
+    if type(keys) not in [list, np.ndarray]:
+        keys = [keys]
+
+    # try to get values
+    values = []
+    for key in keys:
+        # see if key is a keyword list
+        if type(key) in [list, np.ndarray]:
+            key = p[key][0]
+        # try to get key from hdict
+        try:
+            values.append(hdict[key])
+        # if we cannot find the key then raise a config error
+        except ValueError:
+            if filename is not None:
+                emsg = 'key "{0}" is required in the header of file {1}'
+                eargs = [key, filename]
+            else:
+                emsg = 'key "{0}" is required in the "hdict"'
+                eargs = [key]
+            raise spirouConfig.ConfigError(emsg.format(*eargs), level='error')
+    # return values
+    return values
+
+
+
 
 
 # =============================================================================

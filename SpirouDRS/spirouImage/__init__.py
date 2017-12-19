@@ -97,6 +97,8 @@ ReadData = spirouFITS.readdata
 
 ReadImage = spirouFITS.readimage
 
+ReadTable = spirouTable.read_table
+
 # Reads the image 'fitsfilename' defined in p and adds files defined in
 # 'arg_file_names' if add is True
 ReadImageAndCombine = spirouFITS.readimage_and_combine
