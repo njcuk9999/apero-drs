@@ -623,7 +623,7 @@ def coravelation(p, loc):
     ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
     coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
 
-
+    # TODO: finish function
 
 
 # =============================================================================
