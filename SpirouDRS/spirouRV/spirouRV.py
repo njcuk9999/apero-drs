@@ -838,7 +838,7 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
 
 
 # Sp_Flux, Sp_ll, Sp_Dll, blaze, Mask_blue, Mask_red, Mask_w, i_blue_masques, i_red_masques, i_line_ctr, det_noise
-def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
+def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
                   i_line_ctr, det_noise):
     # get sizes of arrays
     nx = len(flux)
