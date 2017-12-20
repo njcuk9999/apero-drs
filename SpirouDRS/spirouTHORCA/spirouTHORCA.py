@@ -67,12 +67,12 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
         nbo, degll, xsize = 0, 0, 0
 
     # get the coefficients from the header
-    coeff_prefix = p['kw_TH_COEFF_PREFIX']
+    coeff_prefix = p['kw_TH_COEFF_PREFIX'][0]
     param_ll = []
     # loop around the orders
     for order_num in range(nbo):
         # loop around the fit degrees
-        for deg_num in range(degll):
+        for deg_num in range(degll + 1):
             # get the row number
             num = (order_num * (degll + 1)) + deg_num
             # get the header key
@@ -168,7 +168,7 @@ def get_dll_from_coefficients(params, nx, nbo):
     # loop around orders
     for order_num in range(nbo):
         # get the coefficients for this order and flip them
-        coeffs = params[order_num][::-1]
+        coeffs = params[order_num]
         # get the y fit using the coefficients for this order and xfit
         # TODO: Check order of params[i]
         # Question: This could be wrong - if fit parameters are order
