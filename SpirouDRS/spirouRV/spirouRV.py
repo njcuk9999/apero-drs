@@ -22,6 +22,7 @@ import os
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
+from SpirouDRS import spirouTHORCA
 
 # =============================================================================
 # Define variables
@@ -572,7 +573,7 @@ def get_ccf_mask(p, loc):
         cols = ['ll_mask_s', 'll_mask_e', 'w_mask']
         ccfmask = spirouImage.ReadTable(filename, fmt='ascii', colnames=cols)
     except IOError:
-        emsg = 'Template file: {0} not found, unstable to proceed'
+        emsg = 'Template file: "{0}" not found, unable to proceed'
         WLOG('error', p['log_opt'], emsg.format(filename))
         ccfmask = None
     # log that we are using a specific RV template with x rows
@@ -602,7 +603,7 @@ def get_ccf_mask(p, loc):
     loc['w_mask'] = w_mask
     # set source
     source = __NAME__ + '/get_ccf_mask()'
-    loc.set_sources(['ll_mask_d', 'll_mask_ctr, w_mask'], source)
+    loc.set_sources(['ll_mask_d', 'll_mask_ctr', 'w_mask'], source)
     # return loc
     return loc
 
@@ -610,21 +611,414 @@ def get_ccf_mask(p, loc):
 def coravelation(p, loc):
 
     # get constants from p
-    berv = p['berv']
+    berv = p['ccf_berv']
+    berv_max = p['ccf_berv_max']
+    trv = p['target_rv']
+    ccf_width = p['ccf_width']
+    ccf_step = p['ccf_step']
+    det_noise = p['ccf_det_noise']
 
     # get data from loc
-    ll_map = loc['wave']
-    coeff_ll = loc['param_ll']
+    ll_map, coeff_ll = loc['wave'], loc['param_ll']
+    ll_mask_ctr, ll_mask_d = loc['ll_mask_ctr'], loc['ll_mask_d']
+    w_mask = loc['w_mask']
+    s2d = loc['e2dsff']
+    blaze = loc['blaze']
+
+    # log that we are computing ccf
+    wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
+    WLOG('', p['log_opt'], wmsg.format(trv))
 
     # speed of light in km/s
     c = constants.c.value / 1000.0
 
+    # create a rv ccf range
+    rv_ccf = np.arange(trv - ccf_width, trv + ccf_width + ccf_step, ccf_step)
+
     # calculate modified map
     ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    # calculate modified coefficients
     coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
+    # get the differential map
+    dll_map = spirouTHORCA.Getdll(coeff_ll_b, len(ll_map[0]), len(coeff_ll))
+
+    # define some constants for loop
+    constant1 = (1 + 1.55e-8) * (1 + berv_max/c)
+    constant2 = (1 + 1.55e-8) * (1 - berv_max/c)
+    rvshift = 1 + rv_ccf/c
+
+    # storage for loop
+    orders = []
+    ccf_all = []
+    ccf_noise_all = []
+    ccf_all_fit = []
+    ccf_max = []
+    ccf_all_results = []
+    pix_passed_all = []
+    ll_range_all = []
+    tot_line = []
+
+    # loop around the orders
+    for order_num in range(len(ll_map)):
+        # get the line list limits
+        ll_min = ll_map[order_num, 1] * constant1 / rvshift[0]
+        ll_max = ll_map[order_num, -1] * constant2 / rvshift[-1]
+        # define mask (mask centers must be inside ll_min and ll_max
+        cond = (ll_mask_ctr - 0.5 * ll_mask_d) > ll_min
+        cond &= (ll_mask_ctr + 0.5 * ll_mask_d) < ll_max
+        # mask mask_ctr, mask_d and w_mask
+        ll_sub_mask_ctr = ll_mask_ctr[cond]
+        ll_sub_mask_d = ll_mask_d[cond]
+        w_sub_mask = w_mask[cond]
+        # if we have values that meet the "cond" condition then we can do CCF
+        if np.sum(cond) > 0:
+            ccf_args = [ll_sub_mask_ctr, ll_sub_mask_d, w_sub_mask,
+                        ll_map_b[order_num], s2d[order_num],
+                        dll_map[order_num], blaze[order_num],
+                        rv_ccf, det_noise]
+            ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
+        else:
+            # else append empty stats
+            ll_range, pix_passed = 0.0, 1.0
+            ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+            ccf_o_results = np.zeros(4)
+
+        # append to storage
+        orders.append(order_num)
+        tot_line.append(len(w_sub_mask))
+        ccf_all.append(ccf_o)
+        ccf_noise_all.append(ccf_noise)
+        ccf_max.append(np.max(ccf_o))
+        ccf_all_fit.append(ccf_o_fit)
+        ccf_all_results.append(ccf_o_results)
+        pix_passed_all.append(pix_passed)
+        ll_range_all.append(ll_range)
+
 
     # TODO: finish function
 
+
+
+def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
+                  rv_ccf, det_noise):
+
+
+
+    # speed of light in km/s
+    c = constants.c.value / 1000.0
+
+    # constants
+    sp_ll_dll = sp_ll + sp_dll*0.5
+    mask_ll_d1 = mask_ll - 0.5 * mask_d
+    mask_ll_d2 = mask_ll + 0.5 * mask_d
+    rv_corr = 1 + rv_ccf/c
+    # get the line centers
+    line_ctr = mask_ll * (1 + rv_ccf[int(len(rv_ccf) / 2)] / c)
+    index_line_ctr = np.searchsorted(sp_ll_dll, line_ctr) + 1
+
+    # loop around each rv in rv_ccf
+    ccf, ccf_noise = [], []
+    pix, llrange = 0.0, 0.0
+    for it in range(len(rv_ccf)):
+        # ge the blue and red ends of each line
+        mask_blue = mask_ll_d1 * rv_corr[it]
+        mask_red = mask_ll_d2 * rv_corr[it]
+        # get the indices for the blue and red ends of each line
+        index_mask_blue = np.searchsorted(sp_ll_dll, mask_blue) + 1
+        index_mask_red = np.searchsorted(sp_ll_dll, mask_red) + 1
+        # work out the correlation of each bin
+        cargs = [sp_flux, sp_ll, sp_dll, blaze, mask_blue, mask_red, mask_w,
+                 index_mask_blue, index_mask_red, index_line_ctr, det_noise]
+
+        out, pix, llrange, sigout = raw_correlbin(*cargs)
+        ccf.append(out), ccf_noise.append(sigout)
+    # return the ccf, pix, llrange and ccf_noise
+    return ccf, pix, llrange, ccf_noise
+
+
+# Sp_Flux, Sp_ll, Sp_Dll, blaze, Mask_blue, Mask_red, Mask_w, i_blue_masques, i_red_masques, i_line_ctr, det_noise
+def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
+                  i_line_ctr, det_noise):
+    # get sizes of arrays
+    nx = len(flux)
+    nfind = len(ll_s)
+    # set up outputs
+    out_ccf = 0.0
+    pix = 0.0
+    llrange = 0.0
+    ccf_noise = 0.0
+    # loop around nfind 1 to nfind +1 (+1 for python loop)
+    for it in range(1, nfind + 1):
+        # adjust from fortran indexing to python indexing
+        ft = it - 1
+
+        # get indices
+        start, end = i_start[ft], i_end[ft]
+        center = i_line_ctr[ft]
+        weight = ll_wei[ft]
+
+        # adjust from fortran indexing to python indexing
+        start -= 1
+        end -= 1
+        center -= 1
+
+        # if the end and start index are the same
+        if start == end:
+            # pix value = take the difference over the derivative
+            pix_s = (ll_e[ft] - ll_s[ft]) / dll[start]
+            # output ccf calculation
+            out = pix_s * flux[start] / blaze[start]
+            out_ccf += (out * weight * blaze[center])
+            # pixel calculation
+            pix += (pix_s * weight)
+            llrange += (pix_s * dll[start] * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_s * det_noise**2
+            ccf_noise += ((noise1 + noise2) * weight**2)
+        # if start+1 == end
+        elif (start + 1) == end:
+            # pix value = start + 0.5 * derivative - Mask_blue/derivative
+            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
+            # pix value = (end - (start + derivative)) /derivative
+            pix_e = (ll_e[ft] - ll[start] - dll[start]*0.5) / dll[end]
+            # output ccf calculation
+            out1 = pix_s * flux[start] / blaze[start]
+            out2 = pix_e * flux[end] / blaze[end]
+            out_ccf += ((out1 + out2) * weight * blaze[center])
+            # pixel calculation
+            pix += ((pix_s + pix_e) * weight)
+            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_e * np.abs(flux[end])
+            noise3 = (pix_s + pix_e) * det_noise**2
+            ccf_noise += (noise1 + noise2 + noise3) * weight**2
+        # else
+        else:
+            # pix value = start + 0.5 * derivative - Mask_blue/derivative
+            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
+            # pix value = (end - (start + derivative)) /derivative
+            pix_e = (ll_e[ft] - ll[end - 1] - dll[end - 1]*0.5) / dll[end]
+            # output ccf calculation
+            out1 = pix_s * flux[start]/blaze[start]
+            out2 = pix_e * flux[end]/blaze[end]
+            out_ccf += ((out1 + out2) * weight * blaze[center])
+            # pixel calculation
+            pix += ((pix_s + pix_e) * weight)
+            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_e * np.abs(flux[end])
+            noise3 = (pix_s + pix_e) * det_noise**2
+            ccf_noise += (noise1 + noise2 + noise3) * weight**2
+            # loop around start + 1 to end - 1 + 1 (+1 for python loop)
+
+            # TODO: THIS IS WHERE I AM AT
+
+            for i in range(start + 1, end - 1 + 1):
+                # adjust from fortran indexing to python indexing
+                j = i - 1
+
+                # output ccf calculation
+                out_ccf += (flux[j]/blaze[j]) * blaze[center] * weight
+                # pixel calculation
+                pix += weight
+                llrange += (dll[j] * weight)
+                # ccf noise calculation
+                noise1 = np.abs(flux[j])
+                noise2 = det_noise**2
+                ccf_noise +=  (noise1 + noise2) * weight**2
+
+    # sqrt the noise
+    ccf_noise = np.sqrt(ccf_noise)
+    # return parameters
+    return out_ccf, pix, llrange, ccf_noise
+
+
+
+# Sp_Flux, Sp_ll, Sp_Dll, blaze, Mask_blue, Mask_red, Mask_w, i_blue_masques, i_red_masques, i_line_ctr, det_noise
+def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
+                  i_line_ctr, det_noise):
+    # get sizes of arrays
+    nx = len(flux)
+    nfind = len(ll_s)
+    # set up outputs
+    out_ccf = 0.0
+    pix = 0.0
+    llrange = 0.0
+    ccf_noise = 0.0
+
+    # three conditions
+
+    cond2 = (i_start+1) == i_end
+    cond3 = ~(cond1 | cond2)
+
+    # set up storage
+    pix_s = np.zeros(nfind)
+    pix_e = np.zeros(nfind)
+    out = np.zeros(nfind)
+    noise = np.zeros(nfind)
+
+    # get starts and ends
+
+
+    # -------------------------------------------------------------------------
+    # condition   start = end
+    # -------------------------------------------------------------------------
+    # condition definition
+    cond1 = i_start == i_end
+    # define masked arrays
+    dll_start = (dll[i_start])[cond1]
+    flux_start = (flux[i_start])[cond1]
+    blaze_start = (blaze[i_start])[cond1]
+    blaze_cent = (blaze[i_line_ctr])[cond1]
+    weight = ll_wei[cond1]
+    # define intermediates
+    pix_s[cond1] = (ll_e[cond1] - ll_s[cond1]) / dll_start
+    out[cond1] = pix_s[cond1] * flux_start / blaze_start
+    noise[cond1] = pix_s[cond1] * np.abs(flux_start)
+    noise[cond1] += pix_s[cond1] * det_noise**2
+    # calculate sums
+    out_ccf += np.sum(out[cond1] * weight * blaze_cent)
+    pix += np.sum(pix_s[cond1] * weight)
+    llrange += np.sum(pix_s[cond1] * dll_start * weight)
+    ccf_noise += np.sum( noise[cond1] * weight**2)
+    # -------------------------------------------------------------------------
+    # condition   start + 1 = end
+    # -------------------------------------------------------------------------
+    # condition definition
+    cond2 = (i_start + 1) == i_end
+    # define masked arrays
+    ll_start = (ll[i_start])[cond2]
+    ll_end = (ll[i_end])[cond2]
+    dll_start = (dll[i_start])[cond2]
+    dll_end = (dll[i_end])[cond2]
+    flux_start = (flux[i_start])[cond2]
+    flux_end = (flux[i_end])[cond2]
+    blaze_start = (blaze[i_start])[cond2]
+    blaze_end = (blaze[i_end])[cond2]
+    blaze_cent = (blaze[i_line_ctr])[cond2]
+    weight = ll_wei[cond2]
+    # define intermediates
+    pix_s[cond2] = (ll_start + (0.5 * dll_start) + ll_s[cond2]) / dll_start
+    pix_e[cond2] = (ll_end - ll_start - (0.5 * dll_start)) / dll_end
+    out[cond2] = pix_s[cond2] * flux_start / blaze_start
+    out[cond2] += pix_e[cond2] * flux_end / blaze_end
+    noise[cond2] = pix_s[cond2] * np.abs(flux_start)
+    noise[cond2] += pix_e[cond2] * np.abs(flux_end)
+    noise[cond2] += (pix_s[cond2] + pix_e[cond2]) * det_noise**2
+    llrangetmp = (pix_s[cond2] * dll_start + pix_e[cond2] * dll_end)
+    # calculate sums
+    out_ccf += out[cond2] * weight * blaze_cent
+    pix += (pix_s[cond2] + pix_e[cond2]) * weight
+    llrange += np.sum(llrangetmp * weight)
+    ccf_noise += np.sum(noise[cond2] * weight**2)
+    # -------------------------------------------------------------------------
+    # condition   not (cond1 or cond2)
+    # -------------------------------------------------------------------------
+    # condition definition
+    cond3 = ~(cond1 | cond2)
+    # define masked arrays
+    ll_start = (ll[i_start])[cond3]
+    ll_end = (ll[i_end])[cond3]
+    ll_end1 = (ll[i_end - 1])[cond3]
+    dll_start = (dll[i_start])[cond3]
+    dll_end = (dll[i_end])[cond3]
+    dll_end1 = (dll[i_end - 1])[cond3]
+    flux_start = (flux[i_start])[cond3]
+    flux_end = (flux[i_end])[cond3]
+    blaze_start = (blaze[i_start])[cond3]
+    blaze_end = (blaze[i_end])[cond3]
+    blaze_cent = (blaze[i_line_ctr])[cond3]
+    weight = ll_wei[cond3]
+    # define intermediates
+    pix_s[cond3] = (ll_start + (dll_start * 0.5) - ll_s[cond3]) / dll_start
+    pix_e[cond3] = (ll_e[cond3] - ll_end1 - (0.8 * dll_end1)) / dll_end
+    out[cond3] = pix_s[cond3] * flux_start/blaze_start
+    out[cond3] += pix_e[cond3] * flux_end/blaze_end
+    noise[cond3] = pix_s[cond3] * np.abs(flux_start)
+    noise[cond3] += pix_e[cond3] * np.abs(flux_end)
+    noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise**2
+    llrangetmp = (pix_s[cond3] * dll_start + pix_e[cond3] * dll_end)
+    # calculate sums
+    out_ccf += out[cond3] * weight * blaze_cent
+    pix += (pix_s[cond3] + pix_e[cond3]) * weight
+    llrange += np.sum(llrangetmp * weight)
+    ccf_noise += np.sum(noise[cond3] * weight**2)
+
+    # TODO: THIS IS WHERE I AM AT
+
+    # loop around nfind 1 to nfind +1 (+1 for python loop)
+    for it in range(1, nfind + 1):
+        # adjust from fortran indexing to python indexing
+        ft = it - 1
+
+        # get indices
+        start, end = i_start[ft], i_end[ft]
+        center = i_line_ctr[ft]
+        weight = ll_wei[ft]
+
+        # adjust from fortran indexing to python indexing
+        start -= 1
+        end -= 1
+        center -= 1
+
+        # if start+1 == end
+        if (start + 1) == end:
+            # pix value = start + 0.5 * derivative - Mask_blue/derivative
+            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
+            # pix value = (end - (start + derivative)) /derivative
+            pix_e = (ll_e[ft] - ll[start] - dll[start]*0.5) / dll[end]
+            # output ccf calculation
+            out1 = pix_s * flux[start] / blaze[start]
+            out2 = pix_e * flux[end] / blaze[end]
+            out_ccf += ((out1 + out2) * weight * blaze[center])
+            # pixel calculation
+            pix += ((pix_s + pix_e) * weight)
+            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_e * np.abs(flux[end])
+            noise3 = (pix_s + pix_e) * det_noise**2
+            ccf_noise += (noise1 + noise2 + noise3) * weight**2
+        # else
+        else:
+            # pix value = start + 0.5 * derivative - Mask_blue/derivative
+            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
+            # pix value = (end - (start + derivative)) /derivative
+            pix_e = (ll_e[ft] - ll[end - 1] - dll[end - 1]*0.5) / dll[end]
+            # output ccf calculation
+            out1 = pix_s * flux[start]/blaze[start]
+            out2 = pix_e * flux[end]/blaze[end]
+            out_ccf += ((out1 + out2) * weight * blaze[center])
+            # pixel calculation
+            pix += ((pix_s + pix_e) * weight)
+            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            # ccf noise calculation
+            noise1 = pix_s * np.abs(flux[start])
+            noise2 = pix_e * np.abs(flux[end])
+            noise3 = (pix_s + pix_e) * det_noise**2
+            ccf_noise += (noise1 + noise2 + noise3) * weight**2
+            # loop around start + 1 to end - 1 + 1 (+1 for python loop)
+            for i in range(start + 1, end - 1 + 1):
+                # adjust from fortran indexing to python indexing
+                j = i - 1
+
+                # output ccf calculation
+                out_ccf += (flux[j]/blaze[j]) * blaze[center] * weight
+                # pixel calculation
+                pix += weight
+                llrange += (dll[j] * weight)
+                # ccf noise calculation
+                noise1 = np.abs(flux[j])
+                noise2 = det_noise**2
+                ccf_noise +=  (noise1 + noise2) * weight**2
+
+    # sqrt the noise
+    ccf_noise = np.sqrt(ccf_noise)
+    # return parameters
+    return out_ccf, pix, llrange, ccf_noise
 
 # =============================================================================
 # Start of code

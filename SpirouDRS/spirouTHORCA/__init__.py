@@ -32,3 +32,9 @@ __all__ = []
 
 # get the e2ds line list
 GetE2DSll = spirouTHORCA.get_e2ds_ll
+
+# get the line list from fits
+Getll = spirouTHORCA.get_ll_from_coefficients
+
+# get the derivative of the line list from fits
+Getdll = spirouTHORCA.get_dll_from_coefficients
