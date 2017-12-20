@@ -158,10 +158,10 @@ def read_table(filename, fmt, colnames=None):
         if len(colnames) != len(table.colnames):
             wmsg = ''
             WLOG('error', '', wmsg.format())
-
+        # rename old names to new names
+        oldcols = table.colnames
         for c_it, col in enumerate(colnames):
-            table[col] = np.array(table[table.colnames[c_it]])
-            del table[table.colnames[c_it]]
+            table[oldcols[c_it]].name = col
 
     # return table
     return table
