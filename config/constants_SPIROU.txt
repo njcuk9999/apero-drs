@@ -408,6 +408,22 @@ ic_ccf_width = 30.0
 #  Define the computations steps of the CCF                      - [cal_CCF]
 ic_ccf_step = 0.5
 
+#  Define the weight of the CCF mask                             - [cal_CCF]
+#     (if 1 force all weights equal)
+ic_w_mask_min = 0.0
+
+#  Define the width of the template line                         - [cal_CCF]
+#     (if 0 use natural)
+ic_mask_width = 1.7
+
+#  Define the barycentric Earth RV (berv)                        - [cal_CCF]
+ccf_berv = 0.0
+
+#  Define the maximum barycentric Earth RV                       - [cal_CCF]
+ccf_berv_max = 0.0
+
+#  Define the detector noise to use in the ccf                   - [cal_CCF]
+ccf_det_noise = 100.0
 
 
 # -----------------------------------------------------------------------------

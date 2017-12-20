@@ -165,7 +165,7 @@ class ParamDict(dict):
         if key in self.keys():
             self.sources[key] = source
         else:
-            emsg = ('Source cannot be added for key {0} '
+            emsg = ('Source cannot be added for key "{0}" '
                     '[Not in parmeter dictionary]')
             raise ConfigError(emsg.format(key), level='error')
 

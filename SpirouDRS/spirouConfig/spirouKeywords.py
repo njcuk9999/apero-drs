@@ -88,6 +88,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_root_drs_loc',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
+            'kw_TH_COEFF_PREFIX',
             'kw_TH_LL_D',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
@@ -187,8 +188,11 @@ kw_TH_LL_D = ['TH_LL_D', None, '']
 # the x-axis dimension size for the TH line list file                [WAVE_AB]
 kw_TH_NAXIS1 = ['NAXIS1', None, '']
 
-# the y-axis dimension size for the THE line list file               [WAVE_AB]
+# the y-axis dimension size for the TH line list file                [WAVE_AB]
 kw_TH_NAXIS2 = ['NAXIS2', None, '']
+
+# the prefix to use to get the TH line list fit coefficients         [WAVE_AB]
+kw_TH_COEFF_PREFIX = ['TH_LC', None, '']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -413,8 +417,9 @@ def get_keyword_values_from_header(p, hdict, keys, filename=None):
     values = []
     for key in keys:
         # see if key is a keyword list
-        if type(key) in [list, np.ndarray]:
-            key = p[key][0]
+        if key in p:
+            if type(p[key]) in [list, np.ndarray]:
+                key = p[key][0]
         # try to get key from hdict
         try:
             values.append(hdict[key])

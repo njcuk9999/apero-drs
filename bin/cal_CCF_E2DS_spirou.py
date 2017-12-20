@@ -119,8 +119,9 @@ if 1:
     wave, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
 
     # save to storage
-    loc['wave'] = wave
-    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc['wave'], loc['param_ll'] = wave, param_ll
+    source = __NAME__ + '/main() + spirouTHORCA.GetE2DSll()'
+    loc.set_sources(['wave', 'param_ll'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -135,14 +136,17 @@ if 1:
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
     # reset flat to all ones
-    flat = np.ones((nbo, nx))
+    loc['flat'] = np.ones((nbo, nx))
     # set blaze to all ones
-    blaze = np.ones((nbo, nx))
+    loc['blaze'] = np.ones((nbo, nx))
+    # set sources
+    loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # correct extracted image for flat
     # ----------------------------------------------------------------------
-    e2dsff = e2ds/flat
+    loc['e2dsff'] = e2ds/loc['flat']
+    loc.set_source('e2dsff', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -188,6 +192,8 @@ if 1:
     # ------------------------------------------------------------------
     # Do correlation
     # ------------------------------------------------------------------
+
+    WLOG('error', '', 'Break line # 195')
     # TODO: finish code
 
 
