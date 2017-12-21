@@ -33,6 +33,8 @@ __all__ = ['DeltaVrms2D', 'ReNormCosmic2D', 'CalcRVdrift2D']
 # Compute radial velocity drift between reference spectrum and current spectrum
 CalcRVdrift2D = spirouRV.calculate_rv_drifts_2d
 
+# calculate and fit CCF
+Coravelation = spirouRV.coravelation
 
 # create drift file for drift-peak
 CreateDriftFile = spirouRV.create_drift_file
@@ -44,6 +46,9 @@ DeltaVrms2D = spirouRV.delta_v_rms_2d
 DriftPerOrder = spirouRV.drift_per_order
 
 DriftAllOrders = spirouRV.drift_all_orders
+
+# fit the CCF
+FitCCF = spirouRV.fit_ccf
 
 GetDrift = spirouRV.get_drift
 

@@ -18,6 +18,7 @@ from scipy.stats.stats import pearsonr
 from scipy.optimize import curve_fit
 import warnings
 import os
+import time
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -609,44 +610,62 @@ def get_ccf_mask(p, loc):
 
 
 def coravelation(p, loc):
+    """
 
+    Calculate the CCF and fit it with a Gaussian profile
+
+    :param p: parameter dictionary, parameter dictionary containing the
+              constants
+    :param loc: parameter dictionary, parameter dictionary containing the data
+    :return:
+    """
+    # -------------------------------------------------------------------------
     # get constants from p
+    # -------------------------------------------------------------------------
     berv = p['ccf_berv']
     berv_max = p['ccf_berv_max']
     trv = p['target_rv']
     ccf_width = p['ccf_width']
     ccf_step = p['ccf_step']
     det_noise = p['ccf_det_noise']
+    fit_type = p['ccf_fit_type']
 
+    res_table_file = spirouConfig.Constants.CCF_TABLE_FILE(p)
+    # speed of light in km/s
+    c = constants.c.value / 1000.0
+    # -------------------------------------------------------------------------
     # get data from loc
+    # -------------------------------------------------------------------------
+    # get the wavelengths for the lines and the fit coefficients for each line
     ll_map, coeff_ll = loc['wave'], loc['param_ll']
+    # get the line centers and the line widths
     ll_mask_ctr, ll_mask_d = loc['ll_mask_ctr'], loc['ll_mask_d']
+    # get the line weights
     w_mask = loc['w_mask']
+    # get the flat fielded flux values
     s2d = loc['e2dsff']
+    # get the blaze values
     blaze = loc['blaze']
-
+    # -------------------------------------------------------------------------
     # log that we are computing ccf
     wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
     WLOG('', p['log_opt'], wmsg.format(trv))
-
-    # speed of light in km/s
-    c = constants.c.value / 1000.0
-
+    # -------------------------------------------------------------------------
     # create a rv ccf range
     rv_ccf = np.arange(trv - ccf_width, trv + ccf_width + ccf_step, ccf_step)
-
+    # -------------------------------------------------------------------------
     # calculate modified map
     ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # calculate modified coefficients
     coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # get the differential map
     dll_map = spirouTHORCA.Getdll(coeff_ll_b, len(ll_map[0]), len(coeff_ll))
-
+    # -------------------------------------------------------------------------
     # define some constants for loop
     constant1 = (1 + 1.55e-8) * (1 + berv_max/c)
     constant2 = (1 + 1.55e-8) * (1 - berv_max/c)
     rvshift = 1 + rv_ccf/c
-
+    # -------------------------------------------------------------------------
     # storage for loop
     orders = []
     ccf_all = []
@@ -657,7 +676,16 @@ def coravelation(p, loc):
     pix_passed_all = []
     ll_range_all = []
     tot_line = []
-
+    # -------------------------------------------------------------------------
+    # graph set up
+    if p['DRS_PLOT'] and p['IC_DEBUG']:
+        # start interactive plot
+        sPlt.start_interactive_session()
+        # define a figure
+        fig = sPlt.define_figure()
+    else:
+        fig = None
+    # -------------------------------------------------------------------------
     # loop around the orders
     for order_num in range(len(ll_map)):
         # get the line list limits
@@ -672,17 +700,24 @@ def coravelation(p, loc):
         w_sub_mask = w_mask[cond]
         # if we have values that meet the "cond" condition then we can do CCF
         if np.sum(cond) > 0:
+            # -----------------------------------------------------------------
+            # calculate the CCF
             ccf_args = [ll_sub_mask_ctr, ll_sub_mask_d, w_sub_mask,
                         ll_map_b[order_num], s2d[order_num],
                         dll_map[order_num], blaze[order_num],
                         rv_ccf, det_noise]
             ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
+            # -----------------------------------------------------------------
+            # fit the CCF
+            fit_args = [rv_ccf, np.array(ccf_o), fit_type]
+            ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
         else:
+            # -----------------------------------------------------------------
             # else append empty stats
             ll_range, pix_passed = 0.0, 1.0
             ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
             ccf_o_results = np.zeros(4)
-
+        # ---------------------------------------------------------------------
         # append to storage
         orders.append(order_num)
         tot_line.append(len(w_sub_mask))
@@ -693,16 +728,85 @@ def coravelation(p, loc):
         ccf_all_results.append(ccf_o_results)
         pix_passed_all.append(pix_passed)
         ll_range_all.append(ll_range)
+        # ---------------------------------------------------------------------
+        # Plots
+        # ---------------------------------------------------------------------
+        if p['DRS_PLOT'] and len(ll_sub_mask_ctr) > 0 and p['IC_DEBUG']:
+            # Plot rv vs ccf (and rv vs ccf_fit)
+            sPlt.ccf_rv_ccf_plot(rv_ccf, ccf_o, ccf_o_fit, order=order_num,
+                                 fig=fig)
 
-
-    # TODO: finish function
+    # -------------------------------------------------------------------------
+    # convert to arrays
+    orders = np.array(orders)
+    tot_line = np.array(tot_line)
+    ccf_all = np.array(ccf_all)
+    ccf_noise_all = np.array(ccf_noise_all)
+    ccf_max = np.array(ccf_max)
+    ccf_all_fit = np.array(ccf_all_fit)
+    ccf_all_results = np.array(ccf_all_results)
+    pix_passed_all = np.array(pix_passed_all)
+    ll_range_all = np.array(ll_range_all)
+    # -------------------------------------------------------------------------
+    # create table
+    columns = ['order', 'maxcpp', 'nlines', 'contrast', 'RV', 'sig']
+    values = [orders, ccf_max/pix_passed_all, tot_line,
+              np.abs(100*ccf_all_results[:, 0]), ccf_all_results[:, 1],
+              ccf_all_results[:, 2]]
+    formats = ['2.0f', '5.0f', '4.0f', '4.1f', '9.4f', '7.4f']
+    table = spirouImage.MakeTable(columns, values, formats)
+    # save table to file
+    spirouImage.WriteTable(table, res_table_file, fmt='ascii')
+    # -------------------------------------------------------------------------
+    # add outputs to loc
+    loc['rv_ccf'] = rv_ccf
+    loc['ccf'] = ccf_all
+    loc['ccf_max'] = ccf_max
+    loc['pix_passed_all'] = pix_passed_all
+    loc['tot_line'] = tot_line
+    loc['ll_range_all'] = ll_range_all
+    loc['ccf_noise'] = ccf_noise_all
+    loc['ccf_noise'] = ccf_noise_all
+    # set source
+    keys = ['rv_ccf', 'ccf', 'ccf_max', 'pix_passed_all', 'tot_line',
+            'll_range_all', 'ccf_noise']
+    loc.set_sources(keys, __NAME__ + '/coravelation()')
+    # -------------------------------------------------------------------------
+    # return loc
+    return loc
 
 
 
 def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
-                  rv_ccf, det_noise):
+                  rv_ccf, det_noise, mode='fast'):
+    """
 
+    :param mask_ll: numpy array (1D), the centers of the lines to be used
+                    size = (number of lines to use)
+    :param mask_d: numpy array (1D), the widths of the lines to be used
+                   size = (number of lines to use)
+    :param mask_w: numpy array (1D), the weights of each line
+                    size = (number of lines to use)
+    :param sp_ll: numpy array (1D), the wavelength values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param sp_flux: numpy array (1D), the flux values for this order
+                    size = (number of columns in e2ds file [x-dimension])
+    :param sp_dll: numpy array (1D), the derivative of the line list fits for
+                   this order
+                   size = (number of columns in e2ds file [x-dimension])
+    :param blaze: numpy array (1D), the blaze values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param rv_ccf: numpy array (1D), the RV values for this order
+                   size = (2 * ccf_width/ccf_step + 1)
+    :param det_noise: float, the detector noise
+    :param mode: string, if "fast" uses a non-for-loop python function to run
+                 the ccf calculation, if "slow" uses a direct fortran
+                 translation to run the ccf calculation
+    :return:
+    """
 
+    import time
+    times = []
 
     # speed of light in km/s
     c = constants.c.value / 1000.0
@@ -726,19 +830,74 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
         # get the indices for the blue and red ends of each line
         index_mask_blue = np.searchsorted(sp_ll_dll, mask_blue) + 1
         index_mask_red = np.searchsorted(sp_ll_dll, mask_red) + 1
+
+        sss = time.time()
         # work out the correlation of each bin
         cargs = [sp_flux, sp_ll, sp_dll, blaze, mask_blue, mask_red, mask_w,
                  index_mask_blue, index_mask_red, index_line_ctr, det_noise]
+        if mode == 'fast':
+            out, pix, llrange, sigout = correlbin(*cargs)
+        else:
+            out, pix, llrange, sigout = raw_correlbin(*cargs)
 
-        out, pix, llrange, sigout = raw_correlbin(*cargs)
+        times.append(time.time() - sss)
+
         ccf.append(out), ccf_noise.append(sigout)
     # return the ccf, pix, llrange and ccf_noise
     return ccf, pix, llrange, ccf_noise
 
 
-# Sp_Flux, Sp_ll, Sp_Dll, blaze, Mask_blue, Mask_red, Mask_w, i_blue_masques, i_red_masques, i_line_ctr, det_noise
 def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
                   i_line_ctr, det_noise):
+    """
+    Raw (Fortran direct translate) of correlbin
+
+    Timing:
+
+    raw_correlbin
+    523 µs ± 62.8 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+    correlbin
+    126 µs ± 13.5 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+    fortran
+    2.56 µs per loop
+
+    :param flux: numpy array (1D), the flux values for this order
+                 size = (number of columns in e2ds file [x-dimension])
+    :param ll: numpy array (1D), the wavelength values for this order
+               size = (number of columns in e2ds file [x-dimension])
+    :param dll: numpy array (1D), the derivative of the line list fits for
+                this order
+                size = (number of columns in e2ds file [x-dimension])
+    :param blaze: numpy array (1D), the blaze values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param ll_s: numpy array (1D), the wavelength at the blue end of each line
+                 size = (number of lines to use)
+    :param ll_e: numpy array (1D), the wavelength at the red end of each line
+                 size = (number of lines to use)
+    :param ll_wei: numpy array (1D), the weights of each line
+                   size = (number of lines to use)
+    :param i_start: numpy array (1D), the indices ll where ll_s would appear if
+                    inserted and sorted (i.e. the bin position to at the blue
+                    end of each line in the main image)
+                    size = (number of lines to use)
+    :param i_end: numpy array (1D), the indices ll where ll_e would appear if
+                  inserted and sorted (i.e. the bin position to at the red
+                  end of each line in the main image)
+                  size = (number of lines to use)
+    :param i_line_ctr: numpy array (1D), the indices ll where the line centers
+                       would appear if inserted and sorted (i.e. the bin
+                       position to at the red end of each line in the main
+                       image)
+                       size = (number of lines to use)
+    :param det_noise: float, the detector noise
+
+    :return out_ccf: float, the calculated CCF
+    :return pix: float, the last pix value?
+    :return llrange: float, the line list range?
+    :return ccf_noise: float, the calculated CCF noise
+    """
     # get sizes of arrays
     nx = len(flux)
     nfind = len(ll_s)
@@ -758,9 +917,9 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
         weight = ll_wei[ft]
 
         # adjust from fortran indexing to python indexing
-        start -= 1
-        end -= 1
-        center -= 1
+        start = start - 1
+        end = end - 1
+        center = center - 1
 
         # if the end and start index are the same
         if start == end:
@@ -813,13 +972,9 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
             noise3 = (pix_s + pix_e) * det_noise**2
             ccf_noise += (noise1 + noise2 + noise3) * weight**2
             # loop around start + 1 to end - 1 + 1 (+1 for python loop)
-
-            # TODO: THIS IS WHERE I AM AT
-
             for i in range(start + 1, end - 1 + 1):
                 # adjust from fortran indexing to python indexing
                 j = i - 1
-
                 # output ccf calculation
                 out_ccf += (flux[j]/blaze[j]) * blaze[center] * weight
                 # pixel calculation
@@ -836,10 +991,57 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
-
-# Sp_Flux, Sp_ll, Sp_Dll, blaze, Mask_blue, Mask_red, Mask_w, i_blue_masques, i_red_masques, i_line_ctr, det_noise
 def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
                   i_line_ctr, det_noise):
+    """
+    Optimized (Fortran translate) of correlbin
+
+    Timing:
+
+    raw_correlbin
+    523 µs ± 62.8 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
+
+    correlbin
+    126 µs ± 13.5 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+
+    fortran
+    2.56 µs per loop
+
+    :param flux: numpy array (1D), the flux values for this order
+                 size = (number of columns in e2ds file [x-dimension])
+    :param ll: numpy array (1D), the wavelength values for this order
+               size = (number of columns in e2ds file [x-dimension])
+    :param dll: numpy array (1D), the derivative of the line list fits for
+                this order
+                size = (number of columns in e2ds file [x-dimension])
+    :param blaze: numpy array (1D), the blaze values for this order
+                  size = (number of columns in e2ds file [x-dimension])
+    :param ll_s: numpy array (1D), the wavelength at the blue end of each line
+                 size = (number of lines to use)
+    :param ll_e: numpy array (1D), the wavelength at the red end of each line
+                 size = (number of lines to use)
+    :param ll_wei: numpy array (1D), the weights of each line
+                   size = (number of lines to use)
+    :param i_start: numpy array (1D), the indices ll where ll_s would appear if
+                    inserted and sorted (i.e. the bin position to at the blue
+                    end of each line in the main image)
+                    size = (number of lines to use)
+    :param i_end: numpy array (1D), the indices ll where ll_e would appear if
+                  inserted and sorted (i.e. the bin position to at the red
+                  end of each line in the main image)
+                  size = (number of lines to use)
+    :param i_line_ctr: numpy array (1D), the indices ll where the line centers
+                       would appear if inserted and sorted (i.e. the bin
+                       position to at the red end of each line in the main
+                       image)
+                       size = (number of lines to use)
+    :param det_noise: float, the detector noise
+
+    :return out_ccf: float, the calculated CCF
+    :return pix: float, the last pix value?
+    :return llrange: float, the line list range?
+    :return ccf_noise: float, the calculated CCF noise
+    """
     # get sizes of arrays
     nx = len(flux)
     nfind = len(ll_s)
@@ -848,177 +1050,211 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     pix = 0.0
     llrange = 0.0
     ccf_noise = 0.0
-
-    # three conditions
-
-    cond2 = (i_start+1) == i_end
-    cond3 = ~(cond1 | cond2)
-
     # set up storage
     pix_s = np.zeros(nfind)
     pix_e = np.zeros(nfind)
     out = np.zeros(nfind)
     noise = np.zeros(nfind)
 
-    # get starts and ends
-
+    # adjust from fortran indexing to python indexing
+    i_start = i_start - 1
+    i_end = i_end - 1
+    i_line_ctr = i_line_ctr - 1
 
     # -------------------------------------------------------------------------
     # condition   start = end
     # -------------------------------------------------------------------------
     # condition definition
     cond1 = i_start == i_end
-    # define masked arrays
-    dll_start = (dll[i_start])[cond1]
-    flux_start = (flux[i_start])[cond1]
-    blaze_start = (blaze[i_start])[cond1]
-    blaze_cent = (blaze[i_line_ctr])[cond1]
-    weight = ll_wei[cond1]
-    # define intermediates
-    pix_s[cond1] = (ll_e[cond1] - ll_s[cond1]) / dll_start
-    out[cond1] = pix_s[cond1] * flux_start / blaze_start
-    noise[cond1] = pix_s[cond1] * np.abs(flux_start)
-    noise[cond1] += pix_s[cond1] * det_noise**2
-    # calculate sums
-    out_ccf += np.sum(out[cond1] * weight * blaze_cent)
-    pix += np.sum(pix_s[cond1] * weight)
-    llrange += np.sum(pix_s[cond1] * dll_start * weight)
-    ccf_noise += np.sum( noise[cond1] * weight**2)
+    # only continue if we have some terms
+    if np.sum(cond1) > 0:
+        # define masked arrays
+        dll_start = (dll[i_start])[cond1]
+        flux_start = (flux[i_start])[cond1]
+        blaze_start = (blaze[i_start])[cond1]
+        blaze_cent = (blaze[i_line_ctr])[cond1]
+        weight = ll_wei[cond1]
+        # define intermediates
+        pix_s[cond1] = (ll_e[cond1] - ll_s[cond1]) / dll_start
+        out[cond1] = pix_s[cond1] * flux_start / blaze_start
+        noise[cond1] = pix_s[cond1] * np.abs(flux_start)
+        noise[cond1] += pix_s[cond1] * det_noise**2
+        # calculate sums
+        out_ccf += np.sum(out[cond1] * weight * blaze_cent)
+        pix += np.sum(pix_s[cond1] * weight)
+        llrange += np.sum(pix_s[cond1] * dll_start * weight)
+        ccf_noise += np.sum(noise[cond1] * weight**2)
     # -------------------------------------------------------------------------
     # condition   start + 1 = end
     # -------------------------------------------------------------------------
     # condition definition
     cond2 = (i_start + 1) == i_end
-    # define masked arrays
-    ll_start = (ll[i_start])[cond2]
-    ll_end = (ll[i_end])[cond2]
-    dll_start = (dll[i_start])[cond2]
-    dll_end = (dll[i_end])[cond2]
-    flux_start = (flux[i_start])[cond2]
-    flux_end = (flux[i_end])[cond2]
-    blaze_start = (blaze[i_start])[cond2]
-    blaze_end = (blaze[i_end])[cond2]
-    blaze_cent = (blaze[i_line_ctr])[cond2]
-    weight = ll_wei[cond2]
-    # define intermediates
-    pix_s[cond2] = (ll_start + (0.5 * dll_start) + ll_s[cond2]) / dll_start
-    pix_e[cond2] = (ll_end - ll_start - (0.5 * dll_start)) / dll_end
-    out[cond2] = pix_s[cond2] * flux_start / blaze_start
-    out[cond2] += pix_e[cond2] * flux_end / blaze_end
-    noise[cond2] = pix_s[cond2] * np.abs(flux_start)
-    noise[cond2] += pix_e[cond2] * np.abs(flux_end)
-    noise[cond2] += (pix_s[cond2] + pix_e[cond2]) * det_noise**2
-    llrangetmp = (pix_s[cond2] * dll_start + pix_e[cond2] * dll_end)
-    # calculate sums
-    out_ccf += out[cond2] * weight * blaze_cent
-    pix += (pix_s[cond2] + pix_e[cond2]) * weight
-    llrange += np.sum(llrangetmp * weight)
-    ccf_noise += np.sum(noise[cond2] * weight**2)
+    # only continue if we have some terms
+    if np.sum(cond2) > 0:
+        # define masked arrays
+        ll_start = (ll[i_start])[cond2]
+        dll_start = (dll[i_start])[cond2]
+        dll_end = (dll[i_end])[cond2]
+        flux_start = (flux[i_start])[cond2]
+        flux_end = (flux[i_end])[cond2]
+        blaze_start = (blaze[i_start])[cond2]
+        blaze_end = (blaze[i_end])[cond2]
+        blaze_cent = (blaze[i_line_ctr])[cond2]
+        weight = ll_wei[cond2]
+        # define intermediates
+        pix_s[cond2] = (ll_start + (0.5 * dll_start) - ll_s[cond2]) / dll_start
+        pix_e[cond2] = (ll_e[cond2] - ll_start - (0.5 * dll_start)) / dll_end
+        out[cond2] = pix_s[cond2] * flux_start / blaze_start
+        out[cond2] += pix_e[cond2] * flux_end / blaze_end
+        noise[cond2] = pix_s[cond2] * np.abs(flux_start)
+        noise[cond2] += pix_e[cond2] * np.abs(flux_end)
+        noise[cond2] += (pix_s[cond2] + pix_e[cond2]) * det_noise**2
+        llrangetmp = (pix_s[cond2] * dll_start + pix_e[cond2] * dll_end)
+        # calculate sums
+        out_ccf += np.sum(out[cond2] * weight * blaze_cent)
+        pix += np.sum((pix_s[cond2] + pix_e[cond2]) * weight)
+        llrange += np.sum(llrangetmp * weight)
+        ccf_noise += np.sum(noise[cond2] * weight**2)
     # -------------------------------------------------------------------------
     # condition   not (cond1 or cond2)
     # -------------------------------------------------------------------------
     # condition definition
     cond3 = ~(cond1 | cond2)
-    # define masked arrays
-    ll_start = (ll[i_start])[cond3]
-    ll_end = (ll[i_end])[cond3]
-    ll_end1 = (ll[i_end - 1])[cond3]
-    dll_start = (dll[i_start])[cond3]
-    dll_end = (dll[i_end])[cond3]
-    dll_end1 = (dll[i_end - 1])[cond3]
-    flux_start = (flux[i_start])[cond3]
-    flux_end = (flux[i_end])[cond3]
-    blaze_start = (blaze[i_start])[cond3]
-    blaze_end = (blaze[i_end])[cond3]
-    blaze_cent = (blaze[i_line_ctr])[cond3]
-    weight = ll_wei[cond3]
-    # define intermediates
-    pix_s[cond3] = (ll_start + (dll_start * 0.5) - ll_s[cond3]) / dll_start
-    pix_e[cond3] = (ll_e[cond3] - ll_end1 - (0.8 * dll_end1)) / dll_end
-    out[cond3] = pix_s[cond3] * flux_start/blaze_start
-    out[cond3] += pix_e[cond3] * flux_end/blaze_end
-    noise[cond3] = pix_s[cond3] * np.abs(flux_start)
-    noise[cond3] += pix_e[cond3] * np.abs(flux_end)
-    noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise**2
-    llrangetmp = (pix_s[cond3] * dll_start + pix_e[cond3] * dll_end)
-    # calculate sums
-    out_ccf += out[cond3] * weight * blaze_cent
-    pix += (pix_s[cond3] + pix_e[cond3]) * weight
-    llrange += np.sum(llrangetmp * weight)
-    ccf_noise += np.sum(noise[cond3] * weight**2)
+    # only continue if we have some terms
+    if np.sum(cond3) > 0:
+        # define masked arrays
+        ll_start = (ll[i_start])[cond3]
+        ll_end1 = (ll[i_end - 1])[cond3]
+        dll_start = (dll[i_start])[cond3]
+        dll_end = (dll[i_end])[cond3]
+        dll_end1 = (dll[i_end - 1])[cond3]
+        flux_start = (flux[i_start])[cond3]
+        flux_end = (flux[i_end])[cond3]
+        blaze_start = (blaze[i_start])[cond3]
+        blaze_end = (blaze[i_end])[cond3]
+        blaze_cent = (blaze[i_line_ctr])[cond3]
+        weight = ll_wei[cond3]
+        # define intermediates
+        pix_s[cond3] = (ll_start + (dll_start * 0.5) - ll_s[cond3]) / dll_start
+        pix_e[cond3] = (ll_e[cond3] - ll_end1 - (0.8 * dll_end1)) / dll_end
+        out[cond3] = pix_s[cond3] * flux_start/blaze_start
+        out[cond3] += pix_e[cond3] * flux_end/blaze_end
+        noise[cond3] = pix_s[cond3] * np.abs(flux_start)
+        noise[cond3] += pix_e[cond3] * np.abs(flux_end)
+        noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise**2
+        llrangetmp = (pix_s[cond3] * dll_start + pix_e[cond3] * dll_end)
+        # calculate sums
+        out_ccf += out[cond3] * weight * blaze_cent
+        pix += (pix_s[cond3] + pix_e[cond3]) * weight
+        llrange += np.sum(llrangetmp * weight)
+        ccf_noise += np.sum(noise[cond3] * weight**2)
 
-    # TODO: THIS IS WHERE I AM AT
-
-    # loop around nfind 1 to nfind +1 (+1 for python loop)
-    for it in range(1, nfind + 1):
-        # adjust from fortran indexing to python indexing
-        ft = it - 1
-
-        # get indices
-        start, end = i_start[ft], i_end[ft]
-        center = i_line_ctr[ft]
-        weight = ll_wei[ft]
-
-        # adjust from fortran indexing to python indexing
-        start -= 1
-        end -= 1
-        center -= 1
-
-        # if start+1 == end
-        if (start + 1) == end:
-            # pix value = start + 0.5 * derivative - Mask_blue/derivative
-            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
-            # pix value = (end - (start + derivative)) /derivative
-            pix_e = (ll_e[ft] - ll[start] - dll[start]*0.5) / dll[end]
+        for i in range(len(i_start)):
+            start, end = i_start[cond3][i] , i_end[cond3][i]
             # output ccf calculation
-            out1 = pix_s * flux[start] / blaze[start]
-            out2 = pix_e * flux[end] / blaze[end]
-            out_ccf += ((out1 + out2) * weight * blaze[center])
+            out_ccf += np.sum((flux[start:end-1]/blaze[start:end-1]) * weight)
             # pixel calculation
-            pix += ((pix_s + pix_e) * weight)
-            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            pix += np.sum(weight)
+            llrange += np.sum(dll[start:end-1] * weight)
             # ccf noise calculation
-            noise1 = pix_s * np.abs(flux[start])
-            noise2 = pix_e * np.abs(flux[end])
-            noise3 = (pix_s + pix_e) * det_noise**2
-            ccf_noise += (noise1 + noise2 + noise3) * weight**2
-        # else
-        else:
-            # pix value = start + 0.5 * derivative - Mask_blue/derivative
-            pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
-            # pix value = (end - (start + derivative)) /derivative
-            pix_e = (ll_e[ft] - ll[end - 1] - dll[end - 1]*0.5) / dll[end]
-            # output ccf calculation
-            out1 = pix_s * flux[start]/blaze[start]
-            out2 = pix_e * flux[end]/blaze[end]
-            out_ccf += ((out1 + out2) * weight * blaze[center])
-            # pixel calculation
-            pix += ((pix_s + pix_e) * weight)
-            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
-            # ccf noise calculation
-            noise1 = pix_s * np.abs(flux[start])
-            noise2 = pix_e * np.abs(flux[end])
-            noise3 = (pix_s + pix_e) * det_noise**2
-            ccf_noise += (noise1 + noise2 + noise3) * weight**2
-            # loop around start + 1 to end - 1 + 1 (+1 for python loop)
-            for i in range(start + 1, end - 1 + 1):
-                # adjust from fortran indexing to python indexing
-                j = i - 1
-
-                # output ccf calculation
-                out_ccf += (flux[j]/blaze[j]) * blaze[center] * weight
-                # pixel calculation
-                pix += weight
-                llrange += (dll[j] * weight)
-                # ccf noise calculation
-                noise1 = np.abs(flux[j])
-                noise2 = det_noise**2
-                ccf_noise +=  (noise1 + noise2) * weight**2
+            noisetmp = np.abs(flux[start:end-1] + det_noise**2)
+            ccf_noise += np.sum(noisetmp * weight**2)
 
     # sqrt the noise
     ccf_noise = np.sqrt(ccf_noise)
     # return parameters
     return out_ccf, pix, llrange, ccf_noise
+
+
+def fit_ccf(rv, ccf, fit_type):
+    """
+    Fit the CCF to a guassian function
+
+    :param rv: numpy array (1D), the radial velocities for the line
+    :param ccf: numpy array (1D), the CCF values for the line
+    :param fit_type: int, if "0" then we have an absorption line
+                          if "1" then we have an emission line
+
+    :return result: numpy array (1D), the fit parameters in the
+                    following order:
+
+                [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :return ccf_fit: numpy array (1D), the fit values, i.e. the gaussian values
+                     for the fit parameters in "result"
+    """
+    # deal with inconsistent lengths
+    if len(rv) != len(ccf):
+        emsg = ('Error "rv" (len={0}) and "ccf" (len={1}) are not the same '
+                'length (in {2})')
+        eargs = [len(rv), len(ccf), __NAME__ + '/fit_ccf()']
+        WLOG('error', '', emsg.format(*eargs))
+
+    # get constants
+    max_ = np.max(ccf)
+    argmin, argmax = np.argmin(ccf), np.argmax(ccf)
+    diff = max_ - np.min(ccf)
+    rvdiff = rv[1] - rv[0]
+    # set up guess for gaussian fit
+    # if fit_type == 0 then we have absorption lines
+    if fit_type == 0:
+        if np.max(ccf) != 0:
+            a = np.array([-diff/max_, rv[argmin], 4*rvdiff, 0])
+        else:
+            a = np.zeros(4)
+    # else (fit_type == 1) then we have emmision lines
+    else:
+        a = np.array([diff/max_, rv[argmax], 4*rvdiff, 1])
+    # normalise y
+    y = ccf/max_ - 1 + fit_type
+    # x is just the RVs
+    x = rv
+    # uniform weights
+    w = np.ones(len(ccf))
+    # get gaussian fit
+    result, fit = fitgaussian(x, y, weights=w, guess=a)
+
+    ccf_fit = (fit + 1 - fit_type)*max_
+    # return the best guess and the gaussian fit
+    return result, ccf_fit
+
+
+def fitgaussian(x, y, weights=None, guess=None):
+    """
+    Fit a single gaussian to the data "y" at positions "x", points can be
+    weighted by "weights" and an initial guess for the gaussian parameters
+
+    :param x: numpy array (1D), the x values for the gaussian
+    :param y: numpy array (1D), the y values for the gaussian
+    :param weights: numpy array (1D), the weights for each y value
+    :param guess: list of floats, the initial guess for the guassian fit
+                  parameters in the following order:
+
+                  [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :return pfit: numpy array (1D), the fit parameters in the
+                  following order:
+
+                [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :return yfit: numpy array (1D), the fit y values, i.e. the gaussian values
+                  for the fit parameters
+    """
+    # if we don't have weights set them to be all equally weighted
+    if weights is None:
+        weights = np.ones(len(x))
+    # if we aren't provided a guess, make one
+    if guess is None:
+        guess = [np.max(y), np.mean(y), np.std(y), 0]
+    # calculate the fit using curve_fit to the function "gauss_function"
+    with warnings.catch_warnings(record=True) as w:
+        pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,
+                               absolute_sigma=True)
+    # calculate the fit parameters
+    yfit = gauss_function(x, *pfit)
+    # return pfit and yfit
+    return pfit, yfit
+
 
 # =============================================================================
 # Start of code
