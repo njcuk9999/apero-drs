@@ -425,6 +425,12 @@ ccf_berv_max = 0.0
 #  Define the detector noise to use in the ccf                   - [cal_CCF]
 ccf_det_noise = 100.0
 
+#  Define the type of fit for the CCF fit                        - [cal_CCF]
+ccf_fit_type = 0
+
+#  Define the number of orders (from zero to ccf_num_orders_max) - [cal_CCF]
+#      to use to calculate the CCF and RV
+ccf_num_orders_max = 25
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
