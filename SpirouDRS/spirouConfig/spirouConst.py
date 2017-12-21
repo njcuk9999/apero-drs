@@ -225,6 +225,28 @@ def REDUCED_DIR(p):
     return reduced_dir
 
 
+def CCF_TABLE_FILE(p):
+
+    # start with the CCF fits file name
+    newfilename = CCF_FITS_FILE(p)
+    # we want to save the file as a tbl file not a fits file
+    newfilename = newfilename.replace('.fits', '.tbl')
+    # join the new filename to the reduced directory
+    ccf_table_file = os.path.join(p['REDUCED_DIR'], newfilename)
+    # return the new ccf table file location and name
+    return ccf_table_file
+
+
+def CCF_FITS_FILE(p):
+
+    # get new extension using ccf_mask without the extention
+    newext = '_ccf_' + p['ccf_mask'].replace('.mas', '')
+    # set the new filename as the reference file without the _e2ds
+    newfilename = p['reffile'].replace('_e2ds', newext)
+    # return the new ccf table file location and name
+    return newfilename
+
+
 def CONFIG_KEY_ERROR(key, location=None):
 
     if location is None:

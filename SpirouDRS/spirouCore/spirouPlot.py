@@ -56,8 +56,13 @@ def end_interactive_session(interactive=False):
         plt.close()
 
 
+def define_figure(num=1):
+    return plt.figure(num)
+
+
 def closeall():
     plt.close('all')
+
 
 # =============================================================================
 # dark plotting functions
@@ -670,7 +675,7 @@ def ext_spectral_order_plot(p, loc):
 
 
 # =============================================================================
-# extract plotting function
+# drift plotting function
 # =============================================================================
 def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     # get constants
@@ -726,6 +731,7 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
         plt.show()
         plt.close()
 
+
 def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     # get data from loc
     deltatime = loc['deltatime']
@@ -764,6 +770,7 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     if not plt.isinteractive():
         plt.show()
         plt.close()
+
 
 def drift_peak_plot_dtime_against_drift(p, loc):
     # get data from loc
@@ -952,8 +959,34 @@ def create_separated_scaled_image(image, axis=0):
     return newimage, scale
 
 
+# =============================================================================
+# CCF plotting function
+# =============================================================================
+def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
 
-
+    if fig is None:
+        fig = plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(x, y, label='data', marker='x', linestyle='none', color='k')
+    frame.plot(x, yfit, label='fit', color='r')
+    # set title labels limits
+    title = 'CCF plot'
+    if order is not None:
+        title += 'Order {0}'.format(order)
+    frame.set(xlabel='Rv [km/s]', ylabel='CCF', title=title)
+    # set legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+    # pause
+    if pause:
+        time.sleep(1.0)
 
 
 # =============================================================================

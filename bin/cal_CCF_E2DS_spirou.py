@@ -164,9 +164,9 @@ if 1:
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
     WLOG('info', p['log_opt'], wmsg.format(p['fiber'], wmeanref))
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Reference plots
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     if p['DRS_PLOT']:
         # start interactive session if needed
         sPlt.start_interactive_session()
@@ -175,9 +175,9 @@ if 1:
         # plot photon noise uncertainty
         sPlt.drift_plot_photon_uncertainty(p, loc)
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Get template RV (from ccf_mask)
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # log that we are getting the template used for CCF computation
     wmsg = 'Template used for CCF computation: {0}'
     WLOG('info', p['log_opt'], wmsg.format(p['ccf_mask']))
@@ -189,13 +189,87 @@ if 1:
         loc['ll_mask_ctr'] *= 1000.0
         loc['ll_mask_d'] *= 1000.0
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Do correlation
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # calculate and fit the CCF
+    loc = spirouRV.Coravelation(p, loc)
 
-    WLOG('error', '', 'Break line # 195')
-    # TODO: finish code
+    # ----------------------------------------------------------------------
+    # Correlation stats
+    # ----------------------------------------------------------------------
+    # get the maximum number of orders to use
+    nbmax = p['ccf_num_orders_max']
+    # get the average ccf
+    loc['average_ccf'] = np.sum(loc['ccf'][: nbmax], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['average_ccf']/np.max(loc['average_ccf'])
+    # get the fit for the normalized average ccf
+    ccf_res, ccf_fit = spirouRV.FitCCF(loc['rv_ccf'], normalized_ccf,
+                                       fit_type=0)
+    loc['ccf_res'] = ccf_res
+    loc['ccf_fit'] = ccf_fit
+    # get the max cpp
+    loc['maxcpp'] = np.sum(loc['ccf_max'])/np.sum(loc['pix_passed_all'])
+    # get the RV value from the normalised average ccf fit center location
+    loc['rv'] = float(ccf_res[1])
+    # get the contrast (ccf fit amplitude)
+    loc['contrast'] = np.abs(100*ccf_res[0])
+    # get the FWHM value
+    loc['fwhm'] = ccf_res[2] * 2.3548
+    # ----------------------------------------------------------------------
+    # set the source
+    keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm',
+            'ccf_res', 'ccf_fit']
+    loc.set_sources(keys, __NAME__ + '/main()')
+    # ----------------------------------------------------------------------
+    # log the stats
+    wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] '
+            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+    wargs = [loc['contrast'], loc['rv'], loc['fwhm'], loc['maxcpp']]
+    WLOG('info', p['log_opt'], wmsg.format(*wargs))
 
+    # ----------------------------------------------------------------------
+    # rv ccf plot
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # Plot rv vs ccf (and rv vs ccf_fit)
+        sPlt.ccf_rv_ccf_plot(loc['rv_ccf'], normalized_ccf, ccf_fit)
+
+    # ----------------------------------------------------------------------
+    # archive ccf
+    # ----------------------------------------------------------------------
+    # construct folder and filename
+    reducedfolder = p['reduced_dir']
+    corfile = spirouConfig.Constants.CCF_FITS_FILE(p)
+    # log that we are archiving the CCF on file
+    WLOG('', p['log_opt'], 'Archiving CCF on file {0}'.format(corfile))
+    # get constants from p
+    mask = p['ccf_mask']
+    # if file exists remove it
+    if os.path.exists(corfile):
+        os.remove(corfile)
+    # add the average ccf to the end of ccf
+    data = np.vstack([loc['ccf'], loc['average_ccf']])
+    # add keys
+    hdict = dict()
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_CTYPE'], value='km/s')
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_CRVAL'], value=loc['rv_ccf'][0])
+    # the rv step
+    rvstep = np.abs(loc['rv_ccf'][0] - loc['rv_ccf'][1])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_CDELT'], value=rvstep)
+    # add stats
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_RV'], value=loc['ccf_res'][1])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_RVC'], value=loc['rv'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_FWHM'], value=loc['fwhm'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_CONTRAST'],
+                               value=loc['contrast'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_MAXCPP'], value=loc['maxcpp'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_MASK'], value=p['ccf_mask'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCF_LINES'],
+                               value=np.sum(loc['tot_line']))
+    # write image and add header keys (via hdict)
+    spirouImage.WriteImage(os.path.join(reducedfolder, corfile), data, hdict)
 
     # ----------------------------------------------------------------------
     # End Message
