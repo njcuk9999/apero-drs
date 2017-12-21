@@ -56,6 +56,16 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BNFLAT',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
+            'kw_CCF_CDELT',
+            'kw_CCF_CONTRAST',
+            'kw_CCF_CRVAL',
+            'kw_CCF_CTYPE',
+            'kw_CCF_FWHM',
+            'kw_CCF_LINES',
+            'kw_CCF_MASK',
+            'kw_CCF_MAXCPP',
+            'kw_CCF_RV',
+            'kw_CCF_RVC',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -82,17 +92,17 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_LOC_RMS_WID',
             'kw_LOC_SMAXPTS_CTR',
             'kw_LOC_SMAXPTS_WID',
-            'kw_TILT',
             'kw_RDNOISE',
-            'kw_version',
-            'kw_root_drs_loc',
-            'kw_root_drs_flat',
-            'kw_root_drs_hc',
             'kw_TH_COEFF_PREFIX',
             'kw_TH_LL_D',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
-            'kw_TH_ORD_N']
+            'kw_TH_ORD_N',
+            'kw_TILT',
+            'kw_root_drs_flat',
+            'kw_root_drs_hc',
+            'kw_root_drs_loc',
+            'kw_version']
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -315,6 +325,21 @@ kw_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
 # fraction of bad pixels with all criteria
 kw_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
 
+
+# -----------------------------------------------------------------------------
+# Define cal_CCF variables
+# -----------------------------------------------------------------------------
+
+kw_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
+kw_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
+kw_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
+kw_CCF_RV = ['CCFRV', 0, 'Baryc RV (no drift correction) (km/s)']
+kw_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
+kw_CCF_FWHM = ['CCFFWHM', 0, 'FWHM of CCF (km/s)']
+kw_CCF_CONTRAST = ['CCFCONTR', 0, 'Contrast of  CCF (%)']
+kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
+kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
+kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
 
 # =============================================================================
 # Define functions (Do not change)
