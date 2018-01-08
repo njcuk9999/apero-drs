@@ -31,11 +31,29 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = []
 # -----------------------------------------------------------------------------
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
+UNIT_TEST_CAL_BADPIX = utf.UNIT_TEST_CAL_BADPIX
 
+UNIT_TEST_CAL_DARK = utf.UNIT_TEST_CAL_DARK
 
+UNIT_TEST_CAL_LOC_RAW = utf.UNIT_TEST_CAL_LOC_RAW
+
+UNIT_TEST_CAL_SLIT = utf.UNIT_TEST_CAL_SLIT
+
+UNIT_TEST_CAL_FF_RAW = utf.UNIT_TEST_CAL_FF_RAW
+
+UNIT_TEST_CAL_EXTRACT = utf.UNIT_TEST_CAL_EXTRACT
+
+UNIT_TEST_CAL_DRIFT_RAW = utf.UNIT_TEST_CAL_DRIFT_RAW
+
+UNIT_TEST_CAL_DRIFT_E2DS = utf.UNIT_TEST_CAL_DRIFT_E2DS
+
+UNIT_TEST_CAL_DRIFTPEAK_E2DS = utf.UNIT_TEST_CAL_DRIFTPEAK_E2DS
+
+UNIT_TEST_CAL_CCF_E2DS = utf.UNIT_TEST_CAL_CCF_E2DS
 
 
 # =============================================================================
