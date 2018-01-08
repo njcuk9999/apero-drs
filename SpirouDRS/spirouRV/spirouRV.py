@@ -165,7 +165,8 @@ def create_drift_file(p, loc):
     # get constants
     border = p['drift_peak_border_size']
     size = p['drift_peak_fpbox_size']
-    minimum_norm_fp_peak = p['drift_peak_min_nfp_peak']
+    # minimum_norm_fp_peak = p['drift_peak_min_nfp_peak']
+
     # get the reference data and the wave data
     speref = np.array(loc['speref'])
     wave = loc['wave']
