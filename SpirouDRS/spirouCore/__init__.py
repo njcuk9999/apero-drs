@@ -26,6 +26,9 @@ __NAME__ = 'spirouCore.__init__()'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
+# define imports using asterisk
 __all__ = ['wlog',
            'sPlt']
 

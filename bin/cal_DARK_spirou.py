@@ -32,6 +32,8 @@ __NAME__ = 'cal_DARK_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
@@ -45,10 +47,11 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
-    # run specific start up
-    p = spirouStartup.RunStartup(p, kind='dark', prefixes=['dark_dark'])
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.InitialFileSetup(p, kind='dark', prefixes=['dark_dark'])
+
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
     p.set_source('dprtype', __NAME__ + '/main()')

@@ -36,6 +36,8 @@ __NAME__ = 'spirouImage.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
 
 
@@ -481,7 +483,7 @@ def get_tilt(pp, lloc, image):
         #   and the middle pixel + 50 * p['COI']
         coi = int(os_fac)
         pos = int(image.shape[1] * coi / 2)
-        delta = np.argmax(cori[pos:pos + 50 * coi]) / coi
+        delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
         # get the angle of the tilt
         angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['offset'])))
         # log the tilt and angle

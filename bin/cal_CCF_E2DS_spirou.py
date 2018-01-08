@@ -33,6 +33,8 @@ __NAME__ = 'cal_CCF_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
@@ -46,13 +48,12 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
          step=None):
-    pass
-if 1:
-    night_name, reffile = '20170710', 'fp_fp02a203_e2ds_AB.fits'
-    mask, rv, width, step = 'UrNe.mas', 0, 10, 0.1
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+
     # deal with arguments being None (i.e. get from sys.argv)
     pos = [0, 1, 2, 3, 4]
     fmt = [str, str, float, float, float]
@@ -65,7 +66,7 @@ if 1:
     customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
     # define default arguments (if ccf_width and ccf_step are not defined
     # in function call or run time arguments
     if 'ccf_width' not in p:
@@ -277,7 +278,7 @@ if 1:
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
-    # return locals()
+    return locals()
 
 # =============================================================================
 # Start of code

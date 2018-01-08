@@ -16,8 +16,8 @@ Version 0.0.0
 from __future__ import division
 import time
 import sys
-import matplotlib.pyplot as plt
 
+from SpirouDRS import spirouConfig
 from . import unit_test_functions as utf
 
 if sys.version_info.major == 2:
@@ -27,8 +27,16 @@ if sys.version_info.major == 2:
 # =============================================================================
 # Define variables
 # =============================================================================
+# Name of program
+__NAME__ = 'spirouUnitTests.unit_test1.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
+# define night name constant
 NIGHT_NAME = '20170710'
-
+# define format for unit test logging
 UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
 
 # =============================================================================

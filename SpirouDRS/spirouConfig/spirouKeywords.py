@@ -26,6 +26,8 @@ __NAME__ = 'spirouKeywords.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get param dict
 ParamDict = spirouConfig.ParamDict
 # get default config file
@@ -145,7 +147,7 @@ spirouConfig.check_config(p, USE_PARAMS)
 #           to distinguish from header keywords that are put in the header
 #
 #   Note 4: You may use variables in the config files
-#           (config.txt, constants_SPIROU.txt etc) located in the ../config
+#           (config.py, constants_SPIROU.py etc) located in the ../config
 #           folder, however they should be placed as strings in USE_PARAMS
 #
 # -----------------------------------------------------------------------------

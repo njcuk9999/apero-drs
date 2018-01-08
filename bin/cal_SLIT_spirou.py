@@ -33,10 +33,14 @@ __NAME__ = 'cal_SLIT_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+# Get parameter dictionary
+ParamDict = spirouConfig.ParamDict
 
 
 # =============================================================================
@@ -46,11 +50,11 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
-    # run specific start up
-    p = spirouStartup.RunStartup(p, kind='slit', prefixes='fp_fp',
-                                 calibdb=True)
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.InitialFileSetup(p, kind='slit', prefixes='fp_fp',
+                                       calibdb=True)
     # set the fiber type
     p['fib_typ'] = ['AB']
     p.set_source('fib_typ', __NAME__ + '/main()')
@@ -109,27 +113,44 @@ def main(night_name=None, files=None):
     WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
-    # Get localisation coefficients
+    # Log the number of dead pixels
     # ----------------------------------------------------------------------
-    # original there is a loop but it is not used --> removed
-    p = spirouLOCOR.FiberParams(p, p['fib_typ'][0], merge=True)
-    # get localisation fit coefficients
-    loc = spirouLOCOR.GetCoeffs(p, hdr)
+    loc = ParamDict()
 
     # ----------------------------------------------------------------------
-    # Calculating the tilt
+    # Loop around fiber types
     # ----------------------------------------------------------------------
-    # get the tilt by extracting the AB fibers and correlating them
-    loc = spirouImage.GetTilt(p, loc, data2)
+
+    for fiber in p['fib_typ']:
+        # set fiber
+        p['fiber'] = fiber
+        # ------------------------------------------------------------------
+        # Get localisation coefficients
+        # ------------------------------------------------------------------
+        # original there is a loop but it is not used --> removed
+        p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
+        # get localisation fit coefficients
+        loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
+
+        # ------------------------------------------------------------------
+        # Calculating the tilt
+        # ------------------------------------------------------------------
+        # get the tilt by extracting the AB fibers and correlating them
+        loc = spirouImage.GetTilt(p, loc, data2)
+
+    # Question: if we loop around fib_typ - loc is overwritten
+    # Question:     (tilt overwritten in original)
+    # Question:   I.E.  looping around fib_typ is USELESS
+    # TODO: Remove fiber type for loop - or use it properly!!
     # fit the tilt with a polynomial
     loc = spirouImage.FitTilt(p, loc)
     # log the tilt dispersion
     wmsg = 'Tilt dispersion = {0:.3f} deg'
     WLOG('info', p['log_opt'] + p['fiber'], wmsg.format(loc['rms_tilt']))
 
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Plotting
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
     if p['DRS_PLOT']:
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
@@ -140,9 +161,9 @@ def main(night_name=None, files=None):
         # end interactive section
         sPlt.end_interactive_session()
 
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Replace tilt by the global fit
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
     loc['tilt'] = loc['yfit_tilt']
     oldsource = loc.get_source('tilt')
     loc.set_source('tilt', oldsource + '+{0}/main()'.format(__NAME__))
@@ -154,8 +175,10 @@ def main(night_name=None, files=None):
     tiltima = np.ones((int(loc['number_orders']/2), data2.shape[1]))
     tiltima *= loc['tilt'][:, None]
     # construct file name and path
-    tiltfits = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
     reduced_dir = p['reduced_dir']
+    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
+    tiltfn = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
+    tiltfits = calibprefix + tiltfn
     # Log that we are saving tilt file
     wmsg = 'Saving tilt  information in file: {0}'
     WLOG('', p['log_opt'], wmsg.format(tiltfits))
@@ -178,8 +201,40 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
-    # to be done
-    p['QC'] = 1
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    # check that tilt rms is below required
+    if loc['rms_tilt'] > p['QC_SLIT_RMS']:
+        # add failed message to fail message list
+        fmsg = 'abnormal RMS of SLIT angle ({0:.2f} > {1:.2f} deg)'
+        fail_msg.append(fmsg.format(loc['rms_tilt'], p['QC_SLIT_RMS']))
+        passed = False
+    # check that tilt is less than max tilt required
+    max_tilt = np.max(loc['tilt'])
+    if max_tilt > p['QC_SLIT_MAX']:
+        # add failed message to fail message list
+        fmsg = 'abnormal SLIT angle ({0:.2f} > {1:.2f} deg)'
+        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MAX']))
+        passed = False
+    # check that tilt is greater than min tilt required
+    min_tilt = np.min(loc['tilt'])
+    if min_tilt < p['QC_SLIT_MIN']:
+        # add failed message to fail message list
+        fmsg = 'abnormal SLIT angle ({0:.2f} < {1:.2f} deg)'
+        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MIN']))
+        passed = False
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG('info', p['log_opt'], wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Update the calibration data base
