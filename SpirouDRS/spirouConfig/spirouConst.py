@@ -146,6 +146,11 @@ def CALIBDB_LOCKFILE(p):
     return lockfilepath
 
 
+def CALIB_PREFIX(p):
+    argnightname = p['arg_night_name'].split('/')[-1]
+    return argnightname + '_'
+
+
 def FORBIDDEN_COPY_KEYS():
     forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                       'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
