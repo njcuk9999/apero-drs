@@ -32,6 +32,8 @@ __all__ = ['RunInitialStartup', 'RunStartup']
 # Function aliases
 # =============================================================================
 
+Begin = spirouStartup.run_begin
+
 # Get custom args from run time args (sys.argv)
 GetCustomFromRuntime = spirouStartup.get_custom_from_run_time_args
 
@@ -42,10 +44,10 @@ GetFile = spirouStartup.get_file
 GetFiberType = spirouStartup.get_fiber_type
 
 # Runs the initial start up script (checking of parameters and title)
-RunInitialStartup = spirouStartup.run_initial_startup
+LoadArguments = spirouStartup.load_arguments
 
 # Runs the start up script
-RunStartup = spirouStartup.run_startup
+InitialFileSetup = spirouStartup.initial_file_setup
 
 # =============================================================================
 # End of code
