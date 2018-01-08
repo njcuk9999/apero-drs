@@ -147,7 +147,7 @@ spirouConfig.check_config(p, USE_PARAMS)
 #           to distinguish from header keywords that are put in the header
 #
 #   Note 4: You may use variables in the config files
-#           (config.txt, constants_SPIROU.txt etc) located in the ../config
+#           (config.py, constants_SPIROU.py etc) located in the ../config
 #           folder, however they should be placed as strings in USE_PARAMS
 #
 # -----------------------------------------------------------------------------
