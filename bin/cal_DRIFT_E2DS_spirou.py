@@ -45,17 +45,18 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, reffile=None):
-    night_name, reffile = None, None
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
         customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type

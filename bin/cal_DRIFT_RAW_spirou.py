@@ -51,11 +51,11 @@ def main(night_name=None, files=None, fiber='AB'):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
-    # run specific start up
-    p = spirouStartup.RunStartup(p, kind='Drift', prefixes='fp_fp',
-                                 calibdb=True)
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.InitialFileSetup(p, kind='Drift', prefixes='fp_fp',
+                                       calibdb=True)
     # set the fiber type
     p['fiber'] = fiber
     p.set_source('fiber', __NAME__ + '/__main__')
