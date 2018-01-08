@@ -1057,10 +1057,15 @@ Value must be a float larger than zero.
 
 \begin{itemize}
 
+% ic_drift_peak_n_order_max
+\item \ParameterEntry{First order to use in drift-peak}
+{Defines the first order to use (from this to \definevariable{ic\_drift\_peak\_n\_order\_max}). This is used to get the median drift. Value must be an integer greater than or equal to 0 and less than \definevariable{ic\_drift\_peak\_n\_order\_max}.}
+{ic\_drift\_peak\_n\_order\_min}{2}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
 % ic_drift_peak_n_order_max
-\item \ParameterEntry{Number of orders to use in drift-peak}
-{Defines the number of orders to use (starting from zero to maximum number). This is used to get the median drift. Value must be an integer between 0 and the maximum number of orders.}
+\item \ParameterEntry{Last order to use in drift-peak}
+{Defines the last order to use (from \definevariable{ic\_drift\_peak\_n\_order\_min} to this). This is used to get the median drift. Value must be an integer greater than \definevariable{ic\_drift\_peak\_n\_order\_min} and less than or equal to the maximum number of orders.}
 {ic\_drift\_peak\_n\_order\_max}{30}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
@@ -1089,10 +1094,26 @@ Value must be a float larger than zero.
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file(), \spirouRV.get\_drift()}{Public}
 
 % drift_peak_min_nfp_peak
-\item \ParameterEntry{Minimum normalized flux for valid FP peak}
-{Defines the minimum normalized flux a valid FP peak must have in order to be recognized as an FP peak (before the peak fitting is done). At this point the FP peak is normalised so the maximum is around a value of 1.0. If a peaks maximum is below this threshold it will not be used as a valid FP in finding the drifts. Value must be a float larger than zero and less than 1.0}
-{drift\_peak\_min\_nfp\_peak}{0.25}
+% \item \ParameterEntry{Minimum normalized flux for valid FP peak}
+% {Defines the minimum normalized flux a valid FP peak must have in order to be recognized as an FP peak (before the peak fitting is done). At this point the FP peak is normalised so the maximum is around a value of 1.0. If a peaks maximum is below this threshold it will not be used as a valid FP in finding the drifts. Value must be a float larger than zero and less than 1.0}
+% {drift\_peak\_min\_nfp\_peak}{0.25}
+% {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
+
+
+% drift_peak_peak_sig_lim
+\item \ParameterEntry{Minimum sigma above median for valid peak}
+{Defines the flux a valid peak must have in order to be recognized as a valid peak (before the peak fitting is done). If a peaks meaximum is below this threshold it will not be used as a valid peak in finding the drifts. Value is a dictionary containing keys equivalient to the lamp types (currently this is 'fp' and 'hc'. The values of each must be a float greater than 1 for above the median and, between zero and 1 for below the median).}
+{drift\_peak\_peak\_sig\_lim}
+{\lstinline[style=pythoninline]| {'fp':1.0, 'hc':7.0} |}
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
+
+
+% drift_peak_inter_peak_spacing
+\item \ParameterEntry{Minimum spacing between valid peaks}
+{Defines the minimum spacing peaks must have (between neighbouring peaks) in order to recognized as valid peaks (before the peak fitting is done). If peak is closer than this sepration to a previous peak the peak will not be used as a valid peak in finding the drifts. Value must be an integer greater than zero.}
+{drift\_peak\_inter\_peak\_spacing}{5}
+{\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
+
 
 % drift_peak_exp_width
 \item \ParameterEntry{Expected width of FP peaks}
@@ -1139,7 +1160,7 @@ Value must be a float larger than zero and less than the number of columns (x-di
 \end{equation}
 then the whole image (e2ds file) is rejected. Value must be a float larger than zero and less than 1.0, values should be close to unity for a good fit i.e. 0.97.
 }
-{drift\_peak\_pearsonr\_cut}{0.5}
+{drift\_peak\_pearsonr\_cut}{0.9}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 \DevNote{This value is currently set below a recommended level and should be set back to 0.97 as soon as possible, even coefficients at 0.95 are from very bad orders, and orders should be removed. A plot currently is made when a bad file is found (i.e. when the above cut is not met).}
 
@@ -1149,7 +1170,11 @@ then the whole image (e2ds file) is rejected. Value must be a float larger than 
 {drift\_peak\_sigmaclip}{1.0}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
-
+% drift_peak_plot_line_log_amp
+\item \ParameterEntry{Plot linelist vs log Amplitude}
+{Defines whether we plot the line list against log amplitude. Value must be 1 or True to plot, or 0 or False to not plot}
+{drift\_peak\_plot\_line\_log\_amp}{False}
+{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
 
 \end{itemize}
@@ -1225,7 +1250,7 @@ then the whole image (e2ds file) is rejected. Value must be a float larger than 
 \end{equation}
 Value must be a float equal to or larger than zero. 
 }
-{qc\_max\_darklevel}{1.0}
+{qc\_max\_darklevel}{0.5}
 {\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
 
 
@@ -1233,17 +1258,34 @@ Value must be a float equal to or larger than zero.
 \item \ParameterEntry{Maximum percentage of dead pixels}
 {Defines the maximum allowed percentage of dead pixels in a dark image. If the number of dead pixels is greater than this it does not pass the quality control criteria:
 \begin{equation}
-\text{Number of dead pixels} < \text{qc\_max\_dead}
+\text{dead pixels} = (\text{pixel value} > \text{dark\_cutlimit}) \text{ and } (\text{pixel value} \neq \text{NaN})
+\end{equation}
+\begin{equation}
+\text{Percentage of dead pixels} < \text{qc\_max\_dead}
 \end{equation}
 }
-{qc\_max\_dead}{25.0}
+{qc\_max\_dead}{20.0}
+{\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
+
+
+% qc_max_dark
+\item \ParameterEntry{Maximum percentage of bad dark pixels}
+{Defines the maximum allowed percentage of bad dark pixels in a dark image. If the number of dead pixels is greater than this it does not pass the quality control criteria:
+\begin{equation}
+\text{bad dark pixels} = \text{pixel value} > \text{dark\_cutlimit}
+\end{equation}
+\begin{equation}
+\text{Percentage of bad dark pixels} < \text{qc\_max\_dead}
+\end{equation}
+}
+{qc\_max\_dark}{6.0}
 {\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
 
 
 % qc_dark_time
 \item \ParameterEntry{Minimum dark exposure time}
 {Defines the minimum dark exposure time. If exposure time (from FITS rec HEADER) is below this the code will exit with `Dark exposure time too short' message. Value must be a float greater than zero.}
-{qc\_dark\_time}{1.0}
+{qc\_dark\_time}{599.0}
 {\calDARK}{\constantsfile}{\calDARK.\progMAIN}{Public}
 
 

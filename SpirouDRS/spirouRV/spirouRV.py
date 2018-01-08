@@ -167,13 +167,15 @@ def create_drift_file(p, loc):
     # get the reference data and the wave data
     speref = np.array(loc['speref'])
     wave = loc['wave']
+    lamp = loc['lamp']
 
     # storage for order of peaks
     allordpeak = []
     allxpeak = []
     allewpeak = []
     allvrpeak = []
-
+    allllpeak = []
+    allamppeak = []
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -181,6 +183,8 @@ def create_drift_file(p, loc):
         xpeak = []
         ewpeak = []
         vrpeak = []
+        llpeak = []
+        amppeak = []
         # get the pixels for this order
         tmp = np.array(speref[order_num, :])
         # For numerical sanity all values less than zero set to zero
@@ -191,26 +195,31 @@ def create_drift_file(p, loc):
             tmp[0: border+1] = 0
             tmp[-(border+1):] = 0
         else:
+            # first few pixels are forced to zero to avoid defining a
+            # gaussian that starts before 0
             tmp[0:3] = 0
+            # same thing at the end of each order
             tmp[speref.shape[1] - 5: speref.shape[1] -1] = 0
         # normalize by the 98th percentile - avoids super-spurois pixels but
         #   keeps the top of the blaze around 1
         # TODO: Change to np.percentile
-        if not OLDCODEEXACT:
-            norm = np.percentile(tmp, 98)
-        else:
-            tmp2 = np.sort(tmp)
-            norm = tmp2[int(len(tmp2)*0.98)]
+        # if not OLDCODEEXACT:
+        #     norm = np.percentile(tmp, 98)
+        # else:
+        #     tmp2 = np.sort(tmp)
+        #     norm = tmp2[int(len(tmp2)*0.98)]
+        # tmp /= norm
 
-        tmp /= norm
+        # peak value depends on type of lamp
+        limit = np.median(tmp) * p['drift_peak_peak_sig_lim'][lamp]
+
         # define the maximum pixel value of the normalized array
         maxtmp = np.max(tmp)
         # set up loop constants
         xprev, ipeak = -99, 0
         nreject = 0
-        # loop for peaks that are above a value of 0.25 (recall we normalized
-        #     to the 98th percentile
-        while maxtmp > minimum_norm_fp_peak:
+        # loop for peaks that are above a value of limit
+        while maxtmp > limit:
             # find the position of the maximum
             maxpos = np.argmax(tmp)
             # define an area around the maximum peak
@@ -240,7 +249,7 @@ def create_drift_file(p, loc):
             #    detection - dx is the distance from last peak
             dx = np.abs(xprev - gg[1])
             # if the distance from last position > 2 - we have a new fit
-            if dx > 2:
+            if dx > p['drift_peak_inter_peak_spacing']:
                 # subtract off the gaussian without the dc level
                 # (leave dc for other peaks
                 tmp[index] -= gauss_function(index, gg[0], gg[1], gg[2], 0)
@@ -262,16 +271,16 @@ def create_drift_file(p, loc):
                 lambefore = wave[order_num, maxpos - 1]
                 lamafter = wave[order_num, maxpos + 1]
                 deltalam = lamafter - lambefore
-                # TODO: use CONSTANT_C
-                if not OLDCODEEXACT:
-                    rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
-                else:
-                    rv = 3.e8 * deltalam / (2.0 * wave[order_num, maxpos])
+                # get the radial velocity
+                rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
+
                 # add to storage
                 ordpeak.append(order_num)
                 xpeak.append(gg[1])
                 ewpeak.append(gg[2])
                 vrpeak.append(rv)
+                llpeak.append(deltalam)
+                amppeak.append(maxtmp)
             else:
                 # add to rejected
                 nreject += 1
@@ -290,12 +299,15 @@ def create_drift_file(p, loc):
         allxpeak = np.append(allxpeak, np.array(xpeak)[indsort])
         allewpeak = np.append(allewpeak, np.array(ewpeak)[indsort])
         allvrpeak = np.append(allvrpeak, np.array(vrpeak)[indsort])
-
+        allllpeak = np.append(allllpeak, np.array(llpeak)[indsort])
+        allamppeak = np.append(allamppeak, np.array(amppeak)[indsort])
     # store values in loc
     loc['ordpeak'] = np.array(allordpeak, dtype=int)
     loc['xpeak'] = allxpeak
     loc['ewpeak'] = allewpeak
     loc['vrpeak'] = allvrpeak
+    loc['llpeak'] = allllpeak
+    loc['amppeak'] = allamppeak
 
     # Log the total number of FP lines found
     wmsg = 'Total Nb of FP lines found = {0}'
@@ -303,7 +315,8 @@ def create_drift_file(p, loc):
 
     # set source
     source = __NAME__ + '/create_drift_file()'
-    loc.set_sources(['ordpeak', 'xpeak', 'ewpeak', 'vrpeak'], source)
+    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    loc.set_sources(keys, source)
     # return loc
     return loc
 
@@ -337,10 +350,13 @@ def remove_wide_peaks(p, loc):
     loc['xpeak'] = loc['xpeak'][mask]
     loc['ewpeak'] = loc['ewpeak'][mask]
     loc['vrpeak'] = loc['vrpeak'][mask]
+    loc['llpeak'] = loc['llpeak'][mask]
+    loc['amppeak'] = loc['amppeak'][mask]
 
     # append this function to sources
     source = __NAME__ + '/remove_wide_peaks()'
-    loc.append_sources(['ordpeak', 'xpeak', 'ewpeak', 'vrpeak'], source)
+    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    loc.append_sources(keys, source)
 
     # log number of lines removed
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
@@ -361,10 +377,13 @@ def remove_zero_peaks(p, loc):
     loc['xpeak'] = loc['xpeak'][mask]
     loc['ewpeak'] = loc['ewpeak'][mask]
     loc['vrpeak'] = loc['vrpeak'][mask]
+    loc['llpeak'] = loc['llpeak'][mask]
+    loc['amppeak'] = loc['amppeak'][mask]
 
     # append this function to sources
     source = __NAME__ + '/remove_zero_peaks()'
-    loc.append_sources(['xref', 'ordpeak', 'xpeak', 'ewpeak', 'vrpeak'], source)
+    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    loc.append_sources(keys, source)
 
     # log number of lines removed
     wmsg = 'Nb of lines removed with no width measurement = {0}'
@@ -522,22 +541,23 @@ def drift_per_order(loc, fileno):
     return loc
 
 
-def drift_all_orders(loc, fileno, nomax):
+def drift_all_orders(loc, fileno, nomin, nomax):
     """
     Work out the weighted mean drift across all orders
 
     :param loc: parameter dictionary, data storage
     :param fileno: int, the file number (iterator number)
-    :param nomax: int, the maximum order to use (i.e. use from 0 to "nomax")
+    :param nomin: int, the first order to use (i.e. from nomin to nomax)
+    :param nomax: int, the last order to use (i.e. from nomin to nomax)
 
     :return loc: parameter dictionary, the updated data storage dictionary
     """
 
     # get data from loc
-    drift = loc['drift'][fileno, :nomax]
-    driftleft = loc['drift_left'][fileno, :nomax]
-    driftright = loc['drift_right'][fileno, :nomax]
-    errdrift = loc['errdrift'][fileno, :nomax]
+    drift = loc['drift'][fileno, nomin:nomax]
+    driftleft = loc['drift_left'][fileno, nomin:nomax]
+    driftright = loc['drift_right'][fileno, nomin:nomax]
+    errdrift = loc['errdrift'][fileno, nomin:nomax]
 
     # work out weighted mean drift
     sumerr = np.sum(1.0/errdrift)

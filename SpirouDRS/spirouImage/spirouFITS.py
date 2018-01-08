@@ -286,7 +286,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
     :return wave: list of the tilt for each order
     """
     if key is None:
-        key = 'WAVE'
+        key = 'WAVE_' + p['fiber']
     # get filename
     if filename is None:
         read_file = spirouCDB.GetFile(p, key, hdr)

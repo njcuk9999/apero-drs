@@ -61,7 +61,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     if fiber_type is None:
         fiber_type = p['FIBER_TYPES']
     if type(fiber_type) == str:
-        fiber_type = [fiber_type]
+        if fiber_type.upper() == 'ALL':
+            fiber_type = p['FIBER_TYPES']
+        elif fiber_type in p['FIBER_TYPES']:
+            fiber_type = [fiber_type]
+        else:
+            emsg = 'fiber_type="{0}" not understood'
+            WLOG('error', p['log_opt'], emsg.format(fiber_type))
     # set fiber type
     p['fib_type'] = fiber_type
     p.set_source('fib_type', __NAME__ + '__main__()')
