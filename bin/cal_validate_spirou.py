@@ -23,8 +23,14 @@ import os
 # =============================================================================
 # Name of program
 __NAME__ = 'cal_validate_spirou.py'
+__version__ = 'Unknown'
+__author__ = 'Unknown'
+__release__ = 'Unknown'
+__date__ = 'Unknown'
+
 # Whether be default we run debug mode
 DEBUG = 0
+
 
 # =============================================================================
 # Define functions

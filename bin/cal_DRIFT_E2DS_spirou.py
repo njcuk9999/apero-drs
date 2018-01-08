@@ -31,6 +31,8 @@ __NAME__ = 'cal_DRIFT_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
