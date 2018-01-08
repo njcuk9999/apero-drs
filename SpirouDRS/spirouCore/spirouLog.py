@@ -20,6 +20,7 @@ import sys
 
 from SpirouDRS import spirouConfig
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -52,7 +53,8 @@ def logger(key='', option='', message=''):
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
     :param option: string, option code
-    :param message: string, message to display
+    :param message: string or list of strings, message to display or messages
+                    to display (1 line for each message in list)
 
     output to stdout/log is as follows:
 
@@ -65,26 +67,76 @@ def logger(key='', option='', message=''):
     # if key is '' then set it to all
     if len(key) == 0:
         key = 'all'
-    # Get the local unix time now
-    unix_time = time.time()
-    # Get the UTC time now in human readable format
-    human_time = time.strftime('%H:%M:%S', time.gmtime(unix_time))
-    # Get the first decimal part of the unix time
-    dsec = int((unix_time - int(unix_time)) * 10)
-    # Get the key code (default is a whitespace)
-    code = TRIG_KEY.get(key, ' ')
-    # construct the log and log error
-    cmdargs = [human_time, dsec, code, option, message]
-    cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-    ecmd = '{0}.{1:1d} - {2} |{3}|NOT IN LOGS: {4}'.format(*cmdargs)
-    # print to stdout
-    printlog(cmd, key)
-    # get logfilepath
-    logfilepath = get_logfilepath(unix_time)
-    # write to log file
-    writelog(cmd, ecmd, key, logfilepath)
-    # deal with errors
+
+    if type(message) == str:
+        message = [message]
+    elif type(list):
+        message = list(message)
+    else:
+        message = [('Logging error: message="{0}" is not a valid string or '
+                    'list').format(message)]
+        key = 'error'
+    # loop around message (now all are lists)
+    for mess in message:
+        # Get the local unix time now
+        unix_time = time.time()
+        # Get the UTC time now in human readable format
+        human_time = time.strftime('%H:%M:%S', time.gmtime(unix_time))
+        # Get the first decimal part of the unix time
+        dsec = int((unix_time - int(unix_time)) * 10)
+        # Get the key code (default is a whitespace)
+        code = TRIG_KEY.get(key, ' ')
+        # construct the log and log error
+        cmdargs = [human_time, dsec, code, option, mess]
+        cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+        ecmd = '{0}.{1:1d} - {2} |{3}|NOT IN LOGS: {4}'.format(*cmdargs)
+        # print to stdout
+        printlog(cmd, key)
+        # get logfilepath
+        logfilepath = get_logfilepath(unix_time)
+        # write to log file
+        writelog(cmd, ecmd, key, logfilepath)
+
+    # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
     if key in EXIT_LEVELS:
+        if spirouConfig.Constants.DEBUG():
+            debug_start()
+        else:
+            EXIT_TYPE(1)
+
+
+def debug_start():
+    # get raw input
+    if sys.version_info.major > 2:
+        raw_input = lambda x: str(input(x))
+    # get colour
+    clevels = spirouConfig.Constants.COLOUREDLEVELS()
+    addcolour = spirouConfig.Constants.COLOURED_LOG()
+    nocol = spirouConfig.Constants.NORMALCOLOUR()
+    cc = clevels['error']
+    # ask to run debugger
+    try:
+        print(cc + '\n\n\tError found and running in DEBUG mode\n')
+        uinput = raw_input('\tEnter python debugger? [Y]es or [N]o?\t')
+        if 'Y' in uinput.upper():
+            print('\n\t ==== DEBUGGER ====\n'
+                  '\n\t - type "list" to list code'
+                  '\n\t - type "up" to go up a level'
+                  '\n\t - type "interact" to go to an interactive shell'
+                  '\n\t - type "print(variable)" to print variable'
+                  '\n\t - type "print(dir())" to list available variables'
+                  '\n\t - type "continue" to exit'
+                  '\n\t - type "help" to see all commands'
+                  '\n\n\t ==================\n\n' + nocol)
+
+            import pdb
+            pdb.set_trace()
+
+            print('\n\nCode Exited')
+            EXIT_TYPE(1)
+        else:
+            EXIT_TYPE(1)
+    except :
         EXIT_TYPE(1)
 
 
@@ -144,9 +196,14 @@ def printlog(message, key):
     """
     # get out level key
     level = CPARAMS.get('PRINT_LEVEL', 'all')
-
+    clevels = spirouConfig.Constants.COLOUREDLEVELS()
+    addcolour = spirouConfig.Constants.COLOURED_LOG()
+    nocol = spirouConfig.Constants.NORMALCOLOUR()
     # if this level is greater than or equal to out level then print to stdout
-    if correct_level(key, level):
+
+    if correct_level(key, level) and (key in clevels) and addcolour:
+        print(clevels[key] + message + nocol)
+    elif correct_level(key, level):
         print(message)
 
 
