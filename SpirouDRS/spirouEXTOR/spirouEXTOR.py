@@ -206,7 +206,7 @@ def extract_wrapper(image, pos, sig, **kwargs):
                             (not currently available)
 
         nbsig:          float,  distance away from center to extract out to +/-
-                        defaults to p['nbsig'] from constants_SPIROU.txt
+                        defaults to p['nbsig'] from constants_SPIROU.py
 
         gain:           float, gain of the image
                         defaults to p['gain'] from fitsfilename HEADER
