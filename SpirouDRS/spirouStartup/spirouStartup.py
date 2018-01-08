@@ -40,7 +40,29 @@ typenames = {int:'integer', float:'float', list:'list', bool:'bool', str:'str'}
 # =============================================================================
 # Define run functions
 # =============================================================================
-def run_initial_startup(night_name=None, files=None, customargs=None):
+def run_begin():
+    """
+    Begin DRS - Must be run at start of every recipe
+
+    :return:
+    """
+    # Get config parameters
+    cparams = spirouConfig.ReadConfigFile()
+    # get variables from spirouConst
+    cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
+    cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
+    cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
+    # display title
+    display_title(cparams)
+    # check input parameters
+    cparams = spirouConfig.CheckCparams(cparams)
+    # display initial parameterisation
+    display_initial_parameterisation(cparams)
+    # return parameters
+    return cparams
+
+
+def load_arguments(cparams, night_name=None, files=None, customargs=None):
     """
     Run initial start up:
 
@@ -51,6 +73,8 @@ def run_initial_startup(night_name=None, files=None, customargs=None):
     5) display help file (if requested and exists)
     6) loads run time arguments (and custom arguments, see below)
     7) loads other config files
+
+    :param cparams: parameter dictionary from run_begin
 
     :param night_name: string or None, the name of the directory in DRS_DATA_RAW
                        to find the files in
@@ -88,19 +112,6 @@ def run_initial_startup(night_name=None, files=None, customargs=None):
 
     :return p: dictionary, parameter dictionary
     """
-
-    # Get config parameters
-    cparams = spirouConfig.ReadConfigFile()
-    # get variables from spirouConst
-    cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
-    cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
-    cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
-    # display title
-    display_title(cparams)
-    # check input parameters
-    cparams = spirouConfig.CheckCparams(cparams)
-    # display initial parameterisation
-    display_initial_parameterisation(cparams)
     # deal with arg_night_name defined in call
     if night_name is not None:
         cparams['ARG_NIGHT_NAME'] = night_name
@@ -136,7 +147,8 @@ def run_initial_startup(night_name=None, files=None, customargs=None):
     return cparams
 
 
-def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
+def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
+                       calibdb=False):
     """
     Run start up code (based on program and parameters defined in p before)
 
@@ -174,9 +186,10 @@ def run_startup(p, kind=None, prefixes=None, add_to_p=None, calibdb=False):
     # -------------------------------------------------------------------------
     # check that fitsfilename exists
     if fits_fn is None:
-        WLOG('error', log_opt, 'No fits file defined in run time argument'
-                               ' format must be: {0}.py [FOLDER] [FILES]'
-                               ''.format(p['program']))
+        wmsg1 = 'Argument Error: No fits file defined in run time argument'
+        wmsg2 = '    format must be:'
+        emsg = '    >>> {0}.py [FOLDER] [FILES]'
+        WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(p['program'])])
     if not os.path.exists(fits_fn):
         WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
     # -------------------------------------------------------------------------
@@ -446,13 +459,17 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
                 raw_value = None
             # if calls is None and required = True then we should exit now
             elif calls is None or calls[pos] is None:
-                emsg = ('Argument Error: "{0}" is not defined ')
-                WLOG('', sys.argv[0], emsg.format(lognames[pos]))
-                emsg = '   (must be Arg number {0}) format:'
-                WLOG('', sys.argv[0], emsg.format(pos + 1))
-                emsg = '   >>> {0} NIGHT_NAME {1}'
+                emsgs = []
+
+                emsgs.append(('Argument Error: "{0}" is not defined'
+                              ''.format(lognames[pos])))
+
+                emsgs.append(('   must be format:'
+                              ''.format(pos + 1)))
                 eargs = [sys.argv[0], ' '.join(lognames)]
-                WLOG('error', sys.argv[0], emsg.format(*eargs))
+                emsgs.append(('   >>> {0} NIGHT_NAME {1}'
+                              ''.format(*eargs)))
+                WLOG('error', sys.argv[0], emsgs)
                 raw_value = None
             # else we must use the value from calls
             else:
