@@ -54,15 +54,17 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    p = spirouStartup.LoadArguments(p, night_name, files)
     # run specific start up
     params2add = dict()
     params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
     params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-    p = spirouStartup.RunStartup(p, kind='Flat-field',
-                                 prefixes=['dark_flat', 'flat_dark'],
-                                 add_to_p=params2add, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
+                                       prefixes=['dark_flat', 'flat_dark'],
+                                       add_to_p=params2add, calibdb=True)
+
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
     p.set_source('dprtype', __NAME__ + '/main()')
@@ -290,7 +292,9 @@ def main(night_name=None, files=None):
         # construct filename
         reducedfolder = p['reduced_dir']
         flatext = '_flat_{0}.fits'.format(p['fiber'])
-        flatfits = p['arg_file_names'][0].replace('.fits', flatext)
+        calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
+        flatfn = p['arg_file_names'][0].replace('.fits', flatext)
+        flatfits = calibprefix + flatfn
         # log that we are saving blaze file
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, flatfits))
@@ -307,14 +311,18 @@ def main(night_name=None, files=None):
         passed, fail_msg = True, []
         # saturation check: check that the max_signal is lower than
         # qc_max_signal
-        if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
-            fmsg = 'Too much flux in the image (max authorized={0})'
-            fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
+        # if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
+        #     fmsg = 'Too much flux in the image (max authorized={0})'
+        #     fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
+        #     passed = False
+        #     # For some reason this test is ignored in old code
+        #     passed = True
+        #     WLOG('info', p['log_opt'], fail_msg[-1])
+        max_rms = np.max(loc['RMS'])
+        if max_rms > p['QC_FF_RMS']:
+            fmsg = 'abnormal RMS of FF ({0:.2f} > {1:.2f})'
+            fail_msg.append(fmsg.format(max_rms, p['QC_FF_RMS']))
             passed = False
-            # Question: Why is this test ignored?
-            # For some reason this test is ignored in old code
-            passed = True
-            WLOG('info', p['log_opt'], fail_msg[-1])
 
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
