@@ -16,18 +16,13 @@ Version 0.0.0
 from __future__ import division
 import time
 import sys
-
-import cal_DARK_spirou
-import cal_loc_RAW_spirou
-import cal_SLIT_spirou
-import cal_FF_RAW_spirou
-import cal_extract_RAW_spirou
-import cal_DRIFT_RAW_spirou
-import cal_BADPIX_spirou
 import matplotlib.pyplot as plt
+
+from . import unit_test_functions as utf
 
 if sys.version_info.major == 2:
     from collections import OrderedDict as dict
+
 
 # =============================================================================
 # Define variables
@@ -55,17 +50,18 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_DARK_spirou'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['dark_dark02d406.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_DARK_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_DARK()
+    test += 1
+
+    # ----------------------------------------------------------------------
+    # test cal_BADPIX_spirou
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_BADPIX_spirou'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_BADPIX()
     test += 1
 
     # ----------------------------------------------------------------------
@@ -74,19 +70,8 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_loc_RAW_spirou (flat_dark)'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['flat_dark02f10.fits', 'flat_dark03f10.fits',
-             'flat_dark04f10.fits', 'flat_dark05f10.fits',
-             'flat_dark06f10.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_loc_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_LOC_RAW(kind='flat_dark')
     test += 1
 
     # ----------------------------------------------------------------------
@@ -95,19 +80,8 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_loc_RAW_spirou (dark_flat)'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['dark_flat02f10.fits', 'dark_flat03f10.fits',
-             'dark_flat04f10.fits', 'dark_flat05f10.fits',
-             'dark_flat06f10.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_loc_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_LOC_RAW(kind='dark_flat')
     test += 1
 
     # ----------------------------------------------------------------------
@@ -116,17 +90,8 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_SLIT_spirou'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_SLIT_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_SLIT()
     test += 1
 
     # ----------------------------------------------------------------------
@@ -135,19 +100,8 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_FF_RAW_spirou (flat_dark)'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['flat_dark02f10.fits', 'flat_dark03f10.fits',
-             'flat_dark04f10.fits', 'flat_dark05f10.fits',
-             'flat_dark06f10.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_FF_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_FF_RAW(kind='flat_dark')
     test += 1
 
     # ----------------------------------------------------------------------
@@ -156,19 +110,8 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_FF_RAW_spirou (dark_flat)'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['dark_flat02f10.fits', 'dark_flat03f10.fits',
-             'dark_flat04f10.fits', 'dark_flat05f10.fits',
-             'dark_flat06f10.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_FF_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_FF_RAW(kind='dark_flat')
     test += 1
 
     # ----------------------------------------------------------------------
@@ -179,15 +122,8 @@ if __name__ == "__main__":
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
     # set up files
     files = ['fp_fp02a203.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_extract_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None)
     test += 1
 
     # ----------------------------------------------------------------------
@@ -198,17 +134,9 @@ if __name__ == "__main__":
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
     # set up files
     files = ['fp_fp03a203.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_extract_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None)
     test += 1
-
 
     # ----------------------------------------------------------------------
     # test cal_extract_RAW_spirou - fp_fp04a203.fits
@@ -218,17 +146,9 @@ if __name__ == "__main__":
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
     # set up files
     files = ['fp_fp04a203.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_extract_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None)
     test += 1
-
 
     # ----------------------------------------------------------------------
     # test cal_DRIFT_E2DS_spirou
@@ -236,40 +156,19 @@ if __name__ == "__main__":
     # set name and print progress
     name = 'cal_DRIFT_E2DS_spirou'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    files = ['fp_fp02a203_e2ds_AB.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_DRIFT_RAW_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_DRIFT_E2DS()
     test += 1
 
-
     # ----------------------------------------------------------------------
-    # test cal_DRIFT_E2DS_spirou
+    # test cal_CCF_E2DS_spirou
     # ----------------------------------------------------------------------
     # set name and print progress
-    name = 'cal_BADPIX_spirou'
+    name = 'cal_CCF_E2DS_spirou'
     print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # set up files
-    flatfile = 'flat_flat02f10.fits'
-    darkfile = 'dark_dark02d406.fits'
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    cal_BADPIX_spirou.main(NIGHT_NAME, darkfile=darkfile, flatfile=flatfile)
-    # end timer
-    endtime = time.time()
-    # add time to output
-    times[name] = endtime - starttime
-    plt.close('all')
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_CCF_E2DS()
     test += 1
-
 
     # ----------------------------------------------------------------------
     # end total timer

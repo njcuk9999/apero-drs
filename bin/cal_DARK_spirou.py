@@ -76,10 +76,11 @@ def main(night_name=None, files=None):
     # Dark exposure time check
     # ----------------------------------------------------------------------
     # log the Dark exposure time
-    WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} [s]'.format(p['exptime']))
+    WLOG('info', p['log_opt'], 'Dark Time = {0:.3f} s'.format(p['exptime']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
     if p['exptime'] < p['QC_DARK_TIME']:
-        WLOG('error', p['log_opt'], 'Dark exposure time too short')
+        emsg = 'Dark exposure time too short (< {0:.1f} s)'
+        WLOG('error', p['log_opt'], emsg.format(p['QC_DARK_TIME']))
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -121,6 +122,14 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Identification of bad pixels
     # ----------------------------------------------------------------------
+    # get number of bad dark pixels (as a fraction of total pixels)
+    with warnings.catch_warnings(record=True) as w:
+        baddark = 100.0 * np.sum(data > p['DARK_CUTLIMIT'])
+        baddark /= np.product(data.shape)
+    # log the fraction of bad dark pixels
+    wmsg = 'Frac pixels with DARK > {0:.1f} ADU/s = {1:.1f} %'
+    WLOG('info', p['log_opt'], wmsg.format(p['DARK_CUTLIMIT'], baddark))
+
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
         datacutmask = ~((data > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
@@ -158,15 +167,25 @@ def main(night_name=None, files=None):
     # check that med < qc_max_darklevel
     if p['med_full'] > p['QC_MAX_DARKLEVEL']:
         # add failed message to fail message list
-        fmsg = 'Unexpected Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
+        fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
         fail_msg.append(fmsg.format(p['med_full'], p['QC_MAX_DARKLEVEL']))
         passed = False
+
     # check that fraction of dead pixels < qc_max_dead
     if p['dadeadall'] > p['QC_MAX_DEAD']:
         # add failed message to fail message list
         fmsg = 'Unexpected Fraction of dead pixels ({0:5.2f} > {1:5.2f} %)'
         fail_msg.append(fmsg.format(p['dadeadall'], p['QC_MAX_DEAD']))
         passed = False
+
+    # checl that the precentage of dark pixels < qc_max_dark
+    if baddark > p['QC_MAX_DARK']:
+        fmsg = ('Unexpected Fraction of pixels > {0:.2f} ADU/s '
+                '({1:.2f} > {2:.2f}')
+        fail_msg.append(fmsg.format(p['DARK_CUTLIMIT'], baddark,
+                                    p['QC_MAX_DARK']))
+        passed = False
+
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -186,7 +205,8 @@ def main(night_name=None, files=None):
 
     # construct folder and filename
     reducedfolder = p['reduced_dir']
-    darkfits = p['arg_file_names'][0]
+    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
+    darkfits = calibprefix + p['arg_file_names'][0]
     # log saving dark frame
     WLOG('', p['log_opt'], 'Saving Dark frame in ' + darkfits)
     # add keys from original header file
@@ -213,7 +233,7 @@ def main(night_name=None, files=None):
     # Save bad pixel mask
     # ----------------------------------------------------------------------
     # construct bad pixel file name
-    badpixelfits = p['arg_file_names'][0].replace('.fits', '_badpixel.fits')
+    badpixelfits = darkfits.replace('.fits', '_badpixel.fits')
     # log that we are saving bad pixel map in dir
     WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
     # add keys from original header file

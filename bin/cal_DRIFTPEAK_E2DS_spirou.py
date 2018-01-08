@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-cal_DRIFT-PEAK_E2DS_spirou.py [night_directory] [Reference file name]
+cal_DRIFTPEAK_E2DS_spirou.py [night_directory] [Reference file name]
 
 # CODE DESCRIPTION HERE
 
@@ -31,7 +31,7 @@ neilstart = time.time()
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_DRIFT-PEAK_E2DS_spirou.py'
+__NAME__ = 'cal_DRIFTPEAK_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -89,6 +89,19 @@ if 1:
     loc.set_sources(['speref', 'number_orders'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
+    # Get lamp type
+    # ----------------------------------------------------------------------
+    # get lamp type
+    if 'hc' in p['reffile']:
+        loc['lamp'] = 'hc'
+    elif 'fp' in p['reffile']:
+        loc['lamp'] = 'fp'
+    else:
+        emsg = 'Wrong type of image for Drift, should be "hc_hc" or "fp_fp"'
+        WLOG('error', p['log_opt'], emsg)
+    loc.set_source('lamp', __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
     # Get basic image properties for reference file
     # ----------------------------------------------------------------------
     # get sig det value
@@ -112,6 +125,17 @@ if 1:
     loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
+    # Read Flat file
+    # ----------------------------------------------------------------------
+    # get flat
+    loc['flat'] = spirouImage.ReadFlatFile(p, hdr)
+    loc.set_source('flat', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+    # get all values in flat that are zero to 1
+    loc['flat'] = np.where(loc['flat'] == 0, 1.0, loc['flat'])
+    # correct for flat file
+    loc['speref'] = loc['speref']/loc['flat']
+
+    # ----------------------------------------------------------------------
     # Background correction
     # ----------------------------------------------------------------------
     # log that we are performing background correction
@@ -127,7 +151,7 @@ if 1:
     # Identify FP peaks in reference file
     # ----------------------------------------------------------------------
     # log that we are identifying peaks
-    wmsg = 'Identifying FP peaks in reference file: {0}'
+    wmsg = 'Identification of lines in reference file: {0}'
     WLOG('', p['log_opt'], wmsg.format(p['reffile']))
     # get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
@@ -136,7 +160,6 @@ if 1:
     # Removal of suspiciously wide FP lines
     # ----------------------------------------------------------------------
     loc = spirouRV.RemoveWidePeaks(p, loc)
-
 
     # ----------------------------------------------------------------------
     # Get reference drift
@@ -182,7 +205,7 @@ if 1:
         WLOG('error', p['log_opt'], emsg.format(prefix, suffix, rfolder))
     else:
         # else Log the number of files found
-        wmsg = 'Number of fp_fp files found on directory = {0}'
+        wmsg = 'Number of files found on directory = {0}'
         WLOG('info', p['log_opt'], wmsg.format(Nfiles))
 
     # ------------------------------------------------------------------
@@ -204,12 +227,19 @@ if 1:
     loc['meanrv_left'] = np.zeros(Nfiles)
     loc['meanrv_right'] = np.zeros(Nfiles)
     loc['merrdrift'] = np.zeros(Nfiles)
+    loc['fluxratio'] = np.zeros(Nfiles)
+    # add sources
+    source = __NAME__ + '/main()'
+    keys = ['drift', 'drift_left', 'drift_right', 'err_drift', 'deltatime',
+            'meanrv', 'meanrv_left', 'meanrv_right', 'merrdrift', 'fluxratio']
+    loc.set_sources(keys, source)
 
     # ------------------------------------------------------------------
     # Loop around all files: correct for dark, reshape, extract and
     #     calculate dvrms and meanpond
     # ------------------------------------------------------------------
     # get the maximum number of orders to use
+    nomin = p['IC_DRIFT_PEAK_N_ORDER_MIN']
     nomax = p['IC_DRIFT_PEAK_N_ORDER_MAX']
     # loop around files
     for i_it in range(Nfiles):
@@ -224,6 +254,8 @@ if 1:
         # read data
         rout = spirouImage.ReadData(p, filename=fpfile, log=False)
         loc['spe'], hdri, cdri, nxi, nyi = rout
+        # apply flat
+        loc['spe'] = loc['spe']/loc['flat']
         # get acqtime
         bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
                                         return_value=1)
@@ -235,6 +267,12 @@ if 1:
             miny, maxy = spirouBACK.MeasureMinMax(loc['spe'][order_num],
                                                   bsize)
             loc['spe'][order_num] = loc['spe'][order_num] - miny
+        # ------------------------------------------------------------------
+        # calculate flux ratio
+        # ------------------------------------------------------------------
+        sorder = p['IC_DRIFT_ORDER_PLOT']
+        fratio = np.sum(loc['spe'][sorder])/np.sum(loc['speref'][sorder])
+        loc['fluxratio'][i_it] = fratio
         # ------------------------------------------------------------------
         # Calculate delta time
         # ------------------------------------------------------------------
@@ -251,7 +289,7 @@ if 1:
         # only calculate drift if the correlation between orders and
         #   reference file is above threshold
         prcut = p['drift_peak_pearsonr_cut']
-        if np.min(correlation_coeffs[:nomax]) > prcut:
+        if np.min(correlation_coeffs[nomin:nomax]) > prcut:
             # get drifts for each order
             dargs = [p, loc['spe'], loc['ordpeak'], loc['xref']]
             x = spirouRV.GetDrift(*dargs, gaussfit=gaussfit)
@@ -262,12 +300,14 @@ if 1:
             # work out median drifts per order
             loc = spirouRV.DriftPerOrder(loc, i_it)
             # work out mean drift across all orders
-            loc = spirouRV.DriftAllOrders(loc, i_it, nomax)
+            loc = spirouRV.DriftAllOrders(loc, i_it, nomin, nomax)
             # log the mean drift
-            wmsg = ('Time from ref= {0:.2f} h  - Drift mean= {1:.2f} +- '
-                    '{2:.2f} m/s')
-            wargs = [loc['deltatime'][i_it], loc['meanrv'][i_it],
-                     loc['merrdrift'][i_it]]
+            wmsg = ('Time from ref= {0:.2f} h '
+                    '- Flux Ratio= {1:.2f} '
+                    '- Drift mean= {2:.2f} +- '
+                    '{3:.2f} m/s')
+            wargs = [loc['deltatime'][i_it], loc['fluxratio'][i_it],
+                     loc['meanrv'][i_it], loc['merrdrift'][i_it]]
             WLOG('info', p['log_opt'], wmsg.format(*wargs))
         # else we can't use this extract
         else:
@@ -335,6 +375,15 @@ if 1:
     wmsg = 'Average Drift saved in {0} Saved '
     WLOG('', p['log_opt'] + p['fiber'], wmsg.format(drifttblfilename))
     spirouImage.WriteTable(table, drifttblfilename, fmt='ascii.rst')
+
+    # ------------------------------------------------------------------
+    # Plot amp and llpeak
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT'] and p['drift_peak_plot_line_log_amp']:
+        # start interactive session if needed
+        sPlt.start_interactive_session()
+        # plot delta time against median drift
+        sPlt.drift_peak_plot_llpeak_amps(p, loc)
 
     # ----------------------------------------------------------------------
     # End Message

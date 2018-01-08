@@ -322,8 +322,13 @@ ic_drift_cut_e2ds = 4.5
 #       (not used in drift_e2ds)
 ic_drift_n_order_max = 28
 
+#   Define the starting order to use (starting from 0 to max)  - [cal_drift-peak]
+#       used to get median drift  median(order min --> order max)
+#       (used in drift-peak_e2ds)
+ic_drift_peak_n_order_min = 2
+
 #   Define the number of orders to use (starting from 0 to max) - [cal_drift-peak]
-#       used to get median drift  median(order0 --> order max)
+#       used to get median drift  median(order min --> order max)
 #       (used in drift-peak_e2ds)
 ic_drift_peak_n_order_max = 30
 
@@ -351,7 +356,16 @@ drift_peak_fpbox_size = 3
 
 #    Define the minimum normalised flux a FP peak must have to    - [cal_drift-peak]
 #        be recognised as a FP peak (before fitting a gaussian)
-drift_peak_min_nfp_peak = 0.25
+# drift_peak_min_nfp_peak = 0.25
+
+#    Define the sigma above the median that a peak must have      - [cal_drift-peak]
+#        to be recognised as a valid peak (before fitting a gaussian)
+#        dictionary must have keys equal to the lamp types (hc, fp)
+drift_peak_peak_sig_lim = {'fp':1.0, 'hc':7.0}
+
+#    Define the minimum spacing between peaks in order to be      - [cal_drift-peak]
+#        recognised as a valid peak (before fitting a gaussian)
+drift_peak_inter_peak_spacing = 5
 
 #    Define the expected width of FP peaks - used to "normalise" - [cal_drift-peak]
 #        peaks (which are then subsequently removed
@@ -370,11 +384,13 @@ drift_peak_getdrift_gaussfit = False
 
 #    Define the minimum Pearson R coefficient allowed in a       - [cal_drift-peak]
 #        file to obtain drifts from that order
-drift_peak_pearsonr_cut = 0.5
+drift_peak_pearsonr_cut = 0.9
 
 #    Define the sigma for the sigma clip of found FP peaks       - [cal_drift-peak]
 drift_peak_sigmaclip = 1.0
 
+#    Define whether we plot the linelist vs amplitude            - [cal_drift-peak]
+drift_peak_plot_line_log_amp = False
 
 
 # -----------------------------------------------------------------------------
@@ -437,13 +453,16 @@ ccf_num_orders_max = 25
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                               - [cal_dark]
-qc_max_darklevel = 1.0
+qc_max_darklevel = 0.5
 
 #   Max fraction of dead pixels                                 - [cal_dark]
-qc_max_dead = 25.0
+qc_max_dead = 20.0
+
+#   Max fraction of dark pixels (percent)                       - [cal_dark]
+qc_max_dark = 6.0
 
 #   Min dark exposure time                                      - [cal_dark]
-qc_dark_time = 1.0
+qc_dark_time = 599.0
 
 #   Maximum points removed in location fit                      - [cal_loc]
 qc_loc_maxlocfit_removed_ctr = 1500

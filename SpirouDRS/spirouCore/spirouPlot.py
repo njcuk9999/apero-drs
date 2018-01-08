@@ -699,7 +699,7 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     # plot fits
     frame.plot(wave, extraction)
     # set title labels limits
-    title = 'FP spectral order {0} fiber {1}'
+    title = 'spectral order {0} fiber {1}'
     frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
               title=title.format(selected_order, fiber))
     # turn off interactive plotting
@@ -957,6 +957,35 @@ def create_separated_scaled_image(image, axis=0):
             newimage[:, start:end] = repeat
 
     return newimage, scale
+
+
+def drift_peak_plot_llpeak_amps(p, loc):
+    # get data from loc
+    wave = loc['wave']
+    extraction = loc['speref']
+    llpeak = loc['llpeak']
+    logamppeak = np.log10(loc['amppeak'])
+    dv = loc['dv']
+    # calculate different thresholds
+    mask1 = abs(dv) < 1000
+    mask2 = abs(dv) < 100
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(wave, extraction)
+    frame.plot(llpeak[mask1], logamppeak[mask1], linestyle='none')
+    frame.plot(llpeak[mask2], logamppeak[mask2], linestlye='none')
+    # set title labels limits
+    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+              title='$log_{10}$(Max Amplitudes)')
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
 
 
 # =============================================================================
