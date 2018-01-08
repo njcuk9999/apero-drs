@@ -41,8 +41,13 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.0.1'
+    version = '0.0.054'
     return version
+
+
+def RELEASE():
+    release = 'alpha'
+    return release
 
 
 def AUTHORS():
@@ -53,7 +58,7 @@ def AUTHORS():
 
 def LATEST_EDIT():
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2017-12-11'
+    date = '2018-01-08'
     return date
 
 
@@ -295,6 +300,8 @@ def EXIT_LEVELS():
 # Get version and author
 __version__ = VERSION()
 __author__ = AUTHORS()
+__date__ = LATEST_EDIT()
+__release__ = RELEASE()
 
 # Main code here
 if __name__ == "__main__":

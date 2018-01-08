@@ -27,6 +27,8 @@ __NAME__ = 'spirouConfig.py'
 # Get version and author
 __version__ = Constants.VERSION()
 __author__ = Constants.AUTHORS()
+__date__ = Constants.LATEST_EDIT()
+__release__ = Constants.RELEASE()
 # -----------------------------------------------------------------------------
 # Get constant parameters
 PACKAGE = Constants.PACKAGE()

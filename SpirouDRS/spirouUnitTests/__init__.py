@@ -14,26 +14,28 @@ Created on 2017-12-06 at 14:26
 Version 0.0.0
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
-
+from SpirouDRS import spirouConfig
+from . import unit_test_functions as utf
 
 # =============================================================================
 # Define variables
 # =============================================================================
-
+# Name of program
+__NAME__ = 'spirouUnitTests.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
+# define imports using asterisk
+__all__ = []
 # -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def function1():
-    return 0
+
+
 
 
 # =============================================================================
