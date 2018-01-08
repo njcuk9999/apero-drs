@@ -52,20 +52,19 @@ OLDCODEEXACT = False
 # Define functions
 # =============================================================================
 def main(night_name=None, reffile=None):
-    pass
-if 1:
-    night_name = '20170710'
-    reffile = 'fp_fp02a203_e2ds_AB.fits'
+
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
         customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
@@ -233,7 +232,7 @@ if 1:
     loc['fluxratio'] = np.zeros(Nfiles)
     # add sources
     source = __NAME__ + '/main()'
-    keys = ['drift', 'drift_left', 'drift_right', 'err_drift', 'deltatime',
+    keys = ['drift', 'drift_left', 'drift_right', 'errdrift', 'deltatime',
             'meanrv', 'meanrv_left', 'meanrv_right', 'merrdrift', 'fluxratio']
     loc.set_sources(keys, source)
 
@@ -394,7 +393,7 @@ if 1:
     wmsg = 'Recipe {0} has been succesfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
-    # return locals()
+    return locals()
 
 
 # =============================================================================
@@ -403,8 +402,6 @@ if 1:
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     locals = main()
-
-    print('Neil timing: AT-4 took {0} seconds'.format(time.time() - neilstart))
 
 # =============================================================================
 # End of code

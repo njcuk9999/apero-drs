@@ -50,10 +50,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
-    # run specific start up
-    p = spirouStartup.RunStartup(p, kind='Flat-field', calibdb=True)
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.InitialFileSetup(p, kind='Flat-field', calibdb=True)
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
     p.set_source('dprtype', __NAME__ + '/main()')
