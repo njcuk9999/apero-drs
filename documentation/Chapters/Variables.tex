@@ -756,7 +756,7 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 % ic_tilt_fit
 \item \ParameterEntry{Degree of the fitting polynomial for the tilt}
 {Defines the degree of the fitting polynomial for determining the tilt i.e. i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit.  The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit).}
-{ic\_tilt\_fit}{3}
+{ic\_tilt\_fit}{4}
 {\calSLIT}{\constantsfile}{\spirouImage.fit\_tilt()}{Public}
 
 
@@ -1338,17 +1338,41 @@ Value must be a float greater than zero.
 
 
 % qc_max_signal
-\item \ParameterEntry{Saturation point}
-{Defines the maximum signal allowed (when defining saturation limit). Currently this does not contribute to failing the quality test. Value must be a float greater than zero.}
-{qc\_max\_signal}{65500}
+% \item \ParameterEntry{Saturation point}
+% {Defines the maximum signal allowed (when defining saturation limit). Currently this does not contribute to failing the quality test. Value must be a float greater than zero.}
+% {qc\_max\_signal}{65500}
+% {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+% \DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
+
+% qc_ff_rms
+\item \ParameterEntry{Maximum allowed RMS}
+{Defines the maximum RMS allowed to accept a flat-field for calibration. Value must be a float greater than zero.}
+{qc\_ff\_rms}{0.12}
 {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
-\DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
 
 % qc_loc_flumax 
 \item \ParameterEntry{Saturation level reached warning}
 {Defines the level above which a warning is generated in the form `SATURATION LEVEL REACHED on Fiber \definevariable{fiber}'. Value must be a float greater than zero.}
 {qc\_loc\_flumax}{64500}
 {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
+
+% qc_slit_rms
+\item \ParameterEntry{Maximum RMS allowed for slit TILT}
+{Defines the maximum allowed RMS in the calculated TILT to add TILT profile to the calibration database. Value must be a float larger than zero.}
+{qc\_slit\_rms}{0.1}
+{\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
+
+% qc_slit_min
+\item \ParameterEntry{Minimum angle allowed for slit TILT}
+{Defines the minimum tilt angle allowed to add TILT profile to the calibration databse. Value must be a float and must be less than \definevariable{qc\_slit\_max}}
+{qc\_slit\_min}{-8.0}
+{\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
+
+% qc_slit_max
+\item \ParameterEntry{Maximum angle allowed for slit TILT}
+{Defines the maximum tiult angle allowed to add TILT profile to the calibration databse. Value must be a float and must be greater than \definevariable{qc\_slit\_min}}
+{qc\_slit\_max}{0.0}
+{\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
 
 \end{itemize}
 
