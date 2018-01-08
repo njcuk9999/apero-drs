@@ -13,9 +13,7 @@ Created on 2017-11-27 at 16:27
 
 Version 0.0.0
 """
-import sys
 import os
-
 
 
 # =============================================================================
@@ -30,6 +28,8 @@ __date__ = 'Unknown'
 
 # Whether be default we run debug mode
 DEBUG = 0
+# exit type
+EXIT = os._exit
 
 
 # =============================================================================
@@ -48,7 +48,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import SpirouDRS')
         print('INSTALL folder must be on PYTHONPATH')
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouBACK
     # -------------------------------------------------------------------------
@@ -60,7 +60,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouBACK from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouCDB
     # -------------------------------------------------------------------------
@@ -72,7 +72,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouCDB from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouCore
     # -------------------------------------------------------------------------
@@ -86,7 +86,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouCore from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouConfig
     # -------------------------------------------------------------------------
@@ -100,7 +100,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouConfig from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouEXTOR
     # -------------------------------------------------------------------------
@@ -112,7 +112,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouEXTOR from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouspirouFLAT
     # -------------------------------------------------------------------------
@@ -124,7 +124,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouFLAT from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouImage
     # -------------------------------------------------------------------------
@@ -137,7 +137,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouImage from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouLOCOR
     # -------------------------------------------------------------------------
@@ -149,7 +149,7 @@ def main(debug_mode=0):
     except ImportError as e:
         print('Fatal error cannot import spirouLOCOR from SpirouDRS')
         print('Error was: {0}'.format(e))   
-        os._exit(1)
+        EXIT(1)
     # -------------------------------------------------------------------------
     # spirouImage
     # -------------------------------------------------------------------------
@@ -160,32 +160,32 @@ def main(debug_mode=0):
             print('\t\t--' + spirouStartup.spirouStartup.__NAME__)
     except ImportError as e:
         print('Fatal error cannot import spirouStartup from SpirouDRS')
-        print('Error was: ' + e)
-        os._exit(1)
+        print('Error was: ' + str(e))
+        EXIT(1)
 
     # if we have got to this stage all modules load and are present
-    import SpirouDRS.spirouStartup.spirouStartup as ss
+    import SpirouDRS.spirouStartup.spirouStartup as Startup
     from SpirouDRS import spirouConfig
     from SpirouDRS.spirouCore import spirouLog
     # get log
-    WLOG = spirouLog.logger
+    wlog = spirouLog.logger
     # Get config parameters
     cparams = spirouConfig.ReadConfigFile()
     # check that drs_name and drs_version exist
     spirouConfig.CheckConfig(cparams, ['DRS_NAME', 'DRS_VERSION'])
     # display title
-    ss.display_title(cparams)
+    Startup.display_title(cparams)
     # check input parameters
     cparams = spirouConfig.CheckCparams(cparams)
     # display initial parameterisation
-    ss.display_initial_parameterisation(cparams)
+    Startup.display_initial_parameterisation(cparams)
     # log that validation was successful
     if not spirouLog.correct_level('all', cparams['PRINT_LEVEL']):
         print('\n')
         print('Validation successful. DRS installed corrected.')
     else:
-        WLOG('', '', '')
-        WLOG('', '', 'Validation successful. DRS installed corrected.')
+        wlog('', '', '')
+        wlog('', '', 'Validation successful. DRS installed corrected.')
 
     return locals()
 
