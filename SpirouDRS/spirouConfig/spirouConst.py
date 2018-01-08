@@ -70,7 +70,7 @@ def CONFIGFOLDER():
 
 def CONFIGFILE():
     # Name of main config file (in CONFIGFOLDER() )
-    config_file = 'config.txt'
+    config_file = 'config.py'
     return config_file
 
 
@@ -108,6 +108,27 @@ def LOG_CAUGHT_WARNINGS():
     # Define whether we warn
     warn = True
     return warn
+
+
+def COLOUREDLEVELS():
+
+    # reference:
+    # http://ozzmaker.com/add-colour-to-text-in-python/
+    clevels = dict(error='\033[0;31;48m',   # red
+                   warning='\033[0;33;48m', # yellow
+                   info='\033[0;32;48m',    # green
+                   graph='\033[0;32;48m',   # green
+                   all='\033[0;32;48m')     # green
+    return clevels
+
+def NORMALCOLOUR():
+    norm = " \033[0;37;40m"
+    return norm
+
+
+def COLOURED_LOG():
+    clog = True
+    return clog
 
 
 def ARG_FILE_NAMES(p):
@@ -276,6 +297,12 @@ def DATE_FMT_CALIBDB():
 
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
+
+
+def DEBUG():
+    # TODO: for release this should be 0
+    debug = 1
+    return debug
 
 
 def EXIT():
