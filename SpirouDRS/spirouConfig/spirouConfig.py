@@ -457,11 +457,16 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
         #    raise error if key does not evaluate to a dictionary
         #    raise error if 'fiber' not in dictionary
         try:
-            params = eval(pp[key])
-            if type(params) != dict:
-                raise NameError('')
-            if fiber not in params:
-                raise ConfigError('')
+            if type(pp[key]) == dict:
+                params = pp[key]
+            elif type(pp[key]) == str:
+                params = eval(pp[key])
+                if type(params) != dict:
+                    raise NameError('')
+                if fiber not in params:
+                    raise ConfigError('')
+            else:
+                raise TypeError('')
         except NameError:
             emsg = ('Key={0} has suffix="{1}" and must be a valid '
                     'python dictionary in form {\'key\':value}')
@@ -470,6 +475,9 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
             emsg = ('Key={0} has suffix="{1}" and must be a dictionary'
                     'containing {2}')
             raise ConfigError(emsg.format(key, suffix, fiber), level='error')
+        except TypeError:
+            emsg = ('Key={0} must be a dictionary')
+            raise ConfigError(emsg.format(key), level='error')
         # we have dictionary with our fiber key so can now get value
         value = params[fiber]
         # get new key without the suffix
@@ -630,7 +638,7 @@ def evaluate_value(value):
     """
     try:
         newvalue = eval(value)
-        if type(newvalue) not in [int, float, bool, complex, list]:
+        if type(newvalue) not in [int, float, bool, complex, list, dict]:
             return value
         else:
             return newvalue
