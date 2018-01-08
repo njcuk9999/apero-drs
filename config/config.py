@@ -12,25 +12,25 @@ DRS_PLOT = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = /scratch/Projects/spirou_py3/data/
+TDATA = '/scratch/Projects/spirou_py3/data/'
 
 #   Define the root installation directory
-DRS_ROOT = /scratch/Projects/spirou_py3/INTROOT/
+DRS_ROOT = '/scratch/Projects/spirou_py3/INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = /scratch/Projects/spirou_py3/data/raw
+DRS_DATA_RAW = '/scratch/Projects/spirou_py3/data/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = /scratch/Projects/spirou_py3/data/reduced
+DRS_DATA_REDUC = '/scratch/Projects/spirou_py3/data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = /scratch/Projects/spirou_py3/data/calibDB
+DRS_CALIB_DB = '/scratch/Projects/spirou_py3/data/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = /scratch/Projects/spirou_py3/data/msg
+DRS_DATA_MSG = '/scratch/Projects/spirou_py3/data/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = /scratch/Projects/spirou_py3/data/tmp/
+DRS_DATA_WORKING = '/scratch/Projects/spirou_py3/data/tmp/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
@@ -58,16 +58,11 @@ SPECIAL_NAME = 'special_config_SPIROU.py'
 
 #   Define the ICDP configuration file
 #       (located at DRS_CONFIG or DRS_ROOT/config if DRS_CONFIG not defined)
-ICDP_NAME = 'constants_SPIROU.txt'
+ICDP_NAME = 'constants_SPIROU.py'
 
 # -----------------------------------------------------------------------------
 # Misc/ unneccessary / unsorted
 # -----------------------------------------------------------------------------
-
-# Set the plot level
-#   value must be "defined"/"undefined"/"trigger
-# DRS_PLOT = undefined
-
 # Set the log date?
 #  value must be "YY-MM-DD" or "None"
 # DRS_USED_DATE = None

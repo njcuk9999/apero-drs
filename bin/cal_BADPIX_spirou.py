@@ -33,6 +33,8 @@ __NAME__ = 'cal_DARK_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
@@ -45,6 +47,8 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
     # deal with darkfile and flat file being None (i.e. get from sys.argv)
     if darkfile is None or flatfile is None:
         names, types = ['flatfile', 'darkfile'], [str, str]
@@ -52,7 +56,7 @@ def main(night_name=None, darkfile=None, flatfile=None):
     else:
         customargs = dict(darkfile=darkfile, flatfile=flatfile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
 
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile

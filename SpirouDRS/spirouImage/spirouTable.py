@@ -31,6 +31,8 @@ __NAME__ = 'spirouTable.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # get the logging function
 WLOG = spirouCore.wlog
 

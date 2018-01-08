@@ -33,6 +33,8 @@ __NAME__ = 'spirouRV.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 ConfigError = spirouConfig.ConfigError
@@ -163,7 +165,8 @@ def create_drift_file(p, loc):
     # get constants
     border = p['drift_peak_border_size']
     size = p['drift_peak_fpbox_size']
-    minimum_norm_fp_peak = p['drift_peak_min_nfp_peak']
+    # minimum_norm_fp_peak = p['drift_peak_min_nfp_peak']
+
     # get the reference data and the wave data
     speref = np.array(loc['speref'])
     wave = loc['wave']

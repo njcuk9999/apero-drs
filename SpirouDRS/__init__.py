@@ -27,6 +27,13 @@ from . import spirouStartup
 # Define variables
 # =============================================================================
 __NAME__ = 'SpirouDRS'
+# These three must also be changed in spirouConfig.spirouConstant to update
+#    all sub-packages
+__author__ = spirouConfig.Constants.AUTHORS()
+__version__ = spirouConfig.Constants.VERSION()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
+# define imports using asterisk
 __all__ = ['spirouBACK',
            'spirouCDB',
            'spirouConfig',
@@ -36,11 +43,7 @@ __all__ = ['spirouBACK',
            'spirouImage',
            'spirouLOCOR',
            'spirouStartup']
-# These three must also be changed in spirouConfig.spirouConstant to update
-#    all sub-packages
-__author__ = spirouConfig.Constants.AUTHORS()
-__version__ = spirouConfig.Constants.VERSION()
-__date__ = spirouConfig.Constants.LATEST_EDIT()
+
 
 # =============================================================================
 # Start of code

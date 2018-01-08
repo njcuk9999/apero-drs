@@ -27,6 +27,8 @@ __NAME__ = 'spirouEXTOR.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
@@ -204,7 +206,7 @@ def extract_wrapper(image, pos, sig, **kwargs):
                             (not currently available)
 
         nbsig:          float,  distance away from center to extract out to +/-
-                        defaults to p['nbsig'] from constants_SPIROU.txt
+                        defaults to p['nbsig'] from constants_SPIROU.py
 
         gain:           float, gain of the image
                         defaults to p['gain'] from fitsfilename HEADER

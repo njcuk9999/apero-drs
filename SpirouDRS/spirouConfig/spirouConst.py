@@ -41,8 +41,13 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.0.1'
+    version = '0.0.054'
     return version
+
+
+def RELEASE():
+    release = 'alpha'
+    return release
 
 
 def AUTHORS():
@@ -53,7 +58,7 @@ def AUTHORS():
 
 def LATEST_EDIT():
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2017-12-11'
+    date = '2018-01-08'
     return date
 
 
@@ -65,7 +70,7 @@ def CONFIGFOLDER():
 
 def CONFIGFILE():
     # Name of main config file (in CONFIGFOLDER() )
-    config_file = 'config.txt'
+    config_file = 'config.py'
     return config_file
 
 
@@ -103,6 +108,27 @@ def LOG_CAUGHT_WARNINGS():
     # Define whether we warn
     warn = True
     return warn
+
+
+def COLOUREDLEVELS():
+
+    # reference:
+    # http://ozzmaker.com/add-colour-to-text-in-python/
+    clevels = dict(error='\033[0;31;48m',   # red
+                   warning='\033[0;33;48m', # yellow
+                   info='\033[0;32;48m',    # green
+                   graph='\033[0;32;48m',   # green
+                   all='\033[0;32;48m')     # green
+    return clevels
+
+def NORMALCOLOUR():
+    norm = " \033[0;37;40m"
+    return norm
+
+
+def COLOURED_LOG():
+    clog = True
+    return clog
 
 
 def ARG_FILE_NAMES(p):
@@ -273,6 +299,12 @@ def DATE_FMT_CALIBDB():
     return date_fmt_calibdb
 
 
+def DEBUG():
+    # TODO: for release this should be 0
+    debug = 1
+    return debug
+
+
 def EXIT():
     my_exit = LOG_EXIT_TYPE()
     if my_exit == 'sys':
@@ -295,6 +327,8 @@ def EXIT_LEVELS():
 # Get version and author
 __version__ = VERSION()
 __author__ = AUTHORS()
+__date__ = LATEST_EDIT()
+__release__ = RELEASE()
 
 # Main code here
 if __name__ == "__main__":

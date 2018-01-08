@@ -218,7 +218,7 @@
             ```python
             x = ParamDict()
             x['version'] = 1.0.0
-            x.set_source('version', '/home/user/config.txt')
+            x.set_source('version', config.py)
             ```
         - `set_sources(keys, sources)`
             - keys is a string
@@ -248,7 +248,7 @@
             ```python
             x = ParamDict()                  
             x['version'] = 1.0.0
-            x.set_source('version', '/home/user/config.txt')
+            x.set_source('version', config.py)
             xsource = x.get_source('version')
             ```
         - `sources`

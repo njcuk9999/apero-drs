@@ -24,6 +24,9 @@ __NAME__ = 'spirouEXTOR.__init__()'
 # Get version and author
 __version__ = Constants.VERSION()
 __author__ = Constants.AUTHORS()
+__date__ = Constants.LATEST_EDIT()
+__release__ = Constants.RELEASE()
+# define imports using asterisk
 __all__ = ['Extraction', 'ExtractABOrderOffset', 'ExtractOrder',
            'ExtractOrder0', 'ExtractTiltOrder', 'ExtractTiltWeightOrder',
            'ExtractTiltWeightOrder2', 'ExtractWeightOrder']

@@ -37,6 +37,8 @@ __NAME__ = 'cal_loc_RAW_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
 
@@ -48,15 +50,16 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.RunInitialStartup(night_name, files)
+    ## get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    p = spirouStartup.LoadArguments(p, night_name, files)
     # run specific start up
     params2add = dict()
     params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
     params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-    p = spirouStartup.RunStartup(p, kind='localisation',
-                              prefixes=['dark_flat', 'flat_dark'],
-                              add_to_p=params2add, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, kind='localisation',
+                                       prefixes=['dark_flat', 'flat_dark'],
+                                       add_to_p=params2add, calibdb=True)
     # log processing image type
     p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
     p.set_source('dprtype', __NAME__ + '/main()')
@@ -115,7 +118,9 @@ def main(night_name=None, files=None):
     # Construct folder and filename
     reducedfolder = p['reduced_dir']
     newext = '_order_profile_{0}.fits'.format(p['fiber'])
-    rawfits = p['arg_file_names'][0].replace('.fits', newext)
+    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
+    rawfn = p['arg_file_names'][0].replace('.fits', newext)
+    rawfits = calibprefix + rawfn
     # log saving order profile
     WLOG('', p['log_opt'], 'Saving processed raw frame in {0}'.format(rawfits))
     # add keys from original header file
@@ -282,7 +287,8 @@ def main(night_name=None, files=None):
 
     # construct filename
     locoext = '_loco_{0}.fits'.format(p['fiber'])
-    locofits = p['arg_file_names'][0].replace('.fits', locoext)
+    locofn = p['arg_file_names'][0].replace('.fits', locoext)
+    locofits = calibprefix + locofn
     # log that we are saving localization file
     WLOG('', p['log_opt'], ('Saving localization information '
                             'in file: {0}').format(locofits))
