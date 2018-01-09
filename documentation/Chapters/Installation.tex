@@ -139,7 +139,7 @@ The first step is to extract the DRS into a folder (the \InstallDIR).
 
 \noindent Do this by using the following commands:
 \begin{cmdbox}
-cd (*\InstallDIRcmd*)
+cd (* \InstallDIRcmd *)
 unzip DRS.zip
 \end{cmdbox}
 
@@ -193,8 +193,8 @@ chmod +x (*\InstallDIRcmd*)/bin/*.py
 This is very similar currently to the Linux/\mac installation (in the future a `.exe' file will be given).
 
 \begin{enumerate}
-\item Extract to \InstallDIR with your favourite unzipping softwear.
-\item Add \InstallDIR to your PYTHONPATH (Section \ref{ch:install:install_win:environ_settings})
+\item Extract to \InstallDIR\, with your favourite unzipping softwear.
+\item Add \InstallDIR\, to your PYTHONPATH (Section \ref{ch:install:install_win:environ_settings})
 \end{enumerate}
 
 % -------------------------------------------------------
@@ -246,14 +246,14 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \begin{thighlight}
 \begin{table}[H]
 \begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{4.5cm}}
-\definevariable{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
+\definevariable{text:tdata}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
 &&&&\\
-\definevariable{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory (\InstallDIR) \\
-\definevariable{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
-\definevariable{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
-\definevariable{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\
-\definevariable{DRS\_DATA\_MSG}     & = & /drs/data/msg     & / & Define the directory that the log messages are stored in \\
-\definevariable{DRS\_DATA\_WORKING} & = & /drs/data/tmp/    & / & Define the working directory \\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory (\InstallDIR) \\
+\definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
+\definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
+\definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\
+\definevariable{text:drs_data_msg}{DRS\_DATA\_MSG}     & = & /drs/data/msg     & / & Define the directory that the log messages are stored in \\
+\definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & /drs/data/tmp/    & / & Define the working directory \\
 \end{tabular}
 \end{table}
 
@@ -268,13 +268,13 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \begin{thighlight}
 \begin{table}[H]
 \begin{tabular}{>{\color{red}}l c r c p{5cm}}
-\definevariable{DRS\_PLOT}    & = & 1     & / & Whether to show plots \\
-\definevariable{PRINT\_LEVEL} & = & "all" & / & Level at which to print \\
-\definevariable{LOG\_LEVEL}   & = & "all" & / & Level at which to log in log file \\
+\definevariable{text:drs_plot}{DRS\_PLOT}    & = & 1     & / & Whether to show plots \\
+\definevariable{text:print_level}{PRINT\_LEVEL} & = & "all" & / & Level at which to print \\
+\definevariable{text:log_level}{LOG\_LEVEL}   & = & "all" & / & Level at which to log in log file \\
 \end{tabular}
 \end{table}
 
-\noindent For the `\definevariable{PRINT\_LEVEL} and \definevariable{LOG\_LEVEL} keywords the values are set as follows:
+\noindent For the `\definevariable{text:print_level}{PRINT\_LEVEL} and \definevariable{text:log_level}{LOG\_LEVEL} keywords the values are set as follows:
 \begin{itemize}
 	\item "all" -- prints all events
 	\item "info" -- prints info, warning and error events
@@ -302,18 +302,18 @@ One must install the DRS (Section \ref{ch:install:installunix}) AND set up the D
 
 \item To validate running from command line type:
 \begin{cmdbox}
-(*\calvalidate*)
+(*\calvalidatecmd*)
 \end{cmdbox}
 
 \item To validate running from python/ipython from the command line type:
 \begin{cmdbox}
-python (*\calvalidate*)
-ipython (*\calvalidate*)
+python (*\calvalidatecmd*)
+ipython (*\calvalidatecmd*)
 \end{cmdbox}
 
 \item To validate running from ipython, open ipython and type:
 \begin{pythonbox}
-@run@ (*\calvalidate*)
+@run@ (*\calvalidatecmd*)
 \end{pythonbox}
 
 \item To validate running from import from python/ipython, open python/ipython and type:

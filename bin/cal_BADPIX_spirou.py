@@ -115,8 +115,10 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # ----------------------------------------------------------------------
     # construct folder and filename
     reducedfolder = p['reduced_dir']
+    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
     # construct bad pixel file name
-    badpixelfits = p['flatfile'].replace('.fits', '_badpixel.fits')
+    badpixelfn = p['flatfile'].replace('.fits', '_badpixel.fits')
+    badpixelfits = calibprefix + badpixelfn
     # log that we are saving bad pixel map in dir
     WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
     # add keys from original header files

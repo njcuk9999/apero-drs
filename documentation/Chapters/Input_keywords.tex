@@ -1,7 +1,68 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \chapter{Required input header keywords}
-\label{chapter:input_keywords}
+\label{ch:input_keywords}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Required keywords}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The following keywords are required by the current recipes to run.
+
+\begin{itemize}
+
+% TPL_NAME
+\item \KeywordEntry{Data fits file type}
+{The data fits file type (template Name)}
+{kw\_DPRTYPE}
+{TPL\_NAME}{"DATA"}{template Name}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% ACQTIME1
+\item \label{text:acqtime1} \KeywordEntry{Acquisition time (human readable)}
+{The acquisition time in format YYYY-mm-dd-HH-MM-SS.ss}
+{kw\_ACQTIME\_KEY}
+{ACQTIME1}{YYYY-mm-dd-HH-MM-SS.ss}{Date at start of observation}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% ACQTIME
+\item \KeywordEntry{Acquisition time (unix time format)}
+{The acquisition time in in unix time format (time since 1970-01-01-00-00-00)}
+{kw\_ACQTIME\_KEY\_UNIX}
+{ACQTIME}{000000000.00}{Date in unix time at start of observation}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% RDNOISE
+\item \KeywordEntry{Read noise}
+{The read noise (used for sigdet) [e-]}
+{kw\_RDNOISE}
+{RDNOISE}{0.0}{read noise (electrons)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% GAIN
+\item \KeywordEntry{Gain}
+{The gain [e-/ADU]}
+{kw\_GAIN}
+{GAIN}{0.0}{gain (electrons/ADU)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% EXPTIME
+\item \KeywordEntry{Exposure time}
+{The integration time in seconds}
+{kw\_EXPTIME}
+{EXPTIME}{0.0}{Integration time (seconds)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Descriptions}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -12,7 +73,7 @@ Last updated version 21 Nov 2014.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{Standard FITS Keywords}
+\subsection{Standard FITS Keywords}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -33,7 +94,7 @@ INSTRUME& = & `SPIROU'           & / & Instrument Name \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{FITS keywords related to the detector}
+\subsection{FITS keywords related to the detector}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -54,7 +115,7 @@ EMCNTS  & = & 	444578   & / & exposure meter counts at end \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{FITS keywords related to the target}
+\subsection{FITS keywords related to the target}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -79,7 +140,7 @@ OBJKMAG & = &        10.0 & / & Target K magnitude  \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{FITS keywords related to the telescope}
+\subsection{FITS keywords related to the telescope}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -104,7 +165,7 @@ SEEING & = &    1.0 & / & Seeing at start of observation \\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{FITS keywords related to the instrument}
+\subsection{FITS keywords related to the instrument}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

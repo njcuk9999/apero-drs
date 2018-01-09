@@ -54,20 +54,20 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 \item \KeywordEntry{DRS Version}
 {The current name and version of the DRS}
 {kw\_version}{VERSION}
-{\definevariable{DRS\_NAME}\_\definevariable{DRS\_VERSION}}
+{\definevariable{text:drs_name}{DRS\_NAME}\_\definevariable{text:drs_version}{DRS\_VERSION}}
 {DRS version}
 {\AllRecipes}{\spirouKeywords}{\spirouKeywords}
 
 
 % root_drs_loc
-\item \ParameterEntry{Root for localization keywords}
+\item \label{text:root_drs_loc} \ParameterEntry{Root for localization keywords}
 {The root (prefix) for localization keywords}
 {kw\_root\_drs\_loc}{LO}
 {\calextractRAW, \spirouKeywords}{\spirouKeywords}{\calextractRAW.\progMAIN, \spirouKeywords}{Private}
 
 
 % root_drs_flat
-\item \ParameterEntry{Root for flat field keywords}
+\item \label{text:root_drs_flat} \ParameterEntry{Root for flat field keywords}
 {The root (prefix) for flat field keywords}
 {kw\_root\_drs\_flat}{FF}
 {\spirouKeywords}{\spirouKeywords}{\spirouKeywords}{Private}
@@ -141,7 +141,8 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 \item \KeywordEntry{Dark level threshold}
 {The dark level threshold in ADU/s}
 {kw\_DARK\_CUT}
-{DACUT}{\definevariable{dark\_cutlimit}}{Threshold of dark level retain [ADU/s]}
+{DACUT}{\definevariable{text:dark_cutlimit}{dark\_cutlimit}}
+{Threshold of dark level retain [ADU/s]}
 {\calDARK}{\spirouKeywords}{\calDARK.\progMAIN}
 
 \end{itemize}
@@ -197,7 +198,7 @@ variable = p["(*\textcolor{red}{kw\_variable}*)"]
 \item \KeywordEntry{Degree of the fitting polynomial for localization position}
 {The fit degree used in the position fit during localization}
 {kw\_LOCO\_DEG\_C}
-{\rootdrsloc{DEGCTR}}{\definevariable{ic\_locdfitc}}{degree fit ctr ord}
+{\rootdrsloc{DEGCTR}}{\definevariable{text:ic_locdfitc}{ic\_locdfitc}}{degree fit ctr ord}
 {\callocRAW}{\spirouKeywords}{\callocRAW.\progMAIN}
 
 

@@ -470,9 +470,6 @@ qc_loc_rmsmax_center = 100
 #   Maximum rms allowed in fitting width                             - [cal_loc]
 qc_loc_rmsmax_fwhm = 500
 
-#   Maximum signal allowed (set saturation limit)                     - [cal_ff]
-# qc_max_signal = 65500
-
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
 qc_ff_rms = 0.12
 
@@ -489,14 +486,28 @@ qc_slit_min = -8.0
 #   Maximum allowed angle for the tilt of the slit [deg]            - [cal_slit]
 qc_slit_max = 0.0
 
+#   Maximum signal allowed (set saturation limit)                - [cal_extract]
+#        however currently does not trigger qc
+qc_max_signal = 65500
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings
 # -----------------------------------------------------------------------------
 
-#   Define calibd DB master filename                       - [cal_dark, cal_loc]
+#   Define calibd DB master filename                                     - [all]
 #      (formally ic_calib_db_master_file)
 ic_calibDB_filename = 'master_calib_SPIROU.txt'
 
-#   Max wait time for calib DB (in seconds)                - [cal_dark, cal_loc]
+#   Max wait time for calib DB (in seconds)                              - [all]
 calib_max_wait = 3600
+
+#   Define the match type for calibDB files                              - [all]
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+calib_db_match = 'closest'

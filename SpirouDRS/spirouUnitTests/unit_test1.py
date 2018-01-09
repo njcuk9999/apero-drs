@@ -18,7 +18,11 @@ import time
 import sys
 
 from SpirouDRS import spirouConfig
-from . import unit_test_functions as utf
+
+try:
+    from . import unit_test_functions as utf
+except ImportError:
+    import unit_test_functions as utf
 
 if sys.version_info.major == 2:
     from collections import OrderedDict as dict

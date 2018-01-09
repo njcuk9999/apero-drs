@@ -163,12 +163,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
 
     # ----------------------------------------------------------------------
-    # Read wavelength solution
-    # ----------------------------------------------------------------------
-    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-
-    # ----------------------------------------------------------------------
     # Fiber loop
     # ----------------------------------------------------------------------
     # loop around fiber types
@@ -176,6 +170,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # set fiber
         p['fiber'] = fiber
         p.set_source('fiber', __NAME__ + '/main()()')
+
+        # ------------------------------------------------------------------
+        # Read wavelength solution
+        # ------------------------------------------------------------------
+        loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
+        loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------

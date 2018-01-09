@@ -118,10 +118,9 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     # check for localization file for this fiber
     if not (loc_file in c_database):
         emsg1 = 'No order geometry defined in the calibDB for fiber: {0}'
-        emsg2 = '    requires key="{0}" in calibDB file (time < {1}).'
-        WLOG('info', p['log_opt'], emsg1.format(p['fiber']))
-        WLOG('info', p['log_opt'], emsg2.format(loc_file, p['max_time_human']))
-        WLOG('error', p['log_opt'], 'Unable to complete the recipe, FATAL')
+        emsg2 = '    requires key="{0}" in calibDB file (with time < {1}).'
+        emsg3 = '    Unable to complete the recipe, FATAL'
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
     # else log that we are reading localization parameters
     wmsg = 'Reading localization parameters of Fiber {0}'
     WLOG('', p['log_opt'], wmsg.format(p['fiber']))

@@ -180,10 +180,10 @@ kw_ACQTIME_KEY_UNIX = ['ACQTIME', None, '']
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 kw_RDNOISE = ['RDNOISE', None, '']
 
-# define the exposure time HEADER key (used to get value only)
+# define the gain HEADER key (used to get value only)
 kw_GAIN = ['GAIN', None, '']
 
-# define the gain HEADER key (used to get value only)
+# define the exposure time HEADER key (used to get value only)
 kw_EXPTIME = ['EXPTIME', None, '']
 
 
