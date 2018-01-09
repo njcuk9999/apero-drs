@@ -20,15 +20,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % formatting the named variables (from user setup)
-\newcommand{\definevariable}[1]{\textcolor{blue}{\{#1\}}}
-\newcommand{\definevariablecmd}[1]{\textcolor{cyan}{\{#1\}}}
+\newcommand{\definevariable}[2]{\hyperref[#1]{{#2}}}
+\newcommand{\definevariablecmd}[1]{\textcolor{cyan}{{#1}}}
 
 % --------------------------------------------------------
 % formatting the named keywords 
-\newcommand{\definekeyword}[1]{\textcolor{red}{\{#1\}}}
+\newcommand{\defineinkeyword}[2]{\hyperref[#1]{{#2}}}
+\newcommand{\defineoutkeyword}[2]{\hyperref[#1]{{#2}}}
+\newcommand{\defineskeyword}[1]{\textcolor{red}{{#1}}}
 
 % --------------------------------------------------------
 % Program should be in small caps
+\newcommand{\defineprogram}[1]{\textcolor{blue}{\Program{#1}}}
 \newcommand{\Program}[1]{\textsc{#1}}
 
 % --------------------------------------------------------
@@ -51,6 +54,7 @@
 % \ParameterEntry{Name}{Description}{variable}{default value}{used in}{location}{level (if dev)}
 \newcommand{\ParameterEntry}[8]{
 	\begin{minipage}[t]{\textwidth}
+
 	\textbf{#1 (\textcolor{red}{#3})}
 
 	\begin{thighlight}
@@ -74,6 +78,7 @@
 
 \newcommand{\PseudoParamEntry}[6]{
 	\begin{minipage}[t]{\textwidth}
+
 	\textbf{#1 (\textcolor{red}{#3})}
 
 	\begin{thighlight}
@@ -96,6 +101,7 @@
 
 \newcommand{\KeywordEntry}[9]{
 	\begin{minipage}[t]{\textwidth}
+
 	\textbf{#1 (\textcolor{red}{#3})}
 
 	\begin{thighlight}
