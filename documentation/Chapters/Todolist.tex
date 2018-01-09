@@ -24,8 +24,8 @@ Below is the current to do list and any things that need to be addressed before 
 	\item Check confirugation variable values are valid at startup of recipes (avoids crashes later)
 	\item \textcolor{red}{Can we remove `special\_config\_SPIROU' configuration file call as the file does not exist?}
 	\item \textcolor{red}{fitsfilename is the last file in a group of files - is this correct or should it be the first (as initially defined)?}
-	\item \textcolor{red}{`nbcos' in \definevariable{\spirouImage} is not used - what is it?}
-	\item \textcolor{red}{`image\_gap' in \definevariable{\spirouLOCOR} is set to zero, what is this?}
+	\item \textcolor{red}{`nbcos' in \spirouImage is not used - what is it?}
+	\item \textcolor{red}{`image\_gap' in \spirouLOCOR is set to zero, what is this?}
 	\item \textcolor{red}{Some keywords added to header but not updated in any recipe - should they be removed (or updated)?}
 	\item Write a setup.py installer / checker for prerequisites (Last step)
 \end{itemize}
@@ -106,9 +106,8 @@ Below is the current to do list and any things that need to be addressed before 
 \begin{itemize}
 	\item \sout{convert code from AT-4 v43 to run on python 3}
 	\item \sout{add variables and keywords to documentation}
-	\item \definevariable{\spirouBACK.measure\_background\_flatfield()} needs converting from C to python (interpol.c) - currently not used so not converted  -- background set to zero.
-	\item \textcolor{red}{\definevariable{\spirouBACK.measure\_min\_max()} why is the max\_signal the third biggest value and not a percentile?}
-	\item \textcolor{red}{Quality control test \definevariable{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
+	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted  -- background set to zero.
+	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
 	\item \sout{Update from AT-4 v43 to current}
 	\item Unit test - comparing outputs this version to AT-4
 \end{itemize}
@@ -123,9 +122,9 @@ Below is the current to do list and any things that need to be addressed before 
 \begin{itemize}
 	\item \sout{convert code from AT-4 v43 to run on python 3}
 	\item \sout{add variables and keywords to documentation}
-	\item \definevariable{\spirouBACK.measure\_background\_flatfield()} needs converting from C to python (interpol.c) - currently not used so not converted -- background set to zero.
-	\item \textcolor{red}{\definevariable{\spirouBACK.measure\_min\_max()} why is the max\_signal the third biggest value and not a percentile?}
-	\item \textcolor{red}{Quality control test \definevariable{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
+	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted -- background set to zero.
+	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
+	\item \textcolor{red}{Quality control test \definevariable{text:qc_max_signal}{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
 	\item \textcolor{red}{Inconsitency in adding ``lower'' and ``upper'' contribution due to pixel rounding in pixel extraction process.}
 	\item \sout{Update from AT-4 v43 to current}
 	\item Unit test - comparing outputs this version to AT-4
@@ -184,7 +183,7 @@ Below is the current to do list and any things that need to be addressed before 
 
 \begin{itemize}
 	\item \sout{convert code from AT-4 to run on python 3}
-	\item add variables and keywords to documentation
+	\item \sout{add variables and keywords to documentation}
 	\item Unit test - comparing outputs this version to AT-4
 \end{itemize}
 
@@ -225,7 +224,7 @@ Below is the current to do list and any things that need to be addressed before 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-	\item convert code from AT-4 to run on python 3
+	\item \sout{convert code from AT-4 to run on python 3}
 	\item add variables and keywords to documentation
 	\item Unit test - comparing outputs this version to AT-4
 \end{itemize}
