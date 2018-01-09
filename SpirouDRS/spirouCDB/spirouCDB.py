@@ -39,6 +39,8 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouCore.wlog
+# get Config Error
+ConfigError = spirouConfig.ConfigError
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
@@ -125,7 +127,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
 
         # construct database line entry
         lineargs = [key, p['arg_night_name'], filename, t_fmt, t]
-        line = '{0} {1} {2} {3} {4}\n'.format(*lineargs)
+        line = '\n{0} {1} {2} {3} {4}'.format(*lineargs)
         # add line to lines list
         lines.append(line)
     # write lines to master
@@ -225,8 +227,8 @@ def get_database(p, max_time=None, update=False):
         # get the unix time from header time
         max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:
-        WLOG('error', p['log_opt'], ('max_time {0} is not a valid float.'
-                                     '').format(max_time))
+        emsg = 'max_time {0} is not a valid float.'
+        WLOG('error', p['log_opt'], emsg.format(max_time))
     # add max_time to p
     p['max_time_unix'] = max_time
     p.set_source('max_time_unix', __NAME__ + '/get_database()')
@@ -237,6 +239,13 @@ def get_database(p, max_time=None, update=False):
     # store all lines that have unix time <= max_time
     keys, dirnames, filenames, utimes = [], [], [], []
     for l_it, line in enumerate(lines):
+        # ignore blank lines or lines starting with '#'
+        if len(line) == 0:
+            continue
+        if line == '\n':
+            continue
+        if line[0] == '#':
+            continue
         # get elements from database
         try:
             key, dirname, filename, t_fmt, t = line.split()
@@ -246,9 +255,10 @@ def get_database(p, max_time=None, update=False):
             # Must close and remove lock file before exiting
             lock.close()
             os.remove(lock_file)
-            WLOG('error', p['log_opt'], ('Incorrectly formatted line in '
-                                         'calibDB (Line {0} = {1})'
-                                         '').format(l_it+1, line))
+            emsg1 = 'Incorrectly formatted line in calibDB'
+            lineedit = line.replace('\n', '')
+            emsg2 = '   Line {0}: "{1}"'.format(l_it + 1, lineedit)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
             key, dirname, filename, t_fmt, t = None, None, None, None, None
 
         # Make sure unix time and t_fmt agree
@@ -258,45 +268,107 @@ def get_database(p, max_time=None, update=False):
         if t_fmt_unix != t:
             emsg = 'Human time = {0} does not match unix time = {1} in calibDB'
             WLOG('error', p['log_opt'], emsg.format(t_fmt, t_human))
-
-        # only keep those entries earlier or equal to "max_time"
-        # note t must be a float here --> exception
+        # t must be a float here --> exception
         try:
-            if t <= max_time:
-                # append unix time, key, directory name and filename
-                utimes.append(t)
-                keys.append(key)
-                dirnames.append(dirname)
-                filenames.append(filename)
+            t = float(t)
         except ValueError:
             # Must close and remove lock file before exiting
             lock.close()
             os.remove(lock_file)
-            WLOG('error', p['log_opt'], ('unix time {0} is not a valid float.'
-                                         '').format(t))
-
+            emsg1 = 'unix time="{0}" is not a valid float'.format(t)
+            emsg2 = '    for key {0}="{1}"'.format(key, line)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
+        # append all database elements to lists
+        utimes.append(t)
+        keys.append(key)
+        dirnames.append(dirname)
+        filenames.append(filename)
+    # convert to numpy arrays
+    utimes = np.array(utimes)
+    keys = np.array(keys)
+    dirnames = np.array(dirnames)
+    filenames = np.array(filenames)
     # Need to check if lists are empty after loop
+    # Must close and remove lock file before exiting
     if len(keys) == 0:
-        # Must close and remove lock file before exiting
         lock.close()
         os.remove(lock_file)
         # log and exit
-        WLOG('error', p['log_opt'], ('There are no entries in calibDB with '
-                                     'time <= {0}').format(max_time))
-    # Finally we only want to keep the most recent key of each time so
-    #     write all keys (in sorted unix time order) to a dictionary
-    #     all keys currently in dictionary will be overwritten thus keeping
-    #     newest key only
-    c_database = ParamDict()
-    for it in np.argsort(utimes):
-        c_database[keys[it]] = [dirnames[it], filenames[it]]
-        # add source
-        c_database.set_source(keys[it], __NAME__)
+        calibdb_file = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+        emsg1 = 'There are no entries in calibDB'
+        emsg2 = '   Please check CalibDB file at {0}'.format(calibdb_file)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # Finally we only want to keep one calibDB file for each key
+    #     This depends on 'calib_db_match'
+    #     If calib_db_match = 'older' - select the newest file that is older
+    #                                   than max_time
+    #     If calib_db_match = 'closest' - select the file that is closest to
+    #                                     max_time (newer OR older)
+    try:
+        c_database = choose_keys(p, utimes, keys, dirnames, filenames)
+    except ConfigError as e:
+        lock.close()
+        os.remove(lock_file)
+        # log error in standard way
+        WLOG(e.level, p['log_opt'], e.msg)
+        c_database = None
+
     # Must close and remove lock file before continuing
     lock.close()
     os.remove(lock_file)
     # return calibDB dictionary
     return c_database, p
+
+
+def choose_keys(p, utimes, keys, dirnames, filenames):
+    # set up database
+    c_database = ParamDict()
+    # get match
+    match = p['CALIB_DB_MATCH']
+    # get max time unix and human
+    maxtime_u = p['max_time_unix']
+    maxtime_h = p['max_time_human']
+    # get unique keys
+    ukeys = np.unique(keys)
+    # loop around unique keys
+    for ukey in ukeys:
+        # gather all keys with ukey
+        kmask = keys == ukey
+        # if we only want older ones test this else keep all
+        if match == 'older':
+            older = utimes <= maxtime_u
+        else:
+            older = np.ones(len(keys), dtype=bool)
+        # combine masks
+        cmask = older & kmask
+        # if we only have one key continue (use this one)
+        if np.sum(cmask) == 1:
+            closest_time = utimes[cmask][0]
+        # if we have none then cause error
+        elif match == 'older' and np.sum(cmask) == 0:
+            calibdb_file = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+            emsg1 = ('There are no entries for key="{0}" in calibDB file with '
+                     'time < {1}'.format(ukey, maxtime_h))
+            emsg2 = '   Please check CalibDB file at {0}'.format(calibdb_file)
+            raise ConfigError([emsg1, emsg2], level='error')
+        elif np.sum(cmask) == 0:
+            calibdb_file = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+            emsg1 = ('There is an undefined error with key="{0}" in '
+                     'calibDB file'.format(ukey))
+            emsg2 = '   Please check CalibDB file at {0}'.format(calibdb_file)
+            raise ConfigError([emsg1, emsg2], level='error')
+        # else we need to choose the one closest to max_time
+        else:
+            tpos = np.argmin(abs(utimes[cmask] - maxtime_u))
+            closest_time = utimes[cmask][tpos]
+        # find where in original array utimes = closest_time
+        pos = np.where((utimes == closest_time) & cmask)[0][-1]
+        # add to c_database
+        c_database[ukey] = [dirnames[pos], filenames[pos]]
+        # set the source of each entry
+        c_database.set_source(ukey, __NAME__ + '/choose_keys()')
+    # return c_database
+    return c_database
 
 
 def put_file(p, inputfile):

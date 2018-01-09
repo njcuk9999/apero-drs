@@ -115,7 +115,7 @@ z = spirouCore.AddXtoY(x, y)
 \label{ch:rules:drs_specific:logger}
 % -------------------------------------------------------
 
-As in previous version of the DRS the printing and logging is controlled by a function. In this version of the DRS this is in \definevariable{\spirouLog.logger} but in most recipes/modules this is aliased to \definevariable{WLOG}. The \definevariable{WLOG} function controls both the printing to the screen (standard output) and to a log file. Where and how this is done is controlled by several variables.
+As in previous version of the DRS the printing and logging is controlled by a function. In this version of the DRS this is in \spirouLog.logger but in most recipes/modules this is aliased to \WLOG. The \WLOG function controls both the printing to the screen (standard output) and to a log file. Where and how this is done is controlled by several variables.
 
 The format of the log entry (whether it is printed to the standard output or to the logging file) is as follows:
 \begin{pythonbox}
@@ -127,12 +127,12 @@ HH:MM:SS.s - char | program | message
 \end{cmdboxprint}
 \noindent where the `char' is dependent on the input level. 
 
-\noindent The `char' and level are a dictionary pair in the form `level = char' and is controlled by \definevariable{trig\_key} (see section \ref{ch:variables:log_print}) i.e. by default the level char pairs are:
+\noindent The `char' and level are a dictionary pair in the form `level = char' and is controlled by \definevariable{text:trig_keys}{trig\_key} (see section \ref{ch:variables:log_print}) i.e. by default the level char pairs are:
 \begin{pythonbox}
 dict(all=' ', error='!', warning='@', info='*', graph='~')
 \end{pythonbox}
 
-\noindent The level also determines whether or not a message is shown in the screen (standard output) or in the log. A log message will be shown if it has a numeric value (defined in \definevariable{write\_level}) higher than that set in \definevariable{PRINT\_LEVEL} for printing to the screen (standard output) or set in \definevariable{LOG\_LEVEL} for printing to the log.
+\noindent The level also determines whether or not a message is shown in the screen (standard output) or in the log. A log message will be shown if it has a numeric value (defined in \definevariable{text:write_level}{write\_level}) higher than that set in \definevariable{text:print_level}{PRINT\_LEVEL} for printing to the screen (standard output) or set in \definevariable{text:log_level}{LOG\_LEVEL} for printing to the log.
 
 i.e.: 
 \begin{pythonbox}
@@ -150,12 +150,12 @@ HH:MM:SS.s - @ |program|Warning message
 HH:MM:SS.s - ! |program|Error message
 \end{cmdboxprint}
 \begin{note}
-Note the info message was not shown as info=1 and \definevariable{PRINT\_LEVEL} is set to warning=2.
+Note the info message was not shown as info=1 and \definevariable{text:print_level}{PRINT\_LEVEL} is set to warning=2.
 \end{note}
 
 \newpage 
 
-\noindent In addition to logging the certain levels can be set to exit the DRS recipe when they are used. They are defined in \definevariable{exit\_levels} and exiting python is controlled via \definevariable{exit} and \definevariable{Logger exit type}.
+\noindent In addition to logging the certain levels can be set to exit the DRS recipe when they are used. They are defined in \definevariable{text:exit_levels}{exit\_levels} and exiting python is controlled via \definevariable{text:exit_controller}{exit} and \definevariable{text:log_exit_type}{log\_exit\_type}.
 
 i.e. 
 \begin{pythonbox}
@@ -184,7 +184,7 @@ Note that `WLOG('error')' triggered the recipe/module to exit python, thus no ot
 
 While running the DRS there are many variables defined in many places that are used throughout the recipes, DRS module and sub-modules, defined in configuration files and from certain sub-modules and recipes. It is important as a developer (and for proper error handling) to keep track of where this variables are being defined and changed in the DRS. \\
 
-\noindent For this reason, and for convenience for passing between functions and recipes, a new object, based on a dictionary has been defined to handle all variables defined throughout the DRS. This is the parameter dictionary (\ParamDict) class (defined in \definevariable{\spirouConfig}). \\
+\noindent For this reason, and for convenience for passing between functions and recipes, a new object, based on a dictionary has been defined to handle all variables defined throughout the DRS. This is the parameter dictionary (\ParamDict) class (defined in \spirouConfig). \\
 
 \noindent The \ParamDict is a custom dictionary class (that inherits all attributes and methods from the standard python dictionary object), with the ability to get and set a source for each key value pair. In addition to this all variables stored are \textbf{insensitive to case} (i.e. uppercase variables, lowercase variables and mixed case variables are stored as the \textbf{same} variable). \\
 
@@ -257,9 +257,9 @@ p3.set_all_sources('SpirouMath.LetterNumbers()')
 \label{ch:rules:drs_specific:config_error}
 % -------------------------------------------------------
 
-As mentioned above in section \ref{ch:rules:drs_specific:param_dict} it is important to handle errors caused by variable definition. Included in the parameter dictionary definitions are a new set of exception handlers to be used with \ParamDict and the \definevariable{\spirouLog.logger} (aliased to \definevariable{WLOG} in most modules/recipes). It is very similar to standard python Exceptions but adds some new methods that can be accessed to be used with \definevariable{WLOG}. \\
+As mentioned above in section \ref{ch:rules:drs_specific:param_dict} it is important to handle errors caused by variable definition. Included in the parameter dictionary definitions are a new set of exception handlers to be used with \ParamDict and the \spirouLog.logger (aliased to \WLOG in most modules/recipes). It is very similar to standard python Exceptions but adds some new methods that can be accessed to be used with \WLOG. \\
 
-An example is below of the \definevariable{ConfigError} exception (without using \ParamDict)
+An example is below of the \ConfigError exception (without using \ParamDict)
 
 \begin{pythonbox}
 def a_function():
@@ -278,9 +278,9 @@ try:
     a_function()
 except ConfigError as e:
     WLOG(e.level, 'program', e.message)
-\end{pythonbox}
+\end{pythonbox}\d
 \vspace{0.5cm}
-\noindent This functionality is coded into \ParamDict (with a \definevariable{WLOG} level set to `error') thus one only needs the following code:
+\noindent This functionality is coded into \ParamDict (with a \WLOG level set to `error') thus one only needs the following code:
 \begin{pythonbox}
 # set up the ParamDict
 x = ParamDict()
@@ -295,5 +295,5 @@ except ConfigError as e:
 HH:MM:SS.s - ! |program|Parameter "add" not found in parameter dictionary
 \end{cmdboxprint}
 \begin{note}
-Due to WLOG `error' currently meaning the code is exited a missing parameter will print the above message and then exit using the \definevariable{log\_exit\_type} exit strategy (see section \ref{ch:rules:drs_specific:logger}).
+Due to WLOG `error' currently meaning the code is exited a missing parameter will print the above message and then exit using the \definevariable{text:log_exit_type}{log\_exit\_type} exit strategy (see section \ref{ch:rules:drs_specific:logger}).
 \end{note}

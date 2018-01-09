@@ -13,7 +13,7 @@
 To better understand the variables in the DRS we have laid out each variable in the following way:
 
 \begin{itemize}
-\item \ParameterEntry{Variable title}
+\item \label{text:variable} \ParameterEntry{Variable title}
 {Description of the variable}
 {VARIABLE\_NAME}
 {Default Value}{The recipe used the variable is used in.}
@@ -101,7 +101,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \begin{itemize}
 % DRS_NAME
 \ifdevguide
-\item \ParameterEntry{DRS Name}
+\item \label{text:drs_name} \ParameterEntry{DRS Name}
 {Defines the data reduction software name. Value must be a valid string.}
 {DRS\_NAME}{SPIROU}
 {\AllRecipes}{\spirouCONST.NAME()}{\AllRecipes}{Private}
@@ -109,7 +109,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 % DRS_VERSION
 \ifdevguide
-\item \ParameterEntry{DRS Version}
+\item \label{text:drs_version} \ParameterEntry{DRS Version}
 {Defines the data reduction software version. Value must be a valid string.}
 {DRS\_VERSION}{0.0.1}
 {\AllRecipes}{\spirouCONST.VERSION()}{\AllRecipes}{Private}
@@ -144,7 +144,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 
 % DRS_PLOT
-\item \ParameterEntry{Plotting switch}
+\item \label{text:drs_plot} \ParameterEntry{Plotting switch}
 {Defines whether to show plots (A value of 1 to show plots, a value of 0 to not show plots). Value must be an integer (0 or 1) or boolean (True or False)}
 {DRS\_PLOT}{1}
 {\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
@@ -194,37 +194,36 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 \begin{itemize}
 
-\item \ParameterEntry{The data directory}
+\item \label{text:tdata} \ParameterEntry{The data directory}
 {Defines the path to the data directory. Value must be a string containing a valid file location.}
 {TDATA}{/drs/data/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
-
-\item \ParameterEntry{The installation directory}
+\item \label{text:drs_root} \ParameterEntry{The installation directory}
 {Defines the installation directory (\InstallDIR). Value must be a string containing a valid file location.}
 {DRS\_ROOT}{/drs/INTROOT/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
 
-\item \ParameterEntry{The raw data directory}
+\item \label{text:drs_data_raw} \ParameterEntry{The raw data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
 {DRS\_DATA\_RAW}{/drs/data/raw}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
 
-\item \ParameterEntry{The reduced data directory}
+\item \label{text:drs_data_reduc} \ParameterEntry{The reduced data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
 {DRS\_DATA\_REDUC}{/drs/data/reduced}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
 
-\item \ParameterEntry{The calibration database and calibration file directory}
+\item \label{text:drs_calib_db} \ParameterEntry{The calibration database and calibration file directory}
 {Defines the directory that the calibration files and database will be saved to/read from. Value must be a string containing a valid file location.}
 {DRS\_CALIB\_DB}{/drs/data/calibDB}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
 
-\item \ParameterEntry{The log directory}
+\item \label{text:drs_data_msg} \ParameterEntry{The log directory}
 {Defines the directory that the log messages are stored in. Value must be a string containing a valid file location.}
 {DRS\_DATA\_MSG}{/drs/data/msg}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
 
-\item \ParameterEntry{The working directory}
+\item \label{text:drs_data_working} \ParameterEntry{The working directory}
 {Defines the working directory. Value must be a string containing a valid file location.}
 {DRS\_DATA\_WORKING}{/drs/data/tmp/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
 
@@ -324,7 +323,7 @@ ic\_ccdy\_high &=& 1935 \\
 
 
 % Avaiable fiber types
-\item \ParameterEntry{Available fiber types}
+\item \label{text:fiber_types} \ParameterEntry{Available fiber types}
 {Defines the type of fiber we have (used in various codes). Theses are define in a python list of string, where the earlier a fiber is in the list the more it takes priority in searches (i.e. AB over A or B if AB is first)}
 {fiber\_types}
 {\lstinline[style=pythoninline]| ['AB', 'A', 'B', 'C'] |}
@@ -502,7 +501,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\spirouImage.measure\_dark()}{Public}
 
 % dark_cutlimit
-\item \ParameterEntry{Bad pixel cut limit}
+\item \label{text:dark_cutlimit} \ParameterEntry{Bad pixel cut limit}
 {Defines the bad pixel cut limit in ADU/s. 
 \begin{equation}
 badpixels = (image > \text{dark\_cut\_limit}) \text{ OR } (\text{non-finite})
@@ -618,7 +617,7 @@ Value must be an integer between zero and the number of rows (y-axis dimension).
 
 
 % ic_locdfitc
-\item \ParameterEntry{Degree of the fitting polynomial for localization position}
+\item \label{text:ic_locdfitc} \ParameterEntry{Degree of the fitting polynomial for localization position}
 {Defines the degree of the fitting polynomial for locating the positions of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the column direction (x-axis direction).}
 {ic\_locdfitc}{5}
 {\callocRAW}{\constantsfile}{\spirouLOCOR.initial\_order\_fit(), \spirouLOCOR.sigmaclip\_order\_fit()}{Public}
@@ -636,7 +635,7 @@ Value must be an integer between zero and the number of rows (y-axis dimension).
 {Defines the degree of the fitting polynomial for locating the positions error of each order i.e. if value is 1 is a linear fit, if the value is 2 is a quadratic fit. The value must be a positive integer equal to or greater than zero (zero would lead to a constant fit along the column direction (x-axis direction).}
 {ic\_locdfitp}{3}
 {\callocRAW}{\constantsfile}{\spirouKeywords, \callocRAW.\progMAIN, \spirouLOCOR.sigmaclip\_order\_fit()}{Public}
-\DevNote{This is only currently used to add the value to the localization file (`\_loco\_\definevariable{fiber}.fits') but not used in any calculation. It could be removed?}
+\DevNote{This is only currently used to add the value to the localization file (`\_loco\_\definevariable{text:fiber_types}{fiber}.fits') but not used in any calculation. It could be removed?}
 
 
 % ic_max_rms_center
@@ -715,7 +714,7 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 % ic_locopt1
 \item \ParameterEntry{Localization archiving option}
-{Whether we save the location image with the superposition of the fit (zeros). If this option is 1 or True it will save the file to `\_with-order\_\definevariable{fiber}.fits' if 0 or False it will not save this file. Value must be 1, 0, True or False.}
+{Whether we save the location image with the superposition of the fit (zeros). If this option is 1 or True it will save the file to `\_with-order\_\definevariable{text:fiber_types}{fiber}.fits' if 0 or False it will not save this file. Value must be 1, 0, True or False.}
 {ic\_locopt1}{1}
 {\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
 
@@ -1057,15 +1056,15 @@ Value must be a float larger than zero.
 
 \begin{itemize}
 
-% ic_drift_peak_n_order_max
-\item \ParameterEntry{First order to use in drift-peak}
-{Defines the first order to use (from this to \definevariable{ic\_drift\_peak\_n\_order\_max}). This is used to get the median drift. Value must be an integer greater than or equal to 0 and less than \definevariable{ic\_drift\_peak\_n\_order\_max}.}
+% ic_drift_peak_n_order_min
+\item \label{text:ic_drift_peak_n_order_min} \ParameterEntry{First order to use in drift-peak}
+{Defines the first order to use (from this to \definevariable{text:ic_drift_peak_n_order_max}{ic\_drift\_peak\_n\_order\_max}). This is used to get the median drift. Value must be an integer greater than or equal to 0 and less than \definevariable{text:ic_drift_peak_n_order_max}{ic\_drift\_peak\_n\_order\_max}.}
 {ic\_drift\_peak\_n\_order\_min}{2}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
 % ic_drift_peak_n_order_max
-\item \ParameterEntry{Last order to use in drift-peak}
-{Defines the last order to use (from \definevariable{ic\_drift\_peak\_n\_order\_min} to this). This is used to get the median drift. Value must be an integer greater than \definevariable{ic\_drift\_peak\_n\_order\_min} and less than or equal to the maximum number of orders.}
+\item \label{text:ic_drift_peak_n_order_max} \ParameterEntry{Last order to use in drift-peak}
+{Defines the last order to use (from \definevariable{text:ic_drift_peak_n_order_min}{ic\_drift\_peak\_n\_order\_min} to this). This is used to get the median drift. Value must be an integer greater than \definevariable{text:ic_drift_peak_n_order_min}{ic\_drift\_peak\_n\_order\_min} and less than or equal to the maximum number of orders.}
 {ic\_drift\_peak\_n\_order\_max}{30}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
@@ -1082,14 +1081,14 @@ Value must be a float larger than zero.
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
 % drift_peak_border_size
-\item \ParameterEntry{Image column (x-dim) border size}
-{Defines the number of pixels on either side of an image that should not be used to find FP peaks. This size must be larger to or equal to \definevariable{drift\_peak\_fpbox\_size}, therefore the fit to an individual FP does not go off the edge of the image. Value must be an integer larger to or equal to \definevariable{drift\_peak\_fpbox\_size} and less than and less than half the number of columns (x-dimension).}
+\item \label{text:drift_peak_border_size} \ParameterEntry{Image column (x-dim) border size}
+{Defines the number of pixels on either side of an image that should not be used to find FP peaks. This size must be larger to or equal to \definevariable{text:drift_peak_fpbox_size}{drift\_peak\_fpbox\_size}, therefore the fit to an individual FP does not go off the edge of the image. Value must be an integer larger to or equal to \definevariable{text:drift_peak_fpbox_size}{drift\_peak\_fpbox\_size} and less than and less than half the number of columns (x-dimension).}
 {drift\_peak\_border\_size}{3}
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
 
 % drift_peak_fpbox_size
-\item \ParameterEntry{Box size for fitting individual FP peak.}
-{Defines the half-box size (i.e. central position $\pm$box size) of the box used to fit an individual FP peak. This size must be large enough to fit a peak but not too large as to encompass multiple FP peaks. The value must be an integer larger than zero and smaller than or equal to \definevariable{drift\_peak\_border\_size} (to avoid fitting off the edges of the image).}
+\item \label{text:drift_peak_fpbox_size} \ParameterEntry{Box size for fitting individual FP peak.}
+{Defines the half-box size (i.e. central position $\pm$box size) of the box used to fit an individual FP peak. This size must be large enough to fit a peak but not too large as to encompass multiple FP peaks. The value must be an integer larger than zero and smaller than or equal to \definevariable{text:drift_peak_border_size}{drift\_peak\_border\_size} (to avoid fitting off the edges of the image).}
 {drift\_peak\_fpbox\_size}{3}
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file(), \spirouRV.get\_drift()}{Public}
 
@@ -1116,7 +1115,7 @@ Value must be a float larger than zero.
 
 
 % drift_peak_exp_width
-\item \ParameterEntry{Expected width of FP peaks}
+\item \label{text:drift_peak_exp_width} \ParameterEntry{Expected width of FP peaks}
 {Defines the expected width of the FP peaks. Parameter is used to `normalise' the peaks which are then subsequently removed if:
 \begin{equation}
 \text{normalized FP FWHM} > \text{drift\_peak\_norm\_width\_cut}
@@ -1141,7 +1140,7 @@ this is equivalent to:
 \begin{equation}
 \text{FP FWHM} > (\text{drift\_peak\_exp\_width} + \text{drift\_peak\_norm\_width\_cut})
 \end{equation}
-Value must be a float larger than zero and less than the number of columns (x-dimension) but if \definevariable{drift\_peak\_exp\_width} is defined sensibly then this number should be small.
+Value must be a float larger than zero and less than the number of columns (x-dimension) but if \definevariable{text:drift_peak_exp_width}{drift\_peak\_exp\_width} is defined sensibly then this number should be small.
 }
 {drift\_peak\_norm\_width\_cut}{0.2}
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.remove\_wide\_peaks()}{Public}
@@ -1195,21 +1194,21 @@ then the whole image (e2ds file) is rejected. Value must be a float larger than 
 \begin{itemize}
 
 	% badpix_flat_med_wid
-	\item \ParameterEntry{Bad pixel median image box width}
-	{A similar flat is produced by taking the running median of the flat in the column direction (x-dimension) over a boxcar width of \definevariable{badpix\_flat\_med\_wid}. This assumes that the flux level varies only by a small amount over \definevariable{badpix\_flat\_med\_wid} pixels and that the bad pixels are isolated enough that the median along that box will be representative of the flux they should have if they were not bad. Value should be an integer larger than zero and less than the number of columns (x-axis dimension).}
+	\item \label{text:badpix_flat_med_wid} \ParameterEntry{Bad pixel median image box width}
+	{A similar flat is produced by taking the running median of the flat in the column direction (x-dimension) over a boxcar width of \definevariable{text:badpix_flat_med_wid}{badpix\_flat\_med\_wid}. This assumes that the flux level varies only by a small amount over \definevariable{text:badpix_flat_med_wid}{badpix\_flat\_med\_wid} pixels and that the bad pixels are isolated enough that the median along that box will be representative of the flux they should have if they were not bad. Value should be an integer larger than zero and less than the number of columns (x-axis dimension).}
 	{badpix\_flat\_med\_wid}{7}
 	{\calbadpix}{\constantsfile}{\spirouImage.normalise\_median\_flat(), \spirouImage.locate\_bad\_pixels()}{Public}
 	\DevNote{Formally this was called wmed in \calbadpix}
 
 	% badpix_illum_cut
 	\item \ParameterEntry{Bad pixel illumination cut parameter}
-	{Threshold below which a pixel is considered unilluminated. As we cut the pixels that fractionally deviate by more than a certain amount (\definevariable{badpix\_flat\_cut\_ratio}) this would lead to lots of bad pixels in unilluminated regions of the array. This parameter stops this, as the pixels are normalised this value must be a float greater than zero and less than 1.}
+	{Threshold below which a pixel is considered unilluminated. As we cut the pixels that fractionally deviate by more than a certain amount (\definevariable{text:badpix_flat_cut_ratio}{badpix\_flat\_cut\_ratio}) this would lead to lots of bad pixels in unilluminated regions of the array. This parameter stops this, as the pixels are normalised this value must be a float greater than zero and less than 1.}
 	{badpix\_illum\_cut}{0.05}
 	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels()}{Public}
 	\DevNote{Formally this was called illum\_cut in \calbadpix}
 
 	% badpix_flat_cut_ratio
-	\item \ParameterEntry{Bad pixel maximum differential pixel cut ratio}{This sets the maximum differential pixel response relative to the expected value. Value must be a float larger than zero.}
+	\item \label{text:badpix_flat_cut_ratio} \ParameterEntry{Bad pixel maximum differential pixel cut ratio}{This sets the maximum differential pixel response relative to the expected value. Value must be a float larger than zero.}
 	{badpix\_flat\_cut\_ratio}{0.5}
 	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels()}{Public}
 	\DevNote{Formally this was called cut\_ratio in \calbadpix}
@@ -1336,14 +1335,6 @@ Value must be a float greater than zero.
 {qc\_loc\_rmsmax\_fwhm}{500}
 {\callocRAW}{\constantsfile}{\callocRAW.\progMAIN}{Public}
 
-
-% qc_max_signal
-% \item \ParameterEntry{Saturation point}
-% {Defines the maximum signal allowed (when defining saturation limit). Currently this does not contribute to failing the quality test. Value must be a float greater than zero.}
-% {qc\_max\_signal}{65500}
-% {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
-% \DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
-
 % qc_ff_rms
 \item \ParameterEntry{Maximum allowed RMS}
 {Defines the maximum RMS allowed to accept a flat-field for calibration. Value must be a float greater than zero.}
@@ -1352,7 +1343,7 @@ Value must be a float greater than zero.
 
 % qc_loc_flumax 
 \item \ParameterEntry{Saturation level reached warning}
-{Defines the level above which a warning is generated in the form `SATURATION LEVEL REACHED on Fiber \definevariable{fiber}'. Value must be a float greater than zero.}
+{Defines the level above which a warning is generated in the form `SATURATION LEVEL REACHED on Fiber \definevariable{text:fiber_types}{fiber}'. Value must be a float greater than zero.}
 {qc\_loc\_flumax}{64500}
 {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
 
@@ -1363,16 +1354,24 @@ Value must be a float greater than zero.
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
 
 % qc_slit_min
-\item \ParameterEntry{Minimum angle allowed for slit TILT}
-{Defines the minimum tilt angle allowed to add TILT profile to the calibration databse. Value must be a float and must be less than \definevariable{qc\_slit\_max}}
+\item \label{text:c_slit_min} \ParameterEntry{Minimum angle allowed for slit TILT}
+{Defines the minimum tilt angle allowed to add TILT profile to the calibration databse. Value must be a float and must be less than \definevariable{text:c_slit_max}{qc\_slit\_max}}
 {qc\_slit\_min}{-8.0}
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
 
 % qc_slit_max
-\item \ParameterEntry{Maximum angle allowed for slit TILT}
-{Defines the maximum tiult angle allowed to add TILT profile to the calibration databse. Value must be a float and must be greater than \definevariable{qc\_slit\_min}}
+\item \label{text:c_slit_max} \ParameterEntry{Maximum angle allowed for slit TILT}
+{Defines the maximum tiult angle allowed to add TILT profile to the calibration databse. Value must be a float and must be greater than \definevariable{text:c_slit_min}{qc\_slit\_min}}
 {qc\_slit\_max}{0.0}
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
+
+% qc_max_signal
+\item \label{text:qc_max_signal} \ParameterEntry{Saturation point}
+{Defines the maximum signal allowed (when defining saturation limit). Currently this does not contribute to failing the quality test. Value must be a float greater than zero.}
+{qc\_max\_signal}{65500}
+{\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
+\DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
+
 
 \end{itemize}
 
@@ -1394,9 +1393,9 @@ Value must be a float greater than zero.
 \begin{itemize}
 
 % ic_calibDB_filename
-\item \ParameterEntry{The calibration database master filename}
+\item \label{text:ic_calibDB_filename} \ParameterEntry{The calibration database master filename}
 {Defines the name of the master calibration database text file for use in all calibration database operation.}
-{ic\_calibDB\_filename}{\masterCALIBDBfile}
+{ic\_calibDB\_filename}{master\_calib{\hskip 0pt}\_SPIROU.txt}
 {\AllRecipes}{\constantsfile}{\spirouCONST.CALIBDB\_MASTERFILE()}{Public}
 \DevNote{This should probably be private, unless we want the user to be able to change calibDB files.}
 
@@ -1405,6 +1404,13 @@ Value must be a float greater than zero.
 \item \ParameterEntry{Maximum wait time for locked calibration database}
 {Defines the maximum time the code waits for the calibration database when it is locked. A locked file is created every time the calibration database is open (and subsequently closed when reading of the database was successful). If a lock file is present the code will wait a maximum of this many seconds and keep checking whether the lock file has been removed. After which time the code will exit with an error. Value must be a positive float greater than zero. Measured in seconds.}
 {calib\_max\_wait}{3600}
+{\AllRecipes}{\constantsfile}{\spirouCDB.get\_check\_lock\_file()}{Public}
+
+
+% calib_db_match
+\item \ParameterEntry{Calibration database duplicate key handler}
+{Defines the mechanism to use in deciding between duplicate keys in the calibration database file. Value must be a string and must be either 'older' or 'closest'. If 'older' the calibration database will only use keys that are older than the timestamp in the input fits file (first argument) using the key \defineinkeyword{text:acqtime1}{kw\_ACQTIME\_KEY}}
+{calib\_db\_match}{'closest'}
 {\AllRecipes}{\constantsfile}{\spirouCDB.get\_check\_lock\_file()}{Public}
 
 \end{itemize}
@@ -1430,15 +1436,15 @@ Value must be a float greater than zero.
 
 
 % config_folder
-\item \ParameterEntry{Configuration Folder Path}
+\item \label{text:config_folder} \ParameterEntry{Configuration Folder Path}
 {Defines the location of the configuration directory relative to the module directory (defined in variable = `package'). Value must be a string containing a valid directory location.}
 {config\_folder}{\configdirrelpath}
 {\AllRecipes}{\spirouCONST.CONFIGFOLDER()}{\AllRecipes}{Private}
 
 
 % config_file
-\item \ParameterEntry{Configuration file name}
-{Defines the main configuration (containing the data directories etc).  Value must be a string containing a valid file name i.e. the main configuration file should be at \definevariable{INSTALL\_DIR}/\definevariable{config\_folder}/\definevariable{config\_file}.}
+\item \label{text:config_file} \ParameterEntry{Configuration file name}
+{Defines the main configuration (containing the data directories etc).  Value must be a string containing a valid file name i.e. the main configuration file should be at \definevariable{text:tdata}{TDATA}/\definevariable{text:config_folder}{config\_folder}/\definevariable{text:config_file}{config\_file}.}
 {config\_file}{\configtxtfile}
 {\AllRecipes}{\spirouCONST.CONFIGFILE()}{\AllRecipes}{Private}
 
@@ -1624,7 +1630,7 @@ forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'EXTEND',
 \begin{itemize}
 
 % PRINT_LEVEL
-\item \ParameterEntry{Print message level}
+\item \label{text:print_level} \ParameterEntry{Print message level}
 {The level of messages to print, values can be as follows:
 \begin{itemize}
 	\item "all" -- prints all events
@@ -1636,7 +1642,7 @@ Value must be a valid string. \ifdevguide See section \ref{ch:rules:drs_specific
 {PRINT\_LEVEL}{all}{\AllRecipes}{\configtxtfile}{\spirouConfig.check\_params()}{Public}
 
 % LOG_LEVEL
-\item \ParameterEntry{Log message level}
+\item \label{text:log_level} \ParameterEntry{Log message level}
 {The level of messages to print, values can be as follows:
 \begin{itemize}
 	\item "all" -- prints all events
@@ -1650,10 +1656,11 @@ Value must be a valid string. \ifdevguide See section \ref{ch:rules:drs_specific
 
 % trig_keys
 \ifdevguide
-\item 
+
+\item \label{text:trig_keys}
 \begin{minipage}[t]{\textwidth}
 \ParameterEntry{Logging keys}
-{Defines the logging keys to use for each logging levels. Value should be a dictionary of key value pairs (where all keys and values are strings). When using the \definevariable{\spirouLog.logger()} (aliases to \definevariable{WLOG} or \definevariable{wlog} in recipes) the first argument must be one of these keys and the returned string is the corresponding value. The keys of \definevariable{write\_level} and \definevariable{trig\_key} must be identical.  See section \ref{ch:rules:drs_specific:logger} for more details.}
+{Defines the logging keys to use for each logging levels. Value should be a dictionary of key value pairs (where all keys and values are strings). When using the \spirouLog.logger() (aliases to \WLOG in recipes) the first argument must be one of these keys and the returned string is the corresponding value. The keys of \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key} must be identical. See section \ref{ch:rules:drs_specific:logger} for more details.}
 {trig\_key}
 {\lstinline[style=pythoninline]| dict(all=' ', error='!', warning='@', info='*', graph='~') |}
 {\AllRecipes}{\spirouCONST.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
@@ -1674,10 +1681,11 @@ HH:MM:SS.s - ! |program|Message
 
 % write_level
 \ifdevguide
-\item 
+
+\item \label{text:write_level}
 \begin{minipage}[t]{\textwidth}
 \ParameterEntry{Write level}
-{Defines the write levels to use for each write level. A write level is defined by a number. The higher the number to more exclusive the level i.e. if A and B are write levels and A $>$ B and write level is set to A, any log or print messages at level B will not be logged/printed. Printing is controlled by variable \definevariable{PRINT\_LEVEL} and logging by variable \definevariable{LOG\_LEVEL}. The keys of \definevariable{write\_level} and \definevariable{trig\_key} must be identical. See section \ref{ch:rules:drs_specific:logger} for more details.}
+{Defines the write levels to use for each write level. A write level is defined by a number. The higher the number to more exclusive the level i.e. if A and B are write levels and A $>$ B and write level is set to A, any log or print messages at level B will not be logged/printed. Printing is controlled by variable \definevariable{text:print_level}{PRINT\_LEVEL} and logging by variable \definevariable{text:log_level}{LOG\_LEVEL}. The keys of \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key} must be identical. See section \ref{ch:rules:drs_specific:logger} for more details.}
 {write\_level}
 {\lstinline[style=pythoninline]| dict(error=3, warning=2, info=1, graph=0, all=0) |}
 {\AllRecipes}{\spirouCONST.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
@@ -1699,7 +1707,7 @@ HH:MM:SS.s - ! |program|Error message
 HH:MM:SS.s - @ |program|Warning message
 \end{cmdboxprint}
 \begin{note}
-Note the info message was not shown as info=1 and \definevariable{PRINT\_LEVEL} is set to warning=2.
+Note the info message was not shown as info=1 and \definevariable{text:print_level}{PRINT\_LEVEL} is set to warning=2.
 \end{note}
 \end{thighlight}
 \end{minipage}
@@ -1708,22 +1716,23 @@ Note the info message was not shown as info=1 and \definevariable{PRINT\_LEVEL} 
 
 % log_exit_type
 \ifdevguide
-\item \ParameterEntry{Logger exit type}
+
+\item \label{text:log_exit_type} \ParameterEntry{Logger exit type}
 {What to do when a logging `error' is raise. Options are: 'None', 'os' or 'sys'. If 'None' the code continues on an `error', if 'os' then python executes a `os.\_exit' command (a hard exit), if 'sys' then python executes a 'sys.exit' command (a soft exit).}
 {log\_exit\_type}{sys}
 {\AllRecipes}{\spirouCONST.LOG\_EXIT\_TYPE()}{\spirouCONST.EXIT() which is called in \spirouLog}{Private}
 \fi
 
 % exit controller
-\item \PseudoParamEntry{Exit controller}
-{Controls the exit type from `log\_exit\_type' and \definevariable{\spirouCONST.LOG\_EXIT\_TYPE()}.}
+\item \label{text:exit_controller} \PseudoParamEntry{Exit controller}
+{Controls the exit type from `log\_exit\_type' and \definevariable{text:log_exit_type}{\spirouCONST.LOG\_EXIT\_TYPE()}.}
 {exit}
 {\AllRecipes}{\spirouCONST.EXIT()}{\spirouLog}
 
 
 % exit levels
-\item \PseudoParamEntry{Exit levels}
-{Controls which levels (defined in \definevariable{write\_level} and \definevariable{trig\_key}) will lead to the exit statement (given in \definevariable{exit} and \definevariable{log\_exit\_type}). Values must be a list of strings where each entry must be in \definevariable{write\_level} and \definevariable{trig\_key}.}
+\item \label{text:exit_levels} \PseudoParamEntry{Exit levels}
+{Controls which levels (defined in \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key}) will lead to the exit statement (given in \definevariable{text:exit_controller}{exit} and \definevariable{text:log_exit_type}{log\_exit\_type}). Values must be a list of strings where each entry must be in \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key}.}
 {exit\_levels}
 {\AllRecipes}{\spirouCONST.EXIT\_LEVELS()}{\spirouLog}
 
@@ -1731,7 +1740,7 @@ Note the info message was not shown as info=1 and \definevariable{PRINT\_LEVEL} 
 % log_caught_warnings
 \ifdevguide
 \item \ParameterEntry{Log caught warnings}
-{If True or 1, then if warnings are passed to \definevariable{\spirouLog.warninglogger()} and there are warnings present, will attempt to log these warnings using the \definevariable{\spirouLog.logger} function. i.e. will print the warning to screen/log file depending on logging settings.}
+{If True or 1, then if warnings are passed to \spirouLog.warninglogger() and there are warnings present, will attempt to log these warnings using the \spirouLog.logger function. i.e. will print the warning to screen/log file depending on logging settings.}
 {log\_caught\_warnings}{True}
 {\AllRecipes}{\spirouCONST.LOG\_CAUGHT\_WARNINGS()}{\spirouLog}{Private}
 \fi
