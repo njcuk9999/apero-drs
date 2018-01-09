@@ -18,18 +18,18 @@ As in Chapter \ref{chapter:installation}, using Linux or \mac one can run DRS re
 \begin{itemize}
 \item To run from command line type:
 \begin{cmdbox}
-(*\calDARK*) (*\definevariablecmd{YYMMDD}*) (*\definevariablecmd{Filenames}) 
+(*\calDARK*) YYMMDD Filenames
 \end{cmdbox}
 
 \item To run from python/ipython from the command line type:
 \begin{cmdbox}
-python (*\calDARK*) (*\definevariablecmd{YYMMDD}*) (*\definevariablecmd{Filenames}) 
-ipython (*\calDARK*) (*\definevariablecmd{YYMMDD}*) (*\definevariablecmd{Filenames})
+python (*\calDARK*) YYMMDD Filenames
+ipython (*\calDARK*) YYMMDD Filenames
 \end{cmdbox}
 
 \item To run from ipython, open ipython and type:
 \begin{pythonbox}
-@run@ (*\calDARK*) (*\definevariable{YYMMDD}*) (*\definevariable{Filenames})
+@run@ (*\calDARK*) YYMMDD Filenames
 \end{pythonbox}
 \end{itemize}
 
@@ -71,14 +71,14 @@ For this example all files are from:
 spirou@10.102.14.81:/data/RawImages/H2RG-AT4/AT4-04/2017-07-10_15-36-18/ramps/
 \end{cmdbox} 
 
-\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicity in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{DATA\_RAW\_ROOT} (\textcolor{blue}{/drs/data/raw} in our case).
+\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicity in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} (\textcolor{blue}{/drs/data/raw} in our case).
 
 \noindent and we will also need the current WAVE file from here:
 \begin{cmdbox}
 spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
 \end{cmdbox}
 
-\noindent which needs to be placed in the \definevariable{DRS\_CALIB\_DB} dirctory (\textcolor{blue}{/drs/data/calibDB} in our case).
+\noindent which needs to be placed in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} dirctory (\textcolor{blue}{/drs/data/calibDB} in our case).
 
 \noindent Starting with RAMP files and ending with extracted orders and calculated drifts we need to run six codes:
 \begin{enumerate}
@@ -164,7 +164,7 @@ cal_FF_RAW_spirou.py 20170710 dark_flat02f10.fits dark_flat03f10.fits dark_flat0
 spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
 \end{cmdbox}
 
-\noindent then place it in the \definevariable{DATA\_ROOT\_CALIB} folder. You will also need to edit the `\masterCALIBDBfile' file located in \definevariable{DATA\_ROOT\_CALIB}. 
+\noindent then place it in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} folder. You will also need to edit the `\masterCALIBDBfile' file located in \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}. 
 
 \noindent Add the folloing line to `\masterCALIBDBfile'
 \begin{textbox}
