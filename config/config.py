@@ -7,6 +7,10 @@
 # Whether to plot (True or 1 to plot)
 DRS_PLOT = 1
 
+# Whether to run in debug mode (1 to debug, 0 to run normally)
+DRS_DEBUG = 1
+
+
 # -----------------------------------------------------------------------------
 # path settings
 # -----------------------------------------------------------------------------
@@ -32,6 +36,7 @@ DRS_DATA_MSG = '/scratch/Projects/spirou_py3/data/msg'
 #   Define the working directory
 DRS_DATA_WORKING = '/scratch/Projects/spirou_py3/data/tmp/'
 
+
 # -----------------------------------------------------------------------------
 # Logging settings
 # -----------------------------------------------------------------------------
@@ -50,6 +55,10 @@ PRINT_LEVEL = "all"
 #       'error' - to print only error events
 LOG_LEVEL = 'all'
 
+#   Coloured logging to standard output (console)
+COLOURED_LOG = True
+
+
 # -----------------------------------------------------------------------------
 # config file locations
 # -----------------------------------------------------------------------------
@@ -60,17 +69,10 @@ SPECIAL_NAME = 'special_config_SPIROU.py'
 #       (located at DRS_CONFIG or DRS_ROOT/config if DRS_CONFIG not defined)
 ICDP_NAME = 'constants_SPIROU.py'
 
+
 # -----------------------------------------------------------------------------
 # Misc/ unneccessary / unsorted
 # -----------------------------------------------------------------------------
 # Set the log date?
 #  value must be "YY-MM-DD" or "None"
 # DRS_USED_DATE = None
-
-# DRS_INTERACTIVE = 0
-
-# DRS_DEBUG = 0
-
-# DRS_CONFIG = ./
-
-# DRS_MAN = ./
