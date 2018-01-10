@@ -31,10 +31,6 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
-# Enable debug modes                                                 - [cal_loc]
-#    formally DRS_DEBUG
-ic_debug = 0
-
 #    Interval between plots (for certain interactive graphs)         - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5

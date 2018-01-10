@@ -256,7 +256,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 time6 = time.time()
                 # -------------------------------------------------------------
                 # If in Debug mode log timings
-                if p['IC_DEBUG']:
+                if p['DRS_DEBUG']:
                     WLOG('info', p['log_opt'], "Timings:")
                     WLOG('info', p['log_opt'],
                          ("        ExtractOrder = {0} s "

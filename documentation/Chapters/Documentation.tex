@@ -106,14 +106,14 @@ It is probably never the case where the user documentation will have content tha
 
 To ease writing the documentation some custom commands are defined in \textcolor{blue}{./documentation/Config/commands.tex}. These include the following:
 \begin{itemize}
-	\label{text:definevariable}
-	\item \textcolor{red}{\textbackslash{definevariable}\{label reference\}\{text\}} - used to create in-text variables (that link to the variables chapter) i.e.:
+	
+	\item \namedlabel{text:definevariable} \textcolor{red}{\textbackslash{definevariable}\{label reference\}\{text\}} - used to create in-text variables (that link to the variables chapter) i.e.:
 	\begin{latexbox}
 	The variable \definevariable{ch:variables}{VARIABLE} can be used.
 	\end{latexbox}
 
-	\label{text:defineinkeyword}
-	\item \textcolor{red}{\textbackslash{defineinkeyword}\{label reference\}\{text\}}, \textcolor{red}{\textbackslash{defineoutkeyword}\{label reference\}\{text\}} - used to create in-text keywords (that link to the keywords chapter) i.e.:
+	
+	\item \namedlabel{text:defineinkeyword} \textcolor{red}{\textbackslash{defineinkeyword}\{label reference\}\{text\}}, \textcolor{red}{\textbackslash{defineoutkeyword}\{label reference\}\{text\}} - used to create in-text keywords (that link to the keywords chapter) i.e.:
 	\begin{latexbox}
 	The keyword \defineinkeyword{ch:input_keywords}{IN\_KEYWORD} can be used.
 	The keyword \defineoutkeyword{ch:output_keywords}{OUT\_KEYWORD} can be used.
@@ -126,10 +126,11 @@ To ease writing the documentation some custom commands are defined in \textcolor
 
 	\newpage
 
-	\item \begin{minipage}[t]{\textwidth} 
+	\item \begin{minipage}[t]{\textwidth}
+	\namedlabel{text:variable_name1}
 	\textcolor{red}{\textbackslash{ParameterEntry}} - used to define a parameter entry. It requires 8 arguments (Variable title, Description, variable name, default value, which recipe it is used in, the place the variable is defined, the code/module/function it is used in -- dev only, and the visibility level -- dev only). i.e.:
 	\begin{latexbox}
-	\label{text:variable_name1}
+	\namedlabel{text:variablename1}
 	\ParameterEntry{Variable title}
 	{Description of the variable}
 	{VARIABLE\_NAME}
@@ -149,10 +150,11 @@ To ease writing the documentation some custom commands are defined in \textcolor
 	\end{note}
 	\end{minipage}
 
-	\item \begin{minipage}[t]{\textwidth} 
+	\item \begin{minipage}[t]{\textwidth}
+	\namedlabel{text:variable_name2}
 	\textcolor{red}{\textbackslash{PseudoParamEntry}} - used to define a pseudo parameter entry. It requires 6 arguments (Variable title, Description, variable name, which recipe it is used in, the place the variable is defined, the code/module/function it is used in). It is only available for the developer guide. i.e.:
 	\begin{latexbox}
-	\label{text:variable_name2}
+	\namedlabel{text:variablename2}
 	\PseudoParamEntry{Variable title}
 	{Description of the variable}
 	{VARIABLE\_NAME}
@@ -169,10 +171,10 @@ To ease writing the documentation some custom commands are defined in \textcolor
 	\end{minipage}
 
 	\item \begin{minipage}[t]{\textwidth}
-	\label{text:definekeyword}
+	\namedlabel{text:definekeyword}
 	\textcolor{red}{\textbackslash{KeywordEntry}} - used to define a keyword entry. It requires 9 arguments (Keyword title, Description, keyword name, HEADER key name, default HEADER value, HEADER comment, which recipe it is used in, the place the variable is defined, the code/module/function it is used in). It is only available for the developer guide.
 	\begin{latexbox}
-	\label{text:keywordname}
+	\namedlabel{text:keywordname}
 	\KeywordEntry{Keyword title}
 	{Description of the keyword}
 	{kw\_variable}{HEADER key}
