@@ -238,7 +238,7 @@ def find_order_centers(pp, image, loc, order_num):
         loc['ctro'][order_num, col] = center
         loc['sigo'][order_num, col] = width
         # debug plot
-        if pp['IC_DEBUG'] == 2 and pp['DRS_PLOT']:
+        if pp['DRS_DEBUG'] == 2 and pp['DRS_PLOT']:
             dvars = [pp, order_num, col, rowcenter, rowtop, rowbottom,
                      center, width, ovalues]
             sPlt.debug_locplot_finding_orders(*dvars)
@@ -464,7 +464,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         WLOG('', pp['log_opt'], ('      {0} fit converging with rms/ptp/{1}:'
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
         # debug plot
-        if pp['DRS_PLOT'] and pp['IC_DEBUG']:
+        if pp['DRS_PLOT'] and pp['DRS_DEBUG']:
             sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)
         # add one to the max rmpts
         max_rmpts += 1

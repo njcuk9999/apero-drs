@@ -10,24 +10,36 @@ Created on 2017-11-13 at 14:22
 
 @author: cook
 
-Import rules: Only from spirouConfig
+Import rules: Only from spirouConfigFile
 
 Version 0.0.1
 """
 from __future__ import division
 import sys
 import os
+from . import spirouConfigFile
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
 __NAME__ = 'spirouConst.py'
+# Get version and author
+__version__ = 'Unknown'
+__author__ = 'Unknown'
+__release__ = 'Unknown'
+__date__ = 'Unknown'
 
 
 # =============================================================================
-# Define functions
+# Define pre-functions
 # =============================================================================
+def CONFIGFILE():
+    # Name of main config file (in CONFIGFOLDER() )
+    config_file = 'config.py'
+    return config_file
+
+
 def PACKAGE():
     # Module package name (Used in code so MUST equal name of parent package)
     package = 'SpirouDRS'
@@ -41,7 +53,7 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.0.054'
+    version = '0.0.055'
     return version
 
 
@@ -58,7 +70,7 @@ def AUTHORS():
 
 def LATEST_EDIT():
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-01-08'
+    date = '2018-01-10'
     return date
 
 
@@ -68,69 +80,33 @@ def CONFIGFOLDER():
     return config_folder
 
 
-def CONFIGFILE():
-    # Name of main config file (in CONFIGFOLDER() )
-    config_file = 'config.py'
-    return config_file
+# =============================================================================
+# Get constants from constant file
+# =============================================================================
+# get constants from file
+ckwargs = dict(package=PACKAGE(), configfolder=CONFIGFOLDER(),
+               configfile=CONFIGFILE(), return_raw=False)
+pp = spirouConfigFile.read_config_file(**ckwargs)
 
 
+# =============================================================================
+# Define General functions
+# =============================================================================
 def INTERACITVE_PLOTS_ENABLED():
     # Whether to use plt.ion (if True) or to use plt.show (if False)
     interactive_plots = True
     return interactive_plots
 
 
-def LOG_TRIG_KEYS():
-    # The trigger character to display for each
-    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
-    return trig_key
+def DEBUG():
+    # TODO: for release this should be 0
+    debug = pp['DRS_DEBUG']
+    return debug
 
 
-def WRITE_LEVEL():
-    write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
-    return write_level
-
-
-def LOG_EXIT_TYPE():
-    # The exit style (on log exit)
-    #  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
-    #  if 'os' exits via os._exit    - hard exit (complete exit)
-    # Do nothing on exit call
-    log_exit_type = None
-    # Use os._exit
-    log_exit_type = 'os'
-    # Use sys.exit
-    log_exit_type = 'sys'
-    return log_exit_type
-
-
-def LOG_CAUGHT_WARNINGS():
-    # Define whether we warn
-    warn = True
-    return warn
-
-
-def COLOUREDLEVELS():
-
-    # reference:
-    # http://ozzmaker.com/add-colour-to-text-in-python/
-    clevels = dict(error='\033[0;31;48m',   # red
-                   warning='\033[0;33;48m', # yellow
-                   info='\033[0;32;48m',    # green
-                   graph='\033[0;32;48m',   # green
-                   all='\033[0;32;48m')     # green
-    return clevels
-
-def NORMALCOLOUR():
-    norm = " \033[0;37;40m"
-    return norm
-
-
-def COLOURED_LOG():
-    clog = True
-    return clog
-
-
+# =============================================================================
+# Define File functions
+# =============================================================================
 def ARG_FILE_NAMES(p):
     # see if already defined
     if 'ARG_FILE_NAMES' in p:
@@ -162,19 +138,11 @@ def ARG_NIGHT_NAME(p):
     return arg_night_name
 
 
-def CALIBDB_MASTERFILE(p):
-    masterfilepath = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
-    return masterfilepath
-
-
-def CALIBDB_LOCKFILE(p):
-    lockfilepath = os.path.join(p['DRS_CALIB_DB'], 'lock_calibDB')
-    return lockfilepath
-
-
-def CALIB_PREFIX(p):
-    argnightname = p['arg_night_name'].split('/')[-1]
-    return argnightname + '_'
+def NBFRAMES(p):
+    # Number of frames = length of arg_file_names
+    nbframes = len(p['arg_file_names'])
+    # return number of frames
+    return nbframes
 
 
 def FORBIDDEN_COPY_KEYS():
@@ -187,7 +155,6 @@ def FORBIDDEN_COPY_KEYS():
 
 
 def FITSFILENAME(p):
-
     arg_file_names = p['arg_file_names']
     arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
@@ -201,7 +168,6 @@ def FITSFILENAME(p):
 
 
 def LOG_OPT(p):
-
     # deal with the log_opt "log option"
     #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
 
@@ -222,18 +188,6 @@ def LOG_OPT(p):
     return log_opt
 
 
-def MANUAL_FILE(p):
-    manual_file = os.path.join(p['DRS_MAN'].replace(p['program'], '.info'))
-    return manual_file
-
-
-def NBFRAMES(p):
-    # Number of frames = length of arg_file_names
-    nbframes = len(p['arg_file_names'])
-    # return number of frames
-    return nbframes
-
-
 def PROGRAM():
     # get run time parameters
     rparams = list(sys.argv)
@@ -243,13 +197,17 @@ def PROGRAM():
     return program
 
 
+def MANUAL_FILE(p):
+    manual_file = os.path.join(p['DRS_MAN'].replace(p['program'], '.info'))
+    return manual_file
+
+
 def RAW_DIR(p):
     raw_dir = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
     return raw_dir
 
 
 def REDUCED_DIR(p):
-
     # set the reduced directory from DRS_DATA_REDUC and 'arg_night_name'
     reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
     # return reduced directory
@@ -257,7 +215,6 @@ def REDUCED_DIR(p):
 
 
 def CCF_TABLE_FILE(p):
-
     # start with the CCF fits file name
     newfilename = CCF_FITS_FILE(p)
     # we want to save the file as a tbl file not a fits file
@@ -269,7 +226,6 @@ def CCF_TABLE_FILE(p):
 
 
 def CCF_FITS_FILE(p):
-
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['ccf_mask'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
@@ -278,8 +234,29 @@ def CCF_FITS_FILE(p):
     return newfilename
 
 
-def CONFIG_KEY_ERROR(key, location=None):
+# =============================================================================
+# Define calibration database functions
+# =============================================================================
+def CALIBDB_MASTERFILE(p):
+    masterfilepath = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
+    return masterfilepath
 
+
+def CALIBDB_LOCKFILE(p):
+    lockfilepath = os.path.join(p['DRS_CALIB_DB'], 'lock_calibDB')
+    return lockfilepath
+
+
+def CALIB_PREFIX(p):
+    argnightname = p['arg_night_name'].split('/')[-1]
+    calib_prefix = argnightname + '_'
+    return calib_prefix
+
+
+# =============================================================================
+# Define formatting functions
+# =============================================================================
+def CONFIG_KEY_ERROR(key, location=None):
     if location is None:
         cerrmsg = 'key "{0}" is not defined'
         return cerrmsg.format(key)
@@ -289,20 +266,82 @@ def CONFIG_KEY_ERROR(key, location=None):
 
 
 def DATE_FMT_HEADER():
-    date_fmt_header =  '%Y-%m-%d-%H:%M:%S.%f'
+    date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_header
 
 
 def DATE_FMT_CALIBDB():
-
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
 
 
-def DEBUG():
-    # TODO: for release this should be 0
-    debug = 1
-    return debug
+# =============================================================================
+# Define logger functions
+# =============================================================================
+def LOG_TRIG_KEYS():
+    # The trigger character to display for each
+    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
+    return trig_key
+
+
+def WRITE_LEVEL():
+    write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
+    return write_level
+
+
+def LOG_EXIT_TYPE():
+    # The exit style (on log exit)
+    #  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
+    #  if 'os' exits via os._exit    - hard exit (complete exit)
+    # Do nothing on exit call
+    log_exit_type = None
+    # Use os._exit
+    log_exit_type = 'os'
+    # Use sys.exit
+    log_exit_type = 'sys'
+    return log_exit_type
+
+
+def LOG_CAUGHT_WARNINGS():
+    # Define whether we warn
+    warn = True
+    return warn
+
+
+def COLOUREDLEVELS():
+    # reference:
+    # http://ozzmaker.com/add-colour-to-text-in-python/
+    clevels = dict(error=REDCOLOUR(),  # red
+                   warning=YELLOWCOLOUR(),  # yellow
+                   info=GREENCOLOUR(),  # green
+                   graph=GREENCOLOUR(),  # green
+                   all=GREENCOLOUR())  # green
+    return clevels
+
+
+def NORMALCOLOUR():
+    norm = " \033[0;37;40m"
+    return norm
+
+
+def REDCOLOUR():
+    red = '\033[0;31;48m'
+    return red
+
+
+def YELLOWCOLOUR():
+    yellow = '\033[0;33;48m'
+    return yellow
+
+
+def GREENCOLOUR():
+    green = '\033[0;32;48m'
+    return green
+
+
+def COLOURED_LOG():
+    clog = pp['COLOURED_LOG']
+    return clog
 
 
 def EXIT():

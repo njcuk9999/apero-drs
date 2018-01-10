@@ -50,6 +50,11 @@
 }
 
 % --------------------------------------------------------
+\newcommand{\namedlabel}[1]{\begingroup
+    \phantomsection\label{#1}\endgroup
+    }
+
+% --------------------------------------------------------
 % Parameters
 % \ParameterEntry{Name}{Description}{variable}{default value}{used in}{location}{level (if dev)}
 \newcommand{\ParameterEntry}[8]{

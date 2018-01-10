@@ -14,10 +14,9 @@ Import rules: Only from spirouConfig
 Version 0.0.0
 """
 from __future__ import division
-import numpy as np
 import os
-import pkg_resources
 from . import spirouConst as Constants
+from . import spirouConfigFile
 
 # =============================================================================
 # Define variables
@@ -35,6 +34,7 @@ PACKAGE = Constants.PACKAGE()
 CONFIG_FILE = Constants.CONFIGFILE()
 CONFIGFOLDER = Constants.CONFIGFOLDER()
 TRIG_KEY = Constants.LOG_TRIG_KEYS()
+
 
 # =============================================================================
 # Define Custom classes
@@ -73,7 +73,8 @@ class ConfigError(ConfigException):
             self.level = 'error'
         # get config file path
         if config_file is None:
-            config_file = get_default_config_file()
+            cargs = [PACKAGE, CONFIGFOLDER, CONFIG_FILE]
+            config_file = spirouConfigFile.get_default_config_file(*cargs)
         if key is None and self.level == 'error':
             self.message = 'Config Error: ' + message
         elif key is None:
@@ -188,7 +189,6 @@ class ParamDict(dict):
         else:
             self.set_source(key, source)
 
-
     def set_sources(self, keys, sources):
         """
         Set a list of keys sources
@@ -217,7 +217,6 @@ class ParamDict(dict):
             # set source
             self.set_source(key, source)
 
-
     def append_sources(self, keys, sources):
         """
         Adds list of keys sources (appends if exists)
@@ -245,7 +244,6 @@ class ParamDict(dict):
                 source = str(sources)
             # append key
             self.append_source(key, source)
-
 
     def set_all_sources(self, source):
         """
@@ -287,7 +285,7 @@ class ParamDict(dict):
             return self.sources[key]
         # else raise a Config Error
         else:
-            emsg = ('No source set for key={0}')
+            emsg = 'No source set for key={0}'
             raise ConfigError(emsg.format(key), level='error')
 
     def source_keys(self):
@@ -354,14 +352,20 @@ class ParamDict(dict):
 #   Read/Write/Get Functions
 # =============================================================================
 def read_config_file(config_file=None):
+    """
+    Read config file wrapper (push into ParamDict)
+
+    :param config_file: string or None, the config_file name, if none uses
+                        PACKAGE/CONFIGFOLDER and CONFIG_FILE to get config
+                        file name
+    :return params: parameter dictionary with key value pairs fron config file
+    """
     # TODO: store user config in /home/$USER/.spirou_config
     # TODO: This will avoid having to rewrite config for every update
     # TODO: Read default parameters and then add "user parameters" to them
-    if config_file is None:
-        # get config file path
-        config_file = get_default_config_file()
-    # get keys and values from config file
-    keys, values = gettxt(config_file)
+    ckwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
+                   configfile=CONFIG_FILE, config_file=config_file)
+    keys, values = spirouConfigFile.read_config_file(**ckwargs)
     # convert key value pairs into dictionary
     # TODO: use default parameters to check format/range etc for config
     # TODO: return error if user defined config file is wrong
@@ -405,38 +409,6 @@ def load_config_from_file(p, key, required=False, logthis=False):
     return p
 
 
-def gettxt(filename):
-    """
-    read config file and convert to key, value pairs
-        comments have a '#' at the start
-        format of variables:   key = value
-
-    :param filename:
-    :return keys: list of strings, upper case strings for each variable
-    :return values: list of strings, value of each key
-    """
-    # read raw config file as strings
-    raw = np.genfromtxt(filename, comments="#", delimiter='=',
-                        dtype=str).astype(str)
-    # check that we have open config file correctly
-    try:
-        lraw = len(raw)
-    except TypeError:
-        return [], []
-    # loop around each variable (key and value pairs)
-    keys, values = [], []
-    for row in range(lraw):
-        # remove whitespaces and quotation marks from start/end
-        key = raw[row, 0].strip().strip("'").strip('"')
-        value = raw[row, 1].strip().strip("'").strip('"')
-        # add key.upper() to keys
-        keys.append(key.upper())
-        # add value to values
-        values.append(evaluate_value(value))
-    # return keys and values
-    return keys, values
-
-
 def extract_dict_params(pp, suffix, fiber, merge=False):
 
     # make suffix uppercase
@@ -476,7 +448,7 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
                     'containing {2}')
             raise ConfigError(emsg.format(key, suffix, fiber), level='error')
         except TypeError:
-            emsg = ('Key={0} must be a dictionary')
+            emsg = 'Key={0} must be a dictionary'
             raise ConfigError(emsg.format(key), level='error')
         # we have dictionary with our fiber key so can now get value
         value = params[fiber]
@@ -626,42 +598,17 @@ def check_params(p):
 # =============================================================================
 #    Worker functions
 # =============================================================================
-def evaluate_value(value):
-    """
-    Takes a value and tries to interpret it as an INT/FLOAT/BOOL etc
-    any strings will throw a NameError and thus be returned as a string
-
-    :param value: string, any string value to be interpreted by python
-
-    :return: object, if eval(value) works returns properly formated object
-             else returns the value as a string
-    """
-    try:
-        newvalue = eval(value)
-        if type(newvalue) not in [int, float, bool, complex, list, dict]:
-            return value
-        else:
-            return newvalue
-    except Exception:
-        return str(value)
-
-
 def get_default_config_file():
     """
-    Get default config file defined in __CONFIG_FILE__ at relative path
-    __CONFIGFOLDER__ from __PACKAGE__
+    Get default config file defined in CONFIG_FILE at relative path
+    CONFIGFOLDER from PACKAGE
 
     :return config_file: string, the path and filename of the default config
                          file
     """
-    init = pkg_resources.resource_filename(PACKAGE, '__init__.py')
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    os.chdir(os.path.dirname(init))
-    config_folder = os.path.abspath(CONFIGFOLDER)
-    os.chdir(current)
     # Get the config file path
-    config_file = os.path.join(config_folder, CONFIG_FILE)
+    cargs = [PACKAGE, CONFIGFOLDER, CONFIG_FILE]
+    config_file = spirouConfigFile.get_default_config_file(*cargs)
     # make sure config file exists
     if not os.path.exists(config_file):
         emsg = "Config file doesn't exists at {0}".format(config_file)

@@ -701,7 +701,7 @@ def coravelation(p, loc):
     tot_line = []
     # -------------------------------------------------------------------------
     # graph set up
-    if p['DRS_PLOT'] and p['IC_DEBUG']:
+    if p['DRS_PLOT'] and p['DRS_DEBUG']:
         # start interactive plot
         sPlt.start_interactive_session()
         # define a figure
@@ -754,7 +754,7 @@ def coravelation(p, loc):
         # ---------------------------------------------------------------------
         # Plots
         # ---------------------------------------------------------------------
-        if p['DRS_PLOT'] and len(ll_sub_mask_ctr) > 0 and p['IC_DEBUG']:
+        if p['DRS_PLOT'] and len(ll_sub_mask_ctr) > 0 and p['DRS_DEBUG']:
             # Plot rv vs ccf (and rv vs ccf_fit)
             sPlt.ccf_rv_ccf_plot(rv_ccf, ccf_o, ccf_o_fit, order=order_num,
                                  fig=fig)

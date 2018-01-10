@@ -113,7 +113,10 @@ def debug_start():
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
     nocol = spirouConfig.Constants.NORMALCOLOUR()
-    cc = clevels['error']
+    if addcolour:
+        cc = clevels['error']
+    else:
+        cc = nocol
     # ask to run debugger
     try:
         print(cc + '\n\n\tError found and running in DEBUG mode\n')
