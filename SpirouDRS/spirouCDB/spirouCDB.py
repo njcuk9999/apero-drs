@@ -266,6 +266,8 @@ def get_database(p, max_time=None, update=False):
         t_fmt_unix = spirouMath.stringtime2unixtime(t_fmt, calibdb_fmt)
         t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
         if t_fmt_unix != t:
+            lock.close()
+            os.remove(lock_file)
             emsg = 'Human time = {0} does not match unix time = {1} in calibDB'
             WLOG('error', p['log_opt'], emsg.format(t_fmt, t_human))
         # t must be a float here --> exception

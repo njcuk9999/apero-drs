@@ -272,7 +272,7 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
     # define row number
     rownumber = np.arange(len(cvalues))
     # plot minimum
-    frame.plot(rownumber, np.minimum(cvalues, pp['IC_LOC_SEUIL']))
+    frame.plot(rownumber, np.minimum(cvalues, pp['IC_LOCSEUIL']))
     # set title
     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
     # turn off interactive plotting

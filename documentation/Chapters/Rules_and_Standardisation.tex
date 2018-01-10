@@ -178,6 +178,34 @@ Note that `WLOG('error')' triggered the recipe/module to exit python, thus no ot
 \end{note}
 
 % -------------------------------------------------------
+\subsection{The coloured log}
+\label{ch:rules:drs_specific:coloured_log}
+% -------------------------------------------------------
+
+In addition to the features above the log can be coloured to aid usability.
+Currently errors are coloured red, warnings are coloured yellow and all other text is coloured green. These colours can be changed using \definevariable{text:colouredlevels}{clevels} or turned on/off using \definevariable{text:coloured_log}{COLOURED\_LOG}.
+
+\vspace{0.5cm}
+
+\noindent An example of each is shown below:
+\begin{pythonbox}
+WLOG('all', 'program', 'All message')
+WLOG('info', 'program', 'Info message')
+WLOG('warning', 'program', 'Warning message')
+WLOG('error', 'program', 'Error message')
+WLOG('all', 'program', 'All message')
+\end{pythonbox}
+\begin{cmdboxprintspecial}
+@gHH:MM:SS.s -   |program|All message@g
+@gHH:MM:SS.s - * |program|Info message@g
+@yHH:MM:SS.s - \@ |program|Warning message@y
+@rHH:MM:SS.s - ! |program|Error message@r
+@gHH:MM:SS.s -   |program|All message@g
+\end{cmdboxprintspecial}
+
+\newpage
+
+% -------------------------------------------------------
 \subsection{The Parameter Dictionary Object}
 \label{ch:rules:drs_specific:param_dict}
 % -------------------------------------------------------
@@ -195,8 +223,6 @@ p1 = ParamDict()
 # from a list of keys and values (using zip)
 p2 = ParamDict(zip(keys, values))
 \end{pythonbox}
-
-\newpage
 
 \noindent Once created key, value pairs are created the same way one would with a python dictionary.
 \begin{pythonbox}
@@ -217,6 +243,8 @@ p1['test'] = 1
 # set the source
 p1.set_source('test', 'test.py/__main__()')
 \end{pythonbox}
+
+\newpage
 
 \noindent One can also add a set of sources (after creating multiple key value pairs)
 \begin{pythonbox}

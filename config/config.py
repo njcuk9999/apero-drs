@@ -7,7 +7,10 @@
 # Whether to plot (True or 1 to plot)
 DRS_PLOT = 1
 
-# Whether to run in debug mode (1 to debug, 0 to run normally)
+# Whether to run in debug mode
+#      0: no debug
+#      1: basic debugging on errors
+#      2: recipes specific (plots and some code runs)
 DRS_DEBUG = 1
 
 

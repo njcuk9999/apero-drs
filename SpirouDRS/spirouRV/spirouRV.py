@@ -589,6 +589,8 @@ def get_ccf_mask(p, loc):
     mask_min = p['ic_w_mask_min']
     mask_width = p['ic_mask_width']
     filename = p['ccf_mask']
+    # try to locate mask
+    filename = locate_mask(p, filename)
     # speed of light in km/s
     c = constants.c.value / 1000.0
     # Question: Where is the mask file supposed to be located?
@@ -630,6 +632,34 @@ def get_ccf_mask(p, loc):
     loc.set_sources(['ll_mask_d', 'll_mask_ctr', 'w_mask'], source)
     # return loc
     return loc
+
+
+def locate_mask(p, filename):
+    # check if filename exists
+    if os.path.exists(filename):
+        abspath = os.path.join(os.getcwd(), filename)
+        wmsg = 'Template used for CCF computation: {0}'
+        WLOG('info', p['log_opt'], wmsg.format(abspath))
+    else:
+        # get package name and relative path
+        package = spirouConfig.Constants.PACKAGE()
+        relfolder = spirouConfig.Constants.CDATA_FOLDER()
+        # get absolute folder path from package and relfolder
+        absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+        # strip filename
+        filename = os.path.split(filename)[-1]
+        # get absolute path and filename
+        abspath = os.path.join(absfolder, filename)
+        # if path exists use it
+        if os.path.exists(abspath):
+            wmsg = 'Template used for CCF computation: {0}'
+            WLOG('info', p['log_opt'], wmsg.format(abspath))
+        # else raise error
+        else:
+            emsg = 'Template file: "{0}" not found, unable to proceed'
+            WLOG('error', p['log_opt'], emsg.format(filename))
+    # return abspath
+    return abspath
 
 
 def coravelation(p, loc):
@@ -701,7 +731,7 @@ def coravelation(p, loc):
     tot_line = []
     # -------------------------------------------------------------------------
     # graph set up
-    if p['DRS_PLOT'] and p['DRS_DEBUG']:
+    if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
         # start interactive plot
         sPlt.start_interactive_session()
         # define a figure
@@ -754,7 +784,7 @@ def coravelation(p, loc):
         # ---------------------------------------------------------------------
         # Plots
         # ---------------------------------------------------------------------
-        if p['DRS_PLOT'] and len(ll_sub_mask_ctr) > 0 and p['DRS_DEBUG']:
+        if p['DRS_PLOT'] and len(ll_sub_mask_ctr) > 0 and p['DRS_DEBUG'] == 2:
             # Plot rv vs ccf (and rv vs ccf_fit)
             sPlt.ccf_rv_ccf_plot(rv_ccf, ccf_o, ccf_o_fit, order=order_num,
                                  fig=fig)

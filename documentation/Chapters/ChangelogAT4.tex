@@ -31,9 +31,14 @@ Below we describe breifly the main differences from AT-4 build.
 	\begin{pythonbox}
 	WLOG("warning", "program", "message")
 	\end{pythonbox}
-	However now when "error" is called an automatic exit routine is run (therefore there is no need for sys.exit after a \WLOG("error", "", "") call).
+	In addition:
+	\begin{itemize}
+	\item when "error" is called an automatic exit routine is run (therefore there is no need for sys.exit after a \WLOG("error", "", "") call).
 
-\item execution of pythonstartup codes removed and replaced with functions
+	\item log printed to standard output (console) can be coloured (see \definevariable{text:colouredlevels}{coloured levels}) this functionality can be switched off and on easily, but with it on errors are coloured red and warning coloured yellow (greatly increases usability).
+
+	\end{itemize}
+\item execution of pythonstartup codes removed and replaced with setup functions (easier to manage, all variables loaded into parameter dictionary (\ParamDict) with their definition location defined (source).
 
 \item loading of many variables into python memory replaced with call to need dictionary object (parameter dictionary). Parameter dictionary is a custom dictionary object that as well as storing key and value pairs also can set a source for each key in the dictionary (hence the developer will always know where a variable was defined, if used correctly)
 
@@ -44,6 +49,26 @@ Below we describe breifly the main differences from AT-4 build.
 \item moved core functions used in multiple recipes to sub-modules
 
 \item all plotting taken out of main codes (call to specific sub-module)
+
+\item calibration database slightly reworked:
+
+\begin{itemize}
+	\item Lines can now be commented (i.e. by starting a line with a \#)
+	\item Blank lines are now ignored (helps for usability)
+	\item Two options for selecting sources with multiple keys the same (i.e. two or more with key ``dark'') this is set with \definevariable{text:calib_db_match}{calib\_db\_match} options are:
+
+	\begin{itemize}
+		\item `older' (same as AT4 V48 where only calibDB files older than the unix time of `fitsfilename' is selected and the one closest to the unix time of `fitsfilename' is used).
+		\item `closest' - selects the calibDB file that is closest in time to the unix tome of `fitsfilename'
+	\end{itemize}
+	\begin{note}
+	If two calibDB files with the same key have the same unix time, the one lower in the list is used.
+	\end{note}
+
+	\item there is also a test that the human readable date and unix date are the same (error is raised if they are different)
+	\DevNote{This may be taken out, but it seems that the unix time and human reabable time should be the same.}
+
+\end{itemize}
 
 \end{itemize}
 
@@ -499,3 +524,35 @@ Below we describe breifly the main differences from AT-4 build.
 \item new functions to save to .tbl format (\spirouImage.MakeTable and \spirouImage.WriteTable)
 
 \end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_CCF\_E2DS\_spirou recipe}
+\label{ch:changelog:At4:cal_CCF_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+	\item 
+
+	\item 
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_WAVE\_E2DS\_spirou recipe}
+\label{ch:changelog:At4:cal_WAVE_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{The cal\_HC\_E2DS\_spirou recipe}
+\label{ch:changelog:At4:cal_HC_E2DS_spirou}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
