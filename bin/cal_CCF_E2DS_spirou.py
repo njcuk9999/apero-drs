@@ -179,10 +179,7 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Get template RV (from ccf_mask)
     # ----------------------------------------------------------------------
-    # log that we are getting the template used for CCF computation
-    wmsg = 'Template used for CCF computation: {0}'
-    WLOG('info', p['log_opt'], wmsg.format(p['ccf_mask']))
-    # get the CCF mask from file
+    # get the CCF mask from file (check location of mask)
     loc = spirouRV.GetCCFMask(p, loc)
 
     # check and deal with mask in microns (should be in nm)

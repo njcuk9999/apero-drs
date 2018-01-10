@@ -80,13 +80,38 @@ def gettxt(filename):
     return keys, values
 
 
-def get_default_config_file(package, configfolder, config_file):
+def get_relative_folder(package, folder):
     """
-    Get default config file defined in __CONFIG_FILE__ at relative path
-    __CONFIGFOLDER__ from __PACKAGE__
+    Get the absolute path of folder defined at relative path
+    folder from package
 
-    :return config_file: string, the path and filename of the default config
+    :param package: string, the python package name
+    :param folder: string, the relative path of the configuration folder
+
+    :return data: string, the absolute path and filename of the default config
                          file
+    """
+    init = pkg_resources.resource_filename(package, '__init__.py')
+    # Get the config_folder from relative path
+    current = os.getcwd()
+    os.chdir(os.path.dirname(init))
+    data_folder = os.path.abspath(folder)
+    os.chdir(current)
+    # return the absolute data_folder path
+    return data_folder
+
+
+def get_default_config_file(package, configfolder, configfile):
+    """
+    Get the absolute path for the  default config file defined in
+    configfile at relative path configfolder from package
+
+    :param package: string, the python package name
+    :param configfolder: string, the relative path of the configuration folder
+    :param configfile: string, the name of the configuration file
+
+    :return config_file: string, the absolute path and filename of the
+                         default config file
     """
     init = pkg_resources.resource_filename(package, '__init__.py')
     # Get the config_folder from relative path
@@ -95,7 +120,7 @@ def get_default_config_file(package, configfolder, config_file):
     config_folder = os.path.abspath(configfolder)
     os.chdir(current)
     # Get the config file path
-    config_file = os.path.join(config_folder, config_file)
+    config_file = os.path.join(config_folder, configfile)
     # return the config file path
     return config_file
 

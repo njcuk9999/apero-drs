@@ -80,6 +80,12 @@ def CONFIGFOLDER():
     return config_folder
 
 
+def CDATA_FOLDER():
+    # Name of constant data folder (relative to PACKAGE() level)
+    const_data_folder = './data'
+    return const_data_folder
+
+
 # =============================================================================
 # Get constants from constant file
 # =============================================================================
