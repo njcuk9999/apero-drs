@@ -464,7 +464,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         WLOG('', pp['log_opt'], ('      {0} fit converging with rms/ptp/{1}:'
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
         # debug plot
-        if pp['DRS_PLOT'] and pp['DRS_DEBUG']:
+        if pp['DRS_PLOT'] and pp['DRS_DEBUG'] == 2:
             sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)
         # add one to the max rmpts
         max_rmpts += 1
