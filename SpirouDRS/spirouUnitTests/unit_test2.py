@@ -172,15 +172,15 @@ if __name__ == "__main__":
     times[name] = utf.UNIT_TEST_CAL_DRIFT_E2DS()
     test += 1
 
-    # # ----------------------------------------------------------------------
-    # # test cal_CCF_E2DS_spirou
-    # # ----------------------------------------------------------------------
-    # # set name and print progress
-    # name = 'cal_CCF_E2DS_spirou'
-    # print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
-    # # run test
-    # times[name] = utf.UNIT_TEST_CAL_CCF_E2DS()
-    # test += 1
+    # ----------------------------------------------------------------------
+    # test cal_CCF_E2DS_spirou
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_CCF_E2DS_spirou'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # run test
+    times[name] = utf.UNIT_TEST_CAL_CCF_E2DS()
+    test += 1
 
     # ----------------------------------------------------------------------
     # end total timer
