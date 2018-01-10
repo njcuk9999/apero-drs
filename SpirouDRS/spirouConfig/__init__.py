@@ -16,7 +16,7 @@ Version 0.0.0
 from . import spirouConfig
 from . import spirouKeywords
 from . import spirouConst
-from . import spirouConst
+from . import spirouConfigFile
 
 # =============================================================================
 # Define variables
@@ -61,6 +61,10 @@ GetKeywordArguments = spirouKeywords.get_keywords
 
 # get the keyword values from a header/dictionary
 GetKwValues = spirouKeywords.get_keyword_values_from_header
+
+GetAbsFolderPath = spirouConfigFile.get_relative_folder
+
+GetAbsConfigPath = spirouConfigFile.get_relative_folder
 
 # Load a config file from given filename
 LoadConfigFromFile = spirouConfig.load_config_from_file
