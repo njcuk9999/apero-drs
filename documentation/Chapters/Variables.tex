@@ -80,7 +80,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 	\end{thighlight}
 
 
-	\item \textbf{Constants and Pseudo-constants:} These are stored in \spirouCONST, they range from simple objects (strings, integers, float, lists, python dictionaries etc) to more complicated `pseudo-constants' that are constructed themselves from other constants. These are kept private (i.e. no mentioned in the user manual) as they should not need be changed by the average user.
+	\item \textbf{Constants and Pseudo-constants:} These are stored in \spirouConst, they range from simple objects (strings, integers, float, lists, python dictionaries etc) to more complicated `pseudo-constants' that are constructed themselves from other constants. These are kept private (i.e. no mentioned in the user manual) as they should not need be changed by the average user.
 
 \end{itemize}
 
@@ -104,7 +104,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \item \label{text:drs_name} \ParameterEntry{DRS Name}
 {Defines the data reduction software name. Value must be a valid string.}
 {DRS\_NAME}{SPIROU}
-{\AllRecipes}{\spirouCONST.NAME()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.NAME()}{\AllRecipes}{Private}
 \fi
 
 % DRS_VERSION
@@ -112,25 +112,32 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \item \label{text:drs_version} \ParameterEntry{DRS Version}
 {Defines the data reduction software version. Value must be a valid string.}
 {DRS\_VERSION}{0.0.1}
-{\AllRecipes}{\spirouCONST.VERSION()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.VERSION()}{\AllRecipes}{Private}
 \fi
 
+
+% DRS_RELEASE
+\ifdevguide
+\item \ParameterEntry{Release type}
+{Defines the current release type or state of the DRS. Value must be a valid string. This could explain the current state or just distinguish between alpha, beta and full releases.}
+{release}{'alpha'}
+{\AllRecipes}{\spirouConst.RELEASE()}{\AllRecipes}{Private}
+\fi
 
 % package
 \ifdevguide
 \item \ParameterEntry{Package name}
 {Defines the name of the python package that all sub-modules are located in. Value must be a string and be the name of a valid python package.}
 {package}{SpirouDRS}
-{\AllRecipes}{\spirouCONST.PACKAGE()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.PACKAGE()}{\AllRecipes}{Private}
 \fi
-
 
 % authors
 \ifdevguide
 \item \ParameterEntry{authors}
 {Defines the authors of the DRS. Value must be a string, author names separated by a comma.}
 {authors}{N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou}
-{\AllRecipes}{\spirouCONST.AUTHORS()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.AUTHORS()}{\AllRecipes}{Private}
 \fi
 
 
@@ -139,7 +146,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \item \ParameterEntry{date}
 {Defines the last edited date for the DRS. Value must be a string in format YYYY-MM-DD format.}
 {date}{2017-11-17}
-{None}{\spirouCONST.LATEST\_EDIT()}{None}{Private}
+{None}{\spirouConst.LATEST\_EDIT()}{None}{Private}
 \fi
 
 
@@ -149,28 +156,33 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 {DRS\_PLOT}{1}
 {\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
 
-
-
 % interactive_plots
 \ifdevguide
 \item \ParameterEntry{Use matplotlib interactive plot environment}
 {Defines whether to use the matplotlib interactive plot environment. If True or 1 uses `plot.ion()' and plots do not interrupt the running of code. If False or 0 all plots are run and `plt.show(), plt.close()' is used after each plot (pausing the code and destroying the plots after they are manually closed). This is mostly useful for debugging.}
 {interactive\_plots}{True}
-{\spirouPlot}{\spirouCONST.INTERACITVE\_PLOTS\_ENABLED()}{\spirouPlot variable definition}{Private}
+{\spirouPlot}{\spirouConst.INTERACITVE\_PLOTS\_ENABLED()}{\spirouPlot variable definition}{Private}
 \fi
 
-% ic_debug
-\item \ParameterEntry{Debug mode}
-{Enable various numeric debug codes (0 for no debug). Value must be an integer where:
+% DRS_DEBUG
+\item \label{text:drs_debug} \ParameterEntry{Debug mode}
+{Defines whether we should run the DRS in debug mode. Certain print/log statements and certain graphs only plot in debug mode. On an error the option to enter the python debugger is asked (allows user to look into functions/current memory and see what variables are currently defined. Value must be an integer. Value must be an integer where:
 \begin{itemize}
 \item 0 = No debug
 \item 1 = Level 1 debug \begin{todo}Define level 1 debug\end{todo}
 \item 2 = Level 2 debug \begin{todo}Define level 2 debug\end{todo}
 \end{itemize}
 }
-{ic\_debug}{0}{\callocRAW}{\constantsfile}{???}{Public}
-\DevNote{Should this be public?}
+{DRS\_DEBUG}{0}
+{\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
 
+% DEBUG
+\ifdevguide
+\item \PseudoParamEntry{Debugging mode controller}
+{Controls the debug level (from \definevariable{text:drs_debug}{DRS\_DEBUG})}
+{debug}
+{\AllRecipes}{\spirouConst.DEBUG()}{\AllRecipes}
+\fi
 
 % ic_display_timeout
 \item \ParameterEntry{Plot interval}
@@ -196,36 +208,36 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 \item \label{text:tdata} \ParameterEntry{The data directory}
 {Defines the path to the data directory. Value must be a string containing a valid file location.}
-{TDATA}{/drs/data/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{TDATA}{/drs/data/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 \item \label{text:drs_root} \ParameterEntry{The installation directory}
 {Defines the installation directory (\InstallDIR). Value must be a string containing a valid file location.}
-{DRS\_ROOT}{/drs/INTROOT/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_ROOT}{/drs/INTROOT/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \item \label{text:drs_data_raw} \ParameterEntry{The raw data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_DATA\_RAW}{/drs/data/raw}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_RAW}{/drs/data/raw}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \item \label{text:drs_data_reduc} \ParameterEntry{The reduced data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_DATA\_REDUC}{/drs/data/reduced}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_REDUC}{/drs/data/reduced}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \item \label{text:drs_calib_db} \ParameterEntry{The calibration database and calibration file directory}
 {Defines the directory that the calibration files and database will be saved to/read from. Value must be a string containing a valid file location.}
-{DRS\_CALIB\_DB}{/drs/data/calibDB}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_CALIB\_DB}{/drs/data/calibDB}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \item \label{text:drs_data_msg} \ParameterEntry{The log directory}
 {Defines the directory that the log messages are stored in. Value must be a string containing a valid file location.}
-{DRS\_DATA\_MSG}{/drs/data/msg}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_MSG}{/drs/data/msg}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \item \label{text:drs_data_working} \ParameterEntry{The working directory}
 {Defines the working directory. Value must be a string containing a valid file location.}
-{DRS\_DATA\_WORKING}{/drs/data/tmp/}{\AllRecipes}{\configtxtfile}{\spirouCONST}{Public}
+{DRS\_DATA\_WORKING}{/drs/data/tmp/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \end{itemize}
@@ -1396,7 +1408,7 @@ Value must be a float greater than zero.
 \item \label{text:ic_calibDB_filename} \ParameterEntry{The calibration database master filename}
 {Defines the name of the master calibration database text file for use in all calibration database operation.}
 {ic\_calibDB\_filename}{master\_calib{\hskip 0pt}\_SPIROU.txt}
-{\AllRecipes}{\constantsfile}{\spirouCONST.CALIBDB\_MASTERFILE()}{Public}
+{\AllRecipes}{\constantsfile}{\spirouConst.CALIBDB\_MASTERFILE()}{Public}
 \DevNote{This should probably be private, unless we want the user to be able to change calibDB files.}
 
 
@@ -1439,90 +1451,98 @@ Value must be a float greater than zero.
 \item \label{text:config_folder} \ParameterEntry{Configuration Folder Path}
 {Defines the location of the configuration directory relative to the module directory (defined in variable = `package'). Value must be a string containing a valid directory location.}
 {config\_folder}{\configdirrelpath}
-{\AllRecipes}{\spirouCONST.CONFIGFOLDER()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.CONFIGFOLDER()}{\AllRecipes}{Private}
 
 
 % config_file
 \item \label{text:config_file} \ParameterEntry{Configuration file name}
 {Defines the main configuration (containing the data directories etc).  Value must be a string containing a valid file name i.e. the main configuration file should be at \definevariable{text:tdata}{TDATA}/\definevariable{text:config_folder}{config\_folder}/\definevariable{text:config_file}{config\_file}.}
 {config\_file}{\configtxtfile}
-{\AllRecipes}{\spirouCONST.CONFIGFILE()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.CONFIGFILE()}{\AllRecipes}{Private}
 
 
 % arg_file_names
 \item \PseudoParamEntry{Filenames from run time arguments}
 {Gets the filenames from run time arguments.}
 {arg\_file\_names}
-{\AllRecipes}{\spirouCONST.ARG\_FILE\_NAMES()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.ARG\_FILE\_NAMES()}{\spirouStartup.run\_time\_args()}
 
 
 % arg_night_name
 \item \PseudoParamEntry{Night name from run time arguments}
 {Gets the night name from run time arguments.}
 {arg\_night\_name}
-{\AllRecipes}{\spirouCONST.ARG\_NIGHT\_NAME()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.ARG\_NIGHT\_NAME()}{\spirouStartup.run\_time\_args()}
 
 
 % calibdb_masterfile
 \item \PseudoParamEntry{Calibration database file path}
 {Gets the full calibration database file path}
 {masterfilepath}
-{\AllRecipes}{\spirouCONST.CALIBDB\_MASTERFILE()}{\spirouCDB.write\_files\_to\_master(), \spirouCDB.read\_master\_file(), \spirouImage.correct\_for\_dark()}
+{\AllRecipes}{\spirouConst.CALIBDB\_MASTERFILE()}{\spirouCDB.write\_files\_to\_master(), \spirouCDB.read\_master\_file(), \spirouImage.correct\_for\_dark()}
 
 
 % calibdb_lockfile
 \item \PseudoParamEntry{Calibration database lock file path}
 {Gets the full calibration database lock file path}
 {lockfilepath}
-{\AllRecipes}{\spirouCONST.CALIBDB\_LOCKFILE()}{\spirouCDB.get\_check\_lock\_file()}
+{\AllRecipes}{\spirouConst.CALIBDB\_LOCKFILE()}{\spirouCDB.get\_check\_lock\_file()}
+
+
+% calib_prefix
+\item \PseudoParamEntry{Calibration database file prefix}
+{Defines the prefix for calibration database files. Value must be a string.}
+{calib\_prefix}
+{\AllRecipes}{\spirouConst.CALIB\_PREFIX(()}{\calDARK.\progMAIN, \callocRAW.\progMAIN, \calSLIT.\progMAIN, \calFFraw.\progMAIN}
+
 
 % fitsfilename
 \item \PseudoParamEntry{Fits file name}
 {Gets the full file path of the first file in `arg\_file\_names'}
 {fitsfilename}
-{\AllRecipes}{\spirouCONST.FITSFILENAME()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.FITSFILENAME()}{\spirouStartup.run\_time\_args()}
 
 
 % log_opt
 \item \PseudoParamEntry{Log program name}
 {Chooses the display format for the program in the logging system.}
 {log\_opt}
-{\AllRecipes}{\spirouCONST.LOG\_OPT()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.LOG\_OPT()}{\spirouStartup.run\_time\_args()}
 
 
 % manual_file
 \item \PseudoParamEntry{Documentation info manual file path}
 {Gets the full documentation info manual file path}
 {manual\_file}
-{\AllRecipes}{\spirouCONST.MANUAL\_FILE()}{\spirouStartup.display\_help\_file()}
+{\AllRecipes}{\spirouConst.MANUAL\_FILE()}{\spirouStartup.display\_help\_file()}
 
 
 % nbframes
 \item \PseudoParamEntry{Number of frames}
 {Gets the number of frames from the list of files (`arg\_file\_names').}
 {nbframes}
-{\AllRecipes}{\spirouCONST.NBFRAMES}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.NBFRAMES}{\spirouStartup.run\_time\_args()}
 
 
 % program
 \item \PseudoParamEntry{Program name from run time}
 {Gets the run program name from run time.}
 {program}
-{\AllRecipes}{\spirouCONST.PROGRAM()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.PROGRAM()}{\spirouStartup.run\_time\_args()}
 
 
 % raw_dir
 \item \PseudoParamEntry{Full path of raw data directory}
 {Gets the full path of the raw data directory.}
 {raw\_dir}
-{\AllRecipes}{\spirouCONST.RAW\_DIR()}{\spirouFITS.math\_controller(), \spirouImage.get\_all\_similar\_files(), \spirouStartup.display\_run\_files()}
+{\AllRecipes}{\spirouConst.RAW\_DIR()}{\spirouFITS.math\_controller(), \spirouImage.get\_all\_similar\_files(), \spirouStartup.display\_run\_files()}
 
 
 % reduced_dir
 \item \PseudoParamEntry{Full path of reduced data directory}
 {Gets the full path of the reduced data directory.}
 {reduced\_dir}
-{\AllRecipes}{\spirouCONST.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}
 
 \end{itemize}
 
@@ -1551,14 +1571,14 @@ Value must be a float greater than zero.
 \item \ParameterEntry{Header date format}
 {Defines the format of the date in the FITS rec header files}
 {date\_fmt\_header}{\%Y-\%m-\%d-\%H:\%M:\%S.\%f}
-{\spirouCDB}{\spirouCONST.DATE\_FMT\_HEADER()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
+{\spirouCDB}{\spirouConst.DATE\_FMT\_HEADER()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
 
 
 % date_fmt_header
 \item \ParameterEntry{Calibration database date format}
 {Defines the format of the date in the calibration database file}
 {date\_fmt\_calibdb}{\%Y-\%m-\%d-\%H:\%M:\%S.\%f}
-{\spirouCDB}{\spirouCONST.DATE\_FMT\_CALIBDB()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
+{\spirouCDB}{\spirouConst.DATE\_FMT\_CALIBDB()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
 
 \end{itemize}
 
@@ -1600,7 +1620,7 @@ forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'EXTEND',
 \begin{tabular}{>{\color{red}}l c l}
 &&\\
 \textcolor{blue}{Used in:}  & \multicolumn{2}{p{10cm}}{\AllRecipes} \\
-\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\spirouCONST.FORBIDDEN\_COPY\_KEYS()} \\
+\textcolor{blue}{Defined in:} & \multicolumn{2}{p{10cm}}{\spirouConst.FORBIDDEN\_COPY\_KEYS()} \\
 \ifdevguide
 \textcolor{blue}{Called in:} & \multicolumn{2}{p{10cm}}{\textcolor{codegreen}{\spirouFITS}} \\
 \textcolor{blue}{Level:} & \multicolumn{2}{p{10cm}}{Private} \\
@@ -1663,7 +1683,7 @@ Value must be a valid string. \ifdevguide See section \ref{ch:rules:drs_specific
 {Defines the logging keys to use for each logging levels. Value should be a dictionary of key value pairs (where all keys and values are strings). When using the \spirouLog.logger() (aliases to \WLOG in recipes) the first argument must be one of these keys and the returned string is the corresponding value. The keys of \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key} must be identical. See section \ref{ch:rules:drs_specific:logger} for more details.}
 {trig\_key}
 {\lstinline[style=pythoninline]| dict(all=' ', error='!', warning='@', info='*', graph='~') |}
-{\AllRecipes}{\spirouCONST.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
 \vspace{-0.25cm}
 \begin{thighlight}
 i.e.: 
@@ -1688,7 +1708,7 @@ HH:MM:SS.s - ! |program|Message
 {Defines the write levels to use for each write level. A write level is defined by a number. The higher the number to more exclusive the level i.e. if A and B are write levels and A $>$ B and write level is set to A, any log or print messages at level B will not be logged/printed. Printing is controlled by variable \definevariable{text:print_level}{PRINT\_LEVEL} and logging by variable \definevariable{text:log_level}{LOG\_LEVEL}. The keys of \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key} must be identical. See section \ref{ch:rules:drs_specific:logger} for more details.}
 {write\_level}
 {\lstinline[style=pythoninline]| dict(error=3, warning=2, info=1, graph=0, all=0) |}
-{\AllRecipes}{\spirouCONST.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
+{\AllRecipes}{\spirouConst.LOG\_TRIG\_KEYS()}{\AllRecipes}{Private}
 \vspace{-0.25cm}
 \begin{thighlight}
 i.e.: 
@@ -1716,25 +1736,28 @@ Note the info message was not shown as info=1 and \definevariable{text:print_lev
 
 % log_exit_type
 \ifdevguide
-
 \item \label{text:log_exit_type} \ParameterEntry{Logger exit type}
 {What to do when a logging `error' is raise. Options are: 'None', 'os' or 'sys'. If 'None' the code continues on an `error', if 'os' then python executes a `os.\_exit' command (a hard exit), if 'sys' then python executes a 'sys.exit' command (a soft exit).}
 {log\_exit\_type}{sys}
-{\AllRecipes}{\spirouCONST.LOG\_EXIT\_TYPE()}{\spirouCONST.EXIT() which is called in \spirouLog}{Private}
+{\AllRecipes}{\spirouConst.LOG\_EXIT\_TYPE()}{\spirouConst.EXIT() which is called in \spirouLog}{Private}
 \fi
 
 % exit controller
+\ifdevguide
 \item \label{text:exit_controller} \PseudoParamEntry{Exit controller}
-{Controls the exit type from `log\_exit\_type' and \definevariable{text:log_exit_type}{\spirouCONST.LOG\_EXIT\_TYPE()}.}
+{Controls the exit type from `log\_exit\_type' and \definevariable{text:log_exit_type}{\spirouConst.LOG\_EXIT\_TYPE()}.}
 {exit}
-{\AllRecipes}{\spirouCONST.EXIT()}{\spirouLog}
+{\AllRecipes}{\spirouConst.EXIT()}{\spirouLog}
+\fi
 
 
 % exit levels
+\ifdevguide
 \item \label{text:exit_levels} \PseudoParamEntry{Exit levels}
 {Controls which levels (defined in \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key}) will lead to the exit statement (given in \definevariable{text:exit_controller}{exit} and \definevariable{text:log_exit_type}{log\_exit\_type}). Values must be a list of strings where each entry must be in \definevariable{text:write_level}{write\_level} and \definevariable{text:trig_keys}{trig\_key}.}
 {exit\_levels}
-{\AllRecipes}{\spirouCONST.EXIT\_LEVELS()}{\spirouLog}
+{\AllRecipes}{\spirouConst.EXIT\_LEVELS()}{\spirouLog}
+\fi
 
 
 % log_caught_warnings
@@ -1742,7 +1765,7 @@ Note the info message was not shown as info=1 and \definevariable{text:print_lev
 \item \ParameterEntry{Log caught warnings}
 {If True or 1, then if warnings are passed to \spirouLog.warninglogger() and there are warnings present, will attempt to log these warnings using the \spirouLog.logger function. i.e. will print the warning to screen/log file depending on logging settings.}
 {log\_caught\_warnings}{True}
-{\AllRecipes}{\spirouCONST.LOG\_CAUGHT\_WARNINGS()}{\spirouLog}{Private}
+{\AllRecipes}{\spirouConst.LOG\_CAUGHT\_WARNINGS()}{\spirouLog}{Private}
 \fi
 
 % cmsg
@@ -1750,9 +1773,63 @@ Note the info message was not shown as info=1 and \definevariable{text:print_lev
 \item \PseudoParamEntry{Configuration key error message}
 {Defines the message that is used when a configuration key is missing}
 {cerrmsg}
-{\AllRecipes}{\spirouCONST.CONFIG\_KEY\_ERROR}{\spirouLog.get\_logfilepath()}
+{\AllRecipes}{\spirouConst.CONFIG\_KEY\_ERROR}{\spirouLog.get\_logfilepath()}
 \fi
 
+% colouredlevels
+\ifdevguide
+\item \label{text:colouredlevels} \ParameterEntry{Colour of levels text}
+{The text colour for each level in \definevariable{{text:trig_keys}}{trig\_key} and \definevariable{text:write_level}{write\_level}. Value must be a dictionary with the keys identical to the keys in \definevariable{{text:trig_keys}}{trig\_key} and \definevariable{text:write_level}{write\_level}. One can use \definevariable{text:redcolour}{REDCOLOUR()}, \definevariable{text:yellowcolour}{YELLOWCOLOUR()}, \definevariable{text:greencolour}{GREENCOLOUR()} to access the predefined values of red, yellow and green respectively. The default colour is given by \definevariable{text:normalcolour}{NORMALCOLOUR()}.}
+{clevels}
+{\lstinline[style=pythoninline]| dict(error=red, warning=yellow, info=green, graph=norm, all=green) |}
+{\AllRecipes}{\spirouConst.COLOUREDLEVELS()}{\spirouLog.debug\_start(), \spirouLog.printlog()}
+\fi
+
+% normalcolour
+\ifdevguide
+\item \label{text:normalcolour} \ParameterEntry{Default text colour}
+{Defines the string that describes the default text colour (retrieves colour from user). This in turn is turned into the colour defined by the python console/terminal that is default for that user. Value must be a string. This is used at the end of any colour change to set the text colour back to default (otherwise colour will remain until changed).}
+{norm}{\lstinline[style=pythoninline]| "\\033[0;37;40m"|}
+{\AllRecipes}{\spirouConst.NORMALCOLOUR()}{\spirouConst.COLOUREDLEVELS(), \spirouLog.debug\_start(), \spirouLog.printlog()}
+\fi
+
+% redcolour
+\ifdevguide
+\item \label{text:redcolour} \ParameterEntry{Red text colour}
+{Defines the string that describes the colour "red".}
+{red}{\lstinline[style=pythoninline]| "\\033[0;31;48m"|}
+{\AllRecipes}{\spirouConst.REDCOLOUR()}{\spirouConst.COLOUREDLEVELS()}
+\fi
+
+% yellowcolour
+\ifdevguide
+\item \label{text:yellowcolour} \ParameterEntry{Yellow text colour}
+{Defines the string that describes the colour "yellow".}
+{yellow}{\lstinline[style=pythoninline]| "\\033[0;33;48m"|}
+{\AllRecipes}{\spirouConst.YELLOWCOLOUR()}{\spirouConst.COLOUREDLEVELS()}
+\fi
+
+% greencolour
+\ifdevguide
+\item \label{text:greencolour} \ParameterEntry{Green text colour}
+{Defines the string that describes the colour "green".}
+{green}{\lstinline[style=pythoninline]| "\\033[0;32;48m"|}
+{\AllRecipes}{\spirouConst.GREENCOLOUR()}{\spirouConst.COLOUREDLEVELS()}
+\fi
+
+% coloured_log
+\item \ParameterEntry{Toggle coloured log}
+{Defines whether the log (printed to the standard output) is coloured \ifdevguide according to \definevariable{text:colouredlevels}{clevels} \fi. Value must be True or 1 to colour the log or False or 0 to use the default console colour throughout.}
+{COLOURED\_LOG}{True}
+{\AllRecipes}{\configtxtfile}{\spirouLog.debug\_start(), \spirouLog.printlog()}{Public}
+
+% coloured_log
+\ifdevguide
+\item \ParameterEntry{Coloured log controller}
+{Defines whether the log (printed to the standard output) is coloured \ifdevguide according to \definevariable{text:colouredlevels}{clevels} \fi. Value is set through 
+{clog}{True}
+{\AllRecipes}{\spirouConst.COLOURED\_LOG()}{\spirouLog.debug\_start(), \spirouLog.printlog()}
+\fi
 
 \end{itemize}
 
