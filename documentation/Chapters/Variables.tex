@@ -169,8 +169,8 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 {Defines whether we should run the DRS in debug mode. Certain print/log statements and certain graphs only plot in debug mode. On an error the option to enter the python debugger is asked (allows user to look into functions/current memory and see what variables are currently defined. Value must be an integer. Value must be an integer where:
 \begin{itemize}
 \item 0 = No debug
-\item 1 = Level 1 debug \begin{todo}Define level 1 debug\end{todo}
-\item 2 = Level 2 debug \begin{todo}Define level 2 debug\end{todo}
+\item 1 = basic debugging on errors (prompted to enter python debugger)
+\item 2 = Same as 1 and recipes specific (plots and some code runs)
 \end{itemize}
 }
 {DRS\_DEBUG}{0}
@@ -1420,7 +1420,7 @@ Value must be a float greater than zero.
 
 
 % calib_db_match
-\item \ParameterEntry{Calibration database duplicate key handler}
+\item \namedlabel{text:calib_db_match} \ParameterEntry{Calibration database duplicate key handler}
 {Defines the mechanism to use in deciding between duplicate keys in the calibration database file. Value must be a string and must be either 'older' or 'closest'. If 'older' the calibration database will only use keys that are older than the timestamp in the input fits file (first argument) using the key \defineinkeyword{text:acqtime1}{kw\_ACQTIME\_KEY}}
 {calib\_db\_match}{'closest'}
 {\AllRecipes}{\constantsfile}{\spirouCDB.get\_check\_lock\_file()}{Public}
