@@ -65,8 +65,9 @@ def compare(name, ll, newoutputs, oldoutputs, errors):
     lists = utc.create_oldfiles(newfiles, OLDPATH, newpath)
     newoutputs[name], oldoutputs[name] = lists
     # get any differences between old and new
-    errors = utc.comparison_wrapper(name, oldoutputs[name], newoutputs[name],
+    e0 = utc.comparison_wrapper(name, oldoutputs[name], newoutputs[name],
                                     path=RESULTSPATH)
+    errors += e0
 
     # return dicts
     return newoutputs, oldoutputs, errors
