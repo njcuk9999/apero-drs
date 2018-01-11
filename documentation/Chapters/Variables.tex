@@ -1461,6 +1461,13 @@ Value must be a float greater than zero.
 {\AllRecipes}{\spirouConst.CONFIGFILE()}{\AllRecipes}{Private}
 
 
+% cdata_folder
+\item \namedlabel{text:cdata_folder} \ParameterEntry{Constant data folder relative path}
+{Defines the storage folder for data files that are used in the DRS. This included masks and lookup tables used by the DRS and not changed by the user. Value should be a string with a path that is relative to the DRS module folder (i.e. SpirouDRS) for example the path `./data' would be located under the SpirouDRS folder.}
+{const\_data\_folder}{'./data'}
+{\AllRecipes}{\spirouConst.CDATA\_FOLDER}{\AllRecipes}{Private}
+
+
 % arg_file_names
 \item \PseudoParamEntry{Filenames from run time arguments}
 {Gets the filenames from run time arguments.}
