@@ -157,6 +157,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['fib_type']:
+        # set fiber in p
+        p['fiber'] = fiber
+        p.set_source('fiber', __NAME__ + '/main()')
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
@@ -282,7 +285,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey1DList(hdict, p['kw_EXTRA_SN'],
                                          values=loc['SNR'])
         # write center fits and add header keys (via hdict)
-        spirouImage.WriteImage(blazefitsname, loc['blaze'], hdict)
+        spirouImage.WriteImage(blazefits, loc['blaze'], hdict)
 
         # ----------------------------------------------------------------------
         # Store Flat-field in file
