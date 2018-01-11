@@ -175,13 +175,11 @@ def main(night_name=None, files=None):
     tiltima = np.ones((int(loc['number_orders']/2), data2.shape[1]))
     tiltima *= loc['tilt'][:, None]
     # construct file name and path
-    reduced_dir = p['reduced_dir']
-    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
-    tiltfn = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
-    tiltfits = calibprefix + tiltfn
+    tiltfits = spirouConfig.Constants.SLIT_TILT_FILE(p)
+    tiltfitsname = os.path.split(tiltfits)[-1]
     # Log that we are saving tilt file
     wmsg = 'Saving tilt  information in file: {0}'
-    WLOG('', p['log_opt'], wmsg.format(tiltfits))
+    WLOG('', p['log_opt'], wmsg.format(tiltfitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
@@ -196,7 +194,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(hdict, tilt_keywordstore,
                                    value=loc['tilt'][order_num])
     # write tilt file to file
-    spirouImage.WriteImage(os.path.join(reduced_dir, tiltfits), tiltima, hdict)
+    spirouImage.WriteImage(tiltfits, tiltima, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -242,9 +240,9 @@ def main(night_name=None, files=None):
     if p['QC']:
         keydb = 'TILT'
         # copy localisation file to the calibDB folder
-        spirouCDB.PutFile(p, os.path.join(reduced_dir, tiltfits))
+        spirouCDB.PutFile(p, tiltfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, tiltfits, hdr)
+        spirouCDB.UpdateMaster(p, keydb, tiltfitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

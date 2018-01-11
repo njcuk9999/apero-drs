@@ -267,12 +267,11 @@ def main(night_name=None, files=None):
         # Store Blaze in file
         # ----------------------------------------------------------------------
         # construct filename
-        reducedfolder = p['reduced_dir']
-        blazeext = '_blaze_{0}.fits'.format(p['fiber'])
-        blazefits = p['arg_file_names'][0].replace('.fits', blazeext)
+        blazefits = spirouConfig.Constants.FF_BLAZE_FILE(p)
+        blazefitsname = os.path.split(blazefits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving blaze spectrum for fiber: {0} in {1}'
-        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, blazefits))
+        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, blazefitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # define new keys to add
@@ -283,27 +282,22 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey1DList(hdict, p['kw_EXTRA_SN'],
                                          values=loc['SNR'])
         # write center fits and add header keys (via hdict)
-        spirouImage.WriteImage(os.path.join(reducedfolder, blazefits),
-                               loc['blaze'], hdict)
+        spirouImage.WriteImage(blazefitsname, loc['blaze'], hdict)
 
         # ----------------------------------------------------------------------
         # Store Flat-field in file
         # ----------------------------------------------------------------------
         # construct filename
-        reducedfolder = p['reduced_dir']
-        flatext = '_flat_{0}.fits'.format(p['fiber'])
-        calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
-        flatfn = p['arg_file_names'][0].replace('.fits', flatext)
-        flatfits = calibprefix + flatfn
+        flatfits = spirouConfig.Constants.FF_FLAT_FILE(p)
+        flatfitsname = os.path.split(flatfits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
-        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, flatfits))
+        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
         hdict = spirouImage.AddKey1DList(hdict, p['kw_FLAT_RMS'],
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)
-        spirouImage.WriteImage(os.path.join(reducedfolder, flatfits),
-                               loc['flat'], hdict)
+        spirouImage.WriteImage(flatfits, loc['flat'], hdict)
 
         # ------------------------------------------------------------------
         # Quality control
@@ -344,9 +338,9 @@ def main(night_name=None, files=None):
         if p['QC'] == 1:
             keydb = 'FLAT_' + p['fiber']
             # copy localisation file to the calibDB folder
-            spirouCDB.PutFile(p, os.path.join(reducedfolder, flatfits))
+            spirouCDB.PutFile(p, flatfits)
             # update the master calib DB file with new key
-            spirouCDB.UpdateMaster(p, keydb, flatfits, hdr)
+            spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
