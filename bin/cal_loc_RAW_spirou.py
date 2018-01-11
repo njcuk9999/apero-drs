@@ -116,18 +116,15 @@ def main(night_name=None, files=None):
     # Write image order_profile to file
     # ----------------------------------------------------------------------
     # Construct folder and filename
-    reducedfolder = p['reduced_dir']
-    newext = '_order_profile_{0}.fits'.format(p['fiber'])
-    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
-    rawfn = p['arg_file_names'][0].replace('.fits', newext)
-    rawfits = calibprefix + rawfn
+    rawfits = spirouConfig.Constants.LOC_ORDER_PROFILE_FILE(p)
+    rawfitsname = os.path.split(rawfits)[-1]
     # log saving order profile
-    WLOG('', p['log_opt'], 'Saving processed raw frame in {0}'.format(rawfits))
+    wmsg = 'Saving processed raw frame in {0}'
+    WLOG('', p['log_opt'], wmsg.format(rawfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # write to file
-    rawpath = os.path.join(reducedfolder, rawfits)
-    spirouImage.WriteImage(rawpath, order_profile, hdict)
+    spirouImage.WriteImage(rawfits, order_profile, hdict)
 
     # ----------------------------------------------------------------------
     # Move order_profile to calibDB and update calibDB
@@ -135,9 +132,9 @@ def main(night_name=None, files=None):
     # set key for calibDB
     keydb = 'ORDER_PROFILE_{0}'.format(p['fiber'])
     # copy dark fits file to the calibDB folder
-    spirouCDB.PutFile(p, os.path.join(reducedfolder, rawfits))
+    spirouCDB.PutFile(p, rawfits)
     # update the master calib DB file with new key
-    spirouCDB.UpdateMaster(p, keydb, rawfits, hdr)
+    spirouCDB.UpdateMaster(p, keydb, rawfitsname, hdr)
 
     # ######################################################################
     # Localization of orders on central column
@@ -286,12 +283,11 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
 
     # construct filename
-    locoext = '_loco_{0}.fits'.format(p['fiber'])
-    locofn = p['arg_file_names'][0].replace('.fits', locoext)
-    locofits = calibprefix + locofn
+    locofits = spirouConfig.Constants.LOC_LOCO_FILE(p)
+    locofitsname = os.path.split(locofits)[-1]
     # log that we are saving localization file
     WLOG('', p['log_opt'], ('Saving localization information '
-                            'in file: {0}').format(locofits))
+                            'in file: {0}').format(locofitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
@@ -327,19 +323,18 @@ def main(night_name=None, files=None):
                                      values=loc['ass'][0:rorder_num])
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['acc'], data2.shape[1])
-    spirouImage.WriteImage(os.path.join(reducedfolder, locofits),
-                           center_fits, hdict)
+    spirouImage.WriteImage(locofits, center_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and record of image of sigma
     # ----------------------------------------------------------------------
     # construct filename
-    locoext = '_fwhm-order_{0}.fits'.format(p['fiber'])
-    locofits2 = p['arg_file_names'][0].replace('.fits', locoext)
+    locofits2 = spirouConfig.Constants.LOC_LOCO_FILE2(p)
+    locofits2name = os.path.split(locofits2)[-1]
 
     # log that we are saving localization file
-    WLOG('', p['log_opt'], ('Saving FWHM information '
-                            'in file: {0}').format(locofits))
+    wmsg = 'Saving FWHM information in file: {0}'
+    WLOG('', p['log_opt'], wmsg.format(locofits2name))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
@@ -373,24 +368,23 @@ def main(night_name=None, files=None):
                                      values=loc['ass'][0:rorder_num])
     # write image and add header keys (via hdict)
     width_fits = spirouLOCOR.CalcLocoFits(loc['ass'], data2.shape[1])
-    spirouImage.WriteImage(os.path.join(reducedfolder, locofits),
-                           width_fits, hdict)
+    spirouImage.WriteImage(locofits2, width_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and Record of image of localization
     # ----------------------------------------------------------------------
     if p['IC_LOCOPT1']:
         # construct filename
-        locoext = '_with-order_{0}.fits'.format(p['fiber'])
-        locofits3 = p['arg_file_names'][0].replace('.fits', locoext)
+        locofits3 = spirouConfig.Constants.LOC_LOCO_FILE3(p)
+        locofits3name = os.path.split(locofits3)[-1]
         # log that we are saving localization file
-        WLOG('', p['log_opt'], ('Saving localization image with superposition '
-                                'of orders in file: {0}').format(locofits))
+        wmsg1 = 'Saving localization image with superposition of orders in '
+        wmsg2 = 'file: {0}'.format(locofits3name)
+        WLOG('', p['log_opt'], [wmsg1, wmsg2])
         # superpose zeros over the fit in the image
         data4 = spirouLOCOR.imageLocSuperimp(data2o, loc['acc'][0:rorder_num])
         # save this image to file
-        spirouImage.WriteImage(os.path.join(reducedfolder, locofits3), data4,
-                               hdict)
+        spirouImage.WriteImage(locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -442,9 +436,9 @@ def main(night_name=None, files=None):
     if p['QC'] == 1:
         keydb = 'LOC_' + p['fiber']
         # copy localisation file to the calibDB folder
-        spirouCDB.PutFile(p, os.path.join(reducedfolder, locofits))
+        spirouCDB.PutFile(p, locofits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, locofits, hdr)
+        spirouCDB.UpdateMaster(p, keydb, locofitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
