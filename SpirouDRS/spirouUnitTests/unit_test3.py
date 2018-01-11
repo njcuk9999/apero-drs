@@ -16,13 +16,17 @@ Version 0.0.0
 from __future__ import division
 import time
 import sys
+import numpy as np
+from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 
 try:
     from . import unit_test_functions as utf
+    from . import unit_test_comp_functions as utc
 except ImportError:
     import unit_test_functions as utf
+    import unit_test_comp_functions as utc
 
 if sys.version_info.major == 2:
     from collections import OrderedDict as dict
@@ -42,6 +46,51 @@ __release__ = spirouConfig.Constants.RELEASE()
 NIGHT_NAME = '20170710'
 # define format for unit test logging
 UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
+# define old version reduced path
+OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710'
+# plot path
+RESULTSPATH = '/scratch/Projects/spirou_py3/unit_test_graphs/unit_test3/'
+
+# =============================================================================
+# Define functions
+# =============================================================================
+def compare(name, ll, newoutputs, oldoutputs, errors):
+
+    print('\n\n Comparing files...')
+    # define new output files from ll
+    newfiles = ll['outputs']
+    # define new path from p['reduced_dir']
+    newpath = ll['p']['reduced_dir']
+    # get old output locations (that should be the same as new output files)
+    lists = utc.create_oldfiles(newfiles, OLDPATH, newpath)
+    newoutputs[name], oldoutputs[name] = lists
+    # get any differences between old and new
+    errors = utc.comparison_wrapper(name, oldoutputs[name], newoutputs[name],
+                                    path=RESULTSPATH)
+
+    # return dicts
+    return newoutputs, oldoutputs, errors
+
+def column(matrix, i):
+    return [row[i] for row in matrix]
+
+
+def construct_error_table(errors):
+
+    table = Table()
+
+    table['names'] = column(errors, 0)
+    table['oldfile'] = column(errors, 1)
+    table['newfile'] = column(errors, 2)
+    table['kind'] = column(errors, 3)
+    table['error'] = column(errors, 4)
+    table['val1'] = column(errors, 5)
+    table['val2'] = column(errors, 6)
+    table['val3'] = column(errors, 7)
+
+    table.write(RESULTSPATH + '/unit_test_3_error_table.fits', overwrite=True)
+
+
 
 # =============================================================================
 # Start of code
@@ -50,9 +99,9 @@ UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
 if __name__ == "__main__":
     # set up time dictionary
     times = dict()
-    outputs = dict()
-    # start total timer
-    starttotaltime = time.time()
+    newoutputs = dict()
+    oldoutputs = dict()
+    errors = []
     # iterator
     test = 1
     # print starting unit tests
@@ -66,7 +115,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_DARK(return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -78,7 +130,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_BADPIX(return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -90,7 +145,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -102,7 +160,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_LOC_RAW(kind='dark_flat', return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -114,7 +175,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_SLIT(return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -126,7 +190,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_FF_RAW(kind='flat_dark', return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -138,7 +205,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_FF_RAW(kind='dark_flat', return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -152,7 +222,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -166,7 +239,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -180,7 +256,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -192,7 +271,10 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_DRIFT_E2DS(return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
@@ -204,13 +286,15 @@ if __name__ == "__main__":
     # run test
     ll = utf.UNIT_TEST_CAL_CCF_E2DS(return_locals=True)
     times[name] = ll['timer']
-    outputs[name] = ll['outputs']
+    # deal with comparison
+    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs, 
+                                             oldoutputs, errors)
+    # append test
     test += 1
 
     # ----------------------------------------------------------------------
     # end total timer
-    endtotaltime = time.time()
-    times['Total'] = endtotaltime - starttotaltime
+    times['Total'] = np.sum(list(times.values()))
 
     # ----------------------------------------------------------------------
     # Timing stats
