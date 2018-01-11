@@ -534,10 +534,35 @@ Below we describe breifly the main differences from AT-4 build.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-	\item 
+\item loading of custom arguments for reference file
 
-	\item 
+\item reference filename constructed using \spirouStartup.GetFile()
+
+\item fiber type determined in \spirouStartup.GetFiberType()
+
+\item reference file image read and image properties found using \spirouImage.ReadData() and \spirouImage.GetSigdet, \spirouImage.GetGain, \spirouImage.GetAcqTime
+
+\item wavelength solution read (from WAVE\_\definevariable{text:fiber_types}{fiber}) using \spirouTHORCA.GetE2DSll()
+
+\item Flat-field file read through \spirouImage.ReadFlatFile()
+
+\item weighted mean dv of reference measured using \spirouRV.DeltaVrms2D()
+
+\item plots moved to \spirouPlot
+
+\item ccf mask file is located and ccf mask is read using \spirouRV.GetCCFMask()
+	\begin{note}
+	First recipe looks if filename given includes full path or is in current working directory, then looks in default constant data file location -- defined with \definevariable{text:cdata_folder}{const\_data\_folder}
+	\end{note}
+
+\item correlation is done in \spirouRV.Coravelation()
+
+\item CCF fitting moved to \spirouRV.FitCCF
+
+\item Archiving of CCF moved from function to \progMAIN -- in-line with other recipes
+
 \end{itemize}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -546,7 +571,7 @@ Below we describe breifly the main differences from AT-4 build.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+Recipe not updated.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -555,4 +580,5 @@ Below we describe breifly the main differences from AT-4 build.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Recipe not updated.
 

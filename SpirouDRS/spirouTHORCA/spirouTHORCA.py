@@ -49,6 +49,7 @@ WLOG = spirouCore.wlog
 def get_e2ds_ll(p, hdr=None, filename=None, key=None):
 
     if key is None:
+        # Question: Why WAVE_AB and not WAVE_{fiber} ??
         key = 'WAVE_AB'
     # get filename
     if filename is None:
