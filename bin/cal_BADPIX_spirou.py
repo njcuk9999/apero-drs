@@ -113,14 +113,11 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
-    # construct folder and filename
-    reducedfolder = p['reduced_dir']
-    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
     # construct bad pixel file name
-    badpixelfn = p['flatfile'].replace('.fits', '_badpixel.fits')
-    badpixelfits = calibprefix + badpixelfn
+    badpixelfits = spirouConfig.Constants.BADPIX_FILE(p)
+    badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
-    WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
+    WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header files
     hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt, hdict=hdict)
@@ -136,8 +133,7 @@ def main(night_name=None, darkfile=None, flatfile=None):
 
     # write to file
     bad_pixel_map = np.array(bad_pixel_map, dtype=int)
-    spirouImage.WriteImage(os.path.join(reducedfolder, badpixelfits),
-                           bad_pixel_map, hdict)
+    spirouImage.WriteImage(badpixelfits, bad_pixel_map, hdict)
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
@@ -145,9 +141,9 @@ def main(night_name=None, darkfile=None, flatfile=None):
     if p['QC']:
         keydb = 'BADPIX'
         # copy dark fits file to the calibDB folder
-        spirouCDB.PutFile(p, os.path.join(reducedfolder, badpixelfits))
+        spirouCDB.PutFile(p, badpixelfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, badpixelfits, fhdr)
+        spirouCDB.UpdateMaster(p, keydb, badpixelfitsname, fhdr)
 
     # ----------------------------------------------------------------------
     # End Message
