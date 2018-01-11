@@ -352,57 +352,50 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Store extraction in file(s)
         # ------------------------------------------------------------------
         # construct filename
-        reducedfolder = p['reduced_dir']
-        e2ds_ext = '_e2ds_{0}.fits'.format(p['fiber'])
-        e2dsfits = p['arg_file_names'][0].replace('.fits', e2ds_ext)
+        e2dsfits = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
+        e2dsfitsname = os.path.split(e2dsfits)[-1]
         # log that we are saving E2DS spectrum
         wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
-        WLOG('', p['log_opt'], wmsg.format(p['fiber'], e2dsfits))
+        WLOG('', p['log_opt'], wmsg.format(p['fiber'], e2dsfitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        # construct loco filename
+        locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
+        locofilename = os.path.split(locofile)[-1]
         # add localization file name to header
-        loco_file = p['calibDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
-        hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
-                                   value=loco_file)
+        hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'], value=locofilename)
         # add localization file keys to header
-        locosavepath = os.path.join(reducedfolder, loco_file)
         root = p['kw_root_drs_loc'][0]
-        hdict = spirouImage.CopyRootKeys(hdict, locosavepath, root=root)
+        hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
         # Save E2DS file
-        spirouImage.WriteImage(os.path.join(reducedfolder, e2dsfits),
-                               loc['e2ds'], hdict)
+        spirouImage.WriteImage(e2dsfits, loc['e2ds'], hdict)
 
         # ------------------------------------------------------------------
         # Store other extractions in files
         # ------------------------------------------------------------------
         # only store all is ic_ext_all = 1
         if p['ic_extract_type'] == 'all':
-            ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
-                         'weight']
             ext_files = ['spe1', 'spe3', 'spe4', 'spe5', 'e2ds']
+            extfitslist = spirouConfig.Constants.EXTRACT_E2DS_ALL_FILES(p)
             # loop around the various extraction files
             for ext_no in range(len(ext_files)):
                 # get extname and extfile
-                extfile, extname = ext_files[ext_no], ext_names[ext_no]
+                extfile = ext_files[ext_no]
                 # construct filename
-                reducedfolder = p['reduced_dir']
-                ext_ext = '_e2ds_{0}_{1}.fits'.format(p['fiber'], extname)
-                extfits = p['arg_file_names'][0].replace('.fits', ext_ext)
+                extfits = extfitslist[ext_no]
+                extfitsname = os.path.split(extfits)[-1]
                 # log that we are saving E2DS spectrum
                 wmsg = 'Saving E2DS {0} spectrum of Fiber {1} in {2}'
-                WLOG('', p['log_opt'], wmsg.format(p['fiber'], extfits))
+                WLOG('', p['log_opt'], wmsg.format(p['fiber'], extfitsname))
                 # add keys from original header file
                 hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
                 # add localization file name to header
-                loco_file = p['calibDB']['LOC_{0}'.format(p['fiber'])][1]
                 hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
-                                           value=loco_file)
+                                           value=locofilename)
                 # add localization file keys to header
-                locosavepath = os.path.join(reducedfolder, loco_file)
-                hdict = spirouImage.CopyRootKeys(hdict, locosavepath)
+                hdict = spirouImage.CopyRootKeys(hdict, locofile)
                 # Save E2DS file
-                spirouImage.WriteImage(os.path.join(reducedfolder, extfits),
-                                       loc[extfile], hdict)
+                spirouImage.WriteImage(extfits, loc[extfile], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
