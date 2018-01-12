@@ -116,6 +116,9 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # log
+    WLOG('', p['log_opt'], 'Reading wavelength solution ')
+
     # get wave image
     wave, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
 
@@ -127,6 +130,9 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
+    # log
+    WLOG('', p['log_opt'], 'Reading Flat-Field ')
+
     # get flat
     loc['flat'] = spirouImage.ReadFlatFile(p, hdr)
     loc.set_source('flat', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
