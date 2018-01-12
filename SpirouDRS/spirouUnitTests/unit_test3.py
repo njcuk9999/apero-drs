@@ -17,7 +17,6 @@ from __future__ import division
 import time
 import sys
 import numpy as np
-from astropy.table import Table
 
 from SpirouDRS import spirouConfig
 
@@ -50,6 +49,9 @@ UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
 OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710'
 # plot path
 RESULTSPATH = '/scratch/Projects/spirou_py3/unit_test_graphs/unit_test3/'
+# threshold for difference pass
+THRESHOLD = -8
+
 
 # =============================================================================
 # Define functions
@@ -71,27 +73,6 @@ def compare(name, ll, newoutputs, oldoutputs, errors):
 
     # return dicts
     return newoutputs, oldoutputs, errors
-
-def column(matrix, i):
-    return [row[i] for row in matrix]
-
-
-def construct_error_table(errors):
-
-    table = Table()
-
-    table['names'] = column(errors, 0)
-    table['oldfile'] = column(errors, 1)
-    table['newfile'] = column(errors, 2)
-    table['kind'] = column(errors, 3)
-    table['error'] = column(errors, 4)
-    table['val1'] = column(errors, 5)
-    table['val2'] = column(errors, 6)
-    table['val3'] = column(errors, 7)
-
-    table.write(RESULTSPATH + '/unit_test_3_error_table.fits', overwrite=True)
-
-
 
 # =============================================================================
 # Start of code
@@ -304,6 +285,12 @@ if __name__ == "__main__":
     # Now print the stats for this test:
     for key in list(times.keys()):
         print('{0} Time taken = {1} s'.format(key, times[key]))
+
+    # ----------------------------------------------------------------------
+    # Analyse results + save to table
+    # ----------------------------------------------------------------------
+    print('\n\n Constructing error table...')
+    utc.construct_error_table(errors, THRESHOLD, RESULTSPATH)
 
     # print starting unit tests
     print('\n\n\n END OF UNIT TESTS \n\n\n')
