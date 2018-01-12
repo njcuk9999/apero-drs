@@ -245,8 +245,8 @@ def main(night_name=None, files=None):
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file
-    datacutmask = np.array(datacutmask, dtype=int)
-    spirouImage.WriteImage(badpixelfits, datacutmask, hdict)
+    datacutmask = np.array(datacutmask, dtype=float)
+    spirouImage.WriteImage(badpixelfits, datacutmask, hdict, dtype='float64')
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
