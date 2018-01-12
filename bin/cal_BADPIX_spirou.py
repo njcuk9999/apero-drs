@@ -119,11 +119,9 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # log that we are saving bad pixel map in dir
     WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header files
-    hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
-    hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt, hdict=hdict)
-    # define new keys to add
-    hdict['DACUT'] = (p['DARK_CUTLIMIT'],
-                      'Threshold of dark level retain [ADU/s]')
+    # Question Why only the keys from the flat file?
+    # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
+    hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
     hdict = spirouImage.AddKey(hdict, p['kw_BHOT'], value=bstats[0])
     hdict = spirouImage.AddKey(hdict, p['kw_BBFLAT'], value=bstats[1])
