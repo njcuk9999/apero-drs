@@ -233,7 +233,7 @@ def measure_dark(pp, image, image_name, short_name):
     imax = image.size - len(fimage)
     # get the median value of the non-NaN data
     med = np.median(fimage)
-    # get the 5th and 95h percentile qmin
+    # get the 5th and 95th percentile qmin
     qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
     # get the histogram for flattened data
     histo = np.histogram(fimage, bins=pp['HISTO_BINS'],
