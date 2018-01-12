@@ -1267,9 +1267,61 @@ def fit_ccf(rv, ccf, fit_type):
     # get gaussian fit
     result, fit = fitgaussian(x, y, weights=w, guess=a)
 
+    # TODO: remove this!
+    # test_fit_ccf(x, y, w, a, result)
+
     ccf_fit = (fit + 1 - fit_type)*max_
     # return the best guess and the gaussian fit
     return result, ccf_fit
+
+
+# TODO: Remove fitgaus.f and fitgaus.so and this function
+def test_fit_ccf(x, y, w, aguess, result):
+    import matplotlib.pyplot as plt
+    from SpirouDRS.spirouRV import fitgaus
+    import time
+
+    if plt.isinteractive():
+        on = True
+        plt.close('all')
+        plt.interactive('off')
+    else:
+        on = False
+
+    anew = result
+    aold = aguess
+    siga = np.zeros(4)
+    fitold = np.zeros(len(x))
+    fitgaus.fitgaus(x, y, w, aold, siga, fitold)
+
+    plt.close('all')
+    fig = plt.figure()
+    fig.set_size_inches(16, 10)
+
+    # plot
+    plt.plot(x, y, color='k', label='data')
+    plt.plot(x, gauss_function(x, *anew), color='b',
+             label='scipy.curve_fit')
+    plt.plot(x, gauss_function(x, *aold), color='r',
+             label='fortran')
+    # title
+    p1 = 'NEW fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*anew)
+    p2 = 'OLD fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*aold)
+    title = 'Comparison of old and new\n{0}\n{1}\n'.format(p1, p2)
+    plt.title(title)
+    # axis labels
+    plt.xlabel('RV')
+    plt.ylabel('CCF')
+
+    PATH = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
+    filename = PATH + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
+
+    plt.savefig(filename + '.png', bbox_inches='tight')
+    plt.savefig(filename + '.pdf', bbox_inches='tight')
+    plt.close()
+
+    if on:
+        plt.interactive('on')
 
 
 def fitgaussian(x, y, weights=None, guess=None):
