@@ -18,6 +18,7 @@ import time
 import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouConfig
+from SpirouDRS import spirouLOCOR
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
@@ -41,6 +42,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# get constants file
+Constants = spirouConfig.Constants
 # define night name constant
 NIGHT_NAME = '20170710'
 # define format for unit test logging
@@ -51,6 +54,47 @@ UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
 # =============================================================================
 # Define functions
 # =============================================================================
+def UNIT_TEST_CAL_DARK(log=False, plot=False, return_locals=False):
+    """
+    test cal_dark_spirou
+
+    :param log: bool, whether to print test log messages during run
+    :param plot: bool, whether to automatically close all plots after run
+    :param return_locals: bool, if true returns local scope of tested function,
+                          if false returns the timing
+
+    :return ll: dictionary, the local scope of the test function
+                (if return_locals=True)
+    :return timing: float, the time in seconds taken to run test
+                    (if return_locals=False)
+    """
+    # set name and print progress
+    name = 'cal_DARK_spirou'
+    if log:
+        print(UNITTEST.format('\n'*3, '='*50, '\n', name))
+    # set up files
+    files = ['dark_dark02d406.fits']
+    # start timer
+    starttime = time.time()
+    # run cal_dark_spirou
+    ll = cal_DARK_spirou.main(NIGHT_NAME, files)
+    # end timer
+    endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.DARK_FILE(ll['p']),
+                     Constants.DARK_BADPIX_FILE(ll['p'])]
+    # deal with closing plots
+    if not plot:
+        plt.close('all')
+    # if return locals return locals
+    if return_locals:
+        return ll
+    else:
+        # return timing
+        return ll['timer']
+
+
 def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
     """
     test cal_BADPIX_spirou
@@ -78,6 +122,10 @@ def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
     ll = cal_BADPIX_spirou.main(NIGHT_NAME, darkfile, flatfile)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.BADPIX_FILE(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -85,43 +133,7 @@ def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
         return ll
     else:
         # return timing
-        return endtime - starttime
-
-
-def UNIT_TEST_CAL_DARK(log=False, plot=False, return_locals=False):
-    """
-    test cal_dark_spirou
-
-    :param log: bool, whether to print test log messages during run
-    :param plot: bool, whether to automatically close all plots after run
-    :param return_locals: bool, if true returns local scope of tested function,
-                          if false returns the timing
-
-    :return ll: dictionary, the local scope of the test function
-                (if return_locals=True)
-    :return timing: float, the time in seconds taken to run test
-                    (if return_locals=False)
-    """
-    # set name and print progress
-    name = 'cal_DARK_spirou'
-    if log:
-        print(UNITTEST.format('\n'*3, '='*50, '\n', name))
-    # set up files
-    files = ['dark_dark02d406.fits']
-    # start timer
-    starttime = time.time()
-    # run cal_dark_spirou
-    ll = cal_DARK_spirou.main(NIGHT_NAME, files)
-    # end timer
-    endtime = time.time()
-    if not plot:
-        plt.close('all')
-    # if return locals return locals
-    if return_locals:
-        return ll
-    else:
-        # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', log=False, plot=False,
@@ -165,6 +177,13 @@ def UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', log=False, plot=False,
     ll = cal_loc_RAW_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.LOC_ORDER_PROFILE_FILE(ll['p']),
+                     Constants.LOC_LOCO_FILE(ll['p']),
+                     Constants.LOC_LOCO_FILE2(ll['p']),
+                     Constants.LOC_LOCO_FILE3(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -172,7 +191,7 @@ def UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', log=False, plot=False,
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_SLIT(log=False, plot=False, return_locals=False):
@@ -201,6 +220,10 @@ def UNIT_TEST_CAL_SLIT(log=False, plot=False, return_locals=False):
     ll = cal_SLIT_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.SLIT_TILT_FILE(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -208,7 +231,7 @@ def UNIT_TEST_CAL_SLIT(log=False, plot=False, return_locals=False):
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_FF_RAW(kind='flat_dark', log=False, plot=False,
@@ -252,6 +275,13 @@ def UNIT_TEST_CAL_FF_RAW(kind='flat_dark', log=False, plot=False,
     ll = cal_FF_RAW_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs (need to loop over fibers)
+    ll['outputs'] = []
+    for fiber in ll['p']['fib_type']:
+        ll['outputs'].append(Constants.FF_BLAZE_FILE(ll['p'], fiber))
+        ll['outputs'].append(Constants.FF_FLAT_FILE(ll['p'], fiber))
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -259,7 +289,8 @@ def UNIT_TEST_CAL_FF_RAW(kind='flat_dark', log=False, plot=False,
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
+
 
 def UNIT_TEST_CAL_EXTRACT(kind='fp_fp', fiber=None, log=False, plot=False,
                           files=None, return_locals=False):
@@ -352,6 +383,15 @@ def UNIT_TEST_CAL_EXTRACT(kind='fp_fp', fiber=None, log=False, plot=False,
     ll = cal_extract_RAW_spirou.main(NIGHT_NAME, files, fiber)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs (extfitslist is a list so add it)
+    # compile outputs (need to loop over fibers)
+    ll['outputs'] = []
+    for fiber in ll['p']['fib_type']:
+        ll['outputs'].append(Constants.EXTRACT_E2DS_FILE(ll['p'], fiber))
+        ll['outputs'].append(Constants.EXTRACT_E2DS_ALL_FILES(ll['p'], fiber))
+
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -359,7 +399,7 @@ def UNIT_TEST_CAL_EXTRACT(kind='fp_fp', fiber=None, log=False, plot=False,
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_DRIFT_RAW(log=False, plot=False, return_locals=False):
@@ -388,6 +428,10 @@ def UNIT_TEST_CAL_DRIFT_RAW(log=False, plot=False, return_locals=False):
     ll = cal_DRIFT_RAW_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.DRIFT_RAW_FILE(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -395,7 +439,7 @@ def UNIT_TEST_CAL_DRIFT_RAW(log=False, plot=False, return_locals=False):
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_DRIFT_E2DS(log=False, plot=False, return_locals=False):
@@ -424,6 +468,11 @@ def UNIT_TEST_CAL_DRIFT_E2DS(log=False, plot=False, return_locals=False):
     ll = cal_DRIFT_E2DS_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.DRIFT_E2DS_FITS_FILE(ll['p']),
+                     Constants.DRIFT_E2DS_TBL_FILE(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -431,7 +480,7 @@ def UNIT_TEST_CAL_DRIFT_E2DS(log=False, plot=False, return_locals=False):
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_DRIFTPEAK_E2DS(log=False, plot=False, return_locals=False):
@@ -460,6 +509,11 @@ def UNIT_TEST_CAL_DRIFTPEAK_E2DS(log=False, plot=False, return_locals=False):
     ll = cal_DRIFTPEAK_E2DS_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.DRIFTPEAK_E2DS_FITS_FILE(ll['p']),
+                     Constants.DRIFTPEAK_E2DS_TBL_FILE(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -467,7 +521,7 @@ def UNIT_TEST_CAL_DRIFTPEAK_E2DS(log=False, plot=False, return_locals=False):
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
@@ -497,6 +551,11 @@ def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
     ll = cal_CCF_E2DS_spirou.main(NIGHT_NAME, reffile, mask, rv, width, step)
     # end timer
     endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.CCF_FITS_FILE(ll['p']),
+                     Constants.CCF_TABLE_FILE(ll['p'])]
+    # deal with closing plots
     if not plot:
         plt.close('all')
     # if return locals return locals
@@ -504,7 +563,7 @@ def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
         return ll
     else:
         # return timing
-        return endtime - starttime
+        return ll['timer']
 
 
 # =============================================================================

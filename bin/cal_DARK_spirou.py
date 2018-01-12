@@ -207,11 +207,10 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
 
     # construct folder and filename
-    reducedfolder = p['reduced_dir']
-    calibprefix = spirouConfig.Constants.CALIB_PREFIX(p)
-    darkfits = calibprefix + p['arg_file_names'][0]
+    darkfits = spirouConfig.Constants.DARK_FILE(p)
+    darkfitsname = os.path.split(darkfits)[-1]
     # log saving dark frame
-    WLOG('', p['log_opt'], 'Saving Dark frame in ' + darkfits)
+    WLOG('', p['log_opt'], 'Saving Dark frame in ' + darkfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
@@ -230,24 +229,24 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['kw_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(os.path.join(reducedfolder, darkfits), data0, hdict)
+    spirouImage.WriteImage(darkfits, data0, hdict)
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
     # construct bad pixel file name
-    badpixelfits = darkfits.replace('.fits', '_badpixel.fits')
+    badpixelfits = spirouConfig.Constants.DARK_BADPIX_FILE(p)
+    badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
-    WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfits)
+    WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file
-    datacutmask = np.array(datacutmask, dtype=int)
-    spirouImage.WriteImage(os.path.join(reducedfolder, badpixelfits),
-                           datacutmask, hdict)
+    datacutmask = np.array(datacutmask, dtype=float)
+    spirouImage.WriteImage(badpixelfits, datacutmask, hdict, dtype='float64')
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
@@ -256,15 +255,15 @@ def main(night_name=None, files=None):
         # set dark key
         keydb = 'DARK'
         # copy dark fits file to the calibDB folder
-        spirouCDB.PutFile(p, os.path.join(reducedfolder, darkfits))
+        spirouCDB.PutFile(p, darkfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, darkfits, hdr)
+        spirouCDB.UpdateMaster(p, keydb, darkfitsname, hdr)
         # set badpix key
         keydb = 'BADPIX'
         # copy badpix fits file to calibDB folder
-        spirouCDB.PutFile(p, os.path.join(reducedfolder, badpixelfits))
+        spirouCDB.PutFile(p, badpixelfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, badpixelfits, hdr)
+        spirouCDB.UpdateMaster(p, keydb, badpixelfitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

@@ -113,22 +113,6 @@ def DEBUG():
 # =============================================================================
 # Define File functions
 # =============================================================================
-def ARG_FILE_NAMES(p):
-    # see if already defined
-    if 'ARG_FILE_NAMES' in p:
-        return p['ARG_FILE_NAMES']
-    # empty file names
-    arg_file_names = []
-    # get run time parameters
-    rparams = list(sys.argv)
-    # get night name and filenames
-    if len(rparams) > 1:
-        for r_it in range(2, len(rparams)):
-            arg_file_names.append(str(rparams[r_it]))
-    # return arg_file_names
-    return arg_file_names
-
-
 def ARG_NIGHT_NAME(p):
     # see if already defined
     if 'ARG_NIGHT_NAME' in p:
@@ -158,19 +142,6 @@ def FORBIDDEN_COPY_KEYS():
                       'PHOT_IM', 'FRAC_OBJ', 'FRAC_SKY', 'FRAC_BB']
     # return keys
     return forbidden_keys
-
-
-def FITSFILENAME(p):
-    arg_file_names = p['arg_file_names']
-    arg_night_name = p['arg_night_name']
-    # construct fits file name (full path + first file in arguments)
-    if len(arg_file_names) > 0:
-        fitsfilename = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
-                                    arg_file_names[0])
-    else:
-        fitsfilename = None
-    # return fitsfilename
-    return fitsfilename
 
 
 def LOG_OPT(p):
@@ -220,24 +191,227 @@ def REDUCED_DIR(p):
     return reduced_dir
 
 
-def CCF_TABLE_FILE(p):
-    # start with the CCF fits file name
-    newfilename = CCF_FITS_FILE(p)
-    # we want to save the file as a tbl file not a fits file
-    newfilename = newfilename.replace('.fits', '.tbl')
-    # join the new filename to the reduced directory
-    ccf_table_file = os.path.join(p['REDUCED_DIR'], newfilename)
-    # return the new ccf table file location and name
-    return ccf_table_file
+# =============================================================================
+# Define Filename functions
+# =============================================================================
+def ARG_FILE_NAMES(p):
+    # see if already defined
+    if 'ARG_FILE_NAMES' in p:
+        return p['ARG_FILE_NAMES']
+    # empty file names
+    arg_file_names = []
+    # get run time parameters
+    rparams = list(sys.argv)
+    # get night name and filenames
+    if len(rparams) > 1:
+        for r_it in range(2, len(rparams)):
+            arg_file_names.append(str(rparams[r_it]))
+    # return arg_file_names
+    return arg_file_names
+
+
+def FITSFILENAME(p):
+    arg_file_names = p['arg_file_names']
+    arg_night_name = p['arg_night_name']
+    # construct fits file name (full path + first file in arguments)
+    if len(arg_file_names) > 0:
+        fitsfilename = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
+                                    arg_file_names[0])
+    else:
+        fitsfilename = None
+    # return fitsfilename
+    return fitsfilename
+
+
+def DARK_FILE(p):
+    reducedfolder = p['reduced_dir']
+    calibprefix = CALIB_PREFIX(p)
+    darkfitsname = calibprefix + p['arg_file_names'][0]
+    darkfits = os.path.join(reducedfolder, darkfitsname)
+    return darkfits
+
+def DARK_BADPIX_FILE(p):
+    darkfile = DARK_FILE(p)
+    badpixelfits = darkfile.replace('.fits', '_badpixel.fits')
+    return badpixelfits
+
+
+def BADPIX_FILE(p):
+    reducedfolder = p['reduced_dir']
+    calibprefix = CALIB_PREFIX(p)
+    badpixelfn = p['flatfile'].replace('.fits', '_badpixel.fits')
+    badpixelfitsname = calibprefix + badpixelfn
+    badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
+    return badpixelfits
+
+
+def LOC_ORDER_PROFILE_FILE(p):
+    reducedfolder = p['reduced_dir']
+    newext = '_order_profile_{0}.fits'.format(p['fiber'])
+    calibprefix = CALIB_PREFIX(p)
+    rawfn = p['arg_file_names'][0].replace('.fits', newext)
+    rawfitsname = calibprefix + rawfn
+    rawfits = os.path.join(reducedfolder, rawfitsname)
+    return rawfits
+
+
+def LOC_LOCO_FILE(p):
+    reducedfolder = p['reduced_dir']
+    locoext = '_loco_{0}.fits'.format(p['fiber'])
+    calibprefix = CALIB_PREFIX(p)
+    locofn = p['arg_file_names'][0].replace('.fits', locoext)
+    locofitsname = calibprefix + locofn
+    locofits = os.path.join(reducedfolder, locofitsname)
+    return locofits
+
+
+def LOC_LOCO_FILE2(p):
+    reducedfolder = p['reduced_dir']
+    locoext = '_fwhm-order_{0}.fits'.format(p['fiber'])
+    calibprefix = CALIB_PREFIX(p)
+    locofn2 = p['arg_file_names'][0].replace('.fits', locoext)
+    locofits2name = calibprefix + locofn2
+    locofits2 = os.path.join(reducedfolder, locofits2name)
+    return locofits2
+
+
+def LOC_LOCO_FILE3(p):
+    reducedfolder = p['reduced_dir']
+    locoext = '_with-order_{0}.fits'.format(p['fiber'])
+    calibprefix = CALIB_PREFIX(p)
+    locofn3  = p['arg_file_names'][0].replace('.fits', locoext)
+    locofits3name = calibprefix + locofn3
+    locofits3 = os.path.join(reducedfolder, locofits3name)
+    return locofits3
+
+
+def SLIT_TILT_FILE(p):
+    reduced_dir = p['reduced_dir']
+    calibprefix = CALIB_PREFIX(p)
+    tiltfn = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
+    tiltfitsname = calibprefix + tiltfn
+    tiltfits = os.path.join(reduced_dir, tiltfitsname)
+    return tiltfits
+
+
+def FF_BLAZE_FILE(p, fiber=None):
+
+    if fiber is None:
+        fiber = p['fiber']
+
+    reduced_dir = p['reduced_dir']
+    blazeext = '_blaze_{0}.fits'.format(fiber)
+    calibprefix = CALIB_PREFIX(p)
+    blazefn = p['arg_file_names'][0].replace('.fits', blazeext)
+    blazefitsname = calibprefix + blazefn
+    blazefits = os.path.join(reduced_dir, blazefitsname)
+    return blazefits
+
+
+def FF_FLAT_FILE(p, fiber=None):
+    if fiber is None:
+        fiber = p['fiber']
+    reduced_dir = p['reduced_dir']
+    flatext = '_flat_{0}.fits'.format(fiber)
+    calibprefix = CALIB_PREFIX(p)
+    flatfn = p['arg_file_names'][0].replace('.fits', flatext)
+    flatfitsname = calibprefix + flatfn
+    flatfits = os.path.join(reduced_dir, flatfitsname)
+    return flatfits
+
+
+def EXTRACT_E2DS_FILE(p, fiber=None):
+    if fiber is None:
+        fiber = p['fiber']
+    reducedfolder = p['reduced_dir']
+    e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
+    e2dsfitsname = p['arg_file_names'][0].replace('.fits', e2ds_ext)
+    e2dsfits = os.path.join(reducedfolder,e2dsfitsname)
+    return e2dsfits
+
+
+def EXTRACT_LOCO_FILE(p):
+    reducedfolder = p['reduced_dir']
+    loco_filename = p['calibDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
+    loco_file = os.path.join(reducedfolder, loco_filename)
+    return loco_file
+
+
+def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
+    if fiber is None:
+        fiber = p['fiber']
+    reducedfolder = p['reduced_dir']
+    ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
+                 'weight']
+    extfitslist = []
+    for ext_no in range(len(ext_names)):
+        extname = ext_names[ext_no]
+        ext_ext = '_e2ds_{0}_{1}.fits'.format(fiber, extname)
+        extfitsname = p['arg_file_names'][0].replace('.fits', ext_ext)
+        extfits = os.path.join(reducedfolder, extfitsname)
+        extfitslist.append(extfits)
+    return extfitslist
+
+
+def DRIFT_RAW_FILE(p):
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
+    driftfitsname = p['arg_file_names'][0].replace('.fits', drift_ext)
+    driftfits = os.path.join(reducedfolder, driftfitsname)
+    return driftfits
+
+
+def DRIFT_E2DS_FITS_FILE(p):
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
+    driftfitsname = p['reffilename'].replace('.fits', drift_ext)
+    driftfits = os.path.join(reducedfolder, driftfitsname)
+    return driftfits
+
+
+def DRIFT_E2DS_TBL_FILE(p):
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_drift_{0}.tbl'.format(p['fiber'])
+    drifttblname = p['reffilename'].replace('.fits', drift_ext)
+    drifttbl = os.path.join(reducedfolder, drifttblname)
+    return drifttbl
+
+
+def DRIFTPEAK_E2DS_FITS_FILE(p):
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_driftnew_{0}.fits'.format(p['fiber'])
+    driftfitsname = p['reffilename'].replace('.fits', drift_ext)
+    driftfits = os.path.join(reducedfolder, driftfitsname)
+    return driftfits
+
+
+def DRIFTPEAK_E2DS_TBL_FILE(p):
+    reducedfolder = p['reduced_dir']
+    drift_ext = '_driftnew_{0}.tbl'.format(p['fiber'])
+    drifttblname = p['reffilename'].replace('.fits', drift_ext)
+    drifttbl = os.path.join(reducedfolder, drifttblname)
+    return drifttbl
 
 
 def CCF_FITS_FILE(p):
+    reducedfolder = p['reduced_dir']
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['ccf_mask'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
-    newfilename = p['reffile'].replace('_e2ds', newext)
+    corfilename = p['reffile'].replace('_e2ds', newext)
+
+    corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf table file location and name
-    return newfilename
+    return corfile
+
+
+def CCF_TABLE_FILE(p):
+    # start with the CCF fits file name
+    corfile = CCF_FITS_FILE(p)
+    # we want to save the file as a tbl file not a fits file
+    ccf_table_file = corfile.replace('.fits', '.tbl')
+    # return the new ccf table file location and name
+    return ccf_table_file
 
 
 # =============================================================================

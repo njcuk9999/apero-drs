@@ -198,7 +198,7 @@ def readimage_and_combine(p, framemath='+', filename=None, log=True):
     return image, header, comments, nx, ny
 
 
-def writeimage(filename, image, hdict):
+def writeimage(filename, image, hdict, dtype=None):
     """
     Writes an image and its header to file
 
@@ -212,6 +212,11 @@ def writeimage(filename, image, hdict):
                 or
                         hdict[key] = value     (comment will be equal to
                                                 "UNKNOWN"
+    :param dtype: None or hdu format type, forces the image to be in the
+                  format type specified (if not None)
+
+                  valid formats are for example: 'int32', 'float64'
+
     :return:
     """
 
@@ -220,6 +225,9 @@ def writeimage(filename, image, hdict):
         os.remove(filename)
     # create the primary hdu
     hdu = fits.PrimaryHDU(image)
+    # force type
+    if dtype is not None:
+        hdu.scale(dtype)
     # add header keys to the hdu header
     for key in list(hdict.keys()):
         hdu.header[key] = hdict[key]

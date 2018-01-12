@@ -101,6 +101,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_TH_NAXIS2',
             'kw_TH_ORD_N',
             'kw_TILT',
+            'kw_drs_QC',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
@@ -342,6 +343,13 @@ kw_CCF_CONTRAST = ['CCFCONTR', 0, 'Contrast of  CCF (%)']
 kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
 kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
+
+
+# -----------------------------------------------------------------------------
+# Define qc variables
+# -----------------------------------------------------------------------------
+kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
+
 
 # =============================================================================
 # Define functions (Do not change)

@@ -64,8 +64,9 @@ def main(night_name=None, reffile=None):
     # get reduced directory + night name
     rdir = p['reduced_dir']
     # construct and test the reffile
-    reffilename = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp',
-                                        'DRIFT')
+    reffilename = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp', 'DRIFT')
+    p['reffilename'] = reffilename
+    p.set_source('reffilename', __NAME__ + '.main()')
     # get the fiber type
     p['fiber'] = spirouStartup.GetFiberType(p, reffilename)
     fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
@@ -309,26 +310,22 @@ def main(night_name=None, reffile=None):
     # Save drift values to file
     # ------------------------------------------------------------------
     # construct filename
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
-    driftfits = reffilename.replace('.fits', drift_ext)
+    driftfits = spirouConfig.Constants.DRIFT_E2DS_FITS_FILE(p)
+    driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfits))
+    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # save drift values
-    spirouImage.WriteImage(os.path.join(reducedfolder, driftfits),
-                           loc['drift'], hdict)
+    spirouImage.WriteImage(driftfits, loc['drift'], hdict)
 
     # ------------------------------------------------------------------
     # print .tbl result
     # ------------------------------------------------------------------
     # construct filename
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_drift_{0}.tbl'.format(p['fiber'])
-    drifttbl = reffilename.replace('.fits', drift_ext)
-    drifttblfilename = os.path.join(reducedfolder, drifttbl)
+    drifttbl = spirouConfig.Constants.DRIFT_E2DS_TBL_FILE(p)
+    drifttblname = os.path.split(drifttbl)[-1]
     # construct and write table
     columnnames = ['time', 'drift', 'drifterr']
     columnformats = ['7.4f', '6.2f', '6.3f']
@@ -337,8 +334,8 @@ def main(night_name=None, reffile=None):
                                   formats=columnformats)
     # write table
     wmsg = 'Average Drift saved in {0} Saved '
-    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(drifttblfilename))
-    spirouImage.WriteTable(table, drifttblfilename, fmt='ascii.rst')
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(drifttblname))
+    spirouImage.WriteTable(table, drifttbl, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # End Message

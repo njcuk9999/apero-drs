@@ -116,6 +116,9 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # log
+    WLOG('', p['log_opt'], 'Reading wavelength solution ')
+
     # get wave image
     wave, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
 
@@ -127,6 +130,9 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
+    # log
+    WLOG('', p['log_opt'], 'Reading Flat-Field ')
+
     # get flat
     loc['flat'] = spirouImage.ReadFlatFile(p, hdr)
     loc.set_source('flat', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
@@ -238,10 +244,10 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # archive ccf
     # ----------------------------------------------------------------------
     # construct folder and filename
-    reducedfolder = p['reduced_dir']
     corfile = spirouConfig.Constants.CCF_FITS_FILE(p)
+    corfilename = os.path.split(corfile)[-1]
     # log that we are archiving the CCF on file
-    WLOG('', p['log_opt'], 'Archiving CCF on file {0}'.format(corfile))
+    WLOG('', p['log_opt'], 'Archiving CCF on file {0}'.format(corfilename))
     # get constants from p
     mask = p['ccf_mask']
     # if file exists remove it
@@ -267,7 +273,7 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['kw_CCF_LINES'],
                                value=np.sum(loc['tot_line']))
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(os.path.join(reducedfolder, corfile), data, hdict)
+    spirouImage.WriteImage(corfile, data, hdict)
 
     # ----------------------------------------------------------------------
     # End Message

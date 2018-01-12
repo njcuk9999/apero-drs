@@ -388,7 +388,6 @@ def main(night_name=None, files=None, fiber='AB'):
         loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
         # median err drift
         loc['merrdrift'] = np.median(loc['errdrift'][:, :nomax], 1)
-    # ------------------------------------------------------------------
     # set source
     loc.set_sources(['mdrift', 'merrdrift'], __NAME__ + '/__main__()')
     # ------------------------------------------------------------------
@@ -414,17 +413,15 @@ def main(night_name=None, files=None, fiber='AB'):
     # Save drift values to file
     # ------------------------------------------------------------------
     # construct filename
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
-    driftfits = p['arg_file_names'][0].replace('.fits', drift_ext)
+    driftfits = spirouConfig.Constants.DRIFT_RAW_FILE(p)
+    driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfits))
+    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # save drift values
-    spirouImage.WriteImage(os.path.join(reducedfolder, driftfits),
-                           loc['drift'], hdict)
+    spirouImage.WriteImage(driftfits, loc['drift'], hdict)
 
     # ----------------------------------------------------------------------
     # End Message
