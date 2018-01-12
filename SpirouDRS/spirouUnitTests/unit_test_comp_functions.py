@@ -16,14 +16,17 @@ Version 0.0.0
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy.table import Table
 import os
 import sys
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS.spirouImage import spirouFITS
 
 if sys.version_info.major > 2:
-    raw_input = lambda x: str(input(x))
+    def raw_input(x):
+        return str(input(x))
 
 # =============================================================================
 # Define variables
@@ -36,6 +39,7 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define functions
@@ -86,6 +90,7 @@ def comparison_wrapper(name, oldfiles, newfiles, errors=None, path=None):
         oldfile, newfile = oldfiles[f_it], newfiles[f_it]
         # check they both exist
         e0 = check_existance(oldfile, newfile, name=name)
+
         # compare data
         if len(e0) == 0:
             e1 = compare_data(oldfile, newfile, plot=True, path=path, name=name)
@@ -119,18 +124,26 @@ def check_existance(old_file, new_file, name):
     if not os.path.exists(old_file):
         emsg = [name, oldname, newname, 'FILE',
                 'Old file "{0}" does not exist'.format(old_file),
-                np.nan, np.nan, np.nan]
+                np.nan, np.nan, np.nan, np.nan]
         errors.append(emsg)
 
     # check for new file
     if not os.path.exists(new_file):
         emsg = [name, oldname, newname, 'FILE',
                 'New file "{0}" does not exist'.format(new_file),
-                np.nan, np.nan, np.nan]
+                np.nan, np.nan, np.nan, np.nan]
+        errors.append(emsg)
+
+    # check for fits file
+    if ('.fits' not in new_file) or ('.fits' not in old_file):
+        emsg = [name, oldname, newname, 'FILE',
+                'Cannot compare non fits file',
+                np.nan, np.nan, np.nan, np.nan]
         errors.append(emsg)
 
     # return errors
     return errors
+
 
 def compare_data(old_file, new_file, errors=None, plot=False, path='./',
                  name=''):
@@ -154,19 +167,22 @@ def compare_data(old_file, new_file, errors=None, plot=False, path='./',
     if np.sum(stats['diff']) != 0:
         # log non-zero error
         emsg = [name, oldname, newname, 'DATA', 'Difference image is non-zero',
-                np.nan, np.nan, np.nan]
+                np.nan, np.nan, np.nan, stats['order_diff']]
         errors.append(emsg)
         # log stats on old image
         emsg = [name, oldname, newname, 'DATA', 'axis=0 (mean,median,std)',
-                stats['xmean'], stats['xmedian'], stats['xstd']]
+                stats['xmean'], stats['xmedian'], stats['xstd'],
+                stats['order_diff']]
         errors.append(emsg)
         # log stats on new image
-        emsg = [name, oldname, newname, 'DATA', 'axis=0 (mean,median,std)',
-                stats['ymean'], stats['ymedian'], stats['ystd']]
+        emsg = [name, oldname, newname, 'DATA', 'axis=1 (mean,median,std)',
+                stats['ymean'], stats['ymedian'], stats['ystd'],
+                stats['order_diff']]
         errors.append(emsg)
         # log stats on full diff image
         emsg = [name, oldname, newname, 'DATA', 'diff (mean,median,std)',
-                stats['diffmean'], stats['diffmedian'], stats['diffstd']]
+                stats['diffmean'], stats['diffmedian'], stats['diffstd'],
+                stats['order_diff']]
         errors.append(emsg)
 
     # plot
@@ -202,7 +218,7 @@ def compare_header(old_file, new_file, errors=None, name=''):
             # log error message
             emsg = [name, oldname, newname, 'HEADER',
                     'Key "{0}" is in NEW but not in OLD'.format(ukey),
-                    np.nan, np.nan, np.nan]
+                    np.nan, np.nan, np.nan, np.nan]
             errors.append(emsg)
             continue
         # check key is in NEW
@@ -210,7 +226,7 @@ def compare_header(old_file, new_file, errors=None, name=''):
             # log error message
             emsg = [name, oldname, newname, 'HEADER',
                     'Key "{0}" is in OLD but not in NEW'.format(ukey),
-                    np.nan, np.nan, np.nan]
+                    np.nan, np.nan, np.nan, np.nan]
             errors.append(emsg)
         # check that value is the same in both
         else:
@@ -226,7 +242,7 @@ def compare_header(old_file, new_file, errors=None, name=''):
                 # log error message for value1 != value2
                 emsg = [name, oldname, newname, 'HEADER',
                         'key={0} old,new,diff'.format(ukey),
-                        value1, value2, diff]
+                        value1, value2, diff, np.nan]
                 errors.append(emsg)
 
     # return errors
@@ -243,39 +259,72 @@ def get_stats(x, y):
     stats['diff'] = diff
 
     # get diff stats
-    stats['diffmean'] = np.mean(diff)
-    stats['diffmedian'] = np.median(diff)
-    stats['diffstd'] = np.std(diff)
-    stats['diffmean1'] = np.mean(diff, axis=0)
-    stats['diffmedian1'] = np.median(diff, axis=0)
-    stats['diffstd1'] = np.std(diff, axis=0)
-    stats['diffmean2'] = np.mean(diff, axis=1)
-    stats['diffmedian2'] = np.median(diff, axis=1)
-    stats['diffstd2'] = np.std(diff, axis=1)
+    stats['diffmean'] = np.nanmean(diff)
+    stats['diffmedian'] = np.nanmedian(diff)
+    stats['diffstd'] = np.nanstd(diff)
+    stats['diffmean1'] = np.nanmean(diff, axis=0)
+    stats['diffmedian1'] = np.nanmedian(diff, axis=0)
+    stats['diffstd1'] = np.nanstd(diff, axis=0)
+    stats['diffmean2'] = np.nanmean(diff, axis=1)
+    stats['diffmedian2'] = np.nanmedian(diff, axis=1)
+    stats['diffstd2'] = np.nanstd(diff, axis=1)
 
     # get x stats
-    stats['xmean'] = np.mean(x)
-    stats['xmedian'] = np.median(x)
-    stats['xstd'] = np.std(x)
-    stats['xmean1'] = np.mean(x, axis=0)
-    stats['xmedian1'] = np.median(x, axis=0)
-    stats['xstd1'] = np.std(x, axis=0)
-    stats['xmean2'] = np.mean(x, axis=1)
-    stats['xmedian2'] = np.median(x, axis=1)
-    stats['xstd2'] = np.std(x, axis=1)
+    stats['xmean'] = np.nanmean(x)
+    stats['xmedian'] = np.nanmedian(x)
+    stats['xstd'] = np.nanstd(x)
+    stats['xmean1'] = np.nanmean(x, axis=0)
+    stats['xmedian1'] = np.nanmedian(x, axis=0)
+    stats['xstd1'] = np.nanstd(x, axis=0)
+    stats['xmean2'] = np.nanmean(x, axis=1)
+    stats['xmedian2'] = np.nanmedian(x, axis=1)
+    stats['xstd2'] = np.nanstd(x, axis=1)
 
     # get y stats
-    stats['ymean'] = np.mean(y)
-    stats['ymedian'] = np.median(y)
-    stats['ystd'] = np.std(y)
-    stats['ymean1'] = np.mean(y, axis=0)
-    stats['ymedian1'] = np.median(y, axis=0)
-    stats['ystd1'] = np.std(y, axis=0)
-    stats['ymean2'] = np.mean(y, axis=1)
-    stats['ymedian2'] = np.median(y, axis=1)
-    stats['ystd2'] = np.std(y, axis=1)
+    stats['ymean'] = np.nanmean(y)
+    stats['ymedian'] = np.nanmedian(y)
+    stats['ystd'] = np.nanstd(y)
+    stats['ymean1'] = np.nanmean(y, axis=0)
+    stats['ymedian1'] = np.nanmedian(y, axis=0)
+    stats['ystd1'] = np.nanstd(y, axis=0)
+    stats['ymean2'] = np.nanmean(y, axis=1)
+    stats['ymedian2'] = np.nanmedian(y, axis=1)
+    stats['ystd2'] = np.nanstd(y, axis=1)
+
+    # work out stats order diff
+    odiff1 = cal_order_diff(stats['xmean'], stats['ymean'], stats['diffmean'])
+    odiff2 = cal_order_diff(stats['xmedian'], stats['ymedian'],
+                            stats['diffmedian'])
+    odiff3 = cal_order_diff(stats['xstd'], stats['ystd'], stats['diffstd'])
+
+    stats['order_diff'] = np.max([odiff1, odiff2, odiff3])
 
     return stats
+
+
+def cal_order_diff(val1, val2, val3):
+    # get the order of the value -- log(val)
+    if val1 == 0:
+        logval1 = 0
+    else:
+        logval1 = np.log10(abs(val1))
+    if val2 == 0:
+        logval2 = 0
+    else:
+        logval2 = np.log10(abs(val2))
+    # if val3 (difference) is zero then make it a very small order
+    if val3 == 0:
+        logval3 = -9999
+    else:
+        logval3 = np.log10(abs(val3))
+    # get the minimum order of the old and new values
+    minorder = np.min([logval1, logval2])
+    # get the order difference between diff and minimum order
+    #     of values
+    order_diff = logval3 - minorder
+    # return order_diff
+    return order_diff
+
 
 # =============================================================================
 # Define plot functions
@@ -294,29 +343,16 @@ def plot_stats(stats, oldname, newname, path='./'):
     fig1.set_size_inches(16, 10)
 
     # means
-    frames[0][0].plot(stats['xmean1'], color='r', label='OLD')
-    frames[0][0].plot(stats['ymean1'], color='b', label='NEW')
-    frames[0][0].plot(stats['diffmean1'], color='g', label='DIFF')
-    frames[0][0].legend(loc=0)
-    frames[0][0].set(xlabel='pixel number', ylabel='pixel value',
-                     title='mean axis=0')
+    frames[0][0] = plot_stat(frames[0][0], stats['xmean1'], stats['ymean1'],
+                             stats['diffmean1'], title='mean axis=0')
     # medians
-    frames[1][0].plot(stats['xmedian1'], color='r', label='OLD')
-    frames[1][0].plot(stats['ymedian1'], color='b', label='NEW')
-    frames[1][0].plot(stats['diffmedian1'], color='g', label='DIFF')
-    frames[1][0].legend(loc=0)
-    frames[1][0].set(xlabel='pixel number', ylabel='pixel value',
-                     title='median axis=0')
+    frames[1][0] = plot_stat(frames[1][0], stats['xmedian1'], stats['ymedian1'],
+                             stats['diffmedian1'], title='median axis=0')
     # std
-    frames[0][1].plot(stats['xstd1'], color='r', label='OLD')
-    frames[0][1].plot(stats['ystd1'], color='b', label='NEW')
-    frames[0][1].plot(stats['diffstd1'], color='g', label='DIFF')
-    frames[0][1].legend(loc=0)
-    frames[0][1].set(xlabel='pixel number', ylabel='pixel value',
-                     title='std axis=0')
+    frames[0][1] = plot_stat(frames[0][1], stats['xstd1'], stats['ystd1'],
+                             stats['diffstd1'], title='std axis=0')
     # diff image
-    frames[1][1].imshow(stats['diff'])
-    frames[1][1].set(title='Difference image')
+    frames[1][1] = plot_image(frames[1][1], stats['diff'])
 
     # set title
     plt.suptitle(title)
@@ -326,7 +362,6 @@ def plot_stats(stats, oldname, newname, path='./'):
     name = 'OLD_{0}_NEW_{1}_axis0'.format(oldname, newname)
     filename = os.path.join(path, name)
 
-    plt.tight_layout()
     plt.savefig(filename + '.png', bbox_inches='tight')
     plt.savefig(filename + '.pdf', bbox_inches='tight')
     plt.close()
@@ -337,29 +372,16 @@ def plot_stats(stats, oldname, newname, path='./'):
     fig2.set_size_inches(16, 10)
 
     # means
-    frames[0][0].plot(stats['xmean2'], color='r', label='OLD')
-    frames[0][0].plot(stats['ymean2'], color='b', label='NEW')
-    frames[0][0].plot(stats['diffmean2'], color='g', label='DIFF')
-    frames[0][0].legend(loc=0)
-    frames[0][0].set(xlabel='pixel number', ylabel='pixel value',
-                     title='mean axis=1')
+    frames[0][0] = plot_stat(frames[0][0], stats['xmean2'], stats['ymean2'],
+                             stats['diffmean2'], title='mean axis=1')
     # medians
-    frames[1][0].plot(stats['xmedian2'], color='r', label='OLD')
-    frames[1][0].plot(stats['ymedian2'], color='b', label='NEW')
-    frames[1][0].plot(stats['diffmedian2'], color='g', label='DIFF')
-    frames[1][0].legend(loc=0)
-    frames[1][0].set(xlabel='pixel number', ylabel='pixel value',
-                     title='median axis=1')
+    frames[1][0] = plot_stat(frames[1][0], stats['xmedian2'], stats['ymedian2'],
+                             stats['diffmedian2'], title='median axis=1')
     # std
-    frames[0][1].plot(stats['xstd2'], color='r', label='OLD')
-    frames[0][1].plot(stats['ystd2'], color='b', label='NEW')
-    frames[0][1].plot(stats['diffstd2'], color='g', label='DIFF')
-    frames[0][1].legend(loc=0)
-    frames[0][1].set(xlabel='pixel number', ylabel='pixel value',
-                     title='std axis=1')
+    frames[0][1] = plot_stat(frames[0][1], stats['xstd2'], stats['ystd2'],
+                             stats['diffstd2'], title='std axis=1')
     # diff image
-    frames[1][1].imshow(stats['diff'])
-    frames[1][1].set(title='Difference image')
+    frames[1][1] = plot_image(frames[1][1], stats['diff'])
 
     # set title
     plt.suptitle(title)
@@ -369,10 +391,153 @@ def plot_stats(stats, oldname, newname, path='./'):
     name = 'OLD_{0}_NEW_{1}_axis1'.format(oldname, newname)
     filename = os.path.join(path, name)
 
-    plt.tight_layout()
     plt.savefig(filename + '.png', bbox_inches='tight')
     plt.savefig(filename + '.pdf', bbox_inches='tight')
     plt.close()
+
+
+def plot_stat(frame, x1, x2, x3, title):
+    
+    # if all of x is <= 0 flip it
+    if np.max(x1) <= 0 and np.max(x2) <= 0:
+        x1 = -x1
+        x2 = -x2
+        ylabel = '$log_{10}$(negative of pixel value)'
+    else:
+        ylabel = '$log_{10}$(pixel value)'
+        
+    # log x
+    with warnings.catch_warnings(record=True) as w:
+        logx1 = np.log10(x1)
+        logx2 = np.log10(x2)
+        logx3 = np.log10(abs(x3))
+    
+    # plot
+    frame.plot(logx1, color='r', label='OLD')
+    frame.plot(logx2, color='b', label='NEW')
+    frame.plot(logx3, color='g', label='DIFF')
+    frame.legend(loc=0)
+    frame.set(xlabel='pixel number', ylabel=ylabel,
+              title=title)
+
+    return frame
+
+
+def plot_image(frame, image):
+
+    if np.max(image.shape)/np.min(image.shape) > 2:
+
+        # find out which axis is smaller
+        small = np.argmin(image.shape)
+        # find out the conversion factor
+        factor = int(np.max(image.shape)/np.min(image.shape))
+        # scale up image
+        newimage = np.repeat(image, factor, axis=small)
+    else:
+        newimage = image
+
+    im = frame.imshow(newimage)
+    # set title
+    frame.set(title='Difference image')
+    # remove x and y axis labels
+    frame.set_xticklabels([])
+    frame.set_yticklabels([])
+    # plot colour bar
+    plt.colorbar(im, ax=frame)
+
+    return frame
+
+
+# =============================================================================
+# Define analysis functions
+# =============================================================================
+def column(matrix, i):
+    return [row[i] for row in matrix]
+
+
+def old_new_diff_pass(errors, threshold):
+    # get columns
+    kinds = column(errors, 3)
+    labels = column(errors, 4)
+    val1s = column(errors, 5)
+    val2s = column(errors, 6)
+    val3s = column(errors, 7)
+    val4s = column(errors, 8)
+    # define storage
+    passed, ratio = [], []
+
+    # loop around each row
+    for row in range(len(labels)):
+        # get iteration value
+        kind, label = kinds[row], labels[row]
+        val1, val2 = val1s[row], val2s[row]
+        val3, val4 = val3s[row], val4s[row]
+        # check that we have a difference from HEADER
+        if 'old,new,diff' in label and kind == 'HEADER':
+            try:
+                # try to make values floats
+                val1, val2, val3 = float(val1), float(val2), float(val3)
+                # get the order of the value -- log(val)
+                order_diff = cal_order_diff(val1, val2, val3)
+                # check that order_diff is below threshold for pass
+                if order_diff < threshold:
+                    passed.append(True)
+                # else test fails
+                else:
+                    passed.append(False)
+                # append ratio
+                ratio.append(order_diff)
+            # if we cannot convert to a float then test fails
+            except ValueError:
+                passed.append(False)
+                ratio.append(np.nan)
+        # check that we have a difference from DATA
+        elif kind == 'DATA':
+            try:
+                # try to make values floats
+                val4 = float(val4)
+                # check that order_diff is below threshold for pass
+                if val4 < threshold:
+                    passed.append(True)
+                # else test fails
+                else:
+                    passed.append(False)
+                # append ratio
+                ratio.append(val4)
+            # if we cannot convert to a float then test fails
+            except ValueError:
+                passed.append(False)
+                ratio.append(np.nan)
+
+        # else we have the wrong type
+        else:
+            passed.append(False)
+            ratio.append(np.nan)
+
+    # return passed and ratio
+    return passed, ratio
+
+
+def construct_error_table(errors, threshold=-8, results_path='./'):
+    # get passed and ratio
+    passed, ratio = old_new_diff_pass(errors, threshold)
+
+    table = Table()
+
+    table['names'] = column(errors, 0)
+    table['oldfile'] = column(errors, 1)
+    table['newfile'] = column(errors, 2)
+    table['kind'] = column(errors, 3)
+    table['error'] = column(errors, 4)
+    table['val1'] = column(errors, 5)
+    table['val2'] = column(errors, 6)
+    table['val3'] = column(errors, 7)
+    table['val4'] = column(errors, 8)
+    table['passed'] = np.array(passed, dtype=bool)
+    table['failed'] = ~np.array(passed, dtype=bool)
+    table['order_diff'] = ratio
+
+    table.write(results_path + '/unit_test_3_error_table.fits', overwrite=True)
 
 
 # =============================================================================
