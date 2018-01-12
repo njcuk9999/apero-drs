@@ -50,7 +50,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
-    ## get parameters from config files/run time args/load paths + calibdb
+    # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
     # run specific start up
@@ -279,114 +279,6 @@ def main(night_name=None, files=None):
         sPlt.locplot_order_number_against_rms(p, loc, rorder_num)
 
     # ----------------------------------------------------------------------
-    # Save and record of image of localization with order center and keywords
-    # ----------------------------------------------------------------------
-
-    # construct filename
-    locofits = spirouConfig.Constants.LOC_LOCO_FILE(p)
-    locofitsname = os.path.split(locofits)[-1]
-    # log that we are saving localization file
-    WLOG('', p['log_opt'], ('Saving localization information '
-                            'in file: {0}').format(locofitsname))
-    # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-    # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['kw_version'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_BCKGRD'],
-                               value=loc['mean_backgrd'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'],
-                               value=rorder_num)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_C'],
-                               value=p['IC_LOCDFITC'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_W'],
-                               value=p['IC_LOCDFITW'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_E'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DELTA'])
-
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_MAXFLX'],
-                               value=float(loc['max_signal']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_CTR'],
-                               value=np.sum(loc['max_rmpts_pos']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_WID'],
-                               value=np.sum(loc['max_rmpts_wid']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_CTR'],
-                               value=mean_rms_center)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_WID'],
-                               value=mean_rms_fwhm)
-    # write 2D list of position fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
-                                     values=loc['acc'][0:rorder_num])
-    # write 2D list of width fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
-                                     values=loc['ass'][0:rorder_num])
-    # write center fits and add header keys (via hdict)
-    center_fits = spirouLOCOR.CalcLocoFits(loc['acc'], data2.shape[1])
-    spirouImage.WriteImage(locofits, center_fits, hdict)
-
-    # ----------------------------------------------------------------------
-    # Save and record of image of sigma
-    # ----------------------------------------------------------------------
-    # construct filename
-    locofits2 = spirouConfig.Constants.LOC_LOCO_FILE2(p)
-    locofits2name = os.path.split(locofits2)[-1]
-
-    # log that we are saving localization file
-    wmsg = 'Saving FWHM information in file: {0}'
-    WLOG('', p['log_opt'], wmsg.format(locofits2name))
-    # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-    # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['kw_version'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_BCKGRD'],
-                               value=loc['mean_backgrd'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'],
-                               value=rorder_num)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_C'],
-                               value=p['IC_LOCDFITC'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_W'],
-                               value=p['IC_LOCDFITW'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_E'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_MAXFLX'],
-                               value=float(loc['max_signal']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_CTR'],
-                               value=np.sum(loc['max_rmpts_pos']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_WID'],
-                               value=np.sum(loc['max_rmpts_wid']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_CTR'],
-                               value=mean_rms_center)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_WID'],
-                               value=mean_rms_fwhm)
-    # write 2D list of position fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
-                                     values=loc['acc'][0:rorder_num])
-    # write 2D list of width fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
-                                     values=loc['ass'][0:rorder_num])
-    # write image and add header keys (via hdict)
-    width_fits = spirouLOCOR.CalcLocoFits(loc['ass'], data2.shape[1])
-    spirouImage.WriteImage(locofits2, width_fits, hdict)
-
-    # ----------------------------------------------------------------------
-    # Save and Record of image of localization
-    # ----------------------------------------------------------------------
-    if p['IC_LOCOPT1']:
-        # construct filename
-        locofits3 = spirouConfig.Constants.LOC_LOCO_FILE3(p)
-        locofits3name = os.path.split(locofits3)[-1]
-        # log that we are saving localization file
-        wmsg1 = 'Saving localization image with superposition of orders in '
-        wmsg2 = 'file: {0}'.format(locofits3name)
-        WLOG('', p['log_opt'], [wmsg1, wmsg2])
-        # superpose zeros over the fit in the image
-        data4 = spirouLOCOR.imageLocSuperimp(data2o, loc['acc'][0:rorder_num])
-        # save this image to file
-        spirouImage.WriteImage(locofits3, data4, hdict)
-
-    # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
@@ -429,6 +321,117 @@ def main(night_name=None, files=None):
             WLOG('info', p['log_opt'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
+    # Save and record of image of localization with order center and keywords
+    # ----------------------------------------------------------------------
+    # construct filename
+    locofits = spirouConfig.Constants.LOC_LOCO_FILE(p)
+    locofitsname = os.path.split(locofits)[-1]
+    # log that we are saving localization file
+    WLOG('', p['log_opt'], ('Saving localization information '
+                            'in file: {0}').format(locofitsname))
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # define new keys to add
+    hdict = spirouImage.AddKey(hdict, p['kw_version'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_BCKGRD'],
+                               value=loc['mean_backgrd'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'],
+                               value=rorder_num)
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_C'],
+                               value=p['IC_LOCDFITC'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_W'],
+                               value=p['IC_LOCDFITW'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_E'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DELTA'])
+
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_MAXFLX'],
+                               value=float(loc['max_signal']))
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_CTR'],
+                               value=np.sum(loc['max_rmpts_pos']))
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_WID'],
+                               value=np.sum(loc['max_rmpts_wid']))
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_CTR'],
+                               value=mean_rms_center)
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_WID'],
+                               value=mean_rms_fwhm)
+    # write 2D list of position fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
+                                     values=loc['acc'][0:rorder_num])
+    # write 2D list of width fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
+                                     values=loc['ass'][0:rorder_num])
+    # add quality control
+    hdict = spirouImage.AddKey(hdict, p['kw_drs_QC'], value=p['QC'])
+    # write center fits and add header keys (via hdict)
+    center_fits = spirouLOCOR.CalcLocoFits(loc['acc'], data2.shape[1])
+    spirouImage.WriteImage(locofits, center_fits, hdict)
+
+    # ----------------------------------------------------------------------
+    # Save and record of image of sigma
+    # ----------------------------------------------------------------------
+    # construct filename
+    locofits2 = spirouConfig.Constants.LOC_LOCO_FILE2(p)
+    locofits2name = os.path.split(locofits2)[-1]
+
+    # log that we are saving localization file
+    wmsg = 'Saving FWHM information in file: {0}'
+    WLOG('', p['log_opt'], wmsg.format(locofits2name))
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # define new keys to add
+    hdict = spirouImage.AddKey(hdict, p['kw_version'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
+    hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'],
+                               value=rorder_num)
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_C'],
+                               value=p['IC_LOCDFITC'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_W'],
+                               value=p['IC_LOCDFITW'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_E'])
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_MAXFLX'],
+                               value=float(loc['max_signal']))
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_CTR'],
+                               value=np.sum(loc['max_rmpts_pos']))
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_WID'],
+                               value=np.sum(loc['max_rmpts_wid']))
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_CTR'],
+                               value=mean_rms_center)
+    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_WID'],
+                               value=mean_rms_fwhm)
+    # write 2D list of position fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
+                                     values=loc['acc'][0:rorder_num])
+    # write 2D list of width fit coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
+                                     values=loc['ass'][0:rorder_num])
+    # add quality control
+    hdict = spirouImage.AddKey(hdict, p['kw_drs_QC'], value=p['QC'])
+    # write image and add header keys (via hdict)
+    width_fits = spirouLOCOR.CalcLocoFits(loc['ass'], data2.shape[1])
+    spirouImage.WriteImage(locofits2, width_fits, hdict)
+
+    # ----------------------------------------------------------------------
+    # Save and Record of image of localization
+    # ----------------------------------------------------------------------
+    if p['IC_LOCOPT1']:
+        # construct filename
+        locofits3 = spirouConfig.Constants.LOC_LOCO_FILE3(p)
+        locofits3name = os.path.split(locofits3)[-1]
+        # log that we are saving localization file
+        wmsg1 = 'Saving localization image with superposition of orders in '
+        wmsg2 = 'file: {0}'.format(locofits3name)
+        WLOG('', p['log_opt'], [wmsg1, wmsg2])
+        # superpose zeros over the fit in the image
+        data4 = spirouLOCOR.imageLocSuperimp(data2o, loc['acc'][0:rorder_num])
+        # save this image to file
+        # Question: Why no keys added to header?
+        hdict = dict()
+        spirouImage.WriteImage(locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------
     # Update the calibration database
