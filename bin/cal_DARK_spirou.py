@@ -183,7 +183,7 @@ def main(night_name=None, files=None):
 
     # checl that the precentage of dark pixels < qc_max_dark
     if baddark > p['QC_MAX_DARK']:
-        fmsg = ('Unexpected Fraction of pixels > {0:.2f} ADU/s '
+        fmsg = ('Unexpected Fraction of dark pixels > {0:.2f} ADU/s '
                 '({1:.2f} > {2:.2f}')
         fail_msg.append(fmsg.format(p['DARK_CUTLIMIT'], baddark,
                                     p['QC_MAX_DARK']))
