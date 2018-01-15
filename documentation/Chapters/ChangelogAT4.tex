@@ -716,10 +716,28 @@ KiB Swap: 31249404 total, 31249404 free,        0 used. 14889016 avail Mem
 
 Table \ref{table:speed_tests} shows the comparison of the various tests above and the ratios of their timings. From this it is clear that the py2 and py3 versions are in most cases much faster than the AT4-V48 version. Specifically the extraction codes are 6 to 7 times faster. The python 2 codes are slightly faster than the python 3 codes (due to the handling of integer precision). The only code that is faster in the AT4-V48 is \calCCF due to the currently implementation of a python only code in the py2 and py3 runs, the AT4-V48 version uses a fortran module, however it may be possible to speed up the python code further.
 
-\vspace{1cm}
+\subsection{Output comparison}
 
-{\scriptsize
-\begin{tabular}{p{3.5cm}cccccc}
+Every header and images output from the DRS was tested against the old version. 
+
+The images were tested for consistency by taking the mean, median and standard deviation of the `old' (AT4-V48 version) and the `new' (py2/py3 version) and the difference image of the two. These results were tabulated and the $log_{10}$(difference) of these values was calculated. If the $log_{10}$(difference) was greater than -8 for any variable, the image was said to fail the comparison test.
+
+The headers were compared for differences in keys and the key values. If a key existed in the `old' header or the `new' header but not the other the header was said to fail the comparison test. If the value in the `old' header and the `new' header were not consistent to a $log_{10}$(difference) of -8 then they were also deemed to fail the comparison test.
+
+All values were any of these values were not identical were tabulated. Graphs were plotted for any image where values were not identical (plotting by folding along both the x and y axis, using mean, median and standard deviation). The tests that failed are shown in Table \ref{table:failed_tests}.
+For \calbadpix this is due to the change in code from using a sorted 90th value to a 90th percentile. In the case of \calCCF the differences are due to the difference in fitting between using \Program{scipy.curvefit} (python) and \Program{fitgaus} (fortran), see Figure \ref{figure:ccf_fitting_probelm} for an example.
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=.8\textwidth]{Figures/CCF_fitting_difference.pdf}
+\end{center}
+\caption{ The difference between the CCF fits from FORTRAN and python. `old' here signifies the AT4-V48 DRS code, `new' the python 3 implementation. `a' here is the amplitude of the Gaussian, `x0' is the Gaussian center, `sigma' is the full-width half-maximum of the Gaussian and `dc' is the continuum level. \label{figure:ccf_fitting_probelm}}
+\end{figure}
+
+\clearpage
+\begin{landscape}
+\begin{tabular}{lcccccc}
 \hline
 name & Time py3 [s] & Time py2 [s] & Time AT4-V48 [s] & AT4/py3 & AT4/py2 & py3/py2 \\
 \hline
@@ -744,26 +762,9 @@ Total & 86.16 & 81.21 & 370.09 & 4.3 & 4.56 & 1.06 \\
 \hline
 \end{tabular}
 \captionof{table}{Table showing the timings of the python 3, python 2 and AT4-V48 tests. Computed are the speed up ratios between the various tests. \label{table:speed_tests}}
-}
-
-\subsection{Output comparison}
-
-Every header and images output from the DRS was tested against the old version. 
-
-The images were tested for consistency by taking the mean, median and standard deviation of the `old' (AT4-V48 version) and the `new' (py2/py3 version) and the difference image of the two. These results were tabulated and the $log_{10}$(difference) of these values was calculated. If the $log_{10}$(difference) was greater than -8 for any variable, the image was said to fail the comparison test.
-
-The headers were compared for differences in keys and the key values. If a key existed in the `old' header or the `new' header but not the other the header was said to fail the comparison test. If the value in the `old' header and the `new' header were not consistent to a $log_{10}$(difference) of -8 then they were also deemed to fail the comparison test.
-
-All values were any of these values were not identical were tabulated. Graphs were plotted for any image where values were not identical (plotting by folding along both the x and y axis, using mean, median and standard deviation). The tests that failed are shown in Table \ref{table:failed_tests}.
-For \calbadpix this is due to the change in code from using a sorted 90th value to a 90th percentile. In the case of \calCCF the differences are due to the difference in fitting between using \Program{scipy.curvefit} (python) and \Program{fitgaus} (fortran), see Figure \ref{figure:ccf_fitting_probelm} for an example.
+\end{landscape}
 
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=.8\textwidth]{Figures/CCF_fitting_difference.pdf}
-\end{center}
-\caption{ The difference between the CCF fits from FORTRAN and python. `old' here signifies the AT4-V48 DRS code, `new' the python 3 implementation. `a' here is the amplitude of the Gaussian, `x0' is the Gaussian center, `sigma' is the full-width half-maximum of the Gaussian and `dc' is the continuum level. \label{figure:ccf_fitting_probelm}}
-\end{figure}
 
 \clearpage
 \begin{landscape}
