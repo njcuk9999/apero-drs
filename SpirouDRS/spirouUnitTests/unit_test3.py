@@ -35,7 +35,7 @@ if sys.version_info.major == 2:
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'spirouUnitTests.unit_test1.py'
+__NAME__ = 'spirouUnitTests.unit_test3.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()

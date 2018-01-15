@@ -1254,7 +1254,7 @@ then the whole image (e2ds file) is rejected. Value must be a float larger than 
 \begin{itemize}
 
 % qc_max_darklevel
-\item \ParameterEntry{Maximum dark median level}
+\item \namedlabel{text:qc_max_darklevel} \ParameterEntry{Maximum dark median level}
 {Defines the maximum dark median level in ADU/s. If this is greater than median flux it does not pass the quality control criteria:
 \begin{equation}
 \text{Median Flux} < \text{qc\_max\_darklevel}
@@ -1266,7 +1266,7 @@ Value must be a float equal to or larger than zero.
 
 
 % qc_max_dead
-\item \ParameterEntry{Maximum percentage of dead pixels}
+\item \namedlabel{text:qc_max_dead} \ParameterEntry{Maximum percentage of dead pixels}
 {Defines the maximum allowed percentage of dead pixels in a dark image. If the number of dead pixels is greater than this it does not pass the quality control criteria:
 \begin{equation}
 \text{dead pixels} = (\text{pixel value} > \text{dark\_cutlimit}) \text{ and } (\text{pixel value} \neq \text{NaN})
@@ -1280,7 +1280,7 @@ Value must be a float equal to or larger than zero.
 
 
 % qc_max_dark
-\item \ParameterEntry{Maximum percentage of bad dark pixels}
+\item \namedlabel{text:qc_max_dark} \ParameterEntry{Maximum percentage of bad dark pixels}
 {Defines the maximum allowed percentage of bad dark pixels in a dark image. If the number of dead pixels is greater than this it does not pass the quality control criteria:
 \begin{equation}
 \text{bad dark pixels} = \text{pixel value} > \text{dark\_cutlimit}
@@ -1361,7 +1361,7 @@ Value must be a float greater than zero.
 
 % qc_slit_rms
 \item \ParameterEntry{Maximum RMS allowed for slit TILT}
-{Defines the maximum allowed RMS in the calculated TILT to add TILT profile to the calibration database. Value must be a float larger than zero.}
+{Defines the maximum allowed RMS in the calculated TILT to add TILT profile to the \calibdb. Value must be a float larger than zero.}
 {qc\_slit\_rms}{0.1}
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
 
@@ -1406,7 +1406,7 @@ Value must be a float greater than zero.
 
 % ic_calibDB_filename
 \item \namedlabel{text:ic_calibDB_filename} \ParameterEntry{The calibration database master filename}
-{Defines the name of the master calibration database text file for use in all calibration database operation.}
+{Defines the name of the master \calibdb text file for use in all \calibdb operation.}
 {ic\_calibDB\_filename}{master\_calib{\hskip 0pt}\_SPIROU.txt}
 {\AllRecipes}{\constantsfile}{\spirouConst.CALIBDB\_MASTERFILE()}{Public}
 \DevNote{This should probably be private, unless we want the user to be able to change calibDB files.}
@@ -1414,14 +1414,14 @@ Value must be a float greater than zero.
 
 % calib_max_wait
 \item \ParameterEntry{Maximum wait time for locked calibration database}
-{Defines the maximum time the code waits for the calibration database when it is locked. A locked file is created every time the calibration database is open (and subsequently closed when reading of the database was successful). If a lock file is present the code will wait a maximum of this many seconds and keep checking whether the lock file has been removed. After which time the code will exit with an error. Value must be a positive float greater than zero. Measured in seconds.}
+{Defines the maximum time the code waits for the \calibdb when it is locked. A locked file is created every time the \calibdb is open (and subsequently closed when reading of the database was successful). If a lock file is present the code will wait a maximum of this many seconds and keep checking whether the lock file has been removed. After which time the code will exit with an error. Value must be a positive float greater than zero. Measured in seconds.}
 {calib\_max\_wait}{3600}
 {\AllRecipes}{\constantsfile}{\spirouCDB.get\_check\_lock\_file()}{Public}
 
 
 % calib_db_match
 \item \namedlabel{text:calib_db_match} \ParameterEntry{Calibration database duplicate key handler}
-{Defines the mechanism to use in deciding between duplicate keys in the calibration database file. Value must be a string and must be either 'older' or 'closest'. If 'older' the calibration database will only use keys that are older than the timestamp in the input fits file (first argument) using the key \defineinkeyword{text:acqtime1}{kw\_ACQTIME\_KEY}}
+{Defines the mechanism to use in deciding between duplicate keys in the \calibdb file. Value must be a string and must be either 'older' or 'closest'. If 'older' the \calibdb will only use keys that are older than the timestamp in the input fits file (first argument) using the key \defineinkeyword{text:acqtime1}{kw\_ACQTIME\_KEY}}
 {calib\_db\_match}{'closest'}
 {\AllRecipes}{\constantsfile}{\spirouCDB.get\_check\_lock\_file()}{Public}
 
@@ -1469,14 +1469,14 @@ Value must be a float greater than zero.
 
 
 % arg_file_names
-\item \PseudoParamEntry{Filenames from run time arguments}
+\item \namedlabel{text:arg_file_names} \PseudoParamEntry{Filenames from run time arguments}
 {Gets the filenames from run time arguments.}
 {arg\_file\_names}
 {\AllRecipes}{\spirouConst.ARG\_FILE\_NAMES()}{\spirouStartup.run\_time\_args()}
 
 
 % arg_night_name
-\item \PseudoParamEntry{Night name from run time arguments}
+\item \namedlabel{text:arg_night_name} \PseudoParamEntry{Night name from run time arguments}
 {Gets the night name from run time arguments.}
 {arg\_night\_name}
 {\AllRecipes}{\spirouConst.ARG\_NIGHT\_NAME()}{\spirouStartup.run\_time\_args()}
@@ -1484,21 +1484,21 @@ Value must be a float greater than zero.
 
 % calibdb_masterfile
 \item \PseudoParamEntry{Calibration database file path}
-{Gets the full calibration database file path}
+{Gets the full \calibdb file path}
 {masterfilepath}
 {\AllRecipes}{\spirouConst.CALIBDB\_MASTERFILE()}{\spirouCDB.write\_files\_to\_master(), \spirouCDB.read\_master\_file(), \spirouImage.correct\_for\_dark()}
 
 
 % calibdb_lockfile
 \item \PseudoParamEntry{Calibration database lock file path}
-{Gets the full calibration database lock file path}
+{Gets the full \calibdb lock file path}
 {lockfilepath}
 {\AllRecipes}{\spirouConst.CALIBDB\_LOCKFILE()}{\spirouCDB.get\_check\_lock\_file()}
 
 
 % calib_prefix
 \item \PseudoParamEntry{Calibration database file prefix}
-{Defines the prefix for calibration database files. Value must be a string.}
+{Defines the prefix for \calibdb files. Value must be a string.}
 {calib\_prefix}
 {\AllRecipes}{\spirouConst.CALIB\_PREFIX(()}{\calDARK.\progMAIN, \callocRAW.\progMAIN, \calSLIT.\progMAIN, \calFFraw.\progMAIN}
 
@@ -1546,7 +1546,7 @@ Value must be a float greater than zero.
 
 
 % reduced_dir
-\item \PseudoParamEntry{Full path of reduced data directory}
+\item \namedlabel{text:reduced_dir} \PseudoParamEntry{Full path of reduced data directory}
 {Gets the full path of the reduced data directory.}
 {reduced\_dir}
 {\AllRecipes}{\spirouConst.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}
@@ -1556,11 +1556,34 @@ Value must be a float greater than zero.
 \fi
 
 
+\ifdevguide
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Output file variables}
+\label{ch:variables:formatting}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\begin{itemize}
+	\item \namedlabel{text:darkfile} \PseudoParamEntry{The dark calibration file}
+	{The full path of the dark calibration file}
+	{darkfile}
+	{\calDARK}{\spirouConst.DARK\_FILE()}{\calDARK}
+\end{itemize}
 
 
+\begin{itemize}
+	\item \namedlabel{text:darkbadpixfile} \PseudoParamEntry{The dark bad pixel map calibration file}
+	{The full path of the dark bad pixel map calibration file}
+	{darkbadpixfile}
+	{\calDARK}{\spirouConst.DARK\_BADPIX\_FILE()}{\calDARK}
+\end{itemize}
 
+
+\fi
 
 \ifdevguide
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1583,7 +1606,7 @@ Value must be a float greater than zero.
 
 % date_fmt_header
 \item \ParameterEntry{Calibration database date format}
-{Defines the format of the date in the calibration database file}
+{Defines the format of the date in the \calibdb file}
 {date\_fmt\_calibdb}{\%Y-\%m-\%d-\%H:\%M:\%S.\%f}
 {\spirouCDB}{\spirouConst.DATE\_FMT\_CALIBDB()}{\spirouCDB.update\_database(), \spirouCDB.get\_database()}{Private}
 

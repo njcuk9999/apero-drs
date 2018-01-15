@@ -103,10 +103,10 @@ def comparison_wrapper(name, oldfiles, newfiles, errors=None, path=None):
 
         # print status
         if len(errors) > 0:
-            wmsg = '\n\t{0} errors found in {1}'
+            wmsg = '\n\t{0} differences found in {1}'
             print(wmsg.format(len(e0) + len(e1) + len(e2), newfile))
         else:
-            wmsg = '\n\tNo errors found in {0} - files the same'
+            wmsg = '\n\tNo difference found in {0} - files the same'
             print(wmsg.format(newfile))
 
     # return errors for files
