@@ -72,9 +72,18 @@ Below we describe breifly the main differences from AT-4 build.
 
 \end{itemize}
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_DARK\_spirou recipe}
+\section{The Recipes}
+\label{ch:changelog:At4:recipes}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\subsection{The cal\_DARK\_spirou recipe}
 \label{ch:changelog:At4:cal_DARK_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,7 +113,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_loc\_RAW\_spirou recipe}
+\subsection{The cal\_loc\_RAW\_spirou recipe}
 \label{ch:changelog:At4:cal_loc_RAW_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -170,7 +179,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_SLIT\_spirou recipe}
+\subsection{The cal\_SLIT\_spirou recipe}
 \label{ch:changelog:At4:cal_SLIT_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -200,7 +209,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_FF\_RAW\_spirou recipe}
+\subsection{The cal\_FF\_RAW\_spirou recipe}
 \label{ch:changelog:At4:cal_FF_RAW_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -248,7 +257,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_extract\_RAW\_spirou recipes}
+\subsection{The cal\_extract\_RAW\_spirou recipes}
 \label{ch:changelog:At4:cal_extract_RAW_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -332,7 +341,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_DRIFT\_RAW\_spirou recipe}
+\subsection{The cal\_DRIFT\_RAW\_spirou recipe}
 \label{ch:changelog:At4:cal_DRIFT_RAW_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -403,7 +412,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_BADPIX\_spirou recipe}
+\subsection{The cal\_BADPIX\_spirou recipe}
 \label{ch:changelog:At4:cal_BADPIX_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -425,7 +434,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_DRIFT-E2DS\_spirou recipe}
+\subsection{The cal\_DRIFT-E2DS\_spirou recipe}
 \label{ch:changelog:At4:cal_DRIFT-E2DS_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -484,7 +493,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_DRIFT-PEAK\_E2DS\_spirou recipe}
+\subsection{The cal\_DRIFT-PEAK\_E2DS\_spirou recipe}
 \label{ch:changelog:At4:cal_DRIFT-PEAK_E2DS_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -528,7 +537,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_CCF\_E2DS\_spirou recipe}
+\subsection{The cal\_CCF\_E2DS\_spirou recipe}
 \label{ch:changelog:At4:cal_CCF_E2DS_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -566,7 +575,7 @@ Below we describe breifly the main differences from AT-4 build.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_WAVE\_E2DS\_spirou recipe}
+\subsection{The cal\_WAVE\_E2DS\_spirou recipe}
 \label{ch:changelog:At4:cal_WAVE_E2DS_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -575,10 +584,259 @@ Recipe not updated.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The cal\_HC\_E2DS\_spirou recipe}
+\subsection{The cal\_HC\_E2DS\_spirou recipe}
 \label{ch:changelog:At4:cal_HC_E2DS_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Recipe not updated.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Benchmark tests}
+\label{ch:changelog:At4:benchmark tests}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Python 3 test - python 3.5.2}
+
+Below is the print out for the test in python 3 (Anaconda, python version 3.5.2, using ipython).
+
+\begin{cmdboxprint}
+Tasks: 280 total,   1 running, 279 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  2.4 us,  0.7 sy,  0.0 ni, 97.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16157992 total, 12358536 free,   714868 used,  3084588 buff/cache
+KiB Swap: 31249404 total, 31249404 free,        0 used. 14991672 avail Mem
+
+TIMING STATS
+
+cal_DARK_spirou Time taken = 1.8906264305114746 s
+cal_BADPIX_spirou Time taken = 1.5497047901153564 s
+cal_loc_RAW_spirou (flat_dark) Time taken = 3.230532169342041 s
+cal_loc_RAW_spirou (dark_flat) Time taken = 2.2100307941436768 s
+cal_SLIT_spirou Time taken = 4.388048887252808 s
+cal_FF_RAW_spirou (flat_dark) Time taken = 4.578831434249878 s
+cal_FF_RAW_spirou (dark_flat) Time taken = 4.136062860488892 s
+cal_extract_RAW_spirou (fp_fp02a203.fits AB A B C) Time taken = 13.75011658668518 s
+cal_extract_RAW_spirou (fp_fp03a203.fits AB A B C) Time taken = 13.464095830917358 s
+cal_extract_RAW_spirou (fp_fp04a203.fits AB A B C) Time taken = 13.431049823760986 s
+cal_DRIFT_RAW_spirou Time taken = 7.293401002883911 s
+cal_DRIFT_E2DS_spirou Time taken = 1.3196706771850586 s
+cal_DRIFTPEAK_E2DS_spirou Time taken = 12.404635190963745 s
+cal_CCF_E2DS_spirou Time taken = 2.5155141353607178 s
+
+Total Time taken = 86.16232061386108 s
+
+END OF UNIT TESTS
+
+Tasks: 281 total,   1 running, 280 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.6 us,  0.5 sy,  0.0 ni, 97.9 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16157992 total, 11805196 free,  1261248 used,  3091548 buff/cache
+KiB Swap: 31249404 total, 31249404 free,        0 used. 14444384 avail Mem
+\end{cmdboxprint}
+
+\subsection{Python 2 test - python 2.7.14}
+
+Below is the test in python 2 (Anaconda, python version 2.7.14, using ipython)
+
+\begin{cmdboxprint}
+Tasks: 285 total,   2 running, 283 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.2 us,  0.4 sy,  0.0 ni, 98.4 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16157992 total, 12359596 free,   720552 used,  3077844 buff/cache
+KiB Swap: 31249404 total, 31249404 free,        0 used. 14986376 avail Mem
+
+TIMING STATS
+
+cal_DARK_spirou Time taken = 1.8414969444274902 s
+cal_BADPIX_spirou Time taken = 1.3952946662902832 s
+cal_loc_RAW_spirou (flat_dark) Time taken = 3.013976573944092 s
+cal_loc_RAW_spirou (dark_flat) Time taken = 2.024026393890381 s
+cal_SLIT_spirou Time taken = 4.410130977630615 s
+cal_FF_RAW_spirou (flat_dark) Time taken = 3.668529987335205 s
+cal_FF_RAW_spirou (dark_flat) Time taken = 3.4684107303619385 s
+cal_extract_RAW_spirou (fp_fp02a203.fits AB A B C) Time taken = 12.921560764312744 s
+cal_extract_RAW_spirou (fp_fp03a203.fits AB A B C) Time taken = 12.569956064224243 s
+cal_extract_RAW_spirou (fp_fp04a203.fits AB A B C) Time taken = 12.973013877868652 s
+cal_DRIFT_RAW_spirou Time taken = 6.88083815574646 s
+cal_DRIFT_E2DS_spirou Time taken = 1.3040492534637451 s
+cal_DRIFTPEAK_E2DS_spirou Time taken = 12.20580244064331 s
+cal_CCF_E2DS_spirou Time taken = 2.5290873050689697 s
+
+Total Time taken = 81.20617413520813 s
+
+END OF UNIT TESTS
+
+Tasks: 280 total,   2 running, 278 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  2.4 us,  1.2 sy,  0.0 ni, 96.2 id,  0.2 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16157992 total, 11844388 free,  1229276 used,  3084328 buff/cache
+KiB Swap: 31249404 total, 31249404 free,        0 used. 14477320 avail Mem
+\end{cmdboxprint}
+
+\newpage
+\subsection{AT4-V48}
+
+Below is the test in the AT4-V48 version of the DRS (Miniconda, custom python, using ipython interface to DRSspirou custom python shell).
+
+\begin{cmdboxprint}
+Tasks: 285 total,   2 running, 283 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  2.4 us,  0.8 sy,  0.0 ni, 96.8 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16157992 total, 12113764 free,   817804 used,  3226424 buff/cache
+KiB Swap: 31249404 total, 31249404 free,        0 used. 14887020 avail Mem
+
+TIMING STATS
+
+cal_DARK_spirou Time taken = 4.65617418289 s
+cal_BADPIX_spirou Time taken = 2.88204312325 s
+cal_loc_RAW_spirou (flat_dark) Time taken = 7.36518502235 s
+cal_loc_RAW_spirou (dark_flat) Time taken = 6.00211191177 s
+cal_SLIT_spirou Time taken = 9.35630702972 s
+cal_FF_RAW_spirou (flat_dark) Time taken = 24.9980201721 s
+cal_FF_RAW_spirou (dark_flat) Time taken = 23.4183678627 s
+cal_extract_RAW_spirou (fp_fp02a203.fits AB A B C) Time taken = 90.8251950741 s
+cal_extract_RAW_spirou (fp_fp03a203.fits AB A B C) Time taken = 92.2540268898 s
+cal_extract_RAW_spirou (fp_fp04a203.fits AB A B C) Time taken = 88.0448830128 s
+cal_DRIFT_RAW_spirou Time taken = 0.491183996201 s
+cal_DRIFT_E2DS_spirou Time taken = 3.07376003265 s
+cal_DRIFT-PEAK_E2DS_spirou Time taken = 15.1532239914 s
+cal_CCF_RAW_spirou Time taken = 1.57253408432 s
+
+END OF UNIT TESTS
+
+Tasks: 282 total,   2 running, 280 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.7 us,  0.5 sy,  0.0 ni, 97.8 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16157992 total, 12113492 free,   814400 used,  3230100 buff/cache
+KiB Swap: 31249404 total, 31249404 free,        0 used. 14889016 avail Mem
+\end{cmdboxprint}
+
+\newpage
+
+\subsection{Speed comparison}
+
+Table \ref{table:speed_tests} shows the comparison of the various tests above and the ratios of their timings. From this it is clear that the py2 and py3 versions are in most cases much faster than the AT4-V48 version. Specifically the extraction codes are 6 to 7 times faster. The python 2 codes are slightly faster than the python 3 codes (due to the handling of integer precision). The only code that is faster in the AT4-V48 is \calCCF due to the currently implementation of a python only code in the py2 and py3 runs, the AT4-V48 version uses a fortran module, however it may be possible to speed up the python code further.
+
+\vspace{1cm}
+
+{\scriptsize
+\begin{tabular}{p{3.5cm}cccccc}
+\hline
+name & Time py3 [s] & Time py2 [s] & Time AT4-V48 [s] & AT4/py3 & AT4/py2 & py3/py2 \\
+\hline
+\hline
+\calDARK & 1.89 & 1.84 & 4.66 & 2.46 & 2.53 & 1.03 \\
+\calbadpix & 1.55 & 1.4 & 2.88 & 1.86 & 2.07 & 1.11 \\
+\callocRAW {\hskip 0pt}(flat\_dark) & 3.23 & 3.01 & 7.37 & 2.28 & 2.44 & 1.07 \\
+\callocRAW {\hskip 0pt}(dark\_flat) & 2.21 & 2.02 & 6.0 & 2.72 & 2.97 & 1.09 \\
+\calSLIT & 4.39 & 4.41 & 9.36 & 2.13 & 2.12 & 0.99 \\
+\calFFraw {\hskip 0pt}(flat\_dark) & 4.58 & 3.67 & 25.0 & 5.46 & 6.81 & 1.25 \\
+\calFFraw {\hskip 0pt}(dark\_flat) & 4.14 & 3.47 & 23.42 & 5.66 & 6.75 & 1.19 \\
+\calextractRAW {\hskip 0pt}(fp\_fp02a203.fits AB A B C) & 13.75 & 12.92 & 90.83 & 6.61 & 7.03 & 1.06 \\
+\calextractRAW {\hskip 0pt}(fp\_fp03a203.fits AB A B C) & 13.46 & 12.57 & 92.25 & 6.85 & 7.34 & 1.07 \\
+\calextractRAW {\hskip 0pt}(fp\_fp04a203.fits AB A B C) & 13.43 & 12.97 & 88.04 & 6.56 & 6.79 & 1.04 \\
+\calDRIFTRAW & 7.29 & 6.88 & 0.49 & 0.07 & 0.07 & 1.06 \\
+\calDRIFTE & 1.32 & 1.3 & 3.07 & 2.33 & 2.36 & 1.01 \\
+\calDRIFTPEAK & 12.4 & 12.21 & 15.15 & 1.22 & 1.24 & 1.02 \\
+\calCCF & 2.52 & 2.53 & 1.57 & 0.63 & 0.62 & 0.99 \\
+\hline
+Total & 86.16 & 81.21 & 370.09 & 4.3 & 4.56 & 1.06 \\
+\hline
+\hline
+\end{tabular}
+\captionof{table}{Table showing the timings of the python 3, python 2 and AT4-V48 tests. Computed are the speed up ratios between the various tests. \label{table:speed_tests}}
+}
+
+\subsection{Output comparison}
+
+Every header and images output from the DRS was tested against the old version. 
+
+The images were tested for consistency by taking the mean, median and standard deviation of the `old' (AT4-V48 version) and the `new' (py2/py3 version) and the difference image of the two. These results were tabulated and the $log_{10}$(difference) of these values was calculated. If the $log_{10}$(difference) was greater than -8 for any variable, the image was said to fail the comparison test.
+
+The headers were compared for differences in keys and the key values. If a key existed in the `old' header or the `new' header but not the other the header was said to fail the comparison test. If the value in the `old' header and the `new' header were not consistent to a $log_{10}$(difference) of -8 then they were also deemed to fail the comparison test.
+
+All values were any of these values were not identical were tabulated. Graphs were plotted for any image where values were not identical (plotting by folding along both the x and y axis, using mean, median and standard deviation). The tests that failed are shown in Table \ref{table:failed_tests}.
+For \calbadpix this is due to the change in code from using a sorted 90th value to a 90th percentile. In the case of \calCCF the differences are due to the difference in fitting between using \Program{scipy.curvefit} (python) and \Program{fitgaus} (fortran), see Figure \ref{figure:ccf_fitting_probelm} for an example.
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=.8\textwidth]{Figures/CCF_fitting_difference.pdf}
+\end{center}
+\caption{ The difference between the CCF fits from FORTRAN and python. `old' here signifies the AT4-V48 DRS code, `new' the python 3 implementation. `a' here is the amplitude of the Gaussian, `x0' is the Gaussian center, `sigma' is the full-width half-maximum of the Gaussian and `dc' is the continuum level. \label{figure:ccf_fitting_probelm}}
+\end{figure}
+
+\clearpage
+\begin{landscape}
+{\footnotesize
+\begin{tabular}{lllllllr}
+\hline
+\hline
+  \multicolumn{1}{c}{Recipe} &
+  \multicolumn{1}{c}{Type} &
+  \multicolumn{1}{c}{Difference} &
+  \multicolumn{1}{c}{Mean} &
+  \multicolumn{1}{c}{Median} &
+  \multicolumn{1}{c}{StDev} &
+  \multicolumn{1}{c}{$log_{10}$(Diff)} &
+  \multicolumn{1}{c}{Note} \\
+\hline
+
+& & & & & \\
+
+\calbadpix & DATA & Difference image is non-zero &  &  &  & -0.975035 & 1 \\
+\calbadpix & DATA & axis=0 (mean,median,std) & 0.246589 & 0.0 & 0.431025 & -0.975035  & 1 \\
+\calbadpix & DATA & axis=1 (mean,median,std) & 0.248678 & 0.0 & 0.432247 & -0.975035  & 1 \\
+\calbadpix & DATA & diff (mean,median,std) & -0.002088 & 0.0 & 0.045652 & -0.975035  & 1 \\
+
+& & & & & \\
+
+\hline
+  \multicolumn{1}{c}{Recipe} &
+  \multicolumn{1}{c}{Type} &
+  \multicolumn{1}{c}{Difference} &
+  \multicolumn{1}{c}{Old value} &
+  \multicolumn{1}{c}{New value} &
+  \multicolumn{1}{c}{difference} &
+  \multicolumn{1}{c}{$log_{10}{Diff}$} &
+  \multicolumn{1}{c}{Note} \\
+ \hline
+
+& & & & & \\
+
+\callocRAW (flat\_dark) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\callocRAW (flat\_dark) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\callocRAW (dark\_flat) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\callocRAW (dark\_flat) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\calSLIT & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\calFFraw (flat\_dark) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\calFFraw (flat\_dark) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\calFFraw (dark\_flat) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\calFFraw (dark\_flat) & HEADER & key=VERSION old,new,diff & SPIROU\_ & SPIROU\_0.0.057 &  &  & 2 \\
+\callocRAW (flat\_dark) & HEADER & key=QC old,new,diff & PASSED & 1 &  &  & 3 \\
+\callocRAW (flat\_dark) & HEADER & key=QC old,new,diff & PASSED & 1 &  &  & 3 \\
+\callocRAW (dark\_flat) & HEADER & key=QC old,new,diff & PASSED & 1 &  &  & 3 \\
+\callocRAW (dark\_flat) & HEADER & key=QC old,new,diff & PASSED & 1 &  &  & 3 \\
+\calbadpix & HEADER & key=BBAD old,new,diff & 24.658989 & 24.867844 & -0.20885 & -2.072131  & 1 \\
+\calbadpix & HEADER & key=BBFLAT old,new,diff & 1.317787 & 1.6633749 & -0.345587 & -0.581287  & 1 \\
+\calCCF & HEADER & key=CCFCONTR old,new,diff & 2.844530 & 2.835287 & 0.009243 & -2.486784 & 4 \\
+\calCCF & HEADER & key=CCFFWHM old,new,diff & 4.346651 & 4.261318 & 0.08533 & -1.698425 & 4 \\
+\calCCF & HEADER & key=CCFMACPP old,new,diff & 422345 & 422345.043882 & -0.043882 & -6.983377 & 4 \\
+\calCCF & HEADER & key=CCFRV old,new,diff & -0.547685 & -0.553049 & 0.005365 & -2.009001 & 4 \\
+\calCCF & HEADER & key=CCFRVC old,new,diff & -0.547685 & -0.553049 & 0.005365 & -2.009001 & 4 \\
+
+& & & & & \\
+
+\hline
+\hline
+\end{tabular}
+\captionof{table}{Table showing all image and header outputs that failed the $log_{10}$(Difference) test between the `old' (AT4-V48) and `new' (python 2/python 3) versions. \label{table:failed_tests}}
+}
+\begin{enumerate}
+\item Explained by the difference in using 90th percentile and sorting to select 90th index
+\item Explained by an error in old code: \definevariable{text:drs_version}{DRS\_VERSION} not passed to header
+\item Explained by an error in old code: \definevariable{ch:variables:qualitycontrol}{QC} not passed to header
+\item Explained by the difference in using \Program{fitgaus} (FORTRAN) and \Program{scipy.curve\_fit} (python) functions.
+\end{enumerate}
+\end{landscape}
+
 
