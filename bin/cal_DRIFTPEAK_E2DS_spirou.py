@@ -72,10 +72,11 @@ def main(night_name=None, reffile=None):
     # get reduced directory + night name
     rdir = p['reduced_dir']
     # construct and test the reffile
-    reffilename = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp',
-                                        'DRIFT')
+    p['reffilename'] = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp',
+                                             'DRIFT')
+    p.set_source('reffilename', __NAME__ + '/main()')
     # get the fiber type
-    p['fiber'] = spirouStartup.GetFiberType(p, reffilename)
+    p['fiber'] = spirouStartup.GetFiberType(p, p['reffilename'])
     fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
     p.set_source('fiber', fsource)
 
@@ -83,7 +84,7 @@ def main(night_name=None, reffile=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, reffilename)
+    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['reffilename'])
     # add to loc
     loc = ParamDict()
     loc['speref'] = speref
@@ -195,10 +196,10 @@ def main(night_name=None, reffile=None):
     listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
     # remove reference file
     try:
-        listfiles.remove(reffilename)
+        listfiles.remove(p['reffilename'])
     except ValueError:
         emsg = 'File {0} not found in {1}'
-        WLOG('error', p['log_opt'], emsg.format(reffilename, rfolder))
+        WLOG('error', p['log_opt'], emsg.format(p['reffilename'], rfolder))
     # get length of files
     Nfiles = len(listfiles)
     # make sure we have some files

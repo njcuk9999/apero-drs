@@ -83,6 +83,7 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # ----------------------------------------------------------------------
     # Normalise flat and median of flat
     # ----------------------------------------------------------------------
+    # TODO: method = new
     flat_med, flat_ref = spirouImage.NormMedianFlat(p, flat_ref)
 
     # ----------------------------------------------------------------------

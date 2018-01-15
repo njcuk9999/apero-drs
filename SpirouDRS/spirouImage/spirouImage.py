@@ -312,7 +312,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         return corrected_image
 
 
-def normalise_median_flat(p, image):
+def normalise_median_flat(p, image, method='new'):
 
     # log that we are normalising the flat
     WLOG('', p['log_opt'], 'Normalising the flat')
@@ -333,8 +333,14 @@ def normalise_median_flat(p, image):
         # x-spatial filtering and insert filtering into image_med array
         image_med[i_it, :] = filters.median_filter(image[i_it, :], wmed)
 
-    # get the 90th percentile of median image
-    norm = np.percentile(image_med[np.isfinite(image_med)], 90)
+    if method == 'new':
+        # get the 90th percentile of median image
+        norm = np.percentile(image_med[np.isfinite(image_med)], 90)
+
+    else:
+        v = image_med.reshape(np.product(image.shape))
+        v = np.sort(v)
+        norm = v[int(np.product(image.shape) * 0.9)]
 
     # apply to flat_med and flat_ref
     return image_med/norm, image/norm
@@ -403,8 +409,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     # background in the dark  we subtract the running median to look
     # only for isolate hot pixels
     for i_it in range(fimage.shape[1]):
-        dmed = filters.median_filter(dimage[i_it, :], wmed)
-        dcorrect[i_it, :] = dimage[i_it, :] - dmed
+        dimage[i_it, :] -= filters.median_filter(dimage[i_it, :], wmed)
     # work out how much do flat pixels deviate compared to expected value
     zmask = fmed != 0
     fratio[zmask] = fimage[zmask] / fmed[zmask]
