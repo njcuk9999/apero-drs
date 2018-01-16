@@ -53,12 +53,12 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.0.058'
+    version = '0.1.000'
     return version
 
 
 def RELEASE():
-    release = 'alpha'
+    release = 'alpha pre-release'
     return release
 
 
