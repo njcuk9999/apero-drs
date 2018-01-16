@@ -2,6 +2,12 @@
 
 <img src="./documentation/Figures/Logo_SPIRou-22.jpg" alt="Drawing" style="width:128px;"/>
 
+
+# Most recent released version:
+
+- ![version 0.1 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.1-alpha) 
+
+
 # User manual
 
 ![User manual page](./documentation/User_guide_spirou_drs.pdf "User manual page")
