@@ -1,0 +1,59 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Quick Install Guide}
+\label{chapter:quickinstallation}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This is a quick guide to installation, for a more full description please see Chapter \ref{chapter:installation}. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using a unix operating system with BASH.
+
+
+\begin{enumerate}
+
+\item Get the latest version of the DRS (for \instrument version \MyCodeVersion). from here: \url{https://github.com/njcuk9999/spirou_py3}
+
+\item Download the test data from here: \url{http://genesis.astro.umontreal.ca/neil/spirou_test_data_alpha0.1.003.zip} (if required).
+
+\item Extract the DRS (make a note of the path, hereinafter \InstallDIR)
+
+\item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc)
+
+	\begin{bashbox}
+	@export@ <PATH>="(*\InstallDIR*)/bin/":<$PATH>
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/":<$PYTHONPATH>
+	\end{bashbox}
+
+\item make sure your paths are set
+	\begin{bashbox}
+	source (*$\sim$*)/.bashrc
+	echo $PATH
+	\end{bashbox}
+
+\item Make recipes executable (found in the \InstallDIR/bin folder) - to use from the command line.
+
+\item Setup the DRS paths (edit the file: `\configtxtfile'):
+\begin{thighlight}
+\begin{table}[H]
+{\footnotesize
+\begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
+\definevariable{text:drs_root}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
+&&&&\\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory (\InstallDIR) \\
+\definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
+\definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
+\definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\
+\definevariable{text:drs_data_msg}{DRS\_DATA\_MSG}     & = & /drs/data/msg     & / & Define the directory that the log messages are stored in \\
+\definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & /drs/data/tmp/    & / & Define the working directory \\
+\end{tabular}
+}
+\end{table}
+\end{thighlight}
+
+\item validate the DRS installation:
+\begin{cmdbox}
+python (*\calvalidate*)
+\end{cmdbox}
+
+\end{enumerate}
+
+The DRS is now installed and setup. To run see section \ref{chapter:using_the_drs}.
