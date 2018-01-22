@@ -11,7 +11,7 @@ DRS_PLOT = 1
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = 1
+DRS_DEBUG = 0
 
 
 # -----------------------------------------------------------------------------
@@ -19,25 +19,25 @@ DRS_DEBUG = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = '/scratch/Projects/spirou_py3/data/'
+TDATA = 'scratch/Projects/spirou_py3/data_test/'
 
 #   Define the root installation directory
-DRS_ROOT = '/scratch/Projects/spirou_py3/INTROOT/'
+DRS_ROOT = '/scratch/Projects/spirou_py3/spirou_py3//INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/scratch/Projects/spirou_py3/data/raw'
+DRS_DATA_RAW = '/scratch/Projects/spirou_py3/data_test/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/scratch/Projects/spirou_py3/data/reduced'
+DRS_DATA_REDUC = '/scratch/Projects/spirou_py3/data_test/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/scratch/Projects/spirou_py3/data/calibDB'
+DRS_CALIB_DB = '/scratch/Projects/spirou_py3/data_test/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/scratch/Projects/spirou_py3/data/msg'
+DRS_DATA_MSG = '/scratch/Projects/spirou_py3/data_test/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/scratch/Projects/spirou_py3/data/tmp/'
+DRS_DATA_WORKING = '/scratch/Projects/spirou_py3/data_test/tmp'
 
 
 # -----------------------------------------------------------------------------
