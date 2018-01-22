@@ -119,10 +119,11 @@ def debug_start():
         cc = nocol
     # ask to run debugger
     try:
-        print(cc + '\n\n\tError found and running in DEBUG mode\n')
-        uinput = raw_input('\tEnter python debugger? [Y]es or [N]o?\t')
+        print(cc + '\n\n\tError found and running in DEBUG mode\n' + nocol)
+        uinput = raw_input(cc + '\tEnter python debugger? [Y]es or [N]o?\t'
+                           + nocol)
         if 'Y' in uinput.upper():
-            print('\n\t ==== DEBUGGER ====\n'
+            print(cc + '\n\t ==== DEBUGGER ====\n'
                   '\n\t - type "list" to list code'
                   '\n\t - type "up" to go up a level'
                   '\n\t - type "interact" to go to an interactive shell'
@@ -135,7 +136,7 @@ def debug_start():
             import pdb
             pdb.set_trace()
 
-            print('\n\nCode Exited')
+            print(cc + '\n\nCode Exited' + nocol)
             EXIT_TYPE(1)
         else:
             EXIT_TYPE(1)
