@@ -1,0 +1,187 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\chapter{Required input header keywords}
+\label{ch:input_keywords}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Required keywords}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The following keywords are required by the current recipes to run.
+
+\begin{itemize}
+
+% TPL_NAME
+\item \KeywordEntry{Data fits file type}
+{The data fits file type (template Name)}
+{kw\_DPRTYPE}
+{TPL\_NAME}{"DATA"}{template Name}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% ACQTIME1
+\item \namedlabel{text:acqtime1} \KeywordEntry{Acquisition time (human readable)}
+{The acquisition time in format YYYY-mm-dd-HH-MM-SS.ss}
+{kw\_ACQTIME\_KEY}
+{ACQTIME1}{YYYY-mm-dd-HH-MM-SS.ss}{Date at start of observation}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% ACQTIME
+\item \KeywordEntry{Acquisition time (unix time format)}
+{The acquisition time in in unix time format (time since 1970-01-01-00-00-00)}
+{kw\_ACQTIME\_KEY\_UNIX}
+{ACQTIME}{000000000.00}{Date in unix time at start of observation}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% RDNOISE
+\item \namedlabel{text:sigdet} \KeywordEntry{Read noise}
+{The read noise (used for sigdet) [e-]}
+{kw\_RDNOISE}
+{RDNOISE}{0.0}{read noise (electrons)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% GAIN
+\item \namedlabel{text:gain} \KeywordEntry{Gain}
+{The gain [e-/ADU]}
+{kw\_GAIN}
+{GAIN}{0.0}{gain (electrons/ADU)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% EXPTIME
+\item \namedlabel{text:exptime} \KeywordEntry{Exposure time}
+{The integration time in seconds}
+{kw\_EXPTIME}
+{EXPTIME}{0.0}{Integration time (seconds)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+\end{itemize}
+
+\ifdevguide
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Descriptions}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ------------------------------------------------------------------------
+
+The following FITS descriptors of the 2D raw frames are required for the DRS.
+Last updated version 21 Nov 2014. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\subsection{Standard FITS Keywords}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thighlight}
+\begin{table}[H]
+\begin{tabular}{>{\color{red}}l c r c l}
+BITPIX  & = &                   16 & / & 16bit \\
+NAXIS   & = &                    2 & / & Number of axes \\
+NAXIS1  & = &                 4096 & / & Number of pixel columns \\
+NAXIS2  & = &                 4096 & / & Number of pixel rows \\
+BZERO   & = &              32768.0 & / & Zero factor \\
+BSCALE  & = &                  1.0 & / & Scale factor \\
+DATE    & = & `2013-11-26T09:06:14' & / & UTC Date of file creation \\
+INSTRUME& = & `SPIROU'           & / & Instrument Name \\
+\end{tabular}
+\end{table}
+\end{thighlight}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\subsection{FITS keywords related to the detector}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thighlight}
+\begin{table}[H]
+\begin{tabular}{>{\color{red}}l c r c l}
+EXPTIME & = &                800.0 & / &  Integration time (seconds) \\
+DARKTIME& = &            800.0 & / & Dark current time (seconds) \\
+GAIN    & = &                 1.30 & / & gain (electrons/ADU) \\
+RDNOISE & = &                 4.20 & / & read noise (electrons) \\
+NSUBEXP & = &                    4 & / & Total number of sub-exposures of 5.2s \\
+OBSTYPE & = &   `NORMAL'     & / & Exposure type (DARK/NORMAL) \\
+MIDEXPTM& = &        400  & / &  mid-exposure time (seconds)  \\
+EMCNTS  & = & 	444578   & / & exposure meter counts at end \\
+\end{tabular}
+\end{table}
+\end{thighlight}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\subsection{FITS keywords related to the target}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thighlight}
+\begin{table}[H]
+\begin{tabular}{>{\color{red}}l c r c l}
+OBJNAME & = &  Gl9999   & / &  Target name \\
+OBJRA   & = &  `5:35:09.87'         & / & Target right ascension \\
+OBJDEC  & = &  `-5:27:53.3'        & / & Target declination \\
+OBJRAPM & = &                  0.560 & / & Target right ascension proper motion in as/yr \\
+OBJDECPM& = &                  -0.33 & / & Target declination proper motion in as/yr \\
+OBJEQUIN& = &  2000.0       & / & Target equinox \\
+
+OBJRV   & = &        -30.0      & / & Target Radial velocity (km/s)  (999 if unknown) \\
+OBJTYPE & = &     `M5' & / & Target spectral type \\
+OBJJMAG & = &        8.2 & / & Target J magnitude \\
+OBJHMAG & = &        9.2 & / & Target H magnitude \\
+OBJKMAG & = &        10.0 & / & Target K magnitude  \\
+\end{tabular}
+\end{table}
+\end{thighlight}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\subsection{FITS keywords related to the telescope}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thighlight}
+\begin{table}[H]
+\begin{tabular}{>{\color{red}}l c r c l}
+ACQTIME & = & 2013-11-26T09 :06 :14.858 & / & Date at start of observation \\
+ACQTIME1 & = & 1385456774               & / & Date in unix time at start of observation \\
+DATE\_OBS& = & `2013-11-26T09 :06 :14.858'       & / & Date at start of observation (UTC) \\
+EQUINOX & = &               2000.0 & / &Equinox of coordinates \\
+EPOCH   & = &            2000.0 & / & Epoch of coordinates \\
+MJDATE  & = &        56622.3700212 & / & Modified Julian Date at start of observation \\
+MJEND   & = &        56622.3797593 & / & Modified Julian Date at end of observation \\
+AIRMASS & = &        1.4 & / & Airmass at start of observation \\
+RA      & = & `5:35:09.87'         & / & Telescope right ascension \\
+DEC     & = & `-5:27:53.3'         & / & Telescope declination \\
+
+SEEING & = &    1.0 & / & Seeing at start of observation \\
+\end{tabular}
+\end{table}
+\end{thighlight}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\subsection{FITS keywords related to the instrument}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thighlight}
+\begin{table}[H]
+\begin{tabular}{>{\color{red}}l c r c l}
+TPL\_NAME & = & `SPIROU\_POL\_WAVE'   & / & template Name  \\
+TPL\_NEXP & = &    1                  & / & \# of exposure within template  \\
+TPL\_EXPN & = &    1                  & / & exposure \# within template  \\
+INS\_CAL  & = & `WAVE'                & / & Simultaneous calibration (WAVE/FP/NONE)  \\
+INS\_LAMP & = & `UrAr'                & / &   Calibration lamp  \\
+INS\_RHB1 & = &  90                   & / & SPIROU rhomb 1 position (deg) \\
+INS\_RHB2 & = &  180                  & / & SPIROU rhomb 2 position deg) \\
+\end{tabular}
+\end{table}
+\end{thighlight}
+
+\fi
