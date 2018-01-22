@@ -83,10 +83,10 @@
 \lstdefinestyle{cmdstyle}{
     language=command.com,
     commentstyle=\color{codegreen},
-    keywordstyle=\color{blue!35!white},
+    keywordstyle=\color{black}{\bfseries},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
-    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{white},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{black},
     breakatwhitespace=false,         
     breaklines=true,                 
     captionpos=b,                    
@@ -105,10 +105,10 @@
 
 \lstdefinestyle{cmdstyleprint}{
     commentstyle=\color{codegreen},
-    keywordstyle=\color{blue!35!white},
+    keywordstyle=\color{black}{\bfseries},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
-    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{white},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{black},
     breakatwhitespace=false,         
     breaklines=true,                 
     captionpos=b,                    
@@ -127,10 +127,10 @@
 
 \lstdefinestyle{cmdstyleprintspecial}{
     commentstyle=\color{codegreen},
-    keywordstyle=\color{blue!35!white},
+    keywordstyle=\color{black}{\bfseries},
     numberstyle=\tiny\color{codegray},
     stringstyle=\color{codepurple},
-    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{white},
+    basicstyle=\linespread{1.2}\ttfamily\footnotesize\color{black},
     breakatwhitespace=false,         
     breaklines=true,                 
     captionpos=b,                    
@@ -254,7 +254,7 @@
       top=0pt,bottom=0pt,left=0mm,right=0mm,
       %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
       colback=backcolour1,
-      colframe=backcolour1!75!black,
+      colframe=backcolour1!50!black,
       fonttitle={\tiny\bfseries},
       title={tcsh/csh},  % Fixed title
       listing only,
@@ -267,7 +267,7 @@
       %tcbox raise base,
       top=0pt,bottom=0pt,left=2mm,right=0mm,
       %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
-      colback=darkgray,
+      colback=darkgray!25!white,
       colframe=darkgray!75!black,
       fonttitle={\tiny\bfseries},
       title={CMD input},  % Fixed title
@@ -282,10 +282,10 @@
       %tcbox raise base,
       top=0pt,bottom=0pt,left=2mm,right=0mm,
       %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
-      colback=darkgray,
+      colback=darkgray!25!white,
       colframe=darkgray!75!black,
       fonttitle={\tiny\bfseries},
-      title={Command line output},  % Fixed title
+      title={CMD output},  % Fixed title
       listing only,
       listing options={style=cmdstyleprint}
 }
@@ -297,10 +297,10 @@
       %tcbox raise base,
       top=0pt,bottom=0pt,left=2mm,right=0mm,
       %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
-      colback=darkgray,
+      colback=darkgray!25!white,
       colframe=darkgray!75!black,
       fonttitle={\tiny\bfseries},
-      title={Command line output},  % Fixed title
+      title={CMD output},  % Fixed title
       listing only,
       listing options={style=cmdstyleprintspecial}
 }
