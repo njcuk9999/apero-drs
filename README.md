@@ -8,6 +8,11 @@
 - ![version 0.1.003 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.1.003) 
 
 
+# Test data:
+
+- [version 0.1.003](http://genesis.astro.umontreal.ca/neil/)
+
+
 # User manual
 
 ![User manual page](./documentation/User_guide_spirou_drs.pdf "User manual page")
