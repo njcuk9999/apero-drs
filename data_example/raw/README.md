@@ -9,3 +9,6 @@ i.e.
 - /data/raw/20170710/raw_fits_file1.fits
 - /data/raw/20170710/raw_fits_file2.fits
 - /data/raw/20170710/raw_fits_file3.fits
+
+
+These paths can be changed in ```/INTROOT/config/config.py```
