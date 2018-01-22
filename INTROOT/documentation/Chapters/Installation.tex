@@ -157,17 +157,17 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 	\item In bash open the `.bashrc' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
 	\begin{bashbox}
-	@export@ <PATH>=(*\InstallDIR*)/bin/:<$PATH>
+	@export@ <PATH>="(*\InstallDIR*)/bin/":<$PATH>
 
-	@export@ <PYTHONPATH>=(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/":<$PYTHONPATH>
 	\end{bashbox}
 
 	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
 
 	\begin{cshbox}
-	@setenv@ <PATH> (*\InstallDIR*)/bin/:<${PATH}>
-
-	@setenv@ <PYTHONPATH> (*\InstallDIR*):(*\InstallDIR*)/bin/:<${PYTHONPATH}>
+	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<${PATH}>
+"
+	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/":<${PYTHONPATH}>
 	\end{cshbox}
 
 \end{itemize}
@@ -215,7 +215,7 @@ This process is a little more convoluted than on Linux or \mac system.
 \noindent i.e.
 
 \begin{textbox}
-C:\Python27;(*\InstallDIR*);
+C:\Python27;(*\InstallDIR*)\bin\;
 \end{textbox}
 
 \item if under system variables `PythonPath' does not exist create a new variable called `PythonPath' and add:
