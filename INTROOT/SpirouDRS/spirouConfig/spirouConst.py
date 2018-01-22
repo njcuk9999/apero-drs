@@ -53,7 +53,7 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.1.003'
+    version = '0.1.004'
     return version
 
 
