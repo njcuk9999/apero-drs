@@ -142,7 +142,7 @@ The first step is to extract the DRS into a folder (the \InstallDIR).
 
 \noindent Do this by using the following commands:
 \begin{cmdbox}
-cd (* \InstallDIRcmd *)
+cd (* \InstallDIR *)
 unzip DRS.zip
 \end{cmdbox}
 
@@ -166,7 +166,6 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 
 	\begin{cshbox}
 	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<${PATH}>
-"
 	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/":<${PYTHONPATH}>
 	\end{cshbox}
 
@@ -179,7 +178,7 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 
 \noindent To run the recipes from the command line (without starting python) one must make them executable. Do this by using the following command:
 \begin{cmdbox}
-chmod +x (*\InstallDIRcmd*)/bin/*.py
+chmod +x (*\InstallDIR*)/bin/*.py
 \end{cmdbox}
 
 
@@ -305,18 +304,18 @@ One must install the DRS (Section \ref{ch:install:installunix}) AND set up the D
 
 \item To validate running from command line type:
 \begin{cmdbox}
-(*\calvalidatecmd*)
+(*\calvalidate*)
 \end{cmdbox}
 
 \item To validate running from python/ipython from the command line type:
 \begin{cmdbox}
-python (*\calvalidatecmd*)
-ipython (*\calvalidatecmd*)
+python (*\calvalidate*)
+ipython (*\calvalidate*)
 \end{cmdbox}
 
 \item To validate running from ipython, open ipython and type:
 \begin{pythonbox}
-@run@ (*\calvalidatecmd*)
+@run@ (*\calvalidate*)
 \end{pythonbox}
 
 \item To validate running from import from python/ipython, open python/ipython and type:
