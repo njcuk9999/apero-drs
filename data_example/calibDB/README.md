@@ -7,3 +7,5 @@ These are managed in 'master_calib_SPIROU.txt' in the following format
 ```
   key foldername filename time-human time-unix
 ```
+
+This path and the calibration database filename can be changed in ```/INTROOT/config/config.py```
