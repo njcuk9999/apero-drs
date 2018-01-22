@@ -1,6 +1,6 @@
 # SPIRou DRS in python 3
 
-<img src="./documentation/Figures/Logo_SPIRou-22.jpg" alt="Drawing" style="width:128px;"/>
+<img src="./INTROOT/documentation/Figures/Logo_SPIRou-22.jpg" alt="SPIRou Logo" style="width:128px;"/>
 
 
 # Most recent released version:
