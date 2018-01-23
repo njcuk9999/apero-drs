@@ -1,11 +1,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
+\ifquickguide
+\begin{center}
+{{\Huge SPIRou Quick Installation Guide} \\ {\small Version \MyVersionDev \\ For DRS \instrument \MyCodeVersion}}
+\end{center}
+\else
 \chapter{Quick Install Guide}
 \label{chapter:quickinstallation}
+\fi
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-This is a quick guide to installation, for a more full description please see Chapter \ref{chapter:installation}. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using a unix operating system with BASH.
+\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using a unix operating system with BASH.
 
 
 \begin{enumerate}
@@ -19,8 +25,8 @@ This is a quick guide to installation, for a more full description please see Ch
 \item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc)
 
 	\begin{bashbox}
-	@export@ <PATH>="(*\InstallDIR*)/bin/":<$PATH>
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/":<$PYTHONPATH>
+	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
 	\end{bashbox}
 
 \item make sure your paths are set
@@ -38,7 +44,7 @@ This is a quick guide to installation, for a more full description please see Ch
 \begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
 \definevariable{text:drs_root}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
 &&&&\\
-\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory (\InstallDIR) \\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory \\
 \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
 \definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
 \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\
@@ -50,6 +56,10 @@ This is a quick guide to installation, for a more full description please see Ch
 \end{thighlight}
 
 \item validate the DRS installation:
+\begin{cmdbox}
+(*\calvalidate*)
+\end{cmdbox}
+\noindent or 
 \begin{cmdbox}
 python (*\calvalidate*)
 \end{cmdbox}
