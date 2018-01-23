@@ -83,7 +83,7 @@ ic_locnbmaxo_fpall = {'AB': 72, 'A': 36, 'B': 36, 'C': 36}
 qc_loc_nbo_fpall = {'AB': 72, 'A': 36, 'B': 36, 'C': 36}
 
 #   Fiber type                                                        - [cal_ff]
-fib_type_fpall = {'AB': ["AB"], 'A': ["A"], 'B': ["B"], 'C': ["C"]}
+fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
 ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
