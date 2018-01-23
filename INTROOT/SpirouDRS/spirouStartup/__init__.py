@@ -26,7 +26,8 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['RunInitialStartup', 'RunStartup']
+__all__ = ['Begin', 'GetCustomFromRuntime', 'GetFile', 'GetFiberType',
+           'LoadArguments', 'InitialFileSetup']
 
 # =============================================================================
 # Function aliases

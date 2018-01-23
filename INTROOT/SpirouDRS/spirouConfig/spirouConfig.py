@@ -48,7 +48,7 @@ class ConfigError(ConfigException):
     """
     Custom Config Error for passing to the log
     """
-    def __init__(self, message, key=None, config_file=None, level=None):
+    def __init__(self, message='', key=None, config_file=None, level=None):
         """
         Constructor for ConfigError sets message to self.message and level to
         self.level
@@ -75,7 +75,8 @@ class ConfigError(ConfigException):
         if config_file is None:
             cargs = [PACKAGE, CONFIGFOLDER, CONFIG_FILE]
             config_file = spirouConfigFile.get_default_config_file(*cargs)
-        if key is None and self.level == 'error':
+        # deal with message
+        if key is None and self.level == 'error' and type(message) == str:
             self.message = 'Config Error: ' + message
         elif key is None:
             self.message = message

@@ -59,8 +59,16 @@ def gettxt(filename):
     :return values: list of strings, value of each key
     """
     # read raw config file as strings
-    raw = np.genfromtxt(filename, comments="#", delimiter='=',
-                        dtype=str).astype(str)
+    try:
+        raw = np.genfromtxt(filename, comments="#", delimiter='=',
+                            dtype=str).astype(str)
+    except Exception:
+        try:
+            raw = read_lines(filename, comments='#', delimiter='=')
+        except Exception:
+            print('FATAL ERROR: Config file {0} is corrupted (invalid '
+                  'charaters or encoding')
+
     # check that we have open config file correctly
     try:
         lraw = len(raw)
@@ -78,6 +86,29 @@ def gettxt(filename):
         values.append(evaluate_value(value))
     # return keys and values
     return keys, values
+
+
+def read_lines(filename, comments='#', delimiter=' '):
+    # manually open file (slow)
+    f = open(filename, 'r')
+    lines = f.readlines()
+    # valid lines
+    raw = []
+    # loop around lines
+    for line in lines:
+        # remove line endings and blanks at start and end
+        line = line.replace('\n', '').strip()
+        # do not include blank lines
+        if len(line) == 0:
+            continue
+        # do not include commented lines
+        elif line[0] == '#':
+            continue
+        else:
+            # append to raw
+            raw.append(line.split(delimiter))
+    # return raw
+    return np.array(raw)
 
 
 def get_relative_folder(package, folder):
