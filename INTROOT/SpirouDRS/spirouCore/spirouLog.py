@@ -40,6 +40,10 @@ EXIT_TYPE = spirouConfig.Constants.EXIT()
 EXIT_LEVELS = spirouConfig.Constants.EXIT_LEVELS()
 # Boolean for whether we log caught warnings
 WARN = spirouConfig.Constants.LOG_CAUGHT_WARNINGS()
+# Get the Config error
+ConfigError = spirouConfig.ConfigError
+# Constant for warning about using tdata
+TDATA_WARNING = 1
 
 
 # =============================================================================
@@ -64,6 +68,8 @@ def logger(key='', option='', message=''):
 
     :return:
     """
+    # allow tdata_warning to be changed
+    global TDATA_WARNING
     # if key is '' then set it to all
     if len(key) == 0:
         key = 'all'
@@ -93,9 +99,21 @@ def logger(key='', option='', message=''):
         # print to stdout
         printlog(cmd, key)
         # get logfilepath
-        logfilepath = get_logfilepath(unix_time)
-        # write to log file
-        writelog(cmd, ecmd, key, logfilepath)
+        try:
+            logfilepath, warning = get_logfilepath(unix_time)
+            # write to log file
+            writelog(cmd, ecmd, key, logfilepath)
+        except ConfigError as e:
+            printlogandcmd(e.message, e.level, human_time, dsec, option)
+            warning = False
+            key = 'error'
+        # if warning is True then we used TDATA and should report that
+        if warning and TDATA_WARNING:
+            wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
+                    'path "TDATA"={0}')
+            printlogandcmd(wmsg.format(CPARAMS.get('TDATA', '')), 'warning',
+                           human_time, dsec, option)
+            TDATA_WARNING = 0
 
     # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
     if key in EXIT_LEVELS:
@@ -103,6 +121,22 @@ def logger(key='', option='', message=''):
             debug_start()
         else:
             EXIT_TYPE(1)
+
+
+def printlogandcmd(message, key, human_time, dsec, option):
+    if type(message) == str:
+        message = [message]
+    elif type(list):
+        message = list(message)
+    else:
+        message = [('Logging error: message="{0}" is not a valid string or '
+                    'list').format(message)]
+        key = 'error'
+    for mess in message:
+        code = TRIG_KEY.get(key, ' ')
+        cmdargs = [human_time, dsec, code, option, mess]
+        cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+        printlog(cmd, key)
 
 
 def debug_start():
@@ -157,15 +191,26 @@ def get_logfilepath(utime):
     # -------------------------------------------------------------------------
     # Get DRS_DATA_MSG folder directory
     dir_data_msg = CPARAMS.get('DRS_DATA_MSG', '')
+    # set warning to False
+    warning = False
     # check that DRS_DATA_MSG path exists
     if not os.path.exists(dir_data_msg):
+        warning = True
         # if TDATA path does not exists - exit with error
         if not os.path.exists(CPARAMS.get('TDATA', '')):
-            print(spirouConfig.Constants.CONFIG_KEY_ERROR('TDATA'))
-            EXIT_TYPE(1)
+            mess1 = 'Fatal error Cannot write to log file'
+            mess2 = ('    the path in "DRS_DATA_MSG" and "TDATA" cannot be '
+                     'found on the system')
+            mess3 = '    Please check configuration file!'
+            mess4 = '    "DRS_DATA_MSG" = {0}'.format(dir_data_msg)
+            mess5 = '    "TDATA" = {0}'.format(CPARAMS.get('TDATA', ''))
+            raise ConfigError(message=[mess1, mess2, mess3, mess4, mess5],
+                              level='error')
         # if TDATA does exist then create a /msg/ sub-directory
         dir_data_msg = os.path.join(CPARAMS['TDATA'], 'msg', '')
-        os.makedirs(dir_data_msg)
+        # if it doesn't exist create it
+        if not os.path.exists(dir_data_msg):
+            os.makedirs(dir_data_msg)
     # Get the used date if it is not None
     CPARAMS['DRS_USED_DATE'] = CPARAMS.get('DRS_USED_DATE', 'None').upper()
     udate = CPARAMS['DRS_USED_DATE']
@@ -173,11 +218,12 @@ def get_logfilepath(utime):
         date = time.strftime('%Y-%m-%d', time.gmtime(utime - 43200))
     else:
         date = CPARAMS['DRS_USED_DATE']
-
     # Get the HOST name (if it does not exist host = 'HOST')
     host = os.environ.get('HOST', 'HOST')
     # construct the logfile path
-    return os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
+    lpath = os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
+    # return the logpath and the warning
+    return lpath, warning
 
 
 def correct_level(key, level):
