@@ -171,8 +171,10 @@ def main(debug_mode=0):
     wlog = spirouLog.logger
     # Get config parameters
     cparams = spirouConfig.ReadConfigFile()
-    # check that drs_name and drs_version exist
-    spirouConfig.CheckConfig(cparams, ['DRS_NAME', 'DRS_VERSION'])
+    # get drs_name and drs_version
+    cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
+    cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
+    cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
     # display title
     Startup.display_title(cparams)
     # check input parameters

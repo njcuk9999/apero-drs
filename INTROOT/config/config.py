@@ -19,10 +19,10 @@ DRS_DEBUG = 0
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = 'scratch/Projects/spirou_py3/data_test/'
+TDATA = '/scratch/Projects/spirou_py3/data_test/'
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/scratch/Projects/spirou_py3/spirou_py3//INTROOT/'
+DRS_ROOT = '/scratch/Projects/spirou_py3/spirou_py3/INTROOT/'
 
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = '/scratch/Projects/spirou_py3/data_test/raw'
@@ -49,7 +49,7 @@ DRS_DATA_WORKING = '/scratch/Projects/spirou_py3/data_test/tmp'
 #       'info' - to print info/warning/error events
 #       'warning' - to print warning/error events
 #       'error' - to print only error events
-PRINT_LEVEL = "all"
+PRINT_LEVEL = 'all'
 
 #   Level at which to log in log file, values can be:
 #       'all' - to print all events
