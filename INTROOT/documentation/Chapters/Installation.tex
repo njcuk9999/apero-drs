@@ -157,16 +157,15 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 	\item In bash open the `.bashrc' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
 	\begin{bashbox}
-	@export@ <PATH>="(*\InstallDIR*)/bin/":<$PATH>
-
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/":<$PYTHONPATH>
+	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
 	\end{bashbox}
 
 	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
 
 	\begin{cshbox}
-	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<${PATH}>
-	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/":<${PYTHONPATH}>
+	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<${PATH}>"
+	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/:<${PYTHONPATH}>"
 	\end{cshbox}
 
 \end{itemize}
@@ -250,7 +249,7 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{4.5cm}}
 \definevariable{text:tdata}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
 &&&&\\
-\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory (\InstallDIR) \\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory \\
 \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
 \definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
 \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & /drs/data/calibDB & / & Define the directory that the calibration files should be saved to/read from \\

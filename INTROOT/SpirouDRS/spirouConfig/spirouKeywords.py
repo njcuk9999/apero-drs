@@ -38,8 +38,7 @@ p['DRS_VERSION'] = spirouConfig.Constants.VERSION()
 p.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
 # check input parameters
 p = spirouConfig.check_params(p)
-# load ICDP config file
-p = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True)
+
 
 # =============================================================================
 # Change these
@@ -113,10 +112,18 @@ USE_PARAMS = ['DRS_NAME',
               'IC_LOC_DELTA_WIDTH',
               'IC_LOCDFITC',
               'IC_LOCDFITP',
-              'IC_LOCDFITW']
+              'IC_LOCDFITW',
+              'DARK_CUTLIMIT']
 
+# load ICDP config file
+try:
+    p = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True)
+except Exception:
+    for param in USE_PARAMS:
+        p[param] = '0'
 # check that we have all parameters (do not change)
 spirouConfig.check_config(p, USE_PARAMS)
+
 # -----------------------------------------------------------------------------
 # Variable definition
 # -----------------------------------------------------------------------------
