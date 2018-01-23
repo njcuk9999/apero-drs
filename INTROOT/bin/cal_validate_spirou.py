@@ -45,7 +45,7 @@ def main(debug_mode=0):
         print(' *     (DEBUG MODE ACTIVE) ')
     print(' *****************************************\n')
 
-    # Check imports
+    # Check importls
     print('\n\n1) Running core module tests\n')
     # -------------------------------------------------------------------------
     # SpirouDRS
