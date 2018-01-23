@@ -158,6 +158,7 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     :param kind: string, description of program we are running (i.e. dark)
 
     :param prefixes: list of strings, prefixes to look for in file name
+    :param prefixes: list of strings, prefixes to look for in file name
                      will exit code if none of the prefixes are found
                      (prefix = None if no prefixes are needed to be found)
 
@@ -186,7 +187,7 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     # -------------------------------------------------------------------------
     # check that fitsfilename exists
     if fits_fn is None:
-        wmsg1 = 'Argument Error: No fits file defined in run time argument'
+        wmsg1 = 'Argument Error: No fits file defined at run time argument'
         wmsg2 = '    format must be:'
         emsg = '    >>> {0}.py [FOLDER] [FILES]'
         WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(p['program'])])
