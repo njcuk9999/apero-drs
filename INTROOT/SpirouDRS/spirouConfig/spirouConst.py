@@ -53,7 +53,7 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.1.004'
+    version = '0.1.005'
     return version
 
 
@@ -70,7 +70,7 @@ def AUTHORS():
 
 def LATEST_EDIT():
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-01-22'
+    date = '2018-01-23'
     return date
 
 
@@ -500,7 +500,8 @@ def COLOUREDLEVELS():
 
 
 def NORMALCOLOUR():
-    norm = " \033[0;37;40m"
+    # norm = " \033[0;37;40m"
+    norm = " \u001b[0m"
     return norm
 
 
