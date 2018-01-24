@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-spirouKeywords
+Spirou keywords module
 
 FITS rec header keywords (for reading headers and writing headers)
 
@@ -10,8 +10,6 @@ Created on 2017-10-30 at 16:37
 @author: cook
 
 Import rules: Only from spirouConfig
-
-Version 0.0.1
 """
 from __future__ import division
 import numpy as np
@@ -362,12 +360,25 @@ kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
 # Define functions (Do not change)
 # =============================================================================
 def test_keywords():
+    """
+    Test which keys are in USE_KEYS (prints warnings about these keys)
+
+    :return None:
+    """
     for key in locals():
         if key not in USE_KEYS:
             print('WARNING: key={0} not in USE_KEYS')
 
 
 def generate_use_keys():
+    """
+    Generate sorted USE_KEYS list from all variables in the memory with
+    'kw_' prefix. Note should have a fresh python instance running to avoid
+    unwanted variables. Only for use in creating the list USE_KEYS for this
+    code!
+
+    :return use_keys: list of strings, list of all keys with 'kw_' in their name
+    """
     all_locals = np.sort(list(globals().keys()))
     use_keys = []
     for lkey in all_locals:
@@ -380,6 +391,9 @@ def get_keywords(pp=None):
     """
     Get keywords defined in USE_KEYS from above (must be named exactly as in
     USE_KEYS list)
+
+    :param pp: parameter dictionary or None, if not None then keywords are added
+               to the specified ParamDict else a new ParamDict is created
 
     :return pp: if pp is None returns a new dictionary of keywords
                 else adds USE_KEYS as keys with value = eval(key)
@@ -415,9 +429,22 @@ def get_keywords(pp=None):
 
 
 def check_keyword_format(key, value):
+    """
+    Checks that the format of each keyword is correct and generates a
+    ConfigError if incorrect
+
+    format must be [string, value, string]
+                   [name, value, comment]
+
+    :param key: string, keyword key to test
+    :param value: object, object to test format
+
+    :return None:
+    """
     if type(value) != list:
         emsg = 'Key {0} defined in {1} is not a list. Please check'
-        raise spirouConfig.ConfigError(emsg.format(key, __NAME__), level='error')
+        raise spirouConfig.ConfigError(emsg.format(key, __NAME__),
+                                       level='error')
     # value must be a list of length 3
     if len(value) != 3:
         emsg = 'key {0} defined in {1} is not a length 3 list (len={2})'
@@ -425,18 +452,18 @@ def check_keyword_format(key, value):
                                        level='error')
     # value[0] and value[2] must be strings
     if type(value[0]) != str or type(value[2]) != str:
-        emsg = ('key {0} defined in {1} is not in form: \n\t'
-                '[string, #value, string] \n\n\twhere #value is any value, '
-                'and \n\tstring is any valid python str object.')
-        raise spirouConfig.ConfigError(emsg.format(key, __NAME__),
-                                       level='error')
+        emsg1 = 'key {0} defined in {1} is not in form:'.format(key, __NAME__)
+        emsg2 = '    [string, #value, string]'
+        emsg3 = ('    where #value is any value and string is any valid python'
+                 ' string object.')
+        raise spirouConfig.ConfigError([emsg1, emsg2, emsg3], level='error')
 
 
-def get_keyword_values_from_header(p, hdict, keys, filename=None):
+def get_keyword_values_from_header(pp, hdict, keys, filename=None):
     """
     Gets a keyword or keywords from a header or dictionary
 
-    :param p: parameter dictionary, the constants parameter dictionary
+    :param pp: parameter dictionary, the constants parameter dictionary
     :param hdict: dictionary, raw dictionary or FITS rec header file containing
                   all the keys in "keys" (spirouConfig.ConfigError raised if
                   any key does not exist)
@@ -447,10 +474,10 @@ def get_keyword_values_from_header(p, hdict, keys, filename=None):
                      fits rec header is from (or where the dictionary was
                      compiled from) - if not from a file this should be left
                      as None
+
     :return values: list, the values in the header for the keys
                     (size = len(keys))
     """
-
     # deal with a non-list set of keys
     if type(keys) not in [list, np.ndarray]:
         keys = [keys]
@@ -459,16 +486,16 @@ def get_keyword_values_from_header(p, hdict, keys, filename=None):
     values = []
     for key in keys:
         # see if key is a keyword list
-        if key in p:
-            if type(p[key]) in [list, np.ndarray]:
-                key = p[key][0]
+        if key in pp:
+            if type(pp[key]) in [list, np.ndarray]:
+                key = pp[key][0]
         # try to get key from hdict
         try:
             values.append(hdict[key])
         # if we cannot find the key then raise a config error
         except ValueError:
             if filename is not None:
-                emsg = 'key "{0}" is required in the header of file {1}'
+                emsg = 'key "{0}" is required in the HEADER of file {1}'
                 eargs = [key, filename]
             else:
                 emsg = 'key "{0}" is required in the "hdict"'
@@ -477,15 +504,6 @@ def get_keyword_values_from_header(p, hdict, keys, filename=None):
     # return values
     return values
 
-
-
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-if __name__ == '__main__':
-    kwdict = get_keywords()
 
 # =============================================================================
 # End of code
