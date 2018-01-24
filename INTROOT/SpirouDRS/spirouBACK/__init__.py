@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+initialization code for SpirouBACK
 
 Created on 2017-11-10 at 14:33
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 
 from SpirouDRS import spirouConfig
