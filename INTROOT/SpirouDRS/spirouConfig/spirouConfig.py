@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou configuration module
 
 Created on 2017-10-11 at 13:09
 
 @author: cook
 
 Import rules: Only from spirouConfig
-
-Version 0.0.0
 """
 from __future__ import division
 import os
@@ -34,21 +30,16 @@ PACKAGE = Constants.PACKAGE()
 CONFIG_FILE = Constants.CONFIGFILE()
 CONFIGFOLDER = Constants.CONFIGFOLDER()
 TRIG_KEY = Constants.LOG_TRIG_KEYS()
-
+ConfigException = spirouConfigFile.ConfigException
 
 # =============================================================================
 # Define Custom classes
 # =============================================================================
-class ConfigException(Exception):
-    """Raised when config file is incorrect"""
-    pass
-
-
 class ConfigError(ConfigException):
     """
     Custom Config Error for passing to the log
     """
-    def __init__(self, message='', key=None, config_file=None, level=None):
+    def __init__(self, message=None, level=None):
         """
         Constructor for ConfigError sets message to self.message and level to
         self.level
@@ -58,12 +49,17 @@ class ConfigError(ConfigException):
 
         if config_file is None then deafult config file is used in its place
 
-        :param message: string, the message to print in the error (if key=None)
-        :param key: string or None, the key that caused this error or None
-        :param config_file: string or None, the source of the key it came from
+        :param message: list or string, the message to print in the error
         :param level: string, level (for logging) must be key in TRIG key above
                       default = all, error, warning, info or graph
         """
+        # deal with message
+        if message is None:
+            self.message = 'Config Error'
+        elif type(message) == str:
+            self.message = 'Config Error: ' + message
+        else:
+            self.message = list(message)
         # set logging level
         if level is None:
             self.level = 'error'
@@ -71,21 +67,6 @@ class ConfigError(ConfigException):
             self.level = level
         else:
             self.level = 'error'
-        # get config file path
-        if config_file is None:
-            cargs = [PACKAGE, CONFIGFOLDER, CONFIG_FILE]
-            config_file = spirouConfigFile.get_default_config_file(*cargs)
-        # deal with message
-        if key is None and self.level == 'error' and type(message) == str:
-            self.message = 'Config Error: ' + message
-        elif key is None:
-            self.message = message
-        elif key is not None:
-            emsg = 'key "{0}" must be defined in config file (located at {1})'
-            self.message = emsg.format(key, config_file)
-        else:
-            emsg = 'There was a problem with the config file (located at {1})'
-            self.message = emsg.format(config_file)
 
 
 class ParamDict(dict):
@@ -106,6 +87,15 @@ class ParamDict(dict):
         self.__capitalise_keys__()
 
     def __getitem__(self, key):
+        """
+        Method used to get the value of an item using "key"
+        used as x.__getitem__(y) <==> x[y]
+        where key is case insensitive
+
+        :param key: string, the key for the value returned (case insensitive)
+
+        :return value: object, the value stored at position "key"
+        """
         oldkey = key
         key = self.__capitalise_key__(key)
         try:
@@ -135,14 +125,46 @@ class ParamDict(dict):
         super(ParamDict, self).__setitem__(key, value)
 
     def __contains__(self, key):
+        """
+        Method to find whether ParamDict instance has key="key"
+        used with the "in" operator
+        if key exists in ParamDict True is returned else False is returned
+
+        :param key: string, "key" to look for in ParamDict instance
+
+        :return bool: True if ParamDict instance has a key "key", else False
+        """
         key = self.__capitalise_key__(key)
         return super(ParamDict, self).__contains__(key)
 
     def __delitem__(self, key):
+        """
+        Deletes the "key" from ParamDict instance, case insensitive
+
+        :param key: string, the key to delete from ParamDict instance,
+                    case insensitive
+
+        :return None:
+        """
+
         key = self.__capitalise_key__(key)
         super(ParamDict, self).__delitem__(key)
 
     def get(self, key, default=None):
+        """
+        Overrides the dictionary get function
+        If "key" is in ParamDict instance then returns this value, else
+        returns "default" (if default returned source is set to None)
+        key is case insensitive
+
+        :param key: string, the key to search for in ParamDict instance
+                    case insensitive
+        :param default: object or None, if key not in ParamDict instance this
+                        object is returned
+
+        :return value: if key in ParamDict instance this value is returned else
+                       the default value is returned (None if undefined)
+        """
         # capitalise string keys
         key = self.__capitalise_key__(key)
         # if we have the key return the value
@@ -161,7 +183,8 @@ class ParamDict(dict):
 
         :param key: string, the main dictionary string
         :param source: string, the source to set
-        :return:
+
+        :return None:
         """
         # capitalise string keys
         key = self.__capitalise_key__(key)
@@ -169,9 +192,9 @@ class ParamDict(dict):
         if key in self.keys():
             self.sources[key] = source
         else:
-            emsg = ('Source cannot be added for key "{0}" '
-                    '[Not in parmeter dictionary]')
-            raise ConfigError(emsg.format(key), level='error')
+            emsg1 = 'Source cannot be added for key "{0}" '.format(key)
+            emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
+            raise ConfigError([emsg1, emsg2], level='error')
 
     def append_source(self, key, source):
         """
@@ -180,7 +203,8 @@ class ParamDict(dict):
 
         :param key: string, the main dictionary string
         :param source: string, the source to set
-        :return:
+
+        :return None:
         """
         # capitalise string keys
         key = self.__capitalise_key__(key)
@@ -202,7 +226,8 @@ class ParamDict(dict):
                         if a dictionary source = sources[key] for key = keys[i]
                         if list source = sources[i]  for keys[i]
                         if string all sources with these keys will = source
-        :return:
+
+        :return None:
         """
         # loop around each key in keys
         for k_it in range(len(keys)):
@@ -230,7 +255,8 @@ class ParamDict(dict):
                         if a dictionary source = sources[key] for key = keys[i]
                         if list source = sources[i]  for keys[i]
                         if string all sources with these keys will = source
-        :return:
+
+        :return None:
         """
         # loop around each key in keys
         for k_it in range(len(keys)):
@@ -251,7 +277,8 @@ class ParamDict(dict):
         Set all keys in dictionary to this source
 
         :param source: string, all keys will be set to this source
-        :return:
+
+        :return None:
         """
         # loop around each key in keys
         for key in self.keys():
@@ -261,6 +288,13 @@ class ParamDict(dict):
             self.sources[key] = source
 
     def append_all_sources(self, source):
+        """
+        Sets all sources to this "source" value
+
+        :param source: string, the source to set
+
+        :return None:
+        """
 
         # loop around each key in keys
         for key in self.keys():
@@ -286,7 +320,7 @@ class ParamDict(dict):
             return self.sources[key]
         # else raise a Config Error
         else:
-            emsg = 'No source set for key={0}'
+            emsg = 'No source set for key={0} in ParamDict'
             raise ConfigError(emsg.format(key), level='error')
 
     def source_keys(self):
@@ -329,6 +363,12 @@ class ParamDict(dict):
         return return_keys
 
     def __capitalise_keys__(self):
+        """
+        Capitalizes all keys in ParamDict (used to make ParamDict case
+        insensitive), only if keys entered are strings
+
+        :return None:
+        """
         keys = list(self.keys())
         for key in keys:
             # check if key is a string
@@ -343,6 +383,15 @@ class ParamDict(dict):
                 super(ParamDict, self).__setitem__(key, value)
 
     def __capitalise_key__(self, key):
+        """
+        Capitalizes "key" (used to make ParamDict case insensitive), only if
+        key is a string
+
+        :param key: string or object, if string then key is capitalized else
+                    nothing is done
+
+        :return key: capitalized string (or unchanged object)
+        """
         # capitalise string keys
         if type(key) == str:
             key = key.upper()
@@ -378,8 +427,27 @@ def read_config_file(config_file=None):
 
 
 def load_config_from_file(p, key, required=False, logthis=False):
-    # Check that key  exists in config file
-    check_config(p, key)
+    """
+    Load a secondary level confiruation file filename = "key", this requires
+    the primary config file to already be loaded into "p"
+    (i.e. p['DRS_CONFIG'] and p[key] to be set)
+
+    :param p: parameter dictionary, contains constants (at least 'DRS_CONFIG'
+              and "key" to be set)
+    :param key: string, the key to access the config file name for (in "p")
+    :param required: bool, if required is True then the secondary config file
+                     is required for the DRS to run and a ConfigError is raised
+                     (program exit)
+    :param logthis: bool, if True loading of this config file is logged to
+                    screen/log file
+
+    :return p: parameter, dictionary, the updated parameter dictionary with
+               the secondary configuration files loaded into it as key/value
+               pairs
+    """
+    func_name = __NAME__ + '.load_config_from_file()'
+    # Check that DRS_CONFIG and "key" is in p
+    check_config(p, ['DRS_CONFIG', key])
     # construct icdp file name
     filename = os.path.join(p['DRS_CONFIG'], p[key])
     # try to open file
@@ -392,7 +460,7 @@ def load_config_from_file(p, key, required=False, logthis=False):
             if newkey in list(p.keys()):
                 wmsg = 'Warning key {0} overwritten by config: {1}'
                 raise ConfigError(wmsg.format(newkey, filename),
-                                  config_file=filename, level='warning')
+                                  level='warning')
             # Write key
             p[newkey] = newparams[newkey]
             # set the source of new parameter
@@ -400,18 +468,51 @@ def load_config_from_file(p, key, required=False, logthis=False):
         # log output
         if logthis:
             emsg = '{0} loaded from: {1}'.format(key, filename)
-            raise ConfigError(emsg, config_file=filename, level='all')
+            raise ConfigError(emsg, level='all')
     else:
         if required:
             # log error
-            emsg = 'Config file: {0} not found'.format(filename)
-            raise ConfigError(emsg, config_file=filename, level='error')
+            emsg1 = 'Config file "{0}" not found'.format(filename)
+            emsg2 = '   function = {0}'.format(func_name)
+            raise ConfigError([emsg1, emsg2], level='error')
     # return p
     return p
 
 
 def extract_dict_params(pp, suffix, fiber, merge=False):
+    """
+    Extract parameters from parameter dictionary "pp" with a certain suffix
+    "suffix" (whose value must be a dictionary containing fibers) add them
+    to a new parameter dictionary (if merge=False) if merge is True then
+    add them back to the "pp" parameter dictionary
 
+    :param pp: parameter dictionary, containing constants
+    :param suffix: string, the suffix string to look for in "pp", all keys
+                   must have values that are dictionaries containing (at least)
+                   the key "fiber"
+
+                   i.e. in the constants file:
+                   param1_suffix = {'AB'=1, 'B'=2, 'C'=3}
+                   param2_suffix = {'AB'='yes', 'B'='no', 'C'='no'}
+                   param3_suffix = {'AB'=True, 'B'=False, 'C'=True}
+
+    :param fiber: string, the key within the value dictionary to look for
+                  (i.e. in the above example 'AB' or 'B' or 'C' are valid
+    :param merge: bool, if True merges new keys with "pp" else provides
+                  a new parameter dictionary with all parameters that had the
+                  suffix in (with the suffix removed)
+
+    :return ParamDict: if merge is True "pp" is returned with the new constants
+                       added, else a new parameter dictionary is returned
+
+        i.e. for the above example return is the following:
+
+            "fiber" = "AB"
+
+            ParamDict(param1=1, param2='yes', param3=True)
+
+    """
+    func_name = __NAME__ + '.extract_dict_params()'
     # make suffix uppercase
     suffix = suffix.upper()
     # set up the fiber parameter directory
@@ -441,16 +542,22 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
             else:
                 raise TypeError('')
         except NameError:
-            emsg = ('Key={0} has suffix="{1}" and must be a valid '
-                    'python dictionary in form {\'key\':value}')
-            raise ConfigError(emsg.format(key, suffix), level='error')
+            emsg1 = ('Parameter={0} has suffix="{1}" and must be a valid python'
+                     ' dictionary in form {\'key\':value}').format(key, suffix)
+            emsg2 = '    function={0}'.format(func_name)
+            raise ConfigError([emsg1, emsg2], level='error')
         except ConfigError:
-            emsg = ('Key={0} has suffix="{1}" and must be a dictionary'
-                    'containing {2}')
-            raise ConfigError(emsg.format(key, suffix, fiber), level='error')
+            emsg1 = 'Parameter={0} has suffix="{1}"'
+            emsg2 = ('   it must be a dictionary containing (at least) the '
+                     'key {2}').format(key, suffix, fiber)
+            emsg3 = '    function={0}'.format(func_name)
+            raise ConfigError([emsg1, emsg2, emsg3], level='error')
         except TypeError:
-            emsg = 'Key={0} must be a dictionary'
-            raise ConfigError(emsg.format(key), level='error')
+            emsg1 = 'Parameter={0} must be a dictionary'.format(key)
+            emsg2 = ('    dictionary must be in form {\'key\':value}'
+                     '').format(key, suffix)
+            emsg3 = '    function={0}'.format(func_name)
+            raise ConfigError([emsg1, emsg2, emsg3], level='error')
         # we have dictionary with our fiber key so can now get value
         value = params[fiber]
         # get new key without the suffix
@@ -485,113 +592,107 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
 # =============================================================================
 #    Checking functions
 # =============================================================================
-
 def check_config(params, keys):
     """
     Check whether we have certain keys in dictionary
+    raises a Config Error if keys are not in params
 
-    :param params: dictionary
-    :param keys: string or list of strings
-    :return:
+    :param params: parameter dictionary
+    :param keys: string or list of strings containing the keys to look for
+
+    :return None:
     """
+    func_name = __NAME__ + '.check_config()'
     # get config file path
     # config_file = get_default_config_file()
     # make sure we have a list
     if type(keys) == str:
         keys = [keys]
     elif hasattr(keys, '__len__'):
-        pass
+        keys = list(keys)
     else:
-        raise ConfigError("Key(s) must be string or list of strings",
-                          level='error')
+        emsg1 = 'Key(s) must be string or list of strings'
+        emsg2 = '    function = {0}'.format(func_name)
+        raise ConfigError([emsg1, emsg2], level='error')
     # loop around each key and check if it exists
     for key in keys:
         if key not in params:
             # if there is an error return error message
-            emsg = 'key "{0}" must be defined in a config file'
+            emsg = 'key "{0}" not found, it must be defined in a config file'
             # return error message
             raise ConfigError(emsg.format(key), level='error')
 
 
 def check_params(p):
     """
-    Check the parameter dictionary has certain required values
+    Check the parameter dictionary has certain required values, p must contain
+    at the very least keys 'DRS_ROOT' and 'TDATA'
 
     :param p: dictionary, parameter dictionary
+               (must have at least keys 'DRS_ROOT' and 'TDATA')
+
     :return p: dictionary, the updated parameter dictionary
     """
+    func_name = __NAME__ + '.check_params()'
     # get log levels
     loglevels = list(TRIG_KEY.keys())
     # check that the drs_root and tdata variables are named
     check_config(p, ['DRS_ROOT', 'TDATA'])
     # check whether we have drs_data_raw key
     tmp = os.path.join(p['TDATA'], 'raw', '')
-    p['DRS_DATA_RAW'] = p.get('DRS_DATA_RAW', tmp)
-    p = set_source_for_defaulting_statements(p, 'DRS_DATA_RAW', tmp)
+    p = check_set_default_val(p, 'DRS_DATA_RAW', tmp, func_name)
 
     # check whether we have drs_data_reduc key
     tmp = os.path.join(p['TDATA'], 'reduced', '')
-    p['DRS_DATA_REDUC'] = p.get('DRS_DATA_REDUC', tmp)
-    p = set_source_for_defaulting_statements(p, 'DRS_DATA_REDUC', tmp)
+    p = check_set_default_val(p, 'DRS_DATA_REDUC', tmp, func_name)
 
     # check whether we have drs_data_msg key
     tmp = os.path.join(p['TDATA'], 'msg', '')
-    p['DRS_DATA_MSG'] = p.get('DRS_DATA_MSG', tmp)
-    p = set_source_for_defaulting_statements(p, 'DRS_DATA_MSG', tmp)
+    p = check_set_default_val(p, 'DRS_DATA_MSG', tmp, func_name)
 
     # check whether we have drs_calib_db key
     tmp = os.path.join(p['TDATA'], 'calibDB', '')
-    p['DRS_CALIB_DB'] = p.get('DRS_CALIB_DB', tmp)
-    p = set_source_for_defaulting_statements(p, 'DRS_CALIB_DB', tmp)
+    p = check_set_default_val(p, 'DRS_CALIB_DB', tmp, func_name)
 
     # check whether we have a drs_config key
     tmp = os.path.join(p['DRS_ROOT'], 'config', '')
-    p['DRS_CONFIG'] = p.get('DRS_CONFIG', tmp)
-    p = set_source_for_defaulting_statements(p, 'DRS_CONFIG', tmp)
+    p = check_set_default_val(p, 'DRS_CONFIG', tmp, func_name)
 
     # check whether we have a drs_man key
     tmp = os.path.join(p['DRS_ROOT'], 'man', '')
-    p['DRS_MAN'] = p.get('DRS_MAN', tmp)
-    p = set_source_for_defaulting_statements(p, 'DRS_MAN', tmp)
+    p = check_set_default_val(p, 'DRS_MAN', tmp, func_name)
 
     # check that drs_log exists else set to 1
     # cparams['DRS_LOG'] = cparams.get('DRS_LOG', 1)
 
     # check that drs_plot exists else set to 'NONE'
-    p['DRS_PLOT'] = p.get('DRS_PLOT', 'undefined')
-    p = set_source_for_defaulting_statements(p, 'DRS_PLOT', 'undefined')
+    p = check_set_default_val(p, 'DRS_PLOT', 'undefined', func_name)
 
     # check whether we have a drs_config key
-    p['DRS_DATA_WORKING'] = p.get('DRS_DATA_WORKING', None)
-    p = set_source_for_defaulting_statements(p, 'DRS_DATA_WORKING', None)
+    p = check_set_default_val(p, 'DRS_DATA_WORKING', None, func_name)
 
     # check that drs_used_date exists else set to 'undefined'
-    p['DRS_USED_DATE'] = p.get('DRS_USED_DATE', 'undefined')
-    p = set_source_for_defaulting_statements(p, 'DRS_USED_DATE', 'undefined')
+    p = check_set_default_val(p, 'DRS_USED_DATE', 'undefined', func_name)
 
     # check that drs_debug exists else set to 0
-    p['DRS_DEBUG'] = p.get('DRS_DEBUG', 0)
-    p = set_source_for_defaulting_statements(p, 'DRS_DEBUG', 0)
+    p = check_set_default_val(p, 'DRS_DEBUG', 0, func_name)
 
     # check that drs_interactive set else set to 0
-    p['DRS_INTERACTIVE'] = p.get('DRS_INTERACTIVE', 0)
-    p = set_source_for_defaulting_statements(p, 'DRS_INTERACTIVE', 0)
+    p = check_set_default_val(p, 'DRS_INTERACTIVE', 0, func_name)
 
     # check that print_level is defined and make sure it is in defined levels
     #    default value is 'all' if doesnt exist or wrong
-    p['PRINT_LEVEL'] = p.get('PRINT_LEVEL', 'all')
-    p = set_source_for_defaulting_statements(p, 'PRINT_LEVEL', 'all')
+    p = check_set_default_val(p, 'PRINT_LEVEL', 'all', func_name)
     if p['PRINT_LEVEL'] not in loglevels:
         p['PRINT_LEVEL'] = 'all'
-        p = set_source_for_defaulting_statements(p, 'PRINT_LEVEL', 'all')
+        p = check_set_default_val(p, 'PRINT_LEVEL', 'all', func_name)
 
     # check that print_level is defined and make sure it is in defined levels
     #    default value is 'all' if doesnt exist or wrong
-    p['LOG_LEVEL'] = p.get('LOG_LEVEL', 'all')
-    p = set_source_for_defaulting_statements(p, 'LOG_LEVEL', 'all')
+    p = check_set_default_val(p, 'LOG_LEVEL', 'all', func_name)
     if p['LOG_LEVEL'] not in loglevels:
         p['LOG_LEVEL'] = 'all'
-        p = set_source_for_defaulting_statements(p, 'LOG_LEVEL', 'all')
+        p = check_set_default_val(p, 'LOG_LEVEL', 'all', func_name)
     # return parameters
     return p
 
@@ -607,31 +708,36 @@ def get_default_config_file():
     :return config_file: string, the path and filename of the default config
                          file
     """
+    func_name = __NAME__ + '.get_default_config_file()'
     # Get the config file path
     cargs = [PACKAGE, CONFIGFOLDER, CONFIG_FILE]
     config_file = spirouConfigFile.get_default_config_file(*cargs)
     # make sure config file exists
     if not os.path.exists(config_file):
-        emsg = "Config file doesn't exists at {0}".format(config_file)
-        raise ConfigError(emsg, config_file=config_file, level='error')
+        emsg1 = "Config file doesn't exists at {0}".format(config_file)
+        emsg2 = '   function = {0}'.format(func_name)
+        raise ConfigError([emsg1, emsg2], level='error')
     # return the config file path
     return config_file
 
 
-def set_source_for_defaulting_statements(p, key, dvalue):
-    if p[key] == dvalue:
-        p.set_source(key, __NAME__ + '/check_params()')
+def check_set_default_val(p, key, dvalue, source=None):
+    """
+    Function to set the source of "key" if the value in "key" is equal
+    to the dvalue (only for use, multiple times, in spirouConfig.check_params())
+
+    :param p: parameter dictionary, parameter dictionary containing constants
+    :param key: string, the key to check
+    :param dvalue: object, the default value of the key to check
+    :param source: string, the source location of the parameter if defaulted
+
+    :return p: parameter dictionary, the updated parameter dictionary
+    """
+    if key not in p:
+        p[key] = dvalue
+        p.set_source(key, source)
     return p
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
