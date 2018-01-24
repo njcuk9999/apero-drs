@@ -31,6 +31,9 @@ __all__ = ['ConfigError',
            'CheckConfig',
            'ExtractDictParams',
            'GetKeywordArguments',
+           'GetKwValues',
+           'GetAbsFolderPath',
+           'GetDefaultConfigFile'
            'LoadConfigFromFile',
            'ParamDict',
            'ReadConfigFile']
