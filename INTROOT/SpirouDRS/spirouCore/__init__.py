@@ -39,6 +39,9 @@ __all__ = ['wlog',
 # The stdout/log file controller
 wlog = spirouLog.logger
 
+# the stdout/log file warning logger (pushes warning to log file/stdout)
+warnlog = spirouLog.warninglogger
+
 # Plotting functions alias
 sPlt = spirouPlot
 
