@@ -11,7 +11,7 @@ DRS_PLOT = 1
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = 0
+DRS_DEBUG = 1
 
 
 # -----------------------------------------------------------------------------
