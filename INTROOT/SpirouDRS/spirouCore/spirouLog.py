@@ -146,7 +146,7 @@ def debug_start():
     # get colour
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.NORMALCOLOUR()
+    nocol = spirouConfig.Constants.bcolors.ENDC
     if addcolour:
         cc = clevels['error']
     else:
@@ -178,13 +178,19 @@ def debug_start():
         EXIT_TYPE(1)
 
 
-def warninglogger(w):
+def warninglogger(w, funcname=None):
     # deal with warnings
     if WARN and (len(w) > 0):
         for wi in w:
-            wargs = [wi.lineno, wi.message]
-            logger('warning', 'python warning',
-                   'Line {0} warning reads: {1}'.format(*wargs))
+            # if we have a function name then use it else just report the
+            #    line number (not recommended)
+            if funcname is None:
+                wargs = [wi.lineno, '', wi.message]
+            else:
+                wargs = [wi.linno, '({0})'.format(funcname), wi.message]
+            # log message
+            wmsg = 'python warning Line {0} {1} warning reads: {2}'
+            logger('warning', wmsg.format(*wargs))
 
 
 def get_logfilepath(utime):
@@ -248,7 +254,7 @@ def printlog(message, key):
     level = CPARAMS.get('PRINT_LEVEL', 'all')
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.NORMALCOLOUR()
+    nocol = spirouConfig.Constants.bcolors.ENDC
     # if this level is greater than or equal to out level then print to stdout
 
     if correct_level(key, level) and (key in clevels) and addcolour:
