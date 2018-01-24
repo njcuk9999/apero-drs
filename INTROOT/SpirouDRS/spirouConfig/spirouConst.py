@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-spirouConst.py
+Spirou constant module
 
 Constants used throughout DRS that are more complicated than simple objects
 i.e. require a function and maybe input parameters
@@ -11,8 +11,6 @@ Created on 2017-11-13 at 14:22
 @author: cook
 
 Import rules: Only from spirouConfigFile
-
-Version 0.0.1
 """
 from __future__ import division
 import sys
@@ -491,33 +489,23 @@ def LOG_CAUGHT_WARNINGS():
 def COLOUREDLEVELS():
     # reference:
     # http://ozzmaker.com/add-colour-to-text-in-python/
-    clevels = dict(error=REDCOLOUR(),  # red
-                   warning=YELLOWCOLOUR(),  # yellow
-                   info=GREENCOLOUR(),  # green
-                   graph=GREENCOLOUR(),  # green
-                   all=GREENCOLOUR())  # green
+    clevels = dict(error=bcolors.FAIL,  # red
+                   warning=bcolors.WARNING,  # yellow
+                   info=bcolors.OKGREEN,  # green
+                   graph=bcolors.OKBLUE,  # green
+                   all=bcolors.OKGREEN)  # green
     return clevels
 
-
-def NORMALCOLOUR():
-    # norm = " \033[0;37;40m"
-    norm = " \u001b[0m"
-    return norm
-
-
-def REDCOLOUR():
-    red = '\033[0;31;48m'
-    return red
-
-
-def YELLOWCOLOUR():
-    yellow = '\033[0;33;48m'
-    return yellow
-
-
-def GREENCOLOUR():
-    green = '\033[0;32;48m'
-    return green
+# defines the colours
+class bcolors:
+    HEADER = '\033[95;1m'
+    OKBLUE = '\033[94;1m'
+    OKGREEN = '\033[92;1m'
+    WARNING = '\033[93;1m'
+    FAIL = '\033[91;1m'
+    ENDC = '\033[0;0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 def COLOURED_LOG():
