@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+The spirou background module
 
 Created on 2017-11-10 at 14:33
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -34,6 +30,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouCore.wlog
+WARNGLOG = spirouCore.warnlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
@@ -50,6 +47,7 @@ def measure_background_flatfield(p, image):
     :param image: numpy array (2D), the image to measure the background of
     :return:
     """
+    func_name = __NAME__ + '.measure_background_flatfield()'
 
     # get constants
     size = p['IC_BKGR_WINDOW']
@@ -73,6 +71,10 @@ def measure_background_flatfield(p, image):
 
     # loop around columns
     # TODO: background spline interpolation - need to understand interpol.c
+    # warning about not background code
+    wmsg = 'No interpolation done in {0} (FUNCTION INCOMPLETE)'
+    WLOG('warning', p['log_opt'], wmsg.format(func_name))
+
 
     return background, xc, yc, minlevel
 
@@ -116,14 +118,13 @@ def measure_background_and_get_central_pixels(pp, loc, image):
         sPlt.locplot_y_miny_maxy(y)
 
     # set function name (for source)
-    __funcname__ = '/measure_background_and_get_central_pixels()'
+    func_name = __NAME__ + '.measure_background_and_get_central_pixels()'
     # Add to loc
     loc['ycc'] = ycc
-    loc.set_source('ycc', __NAME__ + __funcname__)
     loc['mean_backgrd'] = mean_backgrd
-    loc.set_source('mean_backgrd', __NAME__ + __funcname__)
     loc['max_signal'] = max_signal
-    loc.set_source('max_signal', __NAME__ + __funcname__)
+    # set source
+    loc.set_sources(['ycc', 'mean_background', 'max_signal'], func_name)
     # return the localisation dictionary
     return loc
 
@@ -147,13 +148,17 @@ def measure_min_max(pp, y):
                         in y
     :return diff_maxmin: float, the difference between maxy and miny
     """
+    funcname = __NAME__ + '.measure_min_max()'
     # Get the box-smoothed min and max for the central column
     miny, maxy = measure_box_min_max(y, pp['IC_LOCNBPIX'])
     # record the maximum signal in the central column
     # QUESTION: Why the third biggest?
     max_signal = np.sort(y)[-3]
     # get the difference between max and min pixel values
-    diff_maxmin = maxy - miny
+    with warnings.catch_warnings(record=True) as w:
+        diff_maxmin = maxy - miny
+    # log any catch warnings
+    WARNGLOG(w, funcname)
     # return values
     return miny, maxy, max_signal, diff_maxmin
 
