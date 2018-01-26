@@ -382,6 +382,10 @@ drift_peak_sigmaclip = 1.0
 #    Define whether we plot the linelist vs amplitude         - [cal_drift-peak]
 drift_peak_plot_line_log_amp = False
 
+#    Define which peak to plot in the linelist vs amp plot    - [cal_drift-peak]
+drift_peak_selected_order = 30
+
+
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters
 # -----------------------------------------------------------------------------
