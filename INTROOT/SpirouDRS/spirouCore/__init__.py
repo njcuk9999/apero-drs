@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+initialization code for Spirou Core functions module
 
 Created on 2017-10-30 at 17:10
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from SpirouDRS import spirouConfig
 from . import spirouLog
