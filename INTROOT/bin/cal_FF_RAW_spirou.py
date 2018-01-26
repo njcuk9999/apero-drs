@@ -262,9 +262,9 @@ def main(night_name=None, files=None):
                 # plot image with selected order fit and edge fit (faster)
                 sPlt.ff_sorder_fit_edges(p, loc, data2)
             # plot tilt adjusted e2ds and blaze for selected order
-            sPlt.ff_sorder_tiltadj_e2ds_blaze(p, loc, data2)
+            sPlt.ff_sorder_tiltadj_e2ds_blaze(p, loc)
             # plot flat for selected order
-            sPlt.ff_sorder_flat(p, loc, data2)
+            sPlt.ff_sorder_flat(p, loc)
 
         # ----------------------------------------------------------------------
         # Store Blaze in file
