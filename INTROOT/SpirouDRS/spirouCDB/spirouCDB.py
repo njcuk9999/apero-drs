@@ -116,9 +116,9 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
             header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
             # get the calib DB format for dates
             calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
-            # get the unix time from header time
+            # get the unix time from header time (header time assumes GMT/UTC)
             t = spirouMath.stringtime2unixtime(header_time, header_fmt)
-            # get the formatted string time for calib DB
+            # get the formatted string time for calib DB (GMT/UTC)
             t_fmt = spirouMath.unixtime2stringtime(t, calibdb_fmt)
         else:
             emsg = 'File {0} has no HEADER keyword {1} - function = {2}'
@@ -243,7 +243,7 @@ def get_database(p, max_time=None, update=False):
     try:
         # get the header format for dates
         header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
-        # get the unix time from header time
+        # get the unix time from header time (assume max_time is in GMT/UTC)
         max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:
         emsg = 'max_time {0} is not a valid float - function {1}'
@@ -282,7 +282,9 @@ def get_database(p, max_time=None, update=False):
 
         # Make sure unix time and t_fmt agree
         calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
+        # get unix time (assume t_fmt is in GMT/UTC)
         t_fmt_unix = spirouMath.stringtime2unixtime(t_fmt, calibdb_fmt)
+        # get human time in UTC/GMT
         t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
         if t_fmt_unix != t:
             lock.close()
