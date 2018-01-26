@@ -103,7 +103,6 @@ def INTERACITVE_PLOTS_ENABLED():
 
 
 def DEBUG():
-    # TODO: for release this should be 0
     debug = pp['DRS_DEBUG']
     return debug
 
@@ -442,7 +441,6 @@ def CONFIG_KEY_ERROR(key, location=None):
         cerrmsg = 'key "{0}" must be defined in file (located at {1})'
         return cerrmsg.format(key, location)
 
-
 def DATE_FMT_HEADER():
     date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_header
@@ -452,10 +450,30 @@ def DATE_FMT_CALIBDB():
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
 
+def DATE_FMT_DEFAULT():
+    date_fmt_default = '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt_default
+
+def TIME_FORMAT_DEFAULT():
+    time_format_default = '%H:%M:%S'
+    return time_format_default
+
 
 # =============================================================================
 # Define logger functions
 # =============================================================================
+def LOG_TIMEZONE():
+    # options are local or UTC
+    log_timezone = 'UTC'
+    log_timezone = 'local'
+    return log_timezone
+
+
+def LOG_TIME_FORMAT():
+    log_time_format = '%H:%M:%S'
+    return log_time_format
+
+
 def LOG_TRIG_KEYS():
     # The trigger character to display for each
     trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
@@ -538,11 +556,6 @@ __author__ = AUTHORS()
 __date__ = LATEST_EDIT()
 __release__ = RELEASE()
 
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code

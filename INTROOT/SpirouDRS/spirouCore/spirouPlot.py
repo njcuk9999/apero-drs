@@ -45,6 +45,14 @@ INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
 # General plotting functions
 # =============================================================================
 def start_interactive_session(interactive=False):
+    """
+    Start interactive plot session, if required and if
+    spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
+
+    :param interactive: bool, if True start interactive session
+
+    :return None:
+    """
     if interactive is True:
         plt.ion()
     # start interactive plot
@@ -53,16 +61,36 @@ def start_interactive_session(interactive=False):
 
 
 def end_interactive_session(interactive=False):
+    """
+    End interactive plot session, if required and if
+    spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED() is True
+
+    :param interactive: bool, if True end interactive session
+
+    :return None:
+    """
     if not interactive and not INTERACTIVE_PLOTS:
         plt.show()
         plt.close()
 
 
 def define_figure(num=1):
+    """
+    Define a figure number (mostly for use in interactive mode)
+
+    :param num: int, a figure number
+
+    :return figure: plt.figure instance
+    """
     return plt.figure(num)
 
 
 def closeall():
+    """
+    Close all matplotlib plots currently open
+
+    :return None:
+    """
     plt.close('all')
 
 
@@ -76,7 +104,7 @@ def darkplot_image_and_regions(pp, image):
     :param pp: dictionary, parameter dictionary
     :param image: numpy array (2D), the image
 
-    :return:
+    :return None:
     """
     # set up figure
     plt.figure()
@@ -114,6 +142,8 @@ def darkplot_image_and_regions(pp, image):
                      edgecolor='r', facecolor='None')
     frame.add_patch(rrec)
 
+    # TODO: needs axis labels and titles
+
 
 def darkplot_datacut(imagecut):
     """
@@ -136,8 +166,17 @@ def darkplot_datacut(imagecut):
     # make sure image is bounded by shape
     plt.axis([0, imagecut.shape[0], 0, imagecut.shape[1]])
 
+    # TODO: needs axis labels and title
+
 
 def darkplot_histograms(pp):
+    """
+    Plot histograms for the dark images
+
+    :param pp: dictionary, parameter dictionary
+
+    :return None:
+    """
     # set up figure
     plt.figure()
     # clear the current figure
@@ -161,11 +200,23 @@ def darkplot_histograms(pp):
     yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
     frame.plot(xr, yr, color='red')
 
+    # TODO: Needs axis labels and title
+
 
 # =============================================================================
 # localization plotting functions
 # =============================================================================
 def locplot_order(frame, x, y, label):
+    """
+    Simple plot function (added to a larger plot)
+
+    :param frame: the matplotlib axis, e.g. plt.gca() or plt.subplot(111)
+    :param x: numpy array (1D) or list, the x-axis data
+    :param y: numpy array (1D) or list, the y-axis data
+    :param label: string, the label for this line (used in legend)
+
+    :return None:
+    """
     frame.plot(x, y, label=label)
 
 
@@ -177,6 +228,7 @@ def locplot_y_miny_maxy(y, miny=None, maxy=None):
     :param y: numpy array, central column pixel value
     :param miny: numpy array, smoothed minimum central pixel value
     :param maxy: numpy array, smoothed maximum central pixel value
+
     :return None:
     """
     # set up figure
@@ -209,6 +261,7 @@ def locplot_im_sat_threshold(image, threshold):
 
     :param image: numpy array (2D), the image
     :param threshold: float, the saturation threshold
+
     :return None:
     """
     # set up fig
@@ -221,17 +274,22 @@ def locplot_im_sat_threshold(image, threshold):
     frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='pink')
     # set the limits
     frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
+
+    # TODO: Need axis labels and title
+
     # return fig and frame
     return fig, frame
 
 
 def locplot_order_number_against_rms(pp, loc, rnum):
     """
+    Plots the dispersion (RMS) of localization parameters for a fiber
 
-    :param pp:
-    :param loc:
-    :param rnum:
-    :return:
+    :param pp: parameter dictionary, constants the constants
+    :param loc: parameter dictionary, contains the data
+    :param rnum: number of orders to plot (from 0 --> rnum)
+
+    :return None:
     """
     # set up fig
     plt.figure()
@@ -261,6 +319,7 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
 
     :param pp: dictionary, parameter dictionary
     :param cvalues: numpy array, normalised central column pixel values
+
     :return None:
     """
     # set up figure
@@ -285,17 +344,21 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
 
 def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     """
+    Plot one rows boundary conditions for finding the orders, pause after
+    plotting to allow user to see this fix, and then move on to next row in
+    loop (for use in loop only)
 
-    :param pp:
-    :param no:
-    :param ncol:
-    :param ind0:
-    :param ind1:
-    :param ind2:
-    :param cgx:
-    :param wx:
-    :param ycc:
-    :return:
+    :param pp: parameter dictionary, contains constants
+    :param no: int, order number
+    :param ncol: int, column number
+    :param ind0: int, row center value
+    :param ind1: int, row top value
+    :param ind2: int, row bottom value
+    :param cgx: float, fit center position
+    :param wx: float, fit width
+    :param ycc: numpy array (1D), the central column values
+
+    :return None:
     """
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
@@ -313,6 +376,9 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     frame.plot(np.arange(ind1, ind2, 1.0), ycc)
     frame.plot(xx, yy)
     frame.set(xlim=(ind1, ind2), ylim=(0, np.max(ycc)))
+
+    # TODO: Need axis labels and title
+
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
@@ -323,12 +389,15 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
 
 def debug_locplot_fit_residual(pp, loc, rnum, kind):
     """
+    Plots the fit residuals against pixel position for either kind='center'
+    or kind='width'
 
-    :param pp:
-    :param loc:
-    :param rnum:
-    :param kind:
-    :return:
+    :param pp: parameter dictionary, contains constants
+    :param loc: parameter dictionary, contains data
+    :param rnum: int, number of orders to use (from 0 --> rnum)
+    :param kind: string, kind of fit (either 'center' or 'width')
+
+    :return None:
     """
     # get variables from loc dictionary
     x = loc['x']
@@ -348,6 +417,8 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     # set title and limits
     frame.set(title='{0} fit residual of order {1}'.format(kind, rnum),
               xlim=(0, len(xo)), ylim=(np.min(y), np.max(y)))
+
+    # TODO: Need axis labels
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
@@ -394,6 +465,8 @@ def slit_sorder_plot(pp, loc, image):
     frame.plot(xfit, yfit2, color='red')
     # set axis limits to image
     frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
+
+    # TODO: Need axis labels and title
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
