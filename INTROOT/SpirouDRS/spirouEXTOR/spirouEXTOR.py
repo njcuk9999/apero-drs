@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou extraction functions
 
 Created on 2017-11-07 at 13:46
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -42,10 +37,9 @@ def extract_AB_order(pp, loc, image, rnum):
     Perform the extraction on the AB fibers separately using the summation
     over constant range
 
-    :param image: numpy array (2D), the image
     :param pp: dictionary, parameter dictionary
     :param loc: dictionary, parameter dictionary containing the data
-    :param image:
+    :param image: numpy array (2D), the image
     :param rnum: int, the order number for this iteration
 
     :return loc: dictionary, parameter dictionary containing the data
@@ -67,7 +61,7 @@ def extract_AB_order(pp, loc, image, rnum):
     # move the intercept of the center fit by -offset
     acci[0] -= loc['offset']
     # extract the data
-    eargs = [image, acci, assi,]
+    eargs = [image, acci, assi]
     ekwargs = dict(extopt=pp['IC_EXTOPT'], 
                    gain=pp['gain'],                 
                    range1=pp['IC_EXTNBSIG'],
@@ -83,7 +77,7 @@ def extract_AB_order(pp, loc, image, rnum):
     # move the intercept of the center fit by -offset
     acci[0] += loc['offset']
     # extract the data
-    eargs = [image, acci, assi,]
+    eargs = [image, acci, assi]
     ekwargs = dict(extopt=pp['IC_EXTOPT'], 
                    gain=pp['gain'],                 
                    range1=pp['IC_EXTNBSIG'],
@@ -97,6 +91,27 @@ def extract_AB_order(pp, loc, image, rnum):
 
 
 def extract_order(pp, loc, image, rnum, **kwargs):
+    """
+    Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
+
+    :param pp: dictionary, parameter dictionary
+               must have at least "IC_EXT_RANGE" and "GAIN"
+    :param loc: dictionary, parameter dictionary containing the data
+                must have at least "ACC" and "ASS"
+    :param image: numpy array (2D), the image
+    :param rnum: int, the order number for this iteration
+    :param kwargs: additional keywords to pass to the extraction wrapper
+
+            - allowed keywords are:
+
+            range1  (defaults to "IC_EXT_RANGE")
+            range2  (defaults to "IC_EXT_RANGE")
+            gain    (defaults to "GAIN")
+
+    :return cent: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return cpt: int, zero in this case
+    """
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=False, 
@@ -112,6 +127,28 @@ def extract_order(pp, loc, image, rnum, **kwargs):
 
 
 def extract_tilt_order(pp, loc, image, rnum, **kwargs):
+    """
+    Extract order with tilt but without weight using
+    spirouEXTOR.extract_wrapper()
+
+    :param pp: dictionary, parameter dictionary
+               must have at least "IC_EXT_RANGE" and "GAIN"
+    :param loc: dictionary, parameter dictionary containing the data
+                must have at least "ACC" and "ASS" and "TILT"
+    :param image: numpy array (2D), the image
+    :param rnum: int, the order number for this iteration
+    :param kwargs: additional keywords to pass to the extraction wrapper
+
+            - allowed keywords are:
+
+            range1  (defaults to "IC_EXT_RANGE")
+            range2  (defaults to "IC_EXT_RANGE")
+            gain    (defaults to "GAIN")
+
+    :return cent: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return cpt: int, zero in this case
+    """
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=True, 
@@ -127,6 +164,31 @@ def extract_tilt_order(pp, loc, image, rnum, **kwargs):
 
 
 def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
+    """
+    Extract order with tilt and weight using
+    spirouEXTOR.extract_wrapper() with mode=1
+    (extract_tilt_weight_order_old() is run)
+
+    :param pp: dictionary, parameter dictionary
+               must have at least "IC_EXT_RANGE", "GAIN" and "SIGDET"
+    :param loc: dictionary, parameter dictionary containing the data
+                must have at least "ACC" and "ASS" and "TILT"
+    :param image: numpy array (2D), the image
+    :param orderp: numpy array (2D), the order profile image
+    :param rnum: int, the order number for this iteration
+    :param kwargs: additional keywords to pass to the extraction wrapper
+
+            - allowed keywords are:
+
+            range1  (defaults to "IC_EXT_RANGE")
+            range2  (defaults to "IC_EXT_RANGE")
+            gain    (defaults to "GAIN")
+            sigdet  (defaults to "SIGDET")
+
+    :return cent: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return cpt: int, zero in this case
+    """
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=True, 
@@ -145,6 +207,32 @@ def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
 
 
 def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
+    """
+    Extract order with tilt and weight using
+    spirouEXTOR.extract_wrapper() with mode=2
+    (extract_tilt_weight_order() is run)
+
+    :param pp: dictionary, parameter dictionary
+               must have at least "IC_EXT_RANGE1", "IC_EXT_RANGE2",
+               "GAIN" and "SIGDET"
+    :param loc: dictionary, parameter dictionary containing the data
+                must have at least "ACC" and "ASS" and "TILT"
+    :param image: numpy array (2D), the image
+    :param orderp: numpy array (2D), the order profile image
+    :param rnum: int, the order number for this iteration
+    :param kwargs: additional keywords to pass to the extraction wrapper
+
+            - allowed keywords are:
+
+            range1  (defaults to "IC_EXT_RANGE1")
+            range2  (defaults to "IC_EXT_RANGE2")
+            gain    (defaults to "GAIN")
+            sigdet  (defaults to "SIGDET")
+
+    :return cent: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return cpt: int, zero in this case
+    """
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=True,
@@ -163,6 +251,30 @@ def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
 
 
 def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
+    """
+    Extract order with weight but without tilt using
+    spirouEXTOR.extract_wrapper()
+
+    :param pp: dictionary, parameter dictionary
+               must have at least "IC_EXT_RANGE", "GAIN" and "SIGDET"
+    :param loc: dictionary, parameter dictionary containing the data
+                must have at least "ACC" and "ASS"
+    :param image: numpy array (2D), the image
+    :param orderp: numpy array (2D), the order profile image
+    :param rnum: int, the order number for this iteration
+    :param kwargs: additional keywords to pass to the extraction wrapper
+
+            - allowed keywords are:
+
+            range1  (defaults to "IC_EXT_RANGE")
+            range2  (defaults to "IC_EXT_RANGE")
+            gain    (defaults to "GAIN")
+            sigdet  (defaults to "SIGDET")
+
+    :return cent: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return cpt: int, zero in this case
+    """
     # construct the args and keyword args for extract wrapper
     eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
     ekwargs = dict(use_tilt=False,
@@ -624,11 +736,14 @@ def work_out_ww(ww0, ww1, tiltshift, r1):
     We only need to calculate the tilt contribution matrix for each unique
     value in ww0 and ww1 (only changes by +/- 1 due to rounding)
 
-    :param ww0:
-    :param ww1:
-    :param tiltshift:
-    :param r1:
-    :return:
+    :param ww0: numpy array (1D), the end positions for lower bounds
+    :param ww1: numpy array (1D), the end postitions for upper bounds
+    :param tiltshift: float, tangent of the tilt in radians
+    :param r1: float, the distance between center and lower bound
+
+    :return wwall: dictionary with tuple keys giving unique lower bound
+                   and upper bound combinations values are the tilt matrix
+                   at each unique set of bounds
     """
     # find unique values of ww0 and ww1
     uww0 = np.unique(ww0)
@@ -670,6 +785,7 @@ def work_out_ww(ww0, ww1, tiltshift, r1):
 
     # finally return the ww for all unique combinations
     return wwall
+
 
 def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
                              gain, sigdet):
@@ -877,158 +993,183 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     return spe, nbcos
 
 
-# def extract(image, pos, tilt=None, r1=None, r2=None, orderp=None,
-#             gain=None, sigdet=None):
-#     """
-#     Extract order using tilt and weight (sigdet and badpix)
-#
-#     Same as extract_tilt_weight but slow (does NOT assume that rounded
-#     separation between extraction edges is constant along order)
-#
-#
-#     :param image: numpy array (2D), the image
-#     :param pos: numpy array (1D), the position fit coefficients
-#                 size = number of coefficients for fit
-#     :param tilt: float, the tilt for this order
-#
-#     :param r1: float, the distance away from center to extract out to (top)
-#                across the orders direction
-#     :param r2: float, the distance away from center to extract out to (bottom)
-#                across the orders direction
-#     :param orderp: numpy array (2D), the image with fit superposed
-#                    (zero filled)
-#     :param gain: float, the gain of the image (for conversion from
-#                  ADU/s to e-)
-#     :param sigdet: float, the sigdet to use in the weighting
-#                    weights = 1/(signal*gain + sigdet^2) with bad pixels
-#                    multiplied by a weight of 1e-9 and good pixels
-#                    multiplied by 1
-#
-#     :return spe: numpy array (1D), the extracted pixel values,
-#                  size = image.shape[1] (along the order direction)
-#     :return nbcos: int, zero in this case
-#     """
-#     dim1, dim2 = image.shape
-#     nbcos = 0
-#     # create storage for extration
-#     spe = np.zeros(dim2, dtype=float)
-#     # create array of pixel values
-#     ics = np.arange(dim2)
-#     # get positions across the orders for each pixel value along the order
-#     jcs = np.polyval(pos[::-1], ics)
-#     # get the lower bound of the order for each pixel value along the order
-#     lim1s = jcs - r1
-#     # get the upper bound of the order for each pixel value along the order
-#     lim2s = jcs + r2
-#     # get the pixels around the order
-#     i1s = ics - 2
-#     i2s = ics + 2
-#     # get the integer pixel position of the lower bounds
-#     j1s = np.array(np.round(lim1s), dtype=int)
-#     # get the integer pixel position of the upper bounds
-#     j2s = np.array(np.round(lim2s), dtype=int)
-#     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
-#     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
-#
-#     # check that ww0 and ww1 are constant (They should be)
-#     if len(np.unique(ww0)) != 1:
-#         raise ValueError('Neil error: Assumption that ww0 is constant is
-#                          'wrong (spirouEXTOR.py/extract_tilt_weight)')
-#     # get tilt matrix (if we have tilt)
-#     ww = get_tilt_matrix(ww0, ww1, r1, r2, tilt)
-#     # account for the missing fractional pixels (due to integer rounding)
-#     lower, upper = j1s + 0.5 - lim1s, lim2s - j2s + 0.5
-#     # loop around each pixel along the order and, if it is within the image,
-#     #   sum the values contained within the order (including the bits missing
-#     #   due to rounding)
-#     for ic in ics:
-#         # Get the extraction of the main profile
-#         Sx = image[j1s[ic] + 1: j2s[ic], ic]
-#         # Get the extraction of the order_profile
-#         # (if no weights then set to 1)
-#         if orderp is None:
-#             Fx = np.ones_like(Sx)
-#         else:
-#             Fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
-#             # Renormalise the order_profile
-#             Fx = Fx / np.sum(Fx)
-#         # add the main order pixels
-#         spe[ic] = np.sum(Sx)
-#         # get the weights
-#         # weight values less than 0 to 0.000001
-#         raw_weights = np.where(Sx > 0, 1, 0.000001)
-#         weights = Fx * raw_weights
-#         # get the normalisation (equal to the sum of the weights squared)
-#         norm = np.sum(weights**2)
-#         # add the main extraction to array
-#         SSx = np.sum(Sx)
-#         spe[ic] = SSx * weights[1:-1] * ww[1:-1]
-#         # add the bits missing due to rounding
-#         Sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
-#         Sxl *= ww[0] * weights[1:-1]
-#         spe[ic] += lower[ic] * np.sum(Sxl)
-#         Sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
-#         Sxu *= ww[-1] * weights[1:-1]
-#         spe[ic] += upper[ic] * np.sum(Sxu)
-#         # divide by the normalisation
-#         spe[ic] /= norm
-#     # convert to e-
-#     spe *= gain
-#     # return spe and nbcos
-#     return spe, nbcos
-#
+def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
+                            orderp=None, gain=None, sigdet=None):
+    """
+    Extract order using tilt and weight (sigdet and badpix)
+
+    Same as extract_tilt_weight but slow (does NOT assume that rounded
+    separation between extraction edges is constant along order)
+
+
+    :param image: numpy array (2D), the image
+    :param pos: numpy array (1D), the position fit coefficients
+                size = number of coefficients for fit
+    :param tilt: float, the tilt for this order
+
+    :param r1: float, the distance away from center to extract out to (top)
+               across the orders direction
+    :param r2: float, the distance away from center to extract out to (bottom)
+               across the orders direction
+    :param orderp: numpy array (2D), the image with fit superposed
+                   (zero filled)
+    :param gain: float, the gain of the image (for conversion from
+                 ADU/s to e-)
+    :param sigdet: float, the sigdet to use in the weighting
+                   weights = 1/(signal*gain + sigdet^2) with bad pixels
+                   multiplied by a weight of 1e-9 and good pixels
+                   multiplied by 1
+
+    :return spe: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return nbcos: int, zero in this case
+    """
+    dim1, dim2 = image.shape
+    nbcos = 0
+    # create storage for extration
+    spe = np.zeros(dim2, dtype=float)
+    # create array of pixel values
+    ics = np.arange(dim2)
+    # get positions across the orders for each pixel value along the order
+    jcs = np.polyval(pos[::-1], ics)
+    # get the lower bound of the order for each pixel value along the order
+    lim1s = jcs - r1
+    # get the upper bound of the order for each pixel value along the order
+    lim2s = jcs + r2
+    # get the pixels around the order
+    i1s = ics - 2
+    i2s = ics + 2
+    # get the integer pixel position of the lower bounds
+    j1s = np.array(np.round(lim1s), dtype=int)
+    # get the integer pixel position of the upper bounds
+    j2s = np.array(np.round(lim2s), dtype=int)
+    # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
+    ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
+
+    # check that ww0 and ww1 are constant (They should be)
+    if len(np.unique(ww0)) != 1:
+        raise ValueError('Neil error: Assumption that ww0 is constant is'
+                         'wrong (spirouEXTOR.py/extract_tilt_weight)')
+    # get tilt matrix (if we have tilt)
+    ww = get_tilt_matrix(ww0, ww1, r1, r2, tilt)
+    # account for the missing fractional pixels (due to integer rounding)
+    lower, upper = j1s + 0.5 - lim1s, lim2s - j2s + 0.5
+    # loop around each pixel along the order and, if it is within the image,
+    #   sum the values contained within the order (including the bits missing
+    #   due to rounding)
+    for ic in ics:
+        # Get the extraction of the main profile
+        Sx = image[j1s[ic] + 1: j2s[ic], ic]
+        # Get the extraction of the order_profile
+        # (if no weights then set to 1)
+        if orderp is None:
+            Fx = np.ones_like(Sx)
+        else:
+            Fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+            # Renormalise the order_profile
+            Fx = Fx / np.sum(Fx)
+        # add the main order pixels
+        spe[ic] = np.sum(Sx)
+        # get the weights
+        # weight values less than 0 to 0.000001
+        raw_weights = np.where(Sx > 0, 1, 0.000001)
+        weights = Fx * raw_weights
+        # get the normalisation (equal to the sum of the weights squared)
+        norm = np.sum(weights**2)
+        # add the main extraction to array
+        SSx = np.sum(Sx)
+        spe[ic] = SSx * weights[1:-1] * ww[1:-1]
+        # add the bits missing due to rounding
+        Sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
+        Sxl *= ww[0] * weights[1:-1]
+        spe[ic] += lower[ic] * np.sum(Sxl)
+        Sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
+        Sxu *= ww[-1] * weights[1:-1]
+        spe[ic] += upper[ic] * np.sum(Sxu)
+        # divide by the normalisation
+        spe[ic] /= norm
+    # convert to e-
+    spe *= gain
+    # return spe and nbcos
+    return spe, nbcos
 
 
 # =============================================================================
 # Other functions
 # =============================================================================
+def check_for_none(value, name, fname=None):
+    """
+    Checks is value is None, if it is an error is generated
+    For specific use in spirouEXTOR.extract_wrapper() but can be used elsewhere
+    by defining the fname parameter
 
+    Generates WLOG error exit if value is None
 
-def check_for_none(value, name):
+    :param value: object, the object to test whether it is None
+    :param name: string, the (printable) name for value
+    :param fname: string or None, if not None the function name check_for_none
+                  is called from, if None defaults to
+                  spirouEXTOR.extract_wrapper()
+
+    :return None:
+    """
     # func name
-    fname = __NAME__ + '/extract_wrapper()'
+    if fname is None:
+        fname = __NAME__ + '/extract_wrapper()'
     if value is None:
         emsg = 'Keyword "{0}" is not defined for {1}'
         WLOG('error', '', emsg.format(name, fname))
 
 
-# def get_tilt_matrix(ww0, ww1, r1, r2, tilt=None):
-#     # get tilt (or set to zero)
-#     if tilt is None:
-#         tiltshift = 0.0
-#     else:
-#         # calculate the tilt shift
-#         tiltshift = np.tan(np.deg2rad(tilt))
-#     # ww0 and ww1 are constant
-#     ww0, ww1 = ww0[0], ww1[0]
-#     # create a box of the correct size
-#     ww = np.zeros((ww0, ww1))
-#     # calculate the tilt shift for each pixel in the box
-#     ff = tiltshift * (np.arange(ww0) - r1)
-#     # normalise tilt shift between -0.5 and 0.5
-#     rr = np.round(ff) - ff
-#     # Set the masks for tilt values of ff
-#     mask1 = (ff >= -2.0) & (ff < -1.5)
-#     mask2 = (ff >= -1.5) & (ff < -1.0)
-#     mask3 = (ff >= -1.0) & (ff < -0.5)
-#     mask4 = (ff >= -0.5) & (ff < 0.0)
-#     mask5 = (ff >= 0.0) & (ff < 0.5)
-#     mask6 = (ff >= 0.5) & (ff < 1.0)
-#     mask7 = (ff >= 1.0) & (ff < 1.5)
-#     mask8 = (ff >= 1.5) & (ff < 2.0)
-#     # get rra, rrb and rrc
-#     rra, rrb, rrc = -rr, 1 - rr, 1 + rr
-#     # modify the shift values in the box dependent on the mask
-#     ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
-#     ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
-#     ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
-#     ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
-#     ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
-#     ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
-#     ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
-#     ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
-#     # return tilt matrix
-#     return ww
+def get_tilt_matrix(ww0, ww1, r1, r2, tilt=None):
+    """
+    Work out tilt matrix
+
+    :param ww0: numpy array (1D), the end positions for lower bounds
+    :param ww1: numpy array (1D), the end postitions for upper bounds
+    :param r1: float, the distance between center and lower bound
+    :param r2: float, the distance between center and upper bound
+    :param tilt: float, the tilt in degrees
+
+    :return ww: the tilt matrix
+    """
+    # get tilt (or set to zero)
+    if tilt is None:
+        tiltshift = 0.0
+    else:
+        # calculate the tilt shift
+        tiltshift = np.tan(np.deg2rad(tilt))
+    # ww0 and ww1 are constant
+    ww0, ww1 = ww0[0], ww1[0]
+    # create a box of the correct size
+    ww = np.zeros((ww0, ww1))
+    # calculate the tilt shift for each pixel in the box
+    ff = tiltshift * (np.arange(ww0) - r1)
+    # normalise tilt shift between -0.5 and 0.5
+    rr = np.round(ff) - ff
+    # Set the masks for tilt values of ff
+    mask1 = (ff >= -2.0) & (ff < -1.5)
+    mask2 = (ff >= -1.5) & (ff < -1.0)
+    mask3 = (ff >= -1.0) & (ff < -0.5)
+    mask4 = (ff >= -0.5) & (ff < 0.0)
+    mask5 = (ff >= 0.0) & (ff < 0.5)
+    mask6 = (ff >= 0.5) & (ff < 1.0)
+    mask7 = (ff >= 1.0) & (ff < 1.5)
+    mask8 = (ff >= 1.5) & (ff < 2.0)
+    # get rra, rrb and rrc
+    rra, rrb, rrc = -rr, 1 - rr, 1 + rr
+    # modify the shift values in the box dependent on the mask
+    ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
+    ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
+    ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
+    ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
+    ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
+    ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
+    ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
+    ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
+    # return tilt matrix
+    return ww
+
 
 # =============================================================================
 # Test functions
@@ -1142,15 +1283,6 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 
     return spe[::-1], nbcos
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code

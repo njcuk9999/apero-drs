@@ -172,7 +172,9 @@ def PROGRAM():
 
 
 def MANUAL_FILE(p):
-    manual_file = os.path.join(p['DRS_MAN'].replace(p['program'], '.info'))
+
+    program = p['program'] + '.info'
+    manual_file = os.path.join(p['DRS_MAN'], program)
     return manual_file
 
 

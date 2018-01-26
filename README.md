@@ -132,5 +132,33 @@
     - [ ] - user guide
     
     - [ ] - developer guide
+    
+- Help files
+
+    - [ ] - cal_dark_spirou
+    
+    - [ ] - cal_loc_RAW_spioru
+    
+    - [ ] - cal_SLIT_spirou
+    
+    - [ ] - cal_FF_RAW_spirou
+    
+    - [ ] - cal_extract_RAW_spirou
+    
+    - [ ] - cal_DRIFT_RAW_spirou
+
+    - [ ] - cal_BADPIX_spirou
+
+    - [ ] - cal_DRIFT_E2DS_spirou
+
+    - [ ] - cal_DRIFT-PEAK_E2DS_spirou
+ 
+    - [ ] - cal_HC_E2DS_spirou
+    
+    - [ ] - cal_WAVE_E2DS_spirou
+    
+    - [ ] - cal_CCF_E2DS_spirou
+    
+    - [ ] - pol_spirou
 
 - - - -

@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou localization module
 
 Created on 2017-10-25 at 11:31
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -146,6 +141,25 @@ def get_loc_coefficients(p, hdr=None, loc=None):
 
 
 def merge_coefficients(loc, coeffs, step):
+    """
+    Takes a list of coefficients "coeffs" and merges them based on "step"
+    using the mean of "step" blocks
+
+    i.e. shrinks a list of N coefficients to N/2 (if step = 2) where
+         indices 0 and 1 are averaged, indices 2 and 3 are averaged etc
+
+    :param loc: parameter dictionary, ParamDict containing data.
+                Must contain at least "number_orders"
+    :param coeffs: numpy array (2D), the list of coefficients
+                   shape = (number of orders x number of fit parameters)
+
+    :param step: int, the step between merges
+                 i.e. total size before = "number_orders"
+                      total size after = "number_orders"/step
+
+    :return newcoeffs: numpy array (2D), the new list of coefficients
+                shape = (number of orders/step x number of fit parmaeters)
+    """
     # get number of orders
     nbo = loc['number_orders']
     # copy coeffs
@@ -508,6 +522,27 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
 
 
 def calculate_fit(x, y, f):
+    """
+    Calculate the polynomial fit between x and y, for "f" fit parameters,
+    also calculate the residuals, absolute residuals, RMS and max peak-to-peak
+    values
+
+    :param x: numpy array (1D), the x values to use for the fit
+    :param y: numpy array (1D), the y values to fit
+    :param f: int, the number of fit parameters (i.e. for quadratic fit f=2)
+
+    :return a: numpy array (1D), the fit coefficients
+                        shape = f
+    :return fit: numpy array (1D), the fit values for positions in x
+                        shape = len(y) and len(x)
+    :return res: numpy array (1D), the residuals between y and fit
+                        shape = len(y) and len(x)
+    :return abs_res: numpy array (1D), the absolute values of "res"  abs(res)
+                        shape = len(y) and len(x)
+    :return rms: float, the RMS (root-mean square) of the residuals (std)
+    :return max_ptp: float, the max peak to peak value of the absolute
+                     residuals i.e. max(abs_res)
+    """
     # Do initial fit (revere due to fortran compatibility)
     a = np.polyfit(x, y, deg=f)[::-1]
     # Get the intial fit data
