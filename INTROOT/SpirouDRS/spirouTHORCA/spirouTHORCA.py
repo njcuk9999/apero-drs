@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou THORCA module
 
 Created on 2017-12-19 at 16:20
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -47,6 +42,26 @@ WLOG = spirouCore.wlog
 # Define functions
 # =============================================================================
 def get_e2ds_ll(p, hdr=None, filename=None, key=None):
+    """
+    Get the line list for the e2ds file from "filename" or from calibration
+    database using hdr (aqctime) and key. Line list is constructed from
+    fit coefficents stored in keywords:
+        'kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1'
+
+    :param p: parameter dictionary, ParamDict containing constnats
+    :param hdr: dictionary or None, the HEADER dictionary with the aqcuisition
+                time in to use in the calibration database to get the filename
+                with key=key (or if None key='WAVE_AB')
+    :param filename: string or None, the file to get the line list from
+                     (overrides getting the filename from calibration database)
+    :param key: string or None, if defined the key in the calibration database
+                to get the file from (using the HEADER dictionary to deal with
+                calibration database time constraints for duplicated keys.
+
+    :return ll: numpy array (1D), the line list values
+    :return param_ll: numpy array (1d), the line list fit coefficients (used to
+                      generate line list - read from file defined)
+    """
 
     if key is None:
         # Question: Why WAVE_AB and not WAVE_{fiber} ??
@@ -186,16 +201,6 @@ def get_dll_from_coefficients(params, nx, nbo):
     # return line list
     return ll
 
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
