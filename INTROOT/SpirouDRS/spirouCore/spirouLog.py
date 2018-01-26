@@ -19,7 +19,7 @@ import os
 import sys
 
 from SpirouDRS import spirouConfig
-
+from . import spirouMath
 
 # =============================================================================
 # Define variables
@@ -52,7 +52,12 @@ TDATA_WARNING = 1
 def logger(key='', option='', message=''):
     """
     Parses a key (error/warning/info/graph), an option and a message to the
-    stdout and the log file
+    stdout and the log file.
+
+    keys are controlled by "spirouConfig.Constants.LOG_TRIG_KEYS()"
+    printing to screen is controlled by "PRINT_LEVEL" constant (config.py)
+    printing to log file is controlled by "LOG_LEVEL" constant (config.py)
+    based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
 
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
@@ -62,7 +67,7 @@ def logger(key='', option='', message=''):
 
     output to stdout/log is as follows:
 
-    HH:MM:SS.S - CODE |option|message
+        HH:MM:SS.S - CODE |option|message
 
     time is output in UTC to nearest .1 seconds
 
@@ -84,10 +89,13 @@ def logger(key='', option='', message=''):
         key = 'error'
     # loop around message (now all are lists)
     for mess in message:
-        # Get the local unix time now
-        unix_time = time.time()
-        # Get the UTC time now in human readable format
-        human_time = time.strftime('%H:%M:%S', time.gmtime(unix_time))
+        # get the time format and display time zone from constants
+        tfmt = spirouConfig.Constants.LOG_TIME_FORMAT()
+        zone = spirouConfig.Constants.LOG_TIMEZONE()
+        # Get the time now in human readable format
+        unix_time = spirouMath.get_time_now_unix(zone=zone)
+        human_time = spirouMath.get_time_now_string(fmt=tfmt, zone=zone)
+
         # Get the first decimal part of the unix time
         dsec = int((unix_time - int(unix_time)) * 10)
         # Get the key code (default is a whitespace)
@@ -124,6 +132,22 @@ def logger(key='', option='', message=''):
 
 
 def printlogandcmd(message, key, human_time, dsec, option):
+    """
+    Prints log to standard output/screen (for internal use only when
+    logger cannot be used)
+
+        output to stdout is as follows:
+
+        HH:MM:SS.S - CODE |option|message
+
+    :param message: string, the message of the printed output
+    :param key: string, the CODE key for the printed output
+    :param human_time: string, the human time for the printed output
+    :param dsec: float, the "tenth of a second" output
+    :param option: string, the option of the output
+
+    :return None:
+    """
     if type(message) == str:
         message = [message]
     elif type(list):
@@ -140,6 +164,17 @@ def printlogandcmd(message, key, human_time, dsec, option):
 
 
 def debug_start():
+    """
+    Initiate debugger (for DEBUG mode) - will start when an error is raised
+    if 'DRS_DEBUG' is set to True or 1 (in config.py)
+
+    uses pdb to do python debugging
+
+    Asks user [Y]es or [N]o to debugging then exits on 'N' or after debugger
+    is quit
+
+    :return None:
+    """
     # get raw input
     if sys.version_info.major > 2:
         raw_input = lambda x: str(input(x))
@@ -179,6 +214,25 @@ def debug_start():
 
 
 def warninglogger(w, funcname=None):
+    """
+    Warning logger - takes "w" - a list of caught warnings and pipes them on
+    to the log functions. If "funcname" is not None then t "funcname" is
+    printed with the line reference (intended to be used to identify the code/
+    function/module warning was generated in)
+
+    to catch warnings use the following:
+
+    >>> with warnings.catch_warnings(record=True) as w:
+    >>>     code_to_generate_warnings()
+    >>> warninglogger(w, 'some name for logging')
+
+    :param w: list of warnings, the list of warnings from
+               warnings.catch_warnings
+    :param funcname: string or None, if string then also pipes "funcname" to the
+                     warning message (intended to be used to identify the code/
+                     function/module warning was generated in)
+    :return:
+    """
     # deal with warnings
     if WARN and (len(w) > 0):
         for wi in w:
@@ -194,29 +248,70 @@ def warninglogger(w, funcname=None):
 
 
 def get_logfilepath(utime):
+    """
+    Construct the log file path and filename (normally from "DRS_DATA_MSG" but
+    if this is not defined/not found then defaults to "TDATA"/msg or generates
+    an ConfigError exception.
+
+    "DRS_DATA_MSG" and "TDATA" are defined in "config.py"
+
+    :param utime: float, the unix time to add to the log file filename.
+
+    :return lpath: string, the path and filename for the log file to be used
+    :return warning: bool, if True then "TDATA" was used instead of "DRS_DATA
+    """
+    msgkey, tkey = 'DRS_DATA_MSG', 'TDATA'
     # -------------------------------------------------------------------------
     # Get DRS_DATA_MSG folder directory
-    dir_data_msg = CPARAMS.get('DRS_DATA_MSG', '')
-    # set warning to False
-    warning = False
-    # check that DRS_DATA_MSG path exists
-    if not os.path.exists(dir_data_msg):
+    dir_data_msg = CPARAMS.get(msgkey, None)
+    # if None use "TDATA"
+    if dir_data_msg is None:
         warning = True
-        # if TDATA path does not exists - exit with error
-        if not os.path.exists(CPARAMS.get('TDATA', '')):
-            mess1 = 'Fatal error Cannot write to log file'
-            mess2 = ('    the path in "DRS_DATA_MSG" and "TDATA" cannot be '
-                     'found on the system')
-            mess3 = '    Please check configuration file!'
-            mess4 = '    "DRS_DATA_MSG" = {0}'.format(dir_data_msg)
-            mess5 = '    "TDATA" = {0}'.format(CPARAMS.get('TDATA', ''))
-            raise ConfigError(message=[mess1, mess2, mess3, mess4, mess5],
-                              level='error')
-        # if TDATA does exist then create a /msg/ sub-directory
-        dir_data_msg = os.path.join(CPARAMS['TDATA'], 'msg', '')
-        # if it doesn't exist create it
+        dir_data_msg = CPARAMS.get(tkey, None)
+        # check that it exists
         if not os.path.exists(dir_data_msg):
-            os.makedirs(dir_data_msg)
+            emsg1 = 'Fatal error: Cannot write to log file.'
+            emsg2 = (' "{0}" missing from config AND "{1}" directory'
+                     ' does not exist.').format(msgkey, tkey)
+            emsg3 = '    "{0}" = {1}'.format(msgkey, CPARAMS.get(msgkey, ''))
+            emsg4 = '    "{0}" = {1}'.format(tkey, CPARAMS.get(tkey, ''))
+            raise ConfigError(message=[emsg1, emsg2, emsg3, emsg4],
+                              level='error')
+    # if it doesn't exist also set to TDATA
+    elif not os.path.exists(dir_data_msg):
+        warning = True
+        dir_data_msg = CPARAMS.get(tkey, None)
+        # check that it exists
+        if not os.path.exists(dir_data_msg):
+            emsg1 = 'Fatal error: Cannot write to log file.'
+            emsg2 = (' "{0}" AND "{1}" directories'
+                     ' do not exist.').format(msgkey, tkey)
+            emsg3 = '    "{0}" = {1}'.format(msgkey, CPARAMS.get(msgkey, ''))
+            emsg4 = '    "{0}" = {1}'.format(tkey, CPARAMS.get(tkey, ''))
+            raise ConfigError(message=[emsg1, emsg2, emsg3, emsg4],
+                              level='error')
+    else:
+        warning = False
+    # -------------------------------------------------------------------------
+    # if still None then TDATA does not exist in config file
+    if dir_data_msg is None:
+        emsg1 = 'Fatal error: Cannot write to log file.'
+        emsg2 = ('   "{0}" and "{1}" are missing from the config file'
+                 '').format(msgkey, tkey)
+        emsg3 = '    "{0}" = {1}'.format(msgkey, CPARAMS.get(msgkey, ''))
+        emsg4 = '    "{0}" = {1}'.format(tkey, CPARAMS.get(tkey, ''))
+        raise ConfigError(message=[emsg1, emsg2, emsg3, emsg4], level='error')
+    # if we are using TDATA need to create msg folder
+    elif warning:
+        dir_data_msg = os.path.join(dir_data_msg, 'msg', '')
+        # make directory
+        try:
+            os.makedirs(dir_data_msg, exist_ok=True)
+        except Exception as e:
+            emsg = 'Fatal error: cannot create folder {0} error {1}: {2}'
+            raise ConfigError(message=emsg.format(dir_data_msg, type(e), e),
+                              level='error')
+
     # Get the used date if it is not None
     CPARAMS['DRS_USED_DATE'] = CPARAMS.get('DRS_USED_DATE', 'None').upper()
     udate = CPARAMS['DRS_USED_DATE']
@@ -233,10 +328,45 @@ def get_logfilepath(utime):
 
 
 def correct_level(key, level):
+    """
+    Decides (based on WRITE_LEVEL) whether this level ("key") is to be printed/
+    logged (based on the level "level"), return True if we should log key based
+    on level. Returns True if: thislevel >= outlevel  else False
+         where:
+            thislevel = SpirouConfig.SpirouConst.WRITE_LEVEL()[key]
+            outlevel = SpirouConfig.SpirouConst.WRITE_LEVEL()[level]
+
+    :param key: string, test key (must be in
+                SpirouConfig.SpirouConst.LOG_TRIG_KEYS() and
+                SpirouConfig.SpirouConst.WRITE_LEVEL()
+    :param level: string, write key (must be in
+                SpirouConfig.SpirouConst.LOG_TRIG_KEYS() and
+                SpirouConfig.SpirouConst.WRITE_LEVEL()
+
+    :return test: bool, True if: thislevel >= outlevel  else False
+                    where:
+
+                    thislevel = SpirouConfig.SpirouConst.WRITE_LEVEL()[key]
+                    outlevel = SpirouConfig.SpirouConst.WRITE_LEVEL()[level]
+
+    """
+    func_name = __NAME__ + '.correct_level()'
     # get numeric value for out level
-    outlevel = WRITE_LEVEL[level]
+    try:
+        outlevel = WRITE_LEVEL[level]
+    except KeyError:
+        emsg1 = '"level"={0} not in SpirouConfig.SpirouConst.WRITE_LEVEL()'
+        emsg2 = '   function = {0}'.format(func_name)
+        raise ConfigError(message=[emsg1.format(level), emsg2], level='error')
+
     # get numeric value for this level
-    thislevel = WRITE_LEVEL[key]
+    try:
+        thislevel = WRITE_LEVEL[key]
+    except KeyError:
+        emsg1 = '"key"={0} not in SpirouConfig.SpirouConst.WRITE_LEVEL()'
+        emsg2 = '   function = {0}'.format(func_name)
+        raise ConfigError(message=[emsg1.format(key), emsg2], level='error')
+
     # return whether we are printing or not
     return thislevel >= outlevel
 
@@ -250,13 +380,19 @@ def printlog(message, key):
                 gives a character code in output
     :return:
     """
+    func_name = __NAME__ + '.printlog()'
     # get out level key
     level = CPARAMS.get('PRINT_LEVEL', 'all')
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
     nocol = spirouConfig.Constants.bcolors.ENDC
-    # if this level is greater than or equal to out level then print to stdout
+    # make sure key is in clevels
+    if (key not in clevels) and addcolour:
+        emsg1 = 'key={0} not in spirouConfig.Constants.COLOUREDLEVELS()'
+        emsg2 = '    function = {0}'.format(func_name)
+        raise ConfigError(message=[emsg1.format(key), emsg2], level='error')
 
+    # if this level is greater than or equal to out level then print to stdout
     if correct_level(key, level) and (key in clevels) and addcolour:
         print(clevels[key] + message + nocol)
     elif correct_level(key, level):
@@ -277,6 +413,7 @@ def writelog(message, errormessage, key, logfilepath):
 
     :return:
     """
+    func_name = __NAME__ + '.writelog()'
     # -------------------------------------------------------------------------
     # get out level key
     level = CPARAMS.get('LOG_LEVEL', 'all')
@@ -292,9 +429,10 @@ def writelog(message, errormessage, key, logfilepath):
             f = open(logfilepath, 'a')
             f.write(message + '\n')
             f.close()
-        except IOError:
-            # TODO: This could be changed to printlog(...)
-            print(errormessage)
+        except Exception as e:
+            emsg1 = 'Cannot open {0}, error was: {1}'
+            emsg2 = '   function = {0}'.format(func_name)
+            raise ConfigError(message=[emsg1.format(logfilepath, e), emsg2])
     else:
         # try to open the logfile
         try:
@@ -309,9 +447,10 @@ def writelog(message, errormessage, key, logfilepath):
             except OSError:
                 pass
         # If we cannot write to log file then print to stdout
-        except IOError:
-            # TODO: This could be changed to printlog(...)
-            print(errormessage)
+        except Exception as e:
+            emsg1 = 'Cannot open {0}, error was: {1}'
+            emsg2 = '   function = {0}'.format(func_name)
+            raise ConfigError(message=[emsg1.format(logfilepath, e), emsg2])
 
 
 # =============================================================================
@@ -322,14 +461,14 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # Title test
     logger('', '', ' *****************************************')
-    logger('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.1' + ')')
+    logger('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
     logger('', '', ' *****************************************')
     # info log
-    logger("info", "-c:", "This is an info test")
+    logger("info", sys.argv[0], "This is an info test")
     # warning log
-    logger("warning", "-c:", "This is a warning test")
+    logger("warning", sys.argv[0], "This is a warning test")
     # error log
-    logger("error", "-c:", "This is an error test")
+    logger("error", sys.argv[0], "This is an error test")
 
 # =============================================================================
 # End of code
