@@ -38,13 +38,16 @@ WLOG = spirouCore.wlog
 typenames = {int:'integer', float:'float', list:'list', bool:'bool', str:'str'}
 
 # =============================================================================
-# Define run functions
+# Define setup functions
 # =============================================================================
 def run_begin():
     """
     Begin DRS - Must be run at start of every recipe
+    - loads the parameters from the primary configuration file, displays
+      title, checks priamry constants and displays initial parameterization
 
-    :return:
+    :return cparams: parameter dictionary, ParamDict constants from primary
+                     configuration file
     """
     # Get config parameters
     cparams = spirouConfig.ReadConfigFile()
@@ -238,8 +241,8 @@ def run_time_args(p):
     Get sys.argv arguments (run time arguments and use them to fill parameter
     dictionary
 
-    :param p: dictionary, parameter dictionary
-    :return p: dictionary, the updated parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+    :return p: parameter dictionary, the updated parameter dictionary
     """
     # get constants name
     cname = spirouConfig.Constants.__NAME__
@@ -275,10 +278,20 @@ def run_time_args(p):
     p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('raw_dir', cname + '/RAW_DIR()')
 
+    # return updated parameter dictionary
     return p
 
 
 def run_time_custom_args(p, customargs):
+    """
+    Get the custom arguments and add them (with some default arguments)
+    to the constants parameter dictionary
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param customargs:
+
+    :return p: parameter dictionary, the updated parameter dictionary
+    """
     # set source
     source = __NAME__ + '/run_time_custom_args()'
     sconst = 'spirouConfig.Constants.'
@@ -309,20 +322,36 @@ def run_time_custom_args(p, customargs):
 
 
 def load_other_config_file(p, key, logthis=True, required=False):
+    """
+    Load a secondary configuration file from p[key] with wrapper to deal
+    with ConfigErrors (pushed to WLOG)
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param key: string, the key in "p" storing the location of the secondary
+                configuration file
+    :param logthis: bool, if True loading of this config file is logged to
+                    screen/log file
+    :param required: bool, if required is True then the secondary config file
+                     is required for the DRS to run and a ConfigError is raised
+                     (program exit)
+
+    :return p: parameter, dictionary, the updated parameter dictionary with
+               the secondary configuration files loaded into it as key/value
+               pairs
+    """
     # try to load config file from file
     try:
         p = spirouConfig.LoadConfigFromFile(p, key, required=required,
                                             logthis=logthis)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, p['log_opt'], e.message)
-
+    # return parameter dictionary
     return p
 
 
 def deal_with_prefixes(p, kind, prefixes, add_to_p):
     """
     Deals with finding the prefixes and adding any add_to_p values to p
-
 
     :param p: dictionary, parameter dictionary
 
@@ -345,7 +374,7 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             i.e. if prefix1 is found key "value3" and "value4" above are added
             (with "key3" and "key4") to the parameter dictionary p
 
-    :return:
+    :return p: parameter, dictionary, the updated parameter dictionary
     """
     if prefixes is None:
         return p
@@ -499,59 +528,6 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     return customdict
 
 
-
-# def get_custom_from_run_time_args(positions, types, names, required=None):
-#     """
-#     Extract custom arguments from defined positions in sys.argv (defined at
-#     run time)
-#
-#     :param positions: list of integers, the positions of the arguments
-#                       (i.e. first argument is 0)
-#
-#     :param types: list of python types, the type (i.e. int, float) for each
-#                   argument
-#     :param names: list of strings, the names of each argument (to access in
-#                   parameter dictionary once extracted)
-#
-#     :param required: list of bools or None, if not None states whether the
-#                      program should exit if runtime argument not found
-#
-#     :return values: dictionary, if run time arguments are correct python type
-#                     the name-value pairs are returned
-#     """
-#     # set up the dictionary
-#     customdict = dict()
-#     # loop around positions test the type and add the value to dictionary
-#     for pos in positions:
-#         # deal with not having enough arguments
-#         try:
-#             # get from sys.argv
-#             # first arg should be the program name
-#             # second arg should be the night name
-#             raw_value = sys.argv[pos + 2]
-#         except IndexError:
-#             emsg = 'Argument Error: There are not enough arguments defined'
-#             WLOG('', sys.argv[0], emsg)
-#             emsg = ' must be at least {0} arguments defined'
-#             WLOG('error', sys.argv[0], emsg.format(len(positions)))
-#             raw_value = None
-#         # get the name
-#         name = names[pos]
-#         # get the type
-#         kind = types[pos]
-#         # test the raw_value
-#         try:
-#             value = kind(raw_value)
-#         except ValueError:
-#             emsg = 'Arguments Error: argument {0} should be a {1} (Value = {2})'
-#             WLOG('error', sys.argv[0], emsg.format(pos, kind, raw_value))
-#             value = None
-#         # add value to dictionary
-#         customdict[name] = value
-#     # finally return dictionary
-#     return customdict
-
-
 def get_file(p, path, name=None, prefix=None, kind=None):
     """
     Get full file path and check the path and file exist
@@ -564,7 +540,8 @@ def get_file(p, path, name=None, prefix=None, kind=None):
     :param prefix: string or None, if not None this substring must be in the
                    filename
     :param kind: string or None, the type of file (for logging)
-    :return:
+
+    :return location: string, the full file path of the file
     """
 
     # if path is None and name is None
@@ -634,7 +611,8 @@ def display_title(p):
     Display title for this execution
 
     :param p: dictionary, parameter dictionary
-    :return:
+
+    :return None:
     """
     # Log title
     WLOG('', '', ' *****************************************')
@@ -648,7 +626,8 @@ def display_initial_parameterisation(p):
     Display initial parameterisation for this execution
 
     :param p: dictionary, parameter dictionary
-    :return:
+
+    :return None:
     """
     # Add initial parameterisation
     WLOG('', '',
@@ -692,7 +671,8 @@ def display_run_files(p):
     Display run files for this execution
 
     :param p: dictionary, parameter dictionary
-    :return:
+
+    :return None:
     """
     WLOG('', p['log_opt'], ('Now running : {PROGRAM} on file(s): '
                             '{STR_FILE_NAMES}').format(**p))
@@ -701,6 +681,14 @@ def display_run_files(p):
 
 
 def display_custom_args(p, customargs):
+    """
+    Display the custom arguments that have been loaded
+
+    :param p: dictionary, parameter dictionary
+    :param customargs: dictionary, custom arguments
+
+    :return None:
+    """
 
     wmsg = 'Now running : {0} with: '.format(p['program'])
 
@@ -711,39 +699,50 @@ def display_custom_args(p, customargs):
 
 
 def display_help_file(p):
+    """
+    If help file exists display it
+    :param p:
+    :return:
+    """
 
-    if 'arg_night_name' not in list(p.keys()):
-        if 'HELP' not in list(p.keys()):
-            return 0
-
-    if p['arg_night_name'] != "HELP":
-        return 0
+    # find help signal
+    if 'HELP' in p['arg_night_name'].upper():
+        display_help = True
     else:
+        display_help = False
+
+    if 'arg_file_names' in p:
+        for argfilename in p['arg_file_names']:
+            if 'HELP' in argfilename.upper():
+                display_help = True
+
+    # do display help
+    if display_help:
         # Log help file
         WLOG('', p['log_opt'], 'HELP mode for  ' + p['program'])
         # Get man file
         man_file = spirouConfig.Constants.MANUAL_FILE(p)
         # try to open man file
         if os.path.exists(man_file):
-            f = open(man_file, 'r')
-            print('\n')
-            lines = f.readlines()
-            for line in lines:
-                print(line)
+            try:
+                f = open(man_file, 'r')
+                print('\n')
+                lines = f.readlines()
+                for line in lines:
+                    print(line)
+                # then exit
+                spirouConfig.Constants.EXIT()(1)
+            except Exception as e:
+                emsg1 = 'Cannot open help file {0}'.format(man_file)
+                emsg2 = '   error {0} was: {1}'.format(type(e), e)
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
+
         # else print that we have no man file
         else:
             # log and exit
-            WLOG('info', p['log_opt'], 'INFO file is not found for this recipe')
+            emsg = 'No help file is not found for this recipe'
+            WLOG('error', p['log_opt'], emsg)
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
