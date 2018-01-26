@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou flat fielding module
 
 Created on 2017-11-14 at 15:37
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -64,14 +59,6 @@ def measure_blaze_for_order(y, fitdegree):
     # return blaze
     return blaze
 
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
