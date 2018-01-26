@@ -67,6 +67,23 @@ class ConfigError(ConfigException):
             self.level = level
         else:
             self.level = 'error'
+        # deal with a list message (for printing)
+        if type(self.message) == list:
+            amessage = ''
+            for mess in message:
+                amessage += '\n\t\t{0}'.format(mess)
+            message = amessage
+        # set args to message (for printing)
+        argmessage = 'level={0}: {1}'
+        self.args = (argmessage.format(self.level, message),)
+
+    # overwrite string repr message with args[0]
+    def __repr__(self):
+        return self.args[0]
+
+    # overwrite print message with args[0]
+    def __str__(self):
+        return self.args[0]
 
 
 class ParamDict(dict):
