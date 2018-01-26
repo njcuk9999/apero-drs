@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+initialization code for Spirou localization module
 
 Created on 2017-10-30 at 17:09
 
 @author: cook
 
-
-
-Version 0.0.0
 """
 from SpirouDRS import spirouConfig
 from . import spirouLOCOR
@@ -226,9 +221,26 @@ the start and end of the order (and thus the center) above threshold
 For 1000 loops, best of 3: 771 µs per loop
 """
 
-
 MergeCoefficients = spirouLOCOR.merge_coefficients
+"""
+Takes a list of coefficients "coeffs" and merges them based on "step"
+using the mean of "step" blocks 
 
+i.e. shrinks a list of N coefficients to N/2 (if step = 2) where
+     indices 0 and 1 are averaged, indices 2 and 3 are averaged etc 
+
+:param loc: parameter dictionary, ParamDict containing data.
+            Must contain at least "number_orders"
+:param coeffs: numpy array (2D), the list of coefficients
+               shape = (number of orders x number of fit parameters)
+
+:param step: int, the step between merges 
+             i.e. total size before = "number_orders"
+                  total size after = "number_orders"/step
+
+:return newcoeffs: numpy array (2D), the new list of coefficients
+            shape = (number of orders/step x number of fit parmaeters)
+"""
 
 SigClipOrderFit = spirouLOCOR.sigmaclip_order_fit
 """
