@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+spirou plotting functions
 
 Created on 2017-11-02 at 16:29
 
 @author: cook
 
 Import rules: Only from spirouConfig and spirouCore
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -467,6 +463,7 @@ def slit_sorder_plot(pp, loc, image):
     frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
 
     # TODO: Need axis labels and title
+
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
@@ -479,6 +476,7 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
 
     :param pp: dictionary, parameter dictionary
     :param loc: dictionary, localisation parameter dictionary
+
     :return None:
     """
     # set up fig
@@ -506,6 +504,18 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
 # ff plotting function
 # =============================================================================
 def ff_sorder_fit_edges(p, loc, image):
+    """
+    Plot a selected order (defined in "IC_FF_ORDER_PLOT") on the image
+    with fit edges also plotted
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "IC_FF_ORDER_PLOT", "FIBER", "IC_EXT_RANGE1",
+              "IC_EXT_RANGE2"
+    :param loc: parameter dictionary, ParamDict containing data
+    :param image: numpy array (2D), the image to plot the fit on
+
+    :return None:
+    """
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -545,7 +555,19 @@ def ff_sorder_fit_edges(p, loc, image):
 
 
 def ff_aorder_fit_edges(p, loc, image):
+    """
+    Plots all orders and highlights selected order (defined in
+    "IC_FF_ORDER_PLOT") on the image with fit edges also plotted
 
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "IC_FF_ORDER_PLOT", "FIBER", "IC_EXT_RANGE1",
+              "IC_EXT_RANGE2"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain "ACC" (numpy array, 2D)
+    :param image: numpy array (2D), the image to plot the fit on
+
+    :return None:
+    """
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
@@ -594,7 +616,19 @@ def ff_aorder_fit_edges(p, loc, image):
         plt.close()
 
 
-def ff_sorder_tiltadj_e2ds_blaze(p, loc, image):
+def ff_sorder_tiltadj_e2ds_blaze(p, loc):
+    """
+    Plot (for the selected order defined in "IC_FF_ORDER_PLOT") the extracted
+    e2ds and blaze function
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain at least "IC_FF_ORDER_PLOT", "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain at least "E2DS" (numpy array, 2D) and "BLAZE"
+                (numpy array, 2D)
+
+    :return None:
+    """
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
@@ -608,7 +642,7 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc, image):
     # set up axis
     frame = plt.subplot(111)
     # get xrange
-    x = np.arange(image.shape[1])
+    x = np.arange(len(e2ds))
     # plot e2ds for selected order
     frame.plot(x, e2ds, label='E2DS')
     # plot blaze function
@@ -624,7 +658,17 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc, image):
         plt.close()
 
 
-def ff_sorder_flat(p, loc, image):
+def ff_sorder_flat(p, loc):
+    """
+    Plot the flat profile (for selected order defined in "IC_FF_ORDER_PLOT"
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "IC_FF_ORDER_PLOT", "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain "FLAT" (numpy array, 2D)
+
+    :return None:
+    """
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
@@ -636,12 +680,15 @@ def ff_sorder_flat(p, loc, image):
     # set up axis
     frame = plt.subplot(111)
     # get xrange
-    x = np.arange(image.shape[1])
+    x = np.arange(len(flat))
     # plot e2ds for selected order
     frame.plot(x, flat, label='E2DS')
     # set title labels limits
     title = 'FLAT spectral order {0} fiber {1}'
     frame.set(title=title.format(selected_order, fiber))
+
+    # TODO: Need x and y labels
+
     # Add legend
     frame.legend(loc=0)
     # turn off interactive plotting
@@ -654,9 +701,19 @@ def ff_sorder_flat(p, loc, image):
 # extract plotting function
 # =============================================================================
 def ext_sorder_fit(p, loc, image):
+    """
+    Plot a selected order (defined in "IC_EXT_ORDER_PLOT") on the image
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "IC_FF_ORDER_PLOT", "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+    :param image: numpy array (2D), the image to plot the fit on
+
+    :return None:
+    """
 
     # get constants
-    selected_order = p['IC_FF_ORDER_PLOT']
+    selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['fiber']
     # set up fig
     plt.figure()
@@ -686,7 +743,18 @@ def ext_sorder_fit(p, loc, image):
 
 
 def ext_aorder_fit(p, loc, image):
+    """
+    Plots all orders and highlights selected order (defined in
+    "IC_FF_ORDER_PLOT") on the image
 
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "IC_FF_ORDER_PLOT", "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain "ACC" (numpy array, 2D)
+    :param image: numpy array (2D), the image to plot the fit on
+
+    :return None:
+    """
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
@@ -725,6 +793,18 @@ def ext_aorder_fit(p, loc, image):
 
 
 def ext_spectral_order_plot(p, loc):
+    """
+    Plot extracted order against wavelength solution (for selected order
+    defined in "IC_EXT_ORDER_PLOT"
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must have at least "IC_EXT_ORDER_PLOT" and "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+                must have at least "WAVE" (numpy array, 2D) and "E2DS"
+                (numpy array, 2D)
+
+    :return None:
+    """
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['fiber']
@@ -753,6 +833,22 @@ def ext_spectral_order_plot(p, loc):
 # drift plotting function
 # =============================================================================
 def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
+    """
+    Plot the reference extracted spectrum against wavelength solution for the
+    selected order (defined in "IC_DRIFT_ORDER_PLOT")
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain at least "IC_DRIFT_ORDER_PLOT" and "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain at least "WAVE" (numpy array, 2D) and "SPEREF"
+                (numpy array, 2D) if x and y are not defined
+    :param x: numpy array (2D) or None, the wavelength solution for all order
+              if None uses "WAVE" from "loc"
+    :param y: numpy array (2D) or None, the extracted spectrum to plot for all
+              orders, if None uses "SPEREF" from "loc"
+
+    :return None:
+    """
     # get constants
     selected_order = p['IC_DRIFT_ORDER_PLOT']
     fiber = p['fiber']
@@ -784,6 +880,21 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
 
 
 def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
+    """
+    Plot the photo noise uncertainty against spectral order number
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain at least "FIBER"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain at least "NUMBER_ORDERS" (int) and "DVRMSREF"
+                (numpy array, 1D) if x and y are None
+    :param x: numpy array (1D) or None, the order numbers, if None uses
+              "NUMBER_ORDERS" from "loc" to define a list of orders
+    :param y: numpy array (1D) or None, the photon uncertainties for each order
+              if None uses "DVRMSREF" from "loc" to define a list of orders
+
+    :return None:
+    """
     # get data from loc
     if x is None:
         x = np.arange(loc['number_orders'])
@@ -808,6 +919,23 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
 
 
 def drift_plot_dtime_against_mdrift(p, loc, kind=None):
+    """
+    Plot drift (with uncertainties) against time from reference
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "DRIFT_TYPE_RAW" or "DRIFT_TYPE_{kind}" if kind
+              is not None
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain "DELTATIME" (numpy array, 1D), "MDRIFT"
+                (numpy array, 1D) and "MERRDRIFT (numpy array, 1D)
+    :param kind: string or None, the way drift was calculated, currently
+                 accepted are "median" or "mean", if define then drift plotted
+                 comes from "DRIFT_TYPE_MEDIAN" or "DRIFT_TYPE_MEAN" depending
+                 on value of kind (i.e. "median" or "mean")
+
+    :return None:
+    """
+    func_name = __NAME__ + '.drift_plot_dtime_against_mdrift()'
     # get data from loc
     deltatime = loc['deltatime']
     mdrift = loc['mdrift']
@@ -818,9 +946,9 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     elif kind in ['raw', 'e2ds']:
         kindstr = p['drift_type_{0}'.format(kind)]
     else:
-        emsg = ('kind="{0}" not understood in sPlt.drift_plot_dtime_'
-                'against_mdrift')
-        WLOG('error', p['log_opt'], emsg.format(kind))
+        emsg1 = 'kind="{0}" not understood'.format(kind)
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
         kindstr = None
     # get mstr from kindstr
     if kindstr == 'median':
@@ -848,6 +976,17 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
 
 
 def drift_peak_plot_dtime_against_drift(p, loc):
+    """
+    Plot mean drift against time from reference
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain "DELTATIME" (numpy array 1D),
+                "MEANRV" (numpy array 1D), "MEANRV_LEFT" (numpy array, 1D)
+                and "MEANRV_RIGHT" (numpy array, 1D)
+
+    :return None:
+    """
     # get data from loc
     deltatime = loc['deltatime']
     meanvr = loc['meanrv']
@@ -886,6 +1025,19 @@ def drift_peak_plot_dtime_against_drift(p, loc):
 
 
 def drift_plot_correlation_comp(p, loc, cc):
+    """
+    Plot correlation comparison plot (comparing value good and bad orders that
+    pass and fail the Pearson R tests
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "DRIFT_PEAK_PEARSONR_CUT"
+    :param loc: parameter dictionary, ParamDict containing data
+                must contain "NUMBER_ORDERS", "SPE" and "SPEREF"
+    :param cc: numpy array (1D), the correlation coefficients from the
+               Pearson R test
+
+    :return None:
+    """
 
     # get constants
     prcut = p['drift_peak_pearsonr_cut']
@@ -1007,6 +1159,19 @@ def drift_plot_correlation_comp(p, loc, cc):
 
 
 def create_separated_scaled_image(image, axis=0):
+    """
+    Function for scaling up one axis for plotting using imshow. If one axis
+    is vastly less than the other images will be hard to see (i.e. a very
+    thin rectangle. Scaling up the smaller axis by repeating the rows/columns
+    helps for visualizing any image plotted.
+
+    :param image: numpy array (2D), image to scale
+    :param axis: int, the axis to scale (i.e. 0 or 1)
+
+    :return newimage: numpy array (2D), the scaled image
+    :return scale: float, the scale factor between old and new images in
+                   dimension = axis
+    """
 
     if axis == 0:
         dim1, dim2 = 0, 1
@@ -1035,9 +1200,25 @@ def create_separated_scaled_image(image, axis=0):
 
 
 def drift_peak_plot_llpeak_amps(p, loc):
+    """
+    Plot the line-list peak amplitudes against their position on top of a
+    plot of the extraction (against wavelength) for a selected peak (defined
+    by "DRIFT_PEAK_SELECTED_ORDER".
+
+    :param p: parameter dictionary, ParamDict containing constants
+              must contain "DRIFT_PEAK_SELECTED_ORDER"
+    :param loc: parameter dictionary, ParamDict containing data,
+                must contain at least "WAVE" (numpy array, 2D), "SPEREF"
+                (numpy array, 2D), "LLPEAK" (numpy array, 1D), "AMPPEAK"
+                (numpy array, 1D) and "DV" (numpy array, 1D)
+
+    :return None:
+    """
+    # get selected peak from
+    selected_order = p['DRIFT_PEAK_SELECTED_ORDER']
     # get data from loc
-    wave = loc['wave']
-    extraction = loc['speref']
+    wave = loc['wave'][selected_order]
+    extraction = loc['speref'][selected_order]
     llpeak = loc['llpeak']
     logamppeak = np.log10(loc['amppeak'])
     dv = loc['dv']
@@ -1067,7 +1248,21 @@ def drift_peak_plot_llpeak_amps(p, loc):
 # CCF plotting function
 # =============================================================================
 def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
+    """
+    Plot the CCF plot. RV against CCF and RV against CCF fit, for a specific
+    order number "order"
 
+    :param x: numpy array (1D), the RV values
+    :param y: numpy array (1D), the CCF values
+    :param yfit: numpy array (1D), the CCF fit values
+    :param order: int, the order to plot
+    :param fig: matplotlib figure instance, i.e. plt.figure() passed to allow
+                same axis to plot each order of this function
+    :param pause: bool, if True allow for a pause after plotting (to allow user
+                  to view this order before moving to next order
+
+    :return None:
+    """
     if fig is None:
         fig = plt.figure()
     # clear the current figure
@@ -1092,15 +1287,6 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     if pause:
         time.sleep(1.0)
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code

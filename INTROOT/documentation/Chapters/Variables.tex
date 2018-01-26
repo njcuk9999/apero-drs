@@ -1181,11 +1181,19 @@ then the whole image (e2ds file) is rejected. Value must be a float larger than 
 {drift\_peak\_sigmaclip}{1.0}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
+
 % drift_peak_plot_line_log_amp
 \item \ParameterEntry{Plot linelist vs log Amplitude}
 {Defines whether we plot the line list against log amplitude. Value must be 1 or True to plot, or 0 or False to not plot}
 {drift\_peak\_plot\_line\_log\_amp}{False}
-{\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
+{\calDRIFTPEAK}{\constantsfile}{\spirouPlot.drift\_peak\_plot{\hskip 0pt}\_llpeak\_amps()}{Public}
+
+% drift_peak_selected_order
+\item \ParameterEntry{Selected order for linelist vs log Amplitude plot}
+{Defines the selected order to plot the wave vs extracted spectrum for overplotting on the line list against log amplitude plot. Value must be an integer between 0 and the number of orders}
+{drift\_peak\_selected\_order}{30}
+{\calDRIFTPEAK}{\constantsfile}{\spirouPlot.drift\_peak\_plot{\hskip 0pt}\_llpeak\_amps()}{Public}
+
 
 
 \end{itemize}

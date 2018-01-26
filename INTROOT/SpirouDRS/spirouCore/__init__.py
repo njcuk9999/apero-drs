@@ -192,8 +192,16 @@ Commonly used format codes:
 :return unix_time: float, unix time (seconds since 1970-01-01 00:00:00 GMT)
 """
 
-# Plotting functions alias
 sPlt = spirouPlot
+"""
+spirou plotting functions (alias)
+
+Created on 2017-11-02 at 16:29
+
+@author: cook
+
+Import rules: Only from spirouConfig and spirouCore
+"""
 
 # =============================================================================
 # End of code
