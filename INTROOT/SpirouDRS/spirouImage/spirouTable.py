@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou Table (other than fits) module
 
 Created on 2017-12-07 at 16:14
 
 @author: cook
 
-
-
-Version 0.0.0
+Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
