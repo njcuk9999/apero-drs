@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou Image processing module
 
 Created on 2017-10-12 at 17:47
 
 @author: cook
 
 Import rules: Not spirouLOCOR
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -551,14 +547,35 @@ def get_sigdet(p, hdr, name=None, return_value=False):
     return get_param(p, hdr, 'kw_rdnoise', name, return_value)
 
 
-def get_param(p, hdr, keyword, name=None, return_value=False):
+def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
+
+    func_name = __NAME__ + '.get_param()'
     # get header keyword
     key = p[keyword][0]
     # deal with no name
     if name is None:
         name = key
-    # get value
-    value = float(spirouFITS.keylookup(p, hdr, key, hdr['@@@hname']))
+    # get raw value
+    rawvalue = spirouFITS.keylookup(p, hdr, key, hdr['@@@hname'])
+    # get type casted value
+    try:
+        if dtype is None:
+            dtype = float
+            value = float(rawvalue)
+        elif type(dtype) == type:
+            value = dtype(rawvalue)
+        else:
+            emsg1 = 'Dtype "{0}" is not a valid python type. Keyword={1}'
+            emsg2 = '     function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1.format(dtype, keyword), emsg2])
+            value = None
+    except ValueError:
+        emsg1 = ('Cannot convert keyword "{0}" to type "{1}"'
+                 '').format(keyword, dtype)
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        value = None
+
     # deal with return value
     if return_value:
         return value
