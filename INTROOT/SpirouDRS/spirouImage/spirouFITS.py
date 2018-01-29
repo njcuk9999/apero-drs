@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-spirouFITS.py
+Spirou FITS rec module
 
 read and writing functions
 
@@ -10,8 +10,6 @@ Created on 2017-10-12 at 15:32
 @author: cook
 
 Import rules: Not spirouLOCOR
-
-Version 0.0.0
 """
 from __future__ import division
 import numpy as np
@@ -63,7 +61,7 @@ def readimage(p, filename=None, log=True, kind=None):
     :return nx: int, the shape in the first dimension, i.e. data.shape[0]
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
     """
-
+    func_name = __NAME__ + '.readimage()'
     # sort out no kind
     if kind is None:
         kind = 'Image'
@@ -76,8 +74,9 @@ def readimage(p, filename=None, log=True, kind=None):
         try:
             fitsfilename = p['fitsfilename']
         except KeyError:
-            emsg = '"fitsfilename" is not defined in parameter dictionary'
-            WLOG('error', log_opt, emsg)
+            emsg1 = '"fitsfilename" is not defined in parameter dictionary'
+            emsg2 = '   function = {0}'.format(func_name)
+            WLOG('error', log_opt, [emsg1, emsg2])
             fitsfilename = ''
     else:
         fitsfilename = filename
@@ -101,7 +100,6 @@ def readimage(p, filename=None, log=True, kind=None):
         header['@@@fname'] = filename
     # return data, header, data.shape[0], data.shape[1]
     return image, header, comments, nx, ny
-
 
 
 def readdata(p, filename, log=True):
@@ -159,6 +157,7 @@ def readimage_and_combine(p, framemath='+', filename=None, log=True):
     :return nx: int, the shape in the first dimension, i.e. data.shape[0]
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
     """
+    func_name = __NAME__ + '.readimage_and_combine()'
     # set up frequently used variables
     log_opt = p['log_opt']
     # get file name
@@ -166,8 +165,9 @@ def readimage_and_combine(p, framemath='+', filename=None, log=True):
         try:
             fitsfilename = p['fitsfilename']
         except KeyError:
-            emsg = '"fitsfilename" is not defined in parameter dictionary'
-            WLOG('error', log_opt, emsg)
+            emsg1 = '"fitsfilename" is not defined in parameter dictionary'
+            emsg2 = '    function={0}'.format(func_name)
+            WLOG('error', log_opt, [emsg1, emsg2])
             fitsfilename = ''
     else:
         fitsfilename = filename
@@ -219,12 +219,25 @@ def writeimage(filename, image, hdict, dtype=None):
 
     :return:
     """
+    func_name = __NAME__ + '.writeimage()'
 
     # check if file exists and remove it if it does
     if os.path.exists(filename):
-        os.remove(filename)
+        try:
+            os.remove(filename)
+        except Exception as e:
+            emsg1 = ' File {0} already exists and cannot be overwritten.'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1.format(filename), emsg2, emsg3])
     # create the primary hdu
-    hdu = fits.PrimaryHDU(image)
+    try:
+        hdu = fits.PrimaryHDU(image)
+    except Exception as e:
+        emsg1 = 'Cannot open image with astropy.io.fits'
+        emsg2 = '    Error {0}: {1}'.format(type(e), e)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
     # force type
     if dtype is not None:
         hdu.scale(dtype)
@@ -233,7 +246,14 @@ def writeimage(filename, image, hdict, dtype=None):
         hdu.header[key] = hdict[key]
     # write to file
     with warnings.catch_warnings(record=True) as w:
-        hdu.writeto(filename)
+        try:
+            hdu.writeto(filename)
+        except Exception as e:
+            emsg1 = 'Cannot write image to fits file {0}'.format(filename)
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+    # add warnings to the warning logger and log if we have them
     spirouCore.spirouLog.warninglogger(w)
 
 
@@ -243,15 +263,12 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     'kw_TILT' keyword-store extracts the tilts for each order
 
     :param p: dictionary, parameter dictionary
-
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
-
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the TILT file from the calib database
                      keyword "TILT"
-
     :param key: string or None, if None key='TILT' else uses string as key
                 from calibDB (first entry) to get tilt file
 
@@ -278,21 +295,17 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
     Reads the wave file (from calib database or filename)
 
     :param p: dictionary, parameter dictionary
-
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
-
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the TILT file from the calib database
                      keyword "TILT"
-
     :param key: string or None, if None key='WAVE' else uses string as key
                 from calibDB (first entry) to get wave file
 
     :param return_header: bool, if True returns header file else just returns
                           wave file
-
     :return wave: list of the tilt for each order
     """
     if key is None:
@@ -318,22 +331,25 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
     Reads the wave file (from calib database or filename)
 
     :param p: dictionary, parameter dictionary
-
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
-
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the TILT file from the calib database
                      keyword "TILT"
-
     :param key: string or None, if None key='WAVE' else uses string as key
                 from calibDB (first entry) to get wave file
 
     :return wave: list of the tilt for each order
     """
+    func_name = __NAME__ + '.read_flat_file()'
     if key is None:
-        key = 'FLAT_{0}'.format(p['fiber'])
+        try:
+            key = 'FLAT_{0}'.format(p['fiber'])
+        except spirouConfig.ConfigError as e:
+            emsg1 = 'Parameter "fiber" not found in parameter dictionary'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
     # get filename
     if filename is None:
         read_file = spirouCDB.GetFile(p, key, hdr)
@@ -347,17 +363,43 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None):
+    """
+    Read the order profile superposition image from either "filename" (if not
+    None) or get filename from the calibration database using "p"
+
+    "ORDER_PROFILE_{X}" must be in calibration database if filename is None
+    where X is either p["ORDERP_FILE"] or p["FIBER"] (presedence in that order)
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param hdr: dictionary or None, header dictionary (used to get the
+                acquisition time if trying to get "ORDER_PROFILE_{X}" from
+                the calibration database, if None uses the header from the
+                first file in "ARG_FILE_NAMES" i.e. "FITSFILENAME"
+    :param filename: string or None, if defined no need for "hdr" or keys from
+                     "p" the order profile is read straight from "filename"
+
+    :return orderp: numpy array (2D), the order profile image read from file
+    """
+
+    func_name = __NAME__ + '.read_order_profile_superposition()'
     # Log that we are reading the order profile
     wmsg = 'Reading order profile of Fiber {0}'
     WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
     # construct key
     # get loc file
-    if 'ORDERP_FILE' in p:
+    if filename is not None:
+        key = None
+    elif 'ORDERP_FILE' in p:
         key = 'ORDER_PROFILE_{0}'.format(p['ORDERP_FILE'])
-    else:
+    elif 'FIBER' in p:
         key = 'ORDER_PROFILE_{0}'.format(p['fiber'])
-
-    # construct filename
+    else:
+        emsg1 = ('Cannot open the order profile: Parameter dictionary '
+                 'does not contain key "ORDERP_FILE" or "FIBER"')
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        key = None
+    # construct read filename from calibDB or from "filename"
     if filename is None:
         read_file = spirouCDB.GetFile(p, key, hdr)
     else:
@@ -371,16 +413,14 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
 # =============================================================================
 # Define header User functions
 # =============================================================================
-def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
+def keylookup(p, d=None, key=None, has_default=False, default=None):
     """
-    Looks for a key in dictionary p, named 'name'
-    if has_default sets value of key to 'default' if not found
-    else logs an error
+    Looks for a key in dictionary "p" or "d", if has_default is True sets
+    value of key to 'default' if not found else logs an error
 
     :param p: dictionary, any dictionary
     :param d: dictionary, any dictionary, if None uses parameter dictionary
     :param key: string, key in the dictionary to find
-    :param name: string, the name of the dictionary (for log)
     :param has_default: bool, if True uses "default" as the value if key
                         not found
     :param default: object, value of the key if not found and
@@ -388,14 +428,13 @@ def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
 
     :return value: object, value of p[key] or default (if has_default=True)
     """
+    func_name = __NAME__ + '.keylookup()'
     # deal with d = None
     if d is None:
+        name = 'p'
         d = p
-    # deal with no name
-    if name is None and d is None:
-        name = 'Parameter Dictionary'
-    elif name is None:
-        name = 'Unknown Dictionary'
+    else:
+        name = 'd'
     # deal with no key
     if key is None:
         WLOG('error', p['log_opt'], 'Must define key')
@@ -407,23 +446,21 @@ def keylookup(p, d=None, key=None, name=None, has_default=False, default=None):
         try:
             value = d[key]
         except KeyError:
-            emsg = 'Key "{0}" not found in "{1}"'.format(key, name)
-            WLOG('error', p['log_opt'], emsg)
+            emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
 
     return value
 
 
-def keyslookup(p, d=None, keys=None, name=None, has_default=False,
-               defaults=None):
+def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     """
-    Looks for keys in dictionary p, named 'name'
-    if has_default sets value of key to 'default' if not found
-    else logs an error
+    Looks for keys in dictionary "p" or "d", if has_default is True sets
+    value of key to 'default' if not found else logs an error
 
     :param p: dictionary, any dictionary
     :param d: dictionary, any dictionary, if None uses parameter dictionary
     :param keys: list of strings, keys in the dictionary to find
-    :param name: string, the name of the dictionary (for log)
     :param has_default: bool, if True uses "default" as the value if key
                         not found
     :param defaults: list of objects or None, values of the keys if not
@@ -432,12 +469,15 @@ def keyslookup(p, d=None, keys=None, name=None, has_default=False,
     :return values: list of objects, values of p[key] for key in keys
                     or default value for each key (if has_default=True)
     """
-
+    func_name = __NAME__ + '.keyslookup()'
     # make sure keys is a list
     try:
         keys = list(keys)
     except TypeError:
-        raise ValueError('"keys" must be a list')
+        emsg1 = '"keys" must be a valid python list'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+
     # if defaults is None --> list of Nones else make sure defaults is a list
     if defaults is None:
         defaults = list(np.repeat([None], len(keys)))
@@ -445,15 +485,19 @@ def keyslookup(p, d=None, keys=None, name=None, has_default=False,
         try:
             defaults = list(defaults)
             if len(defaults) != len(keys):
-                raise ValueError('"defaults" must be same length as "keys"')
+                emsg1 = '"defaults" must be same length as "keys"'
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
         except TypeError:
-            raise ValueError('"defaults" must be a list')
+            emsg1 = '"defaults" must be a valid python list'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
 
     # loop around keys and look up each key
     values = []
     for k_it, key in enumerate(keys):
         # get the value for key
-        v = keylookup(p, d, key, name, has_default, default=defaults[k_it])
+        v = keylookup(p, d, key, has_default, default=defaults[k_it])
         # append value to values list
         values.append(v)
     # return values
@@ -483,7 +527,9 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
                         certain keys from those being copied, if False copies
                         all keys from input header
 
-    :return:
+    :return hdict: dictionary, (updated or new) header dictionary containing
+                   key/value pairs from the header (that are NOT in
+                   spirouConfig.spirouConst.FORBIDDEN_COPY_KEY)
     """
     if hdict is None:
         hdict = OrderedDict()
@@ -518,11 +564,14 @@ def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
                 (defaults to 0)
     :return:
     """
+    func_name = __NAME__ + '.copy_root_keys()'
     # deal with no hdict and no filename
     if hdict is None:
         hdict = OrderedDict()
     if filename is None:
-        WLOG('error', '', 'Filename required for "copy_root_keys"')
+        emsg1 = 'No filename defined (Filename is required)'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2])
     # read header file
     hdr, cmts = read_raw_header(filename=filename, headerext=ext)
     # loop around header keys
@@ -537,13 +586,14 @@ def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
     return hdict
 
 
-def add_new_key(hdict, keywordstore, value=None):
+def add_new_key(hdict=None, keywordstore=None, value=None):
     """
     Add a new key to hdict from keywordstore, if value is not None then the
     keywordstore value is updated. Each keywordstore is in form:
             [key, value, comment]    where key and comment are strings
+    if hdict is None creates a new dictionary
 
-    :param hdict: dictionary, storage for adding to FITS rec
+    :param hdict: dictionary or None, storage for adding to FITS rec
     :param keywordstore: list, keyword list (defined in spirouKeywords.py)
                          must be in form [string, value, string]
     :param value: object or None, if any python object (other than None) will
@@ -552,8 +602,19 @@ def add_new_key(hdict, keywordstore, value=None):
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
+    func_name = __NAME__ + '.add_ney_key()'
+    # deal with no hdict
+    if hdict is None:
+        hdict = dict()
+    # deal with no keywordstore
+    if keywordstore is None:
+        emsg1 = '"keywordstore" must be defined.'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2])
+
     # extract keyword, value and comment and put it into hdict
-    key, dvalue, comment = keywordstore
+    key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
+
     # set the value to default value if value is None
     if value is None:
         value = dvalue
@@ -563,14 +624,15 @@ def add_new_key(hdict, keywordstore, value=None):
     return hdict
 
 
-def add_new_keys(hdict, keywordstores, values=None):
+def add_new_keys(hdict=None, keywordstores=None, values=None):
     """
     Add a set of new key to hdict from keywordstores, if values is not None,
     then all values are set to None, keywordstores is a list of keywordstore
     objects. Each keywordstore is in form:
             [key, value, comment]    where key and comment are strings
 
-    :param hdict: dictionary, storage for adding to FITS rec
+    :param hdict: dictionary or None, storage for adding to FITS rec if None
+                  creates a new dictionary to store keys in
     :param keywordstores: list of lists, list of "keyword list" lists
                           (defined in spirouKeywords.py)
                           each "keyword list" must be in form:
@@ -582,6 +644,18 @@ def add_new_keys(hdict, keywordstores, values=None):
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
+    func_name = __NAME__ + '.add_new_keys()'
+    # deal with no hdict
+    if hdict is None:
+        hdict = dict()
+
+    if keywordstores is None:
+        emsg1 = '"keywordstores" must be defined as a list of keyword stores'
+        emsg2 = ('   keywordstore must be [name, value, comment] = '
+                 '[string, object, string]')
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+
     # deal with no values
     if values is None:
         values = np.repeat([None], len(keywordstores))
@@ -614,8 +688,9 @@ def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
+    func_name = __NAME__ + '.add_key_1d_list()'
     # extract keyword, value and comment and put it into hdict
-    key, dvalue, comment = keywordstore
+    key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
     # set the value to default value if value is None
     if values is None:
         values = [dvalue]
@@ -664,8 +739,9 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
+    func_name = __NAME__ + '.add_key_2d_list()'
     # extract keyword, value and comment and put it into hdict
-    key, dvalue, comment = keywordstore
+    key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
     # set the value to default value if value is None
     if values is None:
         values = [[dvalue]]
@@ -688,7 +764,67 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
     return hdict
 
 
+def extract_key_word_store(keywordstore=None, func_name=None):
+    """
+    Deal with extraction of key, value and comment from keywordstore
+    the keywordstore should be a list in the following form:
+
+    [name, value, comment]     with types [string, object, string]
+
+    :param keywordstore: list, keyword list (defined in spirouKeywords.py)
+                         must be in form [string, value, string]
+    :param func_name: string or None, if not None defined where the
+                      keywordstore function is being called, if None is set to
+                      here (spirouFITS.extract_key_word_store())
+
+    :return key: string, the name/key of the HEADER (key/value/comment)
+    :return value: object, any object to be put into the HEADER value
+                   (under HEADER key="key")
+    :return comment: string, the comment associated with the HEADER key
+    """
+    # deal with no func_name
+    if func_name is None:
+        func_name = __NAME__ + '.extract_key_word_store()'
+    # extract keyword, value and comment and put it into hdict
+    try:
+        key, dvalue, comment = keywordstore
+    except Exception as e:
+        emsg1 = 'There was a problem with the "keywordstore"'
+        emsg2 = '   It must be a list/tuple with of the following format:'
+        emsg3 = '       [string, object, string]'
+        emsg4 = '     where the first is the HEADER name of the keyword'
+        emsg5 = '     where the second is the default value for the keyword'
+        emsg6 = '     where the third is the HEADER comment'
+        emsg7 = '   keywordstore currently is "{0}"'.format(keywordstore)
+        emsg8 = '   function = {0}'.format(func_name)
+        emsgs = [emsg1, emsg2, emsg3, emsg4, emsg5, emsg6, emsg7, emsg8]
+        WLOG('error', sys.argv[0], emsgs)
+        key, dvalue, comment = None, None, None
+    # return values
+    return key, dvalue, comment
+
+
 def get_type_from_header(p, keywordstore, hdict=None, filename=None):
+    """
+    Special FITS HEADER keyword - get the type of file from a FITS file HEADER
+    using "keywordstore"
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param keywordstore: list, a keyword store in the form
+                         [name, value, comment] where the format is
+                         [string, object, string]
+    :param hdict: dictionary or None, the HEADER dictionary containing
+                  key/value pairs from a FITS HEADER, if None uses the
+                  header from "FITSFILENAME" in "p", unless filename is not None
+                  This hdict is used to get the type of file
+    :param filename: string or None, if not None and hdict is None, this is the
+                     file which is used to extract the HEADER from to get
+                     the type of file
+
+    :return ftype: string, the type of file (extracted from a HEADER dictionary/
+                   file) if undefined set to 'UNKNOWN'
+    """
+    func_name = __NAME__ + '.get_type_from_header()'
     # set up frequently used variables
     log_opt = p['log_opt']
     # if we don't have the hdict then we need to load the header from file
@@ -698,8 +834,9 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
             try:
                 fitsfilename = p['fitsfilename']
             except KeyError:
-                emsg = '"fitsfilename" is not defined in parameter dictionary'
-                WLOG('error', log_opt, emsg)
+                emsg1 = '"fitsfilename" is not defined in parameter dictionary'
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', log_opt, [emsg1, emsg2])
                 fitsfilename = ''
         else:
             fitsfilename = filename
@@ -707,9 +844,10 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
         hdict, _ = read_raw_header(fitsfilename, headerext=0)
     else:
         if type(hdict) not in [dict, ParamDict]:
-            emsg = ('"hdict" must be None or a valid python dictionary or '
-                    'Parameter Dictionary')
-            WLOG('error', log_opt, emsg)
+            emsg1 = ('"hdict" must be None or a valid python dictionary or '
+                     'Parameter Dictionary')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', log_opt, [emsg1, emsg2])
     # get the key from header dictionary
     if keywordstore[0] in hdict:
         return hdict[keywordstore[0]]
@@ -724,8 +862,10 @@ def read_header(p=None, filepath=None, ext=0):
     :param p: dictionary, parameter dictionary
     :param filepath: string, filename and path of FITS file to open
     :param ext: int, extension in FITS rec to open (default = 0)
+
     :return hdict: dictionary, the dictionary with key value pairs
     """
+    func_name = __NAME__ + '.read_header()'
     # if p is None
     if p is None:
         log_opt = ''
@@ -733,25 +873,64 @@ def read_header(p=None, filepath=None, ext=0):
         log_opt = p['log_opt']
     # if filepath is None raise error
     if filepath is None:
-        WLOG('error', log_opt, 'filepath required for "read_header"')
-    # if we don't have header get it (using 'fitsfilename')
-    header = dict()
+        emsg1 = 'Error "filepath" is required'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', log_opt, [emsg1, emsg2])
+    # try to get header from filepath
     try:
         header = fits.getheader(filepath, ext=ext)
     except IOError:
-        emsg = 'Cannot open header of file {0}'
-        WLOG('error', log_opt, emsg.format(filepath))
+        emsg1 = 'Cannot open header of file {0}'.format(filepath)
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', log_opt, [emsg1, emsg2])
+        header = None
     # load in to dictionary
     hdict = dict(zip(header.keys(), header.values()))
     # return hdict
     return hdict
 
 
-def read_key(p, hdict, key):
+def read_key(p, hdict=None, key=None):
+    """
+    Read a key from hdict (or p if hdict is not defined) and return it's
+    value.
+
+    :param p: dictionary, any dictionary
+    :param hdict: dictionary or None, the dictionary to add the key to once
+                  found, if None creates a new dictionary
+    :param key: string, key in the dictionary to find
+
+    :return value: object, the value of the key from hdict
+                   (or p if hdict is None)
+    """
+    func_name = __NAME__ + '.read_key()'
+    # deal with no key
+    if key is None:
+        emsg1 = 'Error "key" must be defined'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # return the value of the key
     return keylookup(p, hdict, key=key)
 
 
 def read_key_2d_list(p, hdict, key, dim1, dim2):
+    """
+    Read a set of header keys that were created from a 2D list
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param hdict: dictionary, HEADER dictionary to extract key/value pairs from
+    :param key: string, prefix of HEADER key to construct 2D list from
+                 key[number]
+
+                 where number = (row number * number of columns) + column number
+                 where column number = dim2 and row number = range(0, dim1)
+    :param dim1: int, the number of elements in dimension 1 (number of rows)
+    :param dim2: int, the number of columns in dimension 2 (number of columns)
+
+    :return value: numpy array (2D), the reconstructed 2D list of variables
+                   from the HEADER dictionary keys
+    """
+    func_name = __NAME__ + '.read_key_2d_list()'
     # create 2d list
     values = np.zeros((dim1, dim2), dtype=float)
     # loop around the 2D array
@@ -765,8 +944,10 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 # set the value
                 values[i_it][j_it] = float(hdict[keyname])
             except KeyError:
-                emsg = 'Cannot find key: {0} nbo={1} nbc={2} in hdict'
-                WLOG('error', p['log_opt'], emsg.format(keyname, dim1, dim2))
+                emsg1 = ('Cannot find key with nbo={1} nbc={2} in "hdict"'
+                         '').format(keyname, dim1, dim2)
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
     # return values
     return values
 
@@ -804,19 +985,43 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
     if getheader = getshape = False
      :return data: numpy array (2D), the image
     """
+    func_name = __NAME__ + '.read_raw_data()'
     # get the data
-    hdu = fits.open(filename)
+    try:
+        hdu = fits.open(filename)
+    except Exception as e:
+        emsg1 = 'File "{0}" cannot be opened by astropy.io.fits'
+        emsg2 = '   Error {0}: {1}'.format(type(e), e)
+        emsg3 = '   function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1.format(filename), emsg2, emsg3])
+        hdu = None
+    # get the number of fits files in filename
     ext = len(hdu)
     # Get the data and header based on how many extensions there are
     if ext == 1:
-        data = hdu[0].data
+        openext = 0
     else:
-        data = hdu[1].data
-
-    hdu.close()
+        openext = 1
+    # try to open the data and close the hdu
+    try:
+        data = hdu[openext].data
+        hdu.close()
+    except Exception as e:
+        emsg1 = 'Could not open data for file "{0}" extension={1}'
+        emsg2 = '    Error {0}: {1}'.format(type(e), e)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1.format(filename, openext), emsg2,
+                                    emsg3])
     # get the header (if header extension is available else default to zero)
     if headerext <= ext:
-        header = hdu[headerext].header
+        try:
+            header = hdu[headerext].header
+        except Exception as e:
+            emsg1 = 'Could not open header for file "{0}" extension={1}'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1.format(filename, openext), emsg2,
+                                        emsg3])
     else:
         header = hdu[0]
     # return based on whether header and shape are required
@@ -831,12 +1036,46 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
 
 
 def read_raw_header(filename, headerext=0):
+    """
+    Reads the header of a fits file using astropy.io.fits
+
+    :param filename: string, the filename to open with astropy.io.fits
+    :param headerext: int, the extension to read the header from
+
+    :return hdr: dictionary, the HEADER dictionary of key/value pairs,
+                 where the values are the values in the HEADER
+    :return cmt: dictionary,  the COMMENT dictionary from the HEADER fits file
+                 of key/value pairs, where the values are the comments
+                 from the HEADER file (for use in copying/writing keys to
+                 new file)
+    """
+    func_name = __NAME__ + '.read_raw_header()'
     # get the data
-    hdu = fits.open(filename)
+    try:
+        hdu = fits.open(filename)
+    except Exception as e:
+        emsg1 = 'File "{0}" cannot be opened by astropy.io.fits'
+        emsg2 = '   Error {0}: {1}'.format(type(e), e)
+        emsg3 = '   function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1.format(filename), emsg2, emsg3])
+        hdu = None
+    # get the number of fits files in filename
     ext = len(hdu)
+    # Get the data and header based on how many extensions there are
+    if ext == 1:
+        openext = 0
+    else:
+        openext = 1
     # get the header (if header extension is available else default to zero)
     if headerext <= ext:
-        header = hdu[headerext].header
+        try:
+            header = hdu[headerext].header
+        except Exception as e:
+            emsg1 = 'Could not open header for file "{0}" extension={1}'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1.format(filename, openext), emsg2,
+                                        emsg3])
     else:
         header = hdu[0]
     # convert header to python dictionary
@@ -869,6 +1108,8 @@ def math_controller(p, data, header, framemath=None):
     :return data: numpy array (2D), the image
     :return header: header dictionary from readimage (ReadImage) function
     """
+    func_name = __NAME__ + '.math_controler()'
+    # deal with no framemath
     if framemath is None:
         return p, data, header
     # set up frequently used variables
@@ -878,12 +1119,15 @@ def math_controller(p, data, header, framemath=None):
                        'MULTIPLY', '*', 'DIVIDE', '/', 'NONE']
     # convert add to upper case
     fm = framemath.upper()
-    # check that frame math is acceptable
+    # check that frame math is acceptable if not report to log
     if fm not in acceptable_math:
-        eargs = [fm, '", "'.join(acceptable_math), __NAME__]
-        emsg = ('framemath="{0}" has to be one of the following:\n\t\t"{1}"'
-                ' (in {2}.math_controller()')
-        WLOG('error', p['log_opt'], emsg.format(*eargs))
+        emsgs = ['framemath="{0}" not a valid operation'.format(fm)]
+        emsgs.append('    must be one of the following:')
+        for a_it in range(0, int(len(acceptable_math)/3)*3, 3):
+            a_math = acceptable_math[a_it: a_it+3]
+            emsgs.append('\t "{0}", "{1}", "{2}"'.format(*a_math))
+        emsgs.append('    Error raised in function = {0}'.format(func_name))
+        WLOG('error', p['log_opt'], emsgs)
     # if we have no math don't continue
     if fm == 'NONE':
         return p, data, header
@@ -906,15 +1150,15 @@ def math_controller(p, data, header, framemath=None):
     # log that we are adding frames
     WLOG('info', log_opt, '{0} frames'.format(kind))
     # loop around each frame
-
     for f_it in range(1, nbframes):
         # construct frame file name
         rawdir = spirouConfig.Constants.RAW_DIR(p)
         framefilename = os.path.join(rawdir, p['arg_file_names'][f_it])
         # check whether frame file name exists, log and exit if not
         if not os.path.exists(framefilename):
-            WLOG('error', log_opt, ('File: {0} does not exist'
-                                    ''.format(framefilename)))
+            emsg1 = 'File "{0}" does not exist'.format(framefilename)
+            emsg2 = '    function {0}'.format(func_name)
+            WLOG('error', log_opt, [emsg1, emsg2])
         else:
             # load that we are reading this file
             WLOG('', log_opt, 'Reading File: ' + framefilename)
