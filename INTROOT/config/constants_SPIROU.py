@@ -406,6 +406,10 @@ badpix_flat_cut_ratio = 0.5
 #       hot to be used (formally max_hotpix)
 badpix_max_hotpix = 100.0
 
+#   Percentile to normalise to when normalising and median        - [cal_badpix]
+#      filtering image [percentage]
+badpix_norm_percentile = 90.0
+
 # -----------------------------------------------------------------------------
 #  cal_CCF_E2DS_spirou
 # -----------------------------------------------------------------------------
