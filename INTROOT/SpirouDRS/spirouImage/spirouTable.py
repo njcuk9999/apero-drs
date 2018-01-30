@@ -11,6 +11,7 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
+import sys
 import os
 from astropy.table import Table
 from astropy.io.registry import IORegistryError, get_formats
@@ -38,7 +39,25 @@ WLOG = spirouCore.wlog
 # Define usable functions
 # =============================================================================
 def make_table(columns, values, formats=None, units=None):
+    """
+    Construct an astropy table from columns and values
 
+    :param columns: list of strings, the list of column names
+    :param values: list of lists or numpy array (2D), the list of lists/array
+                   of values, first dimension must have same length as number
+                   of columns, there must be the same number of values in each
+                   column
+    :param formats: list of strings, the astropy formats for each column
+                    i.e. 0.2f  for a float with two decimal places, must have
+                    same length as number of columns
+    :param units: list of strings, the units for each column, must have
+                  same length as number of columns
+
+    :return table: astropy.table.Table instance, the astropy table containing
+                   all columns and data
+    """
+
+    func_name = __NAME__ + '.make_table()'
     # make empty table
     table = Table()
     # get variables
@@ -52,17 +71,23 @@ def make_table(columns, values, formats=None, units=None):
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
-            WLOG('error', '', emsg.format(lcol, 'formats', len(formats)))
+
+            emsg1 = emsg.format(lcol, 'formats', len(formats))
+            emsg2= '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
-            WLOG('error', '', emsg.format(lcol, 'units', len(units)))
+            emsg1 = emsg.format(lcol, 'units', len(formats))
+            emsg2= '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
-            emsg = 'All values must have same number of rows '
-            WLOG('error', '', emsg)
+            emsg1 = 'All values must have same number of rows '
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -71,7 +96,13 @@ def make_table(columns, values, formats=None, units=None):
         table[col] = val
         # if we have formats set format
         if formats is not None:
-            table[col].format = formats[c_it]
+            if test_number_format(formats[c_it]):
+                table[col].format = formats[c_it]
+            else:
+                eargs1 = [formats[c_it], col]
+                emsg1 = 'Format "{0}" is invalid (Column = {1})'
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', sys.argv[0], [emsg1.format(eargs1), emsg2])
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -86,31 +117,35 @@ def write_table(table, filename, fmt='fits'):
     :param filename: string, the filename and location of the table to read
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
-    :param colnames:
-    :return:
+
+    :return None:
 
     astropy.table writeable formats are as follows:
 
     """
+    func_name = __NAME__ + '.write_table()'
     # get format table
     ftable = list_of_formats()
-
     # check that format in format_table
     if fmt not in ftable['Format']:
-        wmsg = 'fmt={0} not valid for astropy.table reading (in {1})'
-        WLOG('error', '', wmsg.format(fmt, __NAME__ + '/write_table()'))
+        emsg1 = 'fmt={0} not valid for astropy.table reading'.format(fmt)
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
-            wmsg = 'fmt={0} cannot be read by astropy.table (in {1})'
-            WLOG('error', '', wmsg.format(fmt, __NAME__ + '/write_table()'))
-
+            emsg1 = 'fmt={0} cannot be read by astropy.table'.format(fmt)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
+    # try to write table to file
     try:
         table.write(filename, format=fmt, overwrite=True)
-    except IORegistryError:
-        emsg = 'Cannot write to file IO error in {0}'
-        WLOG('error', '', emsg.format(__NAME__ + '/write_table'))
+    except Exception as e:
+        emsg1 = 'Cannot write table to file'
+        emsg2 = '    Error {0}: {1}'.format(type(e), e)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
 
 
 def read_table(filename, fmt, colnames=None):
@@ -124,38 +159,50 @@ def read_table(filename, fmt, colnames=None):
     :param colnames: list of strings or None, if not None renames all columns
                      to these strings, must be the same length as columns
                      in file that is read
-    :return:
+
+    :return None:
 
     astropy.table readable formats are as follows:
 
     """
+    func_name = __NAME__ + '.read_table()'
     # get format table
     ftable = list_of_formats()
 
-
     # check that format in format_table
     if fmt not in ftable['Format']:
-        wmsg = 'fmt={0} not valid for astropy.table reading (in {1})'
-        WLOG('error', '', wmsg.format(fmt, __NAME__ + '/read_table()'))
+        emsg1 = 'fmt={0} not valid for astropy.table reading'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
-            wmsg = 'fmt={0} cannot be read by astropy.table (in {1})'
-            WLOG('error', '', wmsg.format(fmt, __NAME__ + '/read_table()'))
+            emsg1 = 'fmt={0} cannot be read by astropy.table'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
 
     # check that filename exists
     if not os.path.exists(filename):
-        raise IOError('File {0} does not exist'.format(filename))
+        emsg1 = 'File {0} does not exist'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2])
 
-    # load file using astropy table
-    table = Table.read(filename, format='ascii')
+    # try to load file using astropy table
+    try:
+        table = Table.read(filename, format='ascii')
+    except Exception as e:
+        emsg1 = ' Error {0}: {1}'.format(type(e), e)
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        table = None
 
     # if we have colnames rename the columns
     if colnames is not None:
         if len(colnames) != len(table.colnames):
-            wmsg = ''
-            WLOG('error', '', wmsg.format())
+            emsg1 = 'Number of columns not equal to number of columns in table'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
@@ -167,7 +214,26 @@ def read_table(filename, fmt, colnames=None):
 # =============================================================================
 # Define worker functions
 # =============================================================================
+def test_number_format(fmt):
+    """
+    Test the format string with a floating point number
+    :param fmt: string, the format string i.e. "7.4f"
+
+    :return passed: bool, if valid returns True else returns False
+    """
+    try:
+        _ = ('{0:' + fmt + '}').format(123.456789)
+        return True
+    except ValueError:
+        return False
+
 def list_of_formats():
+    """
+    Get the list of astropy formats and return it
+
+    :return ftable: astropy.table.Table instance containing the formats allow
+                    for reading and writing astropy tables
+    """
     ftable = get_formats(Table)
 
     ftable['read?'] = ftable['Read'] == 'Yes'
@@ -178,6 +244,19 @@ def list_of_formats():
 
 
 def string_formats(ftable=None, mask=None):
+    """
+    Creates a string list of formats from the ftable created by
+    spirouTable.list_of_formats()
+
+    :param ftable: astropy.table.Table instance containing the formats allow
+                   for reading and writing astropy tables created by
+                   spirouTable.list_of_formats()
+    :param mask: None or numpy array (1D), if not None defines which rows of
+                 ftable to add to string
+
+    :return string: string containing a print version of ftable (with mask
+                    applied if mask is not None)
+    """
     # deal with no format table
     if ftable is None:
         ftable = list_of_formats()
@@ -195,6 +274,14 @@ def string_formats(ftable=None, mask=None):
     return string
 
 def update_docs():
+    """
+    Updates the documentation of "write_table" and "read_table" with the
+    string version of the formats currently available in astropy.
+    This is only for internal use after the function definitions, to append
+    the doc strings in "write_table" and "read_table
+
+    :return None:
+    """
     # get ftable
     ftable = list_of_formats()
     # update doc for write_table
@@ -208,14 +295,6 @@ def update_docs():
 # global call update the docs
 update_docs()
 
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
