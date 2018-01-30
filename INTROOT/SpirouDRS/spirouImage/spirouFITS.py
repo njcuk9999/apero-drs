@@ -37,6 +37,8 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # get the parameter dictionary object
 ParamDict = spirouConfig.ParamDict
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
 
@@ -229,7 +231,7 @@ def writeimage(filename, image, hdict, dtype=None):
             emsg1 = ' File {0} already exists and cannot be overwritten.'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1.format(filename), emsg2, emsg3])
+            WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
     # create the primary hdu
     try:
         hdu = fits.PrimaryHDU(image)
@@ -237,7 +239,7 @@ def writeimage(filename, image, hdict, dtype=None):
         emsg1 = 'Cannot open image with astropy.io.fits'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
     # force type
     if dtype is not None:
         hdu.scale(dtype)
@@ -252,7 +254,7 @@ def writeimage(filename, image, hdict, dtype=None):
             emsg1 = 'Cannot write image to fits file {0}'.format(filename)
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
     # add warnings to the warning logger and log if we have them
     spirouCore.spirouLog.warninglogger(w)
 
@@ -571,7 +573,7 @@ def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
     if filename is None:
         emsg1 = 'No filename defined (Filename is required)'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        WLOG('error', DPROG, [emsg1, emsg2])
     # read header file
     hdr, cmts = read_raw_header(filename=filename, headerext=ext)
     # loop around header keys
@@ -610,7 +612,7 @@ def add_new_key(hdict=None, keywordstore=None, value=None):
     if keywordstore is None:
         emsg1 = '"keywordstore" must be defined.'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        WLOG('error', DPROG, [emsg1, emsg2])
 
     # extract keyword, value and comment and put it into hdict
     key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
@@ -654,7 +656,7 @@ def add_new_keys(hdict=None, keywordstores=None, values=None):
         emsg2 = ('   keywordstore must be [name, value, comment] = '
                  '[string, object, string]')
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
     # deal with no values
     if values is None:
@@ -798,7 +800,7 @@ def extract_key_word_store(keywordstore=None, func_name=None):
         emsg7 = '   keywordstore currently is "{0}"'.format(keywordstore)
         emsg8 = '   function = {0}'.format(func_name)
         emsgs = [emsg1, emsg2, emsg3, emsg4, emsg5, emsg6, emsg7, emsg8]
-        WLOG('error', sys.argv[0], emsgs)
+        WLOG('error', DPROG, emsgs)
         key, dvalue, comment = None, None, None
     # return values
     return key, dvalue, comment
@@ -993,7 +995,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         emsg1 = 'File "{0}" cannot be opened by astropy.io.fits'
         emsg2 = '   Error {0}: {1}'.format(type(e), e)
         emsg3 = '   function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1.format(filename), emsg2, emsg3])
+        WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
         hdu = None
     # get the number of fits files in filename
     ext = len(hdu)
@@ -1010,7 +1012,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         emsg1 = 'Could not open data for file "{0}" extension={1}'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1.format(filename, openext), emsg2,
+        WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
                                     emsg3])
     # get the header (if header extension is available else default to zero)
     if headerext <= ext:
@@ -1020,7 +1022,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
             emsg1 = 'Could not open header for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1.format(filename, openext), emsg2,
+            WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
                                         emsg3])
     else:
         header = hdu[0]
@@ -1057,7 +1059,7 @@ def read_raw_header(filename, headerext=0):
         emsg1 = 'File "{0}" cannot be opened by astropy.io.fits'
         emsg2 = '   Error {0}: {1}'.format(type(e), e)
         emsg3 = '   function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1.format(filename), emsg2, emsg3])
+        WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
         hdu = None
     # get the number of fits files in filename
     ext = len(hdu)
@@ -1074,7 +1076,7 @@ def read_raw_header(filename, headerext=0):
             emsg1 = 'Could not open header for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1.format(filename, openext), emsg2,
+            WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
                                         emsg3])
     else:
         header = hdu[0]
