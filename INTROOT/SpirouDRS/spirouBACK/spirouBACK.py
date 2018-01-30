@@ -124,7 +124,7 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     loc['mean_backgrd'] = mean_backgrd
     loc['max_signal'] = max_signal
     # set source
-    loc.set_sources(['ycc', 'mean_background', 'max_signal'], func_name)
+    loc.set_sources(['ycc', 'mean_backgrd', 'max_signal'], func_name)
     # return the localisation dictionary
     return loc
 
