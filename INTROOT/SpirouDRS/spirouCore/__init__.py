@@ -77,6 +77,19 @@ to catch warnings use the following:
 :return:
 """
 
+GaussFunction = spirouMath.gauss_function
+"""
+A standard 1D gaussian function (for fitting against)]=
+
+:param x: numpy array (1D), the x data points
+:param a: float, the amplitude
+:param x0: float, the mean of the gaussian
+:param sigma: float, the standard deviation (FWHM) of the gaussian
+:param dc: float, the constant level below the gaussian
+
+:return gauss: numpy array (1D), size = len(x), the output gaussian
+"""
+
 GetTimeNowUnix = spirouMath.get_time_now_unix
 """
 Get the unix_time now.
