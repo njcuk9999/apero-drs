@@ -11,6 +11,7 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
+import sys
 import os
 import glob
 import warnings
@@ -66,6 +67,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
     if getshape = False
     :return newimage: numpy array (2D), the new resized image
     """
+    func_name = __NAME__ + '.resize()'
     # Deal with no low/high values
     if xhigh is None:
         xhigh = image.shape(1)
@@ -81,20 +83,31 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         if xlow > xhigh:
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
-            emsg = '"xlow" and "xhigh" cannot have the same values'
-            WLOG('error', '', emsg)
+            emsg1 = '"xlow" and "xhigh" cannot have the same values'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
         if ylow > yhigh:
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
-            emsg = '"ylow" and "yhigh" cannot have the same values'
-            WLOG('error', '', emsg)
+            emsg1 = '"ylow" and "yhigh" cannot have the same values'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', sys.argv[0], [emsg1, emsg2])
         else:
             y = np.arange(ylow, yhigh)
-    # construct the new image
-    newimage = np.take(np.take(image, x, axis=1), y, axis=0)
+    # construct the new image (if one can't raise error)
+    try:
+        newimage = np.take(np.take(image, x, axis=1), y, axis=0)
+    except Exception as e:
+        eargs1 = [xlow, xhigh, ylow, yhigh]
+        emsg1 = 'Cannot resize "image" to ({0}-{1} by {2}-{3})'.format(*eargs1)
+        emsg2 = '    Error {0}: {1}'.format(type(e), e)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+        newimage = None
+
     # if getshape is True return newimage, newimage.shape[0], newimage.shape[1]
     if getshape:
         return newimage, newimage.shape[0], newimage.shape[1]
@@ -103,21 +116,29 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         return newimage
 
 
-def flip_image(image, flipx=True, flipy=True):
+def flip_image(image, fliprows=True, flipcols=True):
     """
     Flips the image in the x and/or the y direction
 
     :param image: numpy array (2D), the image
-    :param flipx: bool, if True flips in x direction (axis = 0)
-    :param flipy: bool, if True flips in y direction (axis = 1)
+    :param fliprows: bool, if True reverses row order (axis = 0)
+    :param flipcols: bool, if True reverses column order (axis = 1)
 
     :return newimage: numpy array (2D), the flipped image
     """
-    if flipx and flipy:
+    func_name = __NAME__ + '.flip_image()'
+    # raise error if image is not 2D
+    if len(image.shape) < 2:
+        emsg1 = 'Image must has at least two dimensions, shape = {0}'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', sys.argv[0], [emsg1.format(image.shape), emsg2])
+    # flip both dimensions
+    if fliprows and flipcols:
         return image[::-1, ::-1]
-    elif flipx:
+    # flip first dimension
+    elif fliprows:
         return image[::-1, :]
-    elif flipy:
+    elif flipcols:
         return image[:, ::-1]
     else:
         return image
@@ -136,22 +157,32 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
 
     :return newimage: numpy array (2D), the image in e-
     """
-    newimage = None
+    func_name = __NAME__ + '.convert_to_e()'
+    # if p is defined
     if p is not None:
         try:
             newimage = image * p['exptime'] * p['gain']
         except KeyError:
-            emsg = ('If parameter dictionary is defined keys "exptime" '
-                    'and "gain" must be defined.')
-            WLOG('error', '', emsg)
+            emsg1 = ('If parameter dictionary is defined keys "exptime" '
+                     'must be in parameter dictionary.')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', '', [emsg1, emsg2])
+            newimage = None
     elif gain is not None and exptime is not None:
         try:
             gain, exptime = float(gain), float(exptime)
             newimage = image * gain * exptime
         except ValueError:
-            emsg = ('"gain" and "exptime" must be floats if parameter '
-                    'dictionary is None.')
-            WLOG('error', '', emsg)
+            emsg1 = ('"gain" and "exptime" must be floats if parameter '
+                     'dictionary is None.')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', '', [emsg1, emsg2])
+            newimage = None
+    else:
+        emsg1 = 'Either "p" or ("gain" and "exptime") must be defined'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', '', [emsg1, emsg2])
+        newimage = None
 
     return newimage
 
@@ -168,28 +199,62 @@ def convert_to_adu(image, p=None, exptime=None):
 
     :return newimage: numpy array (2D), the image in e-
     """
-    newimage = None
+    func_name = __NAME__ + '.convert_to_adu()'
     if p is not None:
         try:
             newimage = image * p['exptime']
         except KeyError:
-            emsg = ('If parameter dictionary is defined keys "exptime" '
-                    'must be defined.')
-            WLOG('error', '', emsg)
+            emsg1 = ('If parameter dictionary is defined key "exptime" '
+                     'must be in parameter dictionary.')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', '', [emsg1, emsg2])
+            newimage = None
     elif exptime is not None:
         try:
             exptime = float(exptime)
             newimage = image * exptime
         except ValueError:
-            emsg = ('"exptime" must be a float if parameter '
-                    'dictionary is None.')
-            WLOG('error', '', emsg)
+            emsg1 = ('"exptime" must be a float if parameter '
+                     'dictionary is None.')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', '', [emsg1, emsg2])
+            newimage = None
+    else:
+        emsg1 = 'Either "p" or "exptime" must be defined'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', '', [emsg1, emsg2])
+        newimage = None
 
     return newimage
 
 
 def get_all_similar_files(p, directory, prefix=None, suffix=None):
+    """
+    Get all similar files in a directory with matching prefix and suffix defined
+    either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
 
+    :param p: parameter dictionary, ParamDict containing constants
+    :param directory: string, the directory to search for files
+    :param prefix: string or None, if not None the prefix to search for, if
+                   None defines the prefix from the first 5 characters of
+                   p["ARG_FILE_NAMES"][0]
+    :param suffix: string  or None, if not None the suffix to search for, if
+                   None defines the prefix from the last 8 characters of
+                   p["ARG_FILE_NAMES"][0]
+
+    :return filelist: list of strings, the full paths of all files that are in
+                      "directory" with the matching prefix and suffix defined
+                      either by "prefix" and "suffix" or by
+                      p["ARG_FILE_NAMES"][0]
+    """
+    func_name = __NAME__ + '.get_all_similar_files()'
+    # deal with no "arg_file_names"
+    if prefix is None or suffix is None:
+        if 'arg_file_names' not in p:
+            emsg1 = ('"prefix" and "suffix" not defined and "arg_file_names" '
+                     'not found in "p"')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
     # get file prefix and suffix
     if prefix is None:
         prefix = p['arg_file_names'][0][0:5]
@@ -218,9 +283,17 @@ def measure_dark(pp, image, image_name, short_name):
     :param image_name: string, the name of the image (for logging)
     :param short_name: string, suffix (for parameter naming -
                         parmaeters added to pp with suffix i)
+
     :return pp: dictionary, parameter dictionary
     """
-
+    func_name = __NAME__ + '.measure_dark()'
+    # make sure image is a numpy array
+    try:
+        image = np.array(image)
+    except Exception as e:
+        emsg1 = '"image" is not a valid numpy array'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', pp['log_opt'], [emsg1, emsg2])
     # flatten the image
     fimage = image.flat
     # get the finite (non-NaN) mask
@@ -230,19 +303,29 @@ def measure_dark(pp, image, image_name, short_name):
     # get the median value of the non-NaN data
     med = np.median(fimage)
     # get the 5th and 95th percentile qmin
-    qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
+    try:
+        qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
+    except spirouConfig.ConfigError as e:
+        emsg = '    function = {0}'.format(func_name)
+        WLOG('error', pp['log_opt'], [e.message, emsg])
+        qmin, qmax = None, None
     # get the histogram for flattened data
-    histo = np.histogram(fimage, bins=pp['HISTO_BINS'],
-                         range=(pp['HISTO_RANGE_LOW'], pp['HISTO_RANGE_HIGH']))
+    try:
+        histo = np.histogram(fimage, bins=pp['HISTO_BINS'],
+                             range=(pp['HISTO_RANGE_LOW'],
+                                    pp['HISTO_RANGE_HIGH']))
+    except spirouConfig.ConfigError as e:
+        emsg = '    function = {0}'.format(func_name)
+        WLOG('error', pp['log_opt'], [e.message, emsg])
+        histo = None
     # get the fraction of dead pixels as a percentage
     dadead = imax * 100 / np.product(image.shape)
     # log the dark statistics
-    largs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
+    wargs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
              pp['DARK_QMAX'], qmin, qmax]
-    WLOG('info', pp['log_opt'], ('{0:12s}: Frac dead pixels= {1:.1f} % - '
-                                 'Median= {2:.2f} ADU/s - '
-                                 'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s'
-                                 '').format(*largs))
+    wmsg = ('{0:12s}: Frac dead pixels= {1:.1f} % - Median= {2:.2f} ADU/s - '
+            'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s')
+    WLOG('info', pp['log_opt'], wmsg.format(*wargs))
     # add required variables to pp
     source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
     pp['histo_{0}'.format(short_name)] = histo
@@ -251,14 +334,14 @@ def measure_dark(pp, image, image_name, short_name):
     pp.set_source('med_{0}'.format(short_name), source)
     pp['dadead_{0}'.format(short_name)] = dadead
     pp.set_source('dadead_{0}'.format(short_name), source)
-
+    # return the parameter dictionary with new values
     return pp
 
 
 def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     """
     Corrects "data" for "dark" using calibDB file (header must contain
-        value of p['ACQTIME_KEY'] as a keyword
+    value of p['ACQTIME_KEY'] as a keyword)
 
     :param p: dictionary, parameter dictionary
     :param image: numpy array (2D), the image
@@ -271,11 +354,10 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
                         if False (default) returns corrected_image
 
     :return corrected_image: numpy array (2D), the dark corrected image
-
-    only returned if return_dark = True:
-
-    :return dark: numpy array (2D), the dark
+                             only returned if return_dark = True:
+    :return darkimage: numpy array (2D), the dark
     """
+    func_name = __NAME__ + '.correct_for_dark()'
     if nfiles is None:
         nfiles = p['nbframes']
 
@@ -286,8 +368,13 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         # get calibDB
         cdb, p = spirouCDB.GetDatabase(p, acqtime)
     else:
-        cdb = p['calibDB']
-        acqtime = p['max_time_unix']
+        try:
+            cdb = p['calibDB']
+            acqtime = p['max_time_unix']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [e.message, emsg])
+            cdb, acqtime = None, None
 
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:
@@ -296,9 +383,18 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
         corrected_image = image - (darkimage * nfiles)
     else:
+        # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
-        emsg = 'No valid DARK in calibDB {0} ( with unix time <={1})'
-        WLOG('error', p['log_opt'], emsg.format(masterfile, acqtime))
+        # deal with extra constrain on file from "closer/older"
+        comptype = p.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = '(with unit time <={1})'
+        else:
+            extstr = ''
+        # log error
+        emsg1 = 'No valid DARK in calibDB {0} ' + extstr
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1.format(masterfile, acqtime), emsg2])
         corrected_image, darkimage = None, None
 
     # finally return datac
@@ -308,10 +404,39 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         return corrected_image
 
 
-def normalise_median_flat(p, image, method='new'):
+def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
+    """
+    Applies a median filter and normalises. Median filter is applied with width
+    "wmed" or p["BADPIX_FLAT_MED_WID"] if wmed is None) and then normalising by
+    the 90th percentile
 
+    :param p: parameter dictionary, ParamDict containing constants
+    :param image: numpy array (2D), the iamge to median filter and normalise
+    :param method: string, "new" or "old" if "new" uses np.percentile else
+                   sorts the flattened image and takes the "percentile" (i.e.
+                   90th) pixel value to normalise
+    :param wmed: float or None, if not None defines the median filter width
+                 if None uses p["BADPIX_MED_WID", see
+                 scipy.ndimage.filters.median_filter "size" for more details
+    :param percentile: float or None, if not None degines the percentile to
+                       normalise the image at, if None used from
+                       p["BADPIX_NORM_PERCENTILE"]
+
+    :return norm_med_image: numpy array (2D), the median filtered and normalised
+                            image
+    :return norm_image: numpy array (2D), the normalised image
+    """
+    func_name = __NAME__ + '.normalise_median_flat()'
     # log that we are normalising the flat
     WLOG('', p['log_opt'], 'Normalising the flat')
+
+    # get used percentile
+    if percentile is None:
+        try:
+            percentile = p['BADPIX_NORM_PERCENTILE']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [e.message, emsg])
 
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -319,7 +444,12 @@ def normalise_median_flat(p, image, method='new'):
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    wmed = p['BADPIX_FLAT_MED_WID']
+    if wmed is None:
+        try:
+            wmed = p['BADPIX_FLAT_MED_WID']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [e.message, emsg])
 
     # create storage for median-filtered flat image
     image_med = np.zeros_like(image)
@@ -331,18 +461,18 @@ def normalise_median_flat(p, image, method='new'):
 
     if method == 'new':
         # get the 90th percentile of median image
-        norm = np.percentile(image_med[np.isfinite(image_med)], 90)
+        norm = np.percentile(image_med[np.isfinite(image_med)], percentile)
 
     else:
         v = image_med.reshape(np.product(image.shape))
         v = np.sort(v)
-        norm = v[int(np.product(image.shape) * 0.9)]
+        norm = v[int(np.product(image.shape) * percentile/100.0)]
 
     # apply to flat_med and flat_ref
     return image_med/norm, image/norm
 
 
-def locate_bad_pixels(p, fimage, fmed, dimage):
+def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     """
     Locate the bad pixels in the flat image and the dark image
 
@@ -350,6 +480,9 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     :param fimage: numpy array (2D), the flat normalised image
     :param fmed: numpy array (2D), the flat median normalised image
     :param dimage: numpy array (2D), the dark image
+    :param wmed: float or None, if not None defines the median filter width
+                 if None uses p["BADPIX_MED_WID", see
+                 scipy.ndimage.filters.median_filter "size" for more details
 
     :return bad_pix_mask: numpy array (2D), the bad pixel mask image
     :return badpix_stats: list of floats, the statistics array:
@@ -359,6 +492,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
                             Fraction of NaN pixels in flat [%]
                             Fraction of bad pixels with all criteria [%]
     """
+    func_name = __NAME__ + '.locate_bad_pixels()'
     # log that we are looking for bad pixels
     WLOG('', p['log_opt'], 'Looking for bad pixels')
     # -------------------------------------------------------------------------
@@ -368,10 +502,19 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     # a small amount over wmed pixels and that the badpixels are
     # isolated enough that the median along that box will be representative
     # of the flux they should have if they were not bad
-    wmed = p['BADPIX_FLAT_MED_WID']
+    if wmed is None:
+        try:
+            wmed = p['BADPIX_FLAT_MED_WID']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [e.message, emsg])
 
     # maxi differential pixel response relative to the expected value
-    cut_ratio = p['BADPIX_FLAT_CUT_RATIO']
+    try:
+        cut_ratio = p['BADPIX_FLAT_CUT_RATIO']
+    except spirouConfig.ConfigError as e:
+        emsg = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [e.message, emsg])
 
     # illumination cut parameter. If we only cut the pixels that
     # fractionnally deviate by more than a certain amount, we are going
@@ -382,10 +525,17 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     # to about 1. We then set an illumination threshold below which
     # only the dark current will be a relevant parameter to decide that
     #  a pixel is "bad"
-    illum_cut = p['BADPIX_ILLUM_CUT']
-
+    try:
+        illum_cut = p['BADPIX_ILLUM_CUT']
+    except spirouConfig.ConfigError as e:
+        emsg = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [e.message, emsg])
     # hotpix. Max flux in ADU/s to be considered too hot to be used
-    max_hotpix = p['BADPIX_MAX_HOTPIX']
+    try:
+        max_hotpix = p['BADPIX_MAX_HOTPIX']
+    except spirouConfig.ConfigError as e:
+        emsg = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [e.message, emsg])
     # -------------------------------------------------------------------------
     # create storage for dark corrected image
     dcorrect = np.zeros_like(dimage)
@@ -397,9 +547,10 @@ def locate_bad_pixels(p, fimage, fmed, dimage):
     # complain if the flat image and dark image do not have the same dimensions
     if dimage.shape != fimage.shape:
         eargs = np.array([fimage.shape, dimage.shape]).flatten()
-        emsg = ('Flat image ({0}x{1}) and Dark image ({2}x{3}) must have the '
-                'same shape.')
-        WLOG('error', p['log_opt'], emsg.format(*eargs))
+        emsg1 = ('Flat image ({0}x{1}) and Dark image ({2}x{3}) must have the '
+                 'same shape.')
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1.format(*eargs), emsg2])
     # -------------------------------------------------------------------------
     # as there may be a small level of scattered light and thermal
     # background in the dark  we subtract the running median to look
@@ -504,6 +655,7 @@ def fit_tilt(pp, lloc):
 
     :param pp: dictionary, parameter dictionary
     :param lloc: dictionary, parameter dictionary containing the data
+
     :return lloc: dictionary, parameter dictionary containing the data
     """
 
@@ -533,22 +685,86 @@ def fit_tilt(pp, lloc):
 # Get basic image properties
 # =============================================================================
 def get_exptime(p, hdr, name=None, return_value=False):
+    """
+    Get Exposure time from HEADER. Wrapper for spirouImage.get_param
+
+    :param p: parameter dictionary, ParamDict of constants
+    :param hdr: dictionary, header dictionary to extract
+    :param name: string or None, if not None the name for the parameter
+                 logged if there is an error in getting parameter, if name is
+                 None the name is taken as "keyword"
+    :param return_value: bool, if True returns parameter, if False adds
+                         parameter to "p" parameter dictionary (and sets source)
+
+    :return value: if return_value is True value of parameter is returned
+    :return p: if return_value is False, updated parameter dictionary p with
+               key = name is returned
+    """
     # return param
     return get_param(p, hdr, 'kw_exptime', name, return_value)
 
 
 def get_gain(p, hdr, name=None, return_value=False):
+    """
+    Get Gain from HEADER. Wrapper for spirouImage.get_param
+
+    :param p: parameter dictionary, ParamDict of constants
+    :param hdr: dictionary, header dictionary to extract
+    :param name: string or None, if not None the name for the parameter
+                 logged if there is an error in getting parameter, if name is
+                 None the name is taken as "keyword"
+    :param return_value: bool, if True returns parameter, if False adds
+                         parameter to "p" parameter dictionary (and sets source)
+
+    :return value: if return_value is True value of parameter is returned
+    :return p: if return_value is False, updated parameter dictionary p with
+               key = name is returned
+    """
     # return param
     return get_param(p, hdr, 'kw_gain', name, return_value)
 
 
 def get_sigdet(p, hdr, name=None, return_value=False):
+    """
+    Get sigdet from HEADER. Wrapper for spirouImage.get_param
+
+    :param p: parameter dictionary, ParamDict of constants
+    :param hdr: dictionary, header dictionary to extract
+    :param name: string or None, if not None the name for the parameter
+                 logged if there is an error in getting parameter, if name is
+                 None the name is taken as "keyword"
+    :param return_value: bool, if True returns parameter, if False adds
+                         parameter to "p" parameter dictionary (and sets source)
+
+    :return value: if return_value is True value of parameter is returned
+    :return p: if return_value is False, updated parameter dictionary p with
+               key = name is returned
+    """
     # return param
     return get_param(p, hdr, 'kw_rdnoise', name, return_value)
 
 
 def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
+    """
+    Get parameter from header "hdr" using "keyword" (keyword store constant)
 
+    :param p: parameter dictionary, ParamDict containing constants
+    :param hdr: dictionary, HEADER dictionary containing key/value pairs
+                extracted from a FITS rec header
+    :param keyword: string, the keyword key (taken from "p") this allows
+                    getting of the keyword store from the parameter dictionary
+    :param name: string or None, if not None the name for the parameter
+                 logged if there is an error in getting parameter, if name is
+                 None the name is taken as "keyword"
+    :param return_value: bool, if True returns parameter, if False adds
+                         parameter to "p" parameter dictionary (and sets source)
+    :param dtype: type or None, if not None then tries to convert raw
+                  parameter to type=dtype
+
+    :return value: if return_value is True value of parameter is returned
+    :return p: if return_value is False, updated parameter dictionary p with
+               key = name is returned
+    """
     func_name = __NAME__ + '.get_param()'
     # get header keyword
     key = p[keyword][0]
