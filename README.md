@@ -41,7 +41,7 @@
 
 - - - -
 
-## Quick overview of progress (v0.1.007):
+## Quick overview of progress (v0.1.008):
 
 - main codes (updated to V48):
 
