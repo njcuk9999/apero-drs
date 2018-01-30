@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Spirou radial velocity module
 
 Created on 2017-11-21 at 11:52
 
 @author: cook
 
-Version 0.0.1
 """
 from __future__ import division
 import numpy as np
@@ -44,6 +41,8 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # get speed of light
 CONSTANT_C = constants.c.value
+# get gaussian function
+gauss_function = spirouCore.GaussFunction
 
 # switch between new and old
 # TODO: Should be new
@@ -54,12 +53,27 @@ OLDCODEEXACT = False
 # Define main functions
 # =============================================================================
 def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
+    """
+    Compute the photon noise uncertainty for all orders (for the 2D image)
+
+    :param spe: numpy array (2D), the extracted spectrum
+                size = (number of orders by number of columns (x-axis))
+    :param wave: numpy array (2D), the wave solution for each pixel
+    :param sigdet: float, the read noise (sigdet) for calculating the
+                   noise array
+    :param threshold: float, upper limit for pixel values, above this limit
+                      pixels are regarded as saturated
+    :param size: int, size (in pixels) around saturated pixels to also regard
+                 as bad pixels
+
+    :return dvrms2: numpy array (1D), the photon noise for each pixel (squared)
+    :return weightedmean: float, weighted mean photon noise across all orders
+    """
     # flag (saturated) fluxes above threshold as "bad pixels"
     flag = spe < threshold
     # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
     for i_it in range(1, 2 * size, 1):
         flag[:, size:-size] *= flag[:, i_it: i_it - 2 * size]
-
     # get the wavelength normalised to the wavelength spacing
     nwave = wave[:, 1:-1] / (wave[:, 2:] - wave[:, :-2])
     # get the flux + noise array
@@ -79,6 +93,28 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
 
 
 def renormalise_cosmic2d(speref, spe, threshold, size, cut):
+    """
+    Correction of the cosmics and renormalisation by comparison with
+    reference spectrum (for the 2D image)
+
+    :param speref: numpy array (2D), the REFERENCE extracted spectrum
+                   size = (number of orders by number of columns (x-axis))
+    :param spe:  numpy array (2D), the COMPARISON extracted spectrum
+                 size = (number of orders by number of columns (x-axis))
+    :param threshold: float, upper limit for pixel values, above this limit
+                      pixels are regarded as saturated
+    :param size: int, size (in pixels) around saturated pixels to also regard
+                 as bad pixels
+    :param cut: float, define the number of standard deviations cut at in             -                  cosmic renormalisation
+
+    :return spen: numpy array (2D), the corrected normalised COMPARISON
+                  extracted spectrrum
+    :return cnormspe: numpy array (1D), the flux ratio for each order between
+                      corrected normalised COMPARISON extracted spectrum and
+                      REFERENCE extracted spectrum
+    :return cpt: float, the total flux above the "cut" parameter
+                 (cut * standard deviations above median)
+    """
     # flag (saturated) fluxes above threshold as "bad pixels"
     flag = (spe < threshold) & (speref < threshold)
     # get the dimensions of spe
@@ -124,6 +160,25 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
 
 
 def calculate_rv_drifts_2d(speref, spe, wave, sigdet, threshold, size):
+    """
+    Calculate the RV drift between the REFERENCE (speref) and COMPARISON (spe)
+    extracted spectra.
+
+    :param speref: numpy array (2D), the REFERENCE extracted spectrum
+                   size = (number of orders by number of columns (x-axis))
+    :param spe:  numpy array (2D), the COMPARISON extracted spectrum
+                 size = (number of orders by number of columns (x-axis))
+    :param wave: numpy array (2D), the wave solution for each pixel
+    :param sigdet: float, the read noise (sigdet) for calculating the
+                   noise array
+    :param threshold: float, upper limit for pixel values, above this limit
+                      pixels are regarded as saturated
+    :param size: int, size (in pixels) around saturated pixels to also regard
+                 as bad pixels
+
+    :return rvdrift: numpy array (1D), the RV drift between REFERENCE and
+                     COMPARISON spectrum for each order
+    """
     # flag bad pixels (less than threshold + difference less than threshold/10)
     flag = (speref < threshold) & (spe < threshold)
     flag &= (speref - spe < threshold / 10.)
@@ -324,26 +379,34 @@ def create_drift_file(p, loc):
     return loc
 
 
-def gauss_function(x, a, x0, sigma, dc):
+def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     """
-    A standard gaussian function (for fitting against)]=
+    Remove peaks that are too wide
 
-    :param x: numpy array (1D), the x data points
-    :param a: float, the amplitude
-    :param x0: float, the mean of the gaussian
-    :param sigma: float, the standard deviation (FWHM) of the gaussian
-    :param dc: float, the constant level below the gaussian
+    :param p: parameter dictionary, storage of constants
+    :param loc: parameter dictionary, storage of data
+    :param expwidth: float or None, the expected width of FP peaks - used to
+                     "normalise" peaks (which are then subsequently removed
+                     if > "cutwidth") if expwidth is None taken from
+                     p["drift_peak_exp_width"]
+    :param cutwidth: float or None, the normalised width of FP peaks thatis too
+                     large normalised width FP FWHM - expwidth
+                     cut is essentially: FP FWHM < (expwidth + cutwidth), if
+                     cutwidth is None taken from p["drift_peak_norm_width_cut"]
 
-    :return gauss: numpy array (1D), size = len(x), the output gaussian
+    :return loc: parameter dictionary, updated with new data
     """
-    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
-
-
-def remove_wide_peaks(p, loc):
-
+    func_name = __NAME__ + '.remove_wide_peaks()'
     # get constants
-    expwidth = p['drift_peak_exp_width']
-    cutwidth = p['drift_peak_norm_width_cut']
+    try:
+        if expwidth is None:
+            expwidth = p['drift_peak_exp_width']
+        if cutwidth is None:
+            cutwidth = p['drift_peak_norm_width_cut']
+    except spirouConfig.ConfigError as e:
+        emsg1 = 'Error {0}: {1}'.format(type(e), e)
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
 
     # define a mask to cut out wide peaks
     mask = np.abs(loc['ewpeak'] - expwidth) < cutwidth
@@ -370,7 +433,14 @@ def remove_wide_peaks(p, loc):
 
 
 def remove_zero_peaks(p, loc):
+    """
+    Remove peaks that have a value of zero
 
+    :param p: parameter dictionary, storage of constants
+    :param loc: parameter dictionary, storage of data
+
+    :return loc: parameter dictionary, updated with new data
+    """
     # define a mask to cut out peaks with a value of zero
     mask = loc['xref'] != 0
 
@@ -496,7 +566,8 @@ def sigma_clip(loc, sigma=1.0):
 
     :param loc: parameter dictionary, data storage
     :param sigma: float, the sigma of the clip (away from the median)
-    :return:
+
+    :return loc: the updated parameter dictionary
     """
     # get dv
     dv = loc['dv']
@@ -582,13 +653,30 @@ def drift_all_orders(loc, fileno, nomin, nomax):
 # =============================================================================
 # Define ccf used functions
 # =============================================================================
+def get_ccf_mask(p, loc, filename=None):
+    """
+    Get the CCF mask
 
-def get_ccf_mask(p, loc):
+    :param p: parameter dictionary, parameter dictionary containing the
+              constants
+    :param loc: parameter dictionary, parameter dictionary containing the data
+    :param filename: string or None, the filename and location of the ccf mask
+                     file, if None then file names is gotten from p["ccf_mask"]
 
+    :return loc: the updated parameter dictionary
+    """
+    func_name = __NAME__ + '.get_ccf_mask()'
     # get constants from p
     mask_min = p['ic_w_mask_min']
     mask_width = p['ic_mask_width']
-    filename = p['ccf_mask']
+
+    if filename is None:
+        try:
+            filename = p['ccf_mask']
+        except spirouConfig.ConfigError as e:
+            emsg1 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [e.message, emsg1])
+
     # try to locate mask
     filename = locate_mask(p, filename)
     # speed of light in km/s
@@ -635,6 +723,18 @@ def get_ccf_mask(p, loc):
 
 
 def locate_mask(p, filename):
+    """
+    Search for mask file if the filename does not contain a valid path
+    the search in the default data folder
+    (defined in spirouConfig.Constants.CDATA_FOLDER())
+
+    :param p: parameter dictionary, ParamDict containing constant files
+    :param filename: string, the filename (or filename and path) to search for
+                     the mask file
+    :return abspath: string, the absolute path of the found mask, or raises an
+                     error
+    """
+    func_name = __NAME__ + '.locate_mask()'
     # check if filename exists
     if os.path.exists(filename):
         abspath = os.path.join(os.getcwd(), filename)
@@ -656,21 +756,23 @@ def locate_mask(p, filename):
             WLOG('info', p['log_opt'], wmsg.format(abspath))
         # else raise error
         else:
-            emsg = 'Template file: "{0}" not found, unable to proceed'
-            WLOG('error', p['log_opt'], emsg.format(filename))
+            emsg1 = 'Template file: "{0}" not found, unable to proceed'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1.format(filename),
+                                         emsg2])
     # return abspath
     return abspath
 
 
 def coravelation(p, loc):
     """
-
     Calculate the CCF and fit it with a Gaussian profile
 
     :param p: parameter dictionary, parameter dictionary containing the
               constants
     :param loc: parameter dictionary, parameter dictionary containing the data
-    :return:
+
+    :return loc: the updated parameter dictionary
     """
     # -------------------------------------------------------------------------
     # get constants from p
@@ -829,10 +931,10 @@ def coravelation(p, loc):
     return loc
 
 
-
 def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
                   rv_ccf, det_noise, mode='fast'):
     """
+    Calculate the cross correlation function
 
     :param mask_ll: numpy array (1D), the centers of the lines to be used
                     size = (number of lines to use)
@@ -855,7 +957,11 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
     :param mode: string, if "fast" uses a non-for-loop python function to run
                  the ccf calculation, if "slow" uses a direct fortran
                  translation to run the ccf calculation
-    :return:
+
+    :return ccf: numpy array (1D), the CCF for each RV value
+    :return pix: numpy array (1D), the pixel positions for each RV value
+    :return llrange: numpy array (1D), the weight wavelength for each RV value
+    :return ccf_noise: numpy array (1D), the CCF noise for each RV value
     """
 
     import time
@@ -905,7 +1011,7 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     """
     Raw (Fortran direct translate) of correlbin
 
-    Timing:
+    Timing statistics:
 
     raw_correlbin
     523 µs ± 62.8 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
@@ -1049,7 +1155,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     """
     Optimized (Fortran translate) of correlbin
 
-    Timing:
+    Timing statistics:
 
     raw_correlbin
     523 µs ± 62.8 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)
@@ -1277,33 +1383,59 @@ def fit_ccf(rv, ccf, fit_type):
 
 # TODO: Remove fitgaus.f and fitgaus.so and this function
 def test_fit_ccf(x, y, w, aguess, result):
+    """
+    Test the CCF fit against the old CCF fitgaus routine (from FORTRAN)
+    This function requires fisgaus to be compiled on a specific machine so
+    is not for use other than testing (unless one compiles fitgaus first
+    using f2py)
+
+    :param x: numpy array (1D), the rv data
+    :param y: numpy array (1D), the CCF data to fit
+    :param w: numpy array (1D), the weights
+    :param aguess: numpy array (1D), the guess at the gaussian fit parameters
+                   [a, x0, sigma, dc]
+    :param result: numpy array (1D), the resulting gaussian fit parameters
+                   from the scipy.curve_fit gaussian fit
+                   [a, x0, sigma, dc]
+
+        where
+                a: float, the amplitude
+                x0: float, the mean of the gaussian
+                sigma: float, the standard deviation (FWHM) of the gaussian
+                dc: float, the constant level below the gaussian
+
+    :return None:
+    """
+    # imports ONLY for this test function
     import matplotlib.pyplot as plt
     from SpirouDRS.spirouRV import fitgaus
     import time
-
+    # path for plot file (manually set)
+    PATH = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
+    filename = PATH + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
+    # turn off interactive plot
     if plt.isinteractive():
         on = True
         plt.close('all')
         plt.interactive('off')
     else:
         on = False
-
+    # set guess and result times
     anew = result
     aold = aguess
     siga = np.zeros(4)
     fitold = np.zeros(len(x))
+    # use FORTRAN fit gaussian routine
     fitgaus.fitgaus(x, y, w, aold, siga, fitold)
-
+    # close all plots
     plt.close('all')
+    # set up figure
     fig = plt.figure()
     fig.set_size_inches(16, 10)
-
     # plot
     plt.plot(x, y, color='k', label='data')
-    plt.plot(x, gauss_function(x, *anew), color='b',
-             label='scipy.curve_fit')
-    plt.plot(x, gauss_function(x, *aold), color='r',
-             label='fortran')
+    plt.plot(x, gauss_function(x, *anew), color='b', label='scipy.curve_fit')
+    plt.plot(x, gauss_function(x, *aold), color='r', label='fortran')
     # title
     p1 = 'NEW fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*anew)
     p2 = 'OLD fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*aold)
@@ -1312,14 +1444,11 @@ def test_fit_ccf(x, y, w, aguess, result):
     # axis labels
     plt.xlabel('RV')
     plt.ylabel('CCF')
-
-    PATH = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
-    filename = PATH + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
-
+    # save figure
     plt.savefig(filename + '.png', bbox_inches='tight')
     plt.savefig(filename + '.pdf', bbox_inches='tight')
     plt.close()
-
+    # turn back on interactive plotting if it was on before
     if on:
         plt.interactive('on')
 
@@ -1360,15 +1489,6 @@ def fitgaussian(x, y, weights=None, guess=None):
     # return pfit and yfit
     return pfit, yfit
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
