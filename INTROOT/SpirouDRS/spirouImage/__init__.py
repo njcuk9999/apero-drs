@@ -110,8 +110,31 @@ where number = (row number * number of columns) + column number
 """
 
 ConvertToE = spirouImage.convert_to_e
+"""
+Converts image from ADU/s into e-
+
+:param image:
+:param p: dictionary or None, parameter dictionary, must contain 'exptime'
+          and 'gain', if None gain and exptime must not be None
+:param gain: float, if p is None, used as the gain to multiple the image by
+:param exptime: float, if p is None, used as the exposure time the image
+                is multiplied by
+
+:return newimage: numpy array (2D), the image in e-
+"""
 
 ConvertToADU = spirouImage.convert_to_adu
+"""
+Converts image from ADU/s into ADU
+
+:param image:
+:param p: dictionary or None, parameter dictionary, must contain 'exptime'
+          and 'gain', if None gain and exptime must not be None
+:param exptime: float, if p is None, used as the exposure time the image
+                is multiplied by
+
+:return newimage: numpy array (2D), the image in e-
+"""
 
 CopyOriginalKeys = spirouFITS.copy_original_keys
 """
@@ -155,20 +178,160 @@ Copy keys from a filename to hdict
 """
 
 CorrectForDark = spirouImage.correct_for_dark
+"""
+Corrects "data" for "dark" using calibDB file (header must contain
+value of p['ACQTIME_KEY'] as a keyword)
+
+:param p: dictionary, parameter dictionary
+:param image: numpy array (2D), the image
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+:param nfiles: int or None, number of files that created image (need to
+               multiply by this to get the total dark) if None uses
+               p['nbframes']
+:param return_dark: bool, if True returns corrected_image and dark
+                    if False (default) returns corrected_image
+
+:return corrected_image: numpy array (2D), the dark corrected image
+                         only returned if return_dark = True:
+:return darkimage: numpy array (2D), the dark
+"""
 
 FitTilt = spirouImage.fit_tilt
+"""
+Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
+return the coefficients, fit and residual rms in lloc dictionary
+
+:param pp: dictionary, parameter dictionary
+:param lloc: dictionary, parameter dictionary containing the data
+
+:return lloc: dictionary, parameter dictionary containing the data
+"""
 
 FlipImage = spirouImage.flip_image
+"""
+Flips the image in the x and/or the y direction
+
+:param image: numpy array (2D), the image
+:param fliprows: bool, if True reverses row order (axis = 0)
+:param flipcols: bool, if True reverses column order (axis = 1)
+
+:return newimage: numpy array (2D), the flipped image
+"""
 
 GetAllSimilarFiles = spirouImage.get_all_similar_files
+"""
+Get all similar files in a directory with matching prefix and suffix defined
+either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
+
+:param p: parameter dictionary, ParamDict containing constants
+:param directory: string, the directory to search for files
+:param prefix: string or None, if not None the prefix to search for, if
+               None defines the prefix from the first 5 characters of
+               p["ARG_FILE_NAMES"][0]
+:param suffix: string  or None, if not None the suffix to search for, if
+               None defines the prefix from the last 8 characters of
+               p["ARG_FILE_NAMES"][0]
+
+:return filelist: list of strings, the full paths of all files that are in
+                  "directory" with the matching prefix and suffix defined
+                  either by "prefix" and "suffix" or by
+                  p["ARG_FILE_NAMES"][0]
+"""
 
 GetSigdet = spirouImage.get_sigdet
+"""
+Get sigdet from HEADER. Wrapper for spirouImage.get_param
+
+:param p: parameter dictionary, ParamDict of constants
+:param hdr: dictionary, header dictionary to extract
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is 
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds 
+                     parameter to "p" parameter dictionary (and sets source)
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+"""
 
 GetExpTime = spirouImage.get_exptime
+"""
+Get Exposure time from HEADER. Wrapper for spirouImage.get_param
+
+:param p: parameter dictionary, ParamDict of constants
+:param hdr: dictionary, header dictionary to extract
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is 
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds 
+                     parameter to "p" parameter dictionary (and sets source)
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+"""
 
 GetGain = spirouImage.get_gain
+"""
+Get Gain from HEADER. Wrapper for spirouImage.get_param
+
+:param p: parameter dictionary, ParamDict of constants
+:param hdr: dictionary, header dictionary to extract
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is 
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds 
+                     parameter to "p" parameter dictionary (and sets source)
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+"""
 
 GetAcqTime = spirouImage.get_acqtime
+"""
+Get the acquision time from the header file, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: dictionary, parameter dictionary
+:param hdr: dictionary, the header dictionary created by
+            spirouFITS.ReadImage
+:param name: string, the name in parameter dictionary to give to value
+             if return_value is False (i.e. p[name] = value)
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
+             for time since 1970-01-01
+:param return_value: bool, if False value is returned in p as p[name]
+                     if True value is returned
+
+:return p or value: dictionary or string or float, if return_value is False
+                    parameter dictionary is returned, if return_value is
+                    True and kind=='human' returns a string, if return_value
+                    is True and kind=='unix' returns a float
+"""
+
+ReadParam = spirouImage.get_param
+"""
+Get parameter from header "hdr" using "keyword" (keyword store constant)
+
+:param p: parameter dictionary, ParamDict containing constants
+:param hdr: dictionary, HEADER dictionary containing key/value pairs
+            extracted from a FITS rec header
+:param keyword: string, the keyword key (taken from "p") this allows
+                getting of the keyword store from the parameter dictionary
+:param name: string or None, if not None the name for the parameter
+             logged if there is an error in getting parameter, if name is 
+             None the name is taken as "keyword"
+:param return_value: bool, if True returns parameter, if False adds 
+                     parameter to "p" parameter dictionary (and sets source)
+:param dtype: type or None, if not None then tries to convert raw
+              parameter to type=dtype
+
+:return value: if return_value is True value of parameter is returned
+:return p: if return_value is False, updated parameter dictionary p with
+           key = name is returned
+"""
 
 GetKey = spirouFITS.keylookup
 """
@@ -204,6 +367,15 @@ value of key to 'default' if not found else logs an error
 """
 
 GetTilt = spirouImage.get_tilt
+"""
+Get the tilt by correlating the extracted fibers
+
+:param pp: dictionary, parameter dictionary
+:param lloc: dictionary, parameter dictionary containing the data
+:param image: numpy array (2D), the image
+
+:return lloc: dictionary, parameter dictionary containing the data
+"""
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 """
@@ -227,12 +399,80 @@ using "keywordstore"
 """
 
 LocateBadPixels = spirouImage.locate_bad_pixels
+"""
+Locate the bad pixels in the flat image and the dark image
+
+:param p: dictionary, parameter dictionary
+:param fimage: numpy array (2D), the flat normalised image
+:param fmed: numpy array (2D), the flat median normalised image
+:param dimage: numpy array (2D), the dark image
+:param wmed: float or None, if not None defines the median filter width
+             if None uses p["BADPIX_MED_WID", see
+             scipy.ndimage.filters.median_filter "size" for more details
+
+:return bad_pix_mask: numpy array (2D), the bad pixel mask image
+:return badpix_stats: list of floats, the statistics array:
+                        Fraction of hot pixels from dark [%]
+                        Fraction of bad pixels from flat [%]
+                        Fraction of NaN pixels in dark [%]
+                        Fraction of NaN pixels in flat [%]
+                        Fraction of bad pixels with all criteria [%]
+"""
 
 MakeTable = spirouTable.make_table
+"""
+Construct an astropy table from columns and values
+
+:param columns: list of strings, the list of column names
+:param values: list of lists or numpy array (2D), the list of lists/array
+               of values, first dimension must have same length as number
+               of columns, there must be the same number of values in each
+               column
+:param formats: list of strings, the astropy formats for each column
+                i.e. 0.2f  for a float with two decimal places, must have 
+                same length as number of columns
+:param units: list of strings, the units for each column, must have 
+              same length as number of columns
+
+:return table: astropy.table.Table instance, the astropy table containing
+               all columns and data 
+"""
 
 MeasureDark = spirouImage.measure_dark
+"""
+Measure the dark pixels in "image"
+
+:param pp: dictionary, parameter dictionary
+:param image: numpy array (2D), the image
+:param image_name: string, the name of the image (for logging)
+:param short_name: string, suffix (for parameter naming -
+                    parmaeters added to pp with suffix i)
+
+:return pp: dictionary, parameter dictionary
+"""
 
 NormMedianFlat = spirouImage.normalise_median_flat
+"""
+Applies a median filter and normalises. Median filter is applied with width
+"wmed" or p["BADPIX_FLAT_MED_WID"] if wmed is None) and then normalising by
+the 90th percentile
+
+:param p: parameter dictionary, ParamDict containing constants
+:param image: numpy array (2D), the iamge to median filter and normalise
+:param method: string, "new" or "old" if "new" uses np.percentile else
+               sorts the flattened image and takes the "percentile" (i.e.
+               90th) pixel value to normalise
+:param wmed: float or None, if not None defines the median filter width
+             if None uses p["BADPIX_MED_WID", see
+             scipy.ndimage.filters.median_filter "size" for more details
+:param percentile: float or None, if not None degines the percentile to 
+                   normalise the image at, if None used from
+                   p["BADPIX_NORM_PERCENTILE"] 
+
+:return norm_med_image: numpy array (2D), the median filtered and normalised
+                        image
+:return norm_image: numpy array (2D), the normalised image
+"""
 
 ReadData = spirouFITS.readdata
 """
@@ -268,6 +508,19 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 """
 
 ReadTable = spirouTable.read_table
+"""
+Reads a table from file "filename" in format "fmt", if colnames are defined
+renames the columns to these name
+
+:param filename: string, the filename and location of the table to read
+:param fmt: string, the format of the table to read from (must be valid
+            for astropy.table to read - see below)
+:param colnames: list of strings or None, if not None renames all columns
+                 to these strings, must be the same length as columns
+                 in file that is read
+
+:return None:
+"""
 
 ReadImageAndCombine = spirouFITS.readimage_and_combine
 """
@@ -459,3 +712,12 @@ Writes an image and its header to file
 """
 
 WriteTable = spirouTable.write_table
+"""
+Writes a table to file "filename" with format "fmt"
+
+:param filename: string, the filename and location of the table to read
+:param fmt: string, the format of the table to read from (must be valid
+            for astropy.table to read - see below)
+
+:return None:
+"""
