@@ -51,7 +51,7 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.1.007'
+    version = '0.1.008'
     return version
 
 
@@ -68,7 +68,7 @@ def AUTHORS():
 
 def LATEST_EDIT():
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-01-29'
+    date = '2018-01-30'
     return date
 
 
