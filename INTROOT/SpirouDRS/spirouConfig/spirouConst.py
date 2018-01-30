@@ -548,6 +548,17 @@ def EXIT_LEVELS():
     exit_levels = ['error']
     return exit_levels
 
+def DEFAULT_LOG_OPT():
+    # get raw path from first item in sys.argv (normally the python
+    #    script run file absolute path)
+    rawpath = sys.argv[0]
+    # get the file name (no path)
+    path = os.path.split(rawpath)[-1]
+    # clean .py from filename
+    program = path.replace('.py', '')
+    # return program
+    return program
+
 
 # =============================================================================
 # Start of code
