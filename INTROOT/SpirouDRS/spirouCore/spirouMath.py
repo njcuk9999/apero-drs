@@ -65,6 +65,22 @@ def polyval(p, x):
     return y
 
 
+def gauss_function(x, a, x0, sigma, dc):
+    """
+    A standard 1D gaussian function (for fitting against)]=
+
+    :param x: numpy array (1D), the x data points
+    :param a: float, the amplitude
+    :param x0: float, the mean of the gaussian
+    :param sigma: float, the standard deviation (FWHM) of the gaussian
+    :param dc: float, the constant level below the gaussian
+
+    :return gauss: numpy array (1D), size = len(x), the output gaussian
+    """
+    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
+
+
+
 # =============================================================================
 # Time functions
 # =============================================================================
