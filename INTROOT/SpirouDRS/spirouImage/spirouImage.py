@@ -26,8 +26,6 @@ from . import spirouFITS
 # =============================================================================
 # Define variables
 # =============================================================================
-# Get Logging function
-WLOG = spirouCore.wlog
 # Name of program
 __NAME__ = 'spirouImage.py'
 # Get version and author
@@ -35,6 +33,10 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# Get Logging function
+WLOG = spirouCore.wlog
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 
 
@@ -85,7 +87,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif xlow == xhigh:
             emsg1 = '"xlow" and "xhigh" cannot have the same values'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -94,7 +96,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif ylow == yhigh:
             emsg1 = '"ylow" and "yhigh" cannot have the same values'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -105,7 +107,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         emsg1 = 'Cannot resize "image" to ({0}-{1} by {2}-{3})'.format(*eargs1)
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
         newimage = None
 
     # if getshape is True return newimage, newimage.shape[0], newimage.shape[1]
@@ -131,7 +133,7 @@ def flip_image(image, fliprows=True, flipcols=True):
     if len(image.shape) < 2:
         emsg1 = 'Image must has at least two dimensions, shape = {0}'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1.format(image.shape), emsg2])
+        WLOG('error', DPROG, [emsg1.format(image.shape), emsg2])
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]

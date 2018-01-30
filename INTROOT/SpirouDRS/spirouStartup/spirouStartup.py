@@ -14,7 +14,6 @@ Version 0.0.1
 Last modified: 2017-10-11 at 10:49
 """
 from __future__ import division
-import numpy as np
 import os
 import sys
 
@@ -34,6 +33,8 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 typenames = {int:'integer', float:'float', list:'list', bool:'bool', str:'str'}
 
@@ -458,7 +459,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         else:
             emsg = ('Either "positions", "name" or "types" must be defined to'
                     'get custom arguments.')
-            WLOG('', sys.argv[0], emsg)
+            WLOG('', DPROG, emsg)
     # deal with no types (set to strings)
     if types is None:
         types = [str]*len(positions)
@@ -496,10 +497,10 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
 
                 emsgs.append(('   must be format:'
                               ''.format(pos + 1)))
-                eargs = [sys.argv[0], ' '.join(lognames)]
+                eargs = [DPROG, ' '.join(lognames)]
                 emsgs.append(('   >>> {0} NIGHT_NAME {1}'
                               ''.format(*eargs)))
-                WLOG('error', sys.argv[0], emsgs)
+                WLOG('error', DPROG, emsgs)
                 raw_value = None
             # else we must use the value from calls
             else:
@@ -520,7 +521,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         except ValueError:
             emsg = ('Arguments Error: "{0}" should be a {1} (Value = {2})')
             eargs = [lognames[pos], typenames[kind], raw_value]
-            WLOG('error', sys.argv[0], emsg.format(*eargs))
+            WLOG('error', DPROG, emsg.format(*eargs))
         except TypeError:
             pass
 
