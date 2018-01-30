@@ -83,8 +83,21 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     """
     Takes the image and measure the background
 
-    :param pp: dictionary, parameter dictionary
-    :param loc: dictionary, localisation parameter dictionary
+    :param pp: parameter dictionary, parameter dictionary
+
+            Must contain at least:
+            - IC_OFFSET
+            - IC_CENT_COL
+            - IC_MIN_AMPLITUDE
+            - IC_LOCSEUIL
+            - LOG_OPT
+            - DRS_DEBUG
+            - DRS_PLOT
+
+    :param loc: parameter dictionary, localisation parameter dictionary
+
+            Must contain at least:
+            -
     :param image: numpy array (2D), the image
 
     :return ycc: the normalised values the central pixels
