@@ -443,6 +443,7 @@ def CONFIG_KEY_ERROR(key, location=None):
         cerrmsg = 'key "{0}" must be defined in file (located at {1})'
         return cerrmsg.format(key, location)
 
+
 def DATE_FMT_HEADER():
     date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_header
@@ -452,9 +453,11 @@ def DATE_FMT_CALIBDB():
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
 
+
 def DATE_FMT_DEFAULT():
     date_fmt_default = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_default
+
 
 def TIME_FORMAT_DEFAULT():
     time_format_default = '%H:%M:%S'
@@ -547,6 +550,18 @@ def EXIT():
 def EXIT_LEVELS():
     exit_levels = ['error']
     return exit_levels
+
+
+def DEFAULT_LOG_OPT():
+    # get raw path from first item in sys.argv (normally the python
+    #    script run file absolute path)
+    rawpath = sys.argv[0]
+    # get the file name (no path)
+    path = os.path.split(rawpath)[-1]
+    # clean .py from filename
+    program = path.replace('.py', '')
+    # return program
+    return program
 
 
 # =============================================================================

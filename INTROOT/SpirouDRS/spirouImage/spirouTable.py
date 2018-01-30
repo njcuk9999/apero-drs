@@ -32,7 +32,8 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # get the logging function
 WLOG = spirouCore.wlog
-
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -74,20 +75,20 @@ def make_table(columns, values, formats=None, units=None):
 
             emsg1 = emsg.format(lcol, 'formats', len(formats))
             emsg2= '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
             emsg1 = emsg.format(lcol, 'units', len(formats))
             emsg2= '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
             emsg1 = 'All values must have same number of rows '
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -102,7 +103,7 @@ def make_table(columns, values, formats=None, units=None):
                 eargs1 = [formats[c_it], col]
                 emsg1 = 'Format "{0}" is invalid (Column = {1})'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', sys.argv[0], [emsg1.format(eargs1), emsg2])
+                WLOG('error', DPROG, [emsg1.format(eargs1), emsg2])
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -130,14 +131,14 @@ def write_table(table, filename, fmt='fits'):
     if fmt not in ftable['Format']:
         emsg1 = 'fmt={0} not valid for astropy.table reading'.format(fmt)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        WLOG('error', DPROG, [emsg1, emsg2])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             emsg1 = 'fmt={0} cannot be read by astropy.table'.format(fmt)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
     # try to write table to file
     try:
         table.write(filename, format=fmt, overwrite=True)
@@ -145,7 +146,7 @@ def write_table(table, filename, fmt='fits'):
         emsg1 = 'Cannot write table to file'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2, emsg3])
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
 
 def read_table(filename, fmt, colnames=None):
@@ -173,20 +174,20 @@ def read_table(filename, fmt, colnames=None):
     if fmt not in ftable['Format']:
         emsg1 = 'fmt={0} not valid for astropy.table reading'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        WLOG('error', DPROG, [emsg1, emsg2])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             emsg1 = 'fmt={0} cannot be read by astropy.table'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
 
     # check that filename exists
     if not os.path.exists(filename):
         emsg1 = 'File {0} does not exist'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        WLOG('error', DPROG, [emsg1, emsg2])
 
     # try to load file using astropy table
     try:
@@ -194,7 +195,7 @@ def read_table(filename, fmt, colnames=None):
     except Exception as e:
         emsg1 = ' Error {0}: {1}'.format(type(e), e)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', sys.argv[0], [emsg1, emsg2])
+        WLOG('error', DPROG, [emsg1, emsg2])
         table = None
 
     # if we have colnames rename the columns
@@ -202,7 +203,7 @@ def read_table(filename, fmt, colnames=None):
         if len(colnames) != len(table.colnames):
             emsg1 = 'Number of columns not equal to number of columns in table'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', sys.argv[0], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):

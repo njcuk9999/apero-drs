@@ -459,16 +459,17 @@ def writelog(message, errormessage, key, logfilepath):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
+    dprog = spirouConfig.Constants.DEFAULT_LOG_OPT()
     # Title test
     logger('', '', ' *****************************************')
     logger('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
     logger('', '', ' *****************************************')
     # info log
-    logger("info", sys.argv[0], "This is an info test")
+    logger("info", dprog, "This is an info test")
     # warning log
-    logger("warning", sys.argv[0], "This is a warning test")
+    logger("warning", dprog, "This is a warning test")
     # error log
-    logger("error", sys.argv[0], "This is an error test")
+    logger("error", dprog, "This is an error test")
 
 # =============================================================================
 # End of code
