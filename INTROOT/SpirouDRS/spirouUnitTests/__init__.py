@@ -29,9 +29,13 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = []
+__all__ = ['UNIT_TEST_CAL_BADPIX', 'UNIT_TEST_CAL_DARK',
+           'UNIT_TEST_CAL_LOC_RAW', 'UNIT_TEST_CAL_SLIT',
+           'UNIT_TEST_CAL_FF_RAW', 'UNIT_TEST_CAL_EXTRACT',
+           'UNIT_TEST_CAL_DRIFT_RAW', 'UNIT_TEST_CAL_DRIFT_E2DS',
+           'UNIT_TEST_CAL_DRIFTPEAK_E2DS', 'UNIT_TEST_CAL_CCF_E2DS',
+           'EXISTS', 'COMP_DATA', 'COMP_HEADER']
 # -----------------------------------------------------------------------------
-
 
 # =============================================================================
 # Define functions
@@ -63,17 +67,6 @@ EXISTS = utc.check_existance
 COMP_DATA = utc.compare_data
 
 COMP_HEADER = utc.compare_header
-
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
