@@ -503,7 +503,8 @@ qc_max_signal = 65500
 #      (formally ic_calib_db_master_file)
 ic_calibDB_filename = 'master_calib_SPIROU.txt'
 
-#   Max wait time for calib DB (in seconds)                              - [all]
+#   the maximum wait time for calibration database file to be            - [all]
+#       in use (locked) after which an error is raised (in seconds)
 calib_max_wait = 3600
 
 #   Define the match type for calibDB files                              - [all]

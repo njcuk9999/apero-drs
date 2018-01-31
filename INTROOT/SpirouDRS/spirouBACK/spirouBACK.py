@@ -43,9 +43,25 @@ def measure_background_flatfield(p, image):
     Measures the background of a flat field image - currently does not work
     as need an interpolation function (see code)
 
-    :param p: parameter dictionary, the parameter dictionary of constants
+    :param p: parameter dictionary, ParamDict containing constants
+
+            Must contain at least:
+                IC_BKGR_WINDOW: int, Half-size of window for background
+                                measurements
+                GAIN: float, the gain of the image (from HEADER)
+                SIGDET: float, the read noise of the image (from HEADER)
+                log_opt: string, log option, normally the program name
+
     :param image: numpy array (2D), the image to measure the background of
-    :return:
+
+    :return background: numpy array (2D), the background image (currently all
+                        zeros) as background not implemented
+    :return xc: numpy array (1D), the box centers (x positions) used to create
+                the background image
+    :return yc: numpy array (1D), the box centers (y positions) used to create
+                the background image
+    :return minlevel: numpy array (2D), the 2 * size -th minimum pixel value
+                      of each box for each pixel in the image
     """
     func_name = __NAME__ + '.measure_background_flatfield()'
 
@@ -83,24 +99,34 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     """
     Takes the image and measure the background
 
-    :param pp: parameter dictionary, parameter dictionary
+    :param pp: parameter dictionary, ParamDict containing constants
 
             Must contain at least:
-            - IC_OFFSET
-            - IC_CENT_COL
-            - IC_MIN_AMPLITUDE
-            - IC_LOCSEUIL
-            - LOG_OPT
-            - DRS_DEBUG
-            - DRS_PLOT
+                IC_OFFSET: int, row number of image to start processing at
+                IC_CENT_COL: int, Definition of the central column
+                IC_MIN_AMPLITUDE: int, Minimum amplitude to accept (in e-)
+                IC_LOCSEUIL: float, Normalised amplitude threshold to accept
+                             pixels for background calculation
+                log_opt: string, log option, normally the program name
+                DRS_DEBUG: int, Whether to run in debug mode
+                                0: no debug
+                                1: basic debugging on errors
+                                2: recipes specific (plots and some code runs)
+                DRS_PLOT: bool, Whether to plot (True to plot)
 
     :param loc: parameter dictionary, localisation parameter dictionary
-
-            Must contain at least:
-            -
     :param image: numpy array (2D), the image
 
     :return ycc: the normalised values the central pixels
+
+    :return loc:
+
+            Adds the following:
+                ycc: numpy array (1D), normalized central column of pixels
+                mean_backgrd: float, 100 times the mean of the good background
+                              pixels
+                max_signal: float, the maximum value of the central column of
+                            pixels
     """
     # clip the data - start with the ic_offset row and only
     # deal with the central column column=ic_cent_col
@@ -148,7 +174,10 @@ def measure_min_max(pp, y):
     pixel in y and the peak-to-peak difference between the minimum and
     maximum values in y
 
-    :param pp: dictionary, parameter dictionary of constants
+    :param pp: parameter dictionary, ParamDict containing constants
+                Must contain at least:
+                    IC_LOCNBPIX: int, Half spacing between orders
+
     :param y: numpy array (1D), the central column pixel values
 
     :return miny: numpy array (1D length = len(y)), the values

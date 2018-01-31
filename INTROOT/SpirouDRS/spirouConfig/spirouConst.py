@@ -33,12 +33,22 @@ __date__ = 'Unknown'
 # Define pre-functions
 # =============================================================================
 def CONFIGFILE():
+    """
+    Defines the primary config filename
+
+    :return config_file: string, the primary config file filename
+    """
     # Name of main config file (in CONFIGFOLDER() )
     config_file = 'config.py'
     return config_file
 
 
 def PACKAGE():
+    """
+    Defines the package name (Used in code so MUST equal name of parent package)
+
+    :return pakcage: string, defines the package name
+    """
     # Module package name (Used in code so MUST equal name of parent package)
     package = 'SpirouDRS'
     return package
@@ -51,7 +61,7 @@ def NAME():
 
 def VERSION():
     # Module Version (Used in all sub-packages)
-    version = '0.1.008'
+    version = '0.1.009'
     return version
 
 
@@ -61,24 +71,48 @@ def RELEASE():
 
 
 def AUTHORS():
+    """
+    Define the authors of the DRS
+
+    :return authors: string, the list of authors, separated by commas
+    """
     # Module Authors (Used in all sub-packages)
     authors = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
     return authors
 
 
 def LATEST_EDIT():
+    """
+    Defines the latest edit date of the code (used in all recipes)
+
+    :return date: string, the date (in format YYYY-MM-DD)
+    """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-01-30'
+    date = '2018-01-31'
     return date
 
 
 def CONFIGFOLDER():
+    """
+    Defines the config folder folder name (relative to the
+    spirouConfig.PACKAGE() level.
+
+    :return config_folder: string, the config folder path relative to the
+                           package level
+    """
     # Name of main config folder (relative to PACKAGE() level)
     config_folder = '../config'
     return config_folder
 
 
 def CDATA_FOLDER():
+    """
+    Define the location and name of the constant data folder. Path is
+    relative to the spirouConst.PACKAGE() path
+
+    :return const_data_folder: string, the location and name of the constant
+                               data file
+    """
     # Name of constant data folder (relative to PACKAGE() level)
     const_data_folder = './data'
     return const_data_folder
@@ -97,12 +131,28 @@ pp = spirouConfigFile.read_config_file(**ckwargs)
 # Define General functions
 # =============================================================================
 def INTERACITVE_PLOTS_ENABLED():
+    """
+    Defines a master switch which decides whether interactive plots are used
+    throughout the DRS (overrides user preference)
+
+    :return interactive_plots: bool, if True uses interactive plots if False
+                               uses plt.show() to show plots (pauses recipe)
+    """
     # Whether to use plt.ion (if True) or to use plt.show (if False)
     interactive_plots = True
     return interactive_plots
 
 
 def DEBUG():
+    """
+    Gets the debug mode from the primary constant file (using "DRS_DEBUG")
+
+        0: no debug
+        1: basic debugging on errors
+        2: recipes specific (plots and some code runs)
+
+    :return debug: int, the debug level of the DRS
+    """
     debug = pp['DRS_DEBUG']
     return debug
 
@@ -111,6 +161,17 @@ def DEBUG():
 # Define File functions
 # =============================================================================
 def ARG_NIGHT_NAME(p):
+    """
+    Defines the folder name for raw or reduced files within the raw or reduced
+    data folders, i.e. for /data/raw/20170710/  arg_night_name is "20170710"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        If 'ARG_NIGHT_NAME' already defined in "p" this value is returned
+
+    :return: string, the folder within data raw directory containing files
+             (also reduced directory) i.e. /data/raw/20170710 would be
+             "20170710"
+    """
     # see if already defined
     if 'ARG_NIGHT_NAME' in p:
         return p['ARG_NIGHT_NAME']
@@ -126,6 +187,17 @@ def ARG_NIGHT_NAME(p):
 
 
 def NBFRAMES(p):
+    """
+    Defines the number of frames (files) as the length of "arg_file_names"
+    i.e. the number of files defined at run time or in recipe input
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :return nbframes: int, the number of frames (files)
+    """
     # Number of frames = length of arg_file_names
     nbframes = len(p['arg_file_names'])
     # return number of frames
@@ -133,6 +205,13 @@ def NBFRAMES(p):
 
 
 def FORBIDDEN_COPY_KEYS():
+    """
+    Defines the keys in a HEADER file not to copy when copying over all
+    HEADER keys to a new fits file
+
+    :return forbidden_keys: list of strings, the keys in a HEADER file not
+                            to copy from and old fits file
+    """
     forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                       'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                       'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
@@ -142,22 +221,41 @@ def FORBIDDEN_COPY_KEYS():
 
 
 def LOG_OPT(p):
+    """
+    Defines the program to use as the "option" in logging
+    i.e. option in spirouConfig.WLOG(kind, option, message)
+
+    if an error is raised spirouConst.DEFAULT_LOG_OPT() is used instead.
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+
+    :return program: string, the program to use in log option
+    """
     # deal with the log_opt "log option"
     #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
 
-    arg_file_names = p['arg_file_names']
-    program = p['program']
+    try:
+        arg_file_names = p['arg_file_names']
+        program = p['program']
 
-    if len(arg_file_names) == 0:
-        log_opt = program
-    elif len(arg_file_names) == 1:
-        index = arg_file_names[0].find('.')
-        lo_arg = [program, arg_file_names[0][index - 5: index]]
-        log_opt = '{0}:{1}'.format(*lo_arg)
-    else:
-        index = arg_file_names[0].find('.')
-        lo_arg = [program, arg_file_names[0][index - 5: index]]
-        log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+        if len(arg_file_names) == 0:
+            log_opt = program
+        elif len(arg_file_names) == 1:
+            index = arg_file_names[0].find('.')
+            lo_arg = [program, arg_file_names[0][index - 5: index]]
+            log_opt = '{0}:{1}'.format(*lo_arg)
+        else:
+            index = arg_file_names[0].find('.')
+            lo_arg = [program, arg_file_names[0][index - 5: index]]
+            log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+    except Exception:
+        log_opt = DEFAULT_LOG_OPT()
 
     return log_opt
 
@@ -172,7 +270,18 @@ def PROGRAM():
 
 
 def MANUAL_FILE(p):
+    """
+    Defines the path and filename of the manual file for p["program"]
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                DRS_MAN: string, the file path to the manual files
+
+    :return manual_file: the filename and location of the manual file for this
+                         recipe/program
+    """
     program = p['program'] + '.info'
     manual_file = os.path.join(p['DRS_MAN'], program)
     return manual_file
@@ -210,6 +319,23 @@ def ARG_FILE_NAMES(p):
 
 
 def FITSFILENAME(p):
+    """
+    Defines the full path of for the main raw fits file for a recipe
+    i.e. /data/raw/20170710/filename.fits
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+
+    :return fitsfilename: string, the main raw fits file location and filename
+    """
     arg_file_names = p['arg_file_names']
     arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
@@ -223,6 +349,19 @@ def FITSFILENAME(p):
 
 
 def DARK_FILE(p):
+    """
+    Defines the dark file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return darkfits: string, the dark file location and filename
+    """
     reducedfolder = p['reduced_dir']
     calibprefix = CALIB_PREFIX(p)
     darkfitsname = calibprefix + p['arg_file_names'][0]
@@ -230,12 +369,36 @@ def DARK_FILE(p):
     return darkfits
 
 def DARK_BADPIX_FILE(p):
+    """
+    Defines the bad pix file from cal_DARK
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return badpixfits: string the dark bad pix file location and filename
+    """
     darkfile = DARK_FILE(p)
     badpixelfits = darkfile.replace('.fits', '_badpixel.fits')
     return badpixelfits
 
 
 def BADPIX_FILE(p):
+    """
+    Defines the bad pixel path and file name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                flatfile: string, the flat file name (used to name the
+                          badpix file, replacing .fits with _badpixel.fits
+    :return string: the badpix path and filename
+    """
     reducedfolder = p['reduced_dir']
     calibprefix = CALIB_PREFIX(p)
     badpixelfn = p['flatfile'].replace('.fits', '_badpixel.fits')
@@ -245,6 +408,21 @@ def BADPIX_FILE(p):
 
 
 def LOC_ORDER_PROFILE_FILE(p):
+    """
+    Defines the localisation file location and filename (the order profile
+    image)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :return locofits: string, the localisation file location and filename (the
+                      order profile image)
+    """
     reducedfolder = p['reduced_dir']
     newext = '_order_profile_{0}.fits'.format(p['fiber'])
     calibprefix = CALIB_PREFIX(p)
@@ -255,6 +433,19 @@ def LOC_ORDER_PROFILE_FILE(p):
 
 
 def LOC_LOCO_FILE(p):
+    """
+    Defines the localisation file location and filename
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :return locofits: string, the localisation file location and filename
+    """
     reducedfolder = p['reduced_dir']
     locoext = '_loco_{0}.fits'.format(p['fiber'])
     calibprefix = CALIB_PREFIX(p)
@@ -265,6 +456,20 @@ def LOC_LOCO_FILE(p):
 
 
 def LOC_LOCO_FILE2(p):
+    """
+    Defines the localisation file location and filename (for fwhm)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :return locofits: string, the localisation file location and filename (for
+                      fwhm)
+    """
     reducedfolder = p['reduced_dir']
     locoext = '_fwhm-order_{0}.fits'.format(p['fiber'])
     calibprefix = CALIB_PREFIX(p)
@@ -275,6 +480,21 @@ def LOC_LOCO_FILE2(p):
 
 
 def LOC_LOCO_FILE3(p):
+    """
+    Defines the localisation file location and filename (for order
+    superposition)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :return locofits: string, the localisation file location and filename (for
+                      order superposition)
+    """
     reducedfolder = p['reduced_dir']
     locoext = '_with-order_{0}.fits'.format(p['fiber'])
     calibprefix = CALIB_PREFIX(p)
@@ -294,6 +514,20 @@ def SLIT_TILT_FILE(p):
 
 
 def FF_BLAZE_FILE(p, fiber=None):
+    """
+    Define the flat fielding blaze filename and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p["fiber"])
+    :return blazefits: string, the flat fielding blaze filename and location
+    """
 
     if fiber is None:
         fiber = p['fiber']
@@ -308,6 +542,21 @@ def FF_BLAZE_FILE(p, fiber=None):
 
 
 def FF_FLAT_FILE(p, fiber=None):
+    """
+    Defines the flat field file name and location to save flat field file to
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p["fiber"])
+
+    :return flatfits: string, the flat field filename and location
+    """
     if fiber is None:
         fiber = p['fiber']
     reduced_dir = p['reduced_dir']
@@ -320,6 +569,21 @@ def FF_FLAT_FILE(p, fiber=None):
 
 
 def EXTRACT_E2DS_FILE(p, fiber=None):
+    """
+    Defines the extraction E2DS file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p["fiber"])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
     if fiber is None:
         fiber = p['fiber']
     reducedfolder = p['reduced_dir']
@@ -330,6 +594,26 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
 
 
 def EXTRACT_LOCO_FILE(p):
+    """
+    Defines the file name and location of the extraction localisation filename
+    using the calibration database file name and the loc_file suffix
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                calibDB: dictionary, the calibration database dictionary
+                LOC_FILE: string, the suffix to use in the filename, defined
+                          in primary config file (LOC_FILE_FPALL)
+
+
+    :return loco_file: string, the localisation filename and location built from
+                       the calibration database file:
+
+                       LOC_{X}   where X is the suffix provided by "LOC_FILE"
+                                 selected from a specific fiber by
+                                 "LOC_FILE_FPALL"
+    """
     reducedfolder = p['reduced_dir']
     loco_filename = p['calibDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
     loco_file = os.path.join(reducedfolder, loco_filename)
@@ -337,6 +621,23 @@ def EXTRACT_LOCO_FILE(p):
 
 
 def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
+    """
+    Defines the extraction names (and locations) for the extraction process
+    when all types of E2DS file are to be written
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p["fiber"])
+
+    :return extfitslist: list of strings, the list of extraction files to use
+                         to save the extraction files
+    """
     if fiber is None:
         fiber = p['fiber']
     reducedfolder = p['reduced_dir']
@@ -353,6 +654,21 @@ def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
 
 
 def DRIFT_RAW_FILE(p):
+    """
+    Defines the drift_raw fits file name and location using
+    "arg_file_names"[0] and replacing ".fits" with "_drift_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber type
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return driftfits: string, the drift_raw fits file name and location
+    """
     reducedfolder = p['reduced_dir']
     drift_ext = '_drift_{0}.fits'.format(p['fiber'])
     driftfitsname = p['arg_file_names'][0].replace('.fits', drift_ext)
@@ -361,6 +677,20 @@ def DRIFT_RAW_FILE(p):
 
 
 def DRIFT_E2DS_FITS_FILE(p):
+    """
+    Defines the drift_e2ds fits file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+
+    :return driftfits: string, the drift_e2ds peak drift fits file location
+                       and filename
+    """
     reducedfolder = p['reduced_dir']
     drift_ext = '_drift_{0}.fits'.format(p['fiber'])
     driftfitsname = p['reffilename'].replace('.fits', drift_ext)
@@ -369,6 +699,20 @@ def DRIFT_E2DS_FITS_FILE(p):
 
 
 def DRIFT_E2DS_TBL_FILE(p):
+    """
+    Defines the drift_e2ds table file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+
+    :return driftfits: string, the drift_e2ds peak drift table file location
+                       and filename
+    """
     reducedfolder = p['reduced_dir']
     drift_ext = '_drift_{0}.tbl'.format(p['fiber'])
     drifttblname = p['reffilename'].replace('.fits', drift_ext)
@@ -377,6 +721,20 @@ def DRIFT_E2DS_TBL_FILE(p):
 
 
 def DRIFTPEAK_E2DS_FITS_FILE(p):
+    """
+    Defines the drift peak fits drift file name and location using "reffilename"
+    and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+
+    :return driftfits: string, the drift peak drift fits file location and
+                       filename
+    """
     reducedfolder = p['reduced_dir']
     drift_ext = '_driftnew_{0}.fits'.format(p['fiber'])
     driftfitsname = p['reffilename'].replace('.fits', drift_ext)
@@ -385,6 +743,20 @@ def DRIFTPEAK_E2DS_FITS_FILE(p):
 
 
 def DRIFTPEAK_E2DS_TBL_FILE(p):
+    """
+    Defines the drift peak drift table file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+
+    :return driftfits: string, the drift peak drift table file location and
+                       filename
+    """
     reducedfolder = p['reduced_dir']
     drift_ext = '_driftnew_{0}.tbl'.format(p['fiber'])
     drifttblname = p['reffilename'].replace('.fits', drift_ext)
@@ -393,6 +765,17 @@ def DRIFTPEAK_E2DS_TBL_FILE(p):
 
 
 def CCF_FITS_FILE(p):
+    """
+    Defines the CCF file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return corfile: string, the CCF table file location and name
+    """
     reducedfolder = p['reduced_dir']
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['ccf_mask'].replace('.mas', '')
@@ -400,11 +783,22 @@ def CCF_FITS_FILE(p):
     corfilename = p['reffile'].replace('_e2ds', newext)
 
     corfile = os.path.join(reducedfolder, corfilename)
-    # return the new ccf table file location and name
+    # return the new ccf file location and name
     return corfile
 
 
 def CCF_TABLE_FILE(p):
+    """
+    Defines the CCF file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return ccf_table_file:
+    """
     # start with the CCF fits file name
     corfile = CCF_FITS_FILE(p)
     # we want to save the file as a tbl file not a fits file
@@ -417,16 +811,51 @@ def CCF_TABLE_FILE(p):
 # Define calibration database functions
 # =============================================================================
 def CALIBDB_MASTERFILE(p):
+    """
+    Define the name and location of the calibration database file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                IC_CALIBDB_FILENAME: string, the name of the calibration
+                                     database file
+    :return string: the path and location of the calibration database file
+    """
     masterfilepath = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
     return masterfilepath
 
 
 def CALIBDB_LOCKFILE(p):
+    """
+    Define the location and filename of the lock file for the calibration
+    database
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                CALIB_DB_MATCH: string, either "closest" or "older"
+                                whether to use the "closest" time
+                                ("closest") or the closest time that is
+                                older ("older") than "max_time_unix"
+    :return lockfilepath: string, the location and filename of the lock file
+                          for the calibration database
+    """
     lockfilepath = os.path.join(p['DRS_CALIB_DB'], 'lock_calibDB')
     return lockfilepath
 
 
 def CALIB_PREFIX(p):
+    """
+    Define the calibration database file prefix (using arg_night_name)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+    :return calib_prefix: string the calibration database prefix to add to all
+                          calibration database files
+    """
     argnightname = p['arg_night_name'].split('/')[-1]
     calib_prefix = argnightname + '_'
     return calib_prefix
@@ -436,6 +865,15 @@ def CALIB_PREFIX(p):
 # Define formatting functions
 # =============================================================================
 def CONFIG_KEY_ERROR(key, location=None):
+    """
+    Defines the error message displayed when a SpirouConfig.ConfigError is
+    raised
+
+    :param key: string, the key that generated the config error
+    :param location: string, the location of the code that generated the error
+
+    :return cerrmsg: string, the message to display when ConfigError is raised.
+    """
     if location is None:
         cerrmsg = 'key "{0}" is not defined'
         return cerrmsg.format(key)
@@ -445,16 +883,84 @@ def CONFIG_KEY_ERROR(key, location=None):
 
 
 def DATE_FMT_HEADER():
+    """
+    The date format for string timestamp for reading times from FITS
+    file HEADERS
+
+    Commonly used format codes:
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return date_fmt_calibdb: string, the string timestamp format for use in
+                              reading FITS file HEADERS
+    """
     date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_header
 
 
 def DATE_FMT_CALIBDB():
+    """
+    The date format for string timestamp in the calibration database
+
+    Commonly used format codes:
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return date_fmt_calibdb: string, the string timestamp format for the
+                              calibration database
+    """
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
 
 
 def DATE_FMT_DEFAULT():
+    """
+    The date format for string timestamp used by default (if not defined or
+    used)
+
+    Commonly used format codes:
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return date_fmt_calibdb: string, the string timestamp format used by
+                              default
+    """
     date_fmt_default = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_default
 
@@ -468,6 +974,15 @@ def TIME_FORMAT_DEFAULT():
 # Define logger functions
 # =============================================================================
 def LOG_TIMEZONE():
+    """
+    The time zone to use in timestamps for logging (i.e. UTC)
+
+    options are:
+            'UTC' for universal time / GMT
+            'local' for local time (computer time)
+
+    :return log_timezone: string, the timezone to use (either "UTC" or "local")
+    """
     # options are local or UTC
     log_timezone = 'UTC'
     log_timezone = 'local'
@@ -475,41 +990,112 @@ def LOG_TIMEZONE():
 
 
 def LOG_TIME_FORMAT():
+    """
+    The time format to use in the log time stamp
+
+    Commonly used format codes:
+
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return log_time_format: string, the log timestamp format
+    """
     log_time_format = '%H:%M:%S'
     return log_time_format
 
 
 def LOG_TRIG_KEYS():
+    """
+    The log trigger key characters to use in log. Keys must be the same as
+    spirouConst.WRITE_LEVELS()
+
+    i.e.
+
+    if the following is defined:
+    >>> trig_key[error] = '!'
+    and the following log is used:
+    >>> WLOG('error', 'program', 'message')
+    the output is:
+    >>> print("TIMESTAMP - ! |program|message")
+
+    :return trig_key: dictionary, contains all the trigger keys and the
+                      characters/strings to use in logging. Keys must be the
+                      same as spirouConst.WRITE_LEVELS()
+    """
     # The trigger character to display for each
     trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
     return trig_key
 
 
 def WRITE_LEVEL():
+    """
+    The write levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
+
+    The write levels define which levels are logged and printed (based on
+    constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
+
+    i.e. if
+    >>> PRINT_LEVEL = 'warning'
+    then no level with a numerical value less than
+    >>> write_level['warning']
+    will be printed to the screen
+
+    similarly if
+    >>> LOG_LEVEL = 'error'
+    then no level with a numerical value less than
+    >>> write_level['error']
+    will be printed to the log file
+
+    :return write_level: dictionary, contains the keys and numerical levels
+                         of each trigger level. Keys must be the same as
+                         spirouConst.LOG_TRIG_KEYS()
+    """
     write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
     return write_level
 
 
-def LOG_EXIT_TYPE():
-    # The exit style (on log exit)
-    #  if 'sys' exits via sys.exit   - soft exit (ipython Exception)
-    #  if 'os' exits via os._exit    - hard exit (complete exit)
-    # Do nothing on exit call
-    log_exit_type = None
-    # Use os._exit
-    log_exit_type = 'os'
-    # Use sys.exit
-    log_exit_type = 'sys'
-    return log_exit_type
-
-
 def LOG_CAUGHT_WARNINGS():
+    """
+    Defines a master switch, whether to report warnings that are caught in
+
+    >>> with warnings.catch_warnings(record=True) as w:
+    >>>     code_that_may_gen_warnings
+
+    :return warn: bool, if True reports warnings, if False does not
+    """
     # Define whether we warn
     warn = True
     return warn
 
 
 def COLOUREDLEVELS():
+    """
+    Defines the colours if using coloured log.
+    Allowed colour strings are found here:
+            see here:
+            http://ozzmaker.com/add-colour-to-text-in-python/
+            or in spirouConst.bcolors (colour class):
+                HEADER, OKBLUE, OKGREEN, WARNING, FAIL,
+                BOLD, UNDERLINE
+
+    :return clevels: dictionary, containing all the keys identical to
+                     LOG_TRIG_KEYS or WRITE_LEVEL, values must be strings
+                     that prodive colour information to python print statement
+                     see here:
+                         http://ozzmaker.com/add-colour-to-text-in-python/
+    """
     # reference:
     # http://ozzmaker.com/add-colour-to-text-in-python/
     clevels = dict(error=bcolors.FAIL,  # red
@@ -531,12 +1117,59 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def COLOURED_LOG():
-    clog = pp['COLOURED_LOG']
+def COLOURED_LOG(p=None):
+    """
+    Defines whether we use a coloured log to print to the screen/
+    standard output
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must may contain:
+            COLOURED_LOG: bool, if True uses coloured log, else non-coloured
+
+    :return clog: bool, decides whether we use a coloured log or not
+    """
+    if p is None:
+        clog = pp['COLOURED_LOG']
+    elif 'COLOURED_LOG' not in p:
+        clog = pp['COLOURED_LOG']
+    else:
+        clog = True
     return clog
 
 
+def LOG_EXIT_TYPE():
+    """
+    Defines how python exits, when an exit is required after logging, string
+    input fed into spirouConst.EXIT()
+
+    The exit style (on log exit)
+
+    if 'sys' exits via sys.exit   - soft exit (ipython Exception)
+    if 'os' exits via os._exit    - hard exit (complete exit)
+
+    if None - does not exit (this is NOT recommended as it will break all
+                             exception handling)
+
+    :return log_exit_type: string or None, the exit type (fed into
+                           spirouConst.EXIT())
+    """
+
+    # Do nothing on exit call
+    log_exit_type = None
+    # Use os._exit
+    log_exit_type = 'os'
+    # Use sys.exit
+    log_exit_type = 'sys'
+    return log_exit_type
+
+
 def EXIT():
+    """
+    Defines how to exit based on the string defined in
+    spirouConst.LOG_EXIT_TYPE()
+
+    :return my_exit: function
+    """
     my_exit = LOG_EXIT_TYPE()
     if my_exit == 'sys':
         my_exit = sys.exit
@@ -548,11 +1181,26 @@ def EXIT():
 
 
 def EXIT_LEVELS():
+    """
+    Defines which levels (in spirouConst.LOG_TRIG_KEYS and
+    spirouConst.WRITE_LEVELS) trigger an exit of the DRS after they are logged
+    (must be a list of strings)
+
+    :return exit_levels: list of strings, the keys in spirouConst.LOG_TRIG_KEYS
+                         and spirouConst.WRITE_LEVELS which trigger an exit
+                         after they are logged
+    """
     exit_levels = ['error']
     return exit_levels
 
 
 def DEFAULT_LOG_OPT():
+    """
+    Defines the default program to use as the "option" in logging
+    i.e. option in spirouConfig.WLOG(kind, option, message)
+
+    :return program: string, the default program to use in log option
+    """
     # get raw path from first item in sys.argv (normally the python
     #    script run file absolute path)
     rawpath = sys.argv[0]
