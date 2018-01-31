@@ -55,19 +55,24 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     where "human_time" and "unix_time" come from the filename headers (hdrs)
         using HEADER_KEY = timekey (or "ACQTIME1" if timekey=None)
 
-
-    :param p: dictionary, parameter dictionary
-
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                log_opt: string, log option, normally the program name
+                kw_ACQTIME_KEY: list, the keyword store for acquisition time
+                                (string timestamp)
+                            [name, value, comment] = [string, object, string]
+                kw_ACQTIME_KEY_UNIX: list, the keyword store fore acquisition
+                                     time (float unixtime)
     :param keys: string or list of strings, keys to add to the calibDB
-
     :param filenames: string or list of strings, filenames to add to the
                       calibDB, if keys is a list must be a list of same length
                       as "keys"
-
     :param hdrs: dictionary or list of dictionaries, header dictionary/
                  dictionaries to find 'timekey' in - the acquisition time,
                  if keys is a list must be a list of same length  as "keys"
-
     :param timekey: string, key to find acquisition time in header "hdr" if
                     None defaults to the program default ('ACQTIME1')
 
@@ -144,7 +149,18 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     Get the acquision time from the header file, if there is not header file
     use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                log_opt: string, log option, normally the program name
+                kw_ACQTIME_KEY: list, the keyword store for acquisition time
+                                (string timestamp)
+                            [name, value, comment] = [string, object, string]
+                kw_ACQTIME_KEY_UNIX: list, the keyword store fore acquisition
+                                     time (float unixtime)
+                            [name, value, comment] = [string, object, string]
     :param header: dictionary or None, the header dictionary created by
                    spirouFITS.ReadImage, if header is None code tries to get
                    header from p['arg_file_names'][0]
@@ -213,21 +229,25 @@ def get_database(p, max_time=None, update=False):
     Gets all entries from calibDB where unix time <= max_time. If update is
     False then will first search for and use 'calibDB' in p (if it exists)
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                calibDB: dictionary, the calibration database dictionary
+                log_opt: string, log option, normally the program name
     :param max_time: str, maximum time allowed for all calibDB entries
                      format = (YYYY-MM-DD HH:MM:SS.MS)
     :param update: bool, if False looks for "calibDB' in p, and if found does
                    not load new database
 
     :return c_database: dictionary, the calibDB database in form:
-
                     c_database[key] = [dirname, filename]
-
         lines in calibDB must be in form:
-
             {key} {dirname} {filename} {human_time} {unix_time}
 
-    :return p: dictionary, parameter dictionary
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                max_time_human: string, maximum time from "max_time"
+                max_time_unix: float, maximum time from "max_time"
+
     """
     func_name = __NAME__ + '.get_database()'
     # if we already have calib database don't load it
@@ -238,7 +258,7 @@ def get_database(p, max_time=None, update=False):
         max_time = get_acquisition_time(p)
     # add max_time to p
     p['max_time_human'] = max_time
-    p.set_source('max_time_human', __NAME__ + '/get_database()')
+    p.set_source('max_time_human', func_name)
     # check that max_time is a valid unix time (i.e. a float)
     try:
         # get the header format for dates
@@ -250,7 +270,7 @@ def get_database(p, max_time=None, update=False):
         WLOG('error', p['log_opt'], emsg.format(max_time, func_name))
     # add max_time to p
     p['max_time_unix'] = max_time
-    p.set_source('max_time_unix', __NAME__ + '/get_database()')
+    p.set_source('max_time_unix', func_name)
     # get and check the lock file
     lock, lock_file = get_check_lock_file(p)
     # try to open the master file
@@ -354,16 +374,25 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
     if 'calib_db_match' == closest, then choose the most recent of each key
     that is closest (older or newer) than the time in p['max_time_unix']
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                max_time_unix: float, the unix time to use as the time of
+                               reference
+                CALIB_DB_MATCH: string, either "closest" or "older"
+                                whether to use the "closest" time
+                                ("closest") or the closest time that is
+                                older ("older") than "max_time_unix"
+                max_time_human: string, the time stampe to use as the time
+                                of reference
     :param utimes: list of floats, the unix times for each key in keys
     :param keys: list of strings, the keys in calibDB
     :param dirnames: list of strings, the directory names for each key in keys
     :param filenames: list of strings, the filenames for each key in keys
 
-    :return c_databse: dict, the calibration database, with keys equal to the
-                       unique keys in "keys" and values equal to:
-                       [dirname, filename] for each unique key matching the
-                       time criteria
+    :return c_database: dict, the calibration database, with keys equal to the
+                        unique keys in "keys" and values equal to:
+                        [dirname, filename] for each unique key matching the
+                        time criteria
     """
     func_name = __NAME__ + '.choose_keys()'
     # set up database
@@ -422,7 +451,11 @@ def put_file(p, inputfile):
     """
     Copies the "inputfile" to the calibration database folder
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                log_opt: string, log option, normally the program name
     :param inputfile: string, the input file path and file name
 
     :return None:
@@ -451,7 +484,14 @@ def copy_files(p, header=None):
     based on the latest calibDB files from header, if there is not header file
     use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                calibDB: dictionary, the calibration database dictionary
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                log_opt: string, log option, normally the program name
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
 
@@ -525,8 +565,16 @@ def get_file_name(p, key, hdr=None, filename=None):
     the calibration database is not needed for more than one use and does
     not exist already (i.e. called via spirouCDB.GetDatabase() )
 
-    :param p: parameter dictionary, the parameter dictionary containing
-              constants
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                calibDB: dictionary, the calibration database dictionary
+                max_time_human: string, maximum time from "max_time"
+                log_opt: string, log option, normally the program name
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
     :param key: string, the key to look for in the calibration database
     :param hdr: dict or None, the header dictionary to use to get the
                 acquisition time, if hdr is None code tries to get
@@ -573,8 +621,15 @@ def get_check_lock_file(p):
     Creates a lock_file if it doesn't exist, if it does waits for it to not
     exist - acts to stop calibDB being open multiple times at once
 
-    :param p: dictionary, parameter dictionary
-    :return:
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                CALIB_MAX_WAIT: float, the maximum wait time (in seconds)
+                                for calibration database file to be in
+                                use (locked) after which an error is raised
+
+    :return lock: file, the opened lock_file (using open(lockfile, 'w'))
+    :return lockfile: string, the opened lock file name
     """
     # create lock file (to make sure database is only open once at a time)
     # construct lock file name
@@ -606,7 +661,9 @@ def write_files_to_master(p, lines, keys, lock, lock_file):
     master file is defined as 'DRS_CALIB_DB'/'IC_CALIBDB_FILENAME' and
     variables are taken from p
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
     :param lines: list of strings, entries to add to the master file
     :param keys: list of strings, the keys that are to be added to master file
     :param lock: file, the lock file (for closing if error occurs)
@@ -644,8 +701,9 @@ def read_master_file(p, lock, lock_file):
     """
     Read the calibration database master file
 
-    :param p: parameter dictionary, the parameter dictionary containing
-              constants
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
     :param lock: file, the lock file
     :param lock_file: string, the lock file location and filename
 
