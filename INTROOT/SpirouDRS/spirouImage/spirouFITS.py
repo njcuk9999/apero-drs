@@ -51,7 +51,16 @@ def readimage(p, filename=None, log=True, kind=None):
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                      file for a recipe
+                      i.e. /data/raw/20170710/filename.fits
+                log_opt: string, log option, normally the program name
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
     :param filename: string or None, filename of the image to read, if None
                      then p['fitsfilename'] is used
     :param log: bool, if True logs opening and size
@@ -109,7 +118,10 @@ def readdata(p, filename, log=True):
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
     :param filename: string, filename of the image to read
     :param log: bool, if True logs opening and size
 
@@ -140,7 +152,16 @@ def readimage_and_combine(p, framemath='+', filename=None, log=True):
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                      file for a recipe
+                      i.e. /data/raw/20170710/filename.fits
+                log_opt: string, log option, normally the program name
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
     :param framemath: string, controls how files should be added
 
                 currently supported are:
@@ -264,7 +285,15 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     Reads the tilt file (from calib database or filename) and using the
     'kw_TILT' keyword-store extracts the tilts for each order
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                kw_TILT: list, the keyword list for kw_TILT (defined in
+                         spirouKeywords.py)
+                IC_TILT_NBO: int, Number of orders in tilt file
+
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
@@ -296,7 +325,13 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
     """
     Reads the wave file (from calib database or filename)
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
@@ -332,7 +367,14 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
     """
     Reads the wave file (from calib database or filename)
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                log_opt: string, log option, normally the program name
+
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
@@ -373,6 +415,13 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
     where X is either p["ORDERP_FILE"] or p["FIBER"] (presedence in that order)
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                ORDERP_FILE: string, the suffix for the order profile
+                             calibration database key (usually the fiber type)
+                             - read from "orderp_file_fpall"
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                log_opt: string, log option, normally the program name
+
     :param hdr: dictionary or None, header dictionary (used to get the
                 acquisition time if trying to get "ORDER_PROFILE_{X}" from
                 the calibration database, if None uses the header from the
@@ -420,8 +469,12 @@ def keylookup(p, d=None, key=None, has_default=False, default=None):
     Looks for a key in dictionary "p" or "d", if has_default is True sets
     value of key to 'default' if not found else logs an error
 
-    :param p: dictionary, any dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                "key": if d is None must contain key="key" or error is raised
     :param d: dictionary, any dictionary, if None uses parameter dictionary
+              if "d" is not None then must contain key="key" or error is raised
     :param key: string, key in the dictionary to find
     :param has_default: bool, if True uses "default" as the value if key
                         not found
@@ -460,8 +513,12 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     Looks for keys in dictionary "p" or "d", if has_default is True sets
     value of key to 'default' if not found else logs an error
 
-    :param p: dictionary, any dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                "key": if d is None must contain key="key" or error is raised
     :param d: dictionary, any dictionary, if None uses parameter dictionary
+              if "d" is not None then must contain key="key" or error is raised
     :param keys: list of strings, keys in the dictionary to find
     :param has_default: bool, if True uses "default" as the value if key
                         not found
@@ -812,6 +869,12 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
     using "keywordstore"
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+
     :param keywordstore: list, a keyword store in the form
                          [name, value, comment] where the format is
                          [string, object, string]
@@ -861,7 +924,10 @@ def read_header(p=None, filepath=None, ext=0):
     """
     Read the header from a file at "filepath" with extention "ext" (default=0)
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
     :param filepath: string, filename and path of FITS file to open
     :param ext: int, extension in FITS rec to open (default = 0)
 
@@ -897,7 +963,10 @@ def read_key(p, hdict=None, key=None):
     Read a key from hdict (or p if hdict is not defined) and return it's
     value.
 
-    :param p: dictionary, any dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
     :param hdict: dictionary or None, the dictionary to add the key to once
                   found, if None creates a new dictionary
     :param key: string, key in the dictionary to find
@@ -920,6 +989,9 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
     Read a set of header keys that were created from a 2D list
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
     :param hdict: dictionary, HEADER dictionary to extract key/value pairs from
     :param key: string, prefix of HEADER key to construct 2D list from
                  key[number]
@@ -1093,7 +1165,17 @@ def math_controller(p, data, header, framemath=None):
     uses the framemath key to decide how 'arg_file_names' files are added to
     data (fitfilename)
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                nbframes: int, the number of frames/files (usually the length
+                          of "arg_file_names")
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+
     :param data: numpy array (2D), the image
     :param header: header dictionary from readimage (ReadImage) function
     :param framemath: string, or None controls how files should be added
