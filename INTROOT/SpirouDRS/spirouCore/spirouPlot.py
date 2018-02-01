@@ -97,7 +97,18 @@ def darkplot_image_and_regions(pp, image):
     """
     Plot the image and the red and plot regions
 
-    :param pp: dictionary, parameter dictionary
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                med_full: float, the median value of the non-Nan image values
+                IC_CCDX_BLUE_LOW: int, the lower extent of the blue window in x
+                IC_CCDX_BLUE_HIGH: int, the upper extent of the blue window in x
+                IC_CCDY_BLUE_LOW: int, the lower extent of the blue window in y
+                IC_CCDY_BLUE_HIGH: int, the upper extent of the blue window in y
+                IC_CCDX_RED_LOW: int, the lower extent of the red window in x
+                IC_CCDX_RED_HIGH: int, the upper extent of the red window in x
+                IC_CCDY_RED_LOW: int, the lower extent of the red window in y
+                IC_CCDY_RED_HIGH: int, the upper extent of the red window in y
+
     :param image: numpy array (2D), the image
 
     :return None:
@@ -169,7 +180,18 @@ def darkplot_histograms(pp):
     """
     Plot histograms for the dark images
 
-    :param pp: dictionary, parameter dictionary
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                histo_full: numpy.histogram tuple (hist, bin_edges) for
+                            the full image
+                histo_blue: numpy.histogram tuple (hist, bin_edges) for
+                            the blue part of the image
+                histo_red: numpy.histogram tuple (hist, bin_edges) for
+                            the red part of the image
+
+            where:
+                hist : numpy array (1D) The values of the histogram.
+                bin_edges : numpy array (1D) of floats, the bin edges
 
     :return None:
     """
@@ -281,8 +303,17 @@ def locplot_order_number_against_rms(pp, loc, rnum):
     """
     Plots the dispersion (RMS) of localization parameters for a fiber
 
-    :param pp: parameter dictionary, constants the constants
-    :param loc: parameter dictionary, contains the data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                rms_center: numpy array (1D), the RMS of the center fit for
+                            each order
+                rms_fwhm: numpy array (1D), the RMS of the width fit for each
+                          order
+
     :param rnum: number of orders to plot (from 0 --> rnum)
 
     :return None:
@@ -313,7 +344,12 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
     Plots the minimum value between the value in ycc and ic_loc_seuil (the
     normalised amplitude threshold to accept pixels for background calculation)
 
-    :param pp: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_LOCSEUIL: float, Normalised amplitude threshold to accept
+                             pixels for background calculation
+                IC_DISPLAY_TIMEOUT: float, Interval between plots (wait time
+                                    after plotting)
     :param cvalues: numpy array, normalised central column pixel values
 
     :return None:
@@ -344,7 +380,11 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     plotting to allow user to see this fix, and then move on to next row in
     loop (for use in loop only)
 
-    :param pp: parameter dictionary, contains constants
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                IC_DISPLAY_TIMEOUT: float, Interval between plots (wait time
+                                    after plotting)
     :param no: int, order number
     :param ncol: int, column number
     :param ind0: int, row center value
@@ -388,8 +428,16 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     Plots the fit residuals against pixel position for either kind='center'
     or kind='width'
 
-    :param pp: parameter dictionary, contains constants
-    :param loc: parameter dictionary, contains data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_DISPLAY_TIMEOUT: float, Interval between plots (wait time
+                                    after plotting)
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                x: numpy array (1D), the order numbers
+                ctro: numpy array (2D), storage for the center positions
+                      shape = (number of orders x number of columns (x-axis)
+                res: numpy array (1D), the residual values (data - fit)
     :param rnum: int, number of orders to use (from 0 --> rnum)
     :param kind: string, kind of fit (either 'center' or 'width')
 
@@ -398,10 +446,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     # get variables from loc dictionary
     x = loc['x']
     xo = loc['ctro'][rnum]
-    if kind == 'center':
-        y = loc['pos_diff']
-    else:
-        y = loc['wid_diff']
+    y = loc['res']
     # new fig
     plt.figure()
     # clear the current figure
@@ -431,8 +476,21 @@ def slit_sorder_plot(pp, loc, image):
     Plot the image array and overplot the polyfit for the order defined in
     p['ic_slit_order_plot']
 
-    :param pp: dictionary, parameter dictionary
-    :param loc: dictionary, localisation parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_SLIT_ORDER_PLOT: int, the order to plot
+                IC_CENT_COL: int, the column number (x-axis) of the central
+                             column
+                IC_FACDEC: float, the offset multiplicative factor for width
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
     :param image: numpy array (2D), the image
 
     :return None:
@@ -474,8 +532,14 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
     """
     Plot the slit tilt angle and its fit
 
-    :param pp: dictionary, parameter dictionary
-    :param loc: dictionary, localisation parameter dictionary
+    :param pp: parameter dictionary, ParamDict containing constants
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                xfit_tilt: numpy array (1D), the order numbers
+                tilt: numpy array (1D), the tilt angle of each order
+                yfit_tilt: numpy array (1D), the fit for the tilt angle of each
+                           order
 
     :return None:
     """
@@ -509,9 +573,20 @@ def ff_sorder_fit_edges(p, loc, image):
     with fit edges also plotted
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "IC_FF_ORDER_PLOT", "FIBER", "IC_EXT_RANGE1",
-              "IC_EXT_RANGE2"
+        Must contain at least:
+                IC_FF_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                IC_EXT_RANGE1: float, the upper edge of the order in rows
+                               (y-axis) - half-zone width (lower)
+                IC_EXT_RANGE2: float, the lower edge of the order in rows
+                               (y-axis) - half-zone width (upper)
+
     :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+
     :param image: numpy array (2D), the image to plot the fit on
 
     :return None:
@@ -560,10 +635,20 @@ def ff_aorder_fit_edges(p, loc, image):
     "IC_FF_ORDER_PLOT") on the image with fit edges also plotted
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "IC_FF_ORDER_PLOT", "FIBER", "IC_EXT_RANGE1",
-              "IC_EXT_RANGE2"
+        Must contain at least:
+                IC_FF_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                IC_EXT_RANGE1: float, the upper edge of the order in rows
+                               (y-axis) - half-zone width (lower)
+                IC_EXT_RANGE2: float, the lower edge of the order in rows
+                               (y-axis) - half-zone width (upper)
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain "ACC" (numpy array, 2D)
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+
     :param image: numpy array (2D), the image to plot the fit on
 
     :return None:
@@ -622,10 +707,15 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     e2ds and blaze function
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain at least "IC_FF_ORDER_PLOT", "FIBER"
+        Must contain at least:
+                IC_FF_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain at least "E2DS" (numpy array, 2D) and "BLAZE"
-                (numpy array, 2D)
+            Must contain at least:
+                e2ds: numpy array (2D), the extracted orders
+                blaze: numpy array (2D), the blaze image
+                      shape = (number of orders x number of columns (x-axis))
 
     :return None:
     """
@@ -663,9 +753,14 @@ def ff_sorder_flat(p, loc):
     Plot the flat profile (for selected order defined in "IC_FF_ORDER_PLOT"
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "IC_FF_ORDER_PLOT", "FIBER"
+        Must contain at least:
+                IC_FF_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain "FLAT" (numpy array, 2D)
+            Must contain at least:
+                flat: numpy array (2D), the flat image
+                      shape = (number of orders x number of columns (x-axis))
 
     :return None:
     """
@@ -705,8 +800,16 @@ def ext_sorder_fit(p, loc, image):
     Plot a selected order (defined in "IC_EXT_ORDER_PLOT") on the image
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "IC_FF_ORDER_PLOT", "FIBER"
+        Must contain at least:
+                IC_FF_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+
     :param image: numpy array (2D), the image to plot the fit on
 
     :return None:
@@ -748,9 +851,16 @@ def ext_aorder_fit(p, loc, image):
     "IC_FF_ORDER_PLOT") on the image
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "IC_FF_ORDER_PLOT", "FIBER"
+        Must contain at least:
+                IC_FF_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain "ACC" (numpy array, 2D)
+            Must contain at least:
+                    acc: numpy array (2D), the fit coefficients array for
+                         the centers fit
+                         shape = (number of orders x number of fit coefficients)
+
     :param image: numpy array (2D), the image to plot the fit on
 
     :return None:
@@ -798,10 +908,14 @@ def ext_spectral_order_plot(p, loc):
     defined in "IC_EXT_ORDER_PLOT"
 
     :param p: parameter dictionary, ParamDict containing constants
-              must have at least "IC_EXT_ORDER_PLOT" and "FIBER"
+        Must contain at least:
+                IC_EXT_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param loc: parameter dictionary, ParamDict containing data
-                must have at least "WAVE" (numpy array, 2D) and "E2DS"
-                (numpy array, 2D)
+            Must contain at least:
+                wave: numpy array (2D), the wave solution image
+                e2ds: numpy array (2D), the extracted orders
 
     :return None:
     """
@@ -838,10 +952,15 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     selected order (defined in "IC_DRIFT_ORDER_PLOT")
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain at least "IC_DRIFT_ORDER_PLOT" and "FIBER"
+        Must contain at least:
+                IC_DRIFT_ORDER_PLOT: int, defines the order to plot
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain at least "WAVE" (numpy array, 2D) and "SPEREF"
-                (numpy array, 2D) if x and y are not defined
+            Must contain at least: (if x and y are not defined)
+                wave: numpy array (2D), the wave solution image
+                speref: numpy array (2D), the reference spectrum
+
     :param x: numpy array (2D) or None, the wavelength solution for all order
               if None uses "WAVE" from "loc"
     :param y: numpy array (2D) or None, the extracted spectrum to plot for all
@@ -884,10 +1003,13 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     Plot the photo noise uncertainty against spectral order number
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain at least "FIBER"
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain at least "NUMBER_ORDERS" (int) and "DVRMSREF"
-                (numpy array, 1D) if x and y are None
+        Must contain at least: (if x and y are None)
+                number_orders: int, the number of orders in reference spectrum
+                dvrmsref: numpy array (1D), the reference spectrum
+                          photon noise uncertainty
+
     :param x: numpy array (1D) or None, the order numbers, if None uses
               "NUMBER_ORDERS" from "loc" to define a list of orders
     :param y: numpy array (1D) or None, the photon uncertainties for each order
@@ -923,11 +1045,27 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     Plot drift (with uncertainties) against time from reference
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "DRIFT_TYPE_RAW" or "DRIFT_TYPE_{kind}" if kind
-              is not None
+        Must contain at least:
+                drift_type_raw: string, "median" or "mean" the way to combine
+                                the drifts for "kind" == "raw" (or None)
+                or
+                drift_type_e2ds: string, "median" or "mean" the way to combine
+                                the drifts for "kind" == "e2ds"
+                log_opt: string, log option, normally the program name
+
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain "DELTATIME" (numpy array, 1D), "MDRIFT"
-                (numpy array, 1D) and "MERRDRIFT (numpy array, 1D)
+            Must contain at least:
+                deltatime: numpy array (1D), time difference between reference
+                           and all comparison files (len=number of comparison
+                           files)
+                mdrift: numpy array (1D), mean/median RV drift between reference
+                        and all comparison files (len=number of comparison
+                        files)
+                merrdrift: numpy array (1D), error in mean/median RV drift
+                           between reference and all comparison files
+                           (len=number of comparison files)
+
     :param kind: string or None, the way drift was calculated, currently
                  accepted are "median" or "mean", if define then drift plotted
                  comes from "DRIFT_TYPE_MEDIAN" or "DRIFT_TYPE_MEAN" depending
@@ -980,10 +1118,21 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     Plot mean drift against time from reference
 
     :param p: parameter dictionary, ParamDict containing constants
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain "DELTATIME" (numpy array 1D),
-                "MEANRV" (numpy array 1D), "MEANRV_LEFT" (numpy array, 1D)
-                and "MEANRV_RIGHT" (numpy array, 1D)
+            Must contain at least:
+                deltatime: numpy array (1D), time difference between reference
+                           and all comparison files (len=number of comparison
+                           files)
+                meanrv: numpy array (1D), mean RV drift between reference
+                        and all comparison files (len=number of comparison
+                        files)
+                meanrv_left: numpy array (1D), mean RV drift for left half of
+                        order between reference and all comparison files
+                        (len=number of comparison files)
+                meanrv_right: numpy array (1D), mean RV drift for right half of
+                        order between reference and all comparison files
+                        (len=number of comparison files)
 
     :return None:
     """
@@ -1030,9 +1179,17 @@ def drift_plot_correlation_comp(p, loc, cc):
     pass and fail the Pearson R tests
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "DRIFT_PEAK_PEARSONR_CUT"
+        Must contain at least:
+            drift_peak_pearsonr_cut: float, the minimum Pearson R coefficient
+                                     allowed in a file to obtain drifts from
+                                     that order
+
     :param loc: parameter dictionary, ParamDict containing data
-                must contain "NUMBER_ORDERS", "SPE" and "SPEREF"
+            Must contain at least:
+                number_orders: int, the number of orders in reference spectrum
+                spe: numpy array (2D), the comparison spectrum
+                speref: numpy array (2D), the reference spectrum
+
     :param cc: numpy array (1D), the correlation coefficients from the
                Pearson R test
 
@@ -1206,11 +1363,17 @@ def drift_peak_plot_llpeak_amps(p, loc):
     by "DRIFT_PEAK_SELECTED_ORDER".
 
     :param p: parameter dictionary, ParamDict containing constants
-              must contain "DRIFT_PEAK_SELECTED_ORDER"
-    :param loc: parameter dictionary, ParamDict containing data,
-                must contain at least "WAVE" (numpy array, 2D), "SPEREF"
-                (numpy array, 2D), "LLPEAK" (numpy array, 1D), "AMPPEAK"
-                (numpy array, 1D) and "DV" (numpy array, 1D)
+        Must contain at least:
+                DRIFT_PEAK_SELECTED_ORDER: int, which peak to plot in the
+                linelist vs amp plot
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                wave: numpy array (2D), the wave solution image
+                speref: numpy array (2D), the reference spectrum
+                llpeak: numpy array (1D), the delta wavelength of each FP peak
+                amppeak: numpy array (1D), the maximum amplitude of the
+                         normalised pixel values for each FP peak
+                dv: numpy array (1D), the delta v for each FP peak
 
     :return None:
     """

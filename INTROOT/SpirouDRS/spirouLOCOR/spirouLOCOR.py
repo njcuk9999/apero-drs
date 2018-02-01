@@ -477,6 +477,9 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
         WLOG('', pp['log_opt'], ('      {0} fit converging with rms/ptp/{1}:'
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
+        # add residuals to loc
+        loc['res'] = res
+        loc.set_source('res', __NAME__ + '/sigmaclip_order_fit()')
         # debug plot
         if pp['DRS_PLOT'] and pp['DRS_DEBUG'] == 2:
             sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)

@@ -463,7 +463,10 @@ def get_keyword_values_from_header(pp, hdict, keys, filename=None):
     """
     Gets a keyword or keywords from a header or dictionary
 
-    :param pp: parameter dictionary, the constants parameter dictionary
+    :param pp: parameter dictionary, ParamDict containing constants
+                if "key" (element in "keys") is in pp and it is a
+                keyword list then this is used as the key instead of "key"
+
     :param hdict: dictionary, raw dictionary or FITS rec header file containing
                   all the keys in "keys" (spirouConfig.ConfigError raised if
                   any key does not exist)

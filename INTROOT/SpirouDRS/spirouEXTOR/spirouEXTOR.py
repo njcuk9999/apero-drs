@@ -37,12 +37,38 @@ def extract_AB_order(pp, loc, image, rnum):
     Perform the extraction on the AB fibers separately using the summation
     over constant range
 
-    :param pp: dictionary, parameter dictionary
-    :param loc: dictionary, parameter dictionary containing the data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_CENT_COL: int, the column number (x-axis) of the central
+                             column
+                IC_FACDEC: float, the offset multiplicative factor for width
+                IC_EXTOPT: int, the extraction option
+                gain: float, the gain of the image
+                IC_EXTNBSIG: float, distance away from center to extract
+                             out to +/- (in rows or y-axis direction)
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+
+
     :param image: numpy array (2D), the image
     :param rnum: int, the order number for this iteration
 
-    :return loc: dictionary, parameter dictionary containing the data
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                offset: numpy array (1D), the center values with the
+                        offset in 'IC_CENT_COL' added
+                cent1: numpy array (2D), the extraction for A, updated is
+                       the order "rnum"
+                nbcos: int, 0 (constant)
+                cent2: numpy array (2D), the extraction for B, updated is
+                       the order "rnum"
     """
     # get the width fit coefficients for this fit
     assi = loc['ass'][rnum]
@@ -94,10 +120,22 @@ def extract_order(pp, loc, image, rnum, **kwargs):
     """
     Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
 
-    :param pp: dictionary, parameter dictionary
-               must have at least "IC_EXT_RANGE" and "GAIN"
-    :param loc: dictionary, parameter dictionary containing the data
-                must have at least "ACC" and "ASS"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_EXTOPT: int, the extraction option
+                IC_EXT_RANGE: float, the upper and lower edge of the order
+                              in rows (y-axis) - half-zone width
+                gain: float, the gain of the image
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+
     :param image: numpy array (2D), the image
     :param rnum: int, the order number for this iteration
     :param kwargs: additional keywords to pass to the extraction wrapper
@@ -131,10 +169,22 @@ def extract_tilt_order(pp, loc, image, rnum, **kwargs):
     Extract order with tilt but without weight using
     spirouEXTOR.extract_wrapper()
 
-    :param pp: dictionary, parameter dictionary
-               must have at least "IC_EXT_RANGE" and "GAIN"
-    :param loc: dictionary, parameter dictionary containing the data
-                must have at least "ACC" and "ASS" and "TILT"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_EXT_RANGE: float, the upper and lower edge of the order
+                              in rows (y-axis) - half-zone width
+                gain: float, the gain of the image
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+                tilt: numpy array (1D), the tilt angle of each order
+
     :param image: numpy array (2D), the image
     :param rnum: int, the order number for this iteration
     :param kwargs: additional keywords to pass to the extraction wrapper
@@ -169,10 +219,23 @@ def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     spirouEXTOR.extract_wrapper() with mode=1
     (extract_tilt_weight_order_old() is run)
 
-    :param pp: dictionary, parameter dictionary
-               must have at least "IC_EXT_RANGE", "GAIN" and "SIGDET"
-    :param loc: dictionary, parameter dictionary containing the data
-                must have at least "ACC" and "ASS" and "TILT"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_EXT_RANGE: float, the upper and lower edge of the order
+                              in rows (y-axis) - half-zone width
+                gain: float, the gain of the image
+                sigdet: float, the read noise of the image
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+                tilt: numpy array (1D), the tilt angle of each order
+
     :param image: numpy array (2D), the image
     :param orderp: numpy array (2D), the order profile image
     :param rnum: int, the order number for this iteration
@@ -212,11 +275,25 @@ def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
     spirouEXTOR.extract_wrapper() with mode=2
     (extract_tilt_weight_order() is run)
 
-    :param pp: dictionary, parameter dictionary
-               must have at least "IC_EXT_RANGE1", "IC_EXT_RANGE2",
-               "GAIN" and "SIGDET"
-    :param loc: dictionary, parameter dictionary containing the data
-                must have at least "ACC" and "ASS" and "TILT"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_EXT_RANGE1: float, the upper edge of the order in rows
+                               (y-axis) - half-zone width (lower)
+                IC_EXT_RANGE2: float, the lower edge of the order in rows
+                               (y-axis) - half-zone width (upper)
+                gain: float, the gain of the image
+                sigdet: float, the read noise of the image
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+                tilt: numpy array (1D), the tilt angle of each order
+
     :param image: numpy array (2D), the image
     :param orderp: numpy array (2D), the order profile image
     :param rnum: int, the order number for this iteration
@@ -255,10 +332,22 @@ def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     Extract order with weight but without tilt using
     spirouEXTOR.extract_wrapper()
 
-    :param pp: dictionary, parameter dictionary
-               must have at least "IC_EXT_RANGE", "GAIN" and "SIGDET"
-    :param loc: dictionary, parameter dictionary containing the data
-                must have at least "ACC" and "ASS"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_EXT_RANGE: float, the upper and lower edge of the order
+                              in rows (y-axis) - half-zone width
+                gain: float, the gain of the image
+                sigdet: float, the read noise of the image
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+
     :param image: numpy array (2D), the image
     :param orderp: numpy array (2D), the order profile image
     :param rnum: int, the order number for this iteration

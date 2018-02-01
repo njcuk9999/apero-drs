@@ -47,7 +47,7 @@ def PACKAGE():
     """
     Defines the package name (Used in code so MUST equal name of parent package)
 
-    :return pakcage: string, defines the package name
+    :return package: string, defines the package name
     """
     # Module package name (Used in code so MUST equal name of parent package)
     package = 'SpirouDRS'
@@ -55,17 +55,53 @@ def PACKAGE():
 
 
 def NAME():
+    """
+    Defines the name of the DRS
+
+    :return drs_name: string, the name of the DRS
+    """
     drs_name = 'SPIROU'
     return drs_name
 
 
 def VERSION():
+    """
+    Defines the version of the DRS
+
+    alpha and beta releases should be between 0 and 1
+    full releases should be incremental (integers)
+    with major sub-releases using the second decimal place
+    and minor version changes using the third decimal place
+
+    i.e.
+    0.1.01
+    0.1.02   - minor sub-release
+    0.2      - major sub-release
+    0.3      - major sub-release
+    1.0      - first full release
+    1.0.01   - minor sub-release after full release
+
+    :return version: string, a numerical sequence in the form A.B.C where
+                     A denotes full releases, B denotes major changes (but not
+                     full release level), and C denotes minor changes
+    """
     # Module Version (Used in all sub-packages)
-    version = '0.1.009'
+    version = '0.1.010'
     return version
 
 
 def RELEASE():
+    """
+    Defines the release state of the DRS
+    i.e.
+    alpha
+    beta
+
+    pre-release
+    released
+
+    :return release: string, the release state of the DRS
+    """
     release = 'alpha pre-release'
     return release
 
@@ -88,7 +124,7 @@ def LATEST_EDIT():
     :return date: string, the date (in format YYYY-MM-DD)
     """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-01-31'
+    date = '2018-02-01'
     return date
 
 
@@ -261,6 +297,12 @@ def LOG_OPT(p):
 
 
 def PROGRAM():
+    """
+    Defines the recipe/code/program currently running (from sys.argv[0])
+    '.py' is removed
+
+    :return program: string, the recipe/code/program name
+    """
     # get run time parameters
     rparams = list(sys.argv)
     # get program name
@@ -288,11 +330,37 @@ def MANUAL_FILE(p):
 
 
 def RAW_DIR(p):
+    """
+    Defines the raw data directory
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+
+    :return raw_dir: string, the raw data directory
+    """
     raw_dir = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
     return raw_dir
 
 
 def REDUCED_DIR(p):
+    """
+    Defines the reduced data directory
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+
+    :return raw_dir: string, the reduced data directory
+    """
     # set the reduced directory from DRS_DATA_REDUC and 'arg_night_name'
     reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
     # return reduced directory
@@ -303,6 +371,31 @@ def REDUCED_DIR(p):
 # Define Filename functions
 # =============================================================================
 def ARG_FILE_NAMES(p):
+    """
+    Defines the list of filenames (usually obtained from the run time argumnets
+    (i.e. sys.argv). If 'arg_file_names' already in "p" then we use that to
+    set the value.
+    Files are obtained from run time/sys.argv is assumed
+    to be in the following format:
+
+    >>> sys.argv = ['program.py', 'arg_night_name', 'file1', 'file2', 'file3']
+
+    therefore arg_file_names has the value:
+
+    >>> arg_file_names = sys.argv[3:]
+
+    :param p: parameter dictionary, ParamDict containing constants
+        May contain:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+        If it does this value is used over sys.argv values
+
+    :return arg_file_names: list of strings, the file names from run time, or
+                            if p["arg_file_names"] exists value is taken from
+                            there
+    """
     # see if already defined
     if 'ARG_FILE_NAMES' in p:
         return p['ARG_FILE_NAMES']
@@ -505,6 +598,19 @@ def LOC_LOCO_FILE3(p):
 
 
 def SLIT_TILT_FILE(p):
+    """
+    Defines the slit tilt file location and filename
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return tiltfits: string, slit tilt file location and filename
+    """
     reduced_dir = p['reduced_dir']
     calibprefix = CALIB_PREFIX(p)
     tiltfn = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
@@ -966,6 +1072,29 @@ def DATE_FMT_DEFAULT():
 
 
 def TIME_FORMAT_DEFAULT():
+    """
+    The time format for string timestamp used by default (if not defined or
+    used)
+
+    Commonly used format codes:
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return time_format_default: string, the string timestamp format used by
+                                 default
+    """
     time_format_default = '%H:%M:%S'
     return time_format_default
 
