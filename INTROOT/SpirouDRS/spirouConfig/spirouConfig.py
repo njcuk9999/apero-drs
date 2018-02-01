@@ -449,8 +449,12 @@ def load_config_from_file(p, key, required=False, logthis=False):
     the primary config file to already be loaded into "p"
     (i.e. p['DRS_CONFIG'] and p[key] to be set)
 
-    :param p: parameter dictionary, contains constants (at least 'DRS_CONFIG'
-              and "key" to be set)
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_CONFIG: string, the directory that contains the config files
+                "key": string, the key to access the config file name
+                       (key variable defined by "key")
+
     :param key: string, the key to access the config file name for (in "p")
     :param required: bool, if required is True then the secondary config file
                      is required for the DRS to run and a ConfigError is raised
@@ -503,7 +507,11 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
     to a new parameter dictionary (if merge=False) if merge is True then
     add them back to the "pp" parameter dictionary
 
-    :param pp: parameter dictionary, containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
+                If pp has keys with "suffix" they are extracted and used
+                if there are no keys with "suffix" then this function does
+                nothing other than add "fiber" to "p"
+
     :param suffix: string, the suffix string to look for in "pp", all keys
                    must have values that are dictionaries containing (at least)
                    the key "fiber"
@@ -519,14 +527,16 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
                   a new parameter dictionary with all parameters that had the
                   suffix in (with the suffix removed)
 
-    :return ParamDict: if merge is True "pp" is returned with the new constants
-                       added, else a new parameter dictionary is returned
+    :return p: parameter dictionary, the updated parameter dictionary
 
-        i.e. for the above example return is the following:
+               if merge is True "pp" is returned with the new constants
+               added, else a new parameter dictionary is returned
 
-            "fiber" = "AB"
+                i.e. for the above example return is the following:
 
-            ParamDict(param1=1, param2='yes', param3=True)
+                    "fiber" = "AB"
+
+               ParamDict(param1=1, param2='yes', param3=True)
 
     """
     func_name = __NAME__ + '.extract_dict_params()'
@@ -614,7 +624,10 @@ def check_config(params, keys):
     Check whether we have certain keys in dictionary
     raises a Config Error if keys are not in params
 
-    :param params: parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            the keys defined in "keys" (else ConfigError raised)
+
     :param keys: string or list of strings containing the keys to look for
 
     :return None:
@@ -645,10 +658,44 @@ def check_params(p):
     Check the parameter dictionary has certain required values, p must contain
     at the very least keys 'DRS_ROOT' and 'TDATA'
 
-    :param p: dictionary, parameter dictionary
-               (must have at least keys 'DRS_ROOT' and 'TDATA')
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            DRS_ROOT: string, the installation root directory
+            TDATA: string, the data root directory
 
-    :return p: dictionary, the updated parameter dictionary
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following (if not already in "p"):
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                                should be saved to/read from
+                DRS_DATA_MSG: string, the directory that the log messages
+                              should be saved to
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                DRS_CONFIG: string, the directory that contains the config files
+                DRS_MAN: string, the directory the manual files are stored in
+                DRS_PLOT: bool, whether to plot or not
+                DRS_DATA_WORKING: string, the working data directory (temporary
+                                  storage folder)
+                DRS_USED_DATE: string, ???
+                DRS_DEBUG: int, sets the debug level
+                                0: no debug
+                                1: basic debugging on errors
+                                2 : recipes specific (plots and some code runs)
+                DRS_INTERACTIVE: bool, sets whether plots are interactive or
+                                 static
+                PRINT_LEVEL: string, sets the print level
+                                   'all' - to print all events
+                                   'info' - to print info/warning/error events
+                                   'warning' - to print warning/error events
+                                   'error' - to print only error events
+                LOG_LEVEL: string, sets the logging level
+                                   'all' - to print all events
+                                   'info' - to print info/warning/error events
+                                   'warning' - to print warning/error events
+                                   'error' - to print only error events
+        Only updated if not already defined in primary config file
+        (i.e. in "p")
     """
     func_name = __NAME__ + '.check_params()'
     # get log levels
@@ -683,7 +730,7 @@ def check_params(p):
     # cparams['DRS_LOG'] = cparams.get('DRS_LOG', 1)
 
     # check that drs_plot exists else set to 'NONE'
-    p = check_set_default_val(p, 'DRS_PLOT', 'undefined', func_name)
+    p = check_set_default_val(p, 'DRS_PLOT', True, func_name)
 
     # check whether we have a drs_config key
     p = check_set_default_val(p, 'DRS_DATA_WORKING', None, func_name)
@@ -743,12 +790,17 @@ def check_set_default_val(p, key, dvalue, source=None):
     Function to set the source of "key" if the value in "key" is equal
     to the dvalue (only for use, multiple times, in spirouConfig.check_params())
 
-    :param p: parameter dictionary, parameter dictionary containing constants
+    :param p: parameter dictionary, ParamDict containing constants
+                if key is in "p" then it isn't added with the default value
+
     :param key: string, the key to check
     :param dvalue: object, the default value of the key to check
     :param source: string, the source location of the parameter if defaulted
 
     :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                if key isn't in "p" then it is added to "p" with the default
+                value "dvalue"
     """
     if key not in p:
         p[key] = dvalue
