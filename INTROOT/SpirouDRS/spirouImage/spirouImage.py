@@ -151,8 +151,11 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
     Converts image from ADU/s into e-
 
     :param image:
-    :param p: dictionary or None, parameter dictionary, must contain 'exptime'
-              and 'gain', if None gain and exptime must not be None
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least: (if exptime is None)
+                exptime: float, the exposure time of the image
+                gain: float, the gain of the image
+
     :param gain: float, if p is None, used as the gain to multiple the image by
     :param exptime: float, if p is None, used as the exposure time the image
                     is multiplied by
@@ -194,8 +197,11 @@ def convert_to_adu(image, p=None, exptime=None):
     Converts image from ADU/s into ADU
 
     :param image:
-    :param p: dictionary or None, parameter dictionary, must contain 'exptime'
-              and 'gain', if None gain and exptime must not be None
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least: (if exptime is None)
+            exptime: float, the exposure time of the image
+
     :param exptime: float, if p is None, used as the exposure time the image
                     is multiplied by
 
@@ -236,6 +242,12 @@ def get_all_similar_files(p, directory, prefix=None, suffix=None):
     either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                log_opt: string, log option, normally the program name
+
     :param directory: string, the directory to search for files
     :param prefix: string or None, if not None the prefix to search for, if
                    None defines the prefix from the first 5 characters of
@@ -280,13 +292,46 @@ def measure_dark(pp, image, image_name, short_name):
     """
     Measure the dark pixels in "image"
 
-    :param pp: dictionary, parameter dictionary
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                DARK_QMIN: int, The lower percentile (0 - 100)
+                DARK_QMAX: int, The upper percentile (0 - 100)
+                HISTO_BINS: int,  The number of bins in dark histogram
+                HISTO_RANGE_LOW: float, the lower extent of the histogram
+                                 in ADU/s
+                HISTO_RANGE_HIGH: float, the upper extent of the histogram
+                                  in ADU/s
+
     :param image: numpy array (2D), the image
     :param image_name: string, the name of the image (for logging)
     :param short_name: string, suffix (for parameter naming -
                         parmaeters added to pp with suffix i)
 
-    :return pp: dictionary, parameter dictionary
+    :return pp: parameter dictionary, the updated parameter dictionary
+            Adds the following: (based on "short_name")
+                histo_full: numpy.histogram tuple (hist, bin_edges) for
+                            the full image
+                histo_blue: numpy.histogram tuple (hist, bin_edges) for
+                            the blue part of the image
+                histo_red: numpy.histogram tuple (hist, bin_edges) for
+                            the red part of the image
+                med_full: float, the median value of the non-Nan image values
+                          for the full image
+                med_blue: float, the median value of the non-Nan image values
+                          for the blue part of the image
+                med_red: float, the median value of the non-Nan image values
+                         for the red part of the image
+                dadead_full: float, the fraction of dead pixels as a percentage
+                             for the full image
+                dadead_blue: float, the fraction of dead pixels as a percentage
+                             for the blue part of the image
+                dadead_red: float, the fraction of dead pixels as a percentage
+                            for the red part of the image
+
+          where:
+              hist : numpy array (1D) The values of the histogram.
+              bin_edges : numpy array (1D) of floats, the bin edges
     """
     func_name = __NAME__ + '.measure_dark()'
     # make sure image is a numpy array
@@ -345,7 +390,18 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     Corrects "data" for "dark" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword)
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                nbframes: int, the number of frames/files (usually the length
+                          of "arg_file_names")
+                calibDB: dictionary, the calibration database dictionary
+                         (if not in "p" we construct it and need "max_time_unix"
+                max_time_unix: float, the unix time to use as the time of
+                                reference (used only if calibDB is not defined)
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
     :param image: numpy array (2D), the image
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
@@ -413,6 +469,14 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
     the 90th percentile
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                BADPIX_FLAT_MED_WID: float, the median image in the x
+                                     dimension over a boxcar of this width
+                BADPIX_NORM_PERCENTILE: float, the percentile to normalise
+                                        to when normalising and median
+                                        filtering image
+                log_opt: string, log option, normally the program name
+
     :param image: numpy array (2D), the iamge to median filter and normalise
     :param method: string, "new" or "old" if "new" uses np.percentile else
                    sorts the flattened image and takes the "percentile" (i.e.
@@ -478,7 +542,17 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     """
     Locate the bad pixels in the flat image and the dark image
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                BADPIX_FLAT_MED_WID: float, the median image in the x
+                                     dimension over a boxcar of this width
+                BADPIX_FLAT_CUT_RATIO: float, the maximum differential pixel
+                                       cut ratio
+                BADPIX_ILLUM_CUT: float, the illumination cut parameter
+                BADPIX_MAX_HOTPIX: float, the maximum flux in ADU/s to be
+                                   considered too hot to be used
+
     :param fimage: numpy array (2D), the flat normalised image
     :param fmed: numpy array (2D), the flat median normalised image
     :param dimage: numpy array (2D), the dark image
@@ -604,11 +678,28 @@ def get_tilt(pp, lloc, image):
     """
     Get the tilt by correlating the extracted fibers
 
-    :param pp: dictionary, parameter dictionary
-    :param lloc: dictionary, parameter dictionary containing the data
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                ic_tilt_coi: int, oversampling factor
+                log_opt: string, log option, normally the program name
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                number_orders: int, the number of orders in reference spectrum
+                cent1: numpy array (2D), the extraction for A, updated is
+                       the order "rnum"
+                cent2: numpy array (2D), the extraction for B, updated is
+                       the order "rnum"
+                offset: numpy array (1D), the center values with the
+                        offset in 'IC_CENT_COL' added
+
     :param image: numpy array (2D), the image
 
-    :return lloc: dictionary, parameter dictionary containing the data
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                nbcos: numpy array, zero array  (length of "number_orderes")
+                tilt: numpy array (1D), the tilt angle of each order
+
     """
     nbo = lloc['number_orders']
     # storage for "nbcos"
@@ -655,10 +746,24 @@ def fit_tilt(pp, lloc):
     Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
     return the coefficients, fit and residual rms in lloc dictionary
 
-    :param pp: dictionary, parameter dictionary
-    :param lloc: dictionary, parameter dictionary containing the data
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_TILT_FIT: int, Order of polynomial to fit for tilt
 
-    :return lloc: dictionary, parameter dictionary containing the data
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                number_orders: int, the number of orders in reference spectrum
+                tilt: numpy array (1D), the tilt angle of each order
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                xfit_tilt: numpy array (1D), the order numbers
+                yfit_tilt: numpy array (1D), the fit for the tilt angle of each
+                           order
+                a_tilt: numpy array (1D), the fit coefficients (generated by
+                        numpy.polyfit but IN REVERSE ORDER)
+                rms_tilt: float, the RMS (np.std) of the residuals of the
+                          tilt - tilt fit values
     """
 
     # get the x values for
@@ -751,6 +856,11 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
     Get parameter from header "hdr" using "keyword" (keyword store constant)
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            "keyword" defined in call
+            log_opt: string, log option, normally the program name
+            "name" defined in call
+
     :param hdr: dictionary, HEADER dictionary containing key/value pairs
                 extracted from a FITS rec header
     :param keyword: string, the keyword key (taken from "p") this allows
@@ -811,7 +921,11 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
     Get the acquision time from the header file, if there is not header file
     use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            "name" defined in call
+            parameter dictionary to give to value
+
     :param hdr: dictionary, the header dictionary created by
                 spirouFITS.ReadImage
     :param name: string, the name in parameter dictionary to give to value
