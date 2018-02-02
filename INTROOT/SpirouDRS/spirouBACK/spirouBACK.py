@@ -100,7 +100,6 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     Takes the image and measure the background
 
     :param pp: parameter dictionary, ParamDict containing constants
-
             Must contain at least:
                 IC_OFFSET: int, row number of image to start processing at
                 IC_CENT_COL: int, Definition of the central column
@@ -114,14 +113,14 @@ def measure_background_and_get_central_pixels(pp, loc, image):
                                 2: recipes specific (plots and some code runs)
                 DRS_PLOT: bool, Whether to plot (True to plot)
 
-    :param loc: parameter dictionary, localisation parameter dictionary
+    :param loc: parameter dictionary, ParamDict containing data
+
     :param image: numpy array (2D), the image
 
     :return ycc: the normalised values the central pixels
 
-    :return loc:
-
-            Adds the following:
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
                 ycc: numpy array (1D), normalized central column of pixels
                 mean_backgrd: float, 100 times the mean of the good background
                               pixels
