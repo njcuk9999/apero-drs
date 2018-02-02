@@ -179,7 +179,8 @@ ic_locdfitp = 3
 #   Maximum rms for sigma-clip order fit (center positions)          - [cal_loc]
 ic_max_rms_center = 0.2
 
-#   Maximum ptp for sigma-clip order fit (center positions)          - [cal_loc]
+#   Maximum peak-to-peak for sigma-clip order fit                    - [cal_loc]
+#      (center positions)
 ic_max_ptp_center = 0.200
 
 #   Maximum frac ptp/rms for sigma-clip order fit                    - [cal_loc]
@@ -189,7 +190,8 @@ ic_ptporms_center = 8.0
 #   Maximum rms for sigma-clip order fit (width)                     - [cal_loc]
 ic_max_rms_fwhm = 1.0
 
-#   Maximum ptp for sigma-clip order fit (width)                     - [cal_loc]
+#   Maximum fractional peak-to-peak for sigma-clip order             - [cal_loc]
+#       fit (width)
 ic_max_ptp_fracfwhm = 10.0
 
 #   Currently only used in keywords for loco file                       - [None]
