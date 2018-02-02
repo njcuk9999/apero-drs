@@ -49,6 +49,10 @@ def run_begin():
 
     :return cparams: parameter dictionary, ParamDict constants from primary
                      configuration file
+            Adds the following:
+                all constants in primary configuration file
+                DRS_NAME: string, the name of the DRS
+                DRS_VERSION: string, the version of the DRS
     """
     # Get config parameters
     cparams = spirouConfig.ReadConfigFile()
@@ -78,7 +82,14 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None):
     6) loads run time arguments (and custom arguments, see below)
     7) loads other config files
 
-    :param cparams: parameter dictionary from run_begin
+    :param cparams: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
 
     :param night_name: string or None, the name of the directory in DRS_DATA_RAW
                        to find the files in
@@ -157,7 +168,20 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     Run start up code (based on program and parameters defined in p before)
 
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
 
     :param kind: string, description of program we are running (i.e. dark)
 
@@ -183,7 +207,10 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
                     program will log and exit if they are not found
                     if False, program will create calibDB folder
 
-    :return p: dictionary, parameter dictionary
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                calibDB: dictionary, the calibration database dictionary
+                prefixes from add_to_p (see spirouStartup.deal_with_prefixes)
     """
 
     log_opt = p['log_opt']
@@ -243,7 +270,31 @@ def run_time_args(p):
     dictionary
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                constants from primary configuration file
+
     :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                STR_FILE_NAMES: string, the "arg_file_names" in string form
+                                separated by commas
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                log_opt: string, log option, normally the program name
+                nbframes: int, the number of frames/files (usually the length
+                          of "arg_file_names")
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                raw_dir: string, the raw data directory
+                         (i.e. p['DRS_DATA_RAW']/p['arg_night_name'])
     """
     # get constants name
     cname = spirouConfig.Constants.__NAME__
@@ -289,9 +340,24 @@ def run_time_custom_args(p, customargs):
     to the constants parameter dictionary
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+        constants from primary configuration file
+
     :param customargs:
 
     :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                log_opt: string, log option, normally the program name
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                raw_dir: string, the raw data directory
+                         (i.e. p['DRS_DATA_RAW']/p['arg_night_name'])
+                customargs: "customargs" added from call
     """
     # set source
     source = __NAME__ + '/run_time_custom_args()'
@@ -328,6 +394,10 @@ def load_other_config_file(p, key, logthis=True, required=False):
     with ConfigErrors (pushed to WLOG)
 
     :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                key: "key" defined in call
+
     :param key: string, the key in "p" storing the location of the secondary
                 configuration file
     :param logthis: bool, if True loading of this config file is logged to
@@ -354,7 +424,12 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
     """
     Deals with finding the prefixes and adding any add_to_p values to p
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
 
     :param kind: string, description of program we are running (i.e. dark)
 
@@ -369,13 +444,16 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
 
             where prefix1 and prefix2 are the strings in "prefixes"
 
-            This will add the sub dictionarys to the main parameter dictionary
+            This will add the sub dictionaries to the main parameter dictionary
             based on which prefix is found
 
             i.e. if prefix1 is found key "value3" and "value4" above are added
             (with "key3" and "key4") to the parameter dictionary p
 
-    :return p: parameter, dictionary, the updated parameter dictionary
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                the subdictionary key/value pairs in "add_to_p" that contains
+                the correct prefix for p["arg_file_names"][0]
     """
     if prefixes is None:
         return p
@@ -401,7 +479,7 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             # if fprefix is None (shouldn't be) just return original parameters
             if fprefix is None:
                 return p
-            # elif fprefix is not in a2p (if set up correctly it should be)
+            # elif fprefix is not in add_to_p (if set up correctly it should be)
             # return original parameters
             elif fprefix not in add_to_p:
                 return p
@@ -533,7 +611,12 @@ def get_file(p, path, name=None, prefix=None, kind=None):
     """
     Get full file path and check the path and file exist
 
-    :param p: parameter dictionary, the parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+
     :param path: string, either the directory to the folder (if name is None) or
                  the full path to the file
     :param name: string or None, the name of the file, if None name is assumed
@@ -586,7 +669,12 @@ def get_fiber_type(p, filename, fibertypes=None):
     """
     Get fiber types and search for a valid fiber type in filename
 
-    :param p: parameter dictionary, the parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                FIBER_TYPES: list of strings, the types of fiber available
+                             (i.e. ['AB', 'A', 'B', 'C'])
+                log_opt: string, log option, normally the program name
+
     :param filename: string, the filename to search for fiber types in
     :param fibertypes: list of strings, the fiber types to search for
 
@@ -626,7 +714,35 @@ def display_initial_parameterisation(p):
     """
     Display initial parameterisation for this execution
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                DRS_DATA_MSG: string, the directory that the log messages
+                              should be saved to
+                PRINT_LEVEL: string, Level at which to print, values can be:
+                                  'all' - to print all events
+                                  'info' - to print info/warning/error events
+                                  'warning' - to print warning/error events
+                                  'error' - to print only error events
+                LOG_LEVEL: string, Level at which to log, values can be:
+                                  'all' - to print all events
+                                  'info' - to print info/warning/error events
+                                  'warning' - to print warning/error events
+                                  'error' - to print only error events
+                DRS_PLOT: bool, Whether to plot (True to plot)
+                DRS_USED_DATE: string, the DRS USED DATE (not really used)
+                DRS_DATA_WORKING: (optional) string, the temporary working
+                                  directory
+                DRS_INTERACTIVE: bool, True if running in interactive mode.
+                DRS_DEBUG: int, Whether to run in debug mode
+                                0: no debug
+                                1: basic debugging on errors
+                                2: recipes specific (plots and some code runs)
 
     :return None:
     """
@@ -645,7 +761,7 @@ def display_initial_parameterisation(p):
     #               '%(0: minimum stdin-out logs)').format(**p))
     WLOG('', '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
                   '%(error/warning/info/all)').format(**p))
-    WLOG('', '', ('(log_level)         LOG_LEVEL={PRINT_LEVEL}         '
+    WLOG('', '', ('(log_level)         LOG_LEVEL={LOG_LEVEL}         '
                   '%(error/warning/info/all)').format(**p))
     WLOG('', '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
                   '%(def/undef/trigger)').format(**p))
@@ -671,7 +787,13 @@ def display_run_files(p):
     """
     Display run files for this execution
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                STR_FILE_NAMES: string, the "arg_file_names" in string form
+                                separated by commas
 
     :return None:
     """
@@ -685,7 +807,13 @@ def display_custom_args(p, customargs):
     """
     Display the custom arguments that have been loaded
 
-    :param p: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                log_opt: string, log option, normally the program name
+                customargs: the key/value pairs loaded from "customargs"
+
     :param customargs: dictionary, custom arguments
 
     :return None:
@@ -702,8 +830,20 @@ def display_custom_args(p, customargs):
 def display_help_file(p):
     """
     If help file exists display it
-    :param p:
-    :return:
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                log_opt: string, log option, normally the program name
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+
+    :return None:
     """
 
     # find help signal
