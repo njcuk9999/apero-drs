@@ -48,7 +48,10 @@ def fiber_params(pp, fiber, merge=False):
     (i.e. from config files) and adds the correct parameter to a fiber
     parameter dictionary
 
-    :param pp: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
     :param fiber: string, the fiber type (and suffix used in confiruation file)
                   i.e. for fiber AB fiber="AB" and nbfib_AB should be present
                   in config if "nbfib" is in FIBER_PARAMS
@@ -74,13 +77,44 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     to get acquisition time or uses p['fitsfilename'] to get acquisition time if
     "hdr" is None
 
-    :param p: dictionary, parameter dictionary
-    :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
-    :param loc: dictionary, storage for arrays and variables
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                kw_LOCO_NBO: list, keyword store for the number of orders
+                             located
+                kw_LOCO_DEG_C: list, keyword store for the fit degree for
+                               order centers
+                kw_LOCO_DEG_W: list, keyword store for the fit degree for
+                               order widths
+                kw_LOCO_CTR_COEFF: list, keyword store for the Coeff center
+                                   order
+                kw_LOCO_FWHM_COEFF: list, keyword store for the Coeff width
+                                    order
+                LOC_FILE: string, the suffix for the location calibration
+                          database key (usually the fiber type)
+                             - read from "loc_file_fpall", if not defined
+                               uses p["fiber"]
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+                calibDB: dictionary, the calibration database dictionary
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                log_opt: string, log option, normally the program name
 
-    :return loc: dictionary, parameter dictionary containing the coefficients,
-                 the number of orders and the number of coeffiecients from
-                 center and width localization fits
+    :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
+    :param loc: parameter dictionary, ParamDict containing data
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                number_orders: int, the number of orders in reference spectrum
+                nbcoeff_ctr: int, number of coefficients for the center fit
+                nbcoeff_wid: int, number of coefficients for the width fit
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
     """
     # get keywords
     loco_nbo = p['kw_LOCO_NBO'][0]
@@ -148,8 +182,10 @@ def merge_coefficients(loc, coeffs, step):
     i.e. shrinks a list of N coefficients to N/2 (if step = 2) where
          indices 0 and 1 are averaged, indices 2 and 3 are averaged etc
 
-    :param loc: parameter dictionary, ParamDict containing data.
-                Must contain at least "number_orders"
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                number_orders: int, the number of orders in reference spectrum
+
     :param coeffs: numpy array (2D), the list of coefficients
                    shape = (number of orders x number of fit parameters)
 
@@ -182,13 +218,40 @@ def find_order_centers(pp, image, loc, order_num):
     specific points are defined by steps (ic_locstepc) away from the
     central pixel (ic_cent_col)
 
-    :param pp: dictionary, parameter dictionary
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                IC_LOCSTEPC: int, the column separation for fitting orders
+                IC_CENT_COL: int, the column number (x-axis) of the central
+                             column
+                IC_EXT_WINDOW: int, extraction window size (half size)
+                IC_IMAGE_GAP: int, the gap index in the selected area
+                sigdet: float, the read noise of the image
+                IC_LOCSEUIL: float, Normalised amplitude threshold to accept
+                             pixels for background calculation
+                IC_WIDTHMIN: int, minimum width of order to be accepted
+                DRS_DEBUG: int, Whether to run in debug mode
+                                0: no debug
+                                1: basic debugging on errors
+                                2: recipes specific (plots and some code runs)
+                DRS_PLOT: bool, Whether to plot (True to plot)
+
     :param image: numpy array (2D), the image
-    :param loc: dictionary, localisation parameter dictionary
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                ctro: numpy array (2D), storage for the center positions
+                      shape = (number of orders x number of columns (x-axis)
+
     :param order_num: int, the current order to process
 
-    :return loc: dictionary, parameter dictionary with updates center and width
-                 positions
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                ctro: numpy array (2D), storage for the center positions
+                      shape = (number of orders x number of columns (x-axis)
+                      updated the values for "order_num"
+                sigo: numpy array (2D), storage for the width positions
+                      shape = (number of orders x number of columns (x-axis)
+                      updated the values for "order_num"
     """
 
     # get constants from parameter dictionary
@@ -266,10 +329,22 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
     the fit
 
-    :param pp: dictionary, parameter dictionary containing constants and
-               keywords
-    :param loc: dictionary, parameter dictionary containing the localization
-                data "ctro" and "sigo"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                IC_LOCDFITC: int, order of polynomial to fit for positions
+                IC_LOCDFITW: int, order of polynomial to fit for widths
+                DRS_PLOT: bool, Whether to plot (True to plot)
+                IC_CENT_COL: int, Definition of the central column
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                x: numpy array (1D), the order numbers
+                ctro: numpy array (2D), storage for the center positions
+                      shape = (number of orders x number of columns (x-axis)
+                sigo: numpy array (2D), storage for the width positions
+                      shape = (number of orders x number of columns (x-axis)
+
     :param mask: numpy array (1D) of booleans, True where we have non-zero
                  widths
     :param onum: int, order iteration number (running number over all
@@ -361,10 +436,42 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         or max_ptp_frac > 'ic_ptporms_center'   [kind='center']
         or max_ptp_frac > 'ic_max_ptp_frac'     [kind='fwhm'
 
-    :param pp: dictionary, parameter dictionary containing constants and
-               keywords
-    :param loc: dictionary, parameter dictionary containing the localization
-                data "ctro" and "sigo"
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                IC_MAX_RMS_CENTER: required when kind="center", float, Maximum
+                                   rms for sigma-clip order fit (center
+                                   positions)
+                IC_MAX_RMS_FWHM: required when kind="fwhm", float, Maximum
+                                 rms for sigma-clip order fit (width)
+                IC_LOCDFITC: int, order of polynomial to fit for positions
+                IC_MAX_PTP_CENTER: required when kind="center", float, Maximum
+                                   peak-to-peak for sigma-clip order fit
+                                   (center positions)
+                IC_PTPORMS_CENTER: required when kind="center", float, Maximum
+                                   frac ptp/rms for sigma-clip order fit
+                                   (center positions)
+                IC_LOCDFITW: int, order of polynomial to fit for widths
+                IC_MAX_PTP_FRAC_FWHM: required when kind="fwhm", float, Maximum
+                                      fractional peak-to-peak for sigma-clip
+                                      order fit (width)
+                DRS_DEBUG: int, Whether to run in debug mode
+                                0: no debug
+                                1: basic debugging on errors
+                                2: recipes specific (plots and some code runs)
+                DRS_PLOT: bool, Whether to plot (True to plot)
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                ctro: numpy array (2D), storage for the center positions
+                      shape = (number of orders x number of columns (x-axis)
+                sigo: numpy array (2D), storage for the width positions
+                      shape = (number of orders x number of columns (x-axis)
+                max_rmpts_pos: int, maximum number of removed points in sigma
+                               clipping process, for center fits
+                max_rmpts_wid: int, maximum number of removed poitns in sigma
+                               clipping process, for width fits
+
     :param fitdata: dictionary, contains the fit data key value pairs for this
                      initial fit. keys are as follows:
 
