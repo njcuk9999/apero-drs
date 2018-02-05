@@ -140,8 +140,10 @@ def flip_image(image, fliprows=True, flipcols=True):
     # flip first dimension
     elif fliprows:
         return image[::-1, :]
+    # flip second dimension
     elif flipcols:
         return image[:, ::-1]
+    # if both false just return image (no operation done)
     else:
         return image
 
@@ -163,7 +165,8 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
     :return newimage: numpy array (2D), the image in e-
     """
     func_name = __NAME__ + '.convert_to_e()'
-    # if p is defined
+    # test if we have p and exptime/gain are in p - if we do convert -
+    #    else raise error
     if p is not None:
         try:
             newimage = image * p['exptime'] * p['gain']
@@ -173,6 +176,8 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', '', [emsg1, emsg2])
             newimage = None
+    # test of we have exptime and gain defined - if we do convert - else
+    #     raise error
     elif gain is not None and exptime is not None:
         try:
             gain, exptime = float(gain), float(exptime)
@@ -183,6 +188,8 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', '', [emsg1, emsg2])
             newimage = None
+    # if neither p['exptime'] and p['gain' or exptime and gain are defined
+    #     raise error
     else:
         emsg1 = 'Either "p" or ("gain" and "exptime") must be defined'
         emsg2 = '    function = {0}'.format(func_name)
@@ -208,6 +215,8 @@ def convert_to_adu(image, p=None, exptime=None):
     :return newimage: numpy array (2D), the image in e-
     """
     func_name = __NAME__ + '.convert_to_adu()'
+    # test if we have p and exptime is in p - if we do convert - else raise
+    #    error
     if p is not None:
         try:
             newimage = image * p['exptime']
@@ -217,6 +226,7 @@ def convert_to_adu(image, p=None, exptime=None):
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', '', [emsg1, emsg2])
             newimage = None
+    # test of we have exptime defined - if we do convert - else raise error
     elif exptime is not None:
         try:
             exptime = float(exptime)
@@ -227,6 +237,7 @@ def convert_to_adu(image, p=None, exptime=None):
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', '', [emsg1, emsg2])
             newimage = None
+    # if neither p['exptime'] or exptime are defined raise error
     else:
         emsg1 = 'Either "p" or "exptime" must be defined'
         emsg2 = '    function = {0}'.format(func_name)
@@ -387,7 +398,7 @@ def measure_dark(pp, image, image_name, short_name):
 
 def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     """
-    Corrects "data" for "dark" using calibDB file (header must contain
+    Corrects "image" for "dark" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword)
 
     :param p: parameter dictionary, ParamDict containing constants
