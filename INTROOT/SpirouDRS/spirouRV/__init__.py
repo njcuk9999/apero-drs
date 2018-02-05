@@ -32,7 +32,6 @@ __all__ = ['CalcRVdrift2D', 'Coravelation', 'CreateDriftFile',
 # =============================================================================
 # Function aliases
 # =============================================================================
-# Compute radial velocity drift between reference spectrum and current spectrum
 CalcRVdrift2D = spirouRV.calculate_rv_drifts_2d
 
 Coravelation = spirouRV.coravelation
