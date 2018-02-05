@@ -427,7 +427,7 @@ def main(night_name=None, files=None):
         wmsg2 = 'file: {0}'.format(locofits3name)
         WLOG('', p['log_opt'], [wmsg1, wmsg2])
         # superpose zeros over the fit in the image
-        data4 = spirouLOCOR.imageLocSuperimp(data2o, loc['acc'][0:rorder_num])
+        data4 = spirouLOCOR.ImageLocSuperimp(data2o, loc['acc'][0:rorder_num])
         # save this image to file
         # Question: Why no keys added to header?
         hdict = dict()
