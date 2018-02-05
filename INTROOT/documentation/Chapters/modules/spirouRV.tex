@@ -4,19 +4,180 @@
 \clearpage
 \newpage
 \begin{minipage}{\textwidth}
-\section{The  module}
-\label{ch:the_module:}
+\section{The spirouRV module}
+\label{ch:the_module:spirouRV}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %----------------------------------------------------------------------------------------
-\subsection{}
+\subsection{CalcRVdrift2D}
+
+Defined in \spirouRV\path{.spirouRV.calculate_rv_drifts_2d}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.CalcRVdrift2D(speref, spe, wave, sigdet, threshold, size)
+spirouRV.spirouRV.calculate_rv_drifts_2d(speref, spe, wave, sigdet, threshold, size)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Calculate the RV drift between the REFERENCE (speref) and COMPARISON (spe)
+extracted spectra.
+
+:param speref: numpy array (2D), the REFERENCE extracted spectrum
+               size = (number of orders by number of columns (x-axis))
+:param spe:  numpy array (2D), the COMPARISON extracted spectrum
+             size = (number of orders by number of columns (x-axis))
+:param wave: numpy array (2D), the wave solution for each pixel
+:param sigdet: float, the read noise (sigdet) for calculating the
+               noise array
+:param threshold: float, upper limit for pixel values, above this limit
+                  pixels are regarded as saturated
+:param size: int, size (in pixels) around saturated pixels to also regard
+             as bad pixels
+
+:return rvdrift: numpy array (1D), the RV drift between REFERENCE and
+                 COMPARISON spectrum for each order
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{Coravelation}
+
+Defined in \spirouRV\path{.spirouRV.coravelation}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.Coravelation(p, loc)
+spirouRV.spirouRV.coravelation(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{CreateDriftFile}
+
+Defined in \spirouRV\path{.spirouRV.create_drift_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.CreateDriftFile(p, loc)
+spirouRV.spirouRV.create_drift_file(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{DeltaVrms2D}
+
+Defined in \spirouRV\path{.spirouRV.delta_v_rms_2d}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.DeltaVrms2D(spe, wave, sigdet, threshold, size)
+spirouRV.spirouRV.delta_v_rms_2d(spe, wave, sigdet, threshold, size)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Compute the photon noise uncertainty for all orders (for the 2D image)
+
+:param spe: numpy array (2D), the extracted spectrum
+            size = (number of orders by number of columns (x-axis))
+:param wave: numpy array (2D), the wave solution for each pixel
+:param sigdet: float, the read noise (sigdet) for calculating the
+               noise array
+:param threshold: float, upper limit for pixel values, above this limit
+                  pixels are regarded as saturated
+:param size: int, size (in pixels) around saturated pixels to also regard
+             as bad pixels
+
+:return dvrms2: numpy array (1D), the photon noise for each pixel (squared)
+:return weightedmean: float, weighted mean photon noise across all orders
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{DriftPerOrder}
+
+Defined in \spirouRV\path{.spirouRV.drift_per_order}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.DriftPerOrder(loc, fileno)
+spirouRV.spirouRV.drift_per_order(loc, fileno)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{DriftAllOrders}
+
+Defined in \spirouRV\path{.spirouRV.drift_all_orders}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.DriftAllOrders(loc, fileno, nomin, nomax)
+spirouRV.spirouRV.drift_all_orders(loc, fileno, nomin, nomax)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{FitCCF}
+
+Defined in \spirouRV\path{.spirouRV.fit_ccf}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.FitCCF(rv, ccf, fit_type)
+spirouRV.spirouRV.fit_ccf(rv, ccf, fit_type)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Fit the CCF to a guassian function
+
+:param rv: numpy array (1D), the radial velocities for the line
+:param ccf: numpy array (1D), the CCF values for the line
+:param fit_type: int, if "0" then we have an absorption line
+                      if "1" then we have an emission line
+
+:return result: numpy array (1D), the fit parameters in the
+                following order:
+
+            [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+:return ccf_fit: numpy array (1D), the fit values, i.e. the gaussian values
+                 for the fit parameters in "result"
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{GetDrift}
 
 Defined in \spirouRV\path{.}
 
 \begin{pythonbox}
 from SpirouDRS import spirouRV
-spirouRV.
+spirouRV.GetDrift
 spirouRV.
 \end{pythonbox}
 
@@ -27,13 +188,47 @@ spirouRV.
 
 %----------------------------------------------------------------------------------------
 \begin{minipage}{\textwidth}
-\subsection{}
+\subsection{GetCCFMask}
+
+Defined in \spirouRV\path{.spirouRV.get_drift}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.GetCCFMask(p, sp, ordpeak, xpeak0, gaussfit=False)
+spirouRV.spirouRV.get_drift(p, sp, ordpeak, xpeak0, gaussfit=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{PearsonRtest}
+
+Defined in \spirouRV\path{.spirouRV.get_ccf_mask}
+
+\begin{pythonbox}
+from SpirouDRS import spirouRV
+spirouRV.PearsonRtest(p, loc, filename=None)
+spirouRV.spirouRV.get_ccf_mask(p, loc, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{RemoveWidePeaks}
 
 Defined in \spirouRV\path{.}
 
 \begin{pythonbox}
 from SpirouDRS import spirouRV
-spirouRV.
+spirouRV.RemoveWidePeaks
 spirouRV.
 \end{pythonbox}
 
@@ -44,13 +239,13 @@ spirouRV.
 
 %----------------------------------------------------------------------------------------
 \begin{minipage}{\textwidth}
-\subsection{}
+\subsection{RemoveZeroPeaks}
 
 Defined in \spirouRV\path{.}
 
 \begin{pythonbox}
 from SpirouDRS import spirouRV
-spirouRV.
+spirouRV.RemoveZeroPeaks
 spirouRV.
 \end{pythonbox}
 
@@ -61,13 +256,13 @@ spirouRV.
 
 %----------------------------------------------------------------------------------------
 \begin{minipage}{\textwidth}
-\subsection{}
+\subsection{ReNormCosmic2D}
 
 Defined in \spirouRV\path{.}
 
 \begin{pythonbox}
 from SpirouDRS import spirouRV
-spirouRV.
+spirouRV.ReNormCosmic2D
 spirouRV.
 \end{pythonbox}
 
@@ -78,166 +273,13 @@ spirouRV.
 
 %----------------------------------------------------------------------------------------
 \begin{minipage}{\textwidth}
-\subsection{}
+\subsection{SigmaClip}
 
 Defined in \spirouRV\path{.}
 
 \begin{pythonbox}
 from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
-spirouRV.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouRV\path{.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouRV
-spirouRV.
+spirouRV.SigmaClip
 spirouRV.
 \end{pythonbox}
 
