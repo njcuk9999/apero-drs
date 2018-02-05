@@ -15,7 +15,7 @@
 Defined in \spirouLOCOR\path{.spirouLOCOR.smoothed_boxmean_image}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.BoxSmoothedImage(image, size, weighted=True, mode='convolve')
 spirouLOCOR.spirouLOCOR.smoothed_boxmean_image(image, size, weighted=True, mode='convolve')
 \end{pythonbox}
@@ -56,7 +56,7 @@ Produce a (box) smoothed image, smoothed by the mean of a box of
 Defined in \spirouLOCOR\path{.spirouLOCOR.calculate_location_fits}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.CalcLocoFits(coeffs, dim)
 spirouLOCOR.spirouLOCOR.calculate_location_fits(coeffs, dim)
 \end{pythonbox}
@@ -82,7 +82,7 @@ Calculates all fits in coeffs array across pixels of size=dim
 Defined in \spirouLOCOR\path{.spirouLOCOR.fiber_params}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.FiberParams(pp, fiber, merge=False)
 spirouLOCOR.spirouLOCOR.fiber_params(pp, fiber, merge=False)
 \end{pythonbox}
@@ -113,7 +113,7 @@ parameter dictionary
 Defined in \spirouLOCOR\path{.spirouLOCOR.find_position_of_cent_col}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.FindPosCentCol(values, threshold)
 spirouLOCOR.spirouLOCOR.find_position_of_cent_col(values, threshold)
 \end{pythonbox}
@@ -139,7 +139,7 @@ Finds the central positions based on the central column values
 Defined in \spirouLOCOR\path{.spirouLOCOR.find_order_centers}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.FindOrderCtrs(pp, image, loc, order_num)
 spirouLOCOR.spirouLOCOR.find_order_centers(pp, image, loc, order_num)
 \end{pythonbox}
@@ -195,7 +195,7 @@ central pixel (ic_cent_col)
 Defined in \spirouLOCOR\path{.spirouLOCOR.get_loc_coefficients}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.GetCoeffs(p, hdr=None, loc=None)
 spirouLOCOR.spirouLOCOR.get_loc_coefficients(p, hdr=None, loc=None)
 \end{pythonbox}
@@ -253,7 +253,7 @@ to get acquisition time or uses p['fitsfilename'] to get acquisition time if
 Defined in \spirouLOCOR\path{.spirouLOCOR.image_localization_superposition}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.ImageLocSuperimp(image, coeffs)
 spirouLOCOR.spirouLOCOR.image_localization_superposition(image, coeffs)
 \end{pythonbox}
@@ -278,7 +278,7 @@ the central fits where found to be
 Defined in \spirouLOCOR\path{.spirouLOCOR.initial_order_fit}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.InitialOrderFit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None)
 spirouLOCOR.spirouLOCOR.initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None)
 \end{pythonbox}
@@ -341,7 +341,7 @@ width values found in "FindOrderCtrs" or "find_order_centers" to do the fit
 Defined in \spirouLOCOR\path{.spirouLOCOR.locate_order_center}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.LocCentralOrderPos(values, threshold, min_width=None)
 spirouLOCOR.spirouLOCOR.locate_order_center(values, threshold, min_width=None)
 \end{pythonbox}
@@ -375,7 +375,7 @@ the start and end of the order (and thus the center) above threshold
 Defined in \spirouLOCOR\path{.spirouLOCOR.merge_coefficients}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.MergeCoefficients(loc, coeffs, step)
 spirouLOCOR.spirouLOCOR.merge_coefficients(loc, coeffs, step)
 \end{pythonbox}
@@ -410,7 +410,7 @@ i.e. shrinks a list of N coefficients to N/2 (if step = 2) where
 Defined in \spirouLOCOR\path{.spirouLOCOR.sigmaclip_order_fit}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouLOCOR
 spirouLOCOR.SigClipOrderFit(pp, loc, fitdata, mask, onum, rnum, kind)
 spirouLOCOR.spirouLOCOR.sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind)
 \end{pythonbox}

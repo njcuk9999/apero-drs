@@ -15,7 +15,7 @@
 Defined in \spirouImage\path{.}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.AddKey(hdict=None, keywordstore=None, value=None)
 spirouImage.spirouFITS.add_new_key(hdict=None, keywordstore=None, value=None)
 \end{pythonbox}
@@ -44,7 +44,7 @@ if hdict is None creates a new dictionary
 Defined in \spirouImage\path{.pirouFITS.add_key_1d_list}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.AddKey1DList(hdict, keywordstore, values=None, dim1name='order')
 spirouImage.pirouFITS.add_key_1d_list(hdict, keywordstore, values=None, dim1name='order')
 \end{pythonbox}
@@ -79,7 +79,7 @@ keyword = kewordstoreage + row number
 Defined in \spirouImage\path{.spirouFITS.add_key_2d_list}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.AddKey2DList
 spirouImage.spirouFITS.add_key_2d_list
 \end{pythonbox}
@@ -120,7 +120,7 @@ where number = (row number * number of columns) + column number
 Defined in \spirouImage\path{.}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ConvertToE(image, p=None, gain=None, exptime=None)
 spirouImage.spirouImage.convert_to_e(image, p=None, gain=None, exptime=None)
 \end{pythonbox}
@@ -149,7 +149,7 @@ Converts image from ADU/s into e-
 Defined in \spirouImage\path{.spirouImage.convert_to_adu}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ConvertToADU(image, p=None, exptime=None)
 spirouImage.spirouImage.convert_to_adu(image, p=None, exptime=None)
 \end{pythonbox}
@@ -178,7 +178,7 @@ Converts image from ADU/s into ADU
 Defined in \spirouImage\path{.spirouFITS.copy_original_keys}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.CopyOriginalKeys(header, comments, hdict=None, forbid_keys=True)
 spirouImage.spirouFITS.copy_original_keys(header, comments, hdict=None, forbid_keys=True)
 \end{pythonbox}
@@ -219,7 +219,7 @@ keys will not be copies (defined in python code)
 Defined in \spirouImage\path{.spirouFITS.copy_root_keys}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.CopyRootKeys(hdict=None, filename=None, root=None, ext=0)
 spirouImage.spirouFITS.copy_root_keys(hdict=None, filename=None, root=None, ext=0)
 \end{pythonbox}
@@ -245,7 +245,7 @@ Copy keys from a filename to hdict
 Defined in \spirouImage\path{.spirouImage.correct_for_dark}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.CorrectForDark(p, image, header, nfiles=None, return_dark=False)
 spirouImage.spirouImage.correct_for_dark(p, image, header, nfiles=None, return_dark=False)
 \end{pythonbox}
@@ -289,7 +289,7 @@ value of p['ACQTIME_KEY'] as a keyword)
 Defined in \spirouImage\path{.spirouImage.fit_tilt}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.FitTilt(pp, lloc)
 spirouImage.spirouImage.fit_tilt(pp, lloc)
 \end{pythonbox}
@@ -327,7 +327,7 @@ return the coefficients, fit and residual rms in lloc dictionary
 Defined in \spirouImage\path{.spirouImage.flip_image}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.FlipImage(image, fliprows=True, flipcols=True)
 spirouImage.spirouImage.flip_image(image, fliprows=True, flipcols=True)
 \end{pythonbox}
@@ -351,7 +351,7 @@ Flips the image in the x and/or the y direction
 Defined in \spirouImage\path{.spirouImage.get_all_similar_files}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetAllSimilarFiles(p, directory, prefix=None, suffix=None)
 spirouImage.spirouImage.get_all_similar_files(p, directory, prefix=None, suffix=None)
 \end{pythonbox}
@@ -390,7 +390,7 @@ either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
 Defined in \spirouImage\path{.spirouImage.get_sigdet}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetSigdet(p, hdr, name=None, return_value=False)
 spirouImage.spirouImage.get_sigdet(p, hdr, name=None, return_value=False)
 \end{pythonbox}
@@ -420,7 +420,7 @@ Get sigdet from HEADER. Wrapper for spirouImage.get_param
 Defined in \spirouImage\path{.spirouImage.get_exptime}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetExpTime(p, hdr, name=None, return_value=False)
 spirouImage.spirouImage.get_exptime(p, hdr, name=None, return_value=False)
 \end{pythonbox}
@@ -450,7 +450,7 @@ Get Exposure time from HEADER. Wrapper for spirouImage.get_param
 Defined in \spirouImage\path{.spirouImage.get_gain}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetGain(p, hdr, name=None, return_value=False)
 spirouImage.spirouImage.get_gain(p, hdr, name=None, return_value=False)
 \end{pythonbox}
@@ -480,7 +480,7 @@ Get Gain from HEADER. Wrapper for spirouImage.get_param
 Defined in \spirouImage\path{.spirouImage.get_acqtime}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetAcqTime(p, hdr, name=None, kind='human', return_value=False)
 spirouImage.spirouImage.get_acqtime(p, hdr, name=None, kind='human', return_value=False)
 \end{pythonbox}
@@ -518,7 +518,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 Defined in \spirouImage\path{.spirouImage.get_param}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadParam(p, hdr, name=None, kind='human', return_value=False)
 spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=False)
 \end{pythonbox}
@@ -556,7 +556,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 Defined in \spirouImage\path{.spirouFITS.keylookup}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetKey(p, d=None, key=None, has_default=False, default=None)
 spirouImage.spirouFITS.keylookup(p, d=None, key=None, has_default=False, default=None)
 \end{pythonbox}
@@ -589,7 +589,7 @@ value of key to 'default' if not found else logs an error
 Defined in \spirouImage\path{.spirouFITS.keyslookup}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetKeys(p, d=None, keys=None, has_default=False, defaults=None)
 spirouImage.spirouFITS.keyslookup(p, d=None, keys=None, has_default=False, defaults=None)
 \end{pythonbox}
@@ -623,7 +623,7 @@ value of key to 'default' if not found else logs an error
 Defined in \spirouImage\path{.}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetTilt(pp, lloc, image)
 spirouImage.spirouImage.get_tiltspirouImage.get_tilt(pp, lloc, image)
 \end{pythonbox}
@@ -663,7 +663,7 @@ Get the tilt by correlating the extracted fibers
 Defined in \spirouImage\path{.spirouFITS.get_type_from_header}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.GetTypeFromHeader(p, keywordstore, hdict=None, filename=None)
 spirouImage.spirouFITS.get_type_from_header(p, keywordstore, hdict=None, filename=None)
 \end{pythonbox}
@@ -703,7 +703,7 @@ using "keywordstore"
 Defined in \spirouImage\path{.spirouImage.locate_bad_pixels}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.LocateBadPixels(p, fimage, fmed, dimage, wmed=None)
 spirouImage.spirouImage.locate_bad_pixels(p, fimage, fmed, dimage, wmed=None)
 \end{pythonbox}
@@ -747,7 +747,7 @@ Locate the bad pixels in the flat image and the dark image
 Defined in \spirouImage\path{.spirouTable.make_table}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.MakeTable
 spirouImage.spirouTable.make_table
 \end{pythonbox}
@@ -779,7 +779,7 @@ Construct an astropy table from columns and values
 Defined in \spirouImage\path{.spirouImage.measure_dark}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.MeasureDark(pp, image, image_name, short_name)
 spirouImage.spirouImage.measure_dark(pp, image, image_name, short_name)
 \end{pythonbox}
@@ -838,7 +838,7 @@ Measure the dark pixels in "image"
 Defined in \spirouImage\path{.spirouImage.normalise_median_flat}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.NormMedianFlat(p, image, method='new', wmed=None, percentile=None)
 spirouImage.spirouImage.normalise_median_flat(p, image, method='new', wmed=None, percentile=None)
 \end{pythonbox}
@@ -882,7 +882,7 @@ the 90th percentile
 Defined in \spirouImage\path{.spirouFITS.readdata}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadData(p, filename, log=True)
 spirouImage.spirouFITS.readdata(p, filename, log=True)
 \end{pythonbox}
@@ -913,7 +913,7 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 Defined in \spirouImage\path{.spirouFITS.readimage}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadImage(p, filename=None, log=True, kind=None)
 spirouImage.spirouFITS.readimage(p, filename=None, log=True, kind=None)
 \end{pythonbox}
@@ -953,7 +953,7 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 Defined in \spirouImage\path{.spirouTable.read_table}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadTable(filename, fmt, colnames=None)
 spirouImage.spirouTable.read_table(filename, fmt, colnames=None)
 \end{pythonbox}
@@ -983,7 +983,7 @@ astropy.table readable formats are as follows:
 Defined in \spirouImage\path{.spirouFITS.readimage_and_combine}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadImageAndCombine(p, framemath='+', filename=None, log=True)
 spirouImage.spirouFITS.readimage_and_combine(p, framemath='+', filename=None, log=True)
 \end{pythonbox}
@@ -1030,7 +1030,7 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 Defined in \spirouImage\path{.spirouFITS.read_flat_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadFlatFile(p, hdr=None, filename=None, key=None)
 spirouImage.spirouFITS.read_flat_file(p, hdr=None, filename=None, key=None)
 \end{pythonbox}
@@ -1067,7 +1067,7 @@ Reads the wave file (from calib database or filename)
 Defined in \spirouImage\path{.spirouFITS.read_header}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadHeader(p=None, filepath=None, ext=0)
 spirouImage.spirouFITS.read_header(p=None, filepath=None, ext=0)
 \end{pythonbox}
@@ -1094,7 +1094,7 @@ Read the header from a file at "filepath" with extention "ext" (default=0)
 Defined in \spirouImage\path{.spirouFITS.read_key}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadKey(p, hdict=None, key=None)
 spirouImage.spirouFITS.read_key(p, hdict=None, key=None)
 \end{pythonbox}
@@ -1124,7 +1124,7 @@ value.
 Defined in \spirouImage\path{.spirouFITS.read_key_2d_list}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.Read2Dkey(p, hdict, key, dim1, dim2)
 spirouImage.spirouFITS.read_key_2d_list(p, hdict, key, dim1, dim2)
 \end{pythonbox}
@@ -1158,7 +1158,7 @@ Read a set of header keys that were created from a 2D list
 Defined in \spirouImage\path{.spirouFITS.read_tilt_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadTiltFile(p, hdr=None, filename=None, key=None)
 spirouImage.spirouFITS.read_tilt_file(p, hdr=None, filename=None, key=None)
 \end{pythonbox}
@@ -1197,7 +1197,7 @@ Reads the tilt file (from calib database or filename) and using the
 Defined in \spirouImage\path{.spirouFITS.read_wave_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadWaveFile(p, hdr=None, filename=None, key=None, return_header=False)
 spirouImage.spirouFITS.read_wave_file(p, hdr=None, filename=None, key=None, return_header=False)
 \end{pythonbox}
@@ -1235,7 +1235,7 @@ Reads the wave file (from calib database or filename)
 Defined in \spirouImage\path{.spirouFITS.read_order_profile_superposition}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ReadOrderProfile(p, hdr=None, filename=None)
 spirouImage.spirouFITS.read_order_profile_superposition(p, hdr=None, filename=None)
 \end{pythonbox}
@@ -1274,7 +1274,7 @@ where X is either p["ORDERP_FILE"] or p["FIBER"] (presedence in that order)
 Defined in \spirouImage\path{.spirouImage.resize}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.ResizeImage(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None, getshape=True)
 spirouImage.spirouImage.resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None, getshape=True)
 \end{pythonbox}
@@ -1313,7 +1313,7 @@ if getshape = False
 Defined in \spirouImage\path{.spirouFITS.writeimage}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.WriteImage(filename, image, hdict, dtype=None)
 spirouImage.spirouFITS.writeimage(filename, image, hdict, dtype=None)
 \end{pythonbox}
@@ -1348,7 +1348,7 @@ Writes an image and its header to file
 Defined in \spirouImage\path{.spirouTable.write_table}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouImage
 spirouImage.WriteTable(table, filename, fmt='fits')
 spirouImage.spirouTable.write_table(table, filename, fmt='fits')
 \end{pythonbox}
