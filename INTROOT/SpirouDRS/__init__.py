@@ -20,7 +20,9 @@ from . import spirouEXTOR
 from . import spirouFLAT
 from . import spirouImage
 from . import spirouLOCOR
+from . import spirouRV
 from . import spirouStartup
+from . import spirouTHORCA
 
 
 # =============================================================================
@@ -42,7 +44,9 @@ __all__ = ['spirouBACK',
            'spirouFLAT',
            'spirouImage',
            'spirouLOCOR',
-           'spirouStartup']
+           'spirouRV',
+           'spirouStartup',
+           'spirouTHORCA']
 
 
 # =============================================================================
@@ -80,9 +84,15 @@ if __name__ == "__main__":
     # spirouLOCOR
     print('\n\t' + spirouLOCOR.__NAME__)
     print('\t\t--' + spirouLOCOR.spirouLOCOR.__NAME__)
+    # spirouRV
+    print('\n\t' + spirouRV.__NAME__)
+    print('\t\t--' + spirouRV.spirouRV.__NAME__)
     # spirouStartup
     print('\n\t' + spirouStartup.__NAME__)
     print('\t\t--' + spirouStartup.spirouStartup.__NAME__)
+    # spirouTHORCA
+    print('\n\t' + spirouTHORCA.__NAME__)
+    print('\t\t--' + spirouTHORCA.spirouTHORCA.__NAME__)
 
 # =============================================================================
 # End of Code

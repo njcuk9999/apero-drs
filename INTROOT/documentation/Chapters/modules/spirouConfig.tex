@@ -17,7 +17,7 @@ Defined in \spirouConfig\path{.spirouConfig.ConfigError}.
 See Section \ref{ch:rules:drs_specific:config_error} for details on use.
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.ConfigError(message='', level='error')
 spirouConfig.spirouConfig.ConfigError(message='', level='error')
 \end{pythonbox}
@@ -65,7 +65,7 @@ Methods:
 Defined in \spirouConfig\path{.spirouConfig.check_params}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.CheckCparams(p)
 spirouConfig.spirouConfig.check_params(p)
 \end{pythonbox}
@@ -122,7 +122,7 @@ at the very least keys 'DRS_ROOT' and 'TDATA'
 Defined in \spirouConfig\path{.spirouConfig.check_config}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.CheckConfig(params, keys)
 spirouConfig.check_config(params, keys)
 \end{pythonbox}
@@ -148,7 +148,7 @@ raises a Config Error if keys are not in params
 Defined in \spirouConfig\path{.spirouConfig.extract_dict_params}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.ExtractDictParams(pp, suffix, fiber, merge=False)
 spirouConfig.spirouConfig.extract_dict_params(pp, suffix, fiber, merge=False)
 \end{pythonbox}
@@ -199,7 +199,7 @@ add them back to the "pp" parameter dictionary
 Defined in \spirouConfig\path{.spirouKeywords.get_keywords}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.GetKeywordArguments(pp=None)
 spirouConfig.spirouKeywords.get_keywords(pp=None)
 \end{pythonbox}
@@ -223,7 +223,7 @@ Get keywords defined in spirouKeywords.USE_KEYS
 Defined in \spirouConfig\path{.spirouKeywords.get_keyword_values_from_header}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.GetKwValues(pp, hdict, keys, filename=None)
 spirouConfig.spirouKeywords.get_keyword_values_from_header(pp, hdict, keys, filename=None)
 \end{pythonbox}
@@ -258,7 +258,7 @@ Gets a keyword or keywords from a header or dictionary
 Defined in \spirouConfig\path{.spirouConfigFile.get_relative_folder}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.GetAbsFolderPath(package, folder)
 spirouConfig.spirouConfigFile.get_relative_folder(package, folder)
 \end{pythonbox}
@@ -282,7 +282,7 @@ folder from package
 Defined in \spirouConfig\path{.spirouConfigFile.get_default_config_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.GetDefaultConfigFile(package, configfolder, configfile)
 spirouConfig.spirouConfigFile.get_default_config_file(package, configfolder, configfile)
 \end{pythonbox}
@@ -307,7 +307,7 @@ configfile at relative path configfolder from package
 Defined in \spirouConfig\path{.spirouConfig.load_config_from_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.LoadConfigFromFile(p, key, required=False, logthis=False)
 spirouConfig.spirouConfig.load_config_from_file(p, key, required=False, logthis=False)
 \end{pythonbox}
@@ -346,7 +346,7 @@ Defined in \spirouConfig\path{.spirouConfig.ParamDict}
 See Section \ref{ch:rules:drs_specific:param_dict} for details on use.
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.ParamDict(self, *arg, **kw)
 spirouConfig.spirouConfig.ParamDict(self, *arg, **kw)
 \end{pythonbox}
@@ -549,7 +549,7 @@ ParamDict Methods (continued III):
 Defined in \spirouConfig\path{.spirouConfig.read_config_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouConfig
 spirouConfig.ReadConfigFile(config_file=None)
 spirouConfig.spirouConfig.read_config_file(config_file=None)
 \end{pythonbox}
