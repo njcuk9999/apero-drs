@@ -361,23 +361,16 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
                      initial fit. keys are as follows:
 
             a = coefficients of the fit from key
-
             size = 'ic_locdfitc' [for kind='center'] or
                  = 'ic_locdftiw' [for kind='fwhm']
-
             fit = the fity values for the fit (for x = loc['x'])
                 where fity = Sum(a[i] * x^i)
-
             res = the residuals from y - fity
                  where y = ctro [kind='center'] or
                          = sigo [kind='fwhm'])
-
             abs_res = abs(res)
-
             rms = the standard deviation of the residuals
-
             max_ptp = maximum residual value max(res)
-
             max_ptp_frac = max_ptp / rms  [kind='center']
                          = max(abs_res/y) * 100   [kind='fwhm']
     """
@@ -476,23 +469,16 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
                      initial fit. keys are as follows:
 
             a = coefficients of the fit from key
-
             size = 'ic_locdfitc' [for kind='center'] or
                  = 'ic_locdftiw' [for kind='fwhm']
-
             fit = the fity values for the fit (for x = loc['x'])
                 where fity = Sum(a[i] * x^i)
-
             res = the residuals from y - fity
                  where y = ctro [kind='center'] or
                          = sigo [kind='fwhm'])
-
             abs_res = abs(res)
-
             rms = the standard deviation of the residuals
-
             max_ptp = maximum residual value max(res)
-
             max_ptp_frac = max_ptp / rms  [kind='center']
                          = max(abs_res/y) * 100   [kind='fwhm']
 
@@ -509,23 +495,16 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
                      initial fit. keys are as follows:
 
             a = coefficients of the fit from key
-
             size = 'ic_locdfitc' [for kind='center'] or
                  = 'ic_locdftiw' [for kind='fwhm']
-
             fit = the fity values for the fit (for x = loc['x'])
                 where fity = Sum(a[i] * x^i)
-
             res = the residuals from y - fity
                  where y = ctro [kind='center'] or
                          = sigo [kind='fwhm'])
-
             abs_res = abs(res)
-
             rms = the standard deviation of the residuals
-
             max_ptp = maximum residual value max(res)
-
             max_ptp_frac = max_ptp / rms  [kind='center']
                          = max(abs_res/y) * 100   [kind='fwhm']
     """
