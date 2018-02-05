@@ -79,10 +79,20 @@ class ConfigError(ConfigException):
 
     # overwrite string repr message with args[0]
     def __repr__(self):
+        """
+        String representation of ConfigError
+
+        :return message: string, the message assigned in constructor
+        """
         return self.args[0]
 
     # overwrite print message with args[0]
     def __str__(self):
+        """
+        String printing of ConfigError
+
+        :return message: string, the message assigned in constructor
+        """
         return self.args[0]
 
 
