@@ -389,8 +389,8 @@ def generate_use_keys():
 
 def get_keywords(pp=None):
     """
-    Get keywords defined in USE_KEYS from above (must be named exactly as in
-    USE_KEYS list)
+    Get keywords defined in spirouKeywords.USE_KEYS
+    (must be named exactly as in USE_KEYS list)
 
     :param pp: parameter dictionary or None, if not None then keywords are added
                to the specified ParamDict else a new ParamDict is created
