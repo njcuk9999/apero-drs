@@ -210,10 +210,30 @@ def create_drift_file(p, loc):
     Creates a reference ascii file that contains the positions of the FP peaks
     Returns the pixels positions and Nth order of each FP peak
 
-    :param p: parameter dictionary, storage of constants
-    :param loc: parameter dictionary, storage of data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                drift_peak_border_size:
+                drift_peak_fpbox_size:
+                drift_peak_min_nfp_peak:
+                drift_peak_peak_sig_lim:
+                drift_peak_inter_peak_spacing:
+                log_opt:
 
-    :return loc: parameter dictionary, updated with new data
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                speref:
+                wave:
+                lamp:
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                ordpeak:
+                xpeak:
+                ewpeak:
+                vrpeak:
+                llpeak:
+                amppeak:
+
     """
     # get gauss function
     gf = gauss_function
@@ -383,8 +403,21 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     """
     Remove peaks that are too wide
 
-    :param p: parameter dictionary, storage of constants
-    :param loc: parameter dictionary, storage of data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                drift_peak_fpbox_size:
+                drift_peak_exp_width:
+                log_opt:
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                ewpeak:
+                ordpeak:
+                xpeak:
+                vrpeak:
+                llpeak:
+                amppeak:
+
     :param expwidth: float or None, the expected width of FP peaks - used to
                      "normalise" peaks (which are then subsequently removed
                      if > "cutwidth") if expwidth is None taken from
@@ -394,7 +427,14 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
                      cut is essentially: FP FWHM < (expwidth + cutwidth), if
                      cutwidth is None taken from p["drift_peak_norm_width_cut"]
 
-    :return loc: parameter dictionary, updated with new data
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                ewpeak:
+                ordpeak:
+                xpeak:
+                vrpeak:
+                llpeak:
+                amppeak:
     """
     func_name = __NAME__ + '.remove_wide_peaks()'
     # get constants
@@ -436,10 +476,29 @@ def remove_zero_peaks(p, loc):
     """
     Remove peaks that have a value of zero
 
-    :param p: parameter dictionary, storage of constants
-    :param loc: parameter dictionary, storage of data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
 
-    :return loc: parameter dictionary, updated with new data
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                xref:
+                ordpeak:
+                xpeak:
+                ewpeak:
+                vrpeak:
+                llpeak:
+                amppeak:
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                xref:
+                ordpeak:
+                xpeak:
+                ewpeak:
+                vrpeak:
+                llpeak:
+                amppeak:
     """
     # define a mask to cut out peaks with a value of zero
     mask = loc['xref'] != 0
@@ -470,7 +529,12 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
     """
     Get the centroid of all peaks provided an input peak position
 
-    :param p: parameter dictionary, parameter dictionary containing constants
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                drift_peak_fpbox_size:
+                drift_peak_exp_width:
+                log_opt:
+
     :param sp: numpy array (2D), e2ds fits file with FP peaks
                size = (number of orders x number of pixels in x-dim of image)
     :param ordpeak: numpy array (1D), order of each peak
@@ -564,10 +628,17 @@ def sigma_clip(loc, sigma=1.0):
     """
     Perform a sigma clip on dv
 
-    :param loc: parameter dictionary, data storage
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                dv:
+                ordpeak:
+
     :param sigma: float, the sigma of the clip (away from the median)
 
-    :return loc: the updated parameter dictionary
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                dvc:
+                orderpeakc:
     """
     # get dv
     dv = loc['dv']
@@ -586,10 +657,20 @@ def drift_per_order(loc, fileno):
     """
     Calculate the individual drifts per order
 
-    :param loc: parameter dictionary, data storage
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                number_orders:
+                dvc:
+                orderpeakc:
+
     :param fileno: int, the file number (iterator number)
 
-    :return loc: parameter dictionary, the updated data storage dictionary
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                drift:
+                drift_left:
+                drift_right:
+                errdrift:
     """
 
     # loop around the orders
@@ -619,12 +700,23 @@ def drift_all_orders(loc, fileno, nomin, nomax):
     """
     Work out the weighted mean drift across all orders
 
-    :param loc: parameter dictionary, data storage
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                drift:
+                drift_left:
+                drift_right:
+                errdrift:
+
     :param fileno: int, the file number (iterator number)
     :param nomin: int, the first order to use (i.e. from nomin to nomax)
     :param nomax: int, the last order to use (i.e. from nomin to nomax)
 
-    :return loc: parameter dictionary, the updated data storage dictionary
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                meanrv:
+                meanrv_left:
+                meanrv_right:
+                merrdrift:
     """
 
     # get data from loc
@@ -657,13 +749,23 @@ def get_ccf_mask(p, loc, filename=None):
     """
     Get the CCF mask
 
-    :param p: parameter dictionary, parameter dictionary containing the
-              constants
-    :param loc: parameter dictionary, parameter dictionary containing the data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                ccf_mask:
+                ic_w_mask_min:
+                ic_mask_width:
+                log_opt:
+
+    :param loc: parameter dictionary, ParamDict containing data
+
     :param filename: string or None, the filename and location of the ccf mask
                      file, if None then file names is gotten from p["ccf_mask"]
 
-    :return loc: the updated parameter dictionary
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                ll_mask_d:
+                ll_mask_ctr:
+                w_mask:
     """
     func_name = __NAME__ + '.get_ccf_mask()'
     # get constants from p
@@ -728,7 +830,10 @@ def locate_mask(p, filename):
     the search in the default data folder
     (defined in spirouConfig.Constants.CDATA_FOLDER())
 
-    :param p: parameter dictionary, ParamDict containing constant files
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
     :param filename: string, the filename (or filename and path) to search for
                      the mask file
     :return abspath: string, the absolute path of the found mask, or raises an
@@ -768,11 +873,38 @@ def coravelation(p, loc):
     """
     Calculate the CCF and fit it with a Gaussian profile
 
-    :param p: parameter dictionary, parameter dictionary containing the
-              constants
-    :param loc: parameter dictionary, parameter dictionary containing the data
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                ccf_berv:
+                ccf_berv_max:
+                target_rv:
+                ccf_width:
+                ccf_step:
+                ccf_det_noise:
+                ccf_fit_type:
+                log_opt:
+                DRS_PLOT:
+                DRS_DEBUG:
 
-    :return loc: the updated parameter dictionary
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                wave:
+                param_ll:
+                ll_mask_ctr:
+                ll_mask_d:
+                w_mask:
+                e2dsff:
+                blaze:
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                rv_ccf:
+                ccf:
+                ccf_max:
+                pix_passed_all:
+                tot_line:
+                ll_range_all:
+                ccf_noise:
     """
     # -------------------------------------------------------------------------
     # get constants from p
@@ -921,7 +1053,7 @@ def coravelation(p, loc):
     loc['tot_line'] = tot_line
     loc['ll_range_all'] = ll_range_all
     loc['ccf_noise'] = ccf_noise_all
-    loc['ccf_noise'] = ccf_noise_all
+
     # set source
     keys = ['rv_ccf', 'ccf', 'ccf_max', 'pix_passed_all', 'tot_line',
             'll_range_all', 'ccf_noise']

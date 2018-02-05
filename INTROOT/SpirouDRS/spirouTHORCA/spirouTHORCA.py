@@ -48,8 +48,12 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     fit coefficents stored in keywords:
         'kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1'
 
-    :param p: parameter dictionary, ParamDict containing constnats
-    :param hdr: dictionary or None, the HEADER dictionary with the aqcuisition
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt:
+                kw_TH_COEFF_PREFIX:
+
+    :param hdr: dictionary or None, the HEADER dictionary with the acquisition
                 time in to use in the calibration database to get the filename
                 with key=key (or if None key='WAVE_AB')
     :param filename: string or None, the file to get the line list from

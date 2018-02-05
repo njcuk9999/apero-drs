@@ -18,7 +18,7 @@ Defined in \spirouCore\path{.spirouLog.logger}, also aliased in code to `WLOG'.
 See Section \ref{ch:rules:drs_specific:logger} for usuage details.
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.wlog(key='', option='', message='')
 spirouCore.spirouLog.logger(key='', option='', message='')
 \end{pythonbox}
@@ -55,7 +55,7 @@ time is output in UTC to nearest .1 seconds
 Defined in \spirouCore\path{.spirouLog.warninglogger}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.warnlog(w, funcname=None)
 spirouCore.spirouLog.warninglogger(w, funcname=None)
 \end{pythonbox}
@@ -89,7 +89,7 @@ to catch warnings use the following:
 Defined in \spirouCore\path{.spirouMath.gauss_function}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.GaussFunction(x, a, x0, sigma, dc)
 spirouCore.spirouMath.gauss_function(x, a, x0, sigma, dc)
 \end{pythonbox}
@@ -114,7 +114,7 @@ A standard 1D gaussian function (for fitting against)]=
 Defined in \spirouCore\path{.spirouMath.get_time_now_unix}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.GetTimeNowUnix(zone='UTC')
 spirouCore.spirouMath.get_time_now_unix(zone='UTC')
 \end{pythonbox}
@@ -138,7 +138,7 @@ Default is to return unix_time in UTC/GMT time
 Defined in \spirouCore\path{.spirouMath.get_time_now_string}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.GetTimeNowString(fmt=TIME_FMT, zone='UTC')
 spirouCore.spirouMath.get_time_now_string(fmt=TIME_FMT, zone='UTC')
 \end{pythonbox}
@@ -181,7 +181,7 @@ Default is to return string time in UTC/GMT time
 Defined in \spirouCore\path{.spirouMath.unixtime2stringtime}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.Unix2stringTime(ts, fmt=DATE_FMT, zone='UTC')
 spirouCore.spirouMath.unixtime2stringtime(ts, fmt=DATE_FMT, zone='UTC')
 \end{pythonbox}
@@ -227,7 +227,7 @@ Commonly used format codes:
 Defined in \spirouCore\path{.spirouMath.stringtime2unixtime}
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.String2unixTime(string, fmt=DATE_FMT, zone='UTC')
 spirouCore.spirouMath.stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC')
 \end{pythonbox}
@@ -272,7 +272,7 @@ Commonly used format codes:
 Defined in \spirouCore\path{.spirouPlot} (alias to the plotting module).
 
 \begin{pythonbox}
-from SpirouDRS import spirou
+from SpirouDRS import spirouCore
 spirouCore.sPlt
 spirouCore.spirouPlot
 \end{pythonbox}
