@@ -1,0 +1,38 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\begin{minipage}{\textwidth}
+\section{The spirouFLAT module}
+\label{ch:the_module:spirouFLAT}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+\subsection{MeasureBlazeForOrder}
+
+Defined in \spirouFLAT\path{.spirouFLAT.measure_blaze_for_order}
+
+\begin{pythonbox}
+from SpirouDRS import spirou
+spirouFLAT.MeasureBlazeForOrder
+spirouFLAT.spirouFLAT.measure_blaze_for_order
+\end{pythonbox}
+
+\begin{pythondocstring}
+Measure the blaze function (for good pixels this is a polynomial fit of
+order = fitdegree, for bad pixels = 1.0).
+
+bad pixels are defined as less than or equal to zero
+
+:param y: numpy array (1D), the extracted pixels for this order
+:param fitdegree: int, the polynomial degree
+
+:return blaze: numpy array (1D), size = len(y), the blaze function: for
+               good pixels this is the value of the fit, for bad pixels the
+               value = 1.0
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
