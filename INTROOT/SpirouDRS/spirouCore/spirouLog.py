@@ -222,6 +222,7 @@ def warninglogger(w, funcname=None):
 
     to catch warnings use the following:
 
+    >>> import warnings
     >>> with warnings.catch_warnings(record=True) as w:
     >>>     code_to_generate_warnings()
     >>> warninglogger(w, 'some name for logging')

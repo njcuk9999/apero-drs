@@ -240,7 +240,7 @@ def writeimage(filename, image, hdict, dtype=None):
 
                   valid formats are for example: 'int32', 'float64'
 
-    :return:
+    :return None:
     """
     func_name = __NAME__ + '.writeimage()'
 

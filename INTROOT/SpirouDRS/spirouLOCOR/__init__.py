@@ -25,7 +25,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['BoxSmoothedImage', 'CalcLocoFits',
            'FiberParams', 'FindPosCentCol',
            'FindOrderCtrs', 'GetCoeffs',
-           'imageLocSuperimp', 'InitialOrderFit',
+           'ImageLocSuperimp', 'InitialOrderFit',
            'LocCentralOrderPos', 'MergeCoefficients',
            'SigClipOrderFit']
 
@@ -44,7 +44,7 @@ FindOrderCtrs = spirouLOCOR.find_order_centers
 
 GetCoeffs = spirouLOCOR.get_loc_coefficients
 
-imageLocSuperimp = spirouLOCOR.image_localization_superposition
+ImageLocSuperimp = spirouLOCOR.image_localization_superposition
 
 InitialOrderFit = spirouLOCOR.initial_order_fit
 

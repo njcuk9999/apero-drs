@@ -88,9 +88,13 @@
 
 \newcommand{\spirouConfig}{\definevariable{ch:the_module:spirouConfig}{SpirouDRS{\hskip 0pt}.spirouConfig}\,}
 
+\newcommand{\spirouCore}{\definevariable{ch:the_module:spirouCore}{SpirouDRS{\hskip 0pt}.spirouCore}\,}
+
 \newcommand{\spirouConst}{\definevariable{ch:the_module:spirouConfig}{SpirouDRS{\hskip 0pt}.spirouConfig{\hskip 0pt}.spirouConst}\,}
 
 \newcommand{\spirouEXTOR}{\definevariable{ch:the_module:spirouEXTOR}{SpirouDRS{\hskip 0pt}.spirouEXTOR}\,}
+
+\newcommand{\spirouFLAT}{\definevariable{ch:the_module:spirouFLAT}{SpirouDRS{\hskip 0pt}.spirouFLAT\,}}
 
 \newcommand{\spirouFITS}{\definevariable{ch:the_module:spirouImage}{SpirouDRS{\hskip 0pt}.spirouImage{\hskip 0pt}.spirouFITS}\,}
 
@@ -113,11 +117,11 @@
 
 \newcommand{\INIT}{\twound{init}\twound{()}\,}
 
-\newcommand{\WLOG}{\definevariable{ch:rules:drs_specific:logger}{WLOG}\,}
+\newcommand{\WLOG}{\definevariable{ch:the_module:spirouCore:logger}{WLOG}\,}
 
-\newcommand{\ParamDict}{\definevariable{ch:rules:drs_specific:param_dict}{ParamDict}\,}
+\newcommand{\ParamDict}{\definevariable{ch:the_module:spirouConfig:ParamDict}{ParamDict}\,}
 
-\newcommand{\ConfigError}{\definevariable{ch:rules:drs_specific:config_error}{ConfigError}\,}
+\newcommand{\ConfigError}{\definevariable{ch:the_module:spirouConfig:ConfigError}{ConfigError}\,}
 
 % variable the user should identify with their installation directory
 \newcommand{\InstallDIR}{\definevariable{text:drs_root}{DRS\_ROOT}\,}
