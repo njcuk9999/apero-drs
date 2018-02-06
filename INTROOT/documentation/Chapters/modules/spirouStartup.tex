@@ -1,0 +1,274 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\begin{minipage}{\textwidth}
+\section{The spirouStartup module}
+\label{ch:the_module:spirouStartup}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+\subsection{Begin}
+
+Defined in \spirouStartup\path{.spirouStartup.run_begin}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.Begin()
+spirouStartup.spirouStartup.run_begin()
+\end{pythonbox}
+
+\begin{pythondocstring}
+Begin DRS - Must be run at start of every recipe
+- loads the parameters from the primary configuration file, displays
+  title, checks priamry constants and displays initial parameterization
+
+:return cparams: parameter dictionary, ParamDict constants from primary
+                 configuration file
+        Adds the following:
+            all constants in primary configuration file
+            DRS_NAME: string, the name of the DRS
+            DRS_VERSION: string, the version of the DRS
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{GetCustomFromRuntime}
+
+Defined in \spirouStartup\path{.spirouStartup.get_custom_from_run_time_args}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.GetCustomFromRuntime(positions=None, types=None, names=None,
+                                   required=None, calls=None, cprior=None,
+                                   lognames=None)
+spirouStartup.spirouStartup.get_custom_from_run_time_args(positions=None, types=None, names=None,
+                                  required=None, calls=None, cprior=None,
+                                  lognames=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Extract custom arguments from defined positions in sys.argv (defined at
+run time)
+
+:param positions: list of integers, the positions of the arguments
+                  (i.e. first argument is 0)
+
+:param types: list of python types, the type (i.e. int, float) for each
+              argument
+:param names: list of strings, the names of each argument (to access in
+              parameter dictionary once extracted)
+
+:param required: list of bools or None, states whether the program
+                 should exit if runtime argument not found
+
+:param calls: list of objects or None, if define these are the values that
+              come from a function call (overwrite command line arguments)
+
+:param lognames: list of strings, the names displayed in the log (on error)
+                 theses should be similar to "names" but in a form the
+                 user can easily understand for each variable
+
+:return values: dictionary, if run time arguments are correct python type
+                the name-value pairs are returned
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\begin{minipage}{\textwidth}
+\subsection{GetFile}
+
+Defined in \spirouStartup\path{.spirouStartup.get_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.GetFile(p, path, name=None, prefix=None, kind=None)
+spirouStartup.spirouStartup.get_file(p, path, name=None, prefix=None, kind=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get full file path and check the path and file exist
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            program: string, the recipe/way the script was called
+                     i.e. from sys.argv[0]
+
+:param path: string, either the directory to the folder (if name is None) or
+             the full path to the file
+:param name: string or None, the name of the file, if None name is assumed
+             to be in path
+:param prefix: string or None, if not None this substring must be in the
+               filename
+:param kind: string or None, the type of file (for logging)
+
+:return location: string, the full file path of the file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{\textwidth}
+\subsection{GetFiberType}
+
+Defined in \spirouStartup\path{.spirouStartup.get_fiber_type}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.GetFiberType(p, filename, fibertypes=None)
+spirouStartup.spirouStartup.get_fiber_type(p, filename, fibertypes=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get fiber types and search for a valid fiber type in filename
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            FIBER_TYPES: list of strings, the types of fiber available
+                         (i.e. ['AB', 'A', 'B', 'C'])
+            log_opt: string, log option, normally the program name
+
+:param filename: string, the filename to search for fiber types in
+:param fibertypes: list of strings, the fiber types to search for
+
+:return fiber: string, the fiber found (exits via WLOG if no fiber found)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{\textwidth}
+\subsection{LoadArguments}
+
+Defined in \spirouStartup\path{.spirouStartup.load_arguments}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.LoadArguments(cparams, night_name=None, files=None, customargs=None)
+spirouStartup.spirouStartup.load_arguments(cparams, night_name=None, files=None, customargs=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Deal with loading run time arguments:
+
+1) display help file (if requested and exists)
+2) loads run time arguments (and custom arguments, see below)
+3) loads other config files
+
+:param cparams: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            arg_night_name: string, the folder within data raw directory
+                            containing files (also reduced directory) i.e.
+                            /data/raw/20170710 would be "20170710"
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+
+:param night_name: string or None, the name of the directory in DRS_DATA_RAW
+                   to find the files in
+
+                   if None (undefined) uses the first argument in command
+                   line (i.e. sys.argv[1])
+
+                   if defined overwrites call from
+                   command line (i.e. overwrites sys.argv)
+
+                   stored in p['arg_night_name']
+
+:param files: list of strings or None, the files to use for this program
+
+              if None (undefined) uses the second and all other arguments in
+              the command line (i.e. sys.argv[2:])
+
+              if defined overwrites call from command line
+
+              stored in p['arg_file_names']
+
+:param customargs: None or list of strings, if list of strings then instead
+                   of getting the standard runtime arguments
+
+       i.e. in form:
+
+            program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+
+       loads all arguments into customargs
+
+       i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+       expects command line arguments to be:
+
+            program.py rawdir filename a b c
+
+:return p: dictionary, parameter dictionary
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{\textwidth}
+\subsection{InitialFileSetup}
+
+Defined in \spirouStartup\path{.spirouStartup.initial_file_setup}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.InitialFileSetup(p, kind=None, prefixes=None, add_to_p=None,
+                               calibdb=False)
+spirouStartup.spirouStartup.initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
+                                               calibdb=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Run start up code (based on program and parameters defined in p before)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+            program: string, the recipe/way the script was called
+                     i.e. from sys.argv[0]
+            reduced_dir: string, the reduced data directory
+                         (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+            DRS_DATA_REDUC: string, the directory that the reduced data
+                            should be saved to/read from
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+
+:param kind: string, description of program we are running (i.e. dark)
+
+:param prefixes: list of strings, prefixes to look for in file name
+:param prefixes: list of strings, prefixes to look for in file name
+                 will exit code if none of the prefixes are found
+                 (prefix = None if no prefixes are needed to be found)
+
+:param add_to_p: dictionary structure:
+
+        add_to_p[prefix1] = dict(key1=value1, key2=value2)
+        add_to_p[prefix2] = dict(key3=value3, key4=value4)
+
+        where prefix1 and prefix2 are the strings in "prefixes"
+
+        This will add the sub dictionarys to the main parameter dictionary
+        based on which prefix is found
+
+        i.e. if prefix1 is found key "value3" and "value4" above are added
+        (with "key3" and "key4") to the parameter dictionary p
+
+:param calibdb: bool, if True calibDB folder and files are required and
+                program will log and exit if they are not found
+                if False, program will create calibDB folder
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            calibDB: dictionary, the calibration database dictionary
+            prefixes from add_to_p (see spirouStartup.deal_with_prefixes)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+

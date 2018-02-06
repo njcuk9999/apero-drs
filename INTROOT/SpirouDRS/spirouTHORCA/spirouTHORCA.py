@@ -50,8 +50,9 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
 
     :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                log_opt:
-                kw_TH_COEFF_PREFIX:
+                log_opt: string, log option, normally the program name
+                kw_TH_COEFF_PREFIX: list, the keyword store for the prefix to
+                                    use to get the TH line list fit coefficients
 
     :param hdr: dictionary or None, the HEADER dictionary with the acquisition
                 time in to use in the calibration database to get the filename

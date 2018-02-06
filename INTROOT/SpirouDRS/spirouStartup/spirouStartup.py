@@ -72,15 +72,11 @@ def run_begin():
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None):
     """
-    Run initial start up:
+    Deal with loading run time arguments:
 
-    1) Read main config file
-    2) check certain parameters exist
-    3) display title
-    4) display initial parameterisation
-    5) display help file (if requested and exists)
-    6) loads run time arguments (and custom arguments, see below)
-    7) loads other config files
+    1) display help file (if requested and exists)
+    2) loads run time arguments (and custom arguments, see below)
+    3) loads other config files
 
     :param cparams: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -166,7 +162,6 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
                        calibdb=False):
     """
     Run start up code (based on program and parameters defined in p before)
-
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:

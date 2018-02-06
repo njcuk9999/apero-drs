@@ -212,27 +212,43 @@ def create_drift_file(p, loc):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                drift_peak_border_size:
-                drift_peak_fpbox_size:
-                drift_peak_min_nfp_peak:
-                drift_peak_peak_sig_lim:
-                drift_peak_inter_peak_spacing:
-                log_opt:
+                drift_peak_border_size: int, the border size (edges in
+                                        x-direction) for the FP fitting
+                                        algorithm
+                drift_peak_fpbox_size: int, the box half-size (in pixels) to
+                                       fit an individual FP peak to - a
+                                       gaussian will be fit to +/- this size
+                                       from the center of the FP peak
+                drift_peak_peak_sig_lim: dictionary, the sigma above the median
+                                         that a peak must have to be recognised
+                                         as a valid peak (before fitting a
+                                         gaussian) dictionary must have keys
+                                         equal to the lamp types (hc, fp)
+                drift_peak_inter_peak_spacing: int, the minimum spacing between
+                                               peaks in order to be recognised
+                                               as a valid peak (before fitting
+                                               a gaussian)
+                log_opt: string, log option, normally the program name
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                speref:
-                wave:
-                lamp:
+                speref: numpy array (2D), the reference spectrum
+                wave: numpy array (2D), the wave solution image
+                lamp: string, the lamp type (either 'hc' or 'fp')
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                ordpeak:
-                xpeak:
-                ewpeak:
-                vrpeak:
-                llpeak:
-                amppeak:
+                ordpeak: numpy array (1D), the order number for each valid FP
+                         peak
+                xpeak: numpy array (1D), the central position each gaussain fit
+                       to valid FP peak
+                ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                        to valid FP peak
+                vrpeak: numpy array (1D), the radial velocity drift for each
+                        valid FP peak
+                llpeak: numpy array (1D), the delta wavelength for each valid
+                        FP peak
+                amppeak: numpy array (1D), the amplitude for each valid FP peak
 
     """
     # get gauss function
@@ -405,18 +421,32 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                drift_peak_fpbox_size:
-                drift_peak_exp_width:
-                log_opt:
+                drift_peak_exp_width: float, the expected width of FP peaks -
+                                      used to "normalise" peaks (which are then
+                                      subsequently removed if >
+                                      drift_peak_norm_width_cut
+                drift_peak_norm_width_cut: float, the "normalised" width of
+                                           FP peaks that is too large
+                                           normalised width = FP FWHM -
+                                           drift_peak_exp_width cut is
+                                           essentially:=
+                                           FP FWHM < (drift_peak_exp_width +
+                                           drift_peak_norm_width_cut)
+                log_opt: string, log option, normally the program name
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                ewpeak:
-                ordpeak:
-                xpeak:
-                vrpeak:
-                llpeak:
-                amppeak:
+                ordpeak: numpy array (1D), the order number for each valid FP
+                         peak
+                xpeak: numpy array (1D), the central position each gaussain fit
+                       to valid FP peak
+                ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                        to valid FP peak
+                vrpeak: numpy array (1D), the radial velocity drift for each
+                        valid FP peak
+                llpeak: numpy array (1D), the delta wavelength for each valid
+                        FP peak
+                amppeak: numpy array (1D), the amplitude for each valid FP peak
 
     :param expwidth: float or None, the expected width of FP peaks - used to
                      "normalise" peaks (which are then subsequently removed
@@ -429,12 +459,18 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                ewpeak:
-                ordpeak:
-                xpeak:
-                vrpeak:
-                llpeak:
-                amppeak:
+                ordpeak: numpy array (1D), the order number for each valid FP
+                         peak (masked to remove wide peaks)
+                xpeak: numpy array (1D), the central position each gaussain fit
+                       to valid FP peak (masked to remove wide peaks)
+                ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                        to valid FP peak (masked to remove wide peaks)
+                vrpeak: numpy array (1D), the radial velocity drift for each
+                        valid FP peak (masked to remove wide peaks)
+                llpeak: numpy array (1D), the delta wavelength for each valid
+                        FP peak (masked to remove wide peaks)
+                amppeak: numpy array (1D), the amplitude for each valid FP peak
+                         (masked to remove wide peaks)
     """
     func_name = __NAME__ + '.remove_wide_peaks()'
     # get constants
@@ -482,23 +518,35 @@ def remove_zero_peaks(p, loc):
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                xref:
-                ordpeak:
-                xpeak:
-                ewpeak:
-                vrpeak:
-                llpeak:
-                amppeak:
+                xref: numpy array (1D), the central positions of the peaks
+                ordpeak: numpy array (1D), the order number for each valid FP
+                         peak
+                xpeak: numpy array (1D), the central position each gaussain fit
+                       to valid FP peak
+                ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                        to valid FP peak
+                vrpeak: numpy array (1D), the radial velocity drift for each
+                        valid FP peak
+                llpeak: numpy array (1D), the delta wavelength for each valid
+                        FP peak
+                amppeak: numpy array (1D), the amplitude for each valid FP peak
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                xref:
-                ordpeak:
-                xpeak:
-                ewpeak:
-                vrpeak:
-                llpeak:
-                amppeak:
+                xref: numpy array (1D), the central positions of the peaks
+                      (masked with zero peaks removed)
+                ordpeak: numpy array (1D), the order number for each valid FP
+                         peak (masked with zero peaks removed)
+                xpeak: numpy array (1D), the central position each gaussain fit
+                       to valid FP peak (masked with zero peaks removed)
+                ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                        to valid FP peak (masked with zero peaks removed)
+                vrpeak: numpy array (1D), the radial velocity drift for each
+                        valid FP peak (masked with zero peaks removed)
+                llpeak: numpy array (1D), the delta wavelength for each valid
+                        FP peak (masked with zero peaks removed)
+                amppeak: numpy array (1D), the amplitude for each valid FP peak
+                         (masked with zero peaks removed)
     """
     # define a mask to cut out peaks with a value of zero
     mask = loc['xref'] != 0
@@ -531,9 +579,15 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                drift_peak_fpbox_size:
-                drift_peak_exp_width:
-                log_opt:
+                drift_peak_fpbox_size: int, the box half-size (in pixels) to
+                                       fit an individual FP peak to - a
+                                       gaussian will be fit to +/- this size
+                                       from the center of the FP peak
+                drift_peak_exp_width: float, the expected width of FP peaks -
+                                      used to "normalise" peaks (which are then
+                                      subsequently removed if >
+                                      drift_peak_norm_width_cut
+                log_opt: string, log option, normally the program name
 
     :param sp: numpy array (2D), e2ds fits file with FP peaks
                size = (number of orders x number of pixels in x-dim of image)
@@ -542,7 +596,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
     :param gaussfit: bool, if True uses a gaussian fit to get each centroid
                      (slow) or adjusts a barycenter (gaussfit=False)
 
-    :return xpeak: numpy array (1D), the central positions if the peaks
+    :return xpeak: numpy array (1D), the central positions of the peaks
     """
     # get the size of the peak
     size = p['drift_peak_fpbox_size']
@@ -630,15 +684,17 @@ def sigma_clip(loc, sigma=1.0):
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                dv:
-                ordpeak:
+                dv: numpy array (1D), the drift values
+                ordpeak: numpy array (1D), the order number for each drift
+                         value
 
     :param sigma: float, the sigma of the clip (away from the median)
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                dvc:
-                orderpeakc:
+                dvc: numpy array (1D), the sigma clipped drift values
+                orderpeakc: numpy array (1D), the order numbers for the sigma
+                            clipped drift values
     """
     # get dv
     dv = loc['dv']
@@ -659,18 +715,29 @@ def drift_per_order(loc, fileno):
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                number_orders:
-                dvc:
-                orderpeakc:
+                number_orders: int, the number of orders in reference spectrum
+                dvc: numpy array (1D), the sigma clipped drift values
+                orderpeakc: numpy array (1D), the order numbers for the sigma
+                            clipped drift values
 
     :param fileno: int, the file number (iterator number)
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                drift:
-                drift_left:
-                drift_right:
-                errdrift:
+                drift: numpy array (2D), the median drift values for each
+                       file and each order
+                       shape = (number of files x number of orders)
+                drift_left: numpy array (2D), the median drift values for the
+                            left half of each order (for each file and each
+                            order)
+                            shape = (number of files x number of orders)
+                drift_right: numpy array (2D), the median drift values for the
+                             right half of each order (for each file and each
+                             order)
+                             shape = (number of files x number of orders)
+                errdrift: numpy array (2D), the error in the drift for each
+                          file and each order
+                          shape = (number of files x number of orders)
     """
 
     # loop around the orders
@@ -702,10 +769,20 @@ def drift_all_orders(loc, fileno, nomin, nomax):
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                drift:
-                drift_left:
-                drift_right:
-                errdrift:
+                drift: numpy array (2D), the median drift values for each
+                       file and each order
+                       shape = (number of files x number of orders)
+                drift_left: numpy array (2D), the median drift values for the
+                            left half of each order (for each file and each
+                            order)
+                            shape = (number of files x number of orders)
+                drift_right: numpy array (2D), the median drift values for the
+                             right half of each order (for each file and each
+                             order)
+                             shape = (number of files x number of orders)
+                errdrift: numpy array (2D), the error in the drift for each
+                          file and each order
+                          shape = (number of files x number of orders)
 
     :param fileno: int, the file number (iterator number)
     :param nomin: int, the first order to use (i.e. from nomin to nomax)
@@ -713,10 +790,17 @@ def drift_all_orders(loc, fileno, nomin, nomax):
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                meanrv:
-                meanrv_left:
-                meanrv_right:
-                merrdrift:
+                meanrv: numpy array (1D), the weighted mean drift, for each file
+                        shape = (number of files)
+                meanrv_left: numpy array (1D), the weighted mean drift for the
+                             left half of each order, for each file
+                             shape = (number of files)
+                meanrv_right: numpy array (1D), the weighted mean drift for the
+                              right half of each order, for each file
+                              shape = (number of files)
+                merrdrift: numpy array (1D), the error in weighted mean for
+                           each file
+                           shape = (number of files)
     """
 
     # get data from loc
@@ -751,10 +835,13 @@ def get_ccf_mask(p, loc, filename=None):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                ccf_mask:
-                ic_w_mask_min:
-                ic_mask_width:
-                log_opt:
+                ccf_mask: string, the name (and or location) of the CCF
+                          mask file
+                ic_w_mask_min: float, the weight of the CCF mask (if 1 force
+                               all weights equal)
+                ic_mask_width: float, the width of the template line
+                               (if 0 use natural
+                log_opt: string, log option, normally the program name
 
     :param loc: parameter dictionary, ParamDict containing data
 
@@ -763,9 +850,11 @@ def get_ccf_mask(p, loc, filename=None):
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                ll_mask_d:
-                ll_mask_ctr:
-                w_mask:
+                ll_mask_d: numpy array (1D), the size of each pixel
+                           (in wavelengths)
+                ll_mask_ctr: numpy array (1D), the central point of each pixel
+                             (in wavelengths)
+                w_mask: numpy array (1D), the weight mask
     """
     func_name = __NAME__ + '.get_ccf_mask()'
     # get constants from p
@@ -875,36 +964,53 @@ def coravelation(p, loc):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                ccf_berv:
-                ccf_berv_max:
-                target_rv:
-                ccf_width:
-                ccf_step:
-                ccf_det_noise:
-                ccf_fit_type:
-                log_opt:
-                DRS_PLOT:
-                DRS_DEBUG:
+                ccf_berv: float, the barycentric Earth RV (berv)
+                ccf_berv_max: float, the maximum barycentric Earth RV
+                target_rv: float, the target RV
+                ccf_width: float, the CCF width
+                ccf_step: float, the CCF step
+                ccf_det_noise: float, the detector noise to use in the ccf
+                ccf_fit_type: int, the type of fit for the CCF fit
+                log_opt: string, log option, normally the program name
+                DRS_DEBUG: int, Whether to run in debug mode
+                                0: no debug
+                                1: basic debugging on errors
+                                2: recipes specific (plots and some code runs)
+                DRS_PLOT: bool, Whether to plot (True to plot)
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
-                wave:
-                param_ll:
-                ll_mask_ctr:
-                ll_mask_d:
-                w_mask:
-                e2dsff:
-                blaze:
+                wave_ll: numpy array (1D), the line list values
+                param_ll: numpy array (1d), the line list fit coefficients
+                          (used to generate line list - read from file defined)
+                ll_mask_d: numpy array (1D), the size of each line
+                           (in wavelengths)
+                ll_mask_ctr: numpy array (1D), the central point of each line
+                             (in wavelengths)
+                w_mask: numpy array (1D), the weight mask
+                e2dsff: numpy array (2D), the flat fielded E2DS spectrum
+                        shape = (number of orders x number of columns in image
+                                                      (x-axis dimension) )
+                blaze: numpy array (2D), the blaze function
+                        shape = (number of orders x number of columns in image
+                                                      (x-axis dimension) )
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                rv_ccf:
-                ccf:
-                ccf_max:
-                pix_passed_all:
-                tot_line:
-                ll_range_all:
-                ccf_noise:
+                rv_ccf: numpy array (1D), the radial velocities for the CCF
+                ccf: numpy array (2D), the CCF for each order and each RV
+                     shape = (number of orders x number of RV points)
+                ccf_max: float, numpy array (1D), the max value of the CCF for
+                         each order
+                pix_passed_all: numpy array (1D), the weighted line list
+                                position for each order?
+                tot_line: numpy array (1D), the total number of lines for each
+                          order
+                ll_range_all: numpy array (1D), the weighted line list width for
+                          each order
+                ccf_noise: numpy array (2D), the CCF noise for each order and
+                           each RV
+                           shape = (number of orders x number of RV points)
     """
     # -------------------------------------------------------------------------
     # get constants from p
@@ -924,7 +1030,7 @@ def coravelation(p, loc):
     # get data from loc
     # -------------------------------------------------------------------------
     # get the wavelengths for the lines and the fit coefficients for each line
-    ll_map, coeff_ll = loc['wave'], loc['param_ll']
+    ll_map, coeff_ll = loc['wave_ll'], loc['param_ll']
     # get the line centers and the line widths
     ll_mask_ctr, ll_mask_d = loc['ll_mask_ctr'], loc['ll_mask_d']
     # get the line weights
@@ -1091,8 +1197,8 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
                  translation to run the ccf calculation
 
     :return ccf: numpy array (1D), the CCF for each RV value
-    :return pix: numpy array (1D), the pixel positions for each RV value
-    :return llrange: numpy array (1D), the weight wavelength for each RV value
+    :return pix: float, the weighted line list position?
+    :return llrange: float, the weighted line list width?
     :return ccf_noise: numpy array (1D), the CCF noise for each RV value
     """
 
