@@ -120,12 +120,12 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     WLOG('', p['log_opt'], 'Reading wavelength solution ')
 
     # get wave image
-    wave, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
+    wave_ll, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
 
     # save to storage
-    loc['wave'], loc['param_ll'] = wave, param_ll
+    loc['wave_ll'], loc['param_ll'] = wave_ll, param_ll
     source = __NAME__ + '/main() + spirouTHORCA.GetE2DSll()'
-    loc.set_sources(['wave', 'param_ll'], source)
+    loc.set_sources(['wave_ll', 'param_ll'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -159,7 +159,7 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # Compute photon noise uncertainty for reference file
     # ----------------------------------------------------------------------
     # set up the arguments for DeltaVrms2D
-    dargs = [loc['e2ds'], loc['wave']]
+    dargs = [loc['e2ds'], loc['wave_ll']]
     dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
                    threshold=p['IC_DRIFT_MAXFLUX'])
     # run DeltaVrms2D
