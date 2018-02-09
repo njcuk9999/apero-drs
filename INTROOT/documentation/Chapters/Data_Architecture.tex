@@ -89,25 +89,49 @@ The \definevariable{text:drs_root}{DRS\_ROOT} contains all the installed recipes
 
 The bin directory is located in the \definevariable{text:drs_root}{DRS\_ROOT} directory. This contains all the recipes that can be used. A detailed description of all recipes can be found in Chapter \ref{ch:the_recipes} but are listed here for completeness.
 
-\begin{thighlight}
-\begin{itemize}
-\item \calbadpix
-\item \calCCF
-\item \calDARK
-\item \calDRIFTRAW
-\item \calDRIFTE
-\item \calDRIFTPEAK
-\item \calextractRAW
-\item \calextractRAWAB
-\item \calextractRAWC
-\item \calFFraw
-\item \callocRAW
-\item \calSLIT
-\item \calvalidate
-\end{itemize}
-\end{thighlight}
+\begin{tcustomdir}
+\customdirtree{%
+.1 \{dir\}.
+.2 \{DRS\_ROOT\}.
+.3 bin \DTcomment{Recipes}.
+.4 \calbadpix.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_BADPIX_spirou}}.
+.4 \calCCF.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_CCF_E2DS_spirou}}.
+.4 \calDARK.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DARK_spirou}}.
+.4 \calDRIFTRAW.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
+.4 \calDRIFTE.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
+.4 \calDRIFTPEAK.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
+.4 \calextractRAW.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
+.4 \calextractRAWAB.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
+.4 \calextractRAWC.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
+.4 \calFFraw.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_FF_RAW_spirou}}.
+.4 \calHC.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_HC_E2DS_spirou}}.
+.4 \callocRAW.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_loc_RAW_spirou}}.
+.4 \calSLIT.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_SLIT_spirou}}.
+.4 \calvalidate.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_validate_spirou}}.
+.4 \calWAVE.
+.5 \DTcomment{See Section \ref{ch:the_recipes:cal_WAVE_E2DS_spirou}}.
+}
+\end{tcustomdir}
+
+
 
 % only show this section is developer guide
+\clearpage
+\newpage
 \ifdevguide
 
 % ------------------------------------------------------------------------
@@ -115,27 +139,40 @@ The bin directory is located in the \definevariable{text:drs_root}{DRS\_ROOT} di
 \label{ch:data_architecture:install_root_folder:module_folder}
 % ------------------------------------------------------------------------
 
-The SpirouDRS directory is the SPIROU DRS package, it contains all sub-packages that contain all the worker functions and code associated with the recipes. The file structure is as follows:
+The SpirouDRS directory is the SPIROU DRS package, it contains all sub-packages that contain all the worker functions and code associated with the recipes. The modules are described in detail in Chapter \ref{ch:the_module}. \\
+
+The file structure is as follows:
 
 \begin{tcustomdir}
 \customdirtree{%
 .1 SpirouDRS.
 .2 spirouBACK \DTcomment{The SPIRou background module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouBACK}}.
 .2 spirouCDB \DTcomment{The SPIRou calibration database module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouCDB}}.
 .2 spirouConfig \DTcomment{The SPIRou configuration tools module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouConfig}}.
 .2 spirouCore \DTcomment{The SPIRou core modules}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouCore}}.
 .2 spirouEXTOR \DTcomment{The SPIRou extraction module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouEXTOR}}.
 .2 spirouFLAT \DTcomment{The SPIRou Flat field module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouFLAT}}.
 .2 spirouImage \DTcomment{The SPIRou image module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouImage}}.
 .2 spirouLOCOR \DTcomment{The SPIRou localization module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouLOCOR}}.
 .2 spirouRV \DTcomment{The SPIRou radial velocity module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouRV}}.
 .2 spirouStartup \DTcomment{The SPIRou start up tools module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouStartup}}.
 .2 spirouTHORCA \DTcomment{The SPIRou THORCA module}.
+.3 \DTcomment{See Section \ref{ch:the_module:spirouTHORCA}}.
 .2 spirouUnitTests \DTcomment{The SPIRou unit tests module}.
 }
 \end{tcustomdir}
 
-The modules are described in detail in Chapter \ref{ch:the_module}.
+
 
 % end developer guide only
 \fi
@@ -190,7 +227,7 @@ The raw observed data is stored under the \definevariable{text:drs_data_raw}{DRS
 
 \noindent Each line in this file is a unique calibration file and lines are formatted in the following manner:
 
-\begin{textbox}
+\begin{textbox}[title={In calibration database file}]
 @{key}@ @{night_repository}@ @{filename}@ @{human readable date}@ @{unix time}@ 
 \end{textbox}
 \begin{thighlight}
@@ -218,7 +255,7 @@ The raw observed data is stored under the \definevariable{text:drs_data_raw}{DRS
 \end{thighlight}
 
 \noindent An example working \masterCALIBDBfile is shown below (assuming the listed files are present in \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB})
-\begin{textbox}
+\begin{textbox}[title={In calibration database file}]
 @DARK@ 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
 @ORDER_PROFIL_C@ 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
 @LOC_C@ 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0

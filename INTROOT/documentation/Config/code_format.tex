@@ -242,7 +242,7 @@
 % }
 
 
-\newtcblisting{textbox}{
+\NewTCBListing{textbox}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -254,9 +254,10 @@
       title={text},  % Fixed title
       listing only,
       listing options={style=text},
+      #1
 }
 
-\newtcblisting{bashbox}{
+\NewTCBListing{bashbox}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -268,9 +269,10 @@
       title={bash},  % Fixed title
       listing only,
       listing options={style=bashstyle},
+      #1
 }
 
-\newtcblisting{cshbox}{
+\NewTCBListing{cshbox}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -282,9 +284,10 @@
       title={tcsh/csh},  % Fixed title
       listing only,
       listing options={style=cshstyle},
+      #1
 }
 
-\newtcblisting{cmdbox}{
+\NewTCBListing{cmdbox}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -293,13 +296,13 @@
       colback=darkgray!25!white,
       colframe=darkgray!75!black,
       fonttitle={\tiny\bfseries},
-      title={CMD input},  % Fixed title
       listing only,
       listing options={style=cmdstyle},
-      every listing line={\textcolor{red}{\small\ttfamily\bfseries \textgreater{\textgreater}\,\,\,}}
+      every listing line={\textcolor{red}{\small\ttfamily\bfseries \textgreater{\textgreater}\,\,\,}},
+      #1
 }
 
-\newtcblisting{cmdboxprint}{
+\NewTCBListing{cmdboxprint}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -308,27 +311,26 @@
       colback=darkgray!25!white,
       colframe=darkgray!75!black,
       fonttitle={\tiny\bfseries},
-      title={CMD output},  % Fixed title
       listing only,
-      listing options={style=cmdstyleprint}
+      listing options={style=cmdstyleprint},
+      #1
 }
 
-
-\newtcblisting{cmdboxprintspecial}{
+\NewTCBListing{cmdboxprintspecial}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
       top=0pt,bottom=0pt,left=2mm,right=0mm,
       %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
-      colback=darkgray!25!white,
+      colback=darkgray!95!white,
       colframe=darkgray!75!black,
       fonttitle={\tiny\bfseries},
-      title={CMD output},  % Fixed title
       listing only,
-      listing options={style=cmdstyleprintspecial}
+      listing options={style=cmdstyleprintspecial},
+      #1
 }
 
-\newtcblisting{pythonbox}{
+\NewTCBListing{pythonbox}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -340,10 +342,10 @@
       title={Python/Ipython},  % Fixed title
       listing only,
       listing options={style=pythonstyle},
+      #1
 }
 
-
-\newtcblisting{pythondocstring}{
+\NewTCBListing{pythondocstring}{ O{} }{
       before skip=0pt,
       after skip=6pt,
       %tcbox raise base,
@@ -353,8 +355,8 @@
       colframe=backcolour3!75!black,
       listing only,
       listing options={style=pythondocstringstyle},
+      #1
 }
-
 
 \newtcolorbox{note}[1][]{%
   enhanced jigsaw, % better frame drawing
@@ -405,8 +407,7 @@
   #1
 }
 
-
-\newtcblisting{pythonboxblank}{
+\NewTCBListing{pythonboxblank}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -414,10 +415,10 @@
       %toprule=0.3mm,bottomrule=0.3mm,boxsep=0.5mm,
       listing only,
       listing options={style=pythonstyle},
+      #1
 }
 
-
-\newtcblisting{latexbox}{
+\NewTCBListing{latexbox}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -427,6 +428,7 @@
       colframe=red!75!black,
       fonttitle={\tiny\bfseries},
       title={\LaTeX},  % Fixed title
+      #1,
 }
 
 
@@ -437,7 +439,7 @@
 
 % only used to show example latexbox code in Documentation/Code formatting section
 % DO NOT USE IN GENERAL (use latexbox)
-\newtcblisting{latexbox1}{
+\NewTCBListing{latexbox1}{ O{} }{
       before skip=3pt,
       after skip=6pt,
       %tcbox raise base,
@@ -447,4 +449,5 @@
       colframe=red!75!black,
       fonttitle={\tiny\bfseries},
       title={\LaTeX},  % Fixed title
+      #1,
 }
