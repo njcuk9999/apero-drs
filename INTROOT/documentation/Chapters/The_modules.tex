@@ -8,16 +8,19 @@
 \section{Introduction}
 \label{ch:the_module:intro}
 
-In the below sections the DRS sub modules are defined. They are called from the DRS in the following manner.
+In the below sections the DRS sub modules are defined. They are called from the DRS in the following manner. \\
 
 \begin{pythonbox}
 from SpirouDRS import spirouX
-spirouX.function(arg1, arg2, kwarg1='value')
+spirouX.MyFunction(arg1, arg2, kwarg1='value')   # Alias to internal function
+spirouX.spirouY.my_function(arg1, arg2, kwarg1='value')   # internal function
 \end{pythonbox}
 
-\noindent Described in each section are the functions used in the recipes (defined in each sub-modules \path{__init__.py} file) and as such are in CamelCase (capitalized). Functions used with in these sub-modules that are used internally but not called from recipes are not defined here but all functions are described as with those below and can be read in any interactive python or ipython terminal in the following way:
+\noindent Described in each section are the functions used in the recipes (defined in each sub-modules \path{__init__.py} file) and as such are in CamelCase (capitalized). The internal links are provided to locate the code for each function but only the CamelCased aliases should be used in recipes. 
 
-\begin{minipage}{\textwidth}
+Functions used with in these sub-modules that are used internally but not called from recipes are not defined here but all functions are described as with those below and can be read in any interactive python or ipython terminal in the following way: \\
+
+\noindent\begin{minipage}{\textwidth}
 \begin{pythonbox}
 # in python
 from SpirouDRS import spirouConfig
@@ -37,7 +40,7 @@ raises a Config Error if keys are not in params
 
 \vspace{0.5cm}
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \begin{pythonbox}
 # in ipython
 from SpirouDRS import spirouConfig
@@ -86,6 +89,7 @@ raises a Config Error if keys are not in params
 \input{Chapters/modules/spirouStartup}
 
 \input{Chapters/modules/spirouTHORCA}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%

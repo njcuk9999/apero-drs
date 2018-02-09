@@ -53,21 +53,10 @@ files = ['dark_dark02d406.fits']
 cal_validate_spirou.main(night_name=night_name, files=files)
 \end{pythonbox}
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\section{The calibration database}
-\label{chapter:using_the_drs:calibdb}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{todo}
-Description of using the calibration database needs to go here.
-\end{todo}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
+\clearpage
+\newpage
 \section{Working example of the code for SPIRou}
 \label{chapter:using_the_drs:working_example}
 %%
@@ -139,59 +128,52 @@ cal_SLIT_spirou.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
 \item run the flat field creation on the `dark\_flat' files:
 
 \begin{note}
-if using same files as above you will get an error message when running the file.
-
-\noindent To solve this open the `\masterCALIBDBfile' file located in \textcolor{blue}{\{DATA\_ROOT\_CALIB\}}. Edit the unix date in the line that begins `TILT' so that it is less than or equal to the unix date on rows `ORDER\_PROFIL\_AB' (i.e. easiest to change it to the date on the `ORDER\_PROFIL\_AB')
-
-\noindent The human date format must match the unix date thus both must be changed if one is modified.
-
-\noindent i.e. the `\masterCALIBDBfile' file should look go from
-\begin{textbox}
-DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
-ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
-LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
-ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
-LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
-TILT 20170710 fp_fp02a203_tilt.fits @07/10/17/17:25:15 1499707515.0@
-\end{textbox}
-\noindent to this:
-\begin{textbox}
-DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
-ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
-LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
-ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
-LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
-TILT 20170710 fp_fp02a203_tilt.fits @07/10/17/17:07:08 1499706428.0@
-\end{textbox}
+if using same files as above AND \lstinline[style=pythoninline]|calib_db_match="older"| you will get an error message when running the file (the tilt file is newer than input data) to solve this change \lstinline[style=pythoninline]|calib_db_match="closest"|.
 \end{note}
 
 \begin{cmdbox}
 cal_FF_RAW_spirou.py 20170710 dark_flat02f10.fits dark_flat03f10.fits dark_flat04f10.fits dark_flat05f10.fits dark_flat06f10.fits
 \end{cmdbox}
 
-\newpage
 
-\item Currently we do not create a new wavelength calibration file for this run. Therefore we need one (as stated in the above section). We use the one from here:
+\item Currently we do not create a new wavelength calibration file for this run. 
+
+\ifdevguide
+\begin{todo}
+The next section will be redundant once we generate the wave files as part of the DRS. So the next section will need to be updated.
+\end{todo}
+\fi
+
+\noindent Therefore we need one (as stated in the above section). We use the ones from here:
+
 \begin{cmdbox}
 spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
+spirou@10.102.14.81:/data/.../AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 
+spirou@10.102.14.81:/data/.../AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits
 \end{cmdbox}
 
 \noindent then place it in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} folder. You will also need to edit the `\masterCALIBDBfile' file located in \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}. 
 
 \noindent Add the folloing line to `\masterCALIBDBfile'
-\begin{textbox}
-@WAVE 20170710 spirou_wave_ini3.fits 07/10/17/17:03:50 1499706230.0@
+\begin{textbox}[title={In calibration database file}]
+@WAVE_AB AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 2014-08-11-03:42:12.000000 1407728532
+WAVE_A 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
+WAVE_B 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
+WAVE_C AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits@
 \end{textbox}
 
 \noindent and the `master\_calib\_SPIROU.txt' should look like this:
-\begin{textbox}
+\begin{textbox}[title={In calibration database file}]
+@WAVE_AB AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 2014-08-11-03:42:12.000000 1407728532
+WAVE_A 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
+WAVE_B 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
+WAVE_C AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits@
 DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
 ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
 LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
 ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
 LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
 TILT 20170710 fp_fp02a203_tilt.fits 07/10/17/17:07:08 1499706428.0
-@WAVE 20170710 spirou_wave_ini3.fits 07/10/17/17:03:50 1499706230.0@
 \end{textbox}
 
 \item run the extraction files on the `hcone\_dark', `dark\_hcone', `hcone\_hcone', `dark\_dark\_AHC1', `hctwo\_dark', `dark\_hctwo', `hctwo-hctwo', `dark\_dark\_AHC2' and `fp\_fp'  files. For example for the `fp\_fp' files:
@@ -214,7 +196,7 @@ cal_extract_RAW_spirouC.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a20
 \label{chapter:using_the_drs:working_example:run_python}
 % ----------------------------------------------
 
-The process is in the same order as Section \ref{chapter:using_the_drs:working_example:run_cmd}, including changing the date on the `TILT' keyword and adding the `WAVE' line, and adding the wave file to the calibDB folder).
+The process is in the same order as Section \ref{chapter:using_the_drs:working_example:run_cmd}, including adding the `WAVE' lines to the calibDB folder).
 
 \begin{pythonbox}
 import cal_DARK_spirou, cal_loc_RAW_spirou

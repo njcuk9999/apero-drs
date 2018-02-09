@@ -24,16 +24,16 @@
 
 \item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc)
 
-	\begin{bashbox}
+	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
 	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
 	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
 	\end{bashbox}
 
 \item make sure your paths are set
-	\begin{bashbox}
+	\begin{cmdbox}
 	source (*$\sim$*)/.bashrc
 	echo $PATH
-	\end{bashbox}
+	\end{cmdbox}
 
 \item Make recipes executable (found in the \InstallDIR/bin folder) - to use from the command line.
 

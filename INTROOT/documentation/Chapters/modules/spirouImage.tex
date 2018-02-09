@@ -3,7 +3,7 @@
 %%
 \clearpage
 \newpage
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \section{The spirouImage module}
 \label{ch:the_module:spirouImage}
 %%
@@ -38,7 +38,7 @@ if hdict is None creates a new dictionary
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{AddKey1DList}
 
 Defined in \spirouImage\path{.pirouFITS.add_key_1d_list}
@@ -73,7 +73,7 @@ keyword = kewordstoreage + row number
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{AddKey2DList}
 
 Defined in \spirouImage\path{.spirouFITS.add_key_2d_list}
@@ -114,7 +114,7 @@ where number = (row number * number of columns) + column number
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ConvertToE}
 
 Defined in \spirouImage\path{.}
@@ -143,7 +143,7 @@ Converts image from ADU/s into e-
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ConvertToADU}
 
 Defined in \spirouImage\path{.spirouImage.convert_to_adu}
@@ -172,7 +172,7 @@ Converts image from ADU/s into ADU
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{CopyOriginalKeys}
 
 Defined in \spirouImage\path{.spirouFITS.copy_original_keys}
@@ -213,7 +213,7 @@ keys will not be copies (defined in python code)
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{CopyRootKeys}
 
 Defined in \spirouImage\path{.spirouFITS.copy_root_keys}
@@ -239,7 +239,7 @@ Copy keys from a filename to hdict
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{CorrectForDark}
 
 Defined in \spirouImage\path{.spirouImage.correct_for_dark}
@@ -283,7 +283,7 @@ value of p['ACQTIME_KEY'] as a keyword)
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{FitTilt}
 
 Defined in \spirouImage\path{.spirouImage.fit_tilt}
@@ -321,7 +321,7 @@ return the coefficients, fit and residual rms in lloc dictionary
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{FlipImage}
 
 Defined in \spirouImage\path{.spirouImage.flip_image}
@@ -345,7 +345,7 @@ Flips the image in the x and/or the y direction
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetAllSimilarFiles}
 
 Defined in \spirouImage\path{.spirouImage.get_all_similar_files}
@@ -384,7 +384,7 @@ either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetSigdet}
 
 Defined in \spirouImage\path{.spirouImage.get_sigdet}
@@ -414,7 +414,7 @@ Get sigdet from HEADER. Wrapper for spirouImage.get_param
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetExpTime}
 
 Defined in \spirouImage\path{.spirouImage.get_exptime}
@@ -444,7 +444,7 @@ Get Exposure time from HEADER. Wrapper for spirouImage.get_param
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetGain}
 
 Defined in \spirouImage\path{.spirouImage.get_gain}
@@ -474,7 +474,7 @@ Get Gain from HEADER. Wrapper for spirouImage.get_param
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetAcqTime}
 
 Defined in \spirouImage\path{.spirouImage.get_acqtime}
@@ -512,7 +512,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadParam}
 
 Defined in \spirouImage\path{.spirouImage.get_param}
@@ -550,7 +550,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetKey}
 
 Defined in \spirouImage\path{.spirouFITS.keylookup}
@@ -583,7 +583,7 @@ value of key to 'default' if not found else logs an error
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetKeys}
 
 Defined in \spirouImage\path{.spirouFITS.keyslookup}
@@ -617,7 +617,7 @@ value of key to 'default' if not found else logs an error
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetTilt}
 
 Defined in \spirouImage\path{.}
@@ -657,7 +657,7 @@ Get the tilt by correlating the extracted fibers
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetTypeFromHeader}
 
 Defined in \spirouImage\path{.spirouFITS.get_type_from_header}
@@ -697,7 +697,7 @@ using "keywordstore"
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{LocateBadPixels}
 
 Defined in \spirouImage\path{.spirouImage.locate_bad_pixels}
@@ -741,7 +741,7 @@ Locate the bad pixels in the flat image and the dark image
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{MakeTable}
 
 Defined in \spirouImage\path{.spirouTable.make_table}
@@ -773,7 +773,7 @@ Construct an astropy table from columns and values
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{MeasureDark}
 
 Defined in \spirouImage\path{.spirouImage.measure_dark}
@@ -832,7 +832,7 @@ Measure the dark pixels in "image"
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{NormMedianFlat}
 
 Defined in \spirouImage\path{.spirouImage.normalise_median_flat}
@@ -876,7 +876,7 @@ the 90th percentile
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadData}
 
 Defined in \spirouImage\path{.spirouFITS.readdata}
@@ -907,7 +907,7 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadImage}
 
 Defined in \spirouImage\path{.spirouFITS.readimage}
@@ -947,7 +947,7 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadTable}
 
 Defined in \spirouImage\path{.spirouTable.read_table}
@@ -977,7 +977,7 @@ astropy.table readable formats are as follows:
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadImageAndCombine}
 
 Defined in \spirouImage\path{.spirouFITS.readimage_and_combine}
@@ -1024,7 +1024,7 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadFlatFile}
 
 Defined in \spirouImage\path{.spirouFITS.read_flat_file}
@@ -1061,7 +1061,7 @@ Reads the wave file (from calib database or filename)
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadHeader}
 
 Defined in \spirouImage\path{.spirouFITS.read_header}
@@ -1088,7 +1088,7 @@ Read the header from a file at "filepath" with extention "ext" (default=0)
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadKey}
 
 Defined in \spirouImage\path{.spirouFITS.read_key}
@@ -1118,7 +1118,7 @@ value.
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{Read2Dkey}
 
 Defined in \spirouImage\path{.spirouFITS.read_key_2d_list}
@@ -1152,7 +1152,7 @@ Read a set of header keys that were created from a 2D list
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadTiltFile}
 
 Defined in \spirouImage\path{.spirouFITS.read_tilt_file}
@@ -1191,7 +1191,7 @@ Reads the tilt file (from calib database or filename) and using the
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadWaveFile}
 
 Defined in \spirouImage\path{.spirouFITS.read_wave_file}
@@ -1229,7 +1229,7 @@ Reads the wave file (from calib database or filename)
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ReadOrderProfile}
 
 Defined in \spirouImage\path{.spirouFITS.read_order_profile_superposition}
@@ -1268,7 +1268,7 @@ where X is either p["ORDERP_FILE"] or p["FIBER"] (presedence in that order)
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{ResizeImage}
 
 Defined in \spirouImage\path{.spirouImage.resize}
@@ -1307,7 +1307,7 @@ if getshape = False
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{WriteImage}
 
 Defined in \spirouImage\path{.spirouFITS.writeimage}
@@ -1342,7 +1342,7 @@ Writes an image and its header to file
 
 %----------------------------------------------------------------------------------------
 
-\begin{minipage}{\textwidth}
+\noindent\begin{minipage}{\textwidth}
 \subsection{WriteTable}
 
 Defined in \spirouImage\path{.spirouTable.write_table}

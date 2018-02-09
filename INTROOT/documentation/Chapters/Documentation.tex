@@ -30,7 +30,7 @@ To compile in \LaTeX one needs the following document class:
 	\item memoir \dotfill Typeset fiction, non-fiction and mathematical books
 \end{itemize}
 
-To compile in \LaTeX one needs the following packages:
+To compile in \LaTeX\, one needs the following packages:
 \begin{itemize}
 	\item inputenc \dotfill utf8 encoding
 	\item fontenc \dotfill Standard package for selecting font encodings
@@ -42,16 +42,20 @@ To compile in \LaTeX one needs the following packages:
 	\item memhfixc \dotfill Adjustment for using hyperref in memoir documents
 	\item graphicx \dotfill Enhanced support for graphics
 	\item listings \dotfill Typeset source code listings using \LaTeX
-	\item xcolor \dotfill Driver-independent color extensions for \LaTeX and pdf\LaTeX
+	\item xcolor \dotfill Driver-independent color extensions for \LaTeX\, and pdf\LaTeX
 	\item hyperref \dotfill Extensive support for hypertext in \LaTeX
 	\item dirtree \dotfill Display trees in the style of windows explorer
 	\item framed \dotfill Framed or shaded regions that can break across pages
 	\item multirow \dotfill Create tabular cells spanning multiple rows
 	\item float \dotfill Improved interface for floating objects
 	\item background \dotfill Placement of background material on pages of a document
-	\item tcolorbox \dotfill Coloured boxes, for \LaTeX examples and theorems
+	\item tcolorbox \dotfill Coloured boxes, for \LaTeX\, examples and theorems
 	\item eso-pic \dotfill Add picture commands (or backgrounds) to every page
 	\item ulem \dotfill Package for underlining
+	\item tocloft \dotfill Con­trol ta­ble of con­tents, fig­ures, etc
+	\item caption \dotfill Cus­tomis­ing cap­tions in float­ing en­vi­ron­ments
+	\item pdflscape \dotfill Make land­scape pages dis­play as land­scape
+	\item xifthen \dotfill Ex­tended con­di­tional com­mands
 \end{itemize}
 
 
@@ -257,6 +261,19 @@ A line/lines of text (that are to be edited in a text editor):
 \end{latexbox}
 \end{minipage}
 
+\begin{note}
+A custom title can be added to any code box and any other tcolorbox parameters can be overwritten as follows:
+
+\begin{latexbox}
+\begin{textbox}[title={Custom title}, colback=blue!30!white]
+<# A variable name that can be changes to a specific value>
+@VARIABLE_NAME@ = "Variable Value"
+\end{textbox}
+\end{latexbox}
+
+For keywords and options see the \Program{tcolorbox} documentation here: \url{http://texdoc.net/texmf-dist/doc/latex/tcolorbox/tcolorbox.pdf}. 
+\end{note}
+
 
 \item \begin{minipage}[t]{\textwidth} 
 A line/lines of text (that are to be edited in bash):
@@ -322,7 +339,7 @@ print("{0} seconds".format(np.sqrt(25)))
 \item \begin{minipage}[t]{\textwidth} 
 A line/lines of text in \LaTeX code (in raw form and then compiled form).
 \begin{latexbox1}
-\begin{latexbox}
+\begin{latexbox}[colframe=blue!75!black,]
 This is my \LaTeX code.
 \end{latexbox}
 \end{latexbox1}
@@ -344,7 +361,9 @@ Custom directory tree (highlighted section):
 \begin{tcustomdir}
 \customdirtree{%
 .1 home.
-.2 \DTcomment{User directories here}.
+.2 user1\DTcomment{User directories here}.
+.3 Downloads\DTcomment{Sub-directories have increasing numbers}.
+.2 user2 \DTcomment{Each line needs terminating period (`.')}.
 }
 \end{tcustomdir}
 \end{latexbox}
@@ -364,9 +383,9 @@ This is a Note
 \item \begin{minipage}[t]{\textwidth} 
 todo box:
 \begin{latexbox}
-\begin{note}
+\begin{todo}
 This is a to do statement (temporary)
-\end{note}
+\end{todo}
 \end{latexbox}
 \end{minipage}
 
