@@ -23,9 +23,10 @@ Below we describe breifly the main differences from AT-4 build.
 	cal_DARK_spirou.main(night_name=night_name, files=files)
 	\end{pythonbox}
 	will run the exact same procedure as:
-	\begin{bashbox}
+	\begin{cmdbox}
 	cal_DARK_spirou.py 201707 dark_dark02d406.fits
-	\end{bashbox}
+	\end{cmdbox}
+	Running from the command line is still valid.
 
 \item \WLOG function overhal (now in \spirouLog.logger()) but aliased in most codes back to \WLOG. This means one can use the same functionality as before:
 	\begin{pythonbox}
@@ -637,6 +638,9 @@ KiB Mem : 16157992 total, 11805196 free,  1261248 used,  3091548 buff/cache
 KiB Swap: 31249404 total, 31249404 free,        0 used. 14444384 avail Mem
 \end{cmdboxprint}
 
+
+\clearpage
+\newpage
 \subsection{Python 2 test - python 2.7.14}
 
 Below is the test in python 2 (Anaconda, python version 2.7.14, using ipython)
