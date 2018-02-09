@@ -5,13 +5,9 @@
 
 # CODE DESCRIPTION HERE
 
-Created on 2018-01-09 at 10:56
+Created on 2018-02-09 at 17:05
 
 @author: cook
-
-
-
-Version 0.0.0
 """
 
 import numpy as np
