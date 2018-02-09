@@ -156,14 +156,14 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 \begin{itemize}
 	\item In bash open the `.bashrc' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
-	\begin{bashbox}
+	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
 	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
 	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
 	\end{bashbox}
 
 	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
 
-	\begin{cshbox}
+	\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
 	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<${PATH}>"
 	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/:<${PYTHONPATH}>"
 	\end{cshbox}
@@ -212,13 +212,13 @@ This process is a little more convoluted than on Linux or \mac system.
 
 \noindent i.e.
 
-\begin{textbox}
+\begin{textbox}[title={In "Enviromental Variables"}]
 C:\Python27;(*\InstallDIR*)\bin\;
 \end{textbox}
 
 \item if under system variables `PythonPath' does not exist create a new variable called `PythonPath' and add:
 
-\begin{textbox}
+\begin{textbox}[title={In "Enviromental Variables"}]
 %PYTHONPATH%;(*\InstallDIR*);(*\InstallDIR*)\bin\;
 \end{textbox}
 
@@ -327,23 +327,25 @@ cal_validate_spirou.main()
 
 \noindent If validation is successful the following should appear:
 
-\begin{cmdboxprint}
+\begin{cmdboxprintspecial}
+@g
 HH:MM:SS.S -   || *****************************************
 HH:MM:SS.S -   || * SPIROU @(#) Geneva Observatory (0.0.1)
 HH:MM:SS.S -   || *****************************************
-HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
-HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
-HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
-HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/drs/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/drs/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/drs/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/drs/data/msg
 HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
 HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
 HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
 HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
-HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp/
 HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
 HH:MM:SS.S -   ||
 HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
-\end{cmdboxprint}
+@g
+\end{cmdboxprintspecial}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -381,20 +383,22 @@ cal_validate_spirou.main()
 \end{itemize}
 
 \noindent If validation is successful the following should appear:
-\begin{cmdboxprint}
+\begin{cmdboxprintspecial}
+@g
 HH:MM:SS.S -   || *****************************************
 HH:MM:SS.S -   || * SPIROU @(#) Geneva Observatory (0.0.1)
 HH:MM:SS.S -   || *****************************************
-HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
-HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
-HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
-HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/drs/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/drs/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/drs/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/drs/data/msg
 HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
 HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
 HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
 HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
-HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp/
 HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
 HH:MM:SS.S -   ||
 HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
-\end{cmdboxprint}
+@g
+\end{cmdboxprintspecial}
