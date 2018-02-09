@@ -67,6 +67,8 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
     # define default arguments (if ccf_width and ccf_step are not defined
     # in function call or run time arguments
     if 'ccf_width' not in p:
@@ -83,7 +85,7 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
                                         'DRIFT')
     # get the fiber type
     p['fiber'] = spirouStartup.GetFiberType(p, reffilename)
-    fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
+    fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
     p.set_source('fiber', fsource)
 
     # ----------------------------------------------------------------------
