@@ -147,20 +147,25 @@ def readdata(p, filename, log=True):
     return image, header, comments, nx, ny
 
 
-def readimage_and_combine(p, framemath='+', filename=None, log=True):
+def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
+                          log=True):
     """
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-                fitsfilename: string, the full path of for the main raw fits
-                      file for a recipe
-                      i.e. /data/raw/20170710/filename.fits
                 log_opt: string, log option, normally the program name
+
+                optional:
+                fitsfilename: string, the full path of for the main raw fits
+                      file for a recipe i.e. /data/raw/20170710/filename.fits
+                      (if filename is None this is required)
+
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
+                      (if filenames is None this is required)
 
     :param framemath: string, controls how files should be added
 
@@ -171,8 +176,13 @@ def readimage_and_combine(p, framemath='+', filename=None, log=True):
                 'multiply' or '*'      - multiplies the frames
                 'divide' or '/'        - divides the frames
                 'none'                 - does not add
+
     :param filename: string or None, filename of the image to read, if None
                      then p['fitsfilename'] is used
+
+    :param filenames: list of strings or None, filenames to combine with
+                      "filename", if None then p['arg_file_names'] is used
+
     :param log: bool, if True logs opening and size
 
     :return image: numpy array (2D), the image
@@ -183,39 +193,60 @@ def readimage_and_combine(p, framemath='+', filename=None, log=True):
     func_name = __NAME__ + '.readimage_and_combine()'
     # set up frequently used variables
     log_opt = p['log_opt']
+    # -------------------------------------------------------------------------
     # get file name
     if filename is None:
         try:
-            fitsfilename = p['fitsfilename']
+            filename = p['fitsfilename']
         except KeyError:
-            emsg1 = '"fitsfilename" is not defined in parameter dictionary'
+            emsg1 = ('"filename" is not defined and "fitsfilename" is not '
+                     'defined in parameter dictionary')
             emsg2 = '    function={0}'.format(func_name)
             WLOG('error', log_opt, [emsg1, emsg2])
-            fitsfilename = ''
     else:
-        fitsfilename = filename
+        p['fitsfilename'] = filename
+        p.set_source('fitsfilename', func_name)
+        filename = str(filename)
+    # -------------------------------------------------------------------------
+    # get additional files
+    if filenames is None:
+        try:
+            filenames = p['arg_file_names'][1:]
+        except KeyError:
+            emsg1 = ('"filenames" is not defined and "arg_file_names" is not in'
+                     ' parameter dictionary')
+            emsg2 = '    function={0}'.format(func_name)
+            WLOG('error', log_opt, [emsg1, emsg2])
+    else:
+        p['nbframes'] = len(filenames) +1
+        p.set_source('nbframes', func_name)
+        filenames = list(filenames)
+    # -------------------------------------------------------------------------
     # log that we are reading the image
     if log:
-        WLOG('', log_opt, 'Reading Image ' + fitsfilename)
+        WLOG('', log_opt, 'Reading Image ' + filename)
     # read image from fits file
-    image, imageheader, nx, ny = read_raw_data(fitsfilename)
+    image, imageheader, nx, ny = read_raw_data(filename)
     # log that we have loaded the image
     if log:
         WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
     # if we have more than one frame and add is True then add the rest of the
     #    frames, currently we overwrite p['fitsfilename'] and header with
     #    last entry
-    # TODO: Do we want to overwrite header/fitsfilename with last entry?
     if framemath is not None or framemath is not 'none':
         p, image, imageheader = math_controller(p, image, imageheader,
-                                                framemath)
+                                                filenames, framemath)
+    # currently we overwrite fitsfilename with last framefilename
+    # TODO: Do we want to overwrite header/fitsfilename with last entry?
+    p['fitsfilename'] = filenames[-1]
+    p.set_source('fitsfilename', __NAME__)
+
     # convert header to python dictionary
     header = dict(zip(imageheader.keys(), imageheader.values()))
     comments = dict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
-    if filename is None:
-        header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
-        header['@@@fname'] = p['fitsfilename']
+    header['@@@hname'] = filename + ' Header File'
+    header['@@@fname'] = p['fitsfilename']
 
     # return data, header, data.shape[0], data.shape[1]
     return image, header, comments, nx, ny
@@ -1160,7 +1191,7 @@ def read_raw_header(filename, headerext=0):
     return hdr, cmt
 
 
-def math_controller(p, data, header, framemath=None):
+def math_controller(p, data, header, filenames, framemath=None):
     """
     uses the framemath key to decide how 'arg_file_names' files are added to
     data (fitfilename)
@@ -1168,16 +1199,11 @@ def math_controller(p, data, header, framemath=None):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 log_opt: string, log option, normally the program name
-                nbframes: int, the number of frames/files (usually the length
-                          of "arg_file_names")
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
-                fitsfilename: string, the full path of for the main raw fits
-                              file for a recipe
 
     :param data: numpy array (2D), the image
     :param header: header dictionary from readimage (ReadImage) function
+    :param filenames: list of strings, the filenames to read and combine with
+                      "data"
     :param framemath: string, or None controls how files should be added
 
                 currently supported are:
@@ -1198,7 +1224,69 @@ def math_controller(p, data, header, framemath=None):
         return p, data, header
     # set up frequently used variables
     log_opt = p['log_opt']
-    nbframes = p['nbframes']
+    # get math type
+    kind, op = math_type(p, framemath)
+    # if we have no math don't continue
+    if kind == 'no':
+        return p, data, header
+    # if we have only one frame don't continue
+    if len(filenames) < 1:
+        return p, data, header
+    # log that we are adding frames
+    WLOG('info', log_opt, '{0} {1} frame(s)'.format(kind, len(filenames)))
+    # loop around each frame
+    for f_it in range(len(filenames)):
+        # construct frame file name
+        rawdir = spirouConfig.Constants.RAW_DIR(p)
+        framefilename = os.path.join(rawdir, filenames[f_it])
+        # check whether frame file name exists, log and exit if not
+        if not os.path.exists(framefilename):
+            emsg1 = 'File "{0}" does not exist'.format(framefilename)
+            emsg2 = '    function {0}'.format(func_name)
+            WLOG('error', log_opt, [emsg1, emsg2])
+        else:
+            # load that we are reading this file
+            WLOG('', log_opt, 'Reading File: ' + framefilename)
+            # get data and override header
+            dtmp, htmp = read_raw_data(framefilename, True, False)
+            header = htmp
+            # finally add/subtract/multiple/divide data
+            if op in [ '+', 'mean']:
+                data += dtmp
+            elif op == '-':
+                data -= dtmp
+            elif op == '*':
+                data *= dtmp
+            elif op == '/':
+                data /= dtmp
+            else:
+                continue
+    # if we need to average data then divide by nbframes
+    if op == 'mean':
+        data /= (len(filenames) + 1)
+    # return data
+    return p, data, header
+
+
+def math_type(p, framemath):
+    """
+    Take the string "framemath" and choose which math operator to use to combine
+    files currently supported combining math operators are:
+        'ADD', '+', 'SUB', '-', 'AVERAGE', 'MEAN', 'MULTIPLY', '*',
+        'DIVIDE', '/', 'NONE'
+
+    :param p: parameter dictionary
+    :param framemath: string, the way to combine files currently supported
+                      strings are:
+                'ADD', '+', 'SUB', '-', 'AVERAGE', 'MEAN', 'MULTIPLY', '*',
+                'DIVIDE', '/', 'NONE'
+
+    :return kind: string, description of math operator
+    :return op: string, operator string (used to do operation)
+    """
+
+    func_name = __NAME__ + 'math_type'
+    # define acceptable MATH
     acceptable_math = ['ADD', '+', 'SUB', '-', 'AVERAGE', 'MEAN',
                        'MULTIPLY', '*', 'DIVIDE', '/', 'NONE']
     # convert add to upper case
@@ -1212,63 +1300,20 @@ def math_controller(p, data, header, framemath=None):
             emsgs.append('\t "{0}", "{1}", "{2}"'.format(*a_math))
         emsgs.append('    Error raised in function = {0}'.format(func_name))
         WLOG('error', p['log_opt'], emsgs)
-    # if we have no math don't continue
-    if fm == 'NONE':
-        return p, data, header
-    # if we have only one frame don't continue
-    if nbframes < 2:
-        return p, data, header
     # select text for logging
     if fm in ['ADD', '+']:
-        kind = 'Adding'
+        kind, op = 'Adding', '+'
     elif fm in ['MEAN', 'AVERAGE']:
-        kind = 'Averaging'
+        kind, op = 'Averaging', 'mean'
     elif fm in ['SUB', '-']:
-        kind = 'Subtracting'
+        kind, op = 'Subtracting', '-'
     elif fm in ['MULTIPLY', '*']:
-        kind = 'Multiplying'
+        kind, op = 'Multiplying', '*'
     elif fm in ['DIVIDE', '/']:
-        kind = 'Dividing'
+        kind, op = 'Dividing', '/'
     else:
-        kind = 'no'
-    # log that we are adding frames
-    WLOG('info', log_opt, '{0} frames'.format(kind))
-    # loop around each frame
-    for f_it in range(1, nbframes):
-        # construct frame file name
-        rawdir = spirouConfig.Constants.RAW_DIR(p)
-        framefilename = os.path.join(rawdir, p['arg_file_names'][f_it])
-        # check whether frame file name exists, log and exit if not
-        if not os.path.exists(framefilename):
-            emsg1 = 'File "{0}" does not exist'.format(framefilename)
-            emsg2 = '    function {0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
-        else:
-            # load that we are reading this file
-            WLOG('', log_opt, 'Reading File: ' + framefilename)
-            # get data and override header
-            dtmp, htmp = read_raw_data(framefilename, True, False)
-            header = htmp
-            # currently we overwrite fitsfilename with last framefilename
-            p['fitsfilename'] = framefilename
-            p.set_source('fitsfilename', __NAME__)
-            # finally add/subtract/multiple/divide data
-            if fm in ['ADD', '+', 'MEAN', 'AVERAGE']:
-                data += dtmp
-            elif fm in ['SUB', '-']:
-                data -= dtmp
-            elif fm in ['MULTIPLY', '*']:
-                data *= dtmp
-            elif fm in ['DIVIDE', '/']:
-                data /= dtmp
-            else:
-                continue
-    # if we need to average data then divide by nbframes
-    if fm in ['MEAN', 'AVERAGE']:
-        data /= nbframes
-
-    # return data
-    return p, data, header
+        kind, op = 'no', None
+    return kind, op
 
 
 # =============================================================================
