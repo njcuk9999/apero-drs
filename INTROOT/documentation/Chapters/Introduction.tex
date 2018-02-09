@@ -12,21 +12,21 @@ This documentation will cover the installation, data architecture, \ifdevguide t
 \noindent Certain sections will be written in code blocks, these imply text that is written into a text editor, the command shell console, or a python terminal/script. Below explains how one can distinguish these in this document. \\
 
 \noindent The following denotes a line of text (or lines of text) that are to be edited in a text editor.
-\begin{textbox}
+\begin{textbox}[title={Generic text file}]
 <# A variable name that can be changes to a specific value>
 @VARIABLE_NAME@ = "Variable Value"
 \end{textbox}
 \vspace{0.5cm}
 
 \noindent These can also be shell scripts in a certain language:
-\begin{bashbox}
+\begin{bashbox}[title={For example in $\sim$/.bashrc}]
 #!/usr/bin/bash
 # Find out which console you are using
 echo $0
 # Set environment Hello
 export Hello="Hello"
 \end{bashbox}
-\begin{cshbox}
+\begin{cshbox}[title={For example in $\sim$/.tcshrc}]
 #!/usr/bin/tcsh
 # Find out which console you are using
 echo $0
