@@ -34,11 +34,15 @@ GetCustomFromRuntime = spirouStartup.get_custom_from_run_time_args
 
 GetFile = spirouStartup.get_file
 
+GetFiles = spirouStartup.get_files
+
 GetFiberType = spirouStartup.get_fiber_type
 
 LoadArguments = spirouStartup.load_arguments
 
 InitialFileSetup = spirouStartup.initial_file_setup
+
+LoadCalibDB = spirouStartup.load_calibdb
 
 # =============================================================================
 # End of code
