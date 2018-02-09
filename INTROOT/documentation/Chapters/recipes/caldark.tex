@@ -15,6 +15,10 @@ The input of \calDARK is as follows:
 \begin{cmdbox}
 cal_DARK_spirou.py  night_repository  filenames
 \end{cmdbox}
+\noindent for example:
+\begin{cmdbox}[title={example}]
+cal_DARK_spirou.py 20170710 dark_dark02d406.fits
+\end{cmdbox}
 \noindent or
 \begin{pythonbox}
 import cal_DARK_spirou
@@ -96,7 +100,7 @@ There are currently three quality control checks for cal\_DARK\_spirou
 \noindent If none of these quality control criteria are valid then the output file is passed into the \calibdb with key `DARK' for the `darkfile' and `BADPIX' for the `darkbadpixfile'. \\
 
 \noindent For example the following lines are added to the \calibdb for 
-\argnightname{\lstinline[style=pythoninline]| = "20170710" |} and \argfilenames{\lstinline[style=pythoninline]| = "dark_dark02d406.fits" |} 
+\argnightname{\lstinline[style=pythoninline]| = "20170710" |} and \argfilenames{\lstinline[style=pythoninline]| = "dark_dark02d406.fits" |}. \\
 
 \begin{textbox}[title={In calibration database file}]
 DARK 20170710 20170710_dark_dark02d406.fits 2017-07-10-12:37:48.260000 1499690268.26
@@ -109,46 +113,47 @@ BADPIX 20170710 20170710_dark_dark02d406_badpixel.fits 2017-07-10-12:37:48.26000
 % -------------------------------------------------------
 
 An example run where everything worked is below:
-
+\begin{cmdbox}[title={example}]
+cal_DARK_spirou.py 20170710 dark_dark02d406.fits
+\end{cmdbox}
 \begin{cmdboxprintspecial}
-@g20:57:30.8 -   || ***************************************** 
-20:57:30.8 -   || * SPIROU \@(#) Geneva Observatory (0.0.057) 
-20:57:30.8 -   || ***************************************** 
-20:57:30.8 -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw 
-20:57:30.8 -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced 
-20:57:30.8 -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB 
-20:57:30.8 -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg 
-20:57:30.8 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all) 
-20:57:30.8 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all) 
-20:57:30.8 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger) 
-20:57:30.8 -   ||(used_date)         DRS_USED_DATE=undefined
-20:57:30.8 -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
-20:57:30.8 -   ||                    DRS_INTERACTIVE is not set, running on-line mode
-20:57:30.8 -   ||                    DRS_DEBUG is set, debug mode level:1
-20:57:30.8 -   |ipython:2d406|Now running : ipython on file(s): dark_dark02d406.fits
-20:57:30.8 -   |ipython:2d406|On directory /scratch/Projects/spirou_py3/data/raw/20170710
-20:57:30.8 -   |ipython:2d406|ICDP_NAME loaded from: /scratch/Projects/spirou_py3/INTROOT/config/constants_SPIROU.py
-20:57:30.8 - * |ipython:2d406|Correct type of image for dark (dark_dark)
-20:57:31.0 - * |ipython:2d406|Now processing Image TYPE UNKNOWN with ipython recipe
-20:57:31.0 -   |ipython:2d406|Reading Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits
-20:57:31.0 -   |ipython:2d406|Image 2048 x 2048 loaded
-20:57:31.0 - * |ipython:2d406|Dark Time = 597.489 s
-20:57:31.2 -   |ipython:2d406|Doing Dark measurement
-20:57:31.5 - * |ipython:2d406|In Whole det: Frac dead pixels= 14.7 % - Median= 0.35 ADU/s - Percent[5:95]= 0.08-99.57 ADU/s
-20:57:31.5 - * |ipython:2d406|In Blue part: Frac dead pixels= 1.0 % - Median= 0.15 ADU/s - Percent[5:95]= 0.09-0.53 ADU/s
-20:57:31.5 - * |ipython:2d406|In Red part : Frac dead pixels= 20.5 % - Median= 2.11 ADU/s - Percent[5:95]= 0.18-232.09 ADU/s
-20:57:31.5 - * |ipython:2d406|Frac pixels with DARK > 100.0 ADU/s = 4.3 %
-@g@y20:57:31.6 - \@ |python warning|Line 138 warning reads: invalid value encountered in greater
-@y@g20:57:31.6 - * |ipython:2d406|Total Frac dead pixels (N.A.N) + DARK > 100.0 ADU/s = 18.9 %
-20:57:32.1 - * |ipython:2d406|QUALITY CONTROL SUCCESSFUL - Well Done -
-20:57:32.1 -   |ipython:2d406|Saving Dark frame in 20170710_dark_dark02d406.fits
-@g@y20:57:32.4 - \@ |python warning|Line 980 warning reads: Card is too long, comment will be truncated.
-@y@g20:57:32.4 -   |ipython:2d406|Saving Bad Pixel Map in 20170710_dark_dark02d406_badpixel.fits
-@g@y20:57:32.7 - \@ |python warning|Line 980 warning reads: Card is too long, comment will be truncated.
-@y@g20:57:32.7 - * |ipython:2d406|Updating Calib Data Base with DARK
-20:57:32.7 - * |ipython:2d406|Updating Calib Data Base with BADPIX
-20:57:32.7 - * |ipython:2d406|Recipe ipython has been succesfully completed
-@g
+@gHH:MM:SS.S -   || ***************************************** 
+HH:MM:SS.S -   || * SPIROU \@(#) Geneva Observatory (VERSION) 
+HH:MM:SS.S -   || ***************************************** 
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw 
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced 
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB 
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg 
+HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all) 
+HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all) 
+HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger) 
+HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
+HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
+HH:MM:SS.S -   ||                    DRS_DEBUG is set, debug mode level:1
+HH:MM:SS.S -   |ipython:2d406|Now running : ipython on file(s): dark_dark02d406.fits
+HH:MM:SS.S -   |ipython:2d406|On directory /scratch/Projects/spirou_py3/data/raw/20170710
+HH:MM:SS.S -   |ipython:2d406|ICDP_NAME loaded from: /scratch/Projects/spirou_py3/INTROOT/config/constants_SPIROU.py
+HH:MM:SS.S - * |ipython:2d406|Correct type of image for dark (dark_dark)
+HH:MM:SS.S - * |ipython:2d406|Now processing Image TYPE UNKNOWN with ipython recipe
+HH:MM:SS.S -   |ipython:2d406|Reading Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits
+HH:MM:SS.S -   |ipython:2d406|Image 2048 x 2048 loaded
+HH:MM:SS.S - * |ipython:2d406|Dark Time = 597.489 s
+HH:MM:SS.S -   |ipython:2d406|Doing Dark measurement
+HH:MM:SS.S - * |ipython:2d406|In Whole det: Frac dead pixels= 14.7 % - Median= 0.35 ADU/s - Percent[5:95]= 0.08-99.57 ADU/s
+HH:MM:SS.S - * |ipython:2d406|In Blue part: Frac dead pixels= 1.0 % - Median= 0.15 ADU/s - Percent[5:95]= 0.09-0.53 ADU/s
+HH:MM:SS.S - * |ipython:2d406|In Red part : Frac dead pixels= 20.5 % - Median= 2.11 ADU/s - Percent[5:95]= 0.18-232.09 ADU/s
+HH:MM:SS.S - * |ipython:2d406|Frac pixels with DARK > 100.0 ADU/s = 4.3 %
+@g@yHH:MM:SS.S - \@ |python warning|Line 138 warning reads: invalid value encountered in greater
+@y@gHH:MM:SS.S - * |ipython:2d406|Total Frac dead pixels (N.A.N) + DARK > 100.0 ADU/s = 18.9 %
+HH:MM:SS.S - * |ipython:2d406|QUALITY CONTROL SUCCESSFUL - Well Done -
+HH:MM:SS.S -   |ipython:2d406|Saving Dark frame in 20170710_dark_dark02d406.fits
+@g@yHH:MM:SS.S - \@ |python warning|Line 980 warning reads: Card is too long, comment will be truncated.
+@y@gHH:MM:SS.S -   |ipython:2d406|Saving Bad Pixel Map in 20170710_dark_dark02d406_badpixel.fits
+@g@yHH:MM:SS.S - \@ |python warning|Line 980 warning reads: Card is too long, comment will be truncated.
+@y@gHH:MM:SS.S - * |ipython:2d406|Updating Calib Data Base with DARK
+HH:MM:SS.S - * |ipython:2d406|Updating Calib Data Base with BADPIX
+HH:MM:SS.S - * |ipython:2d406|Recipe ipython has been succesfully completed@g
 \end{cmdboxprintspecial}
 
 
