@@ -36,11 +36,10 @@ The first functionality of any recipe \progMAIN function is to setup the recipe 
 	\begin{note}
 	Required prefixes (such as `dark\_dark', `fp\_fp', `flat\_dark') can be set here to cause an exception if the filenames provided to not have one or more of these prefixes (useful in controlling which files are allowed to be used in the recipe).
 	\end{note}
-
-	\item \spirouStartup.InitialFileSetup() -- Pushes values such as `log\_opt', `fitsfilename', `arg\_night\_name' into the main constant parameter dictionary `p' and loads the calibration database, if present.
 \end{enumerate}
 
 As mentioned above there are two ways to load arguments, the `default' way or the `custom' way. These are described in sections \ref{ch:the_recipes:gen_layout:standard_recipes} and \ref{ch:the_recipes:gen_layout:custom_arguments} below.
+
 
 % -------------------------------------------------------
 \clearpage
@@ -70,6 +69,7 @@ An example standard load up can be seen in \calDARK.
 \end{cmdbox}
 
 \begin{pythonbox}
+def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -81,6 +81,8 @@ An example standard load up can be seen in \calDARK.
 \begin{note}
 Here `night\_name' and `files' come from the \progMAIN definition (i.e. if called from python as a function we must have a way to get the arguments as they will not be defined at run time). As this is for \calDARK the `kind' of file is `dark' (used in logging) and the prefixes allowed for dark files are `dark\_dark' only.
 \end{note}
+
+Note that after we have loaded the arguments we use \spirouStartup.InitialFileSetup(). This pushes values such as `log\_opt', `fitsfilename', `arg\_night\_name' into the main constant parameter dictionary `p' and loads the calibration database, if present (using \spirouStartup\path{.LoadCalibDB}).
 
 % -------------------------------------------------------
 \subsubsection{Recipes with custom arguments}
@@ -101,6 +103,8 @@ An example can be seen in \calCCF.
 (*\calCCF*).py 20170710 fp_fp02a203_e2ds_AB.fits UrNe.mas 0 10 0.1
 \end{cmdbox}
 \begin{pythonbox}
+def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
+         step=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -121,6 +125,9 @@ An example can be seen in \calCCF.
     
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
+
 \end{pythonbox}
 \begin{note}
 Here \calCCF requires the custom arguments `reffile', `ccf\_mask', `target\_rv', `ccf\_width' and `ccf\_step'. These must be defined in \progMAIN and must be defined in the list `call'. 
@@ -138,11 +145,66 @@ The other parameters required by \spirouStartup.GetCustomFromRuntime() are:
 \end{note}
 \end{minipage}
 
+This is then fed into \spirouStartup\path{.LoadArguments} with the output of \spirouStartup.GetCustomFromRuntime() (i.e. customargs) passed to \spirouStartup\path{.LoadArguments}. As we do not use \spirouStartup.InitialFileSetup() with custom arguments the \calibdb has to be loaded separately, this is done using \spirouStartup\path{.LoadCalibDB} and is the last step in the setup for recipes with custom arguments.
 
 
 % -------------------------------------------------------
-\clearpage
-\newpage
+\subsubsection{Summary of setup}
+\label{ch:the_recipes:gen_layout:summary}
+% -------------------------------------------------------
+
+There are two ways to setup a recipe, the first is with standard arguments, i.e.:
+\begin{enumerate}
+	\item \spirouStartup\path{.Begin()}
+	\item \spirouStartup\path{.LoadArguments()}
+	\item \spirouStartup\path{.InitialFileSetup()}
+\end{enumerate}
+\begin{pythonbox}
+def main(night_name=None, files=None):
+    # ----------------------------------------------------------------------
+    # Set up
+    # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    # load standard arguments from run time
+    p = spirouStartup.LoadArguments(p, night_name, files)
+    # set files 
+    p = spirouStartup.InitialFileSetup(p, kind='dark', prefixes=['dark_dark'])
+    # ----------------------------------------------------------------------
+\end{pythonbox}
+
+\noindent the second is with custom arguments, i.e.:
+\begin{enumerate}
+	\item \spirouStartup\path{.Begin()}
+	\item \spirouStartup\path{.GetCustomFromRuntime}
+	\item \spirouStartup\path{.LoadArguments()}
+	\item \spirouStartup\path{.LoadCalibDB()}
+\end{enumerate}
+\begin{pythonbox}
+
+def main(night_name=None, arg1=None, arg2=None):
+    # ----------------------------------------------------------------------
+    # Set up
+    # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    # get custom arguments (from run time and function call)
+    if hcfiles is None or fpfile is None:
+        names, types = ['arg1', 'arg2'], [str, str]
+        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+                                                        last_multi=True)
+    else:
+        customargs = dict(arg1=arg1, arg2=arg2)
+    # get parameters from configuration files and run time arguments
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
+    # ----------------------------------------------------------------------
+\end{pythonbox}
+
+
+% -------------------------------------------------------
 \subsection{Main recipe code}
 \label{ch:the_recipes:gen_layout:main_recipe_code}
 % -------------------------------------------------------
