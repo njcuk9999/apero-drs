@@ -14,7 +14,11 @@ Recipe to generate the bad pixel map. \\
 % -------------------------------------------------------
 The input of \calbadpix is as follows:
 \begin{cmdbox}
-cal_BADPIX_spirou.py  night_repository  flatfile, darkfile
+cal_BADPIX_spirou.py night_repository flatfile darkfile
+\end{cmdbox}
+\noindent for example:
+\begin{cmdbox}[title={example}]
+cal_BADPIX_spirou.py 20170710 flat_flat02f10.fits dark_dark02d406.fits
 \end{cmdbox}
 \noindent or
 \begin{pythonbox}
@@ -32,93 +36,95 @@ cal_DARK_spirou.main(night_repository, flatfile=flatfile, darkfile=darkfile)
 	\item dark\_dark (darkfile)
 \end{itemize}
 
-% % -------------------------------------------------------
-% \subsection{The outputs}
-% % -------------------------------------------------------
+% -------------------------------------------------------
+\subsection{The outputs}
+% -------------------------------------------------------
 
-% The outputs of \definevariable{text:badpixelfits}{badpixelfits} are as follows:
+The outputs of \definevariable{text:badpixelfits}{badpixelfits} are as follows:
 
-% \begin{itemize}
-% \item {badpixelfits} in form:
-% \begin{tcustomdir}
-% \{\reduceddir\}\{date prefix\}\_\{file\}\_badpixelfits.fits
-% \end{tcustomdir}
-% \end{itemize}
+\begin{itemize}
+\item {badpixelfits} in form:
+\begin{tcustomdir}
+\{\reduceddir\}\{date prefix\}\_\{file\}\_badpixelfits.fits
+\end{tcustomdir}
+\end{itemize}
 
-% \noindent where `date prefix' is constructed from \argnightname and the file name is the first file in \argfilenames.
+\noindent where `date prefix' is constructed from \argnightname and the file name is the flatfile name.
 
-% % -------------------------------------------------------
-% \subsection{Summary of procedure}
-% % -------------------------------------------------------
-% \begin{enumerate}
-% \item {}
-% \end{enumerate}
-
-
-% % -------------------------------------------------------
-% \subsection{Quality Control}
-% % -------------------------------------------------------
-
-% There are currently three quality control checks for cal\_DARK\_spirou
-% \begin{itemize}
-% \item Unexpected {} if: 
-% 	\begin{equation}
-	
-% 	\end{equation}
-
-% \end{itemize}
-
-% If none of these quality control criteria are valid then the output file is passed into the \calibdb with key `{}'.
+% -------------------------------------------------------
+\subsection{Summary of procedure}
+% -------------------------------------------------------
+\begin{enumerate}
+	\item Normalise the flats
+	\item Look for isolated hot pixels
+	\item Calculate how much pixels deviate compared to expected values
+	\item Select hot pixels compared to neighbours
+	\item Combine bad pixel map
+	\item Save bad pixel mask to file
+\end{enumerate}
 
 
-% % -------------------------------------------------------
-% \newpage
-% \subsection{Example working run}
-% % -------------------------------------------------------
+% -------------------------------------------------------
+\subsection{Quality Control}
+% -------------------------------------------------------
 
-% An example run where everything worked is below:
+There are no quality control parameters for \calbadpix.
 
-% \begin{cmdboxprintspecial}
-% @g
+The output file is passed into the \calibdb with key `BADPIX' for the `badpixfile'. \\
 
-% @g
-% \end{cmdboxprintspecial}
+\noindent For example the following lines are added to the \calibdb for 
+\argnightname{\lstinline[style=pythoninline]| = "20170710" |}, {\lstinline[style=pythoninline]| flatfile = "flat_flat02f10.fits" |} and {\lstinline[style=pythoninline]| darkfile = "dark_dark02d406.fits" |}. \\
 
-
-% % -------------------------------------------------------
-% \newpage
-% \subsection{Interactive mode}
-% % -------------------------------------------------------
+\begin{textbox}[title={In calibration database file}]
+BADPIX 20170710 20170710_flat_flat02f10_badpixel.fits 2017-07-10-13:07:49.470000 1499692069.47
+\end{textbox}
 
 
-% \noindent In interactive mode (\definevariable{text:drs_plot}{DRS\_PLOT} = 1) three figures will also appear (see Figure \ref{figure:}).
+% -------------------------------------------------------
+\newpage
+\subsection{Example working run}
+% -------------------------------------------------------
 
+An example run where everything worked is below:
 
-% \begin{figure}
-
-% \begin{center}
-% \begin{minipage}{.495\textwidth}
-% \begin{center}
-% \includegraphics[width=\textwidth]{Figures/cal_DARK_spirou_1.pdf}
-% a
-% \end{center}
-% \end{minipage}%
-% \begin{minipage}{.495\textwidth}
-% \begin{center}
-% \includegraphics[width=\textwidth]{Figures/cal_DARK_spirou_2.pdf}
-% b
-% \end{center}
-% \end{minipage}%
-% \end{center}
-
-% \begin{center}
-% \begin{minipage}{.495\textwidth}
-% \begin{center}
-% \includegraphics[width=\textwidth]{Figures/cal_DARK_spirou_3.pdf}
-% c
-% \end{center}
-% \end{minipage}%
-% \end{center}
-
-% \caption{\textbf{(a)} The image with overplot red and blue regions (red/blue rectangles). \textbf{(b)} The bad pixel mask, bad pixels have a value=1 (in black) and good pixels have a value=0 (in white). \textbf{(c)} Histograms of the image regions, the full image (in green), the blue section (in blue) and the red section (in red). \label{figure:cal_DARK_spirou}}
-% \end{figure}
+\begin{cmdbox}[title={example}]
+cal_BADPIX_spirou.py 20170710 flat_flat02f10.fits dark_dark02d406.fits
+\end{cmdbox}
+\begin{cmdboxprintspecial}
+@gHH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   || * SPIROU \@(#) Geneva Observatory (VERSION)
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
+HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
+HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp
+HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
+HH:MM:SS.S -   ||                    DRS_DEBUG is set, debug mode level:1
+HH:MM:SS.S -   |cal_BADPIX_spirou|Now running : cal_BADPIX_spirou with:
+HH:MM:SS.S -   |cal_BADPIX_spirou|       -- flatfile=flat_flat02f10.fits
+HH:MM:SS.S -   |cal_BADPIX_spirou|       -- darkfile=dark_dark02d406.fits
+HH:MM:SS.S -   |cal_BADPIX_spirou|Config Error: ICDP_NAME loaded from: /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU.py
+HH:MM:SS.S - * |cal_BADPIX_spirou|Now processing Image TYPE FLAT with cal_BADPIX_spirou recipe
+HH:MM:SS.S - * |cal_BADPIX_spirou|Now processing Image TYPE DARK with cal_BADPIX_spirou recipe
+HH:MM:SS.S -   |cal_BADPIX_spirou|Reading FLAT Image /scratch/Projects/spirou_py3/data/raw/20170710/flat_flat02f10.fits
+HH:MM:SS.S -   |cal_BADPIX_spirou|FLAT Image 2048 x 2048 loaded
+HH:MM:SS.S -   |cal_BADPIX_spirou|Reading DARK Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits
+HH:MM:SS.S -   |cal_BADPIX_spirou|DARK Image 2048 x 2048 loaded
+HH:MM:SS.S -   |cal_BADPIX_spirou|Normalising the flat
+HH:MM:SS.S -   |cal_BADPIX_spirou|Looking for bad pixels
+HH:MM:SS.S -   |cal_BADPIX_spirou|Fraction of hot pixels from dark: 3.01 %
+HH:MM:SS.S -   |cal_BADPIX_spirou|Fraction of bad pixels from flat: 1.66 %
+HH:MM:SS.S -   |cal_BADPIX_spirou|Fraction of non-finite pixels in dark: 20.76 %
+HH:MM:SS.S -   |cal_BADPIX_spirou|Fraction of non-finite pixels in flat: 14.66 %
+HH:MM:SS.S -   |cal_BADPIX_spirou|Fraction of bad pixels with all criteria: 24.87 %
+HH:MM:SS.S - * |cal_BADPIX_spirou|QUALITY CONTROL SUCCESSFUL - Well Done -
+HH:MM:SS.S -   |cal_BADPIX_spirou|Saving Bad Pixel Map in 20170710_flat_flat02f10_badpixel.fits
+@g@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|
+@g@yHH:MM:SS.S - * |cal_BADPIX_spirou|Updating Calib Data Base with BADPIX
+HH:MM:SS.S - * |cal_BADPIX_spirou|Recipe cal_BADPIX_spirou has been successfully completed@g
+\end{cmdboxprintspecial}
