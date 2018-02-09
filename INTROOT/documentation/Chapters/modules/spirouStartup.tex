@@ -54,11 +54,15 @@ spirouStartup.spirouStartup.get_custom_from_run_time_args(positions=None, types=
 Extract custom arguments from defined positions in sys.argv (defined at
 run time)
 
-:param positions: list of integers, the positions of the arguments
+:param positions: list of integers or None, the positions of the arguments
                   (i.e. first argument is 0)
 
-:param types: list of python types, the type (i.e. int, float) for each
-              argument
+:param types: list of python types or None, the type (i.e. int, float) for
+              each argument. Note if last_multi = True, the type of the
+              last defined parameter should be the type of each argument
+              (but the output parameter will be a list of this type of
+              arguments)
+
 :param names: list of strings, the names of each argument (to access in
               parameter dictionary once extracted)
 
@@ -71,6 +75,9 @@ run time)
 :param lognames: list of strings, the names displayed in the log (on error)
                  theses should be similar to "names" but in a form the
                  user can easily understand for each variable
+
+:param last_multi: bool, if True then last argument in positions/types/
+                   names adds all additional arguments into a list
 
 :return values: dictionary, if run time arguments are correct python type
                 the name-value pairs are returned
@@ -109,6 +116,42 @@ Get full file path and check the path and file exist
 :return location: string, the full file path of the file
 \end{pythondocstring}
 \end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetFiles}
+
+Defined in \spirouStartup\path{.spirouStartup.get_files}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.GetFiles(p, path, names, prefix=None, kind=None)
+spirouStartup.spirouStartup.get_files(p, path, names, prefix=None, kind=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get a set of full file path and check the path and file exist
+(wrapper around get_files)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            program: string, the recipe/way the script was called
+                     i.e. from sys.argv[0]
+
+:param path: string, either the directory to the folder (if name is None) or
+             the full path to the files
+:param names: list of strings, the names of the files
+:param prefix: string or None, if not None this substring must be in the
+               filenames
+:param kind: string or None, the type of files (for logging)
+
+:return locations: list of strings, the full file paths of the files
+\end{pythondocstring}
+\end{minipage}
+
+
 
 %----------------------------------------------------------------------------------------
 
@@ -272,3 +315,36 @@ Run start up code (based on program and parameters defined in p before)
 
 %----------------------------------------------------------------------------------------
 
+\noindent\begin{minipage}{\textwidth}
+\subsection{LoadCalibDB}
+
+Defined in \spirouStartup\path{.spirouStartup.load_calibdb}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.LoadCalibDB(p, calibdb=True)
+spirouStartup.spirouStartup.load_calibdb(p, calibdb=True)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Load calibration (on startup) this is loaded by default when
+spirouStartup.spirouStartup.initial_file_setup
+(spirouStartup.InitialFileSetup) so this is only needed to be run when
+InitialFileSetup is not used (i.e. when custom arguments are used)
+
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+:param calibdb: bool, whether to load the calibration database (if False
+                just makes sure DRS_CALIB_DB exists (and creates it if it
+                doesn't)
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            if calibdb is True:
+                calibDB: dictionary, the calibration database dictionary
+\end{pythondocstring}
+\end{minipage}
