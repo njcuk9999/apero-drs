@@ -984,8 +984,8 @@ Defined in \spirouImage\path{.spirouFITS.readimage_and_combine}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.ReadImageAndCombine(p, framemath='+', filename=None, log=True)
-spirouImage.spirouFITS.readimage_and_combine(p, framemath='+', filename=None, log=True)
+spirouImage.ReadImageAndCombine(p, framemath='+', filename=None, filenames=None, log=True)
+spirouImage.spirouFITS.readimage_and_combine(p, framemath='+', filename=None, filenames=None, log=True)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -994,13 +994,17 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 
 :param p: parameter dictionary, ParamDict containing constants
     Must contain at least:
-            fitsfilename: string, the full path of for the main raw fits
-                  file for a recipe
-                  i.e. /data/raw/20170710/filename.fits
             log_opt: string, log option, normally the program name
+            
+            optional:
+            fitsfilename: string, the full path of for the main raw fits
+                  file for a recipe i.e. /data/raw/20170710/filename.fits
+                  (if filename is None this is required)
+                  
             arg_file_names: list, list of files taken from the command line
                             (or call to recipe function) must have at least
                             one string filename in the list
+                  (if filenames is None this is required)
 
 :param framemath: string, controls how files should be added
 
@@ -1011,8 +1015,13 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
             'multiply' or '*'      - multiplies the frames
             'divide' or '/'        - divides the frames
             'none'                 - does not add
+            
 :param filename: string or None, filename of the image to read, if None
                  then p['fitsfilename'] is used
+
+:param filenames: list of strings or None, filenames to combine with 
+                  "filename", if None then p['arg_file_names'] is used
+
 :param log: bool, if True logs opening and size
 
 :return image: numpy array (2D), the image
