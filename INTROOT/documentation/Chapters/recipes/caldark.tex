@@ -93,7 +93,15 @@ There are currently three quality control checks for cal\_DARK\_spirou
 \end{thighlight}
 \end{itemize}
 
-If none of these quality control criteria are valid then the output file is passed into the \calibdb with key `DARK' for the `darkfile' and `BADPIX' for the `darkbadpixfile'.
+\noindent If none of these quality control criteria are valid then the output file is passed into the \calibdb with key `DARK' for the `darkfile' and `BADPIX' for the `darkbadpixfile'. \\
+
+\noindent For example the following lines are added to the \calibdb for 
+\argnightname{\lstinline[style=pythoninline]| = "20170710" |} and \argfilenames{\lstinline[style=pythoninline]| = "dark_dark02d406.fits" |} 
+
+\begin{textbox}[title={In calibration database file}]
+DARK 20170710 20170710_dark_dark02d406.fits 2017-07-10-12:37:48.260000 1499690268.26
+BADPIX 20170710 20170710_dark_dark02d406_badpixel.fits 2017-07-10-12:37:48.260000 1499690268.26
+\end{textbox}
 
 % -------------------------------------------------------
 \newpage
