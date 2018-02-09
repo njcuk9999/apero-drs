@@ -14,6 +14,7 @@ Version 0.0.1
 Last modified: 2017-10-11 at 10:49
 """
 from __future__ import division
+import numpy as np
 import os
 import sys
 
@@ -36,7 +37,8 @@ WLOG = spirouCore.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
-typenames = {int:'integer', float:'float', list:'list', bool:'bool', str:'str'}
+TYPENAMES = {int: 'integer', float: 'float', list: 'list',
+             bool: 'bool', str: 'str'}
 
 # =============================================================================
 # Define setup functions
@@ -234,9 +236,38 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
         os.makedirs(reduced_dir)
     # -------------------------------------------------------------------------
     # Calib DB setup
+    p = load_calibdb(p, calibdb)
+    # -------------------------------------------------------------------------
+    # return the parameter dictionary
+    return p
+
+
+def load_calibdb(p, calibdb=True):
+    """
+    Load calibration (on startup) this is loaded by default when
+    spirouStartup.spirouStartup.initial_file_setup
+    (spirouStartup.InitialFileSetup) so this is only needed to be run when
+    InitialFileSetup is not used (i.e. when custom arguments are used)
+
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+    :param calibdb: bool, whether to load the calibration database (if False
+                    just makes sure DRS_CALIB_DB exists (and creates it if it
+                    doesn't)
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                if calibdb is True:
+                    calibDB: dictionary, the calibration database dictionary
+    """
+
     if calibdb:
         if not os.path.exists(p['DRS_CALIB_DB']):
-            WLOG('error', log_opt,
+            WLOG('error', p['log_opt'],
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
@@ -249,9 +280,7 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
         # if reduced directory does not exist create it
         if not os.path.isdir(calib_dir):
             os.makedirs(calib_dir)
-
-    # -------------------------------------------------------------------------
-    # return the parameter dictionary
+    # return p (with calibration database)
     return p
 
 
@@ -497,16 +526,20 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
 
 def get_custom_from_run_time_args(positions=None, types=None, names=None,
                                   required=None, calls=None, cprior=None,
-                                  lognames=None):
+                                  lognames=None, last_multi=False):
     """
     Extract custom arguments from defined positions in sys.argv (defined at
     run time)
 
-    :param positions: list of integers, the positions of the arguments
+    :param positions: list of integers or None, the positions of the arguments
                       (i.e. first argument is 0)
 
-    :param types: list of python types, the type (i.e. int, float) for each
-                  argument
+    :param types: list of python types or None, the type (i.e. int, float) for
+                  each argument. Note if last_multi = True, the type of the
+                  last defined parameter should be the type of each argument
+                  (but the output parameter will be a list of this type of
+                  arguments)
+
     :param names: list of strings, the names of each argument (to access in
                   parameter dictionary once extracted)
 
@@ -519,6 +552,9 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     :param lognames: list of strings, the names displayed in the log (on error)
                      theses should be similar to "names" but in a form the
                      user can easily understand for each variable
+
+    :param last_multi: bool, if True then last argument in positions/types/
+                       names adds all additional arguments into a list
 
     :return values: dictionary, if run time arguments are correct python type
                     the name-value pairs are returned
@@ -547,9 +583,51 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     # deal with no calls priority (set priority for calls to False)
     if cprior is None:
         cprior = [False]*len(positions)
+    # loop around positions test the type and add the value to dictionary
+    customdict = get_arguments(positions, types, names, required, calls,
+                                cprior, lognames)
+    # deal with the position needing to find additional parameters
+    if last_multi:
+        customdict = get_multi_last_argument(customdict, positions, types,
+                                             names, lognames)
+    # finally return dictionary
+    return customdict
+
+
+def get_arguments(positions, types, names, required, calls, cprior, lognames):
+    """
+    Take the "positions" and extract from sys.argv[2:] (first arg is the program
+    name, second arg is reserved for night_name) use "types" to force type
+    (i.e. int/str/float) of each argument (error raised if cannot convert) and
+    push results into a dictionary with keys = "names"
+
+    :param positions: list of integers or None, the positions of the arguments
+                      (i.e. first argument is 0)
+
+    :param types: list of python types or None, the type (i.e. int, float) for
+                  each argument. Note if last_multi = True, the type of the
+                  last defined parameter should be the type of each argument
+                  (but the output parameter will be a list of this type of
+                  arguments)
+
+    :param names: list of strings, the names of each argument (to access in
+                  parameter dictionary once extracted)
+
+    :param required: list of bools or None, states whether the program
+                     should exit if runtime argument not found
+
+    :param calls: list of objects or None, if define these are the values that
+                  come from a function call (overwrite command line arguments)
+
+    :param lognames: list of strings, the names displayed in the log (on error)
+                     theses should be similar to "names" but in a form the
+                     user can easily understand for each variable
+
+    :return dict: dictionary containing the run time arguments converts to
+                  "types", keys are equal to "names"
+    """
     # set up the dictionary
     customdict = dict()
-    # loop around positions test the type and add the value to dictionary
     for pos in positions:
         # deal with not having enough arguments
         try:
@@ -593,13 +671,95 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
             customdict[name] = value
         except ValueError:
             emsg = ('Arguments Error: "{0}" should be a {1} (Value = {2})')
-            eargs = [lognames[pos], typenames[kind], raw_value]
+            eargs = [lognames[pos], TYPENAMES[kind], raw_value]
             WLOG('error', DPROG, emsg.format(*eargs))
         except TypeError:
             pass
-
-    # finally return dictionary
+    # return dict
     return customdict
+
+
+def get_multi_last_argument(customdict, positions, types, names, lognames):
+    """
+    Takes the largest argument in "positions" and pushes all further arguments
+    into a list under names[max(positions)], all further arguments are
+    required to conform to the type "types[max(positions)] and
+    names[max(position)] becomes a list of types[max(positions)]
+
+    :param positions: list of integers or None, the positions of the arguments
+                      (i.e. first argument is 0)
+
+    :param types: list of python types or None, the type (i.e. int, float) for
+                  each argument. Note if last_multi = True, the type of the
+                  last defined parameter should be the type of each argument
+                  (but the output parameter will be a list of this type of
+                  arguments)
+
+    :param names: list of strings, the names of each argument (to access in
+                  parameter dictionary once extracted)
+
+    :param lognames: list of strings, the names displayed in the log (on error)
+                     theses should be similar to "names" but in a form the
+                     user can easily understand for each variable
+
+    :return dict: dictionary containing the run time arguments converts to
+                  "types", keys are equal to "names"
+                  dict[names[max(positions)] is updated to be a list of
+                  type types[max(positions)]
+    """
+    # get the last position and name/type for it
+    maxpos = np.max(positions)
+    maxname = names[maxpos]
+    maxkind = types[maxpos]
+    # check the length of sys.argv (needs to be > maxpos + 2)
+    if len(sys.argv) > maxpos + 2:
+        # convert maxname to a list
+        customdict[maxname] = [customdict[maxname]]
+        # now append additional arguments to this list with type maxkind
+        for pos in range(maxpos + 2, len(sys.argv)):
+            # get vaue from sys.argv
+            raw_value = sys.argv[pos]
+            try:
+                # try to cast it to type "maxkind"
+                raw_value = maxkind(raw_value)
+                # try to add it to dictionary
+                customdict[maxname].append(raw_value)
+            except ValueError:
+                emsg = ('Arguments Error: "{0}" should be a {1} '
+                        '(Value = {2})')
+                eargs = [lognames[pos], TYPENAMES[maxkind], raw_value]
+                WLOG('error', DPROG, emsg.format(*eargs))
+    # return the new custom dictionary
+    return customdict
+
+
+def get_files(p, path, names, prefix=None, kind=None):
+    """
+    Get a set of full file path and check the path and file exist
+    (wrapper around get_files)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+
+    :param path: string, either the directory to the folder (if name is None) or
+                 the full path to the files
+    :param names: list of strings, the names of the files
+    :param prefix: string or None, if not None this substring must be in the
+                   filenames
+    :param kind: string or None, the type of files (for logging)
+
+    :return locations: list of strings, the full file paths of the files
+    """
+    # define storage for locations
+    locations = []
+    # loop around names of files
+    for name in names:
+        locations.append(get_file(p, path, name, prefix, kind))
+    # if all conditions passed return full path
+    return locations
 
 
 def get_file(p, path, name=None, prefix=None, kind=None):
@@ -658,6 +818,8 @@ def get_file(p, path, name=None, prefix=None, kind=None):
         WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
     # if all conditions passed return full path
     return location
+
+
 
 
 def get_fiber_type(p, filename, fibertypes=None):

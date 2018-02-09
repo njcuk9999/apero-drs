@@ -57,7 +57,7 @@ class ConfigError(ConfigException):
         if message is None:
             self.message = 'Config Error'
         elif type(message) == str:
-            self.message = 'Config Error: ' + message
+            self.message = message
         else:
             self.message = list(message)
         # set logging level
@@ -128,7 +128,8 @@ class ParamDict(dict):
         try:
             return super(ParamDict, self).__getitem__(key)
         except KeyError:
-            emsg = 'Parameter "{0}" not found in parameter dictionary'
+            emsg = ('Config Error: Parameter "{0}" not found in parameter '
+                    'dictionary')
             raise ConfigError(emsg.format(oldkey), level='error')
 
     def __setitem__(self, key, value, source=None):
