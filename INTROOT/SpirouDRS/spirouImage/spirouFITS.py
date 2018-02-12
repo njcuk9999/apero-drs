@@ -238,7 +238,10 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
                                                 filenames, framemath)
     # currently we overwrite fitsfilename with last framefilename
     # TODO: Do we want to overwrite header/fitsfilename with last entry?
-    p['fitsfilename'] = filenames[-1]
+    if len(filenames) > 0:
+        p['fitsfilename'] = filenames[-1]
+    else:
+        p['fitsfilename'] = filename
     p.set_source('fitsfilename', __NAME__)
 
     # convert header to python dictionary
