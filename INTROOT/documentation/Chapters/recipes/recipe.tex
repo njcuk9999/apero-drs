@@ -35,12 +35,25 @@
 % The outputs of \definevariable{}{} are as follows:
 
 % \begin{itemize}
+
 % \item {} in form:
 % \begin{tcustomdir}
-% \{\reduceddir\}\{date prefix\}\_\{file\}.fits
+% \{\reduceddir\}/\{date prefix\}\_\{file\}.fits
 % \end{tcustomdir}
 
+% \end{itemize}
+
+
 % \noindent where `date prefix' is constructed from \argnightname and the file name is the first file in \argfilenames.
+
+
+% \noindent for example for \reduceddir\lstinline[style=pythoninline]|='/drs/data/reduced/20170710'| and \argfilenames\lstinline[style=pythoninline]|=['']| the output files would be:
+% \begin{tcustomdir}
+% \begin{itemize}
+% \item /drs/data/reduced/20170710/20170710\_
+% \item /drs/data/reduced/20170710/20170710\_
+% \end{itemize}
+% \end{tcustomdir}
 
 % % -------------------------------------------------------
 % \subsection{Summary of procedure}
@@ -48,6 +61,31 @@
 % \begin{enumerate}
 % \item {}
 % \end{enumerate}
+
+
+% % -------------------------------------------------------
+% \subsection{Quality Control}
+% % -------------------------------------------------------
+
+% Text here
+% \begin{itemize}
+% \item condition here
+% \begin{thighlight}
+% \begin{equation}
+% Equation
+% \end{equation}
+% \end{thighlight}
+
+% \end{itemize}
+
+% \noindent If none of these quality control criteria are valid then the output file is passed into the \calibdb with key `KEY' for the `'. \\
+
+% \noindent For example the following lines are added to the \calibdb for 
+% \argnightname{\lstinline[style=pythoninline]| = "20170710" |} and \argfilenames{\lstinline[style=pythoninline]| = "" |}. \\
+
+% \begin{textbox}[title={In calibration database file}]
+
+% \end{textbox}
 
 
 % % -------------------------------------------------------
