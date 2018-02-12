@@ -521,8 +521,8 @@ def LOC_ORDER_PROFILE_FILE(p):
     calibprefix = CALIB_PREFIX(p)
     rawfn = p['arg_file_names'][0].replace('.fits', newext)
     rawfitsname = calibprefix + rawfn
-    rawfits = os.path.join(reducedfolder, rawfitsname)
-    return rawfits
+    orderpfile = os.path.join(reducedfolder, rawfitsname)
+    return orderpfile
 
 
 def LOC_LOCO_FILE(p):
