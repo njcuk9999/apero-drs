@@ -389,7 +389,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\callocRAW.\progMAIN}{Public}
 
 % qc_loc_nbo_fpall
-\item \ParameterEntry{Number of orders to fit (QC)}
+\item \namedlabel{text:qc_loc_nbo_fpall} \ParameterEntry{Number of orders to fit (QC)}
 {Quality control parameter for the number of orders on fiber to fit. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
 {qc\_loc\_nbo\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':72, 'A':36, 'B':36, 'C':36\} |}
@@ -1316,7 +1316,7 @@ Value must be a float equal to or larger than zero.
 
 
 % qc_loc_maxlocfit_removed_ctr
-\item \ParameterEntry{Maximum points removed in localization position fit}
+\item \namedlabel{text:qc_loc_maxlocfit_removed_ctr} \ParameterEntry{Maximum points removed in localization position fit}
 {Defines the maximum allowed number of points removed in the position fitting process (during localization). If number is more than this it does not pass the quality control criteria: 
 \begin{equation}
 \text{Number of rejected orders in center fit} >\text{qc\_loc\_maxlocfit\_removed\_ctr}
@@ -1328,7 +1328,7 @@ Value must be a integer greater than zero.
 
 
 % qc_loc_maxlocfit_removed_wid
-\item \ParameterEntry{Maximum points removed in localization width fit}
+\item \namedlabel{text:qc_loc_maxlocfit_removed_wid} \ParameterEntry{Maximum points removed in localization width fit}
 {Defines the maximum allowed number of points removed in the width fitting process (during localization). If number is more than this it does not pass the quality control criteria: 
 \begin{equation}
 \text{Number of rejected orders in width fit} >\text{qc\_loc\_maxlocfit\_removed\_width}
@@ -1340,7 +1340,7 @@ Value must be a integer greater than zero.
 
 
 % qc_loc_rmsmax_center
-\item \ParameterEntry{Maximum allowed RMS in fitting in localization position fit}
+\item \namedlabel{text:qc_loc_rmsmax_center} \ParameterEntry{Maximum allowed RMS in fitting in localization position fit}
 {Defines the maximum RMS allowed in the position fitting process (during localization). If the RMs is higher than this value it does not pass the quality control criteria: 
 \begin{equation}
 \text{Mean rms center fit} > \text{qc\_loc\_rmsmax\_center}
@@ -1352,7 +1352,7 @@ Value must be a float greater than zero.
 
 
 % qc_loc_rmsmax_fwhm
-\item \ParameterEntry{Maximum allowed RMS in fitting in localization width fit}
+\item \namedlabel{text:qc_loc_rmsmax_fwhm} \ParameterEntry{Maximum allowed RMS in fitting in localization width fit}
 {Defines the maximum RMS allowed in the width fitting process (during localization). If the RMs is higher than this value it does not pass the quality control criteria: 
 \begin{equation}
 \text{Mean rms width fit} > \text{qc\_loc\_rmsmax\_fwhm}
@@ -1564,7 +1564,7 @@ Value must be a float greater than zero.
 \item \namedlabel{text:reduced_dir} \PseudoParamEntry{Full path of reduced data directory}
 {Gets the full path of the reduced data directory.}
 {reduced\_dir}
-{\AllRecipes}{\spirouConst.REDUCED\_DIR()}{\spirouStartup.run\_time\_args()}
+{\AllRecipes}{\spirouConst.\path{REDUCED_DIR()}}{\spirouStartup.run\_time\_args()}
 
 \end{itemize}
 
@@ -1581,21 +1581,165 @@ Value must be a float greater than zero.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+% darkfile
 \begin{itemize}
 	\item \namedlabel{text:darkfile} \PseudoParamEntry{The dark calibration file}
 	{The full path of the dark calibration file}
 	{darkfile}
-	{\calDARK}{\spirouConst.DARK\_FILE()}{\calDARK}
+	{\calDARK}{\spirouConst.\path{DARK\_FILE()}}{\calDARK}
 \end{itemize}
 
-
+% darkbadpixfile
 \begin{itemize}
 	\item \namedlabel{text:darkbadpixfile} \PseudoParamEntry{The dark bad pixel map calibration file}
 	{The full path of the dark bad pixel map calibration file}
 	{darkbadpixfile}
-	{\calDARK}{\spirouConst.DARK\_BADPIX\_FILE()}{\calDARK}
+	{\calDARK}{\spirouConst.\path{DARK_BADPIX_FILE()}}{\calDARK}
 \end{itemize}
+
+% badpixelfits
+\begin{itemize}
+	\item \namedlabel{text:badpixelfits} \PseudoParamEntry{The bad pixel map calibration file}
+	{The full path of the bad pixel map calibration file}
+	{badpixfile}
+	{\calbadpix}{\spirouConst.\path{BADPIX_FILE()}}{\calbadpix}
+\end{itemize}
+
+% order_profile
+\begin{itemize}
+	\item \namedlabel{text:order_profile} \PseudoParamEntry{The order profile image file}
+	{The full path of the order profile image file.}
+	{orderpfile}
+	{\callocRAW}{\spirouConst.\path{LOC_ORDER_PROFILE_FILE()}}{\callocRAW}
+\end{itemize}
+
+% locofits
+\begin{itemize}
+	\item \namedlabel{text:locofitsfile} \PseudoParamEntry{Localization file 1}
+	{The full path of the localisation file containing the center fits for each order.}
+	{locofits}
+	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE()}}{\callocRAW}
+\end{itemize}
+
+% locofits2
+\begin{itemize}
+	\item \namedlabel{text:locofitsfile2} \PseudoParamEntry{Localization file 2}
+	{The full path of the localisation file containing the width fits for each order}
+	{locofits2}
+	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE2()}}{\callocRAW}
+\end{itemize}
+
+% locofits3
+\begin{itemize}
+	\item \namedlabel{text:locofitsfile3} \PseudoParamEntry{Localization file 3}
+	{The full path of the fits super-imposed onto the origial image file.}
+	{locofits3}
+	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE3()}}{\callocRAW}
+\end{itemize}
+
+% tiltfits
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+% blazefits
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% flatfits
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% e2ds file
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% all extract types
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% driftfits_raw
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+% driftfits_e2ds
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% drifttblfilename_e2ds
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% driftfits_peak_e2ds
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% drifttblfilename_peak_e2ds
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+
+% corfile
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
+
+% ccf_table_file
+% \begin{itemize}
+% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	{}
+% 	{}
+% 	{\cal}{\spirouConst.}{\cal}
+% \end{itemize}
 
 
 \fi

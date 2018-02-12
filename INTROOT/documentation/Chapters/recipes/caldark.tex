@@ -22,9 +22,9 @@ cal_DARK_spirou.py 20170710 dark_dark02d406.fits
 \noindent or
 \begin{pythonbox}
 import cal_DARK_spirou
-night_reposityory = '20170710'
+night_repository = '20170710'
 filenames = ['dark_dark02d406.fits']
-cal_DARK_spirou.main(night_repository, filenames)
+cal_DARK_spirou.main(night_repository, file=filenames)
 \end{pythonbox}
 
 \noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python). \\
@@ -42,16 +42,24 @@ The outputs of \calDARK are as follows:
 \begin{itemize}
 \item \definevariable{text:darkfile}{darkfile} in form:
 \begin{tcustomdir}
-\{\reduceddir\}\{date prefix\}\_\{file\}.fits
+\{\reduceddir\}/\{date prefix\}\_\{file\}.fits
 \end{tcustomdir}
 
 \item \definevariable{text:darkbadpixfile}{darkbadpixfile} in form:
 \begin{tcustomdir}
-\{\reduceddir\}\{date prefix\}\_\{file\}\_badpixel.fits
+\{\reduceddir\}/\{date prefix\}\_\{file\}\_badpixel.fits
 \end{tcustomdir}
 \end{itemize}
 
-\noindent where `date prefix' is constructed from \argnightname and the file name is the first file in \argfilenames.
+\noindent where `date prefix' is constructed from \argnightname and the file name is the first file in \argfilenames. \\
+
+\noindent For example for \reduceddir\lstinline[style=pythoninline]|='/drs/data/reduced/20170710'| and \argfilenames\lstinline[style=pythoninline]|=['dark_dark02d406.fits']| the output files would be:
+\begin{tcustomdir}
+\begin{itemize}
+\item /drs/data/reduced/20170710/20170710\_dark\_dark02d406.fits
+\item /drs/data/reduced/20170710/20170710\_dark\_dark02d406\_badpixel.fits
+\end{itemize}
+\end{tcustomdir}
 
 % -------------------------------------------------------
 \subsection{Summary of procedure}
@@ -116,27 +124,27 @@ An example run where everything worked is below:
 \begin{cmdbox}[title={example}]
 cal_DARK_spirou.py 20170710 dark_dark02d406.fits
 \end{cmdbox}
-\begin{cmdboxprintspecial}
+\begin{cmdboxprintspecial}[fontupper=\tiny]
 @gHH:MM:SS.S -   || ***************************************** 
 HH:MM:SS.S -   || * SPIROU \@(#) Geneva Observatory (VERSION) 
 HH:MM:SS.S -   || ***************************************** 
-HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw 
-HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced 
-HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB 
-HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg 
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/drs/data/raw 
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/drs/data/reduced 
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/drs/data/calibDB 
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/drs/data/msg 
 HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all) 
 HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all) 
 HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger) 
 HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
-HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp/
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp/
 HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
 HH:MM:SS.S -   ||                    DRS_DEBUG is set, debug mode level:1
 HH:MM:SS.S -   |ipython:2d406|Now running : ipython on file(s): dark_dark02d406.fits
-HH:MM:SS.S -   |ipython:2d406|On directory /scratch/Projects/spirou_py3/data/raw/20170710
-HH:MM:SS.S -   |ipython:2d406|ICDP_NAME loaded from: /scratch/Projects/spirou_py3/INTROOT/config/constants_SPIROU.py
+HH:MM:SS.S -   |ipython:2d406|On directory /drs/data/raw/20170710
+HH:MM:SS.S -   |ipython:2d406|ICDP_NAME loaded from: /drs/INTROOT/config/constants_SPIROU.py
 HH:MM:SS.S - * |ipython:2d406|Correct type of image for dark (dark_dark)
 HH:MM:SS.S - * |ipython:2d406|Now processing Image TYPE UNKNOWN with ipython recipe
-HH:MM:SS.S -   |ipython:2d406|Reading Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits
+HH:MM:SS.S -   |ipython:2d406|Reading Image /drs/data/raw/20170710/dark_dark02d406.fits
 HH:MM:SS.S -   |ipython:2d406|Image 2048 x 2048 loaded
 HH:MM:SS.S - * |ipython:2d406|Dark Time = 597.489 s
 HH:MM:SS.S -   |ipython:2d406|Doing Dark measurement
