@@ -43,13 +43,20 @@ cal_DARK_spirou.main(night_repository, flatfile=flatfile, darkfile=darkfile)
 The outputs of \definevariable{text:badpixelfits}{badpixelfits} are as follows:
 
 \begin{itemize}
-\item {badpixelfits} in form:
+\item \definevariable{text:badpixelfits}{badpixelfits} in form:
 \begin{tcustomdir}
-\{\reduceddir\}\{date prefix\}\_\{file\}\_badpixelfits.fits
+\{\reduceddir\}/\{date prefix\}\_\{file\}\_badpixelfits.fits
 \end{tcustomdir}
 \end{itemize}
 
 \noindent where `date prefix' is constructed from \argnightname and the file name is the flatfile name.
+
+\noindent for example for \reduceddir\lstinline[style=pythoninline]|='/drs/data/reduced/20170710'| and flatfile\lstinline[style=pythoninline]|='flat_flat02f10.fits'| the output file would be:
+\begin{tcustomdir}
+\begin{itemize}
+\item /drs/data/reduced/20170710/20170710\_flat\_flat02f10\_badpixelfits.fits
+\end{itemize}
+\end{tcustomdir}
 
 % -------------------------------------------------------
 \subsection{Summary of procedure}
@@ -90,30 +97,30 @@ An example run where everything worked is below:
 \begin{cmdbox}[title={example}]
 cal_BADPIX_spirou.py 20170710 flat_flat02f10.fits dark_dark02d406.fits
 \end{cmdbox}
-\begin{cmdboxprintspecial}
+\begin{cmdboxprintspecial}[fontupper=\tiny]
 @gHH:MM:SS.S -   || *****************************************
 HH:MM:SS.S -   || * SPIROU \@(#) Geneva Observatory (VERSION)
 HH:MM:SS.S -   || *****************************************
-HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw
-HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced
-HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB
-HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/drs/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/drs/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/drs/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/drs/data/msg
 HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
 HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
 HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
 HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
-HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp
 HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
 HH:MM:SS.S -   ||                    DRS_DEBUG is set, debug mode level:1
 HH:MM:SS.S -   |cal_BADPIX_spirou|Now running : cal_BADPIX_spirou with:
 HH:MM:SS.S -   |cal_BADPIX_spirou|       -- flatfile=flat_flat02f10.fits
 HH:MM:SS.S -   |cal_BADPIX_spirou|       -- darkfile=dark_dark02d406.fits
-HH:MM:SS.S -   |cal_BADPIX_spirou|Config Error: ICDP_NAME loaded from: /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU.py
+HH:MM:SS.S -   |cal_BADPIX_spirou|Config Error: ICDP_NAME loaded from: /drs/spirou_py3/INTROOT/config/constants_SPIROU.py
 HH:MM:SS.S - * |cal_BADPIX_spirou|Now processing Image TYPE FLAT with cal_BADPIX_spirou recipe
 HH:MM:SS.S - * |cal_BADPIX_spirou|Now processing Image TYPE DARK with cal_BADPIX_spirou recipe
-HH:MM:SS.S -   |cal_BADPIX_spirou|Reading FLAT Image /scratch/Projects/spirou_py3/data/raw/20170710/flat_flat02f10.fits
+HH:MM:SS.S -   |cal_BADPIX_spirou|Reading FLAT Image /drs/data/raw/20170710/flat_flat02f10.fits
 HH:MM:SS.S -   |cal_BADPIX_spirou|FLAT Image 2048 x 2048 loaded
-HH:MM:SS.S -   |cal_BADPIX_spirou|Reading DARK Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits
+HH:MM:SS.S -   |cal_BADPIX_spirou|Reading DARK Image /drs/data/raw/20170710/dark_dark02d406.fits
 HH:MM:SS.S -   |cal_BADPIX_spirou|DARK Image 2048 x 2048 loaded
 HH:MM:SS.S -   |cal_BADPIX_spirou|Normalising the flat
 HH:MM:SS.S -   |cal_BADPIX_spirou|Looking for bad pixels

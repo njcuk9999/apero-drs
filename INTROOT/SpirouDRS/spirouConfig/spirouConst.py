@@ -86,7 +86,7 @@ def VERSION():
                      full release level), and C denotes minor changes
     """
     # Module Version (Used in all sub-packages)
-    version = '0.1.015'
+    version = '0.1.016'
     return version
 
 
@@ -124,7 +124,7 @@ def LATEST_EDIT():
     :return date: string, the date (in format YYYY-MM-DD)
     """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-02-09'
+    date = '2018-02-12'
     return date
 
 
@@ -521,8 +521,8 @@ def LOC_ORDER_PROFILE_FILE(p):
     calibprefix = CALIB_PREFIX(p)
     rawfn = p['arg_file_names'][0].replace('.fits', newext)
     rawfitsname = calibprefix + rawfn
-    rawfits = os.path.join(reducedfolder, rawfitsname)
-    return rawfits
+    orderpfile = os.path.join(reducedfolder, rawfitsname)
+    return orderpfile
 
 
 def LOC_LOCO_FILE(p):
