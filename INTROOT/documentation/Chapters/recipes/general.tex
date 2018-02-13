@@ -366,6 +366,14 @@ Here we add, for example, key `LOC\_AB' or `LOC\_C' to the calibration database.
 
 After all the main section is completed, the code should end with the final log statement. This is followed by a returning of the local-scope variables (via the `locals()' command), this allows the developer to have access to the local-scope of the functions on calling the function from another python script (this is used extensively in the unit test functions). For consistency this finishing message should not change and be present at the end of each recipe, thus on seeing this message the user and developer know that the recipe is finished.
 
+If the user is running the recipe externally i.e.:
+\begin{cmdbox}
+python recipe.py arg1 arg2 arg3
+ipython recipe.py arg1 arg2 arg3
+recipe.py arg1 arg2 arg3
+\end{cmdbox}
+\noindent then we must deal with plotting interactivity (for example plot should stay open until the user has had chance to interactive with them and any user may need/want use of interactiveness). This is all taken care of with the \spirouStartup\path{.Exit()} function, which should be part of any recipes \path{__main__} section. \\
+
 \vspace{0.5cm}
 \begin{minipage}{\textwidth}
 \noindent An example is shown below
@@ -375,8 +383,21 @@ After all the main section is completed, the code should end with the final log 
 # ----------------------------------------------------------------------
 wmsg = 'Recipe {0} has been successfully completed'
 WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
 
-return locals()
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message
+    spirouStartup.Exit(ll)
+
+# =============================================================================
+# End of code
+# =============================================================================
 \end{pythonbox}
 \end{minipage}
 
