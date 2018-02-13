@@ -19,8 +19,8 @@ See Section \ref{ch:rules:drs_specific:logger} for usuage details.
 
 \begin{pythonbox}
 from SpirouDRS import spirouCore
-spirouCore.wlog(key='', option='', message='')
-spirouCore.spirouLog.logger(key='', option='', message='')
+spirouCore.wlog(key='', option='', message='', printonly=False, logonly=False)
+spirouCore.spirouLog.logger(key='', option='', message='', printonly=False, logonly=False)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -37,6 +37,8 @@ based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
 :param option: string, option code
 :param message: string or list of strings, message to display or messages
                 to display (1 line for each message in list)
+:param printonly: bool, print only do not save to log (default = False)
+:param logonly: bool, log only do not save to log (default = False)
 
 output to stdout/log is as follows:
 
@@ -44,7 +46,7 @@ output to stdout/log is as follows:
 
 time is output in UTC to nearest .1 seconds
 
-:return:
+:return None:
 \end{pythondocstring}
 \end{minipage}
 
