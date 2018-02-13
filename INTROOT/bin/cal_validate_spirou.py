@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 # CODE NAME HERE
@@ -293,7 +293,8 @@ def main(debug_mode=0):
         wlog('', '', '')
         wlog('', '', 'Validation successful. DRS installed corrected.')
 
-    return locals()
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
 
 
 def debug_message(program, sub=False):
@@ -359,8 +360,7 @@ def test_paths(p):
 # Main code here
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    locals = main(debug_mode=DEBUG)
-
+    ll = main(debug_mode=DEBUG)
 
 # =============================================================================
 # End of code
