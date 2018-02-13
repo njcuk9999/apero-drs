@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 initialization code for Spirou startup module
@@ -43,6 +43,8 @@ LoadArguments = spirouStartup.load_arguments
 InitialFileSetup = spirouStartup.initial_file_setup
 
 LoadCalibDB = spirouStartup.load_calibdb
+
+Exit = spirouStartup.exit_script
 
 # =============================================================================
 # End of code
