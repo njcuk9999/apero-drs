@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 spirouCore.py
@@ -49,7 +49,7 @@ TDATA_WARNING = 1
 # =============================================================================
 # Define functions
 # =============================================================================
-def logger(key='', option='', message=''):
+def logger(key='', option='', message='', printonly=False, logonly=False):
     """
     Parses a key (error/warning/info/graph), an option and a message to the
     stdout and the log file.
@@ -64,6 +64,8 @@ def logger(key='', option='', message=''):
     :param option: string, option code
     :param message: string or list of strings, message to display or messages
                     to display (1 line for each message in list)
+    :param printonly: bool, print only do not save to log (default = False)
+    :param logonly: bool, log only do not save to log (default = False)
 
     output to stdout/log is as follows:
 
@@ -71,14 +73,17 @@ def logger(key='', option='', message=''):
 
     time is output in UTC to nearest .1 seconds
 
-    :return:
+    :return None:
     """
     # allow tdata_warning to be changed
     global TDATA_WARNING
     # if key is '' then set it to all
     if len(key) == 0:
         key = 'all'
-
+    # deal with both printonly and logonly set to True (bad)
+    if printonly and logonly:
+        printonly, logonly = False, False
+    # deal with message type (make into a list)
     if type(message) == str:
         message = [message]
     elif type(list):
@@ -105,22 +110,26 @@ def logger(key='', option='', message=''):
         cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
         ecmd = '{0}.{1:1d} - {2} |{3}|NOT IN LOGS: {4}'.format(*cmdargs)
         # print to stdout
-        printlog(cmd, key)
+        if not logonly:
+            printlog(cmd, key)
         # get logfilepath
         try:
             logfilepath, warning = get_logfilepath(unix_time)
             # write to log file
-            writelog(cmd, ecmd, key, logfilepath)
+            if not printonly:
+                writelog(cmd, ecmd, key, logfilepath)
         except ConfigError as e:
-            printlogandcmd(e.message, e.level, human_time, dsec, option)
+            if not logonly:
+                printlogandcmd(e.message, e.level, human_time, dsec, option)
             warning = False
             key = 'error'
         # if warning is True then we used TDATA and should report that
         if warning and TDATA_WARNING:
             wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
                     'path "TDATA"={0}')
-            printlogandcmd(wmsg.format(CPARAMS.get('TDATA', '')), 'warning',
-                           human_time, dsec, option)
+            if not logonly:
+                printlogandcmd(wmsg.format(CPARAMS.get('TDATA', '')),
+                               'warning', human_time, dsec, option)
             TDATA_WARNING = 0
 
     # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
@@ -439,6 +448,7 @@ def writelog(message, errormessage, key, logfilepath):
         try:
             # open/write and close the logfile
             f = open(logfilepath, 'a')
+            # write the first message line
             f.write(message + '\n')
             f.close()
             try:

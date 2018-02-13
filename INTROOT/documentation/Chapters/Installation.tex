@@ -181,58 +181,11 @@ chmod +x (*\InstallDIR*)/bin/*.py
 \end{cmdbox}
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
 \newpage
-\section{Installation Windows}
-\label{ch:install:install_win}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-This is very similar currently to the Linux/\mac installation (in the future a `.exe' file will be given).
-
-\begin{enumerate}
-\item Extract to \InstallDIR\, with your favourite unzipping softwear.
-\item Add \InstallDIR\, to your PYTHONPATH (Section \ref{ch:install:install_win:environ_settings})
-\end{enumerate}
-
-% -------------------------------------------------------
-\subsection{How to modify environmental settings in windows}
-\label{ch:install:install_win:environ_settings}
-% -------------------------------------------------------
-
-This process is a little more convoluted than on Linux or \mac system.
-
-\begin{enumerate}
-\item Go to `My computer > Properties > Advanced System Settings > Enviromental Variables'.
-
-\item if under system variable `PythonPath' exists click edit and add `\InstallDIR;'\, to the end.
-
-\noindent i.e.
-
-\begin{textbox}[title={In "Enviromental Variables"}]
-C:\Python27;(*\InstallDIR*)\bin\;
-\end{textbox}
-
-\item if under system variables `PythonPath' does not exist create a new variable called `PythonPath' and add:
-
-\begin{textbox}[title={In "Enviromental Variables"}]
-%PYTHONPATH%;(*\InstallDIR*);(*\InstallDIR*)\bin\;
-\end{textbox}
-
-\end{enumerate}
-
-\noindent For problems/troubleshooting see here: \url{https://stackoverflow.com/questions/3701646}.
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\clearpage
-\newpage
-\section{Setting up the DRS}
+\section{Setting up the DRS on Linux and macOS}
 \label{ch:install:setup}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -261,8 +214,12 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \vspace{0.1cm}
 \noindent The directories here are for linux and \mac\, systems another example would be `/home/user/INTROOT' for the \InstallDIR\, directory. 
 
-\noindent On Windows machines this would be equivalent to `C:\textbackslash{Users}\textbackslash{<username>}\textbackslash{INTROOT}' in Windows Vista, 7, 8 and 10 or `C:\textbackslash{Documents and Settings}\textbackslash{<username>}\textbackslash{INTROOT}' on early versions of Windows. \\
+\noindent On Windows machines this would be equivalent to `\path{C:\\Users\\User\\Documents\\drs\\}'. \\
 \end{thighlight}
+\begin{note}
+Note: On windows paths in windows must have a `\textbackslash\textbackslash' also the python files must be open with a valid editor such as sublime text, notepad++, spyder or pycharm for example
+\end{note}
+
 \vspace{0.25cm}
 
 \noindent The following keywords can be changed: \\
@@ -347,6 +304,166 @@ HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
 @g
 \end{cmdboxprintspecial}
 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Installation Windows}
+\label{ch:install:install_win}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This is very similar currently to the Linux/\mac installation (in the future a `.exe' file will be given).
+
+\begin{enumerate}
+\item Extract to \InstallDIR\, with your favourite unzipping softwear.
+\item Add \InstallDIR\, to your PYTHONPATH (Section \ref{ch:install:install_win:environ_settings})
+\end{enumerate}
+
+% -------------------------------------------------------
+\subsection{How to modify environmental settings in windows}
+\label{ch:install:install_win:environ_settings}
+% -------------------------------------------------------
+
+This process is a little more convoluted than on Linux or \mac system.
+
+\begin{enumerate}
+\item Go to `My computer > Properties > Advanced System Settings > Enviromental Variables'. Note in windows 10 you can also click the windows icon and type `Advanced System Settings' then click `Environment Variables'.
+
+
+\item under system variable `Path' click edit and add:
+\begin{textbox}[title={In "Enviromental Variables"}]
+(*\InstallDIR*);(*\InstallDIR*)\bin;
+\end{textbox}
+
+\item if under system variable `PYTHONPATH' exists click edit and add `\InstallDIR;'\, to the end.
+
+\noindent i.e.
+
+\begin{textbox}[title={In "Enviromental Variables"}]
+(*\InstallDIR*);(*\InstallDIR*)\bin;
+\end{textbox}
+
+\item if under system variables `PYTHONPATH' does not exist create a new variable called `PYTHONPATH' and add:
+
+\begin{textbox}[title={In "Enviromental Variables"}]
+%PYTHONPATH%;(*\InstallDIR*);(*\InstallDIR*)\bin\;
+\end{textbox}
+
+\end{enumerate}
+
+\noindent Figure \ref{figure:screengrabs} shows screengrabs of the various steps above to aid in updating PATH and PYTHONPATH.
+\vspace{0.25cm}
+\noindent For problems/troubleshooting see here: \url{https://stackoverflow.com/questions/3701646}.
+
+\begin{figure}
+\begin{center}
+\begin{minipage}[t]{.29\textwidth}
+\begin{center}
+\includegraphics[width=\textwidth]{Figures/win/Win1.pdf}
+(a)
+\end{center}
+\end{minipage}
+\begin{minipage}[t]{.29\textwidth}
+\begin{center}
+\includegraphics[width=\textwidth]{Figures/win/Win2.pdf}
+(b)
+\end{center}
+\end{minipage}
+\begin{minipage}[t]{.29\textwidth}
+\begin{center}
+\includegraphics[width=\textwidth]{Figures/win/Win3.pdf}
+(c)
+\end{center}
+\end{minipage}
+
+\begin{minipage}[t]{.29\textwidth}
+\begin{center}
+\includegraphics[width=\textwidth]{Figures/win/Win4.pdf}
+(d)
+\end{center}
+\end{minipage}
+\begin{minipage}[t]{.29\textwidth}
+\begin{center}
+\includegraphics[width=\textwidth]{Figures/win/Win5.pdf}
+(e)
+\end{center}
+\end{minipage}
+\begin{minipage}[t]{.29\textwidth}
+\begin{center}
+\includegraphics[width=\textwidth]{Figures/win/Win6.pdf}
+(f)
+\end{center}
+\end{minipage}
+\end{center}
+\caption{(a) Once in Advanced system properties click ``Environment Variables'' (b) Click `Path' and click `Edit...' to edit the `Path' environmental variable (c) Once in the Path environmental variable click ``New'' to add a new path (d) Type in the new line to add variable and click ``OK'' (e) Once back in the Enivronmental variable page click ``New'' to add `PYTHONPATH' (f) Set the variable name to ``PYTHONPATH'' and edit the variable value accordingly. \label{figure:screengrabs} }
+\end{figure}
+\vspace{0.25cm}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Setting up the DRS}
+\label{ch:install:setup}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Before running the DRS one must set the data paths. \\
+
+\noindent The `\configtxtfile' file is located in the \InstallDIR in the config folder.
+
+i.e. at \InstallDIR\path{\\config\\}{configtxtfile} \\
+
+\noindent The following keywords \textbf{must} be changed (and must be a valid path):
+\begin{thighlight}
+\begin{table}[H]
+{\footnotesize
+\begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
+\definevariable{text:drs_root}{TDATA}            & = & \path{C:\\Users\\User\\Documents\\drs\\data}        & / & Define the DATA directory\\
+&&&&\\
+\definevariable{text:drs_root}{DRS\_ROOT}         & = & \path{C:\\Users\\User\\Documents\\drs\\INTROOT}     & / & Define the installation directory \\
+\definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\raw}    & / & Define the folder with the raw data files in \\
+\definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & \path{C:\\Users\\User\\Documents\\drs\\data\\reduced} & / & Define the directory that the reduced data should be saved to/read from \\
+\definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\calibDB} & / & Define the directory that the calibration files should be saved to/read from \\
+\definevariable{text:drs_data_msg}{DRS\_DATA\_MSG}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\msg}    & / & Define the directory that the log messages are stored in \\
+\definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & \path{C:\\Users\\User\\Documents\\drs\\data\\tmp}    & / & Define the working directory \\
+\end{tabular}
+}
+\end{table}
+\end{thighlight}
+\begin{note}
+Note: On windows paths in windows must have a `\textbackslash\textbackslash' also the python files must be open with a valid editor such as sublime text, notepad++, spyder or pycharm for example
+\end{note}
+
+\vspace{0.25cm}
+
+\noindent The following keywords can be changed: \\
+\begin{thighlight}
+\begin{table}[H]
+\begin{tabular}{>{\color{red}}l c r c p{5cm}}
+\definevariable{text:drs_plot}{DRS\_PLOT}    & = & 1     & / & Whether to show plots \\
+\definevariable{text:print_level}{PRINT\_LEVEL} & = & "all" & / & Level at which to print \\
+\definevariable{text:log_level}{LOG\_LEVEL}   & = & "all" & / & Level at which to log in log file \\
+\end{tabular}
+\end{table}
+
+\noindent For the `\definevariable{text:print_level}{PRINT\_LEVEL} and \definevariable{text:log_level}{LOG\_LEVEL} keywords the values are set as follows:
+\begin{itemize}
+	\item "all" -- prints all events
+	\item "info" -- prints info, warning and error events
+	\item "warning" -- prints warning and error events
+	\item "error" -- print only error events
+\end{itemize}
+\end{thighlight}
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -385,20 +502,21 @@ cal_validate_spirou.main()
 \noindent If validation is successful the following should appear:
 \begin{cmdboxprintspecial}
 @g
-HH:MM:SS.S -   || *****************************************
-HH:MM:SS.S -   || * SPIROU @(#) Geneva Observatory (0.0.1)
-HH:MM:SS.S -   || *****************************************
-HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/drs/data/raw
-HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/drs/data/reduced
-HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/drs/data/calibDB
-HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/drs/data/msg
-HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
-HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
-HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
-HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
-HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp/
-HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
-HH:MM:SS.S -   ||
-HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
+17:34:19.0 -   || *****************************************
+17:34:19.0 -   || * SPIROU @(#) Geneva Observatory (0.1.016)
+17:34:19.0 -   || *****************************************
+17:34:19.0 -   ||(dir_data_raw)      DRS_DATA_RAW=C:\\Users\\User\\Documents\\drs\\data\\raw
+17:34:19.0 -   ||(dir_data_reduc)    DRS_DATA_REDUC=C:\\Users\\User\\Documents\\drs\\data\\reduced
+17:34:19.0 -   ||(dir_calib_db)      DRS_CALIB_DB=C:\\Users\\User\\Documents\\drs\\data\\calibDB
+17:34:19.0 -   ||(dir_data_msg)      DRS_DATA_MSG=C:\\Users\\User\\Documents\\drs\\data\\msg
+17:34:19.0 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
+17:34:19.0 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
+17:34:19.0 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
+17:34:19.0 -   ||(used_date)         DRS_USED_DATE=undefined
+17:34:19.0 -   ||(working_dir)       DRS_DATA_WORKING=C:\\Users\\User\\Documents\\drs\\data\\tmp
+17:34:19.0 -   ||                    DRS_INTERACTIVE is not set, running on-line mode
+17:34:19.0 -   ||                    DRS_DEBUG is set, debug mode level:1
+17:34:19.0 -   ||
+17:34:19.0 -   ||Validation successful. DRS installed corrected.
 @g
 \end{cmdboxprintspecial}
