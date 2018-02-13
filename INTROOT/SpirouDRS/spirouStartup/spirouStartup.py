@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 spirouStartup.py
@@ -17,6 +17,8 @@ from __future__ import division
 import numpy as np
 import os
 import sys
+from IPython import embed
+import code
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -284,10 +286,56 @@ def load_calibdb(p, calibdb=True):
     return p
 
 
+def exit_script(ll):
+    """
+    Exit script for handling interactive endings to sessions (if DRS_PLOT is
+    active)
+
+    :param ll: dict, the local variables
+    :return:
+    """
+    # get parameter dictionary of constants (or create it)
+    if 'p' in ll:
+        p = ll['p']
+    else:
+        p = dict(DRS_PLOT=0, log_opt=sys.argv[0])
+    # if DRS_PLOT is 0 just return 0
+    if not p['DRS_PLOT']:
+        return 0
+    # find whether user is in ipython or python
+    if find_ipython():
+        kind = 'ipython'
+    else:
+        kind = 'python'
+    # log message
+    wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
+    WLOG('info', p['log_opt'], wmsg.format(kind))
+    # deal with python 2 / python 3 input method
+    if sys.version_info.major < 3:
+        uinput = raw_input('')      # note python 3 wont find this!
+    else:
+        uinput = input('')
+    # close any open plots properly
+    spirouCore.sPlt.closeall()
+    # if yes or YES or Y or y then we need to continue in python
+    # this may require starting an interactive session
+    if 'Y' in uinput.upper():
+        # if user in ipython we need to try opening ipython
+        if kind == 'ipython':
+            try:
+                # this is only to be used in this situation and should not
+                # be used in general
+                locals().update(ll)
+                embed()
+            except Exception:
+                pass
+        if not find_interactive():
+            code.interact(local=ll)
+
+
 # =============================================================================
 # Define general functions
 # =============================================================================
-
 def run_time_args(p):
     """
     Get sys.argv arguments (run time arguments and use them to fill parameter
@@ -820,8 +868,6 @@ def get_file(p, path, name=None, prefix=None, kind=None):
     return location
 
 
-
-
 def get_fiber_type(p, filename, fibertypes=None):
     """
     Get fiber types and search for a valid fiber type in filename
@@ -847,6 +893,42 @@ def get_fiber_type(p, filename, fibertypes=None):
     # if we have reached this type then we have no recognized fiber
     emsg = 'Fiber name not recognized (must be in {0})'
     WLOG('error', p['log_opt'], emsg.format(', '.join(fibertypes)))
+
+
+def find_interactive():
+    """
+    Find whether user is using an interactive session
+
+    i.e. True if:
+        ipython code.py
+        ipython >> run code.py
+        python -i code.py
+
+    False if
+        python code.py
+        code.py
+
+    Note cannot distinguish between ipython from shell (so assumed interactive)
+
+    :return cond: bool, True if interactive
+    """
+    cond1 = sys.flags.interactive
+    cond2 = hasattr(sys, 'ps1')
+    cond3 = not sys.stderr.isatty()
+    return cond1 or cond2 or cond3
+
+
+def find_ipython():
+    """
+    Find whether user is using ipython or python
+
+    :return using_ipython: bool, True if using ipython, false otherwise
+    """
+    try:
+        __IPYTHON__             # Note python wont define this, ipython will
+        return True
+    except NameError:
+        return False
 
 
 # =============================================================================
