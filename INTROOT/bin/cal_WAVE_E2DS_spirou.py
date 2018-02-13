@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 # CODE NAME HERE
@@ -10,7 +10,7 @@ Created on 2018-02-09 at 10:57
 @author: cook
 """
 
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import division
 import numpy as np
@@ -202,8 +202,8 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
-
-    return locals()
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
 
 
 # =============================================================================
@@ -211,8 +211,9 @@ def main(night_name=None, hcfiles=None, fpfile=None):
 # =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    locals = main()
-
+    ll = main()
+    # exit message
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code

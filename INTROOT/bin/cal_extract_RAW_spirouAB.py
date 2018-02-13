@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 cal_extract_RAW_spirou
@@ -43,9 +43,9 @@ sPlt = spirouCore.sPlt
 if __name__ == "__main__":
     # run cal_extract_RAW_spirou main with fibertype set
     # (get other arguments from command line - sys.argv)
-    locals = cal_extract_RAW_spirou.main(fiber_type='AB',
-                                         ic_extract_type='all',
-                                         ic_ext_sigdet=-1)
+    ll = cal_extract_RAW_spirou.main(fiber_type='AB',
+                                     ic_extract_type='all',
+                                     ic_ext_sigdet=-1)
 
 # =============================================================================
 # End of code
