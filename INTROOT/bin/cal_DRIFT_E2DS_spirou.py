@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 cal_DRIFT_RAW_spirou.py [night_directory] [Reference file name]
@@ -342,16 +342,18 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    # return a copy of locally defined variables in the memory
+    return dict(locals())
 
-    return locals()
 
 # =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    locals = main()
-
+    ll = main()
+    # exit message
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
