@@ -24,7 +24,7 @@ cal_DARK_spirou.py 20170710 dark_dark02d406.fits
 import cal_DARK_spirou
 night_repository = '20170710'
 filenames = ['dark_dark02d406.fits']
-cal_DARK_spirou.main(night_repository, file=filenames)
+cal_DARK_spirou.main(night_repository, files=filenames)
 \end{pythonbox}
 
 \noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python). \\
@@ -81,7 +81,7 @@ The outputs of \calDARK are as follows:
 % -------------------------------------------------------
 
 
-There are currently three quality control checks for cal\_DARK\_spirou
+There are currently three quality control checks for \calDARK
 \begin{itemize}
 \item Unexpected median dark level if: 
 \begin{thighlight}
