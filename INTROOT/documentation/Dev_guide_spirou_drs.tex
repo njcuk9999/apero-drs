@@ -117,6 +117,9 @@ openany, % A chapter may start on either a recto or verso page.
 % Define the chapters here
 %%%---------------------------------------------------------
 
+% % page break in TOC
+% \addtocontents{toc}{\protect\newpage}
+
 % Chapter: Introduction
 \input{Chapters/Introduction}
 
@@ -146,9 +149,6 @@ openany, % A chapter may start on either a recto or verso page.
 
 % Chapter: Required input header keywords
 \input{Chapters/Input_keywords}
-
-% page break in TOC
-\addtocontents{toc}{\protect\newpage}
 
 % Chapter: Descriptions of constants and variables
 \input{Chapters/Variables}
