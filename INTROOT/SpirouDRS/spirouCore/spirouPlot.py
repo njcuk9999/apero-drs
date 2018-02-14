@@ -550,9 +550,9 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot tilt
-    frame.plot(loc['xfit_tilt'], loc['tilt'])
+    frame.plot(loc['xfit_tilt'], loc['tilt'], label='tilt')
     # plot tilt fit
-    frame.plot(loc['xfit_tilt'], loc['yfit_tilt'])
+    frame.plot(loc['xfit_tilt'], loc['yfit_tilt'], label='tilt fit')
     # set title and labels
     frame.set(title='SLIT TILT ANGLE', xlabel='Order number',
               ylabel='Slit angle [deg]')
