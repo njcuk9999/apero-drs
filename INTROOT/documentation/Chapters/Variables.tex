@@ -1375,7 +1375,7 @@ Value must be a float greater than zero.
 {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
 
 % qc_slit_rms
-\item \ParameterEntry{Maximum RMS allowed for slit TILT}
+\item \namedlabel{text:qc_slit_rms} \ParameterEntry{Maximum RMS allowed for slit TILT}
 {Defines the maximum allowed RMS in the calculated TILT to add TILT profile to the \calibdb. Value must be a float larger than zero.}
 {qc\_slit\_rms}{0.1}
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
@@ -1638,16 +1638,16 @@ Value must be a float greater than zero.
 \end{itemize}
 
 % tiltfits
-% \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:tiltfits} \PseudoParamEntry{Tilt file}
+	{The full path of the tilt file.}
+	{tiltfits}
+	{\calSLIT}{\spirouConst.\path{SLIT_TILT_FILE}}{\calSLIT}
+\end{itemize}
 
 % blazefits
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1656,7 +1656,7 @@ Value must be a float greater than zero.
 
 % flatfits
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1665,7 +1665,7 @@ Value must be a float greater than zero.
 
 % e2ds file
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1674,7 +1674,7 @@ Value must be a float greater than zero.
 
 % all extract types
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1683,7 +1683,7 @@ Value must be a float greater than zero.
 
 % driftfits_raw
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1691,7 +1691,7 @@ Value must be a float greater than zero.
 
 % driftfits_e2ds
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1700,7 +1700,7 @@ Value must be a float greater than zero.
 
 % drifttblfilename_e2ds
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1709,7 +1709,7 @@ Value must be a float greater than zero.
 
 % driftfits_peak_e2ds
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1718,7 +1718,7 @@ Value must be a float greater than zero.
 
 % drifttblfilename_peak_e2ds
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1727,7 +1727,7 @@ Value must be a float greater than zero.
 
 % corfile
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
@@ -1735,7 +1735,7 @@ Value must be a float greater than zero.
 
 % ccf_table_file
 % \begin{itemize}
-% 	\item \namdlabel{text:} \PseudoParamEntry{}
+% 	\item \namedlabel{text:} \PseudoParamEntry{}
 % 	{}
 % 	{}
 % 	{\cal}{\spirouConst.}{\cal}
