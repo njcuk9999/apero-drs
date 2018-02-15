@@ -98,7 +98,7 @@ The outputs of \callocRAW are as follows:
 	\end{itemize}
 \item saves the `order\_profile' image (with a superposition of the fit orders as zero values)
 \item does some quality control
-\item updates calibDB with key ``LOC\_{fiber}'' where {fiber} = [AB, C] etc
+\item updates calibDB with keys ``ORDER\_PROFILE\_\{fiber\}'' ``LOC\_\{fiber\}'' where \{fiber\} = [AB, C] etc
 \end{enumerate}
 
 
@@ -147,13 +147,14 @@ There are currently five quality control checks for \callocRAW
 
 \end{itemize}
 
-\noindent If none of these quality control criteria are valid then the output file is passed into the \calibdb with key `LOC\_\{fiber\}' for the `locofitsname' file. \\
+\noindent If none of these quality control criteria are valid then the output file is passed into the \calibdb with keys `ORDER\_PROFILE\_\{fiber\}' for the `order\_profile' file and `LOC\_\{fiber\}' for the `locofitsname' file. \\
 
 \noindent For example the following lines are added to the \calibdb for 
 \argnightname{\lstinline[style=pythoninline]| = "20170710" |} and \argfilenames{\lstinline[style=pythoninline]| = ["flat_dark02f10.fits"] |}. \\
 
 \begin{textbox}[title={In calibration database file}]
-LOC_AB 20170710 20170710_flat_dark02f10_loco_AB.fits 2017-07-10-13:07:08.460000 1499692028.46
+ORDER_PROFILE_AB 20170710 20170710_flat_dark02f10_order_profile_AB.fits 2017-07-10-13:04:34.440000 1499691874.44
+LOC_AB 20170710 20170710_flat_dark02f10_loco_AB.fits 2017-07-10-13:04:34.440000 1499691874.44
 \end{textbox}
 
 
