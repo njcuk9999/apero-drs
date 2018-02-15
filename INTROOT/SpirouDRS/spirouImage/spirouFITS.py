@@ -113,7 +113,7 @@ def readimage(p, filename=None, log=True, kind=None):
     return image, header, comments, nx, ny
 
 
-def readdata(p, filename, log=True):
+def readdata(p, filename, log=True, return_header=True, return_shape=True):
     """
     Reads the image 'fitsfilename' defined in p and adds files defined in
     'arg_file_names' if add is True
@@ -124,11 +124,24 @@ def readdata(p, filename, log=True):
 
     :param filename: string, filename of the image to read
     :param log: bool, if True logs opening and size
+    :param return_header: bool, if True returns header
+    :param return_shape: bool, if True returns shape
 
     :return image: numpy array (2D), the image
-    :return header: dictionary, the header file of the image
-    :return nx: int, the shape in the first dimension, i.e. data.shape[0]
-    :return ny: int, the shape in the second dimension, i.e. data.shape[1]
+
+    if return_header also returns:
+        :return header: dictionary, the header file of the image
+        :return comments: dictionary, the header comment file
+
+    if return_shape also returns:
+        if len(data.shape)==2
+            :return nx: int, the shape in the first dimension,
+                        i.e. data.shape[0]
+            :return ny: int, the shape in the second dimension,
+                        i.e. data.shape[1]
+        if len(data.shape)!=2
+            :return shape: tuple, data.shape
+            :return empty: None, blank entry
     """
     # set up frequently used variables
     log_opt = p['log_opt']
@@ -136,15 +149,23 @@ def readdata(p, filename, log=True):
     if log:
         WLOG('', log_opt, 'Reading File: {0} '.format(filename))
     # read image from fits file
-    image, imageheader, nx, ny = read_raw_data(filename)
-    # convert header to python dictionary
-    header = dict(zip(imageheader.keys(), imageheader.values()))
-    comments = dict(zip(imageheader.keys(), imageheader.comments))
-    # # add some keys to the header-
-    header['@@@hname'] = filename + ' Header File'
-    header['@@@fname'] = filename
-    # return data, header, data.shape[0], data.shape[1]
-    return image, header, comments, nx, ny
+    rdata = read_raw_data(filename, getheader=return_header,
+                          getshape=return_shape)
+    # if we are returnning header then add some keys
+    if return_header:
+        image, imageheader, nx, ny = rdata
+        # convert header to python dictionary
+        header = dict(zip(imageheader.keys(), imageheader.values()))
+        comments = dict(zip(imageheader.keys(), imageheader.comments))
+        # # add some keys to the header-
+        header['@@@hname'] = filename + ' Header File'
+        header['@@@fname'] = filename
+        if return_shape:
+            return image, header, comments, nx, ny
+        else:
+            return image, header
+    else:
+        return rdata
 
 
 def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
@@ -1083,8 +1104,15 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
 
     if getheader = False, getshape = True
     :return data: numpy array (2D), the image
-    :return nx: int, the shape in the first dimension, i.e. data.shape[0]
-    :return ny: int, the shape in the second dimension, i.e. data.shape[1]
+
+        if len(data.shape)==2
+            :return nx: int, the shape in the first dimension,
+                        i.e. data.shape[0]
+            :return ny: int, the shape in the second dimension,
+                        i.e. data.shape[1]
+        if len(data.shape)!=2
+            :return shape: tuple, data.shape
+            :return empty: None, blank entry
 
     if getheader = False, getshape = False
     :return data: numpy array (2D), the image
@@ -1120,6 +1148,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         emsg3 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
                                     emsg3])
+        data = None
     # get the header (if header extension is available else default to zero)
     if headerext <= ext:
         try:
@@ -1130,15 +1159,22 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
                                         emsg3])
+            header = None
     else:
         header = hdu[0]
     # return based on whether header and shape are required
     if getheader and getshape:
-        return data, header, data.shape[0], data.shape[1]
+        if len(data.shape) == 2:
+            return data, header, data.shape[0], data.shape[1]
+        else:
+            return data, header, data.shape, None
     elif getheader:
         return data, header
     elif getshape:
-        return data, data.shape[0], data.shape[1]
+        if len(data.shape) == 2:
+            return data, data.shape[0], data.shape[1]
+        else:
+            return data, data.shape, None
     else:
         return data
 
