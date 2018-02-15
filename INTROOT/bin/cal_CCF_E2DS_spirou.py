@@ -66,7 +66,8 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsfile='reffile')
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
     # define default arguments (if ccf_width and ccf_step are not defined
