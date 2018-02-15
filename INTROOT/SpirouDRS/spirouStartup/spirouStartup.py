@@ -80,7 +80,8 @@ def run_begin():
     return cparams
 
 
-def load_arguments(cparams, night_name=None, files=None, customargs=None):
+def load_arguments(cparams, night_name=None, files=None, customargs=None,
+                   mainfitsfile=None):
     """
     Deal with loading run time arguments:
 
@@ -131,14 +132,65 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None):
 
                 program.py rawdir filename a b c
 
+    :param mainfitsfile: string or None, if "customargs" is not None (i.e. if we
+                         are using custom arguments) we must define one
+                         of the parameters in "customargs" to be the main fits
+                         file (fitsfilename and arg_file_names[0]).
+                         The parameter MUST be a string, a fits file,
+                         and have HEADER key defining the acquisition time
+                         as defined in kw_ACQTIME_KEY in spirouKeywords.py
+                         if not using custom arguments (i.e. customargs=None
+                         files must be defined and these files are used
+                         set fitsfilename and arg_file_names
+
     :return p: dictionary, parameter dictionary
     """
+    func_name = __NAME__ + '.load_arguments()'
     # deal with arg_night_name defined in call
     if night_name is not None:
-        cparams['ARG_NIGHT_NAME'] = night_name
+            cparams['ARG_NIGHT_NAME'] = night_name
+    else:
+        emsg1 = ' night_name must be defined'
+        emsg2 = '     function = {0}'.format(func_name)
+        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
     # deal with files being defined in call
     if files is not None:
         cparams['ARG_FILE_NAMES'] = files
+        cparams['FITSFILENAME'] = files[0]
+    # if files not defined we have custom arguments and hence need to define
+    #    a main fits file from one of the values in customargs
+    #    customargs[mainfitsfile]
+    elif mainfitsfile is not None and customargs is not None:
+        # mainfitsfile must be a key in customargs
+        if mainfitsfile in customargs:
+            # the value of mainfitsfile must be a string or list of strings
+            #    if it isn't raise an error
+            mainfitsvalue = customargs[mainfitsfile]
+            if type(mainfitsfile) == str:
+                cparams['ARG_FILE_NAMES'] = [mainfitsvalue]
+                cparams['FITSFILENAME'] = mainfitsvalue
+            elif type(mainfitsfile) == list:
+                cparams['ARG_FILE_NAMES'] = mainfitsvalue
+                cparams['FITSFILENAME'] = mainfitsvalue[0]
+            else:
+                eargs = [mainfitsfile, mainfitsvalue]
+                emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
+                         'valid python string or list').format(*eargs)
+                emsg2 = '    function = {0}'.format(func_name)
+        # if mainfitsfile is not a key in customargs raise an error
+        else:
+            emsg1 = ('If using custom arguments "mainfitsfile" must be a '
+                     'key in "customargs"')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', cparams['log_opt'], [emsg1, emsg2])
+    # if mainfitsfile is not defined or customargs is not defined we cannot
+    #    continue - hence raise an error
+    else:
+        emsg1 = ('Must define either "files" or ("customargs" and '
+                 '"mainfitsfile")')
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
+
     # deal with run time arguments
     if customargs is None:
         cparams = run_time_args(cparams)
@@ -263,6 +315,7 @@ def load_calibdb(p, calibdb=True):
                 log_opt: string, log option, normally the program name
                 DRS_CALIB_DB: string, the directory that the calibration
                               files should be saved to/read from
+
     :param calibdb: bool, whether to load the calibration database (if False
                     just makes sure DRS_CALIB_DB exists (and creates it if it
                     doesn't)
@@ -272,7 +325,6 @@ def load_calibdb(p, calibdb=True):
                 if calibdb is True:
                     calibDB: dictionary, the calibration database dictionary
     """
-
     if calibdb:
         if not os.path.exists(p['DRS_CALIB_DB']):
             WLOG('error', p['log_opt'],
@@ -298,7 +350,8 @@ def exit_script(ll):
     active)
 
     :param ll: dict, the local variables
-    :return:
+
+    :return None:
     """
     # get parameter dictionary of constants (or create it)
     if 'p' in ll:

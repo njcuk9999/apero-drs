@@ -636,7 +636,7 @@ Get the tilt by correlating the extracted fibers
             ic_tilt_coi: int, oversampling factor
             log_opt: string, log option, normally the program name
 
-:param loc: parameter dictionary, ParamDict containing data
+:param lloc: parameter dictionary, ParamDict containing data
         Must contain at least:
             number_orders: int, the number of orders in reference spectrum
             cent1: numpy array (2D), the extraction for A, updated is
@@ -648,7 +648,7 @@ Get the tilt by correlating the extracted fibers
 
 :param image: numpy array (2D), the image
 
-:return loc: parameter dictionary, the updated parameter dictionary
+:return lloc: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
             nbcos: numpy array, zero array  (length of "number_orderes")
             tilt: numpy array (1D), the tilt angle of each order
@@ -883,8 +883,8 @@ Defined in \spirouImage\path{.spirouFITS.readdata}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.ReadData(p, filename, log=True)
-spirouImage.spirouFITS.readdata(p, filename, log=True)
+spirouImage.ReadData(p, filename, log=True, return_header=True, return_shape=True)
+spirouImage.spirouFITS.readdata(p, filename, log=True, return_header=True, return_shape=True)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -897,11 +897,24 @@ Reads the image 'fitsfilename' defined in p and adds files defined in
 
 :param filename: string, filename of the image to read
 :param log: bool, if True logs opening and size
+:param return_header: bool, if True returns header
+:param return_shape: bool, if True returns shape
 
 :return image: numpy array (2D), the image
-:return header: dictionary, the header file of the image
-:return nx: int, the shape in the first dimension, i.e. data.shape[0]
-:return ny: int, the shape in the second dimension, i.e. data.shape[1]
+
+if return_header also returns:
+    :return header: dictionary, the header file of the image
+    :return comments: dictionary, the header comment file
+
+if return_shape also returns:
+    if len(data.shape)==2
+        :return nx: int, the shape in the first dimension,
+                    i.e. data.shape[0]
+        :return ny: int, the shape in the second dimension,
+                    i.e. data.shape[1]
+    if len(data.shape)!=2
+        :return shape: tuple, data.shape
+        :return empty: None, blank entry
 \end{pythondocstring}
 \end{minipage}
 

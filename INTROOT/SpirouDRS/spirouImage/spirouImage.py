@@ -694,7 +694,7 @@ def get_tilt(pp, lloc, image):
                 ic_tilt_coi: int, oversampling factor
                 log_opt: string, log option, normally the program name
 
-    :param loc: parameter dictionary, ParamDict containing data
+    :param lloc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 number_orders: int, the number of orders in reference spectrum
                 cent1: numpy array (2D), the extraction for A, updated is
@@ -706,7 +706,7 @@ def get_tilt(pp, lloc, image):
 
     :param image: numpy array (2D), the image
 
-    :return loc: parameter dictionary, the updated parameter dictionary
+    :return lloc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 nbcos: numpy array, zero array  (length of "number_orderes")
                 tilt: numpy array (1D), the tilt angle of each order

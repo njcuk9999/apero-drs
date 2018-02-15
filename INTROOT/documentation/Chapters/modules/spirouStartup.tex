@@ -245,6 +245,17 @@ Deal with loading run time arguments:
 
             program.py rawdir filename a b c
 
+:param mainfitsfile: string or None, if "customargs" is not None (i.e. if we
+                     are using custom arguments) we must define one
+                     of the parameters in "customargs" to be the main fits
+                     file (fitsfilename and arg_file_names[0]).
+                     The parameter MUST be a string, a fits file,
+                     and have HEADER key defining the acquisition time
+                     as defined in kw_ACQTIME_KEY in spirouKeywords.py
+                     if not using custom arguments (i.e. customargs=None
+                     files must be defined and these files are used
+                     set fitsfilename and arg_file_names
+
 :return p: dictionary, parameter dictionary
 \end{pythondocstring}
 \end{minipage}
@@ -346,5 +357,30 @@ InitialFileSetup is not used (i.e. when custom arguments are used)
         Adds the following:
             if calibdb is True:
                 calibDB: dictionary, the calibration database dictionary
+\end{pythondocstring}
+\end{minipage}
+
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{Exit}
+
+Defined in \spirouStartup\path{.spirouStartup.exit_script}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.Exit(ll)
+spirouStartup.spirouStartup.exit_script(ll)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Exit script for handling interactive endings to sessions (if DRS_PLOT is
+active)
+
+:param ll: dict, the local variables
+
+:return None:
 \end{pythondocstring}
 \end{minipage}
