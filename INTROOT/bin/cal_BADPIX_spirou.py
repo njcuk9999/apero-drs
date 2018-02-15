@@ -56,7 +56,8 @@ def main(night_name=None, darkfile=None, flatfile=None):
     else:
         customargs = dict(darkfile=darkfile, flatfile=flatfile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsfile='flatfile')
 
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
