@@ -12,8 +12,12 @@
 % % -------------------------------------------------------
 % \subsection{The inputs}
 % % -------------------------------------------------------
-% The input of {\_} is as follows:
+% The input of \_ is as follows:
 % \begin{cmdbox}
+
+% \end{cmdbox}
+% \noindent for example
+% \begin{cmdbox}[title={example}]
 
 % \end{cmdbox}
 % \noindent or
@@ -24,7 +28,6 @@
 % \end{pythonbox}
 
 % \noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and must have the folowing prefixes:
-% \noindent File prefixes allowed:
 % \begin{itemize}
 % 	\item {}
 % \end{itemize}
@@ -32,11 +35,11 @@
 % % -------------------------------------------------------
 % \subsection{The outputs}
 % % -------------------------------------------------------
-% The outputs of \definevariable{}{} are as follows:
+% The outputs of \_ are as follows:
 
 % \begin{itemize}
 
-% \item {} in form:
+% \item \definevariable{}{} in form:
 % \begin{tcustomdir}
 % \{\reduceddir\}/\{date prefix\}\_\{file\}.fits
 % \end{tcustomdir}
@@ -50,8 +53,8 @@
 % \noindent for example for \reduceddir\lstinline[style=pythoninline]|='/drs/data/reduced/20170710'| and \argfilenames\lstinline[style=pythoninline]|=['']| the output files would be:
 % \begin{tcustomdir}
 % \begin{itemize}
-% \item /drs/data/reduced/20170710/20170710\_
-% \item /drs/data/reduced/20170710/20170710\_
+% \item \path{/drs/data/reduced/20170710/20170710\_ }
+% \item \path{/drs/data/reduced/20170710/20170710\_ }
 % \end{itemize}
 % \end{tcustomdir}
 
@@ -95,7 +98,7 @@
 
 % An example run where everything worked is below:
 
-% \begin{cmdboxprintspecial}
+% \begin{cmdboxprintspecial}[fontupper=\tiny, fontlower=\tiny]
 % @g
 
 % @g

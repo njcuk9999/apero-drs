@@ -149,10 +149,6 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # deal with arg_night_name defined in call
     if night_name is not None:
             cparams['ARG_NIGHT_NAME'] = night_name
-    else:
-        emsg1 = ' night_name must be defined'
-        emsg2 = '     function = {0}'.format(func_name)
-        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
     # deal with files being defined in call
     if files is not None:
         cparams['ARG_FILE_NAMES'] = files
@@ -182,14 +178,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
             emsg1 = ('If using custom arguments "mainfitsfile" must be a '
                      'key in "customargs"')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', cparams['log_opt'], [emsg1, emsg2])
-    # if mainfitsfile is not defined or customargs is not defined we cannot
-    #    continue - hence raise an error
-    else:
-        emsg1 = ('Must define either "files" or ("customargs" and '
-                 '"mainfitsfile")')
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
+            WLOG('error', DPROG, [emsg1, emsg2])
 
     # deal with run time arguments
     if customargs is None:
@@ -213,9 +202,9 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
         cparams, warnlogs = spirouConfig.GetKeywordArguments(cparams)
         # print warning logs
         for warnlog in warnlogs:
-            WLOG('warning', '', warnlog)
+            WLOG('warning', DPROG, warnlog)
     except spirouConfig.ConfigError as e:
-        WLOG(e.level, '', e.message)
+        WLOG(e.level, DPROG, e.message)
     # return parameter dictionary
     return cparams
 
