@@ -31,7 +31,7 @@ __all__ = ['ConfigError',
            'CheckConfig',
            'ExtractDictParams',
            'GetKeywordArguments',
-           'GetKwValues',
+           'GetKeywordValues',
            'GetAbsFolderPath',
            'GetDefaultConfigFile'
            'LoadConfigFromFile',
@@ -52,7 +52,7 @@ ExtractDictParams = spirouConfig.extract_dict_params
 
 GetKeywordArguments = spirouKeywords.get_keywords
 
-GetKwValues = spirouKeywords.get_keyword_values_from_header
+GetKeywordValues = spirouKeywords.get_keyword_values_from_header
 
 GetAbsFolderPath = spirouConfigFile.get_relative_folder
 
