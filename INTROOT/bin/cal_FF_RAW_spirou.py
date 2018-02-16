@@ -339,11 +339,18 @@ def main(night_name=None, files=None):
         # Update the calibration database
         # ------------------------------------------------------------------
         if p['QC'] == 1:
+            # copy flatfits to calibdb
             keydb = 'FLAT_' + p['fiber']
             # copy localisation file to the calibDB folder
             spirouCDB.PutFile(p, flatfits)
             # update the master calib DB file with new key
             spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
+            # copy blazefits to calibdb
+            keydb = 'BLAZE_' + p['fiber']
+            # copy localisation file to the calibDB folder
+            spirouCDB.PutFile(p, blazefits)
+            # update the master calib DB file with new key
+            spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
