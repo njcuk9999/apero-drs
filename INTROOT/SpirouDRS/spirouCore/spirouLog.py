@@ -322,17 +322,7 @@ def get_logfilepath(utime):
             raise ConfigError(message=emsg.format(dir_data_msg, type(e), e),
                               level='error')
 
-    # Get the used date if it is not None
-    CPARAMS['DRS_USED_DATE'] = CPARAMS.get('DRS_USED_DATE', 'None').upper()
-    udate = CPARAMS['DRS_USED_DATE']
-    if udate == 'undefined' or udate == 'NONE':
-        date = time.strftime('%Y-%m-%d', time.gmtime(utime - 43200))
-    else:
-        date = CPARAMS['DRS_USED_DATE']
-    # Get the HOST name (if it does not exist host = 'HOST')
-    host = os.environ.get('HOST', 'HOST')
-    # construct the logfile path
-    lpath = os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
+    lpath = spirouConfig.Constants.LOG_FILE_NAME(CPARAMS, dir_data_msg, utime)
     # return the logpath and the warning
     return lpath, warning
 
