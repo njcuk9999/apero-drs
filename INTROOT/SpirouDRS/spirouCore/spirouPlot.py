@@ -973,7 +973,7 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     fiber = p['fiber']
     # get data from loc
     if x is None:
-        wave = loc['wave_ll'][selected_order]
+        wave = loc['wave'][selected_order]
     else:
         wave = np.array(x)[selected_order]
     if y is None:
