@@ -67,7 +67,8 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='reffile')
+                                    mainfitsfile='reffile',
+                                    mainfitsdir='reduced')
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
     # define default arguments (if ccf_width and ccf_step are not defined
@@ -181,7 +182,8 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
         # start interactive session if needed
         sPlt.start_interactive_session()
         # plot FP spectral order
-        sPlt.drift_plot_selected_wave_ref(p, loc, y=loc['e2ds'])
+        sPlt.drift_plot_selected_wave_ref(p, loc, x=loc['wave_ll'],
+                                          y=loc['e2ds'])
         # plot photon noise uncertainty
         sPlt.drift_plot_photon_uncertainty(p, loc)
 

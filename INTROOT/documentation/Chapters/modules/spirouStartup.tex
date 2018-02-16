@@ -203,13 +203,6 @@ Deal with loading run time arguments:
 3) loads other config files
 
 :param cparams: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            arg_night_name: string, the folder within data raw directory
-                            containing files (also reduced directory) i.e.
-                            /data/raw/20170710 would be "20170710"
-            arg_file_names: list, list of files taken from the command line
-                            (or call to recipe function) must have at least
-                            one string filename in the list
 
 :param night_name: string or None, the name of the directory in DRS_DATA_RAW
                    to find the files in
@@ -255,6 +248,14 @@ Deal with loading run time arguments:
                      if not using custom arguments (i.e. customargs=None
                      files must be defined and these files are used
                      set fitsfilename and arg_file_names
+                     
+:param mainfitsdir: string or None, if mainfitsfile is defined and needed
+                    this is the location of the mainfitsfile if None this
+                    is assumed to be the raw dir folder
+                    current other options are:
+                        'reduced' - the DRS_DATA_REDUC folder
+                        'calibdb' - the DRS_CALIB_DB folder
+                        or the full path to the file
 
 :return p: dictionary, parameter dictionary
 \end{pythondocstring}
