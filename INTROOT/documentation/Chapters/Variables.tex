@@ -1540,7 +1540,7 @@ Value must be a float greater than zero.
 
 
 % nbframes
-\item \PseudoParamEntry{Number of frames}
+\item \namedlabel{text:nbframes} \PseudoParamEntry{Number of frames}
 {Gets the number of frames from the list of files (`arg\_file\_names').}
 {nbframes}
 {\AllRecipes}{\spirouConst.NBFRAMES}{\spirouStartup.run\_time\_args()}
@@ -1584,7 +1584,7 @@ Value must be a float greater than zero.
 % darkfile
 \begin{itemize}
 	\item \namedlabel{text:darkfile} \PseudoParamEntry{The dark calibration file}
-	{The full path of the dark calibration file}
+	{The full path of the processed dark calibration file}
 	{darkfile}
 	{\calDARK}{\spirouConst.\path{DARK\_FILE()}}{\calDARK}
 \end{itemize}
@@ -1592,7 +1592,7 @@ Value must be a float greater than zero.
 % darkbadpixfile
 \begin{itemize}
 	\item \namedlabel{text:darkbadpixfile} \PseudoParamEntry{The dark bad pixel map calibration file}
-	{The full path of the dark bad pixel map calibration file}
+	{The full path of the processed dark bad pixel map calibration file}
 	{darkbadpixfile}
 	{\calDARK}{\spirouConst.\path{DARK_BADPIX_FILE()}}{\calDARK}
 \end{itemize}
@@ -1600,7 +1600,7 @@ Value must be a float greater than zero.
 % badpixelfits
 \begin{itemize}
 	\item \namedlabel{text:badpixelfits} \PseudoParamEntry{The bad pixel map calibration file}
-	{The full path of the bad pixel map calibration file}
+	{The full path of the processed bad pixel map calibration file}
 	{badpixfile}
 	{\calbadpix}{\spirouConst.\path{BADPIX_FILE()}}{\calbadpix}
 \end{itemize}
@@ -1616,7 +1616,7 @@ Value must be a float greater than zero.
 % locofits
 \begin{itemize}
 	\item \namedlabel{text:locofitsfile} \PseudoParamEntry{Localization file 1}
-	{The full path of the localisation file containing the center fits for each order.}
+	{The full path of the processed localisation file containing the center fits for each order.}
 	{locofits}
 	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE()}}{\callocRAW}
 \end{itemize}
@@ -1624,7 +1624,7 @@ Value must be a float greater than zero.
 % locofits2
 \begin{itemize}
 	\item \namedlabel{text:locofitsfile2} \PseudoParamEntry{Localization file 2}
-	{The full path of the localisation file containing the width fits for each order}
+	{The full path of the processed localisation file containing the width fits for each order}
 	{locofits2}
 	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE2()}}{\callocRAW}
 \end{itemize}
@@ -1640,27 +1640,27 @@ Value must be a float greater than zero.
 % tiltfits
 \begin{itemize}
 	\item \namedlabel{text:tiltfits} \PseudoParamEntry{Tilt file}
-	{The full path of the tilt file.}
+	{The full path of the processed tilt file.}
 	{tiltfits}
 	{\calSLIT}{\spirouConst.\path{SLIT_TILT_FILE}}{\calSLIT}
 \end{itemize}
 
 % blazefits
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:blazefits} \PseudoParamEntry{Blaze file}
+	{The full path of the processed blaze file.}
+	{blazefits}
+	{\calFFraw}{\spirouConst.\path{FF_BLAZE_FILE}}{\calFFraw}
+\end{itemize}
 
 
 % flatfits
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:flatfits} \PseudoParamEntry{Flat file}
+	{The full path of the processed flat file}
+	{flatfits}
+	{\calFFraw}{\spirouConst.\path{FF_FLAT_FILE}}{\calFFraw}
+\end{itemize}
 
 
 % e2ds file
