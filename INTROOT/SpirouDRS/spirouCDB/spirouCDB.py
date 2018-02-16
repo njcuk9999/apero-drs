@@ -194,7 +194,11 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
         # deal with no filename
         if filename is None and header is None:
             rawdir = spirouConfig.Constants.RAW_DIR(p)
-            rawfile = os.path.join(rawdir, p['arg_file_names'][0])
+
+            if os.path.exists(p['arg_file_names'][0]):
+                rawfile = p['arg_file_names'][0]
+            else:
+                rawfile = os.path.join(rawdir, p['arg_file_names'][0])
 
             if not os.path.exists(rawfile):
                 emsg1 = '"header" and "filename" not defined in {0}'
