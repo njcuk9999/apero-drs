@@ -15,6 +15,7 @@ Import rules: Only from spirouConfigFile
 from __future__ import division
 import sys
 import os
+import time
 from . import spirouConfigFile
 
 # =============================================================================
@@ -1102,6 +1103,54 @@ def TIME_FORMAT_DEFAULT():
 # =============================================================================
 # Define logger functions
 # =============================================================================
+
+def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
+    """
+    Define the log filename and full path.
+
+    The filename is defined as:
+        DRS-YYYY-MM-DD  (GMT date)
+    The directory is defined as dir_data_msg (or p['DRS_DATA_MSG'] if not
+        defined)
+
+    if p['DRS_USED_DATE'] is set this date is used instead
+    if no utime is defined uses the time now (in gmt time)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_MSG: string, the directory that the log messages
+                              should be saved to (if "dir_data_msg" not defined)
+                DRS_USED_DATE: string, the used date (if not defined or set to
+                               "None" then "utime" is used or if "utime" not
+                               defined uses the time now
+    :param dir_data_msg: string or None, if defined the p
+    :param utime: float or None, the unix time to use to set the date, if
+                  undefined uses time.time() (time now) - in GMT
+
+    :return lpath: string, the full path and file name for the log file
+    """
+    # deal with no dir_data_msg
+    if dir_data_msg is None:
+        dir_data_msg = p.get('DRS_DATA_MSG', None)
+    # deal with no utime (set it to the time now)
+    if utime is None:
+        utime = time.time()
+    # Get the used date if it is not None
+    p['DRS_USED_DATE'] = p.get('DRS_USED_DATE', 'None').upper()
+    udate = p['DRS_USED_DATE']
+    # if we don't have a udate use the date
+    if udate == 'undefined' or udate == 'NONE':
+        date = time.strftime('%Y-%m-%d', time.gmtime(utime))
+    else:
+        date = p['DRS_USED_DATE']
+    # Get the HOST name (if it does not exist host = 'HOST')
+    host = os.environ.get('HOST', 'HOST')
+    # construct the logfile path
+    lpath = os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
+    # return lpath
+    return lpath
+
+
 def LOG_TIMEZONE():
     """
     The time zone to use in timestamps for logging (i.e. UTC)
