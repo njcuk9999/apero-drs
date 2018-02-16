@@ -81,7 +81,7 @@ def run_begin():
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
-                   mainfitsfile=None):
+                   mainfitsfile=None, mainfitsdir=None):
     """
     Deal with loading run time arguments:
 
@@ -90,13 +90,6 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     3) loads other config files
 
     :param cparams: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                arg_night_name: string, the folder within data raw directory
-                                containing files (also reduced directory) i.e.
-                                /data/raw/20170710 would be "20170710"
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
 
     :param night_name: string or None, the name of the directory in DRS_DATA_RAW
                        to find the files in
@@ -143,48 +136,37 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                          files must be defined and these files are used
                          set fitsfilename and arg_file_names
 
+    :param mainfitsdir: string or None, if mainfitsfile is defined and needed
+                        this is the location of the mainfitsfile if None this
+                        is assumed to be the raw dir folder
+                        current other options are:
+                            'reduced' - the DRS_DATA_REDUC folder
+                            'calibdb' - the DRS_CALIB_DB folder
+                            or the full path to the file
+
     :return p: dictionary, parameter dictionary
     """
-    func_name = __NAME__ + '.load_arguments()'
+    # -------------------------------------------------------------------------
     # deal with arg_night_name defined in call
     if night_name is not None:
             cparams['ARG_NIGHT_NAME'] = night_name
+    # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
         cparams['ARG_FILE_NAMES'] = files
         cparams['FITSFILENAME'] = files[0]
     # if files not defined we have custom arguments and hence need to define
-    #    a main fits file from one of the values in customargs
-    #    customargs[mainfitsfile]
+    #    arg_file_names and fitsfilename manually
     elif mainfitsfile is not None and customargs is not None:
-        # mainfitsfile must be a key in customargs
-        if mainfitsfile in customargs:
-            # the value of mainfitsfile must be a string or list of strings
-            #    if it isn't raise an error
-            mainfitsvalue = customargs[mainfitsfile]
-            if type(mainfitsfile) == str:
-                cparams['ARG_FILE_NAMES'] = [mainfitsvalue]
-                cparams['FITSFILENAME'] = mainfitsvalue
-            elif type(mainfitsfile) == list:
-                cparams['ARG_FILE_NAMES'] = mainfitsvalue
-                cparams['FITSFILENAME'] = mainfitsvalue[0]
-            else:
-                eargs = [mainfitsfile, mainfitsvalue]
-                emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
-                         'valid python string or list').format(*eargs)
-                emsg2 = '    function = {0}'.format(func_name)
-        # if mainfitsfile is not a key in customargs raise an error
-        else:
-            emsg1 = ('If using custom arguments "mainfitsfile" must be a '
-                     'key in "customargs"')
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
-
+        cparams = get_custom_arg_files_fitsfilename(cparams, customargs,
+                                                    mainfitsfile, mainfitsdir)
+    # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
         cparams = run_time_args(cparams)
     else:
         cparams = run_time_custom_args(cparams, customargs)
+    # -------------------------------------------------------------------------
     # Display help file if needed
     display_help_file(cparams)
     # display run file
@@ -192,6 +174,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
         display_run_files(cparams)
     else:
         display_custom_args(cparams, customargs)
+    # -------------------------------------------------------------------------
     # load special config file
     # TODO: is this needed as special_config_SPIROU does not exist
     cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=False)
@@ -205,6 +188,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
             WLOG('warning', DPROG, warnlog)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, DPROG, e.message)
+    # -------------------------------------------------------------------------
     # return parameter dictionary
     return cparams
 
@@ -346,7 +330,13 @@ def exit_script(ll):
     if 'p' in ll:
         p = ll['p']
     else:
-        p = dict(DRS_PLOT=0, log_opt=sys.argv[0])
+        p = dict()
+    # make sure we have DRS_PLOT
+    if 'DRS_PLOT' not in p:
+        p['DRS_PLOT'] = 0
+    # make sure we have log_opt
+    if 'log_opt' not in p:
+        p['log_opt']=sys.argv[0]
     # if DRS_PLOT is 0 just return 0
     if not p['DRS_PLOT']:
         return 0
@@ -621,76 +611,6 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
     else:
         wmsg = 'Wrong type of image for {0}, should be {1}'
         WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
-
-
-def get_custom_from_run_time_args(positions=None, types=None, names=None,
-                                  required=None, calls=None, cprior=None,
-                                  lognames=None, last_multi=False):
-    """
-    Extract custom arguments from defined positions in sys.argv (defined at
-    run time)
-
-    :param positions: list of integers or None, the positions of the arguments
-                      (i.e. first argument is 0)
-
-    :param types: list of python types or None, the type (i.e. int, float) for
-                  each argument. Note if last_multi = True, the type of the
-                  last defined parameter should be the type of each argument
-                  (but the output parameter will be a list of this type of
-                  arguments)
-
-    :param names: list of strings, the names of each argument (to access in
-                  parameter dictionary once extracted)
-
-    :param required: list of bools or None, states whether the program
-                     should exit if runtime argument not found
-
-    :param calls: list of objects or None, if define these are the values that
-                  come from a function call (overwrite command line arguments)
-
-    :param lognames: list of strings, the names displayed in the log (on error)
-                     theses should be similar to "names" but in a form the
-                     user can easily understand for each variable
-
-    :param last_multi: bool, if True then last argument in positions/types/
-                       names adds all additional arguments into a list
-
-    :return values: dictionary, if run time arguments are correct python type
-                    the name-value pairs are returned
-    """
-    # deal with no positions (use length of types or names or exit with error)
-    if positions is None:
-        if types is not None:
-            positions = range(len(types))
-        elif names is not None:
-            positions = range(len(names))
-        else:
-            emsg = ('Either "positions", "name" or "types" must be defined to'
-                    'get custom arguments.')
-            WLOG('', DPROG, emsg)
-    # deal with no types (set to strings)
-    if types is None:
-        types = [str]*len(positions)
-    # deal with no names (set to Arg0, Arg1, Arg2 etc)
-    if names is None:
-        names = ['Arg{0}'.format(pos) for pos in positions]
-    if lognames is None:
-        lognames = names
-    # deal with no required (set all to be required)
-    if required is None:
-        required = [True]*len(positions)
-    # deal with no calls priority (set priority for calls to False)
-    if cprior is None:
-        cprior = [False]*len(positions)
-    # loop around positions test the type and add the value to dictionary
-    customdict = get_arguments(positions, types, names, required, calls,
-                                cprior, lognames)
-    # deal with the position needing to find additional parameters
-    if last_multi:
-        customdict = get_multi_last_argument(customdict, positions, types,
-                                             names, lognames)
-    # finally return dictionary
-    return customdict
 
 
 def get_arguments(positions, types, names, required, calls, cprior, lognames):
@@ -981,6 +901,7 @@ def find_ipython():
     except NameError:
         return False
 
+
 def sort_version(messages=None):
     """
     Obtain and sort version info
@@ -1007,6 +928,184 @@ def sort_version(messages=None):
     messages.append('    Dist Other = {0}'.format(other))
     # return updated messages
     return messages
+
+
+# =============================================================================
+# Define custom argument functions
+# =============================================================================
+def get_custom_from_run_time_args(positions=None, types=None, names=None,
+                                  required=None, calls=None, cprior=None,
+                                  lognames=None, last_multi=False):
+    """
+    Extract custom arguments from defined positions in sys.argv (defined at
+    run time)
+
+    :param positions: list of integers or None, the positions of the arguments
+                      (i.e. first argument is 0)
+
+    :param types: list of python types or None, the type (i.e. int, float) for
+                  each argument. Note if last_multi = True, the type of the
+                  last defined parameter should be the type of each argument
+                  (but the output parameter will be a list of this type of
+                  arguments)
+
+    :param names: list of strings, the names of each argument (to access in
+                  parameter dictionary once extracted)
+
+    :param required: list of bools or None, states whether the program
+                     should exit if runtime argument not found
+
+    :param calls: list of objects or None, if define these are the values that
+                  come from a function call (overwrite command line arguments)
+
+    :param lognames: list of strings, the names displayed in the log (on error)
+                     theses should be similar to "names" but in a form the
+                     user can easily understand for each variable
+
+    :param last_multi: bool, if True then last argument in positions/types/
+                       names adds all additional arguments into a list
+
+    :return values: dictionary, if run time arguments are correct python type
+                    the name-value pairs are returned
+    """
+    # deal with no positions (use length of types or names or exit with error)
+    if positions is None:
+        if types is not None:
+            positions = range(len(types))
+        elif names is not None:
+            positions = range(len(names))
+        else:
+            emsg = ('Either "positions", "name" or "types" must be defined to'
+                    'get custom arguments.')
+            WLOG('', DPROG, emsg)
+    # deal with no types (set to strings)
+    if types is None:
+        types = [str]*len(positions)
+    # deal with no names (set to Arg0, Arg1, Arg2 etc)
+    if names is None:
+        names = ['Arg{0}'.format(pos) for pos in positions]
+    if lognames is None:
+        lognames = names
+    # deal with no required (set all to be required)
+    if required is None:
+        required = [True]*len(positions)
+    # deal with no calls priority (set priority for calls to False)
+    if cprior is None:
+        cprior = [False]*len(positions)
+    # loop around positions test the type and add the value to dictionary
+    customdict = get_arguments(positions, types, names, required, calls,
+                                cprior, lognames)
+    # deal with the position needing to find additional parameters
+    if last_multi:
+        customdict = get_multi_last_argument(customdict, positions, types,
+                                             names, lognames)
+    # finally return dictionary
+    return customdict
+
+
+def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
+    """
+    Deal with having to set arg_file_names and fitsfilenames manually
+    uses "mff" the main fits filename and "mdf" the main fits file directory
+
+    :param cparams: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+    :param customargs: None or list of strings, if list of strings then instead
+                       of getting the standard runtime arguments
+
+           i.e. in form:
+
+                program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+
+           loads all arguments into customargs
+
+           i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+           expects command line arguments to be:
+
+                program.py rawdir filename a b c
+
+    :param mff: string, the main fits file (fitsfilename and arg_file_names[0]).
+                The parameter MUST be a string, a fits file, and have HEADER
+                key defining the acquisition time as  defined in kw_ACQTIME_KEY
+                in spirouKeywords.py
+
+    :param mfd: string or None, if mainfitsfile is defined and needed this is
+                the location of the mainfitsfile if None this is assumed to
+                be the raw dir folder current other options are:
+                    'reduced' - the DRS_DATA_REDUC folder
+                    'calibdb' - the DRS_CALIB_DB folder
+                    or the full path to the file
+    :return cparams: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+    """
+    # define function name
+    func_name = __NAME__ + '.get_custom_arg_files_fitsfilename()'
+    # define the raw/reduced/calib folder from cparams
+    raw = os.path.join(cparams['DRS_DATA_RAW'], cparams['arg_night_name'])
+    red = os.path.join(cparams['DRS_DATA_REDUC'], cparams['arg_night_name'])
+    calib = cparams['DRS_CALIB_DB']
+    # mainfitsfile must be a key in customargs
+    if mff in customargs:
+        # the value of mainfitsfile must be a string or list of strings
+        #    if it isn't raise an error
+        mfv = customargs[mff]
+        # check if mainfitsvalue is a full path
+        if not os.path.exists(mfv):
+            # check if mainfits dir is defined
+            if mfd is not None:
+                tpath = os.path.join(mfd, mfv)
+                # if path exists then use it
+                if os.path.exists(tpath):
+                    mfv = os.path.join(mfd, mfv)
+                elif mfd == 'reduced':
+                    mfv = os.path.join(red, mfv)
+                elif mfd == 'calibdb':
+                    mfv = os.path.join(calib, mfv)
+                else:
+                    emsg1 = '"mainfitsdir"={0} not a valid path/option'
+                    emsg2 = '    function = {0}'.format(func_name)
+                    WLOG('error', DPROG, [emsg1.format(mfd), emsg2])
+                    mfv = ''
+                    # if mainfits dir is not defined make the path the raw
+            else:
+                # redefine the mainfits file
+                mfv = os.path.join(raw, mfv)
+        # test type mainfitsfile (must be str or list)
+        if type(mff) == str:
+            cparams['ARG_FILE_NAMES'] = [mfv]
+            cparams['FITSFILENAME'] = mfv
+        elif type(mff) == list:
+            cparams['ARG_FILE_NAMES'] = mfv
+            cparams['FITSFILENAME'] = mfv[0]
+        else:
+            eargs = [mff, mfv]
+            emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
+                     'valid python string or list').format(*eargs)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2])
+    # if mainfitsfile is not a key in customargs raise an error
+    else:
+        emsg1 = ('If using custom arguments "mainfitsfile" must be a '
+                 'key in "customargs"')
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2])
+
+    return cparams
 
 
 # =============================================================================
