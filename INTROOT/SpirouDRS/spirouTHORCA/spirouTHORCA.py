@@ -84,7 +84,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     # extract required keyword arguments from the header
     keys = ['kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1']
     try:
-        nbo, degll, xsize = spirouConfig.GetKwValues(p, whdr, keys, read_file)
+        nbo, degll, xsize = spirouConfig.GetKeywordValues(p, whdr, keys, read_file)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, p['log_opt'], e.msg)
         nbo, degll, xsize = 0, 0, 0
