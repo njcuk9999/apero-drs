@@ -15,17 +15,13 @@ Version 0.0.0
 """
 
 import numpy as np
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
+import os
 import warnings
 
-from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
@@ -118,17 +114,42 @@ def get_telluric(p, loc):
     return loc
 
 
-def make_2d_tell_mask(p, loc):
+def make_2d_wave_image(p, loc):
+    """
 
+    :param p: parameter dictionary, ParamDict containing constants
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                flat2: numpy array (2D), the flat image
+                      shape = (number of orders x number of columns (x-dir)
+                wave: numpy array (2D), the wave solution image
+                tilt: numpy array (1D), the tilt angle of each order
+                acc: numpy array (2D), the fit coefficients array for
+                      the centers fit
+                      shape = (number of orders x number of fit coefficients)
+                ass: numpy array (2D), the fit coefficients array for
+                      the widths fit
+                      shape = (number of orders x number of fit coefficients)
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                waveimage: numpy array (2D), the wavelengths of every pixel
+                           for all orders
+                           shape = (number of columns x number of rows)
+                                   i.e. the same size as original image
+    """
+    func_name = __NAME__ + '.make_2d_wave_image()'
+    # get data from loc
     image = loc['flat2']
     wave = loc['wave']
     tilt = loc['tilt']
     acc, ass = loc['acc'], loc['ass']
-
+    # assign number of orders
     number_orders = len(wave)
-
     # construct a "NaN" image (for wavelengths)
     ishape = image.shape
+
+    # TODO: change to np.nan array
     waveimage = np.repeat([np.nan], np.product(ishape)).reshape(ishape)
 
     waveimage = np.zeros_like(image)
@@ -149,6 +170,8 @@ def make_2d_tell_mask(p, loc):
             cfit = np.polyval(acc[fin][::-1], xpos)
             # get width positions
             wfit = np.polyval(ass[fin][::-1], xpos)
+            # get tilt
+            otilt = tilt[order_no]
             # calculate pixel positions for each center
             #     need +0.5 for int rounding
             ypos = np.array(cfit + 0.5, dtype=int)
@@ -164,32 +187,128 @@ def make_2d_tell_mask(p, loc):
                     # add wavelength values at correct positions
                     waveimage[yposi, xposi] = wave[order_no][w_it]
 
+    # add to loc
+    loc['waveimage'] = waveimage
+    # set source
+    loc.set_source('waveimage', func_name)
+
+    return loc
 
 
+def create_image_from_waveimage(p, loc, x, y):
+    """
+    Takes a spectrum "y" at wavelengths "x" and uses these to interpolate
+    wavelength positions in loc['waveimage'] to map the spectrum onto
+    the waveimage
+
+    :param p: parameter dictionary, ParamDict containing constants
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                waveimage: numpy array (2D), the wavelengths of every pixel
+                           for all orders
+                           shape = (number of columns x number of rows)
+                                   i.e. the same size as original image
+    :param x: numpy array (1D), the wavelength values for each spectrum pixel
+    :param y: numpy array (1D), the
+    :return:
+    """
+    func_name = __NAME__ + '.create_image_from_waveimage()'
+    # get data from loc
+    waveimage = loc['waveimage']
+    # set up interpolation
+    F = interp1d(x, y)
+    # create new spectrum
+    newimage = np.zeros_like(waveimage)
+    # loop around each row in image, interpolate wavevalues
+    for row in range(len(waveimage)):
+        # get row values
+        rvalues = waveimage[row]
+        # TODO change mask out zeros to NaNs
+        # mask out zeros (NaNs in future)
+        invalidpixels = (rvalues == 0)
+        # don't try to interpolate those pixels outside range of "x"
+        invalidpixels |= rvalues < np.min(x)
+        invalidpixels |= rvalues > np.max(x)
+        # valid pixel definition
+        validpixels = ~invalidpixels
+        # check that we have some valid pixels
+        if np.sum(validpixels) == 0:
+            continue
+        # interpolate wavelengths in waveimage to get newimage
+        newimage[row][validpixels] = F(rvalues[validpixels])
+    # add to loc
+    loc['spe'] = newimage
+    loc.set_source('spe', func_name)
+    # return loc
+    return loc
+
+
+
+# =============================================================================
+# Define plotting
+# =============================================================================
 def test_image(loc):
-
+    """
+    Test image: plot the flat image with the superimposed localisation fits
+    on top for all orders
+    """
+    # get data from loc
     image = loc['flat2']
     acc, ass = loc['acc'], loc['ass']
-
-    import matplotlib.pyplot as plt
-
+    # plot
     plt.imshow(image)
-
-
-
     for it in range(len(acc)):
-
         xfit = np.arange(image.shape[1])
         cfit = np.polyval(acc[it][::-1], xfit)
         wfit = np.polyval(ass[it][::-1], xfit)
-
         p = plt.plot(xfit, cfit - wfit/2, ls='--')
         plt.plot(xfit, cfit, ls='-', color=p[0].get_color())
         plt.plot(xfit, cfit + wfit/2, ls='--', color=p[0].get_color())
+    plt.show()
+    plt.close()
 
+
+def test_spec(loc):
+
+    # get data from loc
+    waveimage = loc['waveimage']
+    spec = loc['spe']
+    x, y = loc['tell_x'], loc['tell_y']
+
+    # set zeros to NaN
+    mask1 = waveimage == 0
+    waveimage[mask1] = np.nan
+    mask2 = spec == 0
+    spec[mask2] = np.nan
+
+    plt.close()
+
+    # plot input spectrum
+    fig0, frame0 = plt.subplots(ncols=1, nrows=1)
+    frame0.plot(x, y)
+    frame0.set(xlim=(1000, 2500), ylim=(0.8, 1.01),
+               xlabel='Wavelength', ylabel='Transmission')
+
+    # plot wavelength map
+    fig1, frame1 = plt.subplots(ncols=1, nrows=1)
+    frame1.set_facecolor('black')
+    im1 = frame1.imshow(waveimage, vmin=1000, vmax=2500, cmap='inferno')
+    cb1 = plt.colorbar(im1, ax=frame1)
+    frame1.set(title='Wavelength Map')
+    cb1.set_label('Wavelength')
+
+    # plot spectrum map
+    fig2, frame2 = plt.subplots(ncols=1, nrows=1)
+    frame2.set_facecolor('black')
+    im2 = frame2.imshow(spec, vmin=0.95, vmax=1.0, cmap='inferno')
+    cb2 = plt.colorbar(im2, ax=frame2)
+    frame2.set(title='Spectrum Interpolation')
+    cb2.set_label('Transmission')
 
     plt.show()
     plt.close()
+
 
 # =============================================================================
 # Start of code
@@ -198,6 +317,7 @@ def test_image(loc):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # function inputs
+    # TODO: This should be removed when function in main()
     night_name = '20170710'
     flatfile = FLATFILE
     tellmodx = TAPASX
@@ -285,6 +405,13 @@ if __name__ == "__main__":
     loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
     loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
 
+    # ----------------------------------------------------------------------
+    # Read blaze
+    # ----------------------------------------------------------------------
+    # get tilts
+    loc['blaze'] = spirouImage.ReadBlazeFile(p, hdr)
+    loc.set_source('blaze', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
@@ -309,14 +436,43 @@ if __name__ == "__main__":
     loc = get_telluric(p, loc)
 
     # ------------------------------------------------------------------
-    # Make 2D image from flat, loc, wave, tilt and the telluric model + mask
+    # Make 2D wave-image from flat, loc, wave, tilt
     # ------------------------------------------------------------------
-    loc = make_2d_tell_mask(p, loc)
+    # log progress
+    WLOG('', p['log_opt'], 'Constructing 2D wave-image')
+    # make the 2D wave-image
+    loc = make_2d_wave_image(p, loc)
+
+    # ------------------------------------------------------------------
+    # Use spectra wavelength to create 2D image from wave-image
+    # ------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], 'Creating image from wave-image interpolation')
+    # create image from waveimage
+    loc = create_image_from_waveimage(p, loc, x=loc['tell_x'], y=loc['tell_y'])
 
     # ----------------------------------------------------------------------
-    # save 2D mask to file
+    # save 2D spectrum and wavelength image to file
     # ----------------------------------------------------------------------
-
+    # TODO: move to spirouConst
+    # construct spectrum filename
+    redfolder = p['reduced_dir']
+    specfilename = 'telluric_mapped_spectrum.fits'
+    specfitsfile = os.path.join(redfolder, specfilename)
+    # log progress
+    wmsg = 'Writing spectrum to file {0}'
+    WLOG('', p['log_opt'], wmsg.format(specfilename))
+    # write to file
+    spirouImage.WriteImage(specfitsfile, loc['spe'])
+    # ----------------------------------------------------------------------
+    # construct waveimage filename
+    wavefilename = 'telluric_mapped_waveimage.fits'
+    wavefitsfile = os.path.join(redfolder, wavefilename)
+    # log progress
+    wmsg = 'Writing wave image to file {0}'
+    WLOG('', p['log_opt'], wmsg.format(wavefilename))
+    # write to file
+    spirouImage.WriteImage(wavefitsfile, loc['waveimage'])
 
     # ----------------------------------------------------------------------
     # End Message
