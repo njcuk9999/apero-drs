@@ -1058,7 +1058,7 @@ spirouImage.spirouFITS.read_flat_file(p, hdr=None, filename=None, key=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Reads the wave file (from calib database or filename)
+Reads the flat file (from calib database or filename)
 
 :param p: parameter dictionary, ParamDict containing constants
     Must contain at least:
@@ -1072,12 +1072,51 @@ Reads the wave file (from calib database or filename)
                  acquisition time in, if None loads the header from
                  p['fitsfilename']
 :param filename: string or None, the filename and path of the tilt file,
-                 if None gets the TILT file from the calib database
-                 keyword "TILT"
-:param key: string or None, if None key='WAVE' else uses string as key
-            from calibDB (first entry) to get wave file
+                 if None gets the FLAT file from the calib database
+                 keyword "FLAT_{fiber}"
+:param key: string or None, if None key='FLAT_{fiber}' else uses string 
+            as key from calibDB (first entry) to get wave file
 
-:return wave: list of the tilt for each order
+:return wave: numpy array (2D), the flat image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadBlazeFile}
+
+Defined in \spirouImage\path{.spirouFITS.read_blaze_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadBlazeFile(p, hdr=None, filename=None, key=None)
+spirouImage.spirouFITS.read_blaze_file(p, hdr=None, filename=None, key=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Reads the blaze file (from calib database or filename)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+:param hdr: dictionary or None, the header dictionary to look for the
+                 acquisition time in, if None loads the header from
+                 p['fitsfilename']
+:param filename: string or None, the filename and path of the tilt file,
+                 if None gets the WAVE file from the calib database
+                 keyword "BLAZE_{fiber}"
+:param key: string or None, if None key='BLAZE_{fiber}' else uses string
+            as key from calibDB (first entry) to get wave file
+
+:param return_header: bool, if True returns header file else just returns
+                      wave file
+:return blaze: numpy array (2D), the blaze function (along x-direction)
+              for each order
 \end{pythondocstring}
 \end{minipage}
 
@@ -1207,7 +1246,7 @@ Reads the tilt file (from calib database or filename) and using the
 :param key: string or None, if None key='TILT' else uses string as key
             from calibDB (first entry) to get tilt file
 
-:return tilt: list of the tilt for each order
+:return tilt: numpy array (1D), the tilts for each order
 \end{pythondocstring}
 \end{minipage}
 
@@ -1245,7 +1284,8 @@ Reads the wave file (from calib database or filename)
 
 :param return_header: bool, if True returns header file else just returns
                       wave file
-:return wave: list of the tilt for each order
+:return wave: numpy array (2D), the wavelengths for each pixel (x-direction)
+              for each order
 \end{pythondocstring}
 \end{minipage}
 
@@ -1336,8 +1376,8 @@ Defined in \spirouImage\path{.spirouFITS.writeimage}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.WriteImage(filename, image, hdict, dtype=None)
-spirouImage.spirouFITS.writeimage(filename, image, hdict, dtype=None)
+spirouImage.WriteImage(filename, image, hdict=None, dtype=None)
+spirouImage.spirouFITS.writeimage(filename, image, hdict=None, dtype=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -1345,7 +1385,7 @@ Writes an image and its header to file
 
 :param filename: string, filename to save the fits file to
 :param image: numpy array (2D), the image
-:param hdict: dictionary, header dictionary to write to fits file
+:param hdict: dictionary or None, header dictionary to write to fits file
 
             Must be in form:
 
@@ -1353,6 +1393,8 @@ Writes an image and its header to file
             or
                     hdict[key] = value     (comment will be equal to
                                             "UNKNOWN"
+            if None does not write header to fits file                      
+                            
 :param dtype: None or hdu format type, forces the image to be in the
               format type specified (if not None)
 
