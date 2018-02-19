@@ -276,13 +276,13 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     return image, header, comments, nx, ny
 
 
-def writeimage(filename, image, hdict, dtype=None):
+def writeimage(filename, image, hdict=None, dtype=None):
     """
     Writes an image and its header to file
 
     :param filename: string, filename to save the fits file to
     :param image: numpy array (2D), the image
-    :param hdict: dictionary, header dictionary to write to fits file
+    :param hdict: dictionary or None, header dictionary to write to fits file
 
                 Must be in form:
 
@@ -290,6 +290,8 @@ def writeimage(filename, image, hdict, dtype=None):
                 or
                         hdict[key] = value     (comment will be equal to
                                                 "UNKNOWN"
+                if None does not write header to fits file
+
     :param dtype: None or hdu format type, forces the image to be in the
                   format type specified (if not None)
 
@@ -320,8 +322,9 @@ def writeimage(filename, image, hdict, dtype=None):
     if dtype is not None:
         hdu.scale(dtype)
     # add header keys to the hdu header
-    for key in list(hdict.keys()):
-        hdu.header[key] = hdict[key]
+    if hdict is not None:
+        for key in list(hdict.keys()):
+            hdu.header[key] = hdict[key]
     # write to file
     with warnings.catch_warnings(record=True) as w:
         try:
@@ -358,7 +361,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     :param key: string or None, if None key='TILT' else uses string as key
                 from calibDB (first entry) to get tilt file
 
-    :return tilt: list of the tilt for each order
+    :return tilt: numpy array (1D), the tilts for each order
     """
     if key is None:
         key = 'TILT'
@@ -391,14 +394,15 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
     :param filename: string or None, the filename and path of the tilt file,
-                     if None gets the TILT file from the calib database
-                     keyword "TILT"
+                     if None gets the WAVE file from the calib database
+                     keyword "WAVE_{fiber}"
     :param key: string or None, if None key='WAVE' else uses string as key
                 from calibDB (first entry) to get wave file
 
     :param return_header: bool, if True returns header file else just returns
                           wave file
-    :return wave: list of the tilt for each order
+    :return wave: numpy array (2D), the wavelengths for each pixel (x-direction)
+                  for each order
     """
     if key is None:
         key = 'WAVE_' + p['fiber']
@@ -420,7 +424,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
 
 def read_flat_file(p, hdr=None, filename=None, key=None):
     """
-    Reads the wave file (from calib database or filename)
+    Reads the flat file (from calib database or filename)
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -434,12 +438,12 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
                      acquisition time in, if None loads the header from
                      p['fitsfilename']
     :param filename: string or None, the filename and path of the tilt file,
-                     if None gets the TILT file from the calib database
-                     keyword "TILT"
-    :param key: string or None, if None key='WAVE' else uses string as key
-                from calibDB (first entry) to get wave file
+                     if None gets the FLAT file from the calib database
+                     keyword "FLAT_{fiber}"
+    :param key: string or None, if None key='FLAT_{fiber}' else uses string
+                as key from calibDB (first entry) to get wave file
 
-    :return wave: list of the tilt for each order
+    :return wave: numpy array (2D), the flat image
     """
     func_name = __NAME__ + '.read_flat_file()'
     if key is None:
@@ -459,6 +463,51 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
     flat, hdict, _, nx, ny = rout
     # return the wave file
     return flat
+
+
+def read_blaze_file(p, hdr=None, filename=None, key=None):
+    """
+    Reads the blaze file (from calib database or filename)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['fitsfilename']
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the WAVE file from the calib database
+                     keyword "BLAZE_{fiber}"
+    :param key: string or None, if None key='BLAZE_{fiber}' else uses string
+                as key from calibDB (first entry) to get wave file
+
+    :param return_header: bool, if True returns header file else just returns
+                          wave file
+    :return blaze: numpy array (2D), the blaze function (along x-direction)
+                  for each order
+    """
+    func_name = __NAME__ + '.read_blaze_file()'
+    if key is None:
+        try:
+            key = 'BLAZE_{0}'.format(p['fiber'])
+        except spirouConfig.ConfigError as e:
+            emsg1 = 'Parameter "fiber" not found in parameter dictionary'
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # get filename
+    if filename is None:
+        read_file = spirouCDB.GetFile(p, key, hdr)
+    else:
+        read_file = filename
+    # read read_file
+    rout = readdata(p, filename=read_file, log=False)
+    blaze, hdict, _, nx, ny = rout
+    # return the wave file
+    return blaze
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None):
