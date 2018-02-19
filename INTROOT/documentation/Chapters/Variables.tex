@@ -897,9 +897,9 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 {\calSLIT, \calFFraw}{\constantsfile}{\spirouEXTOR.extract\_AB\_order}{Public}
 
 
-% ic_ext_all
-\item \ParameterEntry{Extraction type}
-{Defines which type of extract should be used in \calextractRAW. This variable is overwritten if using \calextractRAWAB or \calextractRAWC. The value must be one of the following:
+% ic_extract_type
+\item \namedlabel{text:ic_extract_type} \ParameterEntry{Extraction type}
+{Defines which type of extraction should be used in \calextractRAW. This variable is overwritten if using \calextractRAWAB or \calextractRAWC. The value must be one of the following:
 \begin{itemize}
 \item simple \dotfill just does extraction as is.
 \item tilt \dotfill does the extraction and corrects for tilt
@@ -909,11 +909,12 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \end{itemize}
 Value should be a python string with one of the above values only. Any other value will cause an error and a recipe to exit.
 }
-{ic\_extact\_type}{tiltweight}
+{ic\_extract\_type}{tiltweight}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
 \DevNote{For all we should probably use tiltweight but as \calextractRAWAB and \calextractRAWC currently use weight for the E2DS this is set to reproduce this.}
 
-\item \ParameterEntry{Manually set the extraction sigdet}
+% ic_ext_sigdet
+\item \namedlabel{text:ic_ext_sigdet} \ParameterEntry{Manually set the extraction sigdet}
 {Set the sigdet used in the extraction process instead of using the sigdet in the FITS rec HEADER file. If the value is set to -1 the sigdet from the HEADER is used instead.}
 {ic\_ext\_sigdet}{100}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
@@ -1583,7 +1584,7 @@ Value must be a float greater than zero.
 
 % darkfile
 \begin{itemize}
-	\item \namedlabel{text:darkfile} \PseudoParamEntry{The dark calibration file}
+	\item \namedlabel{text:darkfile} \PseudoParamEntry{The dark calibration filename}
 	{The full path of the processed dark calibration file}
 	{darkfile}
 	{\calDARK}{\spirouConst.\path{DARK\_FILE()}}{\calDARK}
@@ -1592,14 +1593,14 @@ Value must be a float greater than zero.
 % darkbadpixfile
 \begin{itemize}
 	\item \namedlabel{text:darkbadpixfile} \PseudoParamEntry{The dark bad pixel map calibration file}
-	{The full path of the processed dark bad pixel map calibration file}
+	{The full path of the processed dark bad pixel map calibration filename}
 	{darkbadpixfile}
 	{\calDARK}{\spirouConst.\path{DARK_BADPIX_FILE()}}{\calDARK}
 \end{itemize}
 
 % badpixelfits
 \begin{itemize}
-	\item \namedlabel{text:badpixelfits} \PseudoParamEntry{The bad pixel map calibration file}
+	\item \namedlabel{text:badpixelfits} \PseudoParamEntry{The bad pixel map calibration filename}
 	{The full path of the processed bad pixel map calibration file}
 	{badpixfile}
 	{\calbadpix}{\spirouConst.\path{BADPIX_FILE()}}{\calbadpix}
@@ -1607,7 +1608,7 @@ Value must be a float greater than zero.
 
 % order_profile
 \begin{itemize}
-	\item \namedlabel{text:order_profile} \PseudoParamEntry{The order profile image file}
+	\item \namedlabel{text:order_profile} \PseudoParamEntry{The order profile image filename}
 	{The full path of the order profile image file.}
 	{orderpfile}
 	{\callocRAW}{\spirouConst.\path{LOC_ORDER_PROFILE_FILE()}}{\callocRAW}
@@ -1615,7 +1616,7 @@ Value must be a float greater than zero.
 
 % locofits
 \begin{itemize}
-	\item \namedlabel{text:locofitsfile} \PseudoParamEntry{Localization file 1}
+	\item \namedlabel{text:locofitsfile} \PseudoParamEntry{Localization filename 1}
 	{The full path of the processed localisation file containing the center fits for each order.}
 	{locofits}
 	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE()}}{\callocRAW}
@@ -1623,7 +1624,7 @@ Value must be a float greater than zero.
 
 % locofits2
 \begin{itemize}
-	\item \namedlabel{text:locofitsfile2} \PseudoParamEntry{Localization file 2}
+	\item \namedlabel{text:locofitsfile2} \PseudoParamEntry{Localization filename 2}
 	{The full path of the processed localisation file containing the width fits for each order}
 	{locofits2}
 	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE2()}}{\callocRAW}
@@ -1631,7 +1632,7 @@ Value must be a float greater than zero.
 
 % locofits3
 \begin{itemize}
-	\item \namedlabel{text:locofitsfile3} \PseudoParamEntry{Localization file 3}
+	\item \namedlabel{text:locofitsfile3} \PseudoParamEntry{Localization filename 3}
 	{The full path of the fits super-imposed onto the origial image file.}
 	{locofits3}
 	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE3()}}{\callocRAW}
@@ -1639,7 +1640,7 @@ Value must be a float greater than zero.
 
 % tiltfits
 \begin{itemize}
-	\item \namedlabel{text:tiltfits} \PseudoParamEntry{Tilt file}
+	\item \namedlabel{text:tiltfits} \PseudoParamEntry{Tilt filename}
 	{The full path of the processed tilt file.}
 	{tiltfits}
 	{\calSLIT}{\spirouConst.\path{SLIT_TILT_FILE}}{\calSLIT}
@@ -1647,7 +1648,7 @@ Value must be a float greater than zero.
 
 % blazefits
 \begin{itemize}
-	\item \namedlabel{text:blazefits} \PseudoParamEntry{Blaze file}
+	\item \namedlabel{text:blazefits} \PseudoParamEntry{Blaze filename}
 	{The full path of the processed blaze file.}
 	{blazefits}
 	{\calFFraw}{\spirouConst.\path{FF_BLAZE_FILE}}{\calFFraw}
@@ -1656,7 +1657,7 @@ Value must be a float greater than zero.
 
 % flatfits
 \begin{itemize}
-	\item \namedlabel{text:flatfits} \PseudoParamEntry{Flat file}
+	\item \namedlabel{text:flatfits} \PseudoParamEntry{Flat filename}
 	{The full path of the processed flat file}
 	{flatfits}
 	{\calFFraw}{\spirouConst.\path{FF_FLAT_FILE}}{\calFFraw}
@@ -1664,21 +1665,21 @@ Value must be a float greater than zero.
 
 
 % e2ds file
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:e2ds_file} \PseudoParamEntry{E2DS filename}
+	{The full path of the processed and extracted e2ds file}
+	{e2dsfits}
+	{\calextractRAW, \calextractRAWAB, \calextractRAWC}{\spirouConst.\path{EXTRACT_E2DS_FILE}}{\calextractRAW}
+\end{itemize}
 
 
 % all extract types
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:exfitslist} \PseudoParamEntry{The extraction filenames}
+	{Defines the extraction names (and locations) for the extraction process for all types of E2DS file. i.e. the filenames for `simple', `tilt', `tiltweight', `tiltweight2' and `weight'}
+	{exfitslist}
+	{\calextractRAW}{\spirouConst.\path{EXTRACT_E2DS_ALL_FILES}}{\calextractRAW}
+\end{itemize}
 
 
 % driftfits_raw
