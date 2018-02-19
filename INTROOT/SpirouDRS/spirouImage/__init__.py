@@ -109,6 +109,8 @@ ReadTiltFile = spirouFITS.read_tilt_file
 
 ReadWaveFile = spirouFITS.read_wave_file
 
+ReadBlazeFile = spirouFITS.read_blaze_file
+
 ReadOrderProfile = spirouFITS.read_order_profile_superposition
 
 ResizeImage = spirouImage.resize
