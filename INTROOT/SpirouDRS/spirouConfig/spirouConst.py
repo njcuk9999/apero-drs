@@ -87,7 +87,7 @@ def VERSION():
                      full release level), and C denotes minor changes
     """
     # Module Version (Used in all sub-packages)
-    version = '0.1.021'
+    version = '0.1.022'
     return version
 
 
@@ -125,7 +125,7 @@ def LATEST_EDIT():
     :return date: string, the date (in format YYYY-MM-DD)
     """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-02-19'
+    date = '2018-02-21'
     return date
 
 

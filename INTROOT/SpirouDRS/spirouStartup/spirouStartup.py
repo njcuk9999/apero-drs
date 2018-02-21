@@ -149,7 +149,13 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # -------------------------------------------------------------------------
     # deal with arg_night_name defined in call
     if night_name is not None:
-            cparams['ARG_NIGHT_NAME'] = night_name
+        cparams['ARG_NIGHT_NAME'] = night_name
+    # -------------------------------------------------------------------------
+    # deal with run time arguments
+    if customargs is None:
+        cparams = run_time_args(cparams)
+    else:
+        cparams = run_time_custom_args(cparams, customargs)
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
@@ -160,12 +166,6 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     elif mainfitsfile is not None and customargs is not None:
         cparams = get_custom_arg_files_fitsfilename(cparams, customargs,
                                                     mainfitsfile, mainfitsdir)
-    # -------------------------------------------------------------------------
-    # deal with run time arguments
-    if customargs is None:
-        cparams = run_time_args(cparams)
-    else:
-        cparams = run_time_custom_args(cparams, customargs)
     # -------------------------------------------------------------------------
     # Display help file if needed
     display_help_file(cparams)
