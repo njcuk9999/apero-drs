@@ -56,8 +56,11 @@ def main(night_name=None, reffile=None):
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
-
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsfile='reffile',
+                                    mainfitsdir='reduced')
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
