@@ -1643,7 +1643,7 @@ Value must be a float greater than zero.
 	\item \namedlabel{text:tiltfits} \PseudoParamEntry{Tilt filename}
 	{The full path of the processed tilt file.}
 	{tiltfits}
-	{\calSLIT}{\spirouConst.\path{SLIT_TILT_FILE}}{\calSLIT}
+	{\calSLIT}{\spirouConst.\path{SLIT_TILT_FILE()}}{\calSLIT}
 \end{itemize}
 
 % blazefits
@@ -1651,7 +1651,7 @@ Value must be a float greater than zero.
 	\item \namedlabel{text:blazefits} \PseudoParamEntry{Blaze filename}
 	{The full path of the processed blaze file.}
 	{blazefits}
-	{\calFFraw}{\spirouConst.\path{FF_BLAZE_FILE}}{\calFFraw}
+	{\calFFraw}{\spirouConst.\path{FF_BLAZE_FILE()}}{\calFFraw}
 \end{itemize}
 
 
@@ -1660,7 +1660,7 @@ Value must be a float greater than zero.
 	\item \namedlabel{text:flatfits} \PseudoParamEntry{Flat filename}
 	{The full path of the processed flat file}
 	{flatfits}
-	{\calFFraw}{\spirouConst.\path{FF_FLAT_FILE}}{\calFFraw}
+	{\calFFraw}{\spirouConst.\path{FF_FLAT_FILE()}}{\calFFraw}
 \end{itemize}
 
 
@@ -1669,7 +1669,7 @@ Value must be a float greater than zero.
 	\item \namedlabel{text:e2ds_file} \PseudoParamEntry{E2DS filename}
 	{The full path of the processed and extracted e2ds file}
 	{e2dsfits}
-	{\calextractRAW, \calextractRAWAB, \calextractRAWC}{\spirouConst.\path{EXTRACT_E2DS_FILE}}{\calextractRAW}
+	{\calextractRAW, \calextractRAWAB, \calextractRAWC()}{\spirouConst.\path{EXTRACT_E2DS_FILE}}{\calextractRAW}
 \end{itemize}
 
 
@@ -1678,52 +1678,52 @@ Value must be a float greater than zero.
 	\item \namedlabel{text:exfitslist} \PseudoParamEntry{The extraction filenames}
 	{Defines the extraction names (and locations) for the extraction process for all types of E2DS file. i.e. the filenames for `simple', `tilt', `tiltweight', `tiltweight2' and `weight'}
 	{exfitslist}
-	{\calextractRAW}{\spirouConst.\path{EXTRACT_E2DS_ALL_FILES}}{\calextractRAW}
+	{\calextractRAW}{\spirouConst.\path{EXTRACT_E2DS_ALL_FILES()}}{\calextractRAW}
 \end{itemize}
 
 
 % driftfits_raw
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:driftfits_raw} \PseudoParamEntry{The raw drift filename}
+	{Defines the raw drift fits file name and location}
+	{driftfits\_raw}
+	{\calDRIFTRAW}{\spirouConst.\path{DRIFT_RAW_FILE()}}{\calDRIFTRAW}
+\end{itemize}
 
 % driftfits_e2ds
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:driftfits_e2ds} \PseudoParamEntry{The E2DS drift filename}
+	{Defines the E2DS drift fits filename and location}
+	{driftfits\_e2ds}
+	{\calDRIFTE}{\spirouConst.\path{DRIFT_E2DS_FITS_FILE()}}{\calDRIFTE}
+\end{itemize}
 
 
 % drifttblfilename_e2ds
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:drifttblfilename_e2ds} \PseudoParamEntry{The E2DS drift table filename}
+	{Defines the E2DS drift table filename and location}
+	{drifttblfilename\_e2ds}
+	{\calDRIFTE}{\spirouConst.\path{DRIFT_E2DS_TBL_FILE()}}{\calDRIFTE}
+\end{itemize}
 
 
 % driftfits_peak_e2ds
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:driftfits_peak_e2ds} \PseudoParamEntry{The E2DS drift-peak fits filename}
+	{Defines the E2DS drift-peak fits filename and location}
+	{driftfits\_peak\_e2ds}
+	{\calDRIFTPEAK}{\spirouConst.\path{DRIFTPEAK_E2DS_FITS_FILE}}{\calDRIFTPEAK}
+\end{itemize}
 
 
 % drifttblfilename_peak_e2ds
-% \begin{itemize}
-% 	\item \namedlabel{text:} \PseudoParamEntry{}
-% 	{}
-% 	{}
-% 	{\cal}{\spirouConst.}{\cal}
-% \end{itemize}
+\begin{itemize}
+	\item \namedlabel{text:drifttblfilename_peak_e2ds} \PseudoParamEntry{The E2DS drift-peak table filename}
+	{Defines the E2DS drift-peak table filename and location}
+	{drifttblfilename\_peak\_e2ds}
+	{\calDRIFTPEAK}{\spirouConst.\path{DRIFTPEAK_E2DS_TBL_FILE}}{\calDRIFTPEAK}
+\end{itemize}
 
 
 % corfile
