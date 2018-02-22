@@ -316,34 +316,37 @@ def correct_for_tilt(p, loc):
             centpoly = acc[fin][::-1]
             # find those pixels in this suborder
             mask = suborderimage == fin
-            # loop around all positions that are valid
-            for x0, y0 in zip(ximage[mask], yimage[mask]):
-                # get center position
-                xc = x0
-                yc = np.polyval(centpoly, xc)
-                # get line parameters
-                # TODO: This may not be a linear relation in future
-                linepoly = line_parameters(x0, y0, xc, yc, tilt[order_no])
+            # get x0s and y0s
+            x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
+            # calculate centers
+            xcenters = np.array(x0s)
+            ycenters = np.polyval(centpoly, xcenters)
+            # calculate line parmeters
+            ms, cs = line_parameters(x0s, y0s, xcenters, ycenters,
+                                     tilt[order_no])
+            # loop around parameters to get individual intersections
+            for it in range(len(x0s)):
+                # construct this iterations linepoly
+                linepoly = [ms[it], cs[it]]
                 # get the intersection points
                 x, y = get_intersection_twopolys(centpoly, linepoly)
-                # check for real solutions in the image
+                # check for real solutions in the image limits
                 good = np.isreal(x) & np.isreal(y)
                 good &= (x.real > 0) & (x.real < ishape[1])
                 good &= (y.real > 0) & (y.real < ishape[0])
                 # check if we have a valid position
                 # if we do only want the closest solution to x0
                 if np.sum(good) == 0:
-                    pass
-                    # continue
+                    continue
                 elif np.sum(good) > 1:
-                    pos = np.argmin(abs(x[good]-x0))
+                    pos = np.argmin(abs(x[good]-x0s[it]))
                     xa = x[good][pos].real
-                    ya = y[good][pos].real
+                    # ya = y[good][pos].real
                 else:
                     xa = x[good][0].real
-                    ya = y[good][0].real
+                    # ya = y[good][0].real
                 # push the x value into true x image
-                trueximage[y0, x0] = xa
+                trueximage[y0s[it], x0s[it]] = xa
 
                 # if x0 == 300 and order_no == 20:
                 #     test_tilt(ximage, yimage, centpoly, linepoly, x0, y0,
