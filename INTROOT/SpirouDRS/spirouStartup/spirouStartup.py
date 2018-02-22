@@ -159,8 +159,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
-        cparams['ARG_FILE_NAMES'] = files
-        cparams['FITSFILENAME'] = files[0]
+        cparams = get_call_arg_files_fitsfilename(cparams, files)
     # if files not defined we have custom arguments and hence need to define
     #    arg_file_names and fitsfilename manually
     elif mainfitsfile is not None and customargs is not None:
@@ -499,6 +498,58 @@ def run_time_custom_args(p, customargs):
         p.set_source(key, 'From run time arguments (sys.argv)')
 
     return p
+
+
+def get_call_arg_files_fitsfilename(cparams, files):
+    """
+    We need to deal with there being no run time arguments and having
+    files defined from "files". In the case that there are no run time
+    arguments "arg_file_names" and "fitsfilename" are not defined so these
+    have to be defined from "files". "arg_file_names" is simply equal to "files"
+    however "fitsfilename" is a full path so this is more complicated.
+    In runtime arguments all "arg_file_names" are assumed to be in the raw
+    directory thus we need to add this to the fitsfilename
+
+    :param cparams: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+    :param files:
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+    """
+    func_name = __NAME__ + '.get_call_arg_files_fitsfilename()'
+    # make sure we have DRS_DATA_RAW and ARG_NIGHT_NAME
+    if 'DRS_DATA_RAW' not in cparams or 'arg_night_name' not in cparams:
+        emsg1 = (' Error "cparams" must contain "DRS_DATA_RAW" and '
+                 '"ARG_NIGHT_NAME"')
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
+    # get raw directory
+    rawdir = spirouConfig.Constants.RAW_DIR(cparams)
+    # if we don't have arg_file_names set it to the "files"
+    if 'ARG_FILE_NAMES' not in cparams:
+        cparams['ARG_FILE_NAMES'] = files
+    # if we have no files in arg_file_names set it to the "files"
+    elif len(cparams['ARG_FILE_NAMES']) == 0:
+        cparams['ARG_FILE_NAMES'] = files
+    # if we don't have fitsfilename set it to the rawdir + files[0]
+    if 'FITSFILENAME' not in cparams:
+        cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+    # if fitsfilename is set to None set it to the rawdir + files[0]
+    elif cparams['FITSFILENAME'] is None:
+        cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+    # finally return the updated cparams
+    return cparams
 
 
 def load_other_config_file(p, key, logthis=True, required=False):
