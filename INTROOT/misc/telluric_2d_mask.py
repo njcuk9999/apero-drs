@@ -225,7 +225,7 @@ def make_2d_wave_image(p, loc):
     # get xpixel positions
     xpos = np.arange(image.shape[1])
     # mask out those values not in waveo range
-    good = (t_x_image > 0) & (t_x_image < image.shape[1])
+    good = (t_x_image > 0) & (t_x_image < np.max(xpos))
     # loop around number of orders (AB)
     for order_no in tqdm(range(number_orders)):
         # find those pixels in this order
@@ -328,19 +328,26 @@ def correct_for_tilt(p, loc):
                 x, y = get_intersection_twopolys(centpoly, linepoly)
                 # check for real solutions in the image
                 good = np.isreal(x) & np.isreal(y)
-                good &= (x > 0) & (x < ishape[1])
-                good &= (y > 0) & (y < ishape[0])
+                good &= (x.real > 0) & (x.real < ishape[1])
+                good &= (y.real > 0) & (y.real < ishape[0])
                 # check if we have a valid position
                 # if we do only want the closest solution to x0
                 if np.sum(good) == 0:
-                    continue
+                    pass
+                    # continue
                 elif np.sum(good) > 1:
                     pos = np.argmin(abs(x[good]-x0))
-                    xgood = x[good][pos].real
+                    xa = x[good][pos].real
+                    ya = y[good][pos].real
                 else:
-                    xgood = x[good][0].real
+                    xa = x[good][0].real
+                    ya = y[good][0].real
                 # push the x value into true x image
-                trueximage[y0, x0] = xgood
+                trueximage[y0, x0] = xa
+
+                # if x0 == 300 and order_no == 20:
+                #     test_tilt(ximage, yimage, centpoly, linepoly, x0, y0,
+                #               xc, yc, xa, ya)
     # save to loc
     loc['true_x_image'] = trueximage
     loc.set_source('true_x_image', func_name)
@@ -373,11 +380,26 @@ def get_intersection_twopolys(coeffs1, coeffs2):
 
 
 def line_parameters(x0, y0, xc, yc, angle):
+    """
 
-    # From trig identities equation of a line given an angle and two
-    # of the triangles co-ordinates
-    m = (yc - y0) / ((abs(y0-yc)) * np.tan(np.deg2rad(angle)))
-    c = y0 - m * x0
+    :param x0: int, pixel position in x direction (columns direction)
+    :param y0: int, pixel position in y direction (rows direction)
+    :param xc: int, central pixel value x direction
+    :param yc: float, central pixel value y direction
+    :param angle: float, tilt angle in degrees, defined as positive
+                  clockwise away from the positive y-axis
+    :return:
+    """
+    if y0 > yc:
+        # From trig identities equation of a line given an angle and two
+        # of the triangles co-ordinates
+        m = (yc - y0) / (+abs(y0-yc) * np.tan(np.deg2rad(angle)))
+        c = y0 - m * x0
+    else:
+        # From trig identities equation of a line given an angle and two
+        # of the triangles co-ordinates
+        m = (yc - y0) / (-abs(y0-yc) * np.tan(np.deg2rad(angle)))
+        c = y0 - m * x0
     # return gradient and intercept
     return m, c
 
@@ -415,8 +437,9 @@ def create_image_from_waveimage(p, loc, x, y):
         # mask out zeros (NaNs in future)
         invalidpixels = (rvalues == 0)
         # don't try to interpolate those pixels outside range of "x"
-        invalidpixels |= rvalues < np.min(x)
-        invalidpixels |= rvalues > np.max(x)
+        with warnings.catch_warnings(record=True) as w:
+            invalidpixels |= rvalues < np.min(x)
+            invalidpixels |= rvalues > np.max(x)
         # valid pixel definition
         validpixels = ~invalidpixels
         # check that we have some valid pixels
@@ -495,6 +518,27 @@ def test_spec(loc):
 
     plt.show()
     plt.close()
+
+
+def test_tilt(ximage, yimage, centpoly, linepoly, x0, y0, xc, yc, xa, ya):
+
+    # plot order fit
+    plt.plot(ximage[0], np.polyval(centpoly, ximage[0]), color='k',
+             label='order fit')
+    # plot tilt line
+    xvalues = np.arange(np.min([x0, xa]) - 0.1, np.max([x0, xa]) + 0.1, 0.01)
+    plt.plot(xvalues, np.polyval(linepoly, xvalues), color='orange',
+             label='tilt line')
+    # plot cent to original line
+    plt.plot([x0, xc], [y0, yc], color='cyan', label='cent line')
+
+    # plot points
+    plt.plot([xc], [yc], color='red', marker='x', label='center')
+    plt.plot([x0], [y0], color='blue', marker='o', label='original')
+    plt.plot([xa], [ya], color='green', marker='+', label='actual')
+
+    plt.xlim(np.min(ximage), np.max(ximage))
+    plt.ylim(np.min(yimage), np.max(yimage))
 
 
 # =============================================================================
