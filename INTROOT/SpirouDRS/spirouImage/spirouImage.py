@@ -720,15 +720,16 @@ def get_tilt(pp, lloc, image):
     # storage for tilt
     lloc['tilt'] = np.zeros(int(nbo/2), dtype=float)
     lloc.set_source('tilt', __NAME__ + '/get_tilt()')
+    # Over sample the data and interpolate new extraction values
+    pixels = np.arange(image.shape[1])
+    os_fac = pp['ic_tilt_coi']
+    os_pixels = np.arange(image.shape[1] * os_fac) / os_fac
     # loop around each order
     for order_num in range(0, nbo, 2):
         # extract this AB order
         lloc = spirouEXTOR.ExtractABOrderOffset(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
-        # Over sample the data and interpolate new extraction values
-        pixels = np.arange(image.shape[1])
-        os_fac = pp['ic_tilt_coi']
-        os_pixels = np.arange(image.shape[1] * os_fac) / os_fac
+        # interpolate the pixels on to the extracted centers
         cent1i = np.interp(os_pixels, pixels, lloc['cent1'])
         cent2i = np.interp(os_pixels, pixels, lloc['cent2'])
         # --------------------------------------------------------------------
@@ -736,7 +737,7 @@ def get_tilt(pp, lloc, image):
         cori = np.correlate(cent2i, cent1i, mode='same')
         # --------------------------------------------------------------------
         # get the tilt - the maximum correlation between the middle pixel
-        #   and the middle pixel + 50 * p['COI']
+        #   and the middle pixel + 10 * p['COI']
         coi = int(os_fac)
         pos = int(image.shape[1] * coi / 2)
         delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
