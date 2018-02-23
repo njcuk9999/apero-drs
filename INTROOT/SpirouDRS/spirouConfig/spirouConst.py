@@ -87,7 +87,7 @@ def VERSION():
                      full release level), and C denotes minor changes
     """
     # Module Version (Used in all sub-packages)
-    version = '0.1.023'
+    version = '0.1.024'
     return version
 
 
@@ -125,7 +125,7 @@ def LATEST_EDIT():
     :return date: string, the date (in format YYYY-MM-DD)
     """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-02-22'
+    date = '2018-02-23'
     return date
 
 
@@ -873,7 +873,7 @@ def DRIFTPEAK_E2DS_TBL_FILE(p):
 
 def CCF_FITS_FILE(p):
     """
-    Defines the CCF file location and name
+    Defines the CCF fits file location and name
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -887,7 +887,7 @@ def CCF_FITS_FILE(p):
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['ccf_mask'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
-    corfilename = p['reffile'].replace('_e2ds', newext)
+    corfilename = p['e2dsfile'].replace('_e2ds', newext)
 
     corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf file location and name
@@ -896,7 +896,7 @@ def CCF_FITS_FILE(p):
 
 def CCF_TABLE_FILE(p):
     """
-    Defines the CCF file location and name
+    Defines the CCF table file location and name
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:

@@ -54,8 +54,8 @@ FLATFILE = 'flat_dark02f10.fits'
 TAPASX = DATA + '/calibDB/TAPAS_X_axis_speed_dv=0.5.fits'
 TAPASY = DATA + '/calibDB/tapas_combined_za=20.000000.fits'
 THRESHOLD = 0.95
-MINLAM = 1500
-MAXLAM = 1800
+MINLAM = 1250
+MAXLAM = 2250
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -101,20 +101,187 @@ def get_telluric(p, loc):
     kwargs = dict(return_header=False, return_shape=False)
     tx = spirouImage.ReadData(p, filename=p['tellmodx'], **kwargs)
     ty = spirouImage.ReadData(p, filename=p['tellmody'], **kwargs)
-    # apply mask to telluric model
-    mask1 = tx > p['minlam']
-    mask2 = tx < p['maxlam']
-    mask3 = ty > p['tellthres']
-    # combine masks
-    mask = mask1 & mask2 & mask3
     # add model and mask to loc
     loc['tell_x'] = tx
     loc['tell_y'] = ty
-    loc['tell_mask'] = mask
     # set source
-    loc.set_sources(['tell_x', 'tell_y', 'tell_mask'], func_name)
+    loc.set_sources(['tell_x', 'tell_y'], func_name)
     # return loc
     return loc
+
+
+def order_profile(p, loc):
+    func_name = __NAME__ + '.order_profile()'
+    # get data from loc
+    image = loc['flat2']
+    wave = loc['wave']
+    acc, ass = loc['acc'], loc['ass']
+    # assign number of orders
+    number_orders = len(wave)
+    # construct a "NaN" image (for wavelengths)
+    ishape = image.shape
+    # Define empty order image
+    orderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
+    suborderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
+    # get the indices locations
+    yimage, ximage = np.indices(image.shape)
+    # loop around number of orders (AB)
+    for order_no in tqdm(range(number_orders)):
+        # loop around A and B
+        for fno in [0, 1]:
+            # get fiber iteration number
+            fin = 2*order_no + fno
+            # get central positions
+            cfit = np.polyval(acc[fin][::-1], ximage)
+            # get width positions
+            wfit = np.polyval(ass[fin][::-1], ximage)
+            # define the lower and upper bounds of this order
+            upper = cfit + wfit/2
+            lower = cfit - wfit/2
+            # define the mask of the pixels in this order
+            mask = (yimage < upper) & (yimage > lower)
+
+            # create the order image
+            orderimage[mask] = order_no
+            suborderimage[mask] = fin
+
+    # add to loc
+    loc['orderimage'] = orderimage
+    loc['suborderimage'] = suborderimage
+    # add source
+    loc.set_sources(['orderimage', 'suborderimage'], func_name)
+    # return loc
+    return loc
+
+
+def correct_for_tilt(p, loc):
+    func_name = __NAME__ + '.correct_for_tilt()'
+    # get constants from p
+    sorder = p['ic_drift_order_plot']
+    # plot conditions
+    cond1 = p['DRS_PLOT']
+    cond2 = p['DRS_DEBUG']
+
+    # get data from loc
+    image = loc['flat2']
+    wave = loc['wave']
+    acc = loc['acc']
+    tilt = loc['tilt']
+    orderimage = loc['orderimage']
+    suborderimage = loc['suborderimage']
+    # assign number of orders
+    number_orders = len(wave)
+    # construct a "NaN" image (for wavelengths)
+    ishape = image.shape
+    # Define empty order image
+    trueximage = np.repeat([-1.0], np.product(ishape)).reshape(ishape)
+    # get the indices locations
+    yimage, ximage = np.indices(image.shape)
+    # loop around number of orders (AB)
+    for order_no in tqdm(range(number_orders)):
+        # define plot condition
+        cond3 = order_no == sorder
+        # loop around A and B
+        for fno in [0, 1]:
+            # get fiber iteration number
+            fin = 2*order_no + fno
+            # get central polynomial coefficients
+            centpoly = acc[fin][::-1]
+            # find those pixels in this suborder
+            mask = suborderimage == fin
+            # get x0s and y0s
+            x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
+            # calculate centers
+            xcenters = np.array(x0s)
+            ycenters = np.polyval(centpoly, xcenters)
+            # calculate line parmeters
+            ms, cs = line_parameters(x0s, y0s, xcenters, ycenters,
+                                     tilt[order_no])
+            # loop around parameters to get individual intersections
+            for it in range(len(x0s)):
+                # construct this iterations linepoly
+                linepoly = [ms[it], cs[it]]
+                # get the intersection points
+                x, y = get_intersection_twopolys(centpoly, linepoly)
+                # check for real solutions in the image limits
+                good = np.isreal(x) & np.isreal(y)
+                good &= (x.real > 0) & (x.real < ishape[1])
+                good &= (y.real > 0) & (y.real < ishape[0])
+                # check if we have a valid position
+                # if we do only want the closest solution to x0
+                if np.sum(good) == 0:
+                    continue
+                elif np.sum(good) > 1:
+                    pos = np.argmin(abs(x[good]-x0s[it]))
+                    xa = x[good][pos].real
+                    ya = y[good][pos].real
+                else:
+                    xa = x[good][0].real
+                    ya = y[good][0].real
+                # push the x value into true x image
+                trueximage[y0s[it], x0s[it]] = xa
+                # get final plot condition
+                cond4 = x0s[it] % 300 == 0
+                # plot if conditions are all met
+                if cond1 and cond2 and cond3 and cond4:
+                    test_tilt(ximage, yimage, centpoly, linepoly, x0s[it],
+                              y0s[it], xcenters[it], ycenters[it], xa, ya)
+    # save to loc
+    loc['true_x_image'] = trueximage
+    loc.set_source('true_x_image', func_name)
+    # return loc
+    return loc
+
+
+def get_intersection_twopolys(coeffs1, coeffs2):
+
+
+    # coefficients must be in order:
+    #   p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+    # From here: https://stackoverflow.com/a/19217593/7858439
+
+    length = np.max([len(coeffs1), len(coeffs2)])
+    if len(coeffs1) < len(coeffs2):
+        coeffs1 =  [0.0] * (length - len(coeffs1)) + list(coeffs1)
+    elif len(coeffs2) < len(coeffs1):
+        coeffs2 = [0.0] * (length - len(coeffs2)) + list(coeffs2)
+
+    # make sure coefficient lists are arrays of floats
+    c1 = np.array(coeffs1, dtype=float)[::-1]
+    c2 = np.array(coeffs2, dtype=float)[::-1]
+    # get the roots of the coefficients (these are the x positions)
+    x = polynomial.polyroots(c2 - c1)
+    # get the y values for the x positions
+    y = np.polyval(coeffs1, x)
+    # return x and y
+    return x, y
+
+
+def line_parameters(x0, y0, xc, yc, angle):
+    """
+
+    :param x0: int, pixel position in x direction (columns direction)
+    :param y0: int, pixel position in y direction (rows direction)
+    :param xc: int, central pixel value x direction
+    :param yc: float, central pixel value y direction
+    :param angle: float, tilt angle in degrees, defined as positive
+                  anti-clockwise away from the positive y-axis
+    :return:
+    """
+    # this gets the sign of the denominator
+    # if y0 is greater than yc we are above the center and our new point
+    #    should be to the left of xc (if tilt is negative)
+    # if y0 is less than yc we are below the center and our new point
+    #    should be to the right of xc (if tilt is negative)
+    sign = 2 * (y0 > yc) - 1
+
+    # From trig identities equation of a line given an angle and two
+    # of the triangles co-ordinates
+    m = (yc - y0) / (sign * abs(y0-yc) * np.tan(np.deg2rad(-angle)))
+    c = y0 - m * x0
+
+    # return gradient and intercept
+    return m, c
 
 
 def make_2d_wave_image_old(p, loc):
@@ -245,168 +412,6 @@ def make_2d_wave_image(p, loc):
     return loc
 
 
-def order_profile(p, loc):
-    func_name = __NAME__ + '.order_profile()'
-    # get data from loc
-    image = loc['flat2']
-    wave = loc['wave']
-    acc, ass = loc['acc'], loc['ass']
-    # assign number of orders
-    number_orders = len(wave)
-    # construct a "NaN" image (for wavelengths)
-    ishape = image.shape
-    # Define empty order image
-    orderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
-    suborderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
-    # get the indices locations
-    yimage, ximage = np.indices(image.shape)
-    # loop around number of orders (AB)
-    for order_no in tqdm(range(number_orders)):
-        # loop around A and B
-        for fno in [0, 1]:
-            # get fiber iteration number
-            fin = 2*order_no + fno
-            # get central positions
-            cfit = np.polyval(acc[fin][::-1], ximage)
-            # get width positions
-            wfit = np.polyval(ass[fin][::-1], ximage)
-            # define the lower and upper bounds of this order
-            upper = cfit + wfit/2
-            lower = cfit - wfit/2
-            # define the mask of the pixels in this order
-            mask = (yimage < upper) & (yimage > lower)
-
-            # create the order image
-            orderimage[mask] = order_no
-            suborderimage[mask] = fin
-
-    # add to loc
-    loc['orderimage'] = orderimage
-    loc['suborderimage'] = suborderimage
-    # add source
-    loc.set_sources(['orderimage', 'suborderimage'], func_name)
-    # return loc
-    return loc
-
-
-def correct_for_tilt(p, loc):
-    func_name = __NAME__ + '.correct_for_tilt()'
-    # get data from loc
-    image = loc['flat2']
-    wave = loc['wave']
-    acc = loc['acc']
-    tilt = loc['tilt']
-    orderimage = loc['orderimage']
-    suborderimage = loc['suborderimage']
-    # assign number of orders
-    number_orders = len(wave)
-    # construct a "NaN" image (for wavelengths)
-    ishape = image.shape
-    # Define empty order image
-    trueximage = np.repeat([-1.0], np.product(ishape)).reshape(ishape)
-    # get the indices locations
-    yimage, ximage = np.indices(image.shape)
-    # loop around number of orders (AB)
-    for order_no in tqdm(range(number_orders)):
-        # loop around A and B
-        for fno in [0, 1]:
-            # get fiber iteration number
-            fin = 2*order_no + fno
-            # get central polynomial coefficients
-            centpoly = acc[fin][::-1]
-            # find those pixels in this suborder
-            mask = suborderimage == fin
-            # get x0s and y0s
-            x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
-            # calculate centers
-            xcenters = np.array(x0s)
-            ycenters = np.polyval(centpoly, xcenters)
-            # calculate line parmeters
-            ms, cs = line_parameters(x0s, y0s, xcenters, ycenters,
-                                     tilt[order_no])
-            # loop around parameters to get individual intersections
-            for it in range(len(x0s)):
-                # construct this iterations linepoly
-                linepoly = [ms[it], cs[it]]
-                # get the intersection points
-                x, y = get_intersection_twopolys(centpoly, linepoly)
-                # check for real solutions in the image limits
-                good = np.isreal(x) & np.isreal(y)
-                good &= (x.real > 0) & (x.real < ishape[1])
-                good &= (y.real > 0) & (y.real < ishape[0])
-                # check if we have a valid position
-                # if we do only want the closest solution to x0
-                if np.sum(good) == 0:
-                    continue
-                elif np.sum(good) > 1:
-                    pos = np.argmin(abs(x[good]-x0s[it]))
-                    xa = x[good][pos].real
-                    # ya = y[good][pos].real
-                else:
-                    xa = x[good][0].real
-                    # ya = y[good][0].real
-                # push the x value into true x image
-                trueximage[y0s[it], x0s[it]] = xa
-
-                # if x0 == 300 and order_no == 20:
-                #     test_tilt(ximage, yimage, centpoly, linepoly, x0, y0,
-                #               xc, yc, xa, ya)
-    # save to loc
-    loc['true_x_image'] = trueximage
-    loc.set_source('true_x_image', func_name)
-    # return loc
-    return loc
-
-
-def get_intersection_twopolys(coeffs1, coeffs2):
-
-
-    # coefficients must be in order:
-    #   p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
-    # From here: https://stackoverflow.com/a/19217593/7858439
-
-    length = np.max([len(coeffs1), len(coeffs2)])
-    if len(coeffs1) < len(coeffs2):
-        coeffs1 =  [0.0] * (length - len(coeffs1)) + list(coeffs1)
-    elif len(coeffs2) < len(coeffs1):
-        coeffs2 = [0.0] * (length - len(coeffs2)) + list(coeffs2)
-
-    # make sure coefficient lists are arrays of floats
-    c1 = np.array(coeffs1, dtype=float)[::-1]
-    c2 = np.array(coeffs2, dtype=float)[::-1]
-    # get the roots of the coefficients (these are the x positions)
-    x = polynomial.polyroots(c2 - c1)
-    # get the y values for the x positions
-    y = np.polyval(coeffs1, x)
-    # return x and y
-    return x, y
-
-
-def line_parameters(x0, y0, xc, yc, angle):
-    """
-
-    :param x0: int, pixel position in x direction (columns direction)
-    :param y0: int, pixel position in y direction (rows direction)
-    :param xc: int, central pixel value x direction
-    :param yc: float, central pixel value y direction
-    :param angle: float, tilt angle in degrees, defined as positive
-                  clockwise away from the positive y-axis
-    :return:
-    """
-    if y0 > yc:
-        # From trig identities equation of a line given an angle and two
-        # of the triangles co-ordinates
-        m = (yc - y0) / (+abs(y0-yc) * np.tan(np.deg2rad(angle)))
-        c = y0 - m * x0
-    else:
-        # From trig identities equation of a line given an angle and two
-        # of the triangles co-ordinates
-        m = (yc - y0) / (-abs(y0-yc) * np.tan(np.deg2rad(angle)))
-        c = y0 - m * x0
-    # return gradient and intercept
-    return m, c
-
-
 def create_image_from_waveimage(p, loc, x, y):
     """
     Takes a spectrum "y" at wavelengths "x" and uses these to interpolate
@@ -429,7 +434,8 @@ def create_image_from_waveimage(p, loc, x, y):
     # get data from loc
     waveimage = loc['waveimage']
     # set up interpolation
-    F = interp1d(x, y)
+    with warnings.catch_warnings(record=True) as w:
+        F = interp1d(x, y)
     # create new spectrum
     newimage = np.zeros_like(waveimage)
     # loop around each row in image, interpolate wavevalues
@@ -439,6 +445,7 @@ def create_image_from_waveimage(p, loc, x, y):
         # TODO change mask out zeros to NaNs
         # mask out zeros (NaNs in future)
         invalidpixels = (rvalues == 0)
+        invalidpixels &= ~np.isfinite(rvalues)
         # don't try to interpolate those pixels outside range of "x"
         with warnings.catch_warnings(record=True) as w:
             invalidpixels |= rvalues < np.min(x)
@@ -456,6 +463,24 @@ def create_image_from_waveimage(p, loc, x, y):
     # return loc
     return loc
 
+
+def create_mask(p, loc):
+
+    func_name = __NAME__ + '.create_image_from_waveimage()'
+    # get data from loc
+    waveimage = loc['waveimage']
+    tell_spe = loc['spe']
+    # apply mask to telluric model
+    mask1 = waveimage > p['minlam']
+    mask2 = waveimage < p['maxlam']
+    mask3 = tell_spe > p['tellthres']
+    # combine masks
+    mask = mask1 & mask2 & mask3
+    # save mask to loc
+    loc['tell_mask_2D'] = mask
+    loc.set_source('tell_mask_2D', func_name)
+    # return loc
+    return loc
 
 
 # =============================================================================
@@ -680,6 +705,11 @@ if __name__ == "__main__":
     # ------------------------------------------------------------------
     # Make 2D map of true x location (corrected for tilt)
     # ------------------------------------------------------------------
+    # start up plot
+    if p['DRS_DEBUG'] and p['DRS_PLOT']:
+        sPlt.start_interactive_session()
+        sPlt.define_figure()
+
     # log progress
     WLOG('', p['log_opt'], 'Correcting for tilt')
     # make the true x location map
@@ -701,8 +731,16 @@ if __name__ == "__main__":
     # create image from waveimage
     loc = create_image_from_waveimage(p, loc, x=loc['tell_x'], y=loc['tell_y'])
 
+    # ------------------------------------------------------------------
+    # Create 2D mask (min to max lambda + transmission threshold)
+    # ------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], 'Creating wavelength/tranmission mask')
+    # create mask
+    loc = create_mask(p, loc)
+
     # ----------------------------------------------------------------------
-    # save 2D spectrum and wavelength image to file
+    # save 2D spectrum, wavelength image and mask to file
     # ----------------------------------------------------------------------
     # TODO: move to spirouConst
     # construct spectrum filename
@@ -714,6 +752,7 @@ if __name__ == "__main__":
     WLOG('', p['log_opt'], wmsg.format(specfilename))
     # write to file
     spirouImage.WriteImage(specfitsfile, loc['spe'])
+
     # ----------------------------------------------------------------------
     # construct waveimage filename
     wavefilename = 'telluric_mapped_waveimage.fits'
@@ -723,6 +762,18 @@ if __name__ == "__main__":
     WLOG('', p['log_opt'], wmsg.format(wavefilename))
     # write to file
     spirouImage.WriteImage(wavefitsfile, loc['waveimage'])
+
+    # ----------------------------------------------------------------------
+    # construct tell mask 2D filename
+    maskfilename = 'telluric_mapped_mask.fits'
+    maskfitsfile = os.path.join(redfolder, maskfilename)
+    # log progress
+    wmsg = 'Writing telluric mask to file {0}'
+    WLOG('', p['log_opt'], wmsg.format(maskfilename))
+    # convert boolean mask to integers
+    writablemask = np.array(loc['tell_mask_2D'], dtype=int)
+    # write to file
+    spirouImage.WriteImage(maskfitsfile, writablemask)
 
     # ----------------------------------------------------------------------
     # End Message
