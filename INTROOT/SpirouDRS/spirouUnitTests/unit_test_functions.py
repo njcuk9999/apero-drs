@@ -543,12 +543,12 @@ def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
     if log:
         print(UNITTEST.format('\n' * 3, '=' * 50, '\n', name))
     # set up files
-    reffile = 'fp_fp02a203_e2ds_AB.fits'
+    e2dsfile = 'fp_fp02a203_e2ds_AB.fits'
     mask, rv, width, step = 'UrNe.mas', 0, 10, 0.1
     # start timer
     starttime = time.time()
     # run cal_dark_spirou
-    ll = cal_CCF_E2DS_spirou.main(NIGHT_NAME, reffile, mask, rv, width, step)
+    ll = cal_CCF_E2DS_spirou.main(NIGHT_NAME, e2dsfile, mask, rv, width, step)
     # end timer
     endtime = time.time()
     ll['timer'] = endtime - starttime
