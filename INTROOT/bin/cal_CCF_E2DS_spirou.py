@@ -46,7 +46,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
+def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
          step=None):
     # ----------------------------------------------------------------------
     # Set up
@@ -57,17 +57,17 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # deal with arguments being None (i.e. get from sys.argv)
     pos = [0, 1, 2, 3, 4]
     fmt = [str, str, float, float, float]
-    name = ['reffile', 'ccf_mask', 'target_rv', 'ccf_width', 'ccf_step']
+    name = ['e2dsfile', 'ccf_mask', 'target_rv', 'ccf_width', 'ccf_step']
     lname = ['input_file', 'CCF_mask', 'RV', 'CCF_width', 'CCF_step']
     req = [True, True, True, False, False]
-    call = [reffile, mask, rv, width, step]
+    call = [e2dsfile, mask, rv, width, step]
     call_priority = [True, True, True, True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='reffile',
+                                    mainfitsfile='e2dsfile',
                                     mainfitsdir='reduced')
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
@@ -82,11 +82,11 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # get reduced directory + night name
     rdir = p['reduced_dir']
-    # construct and test the reffile
-    reffilename = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp',
+    # construct and test the e2dsfile
+    e2dsfilename = spirouStartup.GetFile(p, rdir, p['e2dsfile'], 'fp_fp',
                                         'DRIFT')
     # get the fiber type
-    p['fiber'] = spirouStartup.GetFiberType(p, reffilename)
+    p['fiber'] = spirouStartup.GetFiberType(p, e2dsfilename)
     fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
     p.set_source('fiber', fsource)
 
@@ -94,7 +94,7 @@ def main(night_name=None, reffile=None, mask=None, rv=None, width=None,
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    e2ds, hdr, cdr, nbo, nx = spirouImage.ReadData(p, reffilename)
+    e2ds, hdr, cdr, nbo, nx = spirouImage.ReadData(p, e2dsfilename)
     # add to loc
     loc = ParamDict()
     loc['e2ds'] = e2ds
