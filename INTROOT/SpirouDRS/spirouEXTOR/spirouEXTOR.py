@@ -32,6 +32,7 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # User functions
 # =============================================================================
+# noinspection PyPep8Naming
 def extract_AB_order(pp, loc, image, rnum):
     """
     Perform the extraction on the AB fibers separately using the summation
