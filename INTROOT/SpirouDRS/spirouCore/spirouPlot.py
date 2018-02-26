@@ -303,7 +303,7 @@ def locplot_order_number_against_rms(pp, loc, rnum):
     """
     Plots the dispersion (RMS) of localization parameters for a fiber
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 fiber: string, the fiber used for this recipe (eg. AB or A or C)
 
@@ -344,7 +344,7 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
     Plots the minimum value between the value in ycc and ic_loc_seuil (the
     normalised amplitude threshold to accept pixels for background calculation)
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_LOCSEUIL: float, Normalised amplitude threshold to accept
                              pixels for background calculation
@@ -428,7 +428,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     Plots the fit residuals against pixel position for either kind='center'
     or kind='width'
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_DISPLAY_TIMEOUT: float, Interval between plots (wait time
                                     after plotting)
@@ -476,7 +476,7 @@ def slit_sorder_plot(pp, loc, image):
     Plot the image array and overplot the polyfit for the order defined in
     p['ic_slit_order_plot']
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_SLIT_ORDER_PLOT: int, the order to plot
                 IC_CENT_COL: int, the column number (x-axis) of the central
@@ -1212,10 +1212,10 @@ def drift_plot_correlation_comp(p, loc, cc):
     # clear the current figure
     plt.clf()
     # set up axis
-    frame1 = plt.subplot2grid((2,3), (0, 0))
-    frame2 = plt.subplot2grid((2,3), (1, 0))
-    frame3 = plt.subplot2grid((2,3), (0, 1), colspan=2)
-    frame4 = plt.subplot2grid((2,3), (1, 1), colspan=2)
+    frame1 = plt.subplot2grid((2, 3), (0, 0))
+    frame2 = plt.subplot2grid((2, 3), (1, 0))
+    frame3 = plt.subplot2grid((2, 3), (0, 1), colspan=2)
+    frame4 = plt.subplot2grid((2, 3), (1, 1), colspan=2)
     # -------------------------------------------------------------------------
     # order selection
     # -------------------------------------------------------------------------
@@ -1332,6 +1332,8 @@ def create_separated_scaled_image(image, axis=0):
 
     if axis == 0:
         dim1, dim2 = 0, 1
+    else:
+        dim1, dim2 = 1, 0
     # get a scale for the pixels
     scale = int(np.ceil(image.shape[dim2]/(image.shape[dim1])))
     # get a new image
@@ -1345,7 +1347,7 @@ def create_separated_scaled_image(image, axis=0):
         end = scale*(pixel + 1)
 
         if axis == 0:
-            repeat = np.tile(image[pixel,:], scale)
+            repeat = np.tile(image[pixel, :], scale)
             repeat = repeat.reshape((scale, image.shape[dim2]))
             newimage[start:end, :] = repeat
         if axis == 1:
