@@ -37,7 +37,7 @@ def extract_AB_order(pp, loc, image, rnum):
     Perform the extraction on the AB fibers separately using the summation
     over constant range
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_CENT_COL: int, the column number (x-axis) of the central
                              column
@@ -120,7 +120,7 @@ def extract_order(pp, loc, image, rnum, **kwargs):
     """
     Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_EXTOPT: int, the extraction option
                 IC_EXT_RANGE: float, the upper and lower edge of the order
@@ -169,7 +169,7 @@ def extract_tilt_order(pp, loc, image, rnum, **kwargs):
     Extract order with tilt but without weight using
     spirouEXTOR.extract_wrapper()
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_EXT_RANGE: float, the upper and lower edge of the order
                               in rows (y-axis) - half-zone width
@@ -219,7 +219,7 @@ def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     spirouEXTOR.extract_wrapper() with mode=1
     (extract_tilt_weight_order_old() is run)
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_EXT_RANGE: float, the upper and lower edge of the order
                               in rows (y-axis) - half-zone width
@@ -275,7 +275,7 @@ def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
     spirouEXTOR.extract_wrapper() with mode=2
     (extract_tilt_weight_order() is run)
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_EXT_RANGE1: float, the upper edge of the order in rows
                                (y-axis) - half-zone width (lower)
@@ -332,7 +332,7 @@ def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     Extract order with weight but without tilt using
     spirouEXTOR.extract_wrapper()
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_EXT_RANGE: float, the upper and lower edge of the order
                               in rows (y-axis) - half-zone width
@@ -1032,12 +1032,6 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
                          '(spirouEXTOR.py/extract_tilt_weight)')
     # ww0 and ww1 are constant
     ww0, ww1 = ww0[0], ww1[0]
-    # create a box of the correct size
-    ww = np.zeros((ww0, ww1))
-    # calculate the tilt shift for each pixel in the box
-    ff = tiltshift * (np.arange(ww0) - r1)
-    # normalise tilt shift between -0.5 and 0.5
-    rr = np.round(ff) - ff
     # get the weight contribution matrix (look up table)
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # account for the missing fractional pixels (due to integer rounding)
@@ -1148,33 +1142,33 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
     #   due to rounding)
     for ic in ics:
         # Get the extraction of the main profile
-        Sx = image[j1s[ic] + 1: j2s[ic], ic]
+        sx = image[j1s[ic] + 1: j2s[ic], ic]
         # Get the extraction of the order_profile
         # (if no weights then set to 1)
         if orderp is None:
-            Fx = np.ones_like(Sx)
+            fx = np.ones_like(sx)
         else:
-            Fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
             # Renormalise the order_profile
-            Fx = Fx / np.sum(Fx)
+            fx = fx / np.sum(fx)
         # add the main order pixels
-        spe[ic] = np.sum(Sx)
+        spe[ic] = np.sum(sx)
         # get the weights
         # weight values less than 0 to 0.000001
-        raw_weights = np.where(Sx > 0, 1, 0.000001)
-        weights = Fx * raw_weights
+        raw_weights = np.where(sx > 0, 1, 0.000001)
+        weights = fx * raw_weights
         # get the normalisation (equal to the sum of the weights squared)
         norm = np.sum(weights**2)
         # add the main extraction to array
-        SSx = np.sum(Sx)
-        spe[ic] = SSx * weights[1:-1] * ww[1:-1]
+        s_sx = np.sum(sx)
+        spe[ic] = s_sx * weights[1:-1] * ww[1:-1]
         # add the bits missing due to rounding
-        Sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
-        Sxl *= ww[0] * weights[1:-1]
-        spe[ic] += lower[ic] * np.sum(Sxl)
-        Sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
-        Sxu *= ww[-1] * weights[1:-1]
-        spe[ic] += upper[ic] * np.sum(Sxu)
+        sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
+        sxl *= ww[0] * weights[1:-1]
+        spe[ic] += lower[ic] * np.sum(sxl)
+        sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
+        sxu *= ww[-1] * weights[1:-1]
+        spe[ic] += upper[ic] * np.sum(sxu)
         # divide by the normalisation
         spe[ic] /= norm
     # convert to e-
