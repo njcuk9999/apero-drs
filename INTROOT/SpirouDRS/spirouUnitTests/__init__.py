@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+unit_test_comp_functions.py
 
-# CODE DESCRIPTION HERE
+Comparison functions for the unit tests
 
 Created on 2017-12-06 at 14:26
 
 @author: cook
-
-
-
-Version 0.0.0
 """
 
 from SpirouDRS import spirouConfig

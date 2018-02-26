@@ -1,24 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+unit_test_functions
 
-# CODE DESCRIPTION HERE
+Functions to run the unit tests (and define test file names)
 
 Created on 2018-01-08 at 12:36
 
 @author: cook
-
-
-
-Version 0.0.0
 """
 from __future__ import division
 import time
 import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouConfig
-from SpirouDRS import spirouLOCOR
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
@@ -54,6 +49,7 @@ UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
 # =============================================================================
 # Define functions
 # =============================================================================
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_DARK(log=False, plot=False, return_locals=False):
     """
     test cal_dark_spirou
@@ -95,6 +91,7 @@ def UNIT_TEST_CAL_DARK(log=False, plot=False, return_locals=False):
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
     """
     test cal_BADPIX_spirou
@@ -136,6 +133,7 @@ def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', log=False, plot=False,
                           return_locals=False):
     """
@@ -194,6 +192,7 @@ def UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', log=False, plot=False,
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_SLIT(log=False, plot=False, return_locals=False):
     """
     test cal_SLIT_spirou
@@ -234,6 +233,7 @@ def UNIT_TEST_CAL_SLIT(log=False, plot=False, return_locals=False):
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_FF_RAW(kind='flat_dark', log=False, plot=False,
                          return_locals=False):
     """
@@ -292,6 +292,7 @@ def UNIT_TEST_CAL_FF_RAW(kind='flat_dark', log=False, plot=False,
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_EXTRACT(kind='fp_fp', fiber=None, log=False, plot=False,
                           files=None, return_locals=False):
     """
@@ -402,6 +403,7 @@ def UNIT_TEST_CAL_EXTRACT(kind='fp_fp', fiber=None, log=False, plot=False,
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_DRIFT_RAW(log=False, plot=False, return_locals=False):
     """
     test cal_SLIT_spirou
@@ -442,6 +444,7 @@ def UNIT_TEST_CAL_DRIFT_RAW(log=False, plot=False, return_locals=False):
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_DRIFT_E2DS(log=False, plot=False, return_locals=False):
     """
     test cal_SLIT_spirou
@@ -483,6 +486,7 @@ def UNIT_TEST_CAL_DRIFT_E2DS(log=False, plot=False, return_locals=False):
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_DRIFTPEAK_E2DS(log=False, plot=False, return_locals=False):
     """
     test cal_SLIT_spirou
@@ -524,6 +528,7 @@ def UNIT_TEST_CAL_DRIFTPEAK_E2DS(log=False, plot=False, return_locals=False):
         return ll['timer']
 
 
+# noinspection PyPep8Naming
 def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
     """
     test cal_CCF_E2DS_spirou

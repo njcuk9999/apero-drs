@@ -1,20 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+unit_test4.py
 
-# CODE DESCRIPTION HERE
+Unit test code 4:
+    Tests the following (and comparison of outputs):
+        cal_DARK_spirou
+        cal_BADPIX_spirou
+        cal_loc_RAW_spirou (flat_dark)
+        cal_loc_RAW_spirou (dark_flat)
+        cal_SLIT_spirou
+        cal_FF_RAW_spirou (flat_dark)
+        cal_FF_RAW_spirou (dark_flat)
+        cal_extract_RAW_spirou (fp_fp02a203.fits AB A B C)
+        cal_extract_RAW_spirou (fp_fp03a203.fits AB A B C)
+        cal_extract_RAW_spirou (fp_fp04a203.fits AB A B C)
+        cal_DRIFT_RAW_spirou
+        cal_DRIFT_E2DS_spirou
+        cal_DRIFTPEAK_E2DS_spirou
+        cal_CCF_E2DS_spirou
 
 Created on 2017-11-23 at 12:14
 
 @author: cook
-
-
-
-Version 0.0.0
 """
 from __future__ import division
-import time
 import sys
 import numpy as np
 
@@ -24,10 +34,13 @@ try:
     from . import unit_test_functions as utf
     from . import unit_test_comp_functions as utc
 except ImportError:
+    # noinspection PyUnresolvedReferences
     import unit_test_functions as utf
+    # noinspection PyUnresolvedReferences
     import unit_test_comp_functions as utc
 
 if sys.version_info.major == 2:
+    # noinspection PyPep8Naming,PyShadowingBuiltins
     from collections import OrderedDict as dict
 
 
@@ -56,23 +69,6 @@ THRESHOLD = -8
 # =============================================================================
 # Define functions
 # =============================================================================
-def compare(name, ll, newoutputs, oldoutputs, errors):
-
-    print('\n\n Comparing files...')
-    # define new output files from ll
-    newfiles = ll['outputs']
-    # define new path from p['reduced_dir']
-    newpath = ll['p']['reduced_dir']
-    # get old output locations (that should be the same as new output files)
-    lists = utc.create_oldfiles(newfiles, OLDPATH, newpath)
-    newoutputs[name], oldoutputs[name] = lists
-    # get any differences between old and new
-    e0 = utc.comparison_wrapper(name, oldoutputs[name], newoutputs[name],
-                                    path=RESULTSPATH)
-    errors += e0
-
-    # return dicts
-    return newoutputs, oldoutputs, errors
 
 # =============================================================================
 # Start of code
@@ -98,8 +94,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_DARK(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -113,8 +109,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_BADPIX(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -128,8 +124,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -143,8 +139,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_LOC_RAW(kind='dark_flat', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -158,8 +154,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_SLIT(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -173,8 +169,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_FF_RAW(kind='flat_dark', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -188,8 +184,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_FF_RAW(kind='dark_flat', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -205,8 +201,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -222,8 +218,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -239,8 +235,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -254,8 +250,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_DRIFT_RAW(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -269,8 +265,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_DRIFT_E2DS(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -284,8 +280,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_DRIFTPEAK_E2DS(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 
@@ -299,8 +295,8 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_CCF_E2DS(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    newoutputs, oldoutputs, errors = compare(name, ll, newoutputs,
-                                             oldoutputs, errors)
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
 

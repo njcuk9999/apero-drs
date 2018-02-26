@@ -44,6 +44,25 @@ __release__ = spirouConfig.Constants.RELEASE()
 # =============================================================================
 # Define functions
 # =============================================================================
+def compare(name, ll, newoutputs, oldoutputs, errors, oldpath, resultspath):
+
+    print('\n\n Comparing files...')
+    # define new output files from ll
+    newfiles = ll['outputs']
+    # define new path from p['reduced_dir']
+    newpath = ll['p']['reduced_dir']
+    # get old output locations (that should be the same as new output files)
+    lists = create_oldfiles(newfiles, oldpath, newpath)
+    newoutputs[name], oldoutputs[name] = lists
+    # get any differences between old and new
+    e0 = comparison_wrapper(name, oldoutputs[name], newoutputs[name],
+                            path=resultspath)
+    errors += e0
+
+    # return dicts
+    return newoutputs, oldoutputs, errors
+
+
 def create_oldfiles(newfiles, oldpath, newpath):
     oldfiles = []
     newfiles1 = []
@@ -407,7 +426,7 @@ def plot_stat(frame, x1, x2, x3, title):
         ylabel = '$log_{10}$(pixel value)'
         
     # log x
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         logx1 = np.log10(x1)
         logx2 = np.log10(x2)
         logx3 = np.log10(abs(x3))
