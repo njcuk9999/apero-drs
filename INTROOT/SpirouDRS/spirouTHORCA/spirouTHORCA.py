@@ -10,11 +10,6 @@ Created on 2017-12-19 at 16:20
 """
 from __future__ import division
 import numpy as np
-from astropy import constants
-from scipy.stats.stats import pearsonr
-from scipy.optimize import curve_fit
-import warnings
-import os
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -48,7 +43,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     fit coefficents stored in keywords:
         'kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1'
 
-    :param pp: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 log_opt: string, log option, normally the program name
                 kw_TH_COEFF_PREFIX: list, the keyword store for the prefix to
@@ -84,7 +79,8 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     # extract required keyword arguments from the header
     keys = ['kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1']
     try:
-        nbo, degll, xsize = spirouConfig.GetKeywordValues(p, whdr, keys, read_file)
+        gkv = spirouConfig.GetKeywordValues(p, whdr, keys, read_file)
+        nbo, degll, xsize = gkv
     except spirouConfig.ConfigError as e:
         WLOG(e.level, p['log_opt'], e.msg)
         nbo, degll, xsize = 0, 0, 0
@@ -104,7 +100,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
             param_ll.append(whdr[header_key])
 
     # reshape param_ll to be size = (number of orders x degll+1
-    param_ll = np.array(param_ll).reshape((nbo, degll +1))
+    param_ll = np.array(param_ll).reshape((nbo, degll + 1))
 
     # get the line list
     ll = get_ll_from_coefficients(param_ll, xsize, nbo)
