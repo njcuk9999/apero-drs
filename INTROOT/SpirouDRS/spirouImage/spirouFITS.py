@@ -15,7 +15,6 @@ from __future__ import division
 import numpy as np
 from astropy.io import fits
 import os
-import sys
 import warnings
 from collections import OrderedDict
 
@@ -239,7 +238,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
             emsg2 = '    function={0}'.format(func_name)
             WLOG('error', log_opt, [emsg1, emsg2])
     else:
-        p['nbframes'] = len(filenames) +1
+        p['nbframes'] = len(filenames) + 1
         p.set_source('nbframes', func_name)
         filenames = list(filenames)
     # -------------------------------------------------------------------------
@@ -318,6 +317,7 @@ def writeimage(filename, image, hdict=None, dtype=None):
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        hdu = None
     # force type
     if dtype is not None:
         hdu.scale(dtype)
@@ -449,7 +449,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
     if key is None:
         try:
             key = 'FLAT_{0}'.format(p['fiber'])
-        except spirouConfig.ConfigError as e:
+        except spirouConfig.ConfigError as _:
             emsg1 = 'Parameter "fiber" not found in parameter dictionary'
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', p['log_opt'], [emsg1, emsg2])
@@ -485,8 +485,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None):
     :param key: string or None, if None key='BLAZE_{fiber}' else uses string
                 as key from calibDB (first entry) to get wave file
 
-    :param return_header: bool, if True returns header file else just returns
-                          wave file
+
     :return blaze: numpy array (2D), the blaze function (along x-direction)
                   for each order
     """
@@ -494,7 +493,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None):
     if key is None:
         try:
             key = 'BLAZE_{0}'.format(p['fiber'])
-        except spirouConfig.ConfigError as e:
+        except spirouConfig.ConfigError as _:
             emsg1 = 'Parameter "fiber" not found in parameter dictionary'
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', p['log_opt'], [emsg1, emsg2])
@@ -723,9 +722,14 @@ def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
                   if None hdict is created
     :param filename: string, location and filename of the FITS rec to open
 
+    :param root: string, if we have "root" then only copy keywords that start
+                 with this string (prefix)
+
     :param ext: int, the extension of the FITS rec to open header from
                 (defaults to 0)
-    :return:
+
+    :return hdict: dictionary containing all keys to write to file each
+                   key has a value = [header value, comment]
     """
     func_name = __NAME__ + '.copy_root_keys()'
     # deal with no hdict and no filename
@@ -951,7 +955,7 @@ def extract_key_word_store(keywordstore=None, func_name=None):
     # extract keyword, value and comment and put it into hdict
     try:
         key, dvalue, comment = keywordstore
-    except Exception as e:
+    except Exception as _:
         emsg1 = 'There was a problem with the "keywordstore"'
         emsg2 = '   It must be a list/tuple with of the following format:'
         emsg3 = '       [string, object, string]'
@@ -1196,7 +1200,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                                    emsg3])
+                              emsg3])
         data = None
     # get the header (if header extension is available else default to zero)
     if headerext <= ext:
@@ -1207,7 +1211,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                                        emsg3])
+                                  emsg3])
             header = None
     else:
         header = hdu[0]
@@ -1268,7 +1272,8 @@ def read_raw_header(filename, headerext=0):
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                                        emsg3])
+                                  emsg3])
+            header = None
     else:
         header = hdu[0]
     # convert header to python dictionary
@@ -1339,7 +1344,7 @@ def math_controller(p, data, header, filenames, framemath=None):
             dtmp, htmp = read_raw_data(framefilename, True, False)
             header = htmp
             # finally add/subtract/multiple/divide data
-            if op in [ '+', 'mean']:
+            if op in ['+', 'mean']:
                 data += dtmp
             elif op == '-':
                 data -= dtmp
@@ -1381,8 +1386,8 @@ def math_type(p, framemath):
     fm = framemath.upper()
     # check that frame math is acceptable if not report to log
     if fm not in acceptable_math:
-        emsgs = ['framemath="{0}" not a valid operation'.format(fm)]
-        emsgs.append('    must be one of the following:')
+        emsgs = ['framemath="{0}" not a valid operation'.format(fm),
+                 '    must be one of the following:']
         for a_it in range(0, int(len(acceptable_math)/3)*3, 3):
             a_math = acceptable_math[a_it: a_it+3]
             emsgs.append('\t "{0}", "{1}", "{2}"'.format(*a_math))
