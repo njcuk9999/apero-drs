@@ -11,7 +11,6 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
-import sys
 import os
 import glob
 import warnings
@@ -348,7 +347,7 @@ def measure_dark(pp, image, image_name, short_name):
     # make sure image is a numpy array
     try:
         image = np.array(image)
-    except Exception as e:
+    except Exception as _:
         emsg1 = '"image" is not a valid numpy array'
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', pp['log_opt'], [emsg1, emsg2])
@@ -602,6 +601,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG('error', p['log_opt'], [e.message, emsg])
+        cut_ratio = None
 
     # illumination cut parameter. If we only cut the pixels that
     # fractionnally deviate by more than a certain amount, we are going
@@ -617,15 +617,15 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG('error', p['log_opt'], [e.message, emsg])
+        illum_cut = None
     # hotpix. Max flux in ADU/s to be considered too hot to be used
     try:
         max_hotpix = p['BADPIX_MAX_HOTPIX']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG('error', p['log_opt'], [e.message, emsg])
+        max_hotpix = None
     # -------------------------------------------------------------------------
-    # create storage for dark corrected image
-    dcorrect = np.zeros_like(dimage)
     # create storage for ratio of flat_ref to flat_med
     fratio = np.zeros_like(fimage)
     # create storage for bad dark pixels
@@ -648,11 +648,11 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     zmask = fmed != 0
     fratio[zmask] = fimage[zmask] / fmed[zmask]
     # catch the warnings
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         # if illumination is low, then consider pixel valid for this criterion
         fratio[fmed < illum_cut] = 1
     # catch the warnings
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         # where do pixels deviate too much
         badpix_flat = (np.abs(fratio - 1)) > cut_ratio
     # -------------------------------------------------------------------------
@@ -762,12 +762,12 @@ def fit_tilt(pp, lloc):
         Must contain at least:
             IC_TILT_FIT: int, Order of polynomial to fit for tilt
 
-    :param loc: parameter dictionary, ParamDict containing data
+    :param lloc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 number_orders: int, the number of orders in reference spectrum
                 tilt: numpy array (1D), the tilt angle of each order
 
-    :return loc: parameter dictionary, the updated parameter dictionary
+    :return lloc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 xfit_tilt: numpy array (1D), the order numbers
                 yfit_tilt: numpy array (1D), the fit for the tilt angle of each

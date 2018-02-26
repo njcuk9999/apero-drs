@@ -11,10 +11,9 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
-import sys
 import os
 from astropy.table import Table
-from astropy.io.registry import IORegistryError, get_formats
+from astropy.io.registry import get_formats
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -35,6 +34,7 @@ WLOG = spirouCore.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define usable functions
@@ -74,13 +74,13 @@ def make_table(columns, values, formats=None, units=None):
         if lcol != len(formats):
 
             emsg1 = emsg.format(lcol, 'formats', len(formats))
-            emsg2= '    function = {0}'.format(func_name)
+            emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2])
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
             emsg1 = emsg.format(lcol, 'units', len(formats))
-            emsg2= '    function = {0}'.format(func_name)
+            emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2])
     # make sure that the values in values are the same length
     lval1 = len(values[0])
@@ -115,6 +115,7 @@ def write_table(table, filename, fmt='fits'):
     """
     Writes a table to file "filename" with format "fmt"
 
+    :param table: astropy table, the table to be writen to file
     :param filename: string, the filename and location of the table to read
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
@@ -212,6 +213,7 @@ def read_table(filename, fmt, colnames=None):
     # return table
     return table
 
+
 # =============================================================================
 # Define worker functions
 # =============================================================================
@@ -227,6 +229,7 @@ def test_number_format(fmt):
         return True
     except ValueError:
         return False
+
 
 def list_of_formats():
     """
@@ -273,6 +276,7 @@ def string_formats(ftable=None, mask=None):
             string += '\n\t {0}'.format(fmt)
     # return the string
     return string
+
 
 def update_docs():
     """
