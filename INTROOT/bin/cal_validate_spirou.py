@@ -24,6 +24,7 @@ __date__ = 'Unknown'
 # Whether be default we run debug mode
 DEBUG = 0
 # exit type
+# noinspection PyProtectedMember
 EXIT = os._exit
 
 
@@ -45,6 +46,7 @@ def main(debug_mode=0):
     # SpirouDRS
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         import SpirouDRS
         if debug_mode:
             debug_message(SpirouDRS.__NAME__)
@@ -62,6 +64,7 @@ def main(debug_mode=0):
     # spirouConfig
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouConfig
         if debug_mode:
             debug_message(spirouConfig.__NAME__)
@@ -81,6 +84,7 @@ def main(debug_mode=0):
     # spirouCore
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouCore
         if debug_mode:
             debug_message(spirouCore.__NAME__)
@@ -108,6 +112,7 @@ def main(debug_mode=0):
     # -------------------------------------------------------------------------
     print('\n\n2) Running sub-module tests\n')
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouBACK
         if debug_mode:
             debug_message(spirouBACK.__NAME__)
@@ -125,6 +130,7 @@ def main(debug_mode=0):
     # spirouCDB
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouCDB
         if debug_mode:
             debug_message(spirouCDB.__NAME__)
@@ -142,6 +148,7 @@ def main(debug_mode=0):
     # spirouEXTOR
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouEXTOR
         if debug_mode:
             debug_message(spirouEXTOR.__NAME__)
@@ -158,6 +165,7 @@ def main(debug_mode=0):
     # spirouspirouFLAT
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouFLAT
         if debug_mode:
             debug_message(spirouFLAT.__NAME__)
@@ -174,6 +182,7 @@ def main(debug_mode=0):
     # spirouImage
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouImage
         if debug_mode:
             debug_message(spirouImage.__NAME__)
@@ -191,6 +200,7 @@ def main(debug_mode=0):
     # spirouLOCOR
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouLOCOR
         if debug_mode:
             debug_message(spirouLOCOR.__NAME__)
@@ -208,6 +218,7 @@ def main(debug_mode=0):
     # spirouRV
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouRV
         if debug_mode:
             debug_message(spirouRV.__NAME__)
@@ -225,6 +236,7 @@ def main(debug_mode=0):
     # spirouStartup
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouStartup
         if debug_mode:
             debug_message(spirouStartup.__NAME__)
@@ -242,6 +254,7 @@ def main(debug_mode=0):
     # spirouTHORCA
     # -------------------------------------------------------------------------
     try:
+        # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouTHORCA
         if debug_mode:
             debug_message(spirouTHORCA.__NAME__)
