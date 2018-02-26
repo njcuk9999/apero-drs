@@ -33,6 +33,7 @@ __date__ = 'Unknown'
 # =============================================================================
 # Define pre-functions
 # =============================================================================
+# noinspection PyPep8Naming
 def CONFIGFILE():
     """
     Defines the primary config filename
@@ -44,6 +45,7 @@ def CONFIGFILE():
     return config_file
 
 
+# noinspection PyPep8Naming
 def PACKAGE():
     """
     Defines the package name (Used in code so MUST equal name of parent package)
@@ -55,6 +57,7 @@ def PACKAGE():
     return package
 
 
+# noinspection PyPep8Naming
 def NAME():
     """
     Defines the name of the DRS
@@ -65,6 +68,7 @@ def NAME():
     return drs_name
 
 
+# noinspection PyPep8Naming
 def VERSION():
     """
     Defines the version of the DRS
@@ -87,10 +91,11 @@ def VERSION():
                      full release level), and C denotes minor changes
     """
     # Module Version (Used in all sub-packages)
-    version = '0.1.024'
+    version = '0.1.025'
     return version
 
 
+# noinspection PyPep8Naming
 def RELEASE():
     """
     Defines the release state of the DRS
@@ -107,6 +112,7 @@ def RELEASE():
     return release
 
 
+# noinspection PyPep8Naming
 def AUTHORS():
     """
     Define the authors of the DRS
@@ -118,6 +124,7 @@ def AUTHORS():
     return authors
 
 
+# noinspection PyPep8Naming
 def LATEST_EDIT():
     """
     Defines the latest edit date of the code (used in all recipes)
@@ -125,10 +132,11 @@ def LATEST_EDIT():
     :return date: string, the date (in format YYYY-MM-DD)
     """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-02-23'
+    date = '2018-02-26'
     return date
 
 
+# noinspection PyPep8Naming
 def CONFIGFOLDER():
     """
     Defines the config folder folder name (relative to the
@@ -142,6 +150,7 @@ def CONFIGFOLDER():
     return config_folder
 
 
+# noinspection PyPep8Naming
 def CDATA_FOLDER():
     """
     Define the location and name of the constant data folder. Path is
@@ -167,6 +176,7 @@ pp = spirouConfigFile.read_config_file(**ckwargs)
 # =============================================================================
 # Define General functions
 # =============================================================================
+# noinspection PyPep8Naming
 def INTERACITVE_PLOTS_ENABLED():
     """
     Defines a master switch which decides whether interactive plots are used
@@ -180,6 +190,7 @@ def INTERACITVE_PLOTS_ENABLED():
     return interactive_plots
 
 
+# noinspection PyPep8Naming
 def DEBUG():
     """
     Gets the debug mode from the primary constant file (using "DRS_DEBUG")
@@ -197,6 +208,7 @@ def DEBUG():
 # =============================================================================
 # Define File functions
 # =============================================================================
+# noinspection PyPep8Naming
 def ARG_NIGHT_NAME(p):
     """
     Defines the folder name for raw or reduced files within the raw or reduced
@@ -223,6 +235,7 @@ def ARG_NIGHT_NAME(p):
     return arg_night_name
 
 
+# noinspection PyPep8Naming
 def NBFRAMES(p):
     """
     Defines the number of frames (files) as the length of "arg_file_names"
@@ -241,6 +254,7 @@ def NBFRAMES(p):
     return nbframes
 
 
+# noinspection PyPep8Naming
 def FORBIDDEN_COPY_KEYS():
     """
     Defines the keys in a HEADER file not to copy when copying over all
@@ -257,6 +271,7 @@ def FORBIDDEN_COPY_KEYS():
     return forbidden_keys
 
 
+# noinspection PyPep8Naming
 def LOG_OPT(p):
     """
     Defines the program to use as the "option" in logging
@@ -297,6 +312,7 @@ def LOG_OPT(p):
     return log_opt
 
 
+# noinspection PyPep8Naming
 def PROGRAM():
     """
     Defines the recipe/code/program currently running (from sys.argv[0])
@@ -312,6 +328,7 @@ def PROGRAM():
     return program
 
 
+# noinspection PyPep8Naming
 def MANUAL_FILE(p):
     """
     Defines the path and filename of the manual file for p["program"]
@@ -330,6 +347,7 @@ def MANUAL_FILE(p):
     return manual_file
 
 
+# noinspection PyPep8Naming
 def RAW_DIR(p):
     """
     Defines the raw data directory
@@ -348,6 +366,7 @@ def RAW_DIR(p):
     return raw_dir
 
 
+# noinspection PyPep8Naming
 def REDUCED_DIR(p):
     """
     Defines the reduced data directory
@@ -371,6 +390,7 @@ def REDUCED_DIR(p):
 # =============================================================================
 # Define Filename functions
 # =============================================================================
+# noinspection PyPep8Naming
 def ARG_FILE_NAMES(p):
     """
     Defines the list of filenames (usually obtained from the run time argumnets
@@ -379,11 +399,11 @@ def ARG_FILE_NAMES(p):
     Files are obtained from run time/sys.argv is assumed
     to be in the following format:
 
-    >>> sys.argv = ['program.py', 'arg_night_name', 'file1', 'file2', 'file3']
+    >> sys.argv = ['program.py', 'arg_night_name', 'file1', 'file2', 'file3']
 
     therefore arg_file_names has the value:
 
-    >>> arg_file_names = sys.argv[3:]
+    >> arg_file_names = sys.argv[3:]
 
     :param p: parameter dictionary, ParamDict containing constants
         May contain:
@@ -412,6 +432,7 @@ def ARG_FILE_NAMES(p):
     return arg_file_names
 
 
+# noinspection PyPep8Naming
 def FITSFILENAME(p):
     """
     Defines the full path of for the main raw fits file for a recipe
@@ -442,6 +463,7 @@ def FITSFILENAME(p):
     return fitsfilename
 
 
+# noinspection PyPep8Naming
 def DARK_FILE(p):
     """
     Defines the dark file
@@ -462,6 +484,8 @@ def DARK_FILE(p):
     darkfits = os.path.join(reducedfolder, darkfitsname)
     return darkfits
 
+
+# noinspection PyPep8Naming
 def DARK_BADPIX_FILE(p):
     """
     Defines the bad pix file from cal_DARK
@@ -481,6 +505,7 @@ def DARK_BADPIX_FILE(p):
     return badpixelfits
 
 
+# noinspection PyPep8Naming
 def BADPIX_FILE(p):
     """
     Defines the bad pixel path and file name
@@ -501,6 +526,7 @@ def BADPIX_FILE(p):
     return badpixelfits
 
 
+# noinspection PyPep8Naming
 def LOC_ORDER_PROFILE_FILE(p):
     """
     Defines the localisation file location and filename (the order profile
@@ -526,6 +552,7 @@ def LOC_ORDER_PROFILE_FILE(p):
     return orderpfile
 
 
+# noinspection PyPep8Naming
 def LOC_LOCO_FILE(p):
     """
     Defines the localisation file location and filename
@@ -549,6 +576,7 @@ def LOC_LOCO_FILE(p):
     return locofits
 
 
+# noinspection PyPep8Naming
 def LOC_LOCO_FILE2(p):
     """
     Defines the localisation file location and filename (for fwhm)
@@ -573,6 +601,7 @@ def LOC_LOCO_FILE2(p):
     return locofits2
 
 
+# noinspection PyPep8Naming
 def LOC_LOCO_FILE3(p):
     """
     Defines the localisation file location and filename (for order
@@ -592,12 +621,13 @@ def LOC_LOCO_FILE3(p):
     reducedfolder = p['reduced_dir']
     locoext = '_with-order_{0}.fits'.format(p['fiber'])
     calibprefix = CALIB_PREFIX(p)
-    locofn3  = p['arg_file_names'][0].replace('.fits', locoext)
+    locofn3 = p['arg_file_names'][0].replace('.fits', locoext)
     locofits3name = calibprefix + locofn3
     locofits3 = os.path.join(reducedfolder, locofits3name)
     return locofits3
 
 
+# noinspection PyPep8Naming
 def SLIT_TILT_FILE(p):
     """
     Defines the slit tilt file location and filename
@@ -620,6 +650,7 @@ def SLIT_TILT_FILE(p):
     return tiltfits
 
 
+# noinspection PyPep8Naming
 def FF_BLAZE_FILE(p, fiber=None):
     """
     Define the flat fielding blaze filename and location
@@ -648,6 +679,7 @@ def FF_BLAZE_FILE(p, fiber=None):
     return blazefits
 
 
+# noinspection PyPep8Naming
 def FF_FLAT_FILE(p, fiber=None):
     """
     Defines the flat field file name and location to save flat field file to
@@ -675,6 +707,7 @@ def FF_FLAT_FILE(p, fiber=None):
     return flatfits
 
 
+# noinspection PyPep8Naming
 def EXTRACT_E2DS_FILE(p, fiber=None):
     """
     Defines the extraction E2DS file name and location
@@ -696,10 +729,11 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     reducedfolder = p['reduced_dir']
     e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
     e2dsfitsname = p['arg_file_names'][0].replace('.fits', e2ds_ext)
-    e2dsfits = os.path.join(reducedfolder,e2dsfitsname)
+    e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     return e2dsfits
 
 
+# noinspection PyPep8Naming
 def EXTRACT_LOCO_FILE(p):
     """
     Defines the file name and location of the extraction localisation filename
@@ -727,6 +761,7 @@ def EXTRACT_LOCO_FILE(p):
     return loco_file
 
 
+# noinspection PyPep8Naming
 def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
     """
     Defines the extraction names (and locations) for the extraction process
@@ -760,6 +795,7 @@ def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
     return extfitslist
 
 
+# noinspection PyPep8Naming
 def DRIFT_RAW_FILE(p):
     """
     Defines the drift_raw fits file name and location using
@@ -783,6 +819,7 @@ def DRIFT_RAW_FILE(p):
     return driftfits
 
 
+# noinspection PyPep8Naming
 def DRIFT_E2DS_FITS_FILE(p):
     """
     Defines the drift_e2ds fits file name and location using
@@ -805,6 +842,7 @@ def DRIFT_E2DS_FITS_FILE(p):
     return driftfits
 
 
+# noinspection PyPep8Naming
 def DRIFT_E2DS_TBL_FILE(p):
     """
     Defines the drift_e2ds table file name and location using
@@ -827,6 +865,7 @@ def DRIFT_E2DS_TBL_FILE(p):
     return drifttbl
 
 
+# noinspection PyPep8Naming
 def DRIFTPEAK_E2DS_FITS_FILE(p):
     """
     Defines the drift peak fits drift file name and location using "reffilename"
@@ -849,6 +888,7 @@ def DRIFTPEAK_E2DS_FITS_FILE(p):
     return driftfits
 
 
+# noinspection PyPep8Naming
 def DRIFTPEAK_E2DS_TBL_FILE(p):
     """
     Defines the drift peak drift table file name and location using
@@ -871,6 +911,7 @@ def DRIFTPEAK_E2DS_TBL_FILE(p):
     return drifttbl
 
 
+# noinspection PyPep8Naming
 def CCF_FITS_FILE(p):
     """
     Defines the CCF fits file location and name
@@ -894,6 +935,7 @@ def CCF_FITS_FILE(p):
     return corfile
 
 
+# noinspection PyPep8Naming
 def CCF_TABLE_FILE(p):
     """
     Defines the CCF table file location and name
@@ -917,6 +959,7 @@ def CCF_TABLE_FILE(p):
 # =============================================================================
 # Define calibration database functions
 # =============================================================================
+# noinspection PyPep8Naming
 def CALIBDB_MASTERFILE(p):
     """
     Define the name and location of the calibration database file
@@ -933,6 +976,7 @@ def CALIBDB_MASTERFILE(p):
     return masterfilepath
 
 
+# noinspection PyPep8Naming
 def CALIBDB_LOCKFILE(p):
     """
     Define the location and filename of the lock file for the calibration
@@ -951,6 +995,7 @@ def CALIBDB_LOCKFILE(p):
     return lockfilepath
 
 
+# noinspection PyPep8Naming
 def CALIB_PREFIX(p):
     """
     Define the calibration database file prefix (using arg_night_name)
@@ -971,6 +1016,7 @@ def CALIB_PREFIX(p):
 # =============================================================================
 # Define formatting functions
 # =============================================================================
+# noinspection PyPep8Naming
 def CONFIG_KEY_ERROR(key, location=None):
     """
     Defines the error message displayed when a SpirouConfig.ConfigError is
@@ -989,6 +1035,7 @@ def CONFIG_KEY_ERROR(key, location=None):
         return cerrmsg.format(key, location)
 
 
+# noinspection PyPep8Naming
 def DATE_FMT_HEADER():
     """
     The date format for string timestamp for reading times from FITS
@@ -1017,6 +1064,7 @@ def DATE_FMT_HEADER():
     return date_fmt_header
 
 
+# noinspection PyPep8Naming
 def DATE_FMT_CALIBDB():
     """
     The date format for string timestamp in the calibration database
@@ -1044,6 +1092,7 @@ def DATE_FMT_CALIBDB():
     return date_fmt_calibdb
 
 
+# noinspection PyPep8Naming
 def DATE_FMT_DEFAULT():
     """
     The date format for string timestamp used by default (if not defined or
@@ -1072,6 +1121,7 @@ def DATE_FMT_DEFAULT():
     return date_fmt_default
 
 
+# noinspection PyPep8Naming
 def TIME_FORMAT_DEFAULT():
     """
     The time format for string timestamp used by default (if not defined or
@@ -1103,7 +1153,7 @@ def TIME_FORMAT_DEFAULT():
 # =============================================================================
 # Define logger functions
 # =============================================================================
-
+# noinspection PyPep8Naming
 def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
     """
     Define the log filename and full path.
@@ -1151,6 +1201,7 @@ def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
     return lpath
 
 
+# noinspection PyPep8Naming
 def LOG_TIMEZONE():
     """
     The time zone to use in timestamps for logging (i.e. UTC)
@@ -1162,11 +1213,12 @@ def LOG_TIMEZONE():
     :return log_timezone: string, the timezone to use (either "UTC" or "local")
     """
     # options are local or UTC
-    log_timezone = 'UTC'
+    # log_timezone = 'UTC'
     log_timezone = 'local'
     return log_timezone
 
 
+# noinspection PyPep8Naming
 def LOG_TIME_FORMAT():
     """
     The time format to use in the log time stamp
@@ -1194,6 +1246,7 @@ def LOG_TIME_FORMAT():
     return log_time_format
 
 
+# noinspection PyPep8Naming
 def LOG_TRIG_KEYS():
     """
     The log trigger key characters to use in log. Keys must be the same as
@@ -1202,11 +1255,11 @@ def LOG_TRIG_KEYS():
     i.e.
 
     if the following is defined:
-    >>> trig_key[error] = '!'
+    >> trig_key[error] = '!'
     and the following log is used:
-    >>> WLOG('error', 'program', 'message')
+    >> WLOG('error', 'program', 'message')
     the output is:
-    >>> print("TIMESTAMP - ! |program|message")
+    >> print("TIMESTAMP - ! |program|message")
 
     :return trig_key: dictionary, contains all the trigger keys and the
                       characters/strings to use in logging. Keys must be the
@@ -1217,6 +1270,7 @@ def LOG_TRIG_KEYS():
     return trig_key
 
 
+# noinspection PyPep8Naming
 def WRITE_LEVEL():
     """
     The write levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
@@ -1225,15 +1279,15 @@ def WRITE_LEVEL():
     constants "PRINT_LEVEL" and "LOG_LEVEL" in the primary config file
 
     i.e. if
-    >>> PRINT_LEVEL = 'warning'
+    >> PRINT_LEVEL = 'warning'
     then no level with a numerical value less than
-    >>> write_level['warning']
+    >> write_level['warning']
     will be printed to the screen
 
     similarly if
-    >>> LOG_LEVEL = 'error'
+    >> LOG_LEVEL = 'error'
     then no level with a numerical value less than
-    >>> write_level['error']
+    >> write_level['error']
     will be printed to the log file
 
     :return write_level: dictionary, contains the keys and numerical levels
@@ -1244,12 +1298,13 @@ def WRITE_LEVEL():
     return write_level
 
 
+# noinspection PyPep8Naming
 def LOG_CAUGHT_WARNINGS():
     """
     Defines a master switch, whether to report warnings that are caught in
 
-    >>> with warnings.catch_warnings(record=True) as w:
-    >>>     code_that_may_gen_warnings
+    >> with warnings.catch_warnings(record=True) as w:
+    >>     code_that_may_gen_warnings
 
     :return warn: bool, if True reports warnings, if False does not
     """
@@ -1258,6 +1313,7 @@ def LOG_CAUGHT_WARNINGS():
     return warn
 
 
+# noinspection PyPep8Naming
 def COLOUREDLEVELS():
     """
     Defines the colours if using coloured log.
@@ -1276,15 +1332,16 @@ def COLOUREDLEVELS():
     """
     # reference:
     # http://ozzmaker.com/add-colour-to-text-in-python/
-    clevels = dict(error=bcolors.FAIL,  # red
-                   warning=bcolors.WARNING,  # yellow
-                   info=bcolors.OKGREEN,  # green
-                   graph=bcolors.OKBLUE,  # green
-                   all=bcolors.OKGREEN)  # green
+    clevels = dict(error=BColors.FAIL,  # red
+                   warning=BColors.WARNING,  # yellow
+                   info=BColors.OKGREEN,  # green
+                   graph=BColors.OKBLUE,  # green
+                   all=BColors.OKGREEN)  # green
     return clevels
 
+
 # defines the colours
-class bcolors:
+class BColors:
     HEADER = '\033[95;1m'
     OKBLUE = '\033[94;1m'
     OKGREEN = '\033[92;1m'
@@ -1295,6 +1352,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
+# noinspection PyPep8Naming
 def COLOURED_LOG(p=None):
     """
     Defines whether we use a coloured log to print to the screen/
@@ -1315,6 +1373,7 @@ def COLOURED_LOG(p=None):
     return clog
 
 
+# noinspection PyPep8Naming
 def LOG_EXIT_TYPE():
     """
     Defines how python exits, when an exit is required after logging, string
@@ -1333,14 +1392,15 @@ def LOG_EXIT_TYPE():
     """
 
     # Do nothing on exit call
-    log_exit_type = None
+    # log_exit_type = None
     # Use os._exit
-    log_exit_type = 'os'
+    # log_exit_type = 'os'
     # Use sys.exit
     log_exit_type = 'sys'
     return log_exit_type
 
 
+# noinspection PyPep8Naming
 def EXIT():
     """
     Defines how to exit based on the string defined in
@@ -1352,12 +1412,15 @@ def EXIT():
     if my_exit == 'sys':
         my_exit = sys.exit
     elif EXIT == 'os':
+        # noinspection PyProtectedMember
         my_exit = os._exit
     else:
+        # noinspection PyPep8
         my_exit = lambda x: None
     return my_exit
 
 
+# noinspection PyPep8Naming
 def EXIT_LEVELS():
     """
     Defines which levels (in spirouConst.LOG_TRIG_KEYS and
@@ -1372,6 +1435,7 @@ def EXIT_LEVELS():
     return exit_levels
 
 
+# noinspection PyPep8Naming
 def DEFAULT_LOG_OPT():
     """
     Defines the default program to use as the "option" in logging
@@ -1394,9 +1458,13 @@ def DEFAULT_LOG_OPT():
 # Start of code
 # =============================================================================
 # Get version and author
+# noinspection PyRedeclaration
 __version__ = VERSION()
+# noinspection PyRedeclaration
 __author__ = AUTHORS()
+# noinspection PyRedeclaration
 __date__ = LATEST_EDIT()
+# noinspection PyRedeclaration
 __release__ = RELEASE()
 
 
