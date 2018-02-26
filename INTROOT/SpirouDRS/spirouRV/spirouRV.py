@@ -39,6 +39,7 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # get speed of light
+# noinspection PyUnresolvedReferences
 CONSTANT_C = constants.c.value
 # get gaussian function
 gauss_function = spirouCore.GaussFunction
@@ -871,7 +872,7 @@ def get_ccf_mask(p, loc, filename=None):
     # try to locate mask
     filename = locate_mask(p, filename)
     # speed of light in km/s
-    c = constants.c.value / 1000.0
+    c = CONSTANT_C / 1000.0
     # Question: Where is the mask file supposed to be located?
     # get table if not found raise error
     try:
@@ -1023,7 +1024,7 @@ def coravelation(p, loc):
     det_noise = p['ccf_det_noise']
     fit_type = p['ccf_fit_type']
     # speed of light in km/s
-    c = constants.c.value / 1000.0
+    c = CONSTANT_C / 1000.0
     # -------------------------------------------------------------------------
     # get data from loc
     # -------------------------------------------------------------------------
@@ -1197,7 +1198,7 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
     times = []
 
     # speed of light in km/s
-    c = constants.c.value / 1000.0
+    c = CONSTANT_C / 1000.0
 
     # constants
     sp_ll_dll = sp_ll + sp_dll*0.5
@@ -1637,6 +1638,7 @@ def test_fit_ccf(x, y, w, aguess, result):
     """
     # imports ONLY for this test function
     import matplotlib.pyplot as plt
+    # noinspection PyUnresolvedReferences
     from SpirouDRS.spirouRV import fitgaus
     import time
     # path for plot file (manually set)

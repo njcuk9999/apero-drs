@@ -473,16 +473,52 @@ Remove peaks that are too wide
 \noindent\begin{minipage}{\textwidth}
 \subsection{RemoveZeroPeaks}
 
-Defined in \spirouRV\path{.}
+Defined in \spirouRV\path{.remove_zero_peaks}
 
 \begin{pythonbox}
 from SpirouDRS import spirouRV
-spirouRV.RemoveZeroPeaks
-spirouRV.
+spirouRV.RemoveZeroPeaks(p, loc)
+spirouRV.spirouRV.remove_zero_peaks(p, loc)
 \end{pythonbox}
 
 \begin{pythondocstring}
+Remove peaks that have a value of zero
 
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            xref: numpy array (1D), the central positions of the peaks
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak
+            xpeak: numpy array (1D), the central position each gaussain fit
+                   to valid FP peak
+            ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                    to valid FP peak
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            xref: numpy array (1D), the central positions of the peaks
+                  (masked with zero peaks removed)
+            ordpeak: numpy array (1D), the order number for each valid FP
+                     peak (masked with zero peaks removed)
+            xpeak: numpy array (1D), the central position each gaussain fit
+                   to valid FP peak (masked with zero peaks removed)
+            ewpeak: numpy array (1D), the FWHM of each gaussain fit
+                    to valid FP peak (masked with zero peaks removed)
+            vrpeak: numpy array (1D), the radial velocity drift for each
+                    valid FP peak (masked with zero peaks removed)
+            llpeak: numpy array (1D), the delta wavelength for each valid
+                    FP peak (masked with zero peaks removed)
+            amppeak: numpy array (1D), the amplitude for each valid FP peak
+                     (masked with zero peaks removed)
 \end{pythondocstring}
 \end{minipage}
 

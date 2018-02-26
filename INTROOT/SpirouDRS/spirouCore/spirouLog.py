@@ -184,11 +184,12 @@ def debug_start():
     """
     # get raw input
     if sys.version_info.major > 2:
+        # noinspection PyPep8
         raw_input = lambda x: str(input(x))
     # get colour
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.bcolors.ENDC
+    nocol = spirouConfig.Constants.BColors.ENDC
     if addcolour:
         cc = clevels['error']
     else:
@@ -196,6 +197,7 @@ def debug_start():
     # ask to run debugger
     try:
         print(cc + '\n\n\tError found and running in DEBUG mode\n' + nocol)
+        # noinspection PyUnboundLocalVariable
         uinput = raw_input(cc + '\tEnter python debugger? [Y]es or [N]o?\t'
                            + nocol)
         if 'Y' in uinput.upper():
@@ -383,7 +385,7 @@ def printlog(message, key):
     level = CPARAMS.get('PRINT_LEVEL', 'all')
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.bcolors.ENDC
+    nocol = spirouConfig.Constants.BColors.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
         emsg1 = 'key={0} not in spirouConfig.Constants.COLOUREDLEVELS()'
