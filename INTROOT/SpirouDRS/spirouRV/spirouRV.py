@@ -15,7 +15,6 @@ from scipy.stats.stats import pearsonr
 from scipy.optimize import curve_fit
 import warnings
 import os
-import time
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -105,7 +104,8 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
                       pixels are regarded as saturated
     :param size: int, size (in pixels) around saturated pixels to also regard
                  as bad pixels
-    :param cut: float, define the number of standard deviations cut at in             -                  cosmic renormalisation
+    :param cut: float, define the number of standard deviations cut at in
+                cosmic renormalisation
 
     :return spen: numpy array (2D), the corrected normalised COMPARISON
                   extracted spectrrum
@@ -293,7 +293,7 @@ def create_drift_file(p, loc):
             # gaussian that starts before 0
             tmp[0:3] = 0
             # same thing at the end of each order
-            tmp[speref.shape[1] - 5: speref.shape[1] -1] = 0
+            tmp[speref.shape[1] - 5: speref.shape[1] - 1] = 0
         # normalize by the 98th percentile - avoids super-spurois pixels but
         #   keeps the top of the blaze around 1
         # TODO: Change to np.percentile
@@ -1022,8 +1022,6 @@ def coravelation(p, loc):
     ccf_step = p['ccf_step']
     det_noise = p['ccf_det_noise']
     fit_type = p['ccf_fit_type']
-
-    res_table_file = spirouConfig.Constants.CCF_TABLE_FILE(p)
     # speed of light in km/s
     c = constants.c.value / 1000.0
     # -------------------------------------------------------------------------
@@ -1136,20 +1134,11 @@ def coravelation(p, loc):
     ccf_all = np.array(ccf_all)
     ccf_noise_all = np.array(ccf_noise_all)
     ccf_max = np.array(ccf_max)
-    ccf_all_fit = np.array(ccf_all_fit)
+    # ccf_all_fit = np.array(ccf_all_fit)
     ccf_all_results = np.array(ccf_all_results)
     pix_passed_all = np.array(pix_passed_all)
     ll_range_all = np.array(ll_range_all)
-    # -------------------------------------------------------------------------
-    # create table
-    columns = ['order', 'maxcpp', 'nlines', 'contrast', 'RV', 'sig']
-    values = [orders, ccf_max/pix_passed_all, tot_line,
-              np.abs(100*ccf_all_results[:, 0]), ccf_all_results[:, 1],
-              ccf_all_results[:, 2]]
-    formats = ['2.0f', '5.0f', '4.0f', '4.1f', '9.4f', '7.4f']
-    table = spirouImage.MakeTable(columns, values, formats)
-    # save table to file
-    spirouImage.WriteTable(table, res_table_file, fmt='ascii')
+
     # -------------------------------------------------------------------------
     # add outputs to loc
     loc['rv_ccf'] = rv_ccf
@@ -1159,10 +1148,12 @@ def coravelation(p, loc):
     loc['tot_line'] = tot_line
     loc['ll_range_all'] = ll_range_all
     loc['ccf_noise'] = ccf_noise_all
+    loc['orders'] = orders
+    loc['ccf_all_results'] = ccf_all_results
 
     # set source
     keys = ['rv_ccf', 'ccf', 'ccf_max', 'pix_passed_all', 'tot_line',
-            'll_range_all', 'ccf_noise']
+            'll_range_all', 'ccf_noise', 'orders', 'ccf_all_results']
     loc.set_sources(keys, __NAME__ + '/coravelation()')
     # -------------------------------------------------------------------------
     # return loc
@@ -1296,7 +1287,7 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     :return ccf_noise: float, the calculated CCF noise
     """
     # get sizes of arrays
-    nx = len(flux)
+    # nx = len(flux)
     nfind = len(ll_s)
     # set up outputs
     out_ccf = 0.0
@@ -1380,7 +1371,7 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
                 # ccf noise calculation
                 noise1 = np.abs(flux[j])
                 noise2 = det_noise**2
-                ccf_noise +=  (noise1 + noise2) * weight**2
+                ccf_noise += (noise1 + noise2) * weight**2
 
     # sqrt the noise
     ccf_noise = np.sqrt(ccf_noise)
@@ -1389,7 +1380,7 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
 
 
 def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
-                  i_line_ctr, det_noise):
+              i_line_ctr, det_noise):
     """
     Optimized (Fortran translate) of correlbin
 
@@ -1440,7 +1431,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     :return ccf_noise: float, the calculated CCF noise
     """
     # get sizes of arrays
-    nx = len(flux)
+    # nx = len(flux)
     nfind = len(ll_s)
     # set up outputs
     out_ccf = 0.0
@@ -1547,7 +1538,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
         ccf_noise += np.sum(noise[cond3] * weight**2)
 
         for i in range(len(i_start)):
-            start, end = i_start[cond3][i] , i_end[cond3][i]
+            start, end = i_start[cond3][i], i_end[cond3][i]
             # output ccf calculation
             out_ccf += np.sum((flux[start:end-1]/blaze[start:end-1]) * weight)
             # pixel calculation
@@ -1649,8 +1640,8 @@ def test_fit_ccf(x, y, w, aguess, result):
     from SpirouDRS.spirouRV import fitgaus
     import time
     # path for plot file (manually set)
-    PATH = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
-    filename = PATH + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
+    path = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
+    filename = path + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
     # turn off interactive plot
     if plt.isinteractive():
         on = True
@@ -1719,7 +1710,7 @@ def fitgaussian(x, y, weights=None, guess=None):
     if guess is None:
         guess = [np.max(y), np.mean(y), np.std(y), 0]
     # calculate the fit using curve_fit to the function "gauss_function"
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,
                                absolute_sigma=True)
     # calculate the fit parameters
