@@ -32,6 +32,7 @@ CONFIGFOLDER = Constants.CONFIGFOLDER()
 TRIG_KEY = Constants.LOG_TRIG_KEYS()
 ConfigException = spirouConfigFile.ConfigException
 
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================
@@ -96,6 +97,22 @@ class ConfigError(ConfigException):
         return self.args[0]
 
 
+def __capitalise_key__(key):
+    """
+    Capitalizes "key" (used to make ParamDict case insensitive), only if
+    key is a string
+
+    :param key: string or object, if string then key is capitalized else
+                nothing is done
+
+    :return key: capitalized string (or unchanged object)
+    """
+    # capitalise string keys
+    if type(key) == str:
+        key = key.upper()
+    return key
+
+
 class ParamDict(dict):
     """
     Custom dictionary to retain source of a parameter (added via setSource,
@@ -124,7 +141,7 @@ class ParamDict(dict):
         :return value: object, the value stored at position "key"
         """
         oldkey = key
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         try:
             return super(ParamDict, self).__getitem__(key)
         except KeyError:
@@ -142,7 +159,7 @@ class ParamDict(dict):
         :return:
         """
         # capitalise string keys
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -162,7 +179,7 @@ class ParamDict(dict):
 
         :return bool: True if ParamDict instance has a key "key", else False
         """
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         return super(ParamDict, self).__contains__(key)
 
     def __delitem__(self, key):
@@ -175,7 +192,7 @@ class ParamDict(dict):
         :return None:
         """
 
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         super(ParamDict, self).__delitem__(key)
 
     def get(self, key, default=None):
@@ -194,7 +211,7 @@ class ParamDict(dict):
                        the default value is returned (None if undefined)
         """
         # capitalise string keys
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         # if we have the key return the value
         if key in self.keys():
             return self.__getitem__(key)
@@ -215,7 +232,7 @@ class ParamDict(dict):
         :return None:
         """
         # capitalise string keys
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         # only add if key is in main dictionary
         if key in self.keys():
             self.sources[key] = source
@@ -235,7 +252,7 @@ class ParamDict(dict):
         :return None:
         """
         # capitalise string keys
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         # if key exists append source to it
         if key in self.keys() and key in list(self.sources.keys()):
             self.sources[key] += ' {0}'.format(source)
@@ -311,7 +328,7 @@ class ParamDict(dict):
         # loop around each key in keys
         for key in self.keys():
             # capitalise string keys
-            key = self.__capitalise_key__(key)
+            key = __capitalise_key__(key)
             # set key
             self.sources[key] = source
 
@@ -327,7 +344,7 @@ class ParamDict(dict):
         # loop around each key in keys
         for key in self.keys():
             # capitalise string keys
-            key = self.__capitalise_key__(key)
+            key = __capitalise_key__(key)
             # set key
             self.sources[key] += ' {0}'.format(source)
 
@@ -342,7 +359,7 @@ class ParamDict(dict):
         :return source: string, the source of the parameter
         """
         # capitalise string keys
-        key = self.__capitalise_key__(key)
+        key = __capitalise_key__(key)
         # if key in keys and sources then return source
         if key in self.keys() and key in self.sources.keys():
             return self.sources[key]
@@ -409,21 +426,6 @@ class ParamDict(dict):
                 key = key.upper()
                 # set the new key
                 super(ParamDict, self).__setitem__(key, value)
-
-    def __capitalise_key__(self, key):
-        """
-        Capitalizes "key" (used to make ParamDict case insensitive), only if
-        key is a string
-
-        :param key: string or object, if string then key is capitalized else
-                    nothing is done
-
-        :return key: capitalized string (or unchanged object)
-        """
-        # capitalise string keys
-        if type(key) == str:
-            key = key.upper()
-        return key
 
 
 # =============================================================================
@@ -635,7 +637,7 @@ def check_config(params, keys):
     Check whether we have certain keys in dictionary
     raises a Config Error if keys are not in params
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
         Must contain at least:
             the keys defined in "keys" (else ConfigError raised)
 

@@ -335,7 +335,7 @@ def exit_script(ll):
         p['DRS_PLOT'] = 0
     # make sure we have log_opt
     if 'log_opt' not in p:
-        p['log_opt']=sys.argv[0]
+        p['log_opt'] = sys.argv[0]
     # if DRS_PLOT is 0 just return 0
     if not p['DRS_PLOT']:
         return 0
@@ -352,6 +352,7 @@ def exit_script(ll):
     WLOG('', '', HEADER, printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
+        # noinspection PyUnresolvedReferences
         uinput = raw_input('')      # note python 3 wont find this!
     else:
         uinput = input('')
@@ -689,12 +690,16 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames):
     :param calls: list of objects or None, if define these are the values that
                   come from a function call (overwrite command line arguments)
 
+    :param cprior: list of bools, if True the call takes priority over arguments
+                   defined at run time, if False run time arguments take
+                   priority
+
     :param lognames: list of strings, the names displayed in the log (on error)
                      theses should be similar to "names" but in a form the
                      user can easily understand for each variable
 
-    :return dict: dictionary containing the run time arguments converts to
-                  "types", keys are equal to "names"
+    :return customdict: dictionary containing the run time arguments converts
+                        to "types", keys are equal to "names"
     """
     # set up the dictionary
     customdict = dict()
@@ -711,16 +716,12 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames):
                 raw_value = None
             # if calls is None and required = True then we should exit now
             elif calls is None or calls[pos] is None:
-                emsgs = []
-
-                emsgs.append(('Argument Error: "{0}" is not defined'
-                              ''.format(lognames[pos])))
-
-                emsgs.append(('   must be format:'
-                              ''.format(pos + 1)))
+                # noinspection PyListCreation
+                emsgs = ['Argument Error: "{0}" is not defined'
+                         ''.format(lognames[pos])]
+                emsgs.append(('   must be format:'.format(pos + 1)))
                 eargs = [DPROG, ' '.join(lognames)]
-                emsgs.append(('   >>> {0} NIGHT_NAME {1}'
-                              ''.format(*eargs)))
+                emsgs.append(('   >>> {0} NIGHT_NAME {1}'.format(*eargs)))
                 WLOG('error', DPROG, emsgs)
                 raw_value = None
             # else we must use the value from calls
@@ -740,7 +741,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames):
             # add value to dictionary
             customdict[name] = value
         except ValueError:
-            emsg = ('Arguments Error: "{0}" should be a {1} (Value = {2})')
+            emsg = 'Arguments Error: "{0}" should be a {1} (Value = {2})'
             eargs = [lognames[pos], TYPENAMES[kind], raw_value]
             WLOG('error', DPROG, emsg.format(*eargs))
         except TypeError:
@@ -755,6 +756,9 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     into a list under names[max(positions)], all further arguments are
     required to conform to the type "types[max(positions)] and
     names[max(position)] becomes a list of types[max(positions)]
+
+    :param customdict: dictionary containing the run time arguments converts
+                       to "types", keys are equal to "names"
 
     :param positions: list of integers or None, the positions of the arguments
                       (i.e. first argument is 0)
@@ -940,6 +944,7 @@ def find_interactive():
     return cond1 or cond2 or cond3
 
 
+# noinspection PyUnresolvedReferences
 def find_ipython():
     """
     Find whether user is using ipython or python
@@ -947,6 +952,7 @@ def find_ipython():
     :return using_ipython: bool, True if using ipython, false otherwise
     """
     try:
+        # noinspection PyStatementEffect
         __IPYTHON__             # Note python wont define this, ipython will
         return True
     except NameError:
@@ -1009,6 +1015,10 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     :param calls: list of objects or None, if define these are the values that
                   come from a function call (overwrite command line arguments)
 
+    :param cprior: list of bools, if True the call takes priority over arguments
+                   defined at run time, if False run time arguments take
+                   priority
+
     :param lognames: list of strings, the names displayed in the log (on error)
                      theses should be similar to "names" but in a form the
                      user can easily understand for each variable
@@ -1045,7 +1055,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         cprior = [False]*len(positions)
     # loop around positions test the type and add the value to dictionary
     customdict = get_arguments(positions, types, names, required, calls,
-                                cprior, lognames)
+                               cprior, lognames)
     # deal with the position needing to find additional parameters
     if last_multi:
         customdict = get_multi_last_argument(customdict, positions, types,
@@ -1352,6 +1362,7 @@ def display_help_file(p):
             WLOG('error', p['log_opt'], emsg)
 
 
+# noinspection PyListCreation
 def display_system_info():
     """
     Display system information
@@ -1369,8 +1380,6 @@ def display_system_info():
     messages.append(HEADER)
     # return messages for logger
     WLOG('', '', messages, logonly=True)
-
-
 
 
 # =============================================================================

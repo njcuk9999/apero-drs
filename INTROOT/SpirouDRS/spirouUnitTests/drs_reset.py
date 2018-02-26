@@ -12,17 +12,11 @@ Created on 2018-02-16 at 11:20
 
 @author: cook
 """
-
-import numpy as np
+from __future__ import division
 import os
 import shutil
 import glob
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
+
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -41,6 +35,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
+
 
 # =============================================================================
 # Define functions
@@ -104,7 +99,6 @@ def reset_calibdb(p):
     # -------------------------------------------------------------------------
 
 
-
 def reset_log(p):
     # log progress
     WLOG('', DPROG, 'Resetting log directory')
@@ -112,6 +106,7 @@ def reset_log(p):
     log_dir = p['DRS_DATA_MSG']
     # loop around files and folders in reduced dir
     remove_all(log_dir)
+
 
 def remove_all(path):
     # loop around files and folders in calib_dir
@@ -141,6 +136,7 @@ def remove(path, list_of_files):
         os.remove(path)
     # return list of files
     return list_of_files
+
 
 def main():
     # ----------------------------------------------------------------------

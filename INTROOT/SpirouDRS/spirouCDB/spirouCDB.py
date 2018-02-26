@@ -535,7 +535,7 @@ def copy_files(p, header=None):
                 # Make sure old path exists
                 if not os.path.exists(oldloc):
                     emsg1 = ('Error file {0} define in calibDB (key={1}) '
-                            'does not exist').format(oldloc, key)
+                             'does not exist').format(oldloc, key)
                     emsg2 = '    function = {0}'.format(func_name)
                     WLOG('error', p['log_opt'], [emsg1, emsg2])
                 # try to copy --> if not raise an error and log it
@@ -607,7 +607,7 @@ def get_file_name(p, key, hdr=None, filename=None):
             rawfilename = c_database[key][1]
         else:
             emsg1 = ('Calibration database has no valid "{0}" entry '
-                    'for time<{1}').format(key, p['max_time_human'])
+                     'for time<{1}').format(key, p['max_time_human'])
             emsg2 = '   function = {0}'.format(func_name)
             WLOG('error', p['log_opt'], [emsg1, emsg2])
             rawfilename = ''

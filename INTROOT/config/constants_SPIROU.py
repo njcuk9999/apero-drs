@@ -519,3 +519,7 @@ calib_max_wait = 3600
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 calib_db_match = 'closest'
+
+# -----------------------------------------------------------------------------
+#  End of constants file
+# -----------------------------------------------------------------------------

@@ -13,7 +13,6 @@ from __future__ import division
 import numpy as np
 import os
 import pkg_resources
-import sys
 
 # =============================================================================
 # Define variables
@@ -26,6 +25,7 @@ __author__ = 'Unknown'
 __release__ = 'Unknown'
 __date__ = 'Unknown'
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define Custom classes
@@ -168,13 +168,13 @@ def read_lines(filename, comments='#', delimiter=' '):
         if len(line) == 0:
             continue
         # do not include commented lines
-        elif line[0] == '#':
+        elif line[0] == comments:
             continue
         else:
             # append to raw
             try:
                 key, value = line.split(delimiter)
-            except ValueError as e:
+            except ValueError as _:
                 emsg = ('\n\t\t Wrong format for line {0} in file {1}'
                         '\n\t\t Lines must be "key" = "value"'
                         '\n\t\t Where "key" and "value" are a valid python '
