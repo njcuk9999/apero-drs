@@ -35,6 +35,7 @@ WARNGLOG = spirouCore.warnlog
 sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -67,8 +68,6 @@ def measure_background_flatfield(p, image):
 
     # get constants
     size = p['IC_BKGR_WINDOW']
-    gain = p['GAIN']
-    sigdet = p['SIGDET']
     # set the background image to zeros
     background = np.zeros_like(image)
     # create the box centers
@@ -81,7 +80,7 @@ def measure_background_flatfield(p, image):
         for j_it in range(len(yc)):
             xci, yci = xc[i_it], yc[i_it]
             # get the pixels for this box
-            subframe = image[xci-size:xci+size,yci-size:yci+size].ravel()
+            subframe = image[xci-size:xci+size, yci-size:yci+size].ravel()
             # get the (2*size)th minimum pixel
             minlevel[i_it, j_it] = np.sort(subframe)[2 * size]
 
@@ -91,7 +90,7 @@ def measure_background_flatfield(p, image):
     wmsg = 'No interpolation done in {0} (FUNCTION INCOMPLETE)'
     WLOG('warning', p['log_opt'], wmsg.format(func_name))
 
-
+    # return background, xc, yc and minlevel
     return background, xc, yc, minlevel
 
 
