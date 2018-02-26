@@ -1,20 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+cal_validate_spirou.py
 
-# CODE DESCRIPTION HERE
+To be run after installation to test whether modules run
 
 Created on 2017-11-27 at 16:27
 
 @author: cook
-
-
-
-Version 0.0.0
 """
 import os
-import sys
 
 # =============================================================================
 # Define variables
@@ -36,7 +31,6 @@ EXIT = os._exit
 # Define functions
 # =============================================================================
 def main(debug_mode=0):
-
     # print log
     print(' *****************************************')
     print(' *        VALIDATING DRS ')
@@ -82,7 +76,6 @@ def main(debug_mode=0):
         print('Installation failed with message')
         print('   {0}'.format(e))
         EXIT(1)
-
 
     # -------------------------------------------------------------------------
     # spirouCore
