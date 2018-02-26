@@ -1,17 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+unit_test1.py
 
-# CODE DESCRIPTION HERE
+Unit test code 1:
+    Tests the following:
+        cal_DARK_spirou
+        cal_BADPIX_spirou
+        cal_loc_RAW_spirou (flat_dark)
+        cal_loc_RAW_spirou (dark_flat)
+        cal_SLIT_spirou
+        cal_FF_RAW_spirou (flat_dark)
+        cal_FF_RAW_spirou (dark_flat)
+        cal_extract_RAW_spirou (fp_fp02a203.fits AB A B C)
+        cal_extract_RAW_spirou (fp_fp03a203.fits AB A B C)
+        cal_extract_RAW_spirou (fp_fp04a203.fits AB A B C)
+        cal_DRIFT_E2DS_spirou
+        cal_CCF_E2DS_spirou
 
 Created on 2017-11-23 at 12:14
 
 @author: cook
-
-
-
-Version 0.0.0
 """
 from __future__ import division
 import time
@@ -22,9 +31,11 @@ from SpirouDRS import spirouConfig
 try:
     from . import unit_test_functions as utf
 except ImportError:
+    # noinspection PyUnresolvedReferences
     import unit_test_functions as utf
 
 if sys.version_info.major == 2:
+    # noinspection PyPep8Naming,PyShadowingBuiltins
     from collections import OrderedDict as dict
 
 
