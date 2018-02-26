@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_CCF_E2DS_spirou.py [night_directory] [E2DSfilename] [mask] [RV] [width] [step]
+cal_CCF_E2DS_spirou.py
+       [night_directory] [E2DSfilename] [mask] [RV] [width] [step]
 
 # CODE DESCRIPTION HERE
 
@@ -84,7 +85,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     rdir = p['reduced_dir']
     # construct and test the e2dsfile
     e2dsfilename = spirouStartup.GetFile(p, rdir, p['e2dsfile'], 'fp_fp',
-                                        'DRIFT')
+                                         'DRIFT')
     # get the fiber type
     p['fiber'] = spirouStartup.GetFiberType(p, e2dsfilename)
     fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
@@ -246,7 +247,30 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         sPlt.ccf_rv_ccf_plot(loc['rv_ccf'], normalized_ccf, ccf_fit)
 
     # ----------------------------------------------------------------------
-    # archive ccf
+    # archive ccf to table
+    # ----------------------------------------------------------------------
+    # construct filename
+    res_table_file = spirouConfig.Constants.CCF_TABLE_FILE(p)
+    # log progress
+    WLOG('', p['log_opt'], 'Archiving CCF on file {0}'.format(res_table_file))
+    # define column names
+    columns = ['order', 'maxcpp', 'nlines', 'contrast', 'RV', 'sig']
+    # define values for each column
+    values = [loc['orders'],
+              loc['ccf_max']/loc['pix_passed_all'],
+              loc['tot_line'],
+              np.abs(100*loc['ccf_all_results'][:, 0]),
+              loc['ccf_all_results'][:, 1],
+              loc['ccf_all_results'][:, 2]]
+    # define the format for each column
+    formats = ['2.0f', '5.0f', '4.0f', '4.1f', '9.4f', '7.4f']
+    # construct astropy table from column names, values and formats
+    table = spirouImage.MakeTable(columns, values, formats)
+    # save table to file
+    spirouImage.WriteTable(table, res_table_file, fmt='ascii')
+
+    # ----------------------------------------------------------------------
+    # archive ccf to fits file
     # ----------------------------------------------------------------------
     # construct folder and filename
     corfile = spirouConfig.Constants.CCF_FITS_FILE(p)
