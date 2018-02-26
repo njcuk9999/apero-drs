@@ -244,29 +244,29 @@ def main(night_name=None, files=None, fiber='AB'):
         emsg = 'File {0} not found in {1}'
         WLOG('error', p['log_opt'], emsg.format(reffilename, rfolder))
     # get length of files
-    Nfiles = len(listfiles)
+    nfiles = len(listfiles)
     # make sure we have some files
-    if Nfiles == 0:
+    if nfiles == 0:
         emsg = 'No additional {0}*{1} files found in {2}'
         WLOG('error', p['log_opt'], emsg.format(prefix, suffix, rfolder))
     else:
         # else Log the number of files found
         wmsg = 'Number of fp_fp files found on directory = {0}'
-        WLOG('info', p['log_opt'], wmsg.format(Nfiles))
+        WLOG('info', p['log_opt'], wmsg.format(nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
     # ------------------------------------------------------------------
     # decide whether we need to skip (for large number of files)
     if len(listfiles) >= p['DRIFT_NLARGE']:
-        Nfiles = int(Nfiles/p['DRIFT_FILE_SKIP'])
+        nfiles = int(nfiles/p['DRIFT_FILE_SKIP'])
         skip = p['DRIFT_FILE_SKIP']
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((Nfiles, loc['number_orders']))
-    loc['errdrift'] = np.zeros((Nfiles, loc['number_orders']))
-    loc['deltatime'] = np.zeros(Nfiles)
+    loc['drift'] = np.zeros((nfiles, loc['number_orders']))
+    loc['errdrift'] = np.zeros((nfiles, loc['number_orders']))
+    loc['deltatime'] = np.zeros(nfiles)
     # set loc sources
     keys = ['drift', 'errdrift', 'deltatime']
     loc.set_sources(keys, __NAME__ + '/__main__()')
@@ -276,7 +276,7 @@ def main(night_name=None, files=None, fiber='AB'):
     #     calculate dvrms and meanpond
     # ------------------------------------------------------------------
     wref = 1.0
-    for i_it in range(Nfiles):
+    for i_it in range(nfiles):
         # get file for this iteration
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading

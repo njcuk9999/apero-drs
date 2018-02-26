@@ -18,7 +18,6 @@ import numpy as np
 from numpy.polynomial import polynomial
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-import sys
 import os
 import warnings
 from tqdm import tqdm
@@ -58,12 +57,219 @@ MINLAM = 1250
 MAXLAM = 2250
 # -----------------------------------------------------------------------------
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
          minlam=None, maxlam=None):
 
+    # ----------------------------------------------------------------------
+    # function inputs
+    # TODO: This should be removed when function in main()
+    night_name = '20170710'
+    flatfile = FLATFILE
+    tellmodx = TAPASX
+    tellmody = TAPASY
+    tellthres = THRESHOLD
+    minlam, maxlam = MINLAM, MAXLAM
+
+    # ----------------------------------------------------------------------
+    # Set up
+    # ----------------------------------------------------------------------
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin()
+    # deal with arguments being None (i.e. get from sys.argv)
+    pos = [0, 1, 2, 3, 4, 5]
+    fmt = [str, str, str, float, float, float]
+    name = ['flatfile', 'tellmodx', 'tellmody', 'tellthres', 'minlam',
+            'maxlam']
+    lname = ['Flat fits file', 'Telluric spectrum', 'Good threshold',
+             'Minimum lambda', 'Maximum lambda']
+    req = [True, True, True, True, True, True]
+    call = [flatfile, tellmodx, tellmody, tellthres, minlam, maxlam]
+    call_priority = [True, True, True, True, True, True]
+    # now get custom arguments
+    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
+                                                    call_priority, lname)
+    # get parameters from configuration files and run time arguments
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsfile='flatfile')
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
+
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    # get reduced directory + night name
+    rdir = p['raw_dir']
+    # construct and test the reffile
+    flatfilename = spirouStartup.GetFile(p, rdir, p['flatfile'], 'flat_dark',
+                                         'TELLMASK')
+    # get the fiber type
+    p['fiber'] = 'AB'
+
+    # ----------------------------------------------------------------------
+    # Read flat image file
+    # ----------------------------------------------------------------------
+    # read the image data
+    flat, hdr, cdr, ny, nx = spirouImage.ReadData(p, flatfilename)
+    # add to loc
+    loc = ParamDict()
+    loc['flat'] = flat
+    loc.set_sources(['flat'], __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
+    # Get basic image properties
+    # ----------------------------------------------------------------------
+    # get sig det value
+    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
+    # get exposure time
+    p = spirouImage.GetExpTime(p, hdr, name='exptime')
+    # get gain
+    p = spirouImage.GetGain(p, hdr, name='gain')
+
+    # ----------------------------------------------------------------------
+    # Resize flat image
+    # ----------------------------------------------------------------------
+    # rotate the image and convert from ADU/s to e-
+    flat = spirouImage.ConvertToE(spirouImage.FlipImage(flat), p=p)
+    # convert NaN to zeros
+    flat0 = np.where(~np.isfinite(flat), np.zeros_like(flat), flat)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    flat2 = spirouImage.ResizeImage(flat0, **bkwargs)
+    loc['flat2'] = flat2
+    loc.set_sources(['flat2'], __NAME__ + '/main()')
+    # log change in data size
+    WLOG('', p['log_opt'], ('Image format changed to '
+                            '{0}x{1}').format(*flat2.shape))
+
+    # ----------------------------------------------------------------------
+    # Read tilt slit angle
+    # ----------------------------------------------------------------------
+    # get tilts
+    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
+    loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+
+    # ----------------------------------------------------------------------
+    # Read blaze
+    # ----------------------------------------------------------------------
+    # get tilts
+    loc['blaze'] = spirouImage.ReadBlazeFile(p, hdr)
+    loc.set_source('blaze', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+
+    # ------------------------------------------------------------------
+    # Read wavelength solution
+    # ------------------------------------------------------------------
+    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
+    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+
+    # ------------------------------------------------------------------
+    # Get localisation coefficients
+    # ------------------------------------------------------------------
+    # get this fibers parameters
+    p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
+    # get localisation fit coefficients
+    loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+
+    # ------------------------------------------------------------------
+    # Get telluric and telluric mask and add to loc
+    # ------------------------------------------------------------------
+    # log process
+    wmsg = 'Loading telluric model and locating "good" tranmission'
+    WLOG('', p['log_opt'], wmsg)
+    # load telluric and get mask (add to loc)
+    loc = get_telluric(p, loc)
+
+    # ------------------------------------------------------------------
+    # Make 2D map of orders
+    # ------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], 'Making 2D map of order locations')
+    # make the 2D wave-image
+    loc = order_profile(loc)
+
+    # ------------------------------------------------------------------
+    # Make 2D map of true x location (corrected for tilt)
+    # ------------------------------------------------------------------
+    # start up plot
+    if p['DRS_DEBUG'] and p['DRS_PLOT']:
+        sPlt.start_interactive_session()
+        sPlt.define_figure()
+
+    # log progress
+    WLOG('', p['log_opt'], 'Correcting for tilt')
+    # make the true x location map
+    loc = correct_for_tilt(p, loc)
+
+    # ------------------------------------------------------------------
+    # Make 2D map of wavelengths (based on true x location)
+    # ------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], 'Mapping pixels on to wavelength grid')
+    # make the 2D map of wavelength
+    loc = make_2d_wave_image(loc)
+
+    # ------------------------------------------------------------------
+    # Use spectra wavelength to create 2D image from wave-image
+    # ------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], 'Creating image from wave-image interpolation')
+    # create image from waveimage
+    loc = create_image_from_waveimage(loc, x=loc['tell_x'], y=loc['tell_y'])
+
+    # ------------------------------------------------------------------
+    # Create 2D mask (min to max lambda + transmission threshold)
+    # ------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], 'Creating wavelength/tranmission mask')
+    # create mask
+    loc = create_mask(p, loc)
+
+    # ----------------------------------------------------------------------
+    # save 2D spectrum, wavelength image and mask to file
+    # ----------------------------------------------------------------------
+    # TODO: move to spirouConst
+    # construct spectrum filename
+    redfolder = p['reduced_dir']
+    specfilename = 'telluric_mapped_spectrum.fits'
+    specfitsfile = os.path.join(redfolder, specfilename)
+    # log progress
+    wmsg = 'Writing spectrum to file {0}'
+    WLOG('', p['log_opt'], wmsg.format(specfilename))
+    # write to file
+    spirouImage.WriteImage(specfitsfile, loc['spe'])
+
+    # ----------------------------------------------------------------------
+    # construct waveimage filename
+    wavefilename = 'telluric_mapped_waveimage.fits'
+    wavefitsfile = os.path.join(redfolder, wavefilename)
+    # log progress
+    wmsg = 'Writing wave image to file {0}'
+    WLOG('', p['log_opt'], wmsg.format(wavefilename))
+    # write to file
+    spirouImage.WriteImage(wavefitsfile, loc['waveimage'])
+
+    # ----------------------------------------------------------------------
+    # construct tell mask 2D filename
+    maskfilename = 'telluric_mapped_mask.fits'
+    maskfitsfile = os.path.join(redfolder, maskfilename)
+    # log progress
+    wmsg = 'Writing telluric mask to file {0}'
+    WLOG('', p['log_opt'], wmsg.format(maskfilename))
+    # convert boolean mask to integers
+    writablemask = np.array(loc['tell_mask_2D'], dtype=int)
+    # write to file
+    spirouImage.WriteImage(maskfitsfile, writablemask)
+
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    wmsg = 'Recipe {0} has been successfully completed'
+    WLOG('info', p['log_opt'], wmsg.format(p['program']))
 
     # return a copy of locally defined variables in the memory
     return dict(locals())
@@ -98,9 +304,9 @@ def get_telluric(p, loc):
 
     func_name = __NAME__ + '.get_telluric()'
     # load the telluric model
-    kwargs = dict(return_header=False, return_shape=False)
-    tx = spirouImage.ReadData(p, filename=p['tellmodx'], **kwargs)
-    ty = spirouImage.ReadData(p, filename=p['tellmody'], **kwargs)
+    gkwargs = dict(return_header=False, return_shape=False)
+    tx = spirouImage.ReadData(p, filename=p['tellmodx'], **gkwargs)
+    ty = spirouImage.ReadData(p, filename=p['tellmody'], **gkwargs)
     # add model and mask to loc
     loc['tell_x'] = tx
     loc['tell_y'] = ty
@@ -110,7 +316,7 @@ def get_telluric(p, loc):
     return loc
 
 
-def order_profile(p, loc):
+def order_profile(loc):
     func_name = __NAME__ + '.order_profile()'
     # get data from loc
     image = loc['flat2']
@@ -167,7 +373,6 @@ def correct_for_tilt(p, loc):
     wave = loc['wave']
     acc = loc['acc']
     tilt = loc['tilt']
-    orderimage = loc['orderimage']
     suborderimage = loc['suborderimage']
     # assign number of orders
     number_orders = len(wave)
@@ -234,15 +439,21 @@ def correct_for_tilt(p, loc):
 
 
 def get_intersection_twopolys(coeffs1, coeffs2):
+    """
+    Get the intersection points between two polynomials where each polynomial
+    is defined by:
+        p(x) = p[0] * x**deg + ... + p[deg]   where p is the set of coefficients
 
-
-    # coefficients must be in order:
-    #   p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+    :param coeffs1: list of floats, the first set of coefficients
+    :param coeffs2: list of floats, the second set of coefficients
+    :return:
+    """
     # From here: https://stackoverflow.com/a/19217593/7858439
 
+    # convert cofficients to same order (zero fill smaller)
     length = np.max([len(coeffs1), len(coeffs2)])
     if len(coeffs1) < len(coeffs2):
-        coeffs1 =  [0.0] * (length - len(coeffs1)) + list(coeffs1)
+        coeffs1 = [0.0] * (length - len(coeffs1)) + list(coeffs1)
     elif len(coeffs2) < len(coeffs1):
         coeffs2 = [0.0] * (length - len(coeffs2)) + list(coeffs2)
 
@@ -259,6 +470,8 @@ def get_intersection_twopolys(coeffs1, coeffs2):
 
 def line_parameters(x0, y0, xc, yc, angle):
     """
+    Generate the gradient and intercept of a line which lies at an angle
+    "angle" to the straight line between (x0, y0) and (xc, yc)
 
     :param x0: int, pixel position in x direction (columns direction)
     :param y0: int, pixel position in y direction (rows direction)
@@ -268,6 +481,9 @@ def line_parameters(x0, y0, xc, yc, angle):
                   anti-clockwise away from the positive y-axis
     :return:
     """
+    if xc != x0:
+        print('Warning: xc and x0 are not the same. This may break')
+
     # this gets the sign of the denominator
     # if y0 is greater than yc we are above the center and our new point
     #    should be to the left of xc (if tilt is negative)
@@ -284,10 +500,8 @@ def line_parameters(x0, y0, xc, yc, angle):
     return m, c
 
 
-def make_2d_wave_image_old(p, loc):
+def make_2d_wave_image_old(loc):
     """
-
-    :param p: parameter dictionary, ParamDict containing constants
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -312,7 +526,6 @@ def make_2d_wave_image_old(p, loc):
     # get data from loc
     image = loc['flat2']
     wave = loc['wave']
-    tilt = loc['tilt']
     acc, ass = loc['acc'], loc['ass']
     # assign number of orders
     number_orders = len(wave)
@@ -321,8 +534,6 @@ def make_2d_wave_image_old(p, loc):
 
     # TODO: change to np.nan array
     waveimage = np.repeat([np.nan], np.product(ishape)).reshape(ishape)
-
-    waveimage = np.zeros_like(image)
 
     # make 2D image of wavelength positions (super imposed on nan image)
     # central values are easy
@@ -340,8 +551,6 @@ def make_2d_wave_image_old(p, loc):
             cfit = np.polyval(acc[fin][::-1], xpos)
             # get width positions
             wfit = np.polyval(ass[fin][::-1], xpos)
-            # get tilt
-            otilt = tilt[order_no]
             # calculate pixel positions for each center
             #     need +0.5 for int rounding
             ypos = np.array(cfit + 0.5, dtype=int)
@@ -365,10 +574,8 @@ def make_2d_wave_image_old(p, loc):
     return loc
 
 
-def make_2d_wave_image(p, loc):
+def make_2d_wave_image(loc):
     """
-
-    :param p: parameter dictionary, ParamDict containing constants
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -400,9 +607,9 @@ def make_2d_wave_image(p, loc):
         # get the wave for this order
         waveo = wave[order_no]
         # interp wave as a function of x
-        F = interp1d(xpos, waveo)
+        wave_interp = interp1d(xpos, waveo)
         # push the true x values into waveimage
-        waveimage[mask & good] = F(t_x_image[mask & good])
+        waveimage[mask & good] = wave_interp(t_x_image[mask & good])
 
     # add to loc
     loc['waveimage'] = waveimage
@@ -412,13 +619,11 @@ def make_2d_wave_image(p, loc):
     return loc
 
 
-def create_image_from_waveimage(p, loc, x, y):
+def create_image_from_waveimage(loc, x, y):
     """
     Takes a spectrum "y" at wavelengths "x" and uses these to interpolate
     wavelength positions in loc['waveimage'] to map the spectrum onto
     the waveimage
-
-    :param p: parameter dictionary, ParamDict containing constants
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -434,8 +639,8 @@ def create_image_from_waveimage(p, loc, x, y):
     # get data from loc
     waveimage = loc['waveimage']
     # set up interpolation
-    with warnings.catch_warnings(record=True) as w:
-        F = interp1d(x, y)
+    with warnings.catch_warnings(record=True) as _:
+        wave_interp = interp1d(x, y)
     # create new spectrum
     newimage = np.zeros_like(waveimage)
     # loop around each row in image, interpolate wavevalues
@@ -447,7 +652,7 @@ def create_image_from_waveimage(p, loc, x, y):
         invalidpixels = (rvalues == 0)
         invalidpixels &= ~np.isfinite(rvalues)
         # don't try to interpolate those pixels outside range of "x"
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             invalidpixels |= rvalues < np.min(x)
             invalidpixels |= rvalues > np.max(x)
         # valid pixel definition
@@ -456,7 +661,7 @@ def create_image_from_waveimage(p, loc, x, y):
         if np.sum(validpixels) == 0:
             continue
         # interpolate wavelengths in waveimage to get newimage
-        newimage[row][validpixels] = F(rvalues[validpixels])
+        newimage[row][validpixels] = wave_interp(rvalues[validpixels])
     # add to loc
     loc['spe'] = newimage
     loc.set_source('spe', func_name)
@@ -577,210 +782,13 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # function inputs
     # TODO: This should be removed when function in main()
-    night_name = '20170710'
-    flatfile = FLATFILE
-    tellmodx = TAPASX
-    tellmody = TAPASY
-    tellthres = THRESHOLD
-    minlam, maxlam = MINLAM, MAXLAM
-
-    # ----------------------------------------------------------------------
-    # Set up
-    # ----------------------------------------------------------------------
-    # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
-    # deal with arguments being None (i.e. get from sys.argv)
-    pos = [0, 1, 2, 3, 4, 5]
-    fmt = [str, str, str, float, float, float]
-    name = ['flatfile', 'tellmodx', 'tellmody', 'tellthres', 'minlam',
-            'maxlam']
-    lname = ['Flat fits file', 'Telluric spectrum', 'Good threshold',
-             'Minimum lambda', 'Maximum lambda']
-    req = [True, True, True, True, True, True]
-    call = [flatfile, tellmodx, tellmody, tellthres, minlam, maxlam]
-    call_priority = [True, True, True, True, True, True]
-    # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
-                                                    call_priority, lname)
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='flatfile')
-    # as we have custom arguments need to load the calibration database
-    p = spirouStartup.LoadCalibDB(p)
-
-    # ----------------------------------------------------------------------
-    # Construct reference filename and get fiber type
-    # ----------------------------------------------------------------------
-    # get reduced directory + night name
-    rdir = p['raw_dir']
-    # construct and test the reffile
-    flatfilename = spirouStartup.GetFile(p, rdir, p['flatfile'], 'flat_dark',
-                                        'TELLMASK')
-    # get the fiber type
-    p['fiber'] = 'AB'
-
-    # ----------------------------------------------------------------------
-    # Read flat image file
-    # ----------------------------------------------------------------------
-    # read the image data
-    flat, hdr, cdr, ny, nx = spirouImage.ReadData(p, flatfilename)
-    # add to loc
-    loc = ParamDict()
-    loc['flat'] = flat
-    loc.set_sources(['flat'], __NAME__ + '/main()')
-
-    # ----------------------------------------------------------------------
-    # Get basic image properties
-    # ----------------------------------------------------------------------
-    # get sig det value
-    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
-    # get exposure time
-    p = spirouImage.GetExpTime(p, hdr, name='exptime')
-    # get gain
-    p = spirouImage.GetGain(p, hdr, name='gain')
-
-    # ----------------------------------------------------------------------
-    # Resize flat image
-    # ----------------------------------------------------------------------
-    # rotate the image and convert from ADU/s to e-
-    flat = spirouImage.ConvertToE(spirouImage.FlipImage(flat), p=p)
-    # convert NaN to zeros
-    flat0 = np.where(~np.isfinite(flat), np.zeros_like(flat), flat)
-    # resize image
-    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
-                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
-                   getshape=False)
-    flat2 = spirouImage.ResizeImage(flat0, **bkwargs)
-    loc['flat2'] = flat2
-    loc.set_sources(['flat2'], __NAME__ + '/main()')
-    # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
-                            '{0}x{1}').format(*flat2.shape))
-
-    # ----------------------------------------------------------------------
-    # Read tilt slit angle
-    # ----------------------------------------------------------------------
-    # get tilts
-    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
-
-    # ----------------------------------------------------------------------
-    # Read blaze
-    # ----------------------------------------------------------------------
-    # get tilts
-    loc['blaze'] = spirouImage.ReadBlazeFile(p, hdr)
-    loc.set_source('blaze', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
-
-    # ------------------------------------------------------------------
-    # Read wavelength solution
-    # ------------------------------------------------------------------
-    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-
-    # ------------------------------------------------------------------
-    # Get localisation coefficients
-    # ------------------------------------------------------------------
-    # get this fibers parameters
-    p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
-    # get localisation fit coefficients
-    loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
-
-    # ------------------------------------------------------------------
-    # Get telluric and telluric mask and add to loc
-    # ------------------------------------------------------------------
-    # log process
-    wmsg = 'Loading telluric model and locating "good" tranmission'
-    WLOG('', p['log_opt'], wmsg)
-    # load telluric and get mask (add to loc)
-    loc = get_telluric(p, loc)
-
-    # ------------------------------------------------------------------
-    # Make 2D map of orders
-    # ------------------------------------------------------------------
-    # log progress
-    WLOG('', p['log_opt'], 'Making 2D map of order locations')
-    # make the 2D wave-image
-    loc = order_profile(p, loc)
-
-    # ------------------------------------------------------------------
-    # Make 2D map of true x location (corrected for tilt)
-    # ------------------------------------------------------------------
-    # start up plot
-    if p['DRS_DEBUG'] and p['DRS_PLOT']:
-        sPlt.start_interactive_session()
-        sPlt.define_figure()
-
-    # log progress
-    WLOG('', p['log_opt'], 'Correcting for tilt')
-    # make the true x location map
-    loc = correct_for_tilt(p, loc)
-
-    # ------------------------------------------------------------------
-    # Make 2D map of wavelengths (based on true x location)
-    # ------------------------------------------------------------------
-    # log progress
-    WLOG('', p['log_opt'], 'Mapping pixels on to wavelength grid')
-    # make the 2D map of wavelength
-    loc = make_2d_wave_image(p, loc)
-
-    # ------------------------------------------------------------------
-    # Use spectra wavelength to create 2D image from wave-image
-    # ------------------------------------------------------------------
-    # log progress
-    WLOG('', p['log_opt'], 'Creating image from wave-image interpolation')
-    # create image from waveimage
-    loc = create_image_from_waveimage(p, loc, x=loc['tell_x'], y=loc['tell_y'])
-
-    # ------------------------------------------------------------------
-    # Create 2D mask (min to max lambda + transmission threshold)
-    # ------------------------------------------------------------------
-    # log progress
-    WLOG('', p['log_opt'], 'Creating wavelength/tranmission mask')
-    # create mask
-    loc = create_mask(p, loc)
-
-    # ----------------------------------------------------------------------
-    # save 2D spectrum, wavelength image and mask to file
-    # ----------------------------------------------------------------------
-    # TODO: move to spirouConst
-    # construct spectrum filename
-    redfolder = p['reduced_dir']
-    specfilename = 'telluric_mapped_spectrum.fits'
-    specfitsfile = os.path.join(redfolder, specfilename)
-    # log progress
-    wmsg = 'Writing spectrum to file {0}'
-    WLOG('', p['log_opt'], wmsg.format(specfilename))
-    # write to file
-    spirouImage.WriteImage(specfitsfile, loc['spe'])
-
-    # ----------------------------------------------------------------------
-    # construct waveimage filename
-    wavefilename = 'telluric_mapped_waveimage.fits'
-    wavefitsfile = os.path.join(redfolder, wavefilename)
-    # log progress
-    wmsg = 'Writing wave image to file {0}'
-    WLOG('', p['log_opt'], wmsg.format(wavefilename))
-    # write to file
-    spirouImage.WriteImage(wavefitsfile, loc['waveimage'])
-
-    # ----------------------------------------------------------------------
-    # construct tell mask 2D filename
-    maskfilename = 'telluric_mapped_mask.fits'
-    maskfitsfile = os.path.join(redfolder, maskfilename)
-    # log progress
-    wmsg = 'Writing telluric mask to file {0}'
-    WLOG('', p['log_opt'], wmsg.format(maskfilename))
-    # convert boolean mask to integers
-    writablemask = np.array(loc['tell_mask_2D'], dtype=int)
-    # write to file
-    spirouImage.WriteImage(maskfitsfile, writablemask)
-
-    # ----------------------------------------------------------------------
-    # End Message
-    # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
-
+    kwargs = dict(night_name='20170710', flatfile=FLATFILE, tellwave=TAPASX,
+                  tellspe=TAPASY, tellthres=THRESHOLD, minlam=MINLAM,
+                  maxlam=MAXLAM)
+    # TODO: Should remove kwargs
+    ll = main(**kwargs)
+    # exit message
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code

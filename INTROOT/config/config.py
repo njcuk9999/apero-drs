@@ -79,3 +79,7 @@ ICDP_NAME = 'constants_SPIROU.py'
 # Set the log date?
 #  value must be "YY-MM-DD" or "None"
 # DRS_USED_DATE = None
+
+# -----------------------------------------------------------------------------
+#  End of configuration file
+# -----------------------------------------------------------------------------

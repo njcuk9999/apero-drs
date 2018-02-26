@@ -15,9 +15,7 @@ Up-to-date with cal_BADPIX_spirou AT-4 V47
 """
 from __future__ import division
 import numpy as np
-import sys
 import os
-import warnings
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -39,6 +37,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+
 
 # =============================================================================
 # Define functions

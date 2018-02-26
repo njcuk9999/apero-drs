@@ -37,7 +37,6 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __release__ = spirouConfig.Constants.RELEASE()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
-__release__ = spirouConfig.Constants.RELEASE()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
@@ -48,11 +47,11 @@ sPlt = spirouCore.sPlt
 # TODO: Should be new
 OLDCODEEXACT = False
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(night_name=None, reffile=None):
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -204,15 +203,15 @@ def main(night_name=None, reffile=None):
         emsg = 'File {0} not found in {1}'
         WLOG('error', p['log_opt'], emsg.format(p['reffilename'], rfolder))
     # get length of files
-    Nfiles = len(listfiles)
+    nfiles = len(listfiles)
     # make sure we have some files
-    if Nfiles == 0:
+    if nfiles == 0:
         emsg = 'No additional {0}*{1} files found in {2}'
         WLOG('error', p['log_opt'], emsg.format(prefix, suffix, rfolder))
     else:
         # else Log the number of files found
         wmsg = 'Number of files found on directory = {0}'
-        WLOG('info', p['log_opt'], wmsg.format(Nfiles))
+        WLOG('info', p['log_opt'], wmsg.format(nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -220,20 +219,20 @@ def main(night_name=None, reffile=None):
     # decide whether we need to skip (for large number of files)
     if len(listfiles) >= p['DRIFT_NLARGE']:
         skip = p['DRIFT_PEAK_FILE_SKIP']
-        Nfiles = int(Nfiles/skip)
+        nfiles = int(nfiles/skip)
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((Nfiles, loc['number_orders']))
-    loc['drift_left'] = np.zeros((Nfiles, loc['number_orders']))
-    loc['drift_right'] = np.zeros((Nfiles, loc['number_orders']))
-    loc['errdrift'] = np.zeros((Nfiles, loc['number_orders']))
-    loc['deltatime'] = np.zeros(Nfiles)
-    loc['meanrv'] = np.zeros(Nfiles)
-    loc['meanrv_left'] = np.zeros(Nfiles)
-    loc['meanrv_right'] = np.zeros(Nfiles)
-    loc['merrdrift'] = np.zeros(Nfiles)
-    loc['fluxratio'] = np.zeros(Nfiles)
+    loc['drift'] = np.zeros((nfiles, loc['number_orders']))
+    loc['drift_left'] = np.zeros((nfiles, loc['number_orders']))
+    loc['drift_right'] = np.zeros((nfiles, loc['number_orders']))
+    loc['errdrift'] = np.zeros((nfiles, loc['number_orders']))
+    loc['deltatime'] = np.zeros(nfiles)
+    loc['meanrv'] = np.zeros(nfiles)
+    loc['meanrv_left'] = np.zeros(nfiles)
+    loc['meanrv_right'] = np.zeros(nfiles)
+    loc['merrdrift'] = np.zeros(nfiles)
+    loc['fluxratio'] = np.zeros(nfiles)
     # add sources
     source = __NAME__ + '/main()'
     keys = ['drift', 'drift_left', 'drift_right', 'errdrift', 'deltatime',
@@ -248,7 +247,7 @@ def main(night_name=None, reffile=None):
     nomin = p['IC_DRIFT_PEAK_N_ORDER_MIN']
     nomax = p['IC_DRIFT_PEAK_N_ORDER_MAX']
     # loop around files
-    for i_it in range(Nfiles):
+    for i_it in range(nfiles):
         # get file for this iteration
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading

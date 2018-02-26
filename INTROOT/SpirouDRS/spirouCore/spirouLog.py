@@ -14,7 +14,6 @@ Import rules: Only from spirouConfig and spirouCore
 Version 0.0.1
 """
 from __future__ import division
-import time
 import os
 import sys
 
@@ -108,7 +107,6 @@ def logger(key='', option='', message='', printonly=False, logonly=False):
         # construct the log and log error
         cmdargs = [human_time, dsec, code, option, mess]
         cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-        ecmd = '{0}.{1:1d} - {2} |{3}|NOT IN LOGS: {4}'.format(*cmdargs)
         # print to stdout
         if not logonly:
             printlog(cmd, key)
@@ -117,7 +115,7 @@ def logger(key='', option='', message='', printonly=False, logonly=False):
             logfilepath, warning = get_logfilepath(unix_time)
             # write to log file
             if not printonly:
-                writelog(cmd, ecmd, key, logfilepath)
+                writelog(cmd, key, logfilepath)
         except ConfigError as e:
             if not logonly:
                 printlogandcmd(e.message, e.level, human_time, dsec, option)
@@ -218,7 +216,7 @@ def debug_start():
             EXIT_TYPE(1)
         else:
             EXIT_TYPE(1)
-    except :
+    except:
         EXIT_TYPE(1)
 
 
@@ -231,10 +229,10 @@ def warninglogger(w, funcname=None):
 
     to catch warnings use the following:
 
-    >>> import warnings
-    >>> with warnings.catch_warnings(record=True) as w:
-    >>>     code_to_generate_warnings()
-    >>> warninglogger(w, 'some name for logging')
+    >> import warnings
+    >> with warnings.catch_warnings(record=True) as w:
+    >>     code_to_generate_warnings()
+    >> warninglogger(w, 'some name for logging')
 
     :param w: list of warnings, the list of warnings from
                warnings.catch_warnings
@@ -399,13 +397,11 @@ def printlog(message, key):
         print(message)
 
 
-def writelog(message, errormessage, key, logfilepath):
+def writelog(message, key, logfilepath):
     """
     write message to log file (if level is correct - set by LOG_LEVEL)
 
     :param message: string, message to write to log file
-    :param errormessage: string, error message to print to stdout if we cannot
-                         write to log file
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
 

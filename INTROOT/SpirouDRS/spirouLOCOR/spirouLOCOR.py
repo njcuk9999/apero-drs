@@ -48,7 +48,7 @@ def fiber_params(pp, fiber, merge=False):
     (i.e. from config files) and adds the correct parameter to a fiber
     parameter dictionary
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 log_opt: string, log option, normally the program name
 
@@ -218,7 +218,7 @@ def find_order_centers(pp, image, loc, order_num):
     specific points are defined by steps (ic_locstepc) away from the
     central pixel (ic_cent_col)
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 IC_LOCSTEPC: int, the column separation for fitting orders
                 IC_CENT_COL: int, the column number (x-axis) of the central
@@ -329,7 +329,7 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
     the fit
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 log_opt: string, log option, normally the program name
                 IC_LOCDFITC: int, order of polynomial to fit for positions
@@ -429,7 +429,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         or max_ptp_frac > 'ic_ptporms_center'   [kind='center']
         or max_ptp_frac > 'ic_max_ptp_frac'     [kind='fwhm'
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 log_opt: string, log option, normally the program name
                 IC_MAX_RMS_CENTER: required when kind="center", float, Maximum

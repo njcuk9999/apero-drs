@@ -35,6 +35,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 DATE_FMT = spirouConfig.Constants.DATE_FMT_DEFAULT()
 TIME_FMT = spirouConfig.Constants.TIME_FORMAT_DEFAULT()
 
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================
@@ -78,7 +79,6 @@ def gauss_function(x, a, x0, sigma, dc):
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
-
 
 
 # =============================================================================
@@ -147,7 +147,6 @@ def stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC'):
         emsg1 = 'Error in converting time (function = {0})'.format(func_name)
         emsg2 = '{0} reads: {1}'.format(type(e), e)
         raise MathException(emsg1 + '\n\t\t' + emsg2)
-
 
     return timestamp + datetime_obj.microsecond/1e6
 
