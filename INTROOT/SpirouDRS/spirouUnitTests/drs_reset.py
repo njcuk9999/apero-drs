@@ -16,10 +16,12 @@ from __future__ import division
 import os
 import shutil
 import glob
+import sys
 
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+
 
 # =============================================================================
 # Define variables
@@ -33,6 +35,7 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
+printc = spirouCore.PrintColour
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 
@@ -40,6 +43,29 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # =============================================================================
 # Define functions
 # =============================================================================
+def reset_confirmation():
+
+    # get the warning and error colours
+    w1, w2 = printc('warning')
+    e1, e2 = printc('error')
+    # confirm reset
+    print(w1 + '\nAre you sure you wish to reset the DRS?' + w2)
+    print(w1 + '\tThis will remove all files in the reduced/calibDB '
+          'directories' + w2)
+    print(w1 + '\tIf you are sure you want to reset type "yes"\n' + w2)
+    # user input
+    if sys.version_info.major < 3:
+        # noinspection PyUnresolvedReferences
+        uinput = raw_input(e1 + 'Reset the DRS?\t' + e2)
+    else:
+        uinput = input(e1 + 'Reset the DRS?\t' + e2)
+
+    if uinput.upper() != "YES":
+        print(e1 + '\nResetting DRS aborted.' + e2)
+        # noinspection PyProtectedMember
+        os._exit(0)
+
+
 def reset_reduced_folders(p):
 
     # log progress
@@ -147,6 +173,7 @@ def main():
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
+    reset_confirmation()
     reset_reduced_folders(p)
     reset_calibdb(p)
     # reset_log(p)

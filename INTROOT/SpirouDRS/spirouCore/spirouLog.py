@@ -371,18 +371,48 @@ def correct_level(key, level):
     return thislevel >= outlevel
 
 
-def printlog(message, key):
+def printlog(message, key='all'):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
+    is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
 
     :param message: string, the formatted log line to write to stdout
-    :param key: string, either "error" or "warning" or "info" or graph, this
-                gives a character code in output
-    :return:
+    :param key: string, either "error" or "warning" or "info" or "graph" or
+                "all", this gives a character code in output
+
+    :return None:
     """
     func_name = __NAME__ + '.printlog()'
+    # get the colours for the "key"
+    c1, c2 = printcolour(key, func_name=func_name)
+    # if the colours are not None then print the message
+    if c1 is not None and c2 is not None:
+        print(c1 + message + c2)
+
+
+def printcolour(key='all', func_name=None):
+    """
+    Get the print colour (start and end) based on "key".
+    This should be used as follows:
+        >> c1, c2 = printcolour(key='all')
+        >> print(c1 + message + c2)
+
+    :param key: string, either "error" or "warning" or "info" or "graph" or
+                "all", this gives a character code in output
+    :param func_name: string or None, if not None then defines the function to
+                      report in the error
+    :return colour1: string or None, if key is found and we are using coloured
+                     log returns the starting colour, if not returns empty
+                     string if key is not accepted does not print
+    :return colour2: string or None, if key is found and we are using coloured
+                     log returns the ending colour, if not returns empty
+                     string if key is not accepted does not print
+    """
+    if func_name is None:
+        func_name = __NAME__ + '.printcolour()'
     # get out level key
     level = CPARAMS.get('PRINT_LEVEL', 'all')
+    # get the colours
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
     nocol = spirouConfig.Constants.BColors.ENDC
@@ -391,12 +421,18 @@ def printlog(message, key):
         emsg1 = 'key={0} not in spirouConfig.Constants.COLOUREDLEVELS()'
         emsg2 = '    function = {0}'.format(func_name)
         raise ConfigError(message=[emsg1.format(key), emsg2], level='error')
-
     # if this level is greater than or equal to out level then print to stdout
     if correct_level(key, level) and (key in clevels) and addcolour:
-        print(clevels[key] + message + nocol)
+        colour1 = clevels[key]
+        colour2 = nocol
     elif correct_level(key, level):
-        print(message)
+        colour1 = ''
+        colour2 = ''
+    else:
+        colour1, colour2 = None, None
+    # return colour1 and colour2
+    return colour1, colour2
+
 
 
 def writelog(message, key, logfilepath):

@@ -69,7 +69,7 @@ def run_begin():
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
     cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
     # display title
-    display_title(cparams)
+    display_drs_title(cparams)
     # check input parameters
     cparams = spirouConfig.CheckCparams(cparams)
     # display initial parameterisation
@@ -1184,7 +1184,7 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
 # =============================================================================
 # Define display functions
 # =============================================================================
-def display_title(p):
+def display_drs_title(p):
     """
     Display title for this execution
 
@@ -1192,10 +1192,25 @@ def display_title(p):
 
     :return None:
     """
+    # create title
+    title = ' * {DRS_NAME} @(#) Geneva Observatory ({DRS_VERSION})'.format(**p)
+
+    # Log title
+    display_title(title)
+
+
+def display_title(title):
+    """
+    Display any title between HEADER bars
+
+    :param title: string, title string
+
+    :return None:
+    """
     # Log title
     WLOG('', '', HEADER)
     WLOG('', '',
-         ' * {DRS_NAME} @(#) Geneva Observatory ({DRS_VERSION})'.format(**p))
+         '{0}'.format(title))
     WLOG('', '', HEADER)
 
 
