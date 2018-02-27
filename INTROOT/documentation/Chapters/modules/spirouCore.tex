@@ -177,6 +177,65 @@ Default is to return string time in UTC/GMT time
 \end{pythondocstring}
 \end{minipage}
 
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{PrintLog}
+
+Defined in \spirouCore\path{.spirouMath.printlog}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.PrintLog(message, key='all')
+spirouCore.spirouCore.printlog(message, key='all')
+\end{pythonbox}
+
+\begin{pythondocstring}
+print message to stdout (if level is correct - set by PRINT_LEVEL)
+is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
+
+:param message: string, the formatted log line to write to stdout
+:param key: string, either "error" or "warning" or "info" or "graph" or
+            "all", this gives a character code in output
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{PrintColours}
+
+Defined in \spirouCore\path{.spirouMath.printlog}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.PrintColour(key='all', func_name=None)
+spirouCore.spirouCore.printcolour(key='all', func_name=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the print colour (start and end) based on "key".
+This should be used as follows:
+    >> c1, c2 = printcolour(key='all')
+    >> print(c1 + message + c2)
+
+:param key: string, either "error" or "warning" or "info" or "graph" or
+            "all", this gives a character code in output
+:param func_name: string or None, if not None then defines the function to
+                  report in the error
+:return colour1: string or None, if key is found and we are using coloured
+                 log returns the starting colour, if not returns empty
+                 string if key is not accepted does not print
+:return colour2: string or None, if key is found and we are using coloured
+                 log returns the ending colour, if not returns empty
+                 string if key is not accepted does not print
+\end{pythondocstring}
+\end{minipage}
+
+
+
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
 \subsection{Unix2stringTime}
