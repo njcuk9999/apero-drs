@@ -20,9 +20,11 @@ from astropy.table import Table
 import os
 import sys
 import warnings
+import shutil
 
 from SpirouDRS import spirouConfig
 from SpirouDRS.spirouImage import spirouFITS
+from SpirouDRS.spirouCore import GetTimeNowString
 
 if sys.version_info.major > 2:
     def raw_input(x):
@@ -32,7 +34,7 @@ if sys.version_info.major > 2:
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'spirouUnitTests.unit_test1.py'
+__NAME__ = 'spirouUnitTests.unit_test_comp_functions.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -44,6 +46,27 @@ __release__ = spirouConfig.Constants.RELEASE()
 # =============================================================================
 # Define functions
 # =============================================================================
+def get_folder_name(rawpath, foldername=None):
+
+    # construct folder name if not given
+    if foldername is None:
+        # Make a new folder with todays date and timestamp
+        timestamp = GetTimeNowString(r'Unit-Test-%Y%m%d-%H00', 'local')
+        foldername = timestamp + '_unit_test'
+    # join rawpath and foldername
+    path = os.path.join(rawpath, foldername)
+
+    # test to see if path exists
+    if os.path.exists(path):
+        shutil.rmtree(path)
+
+    # add directory
+    os.mkdir(path)
+
+    # return directory
+    return path
+
+
 def compare(name, ll, newoutputs, oldoutputs, errors, oldpath, resultspath):
 
     print('\n\n Comparing files...')
@@ -556,7 +579,12 @@ def construct_error_table(errors, threshold=-8, results_path='./'):
     table['failed'] = ~np.array(passed, dtype=bool)
     table['order_diff'] = ratio
 
-    table.write(results_path + '/unit_test_3_error_table.fits', overwrite=True)
+    # construct filename
+    filename = os.path.split(sys.argv[0])[-1].split('.py')[0]
+    # construct path
+    path = os.path.join(results_path, '{0}_results.fits'.format(filename))
+    # write to file
+    table.write(path, overwrite=True)
 
 
 # =============================================================================
