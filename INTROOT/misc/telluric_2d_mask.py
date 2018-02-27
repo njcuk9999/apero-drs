@@ -20,7 +20,6 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import os
 import warnings
-from tqdm import tqdm
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -332,7 +331,7 @@ def order_profile(loc):
     # get the indices locations
     yimage, ximage = np.indices(image.shape)
     # loop around number of orders (AB)
-    for order_no in tqdm(range(number_orders)):
+    for order_no in range(number_orders):
         # loop around A and B
         for fno in [0, 1]:
             # get fiber iteration number
@@ -383,7 +382,7 @@ def correct_for_tilt(p, loc):
     # get the indices locations
     yimage, ximage = np.indices(image.shape)
     # loop around number of orders (AB)
-    for order_no in tqdm(range(number_orders)):
+    for order_no in range(number_orders):
         # define plot condition
         cond3 = order_no == sorder
         # loop around A and B
@@ -542,7 +541,7 @@ def make_2d_wave_image_old(loc):
     # get xpixel positions
     xpos = np.arange(image.shape[1])
     # loop around number of orders (AB)
-    for order_no in tqdm(range(number_orders)):
+    for order_no in range(number_orders):
         # loop around A and B
         for fno in [0, 1]:
             # get fiber iteration number
@@ -601,7 +600,7 @@ def make_2d_wave_image(loc):
     # mask out those values not in waveo range
     good = (t_x_image > 0) & (t_x_image < np.max(xpos))
     # loop around number of orders (AB)
-    for order_no in tqdm(range(number_orders)):
+    for order_no in range(number_orders):
         # find those pixels in this order
         mask = orderimage == order_no
         # get the wave for this order
@@ -644,7 +643,7 @@ def create_image_from_waveimage(loc, x, y):
     # create new spectrum
     newimage = np.zeros_like(waveimage)
     # loop around each row in image, interpolate wavevalues
-    for row in tqdm(range(len(waveimage))):
+    for row in range(len(waveimage)):
         # get row values
         rvalues = waveimage[row]
         # TODO change mask out zeros to NaNs

@@ -74,6 +74,8 @@ if __name__ == "__main__":
     newoutputs = dict()
     oldoutputs = dict()
     errors = []
+    # get new folder
+    filepath = utc.get_folder_name(RESULTSPATH)
     # iterator
     test = 1
     # print starting unit tests
@@ -88,7 +90,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_DARK(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -103,7 +105,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_BADPIX(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -118,7 +120,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_LOC_RAW(kind='dark_flat', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -148,7 +150,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_SLIT(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -163,7 +165,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_FF_RAW(kind='flat_dark', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -178,7 +180,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_FF_RAW(kind='dark_flat', return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -195,7 +197,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -212,7 +214,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -229,7 +231,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -244,7 +246,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_DRIFT_E2DS(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -259,7 +261,7 @@ if __name__ == "__main__":
     ll = utf.UNIT_TEST_CAL_CCF_E2DS(return_locals=True)
     times[name] = ll['timer']
     # deal with comparison
-    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH,  RESULTSPATH]
+    args = [name, ll, newoutputs, oldoutputs, errors, OLDPATH, filepath]
     newoutputs, oldoutputs, errors = utc.compare(*args)
     # append test
     test += 1
@@ -280,7 +282,7 @@ if __name__ == "__main__":
     # Analyse results + save to table
     # ----------------------------------------------------------------------
     print('\n\n Constructing error table...')
-    utc.construct_error_table(errors, THRESHOLD, RESULTSPATH)
+    utc.construct_error_table(errors, THRESHOLD, filepath)
 
     # print starting unit tests
     print('\n\n\n END OF UNIT TESTS \n\n\n')

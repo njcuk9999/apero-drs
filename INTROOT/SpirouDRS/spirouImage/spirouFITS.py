@@ -13,6 +13,7 @@ Import rules: Not spirouLOCOR
 """
 from __future__ import division
 import numpy as np
+from astropy import version as av
 from astropy.io import fits
 import os
 import warnings
@@ -21,6 +22,13 @@ from collections import OrderedDict
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouCDB
+
+# TODO: This should be changed for astropy -> 2.0.1
+# bug that hdu.scale has bug before version 2.0.1
+if av.major < 2 or (av.major == 2 and av.minor < 1):
+    SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
+else:
+    SCALEARGS = dict(bscale=1, bzero=0)
 
 # =============================================================================
 # Define variables
@@ -320,7 +328,7 @@ def writeimage(filename, image, hdict=None, dtype=None):
         hdu = None
     # force type
     if dtype is not None:
-        hdu.scale(dtype)
+        hdu.scale(type=dtype, **SCALEARGS)
     # add header keys to the hdu header
     if hdict is not None:
         for key in list(hdict.keys()):
