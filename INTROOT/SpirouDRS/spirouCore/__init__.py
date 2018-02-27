@@ -44,6 +44,10 @@ GetTimeNowUnix = spirouMath.get_time_now_unix
 
 GetTimeNowString = spirouMath.get_time_now_string
 
+PrintLog = spirouLog.printlog
+
+PrintColour = spirouLog.printcolour
+
 Unix2stringTime = spirouMath.unixtime2stringtime
 
 String2unixTime = spirouMath.stringtime2unixtime
