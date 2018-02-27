@@ -542,17 +542,25 @@ def get_call_arg_files_fitsfilename(cparams, files):
         cparams['ARG_FILE_NAMES'] = files
         # need to re-set nbframes
         cparams['NBFRAMES'] = len(files)
+        # set source
+        cparams.set_souces(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
     # if we have no files in arg_file_names set it to the "files"
     elif len(cparams['ARG_FILE_NAMES']) == 0:
         cparams['ARG_FILE_NAMES'] = files
         # need to re-set nbframes
         cparams['NBFRAMES'] = len(files)
+        # set source
+        cparams.set_souces(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
     # if we don't have fitsfilename set it to the rawdir + files[0]
     if 'FITSFILENAME' not in cparams:
         cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+        # set source
+        cparams.set_souce('FITSFILENAME', func_name)
     # if fitsfilename is set to None set it to the rawdir + files[0]
     elif cparams['FITSFILENAME'] is None:
         cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+        # set source
+        cparams.set_souce('FITSFILENAME', func_name)
     # finally return the updated cparams
     return cparams
 
