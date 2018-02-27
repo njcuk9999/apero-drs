@@ -161,15 +161,17 @@ def darkplot_datacut(imagecut):
     :return:
     """
     # set up figure
-    plt.figure()
+    fig = plt.figure()
     # clear the current figure
     plt.clf()
     # set up axis
     frame = plt.subplot(111)
+    # imagecut need to be integers
+    imagecut = imagecut.astype(np.int)
     # plot the image cut
     im = frame.imshow(imagecut, origin='lower', cmap='gray')
     # plot the colorbar
-    plt.colorbar(im, ax=frame)
+    fig.colorbar(im, ax=frame)
     # make sure image is bounded by shape
     plt.axis([0, imagecut.shape[0], 0, imagecut.shape[1]])
 
