@@ -540,9 +540,13 @@ def get_call_arg_files_fitsfilename(cparams, files):
     # if we don't have arg_file_names set it to the "files"
     if 'ARG_FILE_NAMES' not in cparams:
         cparams['ARG_FILE_NAMES'] = files
+        # need to re-set nbframes
+        cparams['NBFRAMES'] = len(files)
     # if we have no files in arg_file_names set it to the "files"
     elif len(cparams['ARG_FILE_NAMES']) == 0:
         cparams['ARG_FILE_NAMES'] = files
+        # need to re-set nbframes
+        cparams['NBFRAMES'] = len(files)
     # if we don't have fitsfilename set it to the rawdir + files[0]
     if 'FITSFILENAME' not in cparams:
         cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
