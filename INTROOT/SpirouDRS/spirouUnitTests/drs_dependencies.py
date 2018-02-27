@@ -13,17 +13,28 @@ import numpy as np
 import os
 import pkg_resources
 
+from SpirouDRS import spirouCore
+from SpirouDRS import spirouStartup
+from SpirouDRS import spirouConfig
+
 # =============================================================================
 # Define variables
 # =============================================================================
+# define DRS path
 DRSPATH = pkg_resources.resource_filename('SpirouDRS', '')
 PATH = os.path.dirname(DRSPATH)
-
+# Get Logging function
+WLOG = spirouCore.wlog
+# get print log
+printl = spirouCore.PrintLog
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = ['/spirouUnitTests/', '/documentation/', '/man/']
 # dependencies to exclude
 EXCLUDE_MOD_STR = ['SpirouDRS', 'spirou']
+
 
 # =============================================================================
 # Define functions
@@ -164,29 +175,35 @@ def get_current_versions(imports):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
+    # title
+    spirouStartup.spirouStartup.display_title(' * DRS Dependencies')
     # get all python files
-    print('\n Getting python files')
+    WLOG('', DPROG, 'Getting python files')
     python_files = get_python_files(PATH)
     # get all import statements
-    print('\n Getting import statements')
+    WLOG('', DPROG, 'Getting import statements')
     rimports, stats, info = get_import_statements(python_files)
     # clean imports
     imports = clean_imports(rimports)
     # get versions
     versions = get_current_versions(imports)
     # print total number of lines
-    print('\nStats:')
+    WLOG('', DPROG, 'Stats:')
     for stat in stats:
-        print('\t{0}: {1}'.format(stat, stats[stat]))
+        WLOG('', DPROG, '\t{0}: {1}'.format(stat, stats[stat]))
     # print import statements
-    print('\n Import statements found are: \n\n')
+    WLOG('', DPROG, 'Import statements found are:')
     for it in range(len(imports)):
         args = [imports[it], versions[it]]
         if versions[it] is not None:
-            print('\t{0: <16}({1})'.format(*args))
+            WLOG('', DPROG, '\t{0: <16}({1})'.format(*args))
         else:
-            print('\t{0}'.format(*args))
-
+            WLOG('', DPROG, '\t{0}'.format(*args))
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    wmsg = 'Recipe {0} has been successfully completed'
+    WLOG('info', DPROG, wmsg.format(DPROG))
 
 
 # =============================================================================
