@@ -286,7 +286,7 @@ def main(debug_mode=0):
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
     cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
     # display title
-    Startup.display_title(cparams)
+    Startup.display_drs_title(cparams)
     # check input parameters
     cparams = spirouConfig.CheckCparams(cparams)
     # display initial parameterisation
