@@ -18,13 +18,14 @@ cal_loc_RAW_spirou.py night_repository filenames
 \end{cmdbox}
 \noindent for example:
 \begin{cmdbox}[title={example}]
-cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits
+cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits flat_dark03f10.fits flat_dark04f10.fits flat_dark05f10.fits flat_dark06f10.fits
 \end{cmdbox}
 \noindent or
 \begin{pythonbox}
 import cal_loc_RAW_spirou
 night_repository = '20170710'
-filenames = ['flat_dark02f10.fits']
+filenames = ['flat_dark02f10.fits', 'flat_dark03f10.fits', 'flat_dark04f10.fits',
+             'flat_dark05f10.fits', 'flat_dark06f10.fits']
 cal_loc_RAW_spirou.main(night_repository, files=filenames)
 \end{pythonbox}
 
@@ -165,7 +166,7 @@ LOC_AB 20170710 20170710_flat_dark02f10_loco_AB.fits 2017-07-10-13:04:34.440000 
 An example run where everything worked is below:
 
 \begin{cmdbox}[title={example}]
-cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits
+cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits flat_dark03f10.fits flat_dark04f10.fits flat_dark05f10.fits flat_dark06f10.fits
 \end{cmdbox}
 \begin{cmdboxprintspecial}[fontupper=\tiny, fontlower=\tiny]
 @gHH:MM:SS.S -   || *****************************************@g
@@ -182,72 +183,60 @@ cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits
 @gHH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp@g
 @gHH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode@g
 @gHH:MM:SS.S -   ||                    DRS_DEBUG is set, debug mode level:1@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Now running : cal_loc_RAW_spirou on file(s): flat_dark02f10.fits@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|On directory /drs/data/raw/20170710@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ICDP_NAME loaded from: /drs/spirou_py3/INTROOT/config/constants_SPIROU.py@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Correct type of image for localisation (dark_flat or flat_dark)@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Calibration file: 20170710_flat_flat02f10_badpixel.fits already exists - not copied@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Calibration file: 20170710_dark_dark02d406.fits already exists - not copied@g
+@gHH:MM:SS.S -   |ipython|Now running : ipython on file(s): @g
+@gHH:MM:SS.S -   |ipython|On directory /drs/data/raw/20170710@g
+@gHH:MM:SS.S -   |ipython|ICDP_NAME loaded from: /drs/spirou_py3/INTROOT/config/constants_SPIROU.py@g
+@gHH:MM:SS.S - * |ipython|Correct type of image for localisation (dark_flat or flat_dark)@g
+@gHH:MM:SS.S -   |ipython|Calibration file: 20170710_flat_flat02f10_badpixel.fits already exists - not copied@g
+@gHH:MM:SS.S -   |ipython|Calibration file: 20170710_flat_dark02f10_blaze_AB.fits already exists - not copied@g
 ...
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Now processing Image TYPE UNKNOWN with cal_loc_RAW_spirou recipe@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Reading Image /drs/data/raw/20170710/flat_dark02f10.fits@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Image 2048 x 2048 loaded@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Doing Dark Correction using /drs/data/calibDB/20170710_dark_dark02d406.fits@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Image format changed to 1930x2035@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Saving processed raw frame in 20170710_flat_dark02f10_order_profile_AB.fits
-@g@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|@y@g@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Updating Calib Data Base with ORDER_PROFILE_AB@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Maximum flux/pixel in the spectrum: 82388.4 [e-]@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Average background level: 1.39 [%]@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Searching order center on central column@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|On fiber AB 36 orders have been detected on 2 fiber(s)@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 0 center at pixel 102.5 width 11.6 rms 0.049@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.049/0.140/2.855 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.434/0.740/6.726 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 1 center at pixel 116.9 width 11.4 rms 0.073@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.073/0.164/2.240 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.448/0.794/6.618 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 2 center at pixel 149.8 width 11.7 rms 0.049@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.049/0.116/2.374 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.421/0.881/8.006 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 3 center at pixel 164.2 width 11.5 rms 0.075@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.075/0.173/2.309 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.420/0.806/7.119 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 4 center at pixel 196.6 width 11.5 rms 0.051@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.051/0.140/2.762 with 0 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.403/0.989/8.889 with 0 rejected points@g
+@gHH:MM:SS.S -   |ipython|Calibration file: spirou_wave_ini3.fits already exists - not copied@g
+@gHH:MM:SS.S -   |ipython|Calibration file: 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits already exists - not copied@g
+@gHH:MM:SS.S - * |ipython|Now processing Image TYPE UNKNOWN with ipython recipe@g
+@gHH:MM:SS.S -   |ipython|Reading Image /drs/data/raw/20170710/flat_dark02f10.fits@g
+@gHH:MM:SS.S -   |ipython|Image 2048 x 2048 loaded@g
+@gHH:MM:SS.S - * |ipython|Adding 4 frame(s)@g
+@gHH:MM:SS.S -   |ipython|Reading File: /drs/data/raw/20170710/flat_dark03f10.fits@g
+@gHH:MM:SS.S -   |ipython|Reading File: /drs/data/raw/20170710/flat_dark04f10.fits@g
+@gHH:MM:SS.S -   |ipython|Reading File: /drs/data/raw/20170710/flat_dark05f10.fits@g
+@gHH:MM:SS.S -   |ipython|Reading File: /drs/data/raw/20170710/flat_dark06f10.fits@g
+@gHH:MM:SS.S -   |ipython|Doing Dark Correction using /drs/data/calibDB/20170710_dark_dark02d406.fits@g
+@gHH:MM:SS.S -   |ipython|Image format changed to 1930x2035@g
+@gHH:MM:SS.S -   |ipython|Saving processed raw frame in 20170710_flat_dark02f10_order_profile_AB.fits@g
+@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|@y
+@gHH:MM:SS.S - * |ipython|Updating Calib Data Base with ORDER_PROFILE_AB@g
+@gHH:MM:SS.S - * |ipython|Maximum flux/pixel in the spectrum: 412475.3 [e-]@g
+@gHH:MM:SS.S - * |ipython|Average background level: 1.36 [%]@g
+@gHH:MM:SS.S -   |ipython|Searching order center on central column@g
+@gHH:MM:SS.S - * |ipython|On fiber AB 36 orders have been detected on 2 fiber(s)@g
+@gHH:MM:SS.S -   |ipython|ORDER: 0 center at pixel 102.5 width 11.6 rms 0.047@g
+@gHH:MM:SS.S -   |ipython| - center fit rms/ptp/sigrms: 0.047/0.108/2.305 with 0 rejected points@g
+@gHH:MM:SS.S -   |ipython| - width  fit rms/ptp/ptp%: 0.442/0.814/6.951 with 0 rejected points@g
+@gHH:MM:SS.S -   |ipython|ORDER: 1 center at pixel 116.9 width 11.4 rms 0.072@g
+@gHH:MM:SS.S -   |ipython| - center fit rms/ptp/sigrms: 0.072/0.167/2.331 with 0 rejected points@g
+@gHH:MM:SS.S -   |ipython| - width  fit rms/ptp/ptp%: 0.457/0.875/7.295 with 0 rejected points@g
 ...
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 69 center at pixel 1801.4 width 10.4 rms 0.168@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      center fit converging with rms/ptp/sigrms: 0.168/1.465/8.710@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.067/0.167/2.490 with 1 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      fwhm fit converging with rms/ptp/ptp%: 0.535/2.337/29.218@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      fwhm fit converging with rms/ptp/ptp%: 0.478/1.105/11.053@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.466/0.936/9.357 with 2 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 70 center at pixel 1851.8 width 7.1 rms 2.565@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      center fit converging with rms/ptp/sigrms: 2.565/8.719/3.399@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.077/0.158/2.047 with 22 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      fwhm fit converging with rms/ptp/ptp%: 1.070/2.674/44.574@g
+@gHH:MM:SS.S -   |ipython|ORDER: 71 center at pixel 1881.0 width 10.8 rms 0.414@g
+@gHH:MM:SS.S -   |ipython|      center fit converging with rms/ptp/sigrms: 0.414/2.989/7.215@g
 ...
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.300/0.623/9.965 with 17 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|ORDER: 71 center at pixel 1869.1 width 10.7 rms 0.296@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      center fit converging with rms/ptp/sigrms: 0.296/0.889/3.008@g
+@gHH:MM:SS.S -   |ipython|      center fit converging with rms/ptp/sigrms: 0.100/0.203/2.026@g
+@gHH:MM:SS.S -   |ipython| - center fit rms/ptp/sigrms: 0.098/0.193/1.973 with 21 rejected points@g
+@gHH:MM:SS.S -   |ipython|      fwhm fit converging with rms/ptp/ptp%: 0.970/5.272/87.869@g
 ...
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - center fit rms/ptp/sigrms: 0.099/0.199/1.998 with 30 rejected points@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|      fwhm fit converging with rms/ptp/ptp%: 0.995/3.544/23.627@g
-...
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10| - width  fit rms/ptp/ptp%: 0.468/0.838/8.383 with 23 rejected points@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|On fiber AB 72 orders geometry have been measured@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Average uncertainty on position: 66.42 [mpix]@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Average uncertainty on width: 381.93 [mpix]@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|QUALITY CONTROL SUCCESSFUL - Well Done -@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Saving localization information in file: 20170710_flat_dark02f10_loco_AB.fits
-@g@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.| @y@g@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Saving FWHM information in file: 20170710_flat_dark02f10_fwhm-order_AB.fits
-@g@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|@y@g@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|Saving localization image with superposition of orders in@g
-@gHH:MM:SS.S -   |cal_loc_RAW_spirou:02f10|file: 20170710_flat_dark02f10_with-order_AB.fits@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Updating Calib Data Base with LOC_AB@g
-@gHH:MM:SS.S - * |cal_loc_RAW_spirou:02f10|Recipe cal_loc_RAW_spirou has been successfully completed@g
+@gHH:MM:SS.S -   |ipython|      fwhm fit converging with rms/ptp/ptp%: 0.478/1.258/10.480@g
+@gHH:MM:SS.S -   |ipython| - width  fit rms/ptp/ptp%: 0.459/1.199/9.993 with 12 rejected points@g
+@gHH:MM:SS.S - * |ipython|On fiber AB 72 orders geometry have been measured@g
+@gHH:MM:SS.S - * |ipython|Average uncertainty on position: 65.96 [mpix]@g
+@gHH:MM:SS.S - * |ipython|Average uncertainty on width: 388.67 [mpix]@g
+@gHH:MM:SS.S - * |ipython|QUALITY CONTROL SUCCESSFUL - Well Done -@g
+@gHH:MM:SS.S -   |ipython|Saving localization information in file: 20170710_flat_dark02f10_loco_AB.fits@g
+@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|@y
+@gHH:MM:SS.S -   |ipython|Saving FWHM information in file: 20170710_flat_dark02f10_fwhm-order_AB.fits@g
+@yHH:MM:SS.S - \@ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|@y
+@gHH:MM:SS.S -   |ipython|Saving localization image with superposition of orders in @g
+@gHH:MM:SS.S -   |ipython|file: 20170710_flat_dark02f10_with-order_AB.fits@g
+@gHH:MM:SS.S - * |ipython|Updating Calib Data Base with LOC_AB@g
+@gHH:MM:SS.S - * |ipython|Recipe ipython has been successfully completed@g
 \end{cmdboxprintspecial}
 
 

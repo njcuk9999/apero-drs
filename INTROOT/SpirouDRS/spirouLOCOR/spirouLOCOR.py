@@ -136,6 +136,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
         c_database, p = spirouCDB.GetDatabase(p, acqtime)
     else:
         c_database = p['calibDB']
+        acqtime = p['MAX_TIME_HUMAN']
 
     # get the reduced dir name
     reduced_dir = p['reduced_dir']
@@ -146,8 +147,10 @@ def get_loc_coefficients(p, hdr=None, loc=None):
 
     # check for localization file for this fiber
     if not (loc_file in c_database):
-        emsg1 = 'No order geometry defined in the calibDB for fiber: {0}'
-        emsg2 = '    requires key="{0}" in calibDB file (with time < {1}).'
+        emsg1 = ('No order geometry defined in the calibDB for fiber: {0}'
+                 '').format(p['fiber'])
+        emsg2 = ('    requires key="{0}" in calibDB file (with time < {1}).'
+                 '').format(loc_file, acqtime)
         emsg3 = '    Unable to complete the recipe, FATAL'
         WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
     # else log that we are reading localization parameters
