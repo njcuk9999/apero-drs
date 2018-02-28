@@ -1201,7 +1201,7 @@ def display_drs_title(p):
 
 def display_title(title):
     """
-    Display any title between HEADER bars
+    Display any title between HEADER bars via the WLOG command
 
     :param title: string, title string
 
@@ -1390,11 +1390,14 @@ def display_help_file(p):
 
 
 # noinspection PyListCreation
-def display_system_info():
+def display_system_info(logonly=True):
     """
-    Display system information
+    Display system information via the WLOG command
 
-    :return messages: list of strings, the system information
+    :param logonly: bool, if True will only display in the log (not to screen)
+                    default=True, if False prints to both log and screen
+
+    :return None:
     """
     messages = [HEADER]
     messages.append(" * System information:")
@@ -1406,7 +1409,7 @@ def display_system_info():
         messages.append("    Arg {0} = \"{1}\"".format(it + 1, arg))
     messages.append(HEADER)
     # return messages for logger
-    WLOG('', '', messages, logonly=True)
+    WLOG('', '', messages, logonly=logonly)
 
 
 # =============================================================================
