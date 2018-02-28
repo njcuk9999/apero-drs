@@ -30,6 +30,10 @@ __all__ = ['Begin', 'GetCustomFromRuntime', 'GetFile', 'GetFiberType',
 
 Begin = spirouStartup.run_begin
 
+DisplayTitle = spirouStartup.display_title
+
+DisplaySysInfo = spirouStartup.display_system_info
+
 GetCustomFromRuntime = spirouStartup.get_custom_from_run_time_args
 
 GetFile = spirouStartup.get_file
