@@ -57,25 +57,26 @@ def get_python_files(path):
                 pyfiles.append(abspath)
     return pyfiles
 
+
 def get_import_statements(files):
-    imports = []
+    importslist = []
 
-    stats = dict()
-    stats['total lines'] = 0
-    stats['total empty lines'] = 0
-    stats['total lines of comments'] = 0
-    stats['total lines of code'] = 0
+    statsdict = dict()
+    statsdict['total lines'] = 0
+    statsdict['total empty lines'] = 0
+    statsdict['total lines of comments'] = 0
+    statsdict['total lines of code'] = 0
 
-    info = dict()
-    info['imports'] = []
-    info['filename'] = []
+    infodict = dict()
+    infodict['imports'] = []
+    infodict['filename'] = []
     # loop around the files
     for filename in files:
         # open this iterations file
         f = open(filename)
         # read all lines from this iteration
         lines = f.readlines()
-        stats['total lines'] += len(lines)
+        statsdict['total lines'] += len(lines)
         # loop around the lines of code in this file
         docstring_skip = False
         for line in lines:
@@ -83,18 +84,18 @@ def get_import_statements(files):
             docstring_skip = deal_with_doc_strings(line, docstring_skip)
             if docstring_skip:
                 # print('\tSkip doc string')
-                stats['total lines of comments'] += 1
+                statsdict['total lines of comments'] += 1
                 continue
             # blank lines should not count
             if len(line.strip()) == 0:
-                stats['total empty lines'] += 1
+                statsdict['total empty lines'] += 1
                 continue
             # commented lines should not count
             elif line.strip()[0] == '#':
-                stats['total lines of comments'] += 1
+                statsdict['total lines of comments'] += 1
                 continue
             else:
-                stats['total lines of code'] += 1
+                statsdict['total lines of code'] += 1
             # filter any lines with excluded strings in
             excluded = False
             for ext in EXCLUDE_MOD_STR:
@@ -102,12 +103,12 @@ def get_import_statements(files):
                     excluded = True
             # line must have import and not be excluded
             if 'import' in line and not excluded:
-                imports.append(line.replace('\n', ''))
-                info['imports'].append(line.replace('\n', ''))
-                info['filename'].append(filename)
+                importslist.append(line.replace('\n', ''))
+                infodict['imports'].append(line.replace('\n', ''))
+                infodict['filename'].append(filename)
                 # print('\tWritten...')
     # return
-    return imports, stats, info
+    return importslist, statsdict, infodict
 
 
 def deal_with_doc_strings(line, docstring_skip):
@@ -133,41 +134,41 @@ def clean_imports(rawimports):
     # clean up (keep unique only)
     uimports = np.unique(rawimports)
     # loop around unique imports
-    imports = []
+    importslist = []
     for uimport in uimports:
         # strip down uimport
         usimport = uimport.strip()
         # strip out import and from statements
         if usimport.startswith('import'):
-            module = uimport.split('import ')[1]
+            modulename = uimport.split('import ')[1]
         elif usimport.startswith('from'):
-            module = uimport.split('from ')[1].split(' import')[0]
+            modulename = uimport.split('from ')[1].split(' import')[0]
         # deal with . (only want main module)
-        if '.' in module:
-            module = module.split('.')[0]
+        if '.' in modulename:
+            modulename = modulename.split('.')[0]
         # deal with 'as'
-        if 'as' in module:
-            module = module.split(' as')[0]
+        if 'as' in modulename:
+            modulename = modulename.split(' as')[0]
         # make sure we only have one version in final list
-        if module not in imports:
-            imports.append(module.strip())
+        if modulename not in importslist:
+            importslist.append(modulename.strip())
     # return cleaned imports
-    return imports
+    return importslist
 
 
 # get current versions
-def get_current_versions(imports):
-    versions = []
-    for imp in imports:
+def get_current_versions(importslist):
+    versionslist = []
+    for imp in importslist:
         try:
             mod = __import__(imp)
             if hasattr(mod, '__version__'):
-                versions.append(mod.__version__)
+                versionslist.append(mod.__version__)
             else:
-                versions.append('No version info')
+                versionslist.append('No version info')
         except ImportError:
-            versions.append('NOT INSTALLED')
-    return versions
+            versionslist.append('NOT INSTALLED')
+    return versionslist
 
 # =============================================================================
 # Start of code
@@ -176,7 +177,9 @@ def get_current_versions(imports):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # title
-    spirouStartup.spirouStartup.display_title(' * DRS Dependencies')
+    spirouStartup.DisplayTitle(' * DRS Dependencies')
+    # list the version of python found
+    spirouStartup.DisplaySysInfo(logonly=False)
     # get all python files
     WLOG('', DPROG, 'Getting python files')
     python_files = get_python_files(PATH)
