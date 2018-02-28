@@ -274,7 +274,7 @@ def main(debug_mode=0):
     print('\n\n4) Running recipe test\n')
 
     # if we have got to this stage all modules load and are present
-    import SpirouDRS.spirouStartup.spirouStartup as Startup
+    from SpirouDRS.spirouStartup import spirouStartup as Startup
     from SpirouDRS import spirouConfig
     from SpirouDRS.spirouCore import spirouLog
     # get log
