@@ -36,6 +36,50 @@ Begin DRS - Must be run at start of every recipe
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
+\subsection{DisplayTitle}
+
+Defined in \spirouStartup\path{.spirouStartup.display_title}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.DisplayTitle(title)
+spirouStartup.spirouStartup.display_title(title)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Display any title between HEADER bars via the WLOG command
+
+:param title: string, title string
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{DisplaySysInfo}
+
+Defined in \spirouStartup\path{.spirouStartup.display_system_info}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.DisplaySysInfo()
+spirouStartup.spirouStartup.display_system_info()
+\end{pythonbox}
+
+\begin{pythondocstring}
+Display system information via the WLOG command
+
+:param logonly: bool, if True will only display in the log (not to screen)
+                default=True, if False prints to both log and screen
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
 \subsection{GetCustomFromRuntime}
 
 Defined in \spirouStartup\path{.spirouStartup.get_custom_from_run_time_args}
