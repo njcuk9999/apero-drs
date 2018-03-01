@@ -3,7 +3,10 @@
 """
 cal_DARK_spirou.py [night_directory] [fitsfilename]
 
-Dark characterization + bad pixel map
+Dark with short exposure time (~5min, to be defined during AT-4) to check
+if read-out noise, dark current and hot pixel mask are consistent with the
+ones obtained during technical night. Quality control is done automatically
+by the pipeline
 
 Created on 2017-10-11 at 10:45
 
