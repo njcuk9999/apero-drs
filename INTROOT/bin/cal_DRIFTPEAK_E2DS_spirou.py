@@ -3,7 +3,9 @@
 """
 cal_DRIFTPEAK_E2DS_spirou.py [night_directory] [Reference file name]
 
-# CODE DESCRIPTION HERE
+Additional drift recipe fitting the FP peaks with gaussians (slower).
+Calculates the drift between the reference E2DS file and all other similar
+named E2DS files in the reduced directory.
 
 Created on 2017-12-12 at 10:52
 
