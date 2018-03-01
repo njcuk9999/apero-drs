@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_SLIT_spirou
+cal_SLIT_spirou.py [night_directory] [files]
 
-Flat Field
+Fabry-Perot exposures in which the three fibres are simultaneously fed by light
+from the Fabry-Perot filter. Each exposure is used to build the slit
+orientation. Finds the tilt of the orders.
 
 Created on 2017-11-06 11:32
 
