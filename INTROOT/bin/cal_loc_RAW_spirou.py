@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_loc_RAW_spirou.py
+cal_loc_RAW_spirou.py [night_name] [files]
 
-# CODE DESCRIPTION HERE
+Localisation of orders (centers and widths) on the dark_flat or flat_dark
+images
 
 Created on 2017-10-12 at 15:21
 
