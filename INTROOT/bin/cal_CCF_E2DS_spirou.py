@@ -4,7 +4,8 @@
 cal_CCF_E2DS_spirou.py
        [night_directory] [E2DSfilename] [mask] [RV] [width] [step]
 
-# CODE DESCRIPTION HERE
+Computes the CCF for a specific file using a CCF mask, target RV, CCF width
+and CCF step.
 
 Created on 2017-12-18 at 15:43
 

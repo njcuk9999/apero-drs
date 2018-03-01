@@ -3,10 +3,11 @@
 """
 cal_DRIFT_E2DS_spirou.py [night_directory] [REFfilename]
 
+Extracts orders for specific fibers and files.
+
 Created on 2017-10-12 at 15:21
 
 @author: cook
-
 
 Last modified: 2017-12-11 at 15:12
 
