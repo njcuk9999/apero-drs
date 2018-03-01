@@ -315,10 +315,9 @@ Defined in \spirouStartup\path{.spirouStartup.initial_file_setup}
 \begin{pythonbox}
 from SpirouDRS import spirouStartup
 spirouStartup.InitialFileSetup(p, kind=None, prefixes=None, add_to_p=None,
-                               calibdb=False)
+                               contains=None, calibdb=False)
 spirouStartup.spirouStartup.initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
-                                               calibdb=False)
-\end{pythonbox}
+                                               contains=None, calibdb=False)
 
 \begin{pythondocstring}
 Run start up code (based on program and parameters defined in p before)
@@ -329,6 +328,9 @@ Run start up code (based on program and parameters defined in p before)
             fitsfilename: string, the full path of for the main raw fits
                           file for a recipe
                           i.e. /data/raw/20170710/filename.fits
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
             program: string, the recipe/way the script was called
                      i.e. from sys.argv[0]
             reduced_dir: string, the reduced data directory
@@ -357,6 +359,9 @@ Run start up code (based on program and parameters defined in p before)
 
         i.e. if prefix1 is found key "value3" and "value4" above are added
         (with "key3" and "key4") to the parameter dictionary p
+
+:param contains: string or None: if not None then input files must contain
+                 this sub string else error is raised
 
 :param calibdb: bool, if True calibDB folder and files are required and
                 program will log and exit if they are not found

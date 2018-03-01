@@ -193,7 +193,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
 
 
 def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
-                       calibdb=False):
+                       contains=None, calibdb=False):
     """
     Run start up code (based on program and parameters defined in p before)
 
@@ -203,6 +203,9 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
                 fitsfilename: string, the full path of for the main raw fits
                               file for a recipe
                               i.e. /data/raw/20170710/filename.fits
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
                 program: string, the recipe/way the script was called
                          i.e. from sys.argv[0]
                 reduced_dir: string, the reduced data directory
@@ -232,6 +235,9 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
             i.e. if prefix1 is found key "value3" and "value4" above are added
             (with "key3" and "key4") to the parameter dictionary p
 
+    :param contains: string or None: if not None then input files must contain
+                     this sub string else error is raised
+
     :param calibdb: bool, if True calibDB folder and files are required and
                     program will log and exit if they are not found
                     if False, program will create calibDB folder
@@ -257,6 +263,15 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     # if we have prefixes defined then check that fitsfilename has them
     # if add_to_params is defined then add params to p accordingly
     p = deal_with_prefixes(p, kind, prefixes, add_to_p)
+    # -------------------------------------------------------------------------
+    # deal with contains being defined
+    if contains is not None:
+        # loop around all files in arg_file_names and make sure  "contains"
+        #   sub string is in there
+        for arg_file_name in p['arg_file_names']:
+            if contains not in arg_file_name:
+                emsg = 'Wrong type of image for {0} should contain "{1}"'
+                WLOG('error', p['log_opt'], emsg.format(kind, contains))
     # -------------------------------------------------------------------------
     # Reduced directory
     # construct reduced directory

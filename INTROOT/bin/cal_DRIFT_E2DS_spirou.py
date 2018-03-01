@@ -3,7 +3,8 @@
 """
 cal_DRIFT_RAW_spirou.py [night_directory] [Reference file name]
 
-# CODE DESCRIPTION HERE
+Primary drift recipe. Calculates the drift between the reference E2DS file and
+all other similar named E2DS files in the reduced directory.
 
 Created on 2017-10-12 at 15:21
 

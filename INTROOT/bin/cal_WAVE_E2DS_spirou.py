@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+cal_WAVE_E2DS_spirou.py [night_directory] [HCfitsfilename] [FPfitsfilename]
 
-# CODE DESCRIPTION HERE
+Wavelength calibration incorporating the FP lines
 
 Created on 2018-02-09 at 10:57
 
