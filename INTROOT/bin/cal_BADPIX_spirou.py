@@ -3,7 +3,7 @@
 """
 cal_BADPIX_spirou.py [night_directory] [flat_flat_*.fits] [dark_dark_*.fits]
 
-Create bad pixel mask
+Recipe to generate the bad pixel map
 
 Created on 2017-12-06 at 14:50
 
