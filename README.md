@@ -5,7 +5,7 @@
 
 # Most recent released version:
 
-- ![version 0.1.003 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.1.003) 
+- ![version 0.1.020 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.1.020) 
 
 
 # Test data:
