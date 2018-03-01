@@ -3,7 +3,7 @@
 """
 cal_extract_RAW_spirou
 
-# CODE DESCRIPTION HERE
+Extracts order AB for specified files. Wrapper around cal_extract_RAW_spirou.py
 
 Created on 2017-10-12 at 15:21
 
