@@ -3,12 +3,12 @@
 """
 cal_DRIFT_RAW_spirou.py [night_directory] [Reference file name]
 
-# CODE DESCRIPTION HERE
+Old drift recipe. Extracts the spectra and calculates the drift between the
+reference file and all other similar named files (also extracted in this code).
 
 Created on 2017-10-12 at 15:21
 
 @author: cook
-
 
 Last modified: 2017-12-12 at 10:54
 
