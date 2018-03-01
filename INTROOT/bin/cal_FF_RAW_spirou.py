@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_SLIT_spirou
+cal_FF_RAW_spirou.py [night_directory] [files]
 
 Flat Field
 
