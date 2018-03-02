@@ -30,7 +30,7 @@ from SpirouDRS import spirouConfig
 
 try:
     from . import unit_test_functions as utf
-except ImportError:
+except ValueError:
     # noinspection PyUnresolvedReferences
     import unit_test_functions as utf
 
