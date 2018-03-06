@@ -19,7 +19,8 @@ DRS_DEBUG = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = '/scratch/Projects/spirou_py3/data/'
+# TDATA = “/scratch/Projects/spirou_py3/data/”
+TDATA = "/scratch/Projects/spirou_py3/data/"
 
 #   Define the root installation directory (INTROOT)
 DRS_ROOT = '/scratch/Projects/spirou_py3/spirou_py3/INTROOT/'
