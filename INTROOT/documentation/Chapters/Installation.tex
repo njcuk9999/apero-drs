@@ -217,7 +217,7 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \noindent On Windows machines this would be equivalent to `\path{C:\\Users\\User\\Documents\\drs\\}'. \\
 \end{thighlight}
 \begin{note}
-Note: On windows paths in windows must have a `\textbackslash\textbackslash' also the python files must be open with a valid editor such as sublime text, notepad++, spyder or pycharm for example
+Some text editors (such as TextEdit on macOS) use `smart speechmarks' these characters are invalid for python and thus care must be taken when editting the confirutation files. The \calvalidate recipe (Section \ref{ch:install:validating_installunix}) will check for invalid characters and show the lines which do not have valid characters (valid characters are ascii letters, digits, punctuation and whitespaces as defined by pythons `\Program{string}' module). We suggest using text editors such as \Program{sublime-text} or a python IDE such as \Program{Pycharm}.
 \end{note}
 
 \vspace{0.25cm}
