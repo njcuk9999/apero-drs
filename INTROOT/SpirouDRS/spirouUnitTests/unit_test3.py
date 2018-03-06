@@ -27,15 +27,8 @@ import sys
 import numpy as np
 
 from SpirouDRS import spirouConfig
-
-try:
-    from . import unit_test_functions as utf
-    from . import unit_test_comp_functions as utc
-except ValueError:
-    # noinspection PyUnresolvedReferences
-    import unit_test_functions as utf
-    # noinspection PyUnresolvedReferences
-    import unit_test_comp_functions as utc
+from SpirouDRS.spirouUnitTests import unit_test_functions as utf
+from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
 
 if sys.version_info.major == 2:
     # noinspection PyPep8Naming,PyShadowingBuiltins
