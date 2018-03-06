@@ -32,14 +32,14 @@
 \item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc)
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
+	@export@ <PATH>="(*\InstallDIR*)/bin/:<(*\$*)PATH>"
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*)PYTHONPATH>"
 	\end{bashbox}
 
 \item make sure your paths are set
 	\begin{cmdbox}
 	source (*$\sim$*)/.bashrc
-	echo $PATH
+	echo (*\$*)PATH
 	\end{cmdbox}
 
 \item Make recipes executable (found in the \InstallDIR/bin folder) - to use from the command line.
@@ -100,17 +100,17 @@ The DRS is now installed and setup. To run \ifquickguide see the full documentat
 
 \item Extract the DRS (make a note of the path, hereinafter \InstallDIR)
 
-\item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc)
+\item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc or \path{.bash_profile})
 
-	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
+	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+	@export@ <PATH>="(*\InstallDIR*)/bin/:<(*\$*)PATH>"
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*)PYTHONPATH>"
 	\end{bashbox}
 
 \item make sure your paths are set
 	\begin{cmdbox}
 	source (*$\sim$*)/.bashrc
-	echo $PATH
+	echo (*\$*)PATH
 	\end{cmdbox}
 
 \item Make recipes executable (found in the \InstallDIR/bin folder) - to use from the command line.

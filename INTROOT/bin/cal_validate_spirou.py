@@ -10,6 +10,7 @@ Created on 2017-11-27 at 16:27
 @author: cook
 """
 import os
+import sys
 
 # =============================================================================
 # Define variables
@@ -38,10 +39,10 @@ def main(debug_mode=0):
     if DEBUG:
         print(' * ')
         print(' *     (DEBUG MODE ACTIVE) ')
-    print(' *****************************************\n')
+    print(' *****************************************')
 
     # Check imports
-    print('\n\n1) Running core module tests\n')
+    print('\n1) Running core module tests')
     # -------------------------------------------------------------------------
     # SpirouDRS
     # -------------------------------------------------------------------------
@@ -56,8 +57,8 @@ def main(debug_mode=0):
         EXIT(1)
     # if other exception try to read constants file and check paths
     except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
+        print('\tInstallation failed with message')
+        print('\t{0}'.format(e))
         EXIT(1)
 
     # -------------------------------------------------------------------------
@@ -103,14 +104,14 @@ def main(debug_mode=0):
     # -------------------------------------------------------------------------
     # test constants
     # -------------------------------------------------------------------------
-    print('\n\n2) Running config test\n')
+    print('\n2) Running config test')
     constants = try_to_read_config_file()
     test_paths(constants)
 
     # -------------------------------------------------------------------------
     # spirouBACK
     # -------------------------------------------------------------------------
-    print('\n\n2) Running sub-module tests\n')
+    print('\n3) Running sub-module tests')
     try:
         # noinspection PyUnresolvedReferences
         from SpirouDRS import spirouBACK
@@ -271,7 +272,7 @@ def main(debug_mode=0):
     # -------------------------------------------------------------------------
     # Now we have all modules we can print the paths
     # -------------------------------------------------------------------------
-    print('\n\n4) Running recipe test\n')
+    print('\n4) Running recipe test')
 
     # if we have got to this stage all modules load and are present
     from SpirouDRS.spirouStartup import spirouStartup as Startup
@@ -352,10 +353,10 @@ def test_paths(p):
 
     # if all tests were past print it
     if passed:
-        wmsg = '\n\t\tCongraulations all paths in {0} set up correctly.\n'
+        wmsg = '\n\t\tCongraulations all paths in {0} set up correctly.'
         print(wmsg.format(config_file))
     else:
-        wmsg = '\n\tPlease set up config file ({0}) with valid paths.\n'
+        wmsg = '\n\tPlease set up config file ({0}) with valid paths.'
         print(wmsg.format(config_file))
         EXIT(1)
 
@@ -365,8 +366,17 @@ def test_paths(p):
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
+    # if there is an argument it is the debug mode so try to convert it to
+    #   boolean logic True/False
+    if len(sys.argv) == 2:
+        try:
+            debug = bool(eval(sys.argv[1]))
+        except Exception:
+            debug = DEBUG
+    else:
+        debug = DEBUG
     # run main with no arguments (get from command line - sys.argv)
-    ll = main(debug_mode=DEBUG)
+    ll = main(debug_mode=debug)
 
 # =============================================================================
 # End of code

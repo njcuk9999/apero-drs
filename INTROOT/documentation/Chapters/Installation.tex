@@ -103,7 +103,7 @@ An up-to-date version of python (either python 2 or python 3) and the following 
 	\item \Program{numpy} (tested with version 1.14.0)
 	\item \Program{scipy} (tested with version 1.0.0)
 	\item and the following built-in modules (comes with python): 
-	\Program{\twound{future}\twound}, \Program{calendear}, \Program{code}, \Program{collections}, \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pdb}, \Program{pkg\_resources}, \Program{shutil}, \Program{sys}, \Program{time}, \Program{warnings}.
+	\Program{\twound{future}\twound}, \Program{calendear}, \Program{code}, \Program{collections}, \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pdb}, \Program{pkg\_resources}, \Program{shutil}, \Program{string}, \Program{sys}, \Program{time}, \Program{warnings}.
 	\end{itemize}
 \item Python 2.7.14
 	\begin{itemize}
@@ -112,7 +112,7 @@ An up-to-date version of python (either python 2 or python 3) and the following 
 	\item numpy (tested with version 1.14.0)
 	\item scipy (tested with version 1.0.0)
 	\item and the following built-in modules (comes with python): 
-	\Program{\twound{future}\twound}, \Program{calendear}, \Program{code}, \Program{collections}, \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pdb}, \Program{pkg\_resources}, \Program{shutil}, \Program{sys}, \Program{time}, \Program{warnings}.
+	\Program{\twound{future}\twound}, \Program{calendear}, \Program{code}, \Program{collections}, \Program{datetime}, \Program{filecmp}, \Program{glob}, \Program{os}, \Program{pdb}, \Program{pkg\_resources}, \Program{shutil}, \Program{string}, \Program{sys}, \Program{time}, \Program{warnings}.
 	\end{itemize}
 \end{itemize}
 
@@ -154,18 +154,18 @@ unzip DRS.zip
 The next step is to modify your PATH and PYTHONPATH environmental variables (to include the \InstallDIR. This depends which shell you are using (type `\lstinline[style=bashstyle]{echo $0}' to find out which).
 
 \begin{itemize}
-	\item In bash open the `.bashrc' text file in your home ($\sim$) directory (or create it if it doesn't exist)
+	\item In bash open the `.bashrc' or `.bash\_profile' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
-	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:<$PATH>"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<$PYTHONPATH>"
+	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+	@export@ <PATH>="(*\InstallDIR*)/bin/:<(*\$*)PATH>"
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*)PYTHONPATH>"
 	\end{bashbox}
 
 	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
 
 	\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
-	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<${PATH}>"
-	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/:<${PYTHONPATH}>"
+	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<(*\$*){PATH}>"
+	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*){PYTHONPATH}>"
 	\end{cshbox}
 
 \end{itemize}

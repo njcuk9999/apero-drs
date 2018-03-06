@@ -12,6 +12,7 @@ Import rules: No imports from SpirouDRS
 from __future__ import division
 import numpy as np
 import os
+import string
 import pkg_resources
 
 # =============================================================================
@@ -25,7 +26,8 @@ __author__ = 'Unknown'
 __release__ = 'Unknown'
 __date__ = 'Unknown'
 # -----------------------------------------------------------------------------
-
+VALID_CHARS = list(string.ascii_letters) + list(string.digits)
+VALID_CHARS += list(string.punctuation) + list(string.whitespace)
 
 # =============================================================================
 # Define Custom classes
@@ -117,6 +119,9 @@ def gettxt(filename):
     :return keys: list of strings, upper case strings for each variable
     :return values: list of strings, value of each key
     """
+    # first try to reformat text file to avoid weird characters
+    #   (like mac smart quotes)
+    validate_text_file(filename)
     # read raw config file as strings
     try:
         raw = np.genfromtxt(filename, comments="#", delimiter='=',
@@ -143,7 +148,56 @@ def gettxt(filename):
     return keys, values
 
 
+def validate_text_file(filename, comments='#'):
+    """
+    Validation on any text file, makes sure all non commented lines have
+    valid characters (i.e. are either letters, digits, punctuation or
+    whitespaces as defined by string.ascii_letters, string.digits,
+    string.punctuation and string.whitespace.
+
+    A ConfigException is raised if invalid character(s) found
+
+    :param filename: string, name and location of the text file to open
+    :param comments: char (string), the character that defines a comment line
+    :return None:
+    """
+    func_name = __NAME__ + '.validate_text_file()'
+    # open text file
+    f = open(filename, 'r')
+    # get lines
+    lines = f.readlines()
+    # close text file
+    f.close()
+    # loop around each line in text file
+    for l, line in enumerate(lines):
+        # ignore blank lines
+        if len(line.strip()) == 0:
+            continue
+        # ignore comment lines (don't care about characters in comments)
+        if line.strip()[0] == comments:
+            continue
+        # loop through each character in line and check if it is a valid
+        # character
+        emsg = ' Invalid character(s) found in file={0}'.format(filename)
+        invalid = False
+        for char in line:
+            if char not in VALID_CHARS:
+                invalid = True
+                emsg += '\n\t\tLine {1} character={0}'.format(char, l+1)
+        emsg += '\n\n\tfunction = {0}'.format(func_name)
+        # only raise an error if invalid is True (if we found bad characters)
+        if invalid:
+            raise ConfigException(emsg)
+
+
 def read_lines(filename, comments='#', delimiter=' '):
+    """
+
+    :param filename:
+    :param comments:
+    :param delimiter:
+    :return:
+    """
 
     func_name = __NAME__ + '.read_lines()'
     # manually open file (slow)

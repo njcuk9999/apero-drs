@@ -42,12 +42,7 @@ import time
 import sys
 
 from SpirouDRS import spirouConfig
-
-try:
-    from . import unit_test_functions as utf
-except ValueError:
-    # noinspection PyUnresolvedReferences
-    import unit_test_functions as utf
+from SpirouDRS.spirouUnitTests import unit_test_functions as utf
 
 if sys.version_info.major == 2:
     # noinspection PyPep8Naming,PyShadowingBuiltins
