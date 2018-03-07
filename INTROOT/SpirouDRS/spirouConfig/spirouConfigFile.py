@@ -41,7 +41,7 @@ class ConfigException(Exception):
 # Define functions
 # =============================================================================
 def read_config_file(package, configfolder, configfile, config_file=None,
-                     return_raw=True):
+                     return_raw=True, return_filename=False):
     """
     Read a configruation file called "configfile" at relative path
     "configfolder" (relative to "package" path)
@@ -91,12 +91,23 @@ def read_config_file(package, configfolder, configfile, config_file=None,
 
     :param return_raw: bool, if True returns key and value pairs, if False
                        returns a dictionary of key value pairs
-    :return:
+
+    :param return_filename: bool, if True only returns the filename (string)
+
+    if return_filename:
+        :return config_file: string, filename
+    elif return_raw:
+        :return keys: list of strings, the keys for each value
+        :return values: list of objects matched to each key
+    else:
+        :return dictionary: dictionary, the key value pairs in a dictionary
     """
     if config_file is None:
         # get config file path
         config_file = get_default_config_file(package, configfolder,
                                               configfile)
+    if return_filename:
+        return config_file
     # get keys and values from config file
     keys, values = gettxt(config_file)
     # return keys and values if return_raw
