@@ -446,6 +446,9 @@ def read_config_file(config_file=None):
     ckwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
                    configfile=CONFIG_FILE, config_file=config_file)
     keys, values = spirouConfigFile.read_config_file(**ckwargs)
+    # get file name (for source setting)
+    ckwargs['return_filename'] = True
+    config_file = spirouConfigFile.read_config_file(**ckwargs)
     # convert key value pairs into dictionary
     # TODO: use default parameters to check format/range etc for config
     # TODO: return error if user defined config file is wrong
