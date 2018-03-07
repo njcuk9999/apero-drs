@@ -159,7 +159,7 @@ def main(night_name=None, darkfile=None, flatfile=None):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message
+    # exit message if in debug mode
     spirouStartup.Exit(ll)
 
 # =============================================================================
