@@ -88,10 +88,10 @@ Defined in \spirouStartup\path{.spirouStartup.get_custom_from_run_time_args}
 from SpirouDRS import spirouStartup
 spirouStartup.GetCustomFromRuntime(positions=None, types=None, names=None,
                                    required=None, calls=None, cprior=None,
-                                   lognames=None)
+                                   lognames=None, last_multi=False):
 spirouStartup.spirouStartup.get_custom_from_run_time_args(positions=None, types=None, names=None,
-                                  required=None, calls=None, cprior=None,
-                                  lognames=None)
+                                   required=None, calls=None, cprior=None,
+                                   lognames=None, last_multi=False):
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -115,6 +115,10 @@ run time)
 
 :param calls: list of objects or None, if define these are the values that
               come from a function call (overwrite command line arguments)
+
+:param cprior: list of bools, if True the call takes priority over arguments
+               defined at run time, if False run time arguments take
+               priority
 
 :param lognames: list of strings, the names displayed in the log (on error)
                  theses should be similar to "names" but in a form the
