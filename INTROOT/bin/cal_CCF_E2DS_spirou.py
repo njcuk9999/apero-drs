@@ -73,6 +73,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
                                     mainfitsdir='reduced')
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
+
     # define default arguments (if ccf_width and ccf_step are not defined
     # in function call or run time arguments
     if 'ccf_width' not in p:
