@@ -27,7 +27,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_DARK_spirou.py'
+__NAME__ = 'cal_BADPIX_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -48,15 +48,18 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
-    # deal with darkfile and flat file being None (i.e. get from sys.argv)
-    if darkfile is None or flatfile is None:
-        names, types = ['flatfile', 'darkfile'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names)
-    else:
-        customargs = dict(darkfile=darkfile, flatfile=flatfile)
+    # deal with arguments being None (i.e. get from sys.argv)
+    pos = [0, 1]
+    fmt = [str, str]
+    names = ['flatfile', 'darkfile']
+    call = [darkfile, flatfile]
+    # now get custom arguments
+    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='flatfile')
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
 
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
