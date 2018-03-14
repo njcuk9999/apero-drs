@@ -1,11 +1,11 @@
 # SPIRou DRS in python 3
 
-<img src="./INTROOT/documentation/Figures/Logo_SPIRou-22.jpg" alt="SPIRou Logo" style="width:128px;"/>
+<img src="./INTROOT/documentation/Figures/Logo_SPIRou-22.jpg" alt="SPIRou Logo" style="width:96px;"/>
 
 
 # Most recent released version:
 
-- ![version 0.1.020 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.1.020) 
+- ![version 0.1.030 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.1.030) 
 
 
 # Test data:
