@@ -35,7 +35,7 @@ cal_DRIFT_E2DS_spirou.main(night_repository, reffile=reffilename)
 cal_DRIFTPEAK_E2DS_spirou.main(night_repository, reffile=reffilename)
 \end{pythonbox}
 
-\noindent where `night\_repository' defines \argnightname and `refilename' define the file to use as the reference spectrum. The reference file must be a valid python string and must have the folowing prefixes:
+\noindent where `night\_repository' defines \argnightname and `refilename' define the file to use as the reference spectrum. The reference file must be a valid python string and must have the following prefixes:
 \begin{itemize}
 	\item fp\_fp
 \end{itemize}
@@ -61,7 +61,7 @@ filenames = ['fp_fp02a203.fits']
 cal_DRIFT_RAW_spirou.main(night_repository, files=filenames)
 \end{pythonbox}
 
-\noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and must have the folowing prefixes:
+\noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and must have the following prefixes:
 \begin{itemize}
 	\item fp\_fp
 \end{itemize}
@@ -193,7 +193,7 @@ The outputs of \calDRIFTRAW are as follows:
 	\item resizes the image
 	\item background correction
 	\item Identifies FP peaks in reference file
-	\item Creates a reference ascii file that contains the positions of the FP peaks
+	\item Creates a reference ASCII file that contains the positions of the FP peaks
 	\item Removes lines with suspicious widths
 	\item loops around all other `*\_e2ds\_\{fiber\}.fits' files
 	\item Gets the centroid of all peaks using Gaussian fitting
@@ -458,7 +458,7 @@ b
 \end{minipage}%
 \end{center}
 
-\caption{\textbf{(a)} The extract FP orders for spectral order 20, x-axis is wavelength and y-axis is extract flux.  \textbf{(b)} Mean drift in m/s against the time from the reference extraction for the left side of the orders, the right side of the orders and the whole iamge. \label{figure:cal_driftpeak_e2ds}}
+\caption{\textbf{(a)} The extract FP orders for spectral order 20, x-axis is wavelength and y-axis is extract flux.  \textbf{(b)} Mean drift in m/s against the time from the reference extraction for the left side of the orders, the right side of the orders and the whole image. \label{figure:cal_driftpeak_e2ds}}
 \end{figure}
 
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - -

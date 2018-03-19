@@ -10,7 +10,7 @@ The recipes are designed to have a layout that minimizes repetition and looks fa
 
 Some of this functionality was explained in section \ref{ch:rules:drs_specific}, explicitly the following:
 \begin{itemize}
-	\item the logging functionality -- l{}ogging to both screen and file (Section \ref{ch:rules:drs_specific:logger}).
+	\item the logging functionality -- logging to both screen and file (Section \ref{ch:rules:drs_specific:logger}).
 	\item the parameter dictionary -- specialized dictionary object to store key value pairs with a source attached to each, i.e. to keep track of where key value pairs are defined and changed (Section \ref{ch:rules:drs_specific:param_dict}).
 	\item the configuration error and exception class -- a special error and exception handling class for dealing with the configuration files and parameters associated with them (Section \ref{ch:rules:drs_specific:config_error}).
 \end{itemize}
@@ -27,14 +27,14 @@ Some of this functionality was explained in section \ref{ch:rules:drs_specific},
 % -------------------------------------------------------
 
 
-The first functionality of any recipe \progMAIN function is to setup the recipe for running. This is done in three main steps (recipes may or may not use all three steps).
+The first functionality of any recipe \progMAIN function is to set-up the recipe for running. This is done in three main steps (recipes may or may not use all three steps).
 
 \begin{enumerate}
 	\item \spirouStartup.Begin() -- Loads the initial parameters from the main configuration file.
 
 	\item \spirouStartup.LoadArguments() -- Loads parameters from run time arguments (in default configuration or custom argument configuration, see sections \ref{ch:the_recipes:gen_layout:standard_recipes} and \ref{ch:the_recipes:gen_layout:custom_arguments})
 	\begin{note}
-	Required prefixes (such as `dark\_dark', `fp\_fp', `flat\_dark') can be set here to cause an exception if the filenames provided to not have one or more of these prefixes (useful in controlling which files are allowed to be used in the recipe).
+	Required prefixes (such as `dark\_dark', `fp\_fp', `flat\_dark') can be set here to cause an exception if the file names provided to not have one or more of these prefixes (useful in controlling which files are allowed to be used in the recipe).
 	\end{note}
 \end{enumerate}
 
@@ -60,7 +60,7 @@ RECIPE_NAME.py FOLDER FILENAME1
 RECIPE_NAME.py FOLDER FILENAME1 FILENAME2
 \end{cmdbox}
 
-These (using \spirouStartup.LoadArguments()) are loaded in to parameters. `FOLDER' becomes \definevariable{text:arg_night_name}{arg\_night\_name}, `FILENAME1' or `FILENAME1 FILENAME2' become a python list accessed via \definevariable{text:arg_file_names}{arg\_file\_names} with the first filename also being defined as \definevariable{text:fitsfilename}{fitsfilename}. The `RECIPE\_NAME' is loaded into \definevariable{text:log_opt}{log\_opt} for use in the log.
+These (using \spirouStartup.LoadArguments()) are loaded in to parameters. `FOLDER' becomes \definevariable{text:arg_night_name}{arg\_night\_name}, `FILENAME1' or `FILENAME1 FILENAME2' become a python list accessed via \definevariable{text:arg_file_names}{arg\_file\_names} with the first file name also being defined as \definevariable{text:fitsfilename}{fitsfilename}. The `RECIPE\_NAME' is loaded into \definevariable{text:log_opt}{log\_opt} for use in the log.
 
 An example standard load up can be seen in \calDARK.
 
@@ -145,15 +145,15 @@ The other parameters required by \spirouStartup.GetCustomFromRuntime() are:
 \end{note}
 \end{minipage}
 
-This is then fed into \spirouStartup\path{.LoadArguments} with the output of \spirouStartup.GetCustomFromRuntime() (i.e. customargs) passed to \spirouStartup\path{.LoadArguments}. As we do not use \spirouStartup.InitialFileSetup() with custom arguments the \calibdb has to be loaded separately, this is done using \spirouStartup\path{.LoadCalibDB} and is the last step in the setup for recipes with custom arguments.
+This is then fed into \spirouStartup\path{.LoadArguments} with the output of \spirouStartup.GetCustomFromRuntime() (i.e. customargs) passed to \spirouStartup\path{.LoadArguments}. As we do not use \spirouStartup.InitialFileSetup() with custom arguments the \calibdb has to be loaded separately, this is done using \spirouStartup\path{.LoadCalibDB} and is the last step in the set-up for recipes with custom arguments.
 
 
 % -------------------------------------------------------
-\subsubsection{Summary of setup}
+\subsubsection{Summary of set-up}
 \label{ch:the_recipes:gen_layout:summary}
 % -------------------------------------------------------
 
-There are two ways to setup a recipe, the first is with standard arguments, i.e.:
+There are two ways to set-up a recipe, the first is with standard arguments, i.e.:
 \begin{enumerate}
 	\item \spirouStartup\path{.Begin()}
 	\item \spirouStartup\path{.LoadArguments()}
@@ -239,7 +239,7 @@ After the setup proceedure the main code is run. Most heavy lifting should be do
 \label{ch:the_recipes:gen_layout:writing_to_file}
 % -------------------------------------------------------
 
-Files are written to disk using the \spirouImage.WriteImage() function. This requires a filename (python string), a image file (the data), and a header dictionary. Most filenames are defined in \spirouConfig.Constants (see Section \ref{ch:variables:outputvariables}). The header dictionary can be taken straight from the raw \definevariable{text:fitsfilename}{fitsfilename} header (the output of \spirouImage.ReadImageAndCombine for example), but key can be added using the following commands:
+Files are written to disk using the \spirouImage.WriteImage() function. This requires a file name (python string), a image file (the data), and a header dictionary. Most filenames are defined in \spirouConfig.Constants (see Section \ref{ch:variables:outputvariables}). The header dictionary can be taken straight from the raw \definevariable{text:fitsfilename}{fitsfilename} header (the output of \spirouImage.ReadImageAndCombine for example), but key can be added using the following commands:
 
 \begin{itemize}
 	\item \spirouImage.CopyOriginalKeys -- copies the original keys from the \definevariable{text:fitsfilename}{fitsfilename} except those keys in \definevariable{text:forbidden_keys}{forbidden keys}.
@@ -254,7 +254,7 @@ Files are written to disk using the \spirouImage.WriteImage() function. This req
 \noindent An example is shown below
 \begin{pythonbox}
 # ----------------------------------------------------------------------
-# Save and record of image of localization with order center and keywords
+# Save and record of image of localization with order centre and keywords
 # ----------------------------------------------------------------------
 # log that we are saving localization file
 wmsg = 'Saving FWHM information in file: {0}'
@@ -300,7 +300,7 @@ Quality control parameters decide whether a file is written to the calibration d
 # Quality control
 # ----------------------------------------------------------------------
 passed, fail_msg = True, []
-# check that max number of points rejected in center fit is below threshold
+# check that max number of points rejected in centre fit is below threshold
 if np.sum(loc['max_rmpts_pos']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
     fmsg = 'abnormal points rejection during ctr fit ({0} > {1})'
     fail_msg.append(fmsg.format(np.sum(loc['max_rmpts_pos']),
@@ -326,7 +326,7 @@ else:
     p.set_source('QC', __NAME__ + '/main()')
 \end{pythonbox}
 \begin{note}
-Here we check that the maximum number of points rejected in center fit is below a threshold and check that the maximum number of points rejected in the width fit is below a threshold if either of these fail then their `fail\_msg' is logged and printed, else a message saying `quality control successful' is displayed.
+Here we check that the maximum number of points rejected in centre fit is below a threshold and check that the maximum number of points rejected in the width fit is below a threshold if either of these fail then their `fail\_msg' is logged and printed, else a message saying `quality control successful' is displayed.
 \end{note}
 \end{minipage}
 
@@ -355,7 +355,7 @@ if p['QC'] == 1:
     spirouCDB.UpdateMaster(p, keydb, locofitsname, hdr)
 \end{pythonbox}
 \begin{note}
-Here we add, for example, key `LOC\_AB' or `LOC\_C' to the calibration database. The file is first put in the \definevariable{text:drs_calib_db}{calibration database folder} and then the key, filename and date/time are added to the \masterCALIBDBfile. The date/time that is used is that of the \definevariable{text:fitsfilename}{fitsfilename}.
+Here we add, for example, key `LOC\_AB' or `LOC\_C' to the calibration database. The file is first put in the \definevariable{text:drs_calib_db}{calibration database folder} and then the key, file name and date/time are added to the \masterCALIBDBfile. The date/time that is used is that of the \definevariable{text:fitsfilename}{fitsfilename}.
 \end{note}
 \end{minipage}
 
