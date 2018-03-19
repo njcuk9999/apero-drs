@@ -30,7 +30,7 @@ cal_extract_RAW_spirou.main(night_repository, files=filenames)
 
 \noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. In addition to this one can add optional arguments (and this is the case for the wrapper recipes of \calextractRAWAB and \calextractRAWC). \\
 
-\noindent All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and should have the folowing prefixes:
+\noindent All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and should have the following prefixes:
 \begin{itemize}
 	\item fp\_fp
 	\item hcone\_dark
@@ -44,7 +44,7 @@ cal_extract_RAW_spirou.main(night_repository, files=filenames)
 
 \subsubsection{Optional arguments}
 
-By default \calextractRAW will extract all fibers defiend in \definevariable{text:fiber_types}{fiber\_types} (i.e. `AB', `A', `B' and `C'). It may be the case that one wishes to extract only one fiber, this can be done by setting the `fiber\_type' option (when run from python). For example:
+By default \calextractRAW will extract all fibers defined in \definevariable{text:fiber_types}{fiber\_types} (i.e. `AB', `A', `B' and `C'). It may be the case that one wishes to extract only one fiber, this can be done by setting the `fiber\_type' option (when run from python). For example:
 \begin{pythonbox}
 import cal_extract_RAW_spirou
 night_repository = '20170710'
@@ -96,7 +96,7 @@ cal_extract_RAW_spirou.main(night_repository, files=filenames,fiber_type='C',
                             ic_extract_type='all', ic_ext_sigdet=-1)
 \end{pythonbox}
 \begin{note}
-Here we set the optional arguments \lstinline[style=pythoninline]|ic_extract_type='all', ic_ext_sigdet=-1|. \definevariable{text:ic_extract_type}{ic\_extract\_type} defines which type of extraction should be used (simple, tilt, widht, tiltweight, all) and \definevariable{text:ic_ext_sigdet}{ic\_ext\_sigdet} manually sets the extraction sigdet (-1 sets it to the value from the HEADER else it is defined in \constantsfile).
+Here we set the optional arguments \lstinline[style=pythoninline]|ic_extract_type='all', ic_ext_sigdet=-1|. \definevariable{text:ic_extract_type}{ic\_extract\_type} defines which type of extraction should be used (simple, tilt, weigh, tiltweight, all) and \definevariable{text:ic_ext_sigdet}{ic\_ext\_sigdet} manually sets the extraction sigdet (-1 sets it to the value from the HEADER else it is defined in \constantsfile).
 \end{note}
 \noindent The above python code is exactly what \calextractRAWAB and \calextractRAWC do by default.
 
@@ -193,7 +193,7 @@ Only if \definevariable{text:ic_extract_type}{ic\_extract\_type} is `all'
 \item possible background subtraction?
 \item extracts orders (depending on \definevariable{text:ic_extract_type}{ic\_extract\_type})
 	\begin{itemize}
-		\item without tilt/weight fortran
+		\item without tilt/weight Fortran
 		\item without tilt/weight python
 		\item with tilt (no weight)
 		\item with tilt and weight
