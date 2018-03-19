@@ -29,7 +29,7 @@ filenames = ['dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits'
 cal_FF_RAW_spirou.main()
 \end{pythonbox}
 
-\noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and must have the folowing prefixes:
+\noindent where `night\_repository' defines \argnightname and `filenames' define the list of files in \argfilenames. All files in filenames must be valid python strings separated by a space (command line) or in a line (python) and must have the following prefixes:
 \begin{itemize}
 	\item dark\_flat
 	\item flat\_dark
@@ -79,7 +79,7 @@ The outputs of \calFFraw are as follows:
 \item calculates the flat field, (flat = extraction / blaze)
 \item stores the flat fields
 \item does some quality control
-\item updates calibDB with key "FLAT\_\{fiber\}" where \{fiber\} = [AB, C] etc
+\item updates calibDB with key "FLAT\_\{fiber\}" where \{fiber\} = [AB, C] etc.
 \end{enumerate}
 
 % -------------------------------------------------------
@@ -214,5 +214,5 @@ c
 \end{minipage}%
 \end{center}
 
-\caption{\textbf{(a)} the full processed image with one order fit highlighted. \textbf{(b)} An extracted overplotted with the blaze fit. \textbf{(c)}  A flattened order. \label{figure:cal_FF_raw_spirou}}
+\caption{\textbf{(a)} the full processed image with one order fit highlighted. \textbf{(b)} An extracted over-plotted with the blaze fit. \textbf{(c)}  A flattened order. \label{figure:cal_FF_raw_spirou}}
 \end{figure}
