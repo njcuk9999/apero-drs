@@ -353,7 +353,7 @@ def test_paths(p):
 
     # if all tests were past print it
     if passed:
-        wmsg = '\n\t\tCongraulations all paths in {0} set up correctly.'
+        wmsg = '\n\t\tCongratulations all paths in {0} set up correctly.'
         print(wmsg.format(config_file))
     else:
         wmsg = '\n\tPlease set up config file ({0}) with valid paths.'
