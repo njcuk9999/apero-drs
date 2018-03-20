@@ -14,7 +14,7 @@ There are two ways to run the DRS recipes. The first (described in Section \ref{
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-As in Chapter \ref{chapter:installation}, using Linux or \mac one can run DRS recipes from the command line or from python, in windows one is required to be in python before running the scipts. Below we use \calDARK as an example:
+As in Chapter \ref{chapter:installation}, using Linux or \mac one can run DRS recipes from the command line or from python, in windows one is required to be in python before running the scripts. Below we use \calDARK as an example:
 \begin{itemize}
 \item To run from command line type:
 \begin{cmdbox}
@@ -72,14 +72,14 @@ For this example all files are from:
 spirou@10.102.14.81:/data/RawImages/H2RG-AT4/AT4-04/2017-07-10_15-36-18/ramps/
 \end{cmdbox} 
 
-\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicity in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} (\textcolor{blue}{/drs/data/raw} in our case).
+\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicitly in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} (\textcolor{blue}{/drs/data/raw} in our case).
 
 \noindent and we will also need the current WAVE file from here:
 \begin{cmdbox}
 spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
 \end{cmdbox}
 
-\noindent which needs to be placed in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} dirctory (\textcolor{blue}{/drs/data/calibDB} in our case).
+\noindent which needs to be placed in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} directory (\textcolor{blue}{/drs/data/calibDB} in our case).
 
 \noindent Starting with RAMP files and ending with extracted orders and calculated drifts we need to run six codes:
 \begin{enumerate}
@@ -101,7 +101,7 @@ spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
 \label{chapter:using_the_drs:working_example:run_cmd}
 % ----------------------------------------------
 
-As long as all codes are excutable (see Section \ref{ch:install:installunix:executable}) one can run all codes from the command line or if not excutable or one has a preference for python one can run the following with `python \{command\}', `ipython \{command\}' or indeed through an interactive ipython session using `run \{command\}'.
+As long as all codes are executable (see Section \ref{ch:install:installunix:executable}) one can run all codes from the command line or if not executable or one has a preference for python one can run the following with `python \{command\}', `ipython \{command\}' or indeed through an interactive ipython session using `run \{command\}'.
 
 \begin{enumerate}
 

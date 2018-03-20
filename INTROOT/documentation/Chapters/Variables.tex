@@ -80,7 +80,7 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 	\end{thighlight}
 
 
-	\item \textbf{Constants and Pseudo-constants:} These are stored in \spirouConst, they range from simple objects (strings, integers, float, lists, python dictionaries etc) to more complicated `pseudo-constants' that are constructed themselves from other constants. These are kept private (i.e. no mentioned in the user manual) as they should not need be changed by the average user.
+	\item \textbf{Constants and Pseudo-constants:} These are stored in \spirouConst, they range from simple objects (strings, integers, float, lists, python dictionaries etc.) to more complicated `pseudo-constants' that are constructed themselves from other constants. These are kept private (i.e. no mentioned in the user manual) as they should not need be changed by the average user.
 
 \end{itemize}
 
@@ -409,7 +409,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 % ic_ext_range1_fpall
 \item \ParameterEntry{Half-zone extraction width (left/top)}
-{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{top} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
+{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{top} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the centre of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_range1\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':0.0, 'B':14.5, 'C':7.5\} |}
 {\calFFraw}{\constantsfile}
@@ -418,7 +418,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 % ic_ext_range2_fpall
 \item \ParameterEntry{Half-zone extraction width (right/bottom)}
-{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{bottom} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the center of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
+{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{bottom} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the centre of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_range2\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':0.0, 'C':7.5\} |}
 {\calFFraw, \calextractRAW}{\constantsfile}
@@ -427,7 +427,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 % ic_ext_range_fpall
 \item \ParameterEntry{Half-zone extraction width for full extraction}
-{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order. In \calextractRAW both sides of the fit order are extracted at with the same width (symmetric). Must be a python dictionary with identical keys to all other fiber parameters.}
+{The pixels are extracted from the centre of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order. In \calextractRAW both sides of the fit order are extracted at with the same width (symmetric). Must be a python dictionary with identical keys to all other fiber parameters.}
 {ic\_ext\_range\_fpall}
 {\lstinline[style=pythoninline]| \{'AB':14.5, 'A':14.5, 'B':14.5, 'C':7.5\} |}
 {\calextractRAW}{\constantsfile}
@@ -679,7 +679,7 @@ max(|\text{residuals}|) > \text{ic\_max\_ptp\_center}
 
 % ic_ptporms_center
 \item \ParameterEntry{Maximum peak-to-peak-RMS ratio for sigma-clipping order fit(positions)}
-{Defines the maximum ratio of peak-to-peak residuals and rms value allowed for an order, if the ratio is above this value the position with the highest residual is removed and the fit is recalculated without that position (sigma-clipped). Value must be a positive float.
+{Defines the maximum ratio of peak-to-peak residuals and RMS value allowed for an order, if the ratio is above this value the position with the highest residual is removed and the fit is recalculated without that position (sigma-clipped). Value must be a positive float.
 \vspace{0.5cm}
 i.e. position fit is recalculated if: 
 \begin{equation}
@@ -801,7 +801,7 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 {Define whether to measure the background and do a background subtraction. Value must be True or 1 to do the background measurement and subtraction or be False or 0 to not do the background measurement and subtraction.}
 {ic\_do\_bkgr\_subtraction}{0}
 {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
-\DevNote{Currently even if True or 1 the background is not calculated as the interpol function has not been converted to python.}
+\DevNote{Currently even if True or 1 the background is not calculated as the \Program{interpol} function has not been converted to python.}
 
 
 % ic_bkgr_window
@@ -881,8 +881,8 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \begin{itemize}
 \item if 0 extraction by summation over a constant range
 \item if 1 extraction by summation over constants sigma (not currently available)
-\item if 2 horne extraction without cosmic elimination (not currently available)
-\item if 3 horne extraction with cosmic elimination (not currently available)
+\item if 2 Horne extraction without cosmic elimination (not currently available)
+\item if 3 Horne extraction with cosmic elimination (not currently available)
 \end{itemize}
  Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a integer between 0 and 3.
 }
@@ -892,7 +892,7 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 % ic_extnbsig
 \item \ParameterEntry{Extraction distance - rough extraction}
-{The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order). Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a positive float between 0 and the total number of rows (y-axis dimension).}
+{The pixels are extracted from the centre of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order). Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a positive float between 0 and the total number of rows (y-axis dimension).}
 {ic\_extnbsig}{2.5}
 {\calSLIT, \calFFraw}{\constantsfile}{\spirouEXTOR.extract\_AB\_order}{Public}
 
@@ -995,14 +995,14 @@ Value must be a float larger than zero.
 
 
 % ic_drift_cut_raw
-\item \ParameterEntry{Number of sigmas to cut in cosmic renormalization (\calDRIFTRAW)}
+\item \ParameterEntry{Number of sigmas to cut in cosmic re-normalization (\calDRIFTRAW)}
 {Defines the number of standard deviations to remove fluxes at (and replace with the reference flux) for \calDRIFTRAW. Value must be a float larger than zero.}
 {ic\_drift\_cut\_raw}{3}
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
 
 
 % ic_drift_cut_e2ds
-\item \ParameterEntry{Number of sigmas to cut in cosmic renormalization (\calDRIFTE)}
+\item \ParameterEntry{Number of sigmas to cut in cosmic re-normalization (\calDRIFTE)}
 {Defines the number of standard deviations to remove fluxes at (and replace with the reference flux) for \calDRIFTE. Value must be a float larger than zero.}
 {ic\_drift\_cut\_e2ds}{4.5}
 {\calDRIFTE}{\constantsfile}{\calDRIFTE.\progMAIN}{Public}
@@ -1114,7 +1114,7 @@ Value must be a float larger than zero.
 
 % drift_peak_peak_sig_lim
 \item \ParameterEntry{Minimum sigma above median for valid peak}
-{Defines the flux a valid peak must have in order to be recognized as a valid peak (before the peak fitting is done). If a peaks meaximum is below this threshold it will not be used as a valid peak in finding the drifts. Value is a dictionary containing keys equivalient to the lamp types (currently this is 'fp' and 'hc'. The values of each must be a float greater than 1 for above the median and, between zero and 1 for below the median).}
+{Defines the flux a valid peak must have in order to be recognized as a valid peak (before the peak fitting is done). If a peaks maximum is below this threshold it will not be used as a valid peak in finding the drifts. Value is a dictionary containing keys equivalent to the lamp types (currently this is 'fp' and 'hc'. The values of each must be a float greater than 1 for above the median and, between zero and 1 for below the median).}
 {drift\_peak\_peak\_sig\_lim}
 {\lstinline[style=pythoninline]| {'fp':1.0, 'hc':7.0} |}
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
@@ -1122,7 +1122,7 @@ Value must be a float larger than zero.
 
 % drift_peak_inter_peak_spacing
 \item \ParameterEntry{Minimum spacing between valid peaks}
-{Defines the minimum spacing peaks must have (between neighbouring peaks) in order to recognized as valid peaks (before the peak fitting is done). If peak is closer than this sepration to a previous peak the peak will not be used as a valid peak in finding the drifts. Value must be an integer greater than zero.}
+{Defines the minimum spacing peaks must have (between neighbouring peaks) in order to recognized as valid peaks (before the peak fitting is done). If peak is closer than this separation to a previous peak the peak will not be used as a valid peak in finding the drifts. Value must be an integer greater than zero.}
 {drift\_peak\_inter\_peak\_spacing}{5}
 {\calDRIFTPEAK}{\constantsfile}{\spirouRV.create\_drift\_file()}{Public}
 
@@ -1160,17 +1160,17 @@ Value must be a float larger than zero and less than the number of columns (x-di
 
 % drift_peak_getdrift_gaussfit
 \item \ParameterEntry{Get drift via a Gaussian fitting process}
-{Defines whether the drift is calculated via a Gaussian fitting process (fitting the targeted order with a Gaussian) -- $\sim\times$10 slower, or adjusts a barycenter to get the drift. Value must be True or 1 to do the Gaussian fit, or False or 0 to use the barycenter adjustment.}
+{Defines whether the drift is calculated via a Gaussian fitting process (fitting the targeted order with a Gaussian) -- $\sim\times$10 slower, or adjusts a barycentre to get the drift. Value must be True or 1 to do the Gaussian fit, or False or 0 to use the barycentre adjustment.}
 {drift\_peak\_getdrift\_gaussfit}{False}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
 
 % drift_peak_pearsonr_cut
 \item \ParameterEntry{Pearson R coefficient (between reference and image)}
-{Defines the threshold below which a image is deemed to dissimilar from the reference image to be used. A Pearson R test is performed between the reference image (e2ds file) and the current iteration image (e2ds file), the minimum of all usable orders is then tested. If any order does not pass the criteria:
+{Defines the threshold below which a image is deemed to dissimilar from the reference image to be used. A Pearson R test is performed between the reference image (E2DS file) and the current iteration image (E2DS file), the minimum of all usable orders is then tested. If any order does not pass the criteria:
 \begin{equation}
 \text{coefficient}_{\text{order}} > \text{drift\_peak\_pearsonr\_cut}
 \end{equation}
-then the whole image (e2ds file) is rejected. Value must be a float larger than zero and less than 1.0, values should be close to unity for a good fit i.e. 0.97.
+then the whole image (E2DS file) is rejected. Value must be a float larger than zero and less than 1.0, values should be close to unity for a good fit i.e. 0.97.
 }
 {drift\_peak\_pearsonr\_cut}{0.9}
 {\calDRIFTPEAK}{\constantsfile}{\calDRIFTPEAK.\progMAIN}{Public}
@@ -1190,8 +1190,8 @@ then the whole image (e2ds file) is rejected. Value must be a float larger than 
 {\calDRIFTPEAK}{\constantsfile}{\spirouPlot.drift\_peak\_plot{\hskip 0pt}\_llpeak\_amps()}{Public}
 
 % drift_peak_selected_order
-\item \ParameterEntry{Selected order for linelist vs log Amplitude plot}
-{Defines the selected order to plot the wave vs extracted spectrum for overplotting on the line list against log amplitude plot. Value must be an integer between 0 and the number of orders}
+\item \ParameterEntry{Selected order for line-list vs log Amplitude plot}
+{Defines the selected order to plot the wave vs extracted spectrum for over-plotting on the line list against log amplitude plot. Value must be an integer between 0 and the number of orders}
 {drift\_peak\_selected\_order}{30}
 {\calDRIFTPEAK}{\constantsfile}{\spirouPlot.drift\_peak\_plot{\hskip 0pt}\_llpeak\_amps()}{Public}
 
@@ -1383,13 +1383,13 @@ Value must be a float greater than zero.
 
 % qc_slit_min
 \item \namedlabel{text:c_slit_min} \ParameterEntry{Minimum angle allowed for slit TILT}
-{Defines the minimum tilt angle allowed to add TILT profile to the calibration databse. Value must be a float and must be less than \definevariable{text:c_slit_max}{qc\_slit\_max}}
+{Defines the minimum tilt angle allowed to add TILT profile to the calibration database. Value must be a float and must be less than \definevariable{text:c_slit_max}{qc\_slit\_max}}
 {qc\_slit\_min}{-8.0}
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
 
 % qc_slit_max
 \item \namedlabel{text:c_slit_max} \ParameterEntry{Maximum angle allowed for slit TILT}
-{Defines the maximum tiult angle allowed to add TILT profile to the calibration databse. Value must be a float and must be greater than \definevariable{text:c_slit_min}{qc\_slit\_min}}
+{Defines the maximum tiult angle allowed to add TILT profile to the calibration database. Value must be a float and must be greater than \definevariable{text:c_slit_min}{qc\_slit\_min}}
 {qc\_slit\_max}{0.0}
 {\calSLIT}{\constantsfile}{\calSLIT.\progMAIN}{Public}
 
@@ -1633,7 +1633,7 @@ Value must be a float greater than zero.
 % locofits3
 \begin{itemize}
 	\item \namedlabel{text:locofitsfile3} \PseudoParamEntry{Localization filename 3}
-	{The full path of the fits super-imposed onto the origial image file.}
+	{The full path of the fits super-imposed onto the original image file.}
 	{locofits3}
 	{\callocRAW}{\spirouConst.\path{LOC_LOCO_FILE3()}}{\callocRAW}
 \end{itemize}
@@ -1667,7 +1667,7 @@ Value must be a float greater than zero.
 % e2ds file
 \begin{itemize}
 	\item \namedlabel{text:e2ds_file} \PseudoParamEntry{E2DS filename}
-	{The full path of the processed and extracted e2ds file}
+	{The full path of the processed and extracted E2DS file}
 	{e2dsfits}
 	{\calextractRAW, \calextractRAWAB, \calextractRAWC()}{\spirouConst.\path{EXTRACT_E2DS_FILE}}{\calextractRAW}
 \end{itemize}
