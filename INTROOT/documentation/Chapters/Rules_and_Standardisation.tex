@@ -26,7 +26,7 @@ PEP 8 is a style guide for python it lays out a specific way to format python co
 		\item imports should usually be on separate lines
 	\end{itemize}
 
-	\item Whitespace in expressions and statements
+	\item White space in expressions and statements
 	\begin{itemize}
 		\item No white spaces immediately inside parentheses, brackets or braces
 		\item No white spaces immediately before a comma, semicolon, or colon (exception for slicing)
@@ -46,9 +46,9 @@ PEP 8 is a style guide for python it lays out a specific way to format python co
 
 	\item Naming conventions
 	\begin{itemize}
-		\item Never use lowercase letter el `l', uppercase letter `oh' `O', or uppercase letter `eye' `I' as single character variables names
+		\item Never use lower-case letter el `l', upper-case letter `oh' `O', or upper-case letter `eye' `I' as single character variables names
 		\item Class Names should normally use CamelCase (words should be Capitalized)
-		\item Functions names should be lowercase with words separated by underscores as necessary (same is true for global variable names)
+		\item Functions names should be lower-case with words separated by underscores as necessary (same is true for global variable names)
 		\item Constants defined on a module level should be written in capital letters with underscores separating words
 	\end{itemize}
 
@@ -214,7 +214,7 @@ While running the DRS there are many variables defined in many places that are u
 
 \noindent For this reason, and for convenience for passing between functions and recipes, a new object, based on a dictionary has been defined to handle all variables defined throughout the DRS. This is the parameter dictionary (\ParamDict) class (defined in \spirouConfig). \\
 
-\noindent The \ParamDict is a custom dictionary class (that inherits all attributes and methods from the standard python dictionary object), with the ability to get and set a source for each key value pair. In addition to this all variables stored are \textbf{insensitive to case} (i.e. uppercase variables, lowercase variables and mixed case variables are stored as the \textbf{same} variable). \\
+\noindent The \ParamDict is a custom dictionary class (that inherits all attributes and methods from the standard python dictionary object), with the ability to get and set a source for each key value pair. In addition to this all variables stored are \textbf{insensitive to case} (i.e. upper-case variables, lower-case variables and mixed case variables are stored as the \textbf{same} variable). \\
 
 \noindent Construct/initiate the \ParamDict in the same way one would a python dictionary:
 \begin{pythonbox}
