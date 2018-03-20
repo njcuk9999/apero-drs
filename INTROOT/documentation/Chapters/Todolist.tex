@@ -18,13 +18,13 @@ Below is the current to do list and any things that need to be addressed before 
 	\item Write help files for each recipe (In \InstallDIR/man filenames should be `recipe name'.info)
 	\item Need to sort out public and private variables (and keywords), some variables not needed to be changed by user -- private and public configuration files
 	\item Should have user configuration file too, for example, \textcolor{blue}{/home/\$user/.spirou\_config} and call the default values from a private location
-	\item Check confirugation variable values are valid at startup of recipes (avoids crashes later)
+	\item Check configuration variable values are valid at start-up of recipes (avoids crashes later)
 	\item \textcolor{red}{Can we remove `special\_config\_SPIROU' configuration file call as the file does not exist?}
 	\item \textcolor{red}{fitsfilename is the last file in a group of files - is this correct or should it be the first (as initially defined)?}
 	\item \textcolor{red}{`nbcos' in \spirouImage is not used - what is it?}
 	\item \textcolor{red}{`image\_gap' in \spirouLOCOR is set to zero, what is this?}
 	\item \textcolor{red}{Some keywords added to header but not updated in any recipe - should they be removed (or updated)?}
-	\item Write a setup.py installer / checker for prerequisites (Last step)
+	\item Write a set-up.py installer / checker for prerequisites (Last step)
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -122,7 +122,7 @@ Below is the current to do list and any things that need to be addressed before 
 	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted -- background set to zero.
 	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
 	\item \textcolor{red}{Quality control test \definevariable{text:qc_max_signal}{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
-	\item \textcolor{red}{Inconsitency in adding ``lower'' and ``upper'' contribution due to pixel rounding in pixel extraction process.}
+	\item \textcolor{red}{Inconsistency in adding ``lower'' and ``upper'' contribution due to pixel rounding in pixel extraction process.}
 	\item \sout{Update from AT-4 v43 to current}
 	\item \sout{Unit test - comparing outputs this version to AT-4}
 \end{itemize}
