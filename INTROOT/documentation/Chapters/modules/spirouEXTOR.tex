@@ -115,7 +115,7 @@ over constant range
             IC_FACDEC: float, the offset multiplicative factor for width
             IC_EXTOPT: int, the extraction option
             gain: float, the gain of the image
-            IC_EXTNBSIG: float, distance away from center to extract
+            IC_EXTNBSIG: float, distance away from centre to extract
                          out to +/- (in rows or y-axis direction)
 
 :param loc: parameter dictionary, ParamDict containing data
@@ -124,7 +124,7 @@ over constant range
                   the widths fit
                   shape = (number of orders x number of fit coefficients)
             acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
+                  the centres fit
                   shape = (number of orders x number of fit coefficients)
 
 
@@ -133,7 +133,7 @@ over constant range
 
 :return loc: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
-            offset: numpy array (1D), the center values with the
+            offset: numpy array (1D), the centre values with the
                     offset in 'IC_CENT_COL' added
             cent1: numpy array (2D), the extraction for A, updated is
                    the order "rnum"
@@ -168,7 +168,7 @@ Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
 :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
             acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
+                  the centres fit
                   shape = (number of orders x number of fit coefficients)
             ass: numpy array (2D), the fit coefficients array for
                   the widths fit
@@ -322,7 +322,7 @@ spirouEXTOR.extract_wrapper() with mode=2
 :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
             acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
+                  the centres fit
                   shape = (number of orders x number of fit coefficients)
             ass: numpy array (2D), the fit coefficients array for
                   the widths fit
