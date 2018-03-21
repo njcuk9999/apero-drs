@@ -25,7 +25,7 @@ spirouConfig.spirouConfig.ConfigError(message='', level='error')
 \begin{pythondocstring}
 Custom Config Error class for passing errors and exceptions to the log.
 
-Interits:
+Inherits:
 
 	spirouConfig.spirouConfigFile.ConfigException
 
@@ -39,7 +39,7 @@ Methods:
 		if key is not None defined self.message reads "key [key] must be
 		defined in config file (located at [config_file]
 
-		if config_file is None then deafult config file is used in its place
+		if config_file is None then default config file is used in its place
 
 		:param message: list or string, the message to print in the error
 		:param level: string, level (for logging) must be key in TRIG key above
@@ -313,7 +313,7 @@ spirouConfig.spirouConfig.load_config_from_file(p, key, required=False, logthis=
 \end{pythonbox}
 
 \begin{pythondocstring}
-Load a secondary level confiruation file filename = "key", this requires
+Load a secondary level configuration file filename = "key", this requires
 the primary config file to already be loaded into "p"
 (i.e. p['DRS_CONFIG'] and p[key] to be set)
 
@@ -518,11 +518,11 @@ ParamDict Methods (continued II):
 ParamDict Methods (continued III):
 
 	startswith(self, substring)
-	        Return all keys that start with this substring
+	        Return all keys that start with this sub-string
 
 	        :param substring: string, the prefix that the keys start with
 
-	        :return keys: list of strings, the keys with this substring at the start
+	        :return keys: list of strings, the keys with this sub-string at the start
 
 	__capitalise_keys__(self)
 	        Capitalizes all keys in ParamDict (used to make ParamDict case
@@ -560,7 +560,7 @@ Read config file wrapper (push into ParamDict)
 :param config_file: string or None, the config_file name, if none uses
                     PACKAGE/CONFIGFOLDER and CONFIG_FILE to get config
                     file name
-:return params: parameter dictionary with key value pairs fron config file
+:return params: parameter dictionary with key value pairs from config file
 \end{pythondocstring}
 \end{minipage}
 
