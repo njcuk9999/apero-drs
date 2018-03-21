@@ -38,7 +38,7 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
-
+# data path
 DATA = '/scratch/Projects/spirou_py3/data'
 
 # will be inputs? (should be in config file)
