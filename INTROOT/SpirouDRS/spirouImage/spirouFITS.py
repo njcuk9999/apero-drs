@@ -346,7 +346,7 @@ def writeimage(filename, image, hdict=None, dtype=None):
     spirouCore.spirouLog.warninglogger(w)
 
 
-def read_tilt_file(p, hdr=None, filename=None, key=None):
+def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False):
     """
     Reads the tilt file (from calib database or filename) and using the
     'kw_TILT' keyword-store extracts the tilts for each order
@@ -368,8 +368,12 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
                      keyword "TILT"
     :param key: string or None, if None key='TILT' else uses string as key
                 from calibDB (first entry) to get tilt file
+    :param return_filename: bool, if true return the filename only
 
-    :return tilt: numpy array (1D), the tilts for each order
+    if return_filename is False
+        :return tilt: numpy array (1D), the tilts for each order
+    else
+        :return read_file: string, name of tilt file
     """
     if key is None:
         key = 'TILT'
@@ -378,6 +382,9 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
         read_file = spirouCDB.GetFile(p, key, hdr)
     else:
         read_file = filename
+    # deal with returning filename
+    if return_filename:
+        return read_file
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
@@ -387,7 +394,8 @@ def read_tilt_file(p, hdr=None, filename=None, key=None):
     return tilt[:, 0]
 
 
-def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
+def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
+                   return_filename=False):
     """
     Reads the wave file (from calib database or filename)
 
@@ -406,11 +414,22 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
                      keyword "WAVE_{fiber}"
     :param key: string or None, if None key='WAVE' else uses string as key
                 from calibDB (first entry) to get wave file
-
     :param return_header: bool, if True returns header file else just returns
                           wave file
-    :return wave: numpy array (2D), the wavelengths for each pixel (x-direction)
-                  for each order
+    :param return_filename: bool, if true return the filename only
+
+
+    if return_filename is False and return header is False
+
+        :return wave: numpy array (2D), the wavelengths for each pixel
+                      (x-direction) for each order
+    elif return_filename is False:
+        :return wave: numpy array (2D), the wavelengths for each pixel
+                      (x-direction) for each order
+        :return hdict: dictionary, the header file of the wavelength solution
+    else:
+        :return read_file: string, the file name associated with the wavelength
+                           solution
     """
     if key is None:
         key = 'WAVE_' + p['fiber']
@@ -419,6 +438,9 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False):
         read_file = spirouCDB.GetFile(p, key, hdr)
     else:
         read_file = filename
+    # deal with returning filename only
+    if return_filename:
+        return read_file
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -1100,7 +1122,7 @@ def read_key(p, hdict=None, key=None):
     return keylookup(p, hdict, key=key)
 
 
-def read_key_2d_list(p, hdict, key, dim1, dim2):
+def read_key_2d_list(p, hdict, key, dim1, dim2, return_file=False):
     """
     Read a set of header keys that were created from a 2D list
 
@@ -1116,9 +1138,13 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                  where column number = dim2 and row number = range(0, dim1)
     :param dim1: int, the number of elements in dimension 1 (number of rows)
     :param dim2: int, the number of columns in dimension 2 (number of columns)
+    :param return_file: bool, if True only returns file (not values)
 
-    :return value: numpy array (2D), the reconstructed 2D list of variables
-                   from the HEADER dictionary keys
+    if return_file is false:
+        :return value: numpy array (2D), the reconstructed 2D list of variables
+                       from the HEADER dictionary keys
+    else:
+        :return
     """
     func_name = __NAME__ + '.read_key_2d_list()'
     # create 2d list
