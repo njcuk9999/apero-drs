@@ -41,7 +41,7 @@ sPlt = spirouCore.sPlt
 
 DATA = '/scratch/Projects/spirou_py3/data'
 
-# will be inputs?
+# will be inputs? (should be in config file)
 FLATFILE = 'flat_dark02f10.fits'
 TAPASX = DATA + '/calibDB/TAPAS_X_axis_speed_dv=0.5.fits'
 TAPASY = DATA + '/calibDB/tapas_combined_za=20.000000.fits'
@@ -49,6 +49,16 @@ THRESHOLD = 0.95
 # minimum and maximum H band (MKO))
 MINLAM = 1478.7
 MAXLAM = 1823.1
+# keyword stores (should be in spirou keywords file)
+kwstore = dict()
+kwstore['kw_tellx'] = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
+kwstore['kw_telly'] = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
+kwstore['kw_locfile'] = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
+kwstore['kw_wave'] = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+kwstore['kw_tilt'] = ['TILTFILE', 0.0, 'Tilt solution file used']
+kwstore['kw_minwave'] = ['MINLAM', 0.0, 'Minimum lambda used in mask [nm]']
+kwstore['kw_maxwave'] = ['MAXLAM', 0.0, 'Maximum lambda used in mask [nm]']
+kwstore['kw_trascut'] = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 # -----------------------------------------------------------------------------
 
 
@@ -127,9 +137,14 @@ def main(night_name=None, flatfile=None, tellwave=None, tellspe=None,
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
+    # set source of tilt file
+    tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
     # get tilts
     loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+    loc.set_source('tilt', tsource)
+    # get tilt file
+    p['tilt_file'] = spirouImage.ReadTiltFile(p, hdr, return_filename=True)
+    p.set_source('tilt_file', tsource)
     # set number of orders from tilt length
     loc['nbo'] = len(loc['tilt'])
     loc.set_source('nbo', __NAME__ + '/main()')
@@ -142,8 +157,14 @@ def main(night_name=None, flatfile=None, tellwave=None, tellspe=None,
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.ReadWaveFile'
+    # get wave solution
     loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc.set_source('wave', wsource)
+    # get wave file
+    p['wave_file'] = spirouImage.ReadWaveFile(p, hdr, return_filename=True)
+    p.set_source('wave_file', wsource)
     # ------------------------------------------------------------------
     # Get localisation coefficients
     # ------------------------------------------------------------------
@@ -187,6 +208,33 @@ def main(night_name=None, flatfile=None, tellwave=None, tellspe=None,
     WLOG('', p['log_opt'], 'Creating wavelength/tranmission mask')
     # create mask
     loc = create_mask(p, loc)
+
+    # ------------------------------------------------------------------
+    # Construct parameters for header
+    # ------------------------------------------------------------------
+    hdict = dict()
+    # add name of the TAPAS x data
+    hfile = os.path.split(p['tellwave'])[-1]
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_tellx'], value=hfile)
+    # add name of the TAPAS y data
+    hfile = os.path.split(p['tellspe'])[-1]
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_telly'], value=hfile)
+    # add name of the localisation fits file used
+    hfile = os.path.split(loc['loco_ctr_file'])[-1]
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_locfile'], value=hfile)
+    # add name of the tilt solution used
+    hfile = os.path.split(p['tilt_file'])[-1]
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_tilt'], value=hfile)
+    # add name of the wavelength solution used
+    hfile = os.path.split(p['wave_file'])[-1]
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_wave'], value=hfile)
+    # add the max and min wavelength threshold
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_minwave'], value=p['minlam'])
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_maxwave'], value=p['maxlam'])
+    # add the transmission cut
+    hdict = spirouImage.AddKey(hdict, kwstore['kw_trascut'],
+                               value=p['tellthres'])
+
     # ----------------------------------------------------------------------
     # save 2D spectrum, wavelength image and mask to file
     # ----------------------------------------------------------------------
@@ -199,7 +247,7 @@ def main(night_name=None, flatfile=None, tellwave=None, tellspe=None,
     wmsg = 'Writing spectrum to file {0}'
     WLOG('', p['log_opt'], wmsg.format(specfilename))
     # write to file
-    spirouImage.WriteImage(specfitsfile, loc['spe'])
+    spirouImage.WriteImage(specfitsfile, loc['spe'], hdict=hdict)
     # ----------------------------------------------------------------------
     # construct waveimage filename
     wavefilename = 'telluric_mapped_waveimage2.fits'
@@ -208,7 +256,7 @@ def main(night_name=None, flatfile=None, tellwave=None, tellspe=None,
     wmsg = 'Writing wave image to file {0}'
     WLOG('', p['log_opt'], wmsg.format(wavefilename))
     # write to file
-    spirouImage.WriteImage(wavefitsfile, loc['waveimage'])
+    spirouImage.WriteImage(wavefitsfile, loc['waveimage'], hdict=hdict)
     # ----------------------------------------------------------------------
     # construct tell mask 2D filename
     maskfilename = 'telluric_mapped_mask2.fits'
@@ -219,7 +267,7 @@ def main(night_name=None, flatfile=None, tellwave=None, tellspe=None,
     # convert boolean mask to integers
     writablemask = np.array(loc['tell_mask_2D'], dtype=int)
     # write to file
-    spirouImage.WriteImage(maskfitsfile, writablemask)
+    spirouImage.WriteImage(maskfitsfile, writablemask, hdict=hdict)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
@@ -567,7 +615,7 @@ def create_mask(p, loc):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # function inputs
-    # TODO: This should be removed when function in main()
+    # TODO: This should be removed when constants come from user/config
     kwargs = dict(night_name='20170710', flatfile=FLATFILE, tellwave=TAPASX,
                   tellspe=TAPASY, tellthres=THRESHOLD, minlam=MINLAM,
                   maxlam=MAXLAM)
