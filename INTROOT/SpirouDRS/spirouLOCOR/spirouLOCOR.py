@@ -166,12 +166,21 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     loc['nbcoeff_ctr'] = spirouImage.ReadKey(p, hdict, loco_deg_c) + 1
     loc['nbcoeff_wid'] = spirouImage.ReadKey(p, hdict, loco_deg_w) + 1
     # Read the coefficients from header
+    #     for center fits
     loc['acc'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
-                                       loc['number_orders'], loc['nbcoeff_ctr'])
+                                       loc['number_orders'],  loc['nbcoeff_ctr'])
+    #     for width fits
     loc['ass'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
                                        loc['number_orders'], loc['nbcoeff_wid'])
-
-    added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass']
+    # add some other parameters to loc
+    loc['loco_ctr_coeff'] = loco_ctr_coeff
+    loc['loco_fwhm_coeff'] = loco_fwhm_coeff
+    loc['loco_ctr_file'] = loco_file
+    loc['loco_fwhm_file'] = loco_file
+    # add source
+    added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass',
+             'loco_ctr_coeff', 'loco_fwhm_coeff', 'loco_ctr_file',
+             'loco_fwhm_file']
     loc.set_sources(added, __NAME__ + '/get_loc_coefficients()')
     # return the loc param dict
     return loc
