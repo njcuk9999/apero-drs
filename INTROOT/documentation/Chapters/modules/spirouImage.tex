@@ -498,7 +498,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
             spirouFITS.ReadImage
 :param name: string, the name in parameter dictionary to give to value
              if return_value is False (i.e. p[name] = value)
-:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
              for time since 1970-01-01
 :param return_value: bool, if False value is returned in p as p[name]
                      if True value is returned
@@ -506,7 +506,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 :return p or value: dictionary or string or float, if return_value is False
                     parameter dictionary is returned, if return_value is
                     True and kind=='human' returns a string, if return_value
-                    is True and kind=='unix' returns a float
+                    is True and kind=='Unix' returns a float
 \end{pythondocstring}
 \end{minipage}
 
@@ -524,7 +524,7 @@ spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=
 \end{pythonbox}
 
 \begin{pythondocstring}
-Get the acquision time from the header file, if there is not header file
+Get the acquisition time from the header file, if there is not header file
 use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
 :param p: parameter dictionary, ParamDict containing constants
@@ -536,7 +536,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
             spirouFITS.ReadImage
 :param name: string, the name in parameter dictionary to give to value
              if return_value is False (i.e. p[name] = value)
-:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
              for time since 1970-01-01
 :param return_value: bool, if False value is returned in p as p[name]
                      if True value is returned
@@ -544,7 +544,7 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 :return p or value: dictionary or string or float, if return_value is False
                     parameter dictionary is returned, if return_value is
                     True and kind=='human' returns a string, if return_value
-                    is True and kind=='unix' returns a float
+                    is True and kind=='Unix' returns a float
 \end{pythondocstring}
 \end{minipage}
 
@@ -643,7 +643,7 @@ Get the tilt by correlating the extracted fibers
                    the order "rnum"
             cent2: numpy array (2D), the extraction for B, updated is
                    the order "rnum"
-            offset: numpy array (1D), the center values with the
+            offset: numpy array (1D), the centre values with the
                     offset in 'IC_CENT_COL' added
 
 :param image: numpy array (2D), the image
@@ -801,7 +801,7 @@ Measure the dark pixels in "image"
 :param image: numpy array (2D), the image
 :param image_name: string, the name of the image (for logging)
 :param short_name: string, suffix (for parameter naming -
-                    parmaeters added to pp with suffix i)
+                    parameters added to pp with suffix i)
 
 :return pp: parameter dictionary, the updated parameter dictionary
         Adds the following: (based on "short_name")
@@ -857,14 +857,14 @@ the 90th percentile
                                     filtering image
             log_opt: string, log option, normally the program name
 
-:param image: numpy array (2D), the iamge to median filter and normalise
+:param image: numpy array (2D), the image to median filter and normalise
 :param method: string, "new" or "old" if "new" uses np.percentile else
                sorts the flattened image and takes the "percentile" (i.e.
                90th) pixel value to normalise
 :param wmed: float or None, if not None defines the median filter width
              if None uses p["BADPIX_MED_WID", see
              scipy.ndimage.filters.median_filter "size" for more details
-:param percentile: float or None, if not None degines the percentile to
+:param percentile: float or None, if not None defines the percentile to
                    normalise the image at, if None used from
                    p["BADPIX_NORM_PERCENTILE"]
 
@@ -1220,33 +1220,37 @@ Defined in \spirouImage\path{.spirouFITS.read_tilt_file}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.ReadTiltFile(p, hdr=None, filename=None, key=None)
-spirouImage.spirouFITS.read_tilt_file(p, hdr=None, filename=None, key=None)
+spirouImage.ReadTiltFile(p, hdr=None, filename=None, key=None, return_filename=False)
+spirouImage.spirouFITS.read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Reads the tilt file (from calib database or filename) and using the
-'kw_TILT' keyword-store extracts the tilts for each order
+  Reads the tilt file (from calib database or filename) and using the
+  'kw_TILT' keyword-store extracts the tilts for each order
 
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            fitsfilename: string, the full path of for the main raw fits
-                          file for a recipe
-                          i.e. /data/raw/20170710/filename.fits
-            kw_TILT: list, the keyword list for kw_TILT (defined in
-                     spirouKeywords.py)
-            IC_TILT_NBO: int, Number of orders in tilt file
+  :param p: parameter dictionary, ParamDict containing constants
+      Must contain at least:
+              fitsfilename: string, the full path of for the main raw fits
+                            file for a recipe
+                            i.e. /data/raw/20170710/filename.fits
+              kw_TILT: list, the keyword list for kw_TILT (defined in
+                       spirouKeywords.py)
+              IC_TILT_NBO: int, Number of orders in tilt file
 
-:param hdr: dictionary or None, the header dictionary to look for the
-                 acquisition time in, if None loads the header from
-                 p['fitsfilename']
-:param filename: string or None, the filename and path of the tilt file,
-                 if None gets the TILT file from the calib database
-                 keyword "TILT"
-:param key: string or None, if None key='TILT' else uses string as key
-            from calibDB (first entry) to get tilt file
+  :param hdr: dictionary or None, the header dictionary to look for the
+                   acquisition time in, if None loads the header from
+                   p['fitsfilename']
+  :param filename: string or None, the filename and path of the tilt file,
+                   if None gets the TILT file from the calib database
+                   keyword "TILT"
+  :param key: string or None, if None key='TILT' else uses string as key
+              from calibDB (first entry) to get tilt file
+  :param return_filename: bool, if true return the filename only
 
-:return tilt: numpy array (1D), the tilts for each order
+  if return_filename is False
+      :return tilt: numpy array (1D), the tilts for each order
+  else
+      :return read_file: string, name of tilt file
 \end{pythondocstring}
 \end{minipage}
 
@@ -1259,8 +1263,10 @@ Defined in \spirouImage\path{.spirouFITS.read_wave_file}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.ReadWaveFile(p, hdr=None, filename=None, key=None, return_header=False)
-spirouImage.spirouFITS.read_wave_file(p, hdr=None, filename=None, key=None, return_header=False)
+spirouImage.ReadWaveFile(p, hdr=None, filename=None, key=None, return_header=False,
+                         return_filename=False)
+spirouImage.spirouFITS.read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
+                                      return_filename=False)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -1277,15 +1283,26 @@ Reads the wave file (from calib database or filename)
                  acquisition time in, if None loads the header from
                  p['fitsfilename']
 :param filename: string or None, the filename and path of the tilt file,
-                 if None gets the TILT file from the calib database
-                 keyword "TILT"
+                 if None gets the WAVE file from the calib database
+                 keyword "WAVE_{fiber}"
 :param key: string or None, if None key='WAVE' else uses string as key
             from calibDB (first entry) to get wave file
-
 :param return_header: bool, if True returns header file else just returns
                       wave file
-:return wave: numpy array (2D), the wavelengths for each pixel (x-direction)
-              for each order
+:param return_filename: bool, if true return the filename only
+
+
+if return_filename is False and return header is False
+                      
+    :return wave: numpy array (2D), the wavelengths for each pixel 
+                  (x-direction) for each order
+elif return_filename is False:
+    :return wave: numpy array (2D), the wavelengths for each pixel 
+                  (x-direction) for each order
+    :return hdict: dictionary, the header file of the wavelength solution
+else:
+    :return read_file: string, the file name associated with the wavelength
+                       solution
 \end{pythondocstring}
 \end{minipage}
 
@@ -1307,7 +1324,7 @@ Read the order profile superposition image from either "filename" (if not
 None) or get filename from the calibration database using "p"
 
 "ORDER_PROFILE_{X}" must be in calibration database if filename is None
-where X is either p["ORDERP_FILE"] or p["FIBER"] (presedence in that order)
+where X is either p["ORDERP_FILE"] or p["FIBER"] (precedence in that order)
 
 :param p: parameter dictionary, ParamDict containing constants
     Must contain at least:
