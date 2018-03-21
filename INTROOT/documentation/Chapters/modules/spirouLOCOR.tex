@@ -39,7 +39,7 @@ Produce a (box) smoothed image, smoothed by the mean of a box of
 :param weighted: bool, if True pixel values less than zero are weighted to
                  a value of 1e-6 and values above 0 are weighted to a value
                  of 1
-:param mode: string, if 'convolve' convoles with a top-hat function of the
+:param mode: string, if 'convolve' convolves with a top-hat function of the
                      size "box" for each column (FAST) - note produces small
                      inconsistencies due to FT of top-hat function
 
@@ -96,13 +96,13 @@ parameter dictionary
     Must contain at least:
             log_opt: string, log option, normally the program name
 
-:param fiber: string, the fiber type (and suffix used in confiruation file)
+:param fiber: string, the fiber type (and suffix used in configuration file)
               i.e. for fiber AB fiber="AB" and nbfib_AB should be present
               in config if "nbfib" is in FIBER_PARAMS
 :param merge: bool, if True merges with pp and returns
 
 :return fparam: dictionary, the fiber parameter dictionary (if merge False)
-:treun pp: dictionary, paramter dictionary (if merge True)
+:treun pp: dictionary, parameter dictionary (if merge True)
 \end{pythondocstring}
 \end{minipage}
 
@@ -127,7 +127,7 @@ Finds the central positions based on the central column values
                   part of an order
 
 :return position: numpy array (1D), size= number of rows,
-                  the pixel positions in cvalues where the centers of each
+                  the pixel positions in cvalues where the centres of each
                   order should be
 \end{pythondocstring}
 \end{minipage}
@@ -145,7 +145,7 @@ spirouLOCOR.spirouLOCOR.find_order_centers(pp, image, loc, order_num)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Find the center pixels and widths of this order at specific points
+Find the centre pixels and widths of this order at specific points
 along this order="order_num"
 
 specific points are defined by steps (ic_locstepc) away from the
@@ -172,14 +172,14 @@ central pixel (ic_cent_col)
 
 :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
-            ctro: numpy array (2D), storage for the center positions
+            ctro: numpy array (2D), storage for the centre positions
                   shape = (number of orders x number of columns (x-axis)
 
 :param order_num: int, the current order to process
 
 :return loc: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
-            ctro: numpy array (2D), storage for the center positions
+            ctro: numpy array (2D), storage for the centre positions
                   shape = (number of orders x number of columns (x-axis)
                   updated the values for "order_num"
             sigo: numpy array (2D), storage for the width positions
@@ -216,9 +216,9 @@ to get acquisition time or uses p['fitsfilename'] to get acquisition time if
                            order centers
             kw_LOCO_DEG_W: list, keyword store for the fit degree for
                            order widths
-            kw_LOCO_CTR_COEFF: list, keyword store for the Coeff center
+            kw_LOCO_CTR_COEFF: list, keyword store for the coeff center
                                order
-            kw_LOCO_FWHM_COEFF: list, keyword store for the Coeff width
+            kw_LOCO_FWHM_COEFF: list, keyword store for the coeff width
                                 order
             LOC_FILE: string, the suffix for the location calibration
                       database key (usually the fiber type)
@@ -236,10 +236,10 @@ to get acquisition time or uses p['fitsfilename'] to get acquisition time if
 :return loc: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
             number_orders: int, the number of orders in reference spectrum
-            nbcoeff_ctr: int, number of coefficients for the center fit
+            nbcoeff_ctr: int, number of coefficients for the centre fit
             nbcoeff_wid: int, number of coefficients for the width fit
             acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
+                  the centres fit
                   shape = (number of orders x number of fit coefficients)
             ass: numpy array (2D), the fit coefficients array for
                   the widths fit
@@ -347,8 +347,8 @@ spirouLOCOR.spirouLOCOR.locate_order_center(values, threshold, min_width=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Takes the values across the oder and finds the order center by looking for
-the start and end of the order (and thus the center) above threshold
+Takes the values across the oder and finds the order centre by looking for
+the start and end of the order (and thus the centre) above threshold
 
 :param values: numpy array (1D) size = number of rows, the pixels in an
                 order
@@ -359,11 +359,11 @@ the start and end of the order (and thus the center) above threshold
 :param min_width: float, the minimum width for an order to be accepted
 
 :return positions: numpy array (1D), size= number of rows,
-                   the pixel positions in cvalues where the centers of each
+                   the pixel positions in cvalues where the centres of each
                    order should be
 
 :return widths:    numpy array (1D), size= number of rows,
-                   the pixel positions in cvalues where the centers of each
+                   the pixel positions in cvalues where the centres of each
                    order should be
 \end{pythondocstring}
 \end{minipage}
@@ -399,7 +399,7 @@ i.e. shrinks a list of N coefficients to N/2 (if step = 2) where
                   total size after = "number_orders"/step
 
 :return newcoeffs: numpy array (2D), the new list of coefficients
-            shape = (number of orders/step x number of fit parmaeters)
+            shape = (number of orders/step x number of fit parameters)
 \end{pythondocstring}
 \end{minipage}
 
@@ -460,7 +460,7 @@ Does this until all the following conditions are NOT met:
                   shape = (number of orders x number of columns (x-axis)
             max_rmpts_pos: int, maximum number of removed points in sigma
                            clipping process, for center fits
-            max_rmpts_wid: int, maximum number of removed poitns in sigma
+            max_rmpts_wid: int, maximum number of removed points in sigma
                            clipping process, for width fits
 
 \end{pythondocstring}
@@ -474,7 +474,7 @@ sigmaclip_order_fit (continued)
                  initial fit. keys are as follows:
 
         a = coefficients of the fit from key
-        size = 'ic_locdfitc' [for kind='center'] or
+        size = 'ic_locdfitc' [for kind='centre'] or
              = 'ic_locdftiw' [for kind='fwhm']
         fit = the fity values for the fit (for x = loc['x'])
             where fity = Sum(a[i] * x^i)
