@@ -23,7 +23,7 @@ spirouStartup.spirouStartup.run_begin()
 \begin{pythondocstring}
 Begin DRS - Must be run at start of every recipe
 - loads the parameters from the primary configuration file, displays
-  title, checks priamry constants and displays initial parameterization
+  title, checks primary constants and displays initial parametrization
 
 :return cparams: parameter dictionary, ParamDict constants from primary
                  configuration file
@@ -157,7 +157,7 @@ Get full file path and check the path and file exist
              the full path to the file
 :param name: string or None, the name of the file, if None name is assumed
              to be in path
-:param prefix: string or None, if not None this substring must be in the
+:param prefix: string or None, if not None this sub-string must be in the
                filename
 :param kind: string or None, the type of file (for logging)
 
@@ -191,7 +191,7 @@ Get a set of full file path and check the path and file exist
 :param path: string, either the directory to the folder (if name is None) or
              the full path to the files
 :param names: list of strings, the names of the files
-:param prefix: string or None, if not None this substring must be in the
+:param prefix: string or None, if not None this sub-string must be in the
                filenames
 :param kind: string or None, the type of files (for logging)
 
@@ -358,7 +358,7 @@ Run start up code (based on program and parameters defined in p before)
 
         where prefix1 and prefix2 are the strings in "prefixes"
 
-        This will add the sub dictionarys to the main parameter dictionary
+        This will add the sub dictionaries to the main parameter dictionary
         based on which prefix is found
 
         i.e. if prefix1 is found key "value3" and "value4" above are added
@@ -392,7 +392,7 @@ spirouStartup.spirouStartup.load_calibdb(p, calibdb=True)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Load calibration (on startup) this is loaded by default when
+Load calibration (on start-up) this is loaded by default when
 spirouStartup.spirouStartup.initial_file_setup
 (spirouStartup.InitialFileSetup) so this is only needed to be run when
 InitialFileSetup is not used (i.e. when custom arguments are used)
