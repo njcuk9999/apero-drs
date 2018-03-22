@@ -15,7 +15,7 @@
 
 Defined in \spirouCore\path{.spirouLog.logger}, also aliased in code to `WLOG'.
 
-See Section \ref{ch:rules:drs_specific:logger} for usuage details.
+See Section \ref{ch:rules:drs_specific:logger} for usage details.
 
 \begin{pythonbox}
 from SpirouDRS import spirouCore
@@ -98,15 +98,15 @@ spirouCore.spirouMath.gauss_function(x, a, x0, sigma, dc)
 \end{pythonbox}
 
 \begin{pythondocstring}
-A standard 1D gaussian function (for fitting against)]=
+A standard 1D Gaussian function (for fitting against)]=
 
 :param x: numpy array (1D), the x data points
 :param a: float, the amplitude
-:param x0: float, the mean of the gaussian
-:param sigma: float, the standard deviation (FWHM) of the gaussian
-:param dc: float, the constant level below the gaussian
+:param x0: float, the mean of the Gaussian
+:param sigma: float, the standard deviation (FWHM) of the Gaussian
+:param dc: float, the constant level below the Gaussian
 
-:return gauss: numpy array (1D), size = len(x), the output gaussian
+:return gauss: numpy array (1D), size = len(x), the output Gaussian
 \end{pythondocstring}
 \end{minipage}
 
@@ -250,7 +250,7 @@ spirouCore.spirouMath.unixtime2stringtime(ts, fmt=DATE_FMT, zone='UTC')
 
 \begin{pythondocstring}
 Convert a unix time (seconds since  1970-01-01 00:00:00 GMT) into a
-string in format "fmt". Currently supported timezones are UTC and local
+string in format "fmt". Currently supported time-zones are UTC and local
 (i.e. your current time zone).
 
 Default is to return string time in UTC/GMT time
@@ -295,8 +295,8 @@ spirouCore.spirouMath.stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC')
 \end{pythonbox}
 
 \begin{pythondocstring}
-Convert a string in format "fmt" into a float unix time (seconds since
-1970-01-01 00:00:00 GMT). Currently supported timezones are UTC and local
+Convert a string in format "fmt" into a float Unix time (seconds since
+1970-01-01 00:00:00 GMT). Currently supported time-zones are UTC and local
 (i.e. your current time zone).
 
 Default is to assume string is in UTC/GMT time
@@ -323,7 +323,7 @@ Commonly used format codes:
 :param zone: string, the time zone for the input string
                       (currently supported =  "UTC" or "local")
 
-:return unix_time: float, unix time (seconds since 1970-01-01 00:00:00 GMT)
+:return unix_time: float, Unix time (seconds since 1970-01-01 00:00:00 GMT)
 \end{pythondocstring}
 \end{minipage}
 
