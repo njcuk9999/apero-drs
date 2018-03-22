@@ -52,7 +52,7 @@ def main(night_name=None, darkfile=None, flatfile=None):
     pos = [0, 1]
     fmt = [str, str]
     names = ['flatfile', 'darkfile']
-    call = [darkfile, flatfile]
+    call = [flatfile, darkfile]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
     # get parameters from configuration files and run time arguments
