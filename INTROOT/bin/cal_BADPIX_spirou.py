@@ -38,6 +38,7 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+test = 1
 
 # =============================================================================
 # Define functions
