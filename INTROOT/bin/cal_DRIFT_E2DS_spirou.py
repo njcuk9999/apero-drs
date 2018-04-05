@@ -68,7 +68,9 @@ def main(night_name=None, reffile=None):
     # get reduced directory + night name
     rdir = p['reduced_dir']
     # construct and test the reffile
-    reffilename = spirouStartup.GetFile(p, rdir, p['reffile'], 'fp_fp', 'DRIFT')
+    gfkwargs = dict(path=rdir, name=p['reffile'], prefixes=['fp', 'hc'],
+                    kind='DRIFT')
+    reffilename = spirouStartup.GetFile(p, **gfkwargs)
     p['reffilename'] = reffilename
     p.set_source('reffilename', __NAME__ + '.main()')
     # get the fiber type

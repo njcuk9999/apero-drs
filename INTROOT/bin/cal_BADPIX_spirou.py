@@ -58,8 +58,6 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='flatfile')
-    # as we have custom arguments need to load the calibration database
-    p = spirouStartup.LoadCalibDB(p)
 
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
