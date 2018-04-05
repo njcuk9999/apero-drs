@@ -31,7 +31,8 @@ printl = spirouCore.PrintLog
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 # path strings to exclude
-EXCLUDE_PATH_STR = ['/spirouUnitTests/', '/documentation/', '/man/']
+EXCLUDE_PATH_STR = ['/spirouUnitTests/', '/documentation/', '/man/',
+                    '/spirouTools/']
 # dependencies to exclude
 EXCLUDE_MOD_STR = ['SpirouDRS', 'spirou']
 
@@ -139,10 +140,15 @@ def clean_imports(rawimports):
         # strip down uimport
         usimport = uimport.strip()
         # strip out import and from statements
-        if usimport.startswith('import'):
+        if usimport.startswith('import '):
             modulename = uimport.split('import ')[1]
-        elif usimport.startswith('from'):
+        # deal with from . import
+        elif 'from .' in usimport:
+            continue
+        elif usimport.startswith('from '):
             modulename = uimport.split('from ')[1].split(' import')[0]
+        else:
+            continue
         # deal with . (only want main module)
         if '.' in modulename:
             modulename = modulename.split('.')[0]
@@ -170,11 +176,8 @@ def get_current_versions(importslist):
             versionslist.append('NOT INSTALLED')
     return versionslist
 
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
+
+def main(return_locals=False):
     # ----------------------------------------------------------------------
     # title
     spirouStartup.DisplayTitle(' * DRS Dependencies')
@@ -207,7 +210,19 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', DPROG, wmsg.format(DPROG))
+    # return a copy of locally defined variables in the memory
+    if return_locals:
+        return dict(locals())
 
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main(return_locals=True)
+    # exit message
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
