@@ -28,7 +28,7 @@ from SpirouDRS import spirouCore
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'spirouStarup.py'
+__NAME__ = 'spirouStartup.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -940,7 +940,7 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
         WLOG('error', p['log_opt'], emsg.format(name, path))
     # if we have prefixes defined then check that fitsfilename has them
     # if add_to_params is defined then add params to p accordingly
-    _ = deal_with_prefixes(kind=kind, prefixes=prefixes)
+    _ = deal_with_prefixes(kind=kind, prefixes=prefixes, filename=name)
     # deal with no kind
     if kind is None:
         kind = 'UNKNOWN'
