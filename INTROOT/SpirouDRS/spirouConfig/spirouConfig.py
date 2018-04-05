@@ -509,6 +509,49 @@ class ParamDict(CaseInsensitiveDict):
         # return keys
         return return_keys
 
+    def contains(self, substring):
+        """
+        Return all keys that contain this substring
+
+        :param substring: string, the sub-string to look for in all keys
+
+        :return keys: list of strings, the keys which contain this substring
+        """
+        # define return
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if substring.upper() in key:
+                return_keys.append(key)
+        # return keys
+        return return_keys
+
+    def endswith(self, substring):
+        """
+        Return all keys that end with this substring
+
+        :param substring: string, the suffix that the keys ends with
+
+        :return keys: list of strings, the keys with this substring at the end
+        """
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if str(key).endswith(substring.upper()):
+                return_keys.append(key)
+        # return keys
+        return return_keys
+
 
 # =============================================================================
 #   Read/Write/Get Functions
