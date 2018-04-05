@@ -444,7 +444,9 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
         # find where in original array utimes = closest_time
         pos = np.where((utimes == closest_time) & cmask)[0][-1]
         # add to c_database
-        c_database[ukey] = [dirnames[pos], filenames[pos]]
+        humantime = spirouMath.unixtime2stringtime(utimes[pos])
+        c_database[ukey] = [dirnames[pos], filenames[pos], humantime,
+                            utimes[pos]]
         # set the source of each entry
         c_database.set_source(ukey, func_name)
     # return c_database
