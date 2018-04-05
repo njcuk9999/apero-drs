@@ -16,14 +16,16 @@ Defined in \spirouStartup\path{.spirouStartup.run_begin}
 
 \begin{pythonbox}
 from SpirouDRS import spirouStartup
-spirouStartup.Begin()
-spirouStartup.spirouStartup.run_begin()
+spirouStartup.Begin(quiet=False)
+spirouStartup.spirouStartup.run_begin(quiet=False)
 \end{pythonbox}
 
 \begin{pythondocstring}
 Begin DRS - Must be run at start of every recipe
 - loads the parameters from the primary configuration file, displays
-  title, checks primary constants and displays initial parametrization
+  title, checks priamry constants and displays initial parameterization
+
+:param quiet: bool, if True no messages are displayed
 
 :return cparams: parameter dictionary, ParamDict constants from primary
                  configuration file
@@ -239,8 +241,10 @@ Defined in \spirouStartup\path{.spirouStartup.load_arguments}
 
 \begin{pythonbox}
 from SpirouDRS import spirouStartup
-spirouStartup.LoadArguments(cparams, night_name=None, files=None, customargs=None)
-spirouStartup.spirouStartup.load_arguments(cparams, night_name=None, files=None, customargs=None)
+spirouStartup.LoadArguments(cparams, night_name=None, files=None, customargs=None,
+                            mainfitsfile=None, mainfitsdir=None, quiet=False)
+spirouStartup.spirouStartup.load_arguments(cparams, night_name=None, files=None, customargs=None,
+                                           mainfitsfile=None, mainfitsdir=None, quiet=False)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -296,7 +300,7 @@ Deal with loading run time arguments:
                      if not using custom arguments (i.e. customargs=None
                      files must be defined and these files are used
                      set fitsfilename and arg_file_names
-                     
+
 :param mainfitsdir: string or None, if mainfitsfile is defined and needed
                     this is the location of the mainfitsfile if None this
                     is assumed to be the raw dir folder
@@ -304,6 +308,8 @@ Deal with loading run time arguments:
                         'reduced' - the DRS_DATA_REDUC folder
                         'calibdb' - the DRS_CALIB_DB folder
                         or the full path to the file
+
+:param quiet: bool, if True does not print or log messages
 
 :return p: dictionary, parameter dictionary
 \end{pythondocstring}
