@@ -113,21 +113,13 @@ def __capitalise_key__(key):
     return key
 
 
-class ParamDict(dict):
+# case insensitive dictionary
+class CaseInsensitiveDict(dict):
     """
-    Custom dictionary to retain source of a parameter (added via setSource,
-    retreived via getSource). String keys are case insensitive.
+    Custom dictionary with string keys that are case insensitive
     """
     def __init__(self, *arg, **kw):
-        """
-        Constructor for parameter dictionary, calls dict.__init__
-        i.e. the same as running dict(*arg, *kw)
-
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
-        """
-        self.sources = dict()
-        super(ParamDict, self).__init__(*arg, **kw)
+        super(CaseInsensitiveDict, self).__init__(*arg, **kw)
         self.__capitalise_keys__()
 
     def __getitem__(self, key):
@@ -140,14 +132,8 @@ class ParamDict(dict):
 
         :return value: object, the value stored at position "key"
         """
-        oldkey = key
         key = __capitalise_key__(key)
-        try:
-            return super(ParamDict, self).__getitem__(key)
-        except KeyError:
-            emsg = ('Config Error: Parameter "{0}" not found in parameter '
-                    'dictionary')
-            raise ConfigError(emsg.format(oldkey), level='error')
+        return super(CaseInsensitiveDict, self).__getitem__(key)
 
     def __setitem__(self, key, value, source=None):
         """
@@ -160,6 +146,123 @@ class ParamDict(dict):
         """
         # capitalise string keys
         key = __capitalise_key__(key)
+        # then do the normal dictionary setting
+        super(CaseInsensitiveDict, self).__setitem__(key, value)
+
+    def __contains__(self, key):
+        """
+        Method to find whether CaseInsensitiveDict instance has key="key"
+        used with the "in" operator
+        if key exists in CaseInsensitiveDict True is returned else False
+        is returned
+
+        :param key: string, "key" to look for in CaseInsensitiveDict instance
+
+        :return bool: True if CaseInsensitiveDict instance has a key "key",
+        else False
+        """
+        key = __capitalise_key__(key)
+        return super(CaseInsensitiveDict, self).__contains__(key)
+
+    def __delitem__(self, key):
+        """
+        Deletes the "key" from CaseInsensitiveDict instance, case insensitive
+
+        :param key: string, the key to delete from ParamDict instance,
+                    case insensitive
+
+        :return None:
+        """
+        key = __capitalise_key__(key)
+        super(CaseInsensitiveDict, self).__delitem__(key)
+
+    def get(self, key, default=None):
+        """
+        Overrides the dictionary get function
+        If "key" is in CaseInsensitiveDict instance then returns this value,
+        else returns "default" (if default returned source is set to None)
+        key is case insensitive
+
+        :param key: string, the key to search for in ParamDict instance
+                    case insensitive
+        :param default: object or None, if key not in ParamDict instance this
+                        object is returned
+
+        :return value: if key in ParamDict instance this value is returned else
+                       the default value is returned (None if undefined)
+        """
+        # capitalise string keys
+        key = __capitalise_key__(key)
+        # if we have the key return the value
+        if key in self.keys():
+            return self.__getitem__(key)
+        # else return the default key (None if not defined)
+        else:
+            return default
+
+    def __capitalise_keys__(self):
+        """
+        Capitalizes all keys in ParamDict (used to make ParamDict case
+        insensitive), only if keys entered are strings
+
+        :return None:
+        """
+        keys = list(self.keys())
+        for key in keys:
+            # check if key is a string
+            if type(key) == str:
+                # get value
+                value = super(CaseInsensitiveDict, self).__getitem__(key)
+                # delete old key
+                super(CaseInsensitiveDict, self).__delitem__(key)
+                # if it is a string set it to upper case
+                key = key.upper()
+                # set the new key
+                super(CaseInsensitiveDict, self).__setitem__(key, value)
+
+
+class ParamDict(CaseInsensitiveDict):
+    """
+    Custom dictionary to retain source of a parameter (added via setSource,
+    retreived via getSource). String keys are case insensitive.
+    """
+    def __init__(self, *arg, **kw):
+        """
+        Constructor for parameter dictionary, calls dict.__init__
+        i.e. the same as running dict(*arg, *kw)
+
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        self.sources = CaseInsensitiveDict()
+        super(ParamDict, self).__init__(*arg, **kw)
+
+    def __getitem__(self, key):
+        """
+        Method used to get the value of an item using "key"
+        used as x.__getitem__(y) <==> x[y]
+        where key is case insensitive
+
+        :param key: string, the key for the value returned (case insensitive)
+
+        :return value: object, the value stored at position "key"
+        """
+        try:
+            return super(ParamDict, self).__getitem__(key)
+        except KeyError:
+            emsg = ('Config Error: Parameter "{0}" not found in parameter '
+                    'dictionary')
+            raise ConfigError(emsg.format(key), level='error')
+
+    def __setitem__(self, key, value, source=None):
+        """
+        Sets an item wrapper for self[key] = value
+        :param key: string, the key to set for the parameter
+        :param value: object, the object to set (as in dictionary) for the
+                      parameter
+        :param source: string, the source for the parameter
+        :return:
+        """
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -179,7 +282,6 @@ class ParamDict(dict):
 
         :return bool: True if ParamDict instance has a key "key", else False
         """
-        key = __capitalise_key__(key)
         return super(ParamDict, self).__contains__(key)
 
     def __delitem__(self, key):
@@ -191,8 +293,6 @@ class ParamDict(dict):
 
         :return None:
         """
-
-        key = __capitalise_key__(key)
         super(ParamDict, self).__delitem__(key)
 
     def get(self, key, default=None):
@@ -210,8 +310,6 @@ class ParamDict(dict):
         :return value: if key in ParamDict instance this value is returned else
                        the default value is returned (None if undefined)
         """
-        # capitalise string keys
-        key = __capitalise_key__(key)
         # if we have the key return the value
         if key in self.keys():
             return self.__getitem__(key)
@@ -231,7 +329,7 @@ class ParamDict(dict):
 
         :return None:
         """
-        # capitalise string keys
+        # capitalise
         key = __capitalise_key__(key)
         # only add if key is in main dictionary
         if key in self.keys():
@@ -251,7 +349,7 @@ class ParamDict(dict):
 
         :return None:
         """
-        # capitalise string keys
+        # capitalise
         key = __capitalise_key__(key)
         # if key exists append source to it
         if key in self.keys() and key in list(self.sources.keys()):
@@ -278,6 +376,8 @@ class ParamDict(dict):
         for k_it in range(len(keys)):
             # assign the key from k_it
             key = keys[k_it]
+            # capitalise
+            key = __capitalise_key__(key)
             # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -307,6 +407,8 @@ class ParamDict(dict):
         for k_it in range(len(keys)):
             # assign the key from k_it
             key = keys[k_it]
+            # capitalise
+            key = __capitalise_key__(key)
             # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -327,7 +429,7 @@ class ParamDict(dict):
         """
         # loop around each key in keys
         for key in self.keys():
-            # capitalise string keys
+            # capitalise
             key = __capitalise_key__(key)
             # set key
             self.sources[key] = source
@@ -343,7 +445,7 @@ class ParamDict(dict):
 
         # loop around each key in keys
         for key in self.keys():
-            # capitalise string keys
+            # capitalise
             key = __capitalise_key__(key)
             # set key
             self.sources[key] += ' {0}'.format(source)
@@ -358,7 +460,7 @@ class ParamDict(dict):
 
         :return source: string, the source of the parameter
         """
-        # capitalise string keys
+        # capitalise
         key = __capitalise_key__(key)
         # if key in keys and sources then return source
         if key in self.keys() and key in self.sources.keys():
@@ -407,25 +509,48 @@ class ParamDict(dict):
         # return keys
         return return_keys
 
-    def __capitalise_keys__(self):
+    def contains(self, substring):
         """
-        Capitalizes all keys in ParamDict (used to make ParamDict case
-        insensitive), only if keys entered are strings
+        Return all keys that contain this substring
 
-        :return None:
+        :param substring: string, the sub-string to look for in all keys
+
+        :return keys: list of strings, the keys which contain this substring
         """
-        keys = list(self.keys())
-        for key in keys:
-            # check if key is a string
-            if type(key) == str:
-                # get value
-                value = super(ParamDict, self).__getitem__(key)
-                # delete old key
-                super(ParamDict, self).__delitem__(key)
-                # if it is a string set it to upper case
-                key = key.upper()
-                # set the new key
-                super(ParamDict, self).__setitem__(key, value)
+        # define return
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if substring.upper() in key:
+                return_keys.append(key)
+        # return keys
+        return return_keys
+
+    def endswith(self, substring):
+        """
+        Return all keys that end with this substring
+
+        :param substring: string, the suffix that the keys ends with
+
+        :return keys: list of strings, the keys with this substring at the end
+        """
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if str(key).endswith(substring.upper()):
+                return_keys.append(key)
+        # return keys
+        return return_keys
 
 
 # =============================================================================
