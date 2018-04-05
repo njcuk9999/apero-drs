@@ -270,7 +270,10 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
         #   sub string is in there
         for arg_file_name in p['arg_file_names']:
             if contains not in arg_file_name:
-                emsg = 'Wrong type of image for {0} should contain "{1}"'
+                if kind is None:
+                    emsg = 'Wrong type of image should contain "{1}"'
+                else:
+                    emsg = 'Wrong type of image for {0} should contain "{1}"'
                 WLOG('error', p['log_opt'], emsg.format(kind, contains))
     # -------------------------------------------------------------------------
     # Reduced directory
@@ -623,7 +626,8 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
                                 (or call to recipe function) must have at least
                                 one string filename in the list
 
-    :param kind: string, description of program we are running (i.e. dark)
+    :param kind: string or None, description of program we are running
+                 (i.e. dark) if None is not used.
 
     :param prefixes: list of strings, prefixes to look for in file name
                      will exit code if none of the prefixes are found
@@ -663,7 +667,10 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             fprefix = prefix
     # if found log that we found image
     if found:
-        wmsg = 'Correct type of image for {0} ({1})'
+        if kind is None:
+            wmsg = 'Correct type of image ({1})'
+        else:
+            wmsg = 'Correct type of image for {0} ({1})'
         WLOG('info', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
         # if a2p is not None we have some variables that need added to
         # parameter dictionary based on the prefix found
@@ -688,7 +695,10 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             return p
     # Else if we don't have the correct prefix then log and exit
     else:
-        wmsg = 'Wrong type of image for {0}, should be {1}'
+        if kind is None:
+            wmsg = 'Wrong type of image, should be {1}'
+        else:
+            wmsg = 'Wrong type of image for {0}, should be {1}'
         WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
 
 
