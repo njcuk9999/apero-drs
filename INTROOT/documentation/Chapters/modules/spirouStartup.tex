@@ -140,28 +140,28 @@ Defined in \spirouStartup\path{.spirouStartup.get_file}
 
 \begin{pythonbox}
 from SpirouDRS import spirouStartup
-spirouStartup.GetFile(p, path, name=None, prefix=None, kind=None)
-spirouStartup.spirouStartup.get_file(p, path, name=None, prefix=None, kind=None)
+spirouStartup.GetFile(p, path, name=None, prefixes=None, kind=None)
+spirouStartup.spirouStartup.get_file(p, path, name=None, prefixes=None, kind=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Get full file path and check the path and file exist
+  Get full file path and check the path and file exist
 
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            log_opt: string, log option, normally the program name
-            program: string, the recipe/way the script was called
-                     i.e. from sys.argv[0]
+  :param p: parameter dictionary, ParamDict containing constants
+      Must contain at least:
+              log_opt: string, log option, normally the program name
+              program: string, the recipe/way the script was called
+                       i.e. from sys.argv[0]
 
-:param path: string, either the directory to the folder (if name is None) or
-             the full path to the file
-:param name: string or None, the name of the file, if None name is assumed
-             to be in path
-:param prefix: string or None, if not None this sub-string must be in the
-               filename
-:param kind: string or None, the type of file (for logging)
+  :param path: string, either the directory to the folder (if name is None) or
+               the full path to the file
+  :param name: string or None, the name of the file, if None name is assumed
+               to be in path
+  :param prefixes: string, list of strings or None, if not None this
+                   substring must be in the filename
+  :param kind: string or None, the type of file (for logging)
 
-:return location: string, the full file path of the file
+  :return location: string, the full file path of the file
 \end{pythondocstring}
 \end{minipage}
 
@@ -174,28 +174,28 @@ Defined in \spirouStartup\path{.spirouStartup.get_files}
 
 \begin{pythonbox}
 from SpirouDRS import spirouStartup
-spirouStartup.GetFiles(p, path, names, prefix=None, kind=None)
-spirouStartup.spirouStartup.get_files(p, path, names, prefix=None, kind=None)
+spirouStartup.GetFiles(p, path, names, prefixes=None, kind=None)
+spirouStartup.spirouStartup.get_files(p, path, names, prefixes=None, kind=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Get a set of full file path and check the path and file exist
-(wrapper around get_files)
+  Get a set of full file path and check the path and file exist
+  (wrapper around get_files)
 
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            log_opt: string, log option, normally the program name
-            program: string, the recipe/way the script was called
-                     i.e. from sys.argv[0]
+  :param p: parameter dictionary, ParamDict containing constants
+      Must contain at least:
+              log_opt: string, log option, normally the program name
+              program: string, the recipe/way the script was called
+                       i.e. from sys.argv[0]
 
-:param path: string, either the directory to the folder (if name is None) or
-             the full path to the files
-:param names: list of strings, the names of the files
-:param prefix: string or None, if not None this sub-string must be in the
-               filenames
-:param kind: string or None, the type of files (for logging)
+  :param path: string, either the directory to the folder (if name is None) or
+               the full path to the files
+  :param names: list of strings, the names of the files
+  :param prefixes: string, list of strings or None, if not None this
+                   substring must be in the filenames
+  :param kind: string or None, the type of files (for logging)
 
-:return locations: list of strings, the full file paths of the files
+  :return locations: list of strings, the full file paths of the files
 \end{pythondocstring}
 \end{minipage}
 
