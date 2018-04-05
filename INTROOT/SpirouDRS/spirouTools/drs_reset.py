@@ -164,7 +164,7 @@ def remove(path, list_of_files):
     return list_of_files
 
 
-def main():
+def main(return_locals=False):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -183,7 +183,8 @@ def main():
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', DPROG, wmsg.format(DPROG))
     # return a copy of locally defined variables in the memory
-    return dict(locals())
+    if return_locals:
+        return dict(locals())
 
 
 # =============================================================================
@@ -191,7 +192,7 @@ def main():
 # =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    ll = main()
+    ll = main(return_locals=True)
     # exit message
     spirouStartup.Exit(ll)
 
