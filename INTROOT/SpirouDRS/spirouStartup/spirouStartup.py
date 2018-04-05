@@ -51,11 +51,13 @@ HEADER = ' *****************************************'
 # =============================================================================
 # Define setup functions
 # =============================================================================
-def run_begin():
+def run_begin(quiet=False):
     """
     Begin DRS - Must be run at start of every recipe
     - loads the parameters from the primary configuration file, displays
       title, checks priamry constants and displays initial parameterization
+
+    :param quiet: bool, if True no messages are displayed
 
     :return cparams: parameter dictionary, ParamDict constants from primary
                      configuration file
@@ -71,19 +73,22 @@ def run_begin():
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
     cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
     # display title
-    display_drs_title(cparams)
+    if not quiet:
+        display_drs_title(cparams)
     # check input parameters
     cparams = spirouConfig.CheckCparams(cparams)
-    # display initial parameterisation
-    display_initial_parameterisation(cparams)
-    # display system info (log only)
-    display_system_info()
+
+    if not quiet:
+        # display initial parameterisation
+        display_initial_parameterisation(cparams)
+        # display system info (log only)
+        display_system_info()
     # return parameters
     return cparams
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
-                   mainfitsfile=None, mainfitsdir=None):
+                   mainfitsfile=None, mainfitsdir=None, quiet=False):
     """
     Deal with loading run time arguments:
 
@@ -146,6 +151,8 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                             'calibdb' - the DRS_CALIB_DB folder
                             or the full path to the file
 
+    :param quiet: bool, if True does not print or log messages
+
     :return p: dictionary, parameter dictionary
     """
     # -------------------------------------------------------------------------
@@ -171,16 +178,19 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # Display help file if needed
     display_help_file(cparams)
     # display run file
-    if customargs is None:
+    if customargs is None and not quiet:
         display_run_files(cparams)
-    else:
+    elif not quiet:
         display_custom_args(cparams, customargs)
     # -------------------------------------------------------------------------
     # load special config file
     # TODO: is this needed as special_config_SPIROU does not exist
-    cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=False)
+    logthis = False and (not quiet)
+    cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=logthis)
     # load ICDP config file
-    cparams = load_other_config_file(cparams, 'ICDP_NAME', required=True)
+    logthis = not quiet
+    cparams = load_other_config_file(cparams, 'ICDP_NAME', required=True,
+                                     logthis=logthis)
     # load keywords
     try:
         cparams, warnlogs = spirouConfig.GetKeywordArguments(cparams)
