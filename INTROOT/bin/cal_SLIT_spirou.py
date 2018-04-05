@@ -186,15 +186,9 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
     hdict = spirouImage.AddKey(hdict, p['kw_Version'])
-    # add the tilt parameters
-    for order_num in range(0, int(loc['number_orders']/2)):
-        # modify name and comment for keyword
-        tilt_keywordstore = list(p['kw_TILT'])
-        tilt_keywordstore[0] += str(order_num)
-        tilt_keywordstore[2] += str(order_num)
-        # add keyword to hdict
-        hdict = spirouImage.AddKey(hdict, tilt_keywordstore,
-                                   value=loc['tilt'][order_num])
+    # add tilt parameters as 1d list
+    hdict = spirouImage.AddKey1DList(hdict, p['kw_TILT'],
+                                     values=loc['tilt'])
     # write tilt file to file
     spirouImage.WriteImage(tiltfits, tiltima, hdict)
 
