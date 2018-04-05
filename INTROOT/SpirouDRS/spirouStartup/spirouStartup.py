@@ -38,6 +38,8 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
+# get param dict
+ParamDict = spirouConfig.ParamDict
 # -----------------------------------------------------------------------------
 # define string types
 TYPENAMES = {int: 'integer', float: 'float', list: 'list',
@@ -615,7 +617,8 @@ def load_other_config_file(p, key, logthis=True, required=False):
     return p
 
 
-def deal_with_prefixes(p, kind, prefixes, add_to_p):
+def deal_with_prefixes(p=None, kind=None, prefixes=None,
+                       add_to_p=None, filename=None):
     """
     Deals with finding the prefixes and adding any add_to_p values to p
 
@@ -633,7 +636,7 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
                      will exit code if none of the prefixes are found
                      (prefix = None if no prefixes are needed to be found)
 
-    :param add_to_p: dictionary structure:
+    :param add_to_p: dictionary structure or None:
 
             add_to_p[prefix1] = dict(key1=value1, key2=value2)
             add_to_p[prefix2] = dict(key3=value3, key4=value4)
@@ -646,16 +649,31 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             i.e. if prefix1 is found key "value3" and "value4" above are added
             (with "key3" and "key4") to the parameter dictionary p
 
+    :param filename: string or None, the filename to check (if None checks
+                     "arf_file_names"[0] from p
+
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
                 the subdictionary key/value pairs in "add_to_p" that contains
                 the correct prefix for p["arg_file_names"][0]
     """
+    func_name = __NAME__ + '.deal_with_prefixes()'
+    # if we have p then we are just checking a filename
+    if p is None:
+        p = ParamDict(log_opt=DPROG)
+        if filename is None:
+            emsgs = ['ParamDict "p" or "filename" must be defined '
+                     '(both are None)',
+                     '   function = {0}'.format(func_name)]
+            WLOG('error', p['log_opt'], emsgs)
+    # if we have no prefixes we can just return p
     if prefixes is None:
         return p
     # get variables from p
-    log_opt = p['log_opt']
-    arg_fn1 = p['arg_file_names'][0]
+    if filename is None:
+        arg_fn1 = p['arg_file_names'][0]
+    else:
+        arg_fn1 = filename
     # set up found variables
     found, fprefix = False, None
     # loop around prefixes
@@ -671,7 +689,7 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             wmsg = 'Correct type of image ({1})'
         else:
             wmsg = 'Correct type of image for {0} ({1})'
-        WLOG('info', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
+        WLOG('info', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
         # if a2p is not None we have some variables that need added to
         # parameter dictionary based on the prefix found
         if add_to_p is not None:
@@ -699,7 +717,7 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             wmsg = 'Wrong type of image, should be {1}'
         else:
             wmsg = 'Wrong type of image for {0}, should be {1}'
-        WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
+        WLOG('error', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
 
 
 def get_arguments(positions, types, names, required, calls, cprior, lognames):
@@ -844,7 +862,7 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     return customdict
 
 
-def get_files(p, path, names, prefix=None, kind=None):
+def get_files(p, path, names, prefixes=None, kind=None):
     """
     Get a set of full file path and check the path and file exist
     (wrapper around get_files)
@@ -858,8 +876,8 @@ def get_files(p, path, names, prefix=None, kind=None):
     :param path: string, either the directory to the folder (if name is None) or
                  the full path to the files
     :param names: list of strings, the names of the files
-    :param prefix: string or None, if not None this substring must be in the
-                   filenames
+    :param prefixes: string, list of strings or None, if not None this
+                     substring must be in the filenames
     :param kind: string or None, the type of files (for logging)
 
     :return locations: list of strings, the full file paths of the files
@@ -868,12 +886,12 @@ def get_files(p, path, names, prefix=None, kind=None):
     locations = []
     # loop around names of files
     for name in names:
-        locations.append(get_file(p, path, name, prefix, kind))
+        locations.append(get_file(p, path, name, prefixes, kind))
     # if all conditions passed return full path
     return locations
 
 
-def get_file(p, path, name=None, prefix=None, kind=None):
+def get_file(p, path, name=None, prefixes=None, kind=None):
     """
     Get full file path and check the path and file exist
 
@@ -887,13 +905,12 @@ def get_file(p, path, name=None, prefix=None, kind=None):
                  the full path to the file
     :param name: string or None, the name of the file, if None name is assumed
                  to be in path
-    :param prefix: string or None, if not None this substring must be in the
-                   filename
+    :param prefixes: string, list of strings or None, if not None this
+                     substring must be in the filename
     :param kind: string or None, the type of file (for logging)
 
     :return location: string, the full file path of the file
     """
-
     # if path is None and name is None
     if path is None:
         WLOG('error', p['log_opt'], 'No file defined')
@@ -911,22 +928,15 @@ def get_file(p, path, name=None, prefix=None, kind=None):
     if not os.path.exists(location):
         emsg = 'File : {0} does not exist at location {1}'
         WLOG('error', p['log_opt'], emsg.format(name, path))
-    # if prefix is defined make sure file conforms
+    # if we have prefixes defined then check that fitsfilename has them
+    # if add_to_params is defined then add params to p accordingly
+    _ = deal_with_prefixes(kind=kind, prefixes=prefixes)
+    # deal with no kind
+    if kind is None:
+        kind = 'UNKNOWN'
+    # log that we are processing this image
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    if prefix is not None:
-        # deal with no kind
-        if kind is None:
-            kind = 'UNKNOWN'
-        # look for prefix in name
-        if prefix not in name:
-            emsg = 'Wrong type of image for {0}, should be {1}'
-            emsg2 = '  tried to load file: {0}'
-            WLOG('', p['log_opt'], emsg.format(kind, prefix))
-            WLOG('error', p['log_opt'], emsg2.format(location))
-        else:
-            WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
-    else:
-        WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
+    WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
     # if all conditions passed return full path
     return location
 
