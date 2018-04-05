@@ -187,8 +187,7 @@ def main(night_name=None, files=None):
     # add version number
     hdict = spirouImage.AddKey(hdict, p['kw_Version'])
     # add tilt parameters as 1d list
-    hdict = spirouImage.AddKey1DList(hdict, p['kw_TILT'],
-                                     values=loc['tilt'])
+    hdict = spirouImage.AddKey1DList(hdict, p['kw_TILT'], values=loc['tilt'])
     # write tilt file to file
     spirouImage.WriteImage(tiltfits, tiltima, hdict)
 
