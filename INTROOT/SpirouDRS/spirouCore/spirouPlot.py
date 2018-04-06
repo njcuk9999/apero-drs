@@ -528,13 +528,13 @@ def slit_sorder_plot(pp, loc, image):
     offset = np.polyval(loc['ass'][order][::-1], pp['IC_CENT_COL'])
     offset *= pp['IC_FACDEC']
     offsetarray = np.zeros(len(loc['ass'][order]))
-    offsetarray[0] = -2*offset
+    offsetarray[0] = offset
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 30000.))
     # calculate selected order fit
     xfit = np.arange(image.shape[1])
-    yfit1 = np.polyval(loc['acc'][order][::-1], xfit)
-    yfit2 = np.polyval((loc['acc'][order] + offsetarray)[::-1], xfit)
+    yfit1 = np.polyval((loc['acc'][order] + offsetarray)[::-1], xfit)
+    yfit2 = np.polyval((loc['acc'][order] - offsetarray)[::-1], xfit)
     # plot selected order fit
     frame.plot(xfit, yfit1, color='red')
     frame.plot(xfit, yfit2, color='red')
