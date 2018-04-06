@@ -854,6 +854,7 @@ def ext_sorder_fit(p, loc, image):
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['fiber']
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
     plt.figure()
     # clear the current figure
@@ -861,14 +862,24 @@ def ext_sorder_fit(p, loc, image):
     # set up axis
     frame = plt.subplot(111)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='jet')
+    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
     acc = loc['acc'][selected_order]
+    # work out offsets for this order
+    offsetarraylow = np.zeros(len(acc))
+    offsetarrayhigh = np.zeros(len(acc))
+    offsetarraylow[0] = range2
+    offsetarrayhigh[0] = range1
     # get fit and edge fits
     xfit = np.arange(image.shape[1])
     yfit = np.polyval(acc[::-1], xfit)
+    yfitlow = np.polyval((acc + offsetarraylow)[::-1], xfit)
+    yfithigh = np.polyval((acc - offsetarrayhigh)[::-1], xfit)
     # plot fits
     frame.plot(xfit, yfit, color='red', label='fit')
+    frame.plot(xfit, yfitlow, color='blue', label='Fit edge',
+               linestyle='--')
+    frame.plot(xfit, yfithigh, color='blue', linestyle='--')
     # set title labels limits
     title = 'Image fit for order {0} fiber {1}'
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
@@ -901,6 +912,7 @@ def ext_aorder_fit(p, loc, image):
 
     :return None:
     """
+    range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
     fiber = p['fiber']
@@ -913,19 +925,33 @@ def ext_aorder_fit(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])):
+    for order_num in range(len(loc['acc'])//2):
         acc = loc['acc'][order_num]
+        # work out offsets for this order
+        offsetarraylow = np.zeros(len(acc))
+        offsetarrayhigh = np.zeros(len(acc))
+        offsetarraylow[0] = range2
+        offsetarrayhigh[0] = range1
         # get fit and edge fits
         xfit = np.arange(image.shape[1])
         yfit = np.polyval(acc[::-1], xfit)
+        yfitlow = np.polyval((acc + offsetarraylow)[::-1], xfit)
+        yfithigh = np.polyval((acc - offsetarrayhigh)[::-1], xfit)
         # plot fits
         if order_num == selected_order:
-            frame.plot(xfit, yfit, color='orange',
-                       label='Selected Order fit')
+            frame.plot(xfit, yfit, color='orange', label='Selected Order fit')
+            frame.plot(xfit, yfitlow, color='green', linestyle='--',
+                       label='Selected Order fit edge')
+            frame.plot(xfit, yfithigh, color='green', linestyle='--')
         elif order_num == 0:
             frame.plot(xfit, yfit, color='red', label='fit')
+            frame.plot(xfit, yfitlow, color='blue', label='fit edge',
+                       linestyle='--')
+            frame.plot(xfit, yfithigh, color='blue', linestyle='--')
         else:
             frame.plot(xfit, yfit, color='red')
+            frame.plot(xfit, yfitlow, color='blue', linestyle='--')
+            frame.plot(xfit, yfithigh, color='blue', linestyle='--')
     # set title labels limits
     title = 'Image fit for orders (highlighted order={0}) fiber {1}'
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]),
