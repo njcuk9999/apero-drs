@@ -89,7 +89,7 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using BASH.
+\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using \textcolor{red}{BASH}.
 
 
 \begin{enumerate}
@@ -103,8 +103,8 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 \item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc or \path{.bash_profile})
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:{(*\$*)PATH}"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
+	@export@ <PATH>=".:(*\InstallDIR*)/bin/:{(*\$*)PATH}"
+	@export@ <PYTHONPATH>=".:(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
 	\end{bashbox}
 
 \item make sure your paths are set
