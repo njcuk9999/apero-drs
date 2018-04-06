@@ -386,8 +386,6 @@ def exit_script(ll):
         uinput = raw_input('')      # note python 3 wont find this!
     else:
         uinput = input('')
-    # close any open plots properly
-    spirouCore.sPlt.closeall()
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
@@ -402,7 +400,23 @@ def exit_script(ll):
                 pass
         if not find_interactive():
             code.interact(local=ll)
-
+    # if interactive ask about closing plots
+    if find_interactive():
+        # deal with closing plots
+        wmsg = 'Close plots? [Y]es or [N]o?'
+        WLOG('', '', HEADER, printonly=True)
+        WLOG('warning', p['log_opt'], wmsg.format(kind), printonly=True)
+        WLOG('', '', HEADER, printonly=True)
+        # deal with python 2 / python 3 input method
+        if sys.version_info.major < 3:
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('')      # note python 3 wont find this!
+        else:
+            uinput = input('')
+        # if yes close all plots
+        if 'Y' in uinput.upper():
+            # close any open plots properly
+            spirouCore.sPlt.closeall()
 
 # =============================================================================
 # Define general functions
