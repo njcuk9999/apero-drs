@@ -157,16 +157,45 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 	\item In bash open the `.bashrc' or `.bash\_profile' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:{(*\$*)PATH}"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
+	@export@ <PATH>=".:(*\InstallDIR*)/bin/:{(*\$*)PATH}"
+	@export@ <PYTHONPATH>=".:(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
 	\end{bashbox}
 
-	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
+	\item In csh/tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist).
 
 	\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
-	@setenv@ <PATH> "(*\InstallDIR*)/bin/":{(*\$*){PATH}}"
-	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*){PYTHONPATH}}"
+	@setenv@ <PATH> ".:(*\InstallDIR*)/bin/":{(*\$*){PATH}}"
 	\end{cshbox}
+
+	In csh/tcsh one has to check whether `\$PYTHONPATH' exists before adding to the PYTHONPATH. To check type:
+
+	\begin{cmdbox}
+	echo $PYTHONPATH
+	\end{cmdbox}
+
+	\begin{itemize}
+	\item \begin{thighlight}
+		If the response is:
+		\begin{cmdboxprint}
+		PYTHONPATH: Undefined variable.
+		\end{cmdboxprint}
+
+		Then in the `.cshrc' or `.tcshrc' add: 
+
+		\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
+		@setenv@ <PYTHONPATH> ".:(*\InstallDIR*):(*\InstallDIR*)/bin/"
+		\end{cshbox}
+		\end{thighlight}
+
+	\item \begin{thighlight}
+		If the response is some paths, then in the `.cshrc' or `.tcshrc' add: 
+
+		\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
+		@setenv@ <PYTHONPATH> ".:(*\InstallDIR*):(*\InstallDIR*)/bin/:(*\$*){PYTHONPATH}"
+		\end{cshbox}
+		\end{thighlight}
+
+	\end{itemize}
 
 \end{itemize}
 
