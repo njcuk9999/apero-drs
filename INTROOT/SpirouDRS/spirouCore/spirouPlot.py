@@ -17,14 +17,19 @@ import matplotlib
 
 # TODO: Is there a better fix for this?
 # fix for MacOSX plots freezing
-try:
-    if matplotlib.get_backend() == 'MacOSX':
-        matplotlib.use('Qt5Agg')
-except Exception:
+gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
+for gui in gui_env:
+    try:
+        matplotlib.use(gui, warn=False, force=True)
+        break
+    except:
+        continue
+if matplotlib.get_backend() == 'MacOSX':
     emsg = ('OSX Error: Matplotlib MacOSX backend not supported and '
             'Qt5Agg not available')
     print('\n\n{0}\n{1}\n{0}\n\n'.format('='*50, emsg))
     sys.exit()
+
 # now can import matplotlib properly
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
