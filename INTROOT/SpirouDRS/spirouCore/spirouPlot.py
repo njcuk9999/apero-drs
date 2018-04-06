@@ -11,9 +11,23 @@ Import rules: Only from spirouConfig and spirouCore
 """
 from __future__ import division
 import numpy as np
+import sys
+import time
+import matplotlib
+
+# TODO: Is there a better fix for this?
+# fix for MacOSX plots freezing
+try:
+    if matplotlib.get_backend() == 'MacOSX':
+        matplotlib.use('Qt5Agg')
+except Exception:
+    emsg = ('OSX Error: Matplotlib MacOSX backend not supported and '
+            'Qt5Agg not available')
+    print('\n\n{0}\n{1}\n{0}\n\n'.format('='*50, emsg))
+    sys.exit()
+# now can import matplotlib properly
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-import time
 
 from SpirouDRS import spirouConfig
 from . import spirouLog
