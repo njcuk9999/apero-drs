@@ -628,11 +628,16 @@ def ff_sorder_fit_edges(p, loc, image):
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
     acc = loc['acc'][selected_order]
+    # work out offsets for this order
+    offsetarraylow = np.zeros(len(acc))
+    offsetarrayhigh = np.zeros(len(acc))
+    offsetarraylow[0] = range2
+    offsetarrayhigh[0] = range1
     # get fit and edge fits
     xfit = np.arange(image.shape[1])
     yfit = np.polyval(acc[::-1], xfit)
-    yfitlow = np.polyval(acc[::-1], xfit) + range2
-    yfithigh = np.polyval(acc[::-1], xfit) - range1
+    yfitlow = np.polyval((acc + offsetarraylow)[::-1], xfit)
+    yfithigh = np.polyval((acc - offsetarrayhigh)[::-1], xfit)
     # plot fits
     frame.plot(xfit, yfit, color='red', label='fit')
     frame.plot(xfit, yfitlow, color='blue', label='Fit edge',
@@ -687,14 +692,24 @@ def ff_aorder_fit_edges(p, loc, image):
     frame = plt.subplot(111)
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+
+
+
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])):
+    for order_num in range(len(loc['acc'])//2):
         acc = loc['acc'][order_num]
+
+        # work out offsets for this order
+        offsetarraylow = np.zeros(len(acc))
+        offsetarrayhigh = np.zeros(len(acc))
+        offsetarraylow[0] = range2
+        offsetarrayhigh[0] = range1
+
         # get fit and edge fits
         xfit = np.arange(image.shape[1])
         yfit = np.polyval(acc[::-1], xfit)
-        yfitlow = np.polyval(acc[::-1], xfit) + range2
-        yfithigh = np.polyval(acc[::-1], xfit) - range1
+        yfitlow = np.polyval((acc + offsetarraylow)[::-1], xfit)
+        yfithigh = np.polyval((acc - offsetarrayhigh)[::-1], xfit)
         # plot fits
         if order_num == selected_order:
             frame.plot(xfit, yfit, color='orange', label='Selected Order fit')
