@@ -40,8 +40,8 @@ class ConfigException(Exception):
 # =============================================================================
 # Define functions
 # =============================================================================
-def read_config_file(package, configfolder, configfile, config_file=None,
-                     return_raw=True, return_filename=False):
+def read_config_file(package=None, configfolder=None, configfile=None,
+                     config_file=None, return_raw=True, return_filename=False):
     """
     Read a configruation file called "configfile" at relative path
     "configfolder" (relative to "package" path)
