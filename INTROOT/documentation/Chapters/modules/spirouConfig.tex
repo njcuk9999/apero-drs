@@ -93,6 +93,8 @@ at the very least keys 'DRS_ROOT' and 'TDATA'
             DRS_PLOT: bool, whether to plot or not
             DRS_DATA_WORKING: string, the working data directory (temporary
                               storage folder)
+			DRS_UCONFIG: string, the directory that contains the user config
+			             files
             DRS_USED_DATE: string, ???
             DRS_DEBUG: int, sets the debug level
                             0: no debug
@@ -561,6 +563,7 @@ Read config file wrapper (push into ParamDict)
                     PACKAGE/CONFIGFOLDER and CONFIG_FILE to get config
                     file name
 :return params: parameter dictionary with key value pairs from config file
+:return warning_messages: list, a list of warning messages to pipe to the logger
 \end{pythondocstring}
 \end{minipage}
 
