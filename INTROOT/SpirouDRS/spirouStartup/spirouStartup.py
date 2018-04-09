@@ -40,6 +40,8 @@ WLOG = spirouCore.wlog
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # get param dict
 ParamDict = spirouConfig.ParamDict
+# get the config error
+ConfigError = spirouConfig.ConfigError
 # -----------------------------------------------------------------------------
 # define string types
 TYPENAMES = {int: 'integer', float: 'float', list: 'list',
@@ -66,8 +68,17 @@ def run_begin(quiet=False):
                 DRS_NAME: string, the name of the DRS
                 DRS_VERSION: string, the version of the DRS
     """
-    # Get config parameters
-    cparams = spirouConfig.ReadConfigFile()
+    # Get config parameters from primary file
+    try:
+        cparams, warn_messages = spirouConfig.ReadConfigFile()
+    except ConfigError as e:
+        WLOG(e.level, DPROG, e.message)
+        cparams, warn_messages = None, []
+
+    # log warning messages
+    if len(warn_messages) > 0:
+        WLOG('warning', DPROG, warn_messages)
+
     # get variables from spirouConst
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
@@ -185,7 +196,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # -------------------------------------------------------------------------
     # load special config file
     # TODO: is this needed as special_config_SPIROU does not exist
-    logthis = False and (not quiet)
+    logthis = not quiet
     cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=logthis)
     # load ICDP config file
     logthis = not quiet
@@ -418,6 +429,7 @@ def exit_script(ll):
             # close any open plots properly
             spirouCore.sPlt.closeall()
 
+
 # =============================================================================
 # Define general functions
 # =============================================================================
@@ -633,12 +645,17 @@ def load_other_config_file(p, key, logthis=True, required=False):
     """
     # try to load config file from file
     try:
-        p = spirouConfig.LoadConfigFromFile(p, key, required=required,
-                                            logthis=logthis)
+        pp, lmsgs = spirouConfig.LoadConfigFromFile(p, key, required=required,
+                                                    logthis=logthis)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, p['log_opt'], e.message)
+        lmsgs = []
+
+    # log messages caught in loading config file
+    if len(lmsgs) > 0:
+        WLOG('', DPROG, lmsgs)
     # return parameter dictionary
-    return p
+    return pp
 
 
 def deal_with_prefixes(p=None, kind=None, prefixes=None,
@@ -1310,16 +1327,13 @@ def display_initial_parameterisation(p):
     :return None:
     """
     # Add initial parameterisation
-    WLOG('', '',
-         '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
-    WLOG('', '',
-         '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
-    # WLOG('', '',
-    #      '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
-    WLOG('', '',
-         '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
-    WLOG('', '',
-         '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    WLOG('', '', '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    WLOG('', '', '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'
+                 ''.format(**p))
+    WLOG('', '', '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
+    WLOG('', '', '(dir_drs_uconfig)   DRS_UCONFIG={DRS_UCONFIG}'.format(**p))
+    WLOG('', '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    WLOG('', '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
     # WLOG('', '', ('(print_log)         DRS_LOG={DRS_LOG}         '
     #               '%(0: minimum stdin-out logs)').format(**p))
     WLOG('', '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
