@@ -590,14 +590,27 @@ The path set in the system environment takes precedence over the path set in the
 
 \begin{textbox}[title={In ".../INTROOT/config/config.py"}]
 USER_CONFIG = 1
-
 DRS_ROOT = '/drs/spirou/INTROOT/'
 DRS_DATA_RAW = '/drs/spirou/data/raw'
 DRS_DATA_REDUC = '/drs/spirou/data/reduced'
-
 DRS_UCONFIG = '/home/user/spirou/config.py'
 \end{textbox}
+\begin{textbox}[title={In "/home/user/spirou/config.py"}]
+DRS_DATA_RAW = '/DATA/RAW'
+DRS_DATA_REDIC = '/DATA/RED'
+\end{textbox}
 
+\noindent \textbf{OR}
+
+\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+@export@ DRS_UCONFIG=/home/user/spirou/config.py
+\end{bashbox}
+\begin{textbox}[title={In ".../INTROOT/config/config.py"}]
+USER_CONFIG = 1
+DRS_ROOT = '/drs/spirou/INTROOT/'
+DRS_DATA_RAW = '/drs/spirou/data/raw'
+DRS_DATA_REDUC = '/drs/spirou/data/reduced'
+\end{textbox}
 \begin{textbox}[title={In "/home/user/spirou/config.py"}]
 DRS_DATA_RAW = '/DATA/RAW'
 DRS_DATA_REDIC = '/DATA/RED'
@@ -614,16 +627,6 @@ DRS_DATA_REDIC = '/DATA/RED'@g
 
 \vspace{0.5cm}
 
-\noindent This also works for other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME}). Thus one can have a completely separate ste of configuration files and switch between folders in the master configuration file (\configtxtfile) or by editing the environmental variables.
-
-\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-@export@ DRS_UCONFIG=/home/user/spirou/config.py
-\end{bashbox}
-
-\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
-@setenv@ DRS_UCONFIG /home/user/spirou/config.py
-\end{cshbox}
-
 \begin{note}
 Constants/variables set in the custom constant files \textbf{always} take precedence over the master files.
 \end{note}
@@ -635,3 +638,14 @@ Any constant/variable not set in a custom constant file is taken from the master
 \begin{note}
 For other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME} the name can be changed in the master configuration file (\configtxtfile) thus allowing an easy switch between constant files. The custom path will always use \definevariable{text:icdp_name}{ICDP\_NAME} to locate the file.
 \end{note}
+
+\noindent This also works for other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME}). Thus one can have a completely separate ste of configuration files and switch between folders in the master configuration file (\configtxtfile) or by editing the environmental variables.
+
+\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+@export@ DRS_UCONFIG=/home/user/spirou/config.py
+\end{bashbox}
+
+\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
+@setenv@ DRS_UCONFIG /home/user/spirou/config.py
+\end{cshbox}
+
