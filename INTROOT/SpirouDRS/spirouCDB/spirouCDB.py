@@ -193,28 +193,26 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     if header is None:
         # deal with no filename
         if filename is None and header is None:
-            rawdir = spirouConfig.Constants.RAW_DIR(p)
-
             if os.path.exists(p['arg_file_names'][0]):
-                rawfile = p['arg_file_names'][0]
+                rfile = p['arg_file_names'][0]
             else:
-                rawfile = os.path.join(rawdir, p['arg_file_names'][0])
+                rfile = os.path.join(p['ARG_FILE_DIR'], p['arg_file_names'][0])
 
-            if not os.path.exists(rawfile):
+            if not os.path.exists(rfile):
                 emsg1 = '"header" and "filename" not defined in {0}'
                 emsg2 = '   AND "arg_file_names" not defined in ParamDict'
                 eargs = func_name
                 WLOG('error', p['log_opt'], [emsg1.format(eargs), emsg2])
         # else we have a filename defined
         else:
-            rawfile = filename
+            rfile = filename
             # if rawfile does not exist make error
-            if not os.path.exists(rawfile):
+            if not os.path.exists(rfile):
                 emsg = ('"header" not defined in {0} and "filename" '
                         'path not found.')
                 WLOG('error', p['log_opt'], emsg.format(func_name))
         # get file
-        header = fits.getheader(rawfile, ext=0)
+        header = fits.getheader(rfile, ext=0)
 
     # get max_time from file
     if acqtime_key not in header:
