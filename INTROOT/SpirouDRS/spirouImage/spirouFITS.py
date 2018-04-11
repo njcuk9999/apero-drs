@@ -1318,7 +1318,7 @@ def read_raw_header(filename, headerext=0):
     return hdr, cmt
 
 
-def math_controller(p, data, header, filenames, framemath=None):
+def math_controller(p, data, header, filenames, framemath=None, directory=None):
     """
     uses the framemath key to decide how 'arg_file_names' files are added to
     data (fitfilename)
@@ -1341,6 +1341,10 @@ def math_controller(p, data, header, filenames, framemath=None):
                 'divide' or '/'        - divides the frames
                 'none' or None         - does not do any math
 
+    :param directory: string or None, if not None defines the directory to use
+                      if the filenames have an absolute path this is ignored,
+                      if directory is None p['ARG_FILE_DIR'] is used.
+
     :return p: dictionary, parameter dictionary
     :return data: numpy array (2D), the image
     :return header: header dictionary from readimage (ReadImage) function
@@ -1361,11 +1365,16 @@ def math_controller(p, data, header, filenames, framemath=None):
         return p, data, header
     # log that we are adding frames
     WLOG('info', log_opt, '{0} {1} frame(s)'.format(kind, len(filenames)))
+    # chosen dir (if filenames is not an absolute path)
+    if directory is None:
+        directory = p['ARG_FILE_DIR']
     # loop around each frame
     for f_it in range(len(filenames)):
         # construct frame file name
-        rawdir = spirouConfig.Constants.RAW_DIR(p)
-        framefilename = os.path.join(rawdir, filenames[f_it])
+        if os.path.exists(filenames[f_it]):
+            framefilename = filenames[f_it]
+        else:
+            framefilename = os.path.join(directory, filenames[f_it])
         # check whether frame file name exists, log and exit if not
         if not os.path.exists(framefilename):
             emsg1 = 'File "{0}" does not exist'.format(framefilename)

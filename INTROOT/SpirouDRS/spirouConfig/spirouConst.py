@@ -379,7 +379,7 @@ def REDUCED_DIR(p):
                                 containing files (also reduced directory) i.e.
                                 /data/raw/20170710 would be "20170710"
 
-    :return raw_dir: string, the reduced data directory
+    :return reduced_dir: string, the reduced data directory
     """
     # set the reduced directory from DRS_DATA_REDUC and 'arg_night_name'
     reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
@@ -451,11 +451,12 @@ def FITSFILENAME(p):
 
     :return fitsfilename: string, the main raw fits file location and filename
     """
+    arg_file_dir = p['arg_file_dir']
     arg_file_names = p['arg_file_names']
     arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
     if len(arg_file_names) > 0:
-        fitsfilename = os.path.join(p['DRS_DATA_RAW'], arg_night_name,
+        fitsfilename = os.path.join(arg_file_dir, arg_night_name,
                                     arg_file_names[0])
     else:
         fitsfilename = None
