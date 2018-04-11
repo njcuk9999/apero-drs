@@ -134,14 +134,14 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
 
            i.e. in form:
 
-                program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+                program.py night_dir arg_file_names[0] arg_file_names[1]...
 
            loads all arguments into customargs
 
-           i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+           i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
            expects command line arguments to be:
 
-                program.py rawdir filename a b c
+                program.py night_dir filename a b c
 
     :param mainfitsfile: string or None, if "customargs" is not None (i.e. if we
                          are using custom arguments) we must define one
@@ -170,21 +170,24 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # deal with arg_night_name defined in call
     if night_name is not None:
         cparams['ARG_NIGHT_NAME'] = night_name
+
     # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
-        cparams = run_time_args(cparams)
+        cparams = run_time_args(cparams, mainfitsdir)
     else:
-        cparams = run_time_custom_args(cparams, customargs)
+        cparams = run_time_custom_args(cparams, customargs, mainfitsdir)
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
-        cparams = get_call_arg_files_fitsfilename(cparams, files)
+        cparams = get_call_arg_files_fitsfilename(cparams, files,
+                                                  mfd=mainfitsdir)
     # if files not defined we have custom arguments and hence need to define
     #    arg_file_names and fitsfilename manually
     elif mainfitsfile is not None and customargs is not None:
         cparams = get_custom_arg_files_fitsfilename(cparams, customargs,
-                                                    mainfitsfile, mainfitsdir)
+                                                    mainfitsfile,
+                                                    mfd=mainfitsdir)
     # -------------------------------------------------------------------------
     # Display help file if needed
     display_help_file(cparams)
@@ -433,7 +436,7 @@ def exit_script(ll):
 # =============================================================================
 # Define general functions
 # =============================================================================
-def run_time_args(p):
+def run_time_args(p, mainfitsdir):
     """
     Get sys.argv arguments (run time arguments and use them to fill parameter
     dictionary
@@ -441,6 +444,14 @@ def run_time_args(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 constants from primary configuration file
+
+    :param mainfitsdir: string or None, if mainfitsfile is defined and needed
+                        this is the location of the mainfitsfile if None this
+                        is assumed to be the raw dir folder
+                        current other options are:
+                            'reduced' - the DRS_DATA_REDUC folder
+                            'calibdb' - the DRS_CALIB_DB folder
+                            or the full path to the file
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -480,6 +491,16 @@ def run_time_args(p):
     p['str_file_names'] = ', '.join(p['arg_file_names'])
     p.set_source('str_file_names', __NAME__ + '/run_time_args()')
 
+    # set reduced path
+    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
+    # set raw path
+    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('raw_dir', cname + '/RAW_DIR()')
+
+    # deal with setting main fits directory (sets ARG_FILE_DIR)
+    p = set_arg_file_dir(p, mfd=mainfitsdir)
+
     # get fitsfilename
     p['fitsfilename'] = spirouConfig.Constants.FITSFILENAME(p)
     p.set_source('fitsfilename', cname + '/FITSFILENAME()')
@@ -492,18 +513,12 @@ def run_time_args(p):
     p['nbframes'] = spirouConfig.Constants.NBFRAMES(p)
     p.set_source('nbframes', cname + '/NBFRAMES()')
 
-    # set reduced path
-    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
-    p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
-    # set raw path
-    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
-    p.set_source('raw_dir', cname + '/RAW_DIR()')
 
     # return updated parameter dictionary
     return p
 
 
-def run_time_custom_args(p, customargs):
+def run_time_custom_args(p, customargs, mainfitsdir):
     """
     Get the custom arguments and add them (with some default arguments)
     to the constants parameter dictionary
@@ -512,7 +527,15 @@ def run_time_custom_args(p, customargs):
         Must contain at least:
         constants from primary configuration file
 
-    :param customargs:
+    :param customargs: dictionary, the custom arguments to add
+
+    :param mainfitsdir: string or None, if mainfitsfile is defined and needed
+                        this is the location of the mainfitsfile if None this
+                        is assumed to be the raw dir folder
+                        current other options are:
+                            'reduced' - the DRS_DATA_REDUC folder
+                            'calibdb' - the DRS_CALIB_DB folder
+                            or the full path to the file
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -548,6 +571,9 @@ def run_time_custom_args(p, customargs):
     p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
 
+    # deal with setting main fits directory (sets ARG_FILE_DIR)
+    p = set_arg_file_dir(p, mfd=mainfitsdir)
+
     # loop around defined run time arguments
     for key in list(customargs.keys()):
         # set the value
@@ -557,7 +583,7 @@ def run_time_custom_args(p, customargs):
     return p
 
 
-def get_call_arg_files_fitsfilename(cparams, files):
+def get_call_arg_files_fitsfilename(p, files, mfd=None):
     """
     We need to deal with there being no run time arguments and having
     files defined from "files". In the case that there are no run time
@@ -567,15 +593,24 @@ def get_call_arg_files_fitsfilename(cparams, files):
     In runtime arguments all "arg_file_names" are assumed to be in the raw
     directory thus we need to add this to the fitsfilename
 
-    :param cparams: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 DRS_DATA_RAW: string, the directory that the raw data should
                               be saved to/read from
                 arg_night_name: string, the folder within data raw directory
                                 containing files (also reduced directory) i.e.
                                 /data/raw/20170710 would be "20170710"
-    :param files:
-    :return p: parameter dictionary, the updated parameter dictionary
+    :param files: list or None, the list of files to use for arg_file_names
+                  (if None assumes arg_file_names was set from run time)
+
+    :param mfd: string or None, if mainfitsfile is defined and needed this is
+            the location of the mainfitsfile if None this is assumed to
+            be the raw dir folder current other options are:
+                'reduced' - the DRS_DATA_REDUC folder
+                'calibdb' - the DRS_CALIB_DB folder
+                or the full path to the file
+
+    :return cparams: parameter dictionary, the updated parameter dictionary
             Adds the following:
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -586,39 +621,90 @@ def get_call_arg_files_fitsfilename(cparams, files):
     """
     func_name = __NAME__ + '.get_call_arg_files_fitsfilename()'
     # make sure we have DRS_DATA_RAW and ARG_NIGHT_NAME
-    if 'DRS_DATA_RAW' not in cparams or 'arg_night_name' not in cparams:
+    if 'DRS_DATA_RAW' not in p or 'arg_night_name' not in p:
         emsg1 = (' Error "cparams" must contain "DRS_DATA_RAW" and '
                  '"ARG_NIGHT_NAME"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
-    # get raw directory
-    rawdir = spirouConfig.Constants.RAW_DIR(cparams)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # get chosen arg_file_dir
+    p = set_arg_file_dir(p, mfd)
     # if we don't have arg_file_names set it to the "files"
-    if 'ARG_FILE_NAMES' not in cparams:
-        cparams['ARG_FILE_NAMES'] = files
+    if 'ARG_FILE_NAMES' not in p:
+        p['ARG_FILE_NAMES'] = files
         # need to re-set nbframes
-        cparams['NBFRAMES'] = len(files)
+        p['NBFRAMES'] = len(files)
         # set source
-        cparams.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
+        p.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
     # if we have no files in arg_file_names set it to the "files"
-    elif len(cparams['ARG_FILE_NAMES']) == 0:
-        cparams['ARG_FILE_NAMES'] = files
+    elif len(p['ARG_FILE_NAMES']) == 0:
+        p['ARG_FILE_NAMES'] = files
         # need to re-set nbframes
-        cparams['NBFRAMES'] = len(files)
+        p['NBFRAMES'] = len(files)
         # set source
-        cparams.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
-    # if we don't have fitsfilename set it to the rawdir + files[0]
-    if 'FITSFILENAME' not in cparams:
-        cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+        p.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
+    # if we don't have fitsfilename set it to the ARG_FILE_DIR + files[0]
+    if 'FITSFILENAME' not in p:
+        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], files[0])
         # set source
-        cparams.set_source('FITSFILENAME', func_name)
-    # if fitsfilename is set to None set it to the rawdir + files[0]
-    elif cparams['FITSFILENAME'] is None:
-        cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+        p.set_source('FITSFILENAME', func_name)
+    # if fitsfilename is set to None set it to the ARG_FILE_DIR + files[0]
+    elif p['FITSFILENAME'] is None:
+        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], files[0])
         # set source
-        cparams.set_source('FITSFILENAME', func_name)
+        p.set_source('FITSFILENAME', func_name)
     # finally return the updated cparams
-    return cparams
+    return p
+
+
+
+def set_arg_file_dir(p, mfd=None):
+    """
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param mfd: string or None, if mainfitsfile is defined and needed this is
+            the location of the mainfitsfile if None this is assumed to
+            be the raw dir folder current other options are:
+                'reduced' - the DRS_DATA_REDUC folder
+                'calibdb' - the DRS_CALIB_DB folder
+                or the full path to the file
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                ARG_FILE_DIR: string, the directory containing the files
+                              in p['ARG_FILE_NAMES']
+    """
+
+    # define the raw/reduced/calib folder from cparams
+    raw = spirouConfig.Constants.RAW_DIR(p)
+    red = spirouConfig.Constants.REDUCED_DIR(p)
+    calib = p['DRS_CALIB_DB']
+    # deal with main fits file (see if it exists)
+    if mfd is not None:
+        cond = os.path.exists(mfd)
+    else:
+        cond = False
+    # choose between the different possible values for the main arg_file_dir
+    if cond:
+        p['ARG_FILE_DIR'] = mfd
+    elif mfd == 'reduced':
+        p['ARG_FILE_DIR'] = red
+    elif mfd == 'calibdb':
+        p['ARG_FILE_DIR'] = calib
+    else:
+        p['ARG_FILE_DIR'] = raw
+    # return p
+    return p
 
 
 def load_other_config_file(p, key, logthis=True, required=False):
@@ -1152,12 +1238,12 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     return customdict
 
 
-def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
+def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
     """
     Deal with having to set arg_file_names and fitsfilenames manually
     uses "mff" the main fits filename and "mdf" the main fits file directory
 
-    :param cparams: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 arg_night_name: string, the folder within data raw directory
                                 containing files (also reduced directory) i.e.
@@ -1173,14 +1259,14 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
 
            i.e. in form:
 
-                program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+                program.py night_dir arg_file_names[0] arg_file_names[1]...
 
            loads all arguments into customargs
 
-           i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+           i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
            expects command line arguments to be:
 
-                program.py rawdir filename a b c
+                program.py night_dir filename a b c
 
     :param mff: string, the main fits file (fitsfilename and arg_file_names[0]).
                 The parameter MUST be a string, a fits file, and have HEADER
@@ -1193,7 +1279,7 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
                     'reduced' - the DRS_DATA_REDUC folder
                     'calibdb' - the DRS_CALIB_DB folder
                     or the full path to the file
-    :return cparams: parameter dictionary, the updated parameter dictionary
+    :return p: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -1204,43 +1290,26 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
     """
     # define function name
     func_name = __NAME__ + '.get_custom_arg_files_fitsfilename()'
-    # define the raw/reduced/calib folder from cparams
-    raw = os.path.join(cparams['DRS_DATA_RAW'], cparams['arg_night_name'])
-    red = os.path.join(cparams['DRS_DATA_REDUC'], cparams['arg_night_name'])
-    calib = cparams['DRS_CALIB_DB']
+    # define the chosen arg_file_dir
+    p = set_arg_file_dir(p, mfd=mfd)
     # mainfitsfile must be a key in customargs
     if mff in customargs:
         # the value of mainfitsfile must be a string or list of strings
         #    if it isn't raise an error
-        mfv = customargs[mff]
+        rawfilename = customargs[mff]
         # check if mainfitsvalue is a full path
-        if not os.path.exists(mfv):
-            # check if mainfits dir is defined
-            if mfd is not None:
-                tpath = os.path.join(mfd, mfv)
-                # if path exists then use it
-                if os.path.exists(tpath):
-                    mfv = os.path.join(mfd, mfv)
-                elif mfd == 'reduced':
-                    mfv = os.path.join(red, mfv)
-                elif mfd == 'calibdb':
-                    mfv = os.path.join(calib, mfv)
-                else:
-                    emsg1 = '"mainfitsdir"={0} not a valid path/option'
-                    emsg2 = '    function = {0}'.format(func_name)
-                    WLOG('error', DPROG, [emsg1.format(mfd), emsg2])
-                    mfv = ''
-                    # if mainfits dir is not defined make the path the raw
-            else:
-                # redefine the mainfits file
-                mfv = os.path.join(raw, mfv)
+        if not os.path.exists(rawfilename):
+            # construct main file value path
+            abspathname = os.path.join(p['ARG_FILE_DIR'], rawfilename)
+        else:
+            abspathname = rawfilename
         # test type mainfitsfile (must be str or list)
         if type(mff) == str:
-            cparams['ARG_FILE_NAMES'] = [mfv]
-            cparams['FITSFILENAME'] = mfv
+            p['ARG_FILE_NAMES'] = [rawfilename]
+            p['FITSFILENAME'] = abspathname
         elif type(mff) == list:
-            cparams['ARG_FILE_NAMES'] = mfv
-            cparams['FITSFILENAME'] = mfv[0]
+            p['ARG_FILE_NAMES'] = rawfilename
+            p['FITSFILENAME'] = abspathname[0]
         else:
             eargs = [mff, mfv]
             emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
@@ -1254,7 +1323,7 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1, emsg2])
 
-    return cparams
+    return p
 
 
 # =============================================================================
