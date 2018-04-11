@@ -15,6 +15,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouFLAT
 
 # =============================================================================
 # Define variables
@@ -44,9 +45,10 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.LoadArguments(p, night_name, files, mainfitsdir='reduced')
     # setup files
-    p = spirouStartup.InitialFileSetup(p, kind='cal_HC', calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, kind='cal_HC', prefixes='hc',
+                                       calibdb=True)
     # get the fiber type
     fiber = spirouStartup.GetFiberType(p, p['fitsfilename'])
 
@@ -71,6 +73,11 @@ def main(night_name=None, files=None):
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
+
+    # ----------------------------------------------------------------------
+    # Flat correction
+    # ----------------------------------------------------------------------
+
 
     # ----------------------------------------------------------------------
     # start ll solution
