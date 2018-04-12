@@ -938,7 +938,7 @@ def locate_mask(p, filename):
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
-        relfolder = spirouConfig.Constants.CDATA_FOLDER()
+        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
         # get absolute folder path from package and relfolder
         absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
         # strip filename
