@@ -28,6 +28,8 @@ __all__ = ['MeasureBlazeForOrder']
 # =============================================================================
 # Function aliases
 # =============================================================================
+CorrectFlat = spirouFLAT.correct_flat
+
 MeasureBlazeForOrder = spirouFLAT.measure_blaze_for_order
 
 # =============================================================================
