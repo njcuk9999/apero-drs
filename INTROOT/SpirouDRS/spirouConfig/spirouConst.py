@@ -151,10 +151,13 @@ def CONFIGFOLDER():
 
 
 # noinspection PyPep8Naming
-def CDATA_FOLDER():
+def CDATA_REL_FOLDER():
     """
     Define the location and name of the constant data folder. Path is
     relative to the spirouConst.PACKAGE() path
+
+    Use spirouConfig.GetAbsFolderPath(PACKAGE(), CDATA_REL_FOLDER()) to
+    get absolute path
 
     :return const_data_folder: string, the location and name of the constant
                                data file
