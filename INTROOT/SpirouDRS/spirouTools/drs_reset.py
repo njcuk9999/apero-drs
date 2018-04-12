@@ -92,7 +92,7 @@ def reset_calibdb(p):
     # get reset directory location
     # get package name and relative path
     package = spirouConfig.Constants.PACKAGE()
-    relfolder = spirouConfig.Constants.CDATA_FOLDER()
+    relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
     # -------------------------------------------------------------------------
