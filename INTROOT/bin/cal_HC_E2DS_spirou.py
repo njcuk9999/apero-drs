@@ -13,9 +13,10 @@ from __future__ import division
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
-from SpirouDRS import spirouFLAT
+from SpirouDRS import spirouTHORCA
 
 # =============================================================================
 # Define variables
@@ -50,16 +51,25 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p, kind='cal_HC', prefixes='hc',
                                        calibdb=True)
     # get the fiber type
-    fiber = spirouStartup.GetFiberType(p, p['fitsfilename'])
+    p['fiber'] = spirouStartup.GetFiberType(p, p['fitsfilename'])
+    p.set_source('fiber', __NAME__ + '/main()')
+    # set the fiber type
+    p['fib_typ'] = [p['fiber']]
+    p.set_source('fib_typ', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all files
     data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, 'add')
+    # add data and hdr to loc
+    loc = ParamDict()
+    loc['data'], loc['hdr'] = data, hdr
+    # set the source
+    loc.set_sources(['data', 'hdr'], 'spirouImage.ReadImageAndCombine()')
 
     # ----------------------------------------------------------------------
-    # Get basic image properties for reference file
+    # Get basic parameters
     # ----------------------------------------------------------------------
     # get sig det value
     p = spirouImage.GetSigdet(p, hdr, name='sigdet')
@@ -73,10 +83,32 @@ def main(night_name=None, files=None):
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
+    # get lamp parameters
+    p = spirouTHORCA.GetLampParams(p)
 
     # ----------------------------------------------------------------------
     # Flat correction
     # ----------------------------------------------------------------------
+    # log
+    WLOG('', p['log_opt'], 'Appliying flat correction')
+    # get the flat
+    loc = spirouFLAT.CorrectFlat(p, loc, hdr)
+
+    # ----------------------------------------------------------------------
+    # loop around fiber type
+    # ----------------------------------------------------------------------
+    for fiber in p['FIB_TYP']:
+        # set fiber type for inside loop
+        p['fiber'] = p['fib_typ']
+
+        # log message for loop
+        wmsg = 'Processing Wavelength Calibration for Fiber {0}'
+        WLOG('info', p['log_opt'] + fiber, wmsg.format(fiber))
+
+        # ------------------------------------------------------------------
+        # First guess at solution for each order
+        # ------------------------------------------------------------------
+
 
 
     # ----------------------------------------------------------------------

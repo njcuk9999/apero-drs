@@ -33,6 +33,9 @@ Getll = spirouTHORCA.get_ll_from_coefficients
 
 Getdll = spirouTHORCA.get_dll_from_coefficients
 
+GetLampParams = spirouTHORCA.get_lamp_parameters
+
+
 # =============================================================================
 # End of code
 # =============================================================================
