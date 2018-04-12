@@ -12,6 +12,8 @@ from __future__ import division
 import numpy as np
 
 from SpirouDRS import spirouConfig
+from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -24,6 +26,14 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
+# Get Logging function
+WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
+# Get Config error
+ConfigError = spirouConfig.ConfigError
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 
 
 # =============================================================================
@@ -60,9 +70,51 @@ def measure_blaze_for_order(y, fitdegree):
     return blaze
 
 
-def correct_flat(p):
+def correct_flat(p=None, loc=None, hdr=None, filename=None):
+    """
+    Attempts to read the flat
+    :param p:
+    :param loc:
+    :param hdr:
+    :param filename:
 
-    pass
+    :return loc:
+    """
+    func_name = __NAME__ + '.correct_flat()'
+
+    # deal with no p and no filename
+    if p is None and filename is None:
+        emsg1 = ('Error either "p" (ParamDict) or "filename" (string) must '
+                 'be defined')
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2])
+
+    # get flat from file
+    try:
+        # read the flat
+        flat = spirouImage.ReadFlatFile(p, hdr, required=False)
+        # where the flat is zeros set it to ones
+        flat = np.where(flat == 0.0, np.ones_like(loc['data']), flat)
+    # if there is no flat defined in calibDB use a ones array
+    except ConfigError as e:
+        # log warning
+        wmsg = [e.message, '    Using constant flat instead.']
+        WLOG('warning', p['log_opt'], wmsg)
+        # flat set to ones
+        flat = np.ones_like(loc['data'])
+
+    # add flat to loc
+    loc['flat'] = flat
+    loc.set_source('flat', func_name)
+
+    # correct the data with the flat
+    # TODO: Should this be used?
+    #loc['data'] = loc['data']/flat
+
+    # return loc
+    return loc
+
+
 
 
 # =============================================================================
