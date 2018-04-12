@@ -563,7 +563,7 @@ def copy_files(p, header=None):
                 WLOG('error', p['log_opt'], [emsg1, emsg2])
 
 
-def get_file_name(p, key, hdr=None, filename=None):
+def get_file_name(p, key, hdr=None, filename=None, required=True):
     """
     Get the filename for "key" in the calibration database (for use when
     the calibration database is not needed for more than one use and does
@@ -585,6 +585,8 @@ def get_file_name(p, key, hdr=None, filename=None):
                 header from p['arg_file_names'][0]
     :param filename: string or None, if defined this is the filename returned
                      (means calibration database is not used)
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     :return read_file: string, the filename in calibration database for
                        "key" (selected via unix_time in calibDB)
@@ -609,7 +611,10 @@ def get_file_name(p, key, hdr=None, filename=None):
             emsg1 = ('Calibration database has no valid "{0}" entry '
                      'for time<{1}').format(key, p['max_time_human'])
             emsg2 = '   function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            if required:
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
+            else:
+                raise ConfigError(level='error', message=emsg1)
             rawfilename = ''
         # construct filename
         read_file = os.path.join(p['reduced_dir'], rawfilename)
