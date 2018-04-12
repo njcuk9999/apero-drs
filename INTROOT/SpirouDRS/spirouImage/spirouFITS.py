@@ -346,7 +346,8 @@ def writeimage(filename, image, hdict=None, dtype=None):
     spirouCore.spirouLog.warninglogger(w)
 
 
-def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False):
+def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
+                   required=True):
     """
     Reads the tilt file (from calib database or filename) and using the
     'kw_TILT' keyword-store extracts the tilts for each order
@@ -369,6 +370,8 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False):
     :param key: string or None, if None key='TILT' else uses string as key
                 from calibDB (first entry) to get tilt file
     :param return_filename: bool, if true return the filename only
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     if return_filename is False
         :return tilt: numpy array (1D), the tilts for each order
@@ -379,7 +382,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False):
         key = 'TILT'
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr)
+        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename
@@ -395,7 +398,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False):
 
 
 def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
-                   return_filename=False):
+                   return_filename=False, required=True):
     """
     Reads the wave file (from calib database or filename)
 
@@ -417,7 +420,8 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
     :param return_header: bool, if True returns header file else just returns
                           wave file
     :param return_filename: bool, if true return the filename only
-
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     if return_filename is False and return header is False
 
@@ -435,7 +439,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         key = 'WAVE_' + p['fiber']
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr)
+        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename only
@@ -452,7 +456,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         return wave
 
 
-def read_flat_file(p, hdr=None, filename=None, key=None):
+def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
     """
     Reads the flat file (from calib database or filename)
 
@@ -472,6 +476,8 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
                      keyword "FLAT_{fiber}"
     :param key: string or None, if None key='FLAT_{fiber}' else uses string
                 as key from calibDB (first entry) to get wave file
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     :return wave: numpy array (2D), the flat image
     """
@@ -485,7 +491,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
             WLOG('error', p['log_opt'], [emsg1, emsg2])
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr)
+        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # read read_file
@@ -495,7 +501,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None):
     return flat
 
 
-def read_blaze_file(p, hdr=None, filename=None, key=None):
+def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     """
     Reads the blaze file (from calib database or filename)
 
@@ -514,7 +520,8 @@ def read_blaze_file(p, hdr=None, filename=None, key=None):
                      keyword "BLAZE_{fiber}"
     :param key: string or None, if None key='BLAZE_{fiber}' else uses string
                 as key from calibDB (first entry) to get wave file
-
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     :return blaze: numpy array (2D), the blaze function (along x-direction)
                   for each order
@@ -529,7 +536,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None):
             WLOG('error', p['log_opt'], [emsg1, emsg2])
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr)
+        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # read read_file
@@ -539,7 +546,8 @@ def read_blaze_file(p, hdr=None, filename=None, key=None):
     return blaze
 
 
-def read_order_profile_superposition(p, hdr=None, filename=None):
+def read_order_profile_superposition(p, hdr=None, filename=None,
+                                     required=True):
     """
     Read the order profile superposition image from either "filename" (if not
     None) or get filename from the calibration database using "p"
@@ -561,6 +569,8 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
                 first file in "ARG_FILE_NAMES" i.e. "FITSFILENAME"
     :param filename: string or None, if defined no need for "hdr" or keys from
                      "p" the order profile is read straight from "filename"
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     :return orderp: numpy array (2D), the order profile image read from file
     """
@@ -585,7 +595,7 @@ def read_order_profile_superposition(p, hdr=None, filename=None):
         key = None
     # construct read filename from calibDB or from "filename"
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr)
+        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # read read_file
@@ -1122,7 +1132,7 @@ def read_key(p, hdict=None, key=None):
     return keylookup(p, hdict, key=key)
 
 
-def read_key_2d_list(p, hdict, key, dim1, dim2, return_file=False):
+def read_key_2d_list(p, hdict, key, dim1, dim2):
     """
     Read a set of header keys that were created from a 2D list
 
@@ -1138,7 +1148,6 @@ def read_key_2d_list(p, hdict, key, dim1, dim2, return_file=False):
                  where column number = dim2 and row number = range(0, dim1)
     :param dim1: int, the number of elements in dimension 1 (number of rows)
     :param dim2: int, the number of columns in dimension 2 (number of columns)
-    :param return_file: bool, if True only returns file (not values)
 
     if return_file is false:
         :return value: numpy array (2D), the reconstructed 2D list of variables
