@@ -52,10 +52,10 @@ ic_ccdy_red_low = 750
 ic_ccdy_red_high = 1350
 
 #   Resize image                                                     - [cal_loc]
-ic_ccdx_low = 5
-ic_ccdx_high = 2040
-ic_ccdy_low = 5
-ic_ccdy_high = 1935
+ic_ccdx_low = 1
+ic_ccdx_high = 4096
+ic_ccdy_low = 1
+ic_ccdy_high = 4096
 
 #    Define the types of fiber to look for            - [cal_extract, cal_drift]
 #       (earlier in list takes priority)
@@ -138,7 +138,7 @@ ic_offset = 40
 
 #   Definition of the central column                       - [cal_loc, cal_slit]
 #      (formally ic_ccdcolc)
-ic_cent_col = 1000
+ic_cent_col = 2000
 
 #   Definition of the extraction window size (half size)             - [cal_loc]
 ic_ext_window = 12
@@ -157,7 +157,7 @@ ic_widthmin = 5
 ic_locnbpix = 45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
-ic_min_amplitude = 100
+ic_min_amplitude = 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
