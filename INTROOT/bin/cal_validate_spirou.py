@@ -27,6 +27,7 @@ DEBUG = 0
 # exit type
 # noinspection PyProtectedMember
 EXIT = os._exit
+EXIT = sys.exit
 
 
 # =============================================================================
@@ -281,7 +282,7 @@ def main(debug_mode=0):
     # get log
     wlog = spirouLog.logger
     # Get config parameters
-    cparams = spirouConfig.ReadConfigFile()
+    cparams, _ = spirouConfig.ReadConfigFile()
     # get drs_name and drs_version
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
@@ -313,13 +314,8 @@ def debug_message(program, sub=False):
 
 
 def try_to_read_config_file():
-    from SpirouDRS.spirouConfig.spirouConfigFile import read_config_file
-    from SpirouDRS.spirouConfig.spirouConst import PACKAGE
-    from SpirouDRS.spirouConfig.spirouConst import CONFIGFOLDER
-    from SpirouDRS.spirouConfig.spirouConst import CONFIGFILE
-
-    p = read_config_file(PACKAGE(), CONFIGFOLDER(), CONFIGFILE(),
-                         return_raw=False)
+    from SpirouDRS.spirouStartup import Begin
+    p = Begin(quiet=True)
     return p
 
 
@@ -335,7 +331,18 @@ def test_paths(p):
              'DRS_CALIB_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING']
 
     passed = True
-    print('\t Testing {0}'.format(config_file))
+
+    # if using user config file display has to be altered
+    if p['USER_CONFIG'] and ('DRS_UCONFIG' in p):
+        umsg = '\n\t\t1) {0}\n\t\t2) {1}'
+    else:
+        umsg = '\n\t\t{0}'
+
+    # print which config files we are testing
+    msg = '\t Testing file(s): ' + umsg
+    print(msg.format(config_file, p['DRS_UCONFIG']))
+
+    # loop around paths and check if they exist
     for path in paths:
         # see if path was found in config_file
         if path not in p:
@@ -345,7 +352,8 @@ def test_paths(p):
         # see if path was correct if found
         elif not os.path.exists(p[path]):
             emsg = '\n\t\tError: Path {0}="{1}" does not exist'
-            print(emsg.format(path, p[path], config_file))
+            emsg += '\n\t\t\t(Defined in {2})'
+            print(emsg.format(path, p[path], p.sources[path]))
             passed = False
         # else path exists and is present
         else:
@@ -353,11 +361,13 @@ def test_paths(p):
 
     # if all tests were past print it
     if passed:
-        wmsg = '\n\t\tCongratulations all paths in {0} set up correctly.'
-        print(wmsg.format(config_file))
+        wmsg = ('\n\tCongratulations all paths in file(s):' + umsg +
+                '\n\tset up correctly.')
+        print(wmsg.format(config_file, p['DRS_UCONFIG']))
     else:
-        wmsg = '\n\tPlease set up config file ({0}) with valid paths.'
-        print(wmsg.format(config_file))
+        wmsg = ('\n\tPlease set up config file(s):' + umsg +
+                '\n\twith valid paths.')
+        print(wmsg.format(config_file, p['DRS_UCONFIG']))
         EXIT(1)
 
 

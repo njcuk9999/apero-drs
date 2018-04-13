@@ -13,6 +13,9 @@ DRS_PLOT = 1
 #      2: recipes specific (plots and some code runs)
 DRS_DEBUG = 0
 
+# Whether to use user config (True or 1 to use)
+#      if False (or 0) only uses default configuration files
+USER_CONFIG = 1
 
 # -----------------------------------------------------------------------------
 # path settings
@@ -20,26 +23,30 @@ DRS_DEBUG = 0
 
 #   Define the DATA directory
 # TDATA = “/scratch/Projects/spirou_py3/data/”
-TDATA = "/home/mhobson/SPIRou_CFHT_data/"
+TDATA = "/drs/spirou/data/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/home/mhobson/spirou_py3/branches/melissa/INTROOT/'
+DRS_ROOT = '/drs/spirou/INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/home/mhobson/SPIRou_CFHT_data/raw'
+DRS_DATA_RAW = '/drs/spirou/data/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/home/mhobson/SPIRou_CFHT_data/reduced'
+DRS_DATA_REDUC = '/drs/spirou/data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/home/mhobson/SPIRou_CFHT_data/calibDB'
+DRS_CALIB_DB = '/drs/spirou/data/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/home/mhobson/SPIRou_CFHT_data/msg'
+DRS_DATA_MSG = '/drs/spirou/data/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/home/mhobson/SPIRou_CFHT_data/tmp'
+DRS_DATA_WORKING = '/drs/spirou/data/tmp'
 
+#   Define the user directory
+#        (overwritten by DRS_UCONFIG environmental variable)
+#      If only using default config file (i.e this file) comment this line out
+DRS_UCONFIG = '~/spirou_config/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
@@ -66,20 +73,16 @@ COLOURED_LOG = True
 # -----------------------------------------------------------------------------
 # config file locations
 # -----------------------------------------------------------------------------
+#       location (in order of priority):
+#           DRS_UCONFIG
+#           DRS_CONFIG (or DRS_ROOT/config if DRS_CONFIG not defined)
+
 # Special config file - doesn't exist and not used
 SPECIAL_NAME = 'special_config_SPIROU.py'
 
 #   Define the ICDP configuration file
-#       (located at DRS_CONFIG or DRS_ROOT/config if DRS_CONFIG not defined)
 ICDP_NAME = 'constants_SPIROU.py'
 
-
-# -----------------------------------------------------------------------------
-# Misc/ unneccessary / unsorted
-# -----------------------------------------------------------------------------
-# Set the log date?
-#  value must be "YY-MM-DD" or "None"
-# DRS_USED_DATE = None
 
 # -----------------------------------------------------------------------------
 #  End of configuration file

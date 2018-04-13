@@ -184,6 +184,25 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 {\AllRecipes}{\spirouConst.DEBUG()}{\AllRecipes}
 \fi
 
+
+% USER_CONFIG
+\item \namedlabel{text:user_config} \ParameterEntry{Enable use of custom configuration files}
+{Controls whether the DRS searches for custom configuration files (all configuration files). Value can be 1 (True) or 0 (False), True turns on the use of custom configuration files. Constants/variables set in the custom constant files \textbf{always} take precedence over the master files. Any constant/variable not set in a custom constant file is taken from the master files. Value must be 1 or True to switch on or 0 or False to switch off.}
+{DRS\_DEBUG}{0}
+{\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
+
+% ICDP_NAME
+\item \namedlabel{text:icdp_name} \ParameterEntry{Plot interval}
+{Defines the main constants file for the DRS (not the directory just the file name). The directory is controlled internally or if \definevariable{text:user_config}{USER\_CONFIG} is set by \definevariable{text:drs_uconfig}{DRS\_UCONFIG}}{constants\_SPIROU.py}
+{\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
+
+
+% SPECIAL_NAME
+\item \ParameterEntry{Plot interval}
+{Defines the a special constants file for the DRS (not the directory just the file name). The directory is controlled internally or if \definevariable{text:user_config}{USER\_CONFIG} is set by \definevariable{text:drs_uconfig}{DRS\_UCONFIG}}{special\_config\_SPIROU.py}
+{\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
+\DevNote{This file does not currently exist.}
+
 % ic_display_timeout
 \item \ParameterEntry{Plot interval}
 {Set the interval between plots in seconds (for certain interactive graphs). Value must be a valid float larger than zero.}
@@ -238,6 +257,10 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \item \namedlabel{text:drs_data_working} \ParameterEntry{The working directory}
 {Defines the working directory. Value must be a string containing a valid file location.}
 {DRS\_DATA\_WORKING}{/drs/data/tmp/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
+
+\item \namedlabel{text:drs_uconfig} \ParameterEntry{The custom configuration directory}
+{Defines the custom configuration directory. Value must be a string containing a valid file location.}
+{DRS\_UCONFIG}{$\sim$/spirou\_config/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
 
 \end{itemize}
