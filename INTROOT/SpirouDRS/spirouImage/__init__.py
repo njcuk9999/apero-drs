@@ -107,6 +107,8 @@ Read2Dkey = spirouFITS.read_key_2d_list
 
 ReadTiltFile = spirouFITS.read_tilt_file
 
+ReadLineList = spirouImage.read_line_list
+
 ReadWaveFile = spirouFITS.read_wave_file
 
 ReadBlazeFile = spirouFITS.read_blaze_file
