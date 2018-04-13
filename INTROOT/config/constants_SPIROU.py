@@ -74,13 +74,13 @@ fiber_types = ['AB', 'A', 'B', 'C']
 nbfib_fpall = {'AB': 2, 'A': 1, 'B': 1, 'C': 1}
 
 #   Number of orders to skip at start of image                       - [cal_loc]
-ic_first_order_jump_fpall = {'AB': 2, 'A': 0, 'B': 0, 'C': 0}
+ic_first_order_jump_fpall = {'AB': 3, 'A': 0, 'B': 0, 'C': 0}
 
 #   Maximum number of order to use                                   - [cal_loc]
-ic_locnbmaxo_fpall = {'AB': 72, 'A': 36, 'B': 36, 'C': 36}
+ic_locnbmaxo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 
 #   Quality control "normal" number of orders on fiber               - [cal_loc]
-qc_loc_nbo_fpall = {'AB': 72, 'A': 36, 'B': 36, 'C': 36}
+qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 
 #   Fiber type                                                        - [cal_ff]
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}

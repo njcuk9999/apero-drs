@@ -20,25 +20,25 @@ DRS_DEBUG = 0
 
 #   Define the DATA directory
 # TDATA = “/scratch/Projects/spirou_py3/data/”
-TDATA = "/scratch/Projects/spirou_py3/data/"
+TDATA = "/home/mhobson/SPIRou_CFHT_data/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/scratch/Projects/spirou_py3/spirou_py3/INTROOT/'
+DRS_ROOT = '/home/mhobson/spirou_py3/branches/melissa/INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/scratch/Projects/spirou_py3/data/raw'
+DRS_DATA_RAW = '/home/mhobson/SPIRou_CFHT_data/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/scratch/Projects/spirou_py3/data/reduced'
+DRS_DATA_REDUC = '/home/mhobson/SPIRou_CFHT_data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/scratch/Projects/spirou_py3/data/calibDB'
+DRS_CALIB_DB = '/home/mhobson/SPIRou_CFHT_data/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/scratch/Projects/spirou_py3/data/msg'
+DRS_DATA_MSG = '/home/mhobson/SPIRou_CFHT_data/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/scratch/Projects/spirou_py3/data/tmp'
+DRS_DATA_WORKING = '/home/mhobson/SPIRou_CFHT_data/tmp'
 
 
 # -----------------------------------------------------------------------------
