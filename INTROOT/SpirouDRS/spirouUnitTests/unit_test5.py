@@ -206,6 +206,76 @@ if __name__ == "__main__":
     test += 1
 
     # ----------------------------------------------------------------------
+    # test cal_extract_RAW_spirou - hcone_hcone02c61.fits
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_extract_RAW_spirou (hcone_hcone02c61.fits AB A B C)'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # set up files
+    files = ['hcone_hcone02c61.fits']
+    # run test
+    ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
+    times[name] = ll['timer']
+    # append test
+    test += 1
+
+    # ----------------------------------------------------------------------
+    # test cal_extract_RAW_spirou - hcone_hcone03c61.fits
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_extract_RAW_spirou (hcone_hcone03c61.fits AB A B C)'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # set up files
+    files = ['hcone_hcone03c61.fits']
+    # run test
+    ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
+    times[name] = ll['timer']
+    # append test
+    test += 1
+
+    # ----------------------------------------------------------------------
+    # test cal_extract_RAW_spirou - hcone_hcone04c61.fits
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_extract_RAW_spirou (hcone_hcone04c61.fits AB A B C)'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # set up files
+    files = ['hcone_hcone04c61.fits']
+    # run test
+    ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
+    times[name] = ll['timer']
+    # append test
+    test += 1
+
+    # ----------------------------------------------------------------------
+    # test cal_extract_RAW_spirou - hcone_hcone05c61.fits
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_extract_RAW_spirou (hcone_hcone05c61.fits AB A B C)'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # set up files
+    files = ['hcone_hcone05c61.fits']
+    # run test
+    ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
+    times[name] = ll['timer']
+    # append test
+    test += 1
+
+    # ----------------------------------------------------------------------
+    # test cal_extract_RAW_spirou - hcone_hcone06c61.fits
+    # ----------------------------------------------------------------------
+    # set name and print progress
+    name = 'cal_extract_RAW_spirou (hcone_hcone06c61.fits AB A B C)'
+    print(UNITTEST.format('\n'*3, '='*50, '\n', test, name))
+    # set up files
+    files = ['hcone_hcone06c61.fits']
+    # run test
+    ll = utf.UNIT_TEST_CAL_EXTRACT(files=files, fiber=None, return_locals=True)
+    times[name] = ll['timer']
+    # append test
+    test += 1
+
+    # ----------------------------------------------------------------------
     # test cal_DRIFT_RAW_spirou
     # ----------------------------------------------------------------------
     # set name and print progress

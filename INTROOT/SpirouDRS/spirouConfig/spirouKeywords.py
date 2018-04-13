@@ -29,7 +29,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Get param dict
 ParamDict = spirouConfig.ParamDict
 # get default config file
-p = spirouConfig.read_config_file()
+p, _ = spirouConfig.read_config_file()
 # get variables from spirouConst
 p['DRS_NAME'] = spirouConfig.Constants.NAME()
 p['DRS_VERSION'] = spirouConfig.Constants.VERSION()
@@ -115,7 +115,8 @@ USE_PARAMS = ['DRS_NAME',
 
 # load ICDP config file
 try:
-    p = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True)
+    p, _ = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True,
+                                              logthis=False)
 except Exception:
     for param in USE_PARAMS:
         p[param] = '0'
