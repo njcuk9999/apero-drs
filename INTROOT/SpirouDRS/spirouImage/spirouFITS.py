@@ -336,7 +336,7 @@ def writeimage(filename, image, hdict=None, dtype=None):
     # write to file
     with warnings.catch_warnings(record=True) as w:
         try:
-            hdu.writeto(filename)
+            hdu.writeto(filename, overwrite=True)
         except Exception as e:
             emsg1 = 'Cannot write image to fits file {0}'.format(filename)
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
