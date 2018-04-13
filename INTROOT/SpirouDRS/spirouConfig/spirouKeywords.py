@@ -178,11 +178,11 @@ kw_DPRTYPE = ['TPL_NAME', None, '']
 
 # define the HEADER key for acquisition time (used to get value only)
 #   in format YYYY-mm-dd-HH-MM-SS.ss
-kw_ACQTIME_KEY = ['DATE', None, '']
+kw_ACQTIME_KEY = ['ACQTIME1', None, '']
 
 # define the HEADER key for acquisition time (used to get value only)
 #   in unix time format (time since 1970-01-01-00-00-00)
-kw_ACQTIME_KEY_UNIX = ['MJDATE', None, '']
+kw_ACQTIME_KEY_UNIX = ['ACQTIME', None, '']
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 kw_RDNOISE = ['RDNOISE', None, '']
