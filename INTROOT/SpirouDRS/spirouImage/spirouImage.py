@@ -858,12 +858,17 @@ def read_line_list(p=None, filename=None):
         emsg1 = 'Line list file={0} does not exist.'.format(linefile)
         emsg2 = '    function={0}'.format(func_name)
         WLOG('error', p['log_opt'], [emsg1, emsg2])
-    # read filename as a table
-    linetable = spirouTable.read_table(linefile, fmt='ascii',
-                                       colnames=['ll', 'amp'])
+    # read filename as a table (no header so need data_start=0)
+    linetable = spirouTable.read_table(linefile,
+                                       fmt='ascii.tab',
+                                       colnames=['ll', 'amp', 'kind'],
+                                       data_start=0)
     # push columns into numpy arrays and force to floats
     ll = np.array(linetable['ll'], dtype=float)
     amp = np.array(linetable['amp'], dtype=float)
+    # log that we have opened line file
+    wmsg = 'List of {0} HC lines read in file {1}'
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(len(ll), linefile))
     # return line list and amps
     return ll, amp
 
