@@ -1040,7 +1040,7 @@ def CONFIG_KEY_ERROR(key, location=None):
 
 
 # noinspection PyPep8Naming
-def DATE_FMT_HEADER():
+def DATE_FMT_HEADER(p):
     """
     The date format for string timestamp for reading times from FITS
     file HEADERS
@@ -1064,7 +1064,11 @@ def DATE_FMT_HEADER():
     :return date_fmt_calibdb: string, the string timestamp format for use in
                               reading FITS file HEADERS
     """
-    date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
+    # TODO: This switch will be obsolete after H2RG testing is over
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        date_fmt_header = '%Y-%m-%dT%H:%M:%S'
+    else:
+        date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_header
 
 
