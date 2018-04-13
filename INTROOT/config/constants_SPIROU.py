@@ -40,16 +40,16 @@ ic_display_timeout = 0.5
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 2000
-ic_ccdx_blue_high = 4000
-ic_ccdy_blue_low = 100
-ic_ccdy_blue_high = 4000
+ic_ccdx_blue_low = 2048 - 200
+ic_ccdx_blue_high = 2048 - 1500
+ic_ccdy_blue_low = 2048 - 20
+ic_ccdy_blue_high = 2048 - 350
 
 #   Resize red window                                               - [cal_dark]
-ic_ccdx_red_low = 750
-ic_ccdx_red_high = 1350
-ic_ccdy_red_low = 100
-ic_ccdy_red_high = 4000
+ic_ccdx_red_low = 2048 - 20
+ic_ccdx_red_high = 2048 - 1750
+ic_ccdy_red_low = 2048 - 1570
+ic_ccdy_red_high = 2048 - 1910
 
 #   Resize image                                                     - [cal_loc]
 ic_ccdx_low = 5
@@ -74,13 +74,13 @@ fiber_types = ['AB', 'A', 'B', 'C']
 nbfib_fpall = {'AB': 2, 'A': 1, 'B': 1, 'C': 1}
 
 #   Number of orders to skip at start of image                       - [cal_loc]
-ic_first_order_jump_fpall = {'AB': 3, 'A': 0, 'B': 0, 'C': 0}
+ic_first_order_jump_fpall = {'AB': 2, 'A': 0, 'B': 0, 'C': 0}
 
 #   Maximum number of order to use                                   - [cal_loc]
-ic_locnbmaxo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
+ic_locnbmaxo_fpall = {'AB': 72, 'A': 36, 'B': 36, 'C': 36}
 
 #   Quality control "normal" number of orders on fiber               - [cal_loc]
-qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
+qc_loc_nbo_fpall = {'AB': 72, 'A': 36, 'B': 36, 'C': 36}
 
 #   Fiber type                                                        - [cal_ff]
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
