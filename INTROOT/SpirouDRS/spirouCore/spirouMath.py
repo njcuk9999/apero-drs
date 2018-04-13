@@ -15,9 +15,11 @@ Version 0.0.0
 """
 from __future__ import division
 import numpy as np
+from scipy.optimize import curve_fit
 from datetime import datetime, tzinfo, timedelta
 from time import mktime
 from calendar import timegm
+import warnings
 
 from SpirouDRS import spirouConfig
 
@@ -65,6 +67,70 @@ def polyval(p, x):
         y += v
     return y
 
+
+def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
+                return_uncertainties=False):
+    """
+    Fit a single gaussian to the data "y" at positions "x", points can be
+    weighted by "weights" and an initial guess for the gaussian parameters
+
+    :param x: numpy array (1D), the x values for the gaussian
+    :param y: numpy array (1D), the y values for the gaussian
+    :param weights: numpy array (1D), the weights for each y value
+    :param guess: list of floats, the initial guess for the guassian fit
+                  parameters in the following order:
+
+                  [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :param return_fit: bool, if True also calculates the fit values for x
+                       i.e. yfit = gauss_function(x, *pfit)
+
+    :param return_uncertainties: bool, if True also calculates the uncertainties
+                                 based on the covariance matrix (pcov)
+                                 uncertainties = np.sqrt(np.diag(pcov))
+
+    :return pfit: numpy array (1D), the fit parameters in the
+                  following order:
+
+                [amplitude, center, fwhm, offset from 0 (in y-direction)]
+
+    :return yfit: numpy array (1D), the fit y values, i.e. the gaussian values
+                  for the fit parameters, only returned if return_fit = True
+
+    """
+    # if we don't have weights set them to be all equally weighted
+    if weights is None:
+        weights = np.ones(len(x))
+    # if we aren't provided a guess, make one
+    if guess is None:
+        guess = [np.max(y), np.mean(y), np.std(y), 0]
+    # calculate the fit using curve_fit to the function "gauss_function"
+    with warnings.catch_warnings(record=True) as _:
+        pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,
+                               absolute_sigma=True)
+    if return_fit and return_uncertainties:
+        # calculate the fit parameters
+        yfit = gauss_function(x, *pfit)
+        # calculate the fit uncertainties based on pcov
+        efit = np.sqrt(np.diag(pcov))
+        # return pfit, yfit and efit
+        return pfit, yfit, efit
+    # if just return fit
+    elif return_fit:
+        # calculate the fit parameters
+        yfit = gauss_function(x, *pfit)
+        # return pfit and yfit
+        return pfit, yfit
+    # if return uncertainties
+    elif return_uncertainties:
+        # calculate the fit uncertainties based on pcov
+        efit = np.sqrt(np.diag(pcov))
+        # return pfit and efit
+        return pfit, efit
+    # else just return the pfit
+    else:
+        # return pfit
+        return pfit
 
 def gauss_function(x, a, x0, sigma, dc):
     """
