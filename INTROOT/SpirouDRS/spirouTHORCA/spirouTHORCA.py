@@ -203,6 +203,131 @@ def get_dll_from_coefficients(params, nx, nbo):
     return ll
 
 
+def get_lamp_parameters(p, filename=None, kind=None):
+    """
+    Get lamp parameters from either a specified lamp type="kind" or a filename
+    or from p['ARG_FILE_NAMES'][0] (if no filename or kind defined)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
+    :param filename: string or None, the filename to check for the lamp
+                     substring in
+    :param kind: string or None, the lamp type
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                LAMP_TYPE: string, the type of lamp (e.g. UNe or TH)
+                IC_LL_LINE_FILE: string, the file name of the line list to use
+                IC_CAT_TYPE: string, the line list catalogue type
+    """
+
+    func_name = __NAME__ + '.get_lamp_parameters()'
+    # identify lamp
+    if kind is not None:
+        lamp = kind
+    elif filename is not None:
+        lamp = decide_on_lamp_type(p, filename=filename)
+    else:
+        lamp = decide_on_lamp_type(p, filename=p['ARG_FILE_NAMES'][0])
+
+    # -------------------------------------------------------------------------
+    # Now set parameters in p based on lamp type
+
+    # the lamp type
+    p['LAMP_TYPE'] = lamp
+    p.set_source('LAMP_TYPE', func_name)
+    # the lamp file
+    p['IC_LL_LINE_FILE'] = p['IC_LL_LINE_FILE_ALL'][lamp]
+    p.set_source('IC_LL_LINE_FILE', func_name)
+    # the lamp cat type
+    p['IC_CAT_TYPE'] = p['IC_CAT_TYPE_ALL'][lamp]
+    p.set_source('IC_CAT_TYPE', func_name)
+    # -------------------------------------------------------------------------
+    # finally return p
+    return p
+
+
+def first_guess_at_wave_solution(p, loc):
+    """
+    First guess at wave solution, consistency check, using the wavelength
+    solutions line list
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+
+
+    :return:
+    """
+
+    # get used constants from p
+    n_order_final = p['CAL_HC_N_ORD_FINAL']
+
+    # set up the orders to fit
+    fit_orders = p['CAL_HC_T_ORDER_START'] - np.arange(n_order_final)
+
+    # get wave solution filename
+    wave_file = spirouImage.ReadWaveFile(p, loc['hdr'], return_filename=True)
+
+    # log wave file name
+    wmsg = 'Reading initial wavelength solution in {0}'
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(wave_file))
+
+    # get E2DS line list from wave_file
+    ll_init, param_ll_init = get_e2ds_ll(p, loc['hdr'], filename=wave_file)
+
+    # only perform fit on orders 0 to p['CAL_HC_N_ORD_FINAL']
+    ll_init = ll_init[:n_order_final]
+
+    ll_line, ampl_line = spirouImage.ReadLineList(p)
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def decide_on_lamp_type(p, filename):
+    """
+    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
+    :param filename: string, the filename to check for the lamp substring in
+
+    :return lamp_type: string, the lamp type for this file (one of the values
+                       in p['IC_LAMPS']
+    """
+    func_name = __NAME__ + '.decide_on_lamp_type()'
+    # storage for lamp type
+    lamp_type = None
+    # loop around each lamp in defined lamp types
+    for lamp in p['IC_LAMPS']:
+        # check for lamp in filename
+        if lamp in filename:
+            # check if we have already found a lamp type
+            if lamp_type is not None:
+                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
+                         'ambiguous'.format(filename))
+                emsg2 = '    function={0}'.format(func_name)
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
+            else:
+                lamp_type = lamp
+    # check that lamp is defined
+    if lamp_type is None:
+        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
+        emsg2 = ('    Must be one of the following: {0}'
+                 ''.format(', '.join(p['IC_LAMPS'])))
+        emsg3 = '    function={0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+    # finally return lamp type
+    return lamp_type
+
+
 # =============================================================================
 # End of code
 # =============================================================================

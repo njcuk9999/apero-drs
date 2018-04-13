@@ -23,6 +23,7 @@ import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
 import cal_extract_RAW_spirou
 import cal_FF_RAW_spirou
+import cal_HC_E2DS_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
 
@@ -115,7 +116,7 @@ def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
     flatfile = 'flat_flat02f10.fits'
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_badpix_spirou
     ll = cal_BADPIX_spirou.main(NIGHT_NAME, darkfile, flatfile)
     # end timer
     endtime = time.time()
@@ -171,7 +172,7 @@ def UNIT_TEST_CAL_LOC_RAW(kind='flat_dark', log=False, plot=False,
         raise ValueError(emsg.format(kind, name))
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_loc_RAW_spirou
     ll = cal_loc_RAW_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
@@ -215,7 +216,7 @@ def UNIT_TEST_CAL_SLIT(log=False, plot=False, return_locals=False):
     files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_SLIT_spirou
     ll = cal_SLIT_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
@@ -271,7 +272,7 @@ def UNIT_TEST_CAL_FF_RAW(kind='flat_dark', log=False, plot=False,
         raise ValueError(emsg.format(kind, name))
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_FF_RAW_spirou
     ll = cal_FF_RAW_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
@@ -380,7 +381,7 @@ def UNIT_TEST_CAL_EXTRACT(kind='fp_fp', fiber=None, log=False, plot=False,
 
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_extract_RAW_spirou
     ll = cal_extract_RAW_spirou.main(NIGHT_NAME, files, fiber)
     # end timer
     endtime = time.time()
@@ -426,7 +427,7 @@ def UNIT_TEST_CAL_DRIFT_RAW(log=False, plot=False, return_locals=False):
     files = ['fp_fp02a203.fits']
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_DRIFT_RAW_spirou
     ll = cal_DRIFT_RAW_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
@@ -467,7 +468,7 @@ def UNIT_TEST_CAL_DRIFT_E2DS(log=False, plot=False, return_locals=False):
     files = 'fp_fp02a203_e2ds_AB.fits'
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_DRIFT_E2DS_spirou
     ll = cal_DRIFT_E2DS_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
@@ -509,7 +510,7 @@ def UNIT_TEST_CAL_DRIFTPEAK_E2DS(log=False, plot=False, return_locals=False):
     files = 'fp_fp02a203_e2ds_AB.fits'
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_DRIFTPEAK_E2DS_spirou
     ll = cal_DRIFTPEAK_E2DS_spirou.main(NIGHT_NAME, files)
     # end timer
     endtime = time.time()
@@ -552,7 +553,7 @@ def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
     mask, rv, width, step = 'UrNe.mas', 0, 10, 0.1
     # start timer
     starttime = time.time()
-    # run cal_dark_spirou
+    # run cal_CCF_E2DS_spirou
     ll = cal_CCF_E2DS_spirou.main(NIGHT_NAME, e2dsfile, mask, rv, width, step)
     # end timer
     endtime = time.time()
@@ -570,6 +571,49 @@ def UNIT_TEST_CAL_CCF_E2DS(log=False, plot=False, return_locals=False):
         # return timing
         return ll['timer']
 
+
+# noinspection PyPep8Naming
+def UNIT_TEST_CAL_HC_E2DS(log=False, plot=False, return_locals=False):
+    """
+    test cal_HC_E2DS_spirou
+
+    :param log: bool, whether to print test log messages during run
+    :param plot: bool, whether to automatically close all plots after run
+    :param return_locals: bool, if true returns local scope of tested function,
+                          if false returns the timing
+
+    :return ll: dictionary, the local scope of the test function
+                (if return_locals=True)
+    :return timing: float, the time in seconds taken to run test
+                    (if return_locals=False)
+    """
+    # set name and print progress
+    name = 'cal_HC_E2DS_spirou'
+    if log:
+        print(UNITTEST.format('\n' * 3, '=' * 50, '\n', name))
+    # set up files
+    files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
+             'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
+             'hcone_hcone06c61_e2ds_AB.fits']
+    # start timer
+    starttime = time.time()
+    # run cal_HC_E2DS_spirou
+    ll = cal_HC_E2DS_spirou.main(NIGHT_NAME, files=files)
+    # end timer
+    endtime = time.time()
+    ll['timer'] = endtime - starttime
+    # compile outputs
+    ll['outputs'] = [Constants.CCF_FITS_FILE(ll['p']),
+                     Constants.CCF_TABLE_FILE(ll['p'])]
+    # deal with closing plots
+    if not plot:
+        plt.close('all')
+    # if return locals return locals
+    if return_locals:
+        return ll
+    else:
+        # return timing
+        return ll['timer']
 
 # =============================================================================
 # Start of code

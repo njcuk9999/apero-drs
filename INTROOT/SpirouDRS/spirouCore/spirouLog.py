@@ -32,7 +32,7 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
 # Get constant parameters
-CPARAMS = spirouConfig.ReadConfigFile()
+CPARAMS, _ = spirouConfig.ReadConfigFile()
 TRIG_KEY = spirouConfig.Constants.LOG_TRIG_KEYS()
 WRITE_LEVEL = spirouConfig.Constants.WRITE_LEVEL()
 EXIT_TYPE = spirouConfig.Constants.EXIT()
