@@ -21,6 +21,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from . import spirouFITS
+from . import spirouTable
 
 # =============================================================================
 # Define variables
@@ -798,6 +799,75 @@ def fit_tilt(pp, lloc):
 
     # return lloc
     return lloc
+
+
+def read_line_list(p=None, filename=None):
+    """
+    Read the line list file (if filename is None construct file from
+    p['IC_LL_LINE_FILE']
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            log_opt: string, log option, normally the program name
+
+        May contain
+            IC_LL_LINE_FILE: string, the file name of the line list to use
+                             (required if filename is None)
+
+    :param filename: string or None, if defined the filename
+
+    # TODO: what are ll and amp
+    :return ll:
+    :return amp:
+    """
+
+    func_name = __NAME__ + '.read_line_list()'
+    # get SpirouDRS data folder
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # deal with p and filename being None
+    if p is None and filename is None:
+        emsg1 = 'p (ParamDict) or "filename" must be defined'
+        emsg2 = '    function={0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # assign line file
+    if filename is not None:
+        # if filename is absolute path and file exists use this
+        if os.path.exists(filename):
+            linefile = filename
+        # if filename is defined but doesn't exist try to see if it is in the
+        # data folder
+        else:
+            linefile = os.path.join(datadir, filename)
+    elif 'IC_LL_LINE_FILE' in p:
+        # else use the predefined line list file from "p"
+        if os.path.exists(p['IC_LL_LINE_FILE']):
+            linefile = p['IC_LL_LINE_FILE']
+        # if it isn't an absolute path try to see if it is in the data folder
+        else:
+            linefile = os.path.join(datadir, p['IC_LL_LINE_FILE'])
+    else:
+        emsg1 = ('p[\'IC_LL_LINE_FILE\'] (ParamDict) or "filename" '
+                 'must be defined')
+        emsg2 = '    function={0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        linefile = ''
+    # check that line file exists
+    if not os.path.exists(linefile):
+        emsg1 = 'Line list file={0} does not exist.'.format(linefile)
+        emsg2 = '    function={0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # read filename as a table
+    linetable = spirouTable.read_table(linefile, fmt='ascii',
+                                       colnames=['ll', 'amp'])
+    # push columns into numpy arrays and force to floats
+    ll = np.array(linetable['ll'], dtype=float)
+    amp = np.array(linetable['amp'], dtype=float)
+    # return line list and amps
+    return ll, amp
+
+
 
 
 # =============================================================================

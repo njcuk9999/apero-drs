@@ -28,7 +28,7 @@ from SpirouDRS import spirouCore
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'spirouStarup.py'
+__NAME__ = 'spirouStartup.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -38,6 +38,10 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
+# get param dict
+ParamDict = spirouConfig.ParamDict
+# get the config error
+ConfigError = spirouConfig.ConfigError
 # -----------------------------------------------------------------------------
 # define string types
 TYPENAMES = {int: 'integer', float: 'float', list: 'list',
@@ -49,11 +53,13 @@ HEADER = ' *****************************************'
 # =============================================================================
 # Define setup functions
 # =============================================================================
-def run_begin():
+def run_begin(quiet=False):
     """
     Begin DRS - Must be run at start of every recipe
     - loads the parameters from the primary configuration file, displays
       title, checks priamry constants and displays initial parameterization
+
+    :param quiet: bool, if True no messages are displayed
 
     :return cparams: parameter dictionary, ParamDict constants from primary
                      configuration file
@@ -62,26 +68,38 @@ def run_begin():
                 DRS_NAME: string, the name of the DRS
                 DRS_VERSION: string, the version of the DRS
     """
-    # Get config parameters
-    cparams = spirouConfig.ReadConfigFile()
+    # Get config parameters from primary file
+    try:
+        cparams, warn_messages = spirouConfig.ReadConfigFile()
+    except ConfigError as e:
+        WLOG(e.level, DPROG, e.message)
+        cparams, warn_messages = None, []
+
+    # log warning messages
+    if len(warn_messages) > 0:
+        WLOG('warning', DPROG, warn_messages)
+
     # get variables from spirouConst
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
     cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
     # display title
-    display_drs_title(cparams)
+    if not quiet:
+        display_drs_title(cparams)
     # check input parameters
     cparams = spirouConfig.CheckCparams(cparams)
-    # display initial parameterisation
-    display_initial_parameterisation(cparams)
-    # display system info (log only)
-    display_system_info()
+
+    if not quiet:
+        # display initial parameterisation
+        display_initial_parameterisation(cparams)
+        # display system info (log only)
+        display_system_info()
     # return parameters
     return cparams
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
-                   mainfitsfile=None, mainfitsdir=None):
+                   mainfitsfile=None, mainfitsdir=None, quiet=False):
     """
     Deal with loading run time arguments:
 
@@ -116,14 +134,14 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
 
            i.e. in form:
 
-                program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+                program.py night_dir arg_file_names[0] arg_file_names[1]...
 
            loads all arguments into customargs
 
-           i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+           i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
            expects command line arguments to be:
 
-                program.py rawdir filename a b c
+                program.py night_dir filename a b c
 
     :param mainfitsfile: string or None, if "customargs" is not None (i.e. if we
                          are using custom arguments) we must define one
@@ -144,41 +162,49 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                             'calibdb' - the DRS_CALIB_DB folder
                             or the full path to the file
 
+    :param quiet: bool, if True does not print or log messages
+
     :return p: dictionary, parameter dictionary
     """
     # -------------------------------------------------------------------------
     # deal with arg_night_name defined in call
     if night_name is not None:
         cparams['ARG_NIGHT_NAME'] = night_name
+
     # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
-        cparams = run_time_args(cparams)
+        cparams = run_time_args(cparams, mainfitsdir)
     else:
-        cparams = run_time_custom_args(cparams, customargs)
+        cparams = run_time_custom_args(cparams, customargs, mainfitsdir)
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
-        cparams = get_call_arg_files_fitsfilename(cparams, files)
+        cparams = get_call_arg_files_fitsfilename(cparams, files,
+                                                  mfd=mainfitsdir)
     # if files not defined we have custom arguments and hence need to define
     #    arg_file_names and fitsfilename manually
     elif mainfitsfile is not None and customargs is not None:
         cparams = get_custom_arg_files_fitsfilename(cparams, customargs,
-                                                    mainfitsfile, mainfitsdir)
+                                                    mainfitsfile,
+                                                    mfd=mainfitsdir)
     # -------------------------------------------------------------------------
     # Display help file if needed
     display_help_file(cparams)
     # display run file
-    if customargs is None:
+    if customargs is None and not quiet:
         display_run_files(cparams)
-    else:
+    elif not quiet:
         display_custom_args(cparams, customargs)
     # -------------------------------------------------------------------------
     # load special config file
     # TODO: is this needed as special_config_SPIROU does not exist
-    cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=False)
+    logthis = not quiet
+    cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=logthis)
     # load ICDP config file
-    cparams = load_other_config_file(cparams, 'ICDP_NAME', required=True)
+    logthis = not quiet
+    cparams = load_other_config_file(cparams, 'ICDP_NAME', required=True,
+                                     logthis=logthis)
     # load keywords
     try:
         cparams, warnlogs = spirouConfig.GetKeywordArguments(cparams)
@@ -270,7 +296,10 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
         #   sub string is in there
         for arg_file_name in p['arg_file_names']:
             if contains not in arg_file_name:
-                emsg = 'Wrong type of image for {0} should contain "{1}"'
+                if kind is None:
+                    emsg = 'Wrong type of image should contain "{1}"'
+                else:
+                    emsg = 'Wrong type of image for {0} should contain "{1}"'
                 WLOG('error', p['log_opt'], emsg.format(kind, contains))
     # -------------------------------------------------------------------------
     # Reduced directory
@@ -371,8 +400,6 @@ def exit_script(ll):
         uinput = raw_input('')      # note python 3 wont find this!
     else:
         uinput = input('')
-    # close any open plots properly
-    spirouCore.sPlt.closeall()
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
@@ -387,12 +414,29 @@ def exit_script(ll):
                 pass
         if not find_interactive():
             code.interact(local=ll)
+    # if interactive ask about closing plots
+    if find_interactive():
+        # deal with closing plots
+        wmsg = 'Close plots? [Y]es or [N]o?'
+        WLOG('', '', HEADER, printonly=True)
+        WLOG('warning', p['log_opt'], wmsg.format(kind), printonly=True)
+        WLOG('', '', HEADER, printonly=True)
+        # deal with python 2 / python 3 input method
+        if sys.version_info.major < 3:
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('')      # note python 3 wont find this!
+        else:
+            uinput = input('')
+        # if yes close all plots
+        if 'Y' in uinput.upper():
+            # close any open plots properly
+            spirouCore.sPlt.closeall()
 
 
 # =============================================================================
 # Define general functions
 # =============================================================================
-def run_time_args(p):
+def run_time_args(p, mainfitsdir):
     """
     Get sys.argv arguments (run time arguments and use them to fill parameter
     dictionary
@@ -400,6 +444,14 @@ def run_time_args(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 constants from primary configuration file
+
+    :param mainfitsdir: string or None, if mainfitsfile is defined and needed
+                        this is the location of the mainfitsfile if None this
+                        is assumed to be the raw dir folder
+                        current other options are:
+                            'reduced' - the DRS_DATA_REDUC folder
+                            'calibdb' - the DRS_CALIB_DB folder
+                            or the full path to the file
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -439,6 +491,16 @@ def run_time_args(p):
     p['str_file_names'] = ', '.join(p['arg_file_names'])
     p.set_source('str_file_names', __NAME__ + '/run_time_args()')
 
+    # set reduced path
+    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
+    # set raw path
+    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('raw_dir', cname + '/RAW_DIR()')
+
+    # deal with setting main fits directory (sets ARG_FILE_DIR)
+    p = set_arg_file_dir(p, mfd=mainfitsdir)
+
     # get fitsfilename
     p['fitsfilename'] = spirouConfig.Constants.FITSFILENAME(p)
     p.set_source('fitsfilename', cname + '/FITSFILENAME()')
@@ -451,18 +513,12 @@ def run_time_args(p):
     p['nbframes'] = spirouConfig.Constants.NBFRAMES(p)
     p.set_source('nbframes', cname + '/NBFRAMES()')
 
-    # set reduced path
-    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
-    p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
-    # set raw path
-    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
-    p.set_source('raw_dir', cname + '/RAW_DIR()')
 
     # return updated parameter dictionary
     return p
 
 
-def run_time_custom_args(p, customargs):
+def run_time_custom_args(p, customargs, mainfitsdir):
     """
     Get the custom arguments and add them (with some default arguments)
     to the constants parameter dictionary
@@ -471,7 +527,15 @@ def run_time_custom_args(p, customargs):
         Must contain at least:
         constants from primary configuration file
 
-    :param customargs:
+    :param customargs: dictionary, the custom arguments to add
+
+    :param mainfitsdir: string or None, if mainfitsfile is defined and needed
+                        this is the location of the mainfitsfile if None this
+                        is assumed to be the raw dir folder
+                        current other options are:
+                            'reduced' - the DRS_DATA_REDUC folder
+                            'calibdb' - the DRS_CALIB_DB folder
+                            or the full path to the file
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -507,6 +571,9 @@ def run_time_custom_args(p, customargs):
     p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
 
+    # deal with setting main fits directory (sets ARG_FILE_DIR)
+    p = set_arg_file_dir(p, mfd=mainfitsdir)
+
     # loop around defined run time arguments
     for key in list(customargs.keys()):
         # set the value
@@ -516,7 +583,7 @@ def run_time_custom_args(p, customargs):
     return p
 
 
-def get_call_arg_files_fitsfilename(cparams, files):
+def get_call_arg_files_fitsfilename(p, files, mfd=None):
     """
     We need to deal with there being no run time arguments and having
     files defined from "files". In the case that there are no run time
@@ -526,15 +593,24 @@ def get_call_arg_files_fitsfilename(cparams, files):
     In runtime arguments all "arg_file_names" are assumed to be in the raw
     directory thus we need to add this to the fitsfilename
 
-    :param cparams: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 DRS_DATA_RAW: string, the directory that the raw data should
                               be saved to/read from
                 arg_night_name: string, the folder within data raw directory
                                 containing files (also reduced directory) i.e.
                                 /data/raw/20170710 would be "20170710"
-    :param files:
-    :return p: parameter dictionary, the updated parameter dictionary
+    :param files: list or None, the list of files to use for arg_file_names
+                  (if None assumes arg_file_names was set from run time)
+
+    :param mfd: string or None, if mainfitsfile is defined and needed this is
+            the location of the mainfitsfile if None this is assumed to
+            be the raw dir folder current other options are:
+                'reduced' - the DRS_DATA_REDUC folder
+                'calibdb' - the DRS_CALIB_DB folder
+                or the full path to the file
+
+    :return cparams: parameter dictionary, the updated parameter dictionary
             Adds the following:
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -545,39 +621,90 @@ def get_call_arg_files_fitsfilename(cparams, files):
     """
     func_name = __NAME__ + '.get_call_arg_files_fitsfilename()'
     # make sure we have DRS_DATA_RAW and ARG_NIGHT_NAME
-    if 'DRS_DATA_RAW' not in cparams or 'arg_night_name' not in cparams:
+    if 'DRS_DATA_RAW' not in p or 'arg_night_name' not in p:
         emsg1 = (' Error "cparams" must contain "DRS_DATA_RAW" and '
                  '"ARG_NIGHT_NAME"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', cparams['log_opt'], [emsg1, emsg2])
-    # get raw directory
-    rawdir = spirouConfig.Constants.RAW_DIR(cparams)
+        WLOG('error', p['log_opt'], [emsg1, emsg2])
+    # get chosen arg_file_dir
+    p = set_arg_file_dir(p, mfd)
     # if we don't have arg_file_names set it to the "files"
-    if 'ARG_FILE_NAMES' not in cparams:
-        cparams['ARG_FILE_NAMES'] = files
+    if 'ARG_FILE_NAMES' not in p:
+        p['ARG_FILE_NAMES'] = files
         # need to re-set nbframes
-        cparams['NBFRAMES'] = len(files)
+        p['NBFRAMES'] = len(files)
         # set source
-        cparams.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
+        p.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
     # if we have no files in arg_file_names set it to the "files"
-    elif len(cparams['ARG_FILE_NAMES']) == 0:
-        cparams['ARG_FILE_NAMES'] = files
+    elif len(p['ARG_FILE_NAMES']) == 0:
+        p['ARG_FILE_NAMES'] = files
         # need to re-set nbframes
-        cparams['NBFRAMES'] = len(files)
+        p['NBFRAMES'] = len(files)
         # set source
-        cparams.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
-    # if we don't have fitsfilename set it to the rawdir + files[0]
-    if 'FITSFILENAME' not in cparams:
-        cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+        p.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
+    # if we don't have fitsfilename set it to the ARG_FILE_DIR + files[0]
+    if 'FITSFILENAME' not in p:
+        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], files[0])
         # set source
-        cparams.set_source('FITSFILENAME', func_name)
-    # if fitsfilename is set to None set it to the rawdir + files[0]
-    elif cparams['FITSFILENAME'] is None:
-        cparams['FITSFILENAME'] = os.path.join(rawdir, files[0])
+        p.set_source('FITSFILENAME', func_name)
+    # if fitsfilename is set to None set it to the ARG_FILE_DIR + files[0]
+    elif p['FITSFILENAME'] is None:
+        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], files[0])
         # set source
-        cparams.set_source('FITSFILENAME', func_name)
+        p.set_source('FITSFILENAME', func_name)
     # finally return the updated cparams
-    return cparams
+    return p
+
+
+
+def set_arg_file_dir(p, mfd=None):
+    """
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param mfd: string or None, if mainfitsfile is defined and needed this is
+            the location of the mainfitsfile if None this is assumed to
+            be the raw dir folder current other options are:
+                'reduced' - the DRS_DATA_REDUC folder
+                'calibdb' - the DRS_CALIB_DB folder
+                or the full path to the file
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                ARG_FILE_DIR: string, the directory containing the files
+                              in p['ARG_FILE_NAMES']
+    """
+
+    # define the raw/reduced/calib folder from cparams
+    raw = spirouConfig.Constants.RAW_DIR(p)
+    red = spirouConfig.Constants.REDUCED_DIR(p)
+    calib = p['DRS_CALIB_DB']
+    # deal with main fits file (see if it exists)
+    if mfd is not None:
+        cond = os.path.exists(mfd)
+    else:
+        cond = False
+    # choose between the different possible values for the main arg_file_dir
+    if cond:
+        p['ARG_FILE_DIR'] = mfd
+    elif mfd == 'reduced':
+        p['ARG_FILE_DIR'] = red
+    elif mfd == 'calibdb':
+        p['ARG_FILE_DIR'] = calib
+    else:
+        p['ARG_FILE_DIR'] = raw
+    # return p
+    return p
 
 
 def load_other_config_file(p, key, logthis=True, required=False):
@@ -604,15 +731,21 @@ def load_other_config_file(p, key, logthis=True, required=False):
     """
     # try to load config file from file
     try:
-        p = spirouConfig.LoadConfigFromFile(p, key, required=required,
-                                            logthis=logthis)
+        pp, lmsgs = spirouConfig.LoadConfigFromFile(p, key, required=required,
+                                                    logthis=logthis)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, p['log_opt'], e.message)
+        lmsgs = []
+
+    # log messages caught in loading config file
+    if len(lmsgs) > 0:
+        WLOG('', DPROG, lmsgs)
     # return parameter dictionary
-    return p
+    return pp
 
 
-def deal_with_prefixes(p, kind, prefixes, add_to_p):
+def deal_with_prefixes(p=None, kind=None, prefixes=None,
+                       add_to_p=None, filename=None):
     """
     Deals with finding the prefixes and adding any add_to_p values to p
 
@@ -623,13 +756,14 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
                                 (or call to recipe function) must have at least
                                 one string filename in the list
 
-    :param kind: string, description of program we are running (i.e. dark)
+    :param kind: string or None, description of program we are running
+                 (i.e. dark) if None is not used.
 
     :param prefixes: list of strings, prefixes to look for in file name
                      will exit code if none of the prefixes are found
                      (prefix = None if no prefixes are needed to be found)
 
-    :param add_to_p: dictionary structure:
+    :param add_to_p: dictionary structure or None:
 
             add_to_p[prefix1] = dict(key1=value1, key2=value2)
             add_to_p[prefix2] = dict(key3=value3, key4=value4)
@@ -642,16 +776,31 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             i.e. if prefix1 is found key "value3" and "value4" above are added
             (with "key3" and "key4") to the parameter dictionary p
 
+    :param filename: string or None, the filename to check (if None checks
+                     "arf_file_names"[0] from p
+
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
                 the subdictionary key/value pairs in "add_to_p" that contains
                 the correct prefix for p["arg_file_names"][0]
     """
+    func_name = __NAME__ + '.deal_with_prefixes()'
+    # if we have p then we are just checking a filename
+    if p is None:
+        p = ParamDict(log_opt=DPROG)
+        if filename is None:
+            emsgs = ['ParamDict "p" or "filename" must be defined '
+                     '(both are None)',
+                     '   function = {0}'.format(func_name)]
+            WLOG('error', p['log_opt'], emsgs)
+    # if we have no prefixes we can just return p
     if prefixes is None:
         return p
     # get variables from p
-    log_opt = p['log_opt']
-    arg_fn1 = p['arg_file_names'][0]
+    if filename is None:
+        arg_fn1 = p['arg_file_names'][0]
+    else:
+        arg_fn1 = filename
     # set up found variables
     found, fprefix = False, None
     # loop around prefixes
@@ -663,8 +812,11 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             fprefix = prefix
     # if found log that we found image
     if found:
-        wmsg = 'Correct type of image for {0} ({1})'
-        WLOG('info', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
+        if kind is None:
+            wmsg = 'Correct type of image ({1})'
+        else:
+            wmsg = 'Correct type of image for {0} ({1})'
+        WLOG('info', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
         # if a2p is not None we have some variables that need added to
         # parameter dictionary based on the prefix found
         if add_to_p is not None:
@@ -688,8 +840,11 @@ def deal_with_prefixes(p, kind, prefixes, add_to_p):
             return p
     # Else if we don't have the correct prefix then log and exit
     else:
-        wmsg = 'Wrong type of image for {0}, should be {1}'
-        WLOG('error', log_opt, wmsg.format(kind, ' or '.join(prefixes)))
+        if kind is None:
+            wmsg = 'Wrong type of image, should be {1}'
+        else:
+            wmsg = 'Wrong type of image for {0}, should be {1}'
+        WLOG('error', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
 
 
 def get_arguments(positions, types, names, required, calls, cprior, lognames):
@@ -834,7 +989,7 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     return customdict
 
 
-def get_files(p, path, names, prefix=None, kind=None):
+def get_files(p, path, names, prefixes=None, kind=None):
     """
     Get a set of full file path and check the path and file exist
     (wrapper around get_files)
@@ -848,8 +1003,8 @@ def get_files(p, path, names, prefix=None, kind=None):
     :param path: string, either the directory to the folder (if name is None) or
                  the full path to the files
     :param names: list of strings, the names of the files
-    :param prefix: string or None, if not None this substring must be in the
-                   filenames
+    :param prefixes: string, list of strings or None, if not None this
+                     substring must be in the filenames
     :param kind: string or None, the type of files (for logging)
 
     :return locations: list of strings, the full file paths of the files
@@ -858,12 +1013,12 @@ def get_files(p, path, names, prefix=None, kind=None):
     locations = []
     # loop around names of files
     for name in names:
-        locations.append(get_file(p, path, name, prefix, kind))
+        locations.append(get_file(p, path, name, prefixes, kind))
     # if all conditions passed return full path
     return locations
 
 
-def get_file(p, path, name=None, prefix=None, kind=None):
+def get_file(p, path, name=None, prefixes=None, kind=None):
     """
     Get full file path and check the path and file exist
 
@@ -877,13 +1032,12 @@ def get_file(p, path, name=None, prefix=None, kind=None):
                  the full path to the file
     :param name: string or None, the name of the file, if None name is assumed
                  to be in path
-    :param prefix: string or None, if not None this substring must be in the
-                   filename
+    :param prefixes: string, list of strings or None, if not None this
+                     substring must be in the filename
     :param kind: string or None, the type of file (for logging)
 
     :return location: string, the full file path of the file
     """
-
     # if path is None and name is None
     if path is None:
         WLOG('error', p['log_opt'], 'No file defined')
@@ -901,22 +1055,15 @@ def get_file(p, path, name=None, prefix=None, kind=None):
     if not os.path.exists(location):
         emsg = 'File : {0} does not exist at location {1}'
         WLOG('error', p['log_opt'], emsg.format(name, path))
-    # if prefix is defined make sure file conforms
+    # if we have prefixes defined then check that fitsfilename has them
+    # if add_to_params is defined then add params to p accordingly
+    _ = deal_with_prefixes(kind=kind, prefixes=prefixes, filename=name)
+    # deal with no kind
+    if kind is None:
+        kind = 'UNKNOWN'
+    # log that we are processing this image
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    if prefix is not None:
-        # deal with no kind
-        if kind is None:
-            kind = 'UNKNOWN'
-        # look for prefix in name
-        if prefix not in name:
-            emsg = 'Wrong type of image for {0}, should be {1}'
-            emsg2 = '  tried to load file: {0}'
-            WLOG('', p['log_opt'], emsg.format(kind, prefix))
-            WLOG('error', p['log_opt'], emsg2.format(location))
-        else:
-            WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
-    else:
-        WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
+    WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
     # if all conditions passed return full path
     return location
 
@@ -1091,12 +1238,12 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     return customdict
 
 
-def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
+def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
     """
     Deal with having to set arg_file_names and fitsfilenames manually
     uses "mff" the main fits filename and "mdf" the main fits file directory
 
-    :param cparams: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 arg_night_name: string, the folder within data raw directory
                                 containing files (also reduced directory) i.e.
@@ -1112,14 +1259,14 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
 
            i.e. in form:
 
-                program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+                program.py night_dir arg_file_names[0] arg_file_names[1]...
 
            loads all arguments into customargs
 
-           i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+           i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
            expects command line arguments to be:
 
-                program.py rawdir filename a b c
+                program.py night_dir filename a b c
 
     :param mff: string, the main fits file (fitsfilename and arg_file_names[0]).
                 The parameter MUST be a string, a fits file, and have HEADER
@@ -1132,7 +1279,7 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
                     'reduced' - the DRS_DATA_REDUC folder
                     'calibdb' - the DRS_CALIB_DB folder
                     or the full path to the file
-    :return cparams: parameter dictionary, the updated parameter dictionary
+    :return p: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -1143,43 +1290,26 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
     """
     # define function name
     func_name = __NAME__ + '.get_custom_arg_files_fitsfilename()'
-    # define the raw/reduced/calib folder from cparams
-    raw = os.path.join(cparams['DRS_DATA_RAW'], cparams['arg_night_name'])
-    red = os.path.join(cparams['DRS_DATA_REDUC'], cparams['arg_night_name'])
-    calib = cparams['DRS_CALIB_DB']
+    # define the chosen arg_file_dir
+    p = set_arg_file_dir(p, mfd=mfd)
     # mainfitsfile must be a key in customargs
     if mff in customargs:
         # the value of mainfitsfile must be a string or list of strings
         #    if it isn't raise an error
-        mfv = customargs[mff]
+        rawfilename = customargs[mff]
         # check if mainfitsvalue is a full path
-        if not os.path.exists(mfv):
-            # check if mainfits dir is defined
-            if mfd is not None:
-                tpath = os.path.join(mfd, mfv)
-                # if path exists then use it
-                if os.path.exists(tpath):
-                    mfv = os.path.join(mfd, mfv)
-                elif mfd == 'reduced':
-                    mfv = os.path.join(red, mfv)
-                elif mfd == 'calibdb':
-                    mfv = os.path.join(calib, mfv)
-                else:
-                    emsg1 = '"mainfitsdir"={0} not a valid path/option'
-                    emsg2 = '    function = {0}'.format(func_name)
-                    WLOG('error', DPROG, [emsg1.format(mfd), emsg2])
-                    mfv = ''
-                    # if mainfits dir is not defined make the path the raw
-            else:
-                # redefine the mainfits file
-                mfv = os.path.join(raw, mfv)
+        if not os.path.exists(rawfilename):
+            # construct main file value path
+            abspathname = os.path.join(p['ARG_FILE_DIR'], rawfilename)
+        else:
+            abspathname = rawfilename
         # test type mainfitsfile (must be str or list)
         if type(mff) == str:
-            cparams['ARG_FILE_NAMES'] = [mfv]
-            cparams['FITSFILENAME'] = mfv
+            p['ARG_FILE_NAMES'] = [rawfilename]
+            p['FITSFILENAME'] = abspathname
         elif type(mff) == list:
-            cparams['ARG_FILE_NAMES'] = mfv
-            cparams['FITSFILENAME'] = mfv[0]
+            p['ARG_FILE_NAMES'] = rawfilename
+            p['FITSFILENAME'] = abspathname[0]
         else:
             eargs = [mff, mfv]
             emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
@@ -1193,7 +1323,7 @@ def get_custom_arg_files_fitsfilename(cparams, customargs, mff, mfd=None):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1, emsg2])
 
-    return cparams
+    return p
 
 
 # =============================================================================
@@ -1266,16 +1396,13 @@ def display_initial_parameterisation(p):
     :return None:
     """
     # Add initial parameterisation
-    WLOG('', '',
-         '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
-    WLOG('', '',
-         '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**p))
-    # WLOG('', '',
-    #      '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
-    WLOG('', '',
-         '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
-    WLOG('', '',
-         '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    WLOG('', '', '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    WLOG('', '', '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'
+                 ''.format(**p))
+    WLOG('', '', '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
+    WLOG('', '', '(dir_drs_uconfig)   DRS_UCONFIG={DRS_UCONFIG}'.format(**p))
+    WLOG('', '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    WLOG('', '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
     # WLOG('', '', ('(print_log)         DRS_LOG={DRS_LOG}         '
     #               '%(0: minimum stdin-out logs)').format(**p))
     WLOG('', '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
