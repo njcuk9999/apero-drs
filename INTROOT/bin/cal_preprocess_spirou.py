@@ -79,8 +79,7 @@ def main(night_name=None, files=None):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
      # write to file
-    spirouImage.WriteImage(rotatefits, data, hdict, dtype='float64')
-
+    spirouImage.WriteImage(rotatefits, data, hdict)
 
     # ----------------------------------------------------------------------
     # End Message

@@ -40,16 +40,16 @@ ic_display_timeout = 0.5
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 2000
+ic_ccdx_blue_low = 100
 ic_ccdx_blue_high = 4000
-ic_ccdy_blue_low = 100
+ic_ccdy_blue_low = 2000
 ic_ccdy_blue_high = 4000
 
 #   Resize red window                                               - [cal_dark]
-ic_ccdx_red_low = 750
-ic_ccdx_red_high = 1350
-ic_ccdy_red_low = 100
-ic_ccdy_red_high = 4000
+ic_ccdx_red_low = 100
+ic_ccdx_red_high = 4000
+ic_ccdy_red_low = 750
+ic_ccdy_red_high = 1350
 
 #   Resize image                                                     - [cal_loc]
 ic_ccdx_low = 5
