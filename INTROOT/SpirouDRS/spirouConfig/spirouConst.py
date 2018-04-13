@@ -1064,7 +1064,8 @@ def DATE_FMT_HEADER():
     :return date_fmt_calibdb: string, the string timestamp format for use in
                               reading FITS file HEADERS
     """
-    date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
+    #date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
+    date_fmt_header = '%Y-%m-%dT%H:%M:%S'
     return date_fmt_header
 
 

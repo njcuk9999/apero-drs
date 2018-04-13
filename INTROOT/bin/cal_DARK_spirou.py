@@ -93,6 +93,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # # rotate the image and conver from ADU/s to e-
     # data = data[::-1, ::-1] * p['exptime'] * p['gain']
+    #rotate the H4RG image
+    #data = np.rot90(data,-1)
     # convert NaN to zeros
     nanmask = ~np.isfinite(data)
     data0 = np.where(nanmask, np.zeros_like(data), data)
