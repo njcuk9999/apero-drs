@@ -459,8 +459,7 @@ def FITSFILENAME(p):
     arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
     if len(arg_file_names) > 0:
-        fitsfilename = os.path.join(arg_file_dir, arg_night_name,
-                                    arg_file_names[0])
+        fitsfilename = os.path.join(arg_file_dir, arg_file_names[0])
     else:
         fitsfilename = None
     # return fitsfilename
