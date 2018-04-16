@@ -22,7 +22,6 @@ USER_CONFIG = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-# TDATA = “/scratch/Projects/spirou_py3/data/”
 TDATA = "/drs/spirou/data/"
 
 #   Define the root installation directory (INTROOT)
@@ -82,7 +81,7 @@ COLOURED_LOG = True
 SPECIAL_NAME = 'special_config_SPIROU.py'
 
 #   Define the ICDP configuration file
-ICDP_NAME = 'constants_SPIROU.py'
+ICDP_NAME = 'constants_SPIROU_H2RG.py'
 
 
 # -----------------------------------------------------------------------------
