@@ -40,6 +40,9 @@ ParamDict = spirouConfig.ParamDict
 # Define functions
 # =============================================================================
 #def main(night_name=None, files=None):
+
+# cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
+
 night_name = '20170710'
 files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
          'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
@@ -96,7 +99,7 @@ if 1:
     # Flat correction
     # ----------------------------------------------------------------------
     # log
-    WLOG('', p['log_opt'], 'Appliying flat correction')
+    WLOG('', p['log_opt'], 'Applying flat correction')
     # get the flat
     loc = spirouFLAT.CorrectFlat(p, loc, hdr)
 
@@ -105,16 +108,16 @@ if 1:
     # ----------------------------------------------------------------------
     for fiber in p['FIB_TYP']:
         # set fiber type for inside loop
-        p['fiber'] = p['fib_typ']
+        p['FIBER'] = fiber
 
         # log message for loop
         wmsg = 'Processing Wavelength Calibration for Fiber {0}'
-        WLOG('info', p['log_opt'] + fiber, wmsg.format(fiber))
+        WLOG('info', p['log_opt'] + p['FIBER'], wmsg.format(p['FIBER']))
 
         # ------------------------------------------------------------------
         # First guess at solution for each order
         # ------------------------------------------------------------------
-
+        loc = spirouTHORCA.FirstGuessSolution(p, loc)
 
 
     # ----------------------------------------------------------------------
