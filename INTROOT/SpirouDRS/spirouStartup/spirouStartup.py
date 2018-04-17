@@ -17,7 +17,6 @@ from __future__ import division
 import numpy as np
 import os
 import sys
-from IPython import embed
 import code
 
 from SpirouDRS import spirouCDB
@@ -406,6 +405,7 @@ def exit_script(ll):
         # if user in ipython we need to try opening ipython
         if kind == 'ipython':
             try:
+                from IPython import embed
                 # this is only to be used in this situation and should not
                 # be used in general
                 locals().update(ll)
