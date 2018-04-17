@@ -21,6 +21,8 @@ gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
 for gui in gui_env:
     try:
         matplotlib.use(gui, warn=False, force=True)
+        # now can import matplotlib properly
+        import matplotlib.pyplot as plt
         break
     except:
         continue
@@ -30,8 +32,6 @@ if matplotlib.get_backend() == 'MacOSX':
     print('\n\n{0}\n{1}\n{0}\n\n'.format('='*50, emsg))
     sys.exit()
 
-# now can import matplotlib properly
-import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from SpirouDRS import spirouConfig
