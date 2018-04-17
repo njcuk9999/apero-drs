@@ -31,6 +31,9 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
+# detector type (from switching between H2RG and H4RG)
+ic_image_type = "H4RG"
+
 #    Interval between plots (for certain interactive graphs)         - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
