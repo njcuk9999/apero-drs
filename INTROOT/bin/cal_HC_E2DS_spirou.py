@@ -39,7 +39,16 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+#def main(night_name=None, files=None):
+
+# cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
+
+night_name = '20170710'
+files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
+         'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
+         'hcone_hcone06c61_e2ds_AB.fits']
+
+if 1:
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -90,7 +99,7 @@ def main(night_name=None, files=None):
     # Flat correction
     # ----------------------------------------------------------------------
     # log
-    WLOG('', p['log_opt'], 'Appliying flat correction')
+    WLOG('', p['log_opt'], 'Applying flat correction')
     # get the flat
     loc = spirouFLAT.CorrectFlat(p, loc, hdr)
 
@@ -99,16 +108,16 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     for fiber in p['FIB_TYP']:
         # set fiber type for inside loop
-        p['fiber'] = p['fib_typ']
+        p['FIBER'] = fiber
 
         # log message for loop
         wmsg = 'Processing Wavelength Calibration for Fiber {0}'
-        WLOG('info', p['log_opt'] + fiber, wmsg.format(fiber))
+        WLOG('info', p['log_opt'] + p['FIBER'], wmsg.format(p['FIBER']))
 
         # ------------------------------------------------------------------
         # First guess at solution for each order
         # ------------------------------------------------------------------
-
+        loc = spirouTHORCA.FirstGuessSolution(p, loc)
 
 
     # ----------------------------------------------------------------------
@@ -169,17 +178,17 @@ def main(night_name=None, files=None):
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
     # return a copy of locally defined variables in the memory
-    return dict(locals())
+    #return dict(locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == "__main__":
-    # run main with no arguments (get from command line - sys.argv)
-    ll = main()
-    # exit message if in debug mode
-    spirouStartup.Exit(ll)
+# if __name__ == "__main__":
+#     # run main with no arguments (get from command line - sys.argv)
+#     ll = main()
+#     # exit message if in debug mode
+#     spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
