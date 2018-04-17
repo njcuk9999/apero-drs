@@ -13,8 +13,10 @@ from __future__ import division
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTHORCA
 
 # =============================================================================
 # Define variables
@@ -37,27 +39,46 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+#def main(night_name=None, files=None):
+
+# cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
+
+night_name = '20170710'
+files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
+         'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
+         'hcone_hcone06c61_e2ds_AB.fits']
+
+if 1:
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.LoadArguments(p, night_name, files, mainfitsdir='reduced')
     # setup files
-    p = spirouStartup.InitialFileSetup(p, kind='cal_HC', calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, kind='cal_HC', prefixes='hc',
+                                       calibdb=True)
     # get the fiber type
-    fiber = spirouStartup.GetFiberType(p, p['fitsfilename'])
+    p['fiber'] = spirouStartup.GetFiberType(p, p['fitsfilename'])
+    p.set_source('fiber', __NAME__ + '/main()')
+    # set the fiber type
+    p['fib_typ'] = [p['fiber']]
+    p.set_source('fib_typ', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all files
     data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, 'add')
+    # add data and hdr to loc
+    loc = ParamDict()
+    loc['data'], loc['hdr'] = data, hdr
+    # set the source
+    loc.set_sources(['data', 'hdr'], 'spirouImage.ReadImageAndCombine()')
 
     # ----------------------------------------------------------------------
-    # Get basic image properties for reference file
+    # Get basic parameters
     # ----------------------------------------------------------------------
     # get sig det value
     p = spirouImage.GetSigdet(p, hdr, name='sigdet')
@@ -71,6 +92,33 @@ def main(night_name=None, files=None):
     # set sigdet and conad keywords (sigdet is changed later)
     p['kw_CCD_SIGDET'][1] = p['sigdet']
     p['kw_CCD_CONAD'][1] = p['gain']
+    # get lamp parameters
+    p = spirouTHORCA.GetLampParams(p)
+
+    # ----------------------------------------------------------------------
+    # Flat correction
+    # ----------------------------------------------------------------------
+    # log
+    WLOG('', p['log_opt'], 'Applying flat correction')
+    # get the flat
+    loc = spirouFLAT.CorrectFlat(p, loc, hdr)
+
+    # ----------------------------------------------------------------------
+    # loop around fiber type
+    # ----------------------------------------------------------------------
+    for fiber in p['FIB_TYP']:
+        # set fiber type for inside loop
+        p['FIBER'] = fiber
+
+        # log message for loop
+        wmsg = 'Processing Wavelength Calibration for Fiber {0}'
+        WLOG('info', p['log_opt'] + p['FIBER'], wmsg.format(p['FIBER']))
+
+        # ------------------------------------------------------------------
+        # First guess at solution for each order
+        # ------------------------------------------------------------------
+        loc = spirouTHORCA.FirstGuessSolution(p, loc)
+
 
     # ----------------------------------------------------------------------
     # start ll solution
@@ -130,17 +178,17 @@ def main(night_name=None, files=None):
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
     # return a copy of locally defined variables in the memory
-    return dict(locals())
+    #return dict(locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == "__main__":
-    # run main with no arguments (get from command line - sys.argv)
-    ll = main()
-    # exit message if in debug mode
-    spirouStartup.Exit(ll)
+# if __name__ == "__main__":
+#     # run main with no arguments (get from command line - sys.argv)
+#     ll = main()
+#     # exit message if in debug mode
+#     spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code

@@ -285,29 +285,30 @@ def main(night_name=None, files=None):
     passed, fail_msg = True, []
     # check that max number of points rejected in center fit is below threshold
     if np.sum(loc['max_rmpts_pos']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
-        fmsg = 'abnormal points rejection during ctr fit ({0} > {1})'
+        fmsg = 'abnormal points rejection during ctr fit ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(np.sum(loc['max_rmpts_pos']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
         passed = False
     # check that max number of points rejected in width fit is below threshold
     if np.sum(loc['max_rmpts_wid']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
-        fmsg = 'abnormal points rejection during width fit ({0} > {1})'
+        fmsg = 'abnormal points rejection during width fit ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(np.sum(loc['max_rmpts_wid']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
         passed = False
     # check that the rms in center fit is lower than qc threshold
     if mean_rms_center > p['QC_LOC_RMSMAX_CENTER']:
-        fmsg = 'too high rms on center fitting ({0} > {1})'
+        fmsg = 'too high rms on center fitting ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(mean_rms_center, p['QC_LOC_RMSMAX_CENTER']))
         passed = False
     # check that the rms in center fit is lower than qc threshold
     if mean_rms_center > p['QC_LOC_RMSMAX_FWHM']:
-        fmsg = 'too high rms on profile fwhm fitting ({0} > {1})'
+        fmsg = 'too high rms on profile fwhm fitting ({0:.2f} > {1:.2f})'
         fail_msg.append(fmsg.format(mean_rms_center, p['QC_LOC_RMSMAX_CENTER']))
         passed = False
     # check for abnormal number of identified orders
     if rorder_num != p['QC_LOC_NBO']:
-        fmsg = 'abnormal number of identified orders (found {0} expected {1})'
+        fmsg = ('abnormal number of identified orders (found {0:.2f} '
+                'expected {1:.2f})')
         fail_msg.append(fmsg.format(rorder_num, p['QC_LOC_NBO']))
         passed = False
     # finally log the failed messages and set QC = 1 if we pass the

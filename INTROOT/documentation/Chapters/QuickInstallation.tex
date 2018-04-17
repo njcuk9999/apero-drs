@@ -29,11 +29,11 @@
 
 \item Extract the DRS (make a note of the path, hereinafter \InstallDIR)
 
-\item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc)
+\item Add the following paths to your PATH and PYTHON PATH environmental variables
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:<(*\$*)PATH>"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*)PYTHONPATH>"
+	@export@ <PATH>="(*\InstallDIR*)/bin/:{(*\$*)PATH}"
+	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
 	\end{bashbox}
 
 \item make sure your paths are set
@@ -50,7 +50,6 @@
 {\footnotesize
 \begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
 \definevariable{text:drs_root}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
-&&&&\\
 \definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory \\
 \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
 \definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
@@ -61,6 +60,8 @@
 }
 \end{table}
 \end{thighlight}
+
+\item Make sure \definevariable{text:user_config}{USER\_CONFIG} and \definevariable{text:drs_debug}{DRS\_DEBUG} are set to a value of 0 (or False) and that \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'.
 
 \item validate the DRS installation:
 \begin{cmdbox}
@@ -89,7 +90,7 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using BASH.
+\noindent This is a quick guide to installation, for a more full description please \ifquickguide see the full documentation \else see Chapter \ref{chapter:installation} \fi. This assumes you have the latest version of Anaconda for python 3 (or python 2) and are using \textcolor{red}{BASH}.
 
 
 \begin{enumerate}
@@ -100,11 +101,11 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 
 \item Extract the DRS (make a note of the path, hereinafter \InstallDIR)
 
-\item Add the following paths to your PATH and PYTHON PATH environmental variables (in for example .bashrc or \path{.bash_profile})
+\item Add the following paths to your PATH and PYTHON PATH environmental variables
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:<(*\$*)PATH>"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*)PYTHONPATH>"
+	@export@ <PATH>=".:(*\InstallDIR*)/bin/:{(*\$*)PATH}"
+	@export@ <PYTHONPATH>=".:(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
 	\end{bashbox}
 
 \item make sure your paths are set
@@ -121,7 +122,6 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 {\footnotesize
 \begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
 \definevariable{text:drs_root}{TDATA}            & = & /drs/data/        & / & Define the DATA directory\\
-&&&&\\
 \definevariable{text:drs_root}{DRS\_ROOT}         & = & /drs/INTROOT/     & / & Define the installation directory \\
 \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & /drs/data/raw     & / & Define the folder with the raw data files in \\
 \definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & /drs/data/reduced & / & Define the directory that the reduced data should be saved to/read from \\
@@ -133,9 +133,11 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 \end{table}
 \end{thighlight}
 
+\item Make sure \definevariable{text:user_config}{USER\_CONFIG} and \definevariable{text:drs_debug}{DRS\_DEBUG} are set to a value of 0 (or False) and that \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'.
+
 \item validate the DRS installation:
 \begin{cmdbox}
-(*\calvalidate*)
+(*\calvalidate*.py)
 \end{cmdbox}
 \noindent or 
 \begin{cmdbox}
@@ -185,9 +187,8 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 \begin{thighlight}
 \begin{table}[H]
 {\footnotesize
-\begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
+\begin{tabular}{p{3cm} p{0.025cm} p{4.0cm} p{0.025cm} p{5.0cm}}
 \definevariable{text:drs_root}{TDATA}            & = & \path{C:\\Users\\User\\Documents\\drs\\data}        & / & Define the DATA directory\\
-&&&&\\
 \definevariable{text:drs_root}{DRS\_ROOT}         & = & \path{C:\\Users\\User\\Documents\\drs\\INTROOT}     & / & Define the installation directory \\
 \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\raw}    & / & Define the folder with the raw data files in \\
 \definevariable{text:drs_data_reduc}{DRS\_DATA\_REDUC}   & = & \path{C:\\Users\\User\\Documents\\drs\\data\\reduced} & / & Define the directory that the reduced data should be saved to/read from \\
@@ -201,6 +202,8 @@ The DRS is now installed and set-up. To run \ifquickguide see the full documenta
 \begin{note}
 Note paths in windows must have a `\textbackslash\textbackslash' also the python files must be open with a valid editor such as Sublime Text, Notepad++, Spyder or Pycharm for example
 \end{note}
+
+\item Make sure \definevariable{text:user_config}{USER\_CONFIG} and \definevariable{text:drs_debug}{DRS\_DEBUG} are set to a value of 0 (or False) and that \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'.
 
 \item validate the DRS installation:
 \begin{cmdbox}

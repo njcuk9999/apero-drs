@@ -10,11 +10,13 @@ Created on 2017-12-19 at 16:20
 """
 from __future__ import division
 import numpy as np
+import warnings
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore import spirouMath
 
 # =============================================================================
 # Define variables
@@ -201,6 +203,404 @@ def get_dll_from_coefficients(params, nx, nbo):
         ll[order_num, :] = yfit
     # return line list
     return ll
+
+
+def get_lamp_parameters(p, filename=None, kind=None):
+    """
+    Get lamp parameters from either a specified lamp type="kind" or a filename
+    or from p['ARG_FILE_NAMES'][0] (if no filename or kind defined)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
+    :param filename: string or None, the filename to check for the lamp
+                     substring in
+    :param kind: string or None, the lamp type
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                LAMP_TYPE: string, the type of lamp (e.g. UNe or TH)
+                IC_LL_LINE_FILE: string, the file name of the line list to use
+                IC_CAT_TYPE: string, the line list catalogue type
+    """
+
+    func_name = __NAME__ + '.get_lamp_parameters()'
+    # identify lamp
+    if kind is not None:
+        lamp = kind
+    elif filename is not None:
+        lamp = decide_on_lamp_type(p, filename=filename)
+    else:
+        lamp = decide_on_lamp_type(p, filename=p['ARG_FILE_NAMES'][0])
+
+    # -------------------------------------------------------------------------
+    # Now set parameters in p based on lamp type
+
+    # the lamp type
+    p['LAMP_TYPE'] = lamp
+    p.set_source('LAMP_TYPE', func_name)
+    # the lamp file
+    p['IC_LL_LINE_FILE'] = p['IC_LL_LINE_FILE_ALL'][lamp]
+    p.set_source('IC_LL_LINE_FILE', func_name)
+    # the lamp cat type
+    p['IC_CAT_TYPE'] = p['IC_CAT_TYPE_ALL'][lamp]
+    p.set_source('IC_CAT_TYPE', func_name)
+    # -------------------------------------------------------------------------
+    # finally return p
+    return p
+
+
+def first_guess_at_wave_solution(p, loc):
+    """
+    First guess at wave solution, consistency check, using the wavelength
+    solutions line list
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            CAL_HC_N_ORD_FINAL
+            CAL_HC_T_ORDER_START
+            log_opt
+            fiber
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                FIT_ORDERS
+                LL_INIT
+                LL_LINE
+                AMPL_LINE
+
+    """
+    func_name = __NAME__ + '.first_guess_at_wave_solution()'
+    # get used constants from p
+    n_order_final = p['CAL_HC_N_ORD_FINAL']
+    # set up the orders to fit
+    loc['fit_orders'] = p['CAL_HC_T_ORDER_START'] - np.arange(n_order_final)
+    loc.set_source('fit_orders', func_name)
+    # get wave solution filename
+    wave_file = spirouImage.ReadWaveFile(p, loc['hdr'], return_filename=True)
+    # log wave file name
+    wmsg = 'Reading initial wavelength solution in {0}'
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(wave_file))
+    # get E2DS line list from wave_file
+    ll_init, param_ll_init = get_e2ds_ll(p, loc['hdr'], filename=wave_file)
+    # only perform fit on orders 0 to p['CAL_HC_N_ORD_FINAL']
+    loc['ll_init'] = ll_init[:n_order_final]
+    loc.set_source('ll_init', __NAME__ + func_name)
+    # load line file (from p['IC_LL_LINE_FILE'])
+    loc['ll_line'], loc['ampl_line'] = spirouImage.ReadLineList(p)
+    source = func_name + ' spirouImage.ReadLineList()'
+    loc.set_sources(['ll_line', 'ampl_line'], source)
+    # log that we are attempting to find ll on spectrum
+    wmsg = 'On fiber {0} trying to identify lines using guess solution'
+    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
+    # find the lines
+    all_lines = find_lines(p, loc)
+    # add all lines to loc
+    loc['ALL_LINES'] = all_lines
+    loc.set_source('ALL_LINES', func_name)
+    # return loc
+    return loc
+
+
+def find_lines(p, loc):
+    """
+    Find the lines on the E2DS spectrum
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LL_SP_MIN
+            IC_LL_SP_MAX
+            IC_RESOL
+            IC_LL_FREE_SPAN
+            IC_HC_NOISE
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            LL_INIT
+            LL_LINE
+            AMPL_LINE
+            DATA
+            FIT_ORDERS
+
+    :return:
+    """
+    func_name = __NAME__ + '.find_lines()'
+    # get parameters from p
+    ll_sp_min = p['IC_LL_SP_MIN']
+    ll_sp_max = p['IC_LL_SP_MAX']
+    resol = p['IC_RESOL']
+    ll_free_span = p['IC_LL_FREE_SPAN']
+    image_ron = p['IC_HC_NOISE']
+    # get parameters from loc
+    ll = loc['LL_INIT']
+    ll_line = loc['LL_LINE']
+    ampl_line = loc['AMPL_LINE']
+    datax = loc['DATA'][:p['CAL_HC_N_ORD_FINAL']]
+    torder = loc['FIT_ORDERS']
+    # set update a pixel array
+    xpos = np.arange(datax.shape[1])
+    # set up storage
+    all_cal_line_fit = []
+    # loop around the orders
+    for order_num in np.arange(datax.shape[0]):
+        # order extend (in wavelengths)
+        order_min, order_max = ll[order_num, 0], ll[order_num, -1]
+        # select lines based on boundaries
+        wave_mask = (ll_line >= order_min)
+        wave_mask &= (ll_line <= order_max)
+        wave_mask &= (ll_line >= ll_sp_min)
+        wave_mask &= (ll_line <= ll_sp_max)
+        # apply mask to ll_line and ampl_line
+        ll_line_s = ll_line[wave_mask]
+        ampl_line_s = ampl_line[wave_mask]
+        # check to make sure we have lines
+        if len(ll_line_s) > 0:
+            gauss_fit = []
+        else:
+            # if we have no lines print detailed error report and exit
+            emsg1 = 'Order {0}: NO LINES IDENTIFIED!!'.format(order_num)
+            emsg2args = [order_min, order_max]
+            emsg2 = '   Order limit: [{0:6.1f}-{1:6.1f}]'.format(*emsg2args)
+            emsg3args = [ll_sp_min, ll_sp_max]
+            emsg3 = '   Hard limit: [{0:6.1f}-{1:6.1f}]'.format(*emsg3args)
+            emsg4args = [ll_line[0], ll_line[-1]]
+            emsg4 = '   Line interval: [{0:6.1f}-{1:6.1f}]'.format(*emsg4args)
+            emsg5 = '       function={0}'.format(func_name)
+            emsg6 = ' Unable to reduce, check guess solution'
+            WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3, emsg4,
+                                         emsg5, emsg6])
+            gauss_fit = []
+        # loop around the lines in kept line list
+        for ll_i in np.arange(len(ll_line_s)):
+            # get this iterations line
+            line = float(ll_line_s[ll_i])
+            # loop around these two span values
+            for span in [4.25, ll_free_span]:
+                # calculate line limits
+                ll_span_min = line - span * (line/(resol * 2.355))
+                ll_span_max = line + span * (line/(resol * 2.355))
+                # calculate line mask for each span
+                line_mask = ll[order_num] >= ll_span_min
+                line_mask &= ll[order_num] <= ll_span_max
+                # apply line mask to ll, xpos and data
+                sll = ll[order_num, :][line_mask]
+                sxpos = xpos[line_mask]
+                sdata = datax[order_num, :][line_mask]
+                # normalise sdata by the minimum sdata
+                sdata -= np.min(sdata)
+                # make sure we have more than 3 data points
+                if len(sxpos) < 3:
+                    wmsg = 'Resolution or ll_span are too small'
+                    WLOG('', p['log_opt'], wmsg)
+                # work out a pixel weighting
+                line_weight = 1.0/(sdata + image_ron**2)
+                # check that the sum of the weighted flux is not zero
+                if np.sum(sdata * line_weight) != 0:
+                    # if it isn't zero set the line value to the
+                    #   weighted mean value
+                    line = np.sum(sll * sdata * line_weight)
+                    line /= np.sum(sdata * line_weight)
+                else:
+                    # if it is zero then just use the line
+                    line = float(ll_line_s[ll_i])
+            # perform the gaussian fit on the line
+            with warnings.catch_warnings(record=True) as w:
+                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight)
+            # check if gau_param[7] is positive
+            if gau_param[7] > 0:
+                gau_param[3] = ll_line_s[ll_i] - gau_param[0]
+                gau_param[4] = ampl_line_s[ll_i]
+            # finally append parameters to storage
+            gauss_fit.append(gau_param)
+        # finally reshape all the gauss_fit parameters
+        gauss_fit = np.array(gauss_fit).reshape(len(ll_line_s), 8)
+        # calculate stats for logging
+        min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
+        nlines_valid = np.sum(gauss_fit[:, 2] > 0)
+        nlines_total = len(gauss_fit[:, 2])
+        percentage_vlines = 100 * (nlines_valid/nlines_total)
+        # log the stats for this order
+        wmsg = 'Order {0:3} ({1:2}): [{2:6.1f} - {3:6.1f}]'
+        wmsg += ' ({4:3}/{5:3})={6:3.0f}% lines identified'
+        wargs = [torder[order_num], order_num, min_ll, max_ll,
+                 nlines_valid, nlines_total, percentage_vlines]
+        WLOG('', p['log_opt'], wmsg.format(*wargs))
+        all_cal_line_fit.append(gauss_fit)
+    # return all lines found (36 x number of lines found for order)
+    return all_cal_line_fit
+
+
+def fit_emi_line(sll, sxpos, sdata, weight):
+
+    # get fit degree
+    fitdegree = 2
+
+    # set data less than or equal to 1 to 1
+    smask = sdata > 1
+    sdata1 = np.where(smask, sdata, np.ones_like(sdata))
+    lsdata = np.log(sdata1)
+
+    # set coeff array
+    coeffs = np.zeros(fitdegree + 1)
+
+    # normalise the wavelength data
+    slln = (sll - sll[0])/(sll[-1]-sll[0])
+    # test for NaNs
+    if np.sum(~np.isfinite(slln)) != 0:
+        coeffs[2] = 0
+        slln = 0
+    # if no NaNs work out weights and fit
+    else:
+        if not np.max(lsdata) == 0:
+            # weights = sqrt(weight * sdata^2)
+            weights = np.sqrt(weight*sdata**2)
+            # fit the lsdata with a weighted polyfit
+            coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
+
+    # perform a gaussian fit
+    gparams = np.zeros(8, dtype='float')
+    params = np.zeros(4, dtype='float')
+
+    # only perform gaussian fit if coeffs[2] is negative
+    if coeffs[2] < 0:
+        # populate the guess for center
+        params[0] = -1 * coeffs[1]/ (2 * coeffs[2])
+        # populate the guess for FWHM
+        params[1] = np.sqrt(-1/(2 * coeffs[2]))
+        # populate the guess for the amplitude
+        params[2] = np.exp(params[0]**2/(2 * params[1]**2) + coeffs[0])
+        # set up the guess (from params)
+        # f(x) = a1 * exp( -(x-a2)**2 / (2*a3**2) ) + a4
+        gcoeffs = np.array([params[2], params[0], params[1], 0])
+        # set up the weights for each pixel
+        invsig = np.sqrt(weight)
+        # fit a gaussian
+        fkwargs = dict(weights=invsig, guess=gcoeffs, return_fit=False,
+                       return_uncertainties=True)
+        try:
+            gcoeffs2, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
+            #copy the gaussian fit coefficients into params
+            params[0] = gcoeffs2[1]
+            params[1] = gcoeffs2[2]
+            params[2] = gcoeffs2[0]
+            params[3] = siga[1]
+        except RuntimeError:
+            params[1] = 1
+            params[2] = 0
+            params[3] = 0
+
+        # test for NaNs
+        if np.sum(~np.isfinite(params)) != 0:
+            params[1] = 1
+            params[2] = 0
+            params[3] = 0
+    # if coefficient is positive
+    else:
+        params[0] = 0
+        params[1] = 1
+        params[2] = 0
+        params[3] = 0
+
+    # get the wavelength different and position diff
+    slldiff = sll[-1] - sll[0]
+    sxposdiff = sxpos[-1] - sxpos[0]
+
+    # set the gaussian parameters
+    gparams[0] = (params[0] * slldiff) + sll[0]
+    gparams[1] = params[1] * slldiff
+    gparams[2] = params[2]
+    gparams[3] = 0.0
+    gparams[4] = 0.0
+    gparams[5] = (params[0] * sxposdiff) + sxpos[0]
+    gparams[6] = params[1] * sxposdiff
+
+    # check params[3]
+    if params[3] * sxposdiff != 0:
+        gparams[7] = 1.0/(params[3] * sxposdiff)**2
+    else:
+        gparams[7] = 0.0
+
+    # return gparams
+    return gparams
+
+
+
+def test_plot(x, y, guess, coeffs, weights):
+
+
+    yguess = gauss_function(x, *guess)
+    yfit = gauss_function(x, *coeffs)
+
+    plt.errorbar(x, y, yerr=1/weights, label='data', ls='None', marker='x')
+    plt.plot(x, yguess, label='guess')
+    plt.plot(x, yfit, label='fit')
+
+    plt.plot([coeffs[1], coeffs[1]], [np.min(y), np.max(y)], ls='--',
+             label='fit center')
+
+    plt.legend(loc=0)
+    plt.show()
+    plt.close()
+
+
+def gauss_function(x, a, x0, sigma, dc):
+    """
+    A standard 1D gaussian function (for fitting against)]=
+
+    :param x: numpy array (1D), the x data points
+    :param a: float, the amplitude
+    :param x0: float, the mean of the gaussian
+    :param sigma: float, the standard deviation (FWHM) of the gaussian
+    :param dc: float, the constant level below the gaussian
+
+    :return gauss: numpy array (1D), size = len(x), the output gaussian
+    """
+    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def decide_on_lamp_type(p, filename):
+    """
+    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
+    :param filename: string, the filename to check for the lamp substring in
+
+    :return lamp_type: string, the lamp type for this file (one of the values
+                       in p['IC_LAMPS']
+    """
+    func_name = __NAME__ + '.decide_on_lamp_type()'
+    # storage for lamp type
+    lamp_type = None
+    # loop around each lamp in defined lamp types
+    for lamp in p['IC_LAMPS']:
+        # check for lamp in filename
+        if p['IC_LAMPS'][lamp] in filename:
+            # check if we have already found a lamp type
+            if lamp_type is not None:
+                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
+                         'ambiguous'.format(filename))
+                emsg2 = '    function={0}'.format(func_name)
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
+            else:
+                lamp_type = lamp
+    # check that lamp is defined
+    if lamp_type is None:
+        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
+        emsg2 = ('    Must be one of the following: {0}'
+                 ''.format(', '.join(p['IC_LAMPS'])))
+        emsg3 = '    function={0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+    # finally return lamp type
+    return lamp_type
 
 
 # =============================================================================
