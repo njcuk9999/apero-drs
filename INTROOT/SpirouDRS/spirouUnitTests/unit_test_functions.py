@@ -11,9 +11,9 @@ Created on 2018-01-08 at 12:36
 """
 from __future__ import division
 import time
-import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouConfig
+from SpirouDRS import spirouCore
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
@@ -44,6 +44,9 @@ Constants = spirouConfig.Constants
 NIGHT_NAME = '20170710'
 # define format for unit test logging
 UNITTEST = '{0}{1}{2}UNIT TEST {3}: {4}{2}{1}{0}'
+# Get plotting functions
+sPlt = spirouCore.sPlt
+plt = sPlt.plt
 # -----------------------------------------------------------------------------
 
 

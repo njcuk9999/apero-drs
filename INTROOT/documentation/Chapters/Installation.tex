@@ -578,7 +578,7 @@ cal_validate_spirou.main()
 
 It is also possible to set up custom constant files (in a folder separate from the DRS).
 
-To do this one need to change the \definevariable{text:user_config}{USER\_CONFIG} parameter to 1 (or True). This tells the DRS to look for \definevariable{text:drs_uconfig} parameter either in the master config file (\configtxtfile) and in the system environment (for the variable `DRS\_UCONFIG').
+To do this one need to change the \definevariable{text:user_config}{USER\_CONFIG} parameter to 1 (or True). This tells the DRS to look for \definevariable{text:drs_uconfig}{DRS\_UCONFIG} parameter either in the master config file (\configtxtfile) and in the system environment (for the variable `DRS\_UCONFIG').
 
 \begin{note}
 The path set in the system environment takes precedence over the path set in the master config file (\configtxtfile).
@@ -649,3 +649,52 @@ For other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME} 
 @setenv@ DRS_UCONFIG /home/user/spirou/config.py
 \end{cshbox}
 
+See the config folder (\path{.../config/}) for example \definevariable{text:drs_uconfig}{DRS\_UCONFIG} directories and files.
+
+
+\ifdevguide
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Changing the detector}
+\label{ch:install:detect_setup}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\noindent During development there is a period when both the H2RG and H4RG will be needed.
+
+\noindent This is a simple guide to switch between the detectors.
+
+\begin{note}
+The best and cleanest way to do this is to set up a custom directory for each detectors settings (i.e. see Section \ref{ch:install:custom_constant_files})
+\end{note}
+
+\noindent the steps to change detector are as follows:
+\begin{itemize}
+	\item Change \definevariable{text:icdp_name}{ICDP\_NAME} to `constants\_SPIROU\_H2RG.py' for the H2RG detector and `constants\_SPIROU\_H4RG.py' for the H4RG detector.
+
+	\item if using custom directories change \definevariable{text:drs_uconfig}{DRS\_UCONFIG} to the required path.
+\end{itemize}
+
+An example custom `config.py' is shown below:
+
+\begin{textbox}[title={In "/home/user/spirouH2RG/config.py"}]
+DRS_ROOT = '/DATA/H2RG/'
+DRS_DATA_RAW = '/DATA/H2RG/RAW'
+DRS_DATA_REDIC = '/DATA/H2RG/RED'
+DRS_CALIB_DB = '/DATA/H2RG/CALIBDB'
+DRS_DATA_MSG = '/DATA/H2RG/MSG'
+DRS_DATA_WORKING = '/DATA/H2RG/TMP'
+\end{textbox}
+
+\begin{textbox}[title={In "/home/user/spirouH4RG/config.py"}]
+DRS_ROOT = '/DATA/H4RG/'
+DRS_DATA_RAW = '/DATA/H4RG/RAW'
+DRS_DATA_REDIC = '/DATA/H4RG/RED'
+DRS_CALIB_DB = '/DATA/H4RG/CALIBDB'
+DRS_DATA_MSG = '/DATA/H4RG/MSG'
+DRS_DATA_WORKING = '/DATA/H4RG/TMP'
+\end{textbox}
+
+\fi
