@@ -1147,16 +1147,36 @@ def sort_version(messages=None):
     if messages is None:
         messages = []
     # get version info
-    vstr = sys.version
-    version = vstr.split('|')[0].strip()
-    build = vstr.split('|')[1].strip()
-    date = vstr.split(build)[1].split('(')[1].split(')')[0].strip()
-    other = vstr.split('[')[1].split(']')[0].strip()
+    major = sys.version_info.major
+    minor = sys.version_info.minor
+    micro = sys.version_info.micro
+
+    version = '{0}.{1}.{2}'.format(major, minor, micro)
+
     # add version info to messages
     messages.append('    Python version = {0}'.format(version))
-    messages.append('    Python distribution = {0}'.format(build))
-    messages.append('    Distribution date = {0}'.format(date))
-    messages.append('    Dist Other = {0}'.format(other))
+
+    # add distribution if possible
+    try:
+        build = sys.version.split('|')[1].strip()
+        messages.append('    Python distribution = {0}'.format(build))
+    except IndexError:
+        pass
+
+    # add date information if possible
+    try:
+        date = sys.version.split('(')[1].split(')')[0].strip()
+        messages.append('    Distribution date = {0}'.format(date))
+    except IndexError:
+        pass
+
+    # add Other info information if possible
+    try:
+        other = sys.version.split('[')[1].split(']')[0].strip()
+        messages.append('    Dist Other = {0}'.format(other))
+    except IndexError:
+        pass
+
     # return updated messages
     return messages
 

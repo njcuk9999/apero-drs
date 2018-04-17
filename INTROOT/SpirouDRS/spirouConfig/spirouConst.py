@@ -459,8 +459,7 @@ def FITSFILENAME(p):
     arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
     if len(arg_file_names) > 0:
-        fitsfilename = os.path.join(arg_file_dir, arg_night_name,
-                                    arg_file_names[0])
+        fitsfilename = os.path.join(arg_file_dir, arg_file_names[0])
     else:
         fitsfilename = None
     # return fitsfilename
@@ -1040,7 +1039,7 @@ def CONFIG_KEY_ERROR(key, location=None):
 
 
 # noinspection PyPep8Naming
-def DATE_FMT_HEADER():
+def DATE_FMT_HEADER(p):
     """
     The date format for string timestamp for reading times from FITS
     file HEADERS
@@ -1064,7 +1063,11 @@ def DATE_FMT_HEADER():
     :return date_fmt_calibdb: string, the string timestamp format for use in
                               reading FITS file HEADERS
     """
-    date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
+    # TODO: This switch will be obsolete after H2RG testing is over
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        date_fmt_header = '%Y-%m-%dT%H:%M:%S'
+    else:
+        date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_header
 
 

@@ -14,6 +14,7 @@ import numpy as np
 import os
 from astropy.table import Table
 from astropy.io.registry import get_formats
+from astropy.io import ascii
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -150,7 +151,7 @@ def write_table(table, filename, fmt='fits'):
         WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
 
-def read_table(filename, fmt, colnames=None):
+def read_table(filename, fmt, colnames=None, **kwargs):
     """
     Reads a table from file "filename" in format "fmt", if colnames are defined
     renames the columns to these name
@@ -161,6 +162,8 @@ def read_table(filename, fmt, colnames=None):
     :param colnames: list of strings or None, if not None renames all columns
                      to these strings, must be the same length as columns
                      in file that is read
+    :param kwargs: keys to pass to the reader
+                   (Table.read(filename, format=fmt**kwargs))
 
     :return None:
 
@@ -192,7 +195,7 @@ def read_table(filename, fmt, colnames=None):
 
     # try to load file using astropy table
     try:
-        table = Table.read(filename, format='ascii')
+        table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
         emsg1 = ' Error {0}: {1}'.format(type(e), e)
         emsg2 = '    function = {0}'.format(func_name)
@@ -202,7 +205,9 @@ def read_table(filename, fmt, colnames=None):
     # if we have colnames rename the columns
     if colnames is not None:
         if len(colnames) != len(table.colnames):
-            emsg1 = 'Number of columns not equal to number of columns in table'
+            emsg1 = ('Number of columns ({0}) not equal to number of '
+                     'columns in table ({1})'
+                     ''.format(len(colnames), len(table.colnames)))
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2])
         # rename old names to new names
@@ -212,6 +217,7 @@ def read_table(filename, fmt, colnames=None):
 
     # return table
     return table
+
 
 
 # =============================================================================

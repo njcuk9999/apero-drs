@@ -31,6 +31,9 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
+# detector type (from switching between H2RG and H4RG)
+ic_image_type = "H2RG"
+
 #    Interval between plots (for certain interactive graphs)         - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
@@ -454,14 +457,14 @@ ccf_num_orders_max = 25
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = ['UNe', 'TH']
+ic_lamps = {'UNe': 'hcone', 'TH': 'hctwo'}
 
 #  Define the catalogue line list to use for each lamp type           - [cal_HC]
 #      (dictionary)
-ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
+ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
 
 #  Define the type of catalogue to use for each lamp type             - [cal_HC]
-ic_cat_type_all = {'UNe':'fullcat', 'TH':'thcat'}
+ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
 
 #
 # default = 5
