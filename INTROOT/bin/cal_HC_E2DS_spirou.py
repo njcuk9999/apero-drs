@@ -41,8 +41,8 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
 
-def main(night_name=None, files=None):
-
+#def main(night_name=None, files=None):
+if 1:
     night_name = '20170710'
     files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
              'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
@@ -177,6 +177,8 @@ def main(night_name=None, files=None):
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
     # return a copy of locally defined variables in the memory
+
+def main():
     return dict(locals())
 
 

@@ -132,6 +132,44 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
         # return pfit
         return pfit
 
+
+# def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
+#                 return_uncertainties=False):
+#     """
+#     Wrapper for fitgaus function
+#
+#     :param x:
+#     :param y:
+#     :param weights:
+#     :param guess:
+#     :param return_fit:
+#     :param return_uncertainties:
+#     :return:
+#     """
+#
+#     from SpirouDRS.spirouTHORCA import fitgaus
+#
+#     siga = np.zeros_like(guess)
+#     f = np.zeros_like(x)
+#
+#     coeffs = guess.copy()
+#
+#     fitgaus.fitgaus(x, y, weights, coeffs, siga, f)
+#
+#     yfit = f
+#     errorfit = siga
+#
+#     # deal with returns
+#     if return_fit and return_uncertainties:
+#         return coeffs, yfit, errorfit
+#     elif return_fit:
+#         return coeffs, yfit
+#     elif return_uncertainties:
+#         return coeffs, errorfit
+#     else:
+#         return coeffs
+
+
 def gauss_function(x, a, x0, sigma, dc):
     """
     A standard 1D gaussian function (for fitting against)]=
