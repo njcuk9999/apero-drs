@@ -1517,7 +1517,9 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
 # =============================================================================
 # test functions (rewmove later)
 # =============================================================================
-def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
+# TODO: remove later
+def __test_smoothed_boxmean_image(image, image1, image2, size,
+                                  row=1000, column=1000):
     """
     This is a test code for comparison between smoothed_boxmean_image1 "manual"
     and smoothed_boxmean_image2 "convovle"
@@ -1530,9 +1532,7 @@ def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
     :param column: int, the column number to plot for
     :return None:
     """
-    # get the new images
-    image1 = smoothed_boxmean_image1(image, size)
-    image2 = smoothed_boxmean_image2(image, size)
+
     # set up the plot
     fsize = (4, 6)
     plt.figure()

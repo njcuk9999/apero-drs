@@ -17,7 +17,6 @@ Version 0.0.0
 import numpy as np
 from numpy.polynomial import polynomial
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
 import os
 import warnings
 
@@ -43,6 +42,7 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+plt = sPlt.plt
 # -----------------------------------------------------------------------------
 
 DATA = '/scratch/Projects/spirou_py3/data'
