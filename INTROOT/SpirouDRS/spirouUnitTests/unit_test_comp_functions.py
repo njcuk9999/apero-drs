@@ -15,7 +15,6 @@ Version 0.0.0
 """
 from __future__ import division
 import numpy as np
-import matplotlib.pyplot as plt
 from astropy.table import Table
 import os
 import sys
@@ -23,8 +22,10 @@ import warnings
 import shutil
 
 from SpirouDRS import spirouConfig
+from SpirouDRS import spirouCore
 from SpirouDRS.spirouImage import spirouFITS
 from SpirouDRS.spirouCore import GetTimeNowString
+
 
 if sys.version_info.major > 2:
     def raw_input(x):
@@ -40,6 +41,9 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# Get plotting functions
+sPlt = spirouCore.sPlt
+plt = sPlt.plt
 # -----------------------------------------------------------------------------
 
 

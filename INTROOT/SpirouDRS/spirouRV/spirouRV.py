@@ -1638,7 +1638,7 @@ def test_fit_ccf(x, y, w, aguess, result):
     :return None:
     """
     # imports ONLY for this test function
-    import matplotlib.pyplot as plt
+    plt = sPlt.plt
     # noinspection PyUnresolvedReferences
     from SpirouDRS.spirouRV import fitgaus
     import time
