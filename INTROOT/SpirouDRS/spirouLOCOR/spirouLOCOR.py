@@ -812,6 +812,16 @@ def smoothed_boxmean_image2(image, size, weighted=True):
     # return new image
     return newimage
 
+# TODO: remove later
+def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
+    # get the new images
+    image1 = smoothed_boxmean_image1(image, size)
+    image2 = smoothed_boxmean_image2(image, size)
+
+    # plot graph in sPlt
+    sPlt.__test_smoothed_boxmean_image(image, image1, image2, size,
+                                       row=row, column=column)
+
 
 def image_localization_superposition(image, coeffs):
     """
