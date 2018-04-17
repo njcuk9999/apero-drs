@@ -39,16 +39,15 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-#def main(night_name=None, files=None):
-
 # cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
 
-night_name = '20170710'
-files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
-         'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
-         'hcone_hcone06c61_e2ds_AB.fits']
+def main(night_name=None, files=None):
 
-if 1:
+    night_name = '20170710'
+    files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
+             'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
+             'hcone_hcone06c61_e2ds_AB.fits']
+
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -178,17 +177,17 @@ if 1:
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['log_opt'], wmsg.format(p['program']))
     # return a copy of locally defined variables in the memory
-    #return dict(locals())
+    return dict(locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# if __name__ == "__main__":
-#     # run main with no arguments (get from command line - sys.argv)
-#     ll = main()
-#     # exit message if in debug mode
-#     spirouStartup.Exit(ll)
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message if in debug mode
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
