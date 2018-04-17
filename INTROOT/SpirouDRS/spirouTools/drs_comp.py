@@ -13,9 +13,7 @@ from __future__ import division
 import numpy as np
 import os
 import warnings
-import matplotlib.pyplot as plt
 
-from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -28,6 +26,7 @@ from SpirouDRS import spirouStartup
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+plt = sPlt.plt
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
