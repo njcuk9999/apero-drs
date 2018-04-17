@@ -20,6 +20,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouTHORCA
+from SpirouDRS.spirouCore import spirouMath
 
 # =============================================================================
 # Define variables
@@ -938,7 +939,7 @@ def locate_mask(p, filename):
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
-        relfolder = spirouConfig.Constants.CDATA_FOLDER()
+        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
         # get absolute folder path from package and relfolder
         absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
         # strip filename
@@ -1601,7 +1602,7 @@ def fit_ccf(rv, ccf, fit_type):
     # uniform weights
     w = np.ones(len(ccf))
     # get gaussian fit
-    result, fit = fitgaussian(x, y, weights=w, guess=a)
+    result, fit = spirouMath.fitgaussian(x, y, weights=w, guess=a)
 
     # TODO: remove this!
     # test_fit_ccf(x, y, w, a, result)
@@ -1637,7 +1638,7 @@ def test_fit_ccf(x, y, w, aguess, result):
     :return None:
     """
     # imports ONLY for this test function
-    import matplotlib.pyplot as plt
+    plt = sPlt.plt
     # noinspection PyUnresolvedReferences
     from SpirouDRS.spirouRV import fitgaus
     import time
@@ -1684,41 +1685,7 @@ def test_fit_ccf(x, y, w, aguess, result):
         plt.interactive('on')
 
 
-def fitgaussian(x, y, weights=None, guess=None):
-    """
-    Fit a single gaussian to the data "y" at positions "x", points can be
-    weighted by "weights" and an initial guess for the gaussian parameters
 
-    :param x: numpy array (1D), the x values for the gaussian
-    :param y: numpy array (1D), the y values for the gaussian
-    :param weights: numpy array (1D), the weights for each y value
-    :param guess: list of floats, the initial guess for the guassian fit
-                  parameters in the following order:
-
-                  [amplitude, center, fwhm, offset from 0 (in y-direction)]
-
-    :return pfit: numpy array (1D), the fit parameters in the
-                  following order:
-
-                [amplitude, center, fwhm, offset from 0 (in y-direction)]
-
-    :return yfit: numpy array (1D), the fit y values, i.e. the gaussian values
-                  for the fit parameters
-    """
-    # if we don't have weights set them to be all equally weighted
-    if weights is None:
-        weights = np.ones(len(x))
-    # if we aren't provided a guess, make one
-    if guess is None:
-        guess = [np.max(y), np.mean(y), np.std(y), 0]
-    # calculate the fit using curve_fit to the function "gauss_function"
-    with warnings.catch_warnings(record=True) as _:
-        pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,
-                               absolute_sigma=True)
-    # calculate the fit parameters
-    yfit = gauss_function(x, *pfit)
-    # return pfit and yfit
-    return pfit, yfit
 
 
 # =============================================================================

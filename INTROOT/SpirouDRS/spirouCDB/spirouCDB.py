@@ -118,7 +118,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
             # get the header time
             header_time = hdr[acqtime_key]
             # get the header format for dates
-            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
+            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
             # get the calib DB format for dates
             calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
             # get the unix time from header time (header time assumes GMT/UTC)
@@ -193,28 +193,26 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     if header is None:
         # deal with no filename
         if filename is None and header is None:
-            rawdir = spirouConfig.Constants.RAW_DIR(p)
-
             if os.path.exists(p['arg_file_names'][0]):
-                rawfile = p['arg_file_names'][0]
+                rfile = p['arg_file_names'][0]
             else:
-                rawfile = os.path.join(rawdir, p['arg_file_names'][0])
+                rfile = os.path.join(p['ARG_FILE_DIR'], p['arg_file_names'][0])
 
-            if not os.path.exists(rawfile):
+            if not os.path.exists(rfile):
                 emsg1 = '"header" and "filename" not defined in {0}'
                 emsg2 = '   AND "arg_file_names" not defined in ParamDict'
                 eargs = func_name
                 WLOG('error', p['log_opt'], [emsg1.format(eargs), emsg2])
         # else we have a filename defined
         else:
-            rawfile = filename
+            rfile = filename
             # if rawfile does not exist make error
-            if not os.path.exists(rawfile):
+            if not os.path.exists(rfile):
                 emsg = ('"header" not defined in {0} and "filename" '
                         'path not found.')
                 WLOG('error', p['log_opt'], emsg.format(func_name))
         # get file
-        header = fits.getheader(rawfile, ext=0)
+        header = fits.getheader(rfile, ext=0)
 
     # get max_time from file
     if acqtime_key not in header:
@@ -266,7 +264,7 @@ def get_database(p, max_time=None, update=False):
     # check that max_time is a valid unix time (i.e. a float)
     try:
         # get the header format for dates
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
         # get the unix time from header time (assume max_time is in GMT/UTC)
         max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:
@@ -444,7 +442,9 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
         # find where in original array utimes = closest_time
         pos = np.where((utimes == closest_time) & cmask)[0][-1]
         # add to c_database
-        c_database[ukey] = [dirnames[pos], filenames[pos]]
+        humantime = spirouMath.unixtime2stringtime(utimes[pos])
+        c_database[ukey] = [dirnames[pos], filenames[pos], humantime,
+                            utimes[pos]]
         # set the source of each entry
         c_database.set_source(ukey, func_name)
     # return c_database
@@ -563,7 +563,7 @@ def copy_files(p, header=None):
                 WLOG('error', p['log_opt'], [emsg1, emsg2])
 
 
-def get_file_name(p, key, hdr=None, filename=None):
+def get_file_name(p, key, hdr=None, filename=None, required=True):
     """
     Get the filename for "key" in the calibration database (for use when
     the calibration database is not needed for more than one use and does
@@ -585,6 +585,8 @@ def get_file_name(p, key, hdr=None, filename=None):
                 header from p['arg_file_names'][0]
     :param filename: string or None, if defined this is the filename returned
                      (means calibration database is not used)
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
 
     :return read_file: string, the filename in calibration database for
                        "key" (selected via unix_time in calibDB)
@@ -609,7 +611,10 @@ def get_file_name(p, key, hdr=None, filename=None):
             emsg1 = ('Calibration database has no valid "{0}" entry '
                      'for time<{1}').format(key, p['max_time_human'])
             emsg2 = '   function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            if required:
+                WLOG('error', p['log_opt'], [emsg1, emsg2])
+            else:
+                raise ConfigError(level='error', message=emsg1)
             rawfilename = ''
         # construct filename
         read_file = os.path.join(p['reduced_dir'], rawfilename)

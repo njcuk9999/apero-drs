@@ -157,16 +157,45 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 	\item In bash open the `.bashrc' or `.bash\_profile' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-	@export@ <PATH>="(*\InstallDIR*)/bin/:<(*\$*)PATH>"
-	@export@ <PYTHONPATH>="(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*)PYTHONPATH>"
+	@export@ <PATH>=".:(*\InstallDIR*)/bin/:{(*\$*)PATH}"
+	@export@ <PYTHONPATH>=".:(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
 	\end{bashbox}
 
-	\item In csh /tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist) 
+	\item In csh/tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist).
 
 	\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
-	@setenv@ <PATH> "(*\InstallDIR*)/bin/":<(*\$*){PATH}>"
-	@setenv@ <PYTHONPATH> "(*\InstallDIR*):(*\InstallDIR*)/bin/:<(*\$*){PYTHONPATH}>"
+	@setenv@ <PATH> ".:(*\InstallDIR*)/bin/":{(*\$*){PATH}}"
 	\end{cshbox}
+
+	In csh/tcsh one has to check whether `\$PYTHONPATH' exists before adding to the PYTHONPATH. To check type:
+
+	\begin{cmdbox}
+	echo (*\$*)PYTHONPATH
+	\end{cmdbox}
+
+	\begin{itemize}
+	\item \begin{thighlight}
+		If the response is:
+		\begin{cmdboxprint}
+		PYTHONPATH: Undefined variable.
+		\end{cmdboxprint}
+
+		Then in the `.cshrc' or `.tcshrc' add: 
+
+		\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
+		@setenv@ <PYTHONPATH> ".:(*\InstallDIR*):(*\InstallDIR*)/bin/"
+		\end{cshbox}
+		\end{thighlight}
+
+	\item \begin{thighlight}
+		If the response is some paths, then in the `.cshrc' or `.tcshrc' add: 
+
+		\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
+		@setenv@ <PYTHONPATH> ".:(*\InstallDIR*):(*\InstallDIR*)/bin/:(*\$*){PYTHONPATH}"
+		\end{cshbox}
+		\end{thighlight}
+
+	\end{itemize}
 
 \end{itemize}
 
@@ -210,17 +239,22 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \definevariable{text:drs_data_working}{DRS\_DATA\_WORKING} & = & /drs/data/tmp/    & / & Define the working directory \\
 \end{tabular}
 \end{table}
-
-\vspace{0.1cm}
-\noindent The directories here are for Linux and \mac\, systems another example would be `/home/user/INTROOT' for the \InstallDIR\, directory. 
-
-\noindent On Windows machines this would be equivalent to `\path{C:\\Users\\User\\Documents\\drs\\}'. \\
 \end{thighlight}
 \begin{note}
 Some text editors (such as TextEdit on macOS) use `smart speech-marks' these characters are invalid for python and thus care must be taken when editing the configuration files. The \calvalidate recipe (Section \ref{ch:install:validating_installunix}) will check for invalid characters and show the lines which do not have valid characters (valid characters are ASCII letters, digits, punctuation and white spaces as defined by pythons `\Program{string}' module). We suggest using text editors such as \Program{sublime-text} or a python IDE such as \Program{Pycharm}.
 \end{note}
 
 \vspace{0.25cm}
+
+\subsection{Other configuration parameters}
+
+If one is using the DRS in the default setup one needs to make sure the following parameters are set correctly:
+
+\begin{itemize}
+	\item \definevariable{text:user_config}{USER\_CONFIG} is set to a value of 0 (or False)
+	\item \definevariable{text:drs_debug}{DRS\_DEBUG} is set to a value of 0 (or False)
+	\item \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'
+\end{itemize}
 
 \noindent The following keywords can be changed: \\
 \begin{thighlight}
@@ -260,7 +294,7 @@ One must install the DRS (Section \ref{ch:install:installunix}) AND set up the D
 
 \item To validate running from command line type:
 \begin{cmdbox}
-(*\calvalidate*)
+(*\calvalidate*).py
 \end{cmdbox}
 
 \item To validate running from python/ipython from the command line type:
@@ -271,7 +305,7 @@ ipython (*\calvalidate*)
 
 \item To validate running from ipython, open ipython and type:
 \begin{pythonbox}
-@run@ (*\calvalidate*)
+@run@ (*\calvalidate*).py
 \end{pythonbox}
 
 \item To validate running from import from python/ipython, open python/ipython and type:
@@ -443,6 +477,16 @@ Note: On windows paths in windows must have a `\textbackslash\textbackslash' als
 
 \vspace{0.25cm}
 
+\subsection{Other configuration parameters}
+
+If one is using the DRS in the default setup one needs to make sure the following parameters are set correctly:
+
+\begin{itemize}
+	\item \definevariable{text:user_config}{USER\_CONFIG} is set to a value of 0 (or False)
+	\item \definevariable{text:drs_debug}{DRS\_DEBUG} is set to a value of 0 (or False)
+	\item \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'
+\end{itemize}
+
 \noindent The following keywords can be changed: \\
 \begin{thighlight}
 \begin{table}[H]
@@ -520,3 +564,137 @@ cal_validate_spirou.main()
 17:34:19.0 -   ||Validation successful. DRS installed corrected.
 @g
 \end{cmdboxprintspecial}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Setting up custom constant files}
+\label{ch:install:custom_constant_files}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+It is also possible to set up custom constant files (in a folder separate from the DRS).
+
+To do this one need to change the \definevariable{text:user_config}{USER\_CONFIG} parameter to 1 (or True). This tells the DRS to look for \definevariable{text:drs_uconfig}{DRS\_UCONFIG} parameter either in the master config file (\configtxtfile) and in the system environment (for the variable `DRS\_UCONFIG').
+
+\begin{note}
+The path set in the system environment takes precedence over the path set in the master config file (\configtxtfile).
+\end{note}
+
+\noindent All constants are loaded initial from the master file and then any parameter in the configuration file at the custom location overwrites the value in the master file. \\
+
+\noindent For example:
+
+\begin{textbox}[title={In ".../INTROOT/config/config.py"}]
+USER_CONFIG = 1
+DRS_ROOT = '/drs/spirou/INTROOT/'
+DRS_DATA_RAW = '/drs/spirou/data/raw'
+DRS_DATA_REDUC = '/drs/spirou/data/reduced'
+DRS_UCONFIG = '/home/user/spirou/config.py'
+\end{textbox}
+\begin{textbox}[title={In "/home/user/spirou/config.py"}]
+DRS_DATA_RAW = '/DATA/RAW'
+DRS_DATA_REDIC = '/DATA/RED'
+\end{textbox}
+
+\noindent \textbf{OR}
+
+\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+@export@ DRS_UCONFIG=/home/user/spirou/config.py
+\end{bashbox}
+\begin{textbox}[title={In ".../INTROOT/config/config.py"}]
+USER_CONFIG = 1
+DRS_ROOT = '/drs/spirou/INTROOT/'
+DRS_DATA_RAW = '/drs/spirou/data/raw'
+DRS_DATA_REDUC = '/drs/spirou/data/reduced'
+\end{textbox}
+\begin{textbox}[title={In "/home/user/spirou/config.py"}]
+DRS_DATA_RAW = '/DATA/RAW'
+DRS_DATA_REDIC = '/DATA/RED'
+\end{textbox}
+
+\vspace{0.5cm}
+
+\noindent Then once the DRS runs, \definevariable{text:drs_root}{DRS\_ROOT} is set from \path{/INTROOT/config/config.py} and \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} and \definevariable{text:drs_data_raw}{DRS\_DATA\_REDUC} are set from \path{/home/user/spirou/config.py} and thus the variables set will be:
+\begin{cmdboxprintspecial}
+@gDRS_ROOT = '/drs/spirou/INTROOT/' 
+DRS_DATA_RAW = '/DATA/RAW'
+DRS_DATA_REDIC = '/DATA/RED'@g
+\end{cmdboxprintspecial}
+
+\vspace{0.5cm}
+
+\begin{note}
+Constants/variables set in the custom constant files \textbf{always} take precedence over the master files.
+\end{note}
+
+\begin{note}
+Any constant/variable not set in a custom constant file is taken from the master files.
+\end{note}
+
+\begin{note}
+For other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME} the name can be changed in the master configuration file (\configtxtfile) thus allowing an easy switch between constant files. The custom path will always use \definevariable{text:icdp_name}{ICDP\_NAME} to locate the file.
+\end{note}
+
+\noindent This also works for other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME}). Thus one can have a completely separate ste of configuration files and switch between folders in the master configuration file (\configtxtfile) or by editing the environmental variables.
+
+\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
+@export@ DRS_UCONFIG=/home/user/spirou/config.py
+\end{bashbox}
+
+\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
+@setenv@ DRS_UCONFIG /home/user/spirou/config.py
+\end{cshbox}
+
+See the config folder (\path{.../config/}) for example \definevariable{text:drs_uconfig}{DRS\_UCONFIG} directories and files.
+
+
+\ifdevguide
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Changing the detector}
+\label{ch:install:detect_setup}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\noindent During development there is a period when both the H2RG and H4RG will be needed.
+
+\noindent This is a simple guide to switch between the detectors.
+
+\begin{note}
+The best and cleanest way to do this is to set up a custom directory for each detectors settings (i.e. see Section \ref{ch:install:custom_constant_files})
+\end{note}
+
+\noindent the steps to change detector are as follows:
+\begin{itemize}
+	\item Change \definevariable{text:icdp_name}{ICDP\_NAME} to `constants\_SPIROU\_H2RG.py' for the H2RG detector and `constants\_SPIROU\_H4RG.py' for the H4RG detector.
+
+	\item if using custom directories change \definevariable{text:drs_uconfig}{DRS\_UCONFIG} to the required path.
+\end{itemize}
+
+An example custom `config.py' is shown below:
+
+\begin{textbox}[title={In "/home/user/spirouH2RG/config.py"}]
+DRS_ROOT = '/DATA/H2RG/'
+DRS_DATA_RAW = '/DATA/H2RG/RAW'
+DRS_DATA_REDIC = '/DATA/H2RG/RED'
+DRS_CALIB_DB = '/DATA/H2RG/CALIBDB'
+DRS_DATA_MSG = '/DATA/H2RG/MSG'
+DRS_DATA_WORKING = '/DATA/H2RG/TMP'
+\end{textbox}
+
+\begin{textbox}[title={In "/home/user/spirouH4RG/config.py"}]
+DRS_ROOT = '/DATA/H4RG/'
+DRS_DATA_RAW = '/DATA/H4RG/RAW'
+DRS_DATA_REDIC = '/DATA/H4RG/RED'
+DRS_CALIB_DB = '/DATA/H4RG/CALIBDB'
+DRS_DATA_MSG = '/DATA/H4RG/MSG'
+DRS_DATA_WORKING = '/DATA/H4RG/TMP'
+\end{textbox}
+
+\fi

@@ -11,6 +11,8 @@ Import rules: Only from spirouConfig
 """
 from __future__ import division
 import os
+import sys
+
 from . import spirouConst as Constants
 from . import spirouConfigFile
 
@@ -97,6 +99,7 @@ class ConfigError(ConfigException):
         return self.args[0]
 
 
+# capitalisation function (for case insensitive keys)
 def __capitalise_key__(key):
     """
     Capitalizes "key" (used to make ParamDict case insensitive), only if
@@ -113,21 +116,13 @@ def __capitalise_key__(key):
     return key
 
 
-class ParamDict(dict):
+# case insensitive dictionary
+class CaseInsensitiveDict(dict):
     """
-    Custom dictionary to retain source of a parameter (added via setSource,
-    retreived via getSource). String keys are case insensitive.
+    Custom dictionary with string keys that are case insensitive
     """
     def __init__(self, *arg, **kw):
-        """
-        Constructor for parameter dictionary, calls dict.__init__
-        i.e. the same as running dict(*arg, *kw)
-
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
-        """
-        self.sources = dict()
-        super(ParamDict, self).__init__(*arg, **kw)
+        super(CaseInsensitiveDict, self).__init__(*arg, **kw)
         self.__capitalise_keys__()
 
     def __getitem__(self, key):
@@ -140,14 +135,8 @@ class ParamDict(dict):
 
         :return value: object, the value stored at position "key"
         """
-        oldkey = key
         key = __capitalise_key__(key)
-        try:
-            return super(ParamDict, self).__getitem__(key)
-        except KeyError:
-            emsg = ('Config Error: Parameter "{0}" not found in parameter '
-                    'dictionary')
-            raise ConfigError(emsg.format(oldkey), level='error')
+        return super(CaseInsensitiveDict, self).__getitem__(key)
 
     def __setitem__(self, key, value, source=None):
         """
@@ -160,6 +149,123 @@ class ParamDict(dict):
         """
         # capitalise string keys
         key = __capitalise_key__(key)
+        # then do the normal dictionary setting
+        super(CaseInsensitiveDict, self).__setitem__(key, value)
+
+    def __contains__(self, key):
+        """
+        Method to find whether CaseInsensitiveDict instance has key="key"
+        used with the "in" operator
+        if key exists in CaseInsensitiveDict True is returned else False
+        is returned
+
+        :param key: string, "key" to look for in CaseInsensitiveDict instance
+
+        :return bool: True if CaseInsensitiveDict instance has a key "key",
+        else False
+        """
+        key = __capitalise_key__(key)
+        return super(CaseInsensitiveDict, self).__contains__(key)
+
+    def __delitem__(self, key):
+        """
+        Deletes the "key" from CaseInsensitiveDict instance, case insensitive
+
+        :param key: string, the key to delete from ParamDict instance,
+                    case insensitive
+
+        :return None:
+        """
+        key = __capitalise_key__(key)
+        super(CaseInsensitiveDict, self).__delitem__(key)
+
+    def get(self, key, default=None):
+        """
+        Overrides the dictionary get function
+        If "key" is in CaseInsensitiveDict instance then returns this value,
+        else returns "default" (if default returned source is set to None)
+        key is case insensitive
+
+        :param key: string, the key to search for in ParamDict instance
+                    case insensitive
+        :param default: object or None, if key not in ParamDict instance this
+                        object is returned
+
+        :return value: if key in ParamDict instance this value is returned else
+                       the default value is returned (None if undefined)
+        """
+        # capitalise string keys
+        key = __capitalise_key__(key)
+        # if we have the key return the value
+        if key in self.keys():
+            return self.__getitem__(key)
+        # else return the default key (None if not defined)
+        else:
+            return default
+
+    def __capitalise_keys__(self):
+        """
+        Capitalizes all keys in ParamDict (used to make ParamDict case
+        insensitive), only if keys entered are strings
+
+        :return None:
+        """
+        keys = list(self.keys())
+        for key in keys:
+            # check if key is a string
+            if type(key) == str:
+                # get value
+                value = super(CaseInsensitiveDict, self).__getitem__(key)
+                # delete old key
+                super(CaseInsensitiveDict, self).__delitem__(key)
+                # if it is a string set it to upper case
+                key = key.upper()
+                # set the new key
+                super(CaseInsensitiveDict, self).__setitem__(key, value)
+
+
+class ParamDict(CaseInsensitiveDict):
+    """
+    Custom dictionary to retain source of a parameter (added via setSource,
+    retreived via getSource). String keys are case insensitive.
+    """
+    def __init__(self, *arg, **kw):
+        """
+        Constructor for parameter dictionary, calls dict.__init__
+        i.e. the same as running dict(*arg, *kw)
+
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        self.sources = CaseInsensitiveDict()
+        super(ParamDict, self).__init__(*arg, **kw)
+
+    def __getitem__(self, key):
+        """
+        Method used to get the value of an item using "key"
+        used as x.__getitem__(y) <==> x[y]
+        where key is case insensitive
+
+        :param key: string, the key for the value returned (case insensitive)
+
+        :return value: object, the value stored at position "key"
+        """
+        try:
+            return super(ParamDict, self).__getitem__(key)
+        except KeyError:
+            emsg = ('Config Error: Parameter "{0}" not found in parameter '
+                    'dictionary')
+            raise ConfigError(emsg.format(key), level='error')
+
+    def __setitem__(self, key, value, source=None):
+        """
+        Sets an item wrapper for self[key] = value
+        :param key: string, the key to set for the parameter
+        :param value: object, the object to set (as in dictionary) for the
+                      parameter
+        :param source: string, the source for the parameter
+        :return:
+        """
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -179,7 +285,6 @@ class ParamDict(dict):
 
         :return bool: True if ParamDict instance has a key "key", else False
         """
-        key = __capitalise_key__(key)
         return super(ParamDict, self).__contains__(key)
 
     def __delitem__(self, key):
@@ -191,8 +296,6 @@ class ParamDict(dict):
 
         :return None:
         """
-
-        key = __capitalise_key__(key)
         super(ParamDict, self).__delitem__(key)
 
     def get(self, key, default=None):
@@ -210,8 +313,6 @@ class ParamDict(dict):
         :return value: if key in ParamDict instance this value is returned else
                        the default value is returned (None if undefined)
         """
-        # capitalise string keys
-        key = __capitalise_key__(key)
         # if we have the key return the value
         if key in self.keys():
             return self.__getitem__(key)
@@ -231,7 +332,7 @@ class ParamDict(dict):
 
         :return None:
         """
-        # capitalise string keys
+        # capitalise
         key = __capitalise_key__(key)
         # only add if key is in main dictionary
         if key in self.keys():
@@ -251,7 +352,7 @@ class ParamDict(dict):
 
         :return None:
         """
-        # capitalise string keys
+        # capitalise
         key = __capitalise_key__(key)
         # if key exists append source to it
         if key in self.keys() and key in list(self.sources.keys()):
@@ -278,6 +379,8 @@ class ParamDict(dict):
         for k_it in range(len(keys)):
             # assign the key from k_it
             key = keys[k_it]
+            # capitalise
+            key = __capitalise_key__(key)
             # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -307,6 +410,8 @@ class ParamDict(dict):
         for k_it in range(len(keys)):
             # assign the key from k_it
             key = keys[k_it]
+            # capitalise
+            key = __capitalise_key__(key)
             # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -327,7 +432,7 @@ class ParamDict(dict):
         """
         # loop around each key in keys
         for key in self.keys():
-            # capitalise string keys
+            # capitalise
             key = __capitalise_key__(key)
             # set key
             self.sources[key] = source
@@ -343,7 +448,7 @@ class ParamDict(dict):
 
         # loop around each key in keys
         for key in self.keys():
-            # capitalise string keys
+            # capitalise
             key = __capitalise_key__(key)
             # set key
             self.sources[key] += ' {0}'.format(source)
@@ -358,7 +463,7 @@ class ParamDict(dict):
 
         :return source: string, the source of the parameter
         """
-        # capitalise string keys
+        # capitalise
         key = __capitalise_key__(key)
         # if key in keys and sources then return source
         if key in self.keys() and key in self.sources.keys():
@@ -407,25 +512,48 @@ class ParamDict(dict):
         # return keys
         return return_keys
 
-    def __capitalise_keys__(self):
+    def contains(self, substring):
         """
-        Capitalizes all keys in ParamDict (used to make ParamDict case
-        insensitive), only if keys entered are strings
+        Return all keys that contain this substring
 
-        :return None:
+        :param substring: string, the sub-string to look for in all keys
+
+        :return keys: list of strings, the keys which contain this substring
         """
-        keys = list(self.keys())
-        for key in keys:
-            # check if key is a string
-            if type(key) == str:
-                # get value
-                value = super(ParamDict, self).__getitem__(key)
-                # delete old key
-                super(ParamDict, self).__delitem__(key)
-                # if it is a string set it to upper case
-                key = key.upper()
-                # set the new key
-                super(ParamDict, self).__setitem__(key, value)
+        # define return
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if substring.upper() in key:
+                return_keys.append(key)
+        # return keys
+        return return_keys
+
+    def endswith(self, substring):
+        """
+        Return all keys that end with this substring
+
+        :param substring: string, the suffix that the keys ends with
+
+        :return keys: list of strings, the keys with this substring at the end
+        """
+        # define return list
+        return_keys = []
+        # loop around keys
+        for key in self.keys():
+            # make sure key is string
+            if type(key) != str:
+                continue
+            # if first
+            if str(key).endswith(substring.upper()):
+                return_keys.append(key)
+        # return keys
+        return return_keys
 
 
 # =============================================================================
@@ -439,10 +567,8 @@ def read_config_file(config_file=None):
                         PACKAGE/CONFIGFOLDER and CONFIG_FILE to get config
                         file name
     :return params: parameter dictionary with key value pairs fron config file
+    :return warning_messages: list, a list of warning messages to pipe to the logger
     """
-    # TODO: store user config in /home/$USER/.spirou_config
-    # TODO: This will avoid having to rewrite config for every update
-    # TODO: Read default parameters and then add "user parameters" to them
     ckwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
                    configfile=CONFIG_FILE, config_file=config_file)
     keys, values = spirouConfigFile.read_config_file(**ckwargs)
@@ -455,8 +581,132 @@ def read_config_file(config_file=None):
     params = ParamDict(zip(keys, values))
     # Set the source
     params.set_sources(keys=keys, sources=config_file)
+
+    # deal with relative paths
+    for key in list(params.keys()):
+        if type(params[key]) == str:
+            params[key] = check_for_rel_paths(params[key])
+
+    # Get user config parameters (if set and found)
+    # only if USER_CONFIG in params (i.e. this is a primary config file)
+    if 'USER_CONFIG' in params:
+        params, warn_messages = get_user_config(params)
+    else:
+        warn_messages = []
+
     # return dictionary
-    return params
+    return params, warn_messages
+
+
+def get_user_config(p):
+    """
+    Deal with the user defining a config file.
+
+    User config file overwrites default file and can be defined in two places:
+
+    - DRS_UCONFIG in the default (primary) config.py file
+    - DRS_UCONFIG in the environmental variables
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+    :param d_config_file: string, the default config file name and path
+
+    :return p: parameter dictionary, ParamDict containing constants
+        Updated with all keys from user config file (if set and found)
+    :return warn_msgs: list, a list of warning messages to pipe to the logger
+    """
+    func_name = __NAME__ + '.get_user_config()'
+    # set configfolder, defined location and warning messages
+    configfolder = None
+    defined_in = None
+    warn_msgs = []
+
+    if not p['USER_CONFIG']:
+        return p, warn_msgs
+
+    # set default config file (re-retrieve from package name etc)
+    ckwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
+                   configfile=CONFIG_FILE, config_file=None,
+                   return_filename=True)
+    d_config_file = spirouConfigFile.read_config_file(**ckwargs)
+
+    # get DRS_UCONFIG from default config file
+    if 'DRS_UCONFIG' in p:
+        # set path
+        rawpath = str(p['DRS_UCONFIG'])
+        # check for relative paths in config folder
+        rawpath = check_for_rel_paths(rawpath)
+        # check that path exists
+        if os.path.exists(rawpath):
+            configfolder = str(rawpath)
+            defined_in = d_config_file
+            p['DRS_UCONFIG'] = str(rawpath)
+            p.set_source('DRS_UCONFIG', func_name)
+        # deal with DRS_UCONFIG being set but not being found
+        else:
+            warn_msgs.append('Directory DRS_UCONFIG={0} does not '
+                             'exist'.format(rawpath))
+            warn_msgs.append('    but USER_CONFIG=1 and the user config '
+                             'folder is set')
+            warn_msgs.append('    in {0}'.format(d_config_file))
+            warn_msgs.append('    User config file will not be used.')
+
+    # get DRS_CONFIG from environmental variables
+    if 'DRS_UCONFIG' in os.environ:
+        # set path
+        rawpath = os.environ['DRS_UCONFIG']
+        # check for relative paths in config folder
+        rawpath = check_for_rel_paths(rawpath)
+        # check that path exists
+        if os.path.exists(rawpath):
+            configfolder = str(rawpath)
+            defined_in = 'environmental variables'
+            p['DRS_UCONFIG'] = str(rawpath)
+            p.set_source('DRS_UCONFIG', 'ENVIRONMENTAL VARIABLES')
+        # deal with DRS_UCONFIG being set but not being found
+        else:
+            warn_msgs.append('Directory DRS_UCONFIG={0} does not '
+                             'exist'.format(rawpath))
+            warn_msgs.append('    but USER_CONFIG=1 and the user config '
+                             'folder is set')
+            warn_msgs.append('    in {0}'.format('the ENVIRONMENTAL VARIABLES'))
+            warn_msgs.append('    User config file will not be used.')
+
+    # if we don't have a user
+    if configfolder is None:
+        warn_msgs.append('USER_CONFIG=1 but no configuration directory set')
+        warn_msgs.append('    Please set in primary config file or as an '
+                         'environmental variable (DRS_UCONFIG)')
+        warn_msgs.append('    User config file will not be used.')
+        return p, warn_msgs
+
+
+    # construct new path
+    configfile = os.path.join(configfolder, CONFIG_FILE)
+    # check config file exists here
+    if os.path.exists(configfile):
+        # get the values in this config file
+        keys, values = spirouConfigFile.read_config_file(config_file=configfile)
+        # loop around keys and add them to dictionary
+        for key, value in zip(keys, values):
+            if key not in ['USER_CONFIG', 'DRS_UCONFIG']:
+                p[key] = value
+                p.set_source(key, configfile)
+    else:
+        warn_msgs.append('User config file {0} does not '
+                         'exist'.format(configfile))
+        warn_msgs.append('    but USER_CONFIG=1 and the user config '
+                         'folder is set')
+        warn_msgs.append('    in {0}'.format(defined_in))
+        warn_msgs.append('    Either add user config file to {0}'
+                         ''.format(configfile))
+        warn_msgs.append('    Or remove DRS_UCONFIG from {0}'
+                         ''.format(defined_in))
+        warn_msgs.append('    User config file will not be used.')
+
+    # return parameters
+    return p, warn_msgs
+
 
 
 def load_config_from_file(p, key, required=False, logthis=False):
@@ -483,38 +733,71 @@ def load_config_from_file(p, key, required=False, logthis=False):
                pairs
     """
     func_name = __NAME__ + '.load_config_from_file()'
+    log_messages = []
+
     # Check that DRS_CONFIG and "key" is in p
-    check_config(p, ['DRS_CONFIG', key])
-    # construct icdp file name
-    filename = os.path.join(p['DRS_CONFIG'], p[key])
-    # try to open file
-    if os.path.exists(filename):
-        # read config file into new dictionary
-        newparams = read_config_file(filename)
-        # merge with param file
-        for newkey in list(newparams.keys()):
-            # Warn the user than key is being overwritten
-            if newkey in list(p.keys()):
-                wmsg = 'Warning key {0} overwritten by config: {1}'
-                raise ConfigError(wmsg.format(newkey, filename),
-                                  level='warning')
-            # Write key
-            p[newkey] = newparams[newkey]
-            # set the source of new parameter
-            p.set_source(newkey, source=filename)
-        # log output
-        if logthis:
-            emsg = '{0} loaded from: {1}'.format(key, filename)
-            raise ConfigError(emsg, level='all')
+    check_config(p, ['DRS_CONFIG', 'DRS_UCONFIG', 'USER_CONFIG', key])
+
+    # construct the two possible locations for files
+    uconfig = os.path.join(p['DRS_UCONFIG'], p[key])
+    dconfig = os.path.join(p['DRS_CONFIG'], p[key])
+
+    # deal with default config file first
+    if os.path.exists(dconfig):
+        newparams1 = get_config_params(p, key, dconfig, logthis=logthis)
     else:
         if required:
             # log error
-            emsg1 = 'Config file "{0}" not found'.format(filename)
+            emsg1 = 'Config file "{0}" not found.'.format(p['DRS_CONFIG'])
             emsg2 = '   function = {0}'.format(func_name)
             raise ConfigError([emsg1, emsg2], level='error')
-    # return p
-    return p
+        return p, log_messages
+    # deal with user config file (if set)
+    if os.path.exists(uconfig) and  p['USER_CONFIG']:
+        newparams2 = get_config_params(p, key, uconfig, logthis=logthis)
+    else:
+        newparams2 = dict()
 
+    # combine giving precedence to user config file
+    newparams, newparamssource = dict(), dict()
+    # loop around default parameters and add to new params
+    for newkey in list(newparams1.keys()):
+        newparams[newkey] = newparams1[newkey]
+        newparamssource[newkey] = dconfig
+    # loop around user parameters and add to new params
+    for newkey in list(newparams2.keys()):
+        newparams[newkey] = newparams2[newkey]
+        newparamssource[newkey] = uconfig
+
+    # loop around parameters and add to p
+    for newkey in list(newparams.keys()):
+        # Write key
+        p[newkey] = newparams[newkey]
+        # set the source of new parameter
+        p.set_source(newkey, source=newparamssource[newkey])
+    # log output
+    if logthis:
+        log_messages.append('{0} loaded from:'.format(key))
+        log_messages.append('     {0}'.format(dconfig))
+        if os.path.exists(uconfig) and  p['USER_CONFIG']:
+            log_messages.append('     {0}'.format(uconfig))
+
+    # return p
+    return p, log_messages
+
+
+def get_config_params(p, key, filename, logthis=True):
+    # read config file into new dictionary
+    newparams, _ = read_config_file(filename)
+    # merge with param file
+    for newkey in list(newparams.keys()):
+        # Warn the user than key is being overwritten
+        if newkey in list(p.keys()):
+            wmsg = 'Warning key {0} overwritten by config: {1}'
+            raise ConfigError(wmsg.format(newkey, filename),
+                              level='warning')
+    # return new parameters
+    return newparams
 
 def extract_dict_params(pp, suffix, fiber, merge=False):
     """
@@ -738,6 +1021,10 @@ def check_params(p):
     tmp = os.path.join(p['DRS_ROOT'], 'config', '')
     p = check_set_default_val(p, 'DRS_CONFIG', tmp, func_name)
 
+    # check whether we have a drs_uconfig key
+    #     (default is the same as DRS_CONFIG)
+    p = check_set_default_val(p, 'DRS_UCONFIG', p['DRS_CONFIG'], func_name)
+
     # check whether we have a drs_man key
     tmp = os.path.join(p['DRS_ROOT'], 'man', '')
     p = check_set_default_val(p, 'DRS_MAN', tmp, func_name)
@@ -822,6 +1109,29 @@ def check_set_default_val(p, key, dvalue, source=None):
         p[key] = dvalue
         p.set_source(key, source)
     return p
+
+
+def check_for_rel_paths(path):
+    """
+    Checks for ~ and $HOME paths and
+
+    :param path: string, the path to check
+
+    :return: string, the path with the full path (using HOME environmental key)
+    """
+    # get home directory
+    home = os.environ.get('HOME')
+    if home is None:
+        return path
+    # check for ~ at start (i.e. home dir)
+    if path.startswith('~/'):
+        path = os.path.join(home, path[2:])
+    # check for $HOME at start
+    if path.startswith('$HOME/'):
+        path = os.path.join(home, path[6:])
+    # finally return path
+    return path
+
 
 
 # =============================================================================

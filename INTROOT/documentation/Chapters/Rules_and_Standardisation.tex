@@ -277,6 +277,60 @@ p3 = ParamDict(zip(keys, values))
 p3.set_all_sources('SpirouMath.LetterNumbers()')
 \end{pythonbox}
 
+The parameter dictionary also contains some helper functions (as the parameter dictionary can get quite large).
+
+\begin{itemize}
+	\item startswith - This allows one to search for all keys that start with a defined string
+
+	\begin{pythonbox}
+	p.startswith('DRS')
+	\end{pythonbox}
+	\begin{cmdboxprint}
+	['DRS_PLOT',
+	 'DRS_DEBUG',
+	 'DRS_ROOT',
+	 'DRS_DATA_RAW',
+	 'DRS_DATA_REDUC',
+	 'DRS_CALIB_DB',
+	 'DRS_DATA_MSG',
+	 'DRS_DATA_WORKING',
+	 'DRS_NAME',
+	 'DRS_VERSION',
+	 'DRS_CONFIG',
+	 'DRS_MAN',
+	 'DRS_USED_DATE',
+	 'DRS_INTERACTIVE']
+	 \end{cmdboxprint}
+
+
+	\item contains - This allows one to search for all keys that contain a defined string
+	\begin{pythonbox}
+	p.contains('calib')
+	\end{pythonbox}
+	\begin{cmdboxprint}
+	['DRS_CALIB_DB', 'IC_CALIBDB_FILENAME', 'CALIB_MAX_WAIT', 'CALIB_DB_MATCH']
+	 \end{cmdboxprint}
+
+	\item endswith - This allows one to search for all keys that end with a defined string
+	\begin{pythonbox}
+	p.endswith('ALL')
+	\end{pythonbox}
+	\begin{cmdboxprint}
+	['NBFIB_FPALL',
+	 'IC_FIRST_ORDER_JUMP_FPALL',
+	 'IC_LOCNBMAXO_FPALL',
+	 'QC_LOC_NBO_FPALL',
+	 'FIB_TYPE_FPALL',
+	 'IC_EXT_RANGE1_FPALL',
+	 'IC_EXT_RANGE2_FPALL',
+	 'IC_EXT_RANGE_FPALL',
+	 'LOC_FILE_FPALL',
+	 'ORDERP_FILE_FPALL',
+	 'IC_EXT_D_RANGE_FPALL']
+	 \end{cmdboxprint}
+
+\end{itemize}
+
 
 % -------------------------------------------------------
 \clearpage

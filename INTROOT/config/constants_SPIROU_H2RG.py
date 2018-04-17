@@ -31,6 +31,9 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
+# detector type (from switching between H2RG and H4RG)
+ic_image_type = "H2RG"
+
 #    Interval between plots (for certain interactive graphs)         - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
@@ -445,6 +448,63 @@ ccf_fit_type = 0
 #  Define the number of orders (from zero to ccf_num_orders_max)     - [cal_CCF]
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 25
+
+# -----------------------------------------------------------------------------
+#   cal_hc parameters
+# -----------------------------------------------------------------------------
+#  Define the lamp types                                              - [cal_HC]
+#      these must be present in the the following dictionaries to
+#      be used
+#                  - ic_ll_line_file
+#                  - ic_cat_type
+ic_lamps = {'UNe': 'hcone', 'TH': 'hctwo'}
+
+#  Define the catalogue line list to use for each lamp type           - [cal_HC]
+#      (dictionary)
+ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
+
+#  Define the type of catalogue to use for each lamp type             - [cal_HC]
+ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
+
+#
+# default = 5
+ic_ll_degr_fit = 4
+
+#
+ic_ll_sp_min = 900
+
+#
+ic_ll_sp_max = 2400
+
+# Maximum amplitude of the line
+# default = 2.0e5
+ic_max_ampl_line = 2.0e8
+
+#
+# default = 1
+ic_max_errw_infit = 1
+
+#
+# default = 50000  or 60000
+ic_resol = 55000
+
+#
+# default = 3   or 2.6
+ic_ll_free_span = 3
+
+#
+# default = 16.8
+ic_hc_noise = 30
+
+#  Defines order to which the solution is calculated                  - [cal_HC]
+#      previously called n_ord_final
+cal_hc_n_ord_final = 24
+
+#  Defines echeele of first extracted order
+cal_hc_t_order_start = 66
+
+#
+ic_ll_smooth = 0
 
 
 # -----------------------------------------------------------------------------
