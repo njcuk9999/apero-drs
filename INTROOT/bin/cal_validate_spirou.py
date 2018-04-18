@@ -11,6 +11,7 @@ Created on 2017-11-27 at 16:27
 """
 import os
 import sys
+from collections import OrderedDict
 
 # =============================================================================
 # Define variables
@@ -21,14 +22,18 @@ __version__ = 'Unknown'
 __author__ = 'Unknown'
 __release__ = 'Unknown'
 __date__ = 'Unknown'
-
+# set modules required
+MODULES = OrderedDict()
+MODULES['numpy'] = '1.14.0'
+MODULES['scipy'] = '1.0.0'
+MODULES['matplotlib'] = '2.1.2'
+MODULES['astropy'] = '2.0.3'
 # Whether be default we run debug mode
 DEBUG = 0
 # exit type
 # noinspection PyProtectedMember
 EXIT = os._exit
 EXIT = sys.exit
-
 
 # =============================================================================
 # Define functions
@@ -41,6 +46,18 @@ def main(debug_mode=0):
         print(' * ')
         print(' *     (DEBUG MODE ACTIVE) ')
     print(' *****************************************')
+    # -------------------------------------------------------------------------
+    # Module tests
+    # -------------------------------------------------------------------------
+    print(' \n0) Checking dependencies...')
+    # loop around modules
+    for module in list(MODULES.keys()):
+        # get required version
+        reqversion = MODULES[module]
+        # test for module and minimum version
+        passed = module_test(module, reqversion)
+    if not passed:
+        EXIT(1)
 
     # Check imports
     print('\n1) Running core module tests')
@@ -369,6 +386,62 @@ def test_paths(p):
                 '\n\twith valid paths.')
         print(wmsg.format(config_file, p['DRS_UCONFIG']))
         EXIT(1)
+
+
+def module_test(module, reqversion):
+    # try to import module
+    try:
+        imod = __import__(module)
+        try:
+            # try to get version
+            version = imod.__version__
+            # perform version test
+            passed = version_test(module, version, reqversion)
+        except:
+            print('\t{0} found'.format(module))
+            passed = True
+    except:
+        print('\tFatal error DRS requires the module "{0}" (version={1})'
+              ' to be installed'.format(module, reqversion))
+        passed = False
+    return passed
+
+
+def version_test(modname, current, required):
+
+    # convert to lists
+    lcurrent = convert_version_to_list(current)
+    lrequired = convert_version_to_list(required)
+    # test version
+    if lcurrent[0] > lrequired[0]:
+        passed = True
+    elif lcurrent[1] > lrequired[1] and lcurrent[0] == lrequired[0]:
+        passed = True
+    elif lcurrent[2] >= lrequired[2] and lcurrent[1] == lrequired[1]:
+        passed = True
+    else:
+        passed = False
+
+    if passed:
+        print('\t{0} version={1} found'.format(modname, current))
+    else:
+        print('\tFatal error DRS requires {0} to be at least version {1}'
+              ' (currently={2})'.format(modname, required, current))
+    return passed
+
+
+def convert_version_to_list(v):
+
+    try:
+        vlist = v.split('.')
+    except:
+        return [-1, -1, -1]
+
+    if len(vlist) == 3:
+        vlist = [int(vlist[0]), int(vlist[1]), int(vlist[2])]
+        return vlist
+    else:
+        return [-1, -1, -1]
 
 
 # =============================================================================
