@@ -19,7 +19,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouImage
-
+from SpirouDRS.spirouCore import spirouFile
 
 # =============================================================================
 # Define variables
@@ -40,20 +40,35 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+def main(night_name=None, ufiles=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
-    p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p)
+    # need custom args (to accept full path or wild card
+    if ufiles is None:
+        names, types = ['ufiles'], [str]
+        customargs = spirouStartup.GetCustomFromRuntime([0], types, names,
+                                                        last_multi=True)
+    else:
+        customargs = dict(ufiles=ufiles)
+    # get parameters from configuration files and run time arguments
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
 
-    # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+    # ----------------------------------------------------------------------
+    # Loop around files
+    # ----------------------------------------------------------------------
+    # get raw folder
+    rawdir = spirouConfig.Constants.RAW_DIR(p)
+    ufiles = spirouFile.Paths(p['ufiles'], root=rawdir).abs_paths
+
+    for ufile in ufiles:
+        # get file name
+        print(ufile)
+
+
+
 
     # ----------------------------------------------------------------------
     # Read image file
