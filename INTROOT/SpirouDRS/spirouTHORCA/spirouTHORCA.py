@@ -33,6 +33,9 @@ ParamDict = spirouConfig.ParamDict
 ConfigError = spirouConfig.ConfigError
 # Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
+plt = sPlt.plt
 
 
 # =============================================================================
@@ -409,6 +412,14 @@ def find_lines(p, loc):
                     line = float(ll_line_s[ll_i])
             # perform the gaussian fit on the line
             with warnings.catch_warnings(record=True) as w:
+
+                # TODO: PROBLEM WITH FIT_EMI_LINE
+                # TODO:  1 scipy.optimize.curve_fit does not give
+                # TODO:    same result as foutran fitgaus.fitgaus routine
+                # TODO:  2 fitgaus.fitgaus routine (in py3) does not give
+                # TODO:    same result as AT4-V48 version (py2 old)
+                # TODO:  3 scipy.optimize.curve_fit is slower
+
                 gau_param = fit_emi_line(sll, sxpos, sdata, line_weight)
             # check if gau_param[7] is positive
             if gau_param[7] > 0:
@@ -425,7 +436,7 @@ def find_lines(p, loc):
         percentage_vlines = 100 * (nlines_valid/nlines_total)
         # log the stats for this order
         wmsg = 'Order {0:3} ({1:2}): [{2:6.1f} - {3:6.1f}]'
-        wmsg += ' ({4:3}/{5:3})={6:3.0f}% lines identified'
+        wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
         wargs = [torder[order_num], order_num, min_ll, max_ll,
                  nlines_valid, nlines_total, percentage_vlines]
         WLOG('', p['log_opt'], wmsg.format(*wargs))
@@ -468,14 +479,14 @@ def fit_emi_line(sll, sxpos, sdata, weight):
     # only perform gaussian fit if coeffs[2] is negative
     if coeffs[2] < 0:
         # populate the guess for center
-        params[0] = -1 * coeffs[1]/ (2 * coeffs[2])
+        params[0] = -1 * coeffs[1] / (2 * coeffs[2])
         # populate the guess for FWHM
         params[1] = np.sqrt(-1/(2 * coeffs[2]))
         # populate the guess for the amplitude
         params[2] = np.exp(params[0]**2/(2 * params[1]**2) + coeffs[0])
         # set up the guess (from params)
         # f(x) = a1 * exp( -(x-a2)**2 / (2*a3**2) ) + a4
-        gcoeffs = np.array([params[2], params[0], params[1], 0])
+        gcoeffs = np.array([params[2], params[0], params[1], 0.0])
         # set up the weights for each pixel
         invsig = np.sqrt(weight)
         # fit a gaussian
@@ -483,7 +494,18 @@ def fit_emi_line(sll, sxpos, sdata, weight):
                        return_uncertainties=True)
         try:
             gcoeffs2, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
-            #copy the gaussian fit coefficients into params
+
+            # TODO: Test of fitgaus.fitfaus FORTRAN ROUTINE
+            # TODO:     (requires fitgaus.so to be compiled and put in
+            # TODO:     SpirouDRS.spirouTHORA folder)
+            # from SpirouDRS.spirouTHORCA import fitgaus
+            # f = np.zeros_like(sdata)
+            # siga = np.zeros_like(gcoeffs)
+            # a = gcoeffs.copy()
+            # fitgaus.fitgaus(slln,sdata,invsig,a,siga,f)
+            # gcoeffs2 = a.copy()
+
+            # copy the gaussian fit coefficients into params
             params[0] = gcoeffs2[1]
             params[1] = gcoeffs2[2]
             params[2] = gcoeffs2[0]
@@ -528,16 +550,20 @@ def fit_emi_line(sll, sxpos, sdata, weight):
     return gparams
 
 
+def test_plot(x, y, guess=None, coeffs=None, weights=None):
 
-def test_plot(x, y, guess, coeffs, weights):
+    if weights is not None:
+        plt.errorbar(x, y, yerr=1/weights, label='data', ls='None', marker='x')
+    else:
+        plt.scatter(x, y, label='data')
 
+    if guess is not None:
+        yguess = gauss_function(x, *guess)
+        plt.plot(x, yguess, label='guess')
 
-    yguess = gauss_function(x, *guess)
-    yfit = gauss_function(x, *coeffs)
-
-    plt.errorbar(x, y, yerr=1/weights, label='data', ls='None', marker='x')
-    plt.plot(x, yguess, label='guess')
-    plt.plot(x, yfit, label='fit')
+    if coeffs is not None:
+        yfit = gauss_function(x, *coeffs)
+        plt.plot(x, yfit, label='fit')
 
     plt.plot([coeffs[1], coeffs[1]], [np.min(y), np.max(y)], ls='--',
              label='fit center')
@@ -560,6 +586,7 @@ def gauss_function(x, a, x0, sigma, dc):
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
+
 
 # =============================================================================
 # Define worker functions

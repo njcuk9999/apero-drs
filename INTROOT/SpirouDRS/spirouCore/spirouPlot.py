@@ -312,7 +312,7 @@ def locplot_im_sat_threshold(image, threshold):
     # plot image
     frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='pink')
     # set the limits
-    frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
 
     # TODO: Need axis labels and title
 
