@@ -959,7 +959,7 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
                      user can easily understand for each variable
 
     :return dict: dictionary containing the run time arguments converts to
-                  "types", keys are equal to "names"
+                  "types", keys are equal to "names"dirname = os.path.dirname(abs_path)
                   dict[names[max(positions)] is updated to be a list of
                   type types[max(positions)]
     """
@@ -971,20 +971,24 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     if len(sys.argv) > maxpos + 2:
         # convert maxname to a list
         customdict[maxname] = [customdict[maxname]]
-        # now append additional arguments to this list with type maxkind
-        for pos in range(maxpos + 2, len(sys.argv)):
-            # get vaue from sys.argv
-            raw_value = sys.argv[pos]
-            try:
-                # try to cast it to type "maxkind"
-                raw_value = maxkind(raw_value)
-                # try to add it to dictionary
-                customdict[maxname].append(raw_value)
-            except ValueError:
-                emsg = ('Arguments Error: "{0}" should be a {1} '
-                        '(Value = {2})')
-                eargs = [lognames[pos], TYPENAMES[maxkind], raw_value]
-                WLOG('error', DPROG, emsg.format(*eargs))
+        # if maxpos = 0 then we are done
+        if maxpos == 0:
+            return customdict
+        else:
+            # now append additional arguments to this list with type maxkind
+            for pos in range(maxpos + 2, len(sys.argv)):
+                # get vaue from sys.argv
+                raw_value = sys.argv[pos]
+                try:
+                    # try to cast it to type "maxkind"
+                    raw_value = maxkind(raw_value)
+                    # try to add it to dictionary
+                    customdict[maxname].append(raw_value)
+                except ValueError:
+                    emsg = ('Arguments Error: "{0}" should be a {1} '
+                            '(Value = {2})')
+                    eargs = [lognames[pos], TYPENAMES[maxkind], raw_value]
+                    WLOG('error', DPROG, emsg.format(*eargs))
     # return the new custom dictionary
     return customdict
 
@@ -1316,7 +1320,20 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
     if mff in customargs:
         # the value of mainfitsfile must be a string or list of strings
         #    if it isn't raise an error
-        rawfilename = customargs[mff]
+        cmff = customargs[mff]
+        tcmff = type(cmff)
+        if type(tcmff) == list:
+            rawfilename = cmff[0]
+        elif type(tcmff) == str:
+            rawfilename = cmff
+        else:
+            emsg1 = 'customarg[{0}] must be a list or a string'.format(mff)
+            emsg2 = ('    customarg[{0}]={1} (type={2})'
+                     ''.format(mff, cmff, tcmff))
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            rawfilename = None
+
         # check if mainfitsvalue is a full path
         if not os.path.exists(rawfilename):
             # construct main file value path
@@ -1331,7 +1348,7 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
             p['ARG_FILE_NAMES'] = rawfilename
             p['FITSFILENAME'] = abspathname[0]
         else:
-            eargs = [mff, mfv]
+            eargs = [mff, p['ARG_FILE_DIR']]
             emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
                      'valid python string or list').format(*eargs)
             emsg2 = '    function = {0}'.format(func_name)
