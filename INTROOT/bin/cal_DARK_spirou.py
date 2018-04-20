@@ -262,7 +262,7 @@ def main(night_name=None, files=None):
         # update the master calib DB file with new key
         spirouCDB.UpdateMaster(p, keydb, darkfitsname, hdr)
         # set badpix key
-        keydb = 'BADPIX'
+        keydb = 'BADPIX_OLD'
         # copy badpix fits file to calibDB folder
         spirouCDB.PutFile(p, badpixelfits)
         # update the master calib DB file with new key
