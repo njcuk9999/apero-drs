@@ -71,8 +71,6 @@ GetGain = spirouImage.get_gain
 
 GetAcqTime = spirouImage.get_acqtime
 
-ReadParam = spirouImage.get_param
-
 GetKey = spirouFITS.keylookup
 
 GetKeys = spirouFITS.keyslookup
@@ -88,6 +86,14 @@ MakeTable = spirouTable.make_table
 MeasureDark = spirouImage.measure_dark
 
 NormMedianFlat = spirouImage.normalise_median_flat
+
+PPCorrectTopBottom = spirouImage.ref_top_bottom
+
+PPMedianFilterDarkAmps = spirouImage.median_filter_dark_amp
+
+PPMedianOneOverfNoise = spirouImage.median_one_over_f_noise
+
+ReadParam = spirouImage.get_param
 
 ReadData = spirouFITS.readdata
 

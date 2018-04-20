@@ -128,6 +128,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Identification of bad pixels
     # ----------------------------------------------------------------------
+    # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
+
     # get number of bad dark pixels (as a fraction of total pixels)
     with warnings.catch_warnings(record=True) as w:
         baddark = 100.0 * np.sum(data > p['DARK_CUTLIMIT'])
@@ -237,6 +239,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
+    # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
+
     # construct bad pixel file name
     badpixelfits = spirouConfig.Constants.DARK_BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
@@ -261,8 +265,11 @@ def main(night_name=None, files=None):
         spirouCDB.PutFile(p, darkfits)
         # update the master calib DB file with new key
         spirouCDB.UpdateMaster(p, keydb, darkfitsname, hdr)
+
+        # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
+
         # set badpix key
-        keydb = 'BADPIX'
+        keydb = 'BADPIX_OLD'
         # copy badpix fits file to calibDB folder
         spirouCDB.PutFile(p, badpixelfits)
         # update the master calib DB file with new key
