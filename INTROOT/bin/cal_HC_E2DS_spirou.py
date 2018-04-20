@@ -42,7 +42,7 @@ ParamDict = spirouConfig.ParamDict
 # cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
 
 #def main(night_name=None, files=None):
-if 1:
+if __name__ == '__main__':
     night_name = '20170710'
     files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
              'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
