@@ -623,6 +623,18 @@ Value must be an integer between zero and the number of rows (y-axis dimension).
 {\callocRAW}{\constantsfile}
 {\spirouLOCOR.find\_order\_centers}{Public}
 
+
+% ic_widthmin
+\item \ParameterEntry{Center noise multiplier threshold}
+{Defines the noise multiplier threshold in order to accept an order center as usable such that:
+\begin{equation}
+max(value) - min(value) > \text{ic\_noise\_mult\_thres} * sigdet
+\end{equation}
+where the value is row center pixel value and sigdet is the image's read out noise. Values must be a float.}
+{ic\_noise\_mult\_thres}{100}
+{\callocRAW}{\constantsfile}
+{\spirouLOCOR.find\_order\_centers}{Public}
+
 % ic_locnbpix
 \item \ParameterEntry{Min/Max smoothing box size}
 {Defines the half-size of the rows to use when smoothing the image to work out the minimum and maximum pixel values. This defines the half-spacing between orders and is used to estimate background and the maximum signal. Value must be greater than zero and less than the number of rows (y-axis dimension).}

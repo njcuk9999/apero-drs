@@ -270,6 +270,7 @@ def find_order_centers(pp, image, loc, order_num):
     ext_window, image_gap = pp['IC_EXT_WINDOW'], pp['IC_IMAGE_GAP']
     sigdet, locthreshold = pp['sigdet'], pp['IC_LOCSEUIL']
     widthmin = pp['IC_WIDTHMIN']
+    nm_threshold = pp['IC_NOISE_MULT_THRES']
     nx2 = image.shape[1]
     # get columns (start from the center and work outwards right side first
     # the left side) the order of these seems weird but we calculate row centers
@@ -307,7 +308,7 @@ def find_order_centers(pp, image, loc, order_num):
         # this column
         ovalues = image[rowtop:rowbottom, col]
         # only use if max - min above threshold = 100 * sigdet
-        if np.max(ovalues) - np.min(ovalues) > (100.0 * sigdet):
+        if np.max(ovalues) - np.min(ovalues) > (nm_threshold * sigdet):
             # as we are not normalised threshold needs multiplying by
             # the maximum value
             threshold = np.max(ovalues) * locthreshold

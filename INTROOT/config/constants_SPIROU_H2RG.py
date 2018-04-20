@@ -156,6 +156,11 @@ ic_locstepc = 20
 #   Define minimum width of order to be accepted                     - [cal_loc]
 ic_widthmin = 5
 
+#   Define the noise multiplier threshold in order to accept an      - [cal_loc]
+#       order center as usable
+#       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
+ic_noise_mult_thres = 100.0
+
 #   Half spacing between orders                                      - [cal_loc]
 ic_locnbpix = 45
 
