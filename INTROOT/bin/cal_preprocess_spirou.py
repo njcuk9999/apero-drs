@@ -37,6 +37,7 @@ WLOG = spirouCore.wlog
 PathException = spirouFile.PathException
 # ----------------------------------------------------------------------------
 # constants for constants file
+# TODO Constants need moving to constants_SPIROU.py
 PROCESSED_SUFFIX = '_pp'
 NUMBER_DARK_AMP = 5
 NUMBER_REF_TOP = 4
@@ -64,6 +65,7 @@ def main(night_name=None, ufiles=None):
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
     # add constants not currently in constants file
+    # TODO Constants need moving to constants_SPIROU.py
     p['PROCESSED_SUFFIX'] = PROCESSED_SUFFIX
     p['NUMBER_DARK_AMP'] = NUMBER_DARK_AMP
     p['NUMBER_REF_TOP'] = NUMBER_REF_TOP
