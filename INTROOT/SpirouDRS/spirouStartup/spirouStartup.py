@@ -188,6 +188,9 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                                                     mainfitsfile,
                                                     mfd=mainfitsdir)
     # -------------------------------------------------------------------------
+    # check key parameters
+    cparams = check_key_fparams(cparams)
+    # -------------------------------------------------------------------------
     # Display help file if needed
     display_help_file(cparams)
     # display run file
@@ -212,6 +215,13 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
             WLOG('warning', DPROG, warnlog)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, DPROG, e.message)
+    # -------------------------------------------------------------------------
+    # Reduced directory
+    # if reduced directory does not exist create it
+    if not os.path.isdir(cparams['DRS_DATA_REDUC']):
+        os.makedirs(cparams['DRS_DATA_REDUC'])
+    if not os.path.isdir(cparams['reduced_dir']):
+        os.makedirs(cparams['reduced_dir'])
     # -------------------------------------------------------------------------
     # return parameter dictionary
     return cparams
@@ -300,15 +310,6 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
                 else:
                     emsg = 'Wrong type of image for {0} should contain "{1}"'
                 WLOG('error', p['log_opt'], emsg.format(kind, contains))
-    # -------------------------------------------------------------------------
-    # Reduced directory
-    # construct reduced directory
-    reduced_dir = p['reduced_dir']
-    # if reduced directory does not exist create it
-    if not os.path.isdir(p['DRS_DATA_REDUC']):
-        os.makedirs(p['DRS_DATA_REDUC'])
-    if not os.path.isdir(reduced_dir):
-        os.makedirs(reduced_dir)
     # -------------------------------------------------------------------------
     # Calib DB setup
     p = load_calibdb(p, calibdb)
@@ -436,6 +437,25 @@ def exit_script(ll, has_plots=True):
 # =============================================================================
 # Define general functions
 # =============================================================================
+def check_key_fparams(p):
+    # if fitsfilename exists it must be found
+    if 'FITSFILENAME' in p:
+        if p['FITSFILENAME'] is not None:
+            if not os.path.exists(p['FITSFILENAME']):
+                emsg = 'Fatal error cannot find FITSFILENAME={0}'
+                WLOG('error', DPROG, emsg.format(p['FITSFILENAME']))
+
+    if 'ARG_FILE_NAMES' in p:
+        for afile in p['ARG_FILE_NAMES']:
+            apath = os.path.join(p['ARG_FILE_DIR'], afile)
+            if not os.path.exists(apath):
+                emsg1 = 'Fatal error cannot find ARG_FILE_NAME={0}'
+                emsg2 = '   in directory = {0}'.format(p['ARG_FILE_DIR'])
+                WLOG('error', DPROG, [emsg1.format(afile), emsg2])
+    # finally return param dict
+    return p
+
+
 def run_time_args(p, mainfitsdir):
     """
     Get sys.argv arguments (run time arguments and use them to fill parameter
@@ -656,7 +676,6 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
     return p
 
 
-
 def set_arg_file_dir(p, mfd=None):
     """
 
@@ -685,6 +704,10 @@ def set_arg_file_dir(p, mfd=None):
                               in p['ARG_FILE_NAMES']
     """
 
+    # first we need to make sure night_name doesn't have backslahses at the end
+    while p['ARG_NIGHT_NAME'].endswith('/'):
+        p['ARG_NIGHT_NAME'] = p['ARG_NIGHT_NAME'][:-1]
+
     # define the raw/reduced/calib folder from cparams
     raw = spirouConfig.Constants.RAW_DIR(p)
     red = spirouConfig.Constants.REDUCED_DIR(p)
@@ -697,12 +720,38 @@ def set_arg_file_dir(p, mfd=None):
     # choose between the different possible values for the main arg_file_dir
     if cond:
         p['ARG_FILE_DIR'] = mfd
+        location = 'mainfitsfile definition'
     elif mfd == 'reduced':
         p['ARG_FILE_DIR'] = red
+        location = 'DRS_DATA_REDUC'
     elif mfd == 'calibdb':
         p['ARG_FILE_DIR'] = calib
+        location = 'DRS_CALIB_DB'
     else:
         p['ARG_FILE_DIR'] = raw
+        location = 'DRS_DATA_RAW'
+
+    # check that ARG_FILE_DIR is valid
+    if not os.path.exists(p['ARG_FILE_DIR']):
+        # get arg path (path without [FOLDER] or NIGHT_NAME
+        if p['ARG_NIGHT_NAME'] in p['ARG_FILE_DIR']:
+            arg_fp = p['ARG_FILE_DIR'][:-len(p['ARG_NIGHT_NAME'])]
+        else:
+            arg_fp = p['ARG_FILE_DIR']
+        # if arg path does exist it is the [FOLDER] or NIGHT_NAME which
+        #   is wrong
+        if os.path.exists(arg_fp):
+            emsg1 = ('Fatal error cannot find '
+                     '[FOLDER]="{0}"'.format(p['ARG_NIGHT_NAME']))
+            emsg2 = '    in directory {0} ({1})'.format(arg_fp, location)
+        # else it is the directory which is wrong (cal_validate was not run)
+        else:
+            emsg1 = ('Fatail error cannot find directory {0}'
+                     ''.format(location))
+            emsg2 = '    {0}="{1}"'.format(location, arg_fp)
+        # log error
+        WLOG('error', DPROG, [emsg1, emsg2])
+
     # return p
     return p
 
@@ -796,6 +845,8 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
     # if we have no prefixes we can just return p
     if prefixes is None:
         return p
+    elif not type(prefixes) == list:
+        prefixes = [prefixes]
     # get variables from p
     if filename is None:
         arg_fn1 = p['arg_file_names'][0]
@@ -1322,9 +1373,9 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
         #    if it isn't raise an error
         cmff = customargs[mff]
         tcmff = type(cmff)
-        if type(tcmff) == list:
+        if tcmff == list:
             rawfilename = cmff[0]
-        elif type(tcmff) == str:
+        elif tcmff == str:
             rawfilename = cmff
         else:
             emsg1 = 'customarg[{0}] must be a list or a string'.format(mff)
