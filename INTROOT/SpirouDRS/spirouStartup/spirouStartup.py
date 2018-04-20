@@ -359,7 +359,7 @@ def load_calibdb(p, calibdb=True):
     return p
 
 
-def exit_script(ll):
+def exit_script(ll, has_plots=True):
     """
     Exit script for handling interactive endings to sessions (if DRS_PLOT is
     active)
@@ -415,7 +415,7 @@ def exit_script(ll):
         if not find_interactive():
             code.interact(local=ll)
     # if interactive ask about closing plots
-    if find_interactive():
+    if find_interactive() and has_plots:
         # deal with closing plots
         wmsg = 'Close plots? [Y]es or [N]o?'
         WLOG('', '', HEADER, printonly=True)
