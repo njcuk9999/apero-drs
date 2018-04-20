@@ -55,10 +55,10 @@ ic_ccdy_red_low = 750
 ic_ccdy_red_high = 1350
 
 #   Resize image                                                     - [cal_loc]
-ic_ccdx_low = 1
-ic_ccdx_high = 4096
-ic_ccdy_low = 1
-ic_ccdy_high = 4096
+ic_ccdx_low = 4
+ic_ccdx_high = 4092
+ic_ccdy_low = 4
+ic_ccdy_high = 3450
 
 #    Define the types of fiber to look for            - [cal_extract, cal_drift]
 #       (earlier in list takes priority)
@@ -155,6 +155,11 @@ ic_locstepc = 20
 
 #   Define minimum width of order to be accepted                     - [cal_loc]
 ic_widthmin = 5
+
+#   Define the noise multiplier threshold in order to accept an      - [cal_loc]
+#       order center as usable
+#       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
+ic_noise_mult_thres = 100.0
 
 #   Half spacing between orders                                      - [cal_loc]
 ic_locnbpix = 45
