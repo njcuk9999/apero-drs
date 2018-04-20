@@ -14,6 +14,7 @@ import numpy as np
 import os
 import glob
 import warnings
+import scipy
 from scipy.ndimage import filters
 
 from SpirouDRS import spirouCDB
@@ -294,6 +295,156 @@ def get_all_similar_files(p, directory, prefix=None, suffix=None):
     filelist = np.sort(filelist)
     # return file list
     return list(filelist)
+
+
+# =============================================================================
+# Define Pre-processing correction functions
+# =============================================================================
+def ref_top_bottom(p, image):
+    """
+    Corretion for the top and bottom reference pixels
+    :param p:
+    :param image:
+    :return:
+    """
+    # get the image size
+    dim1, dim2 = image.shape
+    # get constants from p
+    tamp = p['TOTAL_AMP_NUM']
+    ntop = p['NUMBER_REF_TOP']
+    nbottom = p['NUMBER_REF_BOTTOM']
+    # get number of pixels in amplifier
+    pix_in_amp = dim2 // tamp
+    pix_in_amp_2 = pix_in_amp // 2
+    # work out the weights for y pixels
+    weight = np.arange(dim1)/(dim1-1)
+    # pipe into array to cover odd pixels and even pixels
+    weightarr = np.repeat(weight, dim2 // pix_in_amp_2)
+    # reshape
+    weightarr = weightarr.reshape(dim1, pix_in_amp_2)
+    # loop around each amplifier
+    for amp_num in range(tamp):
+        # get the pixel mask for this amplifier
+        pixmask = (amp_num * dim2 // tamp) + 2 * np.arange(pix_in_amp_2)
+        # loop around the even and then the odd pixels
+        for oddeven in range(2):
+            # work out the median of the bottom pixels for this amplifier
+            bottom = np.nanmedian(image[:nbottom, pixmask + oddeven])
+            top = np.nanmedian(image[dim1 - ntop:, pixmask + oddeven])
+            # work out contribution to subtract from top and bottom
+            contrib = (top * weightarr) + (bottom * (1 - weightarr))
+            # subtraction contribution from image for this amplifier
+            image[:, pixmask+oddeven] -= contrib
+    # return corrected image
+    return image
+
+
+def median_filter_dark_amp(p, image):
+    # get the image size
+    dim1, dim2 = image.shape
+    # get constants from p
+    namp = p['NUMBER_DARK_AMP']
+    tamp = p['TOTAL_AMP_NUM']
+    ybinnum = p['DARK_MED_BINNUM']
+    # get number of pixels in amplifier
+    pix_in_amp = dim2 // tamp
+    # ----------------------------------------------------------------------
+    # extract the dark amplifiers + one for the median filtering
+    image2 = image[:, : 128 * (namp + 1)]
+    # there are ribbons every two amplifiers covering two pixels
+    xribbon = []
+    for pix in range(pix_in_amp * 2, pix_in_amp * namp, pix_in_amp * 2):
+        xribbon = np.append(xribbon, pix - 1)
+        xribbon = np.append(xribbon, pix)
+    # create a copy of the dark amplifiers and set the ribbons to NaN
+    image2b = image2.copy()
+    image2b[:, xribbon.astype(int)] = np.nan
+    # ----------------------------------------------------------------------
+    # produce the median-binned image
+    binstep = dim1 // ybinnum
+    xbinnum = (namp + 1) * pix_in_amp // binstep
+    # create an array to hold binned image
+    imagebin = np.zeros([ybinnum, xbinnum])
+    # bin image using a median (loop around bins)
+    for i in range(ybinnum):
+        for j in range(xbinnum):
+            # get iteration bin pposition
+            x0, y0 = i * binstep, j * binstep
+            x1, y1 = i * binstep + binstep, j * binstep + binstep
+            # calculate value at this position
+            imagebin[i, j] = np.nanmedian(image2b[x0:x1, y0:y1])
+    # apply a cubic spline onto the binned image
+    image3 = scipy.ndimage.zoom(imagebin, binstep, order=2)
+    # ----------------------------------------------------------------------
+    # subtract the low-frequency part of the image
+    #    this leaves the common structures
+    diffimage = image2 - image3
+    # create a cube that contains the dark amplifiers
+    darkamps = np.zeros([namp, dim1, pix_in_amp])
+    # loop around each amplifier and add the diff image for this amplifier
+    # into the common storage cube
+    for amp in range(namp):
+        # amplifiers are flipped for odd numbered amplifiers
+        if (amp % 2) == 1:
+            # work out pixel positions for this amplifier
+            firstpixel = (amp * pix_in_amp) + (pix_in_amp - 1)
+            lastpixel = (amp * pix_in_amp) - 1
+            # add diff image (flipped as amp is odd)
+            darkamps[amp, :, :] = diffimage[:, firstpixel:lastpixel:-1]
+        else:
+            # work out pixel positions
+            firstpixel = (amp * pix_in_amp)
+            lastpixel = firstpixel + pix_in_amp
+            # add diff image
+            darkamps[amp, :, :] = diffimage[:, firstpixel:lastpixel]
+    # from the cube that contains all dark amplifiers construct the
+    #    median dark amplifier
+    refamp = np.nanmedian(darkamps, axis=0)
+    # ----------------------------------------------------------------------
+    # subtract the median dark amp from each amplifier in the image
+    for amp in range(tamp):
+        # if odd flip
+        if (amp % 2) == 1:
+            # work out pixel positions for this amplifier
+            firstpixel = (amp * pix_in_amp) + (pix_in_amp - 1)
+            lastpixel = (amp * pix_in_amp) - 1
+            # subtract off refamp
+            image[:, firstpixel:lastpixel:-1] -= refamp
+        else:
+            # work out pixel positions
+            firstpixel = (amp * pix_in_amp)
+            lastpixel = firstpixel + pix_in_amp
+            # subtract off refamp
+            image[:, firstpixel:lastpixel] -= refamp
+    # ----------------------------------------------------------------------
+    # finally return corrected image
+    return image
+
+
+def median_one_over_f_noise(p, image):
+    # get the image size
+    dim1, dim2 = image.shape
+    # get constants from p
+    tamp = p['TOTAL_AMP_NUM']
+    ntop = p['NUMBER_REF_TOP']
+    nbottom = p['NUMBER_REF_BOTTOM']
+    ybinnum = p['DARK_MED_BINNUM']
+    # get the bin step
+    binstep = dim1 // ybinnum
+    # generate the list of top and bottom reference pixels to use
+    bottompixels = np.arange(nbottom)
+    toppixels = dim2 - np.arange(1, ntop +1)[::-1]
+    usepixels = np.append(bottompixels, toppixels).astype(int)
+    # median the reference pixels
+    refimage = np.nanmedian(image[:, usepixels])
+    # use the refimage to create a map of 1/f noise
+    noise1f = scipy.ndimage.median_filter(refimage, size=binstep,
+                                          mode='reflect')
+    # subtract the 1/f noise from the image
+    for pixel in range(dim2):
+        image[:, pixel] -= noise1f
+    # return the corrected image
+    return image
 
 
 # =============================================================================
@@ -871,8 +1022,6 @@ def read_line_list(p=None, filename=None):
     WLOG('', p['log_opt'] + p['fiber'], wmsg.format(len(ll), linefile))
     # return line list and amps
     return ll, amp
-
-
 
 
 # =============================================================================
