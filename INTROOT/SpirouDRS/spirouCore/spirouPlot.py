@@ -256,7 +256,7 @@ def locplot_order(frame, x, y, label):
 
     :return None:
     """
-    frame.plot(x, y, label=label)
+    frame.plot(x, y, label=label, linewidth=1.5, color='red')
 
 
 def locplot_y_miny_maxy(y, miny=None, maxy=None):
@@ -310,7 +310,7 @@ def locplot_im_sat_threshold(image, threshold):
     # set up axis
     frame = plt.subplot(111)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='pink')
+    frame.imshow(image, origin='lower', clim=(1.0, threshold), cmap='gist_gray')
     # set the limits
     frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
 
