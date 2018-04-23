@@ -118,28 +118,40 @@ def main(night_name=None, ufiles=None):
         rout = spirouImage.ReadImage(p, filename=ufile)
         image, hdr, cdr, nx, ny = rout
 
+
+
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
-        # correct for the top and bottom reference pixels
-        WLOG('', p['log_opt'], 'Correcting for top and bottom pixels')
-        image = spirouImage.PPCorrectTopBottom(p, image)
+        # TODO: Eventually remove H2RG fix
+        # do not correct for H2RG
+        if p['IC_IMAGE_TYPE'] == 'H2RG':
+            pass
+        else:
+            # correct for the top and bottom reference pixels
+            WLOG('', p['log_opt'], 'Correcting for top and bottom pixels')
+            image = spirouImage.PPCorrectTopBottom(p, image)
 
-        # correct by a median filter from the dark amplifiers
-        wmsg = 'Correcting by the median filter from dark amplifiers'
-        WLOG('', p['log_opt'], wmsg)
-        image = spirouImage.PPMedianFilterDarkAmps(p, image)
+            # correct by a median filter from the dark amplifiers
+            wmsg = 'Correcting by the median filter from dark amplifiers'
+            WLOG('', p['log_opt'], wmsg)
+            image = spirouImage.PPMedianFilterDarkAmps(p, image)
 
-        # correct for the 1/f noise
-        wmsg = 'Correcting for the 1/f noise'
-        WLOG('', p['log_opt'], wmsg)
-        image = spirouImage.PPMedianOneOverfNoise(p, image)
+            # correct for the 1/f noise
+            wmsg = 'Correcting for the 1/f noise'
+            WLOG('', p['log_opt'], wmsg)
+            image = spirouImage.PPMedianOneOverfNoise(p, image)
 
         # ------------------------------------------------------------------
         # rotate image
         # ------------------------------------------------------------------
-        # rotation to match HARPS orientation (expected by DRS)
-        image = np.rot90(image, -1)
+        # TODO: Eventually remove H2RG fix
+        # do not rotate for H2RG
+        if p['IC_IMAGE_TYPE'] == 'H2RG':
+            pass
+        else:
+            # rotation to match HARPS orientation (expected by DRS)
+            image = np.rot90(image, -1)
 
         # ------------------------------------------------------------------
         # Save rotated image
