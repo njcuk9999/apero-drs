@@ -44,6 +44,8 @@ GetFiberType = spirouStartup.get_fiber_type
 
 LoadArguments = spirouStartup.load_arguments
 
+LoadOtherConfig = spirouStartup.load_other_config_file
+
 InitialFileSetup = spirouStartup.initial_file_setup
 
 LoadCalibDB = spirouStartup.load_calibdb
