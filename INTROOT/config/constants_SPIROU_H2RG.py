@@ -153,6 +153,8 @@ ic_image_gap = 0
 #   Define the column separation for fitting orders                  - [cal_loc]
 ic_locstepc = 20
 
+#   Define the fit for the order
+
 #   Define minimum width of order to be accepted                     - [cal_loc]
 ic_widthmin = 5
 
@@ -160,6 +162,42 @@ ic_widthmin = 5
 #       order center as usable
 #       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
 ic_noise_mult_thres = 100.0
+
+#   Define the polynomial fit parameters for interpolating over the  - [cal_loc]
+#      bad regions (holes) before localization is done
+#      NOT USED FOR H2RG
+bad_region_fit = [0.0, 0.0, 0.0]
+
+#   Define the median_filter box size used in interpolating over the - [cal_loc]
+#      bad regions (holes) before localization is done
+#      NOT USED FOR H2RG
+bad_region_med_size = 0
+
+#   Define the threshold below which the image (normalised between   - [cal_loc]
+#      0 and 1) should be regarded as bad. Used in interpolating over
+#      the bad regions (holes) before localization is done
+#      NOT USED FOR H2RG
+bad_region_threshold = 0.0
+
+#   Define the box size (kernel) for the convolution used in         - [cal_loc]
+#      interpolating over the bad regions (holes) before localization
+#      is done
+#      NOT USED FOR H2RG
+bad_region_kernel_size = 0
+
+#   Define the median_filter box size used in interpolating over the - [cal_loc]
+#      bad regions (holes) (during the convolution) before
+#      localization is done
+#      NOT USED FOR H2RG
+bad_region_med_size2 = 0
+
+#   Define the thresholds (of the ratio between original image and   - [cal_loc]
+#      the normalised image) where pixels are deem "good" and "bad".
+#      For use in interpolating over the bad regions (holes) before
+#      localization is done
+#      NOT USED FOR H2RG
+bad_region_good_value = 0.0
+bad_region_bad_value = 0.0
 
 #   Half spacing between orders                                      - [cal_loc]
 ic_locnbpix = 45

@@ -89,6 +89,15 @@ def main(night_name=None, files=None):
     datac = spirouImage.CorrectForDark(p, data, hdr)
 
     # ----------------------------------------------------------------------
+    #  Interpolation over bad regions (to fill in the holes)
+    # ----------------------------------------------------------------------
+    # log process
+    wmsg = 'Interpolating over bad regions'
+    WLOG('', p['log_opt'], wmsg)
+    # run interpolation
+    datac = spirouImage.InterpolateBadRegions(p, datac)
+
+    # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
