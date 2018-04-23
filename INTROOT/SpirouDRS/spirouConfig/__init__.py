@@ -33,7 +33,7 @@ __all__ = ['ConfigError',
            'GetKeywordArguments',
            'GetKeywordValues',
            'GetAbsFolderPath',
-           'GetDefaultConfigFile'
+           'GetDefaultConfigFile',
            'LoadConfigFromFile',
            'ParamDict',
            'ReadConfigFile']
