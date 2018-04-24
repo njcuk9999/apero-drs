@@ -15,7 +15,8 @@ import os
 import glob
 import warnings
 import scipy
-from scipy.ndimage import filters
+from scipy.ndimage import filters, median_filter
+from scipy.interpolate import InterpolatedUnivariateSpline as InterpUSpline
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -153,7 +154,7 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
     """
     Converts image from ADU/s into e-
 
-    :param image:
+    :param image: numpy array (2D), the image
     :param p: parameter dictionary, ParamDict containing constants
             Must contain at least: (if exptime is None)
                 exptime: float, the exposure time of the image
@@ -297,15 +298,155 @@ def get_all_similar_files(p, directory, prefix=None, suffix=None):
     return list(filelist)
 
 
+def interp_bad_regions(p, image):
+    """
+    Interpolate over the bad regions to fill in holes on image (only to be used
+    for image localization)
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                IC_IMAGE_TYPE: string, the type of detector (H2RG or H4RG)
+                BAD_REGION_FIT: list of floats, the fit to the curvature
+                BAD_REGION_MED_SIZE: int, the median filter box size
+                BAD_REGION_THRESHOLD: float, the threshold below which the
+                                      image (normalised) should be regarded as
+                                      bad (and the pixels in the image that
+                                      should be set to the norm value)
+                BAD_REGION_KERNAL_SIZE: int, the box size used to do the
+                                        convolution
+                BAD_REGION_MED_SIZE2: int, the median filter box size used
+                                      during the convolution
+                BAD_REGION_GOOD_VALUE: float, the final good ratio value
+                                       (ratio between the original image and
+                                        the interpolated image) to accept
+                                        pixels as good pixels
+
+                BAD_REGION_BAD_VALUE: float, the final bad ratio value
+                                       (ratio between the original image and
+                                        the interpolated image) to reject
+                                        pixels as bad pixels
+
+    :param image: numpy array (2D), the image
+
+    :return image3: numpy array (2D), the corrected image
+    """
+    # TODO: Eventually remove H2RG fix
+    # do not interp for H2RG
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        return image
+    # get the image size
+    dim1, dim2 = image.shape
+    # get parameters from p
+    curvefit = p['BAD_REGION_FIT']
+    med_size = p['BAD_REGION_MED_SIZE']
+    threshold = p['BAD_REGION_THRESHOLD']
+    kernel_size = p['BAD_REGION_KERNEL_SIZE']
+    med_size2  = p['BAD_REGION_MED_SIZE2']
+    goodvalue = p['BAD_REGION_GOOD_VALUE']
+    badvalue = p['BAD_REGION_BAD_VALUE']
+    # set nan pixels to zero
+    image2 = np.where(np.isfinite(image), image, np.zeros_like(image))
+    # create fit (using bad_region_fit parameters) to order curvature
+    xpixfit = np.arange(dim2)
+    ypixfit = np.polyval(curvefit, xpixfit)
+    # work out the delta pixel shift needed to "straighten" curvature
+    pixshift = ypixfit - np.mean(ypixfit)
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], '   - Straightening interpolation image')
+    # loop around all x pixels and shift pixels by interpolating with a spline
+    for xi in range(dim2):
+        # produce the universal spline fit
+        splinefit = InterpUSpline(xpixfit, image2[:, xi], k=1)
+        # apply the spline fit with the shift and write to the image
+        image2[:, xi] = splinefit(xpixfit + pixshift[xi])
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], '   - Applying median filter to interpolation image')
+    # loop around all y pixels and median filter
+    for yi in range(dim1):
+        # get this iterations row data
+        row = np.array(image2[yi, :])
+        # median filter this iterations row data
+        row_med = median_filter(row, size=med_size, mode='reflect')
+        # normalise the row by the median filter
+        row = row/row_med
+        # find all pixels where the normalised value is less than
+        #    "bad_region_threshold"
+        rowmask = row < threshold
+        # set the masked row sto the row median filter values
+        image2[yi, rowmask] = row_med[rowmask]
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], '   - Applying convolution to interpolation image')
+    # define a kernal (box size) for the convolution
+    kernel = np.repeat(1.0/kernel_size, kernel_size)
+    # loop around all y pixels and apply a convolution over a median
+    #    filter to create the final straight image
+
+    for yi in range(dim1):
+        # get this iterations row data
+        row = np.array(image2[yi, :])
+        # median filter over the image
+        row_med = median_filter(row, size=med_size2, mode='reflect')
+        # convolve the row median filter and write to image
+        image2[yi, :] = np.convolve(row_med, kernel, mode='same')
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], '   - Un-straightening interpolation image')
+    # make sure all NaNs are 0
+    image2 = np.where(np.isfinite, image2, np.zeros_like(image2))
+    image = np.where(np.isfinite, image, np.zeros_like(image))
+    # add the curvature back in (again by interpolating with a spline)
+    for xi in range(dim2):
+        # produce the universal spline fit
+        splinefit = InterpUSpline(xpixfit, image2[:, xi], k=1)
+        # apply the spline fit with the shift and write to the image
+        image2[:, xi] = splinefit(xpixfit - pixshift[xi])
+    # -------------------------------------------------------------------------
+    # log progress
+    WLOG('', p['log_opt'], '   - Calculating good and bad pixels (from ratio)')
+    # calculate the ratio between original image and interpolated image
+    ratio = image/image2
+    # set all ratios greater than 1 to the inverse (reflect around 1)
+    with warnings.catch_warnings(record=True) as w:
+        rmask = ratio > 1
+        ratio[rmask] = 1.0/ratio[rmask]
+    # create a weight image
+    weights = np.zeros_like(image, dtype=float)
+    # decide which pixels are good and which pixels are bad
+    with warnings.catch_warnings(record=True) as w:
+        goodmask = ratio > goodvalue
+        badmask = ratio < badvalue
+        betweenmask = (~badmask) & (~goodmask)
+    # fill the weight image based on the ratio (percentage of good image used)
+    weights[goodmask] = 1.0
+    weights[badmask] = 0.0
+    weights[betweenmask] = 1.0 - 4.0 * (goodvalue - ratio[betweenmask])
+    # using the weight image to correct the original image
+    image3 = (image2 * (1 - weights)) + (image * weights)
+    # return corrected image
+    return image3
+
+
 # =============================================================================
 # Define Pre-processing correction functions
 # =============================================================================
 def ref_top_bottom(p, image):
     """
-    Corretion for the top and bottom reference pixels
-    :param p:
-    :param image:
-    :return:
+    Correction for the top and bottom reference pixels
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                               detector
+                NUMBER_REF_TOP: int, the number of reference pixels at the top
+                                of the image (highest y pixel values)
+                NUMBER_REF_BOTTOM: int, the number of reference pixels at the
+                                   bottom of the image (lowest y pixel values)
+    :param image: numpy array (2D), the image
+
+    :return image: numpy array (2D), the corrected image
     """
     # get the image size
     dim1, dim2 = image.shape
@@ -340,6 +481,23 @@ def ref_top_bottom(p, image):
 
 
 def median_filter_dark_amp(p, image):
+    """
+    Use the dark amplifiers to produce a median pattern and apply this to the
+    image
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                               detector
+                NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                                 amplifiers on the detector
+                DARK_MED_BINNUM: int, the number of bins to use in the median
+                                 filter binning process (higher number = finer
+                                 bins, lower number = bigger bins)
+    :param image: numpy array (2D), the image
+
+    :return image: numpy array (2D), the corrected image
+    """
     # get the image size
     dim1, dim2 = image.shape
     # get constants from p
@@ -422,10 +580,28 @@ def median_filter_dark_amp(p, image):
 
 
 def median_one_over_f_noise(p, image):
+    """
+    Use the top and bottom reference pixels to create a map of the 1/f noise
+    and apply it to the image
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                NUMBER_REF_TOP: int, the number of reference pixels at the top
+                                of the image (highest y pixel values)
+                NUMBER_REF_BOTTOM: int, the number of reference pixels at the
+                                   bottom of the image (lowest y pixel values)
+                NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                                 amplifiers on the detector
+                DARK_MED_BINNUM: int, the number of bins to use in the median
+                                 filter binning process (higher number = finer
+                                 bins, lower number = bigger bins)
+    :param image: numpy array (2D), the image
+
+    :return image: numpy array (2D), the corrected image
+    """
     # get the image size
     dim1, dim2 = image.shape
     # get constants from p
-    tamp = p['TOTAL_AMP_NUM']
     ntop = p['NUMBER_REF_TOP']
     nbottom = p['NUMBER_REF_BOTTOM']
     ybinnum = p['DARK_MED_BINNUM']
@@ -433,7 +609,7 @@ def median_one_over_f_noise(p, image):
     binstep = dim1 // ybinnum
     # generate the list of top and bottom reference pixels to use
     bottompixels = np.arange(nbottom)
-    toppixels = dim2 - np.arange(1, ntop +1)[::-1]
+    toppixels = dim2 - np.arange(1, ntop + 1)[::-1]
     usepixels = np.append(bottompixels, toppixels).astype(int)
     # median the reference pixels
     refimage = np.nanmedian(image[:, usepixels])
