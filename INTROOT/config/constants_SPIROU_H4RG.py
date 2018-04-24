@@ -450,6 +450,15 @@ badpix_max_hotpix = 100.0
 #      filtering image [percentage]
 badpix_norm_percentile = 90.0
 
+#   Defines the full detector flat file (located in the data      - [cal_badpix]
+#      folder)
+badpix_full_flat = 'detector_flat_full.fits'
+
+#   Defines the threshold on the full detector flat file to       - [cal_badpix]
+#      deem pixels as good
+badpix_full_threshold = 0.3
+
+
 # -----------------------------------------------------------------------------
 #  cal_CCF_E2DS_spirou
 # -----------------------------------------------------------------------------
