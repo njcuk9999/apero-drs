@@ -83,6 +83,8 @@ InterpolateBadRegions = spirouImage.interp_bad_regions
 
 LocateBadPixels = spirouImage.locate_bad_pixels
 
+LocateFullBadPixels = spirouImage.locate_bad_pixels_full
+
 MakeTable = spirouTable.make_table
 
 MeasureDark = spirouImage.measure_dark
