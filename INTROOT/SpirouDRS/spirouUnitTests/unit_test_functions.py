@@ -115,12 +115,12 @@ def UNIT_TEST_CAL_BADPIX(log=False, plot=False, return_locals=False):
     if log:
         print(UNITTEST.format('\n'*3, '='*50, '\n', name))
     # set up files
-    darkfile = 'dark_dark02d406.fits'
     flatfile = 'flat_flat02f10.fits'
+    darkfile = 'dark_dark02d406.fits'
     # start timer
     starttime = time.time()
     # run cal_badpix_spirou
-    ll = cal_BADPIX_spirou.main(NIGHT_NAME, darkfile, flatfile)
+    ll = cal_BADPIX_spirou.main(NIGHT_NAME, flatfile, darkfile)
     # end timer
     endtime = time.time()
     ll['timer'] = endtime - starttime

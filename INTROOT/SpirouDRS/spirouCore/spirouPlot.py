@@ -25,14 +25,17 @@ for gui in gui_env:
     except:
         continue
 if matplotlib.get_backend() == 'MacOSX':
-    emsg = ('OSX Error: Matplotlib MacOSX backend not supported and '
-            'Qt5Agg not available')
-    print('\n\n{0}\n{1}\n{0}\n\n'.format('='*50, emsg))
-    sys.exit()
+    matplotlib_emsg = ['OSX Error: Matplotlib MacOSX backend not supported and '
+                       'Qt5Agg not available']
+else:
+    matplotlib_emsg = []
 
-# now can import matplotlib properly
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+# can now try to import matplotlib properly
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+except Exception as e:
+    matplotlib_emsg.append(e)
 
 from SpirouDRS import spirouConfig
 from . import spirouLog
@@ -52,8 +55,13 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouLog.logger
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
+# check for matplotlib import errors
+if len(matplotlib_emsg) > 0:
+    WLOG('error', DPROG, matplotlib_emsg)
 
 
 # =============================================================================
