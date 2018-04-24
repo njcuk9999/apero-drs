@@ -79,6 +79,8 @@ GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
+InterpolateBadRegions = spirouImage.interp_bad_regions
+
 LocateBadPixels = spirouImage.locate_bad_pixels
 
 MakeTable = spirouTable.make_table
