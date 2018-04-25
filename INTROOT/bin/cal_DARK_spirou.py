@@ -135,7 +135,7 @@ def main(night_name=None, files=None):
         baddark = 100.0 * np.sum(data > p['DARK_CUTLIMIT'])
         baddark /= np.product(data.shape)
     # log the fraction of bad dark pixels
-    wmsg = 'Frac pixels with DARK > {0:.1f} ADU/s = {1:.1f} %'
+    wmsg = 'Frac pixels with DARK > {0:.2f} ADU/s = {1:.3f} %'
     WLOG('info', p['log_opt'], wmsg.format(p['DARK_CUTLIMIT'], baddark))
 
     # define mask for values above cut limit or NaN
@@ -150,7 +150,7 @@ def main(night_name=None, files=None):
     # log fraction of dead pixels + dark > cut
     logargs = [p['DARK_CUTLIMIT'], p['dadeadall']]
     WLOG('info', p['log_opt'], ('Total Frac dead pixels (N.A.N) + DARK > '
-                                '{0:.1f} ADU/s = {1:.1f} %').format(*logargs))
+                                '{0:.2f} ADU/s = {1:.3f} %').format(*logargs))
 
     # ----------------------------------------------------------------------
     # Plots
