@@ -150,7 +150,8 @@ def darkplot_image_and_regions(pp, image):
     im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med_full']),
                       cmap='jet')
     # plot the colorbar
-    plt.colorbar(im, ax=frame)
+    cbar=plt.colorbar(im, ax=frame)
+    cbar.set_label('ADU/s')
     # get the blue region
     bxlow, bxhigh = pp['IC_CCDX_BLUE_LOW'], pp['IC_CCDX_BLUE_HIGH']
     bylow, byhigh = pp['IC_CCDY_BLUE_LOW'], pp['IC_CCDY_BLUE_HIGH']
@@ -175,6 +176,7 @@ def darkplot_image_and_regions(pp, image):
     rrec = Rectangle((rxlow, rylow), rxhigh-rxlow, ryhigh-rylow,
                      edgecolor='r', facecolor='None')
     frame.add_patch(rrec)
+    plt.title('Dark image with red and blue regions')
 
     # TODO: needs axis labels and titles
 
@@ -201,6 +203,7 @@ def darkplot_datacut(imagecut):
     fig.colorbar(im, ax=frame)
     # make sure image is bounded by shape
     plt.axis([0, imagecut.shape[0], 0, imagecut.shape[1]])
+    plt.title('Dark cut mask')
 
     # TODO: needs axis labels and title
 
@@ -236,16 +239,22 @@ def darkplot_histograms(pp):
     histo_r, edge_r = pp['histo_red']
     # plot the main histogram
     xf = np.repeat(edge_f, 2)
-    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
-    frame.plot(xf, yf, color='green')
+#    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
+    yf = [0] + list(np.repeat(histo_f, 2)) + [0]
+    frame.plot(xf, yf, color='green', label='Whole det')
     # plot the blue histogram
     xb = np.repeat(edge_b, 2)
-    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
-    frame.plot(xb, yb, color='blue')
+#    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
+    yb = [0] + list(np.repeat(histo_b, 2)) + [0]
+    frame.plot(xb, yb, color='blue', label='Blue part')
     # plot the red histogram
     xr = np.repeat(edge_r, 2)
-    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
-    frame.plot(xr, yr, color='red')
+#    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
+    yr = [0] + list(np.repeat(histo_r, 2)) + [0]
+    frame.plot(xr, yr, color='red', label='Red part')
+    frame.set_xlabel('ADU/s')
+    frame.set_ylabel('Normalised frequency')
+    frame.legend()
 
     # TODO: Needs axis labels and title
 
