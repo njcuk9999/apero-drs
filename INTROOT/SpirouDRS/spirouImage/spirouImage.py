@@ -698,7 +698,8 @@ def measure_dark(pp, image, image_name, short_name):
     try:
         histo = np.histogram(fimage, bins=pp['HISTO_BINS'],
                              range=(pp['HISTO_RANGE_LOW'],
-                                    pp['HISTO_RANGE_HIGH']))
+                                    pp['HISTO_RANGE_HIGH']),
+                             density=True)
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG('error', pp['log_opt'], [e.message, emsg])
@@ -708,7 +709,7 @@ def measure_dark(pp, image, image_name, short_name):
     # log the dark statistics
     wargs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
              pp['DARK_QMAX'], qmin, qmax]
-    wmsg = ('{0:12s}: Frac dead pixels= {1:.1f} % - Median= {2:.2f} ADU/s - '
+    wmsg = ('{0:12s}: Frac dead pixels= {1:.3f} % - Median= {2:.2f} ADU/s - '
             'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s')
     WLOG('info', pp['log_opt'], wmsg.format(*wargs))
     # add required variables to pp
@@ -1018,7 +1019,7 @@ def locate_bad_pixels_full(p, image):
     # TODO: remove H2RG dependencies
     # if we are using H2RG we don't need this map
     if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return np.ones_like(image)
+        return np.ones_like(image, dtype=bool)
     # log that we are looking for bad pixels
     WLOG('', p['log_opt'], 'Looking for bad pixels in full flat image')
     # get parameters from p
