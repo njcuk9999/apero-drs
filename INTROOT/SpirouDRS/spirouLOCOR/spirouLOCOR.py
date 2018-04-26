@@ -323,6 +323,7 @@ def find_order_centers(pp, image, loc, order_num):
             # position
             if width == 0:
                 center = float(rowcenter)
+                center = float(rowcenter) - 1  # to force the curvature
         # add these positions to storage
         loc['ctro'][order_num, col] = center
         loc['sigo'][order_num, col] = width
@@ -765,7 +766,8 @@ def smoothed_boxmean_image1(image, size, weighted=True):
         else:
             weights = np.ones(len(part))
         # apply the weighted mean for this column
-        newimage[:, it] = np.average(part, axis=1, weights=weights)
+#        newimage[:, it] = np.average(part, axis=1, weights=weights)
+        newimage[:, it] = np.median(part, axis=1)
     # return the new smoothed image
     return newimage
 
