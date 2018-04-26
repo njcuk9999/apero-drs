@@ -25,14 +25,17 @@ for gui in gui_env:
     except:
         continue
 if matplotlib.get_backend() == 'MacOSX':
-    emsg = ('OSX Error: Matplotlib MacOSX backend not supported and '
-            'Qt5Agg not available')
-    print('\n\n{0}\n{1}\n{0}\n\n'.format('='*50, emsg))
-    sys.exit()
+    matplotlib_emsg = ['OSX Error: Matplotlib MacOSX backend not supported and '
+                       'Qt5Agg not available']
+else:
+    matplotlib_emsg = []
 
-# now can import matplotlib properly
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+# can now try to import matplotlib properly
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+except Exception as e:
+    matplotlib_emsg.append(e)
 
 from SpirouDRS import spirouConfig
 from . import spirouLog
@@ -52,8 +55,13 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouLog.logger
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
+# check for matplotlib import errors
+if len(matplotlib_emsg) > 0:
+    WLOG('error', DPROG, matplotlib_emsg)
 
 
 # =============================================================================
@@ -142,7 +150,8 @@ def darkplot_image_and_regions(pp, image):
     im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med_full']),
                       cmap='jet')
     # plot the colorbar
-    plt.colorbar(im, ax=frame)
+    cbar=plt.colorbar(im, ax=frame)
+    cbar.set_label('ADU/s')
     # get the blue region
     bxlow, bxhigh = pp['IC_CCDX_BLUE_LOW'], pp['IC_CCDX_BLUE_HIGH']
     bylow, byhigh = pp['IC_CCDY_BLUE_LOW'], pp['IC_CCDY_BLUE_HIGH']
@@ -167,6 +176,7 @@ def darkplot_image_and_regions(pp, image):
     rrec = Rectangle((rxlow, rylow), rxhigh-rxlow, ryhigh-rylow,
                      edgecolor='r', facecolor='None')
     frame.add_patch(rrec)
+    plt.title('Dark image with red and blue regions')
 
     # TODO: needs axis labels and titles
 
@@ -193,6 +203,7 @@ def darkplot_datacut(imagecut):
     fig.colorbar(im, ax=frame)
     # make sure image is bounded by shape
     plt.axis([0, imagecut.shape[0], 0, imagecut.shape[1]])
+    plt.title('Dark cut mask')
 
     # TODO: needs axis labels and title
 
@@ -228,16 +239,22 @@ def darkplot_histograms(pp):
     histo_r, edge_r = pp['histo_red']
     # plot the main histogram
     xf = np.repeat(edge_f, 2)
-    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
-    frame.plot(xf, yf, color='green')
+#    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
+    yf = [0] + list(np.repeat(histo_f, 2)) + [0]
+    frame.plot(xf, yf, color='green', label='Whole det')
     # plot the blue histogram
     xb = np.repeat(edge_b, 2)
-    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
-    frame.plot(xb, yb, color='blue')
+#    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
+    yb = [0] + list(np.repeat(histo_b, 2)) + [0]
+    frame.plot(xb, yb, color='blue', label='Blue part')
     # plot the red histogram
     xr = np.repeat(edge_r, 2)
-    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
-    frame.plot(xr, yr, color='red')
+#    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
+    yr = [0] + list(np.repeat(histo_r, 2)) + [0]
+    frame.plot(xr, yr, color='red', label='Red part')
+    frame.set_xlabel('ADU/s')
+    frame.set_ylabel('Normalised frequency')
+    frame.legend()
 
     # TODO: Needs axis labels and title
 
