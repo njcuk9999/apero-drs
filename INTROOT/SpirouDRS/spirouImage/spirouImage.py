@@ -698,7 +698,8 @@ def measure_dark(pp, image, image_name, short_name):
     try:
         histo = np.histogram(fimage, bins=pp['HISTO_BINS'],
                              range=(pp['HISTO_RANGE_LOW'],
-                                    pp['HISTO_RANGE_HIGH']))
+                                    pp['HISTO_RANGE_HIGH']),
+                             density=True)
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
         WLOG('error', pp['log_opt'], [e.message, emsg])
@@ -708,7 +709,7 @@ def measure_dark(pp, image, image_name, short_name):
     # log the dark statistics
     wargs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
              pp['DARK_QMAX'], qmin, qmax]
-    wmsg = ('{0:12s}: Frac dead pixels= {1:.1f} % - Median= {2:.2f} ADU/s - '
+    wmsg = ('{0:12s}: Frac dead pixels= {1:.3f} % - Median= {2:.2f} ADU/s - '
             'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s')
     WLOG('info', pp['log_opt'], wmsg.format(*wargs))
     # add required variables to pp
@@ -1011,6 +1012,34 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     # -------------------------------------------------------------------------
     # return bad pixel map
     return badpix_map, badpix_stats
+
+
+def locate_bad_pixels_full(p, image):
+
+    # TODO: remove H2RG dependencies
+    # if we are using H2RG we don't need this map
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        return np.ones_like(image, dtype=bool)
+    # log that we are looking for bad pixels
+    WLOG('', p['log_opt'], 'Looking for bad pixels in full flat image')
+    # get parameters from p
+    filename = p['BADPIX_FULL_FLAT']
+    threshold = p['BADPIX_FULL_THRESHOLD']
+    # construct filepath
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    absfilename = os.path.join(datadir, filename)
+    # check that filepath exists
+    if not os.path.exists(absfilename):
+        emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
+        WLOG('error', p['log_opt'], emsg.format(filename, datadir))
+    # read image
+    mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
+    # apply threshold
+    mask = np.rot90(mdata, -1) < threshold
+    # return mask
+    return mask
 
 
 def get_tilt(pp, lloc, image):
