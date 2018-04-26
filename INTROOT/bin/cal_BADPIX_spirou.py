@@ -42,7 +42,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, darkfile=None, flatfile=None):
+def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -91,7 +91,42 @@ def main(night_name=None, darkfile=None, flatfile=None):
     # Locate bad pixels
     # ----------------------------------------------------------------------
     bargs = [p, flat_ref, flat_med, dark_ref]
-    bad_pixel_map, bstats = spirouImage.LocateBadPixels(*bargs)
+    bad_pixel_map1, bstats = spirouImage.LocateBadPixels(*bargs)
+
+    # ----------------------------------------------------------------------
+    # Locate bad pixels from full detector flat
+    # ----------------------------------------------------------------------
+    bad_pixel_map2 = spirouImage.LocateFullBadPixels(p, flat_ref)
+
+    # ----------------------------------------------------------------------
+    # Combine bad pixel masks
+    # ----------------------------------------------------------------------
+    bad_pixel_map = bad_pixel_map1 | bad_pixel_map2
+
+    # ----------------------------------------------------------------------
+    # Plots
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive plot
+        sPlt.start_interactive_session()
+        # plot the data cut
+        sPlt.darkplot_datacut(bad_pixel_map)
+        # end interactive session
+        sPlt.end_interactive_session()
+
+    # ----------------------------------------------------------------------
+    # Resize image
+    # ----------------------------------------------------------------------
+    # rotate the image and convert from ADU/s to e-
+    badpixelmap = spirouImage.FlipImage(bad_pixel_map)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    badpixelmap = spirouImage.ResizeImage(badpixelmap, **bkwargs)
+    # log change in data size
+    WLOG('', p['log_opt'], ('Image format changed to '
+                            '{0}x{1}').format(*badpixelmap.shape))
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -132,8 +167,8 @@ def main(night_name=None, darkfile=None, flatfile=None):
     hdict = spirouImage.AddKey(hdict, p['kw_BBAD'], value=bstats[4])
 
     # write to file
-    bad_pixel_map = np.array(bad_pixel_map, dtype=int)
-    spirouImage.WriteImage(badpixelfits, bad_pixel_map, hdict)
+    badpixelmap = np.array(badpixelmap, dtype=int)
+    spirouImage.WriteImage(badpixelfits, badpixelmap, hdict)
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
@@ -161,7 +196,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll, has_plots=False)
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code

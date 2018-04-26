@@ -225,39 +225,42 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 
 \begin{itemize}
 
+% TDATA
 \item \namedlabel{text:tdata} \ParameterEntry{The data directory}
 {Defines the path to the data directory. Value must be a string containing a valid file location.}
 {TDATA}{/drs/data/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
+% DRS_ROOT
 \item \namedlabel{text:drs_root} \ParameterEntry{The installation directory}
 {Defines the installation directory (\InstallDIR). Value must be a string containing a valid file location.}
 {DRS\_ROOT}{/drs/INTROOT/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
-
+% DRS_DATA_RAW
 \item \namedlabel{text:drs_data_raw} \ParameterEntry{The raw data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
 {DRS\_DATA\_RAW}{/drs/data/raw}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
-
+% DRS_DATA_REDUC
 \item \namedlabel{text:drs_data_reduc} \ParameterEntry{The reduced data directory}
 {Defines the directory that the reduced data will be saved to/read from. Value must be a string containing a valid file location.}
 {DRS\_DATA\_REDUC}{/drs/data/reduced}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
-
+% DRS_CALIB_DB
 \item \namedlabel{text:drs_calib_db} \ParameterEntry{The calibration database and calibration file directory}
 {Defines the directory that the calibration files and database will be saved to/read from. Value must be a string containing a valid file location.}
 {DRS\_CALIB\_DB}{/drs/data/calibDB}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
-
+% DRS_DATA_MSG
 \item \namedlabel{text:drs_data_msg} \ParameterEntry{The log directory}
 {Defines the directory that the log messages are stored in. Value must be a string containing a valid file location.}
 {DRS\_DATA\_MSG}{/drs/data/msg}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
-
+% DRS_DATA_WORKING
 \item \namedlabel{text:drs_data_working} \ParameterEntry{The working directory}
 {Defines the working directory. Value must be a string containing a valid file location.}
 {DRS\_DATA\_WORKING}{/drs/data/tmp/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
+% DRS_UCONFIG
 \item \namedlabel{text:drs_uconfig} \ParameterEntry{The custom configuration directory}
 {Defines the custom configuration directory. Value must be a string containing a valid file location.}
 {DRS\_UCONFIG}{$\sim$/spirou\_config/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
@@ -279,6 +282,10 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \begin{itemize}
 
 % Resize blue window (has to be defined manually)
+% IC_CCDX_BLUE_LOW
+% IC_CCDX_BLUE_HIGH
+% IC_CCDY_BLUE_LOW
+% IC_CCDY_BLUE_HIGH
 \item 
 \begin{minipage}[t]{\textwidth}
 \textbf{Resizing blue window (\textcolor{red}{ic\_ccd\{x/y\}\_blue\_\{low/high\}})}
@@ -305,6 +312,10 @@ ic\_ccdy\_blue\_high &=& 2048-350 \\
 
 
 % Resize red window (has to be defined manually)
+ % IC_CCDX_RED_LOW
+ % IC_CCDX_RED_HIGH
+ % IC_CCDY_RED_LOW
+ % IC_CCDY_RED_HIGH
 \item 
 \begin{minipage}[t]{\textwidth}
 \textbf{Resizing red window (\textcolor{red}{ic\_ccd\{x/y\}\_red\_\{low/high\}})}
@@ -332,6 +343,10 @@ ic\_ccdy\_red\_high &  = &  2048-1910 \\
 
 
 % Resize image (has to be defined manually)
+% IC_CCDX_LOW
+% IC_CCDX_HIGH
+% IC_CCDY_LOW
+% IC_CCDY_HIGH
 \item 
 \begin{minipage}[t]{\textwidth}
 \textbf{Resizing red window (\textcolor{red}{ic\_ccd\{x/y\}\_\{low/high\}})}
@@ -358,6 +373,7 @@ ic\_ccdy\_high &=& 1935 \\
 
 
 % Avaiable fiber types
+% fiber_types
 \item \namedlabel{text:fiber_types} \ParameterEntry{Available fiber types}
 {Defines the type of fiber we have (used in various codes). Theses are define in a python list of string, where the earlier a fiber is in the list the more it takes priority in searches (i.e. AB over A or B if AB is first)}
 {fiber\_types}
@@ -388,6 +404,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 \begin{itemize}
 
 % nbfib
+% nbfib_fpall
 \item \ParameterEntry{Number of fibers}
 {This describes the number of fibers of a given type. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
 {nbfib\_fpall}
@@ -395,6 +412,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\callocRAW}{\constantsfile}
 {\callocRAW.\progMAIN}{Public}
 
+% ic_first_order_jump
 % ic_first_order_jump_fpall
 \item \ParameterEntry{Order skip number}
 {Describes the number of orders to skip at the start of an image. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
@@ -403,6 +421,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\callocRAW}{\constantsfile}
 {\callocRAW.\progMAIN}{Public}
 
+% ic_locnbmaxo
 % ic_locnbmaxo_fpall
 \item \ParameterEntry{Maximum order numbers}
 {Describes the maximum allowed number of orders. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
@@ -411,6 +430,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\callocRAW}{\constantsfile}
 {\callocRAW.\progMAIN}{Public}
 
+% qc_loc_nbo
 % qc_loc_nbo_fpall
 \item \namedlabel{text:qc_loc_nbo_fpall} \ParameterEntry{Number of orders to fit (QC)}
 {Quality control parameter for the number of orders on fiber to fit. Must be a python dictionary with identical keys to all other fiber parameters (each value must be an integer).}
@@ -420,7 +440,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\callocRAW.\progMAIN}{Public}
 \DevNote{Should this be merged with `ic\_locnbmaxo\_fpall'?}
 
-
+% fib_type
 % fib_type_fpall
 \item \ParameterEntry{Fiber types for this fiber}
 {The fiber type(s) -- as a list -- for this fiber. Must be a python dictionary with identical keys to all other fiber parameters (each value must be a list of strings).}
@@ -430,6 +450,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\calFFraw.\progMAIN}{Public}
 \DevNote{This is not be needed but is in here due to a loop in \calFFraw}
 
+% ic_ext_range1
 % ic_ext_range1_fpall
 \item \ParameterEntry{Half-zone extraction width (left/top)}
 {The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{top} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the centre of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
@@ -439,6 +460,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2(), \spirouPlot.ff\_sorder\_fit\_edges()}{Public}
 \DevNote{Formally this was called `plage1' in \calFFraw}
 
+% ic_ext_range2
 % ic_ext_range2_fpall
 \item \ParameterEntry{Half-zone extraction width (right/bottom)}
 {The pixels are extracted from the center of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order - this number defines the \textbf{bottom} side (if one requires a symmetric extraction around the order fit both range 1 and range 2 -- below -- should be the same). This can also be used to extract A and B separately (where the fit order is defined at the centre of the AB pair). Must be a python dictionary with identical keys to all other fiber parameters.}
@@ -448,6 +470,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\calFFraw.\progMAIN, \calextractRAW.\progMAIN, \spirouEXTOR.extract\_tilt\_weight\_order2(), \spirouPlot.ff\_sorder\_fit\_edges()}{Public}
 \DevNote{Formally this was called `plage2' in \calFFraw}
 
+% ic_ext_range
 % ic_ext_range_fpall
 \item \ParameterEntry{Half-zone extraction width for full extraction}
 {The pixels are extracted from the centre of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order. In \calextractRAW both sides of the fit order are extracted at with the same width (symmetric). Must be a python dictionary with identical keys to all other fiber parameters.}
@@ -457,6 +480,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\spirouEXTOR.extract\_order(), \spirouEXTOR.extract\_tilt\_order(), \spirouEXTOR.extract\_tilt\_weight\_order(), \spirouEXTOR.extract\_weight\_order()}{Public}
 \DevNote{Formally this was called `plage' in \calextractRAW}
 
+% loc_file
 % loc_file_fpall
 \item \ParameterEntry{Localization fiber for extraction  }
 {Defines the localization fiber to use for each fiber type. This is the file in calibDB that is used i.e. the keyword \masterCALIBDBfile used will be \`LOC\_\{loc\_file\_fpall\}' (e.g. for fiber=`AB' use `LOC\_AB'). Must be a python dictionary with identical keys to all other fiber parameters.}
@@ -465,6 +489,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\calextractRAW}{\constantsfile}
 {\spirouLOCOR.get\_loc\_coefficients()}{Public}
 
+% orderp_file
 % orderp_file_fpall
 \item \ParameterEntry{Order profile fiber for extraction}
 {Defines the order profile fiber to use for each fiber type. This is the file in calibDB that is used i.e. the keyword \masterCALIBDBfile used will be \`ORDER\_PROFILE\_\{orderp\_file\_fpall\}' (e.g. for fiber=`AB' use `ORDER\_PROFILE\_AB'). Must be a python dictionary with identical keys to all other fiber parameters.}
@@ -473,6 +498,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\calextractRAW}{\constantsfile}
 {\spirouFITS.read\_order\_profile\_superposition()}{Public}
 
+% ic_ext_d_range
 % ic_ext_d_range_fpall
 \item \ParameterEntry{Half-zone extract width \calDRIFTRAW}
 {The size in pixels of the extraction away from the order localization fit (to the top and bottom) - defines the illuminated area of the order for extraction. Must be a python dictionary with identical keys to all other fiber parameters.}
@@ -514,7 +540,7 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 {\calDARK}{\constantsfile}
 {\spirouImage.measure\_dark()}{Public}
 
-% histo\_bins
+% histo_bins
 \item \ParameterEntry{Dark stat histogram bins}
 {Defines the number of bins to use in the dark histogram plot. Value must be a positive integer.}
 {histo\_bins}{200}
@@ -624,7 +650,7 @@ Value must be an integer between zero and the number of rows (y-axis dimension).
 {\spirouLOCOR.find\_order\_centers}{Public}
 
 
-% ic_widthmin
+% ic_noise_mult_thres
 \item \ParameterEntry{Center noise multiplier threshold}
 {Defines the noise multiplier threshold in order to accept an order center as usable such that:
 \begin{equation}
@@ -634,6 +660,60 @@ where the value is row center pixel value and sigdet is the image's read out noi
 {ic\_noise\_mult\_thres}{100}
 {\callocRAW}{\constantsfile}
 {\spirouLOCOR.find\_order\_centers}{Public}
+
+
+% bad_region_fit
+\item \ParameterEntry{Polynomial fit coefficients for bad region interp.}
+{Defines the polynomial fit parameters for interpolating over the bad regions (holes) before the localization is done. Must be a python list of floats. The coefficient list should be in the following order:
+\begin{equation}
+p[0]*x^{(N-1)} + p[1]*x^{(N-2)} + \text{...} + p[N-2]*x + p[N-1]
+\end{equation}
+}
+{bad\_region\_fit}{[3.19884964e-05,  -1.08289228e-01,   2.16643659e+03]}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
+
+% bad_region_med_size
+\item \ParameterEntry{Median filter box size 1 for bad region interp.}
+{Defines the median filter box size used in interpolating over the bad regions (holes) before the localization is done. Value must be a positive integer.}
+{bad\_region\_med\_size}{101}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
+
+% bad_region_threshold
+\item \ParameterEntry{Threshold for bad pixels for bad region interp.}
+{Defines the threshold below which the image (normalised between 0 and 1) should be regarded as bad. Used in interpolating over the bad regions (holeS) before localization is done. Value must be a float between 0 and 1.}
+{bad\_region\_threshold}{0.2}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
+
+% bad_region_kernel_size
+\item \ParameterEntry{Box size (kernel) for convolve in bad region interp.}
+{Defines the box size (kernel) for the convolution. Used in interpolating over the bad regions (holes) before localization is done. Value must be a positive integer.}
+{bad\_region\_kernel\_size}{51}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
+
+% bad_region_med_size2
+\item \ParameterEntry{Median filter box size 2 for bad region interp.}
+{Defines the median filter box size used  (during the convolution) in interpolating over the bad regions (holes) before the localization is done. Value must be a positive integer.}
+{bad\_region\_med\_size2}{11}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
+
+% bad_region_good_value
+\item \ParameterEntry{Threshold for good ratio for bad region interp.}
+{Defines the threshold (of the ratio between original image and the interpolated image) where pixels are deemed "good". For use in interpolating over the bad regions (holes) before the localization is done.}
+{bad\_region\_good\_value}{0.5}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
+
+% bad_region_bad_value
+\item \ParameterEntry{Threshold for bad ratio for bad region interp.}
+{Defines the threshold (of the ratio between original image and the interpolated image) where pixels are deemed "bad". For use in interpolating over the bad regions (holes) before the localization is done.}
+{bad\_region\_bad\_value}{0.25}
+{\callocRAW}{\constantsfile}
+{\spirouImage.interp\_bad\_regions}{Public}
 
 % ic_locnbpix
 \item \ParameterEntry{Min/Max smoothing box size}
@@ -955,7 +1035,7 @@ Value should be a python string with one of the above values only. Any other val
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
 \DevNote{Why is this value used and not the value in the header file?}
 
-% ic_drift_order_plot
+% ic_ext_order_plot
 \item \ParameterEntry{Selected order in extract fit order plot}
 {Defines the selected order to plot the fit for in the extract fit order plot. Value must be between zero and the maximum number of orders.}
 {ic\_ext\_order\_plot}{20}
@@ -1050,7 +1130,7 @@ Value must be a float larger than zero.
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
 
 
-% ic_drift_type_raw
+% drift_type_raw
 \item \ParameterEntry{Define the way to combine orders for drift (for \calDRIFTRAW)}
 {Defines the way to calculate the combine order drifts (to one drift per image) should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_1}) or 'median' (Equation \ref{equation:drift_type_median_1}) for \calDRIFTRAW.
 \begin{equation}
@@ -1064,11 +1144,11 @@ Value must be a float larger than zero.
 \end{equation}
 \noindent Value should be a valid python string either `median' or `weighted mean'.
 }
-{ic\_drift\_type\_raw}{median}
+{drift\_type\_raw}{median}
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
 
 
-% ic_drift_type_e2ds
+% drift_type_e2ds
 \item \ParameterEntry{Define the way to combine orders for drift \calDRIFTE)}
 {Defines the way to calculate the combine order drifts (to one drift per image) should either be 'weighted mean' (Equation \ref{equation:drift_type_wmean_2}) or 'median' (Equation \ref{equation:drift_type_median_2}) for \calDRIFTE.
 \begin{equation}
@@ -1082,7 +1162,7 @@ Value must be a float larger than zero.
 \end{equation}
 \noindent Value should be a valid python string either `median' or `weighted mean'.
 }
-{ic\_drift\_type\_e2ds}{weighted mean}
+{drift\_type\_e2ds}{weighted mean}
 {\calDRIFTE}{\constantsfile}{\calDRIFTE.\progMAIN}{Public}
 
 % ic_drift_order_plot
