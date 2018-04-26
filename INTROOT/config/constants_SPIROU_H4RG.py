@@ -77,7 +77,7 @@ fiber_types = ['AB', 'A', 'B', 'C']
 nbfib_fpall = {'AB': 2, 'A': 1, 'B': 1, 'C': 1}
 
 #   Number of orders to skip at start of image                       - [cal_loc]
-ic_first_order_jump_fpall = {'AB': 3, 'A': 0, 'B': 0, 'C': 0}
+ic_first_order_jump_fpall = {'AB': 3, 'A': 0, 'B': 0, 'C': 2}
 
 #   Maximum number of order to use                                   - [cal_loc]
 ic_locnbmaxo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
@@ -126,7 +126,7 @@ histo_range_low = -0.5
 histo_range_high = 5
 
 #   Define a bad pixel cut limit (in ADU/s)                         - [cal_dark]
-dark_cutlimit = 100.0
+dark_cutlimit = 5.0
 
 # -----------------------------------------------------------------------------
 #   cal_loc parameters
@@ -137,14 +137,14 @@ dark_cutlimit = 100.0
 loc_box_size = 10
 
 #   row number of image to start processing at                       - [cal_loc]
-ic_offset = 40
+ic_offset = 150
 
 #   Definition of the central column                       - [cal_loc, cal_slit]
 #      (formally ic_ccdcolc)
 ic_cent_col = 2000
 
 #   Definition of the extraction window size (half size)             - [cal_loc]
-ic_ext_window = 12
+ic_ext_window = 20
 
 #   Definition of the gap index in the selected area                 - [cal_loc]
 #       (formally ic_ccdgap)
@@ -154,18 +154,48 @@ ic_image_gap = 0
 ic_locstepc = 20
 
 #   Define minimum width of order to be accepted                     - [cal_loc]
-ic_widthmin = 5
+ic_widthmin = 10
 
 #   Define the noise multiplier threshold in order to accept an      - [cal_loc]
 #       order center as usable
 #       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
-ic_noise_mult_thres = 100.0
+ic_noise_mult_thres = 5
+
+#   Define the polynomial fit parameters for interpolating over the  - [cal_loc]
+#      bad regions (holes) before localization is done
+bad_region_fit = [3.19884964e-05,  -1.08289228e-01,   2.16643659e+03]
+
+#   Define the median_filter box size used in interpolating over the - [cal_loc]
+#      bad regions (holes) before localization is done
+bad_region_med_size = 101
+
+#   Define the threshold below which the image (normalised between   - [cal_loc]
+#      0 and 1) should be regarded as bad. Used in interpolating over
+#      the bad regions (holes) before localization is done
+bad_region_threshold = 0.2
+
+#   Define the box size (kernel) for the convolution used in         - [cal_loc]
+#      interpolating over the bad regions (holes) before localization
+#      is done
+bad_region_kernel_size = 51
+
+#   Define the median_filter box size used in interpolating over the - [cal_loc]
+#      bad regions (holes) (during the convolution) before
+#      localization is done
+bad_region_med_size2 = 11
+
+#   Define the thresholds (of the ratio between original image and   - [cal_loc]
+#      the interpolated image) where pixels are deem "good" and "bad".
+#      For use in interpolating over the bad regions (holes) before
+#      localization is done
+bad_region_good_value = 0.5
+bad_region_bad_value = 0.25
 
 #   Half spacing between orders                                      - [cal_loc]
 ic_locnbpix = 45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
-ic_min_amplitude = 50
+ic_min_amplitude = 10
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
@@ -419,6 +449,15 @@ badpix_max_hotpix = 100.0
 #   Percentile to normalise to when normalising and median        - [cal_badpix]
 #      filtering image [percentage]
 badpix_norm_percentile = 90.0
+
+#   Defines the full detector flat file (located in the data      - [cal_badpix]
+#      folder)
+badpix_full_flat = 'detector_flat_full.fits'
+
+#   Defines the threshold on the full detector flat file to       - [cal_badpix]
+#      deem pixels as good
+badpix_full_threshold = 0.3
+
 
 # -----------------------------------------------------------------------------
 #  cal_CCF_E2DS_spirou
