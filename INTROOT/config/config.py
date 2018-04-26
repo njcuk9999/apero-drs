@@ -22,31 +22,31 @@ USER_CONFIG = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = '/data/SPIROUDRS/'
+TDATA = "/drs/spirou/data/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/home/spectro/bouchy/spiroudrs/INTROOT/'
+DRS_ROOT = '/drs/spirou/INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/data/SPIROUDRS/raw/'
+DRS_DATA_RAW = '/drs/spirou/data/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/data/SPIROUDRS/reduced/'
+DRS_DATA_REDUC = '/drs/spirou/data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/data/SPIROUDRS/calibDB/'
+DRS_CALIB_DB = '/drs/spirou/data/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/data/SPIROUDRS/msg/'
+DRS_DATA_MSG = '/drs/spirou/data/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/home/spectro/bouchy/SPIROU_DEV_DRS/'
+DRS_DATA_WORKING = '/drs/spirou/data/tmp'
 
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
-DRS_UCONFIG = '/home/spectro/bouchy/spiroudrs/INTROOT/config/'
-# DRS_UCONFIG = '~/spirou_config_H4RG/'
+# DRS_UCONFIG = '~/spirou_config_H2RG/'
+DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
