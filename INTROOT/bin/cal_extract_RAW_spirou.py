@@ -175,8 +175,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-        loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+#        loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
+#        loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
         # ------------------------------------------------------------------
         # Get localisation coefficients
@@ -220,7 +220,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # source for parameter dictionary
         source = __NAME__ + '/main()'
         # loop around each order
-        for order_num in range(loc['number_orders']):
+        for order_num in range(4,loc['number_orders']):
             # extract this order
             if p['ic_extract_type'] == 'all':
                 # -------------------------------------------------------------
