@@ -713,7 +713,7 @@ def ff_aorder_fit_edges(p, loc, image):
 
 
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])//2):
+    for order_num in range(len(loc['acc'])//p['nbfib']):
         acc = loc['acc'][order_num]
 
         # work out offsets for this order
@@ -942,7 +942,7 @@ def ext_aorder_fit(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])//2):
+    for order_num in range(len(loc['acc'])//p['nbfib']):
         acc = loc['acc'][order_num]
         # work out offsets for this order
         offsetarraylow = np.zeros(len(acc))
@@ -1002,8 +1002,9 @@ def ext_spectral_order_plot(p, loc):
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['fiber']
     # get data from loc
-    wave = loc['wave'][selected_order]
+#    wave = loc['wave'][selected_order]
     extraction = loc['e2ds'][selected_order]
+    wave=np.arange(len(extraction))  ## in pixel
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1014,7 +1015,9 @@ def ext_spectral_order_plot(p, loc):
     frame.plot(wave, extraction, color='red')
     # set title labels limits
     title = 'Spectral order {0} fiber {1}'
-    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+#    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+#              title=title.format(selected_order, fiber))
+    frame.set(xlabel='Pixel', ylabel='flux',
               title=title.format(selected_order, fiber))
     # turn off interactive plotting
     if not plt.isinteractive():
