@@ -556,7 +556,7 @@ def slit_sorder_plot(pp, loc, image):
     frame.plot(xfit, yfit1, color='red')
     frame.plot(xfit, yfit2, color='red')
     # set axis limits to image
-    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
+    frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
 
     # TODO: Need axis labels and title
 

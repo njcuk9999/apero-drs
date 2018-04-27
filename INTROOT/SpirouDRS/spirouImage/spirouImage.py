@@ -1097,8 +1097,7 @@ def get_tilt(pp, lloc, image):
         #   and the middle pixel + 10 * p['COI']
         coi = int(os_fac)
         pos = int(image.shape[1] * coi / 2)
-#        delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
-        delta = np.argmax(cori[pos :pos + 10 * coi]) / coi
+        delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
         # get the angle of the tilt
         angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['offset'])))
         # log the tilt and angle
