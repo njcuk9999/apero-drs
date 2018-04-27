@@ -175,8 +175,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-#        loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-#        loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+        # TODO: Remove H2RG dependency
+        if p['IC_IMAGE_TYPE'] == 'H2RG':
+            loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
+
+        else:
+            loc['wave'] = None
+        loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
         # ------------------------------------------------------------------
         # Get localisation coefficients
@@ -219,8 +224,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # source for parameter dictionary
         source = __NAME__ + '/main()'
+        # get limits of order extraction
+        valid_orders = spirouEXTOR.GetValidOrders(p, loc)
         # loop around each order
-        for order_num in range(4,loc['number_orders']):
+        for order_num in valid_orders:
             # extract this order
             if p['ic_extract_type'] == 'all':
                 # -------------------------------------------------------------
