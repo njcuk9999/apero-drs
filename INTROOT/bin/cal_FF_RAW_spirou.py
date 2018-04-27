@@ -118,7 +118,7 @@ def main(night_name=None, files=None):
     n_bad_pix = np.sum(data2 == 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
-    wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
+    wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
     WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
@@ -210,6 +210,7 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # loop around each order
         for order_num in range(loc['number_orders']):
+        # for order_num in range(2, 10):
             # extract this order
             eargs = [p, loc, data2, order_profile, order_num]
             e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
