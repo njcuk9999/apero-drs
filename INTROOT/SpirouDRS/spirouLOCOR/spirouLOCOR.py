@@ -167,7 +167,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     # Read the coefficients from header
     #     for center fits
     loc['acc'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
-                                       loc['number_orders'],  loc['nbcoeff_ctr'])
+                                       loc['number_orders'], loc['nbcoeff_ctr'])
     #     for width fits
     loc['ass'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
                                        loc['number_orders'], loc['nbcoeff_wid'])
@@ -684,7 +684,9 @@ def calculate_location_fits(coeffs, dim):
     return yfits
 
 
-def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
+# TODO: after H2RG tests over can remove method (keep "new" method)
+def smoothed_boxmean_image(image, size, weighted=True, mode='convolve',
+                           method='new'):
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
         size=2*"size" pixels.
@@ -709,19 +711,22 @@ def smoothed_boxmean_image(image, size, weighted=True, mode='convolve'):
                          inconsistencies due to FT of top-hat function
 
                          if 'manual' calculates every box individually (SLOW)
+    :param method: string, if 'new' uses a median, if 'old' uses average
 
     :return newimage: numpy array (2D), the smoothed image
     """
     if mode == 'convolve':
         return smoothed_boxmean_image2(image, size, weighted=weighted)
     if mode == 'manual':
-        return smoothed_boxmean_image1(image, size, weighted=weighted)
+        return smoothed_boxmean_image1(image, size, weighted=weighted,
+                                       method=method)
     else:
         emsg = 'mode keyword={0} not valid. Must be "convolve" or "manual"'
         raise KeyError(emsg.format(mode))
 
 
-def smoothed_boxmean_image1(image, size, weighted=True):
+# TODO: after H2RG tests over can remove method (keep "new" method)
+def smoothed_boxmean_image1(image, size, weighted=True, method='new'):
     """
     Produce a (box) smoothed image, smoothed by the mean of a box of
         size=2*"size" pixels, edges are dealt with by expanding the size of the
@@ -738,6 +743,7 @@ def smoothed_boxmean_image1(image, size, weighted=True):
     :param weighted: bool, if True pixel values less than zero are weighted to
                      a value of 1e-6 and values above 0 are weighted to a value
                      of 1
+    :param method: string, if 'new' uses a median, if 'old' uses average
 
     :return newimage: numpy array (2D), the smoothed image
 
@@ -765,8 +771,10 @@ def smoothed_boxmean_image1(image, size, weighted=True):
         else:
             weights = np.ones(len(part))
         # apply the weighted mean for this column
-        # newimage[:, it] = np.average(part, axis=1, weights=weights)
-        newimage[:, it] = np.median(part, axis=1)
+        if method == 'old':
+            newimage[:, it] = np.average(part, axis=1, weights=weights)
+        else:
+            newimage[:, it] = np.median(part, axis=1)
     # return the new smoothed image
     return newimage
 
@@ -813,6 +821,7 @@ def smoothed_boxmean_image2(image, size, weighted=True):
         newimage[row] = s_weighted_image/s_weights
     # return new image
     return newimage
+
 
 # TODO: remove later
 def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
