@@ -765,7 +765,8 @@ def smoothed_boxmean_image1(image, size, weighted=True):
         else:
             weights = np.ones(len(part))
         # apply the weighted mean for this column
-        newimage[:, it] = np.average(part, axis=1, weights=weights)
+        # newimage[:, it] = np.average(part, axis=1, weights=weights)
+        newimage[:, it] = np.median(part, axis=1)
     # return the new smoothed image
     return newimage
 
