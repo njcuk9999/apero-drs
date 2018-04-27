@@ -24,7 +24,8 @@ __release__ = Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['Extraction', 'ExtractABOrderOffset', 'ExtractOrder',
            'ExtractTiltOrder', 'ExtractTiltWeightOrder',
-           'ExtractTiltWeightOrder2', 'ExtractWeightOrder']
+           'ExtractTiltWeightOrder2', 'ExtractWeightOrder',
+           'GetValidOrders']
 
 # =============================================================================
 # Function aliases
@@ -42,3 +43,5 @@ ExtractTiltWeightOrder = spirouEXTOR.extract_tilt_weight_order
 ExtractTiltWeightOrder2 = spirouEXTOR.extract_tilt_weight_order2
 
 ExtractWeightOrder = spirouEXTOR.extract_weight_order
+
+GetValidOrders = spirouEXTOR.get_valid_orders
