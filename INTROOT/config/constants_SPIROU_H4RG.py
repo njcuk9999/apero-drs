@@ -77,7 +77,7 @@ fiber_types = ['AB', 'A', 'B', 'C']
 nbfib_fpall = {'AB': 2, 'A': 1, 'B': 1, 'C': 1}
 
 #   Number of orders to skip at start of image                       - [cal_loc]
-ic_first_order_jump_fpall = {'AB': 0, 'A': 0, 'B': 0, 'C': 1}
+ic_first_order_jump_fpall = {'AB': 0, 'A': 0, 'B': 0, 'C': 0}
 
 #   Maximum number of order to use                                   - [cal_loc]
 ic_locnbmaxo_fpall = {'AB': 100, 'A': 50, 'B': 50, 'C': 50}
@@ -268,6 +268,14 @@ ic_bkgr_window = 100
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 50  #36
 
+#    Start order of the extraction in cal_ff                          - [cal_ff]
+#       if None starts from 0
+ff_start_order = 4
+
+#    End order of the extraction in cal_ff                            - [cal_ff]
+#       if None ends at last order
+ff_end_order = None
+
 #   Manually set the sigdet to use in weighted tilt extraction        - [cal_ff]
 #       set to -1 to use from fitsfilename HEADER
 #       (formally ccdsigdet)
@@ -278,14 +286,14 @@ ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 5
+ic_blaze_fitn = 7
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 2
+ic_ff_order_plot = 10
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
-ic_ff_plot_all_orders = 0
+ic_ff_plot_all_orders = 1
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
@@ -300,6 +308,14 @@ ic_ff_plot_all_orders = 0
 #                (not currently available)
 ic_extopt = 0
 
+#    Start order of the extraction in cal_ff                     - [cal_extract]
+#       if None starts from 0
+ext_start_order = 4
+
+#    End order of the extraction in cal_ff                       - [cal_extract]
+#       if None ends at last order
+ext_end_order = None
+
 # distance away from center to extract out to +/-                   - [cal_slit]
 ic_extnbsig = 1 #2.5
 
@@ -311,6 +327,10 @@ ic_extnbsig = 1 #2.5
 #                'weight'
 #                'all'    - for comparison (saves all)
 ic_extract_type = 'tiltweight'
+
+#   Set the number of pixels to set as the border (needed   - [cal_slit, cal_FF]
+#       to allow for tilt to not go off edge of image)
+ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header

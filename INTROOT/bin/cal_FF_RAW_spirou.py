@@ -208,9 +208,10 @@ def main(night_name=None, files=None):
         # old code time: 1 loop, best of 3: 22.3 s per loop
         # new code time: 3.16 s ± 237 ms per loop
         # ------------------------------------------------------------------
+        # get limits of order extraction
+        valid_orders = spirouFLAT.GetValidOrders(p, loc)
         # loop around each order
-        for order_num in range(loc['number_orders']):
-        # for order_num in range(2, 10):
+        for order_num in valid_orders:
             # extract this order
             eargs = [p, loc, data2, order_profile, order_num]
             e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
