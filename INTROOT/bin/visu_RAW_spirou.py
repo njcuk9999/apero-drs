@@ -23,8 +23,6 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 
-import matplotlib.pyplot as plt
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -39,6 +37,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+plt = sPlt.plt
 
 
 #import spirouFITS
