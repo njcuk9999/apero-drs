@@ -11,7 +11,7 @@ DRS_PLOT = 1
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = 0
+DRS_DEBUG = 1
 
 # Whether to use user config (True or 1 to use)
 #      if False (or 0) only uses default configuration files
@@ -45,8 +45,8 @@ DRS_DATA_WORKING = '/drs/spirou/data/tmp'
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
-DRS_UCONFIG = '~/spirou_config_H2RG/'
-# DRS_UCONFIG = '~/spirou_config_H4RG/'
+# DRS_UCONFIG = '~/spirou_config_H2RG/'
+DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
@@ -81,7 +81,7 @@ COLOURED_LOG = True
 SPECIAL_NAME = 'special_config_SPIROU.py'
 
 #   Define the ICDP configuration file
-ICDP_NAME = 'constants_SPIROU_H2RG.py'
+ICDP_NAME = 'constants_SPIROU_H4RG.py'
 
 
 # -----------------------------------------------------------------------------
