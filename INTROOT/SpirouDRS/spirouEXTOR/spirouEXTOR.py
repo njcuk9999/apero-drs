@@ -207,7 +207,8 @@ def extract_tilt_order(pp, loc, image, rnum, **kwargs):
                    tilt=loc['tilt'][rnum],
                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['gain']))
+                   gain=kwargs.get('gain', pp['gain']),
+                   tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
@@ -263,7 +264,8 @@ def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
                    mode=1,
                    gain=kwargs.get('gain', pp['gain']),
-                   sigdet=kwargs.get('sigdet', pp['sigdet']))
+                   sigdet=kwargs.get('sigdet', pp['sigdet']),
+                   tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
@@ -321,7 +323,8 @@ def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE2']),
                    mode=2,
                    gain=kwargs.get('gain', pp['gain']),
-                   sigdet=kwargs.get('sigdet', pp['sigdet']))
+                   sigdet=kwargs.get('sigdet', pp['sigdet']),
+                   tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
@@ -456,6 +459,7 @@ def extract_wrapper(image, pos, sig, **kwargs):
     mode = kwargs.get('mode', None)
     tilt = kwargs.get('tilt', None)
     order_profile = kwargs.get('order_profile', None)
+    tilt_border = kwargs.get('tilt_bdr', None)
     # get parameters from keyword arguments but default to False
     use_tilt = kwargs.get('use_tilt', False)
     use_weight = kwargs.get('use_weight', False)
@@ -487,9 +491,11 @@ def extract_wrapper(image, pos, sig, **kwargs):
         check_for_none(order_profile, 'order_profile')
         check_for_none(gain, 'gain')
         check_for_none(sigdet, 'sig_det')
+        check_for_none(tilt_border, 'tilt_border')
         # run extract and return
         ekwargs = dict(image=image, pos=pos, tilt=tilt, r1=range1, r2=range2,
-                       orderp=order_profile, gain=gain, sigdet=sigdet)
+                       orderp=order_profile, gain=gain, sigdet=sigdet,
+                       tiltborder=tilt_border)
         if mode == 0:
             return extract_tilt_weight(**ekwargs)
             # return extract(**ekwargs)
@@ -511,9 +517,10 @@ def extract_wrapper(image, pos, sig, **kwargs):
         check_for_none(range2, 'range2')
         check_for_none(tilt, 'tilt')
         check_for_none(gain, 'gain')
+        check_for_none(tilt_border, 'tilt_border')
         # run extract and return
         ekwargs = dict(image=image, pos=pos, tilt=tilt, r1=range1, r2=range2,
-                       gain=gain)
+                       gain=gain, tiltborder=tilt_border)
         return extract_tilt(**ekwargs)
         # return extract(**ekwargs)
     # ----------------------------------------------------------------------
@@ -604,7 +611,7 @@ def extract_const_range(image, pos, nbsig, gain):
     return spe[::-1], nbcos
 
 
-def extract_tilt(image, pos, tilt, r1, r2, gain):
+def extract_tilt(image, pos, tilt, r1, r2, gain, tiltborder=2):
     """
     Extract order using tilt
 
@@ -617,6 +624,8 @@ def extract_tilt(image, pos, tilt, r1, r2, gain):
     :param r2: float, the distance away from center to extract out to (bottom)
                across the orders direction
     :param gain: float, the gain of the image (for conversion from ADU/s to e-)
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -642,6 +651,8 @@ def extract_tilt(image, pos, tilt, r1, r2, gain):
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
@@ -653,19 +664,20 @@ def extract_tilt(image, pos, tilt, r1, r2, gain):
     # loop around each pixel along the order and, if it is within the image,
     #   sum the values contained within the order (including the bits missing
     #   due to rounding)
-    for ic in ics[2:-2]:
-        # get ww0i and ww1i for this iteration
-        ww0i, ww1i = ww0[ic], ww1[ic]
-        ww = wwa[(ww0i, ww1i)]
-        # multiple the image by the rotation matrix
-        sx = image[j1s[ic]+1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
-        spe[ic] = np.sum(sx)
-        # add the main order pixels
-        # add the bits missing due to rounding
-        sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0]
-        spe[ic] += lower[ic] * np.sum(sxl)
-        sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1]
-        spe[ic] += upper[ic] * np.sum(sxu)
+    for ic in ics[tiltborder:-tiltborder]:
+        if mask[ic]:
+            # get ww0i and ww1i for this iteration
+            ww0i, ww1i = ww0[ic], ww1[ic]
+            ww = wwa[(ww0i, ww1i)]
+            # multiple the image by the rotation matrix
+            sx = image[j1s[ic]+1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
+            spe[ic] = np.sum(sx)
+            # add the main order pixels
+            # add the bits missing due to rounding
+            sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0]
+            spe[ic] += lower[ic] * np.sum(sxl)
+            sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1]
+            spe[ic] += upper[ic] * np.sum(sxu)
     # convert to e-
     spe *= gain
     # return spe and nbcos
@@ -744,7 +756,8 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
     return spe, nbcos
 
 
-def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
+def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
+                         tiltborder=2):
     """
     Extract order using tilt and weight (sigdet and badpix)
 
@@ -767,6 +780,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
                    weights = 1/(signal*gain + sigdet^2) with bad pixels
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -790,6 +805,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
@@ -797,22 +814,23 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     # get the weight contribution matrix (look up table)
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # loop around each pixel along the order
-    for ic in ics[2:-2]:
-        # get ww0i and ww1i for this iteration
-        ww0i, ww1i = ww0[ic], ww1[ic]
-        ww = wwa[(ww0i, ww1i)]
-        # multiple the image by the rotation matrix
-        sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
-        # multiple the order_profile by the rotation matrix
-        fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
-        # Renormalise the rotated order profile
-        fx = fx / np.sum(fx)
-        # weight values less than 0 to 1e-9
-        raw_weights = np.where(sx > 0, 1, 1e-9)
-        # weights are then modified by the gain and sigdet added in quadrature
-        weights = raw_weights / ((sx * gain) + sigdet**2)
-        # set the value of this pixel to the weighted sum
-        spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
+    for ic in ics[tiltborder:-tiltborder]:
+        if mask[ic]:
+            # get ww0i and ww1i for this iteration
+            ww0i, ww1i = ww0[ic], ww1[ic]
+            ww = wwa[(ww0i, ww1i)]
+            # multiple the image by the rotation matrix
+            sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+            # multiple the order_profile by the rotation matrix
+            fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+            # Renormalise the rotated order profile
+            fx = fx / np.sum(fx)
+            # weight values less than 0 to 1e-9
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # weights are then modified by the gain and sigdet added in quadrature
+            weights = raw_weights / ((sx * gain) + sigdet**2)
+            # set the value of this pixel to the weighted sum
+            spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
@@ -878,7 +896,7 @@ def work_out_ww(ww0, ww1, tiltshift, r1):
 
 
 def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
-                             gain, sigdet):
+                             gain, sigdet, tiltborder=2):
     """
     Extract order using tilt and weight (sigdet and badpix)
 
@@ -901,6 +919,8 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
                    weights = 1/(signal*gain + sigdet^2) with bad pixels
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -925,57 +945,62 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
     tiltshift = np.tan(np.deg2rad(tilt))
     # loop around each pixel along the order
-    for ic in ics[2:-2]:
-        # create a box of the correct size
-        ww = np.zeros((ww0[ic], ww1[ic]))
-        # calculate the tilt shift for each pixel in the box
-        ff = tiltshift * (np.arange(ww0[ic]) - r1)
-        # normalise tilt shift between -0.5 and 0.5
-        rr = np.round(ff) - ff
-        # Set the masks for tilt values of ff
-        mask1 = (ff >= -2.0) & (ff < -1.5)
-        mask2 = (ff >= -1.5) & (ff < -1.0)
-        mask3 = (ff >= -1.0) & (ff < -0.5)
-        mask4 = (ff >= -0.5) & (ff < 0.0)
-        mask5 = (ff >= 0.0) & (ff < 0.5)
-        mask6 = (ff >= 0.5) & (ff < 1.0)
-        mask7 = (ff >= 1.0) & (ff < 1.5)
-        mask8 = (ff >= 1.5) & (ff < 2.0)
-        # get rra, rrb and rrc
-        rra, rrb, rrc = -rr, 1 - rr, 1 + rr
-        # modify the shift values in the box dependent on the mask
-        ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
-        ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
-        ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
-        ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
-        ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
-        ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
-        ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
-        ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
-        # multiple the image by the rotation matrix
-        sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
-        # multiple the order_profile by the rotation matrix
-        fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
-        # Renormalise the rotated order profile
-        fx = fx / np.sum(fx)
-        # weight values less than 0 to 1e-9
-        raw_weights = np.where(sx > 0, 1, 1e-9)
-        # weights are then modified by the gain and sigdet added in quadrature
-        weights = raw_weights / ((sx * gain) + sigdet**2)
-        # set the value of this pixel to the weighted sum
-        spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
+    for ic in ics[tiltborder:-tiltborder]:
+        if mask[ic]:
+            # create a box of the correct size
+            ww = np.zeros((ww0[ic], ww1[ic]))
+            # calculate the tilt shift for each pixel in the box
+            ff = tiltshift * (np.arange(ww0[ic]) - r1)
+            # normalise tilt shift between -0.5 and 0.5
+            rr = np.round(ff) - ff
+            # Set the masks for tilt values of ff
+            mask1 = (ff >= -2.0) & (ff < -1.5)
+            mask2 = (ff >= -1.5) & (ff < -1.0)
+            mask3 = (ff >= -1.0) & (ff < -0.5)
+            mask4 = (ff >= -0.5) & (ff < 0.0)
+            mask5 = (ff >= 0.0) & (ff < 0.5)
+            mask6 = (ff >= 0.5) & (ff < 1.0)
+            mask7 = (ff >= 1.0) & (ff < 1.5)
+            mask8 = (ff >= 1.5) & (ff < 2.0)
+            # get rra, rrb and rrc
+            rra, rrb, rrc = -rr, 1 - rr, 1 + rr
+            # modify the shift values in the box dependent on the mask
+            ww[:, 0] = np.where(mask1, rrc, 0) + np.where(mask2, rr, 0)
+            ww[:, 1] = np.where(mask1, rra, 0) + np.where(mask2, rrb, 0)
+            ww[:, 1] += np.where(mask3, rrc, 0) + np.where(mask4, rr, 0)
+            ww[:, 2] = np.where(mask3, rra, 0) + np.where(mask4, rrb, 0)
+            ww[:, 2] += np.where(mask5, rrc, 0) + np.where(mask6, rr, 0)
+            ww[:, 3] = np.where(mask5, rra, 0) + np.where(mask6, rrb, 0)
+            ww[:, 3] += np.where(mask7, rrc, 0) + np.where(mask8, rr, 0)
+            ww[:, 4] = np.where(mask7, rra, 0) + np.where(mask8, rrb, 0)
+            # multiple the image by the rotation matrix
+            sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+            # multiple the order_profile by the rotation matrix
+            fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+            # Renormalise the rotated order profile
+            fx = fx / np.sum(fx)
+            # weight values less than 0 to 1e-9
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # weights are then modified by the gain and sigdet added
+            #     in quadrature
+            weights = raw_weights / ((sx * gain) + sigdet**2)
+            # set the value of this pixel to the weighted sum
+            spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
     return spe, 0
 
 
-def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
+def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
+                        tiltborder):
     """
     Extract order using tilt and weight (sigdet and badpix)
 
@@ -998,6 +1023,8 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
                    weights = 1/(signal*gain + sigdet^2) with bad pixels
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -1023,6 +1050,8 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
@@ -1040,37 +1069,39 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
     # loop around each pixel along the order and, if it is within the image,
     #   sum the values contained within the order (including the bits missing
     #   due to rounding)
-    for ic in ics[2:-2]:
-        # get ww0i and ww1i for this iteration
-        ww0i, ww1i = ww0[ic], ww1[ic]
-        ww = wwa[(ww0i, ww1i)]
-        # Get the extraction of the main profile
-        sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic]+1] * ww[1:-1]
-        sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
-        # Get the extraction of the order_profile
-        fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
-        # Renormalise the order_profile
-        fx = fx/np.sum(fx)
-        # get the weights
-        # weight values less than 0 to 0.000001
-        raw_weights = np.where(sx1 > 0, 1, 0.000001)
-        weights = fx * raw_weights
-        # get the normalisation (equal to the sum of the weights squared)
-        norm = np.sum(weights**2)
-        # add the main extraction to array
-        mainvalues = np.sum(sx * weights[1:-1], 1)
-        # add the bits missing due to rounding
-        sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0] * weights[0]
-        lowervalue = lower[ic] * np.sum(sxl)
-        sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1] * weights[-1]
-        uppervalue = upper[ic] * np.sum(sxu)
-        # add lower and upper constants to array and sum over all
-        # Question: Is this correct or a typo?
-        # Question: Is the intention to add contribution due to lower and upper
-        # Question:    end to each of the main pixels, or just to the total?
-        spe[ic] = np.sum(mainvalues + lowervalue + uppervalue)
-        # divide by the normalisation
-        spe[ic] /= norm
+    for ic in ics[tiltborder:-tiltborder]:
+        if mask[ic]:
+            # get ww0i and ww1i for this iteration
+            ww0i, ww1i = ww0[ic], ww1[ic]
+            ww = wwa[(ww0i, ww1i)]
+            # Get the extraction of the main profile
+            sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic]+1] * ww[1:-1]
+            sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
+            # Get the extraction of the order_profile
+            fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
+            # Renormalise the order_profile
+            fx = fx/np.sum(fx)
+            # get the weights
+            # weight values less than 0 to 0.000001
+            raw_weights = np.where(sx1 > 0, 1, 0.000001)
+            weights = fx * raw_weights
+            # get the normalisation (equal to the sum of the weights squared)
+            norm = np.sum(weights**2)
+            # add the main extraction to array
+            mainvalues = np.sum(sx * weights[1:-1], 1)
+            # add the bits missing due to rounding
+            sxl = image[j1s[ic], i1s[ic]:i2s[ic] + 1] * ww[0] * weights[0]
+            lowervalue = lower[ic] * np.sum(sxl)
+            sxu = image[j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[-1] * weights[-1]
+            uppervalue = upper[ic] * np.sum(sxu)
+            # add lower and upper constants to array and sum over all
+            # Question: Is this correct or a typo?
+            # Question: Is the intention to add contribution due to lower
+            # Question:    and upper end to each of the main pixels, or
+            # Question:    just to the total?
+            spe[ic] = np.sum(mainvalues + lowervalue + uppervalue)
+            # divide by the normalisation
+            spe[ic] /= norm
     # convert to e-
     spe *= gain
     # return spe and nbcos
@@ -1078,7 +1109,7 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet):
 
 
 def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
-                            orderp=None, gain=None, sigdet=None):
+                            orderp=None, gain=None, sigdet=None, tiltborder=2):
     """
     Extract order using tilt and weight (sigdet and badpix)
 
@@ -1103,6 +1134,8 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
                    weights = 1/(signal*gain + sigdet^2) with bad pixels
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -1121,12 +1154,14 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
     j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
 
@@ -1142,36 +1177,37 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
     #   sum the values contained within the order (including the bits missing
     #   due to rounding)
     for ic in ics:
-        # Get the extraction of the main profile
-        sx = image[j1s[ic] + 1: j2s[ic], ic]
-        # Get the extraction of the order_profile
-        # (if no weights then set to 1)
-        if orderp is None:
-            fx = np.ones_like(sx)
-        else:
-            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
-            # Renormalise the order_profile
-            fx = fx / np.sum(fx)
-        # add the main order pixels
-        spe[ic] = np.sum(sx)
-        # get the weights
-        # weight values less than 0 to 0.000001
-        raw_weights = np.where(sx > 0, 1, 0.000001)
-        weights = fx * raw_weights
-        # get the normalisation (equal to the sum of the weights squared)
-        norm = np.sum(weights**2)
-        # add the main extraction to array
-        s_sx = np.sum(sx)
-        spe[ic] = s_sx * weights[1:-1] * ww[1:-1]
-        # add the bits missing due to rounding
-        sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
-        sxl *= ww[0] * weights[1:-1]
-        spe[ic] += lower[ic] * np.sum(sxl)
-        sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
-        sxu *= ww[-1] * weights[1:-1]
-        spe[ic] += upper[ic] * np.sum(sxu)
-        # divide by the normalisation
-        spe[ic] /= norm
+        if mask[ic]:
+            # Get the extraction of the main profile
+            sx = image[j1s[ic] + 1: j2s[ic], ic]
+            # Get the extraction of the order_profile
+            # (if no weights then set to 1)
+            if orderp is None:
+                fx = np.ones_like(sx)
+            else:
+                fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+                # Renormalise the order_profile
+                fx = fx / np.sum(fx)
+            # add the main order pixels
+            spe[ic] = np.sum(sx)
+            # get the weights
+            # weight values less than 0 to 0.000001
+            raw_weights = np.where(sx > 0, 1, 0.000001)
+            weights = fx * raw_weights
+            # get the normalisation (equal to the sum of the weights squared)
+            norm = np.sum(weights**2)
+            # add the main extraction to array
+            s_sx = np.sum(sx)
+            spe[ic] = s_sx * weights[1:-1] * ww[1:-1]
+            # add the bits missing due to rounding
+            sxl = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
+            sxl *= ww[0] * weights[1:-1]
+            spe[ic] += lower[ic] * np.sum(sxl)
+            sxu = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1]
+            sxu *= ww[-1] * weights[1:-1]
+            spe[ic] += upper[ic] * np.sum(sxu)
+            # divide by the normalisation
+            spe[ic] /= norm
     # convert to e-
     spe *= gain
     # return spe and nbcos
@@ -1181,6 +1217,44 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
 # =============================================================================
 # Other functions
 # =============================================================================
+def get_valid_orders(p, loc):
+    func_name = __NAME__ + '.get_valid_orders()'
+    # get from p or set or get from loc
+    if str(p['EXT_START_ORDER']) == 'None':
+        order_range_lower = 0
+    else:
+        order_range_lower = p['EXT_START_ORDER']
+    if str(p['EXT_END_ORDER']) == 'None':
+        order_range_upper = loc['number_orders']
+    else:
+        order_range_upper = p['EXT_END_ORDER']
+
+    # check that order_range_lower is valid
+    try:
+        orl = int(order_range_lower)
+        if orl < 0:
+            raise ValueError
+    except ValueError:
+        emsg1 = 'EXT_START_ORDER = {0}'.format(order_range_lower)
+        emsg2 = '    must be "None" or a valid positive integer'
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        orl = 0
+    # check that order_range_upper is valid
+    try:
+        oru = int(order_range_upper)
+        if oru < 0:
+            raise ValueError
+    except ValueError:
+        emsg1 = 'EXT_END_ORDER = {0}'.format(order_range_upper)
+        emsg2 = '    must be "None" or a valid positive integer'
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        oru = 0
+    # return the range of the orders
+    return range(orl, oru)
+
+
 def check_for_none(value, name, fname=None):
     """
     Checks is value is None, if it is an error is generated
