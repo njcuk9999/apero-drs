@@ -116,8 +116,13 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
+    # TODO: remove H2RG dependencies
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        opmethod = 'old'
+    else:
+        opmethod = 'new'
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
-                                                 mode='manual')
+                                                 mode='manual', method=opmethod)
     # data 2 is now set to the order profile
     data2o = data2.copy()
     data2 = order_profile.copy()
