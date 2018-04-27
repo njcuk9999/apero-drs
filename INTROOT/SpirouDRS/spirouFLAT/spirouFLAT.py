@@ -39,7 +39,7 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_blaze_for_order(y, fitdegree):
+def measure_blaze_for_order(p, y):
     """
     Measure the blaze function (for good pixels this is a polynomial fit of
     order = fitdegree, for bad pixels = 1.0).
@@ -54,6 +54,9 @@ def measure_blaze_for_order(y, fitdegree):
                    value = 1.0
     """
 
+    # get parameters from p
+    fitdegree = p['IC_BLAZE_FITN']
+
     # set up x range
     x = np.arange(len(y))
     # remove bad pixels
@@ -65,7 +68,12 @@ def measure_blaze_for_order(y, fitdegree):
     # get the fit values for these coefficients
     fity = np.polyval(coeffs, x)
     # calculate the blaze as the fit values for all good pixels and 1 elsewise
-    blaze = np.where(mask, fity, 1.0)
+    # TODO: this is where the blaze goes wrong
+    # TODO: remove H4RG dependency
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        blaze = np.where(mask, fity, 1.0)
+    else:
+        blaze = np.array(fity)
     # return blaze
     return blaze
 
