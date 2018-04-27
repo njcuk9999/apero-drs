@@ -92,10 +92,10 @@ def main(night_name=None, files=None):
     #  Interpolation over bad regions (to fill in the holes)
     # ----------------------------------------------------------------------
     # log process
-    wmsg = 'Interpolating over bad regions'
-    WLOG('', p['log_opt'], wmsg)
+    # wmsg = 'Interpolating over bad regions'
+    # WLOG('', p['log_opt'], wmsg)
     # run interpolation
-    datac = spirouImage.InterpolateBadRegions(p, datac)
+    # datac = spirouImage.InterpolateBadRegions(p, datac)
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -188,7 +188,8 @@ def main(night_name=None, files=None):
         # get saturation threshold
         satseuil = p['IC_SATSEUIL'] * p['gain'] * p['nbframes']
         # plot image above saturation threshold
-        fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
+        # fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
+        fig1, frame1 = sPlt.locplot_im_sat_threshold(data2, satseuil)
     else:
         fig1, frame1 = None, None
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
