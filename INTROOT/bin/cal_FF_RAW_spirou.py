@@ -209,7 +209,7 @@ def main(night_name=None, files=None):
         # new code time: 3.16 s ± 237 ms per loop
         # ------------------------------------------------------------------
         # loop around each order
-        for order_num in range(loc['number_orders']):
+        for order_num in range(4,loc['number_orders']):
         # for order_num in range(2, 10):
             # extract this order
             eargs = [p, loc, data2, order_profile, order_num]
