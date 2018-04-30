@@ -321,8 +321,12 @@ def find_order_centers(pp, image, loc, order_num):
             center = center + rowtop
             # if the width is zero set the position back to the original
             # position
+            # TODO: remove H2RG compatibility
             if width == 0:
-                center = float(rowcenter)-1 # to force the order curvature
+                if pp['IC_IMAGE_TYPE'] = "H2RG":
+                    center = float(rowcenter)
+                else:
+                    center = float(rowcenter)-1 # to force the order curvature
         # add these positions to storage
         loc['ctro'][order_num, col] = center
         loc['sigo'][order_num, col] = width
