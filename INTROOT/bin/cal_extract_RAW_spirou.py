@@ -370,6 +370,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # construct loco filename
         locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
+        # write 1D list of the SNR
+        hdict = spirouImage.AddKey1DList(hdict, p['kw_E2DS_SNR'],
+                                         values=loc['SNR'])
         # add localization file name to header
         hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'], value=locofilename)
         # add localization file keys to header
@@ -397,6 +400,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 WLOG('', p['log_opt'], wmsg.format(p['fiber'], extfitsname))
                 # add keys from original header file
                 hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+                # write 1D list of the SNR
+                hdict = spirouImage.AddKey1DList(hdict, p['kw_E2DS_SNR'],
+                                                 values=loc['SNR'])
                 # add localization file name to header
                 hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
                                            value=locofilename)

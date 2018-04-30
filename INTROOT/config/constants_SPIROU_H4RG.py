@@ -77,22 +77,24 @@ fiber_types = ['AB', 'A', 'B', 'C']
 nbfib_fpall = {'AB': 2, 'A': 1, 'B': 1, 'C': 1}
 
 #   Number of orders to skip at start of image                       - [cal_loc]
-ic_first_order_jump_fpall = {'AB': 0, 'A': 0, 'B': 0, 'C': 0}
+ic_first_order_jump_fpall = {'AB': 2, 'A': 0, 'B': 0, 'C': 1}
 
 #   Maximum number of order to use                                   - [cal_loc]
-ic_locnbmaxo_fpall = {'AB': 100, 'A': 50, 'B': 50, 'C': 50}
+ic_locnbmaxo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 
 #   Quality control "normal" number of orders on fiber               - [cal_loc]
-qc_loc_nbo_fpall = {'AB': 100, 'A': 50, 'B': 50, 'C': 50}
+qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 
 #   Fiber type                                                        - [cal_ff]
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
-ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
+#ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
+ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.}
 
 #   Half-zone extraction width right side (formally plage2)           - [cal_ff]
-ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.5}
+#ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.5}
+ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
 #       (formally ic_ext_nbsig)
@@ -199,7 +201,7 @@ ic_min_amplitude = 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.2
+ic_locseuil = 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
 ic_satseuil = 1000 # 64536
@@ -266,11 +268,11 @@ ic_do_bkgr_subtraction = 0
 ic_bkgr_window = 100
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
-ic_tilt_nbo = 50  #36
+ic_tilt_nbo = 49  #36
 
 #    Start order of the extraction in cal_ff                          - [cal_ff]
 #       if None starts from 0
-ff_start_order = 4
+ff_start_order = None
 
 #    End order of the extraction in cal_ff                            - [cal_ff]
 #       if None ends at last order
@@ -286,10 +288,10 @@ ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 7
+ic_blaze_fitn = 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 10
+ic_ff_order_plot = 2
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
@@ -310,7 +312,7 @@ ic_extopt = 0
 
 #    Start order of the extraction in cal_ff                     - [cal_extract]
 #       if None starts from 0
-ext_start_order = 4
+ext_start_order = None
 
 #    End order of the extraction in cal_ff                       - [cal_extract]
 #       if None ends at last order
