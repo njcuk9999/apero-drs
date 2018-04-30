@@ -149,7 +149,7 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     WLOG('info', pp['log_opt'], ('Average background level: '
                                  '{0:.2f} [%]').format(mean_backgrd))
     # if in debug mode plot y, miny and maxy else just plot y
-    if pp['DRS_DEBUG'] == 2 and pp['DRS_PLOT']:
+    if pp['DRS_DEBUG'] == 0 and pp['DRS_PLOT']:
         sPlt.locplot_y_miny_maxy(y, miny, maxy)
     if pp['DRS_PLOT']:
         sPlt.locplot_y_miny_maxy(y)

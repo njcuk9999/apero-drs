@@ -226,9 +226,13 @@ def main(night_name=None, files=None):
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # calcualte the blaze function
-            blaze = spirouFLAT.MeasureBlazeForOrder(e2ds, p['IC_BLAZE_FITN'])
+            blaze = spirouFLAT.MeasureBlazeForOrder(p, e2ds)
             # calculate the flat
-            flat = e2ds/blaze
+            # TODO: Remove H2RG compatibility
+            if p['IC_IMAGE_TYPE'] == 'H2RG':
+                flat = e2ds/blaze
+            else:
+                flat = np.where(blaze>1,e2ds/blaze,1)
             # calculate the rms
             rms = np.std(flat)
             # log the SNR RMS
