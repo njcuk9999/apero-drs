@@ -322,7 +322,7 @@ def find_order_centers(pp, image, loc, order_num):
             # if the width is zero set the position back to the original
             # position
             if width == 0:
-                center = float(rowcenter)
+                center = float(rowcenter)-1 # to force the order curvature
         # add these positions to storage
         loc['ctro'][order_num, col] = center
         loc['sigo'][order_num, col] = width
