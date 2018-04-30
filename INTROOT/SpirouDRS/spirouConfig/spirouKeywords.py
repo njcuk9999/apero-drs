@@ -73,6 +73,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
             'kw_DPRTYPE',
+            'kw_E2DS_SNR',
             'kw_EXPTIME',
             'kw_EXTRA_SN',
             'kw_FLAT_RMS',
@@ -322,6 +323,8 @@ kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 
 # localization file used
 kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
+
+kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
