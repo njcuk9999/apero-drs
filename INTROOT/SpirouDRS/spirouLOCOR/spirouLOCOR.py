@@ -323,7 +323,7 @@ def find_order_centers(pp, image, loc, order_num):
             # position
             # TODO: remove H2RG compatibility
             if width == 0:
-                if pp['IC_IMAGE_TYPE'] = "H2RG":
+                if pp['IC_IMAGE_TYPE'] == "H2RG":
                     center = float(rowcenter)
                 else:
                     center = float(rowcenter)-1 # to force the order curvature
