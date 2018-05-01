@@ -66,17 +66,17 @@ def reset_confirmation():
         os._exit(0)
 
 
-def reset_reduced_folders(p):
+def reset_reduced_folders(p, log=True):
 
     # log progress
     WLOG('', DPROG, 'Resetting reduced directory')
     # remove files from reduced folder
     red_dir = p['DRS_DATA_REDUC']
     # loop around files and folders in calib_dir
-    remove_all(red_dir)
+    remove_all(red_dir, log)
 
 
-def reset_calibdb(p):
+def reset_calibdb(p, log=True):
     # TODO: eventually the calibDB should be reset to empty
     # TODO:    Thus this function will not be needed
 
@@ -86,7 +86,7 @@ def reset_calibdb(p):
     # remove files currently in calibDB
     calib_dir = p['DRS_CALIB_DB']
     # loop around files and folders in calib_dir
-    remove_all(calib_dir)
+    remove_all(calib_dir, log)
 
     # -------------------------------------------------------------------------
     # get reset directory location
@@ -112,16 +112,18 @@ def reset_calibdb(p):
         # check that old path exists
         if os.path.exists(oldpath):
             # log progress
-            wmsg = 'Adding file: {0} to {1}'
-            WLOG('', DPROG, wmsg.format(f, p['DRS_CALIB_DB']))
+            if log:
+                wmsg = 'Adding file: {0} to {1}'
+                WLOG('', DPROG, wmsg.format(f, p['DRS_CALIB_DB']))
             # remove the old file
             if os.path.exists(newpath):
                 os.remove(newpath)
             # copy over the new file
             shutil.copy(oldpath, newpath)
         else:
-            wmsg = 'File {0} does not exists in {1} - cannot add'
-            WLOG('warning', DPROG, wmsg.format(f, absfolder))
+            if log:
+                wmsg = 'File {0} does not exists in {1} - cannot add'
+                WLOG('warning', DPROG, wmsg.format(f, absfolder))
     # -------------------------------------------------------------------------
 
 
@@ -134,17 +136,17 @@ def reset_log(p):
     remove_all(log_dir)
 
 
-def remove_all(path):
+def remove_all(path, log=True):
     # loop around files and folders in calib_dir
     files = glob.glob(path + '/*')
     # loop around all files (adding all files from sub directories
     while len(files) > 0:
         f = files[0]
-        files = remove(f, files)
+        files = remove(f, files, log)
         files.remove(f)
 
 
-def remove(path, list_of_files):
+def remove(path, list_of_files, log=True):
     """
     Remove a file or add files to list_of_files
     :param path:
@@ -157,25 +159,27 @@ def remove(path, list_of_files):
         list_of_files += glob.glob(path + '/*')
     else:
         # log removal
-        WLOG('', DPROG, '    Removing file: {0}'.format(path))
+        if log:
+            WLOG('', DPROG, '    Removing file: {0}'.format(path))
         # remove
         os.remove(path)
     # return list of files
     return list_of_files
 
 
-def main(return_locals=False):
+def main(return_locals=False, warn=True, log=True):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(quiet=log)
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset_confirmation()
-    reset_reduced_folders(p)
-    reset_calibdb(p)
+    if warn:
+        reset_confirmation()
+    reset_reduced_folders(p, log)
+    reset_calibdb(p, log)
     # reset_log(p)
     # ----------------------------------------------------------------------
     # End Message
