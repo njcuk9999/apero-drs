@@ -50,6 +50,8 @@ CheckConfig = spirouConfig.check_config
 
 ExtractDictParams = spirouConfig.extract_dict_params
 
+GetConfigParams = spirouConfig.get_config_params
+
 GetKeywordArguments = spirouKeywords.get_keywords
 
 GetKeywordValues = spirouKeywords.get_keyword_values_from_header
