@@ -12,7 +12,7 @@ Created on 2017-12-06 at 14:26
 
 from SpirouDRS import spirouConfig
 from . import spirouUnitTests
-
+from . import unit_test
 
 # =============================================================================
 # Define variables
@@ -26,7 +26,7 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['GetRuns', 'LogTimings', 'ManageRun', 'SetComp', 'SetType',
-           'UnitLogTitle', 'UnsetType']
+           'UnitLogTitle', 'UnsetType', 'UnitTest']
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -48,6 +48,7 @@ UnitLogTitle = spirouUnitTests.unit_log_title
 
 UnsetType = spirouUnitTests.unset_type
 
+UnitTest = unit_test
 
 # =============================================================================
 # End of code
