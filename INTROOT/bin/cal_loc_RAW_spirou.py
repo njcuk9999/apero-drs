@@ -92,10 +92,10 @@ def main(night_name=None, files=None):
     #  Interpolation over bad regions (to fill in the holes)
     # ----------------------------------------------------------------------
     # log process
-    wmsg = 'Interpolating over bad regions'
-    WLOG('', p['log_opt'], wmsg)
+    # wmsg = 'Interpolating over bad regions'
+    # WLOG('', p['log_opt'], wmsg)
     # run interpolation
-    datac = spirouImage.InterpolateBadRegions(p, datac)
+    # datac = spirouImage.InterpolateBadRegions(p, datac)
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -116,8 +116,13 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
+    # TODO: remove H2RG dependencies
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        opmethod = 'old'
+    else:
+        opmethod = 'new'
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
-                                                 mode='manual')
+                                                 mode='manual', method=opmethod)
     # data 2 is now set to the order profile
     data2o = data2.copy()
     data2 = order_profile.copy()
@@ -164,7 +169,7 @@ def main(night_name=None, files=None):
     # log progress
     WLOG('', p['log_opt'], 'Searching order center on central column')
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
-    if p['DRS_DEBUG'] == 2 and p['DRS_PLOT']:
+    if p['DRS_DEBUG'] == 0 and p['DRS_PLOT']:
         sPlt.debug_locplot_min_ycc_loc_threshold(p, loc['ycc'])
     # find the central positions of the orders in the central
     posc_all = spirouLOCOR.FindPosCentCol(loc['ycc'], p['IC_LOCSEUIL'])
@@ -188,7 +193,8 @@ def main(night_name=None, files=None):
         # get saturation threshold
         satseuil = p['IC_SATSEUIL'] * p['gain'] * p['nbframes']
         # plot image above saturation threshold
-        fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
+        # fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
+        fig1, frame1 = sPlt.locplot_im_sat_threshold(data2, satseuil)
     else:
         fig1, frame1 = None, None
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

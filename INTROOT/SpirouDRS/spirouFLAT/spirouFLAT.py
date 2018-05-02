@@ -39,7 +39,7 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_blaze_for_order(y, fitdegree):
+def measure_blaze_for_order(p, y):
     """
     Measure the blaze function (for good pixels this is a polynomial fit of
     order = fitdegree, for bad pixels = 1.0).
@@ -54,6 +54,9 @@ def measure_blaze_for_order(y, fitdegree):
                    value = 1.0
     """
 
+    # get parameters from p
+    fitdegree = p['IC_BLAZE_FITN']
+
     # set up x range
     x = np.arange(len(y))
     # remove bad pixels
@@ -65,7 +68,12 @@ def measure_blaze_for_order(y, fitdegree):
     # get the fit values for these coefficients
     fity = np.polyval(coeffs, x)
     # calculate the blaze as the fit values for all good pixels and 1 elsewise
-    blaze = np.where(mask, fity, 1.0)
+    # TODO: this is where the blaze goes wrong
+    # TODO: remove H4RG dependency
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        blaze = np.where(mask, fity, 1.0)
+    else:
+        blaze = np.array(fity)
     # return blaze
     return blaze
 
@@ -115,6 +123,43 @@ def correct_flat(p=None, loc=None, hdr=None, filename=None):
     return loc
 
 
+def get_valid_orders(p, loc):
+
+    func_name = __NAME__ + '.get_valid_orders()'
+    # get from p or set or get from loc
+    if str(p['FF_START_ORDER']) == 'None':
+        order_range_lower = 0
+    else:
+        order_range_lower = p['FF_START_ORDER']
+    if str(p['FF_END_ORDER']) == 'None':
+        order_range_upper = loc['number_orders']
+    else:
+        order_range_upper = p['FF_END_ORDER']
+
+    # check that order_range_lower is valid
+    try:
+        orl = int(order_range_lower)
+        if orl < 0:
+            raise ValueError
+    except ValueError:
+        emsg1 = 'FF_START_ORDER = {0}'.format(order_range_lower)
+        emsg2 = '    must be "None" or a valid positive integer'
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        orl = 0
+    # check that order_range_upper is valid
+    try:
+        oru = int(order_range_upper)
+        if oru < 0:
+            raise ValueError
+    except ValueError:
+        emsg1 = 'FF_END_ORDER = {0}'.format(order_range_upper)
+        emsg2 = '    must be "None" or a valid positive integer'
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        oru = 0
+    # return the range of the orders
+    return range(orl, oru)
 
 
 # =============================================================================

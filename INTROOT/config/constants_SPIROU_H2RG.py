@@ -276,6 +276,14 @@ ic_bkgr_window = 100
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 36
 
+#    Start order of the extraction in cal_ff                          - [cal_ff]
+#       if None starts from 0
+ff_start_order = None
+
+#    End order of the extraction in cal_ff                            - [cal_ff]
+#       if None ends at last order
+ff_end_order = None
+
 #   Manually set the sigdet to use in weighted tilt extraction        - [cal_ff]
 #       set to -1 to use from fitsfilename HEADER
 #       (formally ccdsigdet)
@@ -308,6 +316,14 @@ ic_ff_plot_all_orders = 0
 #                (not currently available)
 ic_extopt = 0
 
+#    Start order of the extraction in cal_ff                     - [cal_extract]
+#       if None starts from 0
+ext_start_order = None
+
+#    End order of the extraction in cal_ff                       - [cal_extract]
+#       if None ends at last order
+ext_end_order = None
+
 # distance away from center to extract out to +/-                   - [cal_slit]
 ic_extnbsig = 2.5
 
@@ -319,6 +335,10 @@ ic_extnbsig = 2.5
 #                'weight'
 #                'all'    - for comparison (saves all)
 ic_extract_type = 'tiltweight'
+
+#   Set the number of pixels to set as the border (needed   - [cal_slit, cal_FF]
+#       to allow for tilt to not go off edge of image)
+ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
