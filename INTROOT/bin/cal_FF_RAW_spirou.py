@@ -118,7 +118,7 @@ def main(night_name=None, files=None):
     n_bad_pix = np.sum(data2 == 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
-    wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
+    wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
     WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
@@ -208,8 +208,10 @@ def main(night_name=None, files=None):
         # old code time: 1 loop, best of 3: 22.3 s per loop
         # new code time: 3.16 s ± 237 ms per loop
         # ------------------------------------------------------------------
+        # get limits of order extraction
+        valid_orders = spirouFLAT.GetValidOrders(p, loc)
         # loop around each order
-        for order_num in range(loc['number_orders']):
+        for order_num in valid_orders:
             # extract this order
             eargs = [p, loc, data2, order_profile, order_num]
             e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
@@ -224,9 +226,13 @@ def main(night_name=None, files=None):
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # calcualte the blaze function
-            blaze = spirouFLAT.MeasureBlazeForOrder(e2ds, p['IC_BLAZE_FITN'])
+            blaze = spirouFLAT.MeasureBlazeForOrder(p, e2ds)
             # calculate the flat
-            flat = e2ds/blaze
+            # TODO: Remove H2RG compatibility
+            if p['IC_IMAGE_TYPE'] == 'H2RG':
+                flat = e2ds/blaze
+            else:
+                flat = np.where(blaze>1,e2ds/blaze,1)
             # calculate the rms
             rms = np.std(flat)
             # log the SNR RMS

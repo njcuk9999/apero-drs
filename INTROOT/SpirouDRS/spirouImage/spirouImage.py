@@ -1019,7 +1019,7 @@ def locate_bad_pixels_full(p, image):
     # TODO: remove H2RG dependencies
     # if we are using H2RG we don't need this map
     if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return np.ones_like(image)
+        return np.ones_like(image, dtype=bool)
     # log that we are looking for bad pixels
     WLOG('', p['log_opt'], 'Looking for bad pixels in full flat image')
     # get parameters from p

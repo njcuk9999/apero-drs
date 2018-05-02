@@ -57,8 +57,8 @@ ic_ccdy_red_high = 1350
 #   Resize image                                                     - [cal_loc]
 ic_ccdx_low = 4
 ic_ccdx_high = 4092
-ic_ccdy_low = 4
-ic_ccdy_high = 3450
+ic_ccdy_low = 250 # 100 #4
+ic_ccdy_high = 3350 #3450
 
 #    Define the types of fiber to look for            - [cal_extract, cal_drift]
 #       (earlier in list takes priority)
@@ -77,7 +77,7 @@ fiber_types = ['AB', 'A', 'B', 'C']
 nbfib_fpall = {'AB': 2, 'A': 1, 'B': 1, 'C': 1}
 
 #   Number of orders to skip at start of image                       - [cal_loc]
-ic_first_order_jump_fpall = {'AB': 3, 'A': 0, 'B': 0, 'C': 2}
+ic_first_order_jump_fpall = {'AB': 2, 'A': 0, 'B': 0, 'C': 1}
 
 #   Maximum number of order to use                                   - [cal_loc]
 ic_locnbmaxo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
@@ -89,10 +89,12 @@ qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
-ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
+#ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
+ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.}
 
 #   Half-zone extraction width right side (formally plage2)           - [cal_ff]
-ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.5}
+#ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.5}
+ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
 #       (formally ic_ext_nbsig)
@@ -134,32 +136,32 @@ dark_cutlimit = 5.0
 
 #   Size of the order_profile smoothed box                           - [cal_loc]
 #     (from pixel - size to pixel + size)
-loc_box_size = 10
+loc_box_size = 5  # 10
 
 #   row number of image to start processing at                       - [cal_loc]
-ic_offset = 150
+ic_offset = 0 #40
 
 #   Definition of the central column                       - [cal_loc, cal_slit]
 #      (formally ic_ccdcolc)
-ic_cent_col = 2000
+ic_cent_col = 2500
 
 #   Definition of the extraction window size (half size)             - [cal_loc]
-ic_ext_window = 20
+ic_ext_window = 15  #20 #40 #12
 
 #   Definition of the gap index in the selected area                 - [cal_loc]
 #       (formally ic_ccdgap)
 ic_image_gap = 0
 
 #   Define the column separation for fitting orders                  - [cal_loc]
-ic_locstepc = 20
+ic_locstepc = 20 # 20
 
 #   Define minimum width of order to be accepted                     - [cal_loc]
-ic_widthmin = 10
+ic_widthmin = 10 # 5
 
 #   Define the noise multiplier threshold in order to accept an      - [cal_loc]
 #       order center as usable
 #       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
-ic_noise_mult_thres = 5
+ic_noise_mult_thres =  10  #10 # 100.0
 
 #   Define the polynomial fit parameters for interpolating over the  - [cal_loc]
 #      bad regions (holes) before localization is done
@@ -192,34 +194,34 @@ bad_region_good_value = 0.5
 bad_region_bad_value = 0.25
 
 #   Half spacing between orders                                      - [cal_loc]
-ic_locnbpix = 45
+ic_locnbpix = 45  #45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
-ic_min_amplitude = 10
+ic_min_amplitude = 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.2
+ic_locseuil = 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
-ic_satseuil = 64536
+ic_satseuil = 1000 # 64536
 
 #   Order of polynomial to fit for positions                         - [cal_loc]
-ic_locdfitc = 5
+ic_locdfitc = 4 #5
 
 #   Order of polynomial to fit for widths                            - [cal_loc]
-ic_locdfitw = 5
+ic_locdfitw = 4 #5
 
 #   Order of polynomial to fit for position error             - [spirouKeywords]
 #      Currently not used
 ic_locdfitp = 3
 
 #   Maximum rms for sigma-clip order fit (center positions)          - [cal_loc]
-ic_max_rms_center = 0.2
+ic_max_rms_center = 0.1
 
 #   Maximum peak-to-peak for sigma-clip order fit                    - [cal_loc]
 #      (center positions)
-ic_max_ptp_center = 0.200
+ic_max_ptp_center = 0.300  # 0.200
 
 #   Maximum frac ptp/rms for sigma-clip order fit                    - [cal_loc]
 #      (center positions)
@@ -247,13 +249,13 @@ ic_locopt1 = 1
 ic_tilt_coi = 10
 
 #   Offset multiplicative factor (for width)                        - [cal_slit]
-ic_facdec = 1.6
+ic_facdec =  0.9 # 1.6
 
 #   Order of polynomial to fit for tilt                             - [cal_slit]
 ic_tilt_fit = 4
 
 #   Order to plot on slit image plot                                - [cal_slit]
-ic_slit_order_plot = 10
+ic_slit_order_plot = 20 * 2
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
@@ -266,7 +268,15 @@ ic_do_bkgr_subtraction = 0
 ic_bkgr_window = 100
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
-ic_tilt_nbo = 36
+ic_tilt_nbo = 49  #36
+
+#    Start order of the extraction in cal_ff                          - [cal_ff]
+#       if None starts from 0
+ff_start_order = None
+
+#    End order of the extraction in cal_ff                            - [cal_ff]
+#       if None ends at last order
+ff_end_order = None
 
 #   Manually set the sigdet to use in weighted tilt extraction        - [cal_ff]
 #       set to -1 to use from fitsfilename HEADER
@@ -278,14 +288,14 @@ ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 5
+ic_blaze_fitn = 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 5
+ic_ff_order_plot = 2
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
-ic_ff_plot_all_orders = 0
+ic_ff_plot_all_orders = 1
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
@@ -300,8 +310,16 @@ ic_ff_plot_all_orders = 0
 #                (not currently available)
 ic_extopt = 0
 
+#    Start order of the extraction in cal_ff                     - [cal_extract]
+#       if None starts from 0
+ext_start_order = None
+
+#    End order of the extraction in cal_ff                       - [cal_extract]
+#       if None ends at last order
+ext_end_order = None
+
 # distance away from center to extract out to +/-                   - [cal_slit]
-ic_extnbsig = 2.5
+ic_extnbsig = 1 #2.5
 
 #   Select extraction type                                       - [cal_extract]
 #        Should be one of the following:
@@ -311,6 +329,10 @@ ic_extnbsig = 2.5
 #                'weight'
 #                'all'    - for comparison (saves all)
 ic_extract_type = 'tiltweight'
+
+#   Set the number of pixels to set as the border (needed   - [cal_slit, cal_FF]
+#       to allow for tilt to not go off edge of image)
+ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
@@ -592,7 +614,7 @@ qc_loc_flumax = 64500
 qc_slit_rms = 0.1
 
 #   Minimum allowed angle for the tilt of the slit [deg]            - [cal_slit]
-qc_slit_min = -8.0
+qc_slit_min = -10.0
 
 #   Maximum allowed angle for the tilt of the slit [deg]            - [cal_slit]
 qc_slit_max = 0.0

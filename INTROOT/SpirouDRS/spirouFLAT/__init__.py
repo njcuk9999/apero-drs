@@ -23,7 +23,7 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['MeasureBlazeForOrder']
+__all__ = ['CorrectFlat', 'GetValidOrders', 'MeasureBlazeForOrder']
 
 # =============================================================================
 # Function aliases
@@ -31,6 +31,8 @@ __all__ = ['MeasureBlazeForOrder']
 CorrectFlat = spirouFLAT.correct_flat
 
 MeasureBlazeForOrder = spirouFLAT.measure_blaze_for_order
+
+GetValidOrders = spirouFLAT.get_valid_orders
 
 # =============================================================================
 # End of code

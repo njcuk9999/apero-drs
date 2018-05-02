@@ -11,9 +11,11 @@ Import rules: Only from spirouConfig and spirouCore
 """
 from __future__ import division
 import numpy as np
-import sys
 import time
 import matplotlib
+
+from SpirouDRS import spirouConfig
+from . import spirouLog
 
 # TODO: Is there a better fix for this?
 # fix for MacOSX plots freezing
@@ -36,9 +38,6 @@ try:
     from matplotlib.patches import Rectangle
 except Exception as e:
     matplotlib_emsg.append(e)
-
-from SpirouDRS import spirouConfig
-from . import spirouLog
 
 
 # =============================================================================
@@ -150,7 +149,7 @@ def darkplot_image_and_regions(pp, image):
     im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med_full']),
                       cmap='jet')
     # plot the colorbar
-    cbar=plt.colorbar(im, ax=frame)
+    cbar = plt.colorbar(im, ax=frame)
     cbar.set_label('ADU/s')
     # get the blue region
     bxlow, bxhigh = pp['IC_CCDX_BLUE_LOW'], pp['IC_CCDX_BLUE_HIGH']
@@ -556,7 +555,7 @@ def slit_sorder_plot(pp, loc, image):
     frame.plot(xfit, yfit1, color='red')
     frame.plot(xfit, yfit2, color='red')
     # set axis limits to image
-    frame.set(xlim=(0, image.shape[0]), ylim=(0, image.shape[1]))
+    frame.set(xlim=(0, image.shape[1]), ylim=(0, image.shape[0]))
 
     # TODO: Need axis labels and title
 
@@ -710,10 +709,8 @@ def ff_aorder_fit_edges(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
 
-
-
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])//2):
+    for order_num in range(len(loc['acc'])//p['nbfib']):
         acc = loc['acc'][order_num]
 
         # work out offsets for this order
@@ -787,9 +784,11 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     # get xrange
     x = np.arange(len(e2ds))
     # plot e2ds for selected order
-    frame.plot(x, e2ds, label='E2DS')
+#    frame.plot(x, e2ds, label='E2DS')
+    frame.plot(x[e2ds>0], e2ds[e2ds>0], label='E2DS')
     # plot blaze function
-    frame.plot(x, blaze, label='Blaze')
+#    frame.plot(x, blaze, label='Blaze')
+    frame.plot(x[blaze>1], blaze[blaze>1], label='Blaze')
     # set title labels limits
     title = 'E2DS + BLAZE spectral order {0} fiber {1}'
     frame.set(title=title.format(selected_order, fiber))
@@ -942,7 +941,7 @@ def ext_aorder_fit(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])//2):
+    for order_num in range(len(loc['acc'])//p['nbfib']):
         acc = loc['acc'][order_num]
         # work out offsets for this order
         offsetarraylow = np.zeros(len(acc))
@@ -1002,8 +1001,17 @@ def ext_spectral_order_plot(p, loc):
     selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['fiber']
     # get data from loc
-    wave = loc['wave'][selected_order]
     extraction = loc['e2ds'][selected_order]
+
+    # TODO: remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        wave = loc['wave'][selected_order]
+        xlabel = 'Wavelength [$\AA$]'
+    else:
+        # for now in H4RG we don't have wavelength so use pixels
+        wave = np.arange(len(extraction))
+        xlabel = 'Pixel'
+
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1014,7 +1022,8 @@ def ext_spectral_order_plot(p, loc):
     frame.plot(wave, extraction, color='red')
     # set title labels limits
     title = 'Spectral order {0} fiber {1}'
-    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+
+    frame.set(xlabel=xlabel, ylabel='flux',
               title=title.format(selected_order, fiber))
     # turn off interactive plotting
     if not plt.isinteractive():
