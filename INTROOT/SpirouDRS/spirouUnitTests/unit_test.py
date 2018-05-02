@@ -44,10 +44,11 @@ UNIT_TEST_PATH = os.path.join(UNIT_PATH, 'Runs')
 # =============================================================================
 # Define main function
 # =============================================================================
-def main(runname=None):
+def main(runname=None, quiet=False):
 
     # reset the DRS
-    spirouTools.DRS_Reset(log=False)
+    if not quiet:
+        spirouTools.DRS_Reset(log=False)
 
     # ----------------------------------------------------------------------
     # Set up
