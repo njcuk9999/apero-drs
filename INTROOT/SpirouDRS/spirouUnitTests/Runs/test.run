@@ -1,0 +1,10 @@
+# define detector type (default = H4RG)
+type = "H2RG"
+
+# define whether we run the comparison with old drs (default = False)
+comparison = False
+
+# define run
+#    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
+run0 = ['cal_DARK_spirou', '20170710', 'dark_dark02d406.fits']
+run1 = ['cal_BADPIX_spirou', '20170710', 'flat_flat02f10.fits', 'dark_dark02d406.fits']
