@@ -41,6 +41,10 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# Get Logging function
+WLOG = spirouCore.wlog
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
@@ -73,7 +77,7 @@ def get_folder_name(rawpath, foldername=None):
 
 def compare(name, ll, newoutputs, oldoutputs, errors, oldpath, resultspath):
 
-    print('\n\n Comparing files...')
+    WLOG('', DPROG, 'Comparing files...')
     # define new output files from ll
     newfiles = ll['outputs']
     # define new path from p['reduced_dir']
@@ -149,11 +153,11 @@ def comparison_wrapper(name, oldfiles, newfiles, errors=None, path=None):
 
         # print status
         if len(errors) > 0:
-            wmsg = '\n\t{0} differences found in {1}'
-            print(wmsg.format(len(e0) + len(e1) + len(e2), newfile))
+            wmsg = '\t{0} differences found in {1}'
+            WLOG('', DPROG, wmsg.format(len(e0) + len(e1) + len(e2), newfile))
         else:
-            wmsg = '\n\tNo difference found in {0} - files the same'
-            print(wmsg.format(newfile))
+            wmsg = '\tNo difference found in {0} - files the same'
+            WLOG('', DPROG, wmsg.format(newfile))
 
     # return errors for files
     return errors
@@ -590,15 +594,6 @@ def construct_error_table(errors, threshold=-8, results_path='./'):
     # write to file
     table.write(path, overwrite=True)
 
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
 
 # =============================================================================
 # End of code
