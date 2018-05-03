@@ -69,7 +69,7 @@ def readimage(p, filename=None, log=True, kind=None):
                                 one string filename in the list
 
     :param filename: string or None, filename of the image to read, if None
-                     then p['fitsfilename'] is used
+                     then p['FITSFILENAME'] is used
     :param log: bool, if True logs opening and size
     :param kind: string or None, if defined names the image else just image,
                  used in logging (if log = True)
@@ -86,11 +86,11 @@ def readimage(p, filename=None, log=True, kind=None):
     else:
         kind += ' Image'
     # set up frequently used variables
-    log_opt = p['log_opt']
+    log_opt = p['LOG_OPT']
     # get file name
     if filename is None:
         try:
-            fitsfilename = p['fitsfilename']
+            fitsfilename = p['FITSFILENAME']
         except KeyError:
             emsg1 = '"fitsfilename" is not defined in parameter dictionary'
             emsg2 = '   function = {0}'.format(func_name)
@@ -111,8 +111,8 @@ def readimage(p, filename=None, log=True, kind=None):
     comments = dict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
     if filename is None:
-        header['@@@hname'] = p['arg_file_names'][0] + ' Header File'
-        header['@@@fname'] = p['fitsfilename']
+        header['@@@hname'] = p['ARG_FILE_NAMES'][0] + ' Header File'
+        header['@@@fname'] = p['FITSFILENAME']
     else:
         header['@@@hname'] = filename + ' Header File'
         header['@@@fname'] = filename
@@ -151,7 +151,7 @@ def readdata(p, filename, log=True, return_header=True, return_shape=True):
             :return empty: None, blank entry
     """
     # set up frequently used variables
-    log_opt = p['log_opt']
+    log_opt = p['LOG_OPT']
     # log that we are reading the image
     if log:
         WLOG('', log_opt, 'Reading File: {0} '.format(filename))
@@ -206,10 +206,10 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
                 'none'                 - does not add
 
     :param filename: string or None, filename of the image to read, if None
-                     then p['fitsfilename'] is used
+                     then p['FITSFILENAME'] is used
 
     :param filenames: list of strings or None, filenames to combine with
-                      "filename", if None then p['arg_file_names'] is used
+                      "filename", if None then p['ARG_FILE_NAMES'] is used
 
     :param log: bool, if True logs opening and size
 
@@ -220,34 +220,34 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     """
     func_name = __NAME__ + '.readimage_and_combine()'
     # set up frequently used variables
-    log_opt = p['log_opt']
+    log_opt = p['LOG_OPT']
     # -------------------------------------------------------------------------
     # get file name
     if filename is None:
         try:
-            filename = p['fitsfilename']
+            filename = p['FITSFILENAME']
         except KeyError:
             emsg1 = ('"filename" is not defined and "fitsfilename" is not '
                      'defined in parameter dictionary')
             emsg2 = '    function={0}'.format(func_name)
             WLOG('error', log_opt, [emsg1, emsg2])
     else:
-        p['fitsfilename'] = filename
-        p.set_source('fitsfilename', func_name)
+        p['FITSFILENAME'] = filename
+        p.set_source('FITSFILENAME', func_name)
         filename = str(filename)
     # -------------------------------------------------------------------------
     # get additional files
     if filenames is None:
         try:
-            filenames = p['arg_file_names'][1:]
+            filenames = p['ARG_FILE_NAMES'][1:]
         except KeyError:
             emsg1 = ('"filenames" is not defined and "arg_file_names" is not in'
                      ' parameter dictionary')
             emsg2 = '    function={0}'.format(func_name)
             WLOG('error', log_opt, [emsg1, emsg2])
     else:
-        p['nbframes'] = len(filenames) + 1
-        p.set_source('nbframes', func_name)
+        p['NBFRAMES'] = len(filenames) + 1
+        p.set_source('NBFRAMES', func_name)
         filenames = list(filenames)
     # -------------------------------------------------------------------------
     # log that we are reading the image
@@ -267,17 +267,17 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     # currently we overwrite fitsfilename with last framefilename
     # TODO: Do we want to overwrite header/fitsfilename with last entry?
     if len(filenames) > 0:
-        p['fitsfilename'] = filenames[-1]
+        p['FITSFILENAME'] = filenames[-1]
     else:
-        p['fitsfilename'] = filename
-    p.set_source('fitsfilename', __NAME__)
+        p['FITSFILENAME'] = filename
+    p.set_source('FITSFILENAME', __NAME__)
 
     # convert header to python dictionary
     header = dict(zip(imageheader.keys(), imageheader.values()))
     comments = dict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
     header['@@@hname'] = filename + ' Header File'
-    header['@@@fname'] = p['fitsfilename']
+    header['@@@fname'] = p['FITSFILENAME']
 
     # return data, header, data.shape[0], data.shape[1]
     return image, header, comments, nx, ny
@@ -363,7 +363,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
 
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
-                     p['fitsfilename']
+                     p['FITSFILENAME']
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the TILT file from the calib database
                      keyword "TILT"
@@ -392,7 +392,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
     # get the tilt keys
-    tilt = read_key_2d_list(p, hdict, p['kw_TILT'][0], p['IC_TILT_NBO'], 1)
+    tilt = read_key_2d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'], 1)
     # return the first set of keys
     return tilt[:, 0]
 
@@ -411,7 +411,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
 
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
-                     p['fitsfilename']
+                     p['FITSFILENAME']
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the WAVE file from the calib database
                      keyword "WAVE_{fiber}"
@@ -436,7 +436,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
                            solution
     """
     if key is None:
-        key = 'WAVE_' + p['fiber']
+        key = 'WAVE_' + p['FIBER']
     # get filename
     if filename is None:
         read_file = spirouCDB.GetFile(p, key, hdr, required=required)
@@ -470,7 +470,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
 
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
-                     p['fitsfilename']
+                     p['FITSFILENAME']
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the FLAT file from the calib database
                      keyword "FLAT_{fiber}"
@@ -484,11 +484,11 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
     func_name = __NAME__ + '.read_flat_file()'
     if key is None:
         try:
-            key = 'FLAT_{0}'.format(p['fiber'])
+            key = 'FLAT_{0}'.format(p['FIBER'])
         except spirouConfig.ConfigError as _:
             emsg1 = 'Parameter "fiber" not found in parameter dictionary'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get filename
     if filename is None:
         read_file = spirouCDB.GetFile(p, key, hdr, required=required)
@@ -514,7 +514,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
 
     :param hdr: dictionary or None, the header dictionary to look for the
                      acquisition time in, if None loads the header from
-                     p['fitsfilename']
+                     p['FITSFILENAME']
     :param filename: string or None, the filename and path of the tilt file,
                      if None gets the WAVE file from the calib database
                      keyword "BLAZE_{fiber}"
@@ -529,11 +529,11 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     func_name = __NAME__ + '.read_blaze_file()'
     if key is None:
         try:
-            key = 'BLAZE_{0}'.format(p['fiber'])
+            key = 'BLAZE_{0}'.format(p['FIBER'])
         except spirouConfig.ConfigError as _:
             emsg1 = 'Parameter "fiber" not found in parameter dictionary'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get filename
     if filename is None:
         read_file = spirouCDB.GetFile(p, key, hdr, required=required)
@@ -578,7 +578,7 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
     func_name = __NAME__ + '.read_order_profile_superposition()'
     # Log that we are reading the order profile
     wmsg = 'Reading order profile of Fiber {0}'
-    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # construct key
     # get loc file
     if filename is not None:
@@ -586,12 +586,12 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
     elif 'ORDERP_FILE' in p:
         key = 'ORDER_PROFILE_{0}'.format(p['ORDERP_FILE'])
     elif 'FIBER' in p:
-        key = 'ORDER_PROFILE_{0}'.format(p['fiber'])
+        key = 'ORDER_PROFILE_{0}'.format(p['FIBER'])
     else:
         emsg1 = ('Cannot open the order profile: Parameter dictionary '
                  'does not contain key "ORDERP_FILE" or "FIBER"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         key = None
     # construct read filename from calibDB or from "filename"
     if filename is None:
@@ -635,7 +635,7 @@ def keylookup(p, d=None, key=None, has_default=False, default=None):
         name = 'd'
     # deal with no key
     if key is None:
-        WLOG('error', p['log_opt'], 'Must define key')
+        WLOG('error', p['LOG_OPT'], 'Must define key')
     # if we have default value use get else try standard call or log if error
     value = None
     if has_default:
@@ -646,7 +646,7 @@ def keylookup(p, d=None, key=None, has_default=False, default=None):
         except KeyError:
             emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     return value
 
@@ -678,7 +678,7 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     except TypeError:
         emsg1 = '"keys" must be a valid python list'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # if defaults is None --> list of Nones else make sure defaults is a list
     if defaults is None:
@@ -689,11 +689,11 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
             if len(defaults) != len(keys):
                 emsg1 = '"defaults" must be same length as "keys"'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         except TypeError:
             emsg1 = '"defaults" must be a valid python list'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # loop around keys and look up each key
     values = []
@@ -1039,13 +1039,13 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
     """
     func_name = __NAME__ + '.get_type_from_header()'
     # set up frequently used variables
-    log_opt = p['log_opt']
+    log_opt = p['LOG_OPT']
     # if we don't have the hdict then we need to load the header from file
     if hdict is None:
         # get file name
         if filename is None:
             try:
-                fitsfilename = p['fitsfilename']
+                fitsfilename = p['FITSFILENAME']
             except KeyError:
                 emsg1 = '"fitsfilename" is not defined in parameter dictionary'
                 emsg2 = '    function = {0}'.format(func_name)
@@ -1086,7 +1086,7 @@ def read_header(p=None, filepath=None, ext=0):
     if p is None:
         log_opt = ''
     else:
-        log_opt = p['log_opt']
+        log_opt = p['LOG_OPT']
     # if filepath is None raise error
     if filepath is None:
         emsg1 = 'Error "filepath" is required'
@@ -1127,7 +1127,7 @@ def read_key(p, hdict=None, key=None):
     if key is None:
         emsg1 = 'Error "key" must be defined'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # return the value of the key
     return keylookup(p, hdict, key=key)
 
@@ -1172,7 +1172,7 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 emsg1 = ('Cannot find key with nbo={1} nbc={2} in "hdict"'
                          '').format(keyname, dim1, dim2)
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # return values
     return values
 
@@ -1363,7 +1363,7 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
     if framemath is None:
         return p, data, header
     # set up frequently used variables
-    log_opt = p['log_opt']
+    log_opt = p['LOG_OPT']
     # get math type
     kind, op = math_type(p, framemath)
     # if we have no math don't continue
@@ -1444,7 +1444,7 @@ def math_type(p, framemath):
             a_math = acceptable_math[a_it: a_it+3]
             emsgs.append('\t "{0}", "{1}", "{2}"'.format(*a_math))
         emsgs.append('    Error raised in function = {0}'.format(func_name))
-        WLOG('error', p['log_opt'], emsgs)
+        WLOG('error', p['LOG_OPT'], emsgs)
     # select text for logging
     if fm in ['ADD', '+']:
         kind, op = 'Adding', '+'
