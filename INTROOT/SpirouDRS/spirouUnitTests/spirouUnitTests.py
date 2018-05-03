@@ -56,35 +56,18 @@ VALID = spirouUnitRecipes.VALID_RECIPES
 # =============================================================================
 # Define functions
 # =============================================================================
-def set_type(p, rparams):
-    # check that "type" defined in run file
-    if 'TYPE' not in rparams:
-        emsg1 = '"type" not defined in run file = {0}'.format(p['rfile'])
-        emsg2 = '    "type" must be set'
-        emsg3 = '    "type" must be: "H2RG", "H4RG" or a valid path'
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
-    # set the type from parameter
-    if rparams['TYPE'] == 'H2RG':
-        os.environ[UCONFIG_VAR] = H2RG_USER_PATH
-    elif rparams['TYPE'] == 'H4RG':
-        os.environ[UCONFIG_VAR] = H4RG_USER_PATH
-    # else we expect a valid path
+def check_type(p, rparams):
+
+    # TODO: remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == rparams['TYPE']:
+        wmsg = 'Detector type compatible'
+        WLOG('', p['log_opt'], wmsg)
     else:
-        # check path exists
-        if not os.path.exists(rparams['TYPE']):
-            emsg1 = '"type" must be: "H2RG", "H4RG" or a valid path'
-            emsg2 = '   "type" = {0}'.format(rparams['TYPE'])
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
-        else:
-            os.environ[UCONFIG_VAR] = rparams['TYPE']
-
-
-def unset_type():
-    """
-    Unset type from environment before ending the code
-    :return:
-    """
-    del os.environ[UCONFIG_VAR]
+        emsg1 = 'type={0} incompatible with current run'.format(rparams['TYPE'])
+        emsg2 = ('    Please check "config.py" and link it to the correct'
+                 ' constants_SPIROU.py')
+        emsg3 = '(i.e. constants_SPIROU_{0}.py)'.format(rparams['TYPE'])
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
 
 
 def set_comp(p, rparams):
