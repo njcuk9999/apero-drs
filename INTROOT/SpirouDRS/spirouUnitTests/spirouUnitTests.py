@@ -61,29 +61,29 @@ def check_type(p, rparams):
     # TODO: remove H2RG compatibility
     if p['IC_IMAGE_TYPE'] == rparams['TYPE']:
         wmsg = 'Detector type compatible'
-        WLOG('', p['log_opt'], wmsg)
+        WLOG('', p['LOG_OPT'], wmsg)
     else:
         emsg1 = 'type={0} incompatible with current run'.format(rparams['TYPE'])
         emsg2 = ('    Please check "config.py" and link it to the correct'
                  ' constants_SPIROU.py')
         emsg3 = '(i.e. constants_SPIROU_{0}.py)'.format(rparams['TYPE'])
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
 
 
 def set_comp(p, rparams):
     # check that "comparison" defined in run file
     if 'COMPARISON' not in rparams:
-        emsg1 = '"comparison" not defined in run file {0}'.format(p['rfile'])
+        emsg1 = '"comparison" not defined in run file {0}'.format(p['RFILE'])
         emsg2 = '    "comparison" must be set'
         emsg3 = '    "comparison" must be either "True" or "False"'
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
     # set the comparison from parameter
     try:
         comp = bool(rparams['COMPARISON'])
     except:
         emsg1 = '"comparison" must be either "True" or "False"'
         emsg2 = '    "comparison" = {0}'.format(rparams['COMPARISON'])
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         comp = False
     # return comp
     return comp
@@ -102,42 +102,42 @@ def get_runs(p, rparams):
             if type(run_i) != list:
                 emsg1 = '"{0}" is not a valid python list'.format(key)
                 emsg2 = '   {0}={1}'.format(key, run_i)
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             # check that first entry is a valid recipe
             if run_i[0] not in VALID:
                 emsg1 = '"{0}" does not start with a valid DRS recipe'
                 emsg2 = '   {0}[0]={1}'.format(key, run_i[0])
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             # append to runs
             runs[key] = run_i
     # make sure we have some runs
     if len(runs) == 0:
-        eargs = [RUN_KEY, p['rfile']]
+        eargs = [RUN_KEY, p['RFILE']]
         emsg = 'No runs ("{0}## = ") found in file {1}'
-        WLOG('error', p['log_opt'], emsg.format(*eargs))
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # return runs
     return runs
 
 
 def unit_log_title(p, title=' START OF UNIT TESTS'):
-    WLOG('', p['log_opt'], '')
-    WLOG('warning', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('warning', p['log_opt'], title)
-    WLOG('warning', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['log_opt'], '')
+    WLOG('', p['LOG_OPT'], '')
+    WLOG('warning', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('warning', p['LOG_OPT'], title)
+    WLOG('warning', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], '')
 
 
 def log_timings(p, times):
-    WLOG('', p['log_opt'], '')
-    WLOG('', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['log_opt'], ' TIMING STATS')
-    WLOG('', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['log_opt'], '')
+    WLOG('', p['LOG_OPT'], '')
+    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], ' TIMING STATS')
+    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], '')
     # Now print the stats for this test:
     for key in list(times.keys()):
         msg = '\t{0}\tTime taken = {1:.3f} s'.format(key, times[key])
-        WLOG('', p['log_opt'], msg)
-    WLOG('', p['log_opt'], '')
+        WLOG('', p['LOG_OPT'], msg)
+    WLOG('', p['LOG_OPT'], '')
 
 
 def manage_run(p, runname, run_i, timing, new_out, old_out,

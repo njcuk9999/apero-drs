@@ -175,11 +175,11 @@ if 1:
     # ----------------------------------------------------------------------
     # check that path exists
     emsg = '{0} file = {1} does not exist'
-    if not os.path.exists(p['oldfile']):
-        WLOG('error', p['log_opt'], emsg.format('old', p['oldfile']))
+    if not os.path.exists(p['OLDFILE']):
+        WLOG('error', p['LOG_OPT'], emsg.format('old', p['OLDFILE']))
     # check that paths exists
-    if not os.path.exists(p['newfile']):
-        WLOG('error', DPROG, emsg.format('new', p['newfile']))
+    if not os.path.exists(p['NEWFILE']):
+        WLOG('error', DPROG, emsg.format('new', p['NEWFILE']))
     # load files
     data1, hdr1, cdr1, _, _ = spirouImage.ReadImage(p, filename=oldfile)
     data2, hdr2, cdr2, _, _ = spirouImage.ReadImage(p, filename=newfile)
@@ -193,7 +193,7 @@ if 1:
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
 
 
 def main(night_name=None, oldfile=None, newfile=None):

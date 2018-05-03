@@ -66,17 +66,17 @@ def main(night_name=None, reffile=None):
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     # get reduced directory + night name
-    rdir = p['reduced_dir']
+    rdir = p['REDUCED_DIR']
     # construct and test the reffile
-    gfkwargs = dict(path=rdir, name=p['reffile'], prefixes=['fp', 'hc'],
+    gfkwargs = dict(path=rdir, name=p['REFFILE'], prefixes=['fp', 'hc'],
                     kind='DRIFT')
     reffilename = spirouStartup.GetFile(p, **gfkwargs)
-    p['reffilename'] = reffilename
-    p.set_source('reffilename', __NAME__ + '.main()')
+    p['REFFILENAME'] = reffilename
+    p.set_source('REFFILENAME', __NAME__ + '.main()')
     # get the fiber type
-    p['fiber'] = spirouStartup.GetFiberType(p, reffilename)
+    p['FIBER'] = spirouStartup.GetFiberType(p, reffilename)
     fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
-    p.set_source('fiber', fsource)
+    p.set_source('FIBER', fsource)
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -85,8 +85,8 @@ def main(night_name=None, reffile=None):
     speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, reffilename)
     # add to loc
     loc = ParamDict()
-    loc['speref'] = speref
-    loc['number_orders'] = nbo
+    loc['SPEREF'] = speref
+    loc['NUMBER_ORDERS'] = nbo
     loc.set_sources(['speref', 'number_orders'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
@@ -100,42 +100,42 @@ def main(night_name=None, reffile=None):
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
     p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
-    bjdref = p['acqtime']
+    bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
     # get flat
-    loc['flat'] = spirouImage.ReadFlatFile(p, hdr)
-    loc.set_source('flat', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
-    loc['flat'] = np.where(loc['flat'] == 0, 1.0, loc['flat'])
+    loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
 
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
     # ------------------------------------------------------------------
     # set up the arguments for DeltaVrms2D
-    dargs = [loc['speref'], loc['wave']]
+    dargs = [loc['SPEREF'], loc['WAVE']]
     dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
                    threshold=p['IC_DRIFT_MAXFLUX'])
     # run DeltaVrms2D
     dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
     # save to loc
-    loc['dvrmsref'], loc['wmeanref'] = dvrmsref, wmeanref
+    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG('info', p['log_opt'], wmsg.format(p['fiber'], wmeanref))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
 
     # ------------------------------------------------------------------
     # Reference plots
@@ -152,27 +152,27 @@ def main(night_name=None, reffile=None):
     # Get all other fp_fp*[ext]_e2ds.fits files
     # ------------------------------------------------------------------
     # get reduced folder
-    rfolder = p['reduced_dir']
+    rfolder = p['REDUCED_DIR']
     # Get files, remove fitsfilename, and sort
-    prefix = p['reffile'][0:5]
-    suffix = '_e2ds_{0}.fits'.format(p['fiber'])
+    prefix = p['REFFILE'][0:5]
+    suffix = '_e2ds_{0}.fits'.format(p['FIBER'])
     listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
     # remove reference file
     try:
         listfiles.remove(reffilename)
     except ValueError:
         emsg = 'File {0} not found in {1}'
-        WLOG('error', p['log_opt'], emsg.format(reffilename, rfolder))
+        WLOG('error', p['LOG_OPT'], emsg.format(reffilename, rfolder))
     # get length of files
     nfiles = len(listfiles)
     # make sure we have some files
     if nfiles == 0:
         emsg = 'No additional {0}*{1} files found in {2}'
-        WLOG('error', p['log_opt'], emsg.format(prefix, suffix, rfolder))
+        WLOG('error', p['LOG_OPT'], emsg.format(prefix, suffix, rfolder))
     else:
         # else Log the number of files found
         wmsg = 'Number of fp_fp files found on directory = {0}'
-        WLOG('info', p['log_opt'], wmsg.format(nfiles))
+        WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -184,9 +184,9 @@ def main(night_name=None, reffile=None):
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((nfiles, loc['number_orders']))
-    loc['errdrift'] = np.zeros((nfiles, loc['number_orders']))
-    loc['deltatime'] = np.zeros(nfiles)
+    loc['DRIFT'] = np.zeros((nfiles, loc['NUMBER_ORDERS']))
+    loc['ERRDRIFT'] = np.zeros((nfiles, loc['NUMBER_ORDERS']))
+    loc['DELTATIME'] = np.zeros(nfiles)
     # set loc sources
     keys = ['drift', 'errdrift', 'deltatime']
     loc.set_sources(keys, __NAME__ + '/main()()')
@@ -201,13 +201,13 @@ def main(night_name=None, reffile=None):
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading
         wmsg = 'Reading file {0}'
-        WLOG('', p['log_opt'], wmsg.format(os.path.split(fpfile)[-1]))
+        WLOG('', p['LOG_OPT'], wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
         # read e2ds files and get timestamp
         # ------------------------------------------------------------------
         # read data
         rout = spirouImage.ReadData(p, filename=fpfile, log=False)
-        loc['spe'], hdri, cdri, nxi, nyi = rout
+        loc['SPE'], hdri, cdri, nxi, nyi = rout
         # get acqtime
         bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
                                         return_value=1)
@@ -215,7 +215,7 @@ def main(night_name=None, reffile=None):
         # Compute photon noise uncertainty for iteration file
         # ------------------------------------------------------------------
         # set up the arguments for DeltaVrms2D
-        dargs = [loc['spe'], loc['wave']]
+        dargs = [loc['SPE'], loc['WAVE']]
         dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'],
                        size=p['IC_DRIFT_BOXSIZE'],
                        threshold=p['IC_DRIFT_MAXFLUX'])
@@ -228,7 +228,7 @@ def main(night_name=None, reffile=None):
         # ------------------------------------------------------------------
         # correction of the cosmics and renomalisation by comparison with
         #   the reference spectrum
-        dargs = [loc['speref'], loc['spe']]
+        dargs = [loc['SPEREF'], loc['SPE']]
         dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'],
                        cut=p['IC_DRIFT_CUT_E2DS'])
@@ -237,7 +237,7 @@ def main(night_name=None, reffile=None):
         # ------------------------------------------------------------------
         # Calculate the RV drift
         # ------------------------------------------------------------------
-        dargs = [loc['speref'], spen, loc['wave']]
+        dargs = [loc['SPEREF'], spen, loc['WAVE']]
         dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'],
                        threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'])
@@ -260,12 +260,12 @@ def main(night_name=None, reffile=None):
         # Log the RV properties
         wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s '
                 '- Flux ratio= {3:.2f} - Nb Comsic= {4}')
-        WLOG('', p['log_opt'], wmsg.format(deltatime, meanrv, merr,
+        WLOG('', p['LOG_OPT'], wmsg.format(deltatime, meanrv, merr,
                                            meanfratio, cpt))
         # add this iteration to storage
-        loc['drift'][i_it] = -1.0 * rv
-        loc['errdrift'][i_it] = err_meanrv
-        loc['deltatime'][i_it] = deltatime
+        loc['DRIFT'][i_it] = -1.0 * rv
+        loc['ERRDRIFT'][i_it] = err_meanrv
+        loc['DELTATIME'][i_it] = deltatime
 
     # ------------------------------------------------------------------
     # Calculate drift properties
@@ -274,34 +274,34 @@ def main(night_name=None, reffile=None):
     nomax = nbo    # p['IC_DRIFT_N_ORDER_MAX']
     # ------------------------------------------------------------------
     # if use mean
-    if p['drift_type_e2ds'].upper() == 'WEIGHTED MEAN':
+    if p['DRIFT_TYPE_E2DS'].upper() == 'WEIGHTED MEAN':
         # mean radial velocity
         sumwref = np.sum(wref[:nomax])
-        meanrv = np.sum(loc['drift'][:, :nomax] * wref[:nomax], 1)/sumwref
+        meanrv = np.sum(loc['DRIFT'][:, :nomax] * wref[:nomax], 1)/sumwref
         # error in mean radial velocity
-        errdrift2 = loc['errdrift'][:, :nomax]**2
+        errdrift2 = loc['ERRDRIFT'][:, :nomax]**2
         meanerr = 1.0/np.sqrt(np.sum(1.0/errdrift2, 1))
         # add to loc
-        loc['mdrift'] = meanrv
-        loc['merrdrift'] = meanerr
+        loc['MDRIFT'] = meanrv
+        loc['MERRDRIFT'] = meanerr
     # else use median
     else:
         # median drift
-        loc['mdrift'] = np.median(loc['drift'][:, :nomax], 1)
+        loc['MDRIFT'] = np.median(loc['DRIFT'][:, :nomax], 1)
         # median err drift
-        loc['merrdrift'] = np.median(loc['errdrift'][:, :nomax], 1)
+        loc['MERRDRIFT'] = np.median(loc['ERRDRIFT'][:, :nomax], 1)
     # ------------------------------------------------------------------
     # set source
     loc.set_sources(['mdrift', 'merrdrift'], __NAME__ + '/main()()')
     # ------------------------------------------------------------------
     # peak to peak drift
-    driftptp = np.max(loc['mdrift']) - np.min(loc['mdrift'])
-    driftrms = np.std(loc['mdrift'])
+    driftptp = np.max(loc['MDRIFT']) - np.min(loc['MDRIFT'])
+    driftrms = np.std(loc['MDRIFT'])
     # log th etotal drift peak-to-peak and rms
     wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
             '{2:.2f} hour')
-    wargs = [driftptp, driftrms, np.max(loc['deltatime'])]
-    WLOG('', p['log_opt'], wmsg.format(*wargs))
+    wargs = [driftptp, driftrms, np.max(loc['DELTATIME'])]
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Plot of mean drift
@@ -320,11 +320,11 @@ def main(night_name=None, reffile=None):
     driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['log_opt'], wmsg.format(p['fiber'], driftfitsname))
+    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # save drift values
-    spirouImage.WriteImage(driftfits, loc['drift'], hdict)
+    spirouImage.WriteImage(driftfits, loc['DRIFT'], hdict)
 
     # ------------------------------------------------------------------
     # print .tbl result
@@ -335,19 +335,19 @@ def main(night_name=None, reffile=None):
     # construct and write table
     columnnames = ['time', 'drift', 'drifterr']
     columnformats = ['7.4f', '6.2f', '6.3f']
-    columnvalues = [loc['deltatime'], loc['mdrift'], loc['merrdrift']]
+    columnvalues = [loc['DELTATIME'], loc['MDRIFT'], loc['MERRDRIFT']]
     table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
     wmsg = 'Average Drift saved in {0} Saved '
-    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(drifttblname))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(drifttblname))
     spirouImage.WriteTable(table, drifttbl, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

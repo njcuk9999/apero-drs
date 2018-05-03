@@ -63,12 +63,12 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Construct the darkfile and flatfile
     # ----------------------------------------------------------------------
     # get raw directory + night name
-    raw_dir = p['raw_dir']
+    raw_dir = p['RAW_DIR']
     # construct and test the flatfile
-    flatfilename = spirouStartup.GetFile(p, raw_dir, p['flatfile'], 'flat_flat',
+    flatfilename = spirouStartup.GetFile(p, raw_dir, p['FLATFILE'], 'flat_flat',
                                          'FLAT')
     # construct and test the darkfile
-    darkfilename = spirouStartup.GetFile(p, raw_dir, p['darkfile'], 'dark_dark',
+    darkfilename = spirouStartup.GetFile(p, raw_dir, p['DARKFILE'], 'dark_dark',
                                          'DARK')
 
     # ----------------------------------------------------------------------
@@ -125,7 +125,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
                    getshape=False)
     badpixelmap = spirouImage.ResizeImage(badpixelmap, **bkwargs)
     # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
+    WLOG('', p['LOG_OPT'], ('Image format changed to '
                             '{0}x{1}').format(*badpixelmap.shape))
 
     # ----------------------------------------------------------------------
@@ -137,13 +137,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('info', p['log_opt'], wmsg.format(farg))
+            WLOG('info', p['LOG_OPT'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -154,17 +154,17 @@ def main(night_name=None, flatfile=None, darkfile=None):
     badpixelfits = spirouConfig.Constants.BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
-    WLOG('', p['log_opt'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
+    WLOG('', p['LOG_OPT'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header files
     # Question Why only the keys from the flat file?
     # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
-    hdict = spirouImage.AddKey(hdict, p['kw_BHOT'], value=bstats[0])
-    hdict = spirouImage.AddKey(hdict, p['kw_BBFLAT'], value=bstats[1])
-    hdict = spirouImage.AddKey(hdict, p['kw_BNDARK'], value=bstats[2])
-    hdict = spirouImage.AddKey(hdict, p['kw_BNFLAT'], value=bstats[3])
-    hdict = spirouImage.AddKey(hdict, p['kw_BBAD'], value=bstats[4])
+    hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats[0])
+    hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats[1])
+    hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats[2])
+    hdict = spirouImage.AddKey(hdict, p['KW_BNFLAT'], value=bstats[3])
+    hdict = spirouImage.AddKey(hdict, p['KW_BBAD'], value=bstats[4])
 
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)
@@ -184,7 +184,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
