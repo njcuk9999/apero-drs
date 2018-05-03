@@ -62,10 +62,10 @@ def main(night_name=None, files=None):
                                        prefixes=['dark_flat', 'flat_dark'],
                                        add_to_p=params2add, calibdb=True)
     # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/main()')
+    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
+    p.set_source('DPRTYPE', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -110,7 +110,7 @@ def main(night_name=None, files=None):
                    getshape=False)
     data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
+    WLOG('', p['LOG_OPT'], ('Image format changed to '
                             '{0}x{1}').format(*data2.shape))
 
     # ----------------------------------------------------------------------
@@ -135,7 +135,7 @@ def main(night_name=None, files=None):
     rawfitsname = os.path.split(rawfits)[-1]
     # log saving order profile
     wmsg = 'Saving processed raw frame in {0}'
-    WLOG('', p['log_opt'], wmsg.format(rawfitsname))
+    WLOG('', p['LOG_OPT'], wmsg.format(rawfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # write to file
@@ -145,7 +145,7 @@ def main(night_name=None, files=None):
     # Move order_profile to calibDB and update calibDB
     # ----------------------------------------------------------------------
     # set key for calibDB
-    keydb = 'ORDER_PROFILE_{0}'.format(p['fiber'])
+    keydb = 'ORDER_PROFILE_{0}'.format(p['FIBER'])
     # copy dark fits file to the calibDB folder
     spirouCDB.PutFile(p, rawfits)
     # update the master calib DB file with new key
@@ -167,12 +167,12 @@ def main(night_name=None, files=None):
     # Search for order center on the central column - quick estimation
     # ----------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], 'Searching order center on central column')
+    WLOG('', p['LOG_OPT'], 'Searching order center on central column')
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
     if p['DRS_DEBUG'] == 0 and p['DRS_PLOT']:
-        sPlt.debug_locplot_min_ycc_loc_threshold(p, loc['ycc'])
+        sPlt.debug_locplot_min_ycc_loc_threshold(p, loc['YCC'])
     # find the central positions of the orders in the central
-    posc_all = spirouLOCOR.FindPosCentCol(loc['ycc'], p['IC_LOCSEUIL'])
+    posc_all = spirouLOCOR.FindPosCentCol(loc['YCC'], p['IC_LOCSEUIL'])
     # depending on the fiber type we may need to skip some pixels and also
     # we need to add back on the ic_offset applied
     start = p['IC_FIRST_ORDER_JUMP']
@@ -181,8 +181,8 @@ def main(night_name=None, files=None):
     #    of orders found in 'LocateCentralOrderPositions')
     number_of_orders = np.min([p['IC_LOCNBMAXO'], len(posc)])
     # log the number of orders than have been detected
-    wargs = [p['fiber'], int(number_of_orders/p['NBFIB']), p['NBFIB']]
-    WLOG('info', p['log_opt'], ('On fiber {0} {1} orders have been detected '
+    wargs = [p['FIBER'], int(number_of_orders/p['NBFIB']), p['NBFIB']]
+    WLOG('info', p['LOG_OPT'], ('On fiber {0} {1} orders have been detected '
                                 'on {2} fiber(s)').format(*wargs))
 
     # ----------------------------------------------------------------------
@@ -191,7 +191,7 @@ def main(night_name=None, files=None):
     # Plot the image (ready for fit points to be overplotted later)
     if p['DRS_PLOT']:
         # get saturation threshold
-        satseuil = p['IC_SATSEUIL'] * p['gain'] * p['nbframes']
+        satseuil = p['IC_SATSEUIL'] * p['GAIN'] * p['NBFRAMES']
         # plot image above saturation threshold
         # fig1, frame1 = sPlt.locplot_im_sat_threshold(data2o, satseuil)
         fig1, frame1 = sPlt.locplot_im_sat_threshold(data2, satseuil)
@@ -201,24 +201,24 @@ def main(night_name=None, files=None):
     # get fit polynomial orders for position and width
     fitpos, fitwid = p['IC_LOCDFITC'], p['IC_LOCDFITW']
     # Create arrays to store position and width of order for each order
-    loc['ctro'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
-    loc['sigo'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
+    loc['CTRO'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
+    loc['SIGO'] = np.zeros((number_of_orders, data2.shape[1]), dtype=float)
     # Create arrays to store coefficients for position and width
-    loc['acc'] = np.zeros((number_of_orders, fitpos + 1))
-    loc['ass'] = np.zeros((number_of_orders, fitpos + 1))
+    loc['ACC'] = np.zeros((number_of_orders, fitpos + 1))
+    loc['ASS'] = np.zeros((number_of_orders, fitpos + 1))
     # Create arrays to store rms values for position and width
-    loc['rms_center'] = np.zeros(number_of_orders)
-    loc['rms_fwhm'] = np.zeros(number_of_orders)
+    loc['RMS_CENTER'] = np.zeros(number_of_orders)
+    loc['RMS_FWHM'] = np.zeros(number_of_orders)
     # Create arrays to store point to point max value for position and width
-    loc['max_ptp_center'] = np.zeros(number_of_orders)
-    loc['max_ptp_fraccenter'] = np.zeros(number_of_orders)
-    loc['max_ptp_fwhm'] = np.zeros(number_of_orders)
-    loc['max_ptp_fracfwhm'] = np.zeros(number_of_orders)
+    loc['MAX_PTP_CENTER'] = np.zeros(number_of_orders)
+    loc['MAX_PTP_FRACCENTER'] = np.zeros(number_of_orders)
+    loc['MAX_PTP_FWHM'] = np.zeros(number_of_orders)
+    loc['MAX_PTP_FRACFWHM'] = np.zeros(number_of_orders)
     # Create arrays to store rejected points
-    loc['max_rmpts_pos'] = np.zeros(number_of_orders)
-    loc['max_rmpts_wid'] = np.zeros(number_of_orders)
+    loc['MAX_RMPTS_POS'] = np.zeros(number_of_orders)
+    loc['MAX_RMPTS_WID'] = np.zeros(number_of_orders)
     # set the central col centers in the cpos_orders array
-    loc['ctro'][:, p['IC_CENT_COL']] = posc[0:number_of_orders]
+    loc['CTRO'][:, p['IC_CENT_COL']] = posc[0:number_of_orders]
     # set source for all locs
     loc.set_all_sources(__NAME__ + '/main()')
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,11 +228,11 @@ def main(night_name=None, files=None):
         # find the row centers of the columns
         loc = spirouLOCOR.FindOrderCtrs(p, data2, loc, order_num)
         # only keep the orders with non-zero width
-        mask = loc['sigo'][order_num, :] != 0
-        loc['x'] = np.arange(data2.shape[1])[mask]
-        loc.set_source('x', __NAME__ + '/main()')
+        mask = loc['SIGO'][order_num, :] != 0
+        loc['X'] = np.arange(data2.shape[1])[mask]
+        loc.set_source('X', __NAME__ + '/main()')
         # check that we have enough data points to fit data
-        if len(loc['x']) > (fitpos + 1):
+        if len(loc['X']) > (fitpos + 1):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # initial fit params
             iofargs = [p, loc, mask, order_num, rorder_num]
@@ -246,7 +246,7 @@ def main(night_name=None, files=None):
             # Log order number and fit at central pixel and width and rms
             wargs = [rorder_num, cf_data['cfitval'], wf_data['cfitval'],
                      cf_data['rms']]
-            WLOG('', p['log_opt'], ('ORDER: {0} center at pixel {1:.1f} width '
+            WLOG('', p['LOG_OPT'], ('ORDER: {0} center at pixel {1:.1f} width '
                                     '{2:.1f} rms {3:.3f}').format(*wargs))
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # sigma fit params
@@ -254,39 +254,39 @@ def main(night_name=None, files=None):
             # sigma clip fit for center positions for this order
             cf_data = spirouLOCOR.SigClipOrderFit(*sigfargs, kind='center')
             # load results into storage arrags for this order
-            loc['acc'][rorder_num] = cf_data['a']
-            loc['rms_center'][rorder_num] = cf_data['rms']
-            loc['max_ptp_center'][rorder_num] = cf_data['max_ptp']
-            loc['max_ptp_fraccenter'][rorder_num] = cf_data['max_ptp_frac']
-            loc['max_rmpts_pos'][rorder_num] = cf_data['max_rmpts']
+            loc['ACC'][rorder_num] = cf_data['a']
+            loc['RMS_CENTER'][rorder_num] = cf_data['rms']
+            loc['MAX_PTP_CENTER'][rorder_num] = cf_data['max_ptp']
+            loc['MAX_PTP_FRACCENTER'][rorder_num] = cf_data['max_ptp_frac']
+            loc['MAX_RMPTS_POS'][rorder_num] = cf_data['max_rmpts']
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # sigma fit params
             sigfargs = [p, loc, wf_data, mask, order_num, rorder_num]
             # sigma clip fit for width positions for this order
             wf_data = spirouLOCOR.SigClipOrderFit(*sigfargs, kind='fwhm')
             # load results into storage arrags for this order
-            loc['ass'][rorder_num] = wf_data['a']
-            loc['rms_fwhm'][rorder_num] = wf_data['rms']
-            loc['max_ptp_fwhm'][rorder_num] = wf_data['max_ptp']
-            loc['max_ptp_fracfwhm'][rorder_num] = wf_data['max_ptp_frac']
-            loc['max_rmpts_wid'][rorder_num] = wf_data['max_rmpts']
+            loc['ASS'][rorder_num] = wf_data['a']
+            loc['RMS_FWHM'][rorder_num] = wf_data['rms']
+            loc['MAX_PTP_FWHM'][rorder_num] = wf_data['max_ptp']
+            loc['MAX_PTP_FRACFWHM'][rorder_num] = wf_data['max_ptp_frac']
+            loc['MAX_RMPTS_WID'][rorder_num] = wf_data['max_rmpts']
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # increase the roder_num iterator
             rorder_num += 1
         # else log that the order is unusable
         else:
-            WLOG('', p['log_opt'], 'Order found too much incomplete, discarded')
+            WLOG('', p['LOG_OPT'], 'Order found too much incomplete, discarded')
 
     # Log that order geometry has been measured
-    WLOG('info', p['log_opt'], ('On fiber {0} {1} orders geometry have been '
-                                'measured').format(p['fiber'], rorder_num))
+    WLOG('info', p['LOG_OPT'], ('On fiber {0} {1} orders geometry have been '
+                                'measured').format(p['FIBER'], rorder_num))
     # Get mean rms
-    mean_rms_center = np.sum(loc['rms_center'][:rorder_num]) * 1000/rorder_num
-    mean_rms_fwhm = np.sum(loc['rms_fwhm'][:rorder_num]) * 1000/rorder_num
+    mean_rms_center = np.sum(loc['RMS_CENTER'][:rorder_num]) * 1000/rorder_num
+    mean_rms_fwhm = np.sum(loc['RMS_FWHM'][:rorder_num]) * 1000/rorder_num
     # Log mean rms values
     wmsg = 'Average uncertainty on {0}: {1:.2f} [mpix]'
-    WLOG('info', p['log_opt'], wmsg.format('position', mean_rms_center))
-    WLOG('info', p['log_opt'], wmsg.format('width', mean_rms_fwhm))
+    WLOG('info', p['LOG_OPT'], wmsg.format('position', mean_rms_center))
+    WLOG('info', p['LOG_OPT'], wmsg.format('width', mean_rms_fwhm))
 
     # ----------------------------------------------------------------------
     # Plot of RMS for positions and widths
@@ -299,15 +299,15 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
     # check that max number of points rejected in center fit is below threshold
-    if np.sum(loc['max_rmpts_pos']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
+    if np.sum(loc['MAX_RMPTS_POS']) > p['QC_LOC_MAXLOCFIT_REMOVED_CTR']:
         fmsg = 'abnormal points rejection during ctr fit ({0:.2f} > {1:.2f})'
-        fail_msg.append(fmsg.format(np.sum(loc['max_rmpts_pos']),
+        fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_POS']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_CTR']))
         passed = False
     # check that max number of points rejected in width fit is below threshold
-    if np.sum(loc['max_rmpts_wid']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
+    if np.sum(loc['MAX_RMPTS_WID']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
         fmsg = 'abnormal points rejection during width fit ({0:.2f} > {1:.2f})'
-        fail_msg.append(fmsg.format(np.sum(loc['max_rmpts_wid']),
+        fail_msg.append(fmsg.format(np.sum(loc['MAX_RMPTS_WID']),
                                     p['QC_LOC_MAXLOCFIT_REMOVED_WID']))
         passed = False
     # check that the rms in center fit is lower than qc threshold
@@ -329,13 +329,13 @@ def main(night_name=None, files=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('info', p['log_opt'], wmsg.format(farg))
+            WLOG('info', p['LOG_OPT'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -346,45 +346,45 @@ def main(night_name=None, files=None):
     locofits = spirouConfig.Constants.LOC_LOCO_FILE(p)
     locofitsname = os.path.split(locofits)[-1]
     # log that we are saving localization file
-    WLOG('', p['log_opt'], ('Saving localization information '
+    WLOG('', p['LOG_OPT'], ('Saving localization information '
                             'in file: {0}').format(locofitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['kw_version'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_BCKGRD'],
-                               value=loc['mean_backgrd'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'],
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
+    hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_BCKGRD'],
+                               value=loc['MEAN_BACKGRD'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_NBO'],
                                value=rorder_num)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_C'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_C'],
                                value=p['IC_LOCDFITC'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_W'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_W'],
                                value=p['IC_LOCDFITW'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_E'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DELTA'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_E'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DELTA'])
 
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_MAXFLX'],
-                               value=float(loc['max_signal']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_CTR'],
-                               value=np.sum(loc['max_rmpts_pos']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_WID'],
-                               value=np.sum(loc['max_rmpts_wid']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_CTR'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_MAXFLX'],
+                               value=float(loc['MAX_SIGNAL']))
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_CTR'],
+                               value=np.sum(loc['MAX_RMPTS_POS']))
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_WID'],
+                               value=np.sum(loc['MAX_RMPTS_WID']))
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_CTR'],
                                value=mean_rms_center)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_WID'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_WID'],
                                value=mean_rms_fwhm)
     # write 2D list of position fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
-                                     values=loc['acc'][0:rorder_num])
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_CTR_COEFF'],
+                                     values=loc['ACC'][0:rorder_num])
     # write 2D list of width fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
-                                     values=loc['ass'][0:rorder_num])
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_FWHM_COEFF'],
+                                     values=loc['ASS'][0:rorder_num])
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['kw_drs_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # write center fits and add header keys (via hdict)
-    center_fits = spirouLOCOR.CalcLocoFits(loc['acc'], data2.shape[1])
+    center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])
     spirouImage.WriteImage(locofits, center_fits, hdict)
 
     # ----------------------------------------------------------------------
@@ -396,40 +396,40 @@ def main(night_name=None, files=None):
 
     # log that we are saving localization file
     wmsg = 'Saving FWHM information in file: {0}'
-    WLOG('', p['log_opt'], wmsg.format(locofits2name))
+    WLOG('', p['LOG_OPT'], wmsg.format(locofits2name))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['kw_version'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
-    hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'],
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
+    hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_NBO'],
                                value=rorder_num)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_C'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_C'],
                                value=p['IC_LOCDFITC'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_W'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_W'],
                                value=p['IC_LOCDFITW'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOCO_DEG_E'])
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_MAXFLX'],
-                               value=float(loc['max_signal']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_CTR'],
-                               value=np.sum(loc['max_rmpts_pos']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_SMAXPTS_WID'],
-                               value=np.sum(loc['max_rmpts_wid']))
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_CTR'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_E'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_MAXFLX'],
+                               value=float(loc['MAX_SIGNAL']))
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_CTR'],
+                               value=np.sum(loc['MAX_RMPTS_POS']))
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_WID'],
+                               value=np.sum(loc['MAX_RMPTS_WID']))
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_CTR'],
                                value=mean_rms_center)
-    hdict = spirouImage.AddKey(hdict, p['kw_LOC_RMS_WID'],
+    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_WID'],
                                value=mean_rms_fwhm)
     # write 2D list of position fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
-                                     values=loc['acc'][0:rorder_num])
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_CTR_COEFF'],
+                                     values=loc['ACC'][0:rorder_num])
     # write 2D list of width fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_FWHM_COEFF'],
-                                     values=loc['ass'][0:rorder_num])
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_FWHM_COEFF'],
+                                     values=loc['ASS'][0:rorder_num])
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['kw_drs_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # write image and add header keys (via hdict)
-    width_fits = spirouLOCOR.CalcLocoFits(loc['ass'], data2.shape[1])
+    width_fits = spirouLOCOR.CalcLocoFits(loc['ASS'], data2.shape[1])
     spirouImage.WriteImage(locofits2, width_fits, hdict)
 
     # ----------------------------------------------------------------------
@@ -442,9 +442,9 @@ def main(night_name=None, files=None):
         # log that we are saving localization file
         wmsg1 = 'Saving localization image with superposition of orders in '
         wmsg2 = 'file: {0}'.format(locofits3name)
-        WLOG('', p['log_opt'], [wmsg1, wmsg2])
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
         # superpose zeros over the fit in the image
-        data4 = spirouLOCOR.ImageLocSuperimp(data2o, loc['acc'][0:rorder_num])
+        data4 = spirouLOCOR.ImageLocSuperimp(data2o, loc['ACC'][0:rorder_num])
         # save this image to file
         # Question: Why no keys added to header?
         hdict = dict()
@@ -454,7 +454,7 @@ def main(night_name=None, files=None):
     # Update the calibration database
     # ----------------------------------------------------------------------
     if p['QC'] == 1:
-        keydb = 'LOC_' + p['fiber']
+        keydb = 'LOC_' + p['FIBER']
         # copy localisation file to the calibDB folder
         spirouCDB.PutFile(p, locofits)
         # update the master calib DB file with new key
@@ -464,7 +464,7 @@ def main(night_name=None, files=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

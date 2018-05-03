@@ -61,11 +61,11 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     # Construct filenames and get fiber type
     # ----------------------------------------------------------------------
     # get reduced directory + night name
-    rdir = p['reduced_dir']
+    rdir = p['REDUCED_DIR']
     # construct and test the hcfile
-    fpfitsfilename = spirouStartup.GetFile(p, rdir, p['fpfile'], 'fp', 'FP')
+    fpfitsfilename = spirouStartup.GetFile(p, rdir, p['FPFILE'], 'fp', 'FP')
     # construct and test fpfile
-    hcfilenames = spirouStartup.GetFiles(p, rdir, p['hcfiles'], 'hc', 'HC')
+    hcfilenames = spirouStartup.GetFiles(p, rdir, p['HCFILES'], 'hc', 'HC')
     # set the hcfilename to the first hcfilenames
     hcfitsfilename = hcfilenames[0]
 
@@ -73,13 +73,13 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     fiber1 = spirouStartup.GetFiberType(p, fpfitsfilename)
     fiber2 = spirouStartup.GetFiberType(p, hcfilenames[0])
     if fiber1 == fiber2:
-        p['fiber'] = fiber1
+        p['FIBER'] = fiber1
         fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
-        p.set_source('fiber', fsource)
+        p.set_source('FIBER', fsource)
     else:
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
-        WLOG('error', p['log_opt'], emsg.format(*eargs))
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -101,10 +101,10 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
     p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
-    bjdref = p['acqtime']
+    bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
 
     # ----------------------------------------------------------------------
     # start ll solution
@@ -178,7 +178,7 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

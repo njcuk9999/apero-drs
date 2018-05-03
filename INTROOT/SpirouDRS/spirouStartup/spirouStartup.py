@@ -118,7 +118,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                        if defined overwrites call from
                        command line (i.e. overwrites sys.argv)
 
-                       stored in p['arg_night_name']
+                       stored in p['ARG_NIGHT_NAME']
 
     :param files: list of strings or None, the files to use for this program
 
@@ -127,7 +127,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
 
                   if defined overwrites call from command line
 
-                  stored in p['arg_file_names']
+                  stored in p['ARG_FILE_NAMES']
 
     :param customargs: None or list of strings, if list of strings then instead
                        of getting the standard runtime arguments
@@ -246,7 +246,7 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
                 program: string, the recipe/way the script was called
                          i.e. from sys.argv[0]
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 DRS_DATA_REDUC: string, the directory that the reduced data
                                 should be saved to/read from
                 DRS_CALIB_DB: string, the directory that the calibration
@@ -285,15 +285,15 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
                 prefixes from add_to_p (see spirouStartup.deal_with_prefixes)
     """
 
-    log_opt = p['log_opt']
-    fits_fn = p['fitsfilename']
+    log_opt = p['LOG_OPT']
+    fits_fn = p['FITSFILENAME']
     # -------------------------------------------------------------------------
     # check that fitsfilename exists
     if fits_fn is None:
         wmsg1 = 'Argument Error: No fits file defined at run time argument'
         wmsg2 = '    format must be:'
         emsg = '    >>> {0}.py [FOLDER] [FILES]'
-        WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(p['program'])])
+        WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(p['PROGRAM'])])
     if not os.path.exists(fits_fn):
         WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
     # -------------------------------------------------------------------------
@@ -305,13 +305,13 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     if contains is not None:
         # loop around all files in arg_file_names and make sure  "contains"
         #   sub string is in there
-        for arg_file_name in p['arg_file_names']:
+        for arg_file_name in p['ARG_FILE_NAMES']:
             if contains not in arg_file_name:
                 if kind is None:
                     emsg = 'Wrong type of image should contain "{1}"'
                 else:
                     emsg = 'Wrong type of image for {0} should contain "{1}"'
-                WLOG('error', p['log_opt'], emsg.format(kind, contains))
+                WLOG('error', p['LOG_OPT'], emsg.format(kind, contains))
     # -------------------------------------------------------------------------
     # Calib DB setup
     p = load_calibdb(p, calibdb)
@@ -345,14 +345,14 @@ def load_calibdb(p, calibdb=True):
     """
     if calibdb:
         if not os.path.exists(p['DRS_CALIB_DB']):
-            WLOG('error', p['log_opt'],
+            WLOG('error', p['LOG_OPT'],
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
         # then make sure files are copied
         spirouCDB.CopyCDBfiles(p)
         # then load the calibdb into p
         calib_db, p = spirouCDB.GetDatabase(p)
-        p['calibDB'] = calib_db
-        p.set_source('calibDB', __NAME__ + '/run_startup()')
+        p['CALIBDB'] = calib_db
+        p.set_source('CALIBDB', __NAME__ + '/run_startup()')
     else:
         calib_dir = p['DRS_CALIB_DB']
         # if reduced directory does not exist create it
@@ -381,7 +381,7 @@ def exit_script(ll, has_plots=True):
         p['DRS_PLOT'] = 0
     # make sure we have log_opt
     if 'log_opt' not in p:
-        p['log_opt'] = sys.argv[0]
+        p['LOG_OPT'] = sys.argv[0]
     # if DRS_PLOT is 0 just return 0
     if not p['DRS_PLOT']:
         return 0
@@ -394,7 +394,7 @@ def exit_script(ll, has_plots=True):
     wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
     WLOG('', '', '')
     WLOG('', '', HEADER, printonly=True)
-    WLOG('warning', p['log_opt'], wmsg.format(kind), printonly=True)
+    WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
     WLOG('', '', HEADER, printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
@@ -422,7 +422,7 @@ def exit_script(ll, has_plots=True):
         # deal with closing plots
         wmsg = 'Close plots? [Y]es or [N]o?'
         WLOG('', '', HEADER, printonly=True)
-        WLOG('warning', p['log_opt'], wmsg.format(kind), printonly=True)
+        WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
         WLOG('', '', HEADER, printonly=True)
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
@@ -494,46 +494,46 @@ def run_time_args(p, mainfitsdir):
                 nbframes: int, the number of frames/files (usually the length
                           of "arg_file_names")
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 raw_dir: string, the raw data directory
-                         (i.e. p['DRS_DATA_RAW']/p['arg_night_name'])
+                         (i.e. p['DRS_DATA_RAW']/p['ARG_NIGHT_NAME'])
     """
     # get constants name
     cname = spirouConfig.Constants.__NAME__
 
     # get program name
-    p['program'] = spirouConfig.Constants.PROGRAM()
-    p.set_source('program', cname + '/PROGRAM()')
+    p['PROGRAM'] = spirouConfig.Constants.PROGRAM()
+    p.set_source('PROGRAM', cname + '/PROGRAM()')
 
     # get night name and filenames
-    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
-    p.set_source('arg_night_name', cname + '/ARG_NIGHT_NAME')
-    p['arg_file_names'] = spirouConfig.Constants.ARG_FILE_NAMES(p)
-    p.set_source('arg_file_names', cname + '/ARG_FILE_NAMES')
-    p['str_file_names'] = ', '.join(p['arg_file_names'])
-    p.set_source('str_file_names', __NAME__ + '/run_time_args()')
+    p['ARG_NIGHT_NAME'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
+    p.set_source('ARG_NIGHT_NAME', cname + '/ARG_NIGHT_NAME')
+    p['ARG_FILE_NAMES'] = spirouConfig.Constants.ARG_FILE_NAMES(p)
+    p.set_source('ARG_FILE_NAMES', cname + '/ARG_FILE_NAMES')
+    p['STR_FILE_NAMES'] = ', '.join(p['ARG_FILE_NAMES'])
+    p.set_source('STR_FILE_NAMES', __NAME__ + '/run_time_args()')
 
     # set reduced path
-    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
-    p.set_source('reduced_dir', cname + '/REDUCED_DIR()')
+    p['REDUCED_DIR'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('REDUCED_DIR', cname + '/REDUCED_DIR()')
     # set raw path
-    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
-    p.set_source('raw_dir', cname + '/RAW_DIR()')
+    p['RAW_DIR'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('RAW_DIR', cname + '/RAW_DIR()')
 
     # deal with setting main fits directory (sets ARG_FILE_DIR)
     p = set_arg_file_dir(p, mfd=mainfitsdir)
 
     # get fitsfilename
-    p['fitsfilename'] = spirouConfig.Constants.FITSFILENAME(p)
-    p.set_source('fitsfilename', cname + '/FITSFILENAME()')
+    p['FITSFILENAME'] = spirouConfig.Constants.FITSFILENAME(p)
+    p.set_source('FITSFILENAME', cname + '/FITSFILENAME()')
 
     # get the logging option
-    p['log_opt'] = spirouConfig.Constants.LOG_OPT(p)
-    p.set_source('log_opt', cname + '/LOG_OPT()')
+    p['LOG_OPT'] = spirouConfig.Constants.LOG_OPT(p)
+    p.set_source('LOG_OPT', cname + '/LOG_OPT()')
 
     # Get number of frames
-    p['nbframes'] = spirouConfig.Constants.NBFRAMES(p)
-    p.set_source('nbframes', cname + '/NBFRAMES()')
+    p['NBFRAMES'] = spirouConfig.Constants.NBFRAMES(p)
+    p.set_source('NBFRAMES', cname + '/NBFRAMES()')
 
 
     # return updated parameter dictionary
@@ -568,29 +568,29 @@ def run_time_custom_args(p, customargs, mainfitsdir):
                                 containing files (also reduced directory) i.e.
                                 /data/raw/20170710 would be "20170710"
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 raw_dir: string, the raw data directory
-                         (i.e. p['DRS_DATA_RAW']/p['arg_night_name'])
+                         (i.e. p['DRS_DATA_RAW']/p['ARG_NIGHT_NAME'])
                 customargs: "customargs" added from call
     """
     # set source
     source = __NAME__ + '/run_time_custom_args()'
     sconst = 'spirouConfig.Constants.'
     # get program name
-    p['program'] = spirouConfig.Constants.PROGRAM()
+    p['PROGRAM'] = spirouConfig.Constants.PROGRAM()
     p.set_source('program', source + ' & {0}PROGRAM()'.format(sconst))
     # get the logging option
-    p['log_opt'] = p['program']
+    p['LOG_OPT'] = p['PROGRAM']
     p.set_source('log_opt', source + ' & {0}PROGRAM()'.format(sconst))
     # get night name and filenames
-    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
+    p['ARG_NIGHT_NAME'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
     p.set_source('arg_night_name',
                  source + ' & {0}ARG_NIGHT_NAME()'.format(sconst))
     # set reduced path
-    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p['REDUCED_DIR'] = spirouConfig.Constants.REDUCED_DIR(p)
     p.set_source('reduced_dir', source + ' & {0}/REDUCED_DIR()')
     # set raw path
-    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
+    p['RAW_DIR'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
 
     # deal with setting main fits directory (sets ARG_FILE_DIR)
@@ -647,7 +647,7 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
         emsg1 = (' Error "cparams" must contain "DRS_DATA_RAW" and '
                  '"ARG_NIGHT_NAME"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get chosen arg_file_dir
     p = set_arg_file_dir(p, mfd)
     # if we don't have arg_file_names set it to the "files"
@@ -785,7 +785,7 @@ def load_other_config_file(p, key, logthis=True, required=False):
         pp, lmsgs = spirouConfig.LoadConfigFromFile(p, key, required=required,
                                                     logthis=logthis)
     except spirouConfig.ConfigError as e:
-        WLOG(e.level, p['log_opt'], e.message)
+        WLOG(e.level, p['LOG_OPT'], e.message)
         lmsgs = []
 
     # log messages caught in loading config file
@@ -833,7 +833,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
                 the subdictionary key/value pairs in "add_to_p" that contains
-                the correct prefix for p["arg_file_names"][0]
+                the correct prefix for p['ARG_FILE_NAMES'][0]
     """
     func_name = __NAME__ + '.deal_with_prefixes()'
     # if we have p then we are just checking a filename
@@ -843,7 +843,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
             emsgs = ['ParamDict "p" or "filename" must be defined '
                      '(both are None)',
                      '   function = {0}'.format(func_name)]
-            WLOG('error', p['log_opt'], emsgs)
+            WLOG('error', p['LOG_OPT'], emsgs)
     # if we have no prefixes we can just return p
     if prefixes is None:
         return p
@@ -851,7 +851,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
         prefixes = [prefixes]
     # get variables from p
     if filename is None:
-        arg_fn1 = p['arg_file_names'][0]
+        arg_fn1 = p['ARG_FILE_NAMES'][0]
     else:
         arg_fn1 = filename
     # set up found variables
@@ -869,7 +869,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
             wmsg = 'Correct type of image ({1})'
         else:
             wmsg = 'Correct type of image for {0} ({1})'
-        WLOG('info', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
+        WLOG('info', p['LOG_OPT'], wmsg.format(kind, ' or '.join(prefixes)))
         # if a2p is not None we have some variables that need added to
         # parameter dictionary based on the prefix found
         if add_to_p is not None:
@@ -897,7 +897,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
             wmsg = 'Wrong type of image, should be {1}'
         else:
             wmsg = 'Wrong type of image for {0}, should be {1}'
-        WLOG('error', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
+        WLOG('error', p['LOG_OPT'], wmsg.format(kind, ' or '.join(prefixes)))
 
 
 def get_arguments(positions, types, names, required, calls, cprior, lognames,
@@ -1111,7 +1111,7 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
     """
     # if path is None and name is None
     if path is None:
-        WLOG('error', p['log_opt'], 'No file defined')
+        WLOG('error', p['LOG_OPT'], 'No file defined')
     # if name and path are not None
     if name is None:
         name = os.path.split(path)[-1]
@@ -1121,11 +1121,11 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
     # test if path exists
     if not os.path.exists(path):
         emsg = 'Directory: {0} does not exist'
-        WLOG('error', p['log_opt'], emsg.format(path))
+        WLOG('error', p['LOG_OPT'], emsg.format(path))
     # test if path + file exits
     if not os.path.exists(location):
         emsg = 'File : {0} does not exist at location {1}'
-        WLOG('error', p['log_opt'], emsg.format(name, path))
+        WLOG('error', p['LOG_OPT'], emsg.format(name, path))
     # if we have prefixes defined then check that fitsfilename has them
     # if add_to_params is defined then add params to p accordingly
     _ = deal_with_prefixes(kind=kind, prefixes=prefixes, filename=name)
@@ -1134,7 +1134,7 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
         kind = 'UNKNOWN'
     # log that we are processing this image
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(kind, p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(kind, p['PROGRAM']))
     # if all conditions passed return full path
     return location
 
@@ -1163,7 +1163,7 @@ def get_fiber_type(p, filename, fibertypes=None):
             return fiber
     # if we have reached this type then we have no recognized fiber
     emsg = 'Fiber name not recognized (must be in {0})'
-    WLOG('error', p['log_opt'], emsg.format(', '.join(fibertypes)))
+    WLOG('error', p['LOG_OPT'], emsg.format(', '.join(fibertypes)))
 
 
 def find_interactive():
@@ -1461,29 +1461,29 @@ def load_minimum(p, customargs=None):
                 log_opt: string, log option, normally the program name
                 arg_night_name: string, empty (i.e. '')
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 raw_dir: string, the raw data directory
-                         (i.e. p['DRS_DATA_RAW']/p['arg_night_name'])
+                         (i.e. p['DRS_DATA_RAW']/p['ARG_NIGHT_NAME'])
     """
     # set source
     source = __NAME__ + '.load_minimum()'
     sconst = 'spirouConfig.Constants.'
     # get program name
-    p['program'] = spirouConfig.Constants.PROGRAM()
-    p.set_source('program', source + ' & {0}PROGRAM()'.format(sconst))
+    p['PROGRAM'] = spirouConfig.Constants.PROGRAM()
+    p.set_source('PROGRAM', source + ' & {0}PROGRAM()'.format(sconst))
     # get the logging option
-    p['log_opt'] = p['program']
-    p.set_source('log_opt', source + ' & {0}PROGRAM()'.format(sconst))
+    p['LOG_OPT'] = p['PROGRAM']
+    p.set_source('LOG_OPT', source + ' & {0}PROGRAM()'.format(sconst))
     # get night name and filenames
-    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
-    p.set_source('arg_night_name',
+    p['ARG_NIGHT_NAME'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
+    p.set_source('ARG_NIGHT_NAME',
                  source + ' & {0}ARG_NIGHT_NAME()'.format(sconst))
     # set reduced path
-    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
-    p.set_source('reduced_dir', source + ' & {0}/REDUCED_DIR()')
+    p['REDUCED_DIR'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('REDUCED_DIR', source + ' & {0}/REDUCED_DIR()')
     # set raw path
-    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
-    p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
+    p['RAW_DIR'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('RAW_DIR', source + ' & {0}/RAW_DIR()')
     # -------------------------------------------------------------------------
     # load special config file
     # TODO: is this needed as special_config_SPIROU does not exist
@@ -1619,10 +1619,10 @@ def display_run_files(p):
 
     :return None:
     """
-    WLOG('', p['log_opt'], ('Now running : {PROGRAM} on file(s): '
+    WLOG('', p['LOG_OPT'], ('Now running : {PROGRAM} on file(s): '
                             '{STR_FILE_NAMES}').format(**p))
     tmp = spirouConfig.Constants.RAW_DIR(p)
-    WLOG('', p['log_opt'], 'On directory {0}'.format(tmp))
+    WLOG('', p['LOG_OPT'], 'On directory {0}'.format(tmp))
 
 
 def display_custom_args(p, customargs):
@@ -1641,12 +1641,12 @@ def display_custom_args(p, customargs):
     :return None:
     """
 
-    wmsg = 'Now running : {0} with: '.format(p['program'])
+    wmsg = 'Now running : {0} with: '.format(p['PROGRAM'])
 
-    WLOG('', p['log_opt'], wmsg)
+    WLOG('', p['LOG_OPT'], wmsg)
     for customarg in customargs:
         wmsg = '       -- {0}={1} '.format(customarg, p[customarg])
-        WLOG('', p['log_opt'], wmsg)
+        WLOG('', p['LOG_OPT'], wmsg)
 
 
 def display_help_file(p):
@@ -1669,20 +1669,20 @@ def display_help_file(p):
     """
 
     # find help signal
-    if 'HELP' in p['arg_night_name'].upper():
+    if 'HELP' in p['ARG_NIGHT_NAME'].upper():
         display_help = True
     else:
         display_help = False
 
     if 'arg_file_names' in p:
-        for argfilename in p['arg_file_names']:
+        for argfilename in p['ARG_FILE_NAMES']:
             if 'HELP' in argfilename.upper():
                 display_help = True
 
     # do display help
     if display_help:
         # Log help file
-        WLOG('', p['log_opt'], 'HELP mode for  ' + p['program'])
+        WLOG('', p['LOG_OPT'], 'HELP mode for  ' + p['PROGRAM'])
         # Get man file
         man_file = spirouConfig.Constants.MANUAL_FILE(p)
         # try to open man file
@@ -1698,13 +1698,13 @@ def display_help_file(p):
             except Exception as e:
                 emsg1 = 'Cannot open help file {0}'.format(man_file)
                 emsg2 = '   error {0} was: {1}'.format(type(e), e)
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
         # else print that we have no man file
         else:
             # log and exit
             emsg = 'No help file is not found for this recipe'
-            WLOG('error', p['log_opt'], emsg)
+            WLOG('error', p['LOG_OPT'], emsg)
 
 
 # noinspection PyListCreation

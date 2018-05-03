@@ -60,16 +60,16 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # Read image file
     # ------------------------------------------------------------------
     # read the image data
-    rout = spirouImage.ReadImage(p, filename=p['ufile'])
+    rout = spirouImage.ReadImage(p, filename=p['UFILE'])
     image, hdr, cdr, nx, ny = rout
 
     # ----------------------------------------------------------------------
     # un-Resize image
     # ----------------------------------------------------------------------
     # create an array of given size
-    size = np.product([p['ysize'], p['xsize']])
+    size = np.product([p['YSIZE'], p['XSIZE']])
 
-    newimage = np.repeat(np.nan, size).reshape(p['ysize'], p['xsize'])
+    newimage = np.repeat(np.nan, size).reshape(p['YSIZE'], p['XSIZE'])
 
     # insert image at given pixels
     xlow, xhigh = p['IC_CCDX_LOW'], p['IC_CCDX_HIGH']
@@ -86,7 +86,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     outfits = ufile.replace('.fits', '_old.fits')
     outfitsname = os.path.split(outfits)[-1]
     # log that we are saving rotated image
-    WLOG('', p['log_opt'], 'Saving Rotated Image in ' + outfitsname)
+    WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # write to file
@@ -96,7 +96,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

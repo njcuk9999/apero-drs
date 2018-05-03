@@ -70,7 +70,7 @@ def main(runname=None, quiet=False):
     # check that rfile exists
     if not os.path.exists(rfile):
         emsg = 'Unit test run file "{0}" does not exist'
-        WLOG('error', p['log_opt'], emsg.format(rfile))
+        WLOG('error', p['LOG_OPT'], emsg.format(rfile))
     # get the parameters in the run file
     rparams = spirouConfig.GetConfigParams(p, None, filename=rfile)
 
@@ -117,7 +117,7 @@ def main(runname=None, quiet=False):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
