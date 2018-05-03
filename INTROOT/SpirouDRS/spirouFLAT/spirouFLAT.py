@@ -68,12 +68,7 @@ def measure_blaze_for_order(p, y):
     # get the fit values for these coefficients
     fity = np.polyval(coeffs, x)
     # calculate the blaze as the fit values for all good pixels and 1 elsewise
-    # TODO: this is where the blaze goes wrong
-    # TODO: remove H4RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        blaze = np.where(mask, fity, 1.0)
-    else:
-        blaze = np.array(fity)
+    blaze = np.where(mask, fity, 1.0)
     # return blaze
     return blaze
 

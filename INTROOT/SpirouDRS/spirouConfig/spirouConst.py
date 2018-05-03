@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = 'Unknown'
-__author__ = 'Unknown'
-__release__ = 'Unknown'
-__date__ = 'Unknown'
+__version__ = '0.2.002'
+__author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
+__release__ = 'alpha pre-release'
+__date__ = '2018-05-01'
 
 
 # =============================================================================
@@ -91,7 +91,7 @@ def VERSION():
                      full release level), and C denotes minor changes
     """
     # Module Version (Used in all sub-packages)
-    version = '0.1.044'
+    version = __version__
     return version
 
 
@@ -108,7 +108,7 @@ def RELEASE():
 
     :return release: string, the release state of the DRS
     """
-    release = 'alpha pre-release'
+    release = __release__
     return release
 
 
@@ -120,7 +120,7 @@ def AUTHORS():
     :return authors: string, the list of authors, separated by commas
     """
     # Module Authors (Used in all sub-packages)
-    authors = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
+    authors = __author__
     return authors
 
 
@@ -132,7 +132,7 @@ def LATEST_EDIT():
     :return date: string, the date (in format YYYY-MM-DD)
     """
     # Module last edit date (in form YYYY-MM-DD) used in all sub-packages
-    date = '2018-04-23'
+    date = __date__
     return date
 
 
@@ -446,9 +446,6 @@ def FITSFILENAME(p):
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
-                arg_night_name: string, the folder within data raw directory
-                                containing files (also reduced directory) i.e.
-                                /data/raw/20170710 would be "20170710"
                 DRS_DATA_RAW: string, the directory that the raw data should
                               be saved to/read from
 
@@ -456,7 +453,6 @@ def FITSFILENAME(p):
     """
     arg_file_dir = p['arg_file_dir']
     arg_file_names = p['arg_file_names']
-    arg_night_name = p['arg_night_name']
     # construct fits file name (full path + first file in arguments)
     if len(arg_file_names) > 0:
         fitsfilename = os.path.join(arg_file_dir, arg_file_names[0])
@@ -1422,8 +1418,8 @@ def EXIT():
         # noinspection PyProtectedMember
         my_exit = os._exit
     else:
-        # noinspection PyPep8
-        my_exit = lambda x: None
+        def my_exit(_):
+            return None
     return my_exit
 
 
@@ -1459,20 +1455,6 @@ def DEFAULT_LOG_OPT():
     program = path.replace('.py', '')
     # return program
     return program
-
-
-# =============================================================================
-# Start of code
-# =============================================================================
-# Get version and author
-# noinspection PyRedeclaration
-__version__ = VERSION()
-# noinspection PyRedeclaration
-__author__ = AUTHORS()
-# noinspection PyRedeclaration
-__date__ = LATEST_EDIT()
-# noinspection PyRedeclaration
-__release__ = RELEASE()
 
 
 # =============================================================================

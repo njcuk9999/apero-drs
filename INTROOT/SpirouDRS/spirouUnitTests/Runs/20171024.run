@@ -1,0 +1,23 @@
+# define detector type (default = H4RG)
+type = H2RG
+
+# define whether we run the comparison with old drs (default = False)
+comparison = False
+
+# define run
+#    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
+run0 = ['cal_DARK_spirou', '20171024', 'dark_dark02d406.fits']
+run1 = ['cal_BADPIX_spirou', '20171024', 'flat_flat02f13.fits', 'dark_dark02d406.fits']
+run2 = ['cal_loc_RAW_spirou', '20171024', 'dark_flat02f13.fits']
+run3 = ['cal_loc_RAW_spirou', '20171024', 'flat_dark02f13.fits']
+run4 = ['cal_SLIT_spirou', '20171024', 'fp_fp0002a406.fits', 'fp_fp0003a406.fits', 'fp_fp0004a406.fits']
+run5 = ['cal_FF_RAW_spirou', '20171024', 'dark_flat02f13.fits']
+run6 = ['cal_FF_RAW_spirou', '20171024', 'flat_dark02f13.fits']
+run7 = ['cal_extract_RAW_spirou', '20171024', 'fp_fp0002a406.fits']
+run8 = ['cal_extract_RAW_spirou', '20171024', 'fp_fp0003a406.fits']
+run9 = ['cal_extract_RAW_spirou', '20171024', 'fp_fp0004a406.fits']
+run10 = ['cal_extract_RAW_spirou', '20171024', 'hcone_hcone02c610.fits']
+run11 = ['cal_DRIFT_E2DS_spirou', '20171024', 'fp_fp0002a406_e2ds_AB.fits']
+run12 = ['cal_DRIFTPEAK_E2DS_spirou', '20171024', 'fp_fp0002a406_e2ds_AB.fits']
+run13 = ['cal_CCF_E2DS_spirou', '20171024', 'fp_fp0002a406_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
+
