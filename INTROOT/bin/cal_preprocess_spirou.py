@@ -80,13 +80,13 @@ def main(night_name=None, ufiles=None):
     # get raw folder (assume all files are in the root directory)
     rawdir = spirouConfig.Constants.RAW_DIR(p)
     try:
-        ufiles = spirouFile.Paths(p['ufiles'], root=rawdir).abs_paths
+        ufiles = spirouFile.Paths(p['UFILES'], root=rawdir).abs_paths
     except PathException as e:
-        WLOG('error', p['log_opt'], e)
+        WLOG('error', p['LOG_OPT'], e)
 
     # log how many files were found
     wmsg = '{0} files found'
-    WLOG('', p['log_opt'], wmsg.format(len(ufiles)))
+    WLOG('', p['LOG_OPT'], wmsg.format(len(ufiles)))
 
     # loop around files
     for ufile in ufiles:
@@ -96,20 +96,20 @@ def main(night_name=None, ufiles=None):
         # check if ufile exists
         if not os.path.exists(ufile):
             wmsg = 'File {0} does not exist... skipping'
-            WLOG('warning', p['log_opt'], wmsg.format(ufile))
+            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
         elif p['PROCESSED_SUFFIX'] + '.fits' in ufile:
             wmsg = 'File {0} has been processed... skipping'
-            WLOG('warning', p['log_opt'], wmsg.format(ufile))
+            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
         elif '.fits' not in ufile:
             wmsg = 'File {0} not a fits file... skipping'
-            WLOG('warning', p['log_opt'], wmsg.format(ufile))
+            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
 
         # log the file process
         wmsg = 'Processing file {0}'
-        WLOG('', p['log_opt'], wmsg.format(ufile))
+        WLOG('', p['LOG_OPT'], wmsg.format(ufile))
 
         # ------------------------------------------------------------------
         # Read image file
@@ -129,17 +129,17 @@ def main(night_name=None, ufiles=None):
             pass
         else:
             # correct for the top and bottom reference pixels
-            WLOG('', p['log_opt'], 'Correcting for top and bottom pixels')
+            WLOG('', p['LOG_OPT'], 'Correcting for top and bottom pixels')
             image = spirouImage.PPCorrectTopBottom(p, image)
 
             # correct by a median filter from the dark amplifiers
             wmsg = 'Correcting by the median filter from dark amplifiers'
-            WLOG('', p['log_opt'], wmsg)
+            WLOG('', p['LOG_OPT'], wmsg)
             image = spirouImage.PPMedianFilterDarkAmps(p, image)
 
             # correct for the 1/f noise
             wmsg = 'Correcting for the 1/f noise'
-            WLOG('', p['log_opt'], wmsg)
+            WLOG('', p['LOG_OPT'], wmsg)
             image = spirouImage.PPMedianOneOverfNoise(p, image)
 
         # ------------------------------------------------------------------
@@ -160,7 +160,7 @@ def main(night_name=None, ufiles=None):
         outfits = ufile.replace('.fits', p['PROCESSED_SUFFIX'] + '.fits')
         outfitsname = os.path.split(outfits)[-1]
         # log that we are saving rotated image
-        WLOG('', p['log_opt'], 'Saving Rotated Image in ' + outfitsname)
+        WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # write to file
@@ -170,7 +170,7 @@ def main(night_name=None, ufiles=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

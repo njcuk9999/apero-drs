@@ -87,11 +87,11 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
         gkv = spirouConfig.GetKeywordValues(p, whdr, keys, read_file)
         nbo, degll, xsize = gkv
     except spirouConfig.ConfigError as e:
-        WLOG(e.level, p['log_opt'], e.msg)
+        WLOG(e.level, p['LOG_OPT'], e.msg)
         nbo, degll, xsize = 0, 0, 0
 
     # get the coefficients from the header
-    coeff_prefix = p['kw_TH_COEFF_PREFIX'][0]
+    coeff_prefix = p['KW_TH_COEFF_PREFIX'][0]
     param_ll = []
     # loop around the orders
     for order_num in range(nbo):
@@ -281,25 +281,25 @@ def first_guess_at_wave_solution(p, loc):
     # get used constants from p
     n_order_final = p['CAL_HC_N_ORD_FINAL']
     # set up the orders to fit
-    loc['fit_orders'] = p['CAL_HC_T_ORDER_START'] - np.arange(n_order_final)
-    loc.set_source('fit_orders', func_name)
+    loc['FIT_ORDERS'] = p['CAL_HC_T_ORDER_START'] - np.arange(n_order_final)
+    loc.set_source('FIT_ORDERS', func_name)
     # get wave solution filename
-    wave_file = spirouImage.ReadWaveFile(p, loc['hdr'], return_filename=True)
+    wave_file = spirouImage.ReadWaveFile(p, loc['HDR'], return_filename=True)
     # log wave file name
     wmsg = 'Reading initial wavelength solution in {0}'
-    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(wave_file))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wave_file))
     # get E2DS line list from wave_file
-    ll_init, param_ll_init = get_e2ds_ll(p, loc['hdr'], filename=wave_file)
+    ll_init, param_ll_init = get_e2ds_ll(p, loc['HDR'], filename=wave_file)
     # only perform fit on orders 0 to p['CAL_HC_N_ORD_FINAL']
-    loc['ll_init'] = ll_init[:n_order_final]
-    loc.set_source('ll_init', __NAME__ + func_name)
+    loc['LL_INIT'] = ll_init[:n_order_final]
+    loc.set_source('LL_INIT', __NAME__ + func_name)
     # load line file (from p['IC_LL_LINE_FILE'])
-    loc['ll_line'], loc['ampl_line'] = spirouImage.ReadLineList(p)
+    loc['LL_LINE'], loc['AMPL_LINE'] = spirouImage.ReadLineList(p)
     source = func_name + ' spirouImage.ReadLineList()'
     loc.set_sources(['ll_line', 'ampl_line'], source)
     # log that we are attempting to find ll on spectrum
     wmsg = 'On fiber {0} trying to identify lines using guess solution'
-    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(p['fiber']))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # find the lines
     all_lines = find_lines(p, loc)
     # add all lines to loc
@@ -374,7 +374,7 @@ def find_lines(p, loc):
             emsg4 = '   Line interval: [{0:6.1f}-{1:6.1f}]'.format(*emsg4args)
             emsg5 = '       function={0}'.format(func_name)
             emsg6 = ' Unable to reduce, check guess solution'
-            WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3, emsg4,
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4,
                                          emsg5, emsg6])
             gauss_fit = []
         # loop around the lines in kept line list
@@ -398,7 +398,7 @@ def find_lines(p, loc):
                 # make sure we have more than 3 data points
                 if len(sxpos) < 3:
                     wmsg = 'Resolution or ll_span are too small'
-                    WLOG('', p['log_opt'], wmsg)
+                    WLOG('', p['LOG_OPT'], wmsg)
                 # work out a pixel weighting
                 line_weight = 1.0/(sdata + image_ron**2)
                 # check that the sum of the weighted flux is not zero
@@ -439,7 +439,7 @@ def find_lines(p, loc):
         wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
         wargs = [torder[order_num], order_num, min_ll, max_ll,
                  nlines_valid, nlines_total, percentage_vlines]
-        WLOG('', p['log_opt'], wmsg.format(*wargs))
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
         all_cal_line_fit.append(gauss_fit)
     # return all lines found (36 x number of lines found for order)
     return all_cal_line_fit
@@ -616,7 +616,7 @@ def decide_on_lamp_type(p, filename):
                 emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
                          'ambiguous'.format(filename))
                 emsg2 = '    function={0}'.format(func_name)
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             else:
                 lamp_type = lamp
     # check that lamp is defined
@@ -625,7 +625,7 @@ def decide_on_lamp_type(p, filename):
         emsg2 = ('    Must be one of the following: {0}'
                  ''.format(', '.join(p['IC_LAMPS'])))
         emsg3 = '    function={0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
     # finally return lamp type
     return lamp_type
 

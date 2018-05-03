@@ -101,12 +101,12 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     # get reduced directory + night name
-    rdir = p['raw_dir']
+    rdir = p['RAW_DIR']
     # construct and test the reffile
-    flatfilename = spirouStartup.GetFile(p, rdir, p['flatfile'], 'flat_dark',
+    flatfilename = spirouStartup.GetFile(p, rdir, p['FLATFILE'], 'flat_dark',
                                          'TELLMASK')
     # get the fiber type
-    p['fiber'] = 'AB'
+    p['FIBER'] = 'AB'
 
     # ----------------------------------------------------------------------
     # Read flat image file
@@ -115,7 +115,7 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     flat, hdr, cdr, ny, nx = spirouImage.ReadData(p, flatfilename)
     # add to loc
     loc = ParamDict()
-    loc['flat'] = flat
+    loc['FLAT'] = flat
     loc.set_sources(['flat'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
@@ -140,37 +140,37 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
     flat2 = spirouImage.ResizeImage(flat0, **bkwargs)
-    loc['flat2'] = flat2
+    loc['FLAT2'] = flat2
     loc.set_sources(['flat2'], __NAME__ + '/main()')
     # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
+    WLOG('', p['LOG_OPT'], ('Image format changed to '
                             '{0}x{1}').format(*flat2.shape))
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
     # get tilts
-    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+    loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+    loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
 
     # ----------------------------------------------------------------------
     # Read blaze
     # ----------------------------------------------------------------------
     # get tilts
-    loc['blaze'] = spirouImage.ReadBlazeFile(p, hdr)
-    loc.set_source('blaze', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+    loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+    loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
 
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
-    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
     # ------------------------------------------------------------------
     # get this fibers parameters
-    p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
+    p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
     # get localisation fit coefficients
     loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
 
@@ -179,7 +179,7 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # ------------------------------------------------------------------
     # log process
     wmsg = 'Loading telluric model and locating "good" tranmission'
-    WLOG('', p['log_opt'], wmsg)
+    WLOG('', p['LOG_OPT'], wmsg)
     # load telluric and get mask (add to loc)
     loc = get_telluric(p, loc)
 
@@ -187,7 +187,7 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # Make 2D map of orders
     # ------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], 'Making 2D map of order locations')
+    WLOG('', p['LOG_OPT'], 'Making 2D map of order locations')
     # make the 2D wave-image
     loc = order_profile(loc)
 
@@ -200,7 +200,7 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
         sPlt.define_figure()
 
     # log progress
-    WLOG('', p['log_opt'], 'Correcting for tilt')
+    WLOG('', p['LOG_OPT'], 'Correcting for tilt')
     # make the true x location map
     loc = correct_for_tilt(p, loc)
 
@@ -208,7 +208,7 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # Make 2D map of wavelengths (based on true x location)
     # ------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], 'Mapping pixels on to wavelength grid')
+    WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
     # make the 2D map of wavelength
     loc = make_2d_wave_image(loc)
 
@@ -216,15 +216,15 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # Use spectra wavelength to create 2D image from wave-image
     # ------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], 'Creating image from wave-image interpolation')
+    WLOG('', p['LOG_OPT'], 'Creating image from wave-image interpolation')
     # create image from waveimage
-    loc = create_image_from_waveimage(loc, x=loc['tell_x'], y=loc['tell_y'])
+    loc = create_image_from_waveimage(loc, x=loc['TELL_X'], y=loc['TELL_Y'])
 
     # ------------------------------------------------------------------
     # Create 2D mask (min to max lambda + transmission threshold)
     # ------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], 'Creating wavelength/tranmission mask')
+    WLOG('', p['LOG_OPT'], 'Creating wavelength/tranmission mask')
     # create mask
     loc = create_mask(p, loc)
 
@@ -233,14 +233,14 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # ----------------------------------------------------------------------
     # TODO: move to spirouConst
     # construct spectrum filename
-    redfolder = p['reduced_dir']
+    redfolder = p['REDUCED_DIR']
     specfilename = 'telluric_mapped_spectrum.fits'
     specfitsfile = os.path.join(redfolder, specfilename)
     # log progress
     wmsg = 'Writing spectrum to file {0}'
-    WLOG('', p['log_opt'], wmsg.format(specfilename))
+    WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
     # write to file
-    spirouImage.WriteImage(specfitsfile, loc['spe'])
+    spirouImage.WriteImage(specfitsfile, loc['SPE'])
 
     # ----------------------------------------------------------------------
     # construct waveimage filename
@@ -248,9 +248,9 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     wavefitsfile = os.path.join(redfolder, wavefilename)
     # log progress
     wmsg = 'Writing wave image to file {0}'
-    WLOG('', p['log_opt'], wmsg.format(wavefilename))
+    WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
     # write to file
-    spirouImage.WriteImage(wavefitsfile, loc['waveimage'])
+    spirouImage.WriteImage(wavefitsfile, loc['WAVEIMAGE'])
 
     # ----------------------------------------------------------------------
     # construct tell mask 2D filename
@@ -258,9 +258,9 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     maskfitsfile = os.path.join(redfolder, maskfilename)
     # log progress
     wmsg = 'Writing telluric mask to file {0}'
-    WLOG('', p['log_opt'], wmsg.format(maskfilename))
+    WLOG('', p['LOG_OPT'], wmsg.format(maskfilename))
     # convert boolean mask to integers
-    writablemask = np.array(loc['tell_mask_2D'], dtype=int)
+    writablemask = np.array(loc['TELL_MASK_2D'], dtype=int)
     # write to file
     spirouImage.WriteImage(maskfitsfile, writablemask)
 
@@ -268,7 +268,7 @@ def main(night_name=None, flatfile=None, tellfile=None, tellthres=None,
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
 
     # return a copy of locally defined variables in the memory
     return dict(locals())
@@ -278,8 +278,8 @@ def get_telluric(p, loc):
     """
     Reads the telluric file "tellmodx" (wavelength data) and "tellmody"
     (telluric absorption data) from files defined in "p" and finds "good" areas
-    of the telluric model, i.e. p["minlam"] > wavelength > p["maxlam"] and
-    telluric transmission > p["tellthres"]
+    of the telluric model, i.e. p['MINLAM'] > wavelength > p['MAXLAM'] and
+    telluric transmission > p['TELLTHRES']
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -304,11 +304,11 @@ def get_telluric(p, loc):
     func_name = __NAME__ + '.get_telluric()'
     # load the telluric model
     gkwargs = dict(return_header=False, return_shape=False)
-    tx = spirouImage.ReadData(p, filename=p['tellmodx'], **gkwargs)
-    ty = spirouImage.ReadData(p, filename=p['tellmody'], **gkwargs)
+    tx = spirouImage.ReadData(p, filename=p['TELLMODX'], **gkwargs)
+    ty = spirouImage.ReadData(p, filename=p['TELLMODY'], **gkwargs)
     # add model and mask to loc
-    loc['tell_x'] = tx
-    loc['tell_y'] = ty
+    loc['TELL_X'] = tx
+    loc['TELL_Y'] = ty
     # set source
     loc.set_sources(['tell_x', 'tell_y'], func_name)
     # return loc
@@ -318,9 +318,9 @@ def get_telluric(p, loc):
 def order_profile(loc):
     func_name = __NAME__ + '.order_profile()'
     # get data from loc
-    image = loc['flat2']
-    wave = loc['wave']
-    acc, ass = loc['acc'], loc['ass']
+    image = loc['FLAT2']
+    wave = loc['WAVE']
+    acc, ass = loc['ACC'], loc['ASS']
     # assign number of orders
     number_orders = len(wave)
     # construct a "NaN" image (for wavelengths)
@@ -351,8 +351,8 @@ def order_profile(loc):
             suborderimage[mask] = fin
 
     # add to loc
-    loc['orderimage'] = orderimage
-    loc['suborderimage'] = suborderimage
+    loc['ORDERIMAGE'] = orderimage
+    loc['SUBORDERIMAGE'] = suborderimage
     # add source
     loc.set_sources(['orderimage', 'suborderimage'], func_name)
     # return loc
@@ -362,17 +362,17 @@ def order_profile(loc):
 def correct_for_tilt(p, loc):
     func_name = __NAME__ + '.correct_for_tilt()'
     # get constants from p
-    sorder = p['ic_drift_order_plot']
+    sorder = p['IC_DRIFT_ORDER_PLOT']
     # plot conditions
     cond1 = p['DRS_PLOT']
     cond2 = p['DRS_DEBUG']
 
     # get data from loc
-    image = loc['flat2']
-    wave = loc['wave']
-    acc = loc['acc']
-    tilt = loc['tilt']
-    suborderimage = loc['suborderimage']
+    image = loc['FLAT2']
+    wave = loc['WAVE']
+    acc = loc['ACC']
+    tilt = loc['TILT']
+    suborderimage = loc['SUBORDERIMAGE']
     # assign number of orders
     number_orders = len(wave)
     # construct a "NaN" image (for wavelengths)
@@ -431,8 +431,8 @@ def correct_for_tilt(p, loc):
                     test_tilt(ximage, yimage, centpoly, linepoly, x0s[it],
                               y0s[it], xcenters[it], ycenters[it], xa, ya)
     # save to loc
-    loc['true_x_image'] = trueximage
-    loc.set_source('true_x_image', func_name)
+    loc['TRUE_X_IMAGE'] = trueximage
+    loc.set_source('TRUE_X_IMAGE', func_name)
     # return loc
     return loc
 
@@ -523,9 +523,9 @@ def make_2d_wave_image_old(loc):
     """
     func_name = __NAME__ + '.make_2d_wave_image()'
     # get data from loc
-    image = loc['flat2']
-    wave = loc['wave']
-    acc, ass = loc['acc'], loc['ass']
+    image = loc['FLAT2']
+    wave = loc['WAVE']
+    acc, ass = loc['ACC'], loc['ASS']
     # assign number of orders
     number_orders = len(wave)
     # construct a "NaN" image (for wavelengths)
@@ -566,9 +566,9 @@ def make_2d_wave_image_old(loc):
                     waveimage[yposi, xposi] = wave[order_no][w_it]
 
     # add to loc
-    loc['waveimage'] = waveimage
+    loc['WAVEIMAGE'] = waveimage
     # set source
-    loc.set_source('waveimage', func_name)
+    loc.set_source('WAVEIMAGE', func_name)
 
     return loc
 
@@ -585,10 +585,10 @@ def make_2d_wave_image(loc):
     """
     func_name = __NAME__ + '.make_2d_wave_image()'
     # get data from loc
-    image = loc['flat2']
-    wave = loc['wave']
-    orderimage = loc['orderimage']
-    t_x_image = loc['true_x_image']
+    image = loc['FLAT2']
+    wave = loc['WAVE']
+    orderimage = loc['ORDERIMAGE']
+    t_x_image = loc['TRUE_X_IMAGE']
     # assign number of orders
     number_orders = len(wave)
     # construct a "NaN" image (for wavelengths)
@@ -611,9 +611,9 @@ def make_2d_wave_image(loc):
         waveimage[mask & good] = wave_interp(t_x_image[mask & good])
 
     # add to loc
-    loc['waveimage'] = waveimage
+    loc['WAVEIMAGE'] = waveimage
     # set source
-    loc.set_source('waveimage', func_name)
+    loc.set_source('WAVEIMAGE', func_name)
 
     return loc
 
@@ -621,7 +621,7 @@ def make_2d_wave_image(loc):
 def create_image_from_waveimage(loc, x, y):
     """
     Takes a spectrum "y" at wavelengths "x" and uses these to interpolate
-    wavelength positions in loc['waveimage'] to map the spectrum onto
+    wavelength positions in loc['WAVEIMAGE'] to map the spectrum onto
     the waveimage
 
     :param loc: parameter dictionary, ParamDict containing data
@@ -636,7 +636,7 @@ def create_image_from_waveimage(loc, x, y):
     """
     func_name = __NAME__ + '.create_image_from_waveimage()'
     # get data from loc
-    waveimage = loc['waveimage']
+    waveimage = loc['WAVEIMAGE']
     # set up interpolation
     with warnings.catch_warnings(record=True) as _:
         wave_interp = interp1d(x, y)
@@ -662,8 +662,8 @@ def create_image_from_waveimage(loc, x, y):
         # interpolate wavelengths in waveimage to get newimage
         newimage[row][validpixels] = wave_interp(rvalues[validpixels])
     # add to loc
-    loc['spe'] = newimage
-    loc.set_source('spe', func_name)
+    loc['SPE'] = newimage
+    loc.set_source('SPE', func_name)
     # return loc
     return loc
 
@@ -672,17 +672,17 @@ def create_mask(p, loc):
 
     func_name = __NAME__ + '.create_image_from_waveimage()'
     # get data from loc
-    waveimage = loc['waveimage']
-    tell_spe = loc['spe']
+    waveimage = loc['WAVEIMAGE']
+    tell_spe = loc['SPE']
     # apply mask to telluric model
-    mask1 = waveimage > p['minlam']
-    mask2 = waveimage < p['maxlam']
-    mask3 = tell_spe > p['tellthres']
+    mask1 = waveimage > p['MINLAM']
+    mask2 = waveimage < p['MAXLAM']
+    mask3 = tell_spe > p['TELLTHRES']
     # combine masks
     mask = mask1 & mask2 & mask3
     # save mask to loc
-    loc['tell_mask_2D'] = mask
-    loc.set_source('tell_mask_2D', func_name)
+    loc['TELL_MASK_2D'] = mask
+    loc.set_source('TELL_MASK_2D', func_name)
     # return loc
     return loc
 
@@ -696,8 +696,8 @@ def test_image(loc):
     on top for all orders
     """
     # get data from loc
-    image = loc['flat2']
-    acc, ass = loc['acc'], loc['ass']
+    image = loc['FLAT2']
+    acc, ass = loc['ACC'], loc['ASS']
     # plot
     plt.imshow(image)
     for it in range(len(acc)):
@@ -714,9 +714,9 @@ def test_image(loc):
 def test_spec(loc):
 
     # get data from loc
-    waveimage = loc['waveimage']
-    spec = loc['spe']
-    x, y = loc['tell_x'], loc['tell_y']
+    waveimage = loc['WAVEIMAGE']
+    spec = loc['SPE']
+    x, y = loc['TELL_X'], loc['TELL_Y']
 
     # set zeros to NaN
     mask1 = waveimage == 0
