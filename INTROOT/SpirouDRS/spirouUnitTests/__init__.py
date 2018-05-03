@@ -11,8 +11,8 @@ Created on 2017-12-06 at 14:26
 """
 
 from SpirouDRS import spirouConfig
-from . import unit_test_comp_functions as utc
-from . import unit_test_functions as utf
+from . import spirouUnitTests
+from . import unit_test
 
 # =============================================================================
 # Define variables
@@ -25,44 +25,30 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['UNIT_TEST_CAL_BADPIX', 'UNIT_TEST_CAL_DARK',
-           'UNIT_TEST_CAL_LOC_RAW', 'UNIT_TEST_CAL_SLIT',
-           'UNIT_TEST_CAL_FF_RAW', 'UNIT_TEST_CAL_EXTRACT',
-           'UNIT_TEST_CAL_DRIFT_RAW', 'UNIT_TEST_CAL_DRIFT_E2DS',
-           'UNIT_TEST_CAL_DRIFTPEAK_E2DS', 'UNIT_TEST_CAL_CCF_E2DS',
-           'EXISTS', 'COMP_DATA', 'COMP_HEADER']
+__all__ = ['GetRuns', 'LogTimings', 'ManageRun', 'SetComp', 'SetType',
+           'UnitLogTitle', 'UnsetType', 'UnitTest']
 # -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
 # unit tests
-UNIT_TEST_CAL_BADPIX = utf.UNIT_TEST_CAL_BADPIX
 
-UNIT_TEST_CAL_DARK = utf.UNIT_TEST_CAL_DARK
+GetRuns = spirouUnitTests.get_runs
 
-UNIT_TEST_CAL_LOC_RAW = utf.UNIT_TEST_CAL_LOC_RAW
+LogTimings = spirouUnitTests.log_timings
 
-UNIT_TEST_CAL_SLIT = utf.UNIT_TEST_CAL_SLIT
+ManageRun = spirouUnitTests.manage_run
 
-UNIT_TEST_CAL_FF_RAW = utf.UNIT_TEST_CAL_FF_RAW
+SetComp = spirouUnitTests.set_comp
 
-UNIT_TEST_CAL_EXTRACT = utf.UNIT_TEST_CAL_EXTRACT
+SetType = spirouUnitTests.set_type
 
-UNIT_TEST_CAL_DRIFT_RAW = utf.UNIT_TEST_CAL_DRIFT_RAW
+UnitLogTitle = spirouUnitTests.unit_log_title
 
-UNIT_TEST_CAL_DRIFT_E2DS = utf.UNIT_TEST_CAL_DRIFT_E2DS
+UnsetType = spirouUnitTests.unset_type
 
-UNIT_TEST_CAL_DRIFTPEAK_E2DS = utf.UNIT_TEST_CAL_DRIFTPEAK_E2DS
-
-UNIT_TEST_CAL_CCF_E2DS = utf.UNIT_TEST_CAL_CCF_E2DS
-
-# comparison tests
-EXISTS = utc.check_existance
-
-COMP_DATA = utc.compare_data
-
-COMP_HEADER = utc.compare_header
+UnitTest = unit_test
 
 # =============================================================================
 # End of code
