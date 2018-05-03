@@ -98,7 +98,8 @@ def run_begin(quiet=False):
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
-                   mainfitsfile=None, mainfitsdir=None, quiet=False):
+                   mainfitsfile=None, mainfitsdir=None, quiet=False,
+                   require_night_name=True):
     """
     Deal with loading run time arguments:
 
@@ -161,6 +162,8 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                             'calibdb' - the DRS_CALIB_DB folder
                             or the full path to the file
 
+
+
     :param quiet: bool, if True does not print or log messages
 
     :return p: dictionary, parameter dictionary
@@ -169,7 +172,6 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # deal with arg_night_name defined in call
     if night_name is not None:
         cparams['ARG_NIGHT_NAME'] = night_name
-
     # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
@@ -898,7 +900,8 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
         WLOG('error', p['log_opt'], wmsg.format(kind, ' or '.join(prefixes)))
 
 
-def get_arguments(positions, types, names, required, calls, cprior, lognames):
+def get_arguments(positions, types, names, required, calls, cprior, lognames,
+                  require_night_name=True):
     """
     Take the "positions" and extract from sys.argv[2:] (first arg is the program
     name, second arg is reserved for night_name) use "types" to force type
@@ -931,9 +934,17 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames):
                      theses should be similar to "names" but in a form the
                      user can easily understand for each variable
 
+    :param require_night_name: bool, if False night name is not required in
+                               the arguments
+
     :return customdict: dictionary containing the run time arguments converts
                         to "types", keys are equal to "names"
     """
+    if require_night_name:
+        first_arg_pos = 2
+    else:
+        first_arg_pos = 1
+
     # set up the dictionary
     customdict = dict()
     for pos in positions:
@@ -942,7 +953,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames):
             # get from sys.argv
             # first arg should be the program name
             # second arg should be the night name
-            raw_value = sys.argv[pos + 2]
+            raw_value = sys.argv[pos + first_arg_pos]
         except IndexError:
             # if not required then it is okay to not find it
             if not required[pos]:
@@ -954,7 +965,12 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames):
                          ''.format(lognames[pos])]
                 emsgs.append(('   must be format:'.format(pos + 1)))
                 eargs = [DPROG, ' '.join(lognames)]
-                emsgs.append(('   >>> {0} NIGHT_NAME {1}'.format(*eargs)))
+                # deal with difference between modes (i.e. no night_name)
+                if require_night_name:
+                    emsgs.append(('   >>> {0} NIGHT_NAME {1}'.format(*eargs)))
+                else:
+                    emsgs.append(('   >>> {0} {1}'.format(*eargs)))
+                # log error
                 WLOG('error', DPROG, emsgs)
                 raw_value = None
             # else we must use the value from calls
@@ -1241,7 +1257,8 @@ def sort_version(messages=None):
 # =============================================================================
 def get_custom_from_run_time_args(positions=None, types=None, names=None,
                                   required=None, calls=None, cprior=None,
-                                  lognames=None, last_multi=False):
+                                  lognames=None, last_multi=False,
+                                  require_night_name=True):
     """
     Extract custom arguments from defined positions in sys.argv (defined at
     run time)
@@ -1275,6 +1292,9 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     :param last_multi: bool, if True then last argument in positions/types/
                        names adds all additional arguments into a list
 
+    :param require_night_name: bool, if False night name is not required in
+                               the arguments
+
     :return values: dictionary, if run time arguments are correct python type
                     the name-value pairs are returned
     """
@@ -1304,7 +1324,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         cprior = [False]*len(positions)
     # loop around positions test the type and add the value to dictionary
     customdict = get_arguments(positions, types, names, required, calls,
-                               cprior, lognames)
+                               cprior, lognames, require_night_name)
     # deal with the position needing to find additional parameters
     if last_multi:
         customdict = get_multi_last_argument(customdict, positions, types,
@@ -1411,6 +1431,74 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1, emsg2])
 
+    return p
+
+
+def load_minimum(p, customargs=None):
+    """
+    Load minimal settings (without fitsfilename, arg_file_names, arg_file_dir
+    etc)
+
+    :param p: parameter dictionary, ParamDict containing constants
+    :param customargs: None or list of strings, if list of strings then instead
+                       of getting the standard runtime arguments
+
+           i.e. in form:
+
+                program.py night_dir arg_file_names[0] arg_file_names[1]...
+
+           loads all arguments into customargs
+
+           i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
+           expects command line arguments to be:
+
+                program.py night_dir filename a b c
+
+    :return p: dictionary, parameter dictionary
+            Adds the following:
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                log_opt: string, log option, normally the program name
+                arg_night_name: string, empty (i.e. '')
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                raw_dir: string, the raw data directory
+                         (i.e. p['DRS_DATA_RAW']/p['arg_night_name'])
+    """
+    # set source
+    source = __NAME__ + '.load_minimum()'
+    sconst = 'spirouConfig.Constants.'
+    # get program name
+    p['program'] = spirouConfig.Constants.PROGRAM()
+    p.set_source('program', source + ' & {0}PROGRAM()'.format(sconst))
+    # get the logging option
+    p['log_opt'] = p['program']
+    p.set_source('log_opt', source + ' & {0}PROGRAM()'.format(sconst))
+    # get night name and filenames
+    p['arg_night_name'] = spirouConfig.Constants.ARG_NIGHT_NAME(p)
+    p.set_source('arg_night_name',
+                 source + ' & {0}ARG_NIGHT_NAME()'.format(sconst))
+    # set reduced path
+    p['reduced_dir'] = spirouConfig.Constants.REDUCED_DIR(p)
+    p.set_source('reduced_dir', source + ' & {0}/REDUCED_DIR()')
+    # set raw path
+    p['raw_dir'] = spirouConfig.Constants.RAW_DIR(p)
+    p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
+    # -------------------------------------------------------------------------
+    # load special config file
+    # TODO: is this needed as special_config_SPIROU does not exist
+    p = load_other_config_file(p, 'SPECIAL_NAME')
+    # load ICDP config file
+    p = load_other_config_file(p, 'ICDP_NAME', required=True)
+    # -------------------------------------------------------------------------
+    # if we have customargs
+    if customargs is not None:
+        # loop around defined run time arguments
+        for key in list(customargs.keys()):
+            # set the value
+            p[key] = customargs[key]
+            p.set_source(key, 'From run time arguments (sys.argv)')
+    # return p
     return p
 
 
