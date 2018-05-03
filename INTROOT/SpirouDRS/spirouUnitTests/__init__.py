@@ -25,8 +25,8 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['GetRuns', 'LogTimings', 'ManageRun', 'SetComp', 'SetType',
-           'UnitLogTitle', 'UnsetType', 'UnitTest']
+__all__ = ['CheckType', 'GetRuns', 'LogTimings', 'ManageRun', 'SetComp',
+           'UnitLogTitle', 'UnitTest']
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -42,11 +42,9 @@ ManageRun = spirouUnitTests.manage_run
 
 SetComp = spirouUnitTests.set_comp
 
-SetType = spirouUnitTests.set_type
+CheckType = spirouUnitTests.check_type
 
 UnitLogTitle = spirouUnitTests.unit_log_title
-
-UnsetType = spirouUnitTests.unset_type
 
 UnitTest = unit_test
 
