@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_DRIFT_E2DS_spirou.py [night_directory] [REFfilename]
+cal_DRIFT_E2DS_spirou.py [night_directory] [files]
 
 Extracts orders for specific fibers and files.
 
@@ -48,6 +48,27 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None, fiber_type=None, **kwargs):
+    """
+    cal_DRIFT_E2DS_spirou.py main function, if night_name and files are None uses
+    arguments from run time i.e.:
+        cal_DRIFT_E2DS_spirou.py [night_directory] [files]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param files: string, list or None, the list of files to use for
+                  arg_file_names and fitsfilename
+                  (if None assumes arg_file_names was set from run time)
+    :param fiber_type: string, if None does all fiber types (defined in
+                       constants_SPIROU FIBER_TYPES (default is AB, A, B, C
+                       if defined then only does this fiber type (but must
+                       be in FIBER_TYPES)
+    :param kwargs: any keyword to overwrite constant in param dict "p"
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
