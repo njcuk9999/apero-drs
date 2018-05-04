@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_DRIFT_RAW_spirou.py [night_directory] [Reference file name]
+cal_DRIFT_E2DS_spirou.py [night_directory] [Reference file name]
 
 Primary drift recipe. Calculates the drift between the reference E2DS file and
 all other similar named E2DS files in the reduced directory.
@@ -46,6 +46,20 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, reffile=None):
+    """
+    cal_DRIFT_E2DS_spirou.py main function, if arguments are None uses
+    arguments from run time i.e.:
+        cal_DRIFT_E2DS_spirou.py [night_directory] [reffile]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param reffile: string, the reference file to use
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
