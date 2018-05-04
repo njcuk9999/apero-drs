@@ -645,8 +645,8 @@ def extract_tilt(image, pos, tilt, r1, r2, gain, tiltborder=2):
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -799,8 +799,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -1044,8 +1044,8 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -1056,12 +1056,6 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
     tiltshift = np.tan(np.deg2rad(tilt))
-    # check that ww0 and ww1 are constant (They should be)
-    if len(np.unique(ww0)) != 1:
-        raise ValueError('Neil error: Assumption that ww0 is constant is wrong'
-                         '(spirouEXTOR.py/extract_tilt_weight)')
-    # ww0 and ww1 are constant
-    ww0, ww1 = ww0[0], ww1[0]
     # get the weight contribution matrix (look up table)
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # account for the missing fractional pixels (due to integer rounding)
