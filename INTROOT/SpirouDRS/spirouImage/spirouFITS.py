@@ -1228,36 +1228,49 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
         hdu = None
     # get the number of fits files in filename
-    ext = len(hdu)
-    # Get the data and header based on how many extensions there are
-    if ext == 1:
-        openext = 0
-    else:
-        openext = 1
-    # try to open the data and close the hdu
     try:
-        data = hdu[openext].data
-        hdu.close()
+        ext = len(hdu)
     except Exception as e:
-        emsg1 = 'Could not open data for file "{0}" extension={1}'
-        emsg2 = '    Error {0}: {1}'.format(type(e), e)
-        emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                              emsg3])
-        data = None
-    # get the header (if header extension is available else default to zero)
-    if headerext <= ext:
+        wmsg1 = 'Problem with one of the extensions'
+        wmsg2 = '    Error reads: {0}'.format(e)
+        WLOG('warning', DPROG, [wmsg1, wmsg2])
+        ext = None
+
+    # deal with unknown ext
+    if ext is None:
+        hdu = fits.open(filename)
+        data, header = deal_with_bad_header(hdu)
+
+    # Get the data and header based on how many extensions there are
+    else:
+        if ext == 1:
+            openext = 0
+        else:
+            openext = 1
+        # try to open the data and close the hdu
         try:
-            header = hdu[headerext].header
+            data = hdu[openext].data
+            hdu.close()
         except Exception as e:
-            emsg1 = 'Could not open header for file "{0}" extension={1}'
+            emsg1 = 'Could not open data for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
                                   emsg3])
-            header = None
-    else:
-        header = hdu[0]
+            data = None
+        # get the header (if header extension is available else default to zero)
+        if headerext <= ext:
+            try:
+                header = hdu[headerext].header
+            except Exception as e:
+                emsg1 = 'Could not open header for file "{0}" extension={1}'
+                emsg2 = '    Error {0}: {1}'.format(type(e), e)
+                emsg3 = '    function = {0}'.format(func_name)
+                WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
+                                      emsg3])
+                header = None
+        else:
+            header = hdu[0]
     # return based on whether header and shape are required
     if getheader and getshape:
         if len(data.shape) == 2:
@@ -1273,6 +1286,53 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
             return data, data.shape, None
     else:
         return data
+
+
+def deal_with_bad_header(hdu):
+    """
+    Deal with bad headers by iterating through good hdu's until we hit a
+    problem
+
+    :param hdu: astropy.io.fits HDU
+
+    :return data:
+    :return header:
+    """
+    # define condition to pass
+    cond = True
+    # define iterator
+    it = 0
+    # define storage
+    datastore = []
+    headerstore = []
+    # loop through HDU's until we cannot open them
+    while cond:
+        try:
+            datastore.append(hdu[it].data)
+            headerstore.append(hdu[it].header)
+        except:
+            cond = False
+        # iterate
+        it += 1
+    # print message
+    if len(datastore) > 0:
+        WLOG('warning', DPROG, '    Partially recovered fits file')
+        WLOG('warning', DPROG, '    Problem with ext={0}'.format(it-1))
+    # find the first one that contains equal shaped array
+    valid = []
+    for d_it in range(len(datastore)):
+        if hasattr(datastore[d_it], 'shape'):
+            valid.append(d_it)
+    # if valid is empty we have a problem
+    if len(valid) == 0:
+        emsg = 'Recovery failed: Fatal I/O Error cannot load file.'
+        WLOG('error', DPROG, emsg)
+        data, header = None, None
+    else:
+        data = datastore[valid[0]]
+        header = hdu[0].header
+    # return data and header
+    return data, header
 
 
 def read_raw_header(filename, headerext=0):
