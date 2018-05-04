@@ -10,8 +10,8 @@ Created on 2018-05-01 at 12:32
 @author: cook
 """
 from __future__ import division
+import numpy as np
 import sys
-import os
 import time
 from collections import OrderedDict
 
@@ -128,6 +128,10 @@ def unit_log_title(p, title=' START OF UNIT TESTS'):
 
 
 def log_timings(p, times):
+
+    # add times together
+    times['Total'] = np.sum(list(times.values()))
+    # log the times
     WLOG('', p['LOG_OPT'], '')
     WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
     WLOG('', p['LOG_OPT'], ' TIMING STATS')
@@ -135,7 +139,7 @@ def log_timings(p, times):
     WLOG('', p['LOG_OPT'], '')
     # Now print the stats for this test:
     for key in list(times.keys()):
-        msg = '\t{0}\tTime taken = {1:.3f} s'.format(key, times[key])
+        msg = '  {0:35s} Time taken = {1:.3f} s'.format(key, times[key])
         WLOG('', p['LOG_OPT'], msg)
     WLOG('', p['LOG_OPT'], '')
 
