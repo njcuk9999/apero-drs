@@ -237,6 +237,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc['SPE1'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE3'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE4'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['SPE5'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         # Create array to store the signal to noise ratios for each order
         loc['SNR'] = np.zeros(loc['NUMBER_ORDERS'])
 
