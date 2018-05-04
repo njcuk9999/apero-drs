@@ -50,6 +50,22 @@ DARK_MED_BINNUM = 32
 # Define functions
 # =============================================================================
 def main(night_name=None, ufiles=None):
+    """
+    cal_preprocess_spirou.py main function, if night_name and files are None uses
+    arguments from run time i.e.:
+        cal_preprocess_spirou.py [night_directory] [fitsfilename]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param ufiles: string, list or None, the list of files to process
+                  Note can include wildcard i.e. "*.fits"
+                  (if None assumes arg_file_names was set from run time)
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------

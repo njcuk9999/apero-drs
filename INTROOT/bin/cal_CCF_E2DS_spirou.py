@@ -50,6 +50,25 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
          step=None):
+    """
+    cal_CCF_E2DS_spirou.py main function, if arguments are None uses
+    arguments from run time i.e.:
+        cal_CCF_E2DS_spirou.py [night_directory] [E2DSfilename] [mask] [RV]
+                               [width] [step]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param e2dsfile: string, the E2DS file to use
+    :param mask: string, the mask file to use (i.e. "UrNe.mas")
+    :param rv: float, the target RV to use
+    :param width: float, the CCF width to use
+    :param step: float, the CCF step to use
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------

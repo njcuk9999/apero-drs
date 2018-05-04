@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_validate_spirou.py
+cal_validate_spirou.py [debug]
 
 To be run after installation to test whether modules run
 
@@ -33,12 +33,24 @@ DEBUG = 0
 # exit type
 # noinspection PyProtectedMember
 EXIT = os._exit
-EXIT = sys.exit
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(debug_mode=0):
+    """
+    cal_validate_spirou.py main function, if debug mode is None uses
+    arguments from run time i.e.:
+        cal_validate_spirou.py [debug_mode]
+
+    :param debug_mode: bool or int, if 1 or True runs in debug mode
+                       (extra output), if 0 or False runs in normal mode
+                       (less output)
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # print log
     print(' *****************************************')
     print(' *        VALIDATING DRS ')

@@ -98,8 +98,7 @@ def run_begin(quiet=False):
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
-                   mainfitsfile=None, mainfitsdir=None, quiet=False,
-                   require_night_name=True):
+                   mainfitsfile=None, mainfitsdir=None, quiet=False):
     """
     Deal with loading run time arguments:
 
@@ -650,28 +649,40 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get chosen arg_file_dir
     p = set_arg_file_dir(p, mfd)
+
+    # check files type
+    # need to check whether files is a list
+    if type(files) == str:
+        checkfiles = [files]
+    elif type(files) == list:
+        checkfiles = files
+    else:
+        emsg = '"files" must be either a string or a list of strings'
+        WLOG('error', p['log_opt'], emsg)
+        checkfiles = []
+
     # if we don't have arg_file_names set it to the "files"
     if 'ARG_FILE_NAMES' not in p:
-        p['ARG_FILE_NAMES'] = files
+        p['ARG_FILE_NAMES'] = checkfiles
         # need to re-set nbframes
-        p['NBFRAMES'] = len(files)
+        p['NBFRAMES'] = len(checkfiles)
         # set source
         p.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
     # if we have no files in arg_file_names set it to the "files"
     elif len(p['ARG_FILE_NAMES']) == 0:
-        p['ARG_FILE_NAMES'] = files
+        p['ARG_FILE_NAMES'] = checkfiles
         # need to re-set nbframes
-        p['NBFRAMES'] = len(files)
+        p['NBFRAMES'] = len(checkfiles)
         # set source
         p.set_sources(['ARG_FILE_NAMES', 'NBFRAMES'], func_name)
     # if we don't have fitsfilename set it to the ARG_FILE_DIR + files[0]
     if 'FITSFILENAME' not in p:
-        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], files[0])
+        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], checkfiles[0])
         # set source
         p.set_source('FITSFILENAME', func_name)
     # if fitsfilename is set to None set it to the ARG_FILE_DIR + files[0]
     elif p['FITSFILENAME'] is None:
-        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], files[0])
+        p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], checkfiles[0])
         # set source
         p.set_source('FITSFILENAME', func_name)
     # finally return the updated cparams
