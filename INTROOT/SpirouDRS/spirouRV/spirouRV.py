@@ -256,14 +256,14 @@ def create_drift_file(p, loc):
     # get gauss function
     gf = gauss_function
     # get constants
-    border = p['drift_peak_border_size']
-    size = p['drift_peak_fpbox_size']
+    border = p['DRIFT_PEAK_BORDER_SIZE']
+    size = p['DRIFT_PEAK_FPBOX_SIZE']
     # minimum_norm_fp_peak = p['drift_peak_min_nfp_peak']
 
     # get the reference data and the wave data
-    speref = np.array(loc['speref'])
-    wave = loc['wave']
-    lamp = loc['lamp']
+    speref = np.array(loc['SPEREF'])
+    wave = loc['WAVE']
+    lamp = loc['LAMP']
 
     # storage for order of peaks
     allordpeak = []
@@ -307,7 +307,7 @@ def create_drift_file(p, loc):
         # tmp /= norm
 
         # peak value depends on type of lamp
-        limit = np.median(tmp) * p['drift_peak_peak_sig_lim'][lamp]
+        limit = np.median(tmp) * p['DRIFT_PEAK_PEAK_SIG_LIM'][lamp]
 
         # define the maximum pixel value of the normalized array
         maxtmp = np.max(tmp)
@@ -330,7 +330,7 @@ def create_drift_file(p, loc):
                     gg, pcov = curve_fit(gf, index, tmp[index], p0=p0)
                 spirouCore.spirouLog.warninglogger(w)
             except ValueError:
-                WLOG('warning', p['log_opt'], 'ydata or xdata contains NaNS')
+                WLOG('warning', p['LOG_OPT'], 'ydata or xdata contains NaNS')
                 # TODO: fix this
                 if not OLDCODEEXACT:
                     gg = [np.nan, np.nan, np.nan, np.nan]
@@ -345,7 +345,7 @@ def create_drift_file(p, loc):
             #    detection - dx is the distance from last peak
             dx = np.abs(xprev - gg[1])
             # if the distance from last position > 2 - we have a new fit
-            if dx > p['drift_peak_inter_peak_spacing']:
+            if dx > p['DRIFT_PEAK_INTER_PEAK_SPACING']:
                 # subtract off the gaussian without the dc level
                 # (leave dc for other peaks
                 tmp[index] -= gauss_function(index, gg[0], gg[1], gg[2], 0)
@@ -388,7 +388,7 @@ def create_drift_file(p, loc):
             ipeak += 1
         # log how many FPs were found and how many rejected
         wmsg = 'Order {0} : {1} peaks found, {2} peaks rejected'
-        WLOG('', p['log_opt'], wmsg.format(order_num, ipeak, nreject))
+        WLOG('', p['LOG_OPT'], wmsg.format(order_num, ipeak, nreject))
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
         allordpeak = np.append(allordpeak, np.array(ordpeak)[indsort])
@@ -398,16 +398,16 @@ def create_drift_file(p, loc):
         allllpeak = np.append(allllpeak, np.array(llpeak)[indsort])
         allamppeak = np.append(allamppeak, np.array(amppeak)[indsort])
     # store values in loc
-    loc['ordpeak'] = np.array(allordpeak, dtype=int)
-    loc['xpeak'] = allxpeak
-    loc['ewpeak'] = allewpeak
-    loc['vrpeak'] = allvrpeak
-    loc['llpeak'] = allllpeak
-    loc['amppeak'] = allamppeak
+    loc['ORDPEAK'] = np.array(allordpeak, dtype=int)
+    loc['XPEAK'] = allxpeak
+    loc['EWPEAK'] = allewpeak
+    loc['VRPEAK'] = allvrpeak
+    loc['LLPEAK'] = allllpeak
+    loc['AMPPEAK'] = allamppeak
 
     # Log the total number of FP lines found
     wmsg = 'Total Nb of FP lines found = {0}'
-    WLOG('info', p['log_opt'], wmsg.format(len(allxpeak)))
+    WLOG('info', p['LOG_OPT'], wmsg.format(len(allxpeak)))
 
     # set source
     source = __NAME__ + '/create_drift_file()'
@@ -453,11 +453,11 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     :param expwidth: float or None, the expected width of FP peaks - used to
                      "normalise" peaks (which are then subsequently removed
                      if > "cutwidth") if expwidth is None taken from
-                     p["drift_peak_exp_width"]
+                     p['DRIFT_PEAK_EXP_WIDTH']
     :param cutwidth: float or None, the normalised width of FP peaks thatis too
                      large normalised width FP FWHM - expwidth
                      cut is essentially: FP FWHM < (expwidth + cutwidth), if
-                     cutwidth is None taken from p["drift_peak_norm_width_cut"]
+                     cutwidth is None taken from p['DRIFT_PEAK_NORM_WIDTH_CUT']
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
@@ -478,24 +478,24 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     # get constants
     try:
         if expwidth is None:
-            expwidth = p['drift_peak_exp_width']
+            expwidth = p['DRIFT_PEAK_EXP_WIDTH']
         if cutwidth is None:
-            cutwidth = p['drift_peak_norm_width_cut']
+            cutwidth = p['DRIFT_PEAK_NORM_WIDTH_CUT']
     except spirouConfig.ConfigError as e:
         emsg1 = 'Error {0}: {1}'.format(type(e), e)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # define a mask to cut out wide peaks
-    mask = np.abs(loc['ewpeak'] - expwidth) < cutwidth
+    mask = np.abs(loc['EWPEAK'] - expwidth) < cutwidth
 
     # apply mask
-    loc['ordpeak'] = loc['ordpeak'][mask]
-    loc['xpeak'] = loc['xpeak'][mask]
-    loc['ewpeak'] = loc['ewpeak'][mask]
-    loc['vrpeak'] = loc['vrpeak'][mask]
-    loc['llpeak'] = loc['llpeak'][mask]
-    loc['amppeak'] = loc['amppeak'][mask]
+    loc['ORDPEAK'] = loc['ORDPEAK'][mask]
+    loc['XPEAK'] = loc['XPEAK'][mask]
+    loc['EWPEAK'] = loc['EWPEAK'][mask]
+    loc['VRPEAK'] = loc['VRPEAK'][mask]
+    loc['LLPEAK'] = loc['LLPEAK'][mask]
+    loc['AMPPEAK'] = loc['AMPPEAK'][mask]
 
     # append this function to sources
     source = __NAME__ + '/remove_wide_peaks()'
@@ -504,7 +504,7 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
 
     # log number of lines removed
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
-    WLOG('info', p['log_opt'], wmsg.format(np.sum(~mask)))
+    WLOG('info', p['LOG_OPT'], wmsg.format(np.sum(~mask)))
 
     # return loc
     return loc
@@ -551,16 +551,16 @@ def remove_zero_peaks(p, loc):
                          (masked with zero peaks removed)
     """
     # define a mask to cut out peaks with a value of zero
-    mask = loc['xref'] != 0
+    mask = loc['XREF'] != 0
 
     # apply mask
-    loc['xref'] = loc['xref'][mask]
-    loc['ordpeak'] = loc['ordpeak'][mask]
-    loc['xpeak'] = loc['xpeak'][mask]
-    loc['ewpeak'] = loc['ewpeak'][mask]
-    loc['vrpeak'] = loc['vrpeak'][mask]
-    loc['llpeak'] = loc['llpeak'][mask]
-    loc['amppeak'] = loc['amppeak'][mask]
+    loc['XREF'] = loc['XREF'][mask]
+    loc['ORDPEAK'] = loc['ORDPEAK'][mask]
+    loc['XPEAK'] = loc['XPEAK'][mask]
+    loc['EWPEAK'] = loc['EWPEAK'][mask]
+    loc['VRPEAK'] = loc['VRPEAK'][mask]
+    loc['LLPEAK'] = loc['LLPEAK'][mask]
+    loc['AMPPEAK'] = loc['AMPPEAK'][mask]
 
     # append this function to sources
     source = __NAME__ + '/remove_zero_peaks()'
@@ -569,7 +569,7 @@ def remove_zero_peaks(p, loc):
 
     # log number of lines removed
     wmsg = 'Nb of lines removed with no width measurement = {0}'
-    WLOG('info', p['log_opt'], wmsg.format(np.sum(~mask)))
+    WLOG('info', p['LOG_OPT'], wmsg.format(np.sum(~mask)))
 
     # return loc
     return loc
@@ -601,8 +601,8 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
     :return xpeak: numpy array (1D), the central positions of the peaks
     """
     # get the size of the peak
-    size = p['drift_peak_fpbox_size']
-    width = p['drift_peak_exp_width']
+    size = p['DRIFT_PEAK_FPBOX_SIZE']
+    width = p['DRIFT_PEAK_EXP_WIDTH']
 
     # measured x position of FP peaks
     xpeaks = np.zeros_like(xpeak0)
@@ -636,12 +636,12 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
                     # get position
                     xpeaks[peak] = gg[1]
                 except ValueError:
-                    WLOG('warning', p['log_opt'],
+                    WLOG('warning', p['LOG_OPT'],
                          'ydata or xdata contains NaNS')
                 except RuntimeError:
                     wmsg = ('Problem with gaussfit (Not a big deal, one in '
                             'thousands of fits')
-                    WLOG('warning', p['log_opt'], wmsg)
+                    WLOG('warning', p['LOG_OPT'], wmsg)
         # else barycenter adjustment
         else:
             # range from -2 to +2 pixels from position of peak
@@ -699,12 +699,12 @@ def sigma_clip(loc, sigma=1.0):
                             clipped drift values
     """
     # get dv
-    dv = loc['dv']
+    dv = loc['DV']
     # define a mask for sigma clip
     mask = np.abs(dv - np.median(dv)) < sigma * np.std(dv)
     # perform sigma clip and add to loc
-    loc['dvc'] = loc['dv'][mask]
-    loc['orderpeakc'] = loc['ordpeak'][mask]
+    loc['DVC'] = loc['DV'][mask]
+    loc['ORDERPEAKC'] = loc['ORDPEAK'][mask]
     # set the source for these new parameters
     loc.set_sources(['dvc', 'orderpeakc'], __NAME__ + '/sigma_clip()')
     # return to loc
@@ -743,9 +743,9 @@ def drift_per_order(loc, fileno):
     """
 
     # loop around the orders
-    for order_num in range(loc['number_orders']):
+    for order_num in range(loc['NUMBER_ORDERS']):
         # get the dv for this order
-        dv_order = loc['dvc'][loc['orderpeakc'] == order_num]
+        dv_order = loc['DVC'][loc['ORDERPEAKC'] == order_num]
         # get the number of dvs in this order
         numdv = len(dv_order)
         # get the drift for this order
@@ -756,10 +756,10 @@ def drift_per_order(loc, fileno):
         errdrift = np.std(dv_order) / np.sqrt(numdv)
 
         # add to storage
-        loc['drift'][fileno, order_num] = drift
-        loc['drift_left'][fileno, order_num] = driftleft
-        loc['drift_right'][fileno, order_num] = driftright
-        loc['errdrift'][fileno, order_num] = errdrift
+        loc['DRIFT'][fileno, order_num] = drift
+        loc['DRIFT_LEFT'][fileno, order_num] = driftleft
+        loc['DRIFT_RIGHT'][fileno, order_num] = driftright
+        loc['ERRDRIFT'][fileno, order_num] = errdrift
 
     # return loc
     return loc
@@ -806,10 +806,10 @@ def drift_all_orders(loc, fileno, nomin, nomax):
     """
 
     # get data from loc
-    drift = loc['drift'][fileno, nomin:nomax]
-    driftleft = loc['drift_left'][fileno, nomin:nomax]
-    driftright = loc['drift_right'][fileno, nomin:nomax]
-    errdrift = loc['errdrift'][fileno, nomin:nomax]
+    drift = loc['DRIFT'][fileno, nomin:nomax]
+    driftleft = loc['DRIFT_LEFT'][fileno, nomin:nomax]
+    driftright = loc['DRIFT_RIGHT'][fileno, nomin:nomax]
+    errdrift = loc['ERRDRIFT'][fileno, nomin:nomax]
 
     # work out weighted mean drift
     sumerr = np.sum(1.0/errdrift)
@@ -819,10 +819,10 @@ def drift_all_orders(loc, fileno, nomin, nomax):
     merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
 
     # add to storage
-    loc['meanrv'][fileno] = meanvr
-    loc['meanrv_left'][fileno] = meanvrleft
-    loc['meanrv_right'][fileno] = meanvrright
-    loc['merrdrift'][fileno] = merrdrift
+    loc['MEANRV'][fileno] = meanvr
+    loc['MEANRV_LEFT'][fileno] = meanvrleft
+    loc['MEANRV_RIGHT'][fileno] = meanvrright
+    loc['MERRDRIFT'][fileno] = merrdrift
 
     # return loc
     return loc
@@ -848,7 +848,7 @@ def get_ccf_mask(p, loc, filename=None):
     :param loc: parameter dictionary, ParamDict containing data
 
     :param filename: string or None, the filename and location of the ccf mask
-                     file, if None then file names is gotten from p["ccf_mask"]
+                     file, if None then file names is gotten from p['CCF_MASK']
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
@@ -860,15 +860,15 @@ def get_ccf_mask(p, loc, filename=None):
     """
     func_name = __NAME__ + '.get_ccf_mask()'
     # get constants from p
-    mask_min = p['ic_w_mask_min']
-    mask_width = p['ic_mask_width']
+    mask_min = p['IC_W_MASK_MIN']
+    mask_width = p['IC_MASK_WIDTH']
 
     if filename is None:
         try:
-            filename = p['ccf_mask']
+            filename = p['CCF_MASK']
         except spirouConfig.ConfigError as e:
             emsg1 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [e.message, emsg1])
+            WLOG('error', p['LOG_OPT'], [e.message, emsg1])
 
     # try to locate mask
     filename = locate_mask(p, filename)
@@ -881,12 +881,12 @@ def get_ccf_mask(p, loc, filename=None):
         ccfmask = spirouImage.ReadTable(filename, fmt='ascii', colnames=cols)
     except IOError:
         emsg = 'Template file: "{0}" not found, unable to proceed'
-        WLOG('error', p['log_opt'], emsg.format(filename))
+        WLOG('error', p['LOG_OPT'], emsg.format(filename))
         ccfmask = None
     # log that we are using a specific RV template with x rows
     wmsg = 'Using RV template: {0} ({1} rows)'
     wargs = [os.path.split(filename)[-1], len(ccfmask['ll_mask_s'])]
-    WLOG('', p['log_opt'], wmsg.format(*wargs))
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
     # calculate the difference in mask_e and mask_s
     ll_mask_d = np.array(ccfmask['ll_mask_e']) - np.array(ccfmask['ll_mask_s'])
     ll_mask_ctr = np.array(ccfmask['ll_mask_s']) + ll_mask_d*0.5
@@ -905,9 +905,9 @@ def get_ccf_mask(p, loc, filename=None):
     else:
         w_mask = np.ones(len(ll_mask_d))
     # add to loc
-    loc['ll_mask_d'] = ll_mask_d
-    loc['ll_mask_ctr'] = ll_mask_ctr
-    loc['w_mask'] = w_mask
+    loc['LL_MASK_D'] = ll_mask_d
+    loc['LL_MASK_CTR'] = ll_mask_ctr
+    loc['W_MASK'] = w_mask
     # set source
     source = __NAME__ + '/get_ccf_mask()'
     loc.set_sources(['ll_mask_d', 'll_mask_ctr', 'w_mask'], source)
@@ -935,7 +935,7 @@ def locate_mask(p, filename):
     if os.path.exists(filename):
         abspath = os.path.join(os.getcwd(), filename)
         wmsg = 'Template used for CCF computation: {0}'
-        WLOG('info', p['log_opt'], wmsg.format(abspath))
+        WLOG('info', p['LOG_OPT'], wmsg.format(abspath))
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
@@ -949,12 +949,12 @@ def locate_mask(p, filename):
         # if path exists use it
         if os.path.exists(abspath):
             wmsg = 'Template used for CCF computation: {0}'
-            WLOG('info', p['log_opt'], wmsg.format(abspath))
+            WLOG('info', p['LOG_OPT'], wmsg.format(abspath))
         # else raise error
         else:
             emsg1 = 'Template file: "{0}" not found, unable to proceed'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1.format(filename),
+            WLOG('error', p['LOG_OPT'], [emsg1.format(filename),
                                          emsg2])
     # return abspath
     return abspath
@@ -1017,32 +1017,32 @@ def coravelation(p, loc):
     # -------------------------------------------------------------------------
     # get constants from p
     # -------------------------------------------------------------------------
-    berv = p['ccf_berv']
-    berv_max = p['ccf_berv_max']
-    trv = p['target_rv']
-    ccf_width = p['ccf_width']
-    ccf_step = p['ccf_step']
-    det_noise = p['ccf_det_noise']
-    fit_type = p['ccf_fit_type']
+    berv = p['CCF_BERV']
+    berv_max = p['CCF_BERV_MAX']
+    trv = p['TARGET_RV']
+    ccf_width = p['CCF_WIDTH']
+    ccf_step = p['CCF_STEP']
+    det_noise = p['CCF_DET_NOISE']
+    fit_type = p['CCF_FIT_TYPE']
     # speed of light in km/s
     c = CONSTANT_C / 1000.0
     # -------------------------------------------------------------------------
     # get data from loc
     # -------------------------------------------------------------------------
     # get the wavelengths for the lines and the fit coefficients for each line
-    ll_map, coeff_ll = loc['wave_ll'], loc['param_ll']
+    ll_map, coeff_ll = loc['WAVE_LL'], loc['PARAM_LL']
     # get the line centers and the line widths
-    ll_mask_ctr, ll_mask_d = loc['ll_mask_ctr'], loc['ll_mask_d']
+    ll_mask_ctr, ll_mask_d = loc['LL_MASK_CTR'], loc['LL_MASK_D']
     # get the line weights
-    w_mask = loc['w_mask']
+    w_mask = loc['W_MASK']
     # get the flat fielded flux values
-    s2d = loc['e2dsff']
+    s2d = loc['E2DSFF']
     # get the blaze values
-    blaze = loc['blaze']
+    blaze = loc['BLAZE']
     # -------------------------------------------------------------------------
     # log that we are computing ccf
     wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
-    WLOG('', p['log_opt'], wmsg.format(trv))
+    WLOG('', p['LOG_OPT'], wmsg.format(trv))
     # -------------------------------------------------------------------------
     # create a rv ccf range
     rv_ccf = np.arange(trv - ccf_width, trv + ccf_width + ccf_step, ccf_step)
@@ -1143,15 +1143,15 @@ def coravelation(p, loc):
 
     # -------------------------------------------------------------------------
     # add outputs to loc
-    loc['rv_ccf'] = rv_ccf
-    loc['ccf'] = ccf_all
-    loc['ccf_max'] = ccf_max
-    loc['pix_passed_all'] = pix_passed_all
-    loc['tot_line'] = tot_line
-    loc['ll_range_all'] = ll_range_all
-    loc['ccf_noise'] = ccf_noise_all
-    loc['orders'] = orders
-    loc['ccf_all_results'] = ccf_all_results
+    loc['RV_CCF'] = rv_ccf
+    loc['CCF'] = ccf_all
+    loc['CCF_MAX'] = ccf_max
+    loc['PIX_PASSED_ALL'] = pix_passed_all
+    loc['TOT_LINE'] = tot_line
+    loc['LL_RANGE_ALL'] = ll_range_all
+    loc['CCF_NOISE'] = ccf_noise_all
+    loc['ORDERS'] = orders
+    loc['CCF_ALL_RESULTS'] = ccf_all_results
 
     # set source
     keys = ['rv_ccf', 'ccf', 'ccf_max', 'pix_passed_all', 'tot_line',

@@ -48,7 +48,7 @@ def main(runname=None, quiet=False):
 
     # reset the DRS
     if not quiet:
-        spirouTools.DRS_Reset(log=False)
+        spirouTools.DRS_Reset(log=False, called=True)
 
     # ----------------------------------------------------------------------
     # Set up
@@ -56,27 +56,29 @@ def main(runname=None, quiet=False):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(quiet=True)
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['runname'],
-                                                    calls=[runname])
-    # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, None, customargs=customargs)
+    ckwargs = dict(positions=[0], types=[str], names=['RUNNAME'],
+                   calls=[runname], require_night_name=False)
+    customargs = spirouStartup.GetCustomFromRuntime(**ckwargs)
+    # add custom args straight to p
+    p = spirouStartup.LoadMinimum(p, customargs=customargs)
 
     # ----------------------------------------------------------------------
     # Read the run file and extract parameters
     # ----------------------------------------------------------------------
     # construct filename
-    rfile = os.path.join(UNIT_TEST_PATH, p['runname'])
+    rfile = os.path.join(UNIT_TEST_PATH, p['RUNNAME'])
     # check that rfile exists
     if not os.path.exists(rfile):
         emsg = 'Unit test run file "{0}" does not exist'
-        WLOG('error', p['log_opt'], emsg.format(rfile))
+        WLOG('error', p['LOG_OPT'], emsg.format(rfile))
     # get the parameters in the run file
     rparams = spirouConfig.GetConfigParams(p, None, filename=rfile)
 
     # ----------------------------------------------------------------------
     # Set the type from run parameters
     # ----------------------------------------------------------------------
-    spirouUnitTests.SetType(p, rparams)
+    # TODO: Remove H2RG compatibility
+    spirouUnitTests.CheckType(p, rparams)
 
     # ----------------------------------------------------------------------
     # Check whether we need to compare files
@@ -112,15 +114,10 @@ def main(runname=None, quiet=False):
     spirouUnitTests.LogTimings(p, times)
 
     # ----------------------------------------------------------------------
-    # Unset the type
-    # ----------------------------------------------------------------------
-    spirouUnitTests.UnsetType()
-
-    # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

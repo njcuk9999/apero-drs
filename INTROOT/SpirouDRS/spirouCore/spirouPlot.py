@@ -146,7 +146,7 @@ def darkplot_image_and_regions(pp, image):
     # set up axis
     frame = plt.subplot(111)
     # plot the image
-    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['med_full']),
+    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['MED_FULL']),
                       cmap='jet')
     # plot the colorbar
     cbar = plt.colorbar(im, ax=frame)
@@ -233,9 +233,9 @@ def darkplot_histograms(pp):
     # set up axis
     frame = plt.subplot(111)
     # get variables from property dictionary
-    histo_f, edge_f = pp['histo_full']
-    histo_b, edge_b = pp['histo_blue']
-    histo_r, edge_r = pp['histo_red']
+    histo_f, edge_f = pp['HISTO_FULL']
+    histo_b, edge_b = pp['HISTO_BLUE']
+    histo_r, edge_r = pp['HISTO_RED']
     # plot the main histogram
     xf = np.repeat(edge_f, 2)
 #    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
@@ -362,12 +362,12 @@ def locplot_order_number_against_rms(pp, loc, rnum):
     # set up axis
     frame = plt.subplot(111)
     # plot image
-    frame.plot(np.arange(rnum), loc['rms_center'][0:rnum], label='center')
-    frame.plot(np.arange(rnum), loc['rms_fwhm'][0:rnum], label='fwhm')
+    frame.plot(np.arange(rnum), loc['RMS_CENTER'][0:rnum], label='center')
+    frame.plot(np.arange(rnum), loc['RMS_FWHM'][0:rnum], label='fwhm')
     # set title labels limits
     frame.set(xlim=(0, rnum), xlabel='Order number', ylabel='RMS [pixel]',
               title=('Dispersion of localization parameters fiber {0}'
-                     '').format(pp['fiber']))
+                     '').format(pp['FIBER']))
     # Add legend
     frame.legend(loc=0)
     # turn off interactive plotting
@@ -435,7 +435,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     """
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
-    WLOG('', pp['log_opt'], '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
+    WLOG('', pp['LOG_OPT'], '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
 
     xx = np.array([ind1, cgx - wx / 2., cgx - wx / 2., cgx - wx / 2., cgx,
                    cgx + wx / 2., cgx + wx / 2., cgx + wx / 2., ind2])
@@ -481,9 +481,9 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     :return None:
     """
     # get variables from loc dictionary
-    x = loc['x']
-    xo = loc['ctro'][rnum]
-    y = loc['res']
+    x = loc['X']
+    xo = loc['CTRO'][rnum]
+    y = loc['RES']
     # new fig
     plt.figure()
     # clear the current figure
@@ -511,7 +511,7 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
 def slit_sorder_plot(pp, loc, image):
     """
     Plot the image array and overplot the polyfit for the order defined in
-    p['ic_slit_order_plot']
+    p['IC_SLIT_ORDER_PLOT']
 
     :param pp: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -541,16 +541,16 @@ def slit_sorder_plot(pp, loc, image):
     # get selected order
     order = pp['IC_SLIT_ORDER_PLOT']
     # work out offset for this order
-    offset = np.polyval(loc['ass'][order][::-1], pp['IC_CENT_COL'])
+    offset = np.polyval(loc['ASS'][order][::-1], pp['IC_CENT_COL'])
     offset *= pp['IC_FACDEC']
-    offsetarray = np.zeros(len(loc['ass'][order]))
+    offsetarray = np.zeros(len(loc['ASS'][order]))
     offsetarray[0] = offset
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 30000.))
     # calculate selected order fit
     xfit = np.arange(image.shape[1])
-    yfit1 = np.polyval((loc['acc'][order] + offsetarray)[::-1], xfit)
-    yfit2 = np.polyval((loc['acc'][order] - offsetarray)[::-1], xfit)
+    yfit1 = np.polyval((loc['ACC'][order] + offsetarray)[::-1], xfit)
+    yfit2 = np.polyval((loc['ACC'][order] - offsetarray)[::-1], xfit)
     # plot selected order fit
     frame.plot(xfit, yfit1, color='red')
     frame.plot(xfit, yfit2, color='red')
@@ -587,9 +587,9 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot tilt
-    frame.plot(loc['xfit_tilt'], loc['tilt'], label='tilt')
+    frame.plot(loc['XFIT_TILT'], loc['TILT'], label='tilt')
     # plot tilt fit
-    frame.plot(loc['xfit_tilt'], loc['yfit_tilt'], label='tilt fit')
+    frame.plot(loc['XFIT_TILT'], loc['YFIT_TILT'], label='tilt fit')
     # set title and labels
     frame.set(title='SLIT TILT ANGLE', xlabel='Order number',
               ylabel='Slit angle [deg]')
@@ -631,7 +631,7 @@ def ff_sorder_fit_edges(p, loc, image):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
-    fiber = p['fiber']
+    fiber = p['FIBER']
 
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
@@ -643,7 +643,7 @@ def ff_sorder_fit_edges(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
-    acc = loc['acc'][selected_order]
+    acc = loc['ACC'][selected_order]
     # work out offsets for this order
     offsetarraylow = np.zeros(len(acc))
     offsetarrayhigh = np.zeros(len(acc))
@@ -697,7 +697,7 @@ def ff_aorder_fit_edges(p, loc, image):
     """
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
-    fiber = p['fiber']
+    fiber = p['FIBER']
 
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
@@ -710,8 +710,8 @@ def ff_aorder_fit_edges(p, loc, image):
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
 
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])//p['nbfib']):
-        acc = loc['acc'][order_num]
+    for order_num in range(len(loc['ACC'])//p['NBFIB']):
+        acc = loc['ACC'][order_num]
 
         # work out offsets for this order
         offsetarraylow = np.zeros(len(acc))
@@ -772,9 +772,9 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
 
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
-    fiber = p['fiber']
-    e2ds = loc['e2ds'][selected_order]
-    blaze = loc['blaze'][selected_order]
+    fiber = p['FIBER']
+    e2ds = loc['E2DS'][selected_order]
+    blaze = loc['BLAZE'][selected_order]
     # set up fig
     plt.figure()
     # clear the current figure
@@ -818,8 +818,8 @@ def ff_sorder_flat(p, loc):
     """
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
-    fiber = p['fiber']
-    flat = loc['flat'][selected_order]
+    fiber = p['FIBER']
+    flat = loc['FLAT'][selected_order]
     # set up fig
     plt.figure()
     # clear the current figure
@@ -869,7 +869,7 @@ def ext_sorder_fit(p, loc, image):
 
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
-    fiber = p['fiber']
+    fiber = p['FIBER']
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # set up fig
     plt.figure()
@@ -880,7 +880,7 @@ def ext_sorder_fit(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
-    acc = loc['acc'][selected_order]
+    acc = loc['ACC'][selected_order]
     # work out offsets for this order
     offsetarraylow = np.zeros(len(acc))
     offsetarrayhigh = np.zeros(len(acc))
@@ -931,7 +931,7 @@ def ext_aorder_fit(p, loc, image):
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # get constants
     selected_order = p['IC_FF_ORDER_PLOT']
-    fiber = p['fiber']
+    fiber = p['FIBER']
     # set up fig
     plt.figure()
     # clear the current figure
@@ -941,8 +941,8 @@ def ext_aorder_fit(p, loc, image):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
     # loop around the order numbers
-    for order_num in range(len(loc['acc'])//p['nbfib']):
-        acc = loc['acc'][order_num]
+    for order_num in range(len(loc['ACC'])//p['NBFIB']):
+        acc = loc['ACC'][order_num]
         # work out offsets for this order
         offsetarraylow = np.zeros(len(acc))
         offsetarrayhigh = np.zeros(len(acc))
@@ -999,13 +999,13 @@ def ext_spectral_order_plot(p, loc):
     """
     # get constants
     selected_order = p['IC_EXT_ORDER_PLOT']
-    fiber = p['fiber']
+    fiber = p['FIBER']
     # get data from loc
-    extraction = loc['e2ds'][selected_order]
+    extraction = loc['E2DS'][selected_order]
 
     # TODO: remove H2RG compatibility
     if p['IC_IMAGE_TYPE'] == 'H2RG':
-        wave = loc['wave'][selected_order]
+        wave = loc['WAVE'][selected_order]
         xlabel = 'Wavelength [$\AA$]'
     else:
         # for now in H4RG we don't have wavelength so use pixels
@@ -1058,14 +1058,14 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     """
     # get constants
     selected_order = p['IC_DRIFT_ORDER_PLOT']
-    fiber = p['fiber']
+    fiber = p['FIBER']
     # get data from loc
     if x is None:
-        wave = loc['wave'][selected_order]
+        wave = loc['WAVE'][selected_order]
     else:
         wave = np.array(x)[selected_order]
     if y is None:
-        extraction = loc['speref'][selected_order]
+        extraction = loc['SPEREF'][selected_order]
     else:
         extraction = np.array(y)[selected_order]
     # set up fig
@@ -1107,9 +1107,9 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     """
     # get data from loc
     if x is None:
-        x = np.arange(loc['number_orders'])
+        x = np.arange(loc['NUMBER_ORDERS'])
     if y is None:
-        y = loc['dvrmsref']
+        y = loc['DVRMSREF']
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1163,18 +1163,18 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     """
     func_name = __NAME__ + '.drift_plot_dtime_against_mdrift()'
     # get data from loc
-    deltatime = loc['deltatime']
-    mdrift = loc['mdrift']
-    merrdrift = loc['merrdrift']
+    deltatime = loc['DELTATIME']
+    mdrift = loc['MDRIFT']
+    merrdrift = loc['MERRDRIFT']
 
     if kind is None:
-        kindstr = p['drift_type_raw']
+        kindstr = p['DRIFT_TYPE_RAW']
     elif kind in ['raw', 'e2ds']:
         kindstr = p['drift_type_{0}'.format(kind)]
     else:
         emsg1 = 'kind="{0}" not understood'.format(kind)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         kindstr = None
     # get mstr from kindstr
     if kindstr == 'median':
@@ -1225,10 +1225,10 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     :return None:
     """
     # get data from loc
-    deltatime = loc['deltatime']
-    meanvr = loc['meanrv']
-    meanvrleft = loc['meanrv_left']
-    meanvrright = loc['meanrv_right']
+    deltatime = loc['DELTATIME']
+    meanvr = loc['MEANRV']
+    meanvrleft = loc['MEANRV_LEFT']
+    meanvrright = loc['MEANRV_RIGHT']
     # set up masks
     mask1 = meanvr > -999
     mask2 = meanvrleft > -999
@@ -1285,11 +1285,11 @@ def drift_plot_correlation_comp(p, loc, cc):
     """
 
     # get constants
-    prcut = p['drift_peak_pearsonr_cut']
-    nbo = loc['number_orders']
+    prcut = p['DRIFT_PEAK_PEARSONR_CUT']
+    nbo = loc['NUMBER_ORDERS']
     # get data
-    spe = loc['spe']
-    speref = loc['speref']
+    spe = loc['SPE']
+    speref = loc['SPEREF']
 
     # scale images
     spe_image, spe_scale = create_separated_scaled_image(spe)
@@ -1470,11 +1470,11 @@ def drift_peak_plot_llpeak_amps(p, loc):
     # get selected peak from
     selected_order = p['DRIFT_PEAK_SELECTED_ORDER']
     # get data from loc
-    wave = loc['wave'][selected_order]
-    extraction = loc['speref'][selected_order]
-    llpeak = loc['llpeak']
-    logamppeak = np.log10(loc['amppeak'])
-    dv = loc['dv']
+    wave = loc['WAVE'][selected_order]
+    extraction = loc['SPEREF'][selected_order]
+    llpeak = loc['LLPEAK']
+    logamppeak = np.log10(loc['AMPPEAK'])
+    dv = loc['DV']
     # calculate different thresholds
     mask1 = abs(dv) < 1000
     mask2 = abs(dv) < 100

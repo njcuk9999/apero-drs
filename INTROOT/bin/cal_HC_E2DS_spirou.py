@@ -59,11 +59,11 @@ if __name__ == '__main__':
     p = spirouStartup.InitialFileSetup(p, kind='cal_HC', prefixes='hc',
                                        calibdb=True)
     # get the fiber type
-    p['fiber'] = spirouStartup.GetFiberType(p, p['fitsfilename'])
-    p.set_source('fiber', __NAME__ + '/main()')
+    p['FIBER'] = spirouStartup.GetFiberType(p, p['FITSFILENAME'])
+    p.set_source('FIBER', __NAME__ + '/main()')
     # set the fiber type
-    p['fib_typ'] = [p['fiber']]
-    p.set_source('fib_typ', __NAME__ + '/main()')
+    p['FIB_TYP'] = [p['FIBER']]
+    p.set_source('FIB_TYP', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, 'add')
     # add data and hdr to loc
     loc = ParamDict()
-    loc['data'], loc['hdr'] = data, hdr
+    loc['DATA'], loc['HDR'] = data, hdr
     # set the source
     loc.set_sources(['data', 'hdr'], 'spirouImage.ReadImageAndCombine()')
 
@@ -87,10 +87,10 @@ if __name__ == '__main__':
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
     p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
-    bjdref = p['acqtime']
+    bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
     # get lamp parameters
     p = spirouTHORCA.GetLampParams(p)
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # Flat correction
     # ----------------------------------------------------------------------
     # log
-    WLOG('', p['log_opt'], 'Applying flat correction')
+    WLOG('', p['LOG_OPT'], 'Applying flat correction')
     # get the flat
     loc = spirouFLAT.CorrectFlat(p, loc, hdr)
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
         # log message for loop
         wmsg = 'Processing Wavelength Calibration for Fiber {0}'
-        WLOG('info', p['log_opt'] + p['FIBER'], wmsg.format(p['FIBER']))
+        WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
 
         # ------------------------------------------------------------------
         # First guess at solution for each order
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
 
 def main():

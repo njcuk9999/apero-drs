@@ -88,7 +88,7 @@ def measure_background_flatfield(p, image):
     # TODO: background spline interpolation - need to understand interpol.c
     # warning about not background code
     wmsg = 'No interpolation done in {0} (FUNCTION INCOMPLETE)'
-    WLOG('warning', p['log_opt'], wmsg.format(func_name))
+    WLOG('warning', p['LOG_OPT'], wmsg.format(func_name))
 
     # return background, xc, yc and minlevel
     return background, xc, yc, minlevel
@@ -144,9 +144,9 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     # (goodback and ycc are between 0 and 1)
     mean_backgrd = np.mean(goodback) * 100
     # Log the maximum signal and the mean background
-    WLOG('info', pp['log_opt'], ('Maximum flux/pixel in the spectrum: '
+    WLOG('info', pp['LOG_OPT'], ('Maximum flux/pixel in the spectrum: '
                                  '{0:.1f} [e-]').format(max_signal))
-    WLOG('info', pp['log_opt'], ('Average background level: '
+    WLOG('info', pp['LOG_OPT'], ('Average background level: '
                                  '{0:.2f} [%]').format(mean_backgrd))
     # if in debug mode plot y, miny and maxy else just plot y
     if pp['DRS_DEBUG'] == 0 and pp['DRS_PLOT']:
@@ -157,9 +157,9 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     # set function name (for source)
     func_name = __NAME__ + '.measure_background_and_get_central_pixels()'
     # Add to loc
-    loc['ycc'] = ycc
-    loc['mean_backgrd'] = mean_backgrd
-    loc['max_signal'] = max_signal
+    loc['YCC'] = ycc
+    loc['MEAN_BACKGRD'] = mean_backgrd
+    loc['MAX_SIGNAL'] = max_signal
     # set source
     loc.set_sources(['ycc', 'mean_backgrd', 'max_signal'], func_name)
     # return the localisation dictionary
