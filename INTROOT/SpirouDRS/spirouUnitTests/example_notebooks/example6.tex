@@ -1,0 +1,902 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+
+
+    
+\documentclass[11pt]{article}
+
+    
+    
+    \usepackage[T1]{fontenc}
+    % Nicer default font (+ math font) than Computer Modern for most use cases
+    \usepackage{mathpazo}
+
+    % Basic figure setup, for now with no caption control since it's done
+    % automatically by Pandoc (which extracts ![](path) syntax from Markdown).
+    \usepackage{graphicx}
+    % We will generate all images so they have a width \maxwidth. This means
+    % that they will get their normal width if they fit onto the page, but
+    % are scaled down if they would overflow the margins.
+    \makeatletter
+    \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+    \else\Gin@nat@width\fi}
+    \makeatother
+    \let\Oldincludegraphics\includegraphics
+    % Set max figure width to be 80% of text width, for now hardcoded.
+    \renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=.8\maxwidth]{#1}}
+    % Ensure that by default, figures have no caption (until we provide a
+    % proper Figure object with a Caption API and a way to capture that
+    % in the conversion process - todo).
+    \usepackage{caption}
+    \DeclareCaptionLabelFormat{nolabel}{}
+    \captionsetup{labelformat=nolabel}
+
+    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{xcolor} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage{textcomp} % defines textquotesingle
+    % Hack from http://tex.stackexchange.com/a/47451/13684:
+    \AtBeginDocument{%
+        \def\PYZsq{\textquotesingle}% Upright quotes in Pygmentized code
+    }
+    \usepackage{upquote} % Upright quotes for verbatim code
+    \usepackage{eurosym} % defines \euro
+    \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
+    \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics 
+                         % to support a larger range 
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
+    \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
+                                % normalem makes italics be italics, not underlines
+    
+
+    
+    
+    % Colors for the hyperref package
+    \definecolor{urlcolor}{rgb}{0,.145,.698}
+    \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+    \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+    % ANSI colors
+    \definecolor{ansi-black}{HTML}{3E424D}
+    \definecolor{ansi-black-intense}{HTML}{282C36}
+    \definecolor{ansi-red}{HTML}{E75C58}
+    \definecolor{ansi-red-intense}{HTML}{B22B31}
+    \definecolor{ansi-green}{HTML}{00A250}
+    \definecolor{ansi-green-intense}{HTML}{007427}
+    \definecolor{ansi-yellow}{HTML}{DDB62B}
+    \definecolor{ansi-yellow-intense}{HTML}{B27D12}
+    \definecolor{ansi-blue}{HTML}{208FFB}
+    \definecolor{ansi-blue-intense}{HTML}{0065CA}
+    \definecolor{ansi-magenta}{HTML}{D160C4}
+    \definecolor{ansi-magenta-intense}{HTML}{A03196}
+    \definecolor{ansi-cyan}{HTML}{60C6C8}
+    \definecolor{ansi-cyan-intense}{HTML}{258F8F}
+    \definecolor{ansi-white}{HTML}{C5C1B4}
+    \definecolor{ansi-white-intense}{HTML}{A1A6B2}
+
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \providecommand{\tightlist}{%
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+    
+    % Additional commands for more recent versions of Pandoc
+    \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
+    \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{{#1}}}
+    \newcommand{\ImportTok}[1]{{#1}}
+    \newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{{#1}}}}
+    \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{{#1}}}
+    \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{{#1}}}
+    \newcommand{\BuiltInTok}[1]{{#1}}
+    \newcommand{\ExtensionTok}[1]{{#1}}
+    \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{{#1}}}
+    \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
+    \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    
+    
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatability definitions
+    \def\gt{>}
+    \def\lt{<}
+    % Document parameters
+    \title{example6}
+    
+    
+    
+
+    % Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@fm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sa\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@dl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@mb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ch\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cpf\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % Exact colors from NB
+    \definecolor{incolor}{rgb}{0.0, 0.0, 0.5}
+    \definecolor{outcolor}{rgb}{0.545, 0.0, 0.0}
+
+
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy 
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=linkcolor,
+      citecolor=citecolor,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+    \begin{document}
+    
+    
+    \maketitle
+    
+    
+
+    
+    \section{Opening and saving files in an optimised
+way}\label{opening-and-saving-files-in-an-optimised-way}
+
+One of the main speed ups is a simple change in the efficiency of how we
+open and close files (especially fits files).
+
+Previously fits files were openned and closed at multiple points through
+out a single recipe, even when this was to/from the same fits file (i.e.
+when one wants to read/write the data or read/write fits header keys to
+a file.
+
+Below shows how this has been stream-lined to increase running speeds.
+
+Before we start we will set up a "mock" DRS recipe:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}94}]:} \PY{c+c1}{\PYZsh{} imports }
+         \PY{k+kn}{from} \PY{n+nn}{\PYZus{}\PYZus{}future\PYZus{}\PYZus{}} \PY{k+kn}{import} \PY{n}{division}
+         \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k+kn}{as} \PY{n+nn}{np}
+         \PY{k+kn}{import} \PY{n+nn}{os}
+         \PY{k+kn}{from} \PY{n+nn}{collections} \PY{k+kn}{import} \PY{n}{OrderedDict}
+         
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouConfig}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouCore}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouImage}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouLOCOR}
+         \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouStartup}
+         
+         \PY{c+c1}{\PYZsh{} =============================================================================}
+         \PY{c+c1}{\PYZsh{} Define variables}
+         \PY{c+c1}{\PYZsh{} =============================================================================}
+         \PY{c+c1}{\PYZsh{} Name of program}
+         \PY{n}{\PYZus{}\PYZus{}NAME\PYZus{}\PYZus{}} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}BADPIX\PYZus{}spirou.py}\PY{l+s+s1}{\PYZsq{}}
+         \PY{c+c1}{\PYZsh{} Get version and author}
+         \PY{n}{\PYZus{}\PYZus{}version\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{VERSION}\PY{p}{(}\PY{p}{)}
+         \PY{n}{\PYZus{}\PYZus{}author\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{AUTHORS}\PY{p}{(}\PY{p}{)}
+         \PY{n}{\PYZus{}\PYZus{}date\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{LATEST\PYZus{}EDIT}\PY{p}{(}\PY{p}{)}
+         \PY{n}{\PYZus{}\PYZus{}release\PYZus{}\PYZus{}} \PY{o}{=} \PY{n}{spirouConfig}\PY{o}{.}\PY{n}{Constants}\PY{o}{.}\PY{n}{RELEASE}\PY{p}{(}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} Get Logging function}
+         \PY{n}{WLOG} \PY{o}{=} \PY{n}{spirouCore}\PY{o}{.}\PY{n}{wlog}
+         \PY{c+c1}{\PYZsh{} Get plotting functions}
+         \PY{n}{sPlt} \PY{o}{=} \PY{n}{spirouCore}\PY{o}{.}\PY{n}{sPlt}
+         
+         \PY{c+c1}{\PYZsh{} noteboook only}
+         \PY{k+kn}{import} \PY{n+nn}{sys}
+         \PY{n}{sys}\PY{o}{.}\PY{n}{argv} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{example6.py}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{c+c1}{\PYZsh{} setup some fake file names}
+         \PY{n}{night\PYZus{}name} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}
+         \PY{n}{input\PYZus{}file} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}flat02f10.fits}\PY{l+s+s1}{\PYZsq{}}
+         \PY{n}{output\PYZus{}file} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}out.fits}\PY{l+s+s1}{\PYZsq{}}
+         
+         \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} Set up}
+         \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} get parameters from config files/run time args/load paths + calibdb}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{Begin}\PY{p}{(}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} deal with arguments being None (i.e. get from sys.argv)}
+         \PY{n}{pos} \PY{o}{=} \PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,} \PY{l+m+mi}{1}\PY{p}{]}
+         \PY{n}{fmt} \PY{o}{=} \PY{p}{[}\PY{n+nb}{str}\PY{p}{,} \PY{n+nb}{str}\PY{p}{]}
+         \PY{n}{names} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{inputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{outputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+         \PY{n}{call} \PY{o}{=} \PY{p}{[}\PY{n}{input\PYZus{}file}\PY{p}{,} \PY{n}{output\PYZus{}file}\PY{p}{]}
+         \PY{c+c1}{\PYZsh{} now get custom arguments}
+         \PY{n}{customargs} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{GetCustomFromRuntime}\PY{p}{(}\PY{n}{pos}\PY{p}{,} \PY{n}{fmt}\PY{p}{,} \PY{n}{names}\PY{p}{,} \PY{n}{calls}\PY{o}{=}\PY{n}{call}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} get parameters from configuration files and run time arguments}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{LoadArguments}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{night\PYZus{}name}\PY{p}{,} \PY{n}{customargs}\PY{o}{=}\PY{n}{customargs}\PY{p}{,}
+                                         \PY{n}{mainfitsfile}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{inputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} as we have custom arguments need to load the calibration database}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{LoadCalibDB}\PY{p}{(}\PY{n}{p}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   || * SPIROU @(\#) Geneva Observatory (0.1.032)}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(dir\_data\_raw)      DRS\_DATA\_RAW=/scratch/Projects/spirou\_py3/data/raw}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(dir\_data\_reduc)    DRS\_DATA\_REDUC=/scratch/Projects/spirou\_py3/data/reduced}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(dir\_calib\_db)      DRS\_CALIB\_DB=/scratch/Projects/spirou\_py3/data/calibDB}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(dir\_data\_msg)      DRS\_DATA\_MSG=/scratch/Projects/spirou\_py3/data/msg}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(print\_level)       PRINT\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(log\_level)         LOG\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(plot\_graph)        DRS\_PLOT=1            \%(def/undef/trigger)}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(used\_date)         DRS\_USED\_DATE=undefined}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||(working\_dir)       DRS\_DATA\_WORKING=/scratch/Projects/spirou\_py3/data/tmp}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   ||                    DRS\_INTERACTIVE is not set, running on-line mode}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Now running : example6 with: }}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|       -- inputfile=flat\_flat02f10.fits }}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|       -- outputfile=flat\_out.fits }}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|ICDP\_NAME loaded from: /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU.py}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_flat\_flat02f10\_badpixel.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_flat\_dark02f10\_blaze\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_dark\_flat02f10\_blaze\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_dark\_dark02d406.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_flat\_dark02f10\_flat\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_dark\_flat02f10\_flat\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_flat\_dark02f10\_loco\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_dark\_flat02f10\_loco\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_flat\_dark02f10\_order\_profile\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_dark\_flat02f10\_order\_profile\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 20170710\_fp\_fp02a203\_tilt.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: spirou\_wave\_ini3.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: spirou\_wave\_ini3.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:19:27.0 -   |example6|Calibration file: 2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_C.fits already exists - not copied}}
+
+    \end{Verbatim}
+
+    Lets test to see what this gives us in the parameter dictionary "p":
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}66}]:} \PY{c+c1}{\PYZsh{} parameters in \PYZdq{}p\PYZdq{} starting with the letter \PYZdq{}r\PYZdq{}}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{p.startswith(}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{r}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{) = \PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{p}\PY{o}{.}\PY{n}{startswith}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{r}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} the input file}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{p[}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{inputfile}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{] = \PYZob{}INPUTFILE\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} the output file}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{p[}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{outputfile}\PY{l+s+s1}{\PYZdq{}}\PY{l+s+s1}{] = \PYZob{}OUTPUTFILE\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:04:12.0 -   |example6|p.startswith("r") = ['REDUCED\_DIR', 'RAW\_DIR']}}
+\textcolor{ansi-green-intense}{\textbf{15:04:12.0 -   |example6|p["inputfile"] = flat\_flat02f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:04:12.0 -   |example6|p["outputfile"] = flat\_out.fits}}
+
+    \end{Verbatim}
+
+    Note here that these two variables were setup as custom inputs and do
+not have any information about the absolute path associated with the
+file. Also we used the startswidth command in p to look at which
+variables in p "start with" the letter "r".
+
+    \subsection{Reading fits files}\label{reading-fits-files}
+
+In general this is done as before. However when opening a fits file for
+the first time as well as reading the data the header is also read (and
+stored for later use).
+
+This means any time a HEADER key is needed there should be thought to
+whether the header already exists in the code (with the only exception
+being when we need a HEADER key from a previously unopened file).
+
+The main read functions are shown below:
+
+    \subsubsection{ReadImage}\label{readimage}
+
+Read image is a simple function which reads the input image and header.
+
+It returns the data, the header and comment dictionaries (header
+dictionary contains the header keys and their values, the comment
+dictionary contains the header keys and their comment values) and the
+dimensions of the image.
+
+"kind" keyword arguement sets the log name (i.e. "Reading \{KIND\} Image
+\{filename\}")
+
+The logging can be turned off in this function by using the log=False
+keyword argument.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}55}]:} \PY{c+c1}{\PYZsh{} construct file name}
+         \PY{n}{flatfilename} \PY{o}{=} \PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{RAW\PYZus{}DIR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{inputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Flat file name is: \PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{flatfilename}\PY{p}{)}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} Read Image (basic version)}
+         \PY{n}{flat\PYZus{}data}\PY{p}{,} \PY{n}{fhdr}\PY{p}{,} \PY{n}{fcmt}\PY{p}{,} \PY{n}{nx1}\PY{p}{,} \PY{n}{ny1} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{ReadImage}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{flatfilename}\PY{p}{,} \PY{n}{kind}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{FLAT}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:02:41.0 -   |example6|Flat file name is: /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_flat02f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:41.0 -   |example6|Reading FLAT Image /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_flat02f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:41.0 -   |example6|FLAT Image 2048 x 2048 loaded}}
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}56}]:} \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}data shape is \PYZob{}0\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{flat\PYZus{}data}\PY{o}{.}\PY{n}{shape}\PY{p}{)}\PY{p}{)}
+         
+         \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{The header has the following keys:}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{k}{print}\PY{p}{(}\PY{n+nb}{list}\PY{p}{(}\PY{n}{fhdr}\PY{o}{.}\PY{n}{keys}\PY{p}{(}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:02:43.0 -   |example6|flat\_data shape is (2048, 2048)}}
+
+The header has the following keys:
+['SIMPLE', 'BITPIX', 'NAXIS', 'EXTEND', 'NEXTEND', 'FASTMODE', 'REFOUT', 'REFPIXEL', 'ACQTIME', 'ACQTIME1', 'ASIC\_NUM', 'SCA\_ID', 'MUXTYPE', 'NOUTPUTS', 'WARMTST', 'GLBRESET', 'FRMODE', 'CAMLINK', 'EXPMODE', 'NRESETS', 'FRMTIME', 'EXPTIME', 'ACQTYPE', 'DATAMODE', 'BZERO', 'UNITS', 'HXRGVER', 'BSCALE', 'MCLK', 'SEQNUM\_R', 'FILENAME', 'PATHNAME', 'DATE', 'HSTTIME', 'IMAGESWV', 'OBSTYPE', 'EXPTYPE', 'INTT0001', 'INTT0002', 'INTT0003', 'INTT0004', 'INTT0005', 'INTT0006', 'INTT0007', 'INTT0008', 'INTT0009', 'INTT0010', 'POSE1', 'POSE2', 'POSE3', 'POSE4', 'POSE5', 'POSE6', 'POSE7', 'POSE8', 'POSE9', 'POSE10', 'SATUR1', 'SATUR2', 'INSTRUME', 'OBSERVAT', 'DARKTIME', 'GAIN', 'RDNOISE', 'RON\_EST', 'NSUBEXPS', 'TMID', 'CMEAN', 'OBJECT', 'OBJTYPE', 'OBJ2MASS', 'OBJGAIA', 'EQUINOX', 'EPOCH', 'RA', 'DEC', 'HA', 'ZD', 'PMRA', 'PMDEC', 'RADV', 'J2MASS', 'H2MASS', 'K2MASS', 'DATSTART', 'DATEND', 'MJDSTART', 'MJDMID', 'MJDEND', 'AMSTART', 'AMEND', 'FWSTART', 'FWEND', 'TPLNAME', 'TPLNEXP', 'TPLEXPNO', 'INSCALIB', 'INSLAMP', 'RHOMB1', 'RHOMB2', 'COMMENT', '@@@hname', '@@@fname']
+
+    \end{Verbatim}
+
+    \subsubsection{ReadImageAndCombine}\label{readimageandcombine}
+
+This is a special version of the read function which combines all the
+fits files in 'arg\_file\_names' (if there are more than one) by using
+the "framemath" keyword argument.
+
+i.e. in cal\_loc\_RAW\_spirou.py the user can define multiple files at
+run time as follows:
+
+\textgreater{}\textgreater{} cal\_loc\_RAW\_spirou.py 20170710
+flat\_dark02f10.fits flat\_dark03f10.fits flat\_dark04f10.fits
+flat\_dark05f10.fits flat\_dark06f10.fits
+
+These files are then combined (via adding them together):
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}57}]:} \PY{c+c1}{\PYZsh{} set up user inputted variables via sys.argv}
+         \PY{k+kn}{import} \PY{n+nn}{sys}
+         \PY{n}{sys}\PY{o}{.}\PY{n}{argv} \PY{o}{=} \PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}loc\PYZus{}RAW\PYZus{}spirou.py 20170710 flat\PYZus{}dark02f10.fits flat\PYZus{}dark03f10.fits flat\PYZus{}dark04f10.fits }\PY{l+s+s1}{\PYZsq{}}
+                     \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark05f10.fits flat\PYZus{}dark06f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{split}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ }\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} set the main function arguments to None (set from runtime via sys.argv)}
+         \PY{n}{night\PYZus{}name} \PY{o}{=} \PY{n+nb+bp}{None}
+         \PY{n}{files} \PY{o}{=} \PY{n+nb+bp}{None}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}58}]:} \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} Set up}
+         \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} get parameters from config files/run time args/load paths + calibdb}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{Begin}\PY{p}{(}\PY{p}{)}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{LoadArguments}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{night\PYZus{}name}\PY{p}{,} \PY{n}{files}\PY{p}{)}
+         \PY{c+c1}{\PYZsh{} run specific start up}
+         \PY{n}{params2add} \PY{o}{=} \PY{n+nb}{dict}\PY{p}{(}\PY{p}{)}
+         \PY{n}{params2add}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{spirouLOCOR}\PY{o}{.}\PY{n}{FiberParams}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{C}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{params2add}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{spirouLOCOR}\PY{o}{.}\PY{n}{FiberParams}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{AB}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{p} \PY{o}{=} \PY{n}{spirouStartup}\PY{o}{.}\PY{n}{InitialFileSetup}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{kind}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{localisation}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}
+                                            \PY{n}{prefixes}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,}
+                                            \PY{n}{add\PYZus{}to\PYZus{}p}\PY{o}{=}\PY{n}{params2add}\PY{p}{,} \PY{n}{calibdb}\PY{o}{=}\PY{n+nb+bp}{True}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   || * SPIROU @(\#) Geneva Observatory (0.1.032)}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(dir\_data\_raw)      DRS\_DATA\_RAW=/scratch/Projects/spirou\_py3/data/raw}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(dir\_data\_reduc)    DRS\_DATA\_REDUC=/scratch/Projects/spirou\_py3/data/reduced}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(dir\_calib\_db)      DRS\_CALIB\_DB=/scratch/Projects/spirou\_py3/data/calibDB}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(dir\_data\_msg)      DRS\_DATA\_MSG=/scratch/Projects/spirou\_py3/data/msg}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(print\_level)       PRINT\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(log\_level)         LOG\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(plot\_graph)        DRS\_PLOT=1            \%(def/undef/trigger)}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(used\_date)         DRS\_USED\_DATE=undefined}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||(working\_dir)       DRS\_DATA\_WORKING=/scratch/Projects/spirou\_py3/data/tmp}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   ||                    DRS\_INTERACTIVE is not set, running on-line mode}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Now running : cal\_loc\_RAW\_spirou on file(s): flat\_dark02f10.fits, flat\_dark03f10.fits, flat\_dark04f10.fits, flat\_dark05f10.fits, flat\_dark06f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|On directory /scratch/Projects/spirou\_py3/data/raw/20170710}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|ICDP\_NAME loaded from: /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU.py}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 - * |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Correct type of image for localisation (dark\_flat or flat\_dark)}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_flat\_flat02f10\_badpixel.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_flat\_dark02f10\_blaze\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_dark\_flat02f10\_blaze\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_dark\_dark02d406.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_flat\_dark02f10\_flat\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_dark\_flat02f10\_flat\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_flat\_dark02f10\_loco\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_dark\_flat02f10\_loco\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_flat\_dark02f10\_order\_profile\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_dark\_flat02f10\_order\_profile\_C.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 20170710\_fp\_fp02a203\_tilt.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: spirou\_wave\_ini3.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_AB.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: spirou\_wave\_ini3.fits already exists - not copied}}
+\textcolor{ansi-green-intense}{\textbf{15:02:46.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Calibration file: 2017-10-11\_21-32-17\_hcone\_hcone02c406\_wave\_C.fits already exists - not copied}}
+
+    \end{Verbatim}
+
+    The files and night\_name were added in the standard way (i.e. without
+customisation) therefore the filenames are loaded into "fitsfilename"
+and "arg\_file\_names" as is default with the DRS:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}59}]:} \PY{c+c1}{\PYZsh{} check the file names}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fitsfilename = \PYZob{}FITSFILENAME\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{arg\PYZus{}file\PYZus{}names = \PYZob{}ARG\PYZus{}FILE\PYZus{}NAMES\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:02:48.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|fitsfilename = /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark02f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:48.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|arg\_file\_names = ['flat\_dark02f10.fits', 'flat\_dark03f10.fits', 'flat\_dark04f10.fits', 'flat\_dark05f10.fits', 'flat\_dark06f10.fits']}}
+
+    \end{Verbatim}
+
+    Now one can use ReadImageAndCombine to combine all the files in
+"arg\_file\_names":
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}60}]:} \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} Read image file}
+         \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+         \PY{c+c1}{\PYZsh{} read the image data}
+         \PY{n}{data}\PY{p}{,} \PY{n}{hdr}\PY{p}{,} \PY{n}{cdr}\PY{p}{,} \PY{n}{nx}\PY{p}{,} \PY{n}{ny} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{ReadImageAndCombine}\PY{p}{(}\PY{n}{p}\PY{p}{,} \PY{n}{framemath}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{add}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Reading Image /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark02f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Image 2048 x 2048 loaded}}
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 - * |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Adding 4 frame(s)}}
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Reading File: /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark03f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Reading File: /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark04f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Reading File: /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark05f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{15:02:50.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|Reading File: /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_dark06f10.fits}}
+
+    \end{Verbatim}
+
+    Note that currently to be consistent with the old DRS this process
+updates the value of "fitsfilename" to the last file called in the
+combining process (this is probably not wanted but is here for
+consistency):
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}61}]:} \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fitsfilename = \PYZob{}FITSFILENAME\PYZcb{}   \PYZlt{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} Here}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+         \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{arg\PYZus{}file\PYZus{}names = \PYZob{}ARG\PYZus{}FILE\PYZus{}NAMES\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:02:51.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|fitsfilename = flat\_dark06f10.fits   <------ Here}}
+\textcolor{ansi-green-intense}{\textbf{15:02:51.0 -   |cal\_loc\_RAW\_spirou:02f10+[{\ldots}]|arg\_file\_names = ['flat\_dark02f10.fits', 'flat\_dark03f10.fits', 'flat\_dark04f10.fits', 'flat\_dark05f10.fits', 'flat\_dark06f10.fits']}}
+
+    \end{Verbatim}
+
+    \subsection{Writing fits file and header
+keys}\label{writing-fits-file-and-header-keys}
+
+This was overhauled as it represented one of the slowest steps of any
+recipe.
+
+Some simple rules should be followed:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  generate the data to be saved
+\item
+  generate a dictionary to save the key's and the value/comments to:
+\end{enumerate}
+
+\begin{quote}
+\begin{quote}
+Note hdict entries should be in the following format:
+\textgreater{}\textgreater{} hdict{[}'KEY'{]} = {[}'value', 'comment'{]}
+\end{quote}
+\end{quote}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  save the data \textbf{and} hdict one time before the recipe finishes
+  (if at all possible)
+\end{enumerate}
+
+This process is shown below for a fake output file:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}103}]:} \PY{c+c1}{\PYZsh{} reset sys.argv}
+          \PY{k+kn}{import} \PY{n+nn}{sys}
+          \PY{n}{sys}\PY{o}{.}\PY{n}{argv} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{example6}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+          
+          \PY{c+c1}{\PYZsh{} fake data}
+          \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{creating fake data}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+          \PY{n}{fakedata} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{random}\PY{p}{(}\PY{n}{size}\PY{o}{=}\PY{l+m+mi}{100}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2}\PY{p}{)}\PY{o}{.}\PY{n}{reshape}\PY{p}{(}\PY{l+m+mi}{100}\PY{p}{,} \PY{l+m+mi}{100}\PY{p}{)}
+          \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fake data shape = (\PYZob{}0\PYZcb{} x \PYZob{}1\PYZcb{})}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{n}{fakedata}\PY{o}{.}\PY{n}{shape}\PY{p}{)}\PY{p}{)}
+          
+          \PY{c+c1}{\PYZsh{} check file name}
+          \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{output file = \PYZob{}OUTPUTFILE\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:28:23.0 -   |example6|creating fake data}}
+\textcolor{ansi-green-intense}{\textbf{15:28:23.0 -   |example6|fake data shape = (100 x 100)}}
+\textcolor{ansi-green-intense}{\textbf{15:28:23.0 -   |example6|output file = flat\_out.fits}}
+
+    \end{Verbatim}
+
+    \subsubsection{Adding a header}\label{adding-a-header}
+
+    Now we can create hdict (the header dictionary).
+
+There are several functions that can be used to help us here.
+
+\begin{itemize}
+\tightlist
+\item
+  One can import keys from another HEADER (CopyOriginalKeys)
+\item
+  One can add a single key (AddKey)
+\item
+  One can add a 1DList of keys
+\item
+  One can add a 2DList of keys
+\end{itemize}
+
+These are all shown below:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}96}]:} \PY{c+c1}{\PYZsh{} create the hdict (can be left for the functions to generate)}
+         \PY{n}{hdict} \PY{o}{=} \PY{n}{OrderedDict}\PY{p}{(}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} lets copy the keys from the flat file}
+         \PY{c+c1}{\PYZsh{}  (recall the header files were called fhdr and fcmt)}
+         \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{CopyOriginalKeys}\PY{p}{(}\PY{n}{fhdr}\PY{p}{,} \PY{n}{fcmt}\PY{p}{,} \PY{n}{hdict}\PY{o}{=}\PY{n}{hdict}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} lets print the keys:}
+         \PY{k}{print}\PY{p}{(}\PY{n+nb}{list}\PY{p}{(}\PY{n}{hdict}\PY{o}{.}\PY{n}{keys}\PY{p}{(}\PY{p}{)}\PY{p}{)}\PY{p}{)}
+         
+         \PY{c+c1}{\PYZsh{} and lets print one entry}
+         \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{ key = (value, comment)}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+         \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ gain = \PYZob{}GAIN\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{hdict}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+['NEXTEND', 'FASTMODE', 'REFOUT', 'REFPIXEL', 'ACQTIME', 'ACQTIME1', 'ASIC\_NUM', 'SCA\_ID', 'MUXTYPE', 'NOUTPUTS', 'WARMTST', 'GLBRESET', 'FRMODE', 'CAMLINK', 'EXPMODE', 'NRESETS', 'FRMTIME', 'EXPTIME', 'ACQTYPE', 'DATAMODE', 'UNITS', 'HXRGVER', 'MCLK', 'SEQNUM\_R', 'FILENAME', 'PATHNAME', 'DATE', 'HSTTIME', 'IMAGESWV', 'OBSTYPE', 'EXPTYPE', 'INTT0001', 'INTT0002', 'INTT0003', 'INTT0004', 'INTT0005', 'INTT0006', 'INTT0007', 'INTT0008', 'INTT0009', 'INTT0010', 'POSE1', 'POSE2', 'POSE3', 'POSE4', 'POSE5', 'POSE6', 'POSE7', 'POSE8', 'POSE9', 'POSE10', 'SATUR1', 'SATUR2', 'INSTRUME', 'OBSERVAT', 'DARKTIME', 'GAIN', 'RDNOISE', 'RON\_EST', 'NSUBEXPS', 'TMID', 'CMEAN', 'OBJECT', 'OBJTYPE', 'OBJ2MASS', 'OBJGAIA', 'EQUINOX', 'EPOCH', 'RA', 'DEC', 'HA', 'ZD', 'PMRA', 'PMDEC', 'RADV', 'J2MASS', 'H2MASS', 'K2MASS', 'DATSTART', 'DATEND', 'MJDSTART', 'MJDMID', 'MJDEND', 'AMSTART', 'AMEND', 'FWSTART', 'FWEND', 'TPLNAME', 'TPLNEXP', 'TPLEXPNO', 'INSCALIB', 'INSLAMP', 'RHOMB1', 'RHOMB2']
+
+ key = (value, comment)
+ gain = (1.3, '[(e-/ADU)] gain')
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}109}]:} \PY{c+c1}{\PYZsh{} we need to use keyword stores to add keys}
+          \PY{c+c1}{\PYZsh{}   These are lists that should be located in spirouKeywords.py (loaded into \PYZdq{}p\PYZdq{})}
+          \PY{c+c1}{\PYZsh{} i.e.:}
+          \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Example keyword store:}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+          \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{ kw\PYZus{}LOCO\PYZus{}NBO = \PYZob{}KW\PYZus{}LOCO\PYZus{}NBO\PYZcb{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{o}{*}\PY{o}{*}\PY{n}{p}\PY{p}{)}\PY{p}{)}
+          
+          \PY{c+c1}{\PYZsh{} lets create a fake one to add to}
+          \PY{n}{kw\PYZus{}inputfile} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{INFILE}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+m+mf}{0.0}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{The input file}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+          \PY{n}{kw\PYZus{}fake1dlist} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MY1LST}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+m+mf}{0.0}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{The fake 1D list}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+          \PY{n}{kw\PYZus{}fake2dlist} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{MY2LST}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+m+mf}{0.0}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{The fake 2D list}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+          
+          \PY{c+c1}{\PYZsh{} lets also create a fake 2D list}
+          \PY{n}{my1dlist} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,} \PY{l+m+mi}{10}\PY{p}{)}
+          \PY{n}{my2dlist} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,} \PY{l+m+mi}{30}\PY{p}{)}\PY{o}{.}\PY{n}{reshape}\PY{p}{(}\PY{l+m+mi}{3}\PY{p}{,} \PY{l+m+mi}{10}\PY{p}{)}
+          
+          \PY{c+c1}{\PYZsh{} reset hdict from above}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{OrderedDict}\PY{p}{(}\PY{p}{)}
+          
+          \PY{c+c1}{\PYZsh{} Now lets add some keys}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{kw\PYZus{}version}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{kw\PYZus{}inputfile}\PY{p}{,} \PY{n}{value}\PY{o}{=}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{inputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey1DList}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{kw\PYZus{}fake1dlist}\PY{p}{,} \PY{n}{values}\PY{o}{=}\PY{n}{my1dlist}\PY{p}{)}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey2DList}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{kw\PYZus{}fake2dlist}\PY{p}{,} \PY{n}{values}\PY{o}{=}\PY{n}{my2dlist}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+Example keyword store:
+
+	 kw\_LOCO\_NBO = ['LONBO', 0, 'nb orders localised']
+
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}106}]:} \PY{c+c1}{\PYZsh{} lets print all entries in hdict:}
+          \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Example header from hdict: }\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+          \PY{c+c1}{\PYZsh{} loop around keys}
+          \PY{k}{for} \PY{n}{key} \PY{o+ow}{in} \PY{n}{hdict}\PY{p}{:}
+              \PY{c+c1}{\PYZsh{} get value and comment}
+              \PY{n}{value}\PY{p}{,} \PY{n}{comment} \PY{o}{=} \PY{n}{hdict}\PY{p}{[}\PY{n}{key}\PY{p}{]}
+              \PY{c+c1}{\PYZsh{} print}
+              \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{\PYZob{}0\PYZcb{} = \PYZob{}1\PYZcb{} /\PYZob{}2\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{key}\PY{p}{,} \PY{n}{value}\PY{p}{,} \PY{n}{comment}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+Example header from hdict: 
+	VERSION = SPIROU\_0.1.032 /DRS version
+	INPUTFILE = flat\_flat02f10.fits /The input file
+	MY1LST0 = 0 /The fake 1D list order=0
+	MY1LST1 = 1 /The fake 1D list order=1
+	MY1LST2 = 2 /The fake 1D list order=2
+	MY1LST3 = 3 /The fake 1D list order=3
+	MY1LST4 = 4 /The fake 1D list order=4
+	MY1LST5 = 5 /The fake 1D list order=5
+	MY1LST6 = 6 /The fake 1D list order=6
+	MY1LST7 = 7 /The fake 1D list order=7
+	MY1LST8 = 8 /The fake 1D list order=8
+	MY1LST9 = 9 /The fake 1D list order=9
+	MY2LST0 = 0 /The fake 2D list order=0 coeff=0
+	MY2LST1 = 1 /The fake 2D list order=0 coeff=1
+	MY2LST2 = 2 /The fake 2D list order=0 coeff=2
+	MY2LST3 = 3 /The fake 2D list order=0 coeff=3
+	MY2LST4 = 4 /The fake 2D list order=0 coeff=4
+	MY2LST5 = 5 /The fake 2D list order=0 coeff=5
+	MY2LST6 = 6 /The fake 2D list order=0 coeff=6
+	MY2LST7 = 7 /The fake 2D list order=0 coeff=7
+	MY2LST8 = 8 /The fake 2D list order=0 coeff=8
+	MY2LST9 = 9 /The fake 2D list order=0 coeff=9
+	MY2LST10 = 10 /The fake 2D list order=1 coeff=0
+	MY2LST11 = 11 /The fake 2D list order=1 coeff=1
+	MY2LST12 = 12 /The fake 2D list order=1 coeff=2
+	MY2LST13 = 13 /The fake 2D list order=1 coeff=3
+	MY2LST14 = 14 /The fake 2D list order=1 coeff=4
+	MY2LST15 = 15 /The fake 2D list order=1 coeff=5
+	MY2LST16 = 16 /The fake 2D list order=1 coeff=6
+	MY2LST17 = 17 /The fake 2D list order=1 coeff=7
+	MY2LST18 = 18 /The fake 2D list order=1 coeff=8
+	MY2LST19 = 19 /The fake 2D list order=1 coeff=9
+	MY2LST20 = 20 /The fake 2D list order=2 coeff=0
+	MY2LST21 = 21 /The fake 2D list order=2 coeff=1
+	MY2LST22 = 22 /The fake 2D list order=2 coeff=2
+	MY2LST23 = 23 /The fake 2D list order=2 coeff=3
+	MY2LST24 = 24 /The fake 2D list order=2 coeff=4
+	MY2LST25 = 25 /The fake 2D list order=2 coeff=5
+	MY2LST26 = 26 /The fake 2D list order=2 coeff=6
+	MY2LST27 = 27 /The fake 2D list order=2 coeff=7
+	MY2LST28 = 28 /The fake 2D list order=2 coeff=8
+	MY2LST29 = 29 /The fake 2D list order=2 coeff=9
+
+    \end{Verbatim}
+
+    Note by default the dimension names are 'order' and 'coeff' this can be
+changed with the "dim1name" and "dim2name" keyword arguments:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}110}]:} \PY{c+c1}{\PYZsh{} reset hdict from above}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{OrderedDict}\PY{p}{(}\PY{p}{)}
+          
+          \PY{c+c1}{\PYZsh{} Now lets add some keys}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{kw\PYZus{}version}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{kw\PYZus{}inputfile}\PY{p}{,} \PY{n}{value}\PY{o}{=}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{inputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey1DList}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{kw\PYZus{}fake1dlist}\PY{p}{,} \PY{n}{values}\PY{o}{=}\PY{n}{my1dlist}\PY{p}{,} \PY{n}{dim1name}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dim1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+          \PY{n}{hdict} \PY{o}{=} \PY{n}{spirouImage}\PY{o}{.}\PY{n}{AddKey2DList}\PY{p}{(}\PY{n}{hdict}\PY{p}{,} \PY{n}{kw\PYZus{}fake2dlist}\PY{p}{,} \PY{n}{values}\PY{o}{=}\PY{n}{my2dlist}\PY{p}{,} \PY{n}{dim1name}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dim1}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{dim2name}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dim2}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+          
+          \PY{c+c1}{\PYZsh{} lets print all entries in hdict:}
+          \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Example header from hdict: }\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+          \PY{c+c1}{\PYZsh{} loop around keys}
+          \PY{k}{for} \PY{n}{key} \PY{o+ow}{in} \PY{n}{hdict}\PY{p}{:}
+              \PY{c+c1}{\PYZsh{} get value and comment}
+              \PY{n}{value}\PY{p}{,} \PY{n}{comment} \PY{o}{=} \PY{n}{hdict}\PY{p}{[}\PY{n}{key}\PY{p}{]}
+              \PY{c+c1}{\PYZsh{} print}
+              \PY{k}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}t}\PY{l+s+s1}{\PYZob{}0\PYZcb{} = \PYZob{}1\PYZcb{} /\PYZob{}2\PYZcb{}}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{key}\PY{p}{,} \PY{n}{value}\PY{p}{,} \PY{n}{comment}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+Example header from hdict: 
+	VERSION = SPIROU\_0.1.032 /DRS version
+	INFILE = flat\_flat02f10.fits /The input file
+	MY1LST0 = 0 /The fake 1D list dim1=0
+	MY1LST1 = 1 /The fake 1D list dim1=1
+	MY1LST2 = 2 /The fake 1D list dim1=2
+	MY1LST3 = 3 /The fake 1D list dim1=3
+	MY1LST4 = 4 /The fake 1D list dim1=4
+	MY1LST5 = 5 /The fake 1D list dim1=5
+	MY1LST6 = 6 /The fake 1D list dim1=6
+	MY1LST7 = 7 /The fake 1D list dim1=7
+	MY1LST8 = 8 /The fake 1D list dim1=8
+	MY1LST9 = 9 /The fake 1D list dim1=9
+	MY2LST0 = 0 /The fake 2D list dim1=0 dim2=0
+	MY2LST1 = 1 /The fake 2D list dim1=0 dim2=1
+	MY2LST2 = 2 /The fake 2D list dim1=0 dim2=2
+	MY2LST3 = 3 /The fake 2D list dim1=0 dim2=3
+	MY2LST4 = 4 /The fake 2D list dim1=0 dim2=4
+	MY2LST5 = 5 /The fake 2D list dim1=0 dim2=5
+	MY2LST6 = 6 /The fake 2D list dim1=0 dim2=6
+	MY2LST7 = 7 /The fake 2D list dim1=0 dim2=7
+	MY2LST8 = 8 /The fake 2D list dim1=0 dim2=8
+	MY2LST9 = 9 /The fake 2D list dim1=0 dim2=9
+	MY2LST10 = 10 /The fake 2D list dim1=1 dim2=0
+	MY2LST11 = 11 /The fake 2D list dim1=1 dim2=1
+	MY2LST12 = 12 /The fake 2D list dim1=1 dim2=2
+	MY2LST13 = 13 /The fake 2D list dim1=1 dim2=3
+	MY2LST14 = 14 /The fake 2D list dim1=1 dim2=4
+	MY2LST15 = 15 /The fake 2D list dim1=1 dim2=5
+	MY2LST16 = 16 /The fake 2D list dim1=1 dim2=6
+	MY2LST17 = 17 /The fake 2D list dim1=1 dim2=7
+	MY2LST18 = 18 /The fake 2D list dim1=1 dim2=8
+	MY2LST19 = 19 /The fake 2D list dim1=1 dim2=9
+	MY2LST20 = 20 /The fake 2D list dim1=2 dim2=0
+	MY2LST21 = 21 /The fake 2D list dim1=2 dim2=1
+	MY2LST22 = 22 /The fake 2D list dim1=2 dim2=2
+	MY2LST23 = 23 /The fake 2D list dim1=2 dim2=3
+	MY2LST24 = 24 /The fake 2D list dim1=2 dim2=4
+	MY2LST25 = 25 /The fake 2D list dim1=2 dim2=5
+	MY2LST26 = 26 /The fake 2D list dim1=2 dim2=6
+	MY2LST27 = 27 /The fake 2D list dim1=2 dim2=7
+	MY2LST28 = 28 /The fake 2D list dim1=2 dim2=8
+	MY2LST29 = 29 /The fake 2D list dim1=2 dim2=9
+
+    \end{Verbatim}
+
+    \subsubsection{\texorpdfstring{Saving the file and header
+(\textbf{ONCE})}{Saving the file and header (ONCE)}}\label{saving-the-file-and-header-once}
+
+After the data has be generated and the hdict dictionary made (as above)
+one can save both of these in one operation:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}112}]:} \PY{c+c1}{\PYZsh{} construct absolute filename}
+          \PY{n}{fakeoutfile} \PY{o}{=} \PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{REDUCED\PYZus{}DIR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{outputfile}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+          \PY{c+c1}{\PYZsh{} write to file (filename, data, hdict)}
+          \PY{n}{WLOG}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{p}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{log\PYZus{}opt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Writing file \PYZob{}0\PYZcb{} to disk}\PY{l+s+s1}{\PYZsq{}}\PY{o}{.}\PY{n}{format}\PY{p}{(}\PY{n}{fakeoutfile}\PY{p}{)}\PY{p}{)}
+          \PY{n}{spirouImage}\PY{o}{.}\PY{n}{WriteImage}\PY{p}{(}\PY{n}{fakeoutfile}\PY{p}{,} \PY{n}{fakedata}\PY{p}{,} \PY{n}{hdict}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{15:29:41.0 -   |example6|Writing file /scratch/Projects/spirou\_py3/data/reduced/20170710/flat\_out.fits to disk}}
+
+    \end{Verbatim}
+
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+    \end{document}

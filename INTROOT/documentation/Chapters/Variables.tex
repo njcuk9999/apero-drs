@@ -116,6 +116,13 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 \fi
 
 
+% IC_IMAGE_TYPE
+\item \namedlabel{text:ic_image_type} \ParameterEntry{DRS Detector Type}
+{Defines the detector. Value must be a valid string. Currently supported values are: ``H2RG'' or ``H4RG''.}
+{IC\_IMAGE\_TYPE}{H4RG}
+{\AllRecipes}{\constantsfile}{\AllRecipes}{Public}
+
+
 % DRS_RELEASE
 \ifdevguide
 \item \ParameterEntry{Release type}
@@ -935,6 +942,20 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 \DevNote{This was formally called `nbo' and was hard coded in \calFFraw.}
 
 
+% FF_START_ORDER
+\item \ParameterEntry{Flat extraction start order}
+{Start order of the extract for the flat finding recipe. If value is "None" uses start order = 0, else must be a positive order number less than the total number of orders.}
+{ff\_start\_order}{None}
+{\calFFraw}{\constantsfile}{\spirouFLAT.get\_valid\_orders()}{Public}
+
+
+% FF_END_ORDER
+\item \ParameterEntry{Flat extraction end order}
+{End order of the extract for the flat finding recipe. If value is "None" uses last order, else must be a positive order number less than the total number of orders.}
+{ff\_end\_order}{None}
+{\calFFraw}{\constantsfile}{\spirouFLAT.get\_valid\_orders()}{Public}
+
+
 % ic_ff_sigdet
 \item \ParameterEntry{The manually set sigdet for flat fielding.}
 {This defines the sigdet to use in the weighted tilt extraction. Set to -1 to use from the input file (`fitsfilename') HEADER. Value must be either -1 or a positive float.}
@@ -1005,6 +1026,21 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 {\calSLIT, \calFFraw}{\constantsfile}
 {\spirouEXTOR.extract\_AB\_order(), \spirouEXTOR.extract\_order}{Public}
 
+
+% EXT_START_ORDER
+\item \ParameterEntry{Extraction start order}
+{Start order of the extract for the extraction. If value is "None" uses start order = 0, else must be a positive order number less than the total number of orders.}
+{ff\_start\_order}{None}
+{\calextractRAW}{\constantsfile}{\spirouEXTOR.get\_valid\_orders()}{Public}
+
+
+% EXT_END_ORDER
+\item \ParameterEntry{Extraction end order}
+{End order of the extract for the extraction. If value is "None" uses last order, else must be a positive order number less than the total number of orders.}
+{ff\_end\_order}{None}
+{\calextractRAW}{\constantsfile}{\spirouEXTOR.get\_valid\_orders()}{Public}
+
+
 % ic_extnbsig
 \item \ParameterEntry{Extraction distance - rough extraction}
 {The pixels are extracted from the centre of the order out to the edges in the row direction (y-axis), i.e. defines the illuminated part of the order). Used for estimating the slit tilt and in calculating the blaze/flat fielding. Value must be a positive float between 0 and the total number of rows (y-axis dimension).}
@@ -1027,6 +1063,13 @@ Value should be a python string with one of the above values only. Any other val
 {ic\_extract\_type}{tiltweight}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
 \DevNote{For all we should probably use tiltweight but as \calextractRAWAB and \calextractRAWC currently use weight for the E2DS this is set to reproduce this.}
+
+
+% IC_EXT_TILT_BORD
+\item \ParameterEntry{Tilt border}
+{Set the number of pixels to set as the border (needed to allow for tilt to not go off edge of image). Value must be a positive integer, smaller than half the number of x pixels.}
+{ic\_ext\_tilt\_bord}{2}
+{\calextractRAW, \calFFraw}{\constantsfile}{\spirouEXTOR.extract\_tilt\_order(), \spirouEXTOR.extract\_tilt\_weight\_order(), \spirouEXTOR.extract\_tilt\_weight\_order2()}{Public}
 
 % ic_ext_sigdet
 \item \namedlabel{text:ic_ext_sigdet} \ParameterEntry{Manually set the extraction sigdet}
@@ -1363,13 +1406,97 @@ then the whole image (E2DS file) is rejected. Value must be a float larger than 
 	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels()}{Public}
 
 
+	% badpix_full_flat
+	\item \ParameterEntry{Full detector flat file}
+	{Defines the full detector flat file (located in the data folder)}
+	{badpix\_full\_flat}{`detector\_flat\_full.fits'}
+	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels\_full()}{Public}
+
+	% badpix_full_threshold
+	\item \ParameterEntry{Full detector good threshold}
+	{Defines the threshold on the full detector flat file to deem pixels as good}
+	{badpix\_full\_threshold}{0.3}
+	{\calbadpix}{\constantsfile}{\spirouImage.locate\_bad\_pixels\_full()}{Public}
+
 \end{itemize}
 
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{CCF calibration variables}
+\label{ch:variables:ccf}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% IC_CCF_WIDTH
+\item \ParameterEntry{CCF Width}
+{Define the width of the CCF range. Value must be a positive integer.}
+{ic\_ccf\_width}{30.0}
+{\calCCF}{\constantsfile}{\calCCF.main()}{Public}
 
 
+% IC_CCF_STEP
+\item \ParameterEntry{CCF Step}
+{Define the computations steps of the CCF }
+{ic\_ccf\_step}{0.5}
+{\calCCF}{\constantsfile}{\calCCF.main()}{Public}
+
+
+% IC_W_MASK_MIN
+\item \ParameterEntry{CCF mask weight}
+{Define the weight of the CCF mask (if 1 force all weights equal)}
+{ic\_w\_mask\_min}{0.0}
+{\calCCF}{\constantsfile}{\spirouRV.get\_ccf\_mask()}{Public}
+
+
+% IC_MASK_WIDTH
+\item \ParameterEntry{Template line width}
+{Define the width of the template line (if 0 use natural)}
+{ic\_mask\_width}{1.7}
+{\calCCF}{\constantsfile}{\spirouRV.get\_ccf\_mask()}{Public}
+
+
+% CCF_BERV
+\item \ParameterEntry{Barycentric Earth RV}
+{Define the barycentric Earth RV (berv)}
+{ccf\_berv}{0.0}
+{\calCCF}{\constantsfile}{\spirouRV.coravelation()}{Public}
+
+
+% CCF_BERV_MAX
+\item \ParameterEntry{Maximum barycentric Earth RV}
+{Define the maximum barycentric Earth RV }
+{ccf\_berv\_max}{0.0}
+{\calCCF}{\constantsfile}{\spirouRV.coravelation()}{Public}
+
+
+% CCF_DET_NOISE
+\item \ParameterEntry{Detector CCF noise}
+{Define the detector noise to use in the CCF.}
+{ccf\_det\_noise}{100.0}
+{\calCCF}{\constantsfile}{\spirouRV.coravelation()}{Public}
+
+
+% CCF_FIT_TYPE
+\item \ParameterEntry{CCF Fit type}
+{Define the type of fit for the CCF fit.}
+{ccf\_fit\_type}{0}
+{\calCCF}{\constantsfile}{\spirouRV.coravelation()}{Public}
+
+
+% CCF_NUM_ORDERS_MAX
+\item \ParameterEntry{CCF end order number.}
+{Define the number of orders (from zero to ccf\_num\_orders\_max) to use to calculate the CCF and RV}
+{ccf\_num\_orders\_max}{25}
+{\calCCF}{\constantsfile}{\calCCF.main()}{Public}
+
+\end{itemize}
 
 
 
