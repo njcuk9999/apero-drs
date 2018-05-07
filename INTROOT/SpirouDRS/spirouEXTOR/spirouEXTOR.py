@@ -72,46 +72,46 @@ def extract_AB_order(pp, loc, image, rnum):
                        the order "rnum"
     """
     # get the width fit coefficients for this fit
-    assi = loc['ass'][rnum]
+    assi = loc['ASS'][rnum]
     # --------------------------------------------------------------------
     # Center the central pixel (using the width fit)
     # get the width of the central pixel of this order
     width_cent = np.polyval(assi[::-1], pp['IC_CENT_COL'])
     # work out the offset in width for the center pixel
-    loc['offset'] = width_cent * pp['IC_FACDEC']
-    loc.set_source('offset', __NAME__ + '/extract_AB_order()')
+    loc['OFFSET'] = width_cent * pp['IC_FACDEC']
+    loc.set_source('OFFSET', __NAME__ + '/extract_AB_order()')
     # --------------------------------------------------------------------
     # deal with fiber A:
 
     # Get the center coeffs for this order
-    acci = np.array(loc['acc'][rnum])
+    acci = np.array(loc['ACC'][rnum])
     # move the intercept of the center fit by -offset
-    acci[0] -= loc['offset']
+    acci[0] -= loc['OFFSET']
     # extract the data
     eargs = [image, acci, assi]
     ekwargs = dict(extopt=pp['IC_EXTOPT'], 
-                   gain=pp['gain'],                 
+                   gain=pp['GAIN'],                 
                    range1=pp['IC_EXTNBSIG'],
                    range2=pp['IC_EXTNBSIG'])
-    loc['cent1'], cpt = extract_wrapper(*eargs, **ekwargs)
-    loc.set_source('cent1', __NAME__ + '/extract_AB_order()')
-    loc['nbcos'][rnum] = cpt
+    loc['CENT1'], cpt = extract_wrapper(*eargs, **ekwargs)
+    loc.set_source('CENT1', __NAME__ + '/extract_AB_order()')
+    loc['NBCOS'][rnum] = cpt
     # --------------------------------------------------------------------
     # deal with fiber B:
 
     # Get the center coeffs for this order
-    acci = np.array(loc['acc'][rnum])
+    acci = np.array(loc['ACC'][rnum])
     # move the intercept of the center fit by -offset
-    acci[0] += loc['offset']
+    acci[0] += loc['OFFSET']
     # extract the data
     eargs = [image, acci, assi]
     ekwargs = dict(extopt=pp['IC_EXTOPT'], 
-                   gain=pp['gain'],                 
+                   gain=pp['GAIN'],                 
                    range1=pp['IC_EXTNBSIG'],
                    range2=pp['IC_EXTNBSIG'])
-    loc['cent2'], cpt = extract_wrapper(*eargs, **ekwargs)
-    loc.set_source('cent2', __NAME__ + '/extract_AB_order()')
-    loc['nbcos'][rnum] = cpt
+    loc['CENT2'], cpt = extract_wrapper(*eargs, **ekwargs)
+    loc.set_source('CENT2', __NAME__ + '/extract_AB_order()')
+    loc['NBCOS'][rnum] = cpt
 
     # return loc dictionary
     return loc
@@ -152,13 +152,13 @@ def extract_order(pp, loc, image, rnum, **kwargs):
     :return cpt: int, zero in this case
     """
     # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
+    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
     ekwargs = dict(use_tilt=False, 
                    use_weight=False,
                    extopt=pp['IC_EXTOPT'],
                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['gain']))
+                   gain=kwargs.get('gain', pp['GAIN']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
@@ -201,13 +201,13 @@ def extract_tilt_order(pp, loc, image, rnum, **kwargs):
     :return cpt: int, zero in this case
     """
     # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
+    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
     ekwargs = dict(use_tilt=True, 
                    use_weight=False,
-                   tilt=loc['tilt'][rnum],
+                   tilt=loc['TILT'][rnum],
                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['gain']),
+                   gain=kwargs.get('gain', pp['GAIN']),
                    tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
@@ -255,16 +255,16 @@ def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     :return cpt: int, zero in this case
     """
     # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
+    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
     ekwargs = dict(use_tilt=True, 
                    use_weight=True,
-                   tilt=loc['tilt'][rnum], 
+                   tilt=loc['TILT'][rnum], 
                    order_profile=orderp,
                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
                    mode=1,
-                   gain=kwargs.get('gain', pp['gain']),
-                   sigdet=kwargs.get('sigdet', pp['sigdet']),
+                   gain=kwargs.get('gain', pp['GAIN']),
+                   sigdet=kwargs.get('sigdet', pp['SIGDET']),
                    tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
@@ -314,16 +314,16 @@ def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
     :return cpt: int, zero in this case
     """
     # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
+    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
     ekwargs = dict(use_tilt=True,
                    use_weight=True,
-                   tilt=loc['tilt'][rnum], 
+                   tilt=loc['TILT'][rnum], 
                    order_profile=orderp,
                    range1=kwargs.get('range1', pp['IC_EXT_RANGE1']),
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE2']),
                    mode=2,
-                   gain=kwargs.get('gain', pp['gain']),
-                   sigdet=kwargs.get('sigdet', pp['sigdet']),
+                   gain=kwargs.get('gain', pp['GAIN']),
+                   sigdet=kwargs.get('sigdet', pp['SIGDET']),
                    tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
@@ -369,15 +369,15 @@ def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
     :return cpt: int, zero in this case
     """
     # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['acc'][rnum], loc['ass'][rnum]]
+    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
     ekwargs = dict(use_tilt=False,
                    use_weight=True,
                    tilt=None, 
                    order_profile=orderp,
                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['gain']),
-                   sigdet=kwargs.get('sigdet', pp['sigdet']))
+                   gain=kwargs.get('gain', pp['GAIN']),
+                   sigdet=kwargs.get('sigdet', pp['SIGDET']))
     # get the extraction for this order using the extract wrapper
     cent, cpt = extract_wrapper(*eargs, **ekwargs)
     # return 
@@ -411,22 +411,22 @@ def extract_wrapper(image, pos, sig, **kwargs):
                             (not currently available)
 
         nbsig:          float,  distance away from center to extract out to +/-
-                        defaults to p['nbsig'] from constants_SPIROU.py
+                        defaults to p['NBSIG'] from constants_SPIROU.py
 
         gain:           float, gain of the image
-                        defaults to p['gain'] from fitsfilename HEADER
+                        defaults to p['GAIN'] from fitsfilename HEADER
 
         sigdet:         float, the sigdet of the image
-                        defaults to p['sigdet'] from fitsfilename HEADER
+                        defaults to p['SIGDET'] from fitsfilename HEADER
 
         range1:         float, Half-zone extraction width left side
                         (formally plage1)
-                        defaults to p['ic_ext_range1'] from fiber parameters in
+                        defaults to p['IC_EXT_RANGE1'] from fiber parameters in
                         constatns_SPIROU.txt
 
         range2:         float, Half-zone extraction width left side
                         (formally plage2)
-                        defaults to p['ic_ext_range2'] from fiber parameters in
+                        defaults to p['IC_EXT_RANGE2'] from fiber parameters in
                         constatns_SPIROU.txt
 
         tilt:           numpy array (1D), the tilt for this order, if defined
@@ -645,8 +645,8 @@ def extract_tilt(image, pos, tilt, r1, r2, gain, tiltborder=2):
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -799,8 +799,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -1044,8 +1044,8 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -1056,12 +1056,6 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
     tiltshift = np.tan(np.deg2rad(tilt))
-    # check that ww0 and ww1 are constant (They should be)
-    if len(np.unique(ww0)) != 1:
-        raise ValueError('Neil error: Assumption that ww0 is constant is wrong'
-                         '(spirouEXTOR.py/extract_tilt_weight)')
-    # ww0 and ww1 are constant
-    ww0, ww1 = ww0[0], ww1[0]
     # get the weight contribution matrix (look up table)
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # account for the missing fractional pixels (due to integer rounding)
@@ -1225,7 +1219,7 @@ def get_valid_orders(p, loc):
     else:
         order_range_lower = p['EXT_START_ORDER']
     if str(p['EXT_END_ORDER']) == 'None':
-        order_range_upper = loc['number_orders']
+        order_range_upper = loc['NUMBER_ORDERS']
     else:
         order_range_upper = p['EXT_END_ORDER']
 
@@ -1238,7 +1232,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'EXT_START_ORDER = {0}'.format(order_range_lower)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
         orl = 0
     # check that order_range_upper is valid
     try:
@@ -1249,7 +1243,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'EXT_END_ORDER = {0}'.format(order_range_upper)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
         oru = 0
     # return the range of the orders
     return range(orl, oru)
