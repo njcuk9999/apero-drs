@@ -630,27 +630,6 @@ def get_user_config(p):
                    return_filename=True)
     d_config_file = spirouConfigFile.read_config_file(**ckwargs)
 
-    # get DRS_UCONFIG from default config file
-    if 'DRS_UCONFIG' in p:
-        # set path
-        rawpath = str(p['DRS_UCONFIG'])
-        # check for relative paths in config folder
-        rawpath = check_for_rel_paths(rawpath)
-        # check that path exists
-        if os.path.exists(rawpath):
-            configfolder = str(rawpath)
-            defined_in = d_config_file
-            p['DRS_UCONFIG'] = str(rawpath)
-            p.set_source('DRS_UCONFIG', func_name)
-        # deal with DRS_UCONFIG being set but not being found
-        else:
-            warn_msgs.append('Directory DRS_UCONFIG={0} does not '
-                             'exist'.format(rawpath))
-            warn_msgs.append('    but USER_CONFIG=1 and the user config '
-                             'folder is set')
-            warn_msgs.append('    in {0}'.format(d_config_file))
-            warn_msgs.append('    User config file will not be used.')
-
     # get DRS_CONFIG from environmental variables
     if 'DRS_UCONFIG' in os.environ:
         # set path
@@ -663,6 +642,7 @@ def get_user_config(p):
             defined_in = 'environmental variables'
             p['DRS_UCONFIG'] = str(rawpath)
             p.set_source('DRS_UCONFIG', 'ENVIRONMENTAL VARIABLES')
+            # reset warn messages (not needed)
         # deal with DRS_UCONFIG being set but not being found
         else:
             warn_msgs.append('Directory DRS_UCONFIG={0} does not '
@@ -671,6 +651,28 @@ def get_user_config(p):
                              'folder is set')
             warn_msgs.append('    in {0}'.format('the ENVIRONMENTAL VARIABLES'))
             warn_msgs.append('    User config file will not be used.')
+    # get DRS_UCONFIG from default config file
+    if 'DRS_UCONFIG' in p:
+        # set path
+        rawpath = str(p['DRS_UCONFIG'])
+        # check for relative paths in config folder
+        rawpath = check_for_rel_paths(rawpath)
+        # check that path exists
+        if os.path.exists(rawpath):
+            configfolder = str(rawpath)
+            defined_in = d_config_file
+            p['DRS_UCONFIG'] = str(rawpath)
+            p.set_source('DRS_UCONFIG', func_name)
+            warn_msgs = []
+        # deal with DRS_UCONFIG being set but not being found
+        else:
+            warn_msgs.append('Directory DRS_UCONFIG={0} does not '
+                             'exist'.format(rawpath))
+            warn_msgs.append('    but USER_CONFIG=1 and the user config '
+                             'folder is set')
+            warn_msgs.append('    in {0}'.format(d_config_file))
+            warn_msgs.append('    User config file will not be used.')
+            warn_msgs.append('    Using primary config.py only')
 
     # if we don't have a user
     if configfolder is None:
@@ -678,6 +680,7 @@ def get_user_config(p):
         warn_msgs.append('    Please set in primary config file or as an '
                          'environmental variable (DRS_UCONFIG)')
         warn_msgs.append('    User config file will not be used.')
+        warn_msgs.append('    Using primary config.py only')
         return p, warn_msgs
 
 
@@ -703,6 +706,7 @@ def get_user_config(p):
         warn_msgs.append('    Or remove DRS_UCONFIG from {0}'
                          ''.format(defined_in))
         warn_msgs.append('    User config file will not be used.')
+        warn_msgs.append('    Using primary config.py only')
 
     # return parameters
     return p, warn_msgs
