@@ -71,7 +71,8 @@ def display_calibdb(max_time=None):
 
     # load other config
     p = spirouStartup.Begin(quiet=True)
-    p = spirouStartup.LoadArguments(p, None, customargs={}, quiet=True)
+    # add custom args straight to p
+    p = spirouStartup.LoadMinimum(p, customargs={})
     # set path
     path = os.path.join(p['DRS_CALIB_DB'], p['IC_CALIBDB_FILENAME'])
     # get master calib db file

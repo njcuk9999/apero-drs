@@ -108,6 +108,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
               'DRS_VERSION',
+              'IC_IMAGE_TYPE',
               'IC_LOC_DELTA_WIDTH',
               'IC_LOCDFITC',
               'IC_LOCDFITP',
