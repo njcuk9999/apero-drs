@@ -124,3 +124,75 @@ to construct the derivative of the fit values for each order
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
+
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FirstGuessSolution}
+
+Defined in \spirouTHORCA\path{.spirouTHORCA.first_guess_at_wave_solution}
+
+\begin{pythonbox}
+from SpirouDRS import spirouTHORCA
+spirouTHORCA.FirstGuessSolution(p, loc)
+spirouTHORCA.spirouTHORCA.first_guess_at_wave_solution(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+First guess at wave solution, consistency check, using the wavelength
+solutions line list
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        CAL_HC_N_ORD_FINAL: int, defines first order solution is calculated
+                            from
+        CAL_HC_T_ORDER_START: int, defines the first order solution is 
+                              calculated from
+        log_opt: string, log option, normally the program name
+        fiber: string, the fiber number
+
+:param loc: parameter dictionary, ParamDict containing data
+    Must contain at least:
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            FIT_ORDERS: numpy array, the orders to fit
+            LL_INIT: numpy array, the initial guess at the line list
+            LL_LINE: numpy array, the line list wavelengths from file
+            AMPL_LINE: numpy array, the line list amplitudes from file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetLampParams}
+
+Defined in \spirouTHORCA\path{.spirouTHORCA.get_lamp_parameters}
+
+\begin{pythonbox}
+from SpirouDRS import spirouTHORCA
+spirouTHORCA.GetLampParams(p, filename=None, kind=None)
+spirouTHORCA.spirouTHORCA.get_lamp_parameters(p, filename=None, kind=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get lamp parameters from either a specified lamp type="kind" or a filename
+or from p['ARG_FILE_NAMES'][0] (if no filename or kind defined)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_LAMPS: list of strings, the different allowed lamp types
+        log_opt: string, log option, normally the program name
+:param filename: string or None, the filename to check for the lamp
+                 substring in
+:param kind: string or None, the lamp type
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            LAMP_TYPE: string, the type of lamp (e.g. UNe or TH)
+            IC_LL_LINE_FILE: string, the file name of the line list to use
+            IC_CAT_TYPE: string, the line list catalogue type
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
