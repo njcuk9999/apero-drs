@@ -336,8 +336,8 @@ ic_extnbsig = 2.5
 #                'all'    - for comparison (saves all)
 ic_extract_type = 'tiltweight'
 
-#   Set the number of pixels to set as the border (needed   - [cal_slit, cal_FF]
-#       to allow for tilt to not go off edge of image)
+#   Set the number of pixels to set as                   - [cal_extract, cal_FF]
+#       the border (needed to allow for tilt to not go off edge of image)
 ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
