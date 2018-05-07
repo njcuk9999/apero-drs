@@ -28,7 +28,7 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
            'ConvertToE', 'ConvertToADU',
            'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
            'FitTilt', 'FlipImage',
-           'GetAllSimilarFiles', 'GetAcqTime'
+           'GetAllSimilarFiles', 'GetAcqTime',
            'GetSigdet', 'GetExpTime', 'GetGain',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
            'LocateBadPixels', 'MakeTable', 'MeasureDark',
