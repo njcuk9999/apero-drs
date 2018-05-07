@@ -261,20 +261,22 @@ def first_guess_at_wave_solution(p, loc):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-            CAL_HC_N_ORD_FINAL
-            CAL_HC_T_ORDER_START
-            log_opt
-            fiber
+            CAL_HC_N_ORD_FINAL: int, defines first order solution is calculated
+                                from
+            CAL_HC_T_ORDER_START: int, defines the first order solution is
+                                  calculated from
+            log_opt: string, log option, normally the program name
+            fiber: string, the fiber number
 
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                FIT_ORDERS
-                LL_INIT
-                LL_LINE
-                AMPL_LINE
+                FIT_ORDERS: numpy array, the orders to fit
+                LL_INIT: numpy array, the initial guess at the line list
+                LL_LINE: numpy array, the line list wavelengths from file
+                AMPL_LINE: numpy array, the line list amplitudes from file
 
     """
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
