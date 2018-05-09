@@ -419,7 +419,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 extfitsname = os.path.split(extfits)[-1]
                 # log that we are saving E2DS spectrum
                 wmsg = 'Saving E2DS {0} spectrum of Fiber {1} in {2}'
-                WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], extfitsname))
+                wargs = [extfile, p['FIBER'], extfitsname]
+                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
                 # add keys from original header file
                 hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
                 # write 1D list of the SNR

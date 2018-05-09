@@ -336,7 +336,7 @@ ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
-ic_ext_sigdet = 100
+ic_ext_sigdet = -1
 
 #    Define order to plot                                        - [cal_extract]
 ic_ext_order_plot = 5
