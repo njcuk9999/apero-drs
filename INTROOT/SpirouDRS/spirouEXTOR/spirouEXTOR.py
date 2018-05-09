@@ -503,7 +503,8 @@ def extract_wrapper(image, pos, sig, **kwargs):
             return extract_tilt_weight(**ekwargs)
             # return extract(**ekwargs)
         if mode == 2:
-            return extract_tilt_weight2(**ekwargs)
+#            return extract_tilt_weight2(**ekwargs)
+            return extract_tilt_weight2cosm(**ekwargs)
         if mode == 3:
             return extract_tilt_weight_old2(**ekwargs)
 
@@ -835,6 +836,117 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     spe *= gain
 
     return spe, 0
+
+def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
+                         tiltborder=2):
+    """
+    Extract order using tilt and weight (sigdet and badpix) and cosmic correction
+
+    Same as extract_tilt_weight but slow (does NOT assume that rounded
+    separation between extraction edges is constant along order)
+
+
+    :param image: numpy array (2D), the image
+    :param pos: numpy array (1D), the position fit coefficients
+                size = number of coefficients for fit
+    :param tilt: float, the tilt for this order
+
+    :param r1: float, the distance away from center to extract out to (top)
+               across the orders direction
+    :param r2: float, the distance away from center to extract out to (bottom)
+               across the orders direction
+    :param orderp: numpy array (2D), the image with fit superposed (zero filled)
+    :param gain: float, the gain of the image (for conversion from ADU/s to e-)
+    :param sigdet: float, the sigdet to use in the weighting
+                   weights = 1/(signal*gain + sigdet^2) with bad pixels
+                   multiplied by a weight of 1e-9 and good pixels
+                   multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
+
+    :return spe: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return nbcos: int, zero in this case
+    """
+    dim1, dim2 = image.shape
+    # create storage for extration
+    spe = np.zeros(dim2, dtype=float)
+    # create array of pixel values
+    ics = np.arange(dim2)
+    # get positions across the orders for each pixel value along the order
+    jcs = np.polyval(pos[::-1], ics)
+    # get the lower bound of the order for each pixel value along the order
+    lim1s = jcs - r1
+    # get the upper bound of the order for each pixel value along the order
+    lim2s = jcs + r2
+    # get the pixels around the order
+    i1s = ics - 2
+    i2s = ics + 2
+    # get the integer pixel position of the lower bounds
+    j1s = np.array(np.round(lim1s), dtype=int)
+    # get the integer pixel position of the upper bounds
+    j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
+    # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
+    ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
+    # calculate the tilt shift
+    tiltshift = np.tan(np.deg2rad(tilt))
+    # get the weight contribution matrix (look up table)
+    wwa = work_out_ww(ww0, ww1, tiltshift, r1)
+    # count of the detected cosmic rays
+    cpt = 0
+    # loop around each pixel along the order
+    for ic in ics[tiltborder:-tiltborder]:
+        if mask[ic]:
+            # get ww0i and ww1i for this iteration
+            ww0i, ww1i = ww0[ic], ww1[ic]
+            ww = wwa[(ww0i, ww1i)]
+            # multiple the image by the rotation matrix
+            sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+            # multiple the order_profile by the rotation matrix
+            fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
+            # Renormalise the rotated order profile
+            fx = fx / np.sum(fx)
+            # weight values less than 0 to 1e-9
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # weights are then modified by the gain and sigdet added in quadrature
+            weights = raw_weights / ((sx * gain) + sigdet**2)
+            # set the value of this pixel to the weighted sum
+            spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
+            # Cosmic rays correction
+            crit = (sx  - spe[ic] * fx)
+            sigcut = 0.25 # 25% of the flux
+            cosmask = np.ones(np.shape(crit),'d')
+            nbloop=0
+            while np.max(crit) > sigcut * spe[ic] and nbloop<5:
+#                print('cosmic detected in line %i with amp %.2f' %(ic,np.max(crit)/spe[ic]))
+                cosmask = np.where(crit>np.max(crit)-0.1,0.,cosmask)
+                spe[ic] = np.sum(weights * cosmask * sx * fx) / np.sum(weights * cosmask * fx ** 2)
+                crit = (sx * cosmask - spe[ic] * fx * cosmask)
+                cpt += 1
+                nbloop += 1
+#        crit = (data[ic, ind1:ind2 + 1] * ccdgain - spe[ic] * profil) ** 2 / var
+#        seuil = seuilcosmic * spe[ic]
+#        while max(crit) > max(seuil, 25):
+            #	    print 'COSMICS DETECTED',max(crit),' Line',ic
+#            cpt = cpt + 1
+#            masque = masque - greater(crit, max(crit) - 0.1)
+#            masque = clip(masque, 0., 1.)
+#            norm = sum(profil * profil * masque / var)
+#            spe[ic] = (sum(data[ic, ind1 + 1:ind2, ] * ccdgain * profil[1:-1] * masque[1:-1] / var[1:-1]) + \
+#                       c1 * data[ic, ind1] * ccdgain * profil[0] * masque[0] / var[0] + \
+#                       c2 * data[ic, ind2] * ccdgain * profil[-1] * masque[-1] / var[-1]) / norm
+#            var = profil * spe[ic] + sigdet ** 2
+#            seuil = seuilcosmic * spe[ic]
+#            crit = (data[ic, ind1:ind2 + 1] * ccdgain * masque - spe[ic] * masque * profil) ** 2 / var
+#    print    'Nb cosmics detected : ', cpt
+
+    # multiple spe by gain to convert to e-
+#    print('Nb cosmic detected  %i' %(cpt))
+    spe *= gain
+
+    return spe, cpt
 
 
 def work_out_ww(ww0, ww1, tiltshift, r1):
