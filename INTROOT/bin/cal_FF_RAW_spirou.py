@@ -51,6 +51,22 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None):
+    """
+    cal_FF_RAW_spirou.py main function, if night_name and files are None uses
+    arguments from run time i.e.:
+        cal_FF_RAW_spirou.py [night_directory] [files]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param files: string, list or None, the list of files to use for
+                  arg_file_names and fitsfilename
+                  (if None assumes arg_file_names was set from run time)
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -66,10 +82,10 @@ def main(night_name=None, files=None):
                                        add_to_p=params2add, calibdb=True)
 
     # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/main()')
+    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
+    p.set_source('DPRTYPE', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -87,8 +103,8 @@ def main(night_name=None, files=None):
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -108,7 +124,7 @@ def main(night_name=None, files=None):
                    getshape=False)
     data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
+    WLOG('', p['LOG_OPT'], ('Image format changed to '
                             '{0}x{1}').format(*data2.shape[::-1]))
 
     # ----------------------------------------------------------------------
@@ -119,7 +135,7 @@ def main(night_name=None, files=None):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
-    WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
     # Get the miny, maxy and max_signal for the central column
@@ -130,14 +146,14 @@ def main(night_name=None, files=None):
     miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
     wmsg = 'Maximum average flux/pixel in the spectrum: {0:.1f} [ADU]'
-    WLOG('info', p['log_opt'], wmsg.format(max_signal/p['nbframes']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(max_signal/p['NBFRAMES']))
 
     # ----------------------------------------------------------------------
     # Background computation
     # ----------------------------------------------------------------------
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
-        WLOG('', p['log_opt'], 'Doing background measurement on raw frame')
+        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
     else:
@@ -149,17 +165,17 @@ def main(night_name=None, files=None):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts
-    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/main()')
+    loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+    loc.set_source('TILT', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Fiber loop
     # ----------------------------------------------------------------------
     # loop around fiber types
-    for fiber in p['fib_type']:
+    for fiber in p['FIB_TYPE']:
         # set fiber in p
-        p['fiber'] = fiber
-        p.set_source('fiber', __NAME__ + '/main()')
+        p['FIBER'] = fiber
+        p.set_source('FIBER', __NAME__ + '/main()')
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
@@ -179,30 +195,30 @@ def main(night_name=None, files=None):
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
         if fiber in ['A', 'B', 'AB']:
             # merge
-            loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
-            loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
+            loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
+            loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
             # set the number of order to half of the original
-            loc['number_orders'] = int(loc['number_orders']/2.0)
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS']/2.0)
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
         # Create array to store extraction (for each order and each pixel
         # along order)
-        loc['e2ds'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['E2DS'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         # Create array to store the blaze (for each order and at each pixel
         # along order)
-        loc['blaze'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['BLAZE'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         # Create array to store the flat (for each order and at each pixel
         # along order)
-        loc['flat'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['FLAT'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         # Create array to store the signal to noise ratios for each order
-        loc['SNR'] = np.zeros(loc['number_orders'])
+        loc['SNR'] = np.zeros(loc['NUMBER_ORDERS'])
         # Create array to store the rms for each order
-        loc['RMS'] = np.zeros(loc['number_orders'])
+        loc['RMS'] = np.zeros(loc['NUMBER_ORDERS'])
 
         # Manually set the sigdet to be used in extraction weighting
         if p['IC_FF_SIGDET'] > 0:
-            p['sigdet'] = float(p['IC_FF_SIGDET'])
+            p['SIGDET'] = float(p['IC_FF_SIGDET'])
         # ------------------------------------------------------------------
         # Extract orders
         # old code time: 1 loop, best of 3: 22.3 s per loop
@@ -217,7 +233,7 @@ def main(night_name=None, files=None):
             e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
-            noise = p['sigdet'] * np.sqrt(range1 + range2)
+            noise = p['SIGDET'] * np.sqrt(range1 + range2)
             # get window size
             blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
@@ -238,21 +254,21 @@ def main(night_name=None, files=None):
             # log the SNR RMS
             wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}  - FF rms={3:.2f} %'
             wargs = [fiber, order_num, snr, rms * 100.0]
-            WLOG('', p['log_opt'], wmsg.format(*wargs))
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # add calculations to storage
-            loc['e2ds'][order_num] = e2ds
+            loc['E2DS'][order_num] = e2ds
             loc['SNR'][order_num] = snr
             loc['RMS'][order_num] = rms
-            loc['blaze'][order_num] = blaze
-            loc['flat'][order_num] = flat
+            loc['BLAZE'][order_num] = blaze
+            loc['FLAT'][order_num] = flat
             # set sources
             source = __NAME__ + '/main()()'
             loc.set_sources(['e2ds', 'SNR', 'RMS', 'blaze', 'flat'], source)
             # Log if saturation level reached
-            satvalue = (flux/p['gain'])/(range1 + range2)
-            if satvalue > (p['QC_LOC_FLUMAX'] * p['nbframes']):
+            satvalue = (flux/p['GAIN'])/(range1 + range2)
+            if satvalue > (p['QC_LOC_FLUMAX'] * p['NBFRAMES']):
                 wmsg = 'SATURATION LEVEL REACHED on Fiber {0}'
-                WLOG('warning', p['log_opt'], wmsg.format(fiber))
+                WLOG('warning', p['LOG_OPT'], wmsg.format(fiber))
 
         # ----------------------------------------------------------------------
         # Plots
@@ -280,18 +296,18 @@ def main(night_name=None, files=None):
         blazefitsname = os.path.split(blazefits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving blaze spectrum for fiber: {0} in {1}'
-        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, blazefitsname))
+        WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber, blazefitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # define new keys to add
-        hdict = spirouImage.AddKey(hdict, p['kw_version'])
-        hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
-        hdict = spirouImage.AddKey(hdict, p['kw_CCD_CONAD'])
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
+        hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
         # write 1D list of the SNR
-        hdict = spirouImage.AddKey1DList(hdict, p['kw_EXTRA_SN'],
+        hdict = spirouImage.AddKey1DList(hdict, p['KW_EXTRA_SN'],
                                          values=loc['SNR'])
         # write center fits and add header keys (via hdict)
-        spirouImage.WriteImage(blazefits, loc['blaze'], hdict)
+        spirouImage.WriteImage(blazefits, loc['BLAZE'], hdict)
 
         # ----------------------------------------------------------------------
         # Store Flat-field in file
@@ -301,12 +317,12 @@ def main(night_name=None, files=None):
         flatfitsname = os.path.split(flatfits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
-        WLOG('', p['log_opt'] + fiber, wmsg.format(fiber, flatfitsname))
+        WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
-        hdict = spirouImage.AddKey1DList(hdict, p['kw_FLAT_RMS'],
+        hdict = spirouImage.AddKey1DList(hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)
-        spirouImage.WriteImage(flatfits, loc['flat'], hdict)
+        spirouImage.WriteImage(flatfits, loc['FLAT'], hdict)
 
         # ------------------------------------------------------------------
         # Quality control
@@ -331,13 +347,13 @@ def main(night_name=None, files=None):
         # quality control QC = 0 if we fail quality control
         if passed:
             wmsg = 'QUALITY CONTROL SUCCESSFUL - Well Done -'
-            WLOG('info', p['log_opt'], wmsg)
+            WLOG('info', p['LOG_OPT'], wmsg)
             p['QC'] = 1
             p.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
                 wmsg = 'QUALITY CONTROL FAILED: {0}'
-                WLOG('info', p['log_opt'], wmsg.format(farg))
+                WLOG('info', p['LOG_OPT'], wmsg.format(farg))
             p['QC'] = 0
             p.set_source('QC', __NAME__ + '/main()')
 
@@ -346,13 +362,13 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         if p['QC'] == 1:
             # copy flatfits to calibdb
-            keydb = 'FLAT_' + p['fiber']
+            keydb = 'FLAT_' + p['FIBER']
             # copy localisation file to the calibDB folder
             spirouCDB.PutFile(p, flatfits)
             # update the master calib DB file with new key
             spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
             # copy blazefits to calibdb
-            keydb = 'BLAZE_' + p['fiber']
+            keydb = 'BLAZE_' + p['FIBER']
             # copy localisation file to the calibDB folder
             spirouCDB.PutFile(p, blazefits)
             # update the master calib DB file with new key
@@ -362,7 +378,7 @@ def main(night_name=None, files=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

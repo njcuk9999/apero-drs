@@ -71,10 +71,10 @@ def wrapper(p, rname, inputs=None, outputs=None):
     if name not in VALID_RECIPES:
         emsg1 = "{0} is not a valid DRS recipe".format(name)
         emsg2 = "    run = {0}".format(rname)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # deal with no input or outputs
     if inputs is None and outputs is None:
-        WLOG('error', p['log_opt'], 'Must define inputs')
+        WLOG('error', p['LOG_OPT'], 'Must define inputs')
     # if we don't have outputs then we require inputs only
     strarg = 'rname, inputs, outputs'
     # link to the recipe function
@@ -83,7 +83,7 @@ def wrapper(p, rname, inputs=None, outputs=None):
     try:
         varbs = eval(recipe_function)
     except NameError:
-        WLOG('error', p['log_opt'], 'Cannot run {0}'.format(recipe_function))
+        WLOG('error', p['LOG_OPT'], 'Cannot run {0}'.format(recipe_function))
         varbs = []
     # return recipe inputs (or outputs)
     return varbs
@@ -97,7 +97,7 @@ def run_main(p, name, args):
     except Exception as e:
         emsg1 = 'Cannot run recipe = {0}'.format(name)
         emsg2 = '   Error was: {0}'.format(e)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         ll = None
     # return locals
     return ll

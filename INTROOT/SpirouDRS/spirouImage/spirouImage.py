@@ -171,7 +171,7 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
     #    else raise error
     if p is not None:
         try:
-            newimage = image * p['exptime'] * p['gain']
+            newimage = image * p['EXPTIME'] * p['GAIN']
         except KeyError:
             emsg1 = ('If parameter dictionary is defined keys "exptime" '
                      'must be in parameter dictionary.')
@@ -221,7 +221,7 @@ def convert_to_adu(image, p=None, exptime=None):
     #    error
     if p is not None:
         try:
-            newimage = image * p['exptime']
+            newimage = image * p['EXPTIME']
         except KeyError:
             emsg1 = ('If parameter dictionary is defined key "exptime" '
                      'must be in parameter dictionary.')
@@ -281,12 +281,12 @@ def get_all_similar_files(p, directory, prefix=None, suffix=None):
             emsg1 = ('"prefix" and "suffix" not defined and "arg_file_names" '
                      'not found in "p"')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get file prefix and suffix
     if prefix is None:
-        prefix = p['arg_file_names'][0][0:5]
+        prefix = p['ARG_FILE_NAMES'][0][0:5]
     if suffix is None:
-        suffix = p['arg_file_names'][0][-8:]
+        suffix = p['ARG_FILE_NAMES'][0][-8:]
     # constrcut file string
     filestring = '{0}*{1}'.format(prefix, suffix)
     locstring = os.path.join(directory, filestring)
@@ -353,7 +353,7 @@ def interp_bad_regions(p, image):
     pixshift = ypixfit - np.mean(ypixfit)
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], '   - Straightening interpolation image')
+    WLOG('', p['LOG_OPT'], '   - Straightening interpolation image')
     # loop around all x pixels and shift pixels by interpolating with a spline
     for xi in range(dim2):
         # produce the universal spline fit
@@ -362,7 +362,7 @@ def interp_bad_regions(p, image):
         image2[:, xi] = splinefit(xpixfit + pixshift[xi])
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], '   - Applying median filter to interpolation image')
+    WLOG('', p['LOG_OPT'], '   - Applying median filter to interpolation image')
     # loop around all y pixels and median filter
     for yi in range(dim1):
         # get this iterations row data
@@ -378,7 +378,7 @@ def interp_bad_regions(p, image):
         image2[yi, rowmask] = row_med[rowmask]
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], '   - Applying convolution to interpolation image')
+    WLOG('', p['LOG_OPT'], '   - Applying convolution to interpolation image')
     # define a kernal (box size) for the convolution
     kernel = np.repeat(1.0/kernel_size, kernel_size)
     # loop around all y pixels and apply a convolution over a median
@@ -393,7 +393,7 @@ def interp_bad_regions(p, image):
         image2[yi, :] = np.convolve(row_med, kernel, mode='same')
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], '   - Un-straightening interpolation image')
+    WLOG('', p['LOG_OPT'], '   - Un-straightening interpolation image')
     # make sure all NaNs are 0
     image2 = np.where(np.isfinite, image2, np.zeros_like(image2))
     image = np.where(np.isfinite, image, np.zeros_like(image))
@@ -405,7 +405,7 @@ def interp_bad_regions(p, image):
         image2[:, xi] = splinefit(xpixfit - pixshift[xi])
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['log_opt'], '   - Calculating good and bad pixels (from ratio)')
+    WLOG('', p['LOG_OPT'], '   - Calculating good and bad pixels (from ratio)')
     # calculate the ratio between original image and interpolated image
     ratio = image/image2
     # set all ratios greater than 1 to the inverse (reflect around 1)
@@ -678,7 +678,7 @@ def measure_dark(pp, image, image_name, short_name):
     except Exception as _:
         emsg1 = '"image" is not a valid numpy array'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', pp['log_opt'], [emsg1, emsg2])
+        WLOG('error', pp['LOG_OPT'], [emsg1, emsg2])
     # flatten the image
     fimage = image.flat
     # get the finite (non-NaN) mask
@@ -692,7 +692,7 @@ def measure_dark(pp, image, image_name, short_name):
         qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', pp['log_opt'], [e.message, emsg])
+        WLOG('error', pp['LOG_OPT'], [e.message, emsg])
         qmin, qmax = None, None
     # get the histogram for flattened data
     try:
@@ -702,7 +702,7 @@ def measure_dark(pp, image, image_name, short_name):
                              density=True)
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', pp['log_opt'], [e.message, emsg])
+        WLOG('error', pp['LOG_OPT'], [e.message, emsg])
         histo = None
     # get the fraction of dead pixels as a percentage
     dadead = imax * 100 / np.product(image.shape)
@@ -711,7 +711,7 @@ def measure_dark(pp, image, image_name, short_name):
              pp['DARK_QMAX'], qmin, qmax]
     wmsg = ('{0:12s}: Frac dead pixels= {1:.3f} % - Median= {2:.2f} ADU/s - '
             'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s')
-    WLOG('info', pp['log_opt'], wmsg.format(*wargs))
+    WLOG('info', pp['LOG_OPT'], wmsg.format(*wargs))
     # add required variables to pp
     source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
     pp['histo_{0}'.format(short_name)] = histo
@@ -746,7 +746,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
                    spirouFITS.ReadImage
     :param nfiles: int or None, number of files that created image (need to
                    multiply by this to get the total dark) if None uses
-                   p['nbframes']
+                   p['NBFRAMES']
     :param return_dark: bool, if True returns corrected_image and dark
                         if False (default) returns corrected_image
 
@@ -756,7 +756,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     """
     func_name = __NAME__ + '.correct_for_dark()'
     if nfiles is None:
-        nfiles = p['nbframes']
+        nfiles = p['NBFRAMES']
 
     # get calibDB
     if 'calibDB' not in p:
@@ -766,17 +766,17 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         cdb, p = spirouCDB.GetDatabase(p, acqtime)
     else:
         try:
-            cdb = p['calibDB']
-            acqtime = p['max_time_unix']
+            cdb = p['CALIBDB']
+            acqtime = p['MAX_TIME_UNIX']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [e.message, emsg])
+            WLOG('error', p['LOG_OPT'], [e.message, emsg])
             cdb, acqtime = None, None
 
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
-        WLOG('', p['log_opt'], 'Doing Dark Correction using ' + darkfile)
+        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using ' + darkfile)
         darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
         corrected_image = image - (darkimage * nfiles)
     else:
@@ -791,7 +791,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         # log error
         emsg1 = 'No valid DARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1.format(masterfile, acqtime), emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
         corrected_image, darkimage = None, None
 
     # finally return datac
@@ -833,7 +833,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
     """
     func_name = __NAME__ + '.normalise_median_flat()'
     # log that we are normalising the flat
-    WLOG('', p['log_opt'], 'Normalising the flat')
+    WLOG('', p['LOG_OPT'], 'Normalising the flat')
 
     # get used percentile
     if percentile is None:
@@ -841,7 +841,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
             percentile = p['BADPIX_NORM_PERCENTILE']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [e.message, emsg])
+            WLOG('error', p['LOG_OPT'], [e.message, emsg])
 
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -854,7 +854,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
             wmed = p['BADPIX_FLAT_MED_WID']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [e.message, emsg])
+            WLOG('error', p['LOG_OPT'], [e.message, emsg])
 
     # create storage for median-filtered flat image
     image_med = np.zeros_like(image)
@@ -909,7 +909,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     """
     func_name = __NAME__ + '.locate_bad_pixels()'
     # log that we are looking for bad pixels
-    WLOG('', p['log_opt'], 'Looking for bad pixels')
+    WLOG('', p['LOG_OPT'], 'Looking for bad pixels')
     # -------------------------------------------------------------------------
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -922,14 +922,14 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
             wmed = p['BADPIX_FLAT_MED_WID']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [e.message, emsg])
+            WLOG('error', p['LOG_OPT'], [e.message, emsg])
 
     # maxi differential pixel response relative to the expected value
     try:
         cut_ratio = p['BADPIX_FLAT_CUT_RATIO']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [e.message, emsg])
+        WLOG('error', p['LOG_OPT'], [e.message, emsg])
         cut_ratio = None
 
     # illumination cut parameter. If we only cut the pixels that
@@ -945,14 +945,14 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
         illum_cut = p['BADPIX_ILLUM_CUT']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [e.message, emsg])
+        WLOG('error', p['LOG_OPT'], [e.message, emsg])
         illum_cut = None
     # hotpix. Max flux in ADU/s to be considered too hot to be used
     try:
         max_hotpix = p['BADPIX_MAX_HOTPIX']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [e.message, emsg])
+        WLOG('error', p['LOG_OPT'], [e.message, emsg])
         max_hotpix = None
     # -------------------------------------------------------------------------
     # create storage for ratio of flat_ref to flat_med
@@ -966,7 +966,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
         emsg1 = ('Flat image ({0}x{1}) and Dark image ({2}x{3}) must have the '
                  'same shape.')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1.format(*eargs), emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
     # -------------------------------------------------------------------------
     # as there may be a small level of scattered light and thermal
     # background in the dark  we subtract the running median to look
@@ -1008,7 +1008,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
                     np.mean(badpix_map) * 100]
 
     for it in range(len(text)):
-        WLOG('', p['log_opt'], text[it].format(badpix_stats[it]))
+        WLOG('', p['LOG_OPT'], text[it].format(badpix_stats[it]))
     # -------------------------------------------------------------------------
     # return bad pixel map
     return badpix_map, badpix_stats
@@ -1021,7 +1021,7 @@ def locate_bad_pixels_full(p, image):
     if p['IC_IMAGE_TYPE'] == 'H2RG':
         return np.ones_like(image, dtype=bool)
     # log that we are looking for bad pixels
-    WLOG('', p['log_opt'], 'Looking for bad pixels in full flat image')
+    WLOG('', p['LOG_OPT'], 'Looking for bad pixels in full flat image')
     # get parameters from p
     filename = p['BADPIX_FULL_FLAT']
     threshold = p['BADPIX_FULL_THRESHOLD']
@@ -1033,7 +1033,7 @@ def locate_bad_pixels_full(p, image):
     # check that filepath exists
     if not os.path.exists(absfilename):
         emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
-        WLOG('error', p['log_opt'], emsg.format(filename, datadir))
+        WLOG('error', p['LOG_OPT'], emsg.format(filename, datadir))
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
@@ -1069,17 +1069,17 @@ def get_tilt(pp, lloc, image):
                 tilt: numpy array (1D), the tilt angle of each order
 
     """
-    nbo = lloc['number_orders']
+    nbo = lloc['NUMBER_ORDERS']
     # storage for "nbcos"
     # Question: what is nbcos? as it isn't used
-    lloc['nbcos'] = np.zeros(nbo, dtype=int)
-    lloc.set_source('nbcos', __NAME__ + '/get_tilt()')
+    lloc['NBCOS'] = np.zeros(nbo, dtype=int)
+    lloc.set_source('NBCOS', __NAME__ + '/get_tilt()')
     # storage for tilt
-    lloc['tilt'] = np.zeros(int(nbo/2), dtype=float)
-    lloc.set_source('tilt', __NAME__ + '/get_tilt()')
+    lloc['TILT'] = np.zeros(int(nbo/2), dtype=float)
+    lloc.set_source('TILT', __NAME__ + '/get_tilt()')
     # Over sample the data and interpolate new extraction values
     pixels = np.arange(image.shape[1])
-    os_fac = pp['ic_tilt_coi']
+    os_fac = pp['IC_TILT_COI']
     os_pixels = np.arange(image.shape[1] * os_fac) / os_fac
     # loop around each order
     for order_num in range(0, nbo, 2):
@@ -1087,8 +1087,8 @@ def get_tilt(pp, lloc, image):
         lloc = spirouEXTOR.ExtractABOrderOffset(pp, lloc, image, order_num)
         # --------------------------------------------------------------------
         # interpolate the pixels on to the extracted centers
-        cent1i = np.interp(os_pixels, pixels, lloc['cent1'])
-        cent2i = np.interp(os_pixels, pixels, lloc['cent2'])
+        cent1i = np.interp(os_pixels, pixels, lloc['CENT1'])
+        cent2i = np.interp(os_pixels, pixels, lloc['CENT2'])
         # --------------------------------------------------------------------
         # get the correlations between cent2i and cent1i
         cori = np.correlate(cent2i, cent1i, mode='same')
@@ -1099,20 +1099,20 @@ def get_tilt(pp, lloc, image):
         pos = int(image.shape[1] * coi / 2)
         delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
         # get the angle of the tilt
-        angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['offset'])))
+        angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['OFFSET'])))
         # log the tilt and angle
         wmsg = 'Order {0}: Tilt = {1:.2f} on pixel {2:.1f} = {3:.2f} deg'
-        wargs = [order_num / 2, delta, 2 * lloc['offset'], angle]
-        WLOG('', pp['log_opt'], wmsg.format(*wargs))
+        wargs = [order_num / 2, delta, 2 * lloc['OFFSET'], angle]
+        WLOG('', pp['LOG_OPT'], wmsg.format(*wargs))
         # save tilt angle to lloc
-        lloc['tilt'][int(order_num / 2)] = angle
+        lloc['TILT'][int(order_num / 2)] = angle
     # return the lloc
     return lloc
 
 
 def fit_tilt(pp, lloc):
     """
-    Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
+    Fit the tilt (lloc['TILT'] with a polynomial of size = p['IC_TILT_FILT']
     return the coefficients, fit and residual rms in lloc dictionary
 
     :param pp: parameter dictionary, ParamDict containing constants
@@ -1136,22 +1136,22 @@ def fit_tilt(pp, lloc):
     """
 
     # get the x values for
-    xfit = np.arange(lloc['number_orders']/2)
+    xfit = np.arange(lloc['NUMBER_ORDERS']/2)
     # get fit coefficients for the tilt polynomial fit
-    atc = np.polyfit(xfit, lloc['tilt'], pp['IC_TILT_FIT'])[::-1]
+    atc = np.polyfit(xfit, lloc['TILT'], pp['IC_TILT_FIT'])[::-1]
     # get the yfit values for the fit
     yfit = np.polyval(atc[::-1], xfit)
     # get the rms for the residuls of the fit and the data
-    rms = np.std(lloc['tilt'] - yfit)
+    rms = np.std(lloc['TILT'] - yfit)
     # store the fit data in lloc
-    lloc['xfit_tilt'] = xfit
-    lloc.set_source('xfit_tilt', __NAME__ + '/fit_tilt()')
-    lloc['yfit_tilt'] = yfit
-    lloc.set_source('yfit_tilt', __NAME__ + '/fit_tilt()')
-    lloc['a_tilt'] = atc
-    lloc.set_source('a_tilt', __NAME__ + '/fit_tilt()')
-    lloc['rms_tilt'] = rms
-    lloc.set_source('rms_tilt', __NAME__ + '/fit_tilt()')
+    lloc['XFIT_TILT'] = xfit
+    lloc.set_source('XFIT_TILT', __NAME__ + '/fit_tilt()')
+    lloc['YFIT_TILT'] = yfit
+    lloc.set_source('YFIT_TILT', __NAME__ + '/fit_tilt()')
+    lloc['A_TILT'] = atc
+    lloc.set_source('A_TILT', __NAME__ + '/fit_tilt()')
+    lloc['RMS_TILT'] = rms
+    lloc.set_source('RMS_TILT', __NAME__ + '/fit_tilt()')
 
     # return lloc
     return lloc
@@ -1186,7 +1186,7 @@ def read_line_list(p=None, filename=None):
     if p is None and filename is None:
         emsg1 = 'p (ParamDict) or "filename" must be defined'
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # assign line file
     if filename is not None:
         # if filename is absolute path and file exists use this
@@ -1207,13 +1207,13 @@ def read_line_list(p=None, filename=None):
         emsg1 = ('p[\'IC_LL_LINE_FILE\'] (ParamDict) or "filename" '
                  'must be defined')
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         linefile = ''
     # check that line file exists
     if not os.path.exists(linefile):
         emsg1 = 'Line list file={0} does not exist.'.format(linefile)
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # read filename as a table (no header so need data_start=0)
     linetable = spirouTable.read_table(linefile,
                                        fmt='ascii.tab',
@@ -1224,7 +1224,7 @@ def read_line_list(p=None, filename=None):
     amp = np.array(linetable['amp'], dtype=float)
     # log that we have opened line file
     wmsg = 'List of {0} HC lines read in file {1}'
-    WLOG('', p['log_opt'] + p['fiber'], wmsg.format(len(ll), linefile))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(len(ll), linefile))
     # return line list and amps
     return ll, amp
 
@@ -1336,13 +1336,13 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
         else:
             emsg1 = 'Dtype "{0}" is not a valid python type. Keyword={1}'
             emsg2 = '     function = {0}'.format(func_name)
-            WLOG('error', p['log_opt'], [emsg1.format(dtype, keyword), emsg2])
+            WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
         emsg1 = ('Cannot convert keyword "{0}" to type "{1}"'
                  '').format(keyword, dtype)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         value = None
 
     # deal with return value

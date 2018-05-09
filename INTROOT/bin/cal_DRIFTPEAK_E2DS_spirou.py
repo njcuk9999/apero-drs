@@ -129,12 +129,9 @@ def main(night_name=None, reffile=None):
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-#    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-#    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    # preliminary wavelength solution in pixels
-#    loc['wave']=np.reshape(np.arange(49*4088),(49,4088))
-    wave0=1500.+np.arange(4088.)*0.011
-    loc['wave'] = np.zeros((49, 4088), 'd')+wave0
+    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
+    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------

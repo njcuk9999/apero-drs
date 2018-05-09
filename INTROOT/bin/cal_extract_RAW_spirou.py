@@ -109,7 +109,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
-    # rotate the image and convert from ADU/s to ADU
+    # rotate the image and convert from ADU/s to e-
     data = spirouImage.ConvertToADU(spirouImage.FlipImage(datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
@@ -129,7 +129,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     n_bad_pix = np.sum(data2 == 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
-    wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
+    wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
     WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
@@ -326,8 +326,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # log the SNR RMS
-            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f} NbCosmic= {3}'
-            wargs = [p['fiber'], order_num, snr, cpt]
+            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}'
+            wargs = [p['fiber'], order_num, snr]
             WLOG('', p['log_opt'], wmsg.format(*wargs))
             # add calculations to storage
             loc['e2ds'][order_num] = e2ds

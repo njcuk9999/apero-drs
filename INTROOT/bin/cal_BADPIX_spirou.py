@@ -126,7 +126,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     badpixelmap = spirouImage.ResizeImage(badpixelmap, **bkwargs)
     # log change in data size
     WLOG('', p['log_opt'], ('Image format changed to '
-                            '{0}x{1}').format(*badpixelmap.shape[::-1]))
+                            '{0}x{1}').format(*badpixelmap.shape))
 
     # ----------------------------------------------------------------------
     # Quality control

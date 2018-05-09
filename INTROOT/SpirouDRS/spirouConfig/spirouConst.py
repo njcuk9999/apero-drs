@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.002'
+__version__ = '0.2.017'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-05-01'
+__date__ = '2018-05-04'
 
 
 # =============================================================================
@@ -252,7 +252,7 @@ def NBFRAMES(p):
     :return nbframes: int, the number of frames (files)
     """
     # Number of frames = length of arg_file_names
-    nbframes = len(p['arg_file_names'])
+    nbframes = len(p['ARG_FILE_NAMES'])
     # return number of frames
     return nbframes
 
@@ -296,8 +296,8 @@ def LOG_OPT(p):
     #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
 
     try:
-        arg_file_names = p['arg_file_names']
-        program = p['program']
+        arg_file_names = p['ARG_FILE_NAMES']
+        program = p['PROGRAM']
 
         if len(arg_file_names) == 0:
             log_opt = program
@@ -334,7 +334,7 @@ def PROGRAM():
 # noinspection PyPep8Naming
 def MANUAL_FILE(p):
     """
-    Defines the path and filename of the manual file for p["program"]
+    Defines the path and filename of the manual file for p['PROGRAM']
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -345,7 +345,7 @@ def MANUAL_FILE(p):
     :return manual_file: the filename and location of the manual file for this
                          recipe/program
     """
-    program = p['program'] + '.info'
+    program = p['PROGRAM'] + '.info'
     manual_file = os.path.join(p['DRS_MAN'], program)
     return manual_file
 
@@ -365,7 +365,7 @@ def RAW_DIR(p):
 
     :return raw_dir: string, the raw data directory
     """
-    raw_dir = os.path.join(p['DRS_DATA_RAW'], p['arg_night_name'])
+    raw_dir = os.path.join(p['DRS_DATA_RAW'], p['ARG_NIGHT_NAME'])
     return raw_dir
 
 
@@ -385,7 +385,7 @@ def REDUCED_DIR(p):
     :return reduced_dir: string, the reduced data directory
     """
     # set the reduced directory from DRS_DATA_REDUC and 'arg_night_name'
-    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['arg_night_name'])
+    reduced_dir = os.path.join(p['DRS_DATA_REDUC'], p['ARG_NIGHT_NAME'])
     # return reduced directory
     return reduced_dir
 
@@ -417,7 +417,7 @@ def ARG_FILE_NAMES(p):
         If it does this value is used over sys.argv values
 
     :return arg_file_names: list of strings, the file names from run time, or
-                            if p["arg_file_names"] exists value is taken from
+                            if p['ARG_FILE_NAMES'] exists value is taken from
                             there
     """
     # see if already defined
@@ -451,8 +451,8 @@ def FITSFILENAME(p):
 
     :return fitsfilename: string, the main raw fits file location and filename
     """
-    arg_file_dir = p['arg_file_dir']
-    arg_file_names = p['arg_file_names']
+    arg_file_dir = p['ARG_FILE_DIR']
+    arg_file_names = p['ARG_FILE_NAMES']
     # construct fits file name (full path + first file in arguments)
     if len(arg_file_names) > 0:
         fitsfilename = os.path.join(arg_file_dir, arg_file_names[0])
@@ -470,16 +470,16 @@ def DARK_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
 
     :return darkfits: string, the dark file location and filename
     """
-    reducedfolder = p['reduced_dir']
+    reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    darkfitsname = calibprefix + p['arg_file_names'][0]
+    darkfitsname = calibprefix + p['ARG_FILE_NAMES'][0]
     darkfits = os.path.join(reducedfolder, darkfitsname)
     return darkfits
 
@@ -492,7 +492,7 @@ def DARK_BADPIX_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
@@ -512,14 +512,14 @@ def BADPIX_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 flatfile: string, the flat file name (used to name the
                           badpix file, replacing .fits with _badpixel.fits
     :return string: the badpix path and filename
     """
-    reducedfolder = p['reduced_dir']
+    reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    badpixelfn = p['flatfile'].replace('.fits', '_badpixel.fits')
+    badpixelfn = p['FLATFILE'].replace('.fits', '_badpixel.fits')
     badpixelfitsname = calibprefix + badpixelfn
     badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
     return badpixelfits
@@ -534,7 +534,7 @@ def LOC_ORDER_PROFILE_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber used for this recipe (eg. AB or A or C)
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -542,10 +542,10 @@ def LOC_ORDER_PROFILE_FILE(p):
     :return locofits: string, the localisation file location and filename (the
                       order profile image)
     """
-    reducedfolder = p['reduced_dir']
-    newext = '_order_profile_{0}.fits'.format(p['fiber'])
+    reducedfolder = p['REDUCED_DIR']
+    newext = '_order_profile_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
-    rawfn = p['arg_file_names'][0].replace('.fits', newext)
+    rawfn = p['ARG_FILE_NAMES'][0].replace('.fits', newext)
     rawfitsname = calibprefix + rawfn
     orderpfile = os.path.join(reducedfolder, rawfitsname)
     return orderpfile
@@ -559,17 +559,17 @@ def LOC_LOCO_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber used for this recipe (eg. AB or A or C)
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
     :return locofits: string, the localisation file location and filename
     """
-    reducedfolder = p['reduced_dir']
-    locoext = '_loco_{0}.fits'.format(p['fiber'])
+    reducedfolder = p['REDUCED_DIR']
+    locoext = '_loco_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
-    locofn = p['arg_file_names'][0].replace('.fits', locoext)
+    locofn = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
     locofitsname = calibprefix + locofn
     locofits = os.path.join(reducedfolder, locofitsname)
     return locofits
@@ -583,7 +583,7 @@ def LOC_LOCO_FILE2(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber used for this recipe (eg. AB or A or C)
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -591,10 +591,10 @@ def LOC_LOCO_FILE2(p):
     :return locofits: string, the localisation file location and filename (for
                       fwhm)
     """
-    reducedfolder = p['reduced_dir']
-    locoext = '_fwhm-order_{0}.fits'.format(p['fiber'])
+    reducedfolder = p['REDUCED_DIR']
+    locoext = '_fwhm-order_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
-    locofn2 = p['arg_file_names'][0].replace('.fits', locoext)
+    locofn2 = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
     locofits2name = calibprefix + locofn2
     locofits2 = os.path.join(reducedfolder, locofits2name)
     return locofits2
@@ -609,7 +609,7 @@ def LOC_LOCO_FILE3(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber used for this recipe (eg. AB or A or C)
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -617,10 +617,10 @@ def LOC_LOCO_FILE3(p):
     :return locofits: string, the localisation file location and filename (for
                       order superposition)
     """
-    reducedfolder = p['reduced_dir']
-    locoext = '_with-order_{0}.fits'.format(p['fiber'])
+    reducedfolder = p['REDUCED_DIR']
+    locoext = '_with-order_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
-    locofn3 = p['arg_file_names'][0].replace('.fits', locoext)
+    locofn3 = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
     locofits3name = calibprefix + locofn3
     locofits3 = os.path.join(reducedfolder, locofits3name)
     return locofits3
@@ -634,16 +634,16 @@ def SLIT_TILT_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
 
     :return tiltfits: string, slit tilt file location and filename
     """
-    reduced_dir = p['reduced_dir']
+    reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    tiltfn = p['arg_file_names'][0].replace('.fits', '_tilt.fits')
+    tiltfn = p['ARG_FILE_NAMES'][0].replace('.fits', '_tilt.fits')
     tiltfitsname = calibprefix + tiltfn
     tiltfits = os.path.join(reduced_dir, tiltfitsname)
     return tiltfits
@@ -657,22 +657,22 @@ def FF_BLAZE_FILE(p, fiber=None):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
     :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p["fiber"])
+                  from "p" (i.e. p['FIBER'])
     :return blazefits: string, the flat fielding blaze filename and location
     """
 
     if fiber is None:
-        fiber = p['fiber']
+        fiber = p['FIBER']
 
-    reduced_dir = p['reduced_dir']
+    reduced_dir = p['REDUCED_DIR']
     blazeext = '_blaze_{0}.fits'.format(fiber)
     calibprefix = CALIB_PREFIX(p)
-    blazefn = p['arg_file_names'][0].replace('.fits', blazeext)
+    blazefn = p['ARG_FILE_NAMES'][0].replace('.fits', blazeext)
     blazefitsname = calibprefix + blazefn
     blazefits = os.path.join(reduced_dir, blazefitsname)
     return blazefits
@@ -686,21 +686,21 @@ def FF_FLAT_FILE(p, fiber=None):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
     :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p["fiber"])
+                  from "p" (i.e. p['FIBER'])
 
     :return flatfits: string, the flat field filename and location
     """
     if fiber is None:
-        fiber = p['fiber']
-    reduced_dir = p['reduced_dir']
+        fiber = p['FIBER']
+    reduced_dir = p['REDUCED_DIR']
     flatext = '_flat_{0}.fits'.format(fiber)
     calibprefix = CALIB_PREFIX(p)
-    flatfn = p['arg_file_names'][0].replace('.fits', flatext)
+    flatfn = p['ARG_FILE_NAMES'][0].replace('.fits', flatext)
     flatfitsname = calibprefix + flatfn
     flatfits = os.path.join(reduced_dir, flatfitsname)
     return flatfits
@@ -714,20 +714,20 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
     :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p["fiber"])
+                  from "p" (i.e. p['FIBER'])
     :return e2dsfits: string, the filename and location of the extraction
                       E2DS file
     """
     if fiber is None:
-        fiber = p['fiber']
-    reducedfolder = p['reduced_dir']
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
-    e2dsfitsname = p['arg_file_names'][0].replace('.fits', e2ds_ext)
+    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     return e2dsfits
 
@@ -741,7 +741,7 @@ def EXTRACT_LOCO_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 calibDB: dictionary, the calibration database dictionary
                 LOC_FILE: string, the suffix to use in the filename, defined
                           in primary config file (LOC_FILE_FPALL)
@@ -754,8 +754,8 @@ def EXTRACT_LOCO_FILE(p):
                                  selected from a specific fiber by
                                  "LOC_FILE_FPALL"
     """
-    reducedfolder = p['reduced_dir']
-    loco_filename = p['calibDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
+    reducedfolder = p['REDUCED_DIR']
+    loco_filename = p['CALIBDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
     loco_file = os.path.join(reducedfolder, loco_filename)
     return loco_file
 
@@ -769,26 +769,26 @@ def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
                                 one string filename in the list
     :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p["fiber"])
+                  from "p" (i.e. p['FIBER'])
 
     :return extfitslist: list of strings, the list of extraction files to use
                          to save the extraction files
     """
     if fiber is None:
-        fiber = p['fiber']
-    reducedfolder = p['reduced_dir']
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
     ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
                  'weight']
     extfitslist = []
     for ext_no in range(len(ext_names)):
         extname = ext_names[ext_no]
         ext_ext = '_e2ds_{0}_{1}.fits'.format(fiber, extname)
-        extfitsname = p['arg_file_names'][0].replace('.fits', ext_ext)
+        extfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', ext_ext)
         extfits = os.path.join(reducedfolder, extfitsname)
         extfitslist.append(extfits)
     return extfitslist
@@ -803,7 +803,7 @@ def DRIFT_RAW_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 arg_file_names: list, list of files taken from the command line
                                 (or call to recipe function) must have at least
@@ -811,9 +811,9 @@ def DRIFT_RAW_FILE(p):
 
     :return driftfits: string, the drift_raw fits file name and location
     """
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
-    driftfitsname = p['arg_file_names'][0].replace('.fits', drift_ext)
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_drift_{0}.fits'.format(p['FIBER'])
+    driftfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', drift_ext)
     driftfits = os.path.join(reducedfolder, driftfitsname)
     return driftfits
 
@@ -827,16 +827,16 @@ def DRIFT_E2DS_FITS_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
 
     :return driftfits: string, the drift_e2ds peak drift fits file location
                        and filename
     """
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_drift_{0}.fits'.format(p['fiber'])
-    driftfitsname = p['reffilename'].replace('.fits', drift_ext)
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_drift_{0}.fits'.format(p['FIBER'])
+    driftfitsname = p['REFFILENAME'].replace('.fits', drift_ext)
     driftfits = os.path.join(reducedfolder, driftfitsname)
     return driftfits
 
@@ -850,16 +850,16 @@ def DRIFT_E2DS_TBL_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
 
     :return driftfits: string, the drift_e2ds peak drift table file location
                        and filename
     """
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_drift_{0}.tbl'.format(p['fiber'])
-    drifttblname = p['reffilename'].replace('.fits', drift_ext)
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_drift_{0}.tbl'.format(p['FIBER'])
+    drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
     drifttbl = os.path.join(reducedfolder, drifttblname)
     return drifttbl
 
@@ -873,16 +873,16 @@ def DRIFTPEAK_E2DS_FITS_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
 
     :return driftfits: string, the drift peak drift fits file location and
                        filename
     """
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_driftnew_{0}.fits'.format(p['fiber'])
-    driftfitsname = p['reffilename'].replace('.fits', drift_ext)
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_driftnew_{0}.fits'.format(p['FIBER'])
+    driftfitsname = p['REFFILENAME'].replace('.fits', drift_ext)
     driftfits = os.path.join(reducedfolder, driftfitsname)
     return driftfits
 
@@ -896,16 +896,16 @@ def DRIFTPEAK_E2DS_TBL_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
 
     :return driftfits: string, the drift peak drift table file location and
                        filename
     """
-    reducedfolder = p['reduced_dir']
-    drift_ext = '_driftnew_{0}.tbl'.format(p['fiber'])
-    drifttblname = p['reffilename'].replace('.fits', drift_ext)
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_driftnew_{0}.tbl'.format(p['FIBER'])
+    drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
     drifttbl = os.path.join(reducedfolder, drifttblname)
     return drifttbl
 
@@ -918,16 +918,16 @@ def CCF_FITS_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 ccf_mask: string, the CCF mask file
                 reffile: string, the CCF reference file
     :return corfile: string, the CCF table file location and name
     """
-    reducedfolder = p['reduced_dir']
+    reducedfolder = p['REDUCED_DIR']
     # get new extension using ccf_mask without the extention
-    newext = '_ccf_' + p['ccf_mask'].replace('.mas', '')
+    newext = '_ccf_' + p['CCF_MASK'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
-    corfilename = p['e2dsfile'].replace('_e2ds', newext)
+    corfilename = p['E2DSFILE'].replace('_e2ds', newext)
 
     corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf file location and name
@@ -942,7 +942,7 @@ def CCF_TABLE_FILE(p):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 ccf_mask: string, the CCF mask file
                 reffile: string, the CCF reference file
     :return ccf_table_file:
@@ -1007,7 +1007,7 @@ def CALIB_PREFIX(p):
     :return calib_prefix: string the calibration database prefix to add to all
                           calibration database files
     """
-    argnightname = p['arg_night_name'].split('/')[-1]
+    argnightname = p['ARG_NIGHT_NAME'].split('/')[-1]
     calib_prefix = argnightname + '_'
     return calib_prefix
 

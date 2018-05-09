@@ -64,7 +64,7 @@ def fiber_params(pp, fiber, merge=False):
         fparams = spirouConfig.ExtractDictParams(pp, '_fpall', fiber,
                                                  merge=merge)
     except ConfigError as e:
-        WLOG(e.level, pp['log_opt'], e.msg)
+        WLOG(e.level, pp['LOG_OPT'], e.msg)
         fparams = ParamDict()
     # return fiber dictionary
     return fparams
@@ -73,7 +73,7 @@ def fiber_params(pp, fiber, merge=False):
 def get_loc_coefficients(p, hdr=None, loc=None):
     """
     Extracts loco coefficients from parameters keys (uses header="hdr" provided
-    to get acquisition time or uses p['fitsfilename'] to get acquisition time if
+    to get acquisition time or uses p['FITSFILENAME'] to get acquisition time if
     "hdr" is None
 
     :param p: parameter dictionary, ParamDict containing constants
@@ -94,11 +94,11 @@ def get_loc_coefficients(p, hdr=None, loc=None):
                 LOC_FILE: string, the suffix for the location calibration
                           database key (usually the fiber type)
                              - read from "loc_file_fpall", if not defined
-                               uses p["fiber"]
+                               uses p['FIBER']
                 fiber: string, the fiber used for this recipe (eg. AB or A or C)
                 calibDB: dictionary, the calibration database dictionary
                 reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 log_opt: string, log option, normally the program name
 
     :param hdr: dictionary, header file from FITS rec (opened by spirouFITS)
@@ -116,16 +116,16 @@ def get_loc_coefficients(p, hdr=None, loc=None):
                       the widths fit
     """
     # get keywords
-    loco_nbo = p['kw_LOCO_NBO'][0]
-    loco_deg_c, loco_deg_w = p['kw_LOCO_DEG_C'][0], p['kw_LOCO_DEG_W'][0]
-    loco_ctr_coeff = p['kw_LOCO_CTR_COEFF'][0]
-    loco_fwhm_coeff = p['kw_LOCO_FWHM_COEFF'][0]
+    loco_nbo = p['KW_LOCO_NBO'][0]
+    loco_deg_c, loco_deg_w = p['KW_LOCO_DEG_C'][0], p['KW_LOCO_DEG_W'][0]
+    loco_ctr_coeff = p['KW_LOCO_CTR_COEFF'][0]
+    loco_fwhm_coeff = p['KW_LOCO_FWHM_COEFF'][0]
 
     # get loc file
     if 'LOC_FILE' in p:
         loc_file = 'LOC_' + p['LOC_FILE']
     else:
-        loc_file = 'LOC_' + p['fiber']
+        loc_file = 'LOC_' + p['FIBER']
 
     # get calibDB
     if 'calibDB' not in p:
@@ -134,11 +134,11 @@ def get_loc_coefficients(p, hdr=None, loc=None):
         # get calibDB
         c_database, p = spirouCDB.GetDatabase(p, acqtime)
     else:
-        c_database = p['calibDB']
+        c_database = p['CALIBDB']
         acqtime = p['MAX_TIME_HUMAN']
 
     # get the reduced dir name
-    reduced_dir = p['reduced_dir']
+    reduced_dir = p['REDUCED_DIR']
 
     # set up the loc param dict
     if loc is None:
@@ -147,35 +147,35 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     # check for localization file for this fiber
     if not (loc_file in c_database):
         emsg1 = ('No order geometry defined in the calibDB for fiber: {0}'
-                 '').format(p['fiber'])
+                 '').format(p['FIBER'])
         emsg2 = ('    requires key="{0}" in calibDB file (with time < {1}).'
                  '').format(loc_file, acqtime)
         emsg3 = '    Unable to complete the recipe, FATAL'
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
     # else log that we are reading localization parameters
     wmsg = 'Reading localization parameters of Fiber {0}'
-    WLOG('', p['log_opt'], wmsg.format(p['fiber']))
+    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER']))
     # construct the localization file name
     loco_file = os.path.join(reduced_dir, c_database[loc_file][1])
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header
-    loc['number_orders'] = spirouImage.ReadKey(p, hdict, loco_nbo)
+    loc['NUMBER_ORDERS'] = spirouImage.ReadKey(p, hdict, loco_nbo)
     # Get the number of fit coefficients from header
-    loc['nbcoeff_ctr'] = spirouImage.ReadKey(p, hdict, loco_deg_c) + 1
-    loc['nbcoeff_wid'] = spirouImage.ReadKey(p, hdict, loco_deg_w) + 1
+    loc['NBCOEFF_CTR'] = spirouImage.ReadKey(p, hdict, loco_deg_c) + 1
+    loc['NBCOEFF_WID'] = spirouImage.ReadKey(p, hdict, loco_deg_w) + 1
     # Read the coefficients from header
     #     for center fits
-    loc['acc'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
-                                       loc['number_orders'], loc['nbcoeff_ctr'])
+    loc['ACC'] = spirouImage.Read2Dkey(p, hdict, loco_ctr_coeff,
+                                       loc['NUMBER_ORDERS'], loc['NBCOEFF_CTR'])
     #     for width fits
-    loc['ass'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
-                                       loc['number_orders'], loc['nbcoeff_wid'])
+    loc['ASS'] = spirouImage.Read2Dkey(p, hdict, loco_fwhm_coeff,
+                                       loc['NUMBER_ORDERS'], loc['NBCOEFF_WID'])
     # add some other parameters to loc
-    loc['loco_ctr_coeff'] = loco_ctr_coeff
-    loc['loco_fwhm_coeff'] = loco_fwhm_coeff
-    loc['loco_ctr_file'] = loco_file
-    loc['loco_fwhm_file'] = loco_file
+    loc['LOCO_CTR_COEFF'] = loco_ctr_coeff
+    loc['LOCO_FWHM_COEFF'] = loco_fwhm_coeff
+    loc['LOCO_CTR_FILE'] = loco_file
+    loc['LOCO_FWHM_FILE'] = loco_file
     # add source
     added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass',
              'loco_ctr_coeff', 'loco_fwhm_coeff', 'loco_ctr_file',
@@ -208,7 +208,7 @@ def merge_coefficients(loc, coeffs, step):
                 shape = (number of orders/step x number of fit parmaeters)
     """
     # get number of orders
-    nbo = loc['number_orders']
+    nbo = loc['NUMBER_ORDERS']
     # copy coeffs
     newcoeffs = coeffs.copy()
     # get sum of 0 to step pixels
@@ -268,7 +268,7 @@ def find_order_centers(pp, image, loc, order_num):
     # get constants from parameter dictionary
     locstep, centralcol = pp['IC_LOCSTEPC'], pp['IC_CENT_COL']
     ext_window, image_gap = pp['IC_EXT_WINDOW'], pp['IC_IMAGE_GAP']
-    sigdet, locthreshold = pp['sigdet'], pp['IC_LOCSEUIL']
+    sigdet, locthreshold = pp['SIGDET'], pp['IC_LOCSEUIL']
     widthmin = pp['IC_WIDTHMIN']
     nm_threshold = pp['IC_NOISE_MULT_THRES']
     nx2 = image.shape[1]
@@ -290,11 +290,11 @@ def find_order_centers(pp, image, loc, order_num):
         # for pixels>central pixel we need to get row center from last
         # iteration (or posc) this is to the LEFT
         if col > centralcol:
-            rowcenter = int(loc['ctro'][order_num, col - locstep] + 0.5)
+            rowcenter = int(loc['CTRO'][order_num, col - locstep] + 0.5)
         # for pixels<=central pixel we need to get row center from last
         # iteration this ir to the RIGHT
         else:
-            rowcenter = int(loc['ctro'][order_num, col + locstep] + 0.5)
+            rowcenter = int(loc['CTRO'][order_num, col + locstep] + 0.5)
         # need to define the extraction window edges
         rowtop, rowbottom = (rowcenter - ext_window), (rowcenter + ext_window)
         # now make sure our extraction isn't out of bounds
@@ -328,8 +328,8 @@ def find_order_centers(pp, image, loc, order_num):
                 else:
                     center = float(rowcenter)-1 # to force the order curvature
         # add these positions to storage
-        loc['ctro'][order_num, col] = center
-        loc['sigo'][order_num, col] = width
+        loc['CTRO'][order_num, col] = center
+        loc['SIGO'][order_num, col] = width
         # debug plot
         if pp['DRS_DEBUG'] == 2 and pp['DRS_PLOT']:
             dvars = [pp, order_num, col, rowcenter, rowtop, rowbottom,
@@ -379,7 +379,7 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
             a = coefficients of the fit from key
             size = 'ic_locdfitc' [for kind='center'] or
                  = 'ic_locdftiw' [for kind='fwhm']
-            fit = the fity values for the fit (for x = loc['x'])
+            fit = the fity values for the fit (for x = loc['X'])
                 where fity = Sum(a[i] * x^i)
             res = the residuals from y - fity
                  where y = ctro [kind='center'] or
@@ -393,20 +393,20 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     # deal with kind
     if kind not in ['center', 'fwhm']:
         emsg = 'Error: sigma_clip "kind" must be either "center" or "fwhm"'
-        WLOG('error', pp['log_opt'], emsg)
+        WLOG('error', pp['LOG_OPT'], emsg)
     # get variables that are independent of kind
-    x = loc['x']
+    x = loc['X']
     # get variables dependent on kind
     if kind == 'center':
         # constants
         f_order = pp['IC_LOCDFITC']
         # variables
-        y = loc['ctro'][onum, :][mask]
+        y = loc['CTRO'][onum, :][mask]
     else:
         # constants
         f_order = pp['IC_LOCDFITW']
         # variables
-        y = loc['sigo'][onum, :][mask]
+        y = loc['SIGO'][onum, :][mask]
     # -------------------------------------------------------------------------
     # calculate fit - coefficients, fit y params, residuals, absolute residuals,
     #                 rms and max_ptp
@@ -487,7 +487,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
             a = coefficients of the fit from key
             size = 'ic_locdfitc' [for kind='center'] or
                  = 'ic_locdftiw' [for kind='fwhm']
-            fit = the fity values for the fit (for x = loc['x'])
+            fit = the fity values for the fit (for x = loc['X'])
                 where fity = Sum(a[i] * x^i)
             res = the residuals from y - fity
                  where y = ctro [kind='center'] or
@@ -513,7 +513,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
             a = coefficients of the fit from key
             size = 'ic_locdfitc' [for kind='center'] or
                  = 'ic_locdftiw' [for kind='fwhm']
-            fit = the fity values for the fit (for x = loc['x'])
+            fit = the fity values for the fit (for x = loc['X'])
                 where fity = Sum(a[i] * x^i)
             res = the residuals from y - fity
                  where y = ctro [kind='center'] or
@@ -526,7 +526,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
     """
     # deal with kind
     if kind not in ['center', 'fwhm']:
-        WLOG('error', pp['log_opt'], ('Error: sigma_clip "kind" must be '
+        WLOG('error', pp['LOG_OPT'], ('Error: sigma_clip "kind" must be '
                                       'either "center" or "fwhm"'))
     # extract constants from fitdata
     acoeffs = fitdata['a']
@@ -537,7 +537,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
     max_ptp = fitdata['max_ptp']
     max_ptp_frac = fitdata['max_ptp_frac']
     # get variables that are independent of kind
-    x = loc['x']
+    x = loc['X']
     ic_max_rms = pp['IC_MAX_RMS_{0}'.format(kind.upper())]
     # get variables dependent on kind
     if kind == 'center':
@@ -547,8 +547,8 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         ic_max_ptp_frac = None
         ic_ptporms_center = pp['IC_PTPORMS_CENTER']
         # variables
-        y = loc['ctro'][onum, :][mask]
-        max_rmpts = loc['max_rmpts_pos'][rnum]
+        y = loc['CTRO'][onum, :][mask]
+        max_rmpts = loc['MAX_RMPTS_POS'][rnum]
         kind2, ptpfrackind = 'center', 'sigrms'
     else:
         # constants
@@ -557,8 +557,8 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         ic_max_ptp_frac = pp['IC_MAX_PTP_FRAC{0}'.format(kind.upper())]
         ic_ptporms_center = None
         # variables
-        y = loc['sigo'][onum, :][mask]
-        max_rmpts = loc['max_rmpts_wid'][rnum]
+        y = loc['SIGO'][onum, :][mask]
+        max_rmpts = loc['MAX_RMPTS_WID'][rnum]
         kind2, ptpfrackind = 'width ', 'ptp%'
     # -------------------------------------------------------------------------
     # Need to do sigma clip fit
@@ -577,11 +577,11 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
     while cond:
         # Log that we are clipping the fit
         wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
-        WLOG('', pp['log_opt'], ('      {0} fit converging with rms/ptp/{1}:'
+        WLOG('', pp['LOG_OPT'], ('      {0} fit converging with rms/ptp/{1}:'
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
         # add residuals to loc
-        loc['res'] = res
-        loc.set_source('res', __NAME__ + '/sigmaclip_order_fit()')
+        loc['RES'] = res
+        loc.set_source('RES', __NAME__ + '/sigmaclip_order_fit()')
         # debug plot
         if pp['DRS_PLOT'] and pp['DRS_DEBUG'] == 2:
             sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)
@@ -610,7 +610,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         wmask = wmask[wmask]
     else:
         wargs = [kind2, ptpfrackind, rms, max_ptp, max_ptp_frac, int(max_rmpts)]
-        WLOG('', pp['log_opt'], (' - {0} fit rms/ptp/{1}: {2:.3f}/{3:.3f}/'
+        WLOG('', pp['LOG_OPT'], (' - {0} fit rms/ptp/{1}: {2:.3f}/{3:.3f}/'
                                  '{4:.3f} with {5} rejected points'
                                  '').format(*wargs))
     # if max_rmpts > 50:
