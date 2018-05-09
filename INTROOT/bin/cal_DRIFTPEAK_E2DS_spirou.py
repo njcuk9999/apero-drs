@@ -54,6 +54,20 @@ OLDCODEEXACT = False
 # Define functions
 # =============================================================================
 def main(night_name=None, reffile=None):
+    """
+    cal_DRIFTPEAK_E2DS_spirou.py main function, if arguments are None uses
+    arguments from run time i.e.:
+        cal_DRIFTPEAK_E2DS_spirou.py [night_directory] [reffile]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param reffile: string, the reference file to use
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -74,40 +88,40 @@ def main(night_name=None, reffile=None):
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     # get reduced directory + night name
-    rdir = p['reduced_dir']
+    rdir = p['REDUCED_DIR']
     # construct and test the reffile
-    gfkwargs = dict(path=rdir, name=p['reffile'], prefixes=['fp', 'hc'],
+    gfkwargs = dict(path=rdir, name=p['REFFILE'], prefixes=['fp', 'hc'],
                     kind='DRIFT')
-    p['reffilename'] = spirouStartup.GetFile(p, **gfkwargs)
-    p.set_source('reffilename', __NAME__ + '/main()')
+    p['REFFILENAME'] = spirouStartup.GetFile(p, **gfkwargs)
+    p.set_source('REFFILENAME', __NAME__ + '/main()')
     # get the fiber type
-    p['fiber'] = spirouStartup.GetFiberType(p, p['reffilename'])
+    p['FIBER'] = spirouStartup.GetFiberType(p, p['REFFILENAME'])
     fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
-    p.set_source('fiber', fsource)
+    p.set_source('FIBER', fsource)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['reffilename'])
+    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['REFFILENAME'])
     # add to loc
     loc = ParamDict()
-    loc['speref'] = speref
-    loc['number_orders'] = nbo
-    loc.set_sources(['speref', 'number_orders'], __NAME__ + '/main()')
+    loc['SPEREF'] = speref
+    loc['NUMBER_ORDERS'] = nbo
+    loc.set_sources(['SPEREF', 'NUMBER_ORDERS'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get lamp type
     # ----------------------------------------------------------------------
     # get lamp type
-    if 'hc' in p['reffile']:
-        loc['lamp'] = 'hc'
-    elif 'fp' in p['reffile']:
-        loc['lamp'] = 'fp'
+    if 'hc' in p['REFFILE']:
+        loc['LAMP'] = 'hc'
+    elif 'fp' in p['REFFILE']:
+        loc['LAMP'] = 'fp'
     else:
         emsg = 'Wrong type of image for Drift, should be "hc_hc" or "fp_fp"'
-        WLOG('error', p['log_opt'], emsg)
-    loc.set_source('lamp', __NAME__ + '/main()')
+        WLOG('error', p['LOG_OPT'], emsg)
+    loc.set_source('LAMP', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
@@ -120,50 +134,52 @@ def main(night_name=None, reffile=None):
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
     p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
-    bjdref = p['acqtime']
+    bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-#    loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-#    loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    wave0 = 1500. + np.arange(4088.) * 0.011
-    loc['wave'] = np.zeros((49, 4088), 'd') + wave0
-
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
+        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+        loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    else:
+        wave0 = 1500. + np.arange(4088.) * 0.011
+        loc['WAVE'] = np.zeros((49, 4088), 'd') + wave0
+        loc.set_source('WAVE', __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
     # get flat
-    loc['flat'] = spirouImage.ReadFlatFile(p, hdr)
-    loc.set_source('flat', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
-    loc['flat'] = np.where(loc['flat'] == 0, 1.0, loc['flat'])
+    loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
     # correct for flat file
-    loc['speref'] = loc['speref']/loc['flat']
+    loc['SPEREF'] = loc['SPEREF']/loc['FLAT']
 
     # ----------------------------------------------------------------------
     # Background correction
     # ----------------------------------------------------------------------
     # log that we are performing background correction
-    WLOG('', p['log_opt'], 'Perform background correction')
+    WLOG('', p['LOG_OPT'], 'Perform background correction')
     # get the box size from constants
     bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
     # Loop around the orders
-    for order_num in range(loc['number_orders']):
-        miny, maxy = spirouBACK.MeasureMinMax(loc['speref'][order_num], bsize)
-        loc['speref'][order_num] = loc['speref'][order_num] - miny
+    for order_num in range(loc['NUMBER_ORDERS']):
+        miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
+        loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
 
     # ----------------------------------------------------------------------
     # Identify FP peaks in reference file
     # ----------------------------------------------------------------------
     # log that we are identifying peaks
     wmsg = 'Identification of lines in reference file: {0}'
-    WLOG('', p['log_opt'], wmsg.format(p['reffile']))
+    WLOG('', p['LOG_OPT'], wmsg.format(p['REFFILE']))
     # get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
 
@@ -176,11 +192,11 @@ def main(night_name=None, reffile=None):
     # Get reference drift
     # ----------------------------------------------------------------------
     # are we using gaussfit?
-    gaussfit = p['drift_peak_getdrift_gaussfit']
+    gaussfit = p['DRIFT_PEAK_GETDRIFT_GAUSSFIT']
     # get drift
-    loc['xref'] = spirouRV.GetDrift(p, loc['speref'], loc['ordpeak'],
-                                    loc['xpeak'], gaussfit=gaussfit)
-    loc.set_source('xref', __NAME__ + '/main()')
+    loc['XREF'] = spirouRV.GetDrift(p, loc['SPEREF'], loc['ORDPEAK'],
+                                    loc['XPEAK'], gaussfit=gaussfit)
+    loc.set_source('XREF', __NAME__ + '/main()')
     # remove any drifts that are zero (i.e. peak not measured
     loc = spirouRV.RemoveZeroPeaks(p, loc)
 
@@ -197,27 +213,27 @@ def main(night_name=None, reffile=None):
     # Get all other fp_fp*[ext]_e2ds.fits files
     # ------------------------------------------------------------------
     # get reduced folder
-    rfolder = p['reduced_dir']
+    rfolder = p['REDUCED_DIR']
     # Get files, remove fitsfilename, and sort
-    prefix = p['reffile'][0:5]
-    suffix = '_e2ds_{0}.fits'.format(p['fiber'])
+    prefix = p['REFFILE'][0:5]
+    suffix = '_e2ds_{0}.fits'.format(p['FIBER'])
     listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
     # remove reference file
     try:
         listfiles.remove(p['reffilename'])
     except ValueError:
         emsg = 'File {0} not found in {1}'
-        WLOG('error', p['log_opt'], emsg.format(p['reffilename'], rfolder))
+        WLOG('error', p['log_opt'], emsg.format(p['REFFILENAME'], rfolder))
     # get length of files
     nfiles = len(listfiles)
     # make sure we have some files
     if nfiles == 0:
         emsg = 'No additional {0}*{1} files found in {2}'
-        WLOG('error', p['log_opt'], emsg.format(prefix, suffix, rfolder))
+        WLOG('error', p['LOG_OPT'], emsg.format(prefix, suffix, rfolder))
     else:
         # else Log the number of files found
         wmsg = 'Number of files found on directory = {0}'
-        WLOG('info', p['log_opt'], wmsg.format(nfiles))
+        WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -229,10 +245,10 @@ def main(night_name=None, reffile=None):
     else:
         skip = 1
     # set up storage
-    loc['drift'] = np.zeros((nfiles, loc['number_orders']))
-    loc['drift_left'] = np.zeros((nfiles, loc['number_orders']))
-    loc['drift_right'] = np.zeros((nfiles, loc['number_orders']))
-    loc['errdrift'] = np.zeros((nfiles, loc['number_orders']))
+    loc['drift'] = np.zeros((nfiles, loc['NUMBER_ORDERS']))
+    loc['drift_left'] = np.zeros((nfiles, loc['NUMBER_ORDERS']))
+    loc['drift_right'] = np.zeros((nfiles, loc['NUMBER_ORDERS']))
+    loc['errdrift'] = np.zeros((nfiles, loc['NUMBER_ORDERS']))
     loc['deltatime'] = np.zeros(nfiles)
     loc['meanrv'] = np.zeros(nfiles)
     loc['meanrv_left'] = np.zeros(nfiles)
