@@ -290,7 +290,7 @@ def main(night_name=None, reffile=None):
         # Background correction
         # ----------------------------------------------------------------------
         # Loop around the orders
-        for order_num in range(loc['NUMBER_ORDERES']):
+        for order_num in range(loc['NUMBER_ORDERS']):
             miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
                                                   bsize)
             loc['SPE'][order_num] = loc['SPE'][order_num] - miny
