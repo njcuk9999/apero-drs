@@ -59,11 +59,17 @@ def reset_confirmation(called=False):
         uinput = raw_input(e1 + 'Reset the DRS?\t' + e2)
     else:
         uinput = input(e1 + 'Reset the DRS?\t' + e2)
+    # line break
+    print('\n')
 
     if uinput.upper() != "YES" and (not called):
-        print(e1 + '\nResetting DRS aborted.' + e2)
-        # noinspection PyProtectedMember
-        os._exit(0)
+        WLOG('warning', '', 'Resetting DRS aborted.')
+        return False
+    elif uinput.upper() == "YES":
+        return True
+    else:
+        WLOG('warning', '', 'Resetting DRS aborted.')
+        return False
 
 
 def reset_reduced_folders(p, log=True):
@@ -176,10 +182,12 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
+    reset = True
     if warn:
-        reset_confirmation(called=called)
-    reset_reduced_folders(p, log)
-    reset_calibdb(p, log)
+        reset = reset_confirmation(called=called)
+    if reset:
+        reset_reduced_folders(p, log)
+        reset_calibdb(p, log)
     # reset_log(p)
     # ----------------------------------------------------------------------
     # End Message
