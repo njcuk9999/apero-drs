@@ -43,6 +43,21 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, flatfile=None, darkfile=None):
+    """
+    cal_BADPIX_spirou.py main function, if arguments are None uses
+    arguments from run time i.e.:
+        cal_BADPIX_spirou.py [night_directory] [flatfile] [darkfile]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param flatfile: string, the flat file to use
+    :param darkfile: string, the dark file to use
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
