@@ -1324,6 +1324,21 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
 # Other functions
 # =============================================================================
 def get_valid_orders(p, loc):
+    """
+    Get valid order range (from min to max) from constants
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            EXT_START_ORDER: int or None, the order number to start with, if
+                             None this is set to zero
+            EXT_END_ORDER: int or None, the order number to end with, if None
+                           this is set to the last order number
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+    :return valid_ordesr: list, all integer values between the start order and
+                          end order
+    """
     func_name = __NAME__ + '.get_valid_orders()'
     # get from p or set or get from loc
     if str(p['EXT_START_ORDER']) == 'None':
@@ -1358,7 +1373,7 @@ def get_valid_orders(p, loc):
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
         oru = 0
     # return the range of the orders
-    return range(orl, oru)
+    return list(range(orl, oru))
 
 
 def check_for_none(value, name, fname=None):

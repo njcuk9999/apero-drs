@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>example9</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>example10</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11775,85 +11775,36 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Using-the-SPIRou-unit-test">Using the SPIRou unit test<a class="anchor-link" href="#Using-the-SPIRou-unit-test">&#182;</a></h1><p>Mainly for use as a testing aid, the <code>unit_test.py</code> allows one to run a set of predefined files through the DRS recieps quickly.</p>
-<p>These predefined files are written in text files with the extension .run (By default these are located in the <code>./Runs/</code> directory.</p>
-<p>To run the unit test from the command line we do the following:</p>
-<ul>
-<li>Change to the unit_test folder i.e. <code>.../INTROOT/SpirouDRS/spirouUnitTests/</code>)</li>
-<li>Run the unit_test recipe:</li>
-</ul>
-<blockquote><blockquote><p><code>unit_test.py run_name.run</code></p>
-</blockquote>
-</blockquote>
-<p>Or from python:</p>
+<h1 id="Using-SPIRou-Tools">Using SPIRou Tools<a class="anchor-link" href="#Using-SPIRou-Tools">&#182;</a></h1><p>These are located in the spirouTools module:</p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">SpirouDRS</span> <span class="kn">import</span> <span class="n">spirouUnitTests</span>
-
-<span class="c1"># trick sys.argv (notebook only)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># just for ipython notebook</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;unit_test.py&#39;</span><span class="p">]</span>
-
-<span class="c1"># Note quiet = True just for notebook (avoids user input for reset check)</span>
-<span class="n">ll</span> <span class="o">=</span> <span class="n">spirouUnitTests</span><span class="o">.</span><span class="n">UnitTest</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">runname</span><span class="o">=</span><span class="s1">&#39;None&#39;</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;notebook&#39;</span><span class="p">]</span>
 </pre></div>
 
 </div>
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-<div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre><span class="ansi-green-intense-fg ansi-bold">12:31:15.0 -   |unit_test|Now running : unit_test with: </span>
-<span class="ansi-green-intense-fg ansi-bold">12:31:15.0 -   |unit_test|       -- runname=None </span>
-<span class="ansi-green-intense-fg ansi-bold">12:31:15.0 -   |ipykernel_launcher|ICDP_NAME loaded from:</span>
-<span class="ansi-green-intense-fg ansi-bold">12:31:15.0 -   |ipykernel_launcher|     /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU_H2RG.py</span>
-<span class="ansi-red-intense-fg ansi-bold">12:31:15.0 - ! |unit_test|Unit test run file &#34;/scratch/Projects/spirou_py3/spirou_py3/INTROOT/SpirouDRS/spirouUnitTests/Runs/None&#34; does not exist</span>
-</pre>
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># import spirouTools</span>
+<span class="kn">from</span> <span class="nn">SpirouDRS.spirouTools</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+
 </div>
-
-<div class="output_area">
-
-<div class="prompt"></div>
-
-
-<div class="output_subarea output_text output_error">
-<pre>
-An exception has occurred, use %tb to see the full traceback.
-
-<span class="ansi-red-fg">SystemExit</span><span class="ansi-red-fg">:</span> 1
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-<div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>/scratch/bin/anaconda3/lib/python3.6/site-packages/IPython/core/interactiveshell.py:2918: UserWarning: To exit: use &#39;exit&#39;, &#39;quit&#39;, or Ctrl-D.
-  warn(&#34;To exit: use &#39;exit&#39;, &#39;quit&#39;, or Ctrl-D.&#34;, stacklevel=1)
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -11862,20 +11813,7 @@ An exception has occurred, use %tb to see the full traceback.
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Setting-up-the-.run-files">Setting up the <code>.run</code> files<a class="anchor-link" href="#Setting-up-the-.run-files">&#182;</a></h2><p>Other than running the <code>unit_test.py</code> file one also needs to set up the .run files.</p>
-<p>These are very simple to set up and just require a file with <code>variable=value</code>.</p>
-<p>The values required are as follows:</p>
-<ul>
-<li><code>type</code>: string, the type of detector (i.e. H2RG or H4RG or the path to a custom config folder (i.e. the <code>DRS_UCONFIG</code> path)</li>
-<li><code>comparison</code>: bool, True or False. This is whether one wants to compare these files with identical files from the old DRS (Default is False unless you have the old DRS installed and have run these files on the DRS (and have modified the paths in <code>spirouUnitsTests.spirouUnitTests.py</code>)</li>
-<li><code>runX</code>: list for each run, list should be in order: recipe, night_name, argument1, argument2, argument3, .... where:<ul>
-<li>recipe: string, the recipe name (i.e. cal_DARK_spirou) without the extension</li>
-<li>night_name: string, the directory in DRS_DATA_RAW which contains the raw files</li>
-<li>argument1, argument2, argument3, ... : the arguments used after <code>recipe night_name</code> when calling the recipe from the command line</li>
-</ul>
-</li>
-</ul>
-<p>The following shows a valid .run file (assuming one has the files in <code>DRS_DATA_RAW/night_name/</code></p>
+<h2 id="Display-calibration-database">Display calibration database<a class="anchor-link" href="#Display-calibration-database">&#182;</a></h2><p>This command displays all the lines in the currently assigned master calibration database file.</p>
 
 </div>
 </div>
@@ -11885,93 +11823,7 @@ An exception has occurred, use %tb to see the full traceback.
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># ---------------------------------------------------</span>
-<span class="c1">#  File : 20170710.run</span>
-<span class="c1"># ---------------------------------------------------</span>
-
-<span class="c1"># define detector type (default = H4RG)</span>
-<span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;H2RG&quot;</span>
-
-<span class="c1"># define whether we run the comparison with old drs (default = False)</span>
-<span class="n">comparison</span> <span class="o">=</span> <span class="bp">False</span>
-
-<span class="c1"># define run</span>
-<span class="c1">#    (Format = [recipe, night_name, argument1, argument2, argument3, ...])</span>
-<span class="n">run0</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_DARK_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_dark02d406.fits&#39;</span><span class="p">]</span>
-<span class="n">run1</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_BADPIX_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_flat02f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_dark02d406.fits&#39;</span><span class="p">]</span>
-<span class="n">run2</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_loc_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark02f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark03f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark04f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark05f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark06f10.fits&#39;</span><span class="p">]</span>
-<span class="n">run3</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_loc_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat02f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat03f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat04f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat05f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat06f10.fits&#39;</span><span class="p">]</span>
-<span class="n">run4</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_SLIT_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp02a203.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp03a203.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp04a203.fits&#39;</span><span class="p">]</span>
-<span class="n">run5</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_FF_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark02f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark03f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark04f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark05f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_dark06f10.fits&#39;</span><span class="p">]</span>
-<span class="n">run6</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_FF_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat02f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat03f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat04f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat05f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_flat06f10.fits&#39;</span><span class="p">]</span>
-<span class="n">run7</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp02a203.fits&#39;</span><span class="p">]</span>
-<span class="n">run8</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp03a203.fits&#39;</span><span class="p">]</span>
-<span class="n">run9</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp04a203.fits&#39;</span><span class="p">]</span>
-<span class="n">run10</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;hcone_hcone02c61.fits&#39;</span><span class="p">]</span>
-<span class="n">run11</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;hcone_hcone03c61.fits&#39;</span><span class="p">]</span>
-<span class="n">run12</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;hcone_hcone04c61.fits&#39;</span><span class="p">]</span>
-<span class="n">run13</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;hcone_hcone05c61.fits&#39;</span><span class="p">]</span>
-<span class="n">run14</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_extract_RAW_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;hcone_hcone06c61.fits&#39;</span><span class="p">]</span>
-<span class="n">run15</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_DRIFT_E2DS_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp02a203_e2ds_AB.fits&#39;</span><span class="p">]</span>
-<span class="n">run16</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_DRIFTPEAK_E2DS_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp02a203_e2ds_AB.fits&#39;</span><span class="p">]</span>
-<span class="n">run17</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_CCF_E2DS_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;fp_fp02a203_e2ds_AB.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;UrNe.mas&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>and here is a short version:</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># ---------------------------------------------------</span>
-<span class="c1">#  File : test.run</span>
-<span class="c1"># ---------------------------------------------------</span>
-
-<span class="c1"># define detector type (default = H4RG)</span>
-<span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;H2RG&quot;</span>
-
-<span class="c1"># define whether we run the comparison with old drs (default = False)</span>
-<span class="n">comparison</span> <span class="o">=</span> <span class="bp">False</span>
-
-<span class="c1"># define run</span>
-<span class="c1">#    (Format = [recipe, night_name, argument1, argument2, argument3, ...])</span>
-<span class="n">run0</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_DARK_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_dark02d406.fits&#39;</span><span class="p">]</span>
-<span class="n">run1</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cal_BADPIX_spirou&#39;</span><span class="p">,</span> <span class="s1">&#39;20170710&#39;</span><span class="p">,</span> <span class="s1">&#39;flat_flat02f10.fits&#39;</span><span class="p">,</span> <span class="s1">&#39;dark_dark02d406.fits&#39;</span><span class="p">]</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>This will run the DRS as follows:</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ll</span> <span class="o">=</span> <span class="n">spirouUnitTests</span><span class="o">.</span><span class="n">UnitTest</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">runname</span><span class="o">=</span><span class="s1">&#39;test.run&#39;</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">DisplayCalibDB</span><span class="p">()</span>
 </pre></div>
 
 </div>
@@ -11988,114 +11840,403 @@ An exception has occurred, use %tb to see the full traceback.
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre><span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |unit_test|Now running : unit_test with: </span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |unit_test|       -- runname=test.run </span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |ipykernel_launcher|ICDP_NAME loaded from:</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |ipykernel_launcher|     /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU_H2RG.py</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |unit_test|</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:34.0 - @ |unit_test| *****************************************</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:34.0 - @ |unit_test| START OF UNIT TESTS</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:34.0 - @ |unit_test| *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |unit_test|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |unit_test|</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:34.0 - @ |unit_test| *****************************************</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:34.0 - @ |unit_test| RUN0:cal_DARK_spirou</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:34.0 - @ |unit_test| *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |unit_test|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   || *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   || * SPIROU @(#) Geneva Observatory (0.2.002)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   || *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(dir_drs_config)    DRS_CONFIG=/scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(dir_drs_uconfig)   DRS_UCONFIG=/home/cook/spirou_config_H2RG/</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(used_date)         DRS_USED_DATE=undefined</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   ||                    DRS_INTERACTIVE is not set, running on-line mode</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |RUN0:cal_DARK_spirou|Now running : RUN0:cal_DARK_spirou on file(s): </span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |RUN0:cal_DARK_spirou|On directory /scratch/Projects/spirou_py3/data/raw/20170710</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |ipykernel_launcher|ICDP_NAME loaded from:</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |ipykernel_launcher|     /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU_H2RG.py</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 - * |RUN0:cal_DARK_spirou|Correct type of image for dark (dark_dark)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 - * |RUN0:cal_DARK_spirou|Now processing Image TYPE UNKNOWN with RUN0:cal_DARK_spirou recipe</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |RUN0:cal_DARK_spirou|Reading Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 -   |RUN0:cal_DARK_spirou|Image 2048 x 2048 loaded</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:34.0 - * |RUN0:cal_DARK_spirou|Dark Time = 597.489 s</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:35.0 -   |RUN0:cal_DARK_spirou|Doing Dark measurement</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:35.0 - * |RUN0:cal_DARK_spirou|In Whole det: Frac dead pixels= 14.659 % - Median= 0.35 ADU/s - Percent[5:95]= 0.08-99.57 ADU/s</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:35.0 - * |RUN0:cal_DARK_spirou|In Blue part: Frac dead pixels= 0.997 % - Median= 0.15 ADU/s - Percent[5:95]= 0.09-0.53 ADU/s</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:35.0 - * |RUN0:cal_DARK_spirou|In Red part : Frac dead pixels= 20.534 % - Median= 2.11 ADU/s - Percent[5:95]= 0.18-232.09 ADU/s</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:35.0 - * |RUN0:cal_DARK_spirou|Frac pixels with DARK &gt; 100.00 ADU/s = 4.257 %</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:35.0 - @ |python warning Line 143  warning reads: invalid value encountered in greater|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:35.0 - * |RUN0:cal_DARK_spirou|Total Frac dead pixels (N.A.N) + DARK &gt; 100.00 ADU/s = 18.916 %</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:36.0 - * |RUN0:cal_DARK_spirou|QUALITY CONTROL SUCCESSFUL - Well Done -</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:36.0 -   |RUN0:cal_DARK_spirou|Saving Dark frame in 20170710_dark_dark02d406.fits</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:36.0 - @ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:36.0 -   |RUN0:cal_DARK_spirou|Saving Bad Pixel Map in 20170710_dark_dark02d406_badpixel.fits</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:37.0 - @ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |RUN0:cal_DARK_spirou|Updating Calib Data Base with DARK</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |RUN0:cal_DARK_spirou|Updating Calib Data Base with BADPIX_OLD</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |RUN0:cal_DARK_spirou|Recipe RUN0:cal_DARK_spirou has been successfully completed</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |unit_test|</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:37.0 - @ |unit_test| *****************************************</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:37.0 - @ |unit_test| RUN1:cal_BADPIX_spirou</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:37.0 - @ |unit_test| *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |unit_test|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   || *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   || * SPIROU @(#) Geneva Observatory (0.2.002)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   || *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(dir_data_raw)      DRS_DATA_RAW=/scratch/Projects/spirou_py3/data/raw</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(dir_data_reduc)    DRS_DATA_REDUC=/scratch/Projects/spirou_py3/data/reduced</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(dir_drs_config)    DRS_CONFIG=/scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(dir_drs_uconfig)   DRS_UCONFIG=/home/cook/spirou_config_H2RG/</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(dir_calib_db)      DRS_CALIB_DB=/scratch/Projects/spirou_py3/data/calibDB</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(dir_data_msg)      DRS_DATA_MSG=/scratch/Projects/spirou_py3/data/msg</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(used_date)         DRS_USED_DATE=undefined</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||(working_dir)       DRS_DATA_WORKING=/scratch/Projects/spirou_py3/data/tmp</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   ||                    DRS_INTERACTIVE is not set, running on-line mode</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|Now running : RUN1:cal_BADPIX_spirou with: </span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|       -- flatfile=flat_flat02f10.fits </span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|       -- darkfile=dark_dark02d406.fits </span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |ipykernel_launcher|ICDP_NAME loaded from:</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |ipykernel_launcher|     /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU_H2RG.py</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |ipykernel_launcher|Correct type of image for FLAT (flat_flat)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |RUN1:cal_BADPIX_spirou|Now processing Image TYPE FLAT with RUN1:cal_BADPIX_spirou recipe</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |ipykernel_launcher|Correct type of image for DARK (dark_dark)</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 - * |RUN1:cal_BADPIX_spirou|Now processing Image TYPE DARK with RUN1:cal_BADPIX_spirou recipe</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|Reading FLAT Image /scratch/Projects/spirou_py3/data/raw/20170710/flat_flat02f10.fits</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|FLAT Image 2048 x 2048 loaded</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|Reading DARK Image /scratch/Projects/spirou_py3/data/raw/20170710/dark_dark02d406.fits</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|DARK Image 2048 x 2048 loaded</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:37.0 -   |RUN1:cal_BADPIX_spirou|Normalising the flat</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:38.0 -   |RUN1:cal_BADPIX_spirou|Looking for bad pixels</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Fraction of hot pixels from dark: 3.01 %</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Fraction of bad pixels from flat: 1.66 %</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Fraction of non-finite pixels in dark: 20.76 %</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Fraction of non-finite pixels in flat: 14.66 %</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Fraction of bad pixels with all criteria: 24.87 %</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Image format changed to 1930x2035</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 - * |RUN1:cal_BADPIX_spirou|QUALITY CONTROL SUCCESSFUL - Well Done -</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:39.0 -   |RUN1:cal_BADPIX_spirou|Saving Bad Pixel Map in 20170710_flat_flat02f10_badpixel.fits</span>
-<span class="ansi-yellow-intense-fg ansi-bold">12:28:40.0 - @ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 - * |RUN1:cal_BADPIX_spirou|Updating Calib Data Base with BADPIX</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 - * |RUN1:cal_BADPIX_spirou|Recipe RUN1:cal_BADPIX_spirou has been successfully completed</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test| *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test| TIMING STATS</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test| *****************************************</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test|	RUN0:cal_DARK_spirou	Time taken = 2.829 s</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test|	RUN1:cal_BADPIX_spirou	Time taken = 2.505 s</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 -   |unit_test|</span>
-<span class="ansi-green-intense-fg ansi-bold">12:28:40.0 - * |unit_test|Recipe unit_test has been successfully completed</span>
+<pre><span class="ansi-green-intense-fg ansi-bold">14:19:41.0 -   |notebook|ICDP_NAME loaded from:</span>
+<span class="ansi-green-intense-fg ansi-bold">14:19:41.0 -   |notebook|     /scratch/Projects/spirou_py3/spirou_py3/INTROOT/config/constants_SPIROU_H4RG.py</span>
+<span class="ansi-green-intense-fg ansi-bold">14:19:41.0 -   |notebook|CalibDB located at: /scratch/Projects/spirou_py3/data_h4rg/calibDB/master_calib_SPIROU.txt</span>
+ WAVE_AB AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 2000-01-01-00:00:00.00 946684800
+ WAVE_A 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
+ WAVE_B 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
+ WAVE_C AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits 2000-01-01-00:00:00.00 946684800
+ DARK AT5/20180409 20180409_dark_dark_001_pp.fits 2018-04-09-18:48:25.000000 1523299705.0
+ BADPIX_OLD AT5/20180409 20180409_dark_dark_001_pp_badpixel.fits 2018-04-09-18:48:25.000000 1523299705.0
+ BADPIX AT5/20180409 20180409_flat_flat_001_pp_badpixel.fits 2018-04-09-19:10:25.000000 1523301025.0
+ ORDER_PROFILE_C AT5/20180409 20180409_dark_flat_001_pp_order_profile_C.fits 2018-04-09-19:00:01.000000 1523300401.0
+ LOC_C AT5/20180409 20180409_dark_flat_001_pp_loco_C.fits 2018-04-09-19:00:01.000000 1523300401.0
+ ORDER_PROFILE_AB AT5/20180409 20180409_flat_dark_001_pp_order_profile_AB.fits 2018-04-09-19:05:13.000000 1523300713.0
+ LOC_AB AT5/20180409 20180409_flat_dark_001_pp_loco_AB.fits 2018-04-09-19:05:13.000000 1523300713.0
+ TILT AT5/20180409 20180409_fp_fp_001_pp_tilt.fits 2018-04-09-19:30:29.000000 1523302229.0
+ DARK AT5/20180409 20180409_dark_dark_001_pp.fits 2018-04-09-18:48:25.000000 1523299705.0
+ BADPIX_OLD AT5/20180409 20180409_dark_dark_001_pp_badpixel.fits 2018-04-09-18:48:25.000000 1523299705.0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Display-DRS-dependencies">Display DRS dependencies<a class="anchor-link" href="#Display-DRS-dependencies">&#182;</a></h2><p>This command will display all dependencies (and version) currently being used by the DRS.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">DRS_Dependencies</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || *****************************************</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || * DRS Dependencies</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || *****************************************</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || *****************************************</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || * System information:</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || *****************************************</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Python version = 3.6.4</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Python distribution = Anaconda, Inc.</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Distribution date = default, Jan 16 2018, 18:10:19</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Dist Other = GCC 7.2.0</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Path = &#34;/scratch/bin/anaconda3/bin/python&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Platform = &#34;linux&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   ||    Arg 1 = &#34;notebook&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   || *****************************************</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   |notebook|Getting python files</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:40.0 -   |notebook|Getting import statements</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|Stats:</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	total lines: 26098</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	total empty lines: 2224</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	total lines of comments: 13407</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	total lines of code: 10467</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|Import statements found are:</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	IPython         (6.2.1)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	pdb             (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	matplotlib      (2.1.2)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	time            (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	__future__      (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	astropy         (2.0.3)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	calendar        (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	collections     (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	datetime        (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	numpy           (1.14.0)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	scipy           (1.0.0)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	code            (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	filecmp         (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	glob            (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	os              (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	pkg_resources   (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	shutil          (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	string          (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	sys             (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 -   |notebook|	warnings        (No version info)</span>
+<span class="ansi-green-intense-fg ansi-bold">14:20:41.0 - * |notebook|Recipe notebook has been successfully completed</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Reset-the-DRS">Reset the DRS<a class="anchor-link" href="#Reset-the-DRS">&#182;</a></h2><p>This command resets the DRS back to installation settings. This includes:</p>
+<ul>
+<li>removing all files from the calibDB and master calibDB file</li>
+<li>removing all files from the reduced folder</li>
+<li>copying over files needed by the DRS (e.g. the files needed by the calibDB)</li>
+</ul>
+<p>Note you will be warner and are required to type "yes" or "no" when using in default mode however the warning can be shut off with keyword <code>warn=False</code></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="c1"># For notebook only warn=False (as we have no user input available)</span>
+<span class="n">DRS_Reset</span><span class="p">(</span><span class="n">warn</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Resetting reduced directory</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_dark_001_pp.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_dark_001_pp_badpixel.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_flat_001_pp_badpixel.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/spirou_wave_ini3.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_flat_001_pp_order_profile_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_flat_001_pp_loco_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_flat_001_pp_fwhm-order_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_flat_001_pp_with-order_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_dark_001_pp_order_profile_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_dark_001_pp_loco_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_dark_001_pp_fwhm-order_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_dark_001_pp_with-order_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_fp_fp_001_pp_tilt.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_flat_001_pp_blaze_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_dark_flat_001_pp_flat_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_dark_001_pp_blaze_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/20180409_flat_dark_001_pp_flat_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/fp_fp_001_pp_e2ds_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/fp_fp_001_pp_e2ds_A.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/fp_fp_001_pp_e2ds_B.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/fp_fp_001_pp_e2ds_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/hcone_hcone_001_pp_e2ds_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/hcone_hcone_001_pp_e2ds_A.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/hcone_hcone_001_pp_e2ds_B.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/hcone_hcone_001_pp_e2ds_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Resetting calibration database</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/spirou_wave_ini3.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/tapas_combined_za=20.000000.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/TAPAS_X_axis_speed_dv=0.5.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/master_calib_SPIROU.txt</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_dark_dark_001_pp.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_dark_dark_001_pp_badpixel.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_flat_flat_001_pp_badpixel.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_dark_flat_001_pp_order_profile_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_dark_flat_001_pp_loco_C.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_flat_dark_001_pp_order_profile_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_flat_dark_001_pp_loco_AB.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|    Removing file: /scratch/Projects/spirou_py3/data_h4rg/calibDB/20180409_fp_fp_001_pp_tilt.fits</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Adding file: 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits to /scratch/Projects/spirou_py3/data_h4rg/calibDB</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Adding file: 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits to /scratch/Projects/spirou_py3/data_h4rg/calibDB</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Adding file: spirou_wave_ini3.fits to /scratch/Projects/spirou_py3/data_h4rg/calibDB</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Adding file: tapas_combined_za=20.000000.fits to /scratch/Projects/spirou_py3/data_h4rg/calibDB</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Adding file: TAPAS_X_axis_speed_dv=0.5.fits to /scratch/Projects/spirou_py3/data_h4rg/calibDB</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 -   |notebook|Adding file: master_calib_SPIROU.txt to /scratch/Projects/spirou_py3/data_h4rg/calibDB</span>
+<span class="ansi-green-intense-fg ansi-bold">14:41:30.0 - * |notebook|Recipe notebook has been successfully completed</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="List-all-raw-files-and-directories">List all raw files and directories<a class="anchor-link" href="#List-all-raw-files-and-directories">&#182;</a></h2><p>This command list all raw files and directories available with the current setup (i.e. DRS_DATA_RAW)</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ListRawFiles</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-bold">14:26:55.0 -   |notebook|All RAW files in /scratch/Projects/spirou_py3/data_h4rg/raw are:</span>
+		20180409
+			dark_dark_001.fits
+			dark_dark_aff_001.fits
+			dark_dark_afp_001.fits
+			dark_dark_ahc1_001.fits
+			dark_dark_ahc2_001.fits
+			dark_flat_001.fits
+			dark_hcone_001.fits
+			dark_hctwo_001.fits
+			flat_dark_001.fits
+			flat_flat_001.fits
+			fp_fp_001.fits
+			hcone_dark_001.fits
+			hcone_hcone_001.fits
+			hctwo_dark_001.fits
+			hctwo_hctwo_001.fits
+			dark_dark_001_pp.fits
+			dark_dark_aff_001_pp.fits
+			dark_dark_afp_001_pp.fits
+			dark_dark_ahc1_001_pp.fits
+			dark_dark_ahc2_001_pp.fits
+			dark_flat_001_pp.fits
+			dark_hcone_001_pp.fits
+			dark_hctwo_001_pp.fits
+			flat_dark_001_pp.fits
+			flat_flat_001_pp.fits
+			fp_fp_001_pp.fits
+			hcone_dark_001_pp.fits
+			hcone_hcone_001_pp.fits
+			hctwo_dark_001_pp.fits
+			hctwo_hctwo_001_pp.fits
+		20180407
+			dark_dark_001d.fits
+			dark_flat_001f.fits
+			flat_dark_001f.fits
+			flat_flat_001f.fits
+			fp_fp_001a.fits
+			hcone_hcone_001c.fits
+			dark_dark_001d_pp.fits
+			dark_flat_001f_pp.fits
+			flat_dark_001f_pp.fits
+			flat_flat_001f_pp.fits
+			fp_fp_001a_pp.fits
+			hcone_hcone_001c_pp.fits
+		20180424
+			Gl699_fp42o.fits
+			Gl699_fp42o_pp.fits
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="List-all-reduced-files-and-directories">List all reduced files and directories<a class="anchor-link" href="#List-all-reduced-files-and-directories">&#182;</a></h2><p>This command list all reduced files and directories available with the current setup (i.e. DRS_DATA_REDUC)</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ListReducedFiles</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-bold">14:41:01.0 -   |notebook|All REDUCED files in /scratch/Projects/spirou_py3/data_h4rg/reduced are:</span>
+		20180409
+			20180409_dark_dark_001_pp.fits
+			20180409_dark_dark_001_pp_badpixel.fits
+			20180409_flat_flat_001_pp_badpixel.fits
+			spirou_wave_ini3.fits
+			2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits
+			2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits
+			20180409_dark_flat_001_pp_order_profile_C.fits
+			20180409_dark_flat_001_pp_loco_C.fits
+			20180409_dark_flat_001_pp_fwhm-order_C.fits
+			20180409_dark_flat_001_pp_with-order_C.fits
+			20180409_flat_dark_001_pp_order_profile_AB.fits
+			20180409_flat_dark_001_pp_loco_AB.fits
+			20180409_flat_dark_001_pp_fwhm-order_AB.fits
+			20180409_flat_dark_001_pp_with-order_AB.fits
+			20180409_fp_fp_001_pp_tilt.fits
+			20180409_dark_flat_001_pp_blaze_C.fits
+			20180409_dark_flat_001_pp_flat_C.fits
+			20180409_flat_dark_001_pp_blaze_AB.fits
+			20180409_flat_dark_001_pp_flat_AB.fits
+			fp_fp_001_pp_e2ds_AB.fits
+			fp_fp_001_pp_e2ds_A.fits
+			fp_fp_001_pp_e2ds_B.fits
+			fp_fp_001_pp_e2ds_C.fits
+			hcone_hcone_001_pp_e2ds_AB.fits
+			hcone_hcone_001_pp_e2ds_A.fits
+			hcone_hcone_001_pp_e2ds_B.fits
+			hcone_hcone_001_pp_e2ds_C.fits
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="List-all-calibration-database-files">List all calibration database files<a class="anchor-link" href="#List-all-calibration-database-files">&#182;</a></h2><p>This command list all calibration database files available with the current setup (i.e. DRS_CALIB_DB)</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ListCalibFiles</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+<div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-intense-fg ansi-bold">14:47:36.0 -   |notebook|All CALIB_DB files in /scratch/Projects/spirou_py3/data_h4rg/calibDB are:</span>
+		
+			2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits
+			2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits
+			spirou_wave_ini3.fits
+			tapas_combined_za=20.000000.fits
+			TAPAS_X_axis_speed_dv=0.5.fits
+			master_calib_SPIROU.txt
 </pre>
 </div>
 </div>

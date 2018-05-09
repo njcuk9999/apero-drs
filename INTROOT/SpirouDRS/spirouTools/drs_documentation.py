@@ -45,7 +45,7 @@ SPECIAL_CHARS = ['\\', '/', '{', '}', '(', ')']
 # =============================================================================
 # Define user functions
 # =============================================================================
-def list_modules():
+def list_modules(return_values=False):
     """
     Lists the modules defined in the DRS and descriped in the documentation
 
@@ -59,14 +59,20 @@ def list_modules():
     WLOG('', p['LOG_OPT'], 'Modules described in tex:')
     # print modules from tex files
     files = np.sort(files)
+    mods = []
     for f in files:
-        WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(f.split('.tex')[0]))
+        modname = f.split('.tex')[0]
+        WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(modname))
+        mods.append(modname)
     # log progress
     WLOG('', p['LOG_OPT'], 'Modules in {0}'.format(PACKAGE))
     # get modules from package
     imp = __import__(PACKAGE)
     for f in imp.__all__:
         WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(f))
+
+    if return_values:
+        return mods
 
 
 def list_recipes():
@@ -156,7 +162,32 @@ def list_variables():
     end(p)
 
 
-def find_missing_module_functions(module_name):
+def find_all_missing_modules():
+
+    ll = list_modules(return_values=True)
+
+    missing = dict()
+
+    for mod in ll:
+        try:
+            mll = find_missing_module_functions(mod, return_values=True)
+            missing[mod] = list(mll)
+        except SystemExit:
+            print('Skipping {0}'.format(mod))
+
+    # print all missing
+    WLOG('', DPROG, '')
+    WLOG('', DPROG, 'List of all missing: ')
+    WLOG('', DPROG, '')
+    for mod in missing:
+        if len(missing[mod]) == 0:
+            continue
+        WLOG('', DPROG, '\t{0}'.format(mod))
+        for mll in missing[mod]:
+            WLOG('', DPROG, '\t\t- {0}'.format(mll))
+
+
+def find_missing_module_functions(module_name, return_values=False):
     """
     Looks for missing functions (that are in __init__ file of module) but not
     in module_name.tex (as a subsection)
@@ -205,6 +236,10 @@ def find_missing_module_functions(module_name):
         WLOG('warning', p['LOG_OPT'], wmsg.format(module_name))
     # print end
     end(p)
+
+    if return_values:
+        return missing_funcs
+
 
 
 def find_missing_variables():
