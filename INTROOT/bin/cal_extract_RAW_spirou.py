@@ -116,10 +116,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # set sigdet and conad keywords (sigdet is changed later)
-    p['KW_CCD_SIGDET'][1] = p['sigdet']
-    p['KW_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
     # now change the value of sigdet if require
-    if p['ic_ext_sigdet'] > 0:
+    if p['IC_EXT_SIGDET'] > 0:
         p['SIGDET'] = float(p['IC_EXT_SIGDET'])
 
     # ----------------------------------------------------------------------
@@ -220,7 +220,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if p['fiber'] in ['A', 'B', 'AB']:
+        if p['FIBER'] in ['A', 'B', 'AB']:
             # merge
             loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
             loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
@@ -400,7 +400,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Store other extractions in files
         # ------------------------------------------------------------------
         # only store all is ic_ext_all = 1
-        if p['ic_extract_type'] == 'all':
+        if p['IC_EXTRACT_TYPE'] == 'all':
             ext_files = ['SPE1', 'SPE3', 'SPE4', 'SPE5', 'E2DS']
             extfitslist = spirouConfig.Constants.EXTRACT_E2DS_ALL_FILES(p)
             # loop around the various extraction files
