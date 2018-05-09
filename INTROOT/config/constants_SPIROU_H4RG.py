@@ -288,14 +288,14 @@ ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 10
+ic_blaze_fitn = 7#10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 2
+ic_ff_order_plot = 0
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
-ic_ff_plot_all_orders = 1
+ic_ff_plot_all_orders = 0
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
@@ -336,10 +336,10 @@ ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
-ic_ext_sigdet = 100
+ic_ext_sigdet = -1 # 100
 
 #    Define order to plot                                        - [cal_extract]
-ic_ext_order_plot = 5
+ic_ext_order_plot = 22
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
