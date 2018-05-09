@@ -52,11 +52,11 @@ def main(night_name=None, files=None):
     p = spirouStartup.LoadArguments(p)
     p = spirouStartup.InitialFileSetup(p, kind=None, calibdb=False)
      # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/main()')
+    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
+    p.set_source('DPRTYPE', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
 
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
 
 
     # ----------------------------------------------------------------------
@@ -74,11 +74,11 @@ def main(night_name=None, files=None):
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
     # now change the value of sigdet if require
-    if p['ic_ext_sigdet'] > 0:
-        p['sigdet'] = float(p['ic_ext_sigdet'])
+    if p['IC_EXT_SIGDET'] > 0:
+        p['SIGDET'] = float(p['IC_EXT_SIGDET'])
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -104,7 +104,7 @@ def main(night_name=None, files=None):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     satseuil = 64536.
     col = 3700
@@ -131,7 +131,7 @@ def main(night_name=None, files=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

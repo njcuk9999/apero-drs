@@ -10,8 +10,8 @@ Created on 2018-05-01 at 12:32
 @author: cook
 """
 from __future__ import division
+import numpy as np
 import sys
-import os
 import time
 from collections import OrderedDict
 
@@ -56,51 +56,34 @@ VALID = spirouUnitRecipes.VALID_RECIPES
 # =============================================================================
 # Define functions
 # =============================================================================
-def set_type(p, rparams):
-    # check that "type" defined in run file
-    if 'TYPE' not in rparams:
-        emsg1 = '"type" not defined in run file = {0}'.format(p['rfile'])
-        emsg2 = '    "type" must be set'
-        emsg3 = '    "type" must be: "H2RG", "H4RG" or a valid path'
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
-    # set the type from parameter
-    if rparams['TYPE'] == 'H2RG':
-        os.environ[UCONFIG_VAR] = H2RG_USER_PATH
-    elif rparams['TYPE'] == 'H4RG':
-        os.environ[UCONFIG_VAR] = H4RG_USER_PATH
-    # else we expect a valid path
+def check_type(p, rparams):
+
+    # TODO: remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == rparams['TYPE']:
+        wmsg = 'Detector type compatible'
+        WLOG('', p['LOG_OPT'], wmsg)
     else:
-        # check path exists
-        if not os.path.exists(rparams['TYPE']):
-            emsg1 = '"type" must be: "H2RG", "H4RG" or a valid path'
-            emsg2 = '   "type" = {0}'.format(rparams['TYPE'])
-            WLOG('error', p['log_opt'], [emsg1, emsg2])
-        else:
-            os.environ[UCONFIG_VAR] = rparams['TYPE']
-
-
-def unset_type():
-    """
-    Unset type from environment before ending the code
-    :return:
-    """
-    del os.environ[UCONFIG_VAR]
+        emsg1 = 'type={0} incompatible with current run'.format(rparams['TYPE'])
+        emsg2 = ('    Please check "config.py" and link it to the correct'
+                 ' constants_SPIROU.py')
+        emsg3 = '(i.e. constants_SPIROU_{0}.py)'.format(rparams['TYPE'])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
 
 
 def set_comp(p, rparams):
     # check that "comparison" defined in run file
     if 'COMPARISON' not in rparams:
-        emsg1 = '"comparison" not defined in run file {0}'.format(p['rfile'])
+        emsg1 = '"comparison" not defined in run file {0}'.format(p['RFILE'])
         emsg2 = '    "comparison" must be set'
         emsg3 = '    "comparison" must be either "True" or "False"'
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
     # set the comparison from parameter
     try:
         comp = bool(rparams['COMPARISON'])
     except:
         emsg1 = '"comparison" must be either "True" or "False"'
         emsg2 = '    "comparison" = {0}'.format(rparams['COMPARISON'])
-        WLOG('error', p['log_opt'], [emsg1, emsg2])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         comp = False
     # return comp
     return comp
@@ -119,42 +102,46 @@ def get_runs(p, rparams):
             if type(run_i) != list:
                 emsg1 = '"{0}" is not a valid python list'.format(key)
                 emsg2 = '   {0}={1}'.format(key, run_i)
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             # check that first entry is a valid recipe
             if run_i[0] not in VALID:
                 emsg1 = '"{0}" does not start with a valid DRS recipe'
                 emsg2 = '   {0}[0]={1}'.format(key, run_i[0])
-                WLOG('error', p['log_opt'], [emsg1, emsg2])
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             # append to runs
             runs[key] = run_i
     # make sure we have some runs
     if len(runs) == 0:
-        eargs = [RUN_KEY, p['rfile']]
+        eargs = [RUN_KEY, p['RFILE']]
         emsg = 'No runs ("{0}## = ") found in file {1}'
-        WLOG('error', p['log_opt'], emsg.format(*eargs))
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # return runs
     return runs
 
 
 def unit_log_title(p, title=' START OF UNIT TESTS'):
-    WLOG('', p['log_opt'], '')
-    WLOG('warning', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('warning', p['log_opt'], title)
-    WLOG('warning', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['log_opt'], '')
+    WLOG('', p['LOG_OPT'], '')
+    WLOG('warning', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('warning', p['LOG_OPT'], title)
+    WLOG('warning', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], '')
 
 
 def log_timings(p, times):
-    WLOG('', p['log_opt'], '')
-    WLOG('', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['log_opt'], ' TIMING STATS')
-    WLOG('', p['log_opt'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['log_opt'], '')
+
+    # add times together
+    times['Total'] = np.sum(list(times.values()))
+    # log the times
+    WLOG('', p['LOG_OPT'], '')
+    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], ' TIMING STATS')
+    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], '')
     # Now print the stats for this test:
     for key in list(times.keys()):
-        msg = '\t{0}\tTime taken = {1:.3f} s'.format(key, times[key])
-        WLOG('', p['log_opt'], msg)
-    WLOG('', p['log_opt'], '')
+        msg = '  {0:35s} Time taken = {1:.3f} s'.format(key, times[key])
+        WLOG('', p['LOG_OPT'], msg)
+    WLOG('', p['LOG_OPT'], '')
 
 
 def manage_run(p, runname, run_i, timing, new_out, old_out,

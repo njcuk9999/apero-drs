@@ -43,7 +43,7 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # =============================================================================
 # Define functions
 # =============================================================================
-def reset_confirmation():
+def reset_confirmation(called=False):
 
     # get the warning and error colours
     w1, w2 = printc('warning')
@@ -60,7 +60,7 @@ def reset_confirmation():
     else:
         uinput = input(e1 + 'Reset the DRS?\t' + e2)
 
-    if uinput.upper() != "YES":
+    if uinput.upper() != "YES" and (not called):
         print(e1 + '\nResetting DRS aborted.' + e2)
         # noinspection PyProtectedMember
         os._exit(0)
@@ -167,7 +167,7 @@ def remove(path, list_of_files, log=True):
     return list_of_files
 
 
-def main(return_locals=False, warn=True, log=True):
+def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -177,15 +177,16 @@ def main(return_locals=False, warn=True, log=True):
     # Perform resets
     # ----------------------------------------------------------------------
     if warn:
-        reset_confirmation()
+        reset_confirmation(called=called)
     reset_reduced_folders(p, log)
     reset_calibdb(p, log)
     # reset_log(p)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', DPROG, wmsg.format(DPROG))
+    if log:
+        wmsg = 'Recipe {0} has been successfully completed'
+        WLOG('info', DPROG, wmsg.format(DPROG))
     # return a copy of locally defined variables in the memory
     if return_locals:
         return dict(locals())

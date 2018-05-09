@@ -97,18 +97,18 @@ def correct_flat(p=None, loc=None, hdr=None, filename=None):
         # read the flat
         flat = spirouImage.ReadFlatFile(p, hdr, required=False)
         # where the flat is zeros set it to ones
-        flat = np.where(flat == 0.0, np.ones_like(loc['data']), flat)
+        flat = np.where(flat == 0.0, np.ones_like(loc['DATA']), flat)
     # if there is no flat defined in calibDB use a ones array
     except ConfigError as e:
         # log warning
         wmsg = [e.message, '    Using constant flat instead.']
-        WLOG('warning', p['log_opt'], wmsg)
+        WLOG('warning', p['LOG_OPT'], wmsg)
         # flat set to ones
-        flat = np.ones_like(loc['data'])
+        flat = np.ones_like(loc['DATA'])
 
     # add flat to loc
-    loc['flat'] = flat
-    loc.set_source('flat', func_name)
+    loc['FLAT'] = flat
+    loc.set_source('FLAT', func_name)
 
     # correct the data with the flat
     # TODO: Should this be used?
@@ -127,7 +127,7 @@ def get_valid_orders(p, loc):
     else:
         order_range_lower = p['FF_START_ORDER']
     if str(p['FF_END_ORDER']) == 'None':
-        order_range_upper = loc['number_orders']
+        order_range_upper = loc['NUMBER_ORDERS']
     else:
         order_range_upper = p['FF_END_ORDER']
 
@@ -140,7 +140,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'FF_START_ORDER = {0}'.format(order_range_lower)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
         orl = 0
     # check that order_range_upper is valid
     try:
@@ -151,7 +151,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'FF_END_ORDER = {0}'.format(order_range_upper)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
         oru = 0
     # return the range of the orders
     return range(orl, oru)

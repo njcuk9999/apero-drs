@@ -902,8 +902,8 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
 
     # add fiber to the parameters
     if merge:
-        pp['fiber'] = fiber
-        pp.set_source('fiber', __NAME__ + '/fiber_params()')
+        pp['FIBER'] = fiber
+        pp.set_source('FIBER', __NAME__ + '/fiber_params()')
     else:
         fparam['fiber'] = fiber
         fparam.set_source('fiber', __NAME__ + '/fiber_params()')
