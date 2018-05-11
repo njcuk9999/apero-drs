@@ -1003,9 +1003,11 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
             'Fraction of non-finite pixels in dark: {0:.4f} %',
             'Fraction of non-finite pixels in flat: {0:.4f} %',
             'Fraction of bad pixels with all criteria: {0:.4f} %']
-    badpix_stats = [np.mean(badpix_dark) * 100, np.mean(badpix_flat) * 100,
-                    np.mean(~valid_dark) * 100, np.mean(~valid_flat) * 100,
-                    np.mean(badpix_map) * 100]
+    badpix_stats = [(np.sum(badpix_dark) / badpix_dark.size) * 100,
+                    (np.sum(badpix_flat) / badpix_flat.size) * 100,
+                    (np.sum(~valid_dark) / valid_dark.size) * 100,
+                    (np.sum(~valid_flat) / valid_flat.size) * 100,
+                    (np.sum(badpix_map) / badpix_map.size) * 100]
 
     for it in range(len(text)):
         WLOG('', p['LOG_OPT'], text[it].format(badpix_stats[it]))
@@ -1038,8 +1040,15 @@ def locate_bad_pixels_full(p, image):
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
     mask = np.rot90(mdata, -1) < threshold
+
+    # -------------------------------------------------------------------------
+    # log results
+    badpix_stats = (np.sum(mdata) / mdata.size) * 100
+    text = 'Fraction of un-illuminated pixels in engineering flat {0:.4f} %'
+    WLOG('', p['LOG_OPT'], text.format(badpix_stats))
+
     # return mask
-    return mask
+    return mask, badpix_stats
 
 
 def get_tilt(pp, lloc, image):
