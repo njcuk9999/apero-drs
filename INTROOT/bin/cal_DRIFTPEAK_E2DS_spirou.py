@@ -108,7 +108,7 @@ def main(night_name=None, reffile=None):
     loc = ParamDict()
     loc['SPEREF'] = speref
     loc['NUMBER_ORDERS'] = nbo
-    loc.set_sources(['speref', 'number_orders'], __NAME__ + '/main()')
+    loc.set_sources(['SPEREF', 'NUMBER_ORDERS'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get lamp type
@@ -143,8 +143,13 @@ def main(night_name=None, reffile=None):
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    if p['IC_IMAGE_NAME'] == 'H2RG':
+        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+        loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    else:
+        wave0 = 1500. + np.arange(4088.) * 0.011
+        loc['WAVE'] = np.zeros((49, 4088), 'd') + wave0
+        loc.set_source('WAVE', __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Read Flat file
