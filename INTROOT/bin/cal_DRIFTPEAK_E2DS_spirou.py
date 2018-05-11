@@ -143,7 +143,7 @@ def main(night_name=None, reffile=None):
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    if p['IC_IMAGE_NAME'] == 'H2RG':
+    if p['IC_IMAGE_TYPE'] == 'H2RG':
         loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
         loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
     else:
