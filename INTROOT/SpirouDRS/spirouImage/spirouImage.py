@@ -998,11 +998,11 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     badpix_map = badpix_flat | badpix_dark | ~valid_flat | ~valid_dark
     # -------------------------------------------------------------------------
     # log results
-    text = ['Fraction of hot pixels from dark: {0:.2f} %',
-            'Fraction of bad pixels from flat: {0:.2f} %',
-            'Fraction of non-finite pixels in dark: {0:.2f} %',
-            'Fraction of non-finite pixels in flat: {0:.2f} %',
-            'Fraction of bad pixels with all criteria: {0:.2f} %']
+    text = ['Fraction of hot pixels from dark: {0:.4f} %',
+            'Fraction of bad pixels from flat: {0:.4f} %',
+            'Fraction of non-finite pixels in dark: {0:.4f} %',
+            'Fraction of non-finite pixels in flat: {0:.4f} %',
+            'Fraction of bad pixels with all criteria: {0:.4f} %']
     badpix_stats = [np.mean(badpix_dark) * 100, np.mean(badpix_flat) * 100,
                     np.mean(~valid_dark) * 100, np.mean(~valid_flat) * 100,
                     np.mean(badpix_map) * 100]
