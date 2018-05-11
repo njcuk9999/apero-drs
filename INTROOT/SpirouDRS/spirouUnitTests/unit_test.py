@@ -14,8 +14,9 @@ import os
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from SpirouDRS import spirouUnitTests
 from SpirouDRS import spirouTools
+
+from . import spirouUnitTests
 
 if sys.version_info.major == 2:
     # noinspection PyPep8Naming,PyShadowingBuiltins
