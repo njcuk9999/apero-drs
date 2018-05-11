@@ -130,7 +130,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
-    # rotate the image and convert from ADU/s to e-
+    # rotate the image and convert from ADU/s to ADU
     data = spirouImage.ConvertToADU(spirouImage.FlipImage(datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
@@ -140,8 +140,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                    getshape=False)
     data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('Image format changed to '
-                            '{0}x{1}').format(*data2.shape[::-1]))
+    wmsg = 'Image format changed to {1}x{0}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*data2.shape))
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -150,7 +150,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     n_bad_pix = np.sum(data2 == 0)
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
-    wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
+    wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
     WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
@@ -199,7 +199,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # TODO: Remove H2RG dependency
         if p['IC_IMAGE_TYPE'] == 'H2RG':
             loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-
         else:
             loc['WAVE'] = None
         loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
@@ -288,27 +287,22 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 # If in Debug mode log timings
                 if p['DRS_DEBUG']:
                     WLOG('info', p['LOG_OPT'], "Timings:")
-                    WLOG('info', p['LOG_OPT'],
-                         ("        ExtractOrder = {0} s "
-                          "").format(time2 - time1))
-                    WLOG('info', p['LOG_OPT'],
-                         ("        ExtractTiltOrder = {0} s "
-                          "").format(time3 - time2))
-                    WLOG('info', p['LOG_OPT'],
-                         ("        ExtractTiltWeightOrder = {0} s "
-                          "").format(time4 - time3))
-                    WLOG('info', p['LOG_OPT'],
-                         ("        ExtractTiltWeightOrder2 = {0} s "
-                          "").format(time5 - time4))
-                    WLOG('info', p['LOG_OPT'],
-                         ("        ExtractWeightOrder = {0} s "
-                          "").format(time6 - time5))
+                    wmsg = "        ExtractOrder = {0} s "
+                    WLOG('info', p['LOG_OPT'], wmsg.format(time2 - time1))
+                    wmsg = "        ExtractTiltOrder = {0} s "
+                    WLOG('info', p['LOG_OPT'], wmsg.format(time3 - time2))
+                    wmsg = "        ExtractTiltWeightOrder = {0} s "
+                    WLOG('info', p['LOG_OPT'], wmsg.format(time4 - time3))
+                    wmsg = "        ExtractTiltWeightOrder2 = {0} s "
+                    WLOG('info', p['LOG_OPT'], wmsg.format(time5 - time4))
+                    wmsg = "        ExtractWeightOrder = {0} s "
+                    WLOG('info', p['LOG_OPT'], wmsg.format(time6 - time5))
                 # save to file
                 loc['SPE1'][order_num] = spe1
                 loc['SPE3'][order_num] = spe3
                 loc['SPE4'][order_num] = spe4
                 loc['SPE5'][order_num] = spe5
-                loc.set_sources(['spe1', 'spe3', 'spe4', 'spe5'], source)
+                loc.set_sources(['SPE1', 'SPE3', 'SPE4', 'SPE5'], source)
             elif p['IC_EXTRACT_TYPE'] == 'simple':
                 # -------------------------------------------------------------
                 # Simple extraction
@@ -335,6 +329,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
             else:
                 WLOG('error', p['LOG_OPT'], 'ic_extract_type not understood')
+                e2ds, cpt = None, None
 
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
@@ -348,8 +343,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
             # log the SNR RMS
-            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}'
-            wargs = [p['FIBER'], order_num, snr]
+            wmsg = 'On fiber {0} order {1}: S/N= {2:.1f} Nbcosmic= {3}'
+            wargs = [p['FIBER'], order_num, snr, cpt]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # add calculations to storage
             loc['E2DS'][order_num] = e2ds

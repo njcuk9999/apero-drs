@@ -36,6 +36,18 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+
+# =============================================================================
+# Define functions
+# =============================================================================
+def main(night_name=None, files=None, **kwargs):
+    local = cal_extract_RAW_spirou.main(night_name, files,
+                                        fiber_type='C',
+                                        ic_extract_type='all',
+                                        ic_ext_sigdet=-1, **kwargs)
+    return local
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -43,9 +55,7 @@ sPlt = spirouCore.sPlt
 if __name__ == "__main__":
     # run cal_extract_RAW_spirou main with fibertype set
     # (get other arguments from command line - sys.argv)
-    ll = cal_extract_RAW_spirou.main(fiber_type='C',
-                                     ic_extract_type='all',
-                                     ic_ext_sigdet=-1)
+    ll = main()
 
 # =============================================================================
 # End of code

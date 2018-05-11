@@ -18,8 +18,8 @@ from collections import OrderedDict
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
+from . import spirouUnitRecipes
+from . import unit_test_comp_functions as utc
 
 
 # =============================================================================
@@ -154,7 +154,7 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     # display run title
     unit_log_title(p, ' ' + runtitle)
     # deal with arguments and generate list of expected outputs
-    args = spirouUnitRecipes.wrapper(p, runname, run_i)
+    args, name = spirouUnitRecipes.wrapper(p, runname, run_i)
     # start timer
     starttime = time.time()
     # run program
@@ -166,7 +166,7 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     # add to timer
     timing['{0}:{1}'.format(runname, name)] = endtime - starttime
     # get outputs
-    ll['outputs'] = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
+    ll['outputs'], _ = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
     # comparison (if required)
     if compare:
         # set the file path for the comparison results (plots and table)

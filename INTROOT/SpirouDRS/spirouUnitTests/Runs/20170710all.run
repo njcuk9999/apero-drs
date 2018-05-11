@@ -1,0 +1,28 @@
+# define detector type (default = H4RG)
+type = H2RG
+
+# define whether we run the comparison with old drs (default = False)
+comparison = False
+
+# define run
+#    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
+run0 = ['cal_DARK_spirou', '20170710', 'dark_dark02d406.fits']
+run1 = ['cal_BADPIX_spirou', '20170710', 'flat_flat02f10.fits', 'dark_dark02d406.fits']
+run2 = ['cal_loc_RAW_spirou', '20170710', 'flat_dark02f10.fits', 'flat_dark03f10.fits', 'flat_dark04f10.fits', 'flat_dark05f10.fits', 'flat_dark06f10.fits']
+run3 = ['cal_loc_RAW_spirou', '20170710', 'dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits', 'dark_flat05f10.fits', 'dark_flat06f10.fits']
+run4 = ['cal_SLIT_spirou', '20170710', 'fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
+run5 = ['cal_FF_RAW_spirou', '20170710', 'flat_dark02f10.fits', 'flat_dark03f10.fits', 'flat_dark04f10.fits', 'flat_dark05f10.fits', 'flat_dark06f10.fits']
+run6 = ['cal_FF_RAW_spirou', '20170710', 'dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits', 'dark_flat05f10.fits', 'dark_flat06f10.fits']
+run7 = ['cal_extract_RAW_spirouAB', '20170710', 'fp_fp02a203.fits']
+run8 = ['cal_extract_RAW_spirouC', '20170710', 'fp_fp02a203.fits']
+run9 = ['cal_extract_RAW_spirou', '20170710', 'fp_fp02a203.fits']
+run10 = ['cal_extract_RAW_spirou', '20170710', 'fp_fp03a203.fits']
+run11 = ['cal_extract_RAW_spirou', '20170710', 'fp_fp04a203.fits']
+run12 = ['cal_extract_RAW_spirou', '20170710', 'hcone_hcone02c61.fits']
+run13 = ['cal_extract_RAW_spirou', '20170710', 'hcone_hcone03c61.fits']
+run14 = ['cal_extract_RAW_spirou', '20170710', 'hcone_hcone04c61.fits']
+run15 = ['cal_extract_RAW_spirou', '20170710', 'hcone_hcone05c61.fits']
+run16 = ['cal_extract_RAW_spirou', '20170710', 'hcone_hcone06c61.fits']
+run17 = ['cal_DRIFT_E2DS_spirou', '20170710', 'fp_fp02a203_e2ds_AB.fits']
+run18 = ['cal_DRIFTPEAK_E2DS_spirou', '20170710', 'fp_fp02a203_e2ds_AB.fits']
+run19 = ['cal_CCF_E2DS_spirou', '20170710', 'fp_fp02a203_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
