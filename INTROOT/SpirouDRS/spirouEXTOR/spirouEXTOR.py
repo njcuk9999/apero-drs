@@ -28,9 +28,34 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 
+# New extraction wrapper
+def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
+                       **kwargs):
+    # -------------------------------------------------------------------------
+    # Simple extract
+    # -------------------------------------------------------------------------
+    if mode == '0':
+
+        extract_const_range(image=image,
+                            pos=loc['ACC'][rnum],
+                            nbsig=kwargs.get('range1', p['IC_EXT_RANGE']),
+                            gain=kwargs.get('gain', p['GAIN']))
+    # -------------------------------------------------------------------------
+    # weighted extraction
+    # -------------------------------------------------------------------------
+    elif mode == '1':
+
+        extract_weight(image=image,
+                       pos=loc['ACC'][rnum],
+                       r1=kwargs.get('range1', p['IC_EXT_RANGE']),
+                       r2=kwargs.get('range2', p['IC_EXT_RANGE']),
+                       orderp=order_profile,
+                       gain=kwargs.get('gain', p['GAIN']))
+
+
 
 # =============================================================================
-# User functions
+# User old functions
 # =============================================================================
 # noinspection PyPep8Naming
 def extract_AB_order(pp, loc, image, rnum):
