@@ -14,8 +14,12 @@ import os
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from SpirouDRS import spirouUnitTests
 from SpirouDRS import spirouTools
+
+try:
+    from . import spirouUnitTests
+except ImportError:
+    from SpirouDRS.spirouUnitTests import spirouUnitTests
 
 if sys.version_info.major == 2:
     # noinspection PyPep8Naming,PyShadowingBuiltins
@@ -78,17 +82,17 @@ def main(runname=None, quiet=False):
     # Set the type from run parameters
     # ----------------------------------------------------------------------
     # TODO: Remove H2RG compatibility
-    spirouUnitTests.CheckType(p, rparams)
+    spirouUnitTests.check_type(p, rparams)
 
     # ----------------------------------------------------------------------
     # Check whether we need to compare files
     # ----------------------------------------------------------------------
-    compare = spirouUnitTests.SetComp(p, rparams)
+    compare = spirouUnitTests.set_comp(p, rparams)
 
     # ----------------------------------------------------------------------
     # Get runs
     # ----------------------------------------------------------------------
-    runs = spirouUnitTests.GetRuns(p, rparams)
+    runs = spirouUnitTests.get_runs(p, rparams)
 
     # ----------------------------------------------------------------------
     # Get runs
@@ -100,18 +104,18 @@ def main(runname=None, quiet=False):
     # storage for errors
     errors = []
     # log the start of the unit tests
-    spirouUnitTests.UnitLogTitle(p)
+    spirouUnitTests.unit_log_title(p)
     # loop around runs and process each
     for runn in list(runs.keys()):
         # do run
         rargs = [p, runn, runs[runn], times, newoutputs, oldoutputs,
                  errors, compare]
-        times, newoutputs, oldoutputs = spirouUnitTests.ManageRun(*rargs)
+        times, newoutputs, oldoutputs = spirouUnitTests.manage_run(*rargs)
 
     # ----------------------------------------------------------------------
     # Print timings
     # ----------------------------------------------------------------------
-    spirouUnitTests.LogTimings(p, times)
+    spirouUnitTests.log_timings(p, times)
 
     # ----------------------------------------------------------------------
     # End Message
