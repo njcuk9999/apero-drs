@@ -19,7 +19,7 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 
 
-# TODO: This is a
+# TODO: This is a stupid fix for python 2 - should be done better
 try:
     from . import spirouUnitRecipes
     from . import unit_test_comp_functions as utc

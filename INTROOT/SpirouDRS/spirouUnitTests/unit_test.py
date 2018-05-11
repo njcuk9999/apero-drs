@@ -16,10 +16,13 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTools
 
+# TODO: This is a stupid fix for python 2 - should be done better
 try:
     from . import spirouUnitTests
 except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitTests
+except ValueError:
+    import spirouUnitTests
 
 if sys.version_info.major == 2:
     # noinspection PyPep8Naming,PyShadowingBuiltins
