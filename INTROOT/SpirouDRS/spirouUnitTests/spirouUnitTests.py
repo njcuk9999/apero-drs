@@ -18,8 +18,8 @@ from collections import OrderedDict
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
+from . import spirouUnitRecipes
+from . import unit_test_comp_functions as utc
 
 
 # =============================================================================

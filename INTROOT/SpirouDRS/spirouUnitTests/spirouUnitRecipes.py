@@ -15,7 +15,6 @@ Created on 2018-05-01 at 13:06
 """
 from __future__ import division
 
-
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
