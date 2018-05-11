@@ -53,6 +53,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BHOT',
             'kw_BNDARK',
             'kw_BNFLAT',
+            'kw_BNILUM',
+            'kw_BTOT',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
             'kw_CCF_CDELT',
@@ -346,6 +348,11 @@ kw_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
 # fraction of bad pixels with all criteria
 kw_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
 
+# fraction of un-illuminated pixels (from engineering flat)
+kw_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
+
+# fraction of total bad pixels
+kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
