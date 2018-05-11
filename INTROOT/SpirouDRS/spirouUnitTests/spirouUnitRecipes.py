@@ -511,7 +511,7 @@ def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs, outputs=None):
         :return outs: list of strings, the output filenames
     """
     # define name and arguments
-    name = 'cal_DRIFTPAEK_E2DS_spirou'
+    name = 'cal_DRIFTPEAK_E2DS_spirou'
     arg_names = ['night_name', 'reffile']
     arg_types = [str, str]
 
