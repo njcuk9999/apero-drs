@@ -7,6 +7,11 @@
 # Whether to plot (True or 1 to plot)
 DRS_PLOT = 1
 
+# Whether to run in interactive mode - False or 0 to be in non-interactive mode
+#    (If 0 DRS_PLOT will be forced to 0)
+#    Will stop any user input at the end of recipes if set to 0
+DRS_INTERACTIVE = 1
+
 # Whether to run in debug mode
 #      0: no debug
 #      1: basic debugging on errors
