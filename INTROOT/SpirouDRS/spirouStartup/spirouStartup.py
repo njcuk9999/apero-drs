@@ -383,11 +383,18 @@ def exit_script(ll, has_plots=True):
     # make sure we have DRS_PLOT
     if 'DRS_PLOT' not in p:
         p['DRS_PLOT'] = 0
+    # make sure we have DRS_INTERACTIVE
+    if 'DRS_INTERACTIVE' not in p:
+        p['DRS_INTERACTIVE'] = 1
     # make sure we have log_opt
     if 'log_opt' not in p:
         p['LOG_OPT'] = sys.argv[0]
     # if DRS_PLOT is 0 just return 0
     if not p['DRS_PLOT']:
+        return 0
+    # if DRS_INTERACTIVE is False just return 0
+    if not p['DRS_INTERACTIVE']:
+        print('Interactive mode off')
         return 0
     # find whether user is in ipython or python
     if find_ipython():
@@ -395,20 +402,18 @@ def exit_script(ll, has_plots=True):
     else:
         kind = 'python'
     # log message
-    if p['DRS_INTERACTIVE']:
-        wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
-        WLOG('', '', '')
-        WLOG('', '', HEADER, printonly=True)
-        WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
-        WLOG('', '', HEADER, printonly=True)
-        # deal with python 2 / python 3 input method
-        if sys.version_info.major < 3:
-            # noinspection PyUnresolvedReferences
-            uinput = raw_input('')      # note python 3 wont find this!
-        else:
-            uinput = input('')
+    wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
+    WLOG('', '', '')
+    WLOG('', '', HEADER, printonly=True)
+    WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
+    WLOG('', '', HEADER, printonly=True)
+    # deal with python 2 / python 3 input method
+    if sys.version_info.major < 3:
+        # noinspection PyUnresolvedReferences
+        uinput = raw_input('')      # note python 3 wont find this!
     else:
-        uinput = 'N'
+        uinput = input('')
+
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
@@ -424,8 +429,11 @@ def exit_script(ll, has_plots=True):
                 pass
         if not find_interactive():
             code.interact(local=ll)
+    # if "No" and not interactive quit python/ipython
+    elif not find_interactive():
+        os._exit(0)
     # if interactive ask about closing plots
-    if find_interactive() and has_plots and p['DRS_INTERACTIVE']:
+    if find_interactive() and has_plots:
         # deal with closing plots
         wmsg = 'Close plots? [Y]es or [N]o?'
         WLOG('', '', HEADER, printonly=True)
@@ -441,8 +449,6 @@ def exit_script(ll, has_plots=True):
         if 'Y' in uinput.upper():
             # close any open plots properly
             spirouCore.sPlt.closeall()
-    elif not p['DRS_INTERACTIVE']:
-        spirouCore.sPlt.closeall()
 
 
 # =============================================================================
