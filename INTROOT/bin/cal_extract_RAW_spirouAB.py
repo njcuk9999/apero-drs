@@ -16,6 +16,7 @@ Up-to-date with cal_extract_RAW_spirouAB AT-4 V47
 from __future__ import division
 
 import cal_extract_RAW_spirou
+from SpirouDRS import spirouStartup
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
@@ -56,6 +57,8 @@ if __name__ == "__main__":
     # run cal_extract_RAW_spirou main with fibertype set
     # (get other arguments from command line - sys.argv)
     ll = main()
+    # exit message if in debug mode
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
