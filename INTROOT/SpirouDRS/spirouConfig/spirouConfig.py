@@ -1049,7 +1049,7 @@ def check_params(p):
     p = check_set_default_val(p, 'DRS_DEBUG', 0, func_name)
 
     # check that drs_interactive set else set to 0
-    p = check_set_default_val(p, 'DRS_INTERACTIVE', 0, func_name)
+    p = check_set_default_val(p, 'DRS_INTERACTIVE', 1, func_name)
 
     # check that print_level is defined and make sure it is in defined levels
     #    default value is 'all' if doesnt exist or wrong
