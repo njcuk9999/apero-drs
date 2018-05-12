@@ -22,26 +22,28 @@ __author__ = Constants.AUTHORS()
 __date__ = Constants.LATEST_EDIT()
 __release__ = Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['Extraction', 'ExtractABOrderOffset', 'ExtractOrder',
-           'ExtractTiltOrder', 'ExtractTiltWeightOrder',
-           'ExtractTiltWeightOrder2', 'ExtractWeightOrder',
-           'GetValidOrders']
+__all__ = ['Extraction', 'ExtractABOrderOffset',
+           'GetExtMethod', 'GetValidOrders']
 
 # =============================================================================
 # Function aliases
 # =============================================================================
-Extraction = spirouEXTOR.extract_wrapper
+Extraction = spirouEXTOR.extraction_wrapper
+
+# Extraction = spirouEXTOR.extract_wrapper
 
 ExtractABOrderOffset = spirouEXTOR.extract_AB_order
 
-ExtractOrder = spirouEXTOR.extract_order
+# ExtractOrder = spirouEXTOR.extract_order
+#
+# ExtractTiltOrder = spirouEXTOR.extract_tilt_order
+#
+# ExtractTiltWeightOrder = spirouEXTOR.extract_tilt_weight_order
+#
+# ExtractTiltWeightOrder2 = spirouEXTOR.extract_tilt_weight_order2
+#
+# ExtractWeightOrder = spirouEXTOR.extract_weight_order
 
-ExtractTiltOrder = spirouEXTOR.extract_tilt_order
-
-ExtractTiltWeightOrder = spirouEXTOR.extract_tilt_weight_order
-
-ExtractTiltWeightOrder2 = spirouEXTOR.extract_tilt_weight_order2
-
-ExtractWeightOrder = spirouEXTOR.extract_weight_order
+GetExtMethod = spirouEXTOR.get_extraction_method
 
 GetValidOrders = spirouEXTOR.get_valid_orders

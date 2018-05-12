@@ -310,7 +310,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
     unit_test_cal_extract_raw_spirou
 
     input = night_name files
-    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+    output = EXTRACT_E2DS_FILE
 
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
@@ -338,7 +338,6 @@ def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
         outs = []
         for fiber in outputs['p']['fib_type']:
             outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-            outs.append(Constants.EXTRACT_E2DS_ALL_FILES(outputs['p'], fiber))
         # return outs
         return outs, name
 
@@ -377,7 +376,6 @@ def unit_test_cal_extract_raw_spirouab(rname, inputs, outputs=None):
         outs = []
         for fiber in outputs['p']['fib_type']:
             outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-            outs.append(Constants.EXTRACT_E2DS_ALL_FILES(outputs['p'], fiber))
         # return outs
         return outs, name
 
@@ -416,7 +414,6 @@ def unit_test_cal_extract_raw_spirouc(rname, inputs, outputs=None):
         outs = []
         for fiber in outputs['p']['fib_type']:
             outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-            outs.append(Constants.EXTRACT_E2DS_ALL_FILES(outputs['p'], fiber))
         # return outs
         return outs, name
 

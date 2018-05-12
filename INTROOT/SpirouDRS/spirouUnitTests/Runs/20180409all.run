@@ -6,14 +6,15 @@ comparison = False
 
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
-run0 = ['cal_DARK_spirou', 'AT5/20180409', 'dark_dark_001_pp.fits']
-run1 = ['cal_BADPIX_spirou', 'AT5/20180409', 'flat_flat_001_pp.fits', 'dark_dark_001_pp.fits']
-run2 = ['cal_loc_RAW_spirou', 'AT5/20180409', 'dark_flat_001_pp.fits']
-run3 = ['cal_loc_RAW_spirou', 'AT5/20180409', 'flat_dark_001_pp.fits']
-run4 = ['cal_SLIT_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
-run5 = ['cal_FF_RAW_spirou', 'AT5/20180409', 'dark_flat_001_pp.fits']
-run6 = ['cal_FF_RAW_spirou', 'AT5/20180409', 'flat_dark_001_pp.fits']
-run7 = ['cal_extract_RAW_spirouAB', 'AT5/20180409', 'fp_fp_001_pp.fits']
-run8 = ['cal_extract_RAW_spirouC', 'AT5/20180409', 'fp_fp_001_pp.fits']
-run9 = ['cal_extract_RAW_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
-run10 = ['cal_extract_RAW_spirou', 'AT5/20180409', 'hcone_hcone_001_pp.fits']
+# runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
+run000 = ['cal_DARK_spirou', 'AT5/20180409', 'dark_dark_001_pp.fits']
+run001 = ['cal_BADPIX_spirou', 'AT5/20180409', 'flat_flat_001_pp.fits', 'dark_dark_001_pp.fits']
+run002 = ['cal_loc_RAW_spirou', 'AT5/20180409', 'dark_flat_001_pp.fits']
+run003 = ['cal_loc_RAW_spirou', 'AT5/20180409', 'flat_dark_001_pp.fits']
+run004 = ['cal_SLIT_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
+run005 = ['cal_FF_RAW_spirou', 'AT5/20180409', 'dark_flat_001_pp.fits']
+run006 = ['cal_FF_RAW_spirou', 'AT5/20180409', 'flat_dark_001_pp.fits']
+run007 = ['cal_extract_RAW_spirouAB', 'AT5/20180409', 'fp_fp_001_pp.fits']
+run008 = ['cal_extract_RAW_spirouC', 'AT5/20180409', 'fp_fp_001_pp.fits']
+run009 = ['cal_extract_RAW_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
+run010 = ['cal_extract_RAW_spirou', 'AT5/20180409', 'hcone_hcone_001_pp.fits']

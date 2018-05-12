@@ -93,6 +93,11 @@ def run_begin(quiet=False):
         display_initial_parameterisation(cparams)
         # display system info (log only)
         display_system_info()
+
+    # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
+    if not cparams['DRS_INTERACTIVE']:
+        cparams['DRS_PLOT'] = 0
+
     # return parameters
     return cparams
 
@@ -378,11 +383,18 @@ def exit_script(ll, has_plots=True):
     # make sure we have DRS_PLOT
     if 'DRS_PLOT' not in p:
         p['DRS_PLOT'] = 0
+    # make sure we have DRS_INTERACTIVE
+    if 'DRS_INTERACTIVE' not in p:
+        p['DRS_INTERACTIVE'] = 1
     # make sure we have log_opt
     if 'log_opt' not in p:
         p['LOG_OPT'] = sys.argv[0]
     # if DRS_PLOT is 0 just return 0
     if not p['DRS_PLOT']:
+        return 0
+    # if DRS_INTERACTIVE is False just return 0
+    if not p['DRS_INTERACTIVE']:
+        print('Interactive mode off')
         return 0
     # find whether user is in ipython or python
     if find_ipython():
@@ -401,6 +413,7 @@ def exit_script(ll, has_plots=True):
         uinput = raw_input('')      # note python 3 wont find this!
     else:
         uinput = input('')
+
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
@@ -416,6 +429,9 @@ def exit_script(ll, has_plots=True):
                 pass
         if not find_interactive():
             code.interact(local=ll)
+    # if "No" and not interactive quit python/ipython
+    elif not find_interactive():
+        os._exit(0)
     # if interactive ask about closing plots
     if find_interactive() and has_plots:
         # deal with closing plots

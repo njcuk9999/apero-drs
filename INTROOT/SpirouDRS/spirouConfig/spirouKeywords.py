@@ -53,6 +53,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BHOT',
             'kw_BNDARK',
             'kw_BNFLAT',
+            'kw_BNILUM',
+            'kw_BTOT',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
             'kw_CCF_CDELT',
@@ -73,6 +75,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
             'kw_DPRTYPE',
+            'kw_E2DS_EXTM',
+            'kw_E2DS_FUNC',
             'kw_E2DS_SNR',
             'kw_EXPTIME',
             'kw_EXTRA_SN',
@@ -325,6 +329,10 @@ kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 # localization file used
 kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
+kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
+
+kw_E2DS_FUNC = ['EXTFUNC', '', 'Extrction function']
+
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
 # -----------------------------------------------------------------------------
@@ -346,6 +354,11 @@ kw_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
 # fraction of bad pixels with all criteria
 kw_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
 
+# fraction of un-illuminated pixels (from engineering flat)
+kw_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
+
+# fraction of total bad pixels
+kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables

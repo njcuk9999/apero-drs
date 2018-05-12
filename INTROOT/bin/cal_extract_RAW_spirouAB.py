@@ -16,6 +16,7 @@ Up-to-date with cal_extract_RAW_spirouAB AT-4 V47
 from __future__ import division
 
 import cal_extract_RAW_spirou
+from SpirouDRS import spirouStartup
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
@@ -43,7 +44,7 @@ sPlt = spirouCore.sPlt
 def main(night_name=None, files=None, **kwargs):
     local = cal_extract_RAW_spirou.main(night_name, files,
                                         fiber_type='AB',
-                                        ic_extract_type='all',
+                                        ic_extract_type='2',
                                         ic_ext_sigdet=-1, **kwargs)
     return local
 
@@ -56,6 +57,8 @@ if __name__ == "__main__":
     # run cal_extract_RAW_spirou main with fibertype set
     # (get other arguments from command line - sys.argv)
     ll = main()
+    # exit message if in debug mode
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code

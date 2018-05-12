@@ -16,10 +16,13 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTools
 
+# TODO: This is a stupid fix for python 2 - should be done better
 try:
     from . import spirouUnitTests
 except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitTests
+except ValueError:
+    import spirouUnitTests
 
 if sys.version_info.major == 2:
     # noinspection PyPep8Naming,PyShadowingBuiltins
@@ -61,7 +64,8 @@ def main(runname=None, quiet=False):
     p = spirouStartup.Begin(quiet=True)
     # now get custom arguments
     ckwargs = dict(positions=[0], types=[str], names=['RUNNAME'],
-                   calls=[runname], require_night_name=False)
+                   calls=[runname], require_night_name=False,
+                   required=[False])
     customargs = spirouStartup.GetCustomFromRuntime(**ckwargs)
     # add custom args straight to p
     p = spirouStartup.LoadMinimum(p, customargs=customargs)
@@ -71,10 +75,27 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     # construct filename
     rfile = os.path.join(UNIT_TEST_PATH, p['RUNNAME'])
+
+    # check if RUNNAME is None
+    if p['RUNNAME'] == 'None':
+        exists = False
+        emsgs = ['No unit test run file defined.']
     # check that rfile exists
-    if not os.path.exists(rfile):
-        emsg = 'Unit test run file "{0}" does not exist'
-        WLOG('error', p['LOG_OPT'], emsg.format(rfile))
+    elif not os.path.exists(rfile):
+        emsgs = ['Unit test run file "{0}" does not exist'.format(rfile)]
+        exists = True
+    else:
+        exists = True
+    # deal with file wrong (or no file defined) --> print valid unit tests
+    if not exists:
+        emsgs.append('')
+        emsgs.append('Available units tests are:')
+        for rfile in os.listdir(UNIT_TEST_PATH):
+            emsgs.append('\t{0}'.format(rfile))
+        emsgs.append('')
+        emsgs.append('Located at {0}'.format(UNIT_TEST_PATH))
+        WLOG('error', p['LOG_OPT'], emsgs)
+
     # get the parameters in the run file
     rparams = spirouConfig.GetConfigParams(p, None, filename=rfile)
 
@@ -92,7 +113,7 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     # Get runs
     # ----------------------------------------------------------------------
-    runs = spirouUnitTests.get_runs(p, rparams)
+    runs = spirouUnitTests.get_runs(p, rparams, rfile)
 
     # ----------------------------------------------------------------------
     # Get runs

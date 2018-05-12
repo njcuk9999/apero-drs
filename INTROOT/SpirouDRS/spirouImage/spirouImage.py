@@ -801,6 +801,72 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         return corrected_image
 
 
+def correct_for_badpix(p, image, header):
+    """
+    Corrects "image" for "BADPIX" using calibDB file (header must contain
+    value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                calibDB: dictionary, the calibration database dictionary
+                         (if not in "p" we construct it and need "max_time_unix"
+                max_time_unix: float, the unix time to use as the time of
+                                reference (used only if calibDB is not defined)
+                log_opt: string, log option, normally the program name
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+
+    :param image: numpy array (2D), the image
+    :param header: dictionary, the header dictionary created by
+                   spirouFITS.ReadImage
+
+    :return corrected_image: numpy array (2D), the corrected image where all
+                             bad pixels are set to zeros
+    """
+    func_name = __NAME__ + '.correct_for_baxpix()'
+
+    # get calibDB
+    if 'calibDB' not in p:
+        # get acquisition time
+        acqtime = spirouCDB.GetAcqTime(p, header)
+        # get calibDB
+        cdb, p = spirouCDB.GetDatabase(p, acqtime)
+    else:
+        try:
+            cdb = p['CALIBDB']
+            acqtime = p['MAX_TIME_UNIX']
+        except spirouConfig.ConfigError as e:
+            emsg = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [e.message, emsg])
+            cdb, acqtime = None, None
+
+    # try to read 'BADPIX' from cdb
+    if 'BADPIX' in cdb:
+        badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
+        WLOG('', p['LOG_OPT'], 'Doing Bad Pixel Correction using ' + badpixfile)
+        badpixmask, nx, ny = spirouFITS.read_raw_data(badpixfile, False, True)
+
+        mask = np.array(badpixmask, dtype=bool)
+        corrected_image =  np.where(mask, np.zeros_like(image), image)
+    else:
+        # get master config file name
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+        # deal with extra constrain on file from "closer/older"
+        comptype = p.get('CALIB_DB_MATCH', None)
+        if comptype == 'older':
+            extstr = '(with unit time <={1})'
+        else:
+            extstr = ''
+        # log error
+        emsg1 = 'No valid BADPIX in calibDB {0} ' + extstr
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
+        corrected_image = None
+
+    # finally return corrected_image
+    return corrected_image
+
+
 def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
     """
     Applies a median filter and normalises. Median filter is applied with width
@@ -1003,9 +1069,11 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
             'Fraction of non-finite pixels in dark: {0:.4f} %',
             'Fraction of non-finite pixels in flat: {0:.4f} %',
             'Fraction of bad pixels with all criteria: {0:.4f} %']
-    badpix_stats = [np.mean(badpix_dark) * 100, np.mean(badpix_flat) * 100,
-                    np.mean(~valid_dark) * 100, np.mean(~valid_flat) * 100,
-                    np.mean(badpix_map) * 100]
+    badpix_stats = [(np.sum(badpix_dark) / badpix_dark.size) * 100,
+                    (np.sum(badpix_flat) / badpix_flat.size) * 100,
+                    (np.sum(~valid_dark) / valid_dark.size) * 100,
+                    (np.sum(~valid_flat) / valid_flat.size) * 100,
+                    (np.sum(badpix_map) / badpix_map.size) * 100]
 
     for it in range(len(text)):
         WLOG('', p['LOG_OPT'], text[it].format(badpix_stats[it]))
@@ -1019,7 +1087,7 @@ def locate_bad_pixels_full(p, image):
     # TODO: remove H2RG dependencies
     # if we are using H2RG we don't need this map
     if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return np.ones_like(image, dtype=bool)
+        return np.ones_like(image, dtype=bool), 0
     # log that we are looking for bad pixels
     WLOG('', p['LOG_OPT'], 'Looking for bad pixels in full flat image')
     # get parameters from p
@@ -1038,8 +1106,15 @@ def locate_bad_pixels_full(p, image):
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
     mask = np.rot90(mdata, -1) < threshold
+
+    # -------------------------------------------------------------------------
+    # log results
+    badpix_stats = (np.sum(mask) / mask.size) * 100
+    text = 'Fraction of un-illuminated pixels in engineering flat {0:.4f} %'
+    WLOG('', p['LOG_OPT'], text.format(badpix_stats))
+
     # return mask
-    return mask
+    return mask, badpix_stats
 
 
 def get_tilt(pp, lloc, image):

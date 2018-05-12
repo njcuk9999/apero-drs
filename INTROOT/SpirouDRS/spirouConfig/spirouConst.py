@@ -761,40 +761,6 @@ def EXTRACT_LOCO_FILE(p):
 
 
 # noinspection PyPep8Naming
-def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
-    """
-    Defines the extraction names (and locations) for the extraction process
-    when all types of E2DS file are to be written
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
-    :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p['FIBER'])
-
-    :return extfitslist: list of strings, the list of extraction files to use
-                         to save the extraction files
-    """
-    if fiber is None:
-        fiber = p['FIBER']
-    reducedfolder = p['REDUCED_DIR']
-    ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
-                 'weight']
-    extfitslist = []
-    for ext_no in range(len(ext_names)):
-        extname = ext_names[ext_no]
-        ext_ext = '_e2ds_{0}_{1}.fits'.format(fiber, extname)
-        extfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', ext_ext)
-        extfits = os.path.join(reducedfolder, extfitsname)
-        extfitslist.append(extfits)
-    return extfitslist
-
-
-# noinspection PyPep8Naming
 def DRIFT_RAW_FILE(p):
     """
     Defines the drift_raw fits file name and location using
