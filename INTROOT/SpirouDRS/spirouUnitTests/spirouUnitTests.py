@@ -98,12 +98,12 @@ def set_comp(p, rparams):
     return comp
 
 
-def get_runs(p, rparams):
+def get_runs(p, rparams, rfile):
     # set up storage
     runs = dict()
     # loop around the rparams and add keys with "RUN_KEY"
     for key in list(rparams.keys()):
-        if key.startswith(RUN_KEY):
+        if key.upper().startswith(RUN_KEY.upper()):
             #  get this iteration parameter
             run_i = rparams[key]
 
@@ -121,11 +121,11 @@ def get_runs(p, rparams):
             runs[key] = run_i
     # make sure we have some runs
     if len(runs) == 0:
-        eargs = [RUN_KEY, p['RFILE']]
+        eargs = [RUN_KEY, rfile]
         emsg = 'No runs ("{0}## = ") found in file {1}'
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # sort into order
-    unsorted = runs.keys()
+    unsorted = np.array(list(runs.keys()))
     sorted = np.sort(unsorted)
     # add an OrderedDict
     if sys.version_info.major < 3:
