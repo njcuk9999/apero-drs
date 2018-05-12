@@ -95,7 +95,7 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     # Get runs
     # ----------------------------------------------------------------------
-    runs = spirouUnitTests.get_runs(p, rparams)
+    runs = spirouUnitTests.get_runs(p, rparams, rfile)
 
     # ----------------------------------------------------------------------
     # Get runs
