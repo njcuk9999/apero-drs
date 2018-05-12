@@ -229,8 +229,10 @@ def main(night_name=None, files=None):
         # loop around each order
         for order_num in valid_orders:
             # extract this order
-            eargs = [p, loc, data2, order_profile, order_num]
-            e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
+            eargs = [p, loc, data2, order_num]
+            ekwargs = dict(mode=p['IC_FF_EXTRACT_TYPE'],
+                           order_profile=order_profile)
+            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             noise = p['SIGDET'] * np.sqrt(range1 + range2)
