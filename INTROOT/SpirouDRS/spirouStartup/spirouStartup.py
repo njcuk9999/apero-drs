@@ -93,6 +93,11 @@ def run_begin(quiet=False):
         display_initial_parameterisation(cparams)
         # display system info (log only)
         display_system_info()
+
+    # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
+    if not cparams['DRS_INTERACTIVE']:
+        cparams['DRS_PLOT'] = 0
+
     # return parameters
     return cparams
 
@@ -390,17 +395,20 @@ def exit_script(ll, has_plots=True):
     else:
         kind = 'python'
     # log message
-    wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
-    WLOG('', '', '')
-    WLOG('', '', HEADER, printonly=True)
-    WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
-    WLOG('', '', HEADER, printonly=True)
-    # deal with python 2 / python 3 input method
-    if sys.version_info.major < 3:
-        # noinspection PyUnresolvedReferences
-        uinput = raw_input('')      # note python 3 wont find this!
+    if p['DRS_INTERACTIVE']:
+        wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
+        WLOG('', '', '')
+        WLOG('', '', HEADER, printonly=True)
+        WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
+        WLOG('', '', HEADER, printonly=True)
+        # deal with python 2 / python 3 input method
+        if sys.version_info.major < 3:
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('')      # note python 3 wont find this!
+        else:
+            uinput = input('')
     else:
-        uinput = input('')
+        uinput = 'N'
     # if yes or YES or Y or y then we need to continue in python
     # this may require starting an interactive session
     if 'Y' in uinput.upper():
@@ -417,7 +425,7 @@ def exit_script(ll, has_plots=True):
         if not find_interactive():
             code.interact(local=ll)
     # if interactive ask about closing plots
-    if find_interactive() and has_plots:
+    if find_interactive() and has_plots and p['DRS_INTERACTIVE']:
         # deal with closing plots
         wmsg = 'Close plots? [Y]es or [N]o?'
         WLOG('', '', HEADER, printonly=True)
@@ -433,6 +441,8 @@ def exit_script(ll, has_plots=True):
         if 'Y' in uinput.upper():
             # close any open plots properly
             spirouCore.sPlt.closeall()
+    elif not p['DRS_INTERACTIVE']:
+        spirouCore.sPlt.closeall()
 
 
 # =============================================================================
