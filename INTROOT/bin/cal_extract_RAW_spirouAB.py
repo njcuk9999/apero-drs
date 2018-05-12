@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 def main(night_name=None, files=None, **kwargs):
     local = cal_extract_RAW_spirou.main(night_name, files,
                                         fiber_type='AB',
-                                        ic_extract_type='all',
+                                        ic_extract_type='2',
                                         ic_ext_sigdet=-1, **kwargs)
     return local
 
