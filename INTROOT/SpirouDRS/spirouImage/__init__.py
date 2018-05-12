@@ -57,6 +57,8 @@ CopyRootKeys = spirouFITS.copy_root_keys
 
 CorrectForDark = spirouImage.correct_for_dark
 
+CorrectForBadPix = spirouImage.correct_for_badpix
+
 FitTilt = spirouImage.fit_tilt
 
 FlipImage = spirouImage.flip_image
