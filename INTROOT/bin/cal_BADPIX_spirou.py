@@ -106,17 +106,22 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Locate bad pixels
     # ----------------------------------------------------------------------
     bargs = [p, flat_ref, flat_med, dark_ref]
-    bad_pixel_map1, bstats = spirouImage.LocateBadPixels(*bargs)
+    bad_pixel_map1, bstats1 = spirouImage.LocateBadPixels(*bargs)
 
     # ----------------------------------------------------------------------
     # Locate bad pixels from full detector flat
     # ----------------------------------------------------------------------
-    bad_pixel_map2 = spirouImage.LocateFullBadPixels(p, flat_ref)
+    bad_pixel_map2, bstats2 = spirouImage.LocateFullBadPixels(p, flat_ref)
 
     # ----------------------------------------------------------------------
     # Combine bad pixel masks
     # ----------------------------------------------------------------------
     bad_pixel_map = bad_pixel_map1 | bad_pixel_map2
+    # total number of bad pixels
+    btotal = (np.sum(bad_pixel_map) / bad_pixel_map.size) * 100
+    # log result
+    text = 'Fraction of total bad pixels {0:.4f} %'
+    WLOG('', p['LOG_OPT'], text.format(btotal))
 
     # ----------------------------------------------------------------------
     # Plots
@@ -175,11 +180,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
-    hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats[0])
-    hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats[1])
-    hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats[2])
-    hdict = spirouImage.AddKey(hdict, p['KW_BNFLAT'], value=bstats[3])
-    hdict = spirouImage.AddKey(hdict, p['KW_BBAD'], value=bstats[4])
+    hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
+    hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
+    hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])
+    hdict = spirouImage.AddKey(hdict, p['KW_BNFLAT'], value=bstats1[3])
+    hdict = spirouImage.AddKey(hdict, p['KW_BBAD'], value=bstats1[4])
+    hdict = spirouImage.AddKey(hdict, p['kw_BNILUM'], value=bstats2)
+    hdict = spirouImage.AddKey(hdict, p['kw_BTOT'], value=btotal)
 
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)

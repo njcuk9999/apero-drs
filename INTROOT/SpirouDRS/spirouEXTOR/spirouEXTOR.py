@@ -26,13 +26,217 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
-# -----------------------------------------------------------------------------
 
 
 # =============================================================================
-# User functions
+# Define Extraction Wrapper Function
 # =============================================================================
-# noinspection PyPep8Naming
+# New extraction wrapper
+def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
+                       **kwargs):
+    """
+    Extraction wrapper - takes in p, loc, image, rnum (order number) and mode
+    and decides which extract method to run (based on mode), checks all
+    required inputs are present and valid else displays a helpful error.
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Required parameters depends on mode selected
+    :param loc: parameter dictionary, ParamDict containing data
+            Required parameters depends on mode selected
+
+    :param image: numpy array (2D), the image
+    :param rnum: int, the order number for this iteration
+    :param mode: string, the extraction mode, currently supported modes are:
+
+            0 - Simple extraction
+                    (function = spirouEXTOR.extract_const_range)
+
+            1 - weighted extraction
+                    (function = spirouEXTOR.extract_weight)
+
+            2 - tilt extraction
+                    (function = spirouEXTOR.extract_tilt)
+
+            3a - tilt weight extraction (old 1)
+                    (function = spirouEXTOR.extract_tilt_weight)
+
+            3b - tilt weight extraction 2 (old)
+                    (function = spirouEXTOR.extract_tilt_weight_old2)
+
+            3c - tilt weight extraction 2
+                    (function = spirouEXTOR.extract_tilt_weight2)
+
+            3d - tilt weight extraction 2 (cosmic correction)
+                    (function = spirouEXTOR.extract_tilt_weight2cosm)
+
+    :param order_profile: numpy array (2D) or None, the order profile image.
+                          Can be none if not used by extraction method.
+
+    :param kwargs: keyword arguments, any value used from "p" or "loc" can be
+                   overwritten with this parameter (which parameters depends on
+                   which mode selected)
+    :return: the outputs of extraction method function (see mode functions)
+    """
+    # -------------------------------------------------------------------------
+    # Getting and checking globally used parameters
+    # -------------------------------------------------------------------------
+    # make sure mode is a string
+    mode = str(mode)
+    # check for an image
+    check_for_none(image, 'image')
+    # check and get localisation position "ACC" from loc
+    posall = kwargs.get('posall', loc.get('ACC', None))
+    pos = get_check_for_orderlist_none(p, posall, 'ACC', rnum)
+    # also check for a single order position coming in from kwargs
+    pos = kwargs.get('pos', pos)
+    # get gain
+    gain = kwargs.get('gain', p.get('GAIN', None))
+    check_for_none(gain, 'gain')
+    # get sigdet (but don't test until used)
+    sigdet = kwargs.get('sigdet', p.get('SIGDET', None))
+    # get tilt (but don't test until used)
+    tiltall = kwargs.get('tilt', loc.get('TILT', None))
+    # get tilt border (not don't test until used)
+    tiltborder = kwargs.get('tiltborder', p.get('IC_EXT_TILT_BORD', None))
+
+    # -------------------------------------------------------------------------
+    # Simple extraction
+    # -------------------------------------------------------------------------
+    if mode == '0':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
+        check_for_none(range1, 'range1')
+        # run extraction function
+        ext_func = extract_const_range
+        return ext_func(image=image, pos=pos, gain=gain,
+                        nbsig=range1)
+    # -------------------------------------------------------------------------
+    # weighted extraction
+    # -------------------------------------------------------------------------
+    elif mode == '1':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        # run extraction function
+        ext_func = extract_weight
+        return ext_func(image=image, pos=pos, gain=gain,
+                        r1=range1, r2=range2, orderp=order_profile)
+    # -------------------------------------------------------------------------
+    # tilt extraction
+    # -------------------------------------------------------------------------
+    elif mode == '2':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_tilt
+        return ext_func(image=image, pos=pos, gain=gain,
+                        tilt=tilt, tiltborder=tiltborder,
+                        r1=range1, r2=range2)
+    # -------------------------------------------------------------------------
+    # tilt weight extraction (old 1)
+    # -------------------------------------------------------------------------
+    elif mode == '3a':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(sigdet, 'SIGDET')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_tilt_weight
+        return ext_func(image=image, pos=pos, gain=gain,
+                        tilt=tilt, tiltborder=tiltborder,
+                        r1=range1, r2=range2, orderp=order_profile,
+                        sigdet=sigdet)
+    # -------------------------------------------------------------------------
+    # tilt weight extraction 2 (old)
+    # -------------------------------------------------------------------------
+    elif mode == '3b':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(sigdet, 'SIGDET')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_tilt_weight_old2
+        return ext_func(image=image, pos=pos, gain=gain,
+                        tilt=tilt, tiltborder=tiltborder,
+                        r1=range1, r2=range2, orderp=order_profile,
+                        sigdet=sigdet)
+    # -------------------------------------------------------------------------
+    # tilt weight extraction 2
+    # -------------------------------------------------------------------------
+    elif mode == '3c':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(sigdet, 'SIGDET')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_tilt_weight2
+        return ext_func(image=image, pos=pos, gain=gain,
+                        tilt=tilt, tiltborder=tiltborder,
+                        r1=range1, r2=range2, orderp=order_profile,
+                        sigdet=sigdet)
+    # -------------------------------------------------------------------------
+    # tilt weight extraction 2 with cosmic correction
+    # -------------------------------------------------------------------------
+    elif mode == '3d':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(sigdet, 'SIGDET')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_tilt_weight2cosm
+        return ext_func(image=image, pos=pos, gain=gain,
+                        tilt=tilt, tiltborder=tiltborder,
+                        r1=range1, r2=range2, orderp=order_profile,
+                        sigdet=sigdet)
+    # -------------------------------------------------------------------------
+    # else error
+    # -------------------------------------------------------------------------
+    else:
+        emsgs = []
+        emsgs.append('mode = {0} is not valid')
+        emsgs.append('   Mode must be either:')
+        emsgs.append('       0 - Simple extraction')
+        emsgs.append('       1 - weighted extraction')
+        emsgs.append('       2 - tilt extraction')
+        emsgs.append('       3a - tilt weight extraction (old 1)')
+        emsgs.append('       3b - tilt weight extraction 2 (old)')
+        emsgs.append('       3c - tilt weight extraction 2')
+        emsgs.append('       3d - tilt weight extraction 2 (cosmic correction)')
+        emsgs.append('   Please check constants_SPIROU file.')
+        WLOG('error', p['LOG_OPT'], emsgs)
+
+
+# =============================================================================
+# Custom wrapper function
+# =============================================================================
 def extract_AB_order(pp, loc, image, rnum):
     """
     Perform the extraction on the AB fibers separately using the summation
@@ -88,12 +292,10 @@ def extract_AB_order(pp, loc, image, rnum):
     # move the intercept of the center fit by -offset
     acci[0] -= loc['OFFSET']
     # extract the data
-    eargs = [image, acci, assi]
-    ekwargs = dict(extopt=pp['IC_EXTOPT'], 
-                   gain=pp['GAIN'],                 
-                   range1=pp['IC_EXTNBSIG'],
-                   range2=pp['IC_EXTNBSIG'])
-    loc['CENT1'], cpt = extract_wrapper(*eargs, **ekwargs)
+    loc['CENT1'], cpt = extraction_wrapper(pp, loc, image, rnum, mode=0,
+                                           pos=acci,
+                                           range1=pp['IC_EXTNBSIG'],
+                                           range2=pp['IC_EXTNBSIG'])
     loc.set_source('CENT1', __NAME__ + '/extract_AB_order()')
     loc['NBCOS'][rnum] = cpt
     # --------------------------------------------------------------------
@@ -104,12 +306,10 @@ def extract_AB_order(pp, loc, image, rnum):
     # move the intercept of the center fit by -offset
     acci[0] += loc['OFFSET']
     # extract the data
-    eargs = [image, acci, assi]
-    ekwargs = dict(extopt=pp['IC_EXTOPT'], 
-                   gain=pp['GAIN'],                 
-                   range1=pp['IC_EXTNBSIG'],
-                   range2=pp['IC_EXTNBSIG'])
-    loc['CENT2'], cpt = extract_wrapper(*eargs, **ekwargs)
+    loc['CENT2'], cpt = extraction_wrapper(pp, loc, image, rnum, mode=0,
+                                           pos=acci,
+                                           range1=pp['IC_EXTNBSIG'],
+                                           range2=pp['IC_EXTNBSIG'])
     loc.set_source('CENT2', __NAME__ + '/extract_AB_order()')
     loc['NBCOS'][rnum] = cpt
 
@@ -117,448 +317,84 @@ def extract_AB_order(pp, loc, image, rnum):
     return loc
 
 
-def extract_order(pp, loc, image, rnum, **kwargs):
+def get_extraction_method(p, mode):
     """
-    Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
 
-    :param pp: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                IC_EXTOPT: int, the extraction option
-                IC_EXT_RANGE: float, the upper and lower edge of the order
-                              in rows (y-axis) - half-zone width
-                gain: float, the gain of the image
+    :param mode: string,
 
-    :param loc: parameter dictionary, ParamDict containing data
-            Must contain at least:
-                acc: numpy array (2D), the fit coefficients array for
-                      the centers fit
-                      shape = (number of orders x number of fit coefficients)
-                ass: numpy array (2D), the fit coefficients array for
-                      the widths fit
-                      shape = (number of orders x number of fit coefficients)
+        0 - Simple extraction
+                (function = spirouEXTOR.extract_const_range)
 
-    :param image: numpy array (2D), the image
-    :param rnum: int, the order number for this iteration
-    :param kwargs: additional keywords to pass to the extraction wrapper
+        1 - weighted extraction
+                (function = spirouEXTOR.extract_weight)
 
-            - allowed keywords are:
+        2 - tilt extraction
+                (function = spirouEXTOR.extract_tilt)
 
-            range1  (defaults to "IC_EXT_RANGE")
-            range2  (defaults to "IC_EXT_RANGE")
-            gain    (defaults to "GAIN")
+        3a - tilt weight extraction (old 1)
+                (function = spirouEXTOR.extract_tilt_weight)
 
-    :return cent: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return cpt: int, zero in this case
+        3b - tilt weight extraction 2 (old)
+                (function = spirouEXTOR.extract_tilt_weight_old2)
+
+        3c - tilt weight extraction 2
+                (function = spirouEXTOR.extract_tilt_weight2)
+
+        3d - tilt weight extraction 2 (cosmic correction)
+                (function = spirouEXTOR.extract_tilt_weight2cosm)
+    :return: string the mode and function
     """
-    # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
-    ekwargs = dict(use_tilt=False, 
-                   use_weight=False,
-                   extopt=pp['IC_EXTOPT'],
-                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
-                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['GAIN']))
-    # get the extraction for this order using the extract wrapper
-    cent, cpt = extract_wrapper(*eargs, **ekwargs)
-    # return 
-    return cent, cpt
 
+    func_name = __NAME__ + '.get_extraction_method()'
+    # -------------------------------------------------------------------------
+    # Simple extraction
+    # -------------------------------------------------------------------------
+    if mode == '0':
+        return 'SIMPLE', 'extract_const_range'
+    # -------------------------------------------------------------------------
+    # weighted extraction
+    # -------------------------------------------------------------------------
+    elif mode == '1':
+        return 'WEIGHT', 'extract_weight'
 
-def extract_tilt_order(pp, loc, image, rnum, **kwargs):
-    """
-    Extract order with tilt but without weight using
-    spirouEXTOR.extract_wrapper()
+    # -------------------------------------------------------------------------
+    # tilt extraction
+    # -------------------------------------------------------------------------
+    elif mode == '2':
+        return 'TILT', 'extract_tilt'
+    # -------------------------------------------------------------------------
+    # tilt weight extraction (old 1)
+    # -------------------------------------------------------------------------
+    elif mode == '3a':
+        return 'TILTWEIGHT', 'extract_tilt_weight'
+    # -------------------------------------------------------------------------
+    # tilt weight extraction 2 (old)
+    # -------------------------------------------------------------------------
+    elif mode == '3b':
+        return 'TILTWEIGHT', 'extract_tilt_weight_old2'
+    # -------------------------------------------------------------------------
+    # tilt weight extraction 2
+    # -------------------------------------------------------------------------
+    elif mode == '3c':
+        return 'TILTWEIGHT', 'extract_tilt_weight2'
+    # -------------------------------------------------------------------------
+    # tilt weight extraction 2 with cosmic correction
+    # -------------------------------------------------------------------------
+    elif mode == '3d':
+        return 'TILTWEIGHT', 'extract_tilt_weight2cosm'
 
-    :param pp: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                IC_EXT_RANGE: float, the upper and lower edge of the order
-                              in rows (y-axis) - half-zone width
-                gain: float, the gain of the image
-
-    :param loc: parameter dictionary, ParamDict containing data
-            Must contain at least:
-                acc: numpy array (2D), the fit coefficients array for
-                      the centers fit
-                      shape = (number of orders x number of fit coefficients)
-                ass: numpy array (2D), the fit coefficients array for
-                      the widths fit
-                      shape = (number of orders x number of fit coefficients)
-                tilt: numpy array (1D), the tilt angle of each order
-
-    :param image: numpy array (2D), the image
-    :param rnum: int, the order number for this iteration
-    :param kwargs: additional keywords to pass to the extraction wrapper
-
-            - allowed keywords are:
-
-            range1  (defaults to "IC_EXT_RANGE")
-            range2  (defaults to "IC_EXT_RANGE")
-            gain    (defaults to "GAIN")
-
-    :return cent: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return cpt: int, zero in this case
-    """
-    # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
-    ekwargs = dict(use_tilt=True, 
-                   use_weight=False,
-                   tilt=loc['TILT'][rnum],
-                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
-                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['GAIN']),
-                   tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
-    # get the extraction for this order using the extract wrapper
-    cent, cpt = extract_wrapper(*eargs, **ekwargs)
-    # return 
-    return cent, cpt
-
-
-def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
-    """
-    Extract order with tilt and weight using
-    spirouEXTOR.extract_wrapper() with mode=1
-    (extract_tilt_weight_order_old() is run)
-
-    :param pp: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                IC_EXT_RANGE: float, the upper and lower edge of the order
-                              in rows (y-axis) - half-zone width
-                gain: float, the gain of the image
-                sigdet: float, the read noise of the image
-
-    :param loc: parameter dictionary, ParamDict containing data
-            Must contain at least:
-                acc: numpy array (2D), the fit coefficients array for
-                      the centers fit
-                      shape = (number of orders x number of fit coefficients)
-                ass: numpy array (2D), the fit coefficients array for
-                      the widths fit
-                      shape = (number of orders x number of fit coefficients)
-                tilt: numpy array (1D), the tilt angle of each order
-
-    :param image: numpy array (2D), the image
-    :param orderp: numpy array (2D), the order profile image
-    :param rnum: int, the order number for this iteration
-    :param kwargs: additional keywords to pass to the extraction wrapper
-
-            - allowed keywords are:
-
-            range1  (defaults to "IC_EXT_RANGE")
-            range2  (defaults to "IC_EXT_RANGE")
-            gain    (defaults to "GAIN")
-            sigdet  (defaults to "SIGDET")
-
-    :return cent: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return cpt: int, zero in this case
-    """
-    # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
-    ekwargs = dict(use_tilt=True, 
-                   use_weight=True,
-                   tilt=loc['TILT'][rnum], 
-                   order_profile=orderp,
-                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
-                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   mode=1,
-                   gain=kwargs.get('gain', pp['GAIN']),
-                   sigdet=kwargs.get('sigdet', pp['SIGDET']),
-                   tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
-    # get the extraction for this order using the extract wrapper
-    cent, cpt = extract_wrapper(*eargs, **ekwargs)
-    # return 
-    return cent, cpt
-
-
-def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
-    """
-    Extract order with tilt and weight using
-    spirouEXTOR.extract_wrapper() with mode=2
-    (extract_tilt_weight_order() is run)
-
-    :param pp: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                IC_EXT_RANGE1: float, the upper edge of the order in rows
-                               (y-axis) - half-zone width (lower)
-                IC_EXT_RANGE2: float, the lower edge of the order in rows
-                               (y-axis) - half-zone width (upper)
-                gain: float, the gain of the image
-                sigdet: float, the read noise of the image
-
-    :param loc: parameter dictionary, ParamDict containing data
-            Must contain at least:
-                acc: numpy array (2D), the fit coefficients array for
-                      the centers fit
-                      shape = (number of orders x number of fit coefficients)
-                ass: numpy array (2D), the fit coefficients array for
-                      the widths fit
-                      shape = (number of orders x number of fit coefficients)
-                tilt: numpy array (1D), the tilt angle of each order
-
-    :param image: numpy array (2D), the image
-    :param orderp: numpy array (2D), the order profile image
-    :param rnum: int, the order number for this iteration
-    :param kwargs: additional keywords to pass to the extraction wrapper
-
-            - allowed keywords are:
-
-            range1  (defaults to "IC_EXT_RANGE1")
-            range2  (defaults to "IC_EXT_RANGE2")
-            gain    (defaults to "GAIN")
-            sigdet  (defaults to "SIGDET")
-
-    :return cent: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return cpt: int, zero in this case
-    """
-    # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
-    ekwargs = dict(use_tilt=True,
-                   use_weight=True,
-                   tilt=loc['TILT'][rnum], 
-                   order_profile=orderp,
-                   range1=kwargs.get('range1', pp['IC_EXT_RANGE1']),
-                   range2=kwargs.get('range2', pp['IC_EXT_RANGE2']),
-                   mode=2,
-                   gain=kwargs.get('gain', pp['GAIN']),
-                   sigdet=kwargs.get('sigdet', pp['SIGDET']),
-                   tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
-    # get the extraction for this order using the extract wrapper
-    cent, cpt = extract_wrapper(*eargs, **ekwargs)
-    # return 
-    return cent, cpt
-
-
-def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
-    """
-    Extract order with weight but without tilt using
-    spirouEXTOR.extract_wrapper()
-
-    :param pp: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                IC_EXT_RANGE: float, the upper and lower edge of the order
-                              in rows (y-axis) - half-zone width
-                gain: float, the gain of the image
-                sigdet: float, the read noise of the image
-
-    :param loc: parameter dictionary, ParamDict containing data
-            Must contain at least:
-                acc: numpy array (2D), the fit coefficients array for
-                      the centers fit
-                      shape = (number of orders x number of fit coefficients)
-                ass: numpy array (2D), the fit coefficients array for
-                      the widths fit
-                      shape = (number of orders x number of fit coefficients)
-
-    :param image: numpy array (2D), the image
-    :param orderp: numpy array (2D), the order profile image
-    :param rnum: int, the order number for this iteration
-    :param kwargs: additional keywords to pass to the extraction wrapper
-
-            - allowed keywords are:
-
-            range1  (defaults to "IC_EXT_RANGE")
-            range2  (defaults to "IC_EXT_RANGE")
-            gain    (defaults to "GAIN")
-            sigdet  (defaults to "SIGDET")
-
-    :return cent: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return cpt: int, zero in this case
-    """
-    # construct the args and keyword args for extract wrapper
-    eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
-    ekwargs = dict(use_tilt=False,
-                   use_weight=True,
-                   tilt=None, 
-                   order_profile=orderp,
-                   range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
-                   range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
-                   gain=kwargs.get('gain', pp['GAIN']),
-                   sigdet=kwargs.get('sigdet', pp['SIGDET']))
-    # get the extraction for this order using the extract wrapper
-    cent, cpt = extract_wrapper(*eargs, **ekwargs)
-    # return 
-    return cent, cpt
+    # -------------------------------------------------------------------------
+    # else error
+    # -------------------------------------------------------------------------
+    else:
+        emsg1 = 'Extraction methods "modes" not up-to-date.'
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-def extract_wrapper(image, pos, sig, **kwargs):
-    """
-    Extraction wrapper - takes in image, pos, sig and kwargs and decides
-    which extraction process to use.
-
-    :param image: numpy array (2D), the image
-    :param pos: numpy array (1D), the position fit coefficients
-                size = number of coefficients for fit
-    :param sig: numpy array (1D), the width fit coefficients
-                size = number of coefficients for fit
-    :param kwargs: additional keyword arguments
-
-    currently accepted keyword arguments are:
-
-        extopt:         int, Extraction option in tilt file:
-                         if 0 extraction by summation over constant range
-                         if 1 extraction by summation over constant sigma
-                            (not currently available)
-                         if 2 Horne extraction without cosmic elimination
-                            (not currently available)
-                         if 3 Horne extraction with cosmic elimination
-                            (not currently available)
-
-        nbsig:          float,  distance away from center to extract out to +/-
-                        defaults to p['NBSIG'] from constants_SPIROU.py
-
-        gain:           float, gain of the image
-                        defaults to p['GAIN'] from fitsfilename HEADER
-
-        sigdet:         float, the sigdet of the image
-                        defaults to p['SIGDET'] from fitsfilename HEADER
-
-        range1:         float, Half-zone extraction width left side
-                        (formally plage1)
-                        defaults to p['IC_EXT_RANGE1'] from fiber parameters in
-                        constatns_SPIROU.txt
-
-        range2:         float, Half-zone extraction width left side
-                        (formally plage2)
-                        defaults to p['IC_EXT_RANGE2'] from fiber parameters in
-                        constatns_SPIROU.txt
-
-        tilt:           numpy array (1D), the tilt for this order, if defined
-                        uses tilt, if not defined does not
-
-        use_weight:    bool, if True use weighted extraction, if False or not
-                        defined does not use weighted extraction
-
-        order_profile:  numpy array (2D), the image with fit superposed on top,
-                        required for tilt and or weighted fit
-
-        mode:           if use_weight and tilt is not None then
-                        if mode = 'old'  will use old code (use this if
-                        exception generated)
-                        extract_tilt_weight_order_old() is run
-
-                        else mode = 'new' and
-                        extract_tilt_weight_order() is run
-
-    :return spe: numpy array (1D), the extracted pixel values,
-                 size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
-    """
-    # get parameters from keywordargs but default to None
-    extopt = kwargs.get('extopt', None)
-    gain = kwargs.get('gain', None)
-    sigdet = kwargs.get('sigdet', None)
-    range1 = kwargs.get('range1', None)
-    range2 = kwargs.get('range2', None)
-    mode = kwargs.get('mode', None)
-    tilt = kwargs.get('tilt', None)
-    order_profile = kwargs.get('order_profile', None)
-    tilt_border = kwargs.get('tilt_bdr', None)
-    # get parameters from keyword arguments but default to False
-    use_tilt = kwargs.get('use_tilt', False)
-    use_weight = kwargs.get('use_weight', False)
-    # check len of pos and sig are the same
-    if pos.shape != sig.shape:
-        WLOG('error', '', ('"pos" and "sig" do not have the same shape '
-                           '({0}.extract_wrapper())'.format(__NAME__)))
-    # ----------------------------------------------------------------------
-    # Extract  no tilt no weight extopt = 0
-    # ----------------------------------------------------------------------
-    # Option 0: Extraction by summation over constant range
-    if extopt == 0:
-        # check required values are not None
-        check_for_none(range1, 'range1')
-        check_for_none(gain, 'gain')
-        # run extract and return
-        return extract_const_range(image=image, pos=pos, nbsig=range1,
-                                   gain=gain)
-    # ----------------------------------------------------------------------
-    # Extract tilt + weight
-    # ----------------------------------------------------------------------
-    # Extra: if tilt defined and order_profile defined and use_weight = True
-    #        Extract using a weighted tilt
-    elif use_tilt and use_weight and mode in [0, 1, 2, 3]:
-        # check required values are not None
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(tilt, 'tilt')
-        check_for_none(order_profile, 'order_profile')
-        check_for_none(gain, 'gain')
-        check_for_none(sigdet, 'sig_det')
-        check_for_none(tilt_border, 'tilt_border')
-        # run extract and return
-        ekwargs = dict(image=image, pos=pos, tilt=tilt, r1=range1, r2=range2,
-                       orderp=order_profile, gain=gain, sigdet=sigdet,
-                       tiltborder=tilt_border)
-        if mode == 0:
-            return extract_tilt_weight(**ekwargs)
-            # return extract(**ekwargs)
-        if mode == 1:
-            return extract_tilt_weight(**ekwargs)
-            # return extract(**ekwargs)
-        if mode == 2:
-            # return extract_tilt_weight2(**ekwargs)
-            return extract_tilt_weight2cosm(**ekwargs)
-        if mode == 3:
-            return extract_tilt_weight_old2(**ekwargs)
-
-    # ----------------------------------------------------------------------
-    # Extract tilt  + no weight
-    # ----------------------------------------------------------------------
-    # Extra: if tilt defined but use_weight = False
-    elif use_tilt and not use_weight:
-        # check required values are not None
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(tilt, 'tilt')
-        check_for_none(gain, 'gain')
-        check_for_none(tilt_border, 'tilt_border')
-        # run extract and return
-        ekwargs = dict(image=image, pos=pos, tilt=tilt, r1=range1, r2=range2,
-                       gain=gain, tiltborder=tilt_border)
-        return extract_tilt(**ekwargs)
-        # return extract(**ekwargs)
-    # ----------------------------------------------------------------------
-    # Extract weight + no tilt
-    # ----------------------------------------------------------------------
-    elif not use_tilt and use_weight:
-        # check required values are not None
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'order_profile')
-        check_for_none(gain, 'gain')
-        # run extract and return
-        ekwargs = dict(image=image, pos=pos, r1=range1, r2=range2,
-                       orderp=order_profile, gain=gain)
-        return extract_weight(**ekwargs)
-        # return extract(**ekwargs)
-    # ----------------------------------------------------------------------
-    # Extract no weight + no tilt
-    # ----------------------------------------------------------------------
-    elif not use_tilt and not use_weight:
-        # check required values are not None
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'order_profile')
-        check_for_none(gain, 'gain')
-        check_for_none(sigdet, 'sig_det')
-        # run extract and return
-        WLOG('error', '', 'Extraction type invalid')
-        # ekwargs = dict(image=image, pos=pos, r1=range1, r2=range2, gain=gain)
-        # return extract(**ekwargs)
-    # ----------------------------------------------------------------------
-    # No Extract
-    # ----------------------------------------------------------------------
-    else:
-        WLOG('error', '', 'Extraction type invalid')
-
-
 def extract_const_range(image, pos, nbsig, gain):
     """
     Extracts this order using position only
@@ -671,7 +507,7 @@ def extract_tilt(image, pos, tilt, r1, r2, gain, tiltborder=2):
             ww0i, ww1i = ww0[ic], ww1[ic]
             ww = wwa[(ww0i, ww1i)]
             # multiple the image by the rotation matrix
-            sx = image[j1s[ic]+1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
+            sx = image[j1s[ic] + 1:j2s[ic], i1s[ic]:i2s[ic] + 1] * ww[1:-1]
             spe[ic] = np.sum(sx)
             # add the main order pixels
             # add the bits missing due to rounding
@@ -741,7 +577,7 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
             raw_weights = np.where(sx1 > 0, 1, 0.000001)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
-            norm = np.sum(weights**2)
+            norm = np.sum(weights ** 2)
             # add the main extraction to array
             spe[ic] = np.sum(sx * weights[1:-1])
             # add the bits missing due to rounding
@@ -829,9 +665,9 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # weight values less than 0 to 1e-9
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in quadrature
-            weights = raw_weights / ((sx * gain) + sigdet**2)
+            weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
+            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
@@ -913,44 +749,43 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in
             #    quadrature
-            weights = raw_weights / ((sx * gain) + sigdet**2)
+            weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
+            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
             # Cosmic rays correction
-            crit = (sx  - spe[ic] * fx)
-            sigcut = 0.25 # 25% of the flux
-            cosmask = np.ones(np.shape(crit),'d')
-            nbloop=0
-            while np.max(crit) > sigcut * spe[ic] and nbloop<5:
-#                print('cosmic detected in line %i with amp %.2f' %(ic,np.max(crit)/spe[ic]))
-                cosmask = np.where(crit>np.max(crit)-0.1,0.,cosmask)
-                spe[ic] = np.sum(weights * cosmask * sx * fx) / np.sum(weights * cosmask * fx ** 2)
+            crit = (sx - spe[ic] * fx)
+            sigcut = 0.25  # 25% of the flux
+            cosmask = np.ones(np.shape(crit), 'd')
+            nbloop = 0
+            while np.max(crit) > sigcut * spe[ic] and nbloop < 5:
+                #                print('cosmic detected in line %i with amp %.2f' %(ic,np.max(crit)/spe[ic]))
+                cosmask = np.where(crit > np.max(crit) - 0.1, 0., cosmask)
+                spe[ic] = np.sum(weights * cosmask * sx * fx) / np.sum(
+                    weights * cosmask * fx ** 2)
                 crit = (sx * cosmask - spe[ic] * fx * cosmask)
                 cpt += 1
                 nbloop += 1
-#        crit = (data[ic, ind1:ind2 + 1] * ccdgain - spe[ic] * profil) ** 2 / var
-#        seuil = seuilcosmic * spe[ic]
-#        while max(crit) > max(seuil, 25):
-            #	    print 'COSMICS DETECTED',max(crit),' Line',ic
-#            cpt = cpt + 1
-#            masque = masque - greater(crit, max(crit) - 0.1)
-#            masque = clip(masque, 0., 1.)
-#            norm = sum(profil * profil * masque / var)
-#            spe[ic] = (sum(data[ic, ind1 + 1:ind2, ] * ccdgain * profil[1:-1] * masque[1:-1] / var[1:-1]) + \
-#                       c1 * data[ic, ind1] * ccdgain * profil[0] * masque[0] / var[0] + \
-#                       c2 * data[ic, ind2] * ccdgain * profil[-1] * masque[-1] / var[-1]) / norm
-#            var = profil * spe[ic] + sigdet ** 2
-#            seuil = seuilcosmic * spe[ic]
-#            crit = (data[ic, ind1:ind2 + 1] * ccdgain * masque - spe[ic] * masque * profil) ** 2 / var
-#    print    'Nb cosmics detected : ', cpt
+    #        crit = (data[ic, ind1:ind2 + 1] * ccdgain - spe[ic] * profil) ** 2 / var
+    #        seuil = seuilcosmic * spe[ic]
+    #        while max(crit) > max(seuil, 25):
+    #	    print 'COSMICS DETECTED',max(crit),' Line',ic
+    #            cpt = cpt + 1
+    #            masque = masque - greater(crit, max(crit) - 0.1)
+    #            masque = clip(masque, 0., 1.)
+    #            norm = sum(profil * profil * masque / var)
+    #            spe[ic] = (sum(data[ic, ind1 + 1:ind2, ] * ccdgain * profil[1:-1] * masque[1:-1] / var[1:-1]) + \
+    #                       c1 * data[ic, ind1] * ccdgain * profil[0] * masque[0] / var[0] + \
+    #                       c2 * data[ic, ind2] * ccdgain * profil[-1] * masque[-1] / var[-1]) / norm
+    #            var = profil * spe[ic] + sigdet ** 2
+    #            seuil = seuilcosmic * spe[ic]
+    #            crit = (data[ic, ind1:ind2 + 1] * ccdgain * masque - spe[ic] * masque * profil) ** 2 / var
+    #    print    'Nb cosmics detected : ', cpt
 
     # multiple spe by gain to convert to e-
-#    print('Nb cosmic detected  %i' %(cpt))
+    #    print('Nb cosmic detected  %i' %(cpt))
     spe *= gain
 
     return spe, cpt
-
-
 
 
 def work_out_ww(ww0, ww1, tiltshift, r1):
@@ -1106,9 +941,9 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added
             #     in quadrature
-            weights = raw_weights / ((sx * gain) + sigdet**2)
+            weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            spe[ic] = np.sum(weights * sx * fx)/np.sum(weights * fx**2)
+            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
 
@@ -1185,18 +1020,18 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             ww0i, ww1i = ww0[ic], ww1[ic]
             ww = wwa[(ww0i, ww1i)]
             # Get the extraction of the main profile
-            sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic]+1] * ww[1:-1]
-            sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
+            sx = image[j1s[ic] + 1: j2s[ic], i1s[ic]: i2s[ic] + 1] * ww[1:-1]
+            sx1 = image[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic] + 1]
             # Get the extraction of the order_profile
-            fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic]+1]
+            fx = orderp[j1s[ic]: j2s[ic] + 1, i1s[ic]: i2s[ic] + 1]
             # Renormalise the order_profile
-            fx = fx/np.sum(fx)
+            fx = fx / np.sum(fx)
             # get the weights
             # weight values less than 0 to 0.000001
             raw_weights = np.where(sx1 > 0, 1, 0.000001)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
-            norm = np.sum(weights**2)
+            norm = np.sum(weights ** 2)
             # add the main extraction to array
             mainvalues = np.sum(sx * weights[1:-1], 1)
             # add the bits missing due to rounding
@@ -1305,7 +1140,7 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
             raw_weights = np.where(sx > 0, 1, 0.000001)
             weights = fx * raw_weights
             # get the normalisation (equal to the sum of the weights squared)
-            norm = np.sum(weights**2)
+            norm = np.sum(weights ** 2)
             # add the main extraction to array
             s_sx = np.sum(sx)
             spe[ic] = s_sx * weights[1:-1] * ww[1:-1]
@@ -1398,10 +1233,25 @@ def check_for_none(value, name, fname=None):
     """
     # func name
     if fname is None:
-        fname = __NAME__ + '/extract_wrapper()'
+        fname = __NAME__ + '.extraction_wrapper()'
     if value is None:
-        emsg = 'Keyword "{0}" is not defined for {1}'
+        emsg = 'Extraction Wrapper Error: Keyword "{0}" is not defined for {1}'
         WLOG('error', '', emsg.format(name, fname))
+
+
+def get_check_for_orderlist_none(p, value, name, order_num):
+    try:
+        order_value = value[order_num]
+    except TypeError:
+        emsg = '{0} not defined in arguments or ParamDict.'.format(name)
+        WLOG('error', p['LOG_OPT'], emsg)
+        order_value = None
+    except IndexError:
+        emsg1 = '{0} has incorrect number of orders'.format(name)
+        emsg2 = '\tExpected at least {0} got {1}'.format(order_num, len(value))
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        order_value = None
+    return order_value
 
 
 def get_tilt_matrix(ww0, ww1, r1, r2, tilt=None):
@@ -1478,17 +1328,17 @@ def extract_const_range_fortran(flatimage, pos, sig, dim, nbsig, gain):
     m = len(flatimage)
     ncpos = len(pos)
 
-    ny = int(m/dim)
-    nx = int(m/ny)
+    ny = int(m / dim)
+    nx = int(m / ny)
 
     cpt = 0
 
     spe = np.zeros(ny, dtype=float)
 
-    for ic in range(1, ny+1):
+    for ic in range(1, ny + 1):
         jc = 0
-        for j in range(1, ncpos+1):
-            jc += pos[j-1] * (ic-1)**(j-1)
+        for j in range(1, ncpos + 1):
+            jc += pos[j - 1] * (ic - 1) ** (j - 1)
         lim1 = jc - nbsig
         lim2 = jc + nbsig
         # fortran int rounds the same as python int
@@ -1497,13 +1347,14 @@ def extract_const_range_fortran(flatimage, pos, sig, dim, nbsig, gain):
         if (j1 > 0) and (j2 < nx):
             # for j in range(j1+1, j2):
             #     spe[ic-1] += flatimage[j+nx*(ic-1)]
-            spe[ic-1] = np.sum(flatimage[j1+1+nx*(ic-1):j2+nx*(ic-1)])
-            spe[ic-1] += (j1+0.5-lim1)*flatimage[j1+nx*(ic-1)]
-            spe[ic-1] += (lim2-j2+0.5)*flatimage[j2+nx*(ic-1)]
+            spe[ic - 1] = np.sum(
+                flatimage[j1 + 1 + nx * (ic - 1):j2 + nx * (ic - 1)])
+            spe[ic - 1] += (j1 + 0.5 - lim1) * flatimage[j1 + nx * (ic - 1)]
+            spe[ic - 1] += (lim2 - j2 + 0.5) * flatimage[j2 + nx * (ic - 1)]
 
-            lilbit = (j1+0.5-lim1)*flatimage[j1+nx*(ic-1)]
-            lilbit += (lim2-j2+0.5)*flatimage[j2+nx*(ic-1)]
-            print('', ic, jc, spe[ic-1], lilbit)
+            lilbit = (j1 + 0.5 - lim1) * flatimage[j1 + nx * (ic - 1)]
+            lilbit += (lim2 - j2 + 0.5) * flatimage[j2 + nx * (ic - 1)]
+            print('', ic, jc, spe[ic - 1], lilbit)
 
             spe[ic - 1] *= gain
 
@@ -1565,6 +1416,535 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
     spe *= gain
 
     return spe[::-1], nbcos
+
+
+# =============================================================================
+# Archive functions (old and unused)
+# =============================================================================
+
+
+# def extract_AB_order_old(pp, loc, image, rnum):
+#     """
+#     Perform the extraction on the AB fibers separately using the summation
+#     over constant range
+#
+#     :param pp: parameter dictionary, ParamDict containing constants
+#         Must contain at least:
+#                 IC_CENT_COL: int, the column number (x-axis) of the central
+#                              column
+#                 IC_FACDEC: float, the offset multiplicative factor for width
+#                 IC_EXTOPT: int, the extraction option
+#                 gain: float, the gain of the image
+#                 IC_EXTNBSIG: float, distance away from center to extract
+#                              out to +/- (in rows or y-axis direction)
+#
+#     :param loc: parameter dictionary, ParamDict containing data
+#             Must contain at least:
+#                 ass: numpy array (2D), the fit coefficients array for
+#                       the widths fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 acc: numpy array (2D), the fit coefficients array for
+#                       the centers fit
+#                       shape = (number of orders x number of fit coefficients)
+#
+#
+#     :param image: numpy array (2D), the image
+#     :param rnum: int, the order number for this iteration
+#
+#     :return loc: parameter dictionary, the updated parameter dictionary
+#             Adds/updates the following:
+#                 offset: numpy array (1D), the center values with the
+#                         offset in 'IC_CENT_COL' added
+#                 cent1: numpy array (2D), the extraction for A, updated is
+#                        the order "rnum"
+#                 nbcos: int, 0 (constant)
+#                 cent2: numpy array (2D), the extraction for B, updated is
+#                        the order "rnum"
+#     """
+#     # get the width fit coefficients for this fit
+#     assi = loc['ASS'][rnum]
+#     # --------------------------------------------------------------------
+#     # Center the central pixel (using the width fit)
+#     # get the width of the central pixel of this order
+#     width_cent = np.polyval(assi[::-1], pp['IC_CENT_COL'])
+#     # work out the offset in width for the center pixel
+#     loc['OFFSET'] = width_cent * pp['IC_FACDEC']
+#     loc.set_source('OFFSET', __NAME__ + '/extract_AB_order()')
+#     # --------------------------------------------------------------------
+#     # deal with fiber A:
+#
+#     # Get the center coeffs for this order
+#     acci = np.array(loc['ACC'][rnum])
+#     # move the intercept of the center fit by -offset
+#     acci[0] -= loc['OFFSET']
+#     # extract the data
+#     eargs = [image, acci, assi]
+#     ekwargs = dict(extopt=pp['IC_EXTOPT'],
+#                    gain=pp['GAIN'],
+#                    range1=pp['IC_EXTNBSIG'],
+#                    range2=pp['IC_EXTNBSIG'])
+#     loc['CENT1'], cpt = extract_wrapper(*eargs, **ekwargs)
+#     loc.set_source('CENT1', __NAME__ + '/extract_AB_order()')
+#     loc['NBCOS'][rnum] = cpt
+#     # --------------------------------------------------------------------
+#     # deal with fiber B:
+#
+#     # Get the center coeffs for this order
+#     acci = np.array(loc['ACC'][rnum])
+#     # move the intercept of the center fit by -offset
+#     acci[0] += loc['OFFSET']
+#     # extract the data
+#     eargs = [image, acci, assi]
+#     ekwargs = dict(extopt=pp['IC_EXTOPT'],
+#                    gain=pp['GAIN'],
+#                    range1=pp['IC_EXTNBSIG'],
+#                    range2=pp['IC_EXTNBSIG'])
+#     loc['CENT2'], cpt = extract_wrapper(*eargs, **ekwargs)
+#     loc.set_source('CENT2', __NAME__ + '/extract_AB_order()')
+#     loc['NBCOS'][rnum] = cpt
+#
+#     # return loc dictionary
+#     return loc
+#
+#
+# def extract_order(pp, loc, image, rnum, **kwargs):
+#     """
+#     Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
+#
+#     :param pp: parameter dictionary, ParamDict containing constants
+#         Must contain at least:
+#                 IC_EXTOPT: int, the extraction option
+#                 IC_EXT_RANGE: float, the upper and lower edge of the order
+#                               in rows (y-axis) - half-zone width
+#                 gain: float, the gain of the image
+#
+#     :param loc: parameter dictionary, ParamDict containing data
+#             Must contain at least:
+#                 acc: numpy array (2D), the fit coefficients array for
+#                       the centers fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 ass: numpy array (2D), the fit coefficients array for
+#                       the widths fit
+#                       shape = (number of orders x number of fit coefficients)
+#
+#     :param image: numpy array (2D), the image
+#     :param rnum: int, the order number for this iteration
+#     :param kwargs: additional keywords to pass to the extraction wrapper
+#
+#             - allowed keywords are:
+#
+#             range1  (defaults to "IC_EXT_RANGE")
+#             range2  (defaults to "IC_EXT_RANGE")
+#             gain    (defaults to "GAIN")
+#
+#     :return cent: numpy array (1D), the extracted pixel values,
+#                  size = image.shape[1] (along the order direction)
+#     :return cpt: int, zero in this case
+#     """
+#     # construct the args and keyword args for extract wrapper
+#     eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
+#     ekwargs = dict(use_tilt=False,
+#                    use_weight=False,
+#                    extopt=pp['IC_EXTOPT'],
+#                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+#                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+#                    gain=kwargs.get('gain', pp['GAIN']))
+#     # get the extraction for this order using the extract wrapper
+#     cent, cpt = extract_wrapper(*eargs, **ekwargs)
+#     # return
+#     return cent, cpt
+#
+#
+# def extract_tilt_order(pp, loc, image, rnum, **kwargs):
+#     """
+#     Extract order with tilt but without weight using
+#     spirouEXTOR.extract_wrapper()
+#
+#     :param pp: parameter dictionary, ParamDict containing constants
+#         Must contain at least:
+#                 IC_EXT_RANGE: float, the upper and lower edge of the order
+#                               in rows (y-axis) - half-zone width
+#                 gain: float, the gain of the image
+#
+#     :param loc: parameter dictionary, ParamDict containing data
+#             Must contain at least:
+#                 acc: numpy array (2D), the fit coefficients array for
+#                       the centers fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 ass: numpy array (2D), the fit coefficients array for
+#                       the widths fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 tilt: numpy array (1D), the tilt angle of each order
+#
+#     :param image: numpy array (2D), the image
+#     :param rnum: int, the order number for this iteration
+#     :param kwargs: additional keywords to pass to the extraction wrapper
+#
+#             - allowed keywords are:
+#
+#             range1  (defaults to "IC_EXT_RANGE")
+#             range2  (defaults to "IC_EXT_RANGE")
+#             gain    (defaults to "GAIN")
+#
+#     :return cent: numpy array (1D), the extracted pixel values,
+#                  size = image.shape[1] (along the order direction)
+#     :return cpt: int, zero in this case
+#     """
+#     # construct the args and keyword args for extract wrapper
+#     eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
+#     ekwargs = dict(use_tilt=True,
+#                    use_weight=False,
+#                    tilt=loc['TILT'][rnum],
+#                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+#                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+#                    gain=kwargs.get('gain', pp['GAIN']),
+#                    tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
+#     # get the extraction for this order using the extract wrapper
+#     cent, cpt = extract_wrapper(*eargs, **ekwargs)
+#     # return
+#     return cent, cpt
+#
+#
+# def extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs):
+#     """
+#     Extract order with tilt and weight using
+#     spirouEXTOR.extract_wrapper() with mode=1
+#     (extract_tilt_weight_order_old() is run)
+#
+#     :param pp: parameter dictionary, ParamDict containing constants
+#         Must contain at least:
+#                 IC_EXT_RANGE: float, the upper and lower edge of the order
+#                               in rows (y-axis) - half-zone width
+#                 gain: float, the gain of the image
+#                 sigdet: float, the read noise of the image
+#
+#     :param loc: parameter dictionary, ParamDict containing data
+#             Must contain at least:
+#                 acc: numpy array (2D), the fit coefficients array for
+#                       the centers fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 ass: numpy array (2D), the fit coefficients array for
+#                       the widths fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 tilt: numpy array (1D), the tilt angle of each order
+#
+#     :param image: numpy array (2D), the image
+#     :param orderp: numpy array (2D), the order profile image
+#     :param rnum: int, the order number for this iteration
+#     :param kwargs: additional keywords to pass to the extraction wrapper
+#
+#             - allowed keywords are:
+#
+#             range1  (defaults to "IC_EXT_RANGE")
+#             range2  (defaults to "IC_EXT_RANGE")
+#             gain    (defaults to "GAIN")
+#             sigdet  (defaults to "SIGDET")
+#
+#     :return cent: numpy array (1D), the extracted pixel values,
+#                  size = image.shape[1] (along the order direction)
+#     :return cpt: int, zero in this case
+#     """
+#     # construct the args and keyword args for extract wrapper
+#     eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
+#     ekwargs = dict(use_tilt=True,
+#                    use_weight=True,
+#                    tilt=loc['TILT'][rnum],
+#                    order_profile=orderp,
+#                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+#                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+#                    mode=1,
+#                    gain=kwargs.get('gain', pp['GAIN']),
+#                    sigdet=kwargs.get('sigdet', pp['SIGDET']),
+#                    tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
+#     # get the extraction for this order using the extract wrapper
+#     cent, cpt = extract_wrapper(*eargs, **ekwargs)
+#     # return
+#     return cent, cpt
+#
+#
+# def extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs):
+#     """
+#     Extract order with tilt and weight using
+#     spirouEXTOR.extract_wrapper() with mode=2
+#     (extract_tilt_weight_order() is run)
+#
+#     :param pp: parameter dictionary, ParamDict containing constants
+#         Must contain at least:
+#                 IC_EXT_RANGE1: float, the upper edge of the order in rows
+#                                (y-axis) - half-zone width (lower)
+#                 IC_EXT_RANGE2: float, the lower edge of the order in rows
+#                                (y-axis) - half-zone width (upper)
+#                 gain: float, the gain of the image
+#                 sigdet: float, the read noise of the image
+#
+#     :param loc: parameter dictionary, ParamDict containing data
+#             Must contain at least:
+#                 acc: numpy array (2D), the fit coefficients array for
+#                       the centers fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 ass: numpy array (2D), the fit coefficients array for
+#                       the widths fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 tilt: numpy array (1D), the tilt angle of each order
+#
+#     :param image: numpy array (2D), the image
+#     :param orderp: numpy array (2D), the order profile image
+#     :param rnum: int, the order number for this iteration
+#     :param kwargs: additional keywords to pass to the extraction wrapper
+#
+#             - allowed keywords are:
+#
+#             range1  (defaults to "IC_EXT_RANGE1")
+#             range2  (defaults to "IC_EXT_RANGE2")
+#             gain    (defaults to "GAIN")
+#             sigdet  (defaults to "SIGDET")
+#
+#     :return cent: numpy array (1D), the extracted pixel values,
+#                  size = image.shape[1] (along the order direction)
+#     :return cpt: int, zero in this case
+#     """
+#     # construct the args and keyword args for extract wrapper
+#     eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
+#     ekwargs = dict(use_tilt=True,
+#                    use_weight=True,
+#                    tilt=loc['TILT'][rnum],
+#                    order_profile=orderp,
+#                    range1=kwargs.get('range1', pp['IC_EXT_RANGE1']),
+#                    range2=kwargs.get('range2', pp['IC_EXT_RANGE2']),
+#                    mode=2,
+#                    gain=kwargs.get('gain', pp['GAIN']),
+#                    sigdet=kwargs.get('sigdet', pp['SIGDET']),
+#                    tilt_bdr=kwargs.get('tilt_bdr', pp['IC_EXT_TILT_BORD']))
+#     # get the extraction for this order using the extract wrapper
+#     cent, cpt = extract_wrapper(*eargs, **ekwargs)
+#     # return
+#     return cent, cpt
+#
+#
+# def extract_weight_order(pp, loc, image, orderp, rnum, **kwargs):
+#     """
+#     Extract order with weight but without tilt using
+#     spirouEXTOR.extract_wrapper()
+#
+#     :param pp: parameter dictionary, ParamDict containing constants
+#         Must contain at least:
+#                 IC_EXT_RANGE: float, the upper and lower edge of the order
+#                               in rows (y-axis) - half-zone width
+#                 gain: float, the gain of the image
+#                 sigdet: float, the read noise of the image
+#
+#     :param loc: parameter dictionary, ParamDict containing data
+#             Must contain at least:
+#                 acc: numpy array (2D), the fit coefficients array for
+#                       the centers fit
+#                       shape = (number of orders x number of fit coefficients)
+#                 ass: numpy array (2D), the fit coefficients array for
+#                       the widths fit
+#                       shape = (number of orders x number of fit coefficients)
+#
+#     :param image: numpy array (2D), the image
+#     :param orderp: numpy array (2D), the order profile image
+#     :param rnum: int, the order number for this iteration
+#     :param kwargs: additional keywords to pass to the extraction wrapper
+#
+#             - allowed keywords are:
+#
+#             range1  (defaults to "IC_EXT_RANGE")
+#             range2  (defaults to "IC_EXT_RANGE")
+#             gain    (defaults to "GAIN")
+#             sigdet  (defaults to "SIGDET")
+#
+#     :return cent: numpy array (1D), the extracted pixel values,
+#                  size = image.shape[1] (along the order direction)
+#     :return cpt: int, zero in this case
+#     """
+#     # construct the args and keyword args for extract wrapper
+#     eargs = [image, loc['ACC'][rnum], loc['ASS'][rnum]]
+#     ekwargs = dict(use_tilt=False,
+#                    use_weight=True,
+#                    tilt=None,
+#                    order_profile=orderp,
+#                    range1=kwargs.get('range1', pp['IC_EXT_RANGE']),
+#                    range2=kwargs.get('range2', pp['IC_EXT_RANGE']),
+#                    gain=kwargs.get('gain', pp['GAIN']),
+#                    sigdet=kwargs.get('sigdet', pp['SIGDET']))
+#     # get the extraction for this order using the extract wrapper
+#     cent, cpt = extract_wrapper(*eargs, **ekwargs)
+#     # return
+#     return cent, cpt
+
+
+
+# def extract_wrapper(image, pos, sig, **kwargs):
+#     """
+#     Extraction wrapper - takes in image, pos, sig and kwargs and decides
+#     which extraction process to use.
+#
+#     :param image: numpy array (2D), the image
+#     :param pos: numpy array (1D), the position fit coefficients
+#                 size = number of coefficients for fit
+#     :param sig: numpy array (1D), the width fit coefficients
+#                 size = number of coefficients for fit
+#     :param kwargs: additional keyword arguments
+#
+#     currently accepted keyword arguments are:
+#
+#         extopt:         int, Extraction option in tilt file:
+#                          if 0 extraction by summation over constant range
+#                          if 1 extraction by summation over constant sigma
+#                             (not currently available)
+#                          if 2 Horne extraction without cosmic elimination
+#                             (not currently available)
+#                          if 3 Horne extraction with cosmic elimination
+#                             (not currently available)
+#
+#         nbsig:          float,  distance away from center to extract out to +/-
+#                         defaults to p['NBSIG'] from constants_SPIROU.py
+#
+#         gain:           float, gain of the image
+#                         defaults to p['GAIN'] from fitsfilename HEADER
+#
+#         sigdet:         float, the sigdet of the image
+#                         defaults to p['SIGDET'] from fitsfilename HEADER
+#
+#         range1:         float, Half-zone extraction width left side
+#                         (formally plage1)
+#                         defaults to p['IC_EXT_RANGE1'] from fiber parameters in
+#                         constatns_SPIROU.txt
+#
+#         range2:         float, Half-zone extraction width left side
+#                         (formally plage2)
+#                         defaults to p['IC_EXT_RANGE2'] from fiber parameters in
+#                         constatns_SPIROU.txt
+#
+#         tilt:           numpy array (1D), the tilt for this order, if defined
+#                         uses tilt, if not defined does not
+#
+#         use_weight:    bool, if True use weighted extraction, if False or not
+#                         defined does not use weighted extraction
+#
+#         order_profile:  numpy array (2D), the image with fit superposed on top,
+#                         required for tilt and or weighted fit
+#
+#         mode:           if use_weight and tilt is not None then
+#                         if mode = 'old'  will use old code (use this if
+#                         exception generated)
+#                         extract_tilt_weight_order_old() is run
+#
+#                         else mode = 'new' and
+#                         extract_tilt_weight_order() is run
+#
+#     :return spe: numpy array (1D), the extracted pixel values,
+#                  size = image.shape[1] (along the order direction)
+#     :return nbcos: int, zero in this case
+#     """
+#     # get parameters from keywordargs but default to None
+#     extopt = kwargs.get('extopt', None)
+#     gain = kwargs.get('gain', None)
+#     sigdet = kwargs.get('sigdet', None)
+#     range1 = kwargs.get('range1', None)
+#     range2 = kwargs.get('range2', None)
+#     mode = kwargs.get('mode', None)
+#     tilt = kwargs.get('tilt', None)
+#     order_profile = kwargs.get('order_profile', None)
+#     tilt_border = kwargs.get('tilt_bdr', None)
+#     # get parameters from keyword arguments but default to False
+#     use_tilt = kwargs.get('use_tilt', False)
+#     use_weight = kwargs.get('use_weight', False)
+#     # check len of pos and sig are the same
+#     if pos.shape != sig.shape:
+#         WLOG('error', '', ('"pos" and "sig" do not have the same shape '
+#                            '({0}.extract_wrapper())'.format(__NAME__)))
+#     # ----------------------------------------------------------------------
+#     # Extract  no tilt no weight extopt = 0
+#     # ----------------------------------------------------------------------
+#     # Option 0: Extraction by summation over constant range
+#     if extopt == 0:
+#         # check required values are not None
+#         check_for_none(range1, 'range1')
+#         check_for_none(gain, 'gain')
+#         # run extract and return
+#         return extract_const_range(image=image, pos=pos, nbsig=range1,
+#                                    gain=gain)
+#     # ----------------------------------------------------------------------
+#     # Extract tilt + weight
+#     # ----------------------------------------------------------------------
+#     # Extra: if tilt defined and order_profile defined and use_weight = True
+#     #        Extract using a weighted tilt
+#     elif use_tilt and use_weight and mode in [0, 1, 2, 3]:
+#         # check required values are not None
+#         check_for_none(range1, 'range1')
+#         check_for_none(range2, 'range2')
+#         check_for_none(tilt, 'tilt')
+#         check_for_none(order_profile, 'order_profile')
+#         check_for_none(gain, 'gain')
+#         check_for_none(sigdet, 'sig_det')
+#         check_for_none(tilt_border, 'tilt_border')
+#         # run extract and return
+#         ekwargs = dict(image=image, pos=pos, tilt=tilt, r1=range1, r2=range2,
+#                        orderp=order_profile, gain=gain, sigdet=sigdet,
+#                        tiltborder=tilt_border)
+#         if mode == 0:
+#             return extract_tilt_weight(**ekwargs)
+#             # return extract(**ekwargs)
+#         if mode == 1:
+#             return extract_tilt_weight(**ekwargs)
+#             # return extract(**ekwargs)
+#         if mode == 2:
+#             # return extract_tilt_weight2(**ekwargs)
+#             return extract_tilt_weight2cosm(**ekwargs)
+#         if mode == 3:
+#             return extract_tilt_weight_old2(**ekwargs)
+#
+#     # ----------------------------------------------------------------------
+#     # Extract tilt  + no weight
+#     # ----------------------------------------------------------------------
+#     # Extra: if tilt defined but use_weight = False
+#     elif use_tilt and not use_weight:
+#         # check required values are not None
+#         check_for_none(range1, 'range1')
+#         check_for_none(range2, 'range2')
+#         check_for_none(tilt, 'tilt')
+#         check_for_none(gain, 'gain')
+#         check_for_none(tilt_border, 'tilt_border')
+#         # run extract and return
+#         ekwargs = dict(image=image, pos=pos, tilt=tilt, r1=range1, r2=range2,
+#                        gain=gain, tiltborder=tilt_border)
+#         return extract_tilt(**ekwargs)
+#         # return extract(**ekwargs)
+#     # ----------------------------------------------------------------------
+#     # Extract weight + no tilt
+#     # ----------------------------------------------------------------------
+#     elif not use_tilt and use_weight:
+#         # check required values are not None
+#         check_for_none(range1, 'range1')
+#         check_for_none(range2, 'range2')
+#         check_for_none(order_profile, 'order_profile')
+#         check_for_none(gain, 'gain')
+#         # run extract and return
+#         ekwargs = dict(image=image, pos=pos, r1=range1, r2=range2,
+#                        orderp=order_profile, gain=gain)
+#         return extract_weight(**ekwargs)
+#         # return extract(**ekwargs)
+#     # ----------------------------------------------------------------------
+#     # Extract no weight + no tilt
+#     # ----------------------------------------------------------------------
+#     elif not use_tilt and not use_weight:
+#         # check required values are not None
+#         check_for_none(range1, 'range1')
+#         check_for_none(range2, 'range2')
+#         check_for_none(order_profile, 'order_profile')
+#         check_for_none(gain, 'gain')
+#         check_for_none(sigdet, 'sig_det')
+#         # run extract and return
+#         WLOG('error', '', 'Extraction type invalid')
+#         # ekwargs = dict(image=image, pos=pos, r1=range1, r2=range2, gain=gain)
+#         # return extract(**ekwargs)
+#     # ----------------------------------------------------------------------
+#     # No Extract
+#     # ----------------------------------------------------------------------
+#     else:
+#         WLOG('error', '', 'Extraction type invalid')
 
 
 # =============================================================================

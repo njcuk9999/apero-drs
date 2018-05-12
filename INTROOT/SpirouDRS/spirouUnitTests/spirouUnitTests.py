@@ -13,13 +13,22 @@ from __future__ import division
 import numpy as np
 import sys
 import time
-from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from . import spirouUnitRecipes
-from . import unit_test_comp_functions as utc
+
+
+# TODO: This is a stupid fix for python 2 - should be done better
+try:
+    from . import spirouUnitRecipes
+    from . import unit_test_comp_functions as utc
+except ImportError:
+    from SpirouDRS.spirouUnitTests import spirouUnitRecipes
+    from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
+except ValueError:
+    import spirouUnitRecipes
+    import unit_test_comp_functions as utc
 
 
 # =============================================================================
@@ -89,12 +98,12 @@ def set_comp(p, rparams):
     return comp
 
 
-def get_runs(p, rparams):
+def get_runs(p, rparams, rfile):
     # set up storage
-    runs = OrderedDict()
+    runs = dict()
     # loop around the rparams and add keys with "RUN_KEY"
     for key in list(rparams.keys()):
-        if key.startswith(RUN_KEY):
+        if key.upper().startswith(RUN_KEY.upper()):
             #  get this iteration parameter
             run_i = rparams[key]
 
@@ -112,11 +121,23 @@ def get_runs(p, rparams):
             runs[key] = run_i
     # make sure we have some runs
     if len(runs) == 0:
-        eargs = [RUN_KEY, p['RFILE']]
+        eargs = [RUN_KEY, rfile]
         emsg = 'No runs ("{0}## = ") found in file {1}'
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # sort into order
+    unsorted = np.array(list(runs.keys()))
+    sorted = np.sort(unsorted)
+    # add an OrderedDict
+    if sys.version_info.major < 3:
+        from collections import OrderedDict
+        sorted_runs = OrderedDict()
+    else:
+        sorted_runs = dict()
+    # add runs to new dictionary in the correct order
+    for run_i in sorted:
+        sorted_runs[run_i] = runs[run_i]
     # return runs
-    return runs
+    return sorted_runs
 
 
 def unit_log_title(p, title=' START OF UNIT TESTS'):

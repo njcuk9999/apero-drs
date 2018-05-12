@@ -144,6 +144,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     WLOG('', p['LOG_OPT'], wmsg.format(*data2.shape))
 
     # ----------------------------------------------------------------------
+    # Correct for the BADPIX mask (set all bad pixels to zero)
+    # ----------------------------------------------------------------------
+    # TODO: Remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+
+    # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
@@ -249,88 +256,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         valid_orders = spirouEXTOR.GetValidOrders(p, loc)
         # loop around each order
         for order_num in valid_orders:
-            # extract this order
-            if p['IC_EXTRACT_TYPE'] == 'all':
-                # -------------------------------------------------------------
-                # Extract (extract and extract0)
-                # -------------------------------------------------------------
-                time1 = time.time()
-                eargs = [p, loc, data2, order_num]
-                spe1, cpt = spirouEXTOR.ExtractOrder(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Tilt
-                # -------------------------------------------------------------
-                time2 = time.time()
-                eargs = [p, loc, data2, order_num]
-                spe3, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Tilt + Weight
-                # -------------------------------------------------------------
-                time3 = time.time()
-                eargs = [p, loc, data2, order_profile, order_num]
-                spe4, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Tilt + Weight
-                # -------------------------------------------------------------
-                time4 = time.time()
-                eargs = [p, loc, data2, order_profile, order_num]
-                spe5, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Weight
-                # -------------------------------------------------------------
-                time5 = time.time()
-                eargs = [p, loc, data2, order_profile, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
-
-                time6 = time.time()
-                # -------------------------------------------------------------
-                # If in Debug mode log timings
-                if p['DRS_DEBUG']:
-                    WLOG('info', p['LOG_OPT'], "Timings:")
-                    wmsg = "        ExtractOrder = {0} s "
-                    WLOG('info', p['LOG_OPT'], wmsg.format(time2 - time1))
-                    wmsg = "        ExtractTiltOrder = {0} s "
-                    WLOG('info', p['LOG_OPT'], wmsg.format(time3 - time2))
-                    wmsg = "        ExtractTiltWeightOrder = {0} s "
-                    WLOG('info', p['LOG_OPT'], wmsg.format(time4 - time3))
-                    wmsg = "        ExtractTiltWeightOrder2 = {0} s "
-                    WLOG('info', p['LOG_OPT'], wmsg.format(time5 - time4))
-                    wmsg = "        ExtractWeightOrder = {0} s "
-                    WLOG('info', p['LOG_OPT'], wmsg.format(time6 - time5))
-                # save to file
-                loc['SPE1'][order_num] = spe1
-                loc['SPE3'][order_num] = spe3
-                loc['SPE4'][order_num] = spe4
-                loc['SPE5'][order_num] = spe5
-                loc.set_sources(['SPE1', 'SPE3', 'SPE4', 'SPE5'], source)
-            elif p['IC_EXTRACT_TYPE'] == 'simple':
-                # -------------------------------------------------------------
-                # Simple extraction
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractOrder(*eargs)
-            elif p['IC_EXTRACT_TYPE'] == 'tilt':
-                # -------------------------------------------------------------
-                # Extract with Tilt
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
-            elif p['IC_EXTRACT_TYPE'] == 'tiltweight':
-                # -------------------------------------------------------------
-                # Extract with Tilt + Weight
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_profile, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
-            elif p['IC_EXTRACT_TYPE'] == 'weight':
-                # -------------------------------------------------------------
-                # Extract with Weight
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_profile, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
-            else:
-                WLOG('error', p['LOG_OPT'], 'ic_extract_type not understood')
-                e2ds, cpt = None, None
-
+            # -------------------------------------------------------------
+            # IC_EXTRACT_TYPE decides the extraction routine
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_num]
+            ekwargs = dict(mode=p['IC_EXTRACT_TYPE'],
+                           order_profile=order_profile)
+            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            # -------------------------------------------------------------
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             # set the noise
@@ -376,6 +309,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Store extraction in file(s)
         # ------------------------------------------------------------------
+        # get extraction method and function
+        extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
         # construct filename
         e2dsfits = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
         e2dsfitsname = os.path.split(e2dsfits)[-1]
@@ -387,6 +322,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # construct loco filename
         locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
+        # copy extraction method and function to header (for reproducibility)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'], value=extmethod)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'], value=extfunc)
+
         # write 1D list of the SNR
         hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
                                          values=loc['SNR'])
@@ -397,37 +336,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
         # Save E2DS file
         spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
-
-        # ------------------------------------------------------------------
-        # Store other extractions in files
-        # ------------------------------------------------------------------
-        # only store all is ic_ext_all = 1
-        if p['IC_EXTRACT_TYPE'] == 'all':
-            ext_files = ['spe1', 'spe3', 'spe4', 'spe5', 'e2ds']
-            extfitslist = spirouConfig.Constants.EXTRACT_E2DS_ALL_FILES(p)
-            # loop around the various extraction files
-            for ext_no in range(len(ext_files)):
-                # get extname and extfile
-                extfile = ext_files[ext_no]
-                # construct filename
-                extfits = extfitslist[ext_no]
-                extfitsname = os.path.split(extfits)[-1]
-                # log that we are saving E2DS spectrum
-                wmsg = 'Saving E2DS {0} spectrum of Fiber {1} in {2}'
-                wargs = [extfile, p['FIBER'], extfitsname]
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-                # add keys from original header file
-                hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-                # write 1D list of the SNR
-                hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
-                                                 values=loc['SNR'])
-                # add localization file name to header
-                hdict = spirouImage.AddKey(hdict, p['KW_LOCO_FILE'],
-                                           value=locofilename)
-                # add localization file keys to header
-                hdict = spirouImage.CopyRootKeys(hdict, locofile)
-                # Save E2DS file
-                spirouImage.WriteImage(extfits, loc[extfile], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
