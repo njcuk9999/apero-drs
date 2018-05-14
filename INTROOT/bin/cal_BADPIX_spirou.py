@@ -87,6 +87,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
                                          'DARK')
 
     # ----------------------------------------------------------------------
+    # Check for pre-processed file
+    # ----------------------------------------------------------------------
+    if p['IC_FORCE_PREPROCESS']:
+        spirouStartup.CheckPreProcess(p, filename=flatfilename)
+        spirouStartup.CheckPreProcess(p, filename=darkfilename)
+
+    # ----------------------------------------------------------------------
     # Read the darkfile and flatfile
     # ----------------------------------------------------------------------
     # Read the flat file
