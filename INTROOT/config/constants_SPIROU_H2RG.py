@@ -186,8 +186,6 @@ ic_image_gap = 0
 #   Define the column separation for fitting orders                  - [cal_loc]
 ic_locstepc = 20
 
-#   Define the fit for the order
-
 #   Define minimum width of order to be accepted                     - [cal_loc]
 ic_widthmin = 5
 
@@ -339,6 +337,7 @@ ic_ff_plot_all_orders = 0
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
 # -----------------------------------------------------------------------------
+
 #    Start order of the extraction in cal_ff                     - [cal_extract]
 #       if None starts from 0
 ext_start_order = None
@@ -386,6 +385,14 @@ ic_ext_sigdet = 100
 
 #    Define order to plot                                        - [cal_extract]
 ic_ext_order_plot = 5
+
+#    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
+#        to cut
+ic_cosmic_sigcut = 0.25
+
+#    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
+#        to check for cosmics (for each pixel)
+ic_cosmic_thres = 5
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
