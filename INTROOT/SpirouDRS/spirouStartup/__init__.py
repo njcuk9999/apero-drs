@@ -30,6 +30,8 @@ __all__ = ['Begin', 'GetCustomFromRuntime', 'GetFile', 'GetFiberType',
 
 Begin = spirouStartup.run_begin
 
+CheckPreProcess = spirouStartup.check_preprocess
+
 DisplayTitle = spirouStartup.display_title
 
 DisplaySysInfo = spirouStartup.display_system_info
