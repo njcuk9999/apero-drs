@@ -28,7 +28,7 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
            'ConvertToE', 'ConvertToADU',
            'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
            'FitTilt', 'FlipImage',
-           'GetAllSimilarFiles', 'GetAcqTime'
+           'GetAllSimilarFiles', 'GetAcqTime',
            'GetSigdet', 'GetExpTime', 'GetGain',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
            'LocateBadPixels', 'MakeTable', 'MeasureDark',
@@ -56,6 +56,8 @@ CopyOriginalKeys = spirouFITS.copy_original_keys
 CopyRootKeys = spirouFITS.copy_root_keys
 
 CorrectForDark = spirouImage.correct_for_dark
+
+CorrectForBadPix = spirouImage.correct_for_badpix
 
 FitTilt = spirouImage.fit_tilt
 

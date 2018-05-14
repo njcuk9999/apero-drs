@@ -1,0 +1,569 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+
+
+    
+\documentclass[11pt]{article}
+
+    
+    
+    \usepackage[T1]{fontenc}
+    % Nicer default font (+ math font) than Computer Modern for most use cases
+    \usepackage{mathpazo}
+
+    % Basic figure setup, for now with no caption control since it's done
+    % automatically by Pandoc (which extracts ![](path) syntax from Markdown).
+    \usepackage{graphicx}
+    % We will generate all images so they have a width \maxwidth. This means
+    % that they will get their normal width if they fit onto the page, but
+    % are scaled down if they would overflow the margins.
+    \makeatletter
+    \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+    \else\Gin@nat@width\fi}
+    \makeatother
+    \let\Oldincludegraphics\includegraphics
+    % Set max figure width to be 80% of text width, for now hardcoded.
+    \renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=.8\maxwidth]{#1}}
+    % Ensure that by default, figures have no caption (until we provide a
+    % proper Figure object with a Caption API and a way to capture that
+    % in the conversion process - todo).
+    \usepackage{caption}
+    \DeclareCaptionLabelFormat{nolabel}{}
+    \captionsetup{labelformat=nolabel}
+
+    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{xcolor} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage{textcomp} % defines textquotesingle
+    % Hack from http://tex.stackexchange.com/a/47451/13684:
+    \AtBeginDocument{%
+        \def\PYZsq{\textquotesingle}% Upright quotes in Pygmentized code
+    }
+    \usepackage{upquote} % Upright quotes for verbatim code
+    \usepackage{eurosym} % defines \euro
+    \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
+    \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics 
+                         % to support a larger range 
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
+    \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
+                                % normalem makes italics be italics, not underlines
+    
+
+    
+    
+    % Colors for the hyperref package
+    \definecolor{urlcolor}{rgb}{0,.145,.698}
+    \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+    \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+    % ANSI colors
+    \definecolor{ansi-black}{HTML}{3E424D}
+    \definecolor{ansi-black-intense}{HTML}{282C36}
+    \definecolor{ansi-red}{HTML}{E75C58}
+    \definecolor{ansi-red-intense}{HTML}{B22B31}
+    \definecolor{ansi-green}{HTML}{00A250}
+    \definecolor{ansi-green-intense}{HTML}{007427}
+    \definecolor{ansi-yellow}{HTML}{DDB62B}
+    \definecolor{ansi-yellow-intense}{HTML}{B27D12}
+    \definecolor{ansi-blue}{HTML}{208FFB}
+    \definecolor{ansi-blue-intense}{HTML}{0065CA}
+    \definecolor{ansi-magenta}{HTML}{D160C4}
+    \definecolor{ansi-magenta-intense}{HTML}{A03196}
+    \definecolor{ansi-cyan}{HTML}{60C6C8}
+    \definecolor{ansi-cyan-intense}{HTML}{258F8F}
+    \definecolor{ansi-white}{HTML}{C5C1B4}
+    \definecolor{ansi-white-intense}{HTML}{A1A6B2}
+
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \providecommand{\tightlist}{%
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+    
+    % Additional commands for more recent versions of Pandoc
+    \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
+    \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{{#1}}}
+    \newcommand{\ImportTok}[1]{{#1}}
+    \newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{{#1}}}}
+    \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{{#1}}}
+    \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{{#1}}}
+    \newcommand{\BuiltInTok}[1]{{#1}}
+    \newcommand{\ExtensionTok}[1]{{#1}}
+    \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{{#1}}}
+    \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
+    \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    
+    
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatability definitions
+    \def\gt{>}
+    \def\lt{<}
+    % Document parameters
+    \title{example9}
+    
+    
+    
+
+    % Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@fm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sa\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@dl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@mb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ch\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cpf\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % Exact colors from NB
+    \definecolor{incolor}{rgb}{0.0, 0.0, 0.5}
+    \definecolor{outcolor}{rgb}{0.545, 0.0, 0.0}
+
+
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy 
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=linkcolor,
+      citecolor=citecolor,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+    \begin{document}
+    
+    
+    \maketitle
+    
+    
+
+    
+    \section{Using the SPIRou unit test}\label{using-the-spirou-unit-test}
+
+Mainly for use as a testing aid, the \texttt{unit\_test.py} allows one
+to run a set of predefined files through the DRS recieps quickly.
+
+These predefined files are written in text files with the extension .run
+(By default these are located in the \texttt{./Runs/} directory.
+
+To run the unit test from the command line we do the following:
+
+\begin{itemize}
+\tightlist
+\item
+  Change to the unit\_test folder i.e.
+  \texttt{.../INTROOT/SpirouDRS/spirouUnitTests/})
+\item
+  Run the unit\_test recipe:
+\end{itemize}
+
+\begin{quote}
+\begin{quote}
+\texttt{unit\_test.py\ run\_name.run}
+\end{quote}
+\end{quote}
+
+Or from python:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}6}]:} \PY{k+kn}{from} \PY{n+nn}{SpirouDRS} \PY{k+kn}{import} \PY{n}{spirouUnitTests}
+        
+        \PY{c+c1}{\PYZsh{} trick sys.argv (notebook only)}
+        \PY{k+kn}{import} \PY{n+nn}{sys}
+        \PY{n}{sys}\PY{o}{.}\PY{n}{argv} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{unit\PYZus{}test.py}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        
+        \PY{c+c1}{\PYZsh{} Note quiet = True just for notebook (avoids user input for reset check)}
+        \PY{n}{ll} \PY{o}{=} \PY{n}{spirouUnitTests}\PY{o}{.}\PY{n}{UnitTest}\PY{o}{.}\PY{n}{main}\PY{p}{(}\PY{n}{runname}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{None}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{quiet}\PY{o}{=}\PY{n+nb+bp}{True}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{12:31:15.0 -   |unit\_test|Now running : unit\_test with: }}
+\textcolor{ansi-green-intense}{\textbf{12:31:15.0 -   |unit\_test|       -- runname=None }}
+\textcolor{ansi-green-intense}{\textbf{12:31:15.0 -   |ipykernel\_launcher|ICDP\_NAME loaded from:}}
+\textcolor{ansi-green-intense}{\textbf{12:31:15.0 -   |ipykernel\_launcher|     /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU\_H2RG.py}}
+\textcolor{ansi-red-intense}{\textbf{12:31:15.0 - ! |unit\_test|Unit test run file "/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/SpirouDRS/spirouUnitTests/Runs/None" does not exist}}
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+
+        An exception has occurred, use \%tb to see the full traceback.
+
+
+        SystemExit: 1
+
+
+    \end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+/scratch/bin/anaconda3/lib/python3.6/site-packages/IPython/core/interactiveshell.py:2918: UserWarning: To exit: use 'exit', 'quit', or Ctrl-D.
+  warn("To exit: use 'exit', 'quit', or Ctrl-D.", stacklevel=1)
+
+    \end{Verbatim}
+
+    \subsection{\texorpdfstring{Setting up the \texttt{.run}
+files}{Setting up the .run files}}\label{setting-up-the-.run-files}
+
+Other than running the \texttt{unit\_test.py} file one also needs to set
+up the .run files.
+
+These are very simple to set up and just require a file with
+\texttt{variable=value}.
+
+The values required are as follows:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{type}: string, the type of detector (i.e. H2RG or H4RG or the
+  path to a custom config folder (i.e. the \texttt{DRS\_UCONFIG} path)
+\item
+  \texttt{comparison}: bool, True or False. This is whether one wants to
+  compare these files with identical files from the old DRS (Default is
+  False unless you have the old DRS installed and have run these files
+  on the DRS (and have modified the paths in
+  \texttt{spirouUnitsTests.spirouUnitTests.py})
+\item
+  \texttt{runX}: list for each run, list should be in order: recipe,
+  night\_name, argument1, argument2, argument3, .... where:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    recipe: string, the recipe name (i.e. cal\_DARK\_spirou) without the
+    extension
+  \item
+    night\_name: string, the directory in DRS\_DATA\_RAW which contains
+    the raw files
+  \item
+    argument1, argument2, argument3, ... : the arguments used after
+    \texttt{recipe\ night\_name} when calling the recipe from the
+    command line
+  \end{itemize}
+\end{itemize}
+
+The following shows a valid .run file (assuming one has the files in
+\texttt{DRS\_DATA\_RAW/night\_name/}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}3}]:} \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+        \PY{c+c1}{\PYZsh{}  File : 20170710.run}
+        \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+        
+        \PY{c+c1}{\PYZsh{} define detector type (default = H4RG)}
+        \PY{n+nb}{type} \PY{o}{=} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{H2RG}\PY{l+s+s2}{\PYZdq{}}
+        
+        \PY{c+c1}{\PYZsh{} define whether we run the comparison with old drs (default = False)}
+        \PY{n}{comparison} \PY{o}{=} \PY{n+nb+bp}{False}
+        
+        \PY{c+c1}{\PYZsh{} define run}
+        \PY{c+c1}{\PYZsh{}    (Format = [recipe, night\PYZus{}name, argument1, argument2, argument3, ...])}
+        \PY{n}{run0} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}DARK\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}dark02d406.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run1} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}BADPIX\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}flat02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}dark02d406.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run2} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}loc\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark03f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark04f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark05f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark06f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run3} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}loc\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat03f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat04f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat05f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat06f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run4} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}SLIT\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp02a203.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp03a203.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp04a203.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run5} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}FF\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark03f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark04f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark05f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}dark06f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run6} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}FF\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat03f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat04f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat05f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}flat06f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run7} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp02a203.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run8} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp03a203.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run9} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp04a203.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run10} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{hcone\PYZus{}hcone02c61.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run11} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{hcone\PYZus{}hcone03c61.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run12} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{hcone\PYZus{}hcone04c61.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run13} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{hcone\PYZus{}hcone05c61.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run14} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}extract\PYZus{}RAW\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{hcone\PYZus{}hcone06c61.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run15} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}DRIFT\PYZus{}E2DS\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp02a203\PYZus{}e2ds\PYZus{}AB.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run16} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}DRIFTPEAK\PYZus{}E2DS\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp02a203\PYZus{}e2ds\PYZus{}AB.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run17} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}CCF\PYZus{}E2DS\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{fp\PYZus{}fp02a203\PYZus{}e2ds\PYZus{}AB.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{UrNe.mas}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{,} \PY{l+m+mi}{10}\PY{p}{,} \PY{l+m+mf}{0.1}\PY{p}{]}
+\end{Verbatim}
+
+
+    and here is a short version:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}4}]:} \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+        \PY{c+c1}{\PYZsh{}  File : test.run}
+        \PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}}
+        
+        \PY{c+c1}{\PYZsh{} define detector type (default = H4RG)}
+        \PY{n+nb}{type} \PY{o}{=} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{H2RG}\PY{l+s+s2}{\PYZdq{}}
+        
+        \PY{c+c1}{\PYZsh{} define whether we run the comparison with old drs (default = False)}
+        \PY{n}{comparison} \PY{o}{=} \PY{n+nb+bp}{False}
+        
+        \PY{c+c1}{\PYZsh{} define run}
+        \PY{c+c1}{\PYZsh{}    (Format = [recipe, night\PYZus{}name, argument1, argument2, argument3, ...])}
+        \PY{n}{run0} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}DARK\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}dark02d406.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{n}{run1} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{cal\PYZus{}BADPIX\PYZus{}spirou}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{20170710}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{flat\PYZus{}flat02f10.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{dark\PYZus{}dark02d406.fits}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+\end{Verbatim}
+
+
+    This will run the DRS as follows:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}5}]:} \PY{n}{ll} \PY{o}{=} \PY{n}{spirouUnitTests}\PY{o}{.}\PY{n}{UnitTest}\PY{o}{.}\PY{n}{main}\PY{p}{(}\PY{n}{runname}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{test.run}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{quiet}\PY{o}{=}\PY{n+nb+bp}{True}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |unit\_test|Now running : unit\_test with: }}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |unit\_test|       -- runname=test.run }}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |ipykernel\_launcher|ICDP\_NAME loaded from:}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |ipykernel\_launcher|     /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU\_H2RG.py}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |unit\_test|}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:34.0 - @ |unit\_test| *****************************************}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:34.0 - @ |unit\_test| START OF UNIT TESTS}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:34.0 - @ |unit\_test| *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |unit\_test|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |unit\_test|}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:34.0 - @ |unit\_test| *****************************************}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:34.0 - @ |unit\_test| RUN0:cal\_DARK\_spirou}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:34.0 - @ |unit\_test| *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |unit\_test|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   || * SPIROU @(\#) Geneva Observatory (0.2.002)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(dir\_data\_raw)      DRS\_DATA\_RAW=/scratch/Projects/spirou\_py3/data/raw}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(dir\_data\_reduc)    DRS\_DATA\_REDUC=/scratch/Projects/spirou\_py3/data/reduced}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(dir\_drs\_config)    DRS\_CONFIG=/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(dir\_drs\_uconfig)   DRS\_UCONFIG=/home/cook/spirou\_config\_H2RG/}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(dir\_calib\_db)      DRS\_CALIB\_DB=/scratch/Projects/spirou\_py3/data/calibDB}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(dir\_data\_msg)      DRS\_DATA\_MSG=/scratch/Projects/spirou\_py3/data/msg}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(print\_level)       PRINT\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(log\_level)         LOG\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(plot\_graph)        DRS\_PLOT=1            \%(def/undef/trigger)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(used\_date)         DRS\_USED\_DATE=undefined}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||(working\_dir)       DRS\_DATA\_WORKING=/scratch/Projects/spirou\_py3/data/tmp}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   ||                    DRS\_INTERACTIVE is not set, running on-line mode}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |RUN0:cal\_DARK\_spirou|Now running : RUN0:cal\_DARK\_spirou on file(s): }}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |RUN0:cal\_DARK\_spirou|On directory /scratch/Projects/spirou\_py3/data/raw/20170710}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |ipykernel\_launcher|ICDP\_NAME loaded from:}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |ipykernel\_launcher|     /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU\_H2RG.py}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 - * |RUN0:cal\_DARK\_spirou|Correct type of image for dark (dark\_dark)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 - * |RUN0:cal\_DARK\_spirou|Now processing Image TYPE UNKNOWN with RUN0:cal\_DARK\_spirou recipe}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |RUN0:cal\_DARK\_spirou|Reading Image /scratch/Projects/spirou\_py3/data/raw/20170710/dark\_dark02d406.fits}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 -   |RUN0:cal\_DARK\_spirou|Image 2048 x 2048 loaded}}
+\textcolor{ansi-green-intense}{\textbf{12:28:34.0 - * |RUN0:cal\_DARK\_spirou|Dark Time = 597.489 s}}
+\textcolor{ansi-green-intense}{\textbf{12:28:35.0 -   |RUN0:cal\_DARK\_spirou|Doing Dark measurement}}
+\textcolor{ansi-green-intense}{\textbf{12:28:35.0 - * |RUN0:cal\_DARK\_spirou|In Whole det: Frac dead pixels= 14.659 \% - Median= 0.35 ADU/s - Percent[5:95]= 0.08-99.57 ADU/s}}
+\textcolor{ansi-green-intense}{\textbf{12:28:35.0 - * |RUN0:cal\_DARK\_spirou|In Blue part: Frac dead pixels= 0.997 \% - Median= 0.15 ADU/s - Percent[5:95]= 0.09-0.53 ADU/s}}
+\textcolor{ansi-green-intense}{\textbf{12:28:35.0 - * |RUN0:cal\_DARK\_spirou|In Red part : Frac dead pixels= 20.534 \% - Median= 2.11 ADU/s - Percent[5:95]= 0.18-232.09 ADU/s}}
+\textcolor{ansi-green-intense}{\textbf{12:28:35.0 - * |RUN0:cal\_DARK\_spirou|Frac pixels with DARK > 100.00 ADU/s = 4.257 \%}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:35.0 - @ |python warning Line 143  warning reads: invalid value encountered in greater|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:35.0 - * |RUN0:cal\_DARK\_spirou|Total Frac dead pixels (N.A.N) + DARK > 100.00 ADU/s = 18.916 \%}}
+\textcolor{ansi-green-intense}{\textbf{12:28:36.0 - * |RUN0:cal\_DARK\_spirou|QUALITY CONTROL SUCCESSFUL - Well Done -}}
+\textcolor{ansi-green-intense}{\textbf{12:28:36.0 -   |RUN0:cal\_DARK\_spirou|Saving Dark frame in 20170710\_dark\_dark02d406.fits}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:36.0 - @ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:36.0 -   |RUN0:cal\_DARK\_spirou|Saving Bad Pixel Map in 20170710\_dark\_dark02d406\_badpixel.fits}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:37.0 - @ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |RUN0:cal\_DARK\_spirou|Updating Calib Data Base with DARK}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |RUN0:cal\_DARK\_spirou|Updating Calib Data Base with BADPIX\_OLD}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |RUN0:cal\_DARK\_spirou|Recipe RUN0:cal\_DARK\_spirou has been successfully completed}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |unit\_test|}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:37.0 - @ |unit\_test| *****************************************}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:37.0 - @ |unit\_test| RUN1:cal\_BADPIX\_spirou}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:37.0 - @ |unit\_test| *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |unit\_test|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   || * SPIROU @(\#) Geneva Observatory (0.2.002)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   || *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(dir\_data\_raw)      DRS\_DATA\_RAW=/scratch/Projects/spirou\_py3/data/raw}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(dir\_data\_reduc)    DRS\_DATA\_REDUC=/scratch/Projects/spirou\_py3/data/reduced}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(dir\_drs\_config)    DRS\_CONFIG=/scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(dir\_drs\_uconfig)   DRS\_UCONFIG=/home/cook/spirou\_config\_H2RG/}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(dir\_calib\_db)      DRS\_CALIB\_DB=/scratch/Projects/spirou\_py3/data/calibDB}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(dir\_data\_msg)      DRS\_DATA\_MSG=/scratch/Projects/spirou\_py3/data/msg}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(print\_level)       PRINT\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(log\_level)         LOG\_LEVEL=all         \%(error/warning/info/all)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(plot\_graph)        DRS\_PLOT=1            \%(def/undef/trigger)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(used\_date)         DRS\_USED\_DATE=undefined}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||(working\_dir)       DRS\_DATA\_WORKING=/scratch/Projects/spirou\_py3/data/tmp}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   ||                    DRS\_INTERACTIVE is not set, running on-line mode}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|Now running : RUN1:cal\_BADPIX\_spirou with: }}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|       -- flatfile=flat\_flat02f10.fits }}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|       -- darkfile=dark\_dark02d406.fits }}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |ipykernel\_launcher|ICDP\_NAME loaded from:}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |ipykernel\_launcher|     /scratch/Projects/spirou\_py3/spirou\_py3/INTROOT/config/constants\_SPIROU\_H2RG.py}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |ipykernel\_launcher|Correct type of image for FLAT (flat\_flat)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |RUN1:cal\_BADPIX\_spirou|Now processing Image TYPE FLAT with RUN1:cal\_BADPIX\_spirou recipe}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |ipykernel\_launcher|Correct type of image for DARK (dark\_dark)}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 - * |RUN1:cal\_BADPIX\_spirou|Now processing Image TYPE DARK with RUN1:cal\_BADPIX\_spirou recipe}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|Reading FLAT Image /scratch/Projects/spirou\_py3/data/raw/20170710/flat\_flat02f10.fits}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|FLAT Image 2048 x 2048 loaded}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|Reading DARK Image /scratch/Projects/spirou\_py3/data/raw/20170710/dark\_dark02d406.fits}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|DARK Image 2048 x 2048 loaded}}
+\textcolor{ansi-green-intense}{\textbf{12:28:37.0 -   |RUN1:cal\_BADPIX\_spirou|Normalising the flat}}
+\textcolor{ansi-green-intense}{\textbf{12:28:38.0 -   |RUN1:cal\_BADPIX\_spirou|Looking for bad pixels}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Fraction of hot pixels from dark: 3.01 \%}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Fraction of bad pixels from flat: 1.66 \%}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Fraction of non-finite pixels in dark: 20.76 \%}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Fraction of non-finite pixels in flat: 14.66 \%}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Fraction of bad pixels with all criteria: 24.87 \%}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Image format changed to 1930x2035}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 - * |RUN1:cal\_BADPIX\_spirou|QUALITY CONTROL SUCCESSFUL - Well Done -}}
+\textcolor{ansi-green-intense}{\textbf{12:28:39.0 -   |RUN1:cal\_BADPIX\_spirou|Saving Bad Pixel Map in 20170710\_flat\_flat02f10\_badpixel.fits}}
+\textcolor{ansi-yellow-intense}{\textbf{12:28:40.0 - @ |python warning Line 980  warning reads: Card is too long, comment will be truncated.|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 - * |RUN1:cal\_BADPIX\_spirou|Updating Calib Data Base with BADPIX}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 - * |RUN1:cal\_BADPIX\_spirou|Recipe RUN1:cal\_BADPIX\_spirou has been successfully completed}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test| *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test| TIMING STATS}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test| *****************************************}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test|	RUN0:cal\_DARK\_spirou	Time taken = 2.829 s}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test|	RUN1:cal\_BADPIX\_spirou	Time taken = 2.505 s}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 -   |unit\_test|}}
+\textcolor{ansi-green-intense}{\textbf{12:28:40.0 - * |unit\_test|Recipe unit\_test has been successfully completed}}
+
+    \end{Verbatim}
+
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+    \end{document}

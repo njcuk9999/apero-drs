@@ -400,3 +400,32 @@ spirouEXTOR.extract_wrapper()
 
 %----------------------------------------------------------------------------------------
 
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetValidOrders}
+
+Defined in \spirouEXTOR\path{.spirouEXTOR.get_valid_orders}
+\begin{pythonbox}
+from SpirouDRS import spirouEXTOR
+spirouEXTOR.GetValidOrders(p, loc)
+spirouEXTOR.spirouEXTOR.get_valid_orders(p, loc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get valid order range (from min to max) from constants
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        EXT_START_ORDER: int or None, the order number to start with, if
+                         None this is set to zero
+        EXT_END_ORDER: int or None, the order number to end with, if None
+                       this is set to the last order number
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+:return valid_ordesr: list, all integer values between the start order and
+                      end order
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+

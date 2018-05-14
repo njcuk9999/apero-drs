@@ -6,5 +6,6 @@ comparison = False
 
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
-run0 = ['cal_DARK_spirou', '20170710', 'dark_dark02d406.fits']
-run1 = ['cal_BADPIX_spirou', '20170710', 'flat_flat02f10.fits', 'dark_dark02d406.fits']
+# runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
+run000 = ['cal_extract_RAW_spirouAB', '20170710', 'fp_fp02a203.fits']
+run001 = ['cal_extract_RAW_spirouC', '20170710', 'fp_fp02a203.fits']

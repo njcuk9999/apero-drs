@@ -75,13 +75,29 @@ def measure_blaze_for_order(p, y):
 
 def correct_flat(p=None, loc=None, hdr=None, filename=None):
     """
-    Attempts to read the flat
-    :param p:
-    :param loc:
-    :param hdr:
-    :param filename:
+    Attempts to read the flat and if it fails uses a constant flat
 
-    :return loc:
+    :param p or None: parameter dictionary, ParamDict containing constants
+        If defined must contain at least:
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+            log_opt: string, log option, normally the program name
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            data: numpy array (2D), the image (used for shape)
+    :param hdr or None: dictionary or None, if defined is the header file used
+                        to choose the date used in teh calibDB (else uses
+                        FITSFILENAME to get date for calibDB)
+    :param filename or None: string, the flat file name to read, if None
+                             uses FLAT_{FIBER} and gets the flat filename from
+                             calibDB
+
+    :return lloc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                FLAT: numpy array (2D), the flat image should be the same
+                      shape as data
     """
     func_name = __NAME__ + '.correct_flat()'
 
@@ -119,7 +135,21 @@ def correct_flat(p=None, loc=None, hdr=None, filename=None):
 
 
 def get_valid_orders(p, loc):
+    """
+    Get valid order range (from min to max) from constants
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            FF_START_ORDER: int or None, the order number to start with, if
+                             None this is set to zero
+            FF_END_ORDER: int or None, the order number to end with, if None
+                           this is set to the last order number
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+    :return valid_ordesr: list, all integer values between the start order and
+                          end order
+    """
     func_name = __NAME__ + '.get_valid_orders()'
     # get from p or set or get from loc
     if str(p['FF_START_ORDER']) == 'None':
