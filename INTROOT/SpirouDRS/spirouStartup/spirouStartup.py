@@ -454,6 +454,62 @@ def exit_script(ll, has_plots=True):
 # =============================================================================
 # Define general functions
 # =============================================================================
+def check_preprocess(p, filename=None):
+    """
+    Check "filename" for p["PREPROCESS_SUFFIX"]. If filename is None uses
+    p["FITSFILENAME"]
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            PREPROCESS_SUFFIX: string, the suffix to look for and should be
+                               in filename if 'IC_FORCE_PREPROCESS' is True
+            IC_FORCE_PREPROCESS: bool, if True filename must have
+                                 PREPROCESS_SUFFIX
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+
+    :param filename: string or None, if defined must be a filename to check
+                     if None filename = p['FITSFILENAME']
+
+    :return checked: bool, True if file passes
+                           False if IC_FORCE_PREPROCESS is  False and file
+                           fails to find PREPROCESS_SUFFIX
+
+                           or WLOG error if fails and IC_FORCE_PREPROCESS is
+                           True and file fails to find PREPROCESS_SUFFIX
+    """
+    func_name = __NAME__ + '.check_preprocess()'
+    # get the suffix
+    suffix = p['PROCESSED_SUFFIX']
+    # get the filename
+    if filename is None:
+        filename = p['FITSFILENAME']
+    # make sure filename does not include a path
+    filename = os.path.basename(filename)
+    # check for the pre-process key
+    if p['IC_FORCE_PREPROCESS']:
+        # check that we have a suffix to check
+        if suffix == "None":
+            wmsg = 'Not checking for pre-processed file={0}'.format(filename)
+            WLOG('', p['LOG_OPT'], wmsg)
+            return 0
+        # else check file ends with
+        elif filename.endswith(suffix):
+            wmsg = 'Pre-processing valid for file={0}'.format(filename)
+            WLOG('', p['LOG_OPT'], wmsg)
+            return 1
+        # else generate helpful error
+        else:
+            emsgs = ['File not processed. Suffix="{0}" not '
+                     'found.'.format(suffix),
+                     '\tRun "cal_preprocess_spirou" or turn off '
+                     '"IC_FORCE_PREPROCESS"']
+            emsgs.append('\t\tfile = {0}'.format(filename))
+            emsgs.append('\t\tfunction = {0}'.format(func_name))
+            WLOG('error', p['LOG_OPT'], emsgs)
+
+
 def check_key_fparams(p):
     # if fitsfilename exists it must be found
     if 'FITSFILENAME' in p:
