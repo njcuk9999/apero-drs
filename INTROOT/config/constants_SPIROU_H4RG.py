@@ -382,11 +382,13 @@ ic_ext_order_plot = 22
 
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
+#        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_sigcut = 0.25
 
 #    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
 #        to check for cosmics (for each pixel)
-ic_cosmic_thres = 5
+#        ONLY USED IF EXTRACT_TYPE = '3d'
+ic_cosmic_thresh = 5
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters

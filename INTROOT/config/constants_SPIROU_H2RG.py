@@ -117,7 +117,7 @@ ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
 #     force DRS to accept pre-processed files only - i.e. rotated and
 #     corrected) - if 0 or False DRS will except any file
 #     (at users own risk)
-ic_force_preprocess = 1
+ic_force_preprocess = 0
 
 #   Define the suffix to apply to the pre-processed files                - [all]
 #       if "None" then no suffix is added (or checked for)
@@ -388,11 +388,13 @@ ic_ext_order_plot = 5
 
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
+#        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_sigcut = 0.25
 
 #    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
 #        to check for cosmics (for each pixel)
-ic_cosmic_thres = 5
+#        ONLY USED IF EXTRACT_TYPE = '3d'
+ic_cosmic_thresh = 5
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
