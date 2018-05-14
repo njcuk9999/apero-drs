@@ -83,9 +83,10 @@ def main(runname=None, quiet=False):
     # check that rfile exists
     elif not os.path.exists(rfile):
         emsgs = ['Unit test run file "{0}" does not exist'.format(rfile)]
-        exists = True
+        exists = False
     else:
         exists = True
+        emsgs = []
     # deal with file wrong (or no file defined) --> print valid unit tests
     if not exists:
         emsgs.append('')
