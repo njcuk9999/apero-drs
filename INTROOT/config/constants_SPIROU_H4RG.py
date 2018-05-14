@@ -110,6 +110,38 @@ orderp_file_fpall = {'AB': 'AB', 'A': 'AB', 'B': 'AB', 'C': 'C'}
 #       (formally ic_extnbsig)
 ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
 
+
+# -----------------------------------------------------------------------------
+#   cal_preprocess parameters
+# -----------------------------------------------------------------------------
+
+# force pre-processed files only (Should be 1 or True to check and       - [all]
+#     force DRS to accept pre-processed files only - i.e. rotated and
+#     corrected) - if 0 or False DRS will except any file
+#     (at users own risk)
+ic_force_preprocess = 1
+
+#   Define the suffix to apply to the pre-processed files                - [all]
+processed_suffix = '_pp.fits'
+
+#   Define the number of dark amplifiers                              - [cal_pp]
+number_dark_amp = 5
+
+#   Define the total number of amplifiers                             - [cal_pp]
+total_amp_num = 32
+
+#   Define the number of un-illuminated reference pixels at           - [cal_pp]
+#       top of image
+number_ref_top = 4
+
+#   Define the number of un-illuminated reference pixels at           - [cal_pp]
+#       bottom of image
+number_ref_bottom = 4
+
+#   Define the number of bins used in the dark median process         - [cal_pp]
+dark_med_binnum = 32
+
+
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
 # -----------------------------------------------------------------------------
