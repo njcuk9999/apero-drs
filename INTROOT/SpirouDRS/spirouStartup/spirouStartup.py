@@ -1166,9 +1166,10 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
     return location
 
 
-def get_fiber_type(p, filename, fibertypes=None):
+def get_fiber_type(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
     """
-    Get fiber types and search for a valid fiber type in filename
+    Get fiber types and search for a valid fiber type in filename from the given
+    suffix. "filename" and "suffix" are case insensitive.
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
@@ -1177,20 +1178,61 @@ def get_fiber_type(p, filename, fibertypes=None):
                 log_opt: string, log option, normally the program name
 
     :param filename: string, the filename to search for fiber types in
+
     :param fibertypes: list of strings, the fiber types to search for
+
+    :param suffix: string, the suffix to search for in the filename,
+                   MUST include {FIBER} i.e. valid exampe suffices are:
+
+                        e2ds_{FIBER}.fits
+                        file1_extraction_{FIBER}_process.fits
+                        _{FIBER}_e2ds.fits
+
+                   for use with string.format(dict(FIBER=fiber))
 
     :return fiber: string, the fiber found (exits via WLOG if no fiber found)
     """
+    func_name = __NAME__ + '.get_fiber_type()'
     # deal with no fiber types
     if fibertypes is None:
         fibertypes = p['FIBER_TYPES']
+    # check that we have a correct suffix
+    if '{FIBER}' not in suffix.upper():
+        emsg1 = 'Suffix must contain "{FIBER}" in the string to identify fiber'
+        emsg2 = '    Currently suffix = {0}'.format(suffix)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_opt'], [emsg1, emsg2, emsg3])
+    # set fiber to None
+    correct_fiber = None
+    test_suffices = []
     # loop around each fiber type
     for fiber in fibertypes:
-        if fiber in filename:
-            return fiber
+
+        test_fiber = dict(FIBER=fiber)
+        # make suffix
+        test_suffix = suffix.format(test_fiber)
+        # test suffix
+        if test_suffix.upper() in filename.upper():
+            correct_fiber = fiber
     # if we have reached this type then we have no recognized fiber
-    emsg = 'Fiber name not recognized (must be in {0})'
-    WLOG('error', p['LOG_OPT'], emsg.format(', '.join(fibertypes)))
+    if correct_fiber is None:
+        emsgs = ['Suffix not found in file {0}'.format(filename)]
+        emsgs.append('Must be one of the following:')
+        # check we have fibertype
+        if len(test_suffices) == 0:
+            emsgs.append('\t NONE DEFINED - check "FIBER_TYPES"')
+        # append test_suffices to error message
+        for test_suffix in test_suffices:
+            emsgs.append('\t{0}'.format(test_suffix))
+        emsgs.append('    function = {0}'.format(func_name))
+        # log error messages
+        WLOG('error', p['LOG_OPT'], emsgs)
+    # else log that we have found fiber type
+    else:
+        wmsg = 'Fiber type identified as "{0}"'
+        WLOG('', p['LOG_OPT'], wmsg.format(correct_fiber))
+    # finally return correct_fiber
+    return correct_fiber
 
 
 def find_interactive():
