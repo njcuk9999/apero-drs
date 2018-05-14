@@ -1266,7 +1266,7 @@ def get_fiber_type(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
 
         test_fiber = dict(FIBER=fiber)
         # make suffix
-        test_suffix = suffix.format(test_fiber)
+        test_suffix = suffix.format(**test_fiber)
         # test suffix
         if test_suffix.upper() in filename.upper():
             correct_fiber = fiber
