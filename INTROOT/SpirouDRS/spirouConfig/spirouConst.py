@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.017'
+__version__ = '0.2.018'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-05-04'
+__date__ = '2018-05-07'
 
 
 # =============================================================================
@@ -758,40 +758,6 @@ def EXTRACT_LOCO_FILE(p):
     loco_filename = p['CALIBDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
     loco_file = os.path.join(reducedfolder, loco_filename)
     return loco_file
-
-
-# noinspection PyPep8Naming
-def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
-    """
-    Defines the extraction names (and locations) for the extraction process
-    when all types of E2DS file are to be written
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
-    :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p['FIBER'])
-
-    :return extfitslist: list of strings, the list of extraction files to use
-                         to save the extraction files
-    """
-    if fiber is None:
-        fiber = p['FIBER']
-    reducedfolder = p['REDUCED_DIR']
-    ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
-                 'weight']
-    extfitslist = []
-    for ext_no in range(len(ext_names)):
-        extname = ext_names[ext_no]
-        ext_ext = '_e2ds_{0}_{1}.fits'.format(fiber, extname)
-        extfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', ext_ext)
-        extfits = os.path.join(reducedfolder, extfitsname)
-        extfitslist.append(extfits)
-    return extfitslist
 
 
 # noinspection PyPep8Naming

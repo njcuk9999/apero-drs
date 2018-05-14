@@ -288,7 +288,7 @@ ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 7#10
+ic_blaze_fitn = 7    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
 ic_ff_order_plot = 0
@@ -323,20 +323,37 @@ ic_extnbsig = 1 #2.5
 
 #   Select extraction type                                       - [cal_extract]
 #        Should be one of the following:
-#                'simple'
-#                'tilt'
-#                'tiltweight'
-#                'weight'
-#                'all'    - for comparison (saves all)
-ic_extract_type = 'tiltweight'
+#                 0 - Simple extraction
+#                         (function = spirouEXTOR.extract_const_range)
+#
+#                 1 - weighted extraction
+#                         (function = spirouEXTOR.extract_weight)
+#
+#                 2 - tilt extraction
+#                         (function = spirouEXTOR.extract_tilt)
+#
+#                 3a - tilt weight extraction (old 1)
+#                         (function = spirouEXTOR.extract_tilt_weight)
+#
+#                 3b - tilt weight extraction 2 (old)
+#                         (function = spirouEXTOR.extract_tilt_weight_old2)
+#
+#                 3c - tilt weight extraction 2
+#                         (function = spirouEXTOR.extract_tilt_weight2)
+#
+#                 3d - tilt weight extraction 2 (cosmic correction)
+#                         (function = spirouEXTOR.extract_tilt_weight2cosm)
+ic_extract_type = '3d'
+# Now select the extraction type in cal_ff ONLY                       - [cal_FF]
+ic_ff_extract_type = '3c'
 
-#   Set the number of pixels to set as the border (needed   - [cal_slit, cal_FF]
-#       to allow for tilt to not go off edge of image)
+#   Set the number of pixels to set as                   - [cal_extract, cal_FF]
+#       the border (needed to allow for tilt to not go off edge of image)
 ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
-ic_ext_sigdet = -1 # 100
+ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
 ic_ext_order_plot = 22

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_DRIFT_E2DS_spirou.py [night_directory] [REFfilename]
+cal_DRIFT_E2DS_spirou.py [night_directory] [files]
 
 Extracts orders for specific fibers and files.
 
@@ -48,6 +48,27 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None, fiber_type=None, **kwargs):
+    """
+    cal_DRIFT_E2DS_spirou.py main function, if night_name and files are None uses
+    arguments from run time i.e.:
+        cal_DRIFT_E2DS_spirou.py [night_directory] [files]
+
+    :param night_name: string or None, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710" but
+                                /data/raw/AT5/20180409 would be "AT5/20180409"
+    :param files: string, list or None, the list of files to use for
+                  arg_file_names and fitsfilename
+                  (if None assumes arg_file_names was set from run time)
+    :param fiber_type: string, if None does all fiber types (defined in
+                       constants_SPIROU FIBER_TYPES (default is AB, A, B, C
+                       if defined then only does this fiber type (but must
+                       be in FIBER_TYPES)
+    :param kwargs: any keyword to overwrite constant in param dict "p"
+
+    :return ll: dictionary, containing all the local variables defined in
+                main
+    """
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -56,10 +77,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     p = spirouStartup.LoadArguments(p, night_name, files)
     p = spirouStartup.InitialFileSetup(p, kind=None, calibdb=True)
     # log processing image type
-    p['dprtype'] = spirouImage.GetTypeFromHeader(p, p['kw_DPRTYPE'])
-    p.set_source('dprtype', __NAME__ + '/main()')
+    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
+    p.set_source('DPRTYPE', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['log_opt'], wmsg.format(p['dprtype'], p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
     # deal with fiber type
     if fiber_type is None:
         fiber_type = p['FIBER_TYPES']
@@ -70,10 +91,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             fiber_type = [fiber_type]
         else:
             emsg = 'fiber_type="{0}" not understood'
-            WLOG('error', p['log_opt'], emsg.format(fiber_type))
+            WLOG('error', p['LOG_OPT'], emsg.format(fiber_type))
     # set fiber type
-    p['fib_type'] = fiber_type
-    p.set_source('fib_type', __NAME__ + '__main__()')
+    p['FIB_TYPE'] = fiber_type
+    p.set_source('FIB_TYPE', __NAME__ + '__main__()')
 
     # Overwrite keys from source
     for kwarg in kwargs:
@@ -95,11 +116,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # set sigdet and conad keywords (sigdet is changed later)
-    p['kw_CCD_SIGDET'][1] = p['sigdet']
-    p['kw_CCD_CONAD'][1] = p['gain']
+    p['KW_CCD_SIGDET'][1] = p['SIGDET']
+    p['KW_CCD_CONAD'][1] = p['GAIN']
     # now change the value of sigdet if require
-    if p['ic_ext_sigdet'] > 0:
-        p['sigdet'] = float(p['ic_ext_sigdet'])
+    if p['IC_EXT_SIGDET'] > 0:
+        p['SIGDET'] = float(p['IC_EXT_SIGDET'])
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -119,8 +140,15 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                    getshape=False)
     data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
-    WLOG('', p['log_opt'], ('Image format changed to '
-                            '{0}x{1}').format(*data2.shape[::-1]))
+    wmsg = 'Image format changed to {1}x{0}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*data2.shape))
+
+    # ----------------------------------------------------------------------
+    # Correct for the BADPIX mask (set all bad pixels to zero)
+    # ----------------------------------------------------------------------
+    # TODO: Remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -130,7 +158,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
-    WLOG('info', p['log_opt'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
     # Get the miny, maxy and max_signal for the central column
@@ -141,14 +169,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
     wmsg = 'Maximum average flux/pixel in the spectrum: {0:.1f} [ADU]'
-    WLOG('info', p['log_opt'], wmsg.format(max_signal/p['nbframes']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(max_signal/p['NBFRAMES']))
 
     # ----------------------------------------------------------------------
     # Background computation
     # ----------------------------------------------------------------------
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
-        WLOG('', p['log_opt'], 'Doing background measurement on raw frame')
+        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
     else:
@@ -160,34 +188,33 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts
-    loc['tilt'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('tilt', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+    loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+    loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
 
     # ----------------------------------------------------------------------
     # Fiber loop
     # ----------------------------------------------------------------------
     # loop around fiber types
-    for fiber in p['fib_type']:
+    for fiber in p['FIB_TYPE']:
         # set fiber
-        p['fiber'] = fiber
-        p.set_source('fiber', __NAME__ + '/main()()')
+        p['FIBER'] = fiber
+        p.set_source('FIBER', __NAME__ + '/main()()')
 
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
         # TODO: Remove H2RG dependency
         if p['IC_IMAGE_TYPE'] == 'H2RG':
-            loc['wave'] = spirouImage.ReadWaveFile(p, hdr)
-
+            loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
         else:
-            loc['wave'] = None
-        loc.set_source('wave', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+            loc['WAVE'] = None
+        loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
         # get this fibers parameters
-        p = spirouLOCOR.FiberParams(p, p['fiber'], merge=True)
+        p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
         # get localisation fit coefficients
         loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
         # ------------------------------------------------------------------
@@ -200,24 +227,25 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if p['fiber'] in ['A', 'B', 'AB']:
+        if p['FIBER'] in ['A', 'B', 'AB']:
             # merge
-            loc['acc'] = spirouLOCOR.MergeCoefficients(loc, loc['acc'], step=2)
-            loc['ass'] = spirouLOCOR.MergeCoefficients(loc, loc['ass'], step=2)
+            loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
+            loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
             # set the number of order to half of the original
-            loc['number_orders'] = int(loc['number_orders'] / 2)
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2)
 
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
         # Create array to store extraction (for each order and each pixel
         # along order)
-        loc['e2ds'] = np.zeros((loc['number_orders'], data2.shape[1]))
-        loc['spe1'] = np.zeros((loc['number_orders'], data2.shape[1]))
-        loc['spe3'] = np.zeros((loc['number_orders'], data2.shape[1]))
-        loc['spe4'] = np.zeros((loc['number_orders'], data2.shape[1]))
+        loc['E2DS'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['SPE1'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['SPE3'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['SPE4'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['SPE5'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         # Create array to store the signal to noise ratios for each order
-        loc['SNR'] = np.zeros(loc['number_orders'])
+        loc['SNR'] = np.zeros(loc['NUMBER_ORDERS'])
 
         # ------------------------------------------------------------------
         # Extract orders
@@ -228,96 +256,18 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         valid_orders = spirouEXTOR.GetValidOrders(p, loc)
         # loop around each order
         for order_num in valid_orders:
-            # extract this order
-            if p['ic_extract_type'] == 'all':
-                # -------------------------------------------------------------
-                # Extract (extract and extract0)
-                # -------------------------------------------------------------
-                time1 = time.time()
-                eargs = [p, loc, data2, order_num]
-                spe1, cpt = spirouEXTOR.ExtractOrder(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Tilt
-                # -------------------------------------------------------------
-                time2 = time.time()
-                eargs = [p, loc, data2, order_num]
-                spe3, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Tilt + Weight
-                # -------------------------------------------------------------
-                time3 = time.time()
-                eargs = [p, loc, data2, order_profile, order_num]
-                spe4, cpt = spirouEXTOR.ExtractTiltWeightOrder(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Tilt + Weight
-                # -------------------------------------------------------------
-                time4 = time.time()
-                eargs = [p, loc, data2, order_profile, order_num]
-                spe5, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
-                # -------------------------------------------------------------
-                # Extract with Weight
-                # -------------------------------------------------------------
-                time5 = time.time()
-                eargs = [p, loc, data2, order_profile, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
-
-                time6 = time.time()
-                # -------------------------------------------------------------
-                # If in Debug mode log timings
-                if p['DRS_DEBUG']:
-                    WLOG('info', p['log_opt'], "Timings:")
-                    WLOG('info', p['log_opt'],
-                         ("        ExtractOrder = {0} s "
-                          "").format(time2 - time1))
-                    WLOG('info', p['log_opt'],
-                         ("        ExtractTiltOrder = {0} s "
-                          "").format(time3 - time2))
-                    WLOG('info', p['log_opt'],
-                         ("        ExtractTiltWeightOrder = {0} s "
-                          "").format(time4 - time3))
-                    WLOG('info', p['log_opt'],
-                         ("        ExtractTiltWeightOrder2 = {0} s "
-                          "").format(time5 - time4))
-                    WLOG('info', p['log_opt'],
-                         ("        ExtractWeightOrder = {0} s "
-                          "").format(time6 - time5))
-                # save to file
-                loc['spe1'][order_num] = spe1
-                loc['spe3'][order_num] = spe3
-                loc['spe4'][order_num] = spe4
-                loc['spe5'][order_num] = spe5
-                loc.set_sources(['spe1', 'spe3', 'spe4', 'spe5'], source)
-            elif p['ic_extract_type'] == 'simple':
-                # -------------------------------------------------------------
-                # Simple extraction
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractOrder(*eargs)
-            elif p['ic_extract_type'] == 'tilt':
-                # -------------------------------------------------------------
-                # Extract with Tilt
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractTiltOrder(*eargs)
-            elif p['ic_extract_type'] == 'tiltweight':
-                # -------------------------------------------------------------
-                # Extract with Tilt + Weight
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_profile, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
-            elif p['ic_extract_type'] == 'weight':
-                # -------------------------------------------------------------
-                # Extract with Weight
-                # -------------------------------------------------------------
-                eargs = [p, loc, data2, order_profile, order_num]
-                e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs)
-            else:
-                WLOG('error', p['log_opt'], 'ic_extract_type not understood')
-
+            # -------------------------------------------------------------
+            # IC_EXTRACT_TYPE decides the extraction routine
+            # -------------------------------------------------------------
+            eargs = [p, loc, data2, order_num]
+            ekwargs = dict(mode=p['IC_EXTRACT_TYPE'],
+                           order_profile=order_profile)
+            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            # -------------------------------------------------------------
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             # set the noise
-            noise = p['sigdet'] * np.sqrt(range1 + range2)
+            noise = p['SIGDET'] * np.sqrt(range1 + range2)
             # get window size
             blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
             blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
@@ -327,18 +277,18 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             snr = flux / np.sqrt(flux + noise**2)
             # log the SNR RMS
             wmsg = 'On fiber {0} order {1}: S/N= {2:.1f} Nbcosmic= {3}'
-            wargs = [p['fiber'], order_num, snr, cpt]
-            WLOG('', p['log_opt'], wmsg.format(*wargs))
+            wargs = [p['FIBER'], order_num, snr, cpt]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # add calculations to storage
-            loc['e2ds'][order_num] = e2ds
+            loc['E2DS'][order_num] = e2ds
             loc['SNR'][order_num] = snr
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
             # Log if saturation level reached
-            satvalue = (flux/p['gain'])/(range1 + range2)
-            if satvalue > (p['QC_LOC_FLUMAX'] * p['nbframes']):
+            satvalue = (flux/p['GAIN'])/(range1 + range2)
+            if satvalue > (p['QC_LOC_FLUMAX'] * p['NBFRAMES']):
                 wmsg = 'SATURATION LEVEL REACHED on Fiber {0}'
-                WLOG('warning', p['log_opt'], wmsg.format(fiber))
+                WLOG('warning', p['LOG_OPT'], wmsg.format(fiber))
 
         # ------------------------------------------------------------------
         # Plots
@@ -359,82 +309,58 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Store extraction in file(s)
         # ------------------------------------------------------------------
+        # get extraction method and function
+        extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
         # construct filename
         e2dsfits = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
         e2dsfitsname = os.path.split(e2dsfits)[-1]
         # log that we are saving E2DS spectrum
         wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
-        WLOG('', p['log_opt'], wmsg.format(p['fiber'], e2dsfitsname))
+        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # construct loco filename
         locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
+        # copy extraction method and function to header (for reproducibility)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'], value=extmethod)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'], value=extfunc)
+
         # write 1D list of the SNR
-        hdict = spirouImage.AddKey1DList(hdict, p['kw_E2DS_SNR'],
+        hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
                                          values=loc['SNR'])
         # add localization file name to header
-        hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'], value=locofilename)
+        hdict = spirouImage.AddKey(hdict, p['KW_LOCO_FILE'], value=locofilename)
         # add localization file keys to header
-        root = p['kw_root_drs_loc'][0]
+        root = p['KW_ROOT_DRS_LOC'][0]
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
         # Save E2DS file
-        spirouImage.WriteImage(e2dsfits, loc['e2ds'], hdict)
-
-        # ------------------------------------------------------------------
-        # Store other extractions in files
-        # ------------------------------------------------------------------
-        # only store all is ic_ext_all = 1
-        if p['ic_extract_type'] == 'all':
-            ext_files = ['spe1', 'spe3', 'spe4', 'spe5', 'e2ds']
-            extfitslist = spirouConfig.Constants.EXTRACT_E2DS_ALL_FILES(p)
-            # loop around the various extraction files
-            for ext_no in range(len(ext_files)):
-                # get extname and extfile
-                extfile = ext_files[ext_no]
-                # construct filename
-                extfits = extfitslist[ext_no]
-                extfitsname = os.path.split(extfits)[-1]
-                # log that we are saving E2DS spectrum
-                wmsg = 'Saving E2DS {0} spectrum of Fiber {1} in {2}'
-                WLOG('', p['log_opt'], wmsg.format(p['fiber'], extfitsname))
-                # add keys from original header file
-                hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-                # write 1D list of the SNR
-                hdict = spirouImage.AddKey1DList(hdict, p['kw_E2DS_SNR'],
-                                                 values=loc['SNR'])
-                # add localization file name to header
-                hdict = spirouImage.AddKey(hdict, p['kw_LOCO_FILE'],
-                                           value=locofilename)
-                # add localization file keys to header
-                hdict = spirouImage.CopyRootKeys(hdict, locofile)
-                # Save E2DS file
-                spirouImage.WriteImage(extfits, loc[extfile], hdict)
+        spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
     passed, fail_msg = True, []
     # saturation check: check that the max_signal is lower than qc_max_signal
-    if max_signal > (p['QC_MAX_SIGNAL'] * p['nbframes']):
+    if max_signal > (p['QC_MAX_SIGNAL'] * p['NBFRAMES']):
         fmsg = 'Too much flux in the image (max authorized={0})'
-        fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['nbframes']))
+        fail_msg.append(fmsg.format(p['QC_MAX_SIGNAL'] * p['NBFRAMES']))
         passed = False
         # Question: Why is this test ignored?
         # For some reason this test is ignored in old code
         passed = True
-        WLOG('info', p['log_opt'], fail_msg[-1])
+        WLOG('info', p['LOG_OPT'], fail_msg[-1])
 
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('info', p['log_opt'], wmsg.format(farg))
+            WLOG('info', p['LOG_OPT'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -442,7 +368,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['log_opt'], wmsg.format(p['program']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
 
     # return a copy of locally defined variables in the memory
     return dict(locals())
