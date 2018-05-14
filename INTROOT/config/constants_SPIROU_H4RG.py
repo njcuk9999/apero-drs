@@ -89,11 +89,9 @@ qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
-#ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
 ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.}
 
 #   Half-zone extraction width right side (formally plage2)           - [cal_ff]
-#ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.5}
 ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
@@ -109,6 +107,39 @@ orderp_file_fpall = {'AB': 'AB', 'A': 'AB', 'B': 'AB', 'C': 'C'}
 #   Half-zone extract width for right and left side                - [cal_drift]
 #       (formally ic_extnbsig)
 ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
+
+
+# -----------------------------------------------------------------------------
+#   cal_preprocess parameters
+# -----------------------------------------------------------------------------
+
+# force pre-processed files only (Should be 1 or True to check and       - [all]
+#     force DRS to accept pre-processed files only - i.e. rotated and
+#     corrected) - if 0 or False DRS will except any file
+#     (at users own risk)
+ic_force_preprocess = 1
+
+#   Define the suffix to apply to the pre-processed files                - [all]
+#       if "None" then no suffix is added (or checked for)
+processed_suffix = '_pp.fits'
+
+#   Define the number of dark amplifiers                              - [cal_pp]
+number_dark_amp = 5
+
+#   Define the total number of amplifiers                             - [cal_pp]
+total_amp_num = 32
+
+#   Define the number of un-illuminated reference pixels at           - [cal_pp]
+#       top of image
+number_ref_top = 4
+
+#   Define the number of un-illuminated reference pixels at           - [cal_pp]
+#       bottom of image
+number_ref_bottom = 4
+
+#   Define the number of bins used in the dark median process         - [cal_pp]
+dark_med_binnum = 32
+
 
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
@@ -300,15 +331,6 @@ ic_ff_plot_all_orders = 0
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
 # -----------------------------------------------------------------------------
-#   Extraction option in tilt file:                         - [cal_slit, cal_FF]
-#             if 0 extraction by summation over constant range
-#             if 1 extraction by summation over constant sigma
-#                (not currently available)
-#             if 2 Horne extraction without cosmic elimination
-#                (not currently available)
-#             if 3 Horne extraction with cosmic elimination
-#                (not currently available)
-ic_extopt = 0
 
 #    Start order of the extraction in cal_ff                     - [cal_extract]
 #       if None starts from 0
@@ -357,6 +379,16 @@ ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
 ic_ext_order_plot = 22
+
+#    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
+#        to cut
+#        ONLY USED IF EXTRACT_TYPE = '3d'
+ic_cosmic_sigcut = 0.25
+
+#    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
+#        to check for cosmics (for each pixel)
+#        ONLY USED IF EXTRACT_TYPE = '3d'
+ic_cosmic_thresh = 5
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters

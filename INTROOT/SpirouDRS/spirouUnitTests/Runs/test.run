@@ -1,5 +1,5 @@
 # define detector type (default = H4RG)
-type = "H2RG"
+type = "H4RG"
 
 # define whether we run the comparison with old drs (default = False)
 comparison = False
@@ -7,5 +7,4 @@ comparison = False
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
-run000 = ['cal_extract_RAW_spirouAB', '20170710', 'fp_fp02a203.fits']
-run001 = ['cal_extract_RAW_spirouC', '20170710', 'fp_fp02a203.fits']
+run001 = ['cal_BADPIX_spirou', 'AT5/20180409', 'flat_flat_001_pp.fits', 'dark_dark_001_pp.fits']

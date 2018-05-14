@@ -101,6 +101,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         p[kwarg] = kwargs[kwarg]
 
     # ----------------------------------------------------------------------
+    # Check for pre-processed file
+    # ----------------------------------------------------------------------
+    if p['IC_FORCE_PREPROCESS']:
+        spirouStartup.CheckPreProcess(p)
+
+    # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
