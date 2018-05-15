@@ -110,7 +110,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -328,13 +328,18 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # construct loco filename
         locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
-        # copy extraction method and function to header (for reproducibility)
-        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'], value=extmethod)
-        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'], value=extfunc)
 
-        # write 1D list of the SNR
-        hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
-                                         values=loc['SNR'])
+        # TODO: Remove H2RG dependency
+        if p['IC_IMAGE_TYPE'] == 'H4RG':
+            # copy extraction method and function to header
+            #     (for reproducibility)
+            hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'],
+                                       value=extmethod)
+            hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'],
+                                       value=extfunc)
+            # write 1D list of the SNR
+            hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
+                                             values=loc['SNR'])
         # add localization file name to header
         hdict = spirouImage.AddKey(hdict, p['KW_LOCO_FILE'], value=locofilename)
         # add localization file keys to header
