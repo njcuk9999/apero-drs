@@ -65,11 +65,9 @@ def get_folder_name(rawpath, foldername=None):
     path = os.path.join(rawpath, foldername)
 
     # test to see if path exists
-    if os.path.exists(path):
-        shutil.rmtree(path)
-
-    # add directory
-    os.mkdir(path)
+    if not os.path.exists(path):
+        # add directory
+        os.mkdir(path)
 
     # return directory
     return path
