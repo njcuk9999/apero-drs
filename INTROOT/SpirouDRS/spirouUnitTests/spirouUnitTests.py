@@ -54,8 +54,10 @@ H2RG_USER_PATH = '~/spirou_config_H2RG/'
 H4RG_USER_PATH = '~/spirou_config_H4RG/'
 # define old version reduced path
 OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710'
-# plot path
+# plot and save path
 RESULTSPATH = '/scratch/Projects/spirou_py3/unit_test_graphs/'
+# threshold for difference pass (comparison)
+THRESHOLD = -8
 # -----------------------------------------------------------------------------
 # list of valid recipes (first argument of each run)
 VALID = spirouUnitRecipes.VALID_RECIPES
@@ -196,7 +198,16 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
         cargs = [name, ll, new_out, old_out, errors, OLDPATH, filepath]
         new_out, old_out, errors = utc.compare(*cargs)
     # return the timing and the new and old outputs
-    return timing, new_out, old_out
+    return timing, new_out, old_out, errors
+
+
+def comparison_table(p, errors):
+    # set the file path for the comparison results (plots and table)
+    filepath = utc.get_folder_name(RESULTSPATH)
+    # construct table
+    utc.construct_error_table(errors, THRESHOLD, filepath, runname=p['runname'])
+    # log
+    WLOG('', p['LOG_OPT'], 'Comparison saved to file.')
 
 
 # =============================================================================

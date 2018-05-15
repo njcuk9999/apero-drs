@@ -86,7 +86,7 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     # ----------------------------------------------------------------------
     # read and combine all HC files except the last (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(*rargs)
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(*rargs)
     # read last file (fpfitsfilename)
     data3, hdr3, cdr3, nx3, ny3 = spirouImage.ReadImage(p, fpfitsfilename)
 
