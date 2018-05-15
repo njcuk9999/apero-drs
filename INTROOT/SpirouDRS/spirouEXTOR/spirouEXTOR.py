@@ -204,6 +204,8 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
+        cosmic_sigcut = kwargs.get('csigcut', p['IC_COSMIC_SIGCUT'])
+        cosmic_threshold = kwargs.get('cthres', p['IC_COSMIC_THRESH'])
         check_for_none(range1, 'range1')
         check_for_none(range2, 'range2')
         check_for_none(order_profile, 'Order Profile Image')
@@ -215,7 +217,8 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         return ext_func(image=image, pos=pos, gain=gain,
                         tilt=tilt, tiltborder=tiltborder,
                         r1=range1, r2=range2, orderp=order_profile,
-                        sigdet=sigdet)
+                        sigdet=sigdet, cosmic_sigcut=cosmic_sigcut,
+                        cosmic_threshold=cosmic_threshold)
     # -------------------------------------------------------------------------
     # else error
     # -------------------------------------------------------------------------
@@ -409,7 +412,8 @@ def extract_const_range(image, pos, nbsig, gain):
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
     """
     # print('extract_const_range')
     dim1, dim2 = image.shape
@@ -537,7 +541,8 @@ def extract_weight(image, pos, r1, r2, orderp, gain):
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
     """
     # print('extract_weight')
     dim1, dim2 = image.shape
@@ -622,7 +627,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
     """
     dim1, dim2 = image.shape
     # create storage for extration
@@ -675,9 +681,11 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
 
 
 def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
-                             tiltborder=2):
+                             tiltborder=2, cosmic_sigcut=0.25,
+                             cosmic_threshold=5):
     """
-    Extract order using tilt and weight (sigdet and badpix) and cosmic correction
+    Extract order using tilt and weight (sigdet and badpix) and cosmic
+    correction
 
     Same as extract_tilt_weight but slow (does NOT assume that rounded
     separation between extraction edges is constant along order)
@@ -703,7 +711,7 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found
     """
     dim1, dim2 = image.shape
     # create storage for extration
@@ -753,39 +761,100 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # set the value of this pixel to the weighted sum
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
             # Cosmic rays correction
-            crit = (sx - spe[ic] * fx)
-            sigcut = 0.25  # 25% of the flux
-            cosmask = np.ones(np.shape(crit), 'd')
-            nbloop = 0
-            while np.max(crit) > sigcut * spe[ic] and nbloop < 5:
-                #                print('cosmic detected in line %i with amp %.2f' %(ic,np.max(crit)/spe[ic]))
-                cosmask = np.where(crit > np.max(crit) - 0.1, 0., cosmask)
-                spe[ic] = np.sum(weights * cosmask * sx * fx) / np.sum(
-                    weights * cosmask * fx ** 2)
-                crit = (sx * cosmask - spe[ic] * fx * cosmask)
-                cpt += 1
-                nbloop += 1
-    #        crit = (data[ic, ind1:ind2 + 1] * ccdgain - spe[ic] * profil) ** 2 / var
-    #        seuil = seuilcosmic * spe[ic]
-    #        while max(crit) > max(seuil, 25):
-    #	    print 'COSMICS DETECTED',max(crit),' Line',ic
-    #            cpt = cpt + 1
-    #            masque = masque - greater(crit, max(crit) - 0.1)
-    #            masque = clip(masque, 0., 1.)
-    #            norm = sum(profil * profil * masque / var)
-    #            spe[ic] = (sum(data[ic, ind1 + 1:ind2, ] * ccdgain * profil[1:-1] * masque[1:-1] / var[1:-1]) + \
-    #                       c1 * data[ic, ind1] * ccdgain * profil[0] * masque[0] / var[0] + \
-    #                       c2 * data[ic, ind2] * ccdgain * profil[-1] * masque[-1] / var[-1]) / norm
-    #            var = profil * spe[ic] + sigdet ** 2
-    #            seuil = seuilcosmic * spe[ic]
-    #            crit = (data[ic, ind1:ind2 + 1] * ccdgain * masque - spe[ic] * masque * profil) ** 2 / var
-    #    print    'Nb cosmics detected : ', cpt
+            spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
+                                         cosmic_sigcut, cosmic_threshold)
 
-    # multiple spe by gain to convert to e-
-    #    print('Nb cosmic detected  %i' %(cpt))
     spe *= gain
 
     return spe, cpt
+
+
+def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
+                      cosmic_threshold):
+    """
+    Calculate the cosmic correction
+    :param sx: numpy array (1D), the raw extracted "ic"th order pixels
+    :param spe: numpy array (1D), the output extracted order for the
+                "ic"th pixels
+    :param fx: numpy array (1D), the extracted order_profile for the
+               "ic" the pixels
+    :param ic: int, the iterator for this central x-pixel (for this order)
+    :param weights: numpy array (1D), the weight array for the "ic"th
+                    order pixels
+    :param cpt: int, the number of cosmic rays found
+    :param cosmic_sigcut: float, the
+    :param cosmic_threshold:
+
+    :return spe: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return cpt: int, the number of cosmic rays found
+    """
+    # define the critical pixel values?
+    crit = (sx - spe[ic] * fx)
+    # re-cast the sigcut parameters
+    sigcut = cosmic_sigcut  # 25% of the flux
+    # start the loop counter
+    nbloop = 0
+    # loop around until either:
+    #       critical pixel values > sigcut * extraction
+    #    or
+    #       the loop exceeds "cosmic_threshold"
+    while (np.max(crit) > (sigcut * spe[ic])) and (nbloop < cosmic_threshold):
+        # TODO: Remove old print statement
+        # wmsg = 'cosmic detected in line {0} with amp {1:.2f}'
+        # print(wmsg.format(ic,np.max(crit)/spe[ic]))
+
+        # define the cosmic ray mask (True where not cosmic ray)
+        cosmask = ~(crit > np.max(crit) - 0.1)
+        # set the pixels where there is a cosmic ray to zero
+        # Question: Why are we re-calculating spe
+        # Question:    we just need to set the cosmics to zero?
+        part1 = weights * cosmask * sx * fx
+        part2 = weights * cosmask * fx ** 2
+        spe[ic] = np.sum(part1) / np.sum(part2)
+        # recalculate the critical parameter
+        crit = (sx * cosmask - spe[ic] * fx * cosmask)
+        # increase the number of found cosmic rays by 1
+        cpt += 1
+        # increase the loop counter
+        nbloop += 1
+    # finally return spe and cpt
+    return spe, cpt
+
+    # TODO: Remove archive code
+    # crit = (data[ic, ind1:ind2 + 1] * ccdgain - spe[ic] * profil) ** 2 / var
+    # seuil = seuilcosmic * spe[ic]
+    # while max(crit) > max(seuil, 25):
+    #     print('COSMICS DETECTED',max(crit),' Line',ic)
+    #     cpt = cpt + 1
+    #     masque = masque - greater(crit, max(crit) - 0.1)
+    #     masque = clip(masque, 0., 1.)
+    #     norm = sum(profil * profil * masque / var)
+    #
+    #     dataslice = data[ic, ind1 + 1:ind2, ]
+    #
+    #     part1 = dataslice * ccdgain * profil[1:-1] * masque[1:-1]
+    #     part1 = np.sum(part1 / var[1: -1])
+    #
+    #     part2 = c1 * data[ic, ind1] * ccdgain * profil[0] * masque[0]
+    #     part2 = part2 / var[0]
+    #
+    #     part3 = c2 * data[ic, ind2] * ccdgain * profil[-1] * masque[-1]
+    #     part3 = part3 / var[-1]
+    #
+    #     spe[ic] = part1 + part2 + part3 + var[-1]
+    #     spe[ic] = spe[ic] / norm
+    #
+    #     var = profil * spe[ic] + sigdet ** 2
+    #     seuil = seuilcosmic * spe[ic]
+    #
+    #     dataslice = data[ic, ind1:ind2 + 1]
+    #     crit = (dataslice * ccdgain * masque - spe[ic] * masque * profil) ** 2
+    #     crit = crit / var
+    # print('Nb cosmics detected : ', cpt)
+    # # multiple spe by gain to convert to e-
+    # print('Nb cosmic detected  {0}'.format(cpt))
+
 
 
 def work_out_ww(ww0, ww1, tiltshift, r1):
@@ -875,7 +944,8 @@ def extract_tilt_weight_old2(image, pos, tilt, r1, r2, orderp,
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
     """
 
     dim1, dim2 = image.shape
@@ -979,7 +1049,8 @@ def extract_tilt_weight(image, pos, tilt, r1, r2, orderp, gain, sigdet,
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
     """
     # print('extract_tilt_weight')
     dim1, dim2 = image.shape
@@ -1084,7 +1155,8 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
-    :return nbcos: int, zero in this case
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
     """
     dim1, dim2 = image.shape
     nbcos = 0

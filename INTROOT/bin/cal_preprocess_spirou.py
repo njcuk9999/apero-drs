@@ -35,15 +35,6 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # Get Path Exception
 PathException = spirouFile.PathException
-# ----------------------------------------------------------------------------
-# constants for constants file
-# TODO Constants need moving to constants_SPIROU.py
-PROCESSED_SUFFIX = '_pp'
-NUMBER_DARK_AMP = 5
-NUMBER_REF_TOP = 4
-NUMBER_REF_BOTTOM = 4
-TOTAL_AMP_NUM = 32
-DARK_MED_BINNUM = 32
 
 
 # =============================================================================
@@ -80,15 +71,6 @@ def main(night_name=None, ufiles=None):
         customargs = dict(ufiles=ufiles)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
-    # add constants not currently in constants file
-    # TODO Constants need moving to constants_SPIROU.py
-    p['PROCESSED_SUFFIX'] = PROCESSED_SUFFIX
-    p['NUMBER_DARK_AMP'] = NUMBER_DARK_AMP
-    p['NUMBER_REF_TOP'] = NUMBER_REF_TOP
-    p['NUMBER_REF_BOTTOM'] = NUMBER_REF_BOTTOM
-    p['TOTAL_AMP_NUM'] = TOTAL_AMP_NUM
-    p['DARK_MED_BINNUM'] = DARK_MED_BINNUM
-
 
     # ----------------------------------------------------------------------
     # Process files (including wildcards)
@@ -173,7 +155,7 @@ def main(night_name=None, ufiles=None):
         # Save rotated image
         # ------------------------------------------------------------------
         # construct rotated file name
-        outfits = ufile.replace('.fits', p['PROCESSED_SUFFIX'] + '.fits')
+        outfits = ufile.replace('.fits', p['PROCESSED_SUFFIX'])
         outfitsname = os.path.split(outfits)[-1]
         # log that we are saving rotated image
         WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
