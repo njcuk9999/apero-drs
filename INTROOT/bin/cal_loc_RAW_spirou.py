@@ -87,7 +87,7 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -134,11 +134,11 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # TODO: remove H2RG dependencies
     if p['IC_IMAGE_TYPE'] == 'H2RG':
-        opmethod = 'old'
+        bkwargs = dict(mode='manual', method='old')
     else:
-        opmethod = 'new'
+        bkwargs = dict(mode='manaul', method='new')
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
-                                                 mode='manual', method=opmethod)
+                                                 **bkwargs)
     # data 2 is now set to the order profile
     data2o = data2.copy()
     data2 = order_profile.copy()

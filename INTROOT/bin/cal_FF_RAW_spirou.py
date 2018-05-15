@@ -97,7 +97,7 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -254,9 +254,9 @@ def main(night_name=None, files=None):
             # calculate the flat
             # TODO: Remove H2RG compatibility
             if p['IC_IMAGE_TYPE'] == 'H2RG':
-                flat = e2ds/blaze
+                flat = e2ds / blaze
             else:
-                flat = np.where(blaze>1,e2ds/blaze,1)
+                flat = np.where(blaze > 1, e2ds / blaze, 1)
             # calculate the rms
             rms = np.std(flat)
             # log the SNR RMS
