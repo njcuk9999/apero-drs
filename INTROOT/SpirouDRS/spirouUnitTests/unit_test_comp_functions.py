@@ -566,7 +566,8 @@ def old_new_diff_pass(errors, threshold):
     return passed, ratio
 
 
-def construct_error_table(errors, threshold=-8, results_path='./'):
+def construct_error_table(errors, threshold=-8, results_path='./',
+                          runname=None):
     # get passed and ratio
     passed, ratio = old_new_diff_pass(errors, threshold)
 
@@ -586,7 +587,10 @@ def construct_error_table(errors, threshold=-8, results_path='./'):
     table['order_diff'] = ratio
 
     # construct filename
-    filename = os.path.split(sys.argv[0])[-1].split('.py')[0]
+    if runname is None:
+        filename = os.path.split(sys.argv[0])[-1].split('.py')[0]
+    else:
+        filename = str(runname)
     # construct path
     path = os.path.join(results_path, '{0}_results.fits'.format(filename))
     # write to file
