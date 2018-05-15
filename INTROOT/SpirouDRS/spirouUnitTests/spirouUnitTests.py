@@ -205,7 +205,7 @@ def comparison_table(p, errors):
     # set the file path for the comparison results (plots and table)
     filepath = utc.get_folder_name(RESULTSPATH)
     # construct table
-    utc.construct_error_table(errors, THRESHOLD, filepath)
+    utc.construct_error_table(errors, THRESHOLD, filepath, runname=p['runname'])
     # log
     WLOG('', p['LOG_OPT'], 'Comparison saved to file.')
 
