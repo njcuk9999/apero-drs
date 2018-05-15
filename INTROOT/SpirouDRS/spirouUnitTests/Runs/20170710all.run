@@ -2,7 +2,7 @@
 type = H2RG
 
 # define whether we run the comparison with old drs (default = False)
-comparison = False
+comparison = True
 
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
