@@ -136,7 +136,7 @@ def main(night_name=None, files=None):
     if p['IC_IMAGE_TYPE'] == 'H2RG':
         bkwargs = dict(mode='manual', method='old')
     else:
-        bkwargs = dict(mode='manaul', method='new')
+        bkwargs = dict(mode='manual', method='new')
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
                                                  **bkwargs)
     # data 2 is now set to the order profile
