@@ -602,7 +602,7 @@ def get_args(name, rname, iargs, arg_names, arg_types):
             # find the last value added to arg_names
             end_argument = args[arg_names[pos - 1]]
             # add the remaining arguments to this argument
-            for it in range(pos, len(iargs)):
+            for it in range(pos + 1, len(iargs)):
                 end_argument.append(iargs[it])
             # set the last argument to the end argument list
             args[arg_names[pos - 1]] = end_argument
