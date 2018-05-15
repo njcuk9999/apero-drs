@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all files
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, 'add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, 'add')
     # add data and hdr to loc
     loc = ParamDict()
     loc['DATA'], loc['HDR'] = data, hdr

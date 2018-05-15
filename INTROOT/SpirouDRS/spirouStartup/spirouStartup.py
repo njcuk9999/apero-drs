@@ -1038,24 +1038,27 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
             # second arg should be the night name
             raw_value = sys.argv[pos + first_arg_pos]
         except IndexError:
-            # if not required then it is okay to not find it
-            if not required[pos]:
-                raw_value = None
             # if calls is None and required = True then we should exit now
-            elif calls is None or calls[pos] is None:
-                # noinspection PyListCreation
-                emsgs = ['Argument Error: "{0}" is not defined'
-                         ''.format(lognames[pos])]
-                emsgs.append(('   must be format:'.format(pos + 1)))
-                eargs = [DPROG, ' '.join(lognames)]
-                # deal with difference between modes (i.e. no night_name)
-                if require_night_name:
-                    emsgs.append(('   >>> {0} NIGHT_NAME {1}'.format(*eargs)))
+            if calls is None or calls[pos] is None:
+
+                # if not required then it is okay to not find it
+                if not required[pos]:
+                    raw_value = None
                 else:
-                    emsgs.append(('   >>> {0} {1}'.format(*eargs)))
-                # log error
-                WLOG('error', DPROG, emsgs)
-                raw_value = None
+                    # noinspection PyListCreation
+                    emsgs = ['Argument Error: "{0}" is not defined'
+                             ''.format(lognames[pos])]
+                    emsgs.append(('   must be format:'.format(pos + 1)))
+                    eargs = [DPROG, ' '.join(lognames)]
+                    # deal with difference between modes (i.e. no night_name)
+                    if require_night_name:
+                        emsg = '\t>>> {0} NIGHT_NAME {1}'
+                        emsgs.append(emsg.format(*eargs))
+                    else:
+                        emsgs.append(('\t>>> {0} {1}'.format(*eargs)))
+                    # log error
+                    WLOG('error', DPROG, emsgs)
+                    raw_value = None
             # else we must use the value from calls
             else:
                 raw_value = calls[pos]

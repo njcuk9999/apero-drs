@@ -768,7 +768,10 @@ def smoothed_boxmean_image1(image, size, weighted=True, method='new'):
         # deal with the trailing edge --> i.e. box shrinks from full size
         elif it > image.shape[1]-size:
             # get the subimage defined by the box for all rows
-            part = image[:, it - size: it + size + 1]
+            part = image[:, it - size:]
+        # else we have zeros (shouldn't happen)
+        else:
+            part = np.zeros_like(image)
         # get the weights (pixels below 0 are set to 1e-6, pixels above to 1)
         if weighted:
             weights = np.where(part > 0, 1, 1.e-6)
