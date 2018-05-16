@@ -239,6 +239,13 @@ def stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC'):
     :return unix_time: float, unix time (seconds since 1970-01-01 00:00:00 GMT)
     """
     func_name = __NAME__ + '.stringtime2unixtime()'
+    # make sure input is a string
+    try:
+        string = str(string)
+    except:
+        emsg = 'Error time={0} must be a string in format {1}'
+        raise ValueError(emsg.format(string, fmt))
+    # try converting to datetime object and make into a string timestamp
     try:
         datetime_obj = datetime.strptime(string, fmt)
         if zone == 'UTC':
@@ -246,12 +253,11 @@ def stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC'):
             timestamp = timegm(datetime_obj.timetuple())
         else:
             timestamp = mktime(datetime_obj.timetuple())
-
     except Exception as e:
         emsg1 = 'Error in converting time (function = {0})'.format(func_name)
         emsg2 = '{0} reads: {1}'.format(type(e), e)
         raise MathException(emsg1 + '\n\t\t' + emsg2)
-
+    # return time stamp
     return timestamp + datetime_obj.microsecond/1e6
 
 
