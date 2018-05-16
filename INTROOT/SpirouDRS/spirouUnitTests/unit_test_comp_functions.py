@@ -73,13 +73,15 @@ def get_folder_name(rawpath, foldername=None):
     return path
 
 
-def compare(name, ll, newoutputs, oldoutputs, errors, oldpath, resultspath):
+def compare(name, ll, newoutputs, oldoutputs, errors, oldreduced, resultspath):
 
     WLOG('', DPROG, 'Comparing files...')
     # define new output files from ll
     newfiles = ll['outputs']
     # define new path from p['reduced_dir']
     newpath = ll['p']['reduced_dir']
+    night_name = ll['p']['ARG_NIGHT_NAME']
+    oldpath = os.path.join(oldreduced, night_name)
     # get old output locations (that should be the same as new output files)
     lists = create_oldfiles(newfiles, oldpath, newpath)
     newoutputs[name], oldoutputs[name] = lists
@@ -148,11 +150,15 @@ def comparison_wrapper(name, oldfiles, newfiles, errors=None, path=None):
             errors += e2
         else:
             e1, e2 = [], []
+            errors += e0
 
         # print status
         if len(errors) > 0:
-            wmsg = '\t{0} differences found in {1}'
-            WLOG('', DPROG, wmsg.format(len(e0) + len(e1) + len(e2), newfile))
+            warg = len(e0) + len(e1) + len(e2)
+            wmsg1 = '\t{0} differences found'.format(warg)
+            wmsg2 = '\tOLDFILE = {0}'.format(oldfile)
+            wmsg3 = '\tNEWFILE = {0}'.format(newfile)
+            WLOG('', DPROG, [wmsg1, wmsg2, wmsg3])
         else:
             wmsg = '\tNo difference found in {0} - files the same'
             WLOG('', DPROG, wmsg.format(newfile))
