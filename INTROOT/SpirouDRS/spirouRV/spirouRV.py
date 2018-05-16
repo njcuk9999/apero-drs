@@ -816,6 +816,7 @@ def drift_all_orders(loc, fileno, nomin, nomax):
                            shape = (number of files)
     """
 
+    func_name = __NAME__ + '.drift_all_orders()'
     # get data from loc
     drift = loc['DRIFT'][fileno, nomin:nomax]
     driftleft = loc['DRIFT_LEFT'][fileno, nomin:nomax]
@@ -823,11 +824,14 @@ def drift_all_orders(loc, fileno, nomin, nomax):
     errdrift = loc['ERRDRIFT'][fileno, nomin:nomax]
 
     # work out weighted mean drift
-    sumerr = np.sum(1.0/errdrift)
-    meanvr = np.sum(drift/errdrift) / sumerr
-    meanvrleft = np.sum(driftleft/errdrift) / sumerr
-    meanvrright = np.sum(driftright/errdrift) / sumerr
-    merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+    with warnings.catch_warnings(record=True) as w:
+        sumerr = np.sum(1.0/errdrift)
+        meanvr = np.sum(drift/errdrift) / sumerr
+        meanvrleft = np.sum(driftleft/errdrift) / sumerr
+        meanvrright = np.sum(driftright/errdrift) / sumerr
+        merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
 
     # add to storage
     loc['MEANRV'][fileno] = meanvr
