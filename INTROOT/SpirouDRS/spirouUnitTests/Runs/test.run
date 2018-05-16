@@ -1,12 +1,10 @@
 # define detector type (default = H4RG)
-type = "H2RG"
+type = "H4RG"
 
 # define whether we run the comparison with old drs (default = False)
-comparison = True
+comparison = False
 
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
-run000 = ['cal_DARK_spirou', '20170710', 'dark_dark02d406.fits']
-run001 = ['cal_BADPIX_spirou', '20170710', 'flat_flat02f10.fits', 'dark_dark02d406.fits']
-run019 = ['cal_CCF_E2DS_spirou', '20170710', 'fp_fp02a203_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
+run008 = ['cal_DRIFT_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2ds_AB.fits']
