@@ -21,7 +21,6 @@ from SpirouDRS import spirouCore
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
 import cal_DARK_spirou
-import cal_DRIFT_RAW_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
 import cal_extract_RAW_spirou
@@ -75,7 +74,6 @@ def get_versions():
     vv[cal_BADPIX_spirou.__NAME__] = cal_BADPIX_spirou.__version__
     vv[cal_CCF_E2DS_spirou.__NAME__] = cal_CCF_E2DS_spirou.__version__
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
-    vv[cal_DRIFT_RAW_spirou.__NAME__] = cal_DRIFT_RAW_spirou.__version__
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
     vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
