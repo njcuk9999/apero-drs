@@ -17,6 +17,7 @@ run006 = ['cal_FF_RAW_spirou', 'AT5/20180409', 'flat_dark_001_pp.fits']
 run007 = ['cal_extract_RAW_spirouAB', 'AT5/20180409', 'fp_fp_001_pp.fits']
 run008 = ['cal_extract_RAW_spirouC', 'AT5/20180409', 'fp_fp_001_pp.fits']
 run009a = ['cal_extract_RAW_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
+# These two are fake (copies of fp_fp_001)
 run009b = ['cal_extract_RAW_spirou', 'AT5/20180409', 'fp_fp_002_pp.fits']
 run009c = ['cal_extract_RAW_spirou', 'AT5/20180409', 'fp_fp_003_pp.fits']
 run010 = ['cal_extract_RAW_spirou', 'AT5/20180409', 'hcone_hcone_001_pp.fits']
