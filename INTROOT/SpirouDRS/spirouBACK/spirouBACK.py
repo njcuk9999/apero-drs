@@ -30,7 +30,6 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouCore.wlog
-WARNGLOG = spirouCore.warnlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # -----------------------------------------------------------------------------
@@ -198,7 +197,7 @@ def measure_min_max(pp, y):
     with warnings.catch_warnings(record=True) as w:
         diff_maxmin = maxy - miny
     # log any catch warnings
-    WARNGLOG(w, funcname)
+    spirouCore.WarnLog(w, funcname)
     # return values
     return miny, maxy, max_signal, diff_maxmin
 

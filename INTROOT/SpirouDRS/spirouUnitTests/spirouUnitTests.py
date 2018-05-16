@@ -12,6 +12,7 @@ Created on 2018-05-01 at 12:32
 from __future__ import division
 import numpy as np
 import sys
+import os
 import time
 
 from SpirouDRS import spirouConfig
@@ -53,7 +54,7 @@ RUN_KEY = 'RUN'
 H2RG_USER_PATH = '~/spirou_config_H2RG/'
 H4RG_USER_PATH = '~/spirou_config_H4RG/'
 # define old version reduced path
-OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710'
+OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/'
 # plot and save path
 RESULTSPATH = '/scratch/Projects/spirou_py3/unit_test_graphs/'
 # threshold for difference pass (comparison)
