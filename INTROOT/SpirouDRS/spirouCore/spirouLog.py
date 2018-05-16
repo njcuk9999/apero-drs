@@ -260,7 +260,7 @@ def warninglogger(w, funcname=None):
             if funcname is None:
                 wargs = [wi.lineno, '', wi.message]
             else:
-                wargs = [wi.linno, '({0})'.format(funcname), wi.message]
+                wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
             # log message
             wmsg = 'python warning Line {0} {1} warning reads: {2}'
             logger('warning', wmsg.format(*wargs))
