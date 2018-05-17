@@ -591,13 +591,19 @@ ic_ll_sp_min = 900
 #
 ic_ll_sp_max = 2400
 
-# Maximum amplitude of the line
+
+
+# Maximum sig-fit of the guessed lines                                - [cal_HC]
+#     fwhm/2.35 of th lines)
+ic_max_sigll_cal_lines = 5.2
+
+# Maximum error on first guess lines                                  - [cal_HC]
+# default = 1
+ic_max_errw_onfit = 1
+
+# Maximum amplitude of the guessed lines                              - [cal_HC]
 # default = 2.0e5
 ic_max_ampl_line = 2.0e8
-
-#
-# default = 1
-ic_max_errw_infit = 1
 
 #
 # default = 50000  or 60000
