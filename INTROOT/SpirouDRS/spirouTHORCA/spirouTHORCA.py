@@ -254,7 +254,7 @@ def get_lamp_parameters(p, filename=None, kind=None):
     return p
 
 
-def first_guess_at_wave_solution(p, loc):
+def first_guess_at_wave_solution(p, loc, mode='new'):
     """
     First guess at wave solution, consistency check, using the wavelength
     solutions line list
@@ -271,12 +271,19 @@ def first_guess_at_wave_solution(p, loc):
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
 
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 FIT_ORDERS: numpy array, the orders to fit
                 LL_INIT: numpy array, the initial guess at the line list
                 LL_LINE: numpy array, the line list wavelengths from file
                 AMPL_LINE: numpy array, the line list amplitudes from file
+                ALL_LINES: list of numpy arrays, length = number of orders
+                            each numpy array contains gaussian parameters
+                            for each found line in that order
 
     """
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
@@ -303,7 +310,7 @@ def first_guess_at_wave_solution(p, loc):
     wmsg = 'On fiber {0} trying to identify lines using guess solution'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # find the lines
-    all_lines = find_lines(p, loc)
+    all_lines = find_lines(p, loc, mode=mode)
     # add all lines to loc
     loc['ALL_LINES'] = all_lines
     loc.set_source('ALL_LINES', func_name)
@@ -311,7 +318,7 @@ def first_guess_at_wave_solution(p, loc):
     return loc
 
 
-def find_lines(p, loc):
+def find_lines(p, loc, mode='new'):
     """
     Find the lines on the E2DS spectrum
 
@@ -331,7 +338,27 @@ def find_lines(p, loc):
             DATA
             FIT_ORDERS
 
-    :return:
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
+    :return all_lines: list, all lines in format:
+
+                    [order1lines, order2lines, order3lines, ..., orderNlines]
+
+                    where order1lines = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams1[0] = ?
+                        gparams1[1] = ?
+                        gparams1[2] = ?
+                        gparams1[3] = ?
+                        gparams1[4] = ?
+                        gparams1[5] = ?
+                        gparams1[6] = ?
+                        gparams1[7] = ?
+                    (See fit_emi_line)
+
     """
     func_name = __NAME__ + '.find_lines()'
     # get parameters from p
@@ -427,7 +454,8 @@ def find_lines(p, loc):
                 # TODO:    same result as AT4-V48 version (py2 old)
                 # TODO:  3 scipy.optimize.curve_fit is slower
 
-                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight)
+                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight,
+                                         mode=mode)
 
                 # gau_param = fit_emi_line(sll, sxpos, sdata, line_weight, frame)
 
@@ -475,7 +503,28 @@ def find_lines(p, loc):
     return all_cal_line_fit
 
 
-def fit_emi_line(sll, sxpos, sdata, weight):
+def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
+    """
+    Fit emission line
+
+    :param sll:
+    :param sxpos:
+    :param sdata:
+    :param weight:
+    :param mode:
+
+    :return gparams: list of length = 8:
+
+                gparams[0] = ?
+                gparams[1] = ?
+                gparams[2] = ?
+                gparams[3] = ?
+                gparams[4] = ?
+                gparams[5] = ?
+                gparams[6] = ?
+                gparams[7] = ?
+    """
+
 
     # get fit degree
     fitdegree = 2
@@ -523,16 +572,18 @@ def fit_emi_line(sll, sxpos, sdata, weight):
         fkwargs = dict(weights=invsig, guess=gcoeffs, return_fit=False,
                        return_uncertainties=True)
         try:
-            ag, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
+            if mode == 'new':
+                ag, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
 
             # TODO: Test of fitgaus.fitfaus FORTRAN ROUTINE
             # TODO:     (requires fitgaus.so to be compiled and put in
             # TODO:     SpirouDRS.spirouTHORA folder)
-            # from SpirouDRS.spirouTHORCA import fitgaus
-            # f = np.zeros_like(sdata)
-            # siga = np.zeros_like(gcoeffs)
-            # ag = gcoeffs.copy()
-            # fitgaus.fitgaus(slln,sdata,invsig,ag,siga,f)
+            else:
+                from SpirouDRS.spirouTHORCA import fitgaus
+                f = np.zeros_like(sdata)
+                siga = np.zeros_like(gcoeffs)
+                ag = gcoeffs.copy()
+                fitgaus.fitgaus(slln,sdata,invsig,ag,siga,f)
             # copy the gaussian fit coefficients into params
             params[0] = ag[1]
             params[1] = ag[2]
@@ -584,16 +635,27 @@ def fit_emi_line(sll, sxpos, sdata, weight):
     return gparams
 
 
-def detect_bad_lines(p, loc):
+def detect_bad_lines(p, loc, key=None):
 
     # get constants from p
     max_error_onfit = p['IC_MAX_ERRW_ONFIT']
     max_error_sigll = p['IC_MAX_SIGLL_CAL_LINES']
     max_ampl_lines = p['IC_MAX_AMPL_LINE']
+
+    # deal with key
+    if key is None:
+        key = 'ALL_LINES'
+    elif key in loc:
+        pass
+    else:
+        emsg = 'key = "{0}" not defined in "loc"'
+        WLOG('error', p['LOG_OPT'], emsg.format(key))
+        key = None
+
     # loop around each order
-    for order_num in range(len(loc['ALL_LINES'])):
+    for order_num in range(len(loc[key])):
         # get all lines 7
-        lines = np.array(loc['ALL_LINES'][order_num])
+        lines = np.array(loc[key][order_num])
         # ---------------------------------------------------------------------
         # Criteria 1
         # ---------------------------------------------------------------------
@@ -645,9 +707,9 @@ def detect_bad_lines(p, loc):
         # put all NaN/infs to zero
         lines[:, 7][nanmask] = 0.0
         # ---------------------------------------------------------------------
-        # add back to ALL_LINES
+        # add back to loc[key]
         # ---------------------------------------------------------------------
-        loc['ALL_LINES'][order_num] = lines
+        loc[key][order_num] = lines
 
     # return loc
     return loc
