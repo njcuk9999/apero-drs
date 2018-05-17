@@ -116,7 +116,19 @@ if __name__ == '__main__':
         # ------------------------------------------------------------------
         # First guess at solution for each order
         # ------------------------------------------------------------------
+        # FIXME: Cannot get same number of lines identified
+        # Question: Tried with python gaussian fitting
+        # Question: Tried with Fortran fitgaus.fitgaus
         loc = spirouTHORCA.FirstGuessSolution(p, loc)
+
+        # ------------------------------------------------------------------
+        # Detedct bad fit filtering and saturated lines
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = 'On fiber {0} cleaning list of identified lines'
+        WLOG('', p['LOG_OPT'], wmsg.format(fiber))
+        # clean lines
+        loc = spirouTHORCA.DetectBadLines(p, loc)
 
 
     # ----------------------------------------------------------------------
