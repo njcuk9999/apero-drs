@@ -122,7 +122,7 @@ if __name__ == '__main__':
         loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='old')
 
         # ------------------------------------------------------------------
-        # Detedct bad fit filtering and saturated lines
+        # Detect bad fit filtering and saturated lines
         # ------------------------------------------------------------------
         # log message
         wmsg = 'On fiber {0} cleaning list of identified lines'
