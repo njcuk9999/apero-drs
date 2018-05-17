@@ -119,7 +119,7 @@ if __name__ == '__main__':
         # FIXME: Cannot get same number of lines identified
         # Question: Tried with python gaussian fitting
         # Question: Tried with Fortran fitgaus.fitgaus
-        loc = spirouTHORCA.FirstGuessSolution(p, loc)
+        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='old')
 
         # ------------------------------------------------------------------
         # Detedct bad fit filtering and saturated lines
