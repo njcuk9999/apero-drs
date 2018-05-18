@@ -43,16 +43,16 @@ ic_display_timeout = 0.5
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 100
-ic_ccdx_blue_high = 4000
+ic_ccdx_blue_low = 500
+ic_ccdx_blue_high = 3500
 ic_ccdy_blue_low = 2000
-ic_ccdy_blue_high = 4000
+ic_ccdy_blue_high = 3500
 
 #   Resize red window                                               - [cal_dark]
 ic_ccdx_red_low = 100
 ic_ccdx_red_high = 4000
-ic_ccdy_red_low = 750
-ic_ccdy_red_high = 1350
+ic_ccdy_red_low = 780
+ic_ccdy_red_high = 1200
 
 #   Resize image                                                     - [cal_loc]
 ic_ccdx_low = 4
@@ -155,8 +155,8 @@ dark_qmax = 95
 histo_bins = 200
 
 #   The range of the histogram in ADU/s                             - [cal_dark]
-histo_range_low = -0.5
-histo_range_high = 5
+histo_range_low = -0.2
+histo_range_high = 0.8
 
 #   Define a bad pixel cut limit (in ADU/s)                         - [cal_dark]
 dark_cutlimit = 5.0
@@ -322,7 +322,7 @@ ic_extfblaz = 50
 ic_blaze_fitn = 7    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 0
+ic_ff_order_plot = 27
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
@@ -365,7 +365,7 @@ ic_extnbsig = 1 #2.5
 #
 #                 3d - tilt weight extraction 2 (cosmic correction)
 #                         (function = spirouEXTOR.extract_tilt_weight2cosm)
-ic_extract_type = '3d'
+ic_extract_type = '3d' #'3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
 ic_ff_extract_type = '3c'
 
@@ -378,12 +378,12 @@ ic_ext_tilt_bord = 2
 ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
-ic_ext_order_plot = 22
+ic_ext_order_plot = 17
 
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
 #        ONLY USED IF EXTRACT_TYPE = '3d'
-ic_cosmic_sigcut = 0.25
+ic_cosmic_sigcut = 0.25 # 0.25
 
 #    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
 #        to check for cosmics (for each pixel)
@@ -627,13 +627,13 @@ ic_ll_smooth = 0
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                                   - [cal_dark]
-qc_max_darklevel = 0.5
+qc_max_darklevel = 0.07
 
 #   Max fraction of dead pixels                                     - [cal_dark]
-qc_max_dead = 20.0
+qc_max_dead = 1.0
 
 #   Max fraction of dark pixels (percent)                           - [cal_dark]
-qc_max_dark = 6.0
+qc_max_dark = 1.0
 
 #   Min dark exposure time                                          - [cal_dark]
 #   TODO: This should be set to 599.0
@@ -653,7 +653,7 @@ qc_loc_rmsmax_center = 100
 qc_loc_rmsmax_fwhm = 500
 
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
-qc_ff_rms = 0.12
+qc_ff_rms = 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
 qc_loc_flumax = 64500
