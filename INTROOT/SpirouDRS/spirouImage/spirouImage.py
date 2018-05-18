@@ -709,7 +709,7 @@ def measure_dark(pp, image, image_name, short_name):
     # log the dark statistics
     wargs = ['In {0}'.format(image_name), dadead, med, pp['DARK_QMIN'],
              pp['DARK_QMAX'], qmin, qmax]
-    wmsg = ('{0:12s}: Frac dead pixels= {1:.3f} % - Median= {2:.2f} ADU/s - '
+    wmsg = ('{0:12s}: Frac dead pixels= {1:.4f} % - Median= {2:.3f} ADU/s - '
             'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s')
     WLOG('info', pp['LOG_OPT'], wmsg.format(*wargs))
     # add required variables to pp
