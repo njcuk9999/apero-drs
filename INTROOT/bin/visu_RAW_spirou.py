@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_BADPIX_spirou.py [night_directory] [flat_flat_*.fits] [dark_dark_*.fits]
+visu_RAW_spirou.py [night_directory] [*.fits]
 
-Recipe to generate the bad pixel map
+Recipe to display raw frame + cut across orders + statistics
 
 Created on 2017-12-06 at 14:50
 
@@ -107,7 +107,7 @@ def main(night_name=None, files=None):
     WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     satseuil = 64536.
-    col = 3700
+    col = 2100
     seuil = 10000
     slice = 20
 
@@ -116,14 +116,15 @@ def main(night_name=None, files=None):
     plt.imshow(data2, origin='lower', clim=(1., seuil))
     plt.colorbar()
     plt.axis([0, nx, 0, ny])
-    plt.plot(np.arange(4096), np.ones(4096) * col,  c='red')
+    plt.plot(np.ones(4096) * col, np.arange(4096), c='red')
 
     plt.figure()
     plt.clf()
 
-#    centpart = data2[:, col - 10:col + 10]
-    centpart = data2[col - slice:col + slice,:]
-    y = np.average(centpart, axis=0, weights=np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001))  ## weighted average
+    centpart = data2[:, col - 10:col + 10]
+#    centpart = data2[col - slice:col + slice,:]
+    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
+    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
     # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))   ## weighted average
     plt.plot(np.arange(ny), y)
 
