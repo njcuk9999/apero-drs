@@ -694,7 +694,7 @@ qc_loc_rmsmax_center = 100
 qc_loc_rmsmax_fwhm = 500
 
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
-qc_ff_rms =  5   #  0.14
+qc_ff_rms = 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
 qc_loc_flumax = 64500
