@@ -130,6 +130,15 @@ if __name__ == '__main__':
         # clean lines
         loc = spirouTHORCA.DetectBadLines(p, loc)
 
+        # ------------------------------------------------------------------
+        # Fit wavelength solution on identified lines
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = 'On fiber {0} fitting wavelength solution on identified lines:'
+        WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber))
+        # fit lines
+        loc = spirouTHORCA.Fit1DSolution(p, loc)
+
 
     # ----------------------------------------------------------------------
     # start ll solution
