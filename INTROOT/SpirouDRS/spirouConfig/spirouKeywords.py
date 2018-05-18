@@ -107,7 +107,15 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
-            'kw_version']
+            'kw_version',
+            'kw_EM_TELLX',
+            'kw_EM_TELLY',
+            'kw_EM_LOCFILE',
+            'kw_EM_WAVE',
+            'kw_EM_TILT',
+            'kw_EM_MINWAVE',
+            'kw_EM_MAXWAVE',
+            'kw_EM_TRASCUT']
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -375,6 +383,19 @@ kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
 kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
 
+
+# -----------------------------------------------------------------------------
+# Define cal_exposure_meter variables
+# -----------------------------------------------------------------------------
+
+kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
+kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
+kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
+kw_EM_WAVE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+kw_EM_TILT = ['TILTFILE', 0.0, 'Tilt solution file used']
+kw_EM_MINWAVE = ['MINLAM', 0.0, 'Minimum lambda used in mask [nm]']
+kw_EM_MAXWAVE = ['MAXLAM', 0.0, 'Maximum lambda used in mask [nm]']
+kw_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 
 # -----------------------------------------------------------------------------
 # Define qc variables
