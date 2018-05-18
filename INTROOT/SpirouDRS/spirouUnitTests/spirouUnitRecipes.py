@@ -21,7 +21,6 @@ from SpirouDRS import spirouCore
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
 import cal_DARK_spirou
-import cal_DRIFT_RAW_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
 import cal_extract_RAW_spirou
@@ -53,7 +52,6 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_CCF_E2DS_spirou',
                  'cal_DARK_spirou',
-                 'cal_DRIFT_RAW_spirou',
                  'cal_DRIFT_E2DS_spirou',
                  'cal_DRIFTPEAK_E2DS_spirou',
                  'cal_extract_RAW_spirou',
@@ -76,7 +74,6 @@ def get_versions():
     vv[cal_BADPIX_spirou.__NAME__] = cal_BADPIX_spirou.__version__
     vv[cal_CCF_E2DS_spirou.__NAME__] = cal_CCF_E2DS_spirou.__version__
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
-    vv[cal_DRIFT_RAW_spirou.__NAME__] = cal_DRIFT_RAW_spirou.__version__
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
     vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
@@ -418,39 +415,39 @@ def unit_test_cal_extract_raw_spirouc(rname, inputs, outputs=None):
         return outs, name
 
 
-def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
-    """
-    unit_test_cal_drift_raw_spirou
-
-    input = night_name files
-    output = DRIFT_RAW_FILE
-
-    :param rname: string, identifier for this run
-    :param inputs: list of objects, raw parameters to pass to run, if outputs
-                   is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
-
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
-    """
-    # define name and arguments
-    name = 'cal_DRIFT_RAW_spirou'
-    arg_names = ['night_name', 'files']
-    arg_types = [str, str]
-
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.DRIFT_RAW_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+# def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
+#     """
+#     unit_test_cal_drift_raw_spirou
+#
+#     input = night_name files
+#     output = DRIFT_RAW_FILE
+#
+#     :param rname: string, identifier for this run
+#     :param inputs: list of objects, raw parameters to pass to run, if outputs
+#                    is None returns parameters to pass to file
+#     :param outputs: dictionary or None, output of code - locals() if not None
+#                     returns output filenames
+#
+#     if outputs is None:
+#         :return args: dict, the parameters to pass to the run
+#     else:
+#         :return outs: list of strings, the output filenames
+#     """
+#     # define name and arguments
+#     name = 'cal_DRIFT_RAW_spirou'
+#     arg_names = ['night_name', 'files']
+#     arg_types = [str, str]
+#
+#     # get the inputs (if outputs is None)
+#     if outputs is None:
+#         # get arguments
+#         args = get_args(name, rname, inputs, arg_names, arg_types)
+#         return args, name
+#     # else define the outputs
+#     else:
+#         outs = [Constants.DRIFT_RAW_FILE(outputs['p'])]
+#         # return outs
+#         return outs, name
 
 
 def unit_test_cal_drift_e2ds_spirou(rname, inputs, outputs=None):
@@ -602,7 +599,7 @@ def get_args(name, rname, iargs, arg_names, arg_types):
             # find the last value added to arg_names
             end_argument = args[arg_names[pos - 1]]
             # add the remaining arguments to this argument
-            for it in range(pos, len(iargs)):
+            for it in range(pos + 1, len(iargs)):
                 end_argument.append(iargs[it])
             # set the last argument to the end argument list
             args[arg_names[pos - 1]] = end_argument

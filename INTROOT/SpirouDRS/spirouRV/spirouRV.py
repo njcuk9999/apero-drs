@@ -117,6 +117,7 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
     :return cpt: float, the total flux above the "cut" parameter
                  (cut * standard deviations above median)
     """
+    func_name = __NAME__ + '.renormalise_cosmic2d()'
     # flag (saturated) fluxes above threshold as "bad pixels"
     flag = (spe < threshold) & (speref < threshold)
     # get the dimensions of spe
@@ -143,14 +144,24 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
     # set the bad values to NaN
     znan = np.copy(z)
     znan[~goodvalues] = np.nan
-    # get the rms for each order
-    rms = np.nanstd(znan, axis=1)
+    # if we only have NaNs set rms to nan
+    if np.sum(np.isfinite(znan)) == 0:
+        rms = np.repeat(np.nan, znan.shape[0])
+    # else get the rms for each order
+    else:
+        rms = np.nanstd(znan, axis=1)
     # repeat the rms dim2 times
     rrms = np.repeat(rms, dim2).reshape((dim1, dim2))
     # for any values > cut*mean replace spef values with speref values
-    spefc = np.where(abs(z) > cut * rrms, spereff * rnormspe, spef)
+    with warnings.catch_warnings(record=True) as w:
+        spefc = np.where(abs(z) > cut * rrms, spereff * rnormspe, spef)
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
     # get the total z above cut*mean
-    cpt = np.sum(abs(z) > cut * rrms)
+    with warnings.catch_warnings(record=True) as w:
+        cpt = np.sum(abs(z) > cut * rrms)
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
     # create a normalise spectrum for the corrected spef
     cnormspe = np.sum(spefc, axis=1) / np.sum(spereff, axis=1)
     # get the normed spectrum for each pixel for each order
@@ -805,6 +816,7 @@ def drift_all_orders(loc, fileno, nomin, nomax):
                            shape = (number of files)
     """
 
+    func_name = __NAME__ + '.drift_all_orders()'
     # get data from loc
     drift = loc['DRIFT'][fileno, nomin:nomax]
     driftleft = loc['DRIFT_LEFT'][fileno, nomin:nomax]
@@ -812,11 +824,14 @@ def drift_all_orders(loc, fileno, nomin, nomax):
     errdrift = loc['ERRDRIFT'][fileno, nomin:nomax]
 
     # work out weighted mean drift
-    sumerr = np.sum(1.0/errdrift)
-    meanvr = np.sum(drift/errdrift) / sumerr
-    meanvrleft = np.sum(driftleft/errdrift) / sumerr
-    meanvrright = np.sum(driftright/errdrift) / sumerr
-    merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+    with warnings.catch_warnings(record=True) as w:
+        sumerr = np.sum(1.0/errdrift)
+        meanvr = np.sum(drift/errdrift) / sumerr
+        meanvrleft = np.sum(driftleft/errdrift) / sumerr
+        meanvrright = np.sum(driftright/errdrift) / sumerr
+        merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
 
     # add to storage
     loc['MEANRV'][fileno] = meanvr
