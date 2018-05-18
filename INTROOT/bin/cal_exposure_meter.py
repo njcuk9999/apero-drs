@@ -58,6 +58,7 @@ def main(night_name=None, reffile=None):
                                     mainfitsfile='reffile')
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
+
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
@@ -67,6 +68,7 @@ def main(night_name=None, reffile=None):
     reffile = spirouStartup.GetFile(p, rdir, p['REFFILE'], kind='TELLMASK')
     # get the fiber type (set to AB)
     p['FIBER'] = 'AB'
+
     # ----------------------------------------------------------------------
     # Read flat image file
     # ----------------------------------------------------------------------
@@ -74,6 +76,7 @@ def main(night_name=None, reffile=None):
     image, hdr, cdr, ny, nx = spirouImage.ReadData(p, reffile)
     # create loc
     loc = ParamDict()
+
     # ----------------------------------------------------------------------
     # Get basic image properties
     # ----------------------------------------------------------------------
@@ -83,6 +86,7 @@ def main(night_name=None, reffile=None):
     p = spirouImage.GetExpTime(p, hdr, name='exptime')
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
+
     # ----------------------------------------------------------------------
     # Resize flat image
     # ----------------------------------------------------------------------
@@ -101,6 +105,7 @@ def main(night_name=None, reffile=None):
     # log change in data size
     wmsg = 'Image format changed to {0}x{1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*image2.shape))
+
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -115,12 +120,14 @@ def main(night_name=None, reffile=None):
     # set number of orders from tilt length
     loc['NBO'] = len(loc['TILT'])
     loc.set_source('NBO', __NAME__ + '/main()')
+
     # ----------------------------------------------------------------------
     # Read blaze
     # ----------------------------------------------------------------------
     # get tilts
     loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
@@ -132,6 +139,7 @@ def main(night_name=None, reffile=None):
     # get wave file
     p['WAVE_FILE'] = spirouImage.ReadWaveFile(p, hdr, return_filename=True)
     p.set_source('WAVE_FILE', wsource)
+
     # ------------------------------------------------------------------
     # Get localisation coefficients
     # ------------------------------------------------------------------
@@ -139,6 +147,7 @@ def main(night_name=None, reffile=None):
     p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
     # get localisation fit coefficients
     loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+
     # ------------------------------------------------------------------
     # Get telluric and telluric mask and add to loc
     # ------------------------------------------------------------------
@@ -147,6 +156,7 @@ def main(night_name=None, reffile=None):
     WLOG('', p['LOG_OPT'], wmsg)
     # load telluric and get mask (add to loc)
     p, loc = spirouExM.get_telluric(p, loc, hdr)
+
     # ------------------------------------------------------------------
     # Make 2D map of orders
     # ------------------------------------------------------------------
@@ -154,6 +164,7 @@ def main(night_name=None, reffile=None):
     WLOG('', p['LOG_OPT'], 'Making 2D map of order locations')
     # make the 2D wave-image
     loc = spirouExM.order_profile(loc)
+
     # ------------------------------------------------------------------
     # Make 2D map of wavelengths accounting for tilt
     # ------------------------------------------------------------------
@@ -161,56 +172,29 @@ def main(night_name=None, reffile=None):
     WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
     # make the 2D map of wavelength
     loc = spirouExM.create_wavelength_image(loc)
+
     # ------------------------------------------------------------------
     # Use spectra wavelength to create 2D image from wave-image
     # ------------------------------------------------------------------
-    # log progress
-    WLOG('', p['LOG_OPT'], 'Creating image from wave-image interpolation')
-    # create image from waveimage
-    wkwargs = dict(x=loc['TELL_X'], y=loc['TELL_Y'])
-    loc = spirouExM.create_image_from_waveimage(loc, **wkwargs)
+    if p['EM_SAVE_MASK_MAP'] or p['EM_SAVE_TELL_SPEC']:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Creating image from wave-image interpolation')
+        # create image from waveimage
+        wkwargs = dict(x=loc['TELL_X'], y=loc['TELL_Y'])
+        loc = spirouExM.create_image_from_waveimage(loc, **wkwargs)
+    else:
+        loc['SPE'] = np.zeros_like(image2).astype(float)
+
     # ------------------------------------------------------------------
     # Create 2D mask (min to max lambda + transmission threshold)
     # ------------------------------------------------------------------
-    # log progress
-    WLOG('', p['LOG_OPT'], 'Creating wavelength/tranmission mask')
-    # create mask
-    loc = spirouExM.create_mask(p, loc)
-
-    # ------------------------------------------------------------------
-    # Deal with output preferences
-    # ------------------------------------------------------------------
-
-    # add bad pixel map (if required)
-    if p['EM_COMBINED_BADPIX']:
-        # get bad pix mask (True where bad)
-        badpixmask = spirouImage.GetBadPixMap(p, hdr)
-        goodpixels = badpixmask == 1
-        # apply mask (multiply)
-        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels
-
-    # convert waveimage mask into float array
-    loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'].astype('float')
-
-    # check EM_OUTPUT_TYPE
-    if p['EM_OUTPUT_TYPE'] not in ["drs", "raw", "preprocess"]:
-        emsg1 = '"EM_OUTPUT_TYPE" not understood'
-        emsg2 = '   must be either "drs", "raw" or "preprocess"'
-        emsg3 = '   currently EM_OUTPUT_TYPE="{0}"'.format(p['EM_OUTPUT_TYPE'])
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
-
-    # change image size if needed
-    if p['EM_OUTPUT_TYPE'] in ["raw", "preprocess"]:
-        kk = dict(xsize=image.shape[1], ysize=image.shape[0])
-        loc['SPE'] = spirouExM.unresize(p, loc['SPE'], **kk)
-        loc['WAVEIMAGE'] = spirouExM.unresize(p, loc['WAVEIMAGE'], **kk)
-        loc['TELL_MASK_2D'] = spirouExM.unresize(p, loc['TELL_MASK_2D'], **kk)
-
-    # if raw need to rotate (undo pre-processing)
-    if p['EM_OUTPUT_TYPE'] == "raw":
-        loc['SPE'] = np.rot90(loc['SPE'], 1)
-        loc['WAVEIMAGE'] = np.rot90(loc['WAVEIMAGE'])
-        loc['TELL_MASK_2D'] = np.rot90(loc['TELL_MASK_2D'])
+    if p['EM_SAVE_MASK_MAP']:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Creating wavelength/tranmission mask')
+        # create mask
+        loc = spirouExM.create_mask(p, loc)
+    else:
+        loc['TELL_MASK_2D'] = np.zeros_like(image2).astype(bool)
 
     # ------------------------------------------------------------------
     # Construct parameters for header
@@ -240,39 +224,106 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.AddKey(hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])
 
+    # ------------------------------------------------------------------
+    # Deal with output preferences
+    # ------------------------------------------------------------------
+    # add bad pixel map (if required)
+    if p['EM_COMBINED_BADPIX']:
+        # get bad pix mask (True where bad)
+        badpixmask = spirouImage.GetBadPixMap(p, hdr)
+        goodpixels = badpixmask == 0
+        # apply mask (multiply)
+        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels
+
+    # convert waveimage mask into float array
+    loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'].astype('float')
+
+    # check EM_OUTPUT_TYPE and deal with set to "all"
+    if p['EM_OUTPUT_TYPE'] not in ["drs", "raw", "preprocess", "all"]:
+        emsg1 = '"EM_OUTPUT_TYPE" not understood'
+        emsg2 = '   must be either "drs", "raw" or "preprocess"'
+        emsg3 = '   currently EM_OUTPUT_TYPE="{0}"'.format(p['EM_OUTPUT_TYPE'])
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        outputs = []
+    elif p['EM_OUTPUT_TYPE'] != 'all':
+        outputs = [str(p['EM_OUTPUT_TYPE'])]
+    else:
+        outputs = ["drs", "raw", "preprocess"]
+
     # ----------------------------------------------------------------------
-    # save 2D spectrum, wavelength image and mask to file
+    # loop around output types
     # ----------------------------------------------------------------------
-    # TODO: move filenames to spirouConst
-    # construct spectrum filename
-    redfolder = p['REDUCED_DIR']
-    specfilename = 'telluric_mapped_spectrum2.fits'
-    specfitsfile = os.path.join(redfolder, specfilename)
-    # log progress
-    wmsg = 'Writing spectrum to file {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
-    # write to file
-    spirouImage.WriteImage(specfitsfile, loc['SPE'], hdict=hdict)
-    # ----------------------------------------------------------------------
-    # construct waveimage filename
-    wavefilename = 'telluric_mapped_waveimage2.fits'
-    wavefitsfile = os.path.join(redfolder, wavefilename)
-    # log progress
-    wmsg = 'Writing wave image to file {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
-    # write to file
-    spirouImage.WriteImage(wavefitsfile, loc['WAVEIMAGE'], hdict=hdict)
-    # ----------------------------------------------------------------------
-    # construct tell mask 2D filename
-    maskfilename = 'telluric_mapped_mask2.fits'
-    maskfitsfile = os.path.join(redfolder, maskfilename)
-    # log progress
-    wmsg = 'Writing telluric mask to file {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(maskfilename))
-    # convert boolean mask to integers
-    writablemask = np.array(loc['TELL_MASK_2D'], dtype=float)
-    # write to file
-    spirouImage.WriteImage(maskfitsfile, writablemask, hdict=hdict)
+    for output in outputs:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Processing {0} outputs'.format(output))
+        # change EM_OUTPUT_TYPE
+        p['EM_OUTPUT_TYPE'] = output
+        # copy arrays
+        out_spe = np.array(loc['SPE'])
+        out_wave = np.array(loc['WAVEIMAGE'])
+        out_mask = np.array(loc['TELL_MASK_2D'])
+        # change image size if needed
+        if output in ["raw", "preprocess"]:
+            kk = dict(xsize=image.shape[1], ysize=image.shape[0])
+            if p['EM_SAVE_TELL_SPEC']:
+                WLOG('', p['LOG_OPT'], 'Resizing/Flipping SPE')
+                out_spe = spirouExM.unresize(p, out_spe, **kk)
+            if p['EM_SAVE_WAVE_MAP']:
+                WLOG('', p['LOG_OPT'], 'Resizing/Flipping WAVEIMAGE')
+                out_wave = spirouExM.unresize(p, out_wave, **kk)
+            if p['EM_SAVE_MASK_MAP']:
+                WLOG('', p['LOG_OPT'], 'Resizing/Flipping TELL_MASK_2D')
+                out_mask = spirouExM.unresize(p, out_mask, **kk)
+        # if raw need to rotate (undo pre-processing)
+        if output == "raw":
+            if p['EM_SAVE_TELL_SPEC']:
+                WLOG('', p['LOG_OPT'], 'Rotating SPE')
+                out_spe = np.rot90(out_spe, 1)
+            if p['EM_SAVE_WAVE_MAP']:
+                WLOG('', p['LOG_OPT'], 'Rotating WAVEIMAGE')
+                out_wave = np.rot90(out_wave, 1)
+            if p['EM_SAVE_MASK_MAP']:
+                WLOG('', p['LOG_OPT'], 'Rotating TELL_MASK_2D')
+                out_mask = np.rot90(out_mask, 1)
+
+        # ----------------------------------------------------------------------
+        # save 2D spectrum, wavelength image and mask to file
+        # ----------------------------------------------------------------------
+        # save telluric spectrum
+        if p['EM_SAVE_TELL_SPEC']:
+            # construct spectrum filename
+            specfitsfile = spirouConfig.Constants.EM_SPE_FILE(p)
+            specfilename = os.path.split(specfitsfile)[-1]
+            # log progress
+            wmsg = 'Writing spectrum to file {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
+            # write to file
+            spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
+        # ----------------------------------------------------------------------
+        # save wave map
+        if p['EM_SAVE_WAVE_MAP']:
+            # construct waveimage filename
+            wavefitsfile = spirouConfig.Constants.EM_WAVE_FILE(p)
+            wavefilename = os.path.split(wavefitsfile)[-1]
+            # log progress
+            wmsg = 'Writing wave image to file {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
+            # write to file
+            spirouImage.WriteImage(wavefitsfile, out_wave, hdict=hdict)
+        # ----------------------------------------------------------------------
+        # save mask file
+        if p['EM_SAVE_MASK_MAP']:
+            # construct tell mask 2D filename
+            maskfitsfile = spirouConfig.Constants.EM_MASK_FILE(p)
+            maskfilename = os.path.split(maskfitsfile)[-1]
+            # log progress
+            wmsg = 'Writing telluric mask to file {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(maskfilename))
+            # convert boolean mask to integers
+            writablemask = np.array(out_mask, dtype=float)
+            # write to file
+            spirouImage.WriteImage(maskfitsfile, writablemask, hdict=hdict)
+
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
