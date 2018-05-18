@@ -318,6 +318,152 @@ def first_guess_at_wave_solution(p, loc, mode='new'):
     return loc
 
 
+def detect_bad_lines(p, loc, key=None):
+
+    # get constants from p
+    max_error_onfit = p['IC_MAX_ERRW_ONFIT']
+    max_error_sigll = p['IC_MAX_SIGLL_CAL_LINES']
+    max_ampl_lines = p['IC_MAX_AMPL_LINE']
+
+    # deal with key
+    if key is None:
+        key = 'ALL_LINES'
+    elif key in loc:
+        pass
+    else:
+        emsg = 'key = "{0}" not defined in "loc"'
+        WLOG('error', p['LOG_OPT'], emsg.format(key))
+        key = None
+
+    # loop around each order
+    for order_num in range(len(loc[key])):
+        # get all lines 7
+        lines = np.array(loc[key][order_num])
+        # ---------------------------------------------------------------------
+        # Criteria 1
+        # ---------------------------------------------------------------------
+        # create mask
+        badfit = lines[:, 7] <= max_error_onfit
+        # count number of bad lines
+        num_badfit = np.sum(badfit)
+        # put all bad fit lines to zero
+        lines[:, 7][badfit] = 0.0
+        # ---------------------------------------------------------------------
+        # Criteria 2
+        # ---------------------------------------------------------------------
+        # calculate the sig-fit for the lines
+        sigll = lines[:, 1]/lines[:, 0] * 300000
+        # create mask
+        badsig = sigll >= max_error_sigll
+        # count number of bad sig lines
+        num_badsig = np.sum(badsig)
+        # put all bad sig lines to zero
+        lines[:, 7][badsig] = 0.0
+        # ---------------------------------------------------------------------
+        # Criteria 3
+        # ---------------------------------------------------------------------
+        # create mask
+        badampl = lines[:, 2] >= max_ampl_lines
+        # count number
+        num_badampl = np.sum(badampl)
+        # put all bad ampl to zero
+        lines[:, 7][badsig] = 0.0
+        # ---------------------------------------------------------------------
+        # log criteria
+        # ---------------------------------------------------------------------
+        # combine masks
+        badlines = badfit | badsig | badampl
+        # count number
+        num_bad, num_total = np.sum(badlines), badlines.size
+        # log only if we have bad
+        if np.sum(badlines) > 0:
+            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
+                     num_badfit]
+            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
+                    '[beyond (sig/ampl/err) limits]')
+            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+        # ---------------------------------------------------------------------
+        # Remove infinities
+        # ---------------------------------------------------------------------
+        # create mask
+        nanmask = ~np.isfinite(lines[:, 7])
+        # put all NaN/infs to zero
+        lines[:, 7][nanmask] = 0.0
+        # ---------------------------------------------------------------------
+        # add back to loc[key]
+        # ---------------------------------------------------------------------
+        loc[key][order_num] = lines
+
+    # return loc
+    return loc
+
+
+def fit_1d_solution(p, loc):
+
+    nx, nbo = 1, 1
+    params = []
+
+    # get 1d solution
+    loc = fit_1d_ll_solution(p, loc)
+    # invert solution
+    loc = invert_1ds_ll_solution(p, loc)
+    # reshape param array
+    params_ll_out = loc['FINAL_LLFIT'].reshape(nx, nbo)
+    # get new line list
+    loc['LL_OUT'] = get_ll_from_coefficients(params_ll_out, nx, nbo)
+    # get the first derivative of the line list
+    loc['DLL_OUT'] = get_dll_from_coefficients(params, nx, nbo)
+
+    # log message
+    meanpixscale =
+    wmsg = 'On fiber {0} mean pixel scale at center: {0:.4f} [km/s/pixel]'
+    WLOG('info', p['LOG_OPT'], wmsg.format(meanpixscale))
+
+    return loc
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def decide_on_lamp_type(p, filename):
+    """
+    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
+    :param filename: string, the filename to check for the lamp substring in
+
+    :return lamp_type: string, the lamp type for this file (one of the values
+                       in p['IC_LAMPS']
+    """
+    func_name = __NAME__ + '.decide_on_lamp_type()'
+    # storage for lamp type
+    lamp_type = None
+    # loop around each lamp in defined lamp types
+    for lamp in p['IC_LAMPS']:
+        # check for lamp in filename
+        if p['IC_LAMPS'][lamp] in filename:
+            # check if we have already found a lamp type
+            if lamp_type is not None:
+                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
+                         'ambiguous'.format(filename))
+                emsg2 = '    function={0}'.format(func_name)
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            else:
+                lamp_type = lamp
+    # check that lamp is defined
+    if lamp_type is None:
+        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
+        emsg2 = ('    Must be one of the following: {0}'
+                 ''.format(', '.join(p['IC_LAMPS'])))
+        emsg3 = '    function={0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # finally return lamp type
+    return lamp_type
+
+
 def find_lines(p, loc, mode='new'):
     """
     Find the lines on the E2DS spectrum
@@ -635,86 +781,6 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
     return gparams
 
 
-def detect_bad_lines(p, loc, key=None):
-
-    # get constants from p
-    max_error_onfit = p['IC_MAX_ERRW_ONFIT']
-    max_error_sigll = p['IC_MAX_SIGLL_CAL_LINES']
-    max_ampl_lines = p['IC_MAX_AMPL_LINE']
-
-    # deal with key
-    if key is None:
-        key = 'ALL_LINES'
-    elif key in loc:
-        pass
-    else:
-        emsg = 'key = "{0}" not defined in "loc"'
-        WLOG('error', p['LOG_OPT'], emsg.format(key))
-        key = None
-
-    # loop around each order
-    for order_num in range(len(loc[key])):
-        # get all lines 7
-        lines = np.array(loc[key][order_num])
-        # ---------------------------------------------------------------------
-        # Criteria 1
-        # ---------------------------------------------------------------------
-        # create mask
-        badfit = lines[:, 7] <= max_error_onfit
-        # count number of bad lines
-        num_badfit = np.sum(badfit)
-        # put all bad fit lines to zero
-        lines[:, 7][badfit] = 0.0
-        # ---------------------------------------------------------------------
-        # Criteria 2
-        # ---------------------------------------------------------------------
-        # calculate the sig-fit for the lines
-        sigll = lines[:, 1]/lines[:, 0] * 300000
-        # create mask
-        badsig = sigll >= max_error_sigll
-        # count number of bad sig lines
-        num_badsig = np.sum(badsig)
-        # put all bad sig lines to zero
-        lines[:, 7][badsig] = 0.0
-        # ---------------------------------------------------------------------
-        # Criteria 3
-        # ---------------------------------------------------------------------
-        # create mask
-        badampl = lines[:, 2] >= max_ampl_lines
-        # count number
-        num_badampl = np.sum(badampl)
-        # put all bad ampl to zero
-        lines[:, 7][badsig] = 0.0
-        # ---------------------------------------------------------------------
-        # log criteria
-        # ---------------------------------------------------------------------
-        # combine masks
-        badlines = badfit | badsig | badampl
-        # count number
-        num_bad, num_total = np.sum(badlines), badlines.size
-        # log only if we have bad
-        if np.sum(badlines) > 0:
-            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
-                     num_badfit]
-            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
-                    '[beyond (sig/ampl/err) limits]')
-            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
-        # ---------------------------------------------------------------------
-        # Remove infinities
-        # ---------------------------------------------------------------------
-        # create mask
-        nanmask = ~np.isfinite(lines[:, 7])
-        # put all NaN/infs to zero
-        lines[:, 7][nanmask] = 0.0
-        # ---------------------------------------------------------------------
-        # add back to loc[key]
-        # ---------------------------------------------------------------------
-        loc[key][order_num] = lines
-
-    # return loc
-    return loc
-
-
 def test_plot(x, y, guess=None, coeffs=None, weights=None):
 
     if weights is not None:
@@ -751,48 +817,6 @@ def gauss_function(x, a, x0, sigma, dc):
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def decide_on_lamp_type(p, filename):
-    """
-    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-            IC_LAMPS: list of strings, the different allowed lamp types
-            log_opt: string, log option, normally the program name
-    :param filename: string, the filename to check for the lamp substring in
-
-    :return lamp_type: string, the lamp type for this file (one of the values
-                       in p['IC_LAMPS']
-    """
-    func_name = __NAME__ + '.decide_on_lamp_type()'
-    # storage for lamp type
-    lamp_type = None
-    # loop around each lamp in defined lamp types
-    for lamp in p['IC_LAMPS']:
-        # check for lamp in filename
-        if p['IC_LAMPS'][lamp] in filename:
-            # check if we have already found a lamp type
-            if lamp_type is not None:
-                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
-                         'ambiguous'.format(filename))
-                emsg2 = '    function={0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-            else:
-                lamp_type = lamp
-    # check that lamp is defined
-    if lamp_type is None:
-        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
-        emsg2 = ('    Must be one of the following: {0}'
-                 ''.format(', '.join(p['IC_LAMPS'])))
-        emsg3 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
-    # finally return lamp type
-    return lamp_type
 
 
 # =============================================================================
