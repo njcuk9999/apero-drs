@@ -54,6 +54,7 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_DARK_spirou',
                  'cal_DRIFT_E2DS_spirou',
                  'cal_DRIFTPEAK_E2DS_spirou',
+                 'cal_exposure_meter',
                  'cal_extract_RAW_spirou',
                  'cal_extract_RAW_spirouAB',
                  'cal_extract_RAW_spirouC',
@@ -554,6 +555,52 @@ def unit_test_cal_ccf_e2ds_spirou(rname, inputs, outputs=None):
     else:
         outs = [Constants.CCF_FITS_FILE(outputs['p']),
                 Constants.CCF_TABLE_FILE(outputs['p'])]
+        # return outs
+        return outs, name
+
+
+def unit_test_cal_exposure_meter(rname, inputs, outputs=None):
+    """
+    unit_test_cal_exposure_meter
+
+    input = night_name files
+    output = EM_SPE_FILE, EM_WAVE_FILE, EM_MASK_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_exposure_meter'
+    arg_names = ['night_name', 'reffile']
+    arg_types = [str, str]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        # deal with multiple output files defined by EM_OUTPUT_TYPE
+        if outputs['p']['EM_OUTPUT_TYPE'] != 'all':
+            outtypes = [str(outputs['p']['EM_OUTPUT_TYPE'])]
+        else:
+            outtypes = ["drs", "raw", "preprocess"]
+        outs = []
+        for outtype in outtypes:
+            outputs['p']['EM_OUTPUT_TYPE'] = outtype
+            outs.append(Constants.EM_SPE_FILE(outputs['p']))
+            outs.append(Constants.EM_WAVE_FILE(outputs['p']))
+            outs.append(Constants.EM_MASK_FILE(outputs['p']))
         # return outs
         return outs, name
 
