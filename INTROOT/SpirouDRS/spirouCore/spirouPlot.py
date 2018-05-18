@@ -146,8 +146,12 @@ def darkplot_image_and_regions(pp, image):
     # set up axis
     frame = plt.subplot(111)
     # plot the image
-    im = frame.imshow(image, origin='lower', clim=(1., 10 * pp['MED_FULL']),
-                      cmap='jet')
+    # TODO: Remove H2RG dependency
+    if pp['IC_IMAGE_TYPE'] == 'H2RG':
+        clim = (1., 10 * pp['MED_FULL'])
+    else:
+        clim = (0., 10 * pp['MED_FULL'])
+    im = frame.imshow(image, origin='lower', clim=clim, cmap='jet')
     # plot the colorbar
     cbar = plt.colorbar(im, ax=frame)
     cbar.set_label('ADU/s')
@@ -161,7 +165,7 @@ def darkplot_image_and_regions(pp, image):
         bylow, byhigh = byhigh-1, bylow-1
     # plot blue rectangle
     brec = Rectangle((bxlow, bylow), bxhigh-bxlow, byhigh-bylow,
-                     edgecolor='b', facecolor='None')
+                     edgecolor='w', facecolor='None')
     frame.add_patch(brec)
     # get the red region
     rxlow, rxhigh = pp['IC_CCDX_RED_LOW'], pp['IC_CCDX_RED_HIGH']
@@ -847,7 +851,7 @@ def ff_sorder_flat(p, loc):
 # =============================================================================
 # extract plotting function
 # =============================================================================
-def ext_sorder_fit(p, loc, image):
+def ext_sorder_fit(p, loc, image, cut=20000):
     """
     Plot a selected order (defined in "IC_EXT_ORDER_PLOT") on the image
 
@@ -864,6 +868,8 @@ def ext_sorder_fit(p, loc, image):
 
     :param image: numpy array (2D), the image to plot the fit on
 
+    :param cut: int, the upper cut to apply to the image
+
     :return None:
     """
 
@@ -878,7 +884,7 @@ def ext_sorder_fit(p, loc, image):
     # set up axis
     frame = plt.subplot(111)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
     # loop around the order numbers
     acc = loc['ACC'][selected_order]
     # work out offsets for this order
@@ -1002,16 +1008,9 @@ def ext_spectral_order_plot(p, loc):
     fiber = p['FIBER']
     # get data from loc
     extraction = loc['E2DS'][selected_order]
-
-    # TODO: remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        wave = loc['WAVE'][selected_order]
-        xlabel = 'Wavelength [$\AA$]'
-    else:
-        # for now in H4RG we don't have wavelength so use pixels
-        wave = np.arange(len(extraction))
-        xlabel = 'Pixel'
-
+    # select wavelength solution
+    wave = loc['WAVE'][selected_order]
+    xlabel = 'Wavelength [$\AA$]'
     # set up fig
     plt.figure()
     # clear the current figure
