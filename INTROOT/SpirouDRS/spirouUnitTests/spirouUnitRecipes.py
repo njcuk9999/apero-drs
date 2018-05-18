@@ -23,6 +23,7 @@ import cal_CCF_E2DS_spirou
 import cal_DARK_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
+import cal_exposure_meter
 import cal_extract_RAW_spirou
 import cal_extract_RAW_spirouAB
 import cal_extract_RAW_spirouC
@@ -77,6 +78,7 @@ def get_versions():
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
+    vv[cal_exposure_meter.__NAME__] = cal_exposure_meter.__version__
     vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
     vv[cal_extract_RAW_spirouAB.__NAME__] = cal_extract_RAW_spirouAB.__version__
     vv[cal_extract_RAW_spirouC.__NAME__] = cal_extract_RAW_spirouC.__version__
