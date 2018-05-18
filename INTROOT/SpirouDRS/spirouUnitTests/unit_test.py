@@ -132,7 +132,14 @@ def main(runname=None, quiet=False):
         # do run
         rargs = [p, runn, runs[runn], times, newoutputs, oldoutputs,
                  errors, compare]
-        times, newoutputs, oldoutputs = spirouUnitTests.manage_run(*rargs)
+        out = spirouUnitTests.manage_run(*rargs)
+        times, newoutputs, oldoutputs, errors = out
+
+    # ----------------------------------------------------------------------
+    # Analyse results + save to table
+    # ----------------------------------------------------------------------
+    WLOG('', p['LOG_OPT'], 'Constructing comparison table')
+    spirouUnitTests.comparison_table(p, errors)
 
     # ----------------------------------------------------------------------
     # Print timings

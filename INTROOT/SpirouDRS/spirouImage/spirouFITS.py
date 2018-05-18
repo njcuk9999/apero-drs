@@ -233,7 +233,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
             WLOG('error', log_opt, [emsg1, emsg2])
     else:
         p['FITSFILENAME'] = filename
-        p.set_source('FITSFILENAME', func_name)
+        p.append_source('FITSFILENAME', func_name)
         filename = str(filename)
     # -------------------------------------------------------------------------
     # get additional files
@@ -247,7 +247,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
             WLOG('error', log_opt, [emsg1, emsg2])
     else:
         p['NBFRAMES'] = len(filenames) + 1
-        p.set_source('NBFRAMES', func_name)
+        p.append_source('NBFRAMES', func_name)
         filenames = list(filenames)
     # -------------------------------------------------------------------------
     # log that we are reading the image
@@ -266,11 +266,12 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
                                                 filenames, framemath)
     # currently we overwrite fitsfilename with last framefilename
     # TODO: Do we want to overwrite header/fitsfilename with last entry?
-    if len(filenames) > 0:
+    # TODO: Remove H2RG dependency
+    if len(filenames) > 0 and p['IC_IMAGE_TYPE'] == 'H2RG':
         p['FITSFILENAME'] = filenames[-1]
     else:
         p['FITSFILENAME'] = filename
-    p.set_source('FITSFILENAME', __NAME__)
+    p.append_source('FITSFILENAME', __NAME__)
 
     # convert header to python dictionary
     header = dict(zip(imageheader.keys(), imageheader.values()))
@@ -280,7 +281,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     header['@@@fname'] = p['FITSFILENAME']
 
     # return data, header, data.shape[0], data.shape[1]
-    return image, header, comments, nx, ny
+    return p, image, header, comments
 
 
 def writeimage(filename, image, hdict=None, dtype=None):
@@ -1452,9 +1453,13 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
         else:
             # load that we are reading this file
             WLOG('', log_opt, 'Reading File: ' + framefilename)
-            # get data and override header
+            # get tmp data and tmp header
             dtmp, htmp = read_raw_data(framefilename, True, False)
-            header = htmp
+            # override header
+            # TODO: Remove H2RG compatibility
+            # Question: for H4RG - fitsfilename is first or last file?
+            if p['IC_IMAGE_TYPE'] == 'H2RG':
+                header = htmp
             # finally add/subtract/multiple/divide data
             if op in ['+', 'mean']:
                 data += dtmp

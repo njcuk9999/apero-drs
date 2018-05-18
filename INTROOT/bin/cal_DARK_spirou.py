@@ -87,8 +87,7 @@ def main(night_name=None, files=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    rout = spirouImage.ReadImageAndCombine(p, framemath='average')
-    data, hdr, cdr, nx, ny = rout
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='average')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
