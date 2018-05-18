@@ -69,6 +69,8 @@ GetSigdet = spirouImage.get_sigdet
 
 GetExpTime = spirouImage.get_exptime
 
+GetBadPixMap = spirouImage.get_badpixel_map
+
 GetGain = spirouImage.get_gain
 
 GetAcqTime = spirouImage.get_acqtime
