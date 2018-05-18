@@ -571,6 +571,33 @@ ccf_fit_type = 0
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 25
 
+
+# -----------------------------------------------------------------------------
+#   cal_exposure_meter parameters
+# -----------------------------------------------------------------------------
+
+#  Define the telluric threshold (transmission) to mask at            - [cal_em]
+em_tell_threshold = 0.95
+
+#  Define the minimum wavelength (in nm) to mask at                   - [cal_em]
+em_min_lambda = 1478.7
+
+#  Define the maximum wavelength (in nmm) to mask at                  - [cal_em]
+em_max_lambda = 1823.1
+
+#  Define what size we want the mask                                  - [cal_em]
+#      options are:
+#           - "raw" (4096 x 4096)
+#           - "preprocess" (4096 x 4096) rotated to match HARPS
+#           - "drs" flipped in x and y and resized by
+#                (ic_ccdx_low, ic_ccdx_high, ic_ccdy_low, ic_ccdy_high
+em_output_type = "raw"
+
+#  Define whether to combine with bad pixel mask or not               - [cal_em]
+#     if True badpixel mask is combined if False it is not
+em_combined_badpix = True
+
+
 # -----------------------------------------------------------------------------
 #   cal_hc parameters
 # -----------------------------------------------------------------------------
