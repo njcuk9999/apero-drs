@@ -143,13 +143,13 @@ def main(night_name=None, reffile=None):
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-        loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    else:
-        wave0 = 1500. + np.arange(4088.) * 0.011
-        loc['WAVE'] = np.zeros((49, 4088), 'd') + wave0
-        loc.set_source('WAVE', __NAME__ + '.main()')
+#    if p['IC_IMAGE_TYPE'] == 'H2RG':
+    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+#    else:
+#        wave0 = 1500. + np.arange(4088.) * 0.011
+#        loc['WAVE'] = np.zeros((49, 4088), 'd') + wave0
+#        loc.set_source('WAVE', __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Read Flat file
