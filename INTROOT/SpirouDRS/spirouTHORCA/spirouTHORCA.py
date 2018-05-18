@@ -400,24 +400,21 @@ def detect_bad_lines(p, loc, key=None):
 
 def fit_1d_solution(p, loc):
 
-    nx, nbo = 1, 1
-    params = []
-
-    # get 1d solution
-    loc = fit_1d_ll_solution(p, loc)
-    # invert solution
-    loc = invert_1ds_ll_solution(p, loc)
-    # reshape param array
-    params_ll_out = loc['FINAL_LLFIT'].reshape(nx, nbo)
-    # get new line list
-    loc['LL_OUT'] = get_ll_from_coefficients(params_ll_out, nx, nbo)
-    # get the first derivative of the line list
-    loc['DLL_OUT'] = get_dll_from_coefficients(params, nx, nbo)
-
-    # log message
-    meanpixscale =
-    wmsg = 'On fiber {0} mean pixel scale at center: {0:.4f} [km/s/pixel]'
-    WLOG('info', p['LOG_OPT'], wmsg.format(meanpixscale))
+    # # get 1d solution
+    # loc = fit_1d_ll_solution(p, loc)
+    # # invert solution
+    # loc = invert_1ds_ll_solution(p, loc)
+    # # reshape param array
+    # params_ll_out = loc['FINAL_LLFIT'].reshape(nx, nbo)
+    # # get new line list
+    # loc['LL_OUT'] = get_ll_from_coefficients(params_ll_out, nx, nbo)
+    # # get the first derivative of the line list
+    # loc['DLL_OUT'] = get_dll_from_coefficients(params, nx, nbo)
+    #
+    # # log message
+    # meanpixscale =
+    # wmsg = 'On fiber {0} mean pixel scale at center: {0:.4f} [km/s/pixel]'
+    # WLOG('info', p['LOG_OPT'], wmsg.format(meanpixscale))
 
     return loc
 
