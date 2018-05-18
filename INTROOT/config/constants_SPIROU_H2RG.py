@@ -588,14 +588,22 @@ em_max_lambda = 1823.1
 #  Define what size we want the mask                                  - [cal_em]
 #      options are:
 #           - "raw" (4096 x 4096)
-#           - "preprocess" (4096 x 4096) rotated to match HARPS
 #           - "drs" flipped in x and y and resized by
 #                (ic_ccdx_low, ic_ccdx_high, ic_ccdy_low, ic_ccdy_high
-em_output_type = "raw"
+em_output_type = "all"
 
 #  Define whether to combine with bad pixel mask or not               - [cal_em]
 #     if True badpixel mask is combined if False it is not
 em_combined_badpix = True
+
+#  Define whether to just save wavelength map                         - [cal_em]
+em_save_wave_map = True
+
+#  Define whether to save the telluric spectrum                       - [cal_em]
+em_save_tell_spec = True
+
+#  Define whether to save the exposure meter mask                     - [cal_em]
+em_save_mask_map = True
 
 
 # -----------------------------------------------------------------------------
