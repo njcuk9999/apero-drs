@@ -14,6 +14,8 @@ import numpy as np
 import os
 import string
 import pkg_resources
+import warnings
+
 
 # =============================================================================
 # Define variables
@@ -134,27 +136,41 @@ def gettxt(filename):
     #   (like mac smart quotes)
     validate_text_file(filename)
     # read raw config file as strings
+    with warnings.catch_warnings(record=True) as w:
+        try:
+            raw = np.genfromtxt(filename, comments="#", delimiter='=',
+                                dtype=str).astype(str)
+        except Exception:
+            raw = read_lines(filename, comments='#', delimiter='=')
+    # check that we have lines in config file
+    if len(raw) == 0:
+        return [], []
+    elif len(raw.shape) == 1:
+        single = True
+    else:
+        single = False
+    # check that we have opened config file correctly
     try:
-        raw = np.genfromtxt(filename, comments="#", delimiter='=',
-                            dtype=str).astype(str)
-    except Exception:
-        raw = read_lines(filename, comments='#', delimiter='=')
-
-    # check that we have open config file correctly
-    try:
-        lraw = len(raw)
+        # check how many rows we have
+        lraw = raw.shape[0]
     except TypeError:
         return [], []
     # loop around each variable (key and value pairs)
-    keys, values = [], []
-    for row in range(lraw):
-        # remove whitespaces and quotation marks from start/end
-        key = raw[row, 0].strip().strip("'").strip('"')
-        value = raw[row, 1].strip().strip("'").strip('"')
-        # add key.upper() to keys
-        keys.append(key.upper())
-        # add value to values
-        values.append(evaluate_value(value))
+    if single:
+        key = raw[0].strip().strip("'").strip('"')
+        value = raw[1].strip().strip("'").strip('"')
+        keys = [key]
+        values = [evaluate_value(value)]
+    else:
+        keys, values = [], []
+        for row in range(lraw):
+            # remove whitespaces and quotation marks from start/end
+            key = raw[row, 0].strip().strip("'").strip('"')
+            value = raw[row, 1].strip().strip("'").strip('"')
+            # add key.upper() to keys
+            keys.append(key.upper())
+            # add value to values
+            values.append(evaluate_value(value))
     # return keys and values
     return keys, values
 

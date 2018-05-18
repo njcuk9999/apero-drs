@@ -254,7 +254,7 @@ def get_lamp_parameters(p, filename=None, kind=None):
     return p
 
 
-def first_guess_at_wave_solution(p, loc):
+def first_guess_at_wave_solution(p, loc, mode='new'):
     """
     First guess at wave solution, consistency check, using the wavelength
     solutions line list
@@ -271,12 +271,19 @@ def first_guess_at_wave_solution(p, loc):
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
 
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 FIT_ORDERS: numpy array, the orders to fit
                 LL_INIT: numpy array, the initial guess at the line list
                 LL_LINE: numpy array, the line list wavelengths from file
                 AMPL_LINE: numpy array, the line list amplitudes from file
+                ALL_LINES: list of numpy arrays, length = number of orders
+                            each numpy array contains gaussian parameters
+                            for each found line in that order
 
     """
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
@@ -303,7 +310,7 @@ def first_guess_at_wave_solution(p, loc):
     wmsg = 'On fiber {0} trying to identify lines using guess solution'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # find the lines
-    all_lines = find_lines(p, loc)
+    all_lines = find_lines(p, loc, mode=mode)
     # add all lines to loc
     loc['ALL_LINES'] = all_lines
     loc.set_source('ALL_LINES', func_name)
@@ -311,7 +318,150 @@ def first_guess_at_wave_solution(p, loc):
     return loc
 
 
-def find_lines(p, loc):
+def detect_bad_lines(p, loc, key=None):
+
+    # get constants from p
+    max_error_onfit = p['IC_MAX_ERRW_ONFIT']
+    max_error_sigll = p['IC_MAX_SIGLL_CAL_LINES']
+    max_ampl_lines = p['IC_MAX_AMPL_LINE']
+
+    # deal with key
+    if key is None:
+        key = 'ALL_LINES'
+    elif key in loc:
+        pass
+    else:
+        emsg = 'key = "{0}" not defined in "loc"'
+        WLOG('error', p['LOG_OPT'], emsg.format(key))
+        key = None
+
+    # loop around each order
+    for order_num in range(len(loc[key])):
+        # get all lines 7
+        lines = np.array(loc[key][order_num])
+        # ---------------------------------------------------------------------
+        # Criteria 1
+        # ---------------------------------------------------------------------
+        # create mask
+        badfit = lines[:, 7] <= max_error_onfit
+        # count number of bad lines
+        num_badfit = np.sum(badfit)
+        # put all bad fit lines to zero
+        lines[:, 7][badfit] = 0.0
+        # ---------------------------------------------------------------------
+        # Criteria 2
+        # ---------------------------------------------------------------------
+        # calculate the sig-fit for the lines
+        sigll = lines[:, 1]/lines[:, 0] * 300000
+        # create mask
+        badsig = sigll >= max_error_sigll
+        # count number of bad sig lines
+        num_badsig = np.sum(badsig)
+        # put all bad sig lines to zero
+        lines[:, 7][badsig] = 0.0
+        # ---------------------------------------------------------------------
+        # Criteria 3
+        # ---------------------------------------------------------------------
+        # create mask
+        badampl = lines[:, 2] >= max_ampl_lines
+        # count number
+        num_badampl = np.sum(badampl)
+        # put all bad ampl to zero
+        lines[:, 7][badsig] = 0.0
+        # ---------------------------------------------------------------------
+        # log criteria
+        # ---------------------------------------------------------------------
+        # combine masks
+        badlines = badfit | badsig | badampl
+        # count number
+        num_bad, num_total = np.sum(badlines), badlines.size
+        # log only if we have bad
+        if np.sum(badlines) > 0:
+            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
+                     num_badfit]
+            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
+                    '[beyond (sig/ampl/err) limits]')
+            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+        # ---------------------------------------------------------------------
+        # Remove infinities
+        # ---------------------------------------------------------------------
+        # create mask
+        nanmask = ~np.isfinite(lines[:, 7])
+        # put all NaN/infs to zero
+        lines[:, 7][nanmask] = 0.0
+        # ---------------------------------------------------------------------
+        # add back to loc[key]
+        # ---------------------------------------------------------------------
+        loc[key][order_num] = lines
+
+    # return loc
+    return loc
+
+
+def fit_1d_solution(p, loc):
+
+    # # get 1d solution
+    # loc = fit_1d_ll_solution(p, loc)
+    # # invert solution
+    # loc = invert_1ds_ll_solution(p, loc)
+    # # reshape param array
+    # params_ll_out = loc['FINAL_LLFIT'].reshape(nx, nbo)
+    # # get new line list
+    # loc['LL_OUT'] = get_ll_from_coefficients(params_ll_out, nx, nbo)
+    # # get the first derivative of the line list
+    # loc['DLL_OUT'] = get_dll_from_coefficients(params, nx, nbo)
+    #
+    # # log message
+    # meanpixscale =
+    # wmsg = 'On fiber {0} mean pixel scale at center: {0:.4f} [km/s/pixel]'
+    # WLOG('info', p['LOG_OPT'], wmsg.format(meanpixscale))
+
+    return loc
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def decide_on_lamp_type(p, filename):
+    """
+    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
+    :param filename: string, the filename to check for the lamp substring in
+
+    :return lamp_type: string, the lamp type for this file (one of the values
+                       in p['IC_LAMPS']
+    """
+    func_name = __NAME__ + '.decide_on_lamp_type()'
+    # storage for lamp type
+    lamp_type = None
+    # loop around each lamp in defined lamp types
+    for lamp in p['IC_LAMPS']:
+        # check for lamp in filename
+        if p['IC_LAMPS'][lamp] in filename:
+            # check if we have already found a lamp type
+            if lamp_type is not None:
+                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
+                         'ambiguous'.format(filename))
+                emsg2 = '    function={0}'.format(func_name)
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            else:
+                lamp_type = lamp
+    # check that lamp is defined
+    if lamp_type is None:
+        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
+        emsg2 = ('    Must be one of the following: {0}'
+                 ''.format(', '.join(p['IC_LAMPS'])))
+        emsg3 = '    function={0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # finally return lamp type
+    return lamp_type
+
+
+def find_lines(p, loc, mode='new'):
     """
     Find the lines on the E2DS spectrum
 
@@ -331,7 +481,27 @@ def find_lines(p, loc):
             DATA
             FIT_ORDERS
 
-    :return:
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
+    :return all_lines: list, all lines in format:
+
+                    [order1lines, order2lines, order3lines, ..., orderNlines]
+
+                    where order1lines = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams1[0] = ?
+                        gparams1[1] = ?
+                        gparams1[2] = ?
+                        gparams1[3] = ?
+                        gparams1[4] = ?
+                        gparams1[5] = ?
+                        gparams1[6] = ?
+                        gparams1[7] = ?
+                    (See fit_emi_line)
+
     """
     func_name = __NAME__ + '.find_lines()'
     # get parameters from p
@@ -363,9 +533,7 @@ def find_lines(p, loc):
         ll_line_s = ll_line[wave_mask]
         ampl_line_s = ampl_line[wave_mask]
         # check to make sure we have lines
-        if len(ll_line_s) > 0:
-            gauss_fit = []
-        else:
+        if not len(ll_line_s) > 0:
             # if we have no lines print detailed error report and exit
             emsg1 = 'Order {0}: NO LINES IDENTIFIED!!'.format(order_num)
             emsg2args = [order_min, order_max]
@@ -378,7 +546,14 @@ def find_lines(p, loc):
             emsg6 = ' Unable to reduce, check guess solution'
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4,
                                          emsg5, emsg6])
-            gauss_fit = []
+
+        # import matplotlib.pyplot as plt
+        # plt.ioff()
+        # plt.figure()
+        # frame = plt.subplot(111)
+        # frame.plot(ll[order_num, :], datax[order_num, :], color='k', alpha=0.5)
+
+        gauss_fit = []
         # loop around the lines in kept line list
         for ll_i in np.arange(len(ll_line_s)):
             # get this iterations line
@@ -396,7 +571,7 @@ def find_lines(p, loc):
                 sxpos = xpos[line_mask]
                 sdata = datax[order_num, :][line_mask]
                 # normalise sdata by the minimum sdata
-                sdata -= np.min(sdata)
+                sdata = sdata - np.min(sdata)
                 # make sure we have more than 3 data points
                 if len(sxpos) < 3:
                     wmsg = 'Resolution or ll_span are too small'
@@ -408,7 +583,7 @@ def find_lines(p, loc):
                     # if it isn't zero set the line value to the
                     #   weighted mean value
                     line = np.sum(sll * sdata * line_weight)
-                    line /= np.sum(sdata * line_weight)
+                    line = line / np.sum(sdata * line_weight)
                 else:
                     # if it is zero then just use the line
                     line = float(ll_line_s[ll_i])
@@ -422,15 +597,39 @@ def find_lines(p, loc):
                 # TODO:    same result as AT4-V48 version (py2 old)
                 # TODO:  3 scipy.optimize.curve_fit is slower
 
-                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight)
+                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight,
+                                         mode=mode)
+
+                # gau_param = fit_emi_line(sll, sxpos, sdata, line_weight, frame)
+
+                # frame.text(sll[0], sdata[0], ll_i)
+                # frame.text(sll[-1], sdata[-1], ll_i)
+
             # check if gau_param[7] is positive
             if gau_param[7] > 0:
                 gau_param[3] = ll_line_s[ll_i] - gau_param[0]
                 gau_param[4] = ampl_line_s[ll_i]
+
+            # print('\n\n')
+            # print('ii=', ll_i)
+            # print('ll_span_min,ll_span_max=', ll_span_min, ll_span_max)
+            # print('sll=', sll)
+            # print('sxpos=', sxpos)
+            # print('sdata=', sdata)
+            # print('l, lweight=', line, line_weight)
+            # print('gau_param=', gau_param)
+            # print('\n\n')
+
             # finally append parameters to storage
             gauss_fit.append(gau_param)
+
+        # plt.ylim(0, 1e6)
+        # plt.show()
+        # plt.close()
+
         # finally reshape all the gauss_fit parameters
         gauss_fit = np.array(gauss_fit).reshape(len(ll_line_s), 8)
+
         # calculate stats for logging
         min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
         nlines_valid = np.sum(gauss_fit[:, 2] > 0)
@@ -447,7 +646,28 @@ def find_lines(p, loc):
     return all_cal_line_fit
 
 
-def fit_emi_line(sll, sxpos, sdata, weight):
+def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
+    """
+    Fit emission line
+
+    :param sll:
+    :param sxpos:
+    :param sdata:
+    :param weight:
+    :param mode:
+
+    :return gparams: list of length = 8:
+
+                gparams[0] = ?
+                gparams[1] = ?
+                gparams[2] = ?
+                gparams[3] = ?
+                gparams[4] = ?
+                gparams[5] = ?
+                gparams[6] = ?
+                gparams[7] = ?
+    """
+
 
     # get fit degree
     fitdegree = 2
@@ -495,23 +715,27 @@ def fit_emi_line(sll, sxpos, sdata, weight):
         fkwargs = dict(weights=invsig, guess=gcoeffs, return_fit=False,
                        return_uncertainties=True)
         try:
-            gcoeffs2, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
+            if mode == 'new':
+                ag, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
 
             # TODO: Test of fitgaus.fitfaus FORTRAN ROUTINE
             # TODO:     (requires fitgaus.so to be compiled and put in
             # TODO:     SpirouDRS.spirouTHORA folder)
-            # from SpirouDRS.spirouTHORCA import fitgaus
-            # f = np.zeros_like(sdata)
-            # siga = np.zeros_like(gcoeffs)
-            # a = gcoeffs.copy()
-            # fitgaus.fitgaus(slln,sdata,invsig,a,siga,f)
-            # gcoeffs2 = a.copy()
-
+            else:
+                from SpirouDRS.spirouTHORCA import fitgaus
+                f = np.zeros_like(sdata)
+                siga = np.zeros_like(gcoeffs)
+                ag = gcoeffs.copy()
+                fitgaus.fitgaus(slln,sdata,invsig,ag,siga,f)
             # copy the gaussian fit coefficients into params
-            params[0] = gcoeffs2[1]
-            params[1] = gcoeffs2[2]
-            params[2] = gcoeffs2[0]
+            params[0] = ag[1]
+            params[1] = ag[2]
+            params[2] = ag[0]
             params[3] = siga[1]
+
+            # frame.scatter(sll, sdata)
+            # frame.plot(sll, f)
+
         except RuntimeError:
             params[1] = 1
             params[2] = 0
@@ -528,6 +752,8 @@ def fit_emi_line(sll, sxpos, sdata, weight):
         params[1] = 1
         params[2] = 0
         params[3] = 0
+
+
 
     # get the wavelength different and position diff
     slldiff = sll[-1] - sll[0]
@@ -588,48 +814,6 @@ def gauss_function(x, a, x0, sigma, dc):
     :return gauss: numpy array (1D), size = len(x), the output gaussian
     """
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def decide_on_lamp_type(p, filename):
-    """
-    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-            IC_LAMPS: list of strings, the different allowed lamp types
-            log_opt: string, log option, normally the program name
-    :param filename: string, the filename to check for the lamp substring in
-
-    :return lamp_type: string, the lamp type for this file (one of the values
-                       in p['IC_LAMPS']
-    """
-    func_name = __NAME__ + '.decide_on_lamp_type()'
-    # storage for lamp type
-    lamp_type = None
-    # loop around each lamp in defined lamp types
-    for lamp in p['IC_LAMPS']:
-        # check for lamp in filename
-        if p['IC_LAMPS'][lamp] in filename:
-            # check if we have already found a lamp type
-            if lamp_type is not None:
-                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
-                         'ambiguous'.format(filename))
-                emsg2 = '    function={0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-            else:
-                lamp_type = lamp
-    # check that lamp is defined
-    if lamp_type is None:
-        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
-        emsg2 = ('    Must be one of the following: {0}'
-                 ''.format(', '.join(p['IC_LAMPS'])))
-        emsg3 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
-    # finally return lamp type
-    return lamp_type
 
 
 # =============================================================================
