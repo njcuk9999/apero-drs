@@ -185,11 +185,11 @@ def main(night_name=None, reffile=None):
     if p['EM_COMBINED_BADPIX']:
         # get bad pix mask (True where bad)
         badpixmask = spirouImage.GetBadPixMap(p, hdr)
-        goodpixels = ~badpixmask
+        goodpixels = badpixmask == 1
         # apply mask (multiply)
-        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] * goodpixels.astype(float)
+        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels
 
-    # convert waveimage into
+    # convert waveimage mask into float array
     loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'].astype('float')
 
     # check EM_OUTPUT_TYPE
