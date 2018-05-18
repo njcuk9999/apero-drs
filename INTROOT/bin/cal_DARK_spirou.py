@@ -194,10 +194,10 @@ def main(night_name=None, files=None):
     # set passed variable and fail message list
     passed, fail_msg = True, []
     # check that med < qc_max_darklevel
-    if p['MED_FULL'] > p['QC_MAX_DARKLEVEL']:
+    if p['MED_BLUE'] > p['QC_MAX_DARKLEVEL']:
         # add failed message to fail message list
         fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
-        fail_msg.append(fmsg.format(p['MED_FULL'], p['QC_MAX_DARKLEVEL']))
+        fail_msg.append(fmsg.format(p['MED_BLUE'], p['QC_MAX_DARKLEVEL']))
         passed = False
 
     # check that fraction of dead pixels < qc_max_dead
