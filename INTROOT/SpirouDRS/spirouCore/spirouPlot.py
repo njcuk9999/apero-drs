@@ -146,8 +146,12 @@ def darkplot_image_and_regions(pp, image):
     # set up axis
     frame = plt.subplot(111)
     # plot the image
-    im = frame.imshow(image, origin='lower', clim=(0., 10 * pp['MED_FULL']),
-                      cmap='jet')
+    # TODO: Remove H2RG dependency
+    if pp['IC_IMAGE_TYPE'] == 'H2RG':
+        clim = (1., 10 * pp['MED_FULL'])
+    else:
+        clim = (0., 10 * pp['MED_FULL'])
+    im = frame.imshow(image, origin='lower', clim=clim, cmap='jet')
     # plot the colorbar
     cbar = plt.colorbar(im, ax=frame)
     cbar.set_label('ADU/s')
@@ -847,7 +851,7 @@ def ff_sorder_flat(p, loc):
 # =============================================================================
 # extract plotting function
 # =============================================================================
-def ext_sorder_fit(p, loc, image, cut):
+def ext_sorder_fit(p, loc, image, cut=20000):
     """
     Plot a selected order (defined in "IC_EXT_ORDER_PLOT") on the image
 
@@ -863,6 +867,8 @@ def ext_sorder_fit(p, loc, image, cut):
                       shape = (number of orders x number of fit coefficients)
 
     :param image: numpy array (2D), the image to plot the fit on
+
+    :param cut: int, the upper cut to apply to the image
 
     :return None:
     """
@@ -1002,16 +1008,9 @@ def ext_spectral_order_plot(p, loc):
     fiber = p['FIBER']
     # get data from loc
     extraction = loc['E2DS'][selected_order]
-
-    # TODO: remove H2RG compatibility
-#    if p['IC_IMAGE_TYPE'] == 'H2RG':
+    # select wavelength solution
     wave = loc['WAVE'][selected_order]
     xlabel = 'Wavelength [$\AA$]'
-#    else:
-        # for now in H4RG we don't have wavelength so use pixels
-#        wave = np.arange(len(extraction))
-#        xlabel = 'Pixel'
-
     # set up fig
     plt.figure()
     # clear the current figure

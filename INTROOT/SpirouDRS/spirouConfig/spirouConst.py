@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.024'
+__version__ = '0.2.026'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-05-16'
+__date__ = '2018-05-18'
 
 
 # =============================================================================
@@ -919,6 +919,76 @@ def CCF_TABLE_FILE(p):
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
     return ccf_table_file
+
+
+# noinspection PyPep8Naming
+def EM_SPE_FILE(p):
+    """
+    Defines the cal_exposure_meter telluric spectrum map
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = 'em_tell_spec_{0}.fits'.format(kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+def EM_WAVE_FILE(p):
+    """
+    Defines the cal_exposure_meter wavelength
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = 'em_wavemap_{0}.fits'.format(kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+def EM_MASK_FILE(p):
+    """
+    Defines the cal_exposure_meter telluric spectrum map
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = 'em_mask_map_{0}.fits'.format(kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
 
 
 # =============================================================================

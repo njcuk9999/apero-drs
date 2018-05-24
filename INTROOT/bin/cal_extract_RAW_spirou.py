@@ -132,7 +132,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Correction of DARK
     # ----------------------------------------------------------------------
     datac = spirouImage.CorrectForDark(p, data, hdr)
-#    datac=data*1.
+
     # ----------------------------------------------------------------------
     # Resize image
     # ----------------------------------------------------------------------
@@ -156,7 +156,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
-    #  Put to zero all the negative pixels TODO: Check if it makes sens to do that
+    #  Put to zero all the negative pixels
+    # TODO: Check if it makes sens to do that
     data2 = np.where(data2<0, np.zeros_like(data2), data2)
 
     # ----------------------------------------------------------------------
@@ -212,11 +213,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        # TODO: Remove H2RG dependency
-#        if p['IC_IMAGE_TYPE'] == 'H2RG':
         loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-#        else:
-#           loc['WAVE'] = None
         loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
         # ------------------------------------------------------------------
@@ -311,7 +308,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 sPlt.ext_aorder_fit(p, loc, data2)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                sPlt.ext_sorder_fit(p, loc, data2, max_signal/10.)
+                # TODO: Remove H2RG dependency
+                if p['IC_IMAGE_TYPE'] == 'H2RG':
+                    sPlt.ext_sorder_fit(p, loc, data2)
+                else:
+                    sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
 

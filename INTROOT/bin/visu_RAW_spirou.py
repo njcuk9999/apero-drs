@@ -123,7 +123,8 @@ def main(night_name=None, files=None):
 
     centpart = data2[:, col - 10:col + 10]
 #    centpart = data2[col - slice:col + slice,:]
-    y = np.average(centpart, axis=1, weights=np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001))  ## weighted average
+    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
+    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
     # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))   ## weighted average
     plt.plot(np.arange(ny), y)
 

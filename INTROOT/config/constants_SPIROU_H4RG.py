@@ -365,7 +365,7 @@ ic_extnbsig = 1 #2.5
 #
 #                 3d - tilt weight extraction 2 (cosmic correction)
 #                         (function = spirouEXTOR.extract_tilt_weight2cosm)
-ic_extract_type = '3d' #'3d'
+ic_extract_type = '3d'  #'3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
 ic_ff_extract_type = '3c'
 
@@ -383,7 +383,7 @@ ic_ext_order_plot = 17
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
 #        ONLY USED IF EXTRACT_TYPE = '3d'
-ic_cosmic_sigcut = 0.25 # 0.25
+ic_cosmic_sigcut = 0.25  # 0.25
 
 #    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
 #        to check for cosmics (for each pixel)
@@ -564,6 +564,41 @@ ccf_fit_type = 0
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 25
 
+
+# -----------------------------------------------------------------------------
+#   cal_exposure_meter parameters
+# -----------------------------------------------------------------------------
+
+#  Define the telluric threshold (transmission) to mask at            - [cal_em]
+em_tell_threshold = 0.95
+
+#  Define the minimum wavelength (in nm) to mask at                   - [cal_em]
+em_min_lambda = 1478.7
+
+#  Define the maximum wavelength (in nmm) to mask at                  - [cal_em]
+em_max_lambda = 1823.1
+
+#  Define what size we want the mask                                  - [cal_em]
+#      options are:
+#           - "raw" (4096 x 4096)
+#           - "drs" flipped in x and y and resized by
+#                (ic_ccdx_low, ic_ccdx_high, ic_ccdy_low, ic_ccdy_high
+em_output_type = "all"
+
+#  Define whether to combine with bad pixel mask or not               - [cal_em]
+#     if True badpixel mask is combined if False it is not
+em_combined_badpix = True
+
+#  Define whether to just save wavelength map                         - [cal_em]
+em_save_wave_map = True
+
+#  Define whether to save the telluric spectrum                       - [cal_em]
+em_save_tell_spec = True
+
+#  Define whether to save the exposure meter mask                     - [cal_em]
+em_save_mask_map = True
+
+
 # -----------------------------------------------------------------------------
 #   cal_hc parameters
 # -----------------------------------------------------------------------------
@@ -591,13 +626,19 @@ ic_ll_sp_min = 900
 #
 ic_ll_sp_max = 2400
 
-# Maximum amplitude of the line
+
+
+# Maximum sig-fit of the guessed lines                                - [cal_HC]
+#     fwhm/2.35 of th lines)
+ic_max_sigll_cal_lines = 5.2
+
+# Maximum error on first guess lines                                  - [cal_HC]
+# default = 1
+ic_max_errw_onfit = 1
+
+# Maximum amplitude of the guessed lines                              - [cal_HC]
 # default = 2.0e5
 ic_max_ampl_line = 2.0e8
-
-#
-# default = 1
-ic_max_errw_infit = 1
 
 #
 # default = 50000  or 60000
