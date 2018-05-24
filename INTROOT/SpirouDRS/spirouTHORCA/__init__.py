@@ -22,12 +22,14 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['FirstGuessSolution', 'GetE2DSll', 'Getll', 'Getdll',
-           'GetLampParams']
+__all__ = ['DetectBadLines', 'FirstGuessSolution',
+           'GetE2DSll', 'Getll', 'Getdll', 'GetLampParams']
 
 # =============================================================================
 # Function aliases
 # =============================================================================
+
+DetectBadLines = spirouTHORCA.detect_bad_lines
 
 FirstGuessSolution = spirouTHORCA.first_guess_at_wave_solution
 
