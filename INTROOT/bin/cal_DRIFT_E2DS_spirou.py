@@ -123,13 +123,8 @@ def main(night_name=None, reffile=None):
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-        loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    else:
-        wave0 = 1500. + np.arange(4088.) * 0.011
-        loc['WAVE'] = np.zeros((49, 4088), 'd') + wave0
-        loc.set_source('WAVE', __NAME__ + '.main()')
+    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -139,6 +134,19 @@ def main(night_name=None, reffile=None):
     loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
     loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+
+    # ----------------------------------------------------------------------
+    # Background correction
+    # ----------------------------------------------------------------------
+    # log that we are performing background correction
+    if p['IC_DRIFT_BACK_CORR']==1:
+        WLOG('', p['LOG_OPT'], 'Perform background correction')
+        # get the box size from constants
+        bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+        # Loop around the orders
+        for order_num in range(loc['NUMBER_ORDERS']):
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
+            loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
 
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -230,6 +238,13 @@ def main(night_name=None, reffile=None):
         # get acqtime
         bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
                                         return_value=1)
+
+        if p['IC_DRIFT_BACK_CORR'] == 1:
+            for order_num in range(loc['NUMBER_ORDERS']):
+                miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+                                                  bsize)
+                loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+
         # ------------------------------------------------------------------
         # Compute photon noise uncertainty for iteration file
         # ------------------------------------------------------------------
