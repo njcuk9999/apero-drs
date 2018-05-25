@@ -39,6 +39,17 @@ ic_image_type = "H4RG"
 ic_display_timeout = 0.5
 
 # -----------------------------------------------------------------------------
+#  CFHT variables
+# -----------------------------------------------------------------------------
+
+ic_longit_obs = 155.468876    #CFHT longitude West (deg)
+ic_latit_obs = 19.825252	    #CFHT latitude North (deg)
+ic_altit_obs = 4.204	        #CFHT altitude (km)
+
+
+
+
+# -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
 
@@ -396,6 +407,9 @@ ic_cosmic_thresh = 5
 #   The value of the noise for drift calculation                   - [cal_drift]
 #      snr = flux/sqrt(flux + noise^2)
 ic_drift_noise = 100.0
+
+# Option for the background correction [0/1]                        - [cal_drift]
+ic_drift_back_corr = 0
 
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
