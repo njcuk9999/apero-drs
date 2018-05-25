@@ -1118,7 +1118,8 @@ def coravelation(p, loc):
             # -----------------------------------------------------------------
             # fit the CCF
             fit_args = [rv_ccf, np.array(ccf_o), fit_type]
-            ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            #TODO resolve the bug on fit_ccf
+#            ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
         else:
             # -----------------------------------------------------------------
             # else append empty stats
