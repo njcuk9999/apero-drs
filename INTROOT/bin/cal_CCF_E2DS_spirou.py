@@ -105,8 +105,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get reduced directory + night name
     rdir = p['REDUCED_DIR']
     # construct and test the e2dsfile
-    e2dsfilename = spirouStartup.GetFile(p, rdir, p['E2DSFILE'], 'fp_fp',
-                                         'DRIFT')
+    e2dsfilename = spirouStartup.GetFile(p, rdir, p['E2DSFILE'], None,
+                                         'CCF')
     # get the fiber type
     p['FIBER'] = spirouStartup.GetFiberType(p, e2dsfilename)
     fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
