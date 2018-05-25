@@ -78,7 +78,7 @@ def main(night_name=None, files=None):
     params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
     params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
     p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                       prefixes=['dark_flat', 'flat_dark'],
+                                       prefixes='flat_flat',
                                        add_to_p=params2add, calibdb=True)
 
     # log processing image type
@@ -86,6 +86,9 @@ def main(night_name=None, files=None):
     p.set_source('DPRTYPE', __NAME__ + '/main()')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+
+    p['FIB_TYPE'] = p['FIBER_TYPES']
+    p.set_source('FIB_TYPE', __NAME__ + '__main__()')
 
     # ----------------------------------------------------------------------
     # Check for pre-processed file
@@ -178,7 +181,9 @@ def main(night_name=None, files=None):
     # Fiber loop
     # ----------------------------------------------------------------------
     # loop around fiber types
+#    for fiber in p['FIB_TYPE']:
     for fiber in p['FIB_TYPE']:
+
         # set fiber in p
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()')
