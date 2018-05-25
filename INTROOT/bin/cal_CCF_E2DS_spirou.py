@@ -26,6 +26,7 @@ from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 
+from newbervmain import *
 
 # =============================================================================
 # Define variables
@@ -105,8 +106,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get reduced directory + night name
     rdir = p['REDUCED_DIR']
     # construct and test the e2dsfile
-    e2dsfilename = spirouStartup.GetFile(p, rdir, p['E2DSFILE'], 'fp_fp',
-                                         'DRIFT')
+#    e2dsfilename = spirouStartup.GetFile(p, rdir, p['E2DSFILE'], 'fp_fp',
+#                                         'DRIFT')
+    e2dsfilename = spirouStartup.GetFile(p, rdir, p['E2DSFILE'])
     # get the fiber type
     p['FIBER'] = spirouStartup.GetFiberType(p, e2dsfilename)
     fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
@@ -138,6 +140,40 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
+
+    # ----------------------------------------------------------------------
+    # Read star parameters
+    # ----------------------------------------------------------------------
+    p = spirouImage.ReadParam(p, hdr, 'kw_objra', dtype=str)
+    p = spirouImage.ReadParam(p, hdr, 'kw_objdec', dtype=str)
+    p = spirouImage.ReadParam(p, hdr, 'kw_objequin')
+    p = spirouImage.ReadParam(p, hdr, 'kw_objrapm')
+    p = spirouImage.ReadParam(p, hdr, 'kw_objdecpm')
+    p = spirouImage.ReadParam(p, hdr, 'kw_date_obs', dtype=str)
+    p = spirouImage.ReadParam(p, hdr, 'kw_utc_obs', dtype=str)
+
+    obs_year, obs_month, obs_day = int(p['DATE-OBS'][0:4]), int(p['DATE-OBS'][5:7]), int(p['DATE-OBS'][8:10])
+    utc = p['UTC-OBS'].split(':')
+    obs_hour = float(utc[0]) + float(utc[1]) / 60. + float(utc[2]) / 3600. + p['EXPTIME'] * 3600. / 2.
+    objra = p['OBJRA'].split(':')
+    target_alpha = float(objra[0]) + float(objra[1]) / 60. + float(objra[2]) / 3600.
+    objdec = p['OBJDEC'].split(':')
+    target_delta = float(objdec[0]) + np.sign(float(objdec[0])) * float(objdec[1]) / 60. \
+                + np.sign(float(objdec[0])) * float(objdec[2]) / 3600.
+    target_rapm = p['OBJRAPM']
+    target_decpm = p['OBJDECPM']
+    target_equinox = p['OBJEQUIN']
+
+    #--------------------------------------
+    #  Earth Velocity calculation
+    #--------------------------------------
+
+    WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
+    berv,bjd,bervmax=newbervmain(target_alpha, target_delta, target_equinox,\
+                               obs_year, obs_month, obs_day, obs_hour,\
+                            p['ic_longit_obs'], p['ic_latit_obs'], p['ic_altit_obs'], target_rapm, target_decpm)
+    wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
+    WLOG('info',p['LOG_OPT'], wmsg.format(berv))
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
