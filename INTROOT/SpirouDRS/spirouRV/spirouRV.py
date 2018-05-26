@@ -1632,13 +1632,14 @@ def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
     # if old use FORTRAN
     if method == 'old':
         # need to import
-        from newbervmain import newbervmain
+        from SpirouDRS.fortran import newbervmain
         # pipe to FORTRAN
         berv, bjd, bervmax = newbervmain(ra, dec, equinox, year, month, day,
                                          hour, obs_long, obs_lat, obs_alt,
                                          pmra, pmde)
         # return berv, bjd, bervmax
         return berv, bjd, bervmax
+
 
 
 def fit_ccf(rv, ccf, fit_type):
@@ -1725,7 +1726,7 @@ def test_fit_ccf(x, y, w, aguess, result):
     # imports ONLY for this test function
     plt = sPlt.plt
     # noinspection PyUnresolvedReferences
-    from SpirouDRS.spirouRV import fitgaus
+    from SpirouDRS.fortran import fitgaus
     import time
     # path for plot file (manually set)
     path = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
