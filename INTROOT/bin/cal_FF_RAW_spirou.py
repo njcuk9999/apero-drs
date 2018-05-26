@@ -9,7 +9,6 @@ Created on 2017-11-06 11:32
 
 @author: cook
 
-
 Last modified: 2017-12-11 at 15:11
 
 Up-to-date with cal_FF_RAW_spirou AT-4 V47
