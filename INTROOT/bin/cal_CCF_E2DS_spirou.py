@@ -142,7 +142,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read star parameters
     # ----------------------------------------------------------------------
-    # TODO: remove H2RG compatibility
+    # TODO: remove H2RG dependency
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
         p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
