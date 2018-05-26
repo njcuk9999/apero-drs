@@ -1120,7 +1120,12 @@ def coravelation(p, loc):
             # fit the CCF
             fit_args = [rv_ccf, np.array(ccf_o), fit_type]
             # TODO: Why comment this out?
-            ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            try:
+                ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            except RuntimeError:
+                ll_range, pix_passed = 0.0, 1.0
+                ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+                ccf_o_results = np.zeros(4)
         else:
             # -----------------------------------------------------------------
             # else append empty stats
@@ -1611,7 +1616,7 @@ def earth_velocity_correction(p, loc):
     WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
     args = [target_alpha, target_delta, target_equinox, obs_year, obs_month,
             obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
-            p['IC_ALITIT_OBS'], target_pmra, target_pmde]
+            p['IC_LATIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
     berv, bjd, bervmax = newbervmain(*args)
     # log output
@@ -1619,11 +1624,11 @@ def earth_velocity_correction(p, loc):
     WLOG('info',p['LOG_OPT'], wmsg.format(berv))
 
     # finally save berv, bjd, bervmax to p
-    loc['BERV'], loc['BJD'], loc['BERVMAX'] = berv, bjd, bervmax
-    loc.set_sources(['BERV','BJD', 'BERVMAX'], func_name)
+    loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
+    loc.set_sources(['BERV','BJD', 'BERV_MAX'], func_name)
 
     # return p
-    return p
+    return loc
 
 
 def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
@@ -1634,9 +1639,9 @@ def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
         # need to import
         from SpirouDRS.fortran import newbervmain
         # pipe to FORTRAN
-        berv, bjd, bervmax = newbervmain(ra, dec, equinox, year, month, day,
-                                         hour, obs_long, obs_lat, obs_alt,
-                                         pmra, pmde)
+        args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
+                obs_alt, pmra, pmde]
+        berv, bjd, bervmax = newbervmain.newbervmain(*args)
         # return berv, bjd, bervmax
         return berv, bjd, bervmax
 
