@@ -161,15 +161,17 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Background correction
     # ----------------------------------------------------------------------
-    # log that we are performing background correction
-    if p['IC_DRIFT_BACK_CORR']==1:
-        WLOG('', p['LOG_OPT'], 'Perform background correction')
-        # get the box size from constants
-        bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+    # test whether we want to subtract background
+    if p['IC_DRIFT_BACK_CORR']:
         # Loop around the orders
         for order_num in range(loc['NUMBER_ORDERS']):
-            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
-            loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
+            # get the box size from constants
+            bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+            # Measurethe min and max flux
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+                                                  bsize)
+            # subtract off the background (miny)
+            loc['SPE'][order_num] = loc['SPE'][order_num] - miny
 
     # ----------------------------------------------------------------------
     # Identify FP peaks in reference file
@@ -286,12 +288,15 @@ def main(night_name=None, reffile=None):
         # ----------------------------------------------------------------------
         # Background correction
         # ----------------------------------------------------------------------
-        # Loop around the orders
-        if p['IC_DRIFT_BACK_CORR'] == 1:
+        # test whether we want to subtract background
+        if p['IC_DRIFT_BACK_CORR']:
+            # Loop around the orders
             for order_num in range(loc['NUMBER_ORDERS']):
                 miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
-                                                  bsize)
+                                                      bsize)
+                # subtract off the background (miny)
                 loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+
         # ------------------------------------------------------------------
         # calculate flux ratio
         # ------------------------------------------------------------------
