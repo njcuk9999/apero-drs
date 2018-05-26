@@ -1119,6 +1119,7 @@ def coravelation(p, loc):
             # -----------------------------------------------------------------
             # fit the CCF
             fit_args = [rv_ccf, np.array(ccf_o), fit_type]
+            # TODO: Why comment this out?
             ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
         else:
             # -----------------------------------------------------------------
