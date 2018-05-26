@@ -138,8 +138,9 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     # Analyse results + save to table
     # ----------------------------------------------------------------------
-    WLOG('', p['LOG_OPT'], 'Constructing comparison table')
-    spirouUnitTests.comparison_table(p, errors)
+    if compare:
+        WLOG('', p['LOG_OPT'], 'Constructing comparison table')
+        spirouUnitTests.comparison_table(p, errors)
 
     # ----------------------------------------------------------------------
     # Print timings

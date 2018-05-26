@@ -9,7 +9,6 @@ Created on 2017-11-06 11:32
 
 @author: cook
 
-
 Last modified: 2017-12-11 at 15:11
 
 Up-to-date with cal_FF_RAW_spirou AT-4 V47
@@ -74,12 +73,20 @@ def main(night_name=None, files=None):
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
     # run specific start up
-    params2add = dict()
-    params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
-    params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-    p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                       prefixes=['dark_flat', 'flat_dark'],
-                                       add_to_p=params2add, calibdb=True)
+    # TODO: remove H2RG dependency
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
+                                           prefixes=['flat_flat'],
+                                           calibdb=True)
+        p['FIB_TYPE'] = p['FIBER_TYPES']
+        p.set_source('FIB_TYPE', __NAME__ + '__main__()')
+    else:
+        params2add = dict()
+        params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
+        params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
+        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
+                                           prefixes=['dark_flat', 'flat_dark'],
+                                           add_to_p=params2add, calibdb=True)
 
     # log processing image type
     p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
@@ -182,6 +189,15 @@ def main(night_name=None, files=None):
         # set fiber in p
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()')
+
+        # get fiber parameters
+        # TODO: remove H2RG dependency
+        if p['IC_IMAGE_TYPE'] == 'H4RG':
+            params2add = spirouLOCOR.FiberParams(p, p['FIBER'])
+            for param in params2add:
+                p[param] = params2add[param]
+                p.set_source(param, __NAME__ + '.main()')
+
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------

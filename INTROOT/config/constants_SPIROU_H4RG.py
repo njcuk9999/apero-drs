@@ -39,6 +39,18 @@ ic_image_type = "H4RG"
 ic_display_timeout = 0.5
 
 # -----------------------------------------------------------------------------
+#  CFHT variables
+# -----------------------------------------------------------------------------
+
+#  Defines the CFHT longitude West (deg)                             - [cal_CCF]
+ic_longit_obs = 155.468876
+#  Defines the CFHT latitude North (deg)                             - [cal_CCF]
+ic_latit_obs = 19.825252
+#  Defines the CFHT altitude (km)                                    - [cal_CCF]
+ic_altit_obs = 4.204
+
+
+# -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
 
@@ -397,6 +409,9 @@ ic_cosmic_thresh = 5
 #      snr = flux/sqrt(flux + noise^2)
 ic_drift_noise = 100.0
 
+#  Option for the background correction [0/1]                      - [cal_drift]
+ic_drift_back_corr = 0
+
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
 
@@ -616,18 +631,6 @@ ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
 #  Define the type of catalogue to use for each lamp type             - [cal_HC]
 ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
 
-#
-# default = 5
-ic_ll_degr_fit = 4
-
-#
-ic_ll_sp_min = 900
-
-#
-ic_ll_sp_max = 2400
-
-
-
 # Maximum sig-fit of the guessed lines                                - [cal_HC]
 #     fwhm/2.35 of th lines)
 ic_max_sigll_cal_lines = 5.2
@@ -640,18 +643,6 @@ ic_max_errw_onfit = 1
 # default = 2.0e5
 ic_max_ampl_line = 2.0e8
 
-#
-# default = 50000  or 60000
-ic_resol = 55000
-
-#
-# default = 3   or 2.6
-ic_ll_free_span = 3
-
-#
-# default = 16.8
-ic_hc_noise = 30
-
 #  Defines order to which the solution is calculated                  - [cal_HC]
 #      previously called n_ord_final
 cal_hc_n_ord_final = 24
@@ -659,7 +650,35 @@ cal_hc_n_ord_final = 24
 #  Defines echeele of first extracted order
 cal_hc_t_order_start = 66
 
-#
+# Define the minimum instrumental error                               - [cal_HC]
+ic_errx_min = 0.03
+
+#  Define the wavelength fit polynomial order                         - [cal_HC]
+# default = 5
+ic_ll_degr_fit = 4
+
+#  Define the max rms for the sigma-clip fit ll                       - [cal_HC]
+ic_max_llfit_rms = 3.0
+
+# NOT USED YET
+# default = 50000  or 60000
+ic_resol = 55000
+
+# NOT USED YET
+# default = 3   or 2.6
+ic_ll_free_span = 3
+
+# NOT USED YET
+# default = 16.8
+ic_hc_noise = 30
+
+# NOT USED YET
+ic_ll_sp_min = 900
+
+# NOT USED YET
+ic_ll_sp_max = 2400
+
+# NOT USED YET
 ic_ll_smooth = 0
 
 
