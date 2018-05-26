@@ -39,6 +39,18 @@ ic_image_type = "H2RG"
 ic_display_timeout = 0.5
 
 # -----------------------------------------------------------------------------
+#  CFHT variables
+# -----------------------------------------------------------------------------
+
+#  Defines the CFHT longitude West (deg)                             - [cal_CCF]
+ic_longit_obs = 155.468876
+#  Defines the CFHT latitude North (deg)                             - [cal_CCF]
+ic_latit_obs = 19.825252
+#  Defines the CFHT altitude (km)                                    - [cal_CCF]
+ic_altit_obs = 4.204
+
+
+# -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
 
