@@ -1,5 +1,5 @@
 # define detector type (default = H4RG)
-type = "H2RG"
+type = H4RG
 
 # define whether we run the comparison with old drs (default = False)
 comparison = False
@@ -7,4 +7,4 @@ comparison = False
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
-run020 = ['cal_exposure_meter', '20170710', 'flat_dark02f10.fits']
+run019 = ['cal_CCF_E2DS_spirou', 'AT5/20180409', 'hcone_hcone_001_pp_e2ds_C.fits', 'UrNe.mas', 0, 10, 0.1]

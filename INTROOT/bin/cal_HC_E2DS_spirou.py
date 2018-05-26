@@ -44,9 +44,9 @@ ParamDict = spirouConfig.ParamDict
 #def main(night_name=None, files=None):
 if __name__ == '__main__':
     night_name = '20170710'
-    files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
-             'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
-             'hcone_hcone06c61_e2ds_AB.fits']
+    files = ['hcone_hcone02c61_e2ds_AB.fits']   #, 'hcone_hcone03c61_e2ds_AB.fits',
+             # 'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
+             # 'hcone_hcone06c61_e2ds_AB.fits']
 
     # ----------------------------------------------------------------------
     # Set up
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         # FIXME: Cannot get same number of lines identified
         # Question: Tried with python gaussian fitting
         # Question: Tried with Fortran fitgaus.fitgaus
-        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='old')
+        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='new')
 
         # ------------------------------------------------------------------
         # Detect bad fit filtering and saturated lines

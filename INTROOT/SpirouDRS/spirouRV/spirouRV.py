@@ -1032,8 +1032,6 @@ def coravelation(p, loc):
     # -------------------------------------------------------------------------
     # get constants from p
     # -------------------------------------------------------------------------
-    berv = p['CCF_BERV']
-    berv_max = p['CCF_BERV_MAX']
     trv = p['TARGET_RV']
     ccf_width = p['CCF_WIDTH']
     ccf_step = p['CCF_STEP']
@@ -1054,6 +1052,9 @@ def coravelation(p, loc):
     s2d = loc['E2DSFF']
     # get the blaze values
     blaze = loc['BLAZE']
+    # get the Barycentric Earth Velocity calculation
+    berv = loc['BERV']
+    berv_max = loc['BERV_MAX']
     # -------------------------------------------------------------------------
     # log that we are computing ccf
     wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
@@ -1118,7 +1119,13 @@ def coravelation(p, loc):
             # -----------------------------------------------------------------
             # fit the CCF
             fit_args = [rv_ccf, np.array(ccf_o), fit_type]
-            ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            # TODO: Why comment this out?
+            try:
+                ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            except RuntimeError:
+                ll_range, pix_passed = 0.0, 1.0
+                ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+                ccf_o_results = np.zeros(4)
         else:
             # -----------------------------------------------------------------
             # else append empty stats
@@ -1571,6 +1578,75 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
+def earth_velocity_correction(p, loc):
+    func_name = __NAME__ + '.earth_velocity_correction()'
+    # get the observation date
+    obs_year = int(p['DATE-OBS'][0:4])
+    obs_month = int(p['DATE-OBS'][5:7])
+    obs_day = int(p['DATE-OBS'][8:10])
+    #get the UTC observation time
+    utc = p['UTC-OBS'].split(':')
+    # convert to hours
+    hourpart = float(utc[0])
+    minpart = float(utc[1]) / 60.
+    secondpart = float(utc[2]) / 3600.
+    exptimehours = p['EXPTIME'] * 3600. / 2.
+    obs_hour = hourpart + minpart + secondpart + exptimehours
+    # get the RA in hours
+    objra = p['OBJRA'].split(':')
+    ra_hour = float(objra[0])
+    ra_min = float(objra[1]) / 60.
+    ra_second = float(objra[2]) / 3600.
+    target_alpha = ra_hour + ra_min + ra_second
+    # get the DEC in degrees
+    objdec = p['OBJDEC'].split(':')
+    dec_hour = float(objdec[0])
+    dec_min = np.sign(float(objdec[0])) * float(objdec[1]) / 60.
+    dec_second = np.sign(float(objdec[0])) * float(objdec[2]) / 3600.
+    target_delta = dec_hour + dec_min + dec_second
+    # set the proper motion and equinox
+    target_pmra = p['OBJRAPM']
+    target_pmde = p['OBJDECPM']
+    target_equinox = p['OBJEQUIN']
+
+    #--------------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #--------------------------------------------------------------------------
+
+    WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
+    args = [target_alpha, target_delta, target_equinox, obs_year, obs_month,
+            obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
+            p['IC_LATIT_OBS'], target_pmra, target_pmde]
+    # calculate BERV
+    berv, bjd, bervmax = newbervmain(*args)
+    # log output
+    wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
+    WLOG('info',p['LOG_OPT'], wmsg.format(berv))
+
+    # finally save berv, bjd, bervmax to p
+    loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
+    loc.set_sources(['BERV','BJD', 'BERV_MAX'], func_name)
+
+    # return p
+    return loc
+
+
+def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
+                obs_lat, obs_alt, pmra, pmde, method='old'):
+
+    # if old use FORTRAN
+    if method == 'old':
+        # need to import
+        from SpirouDRS.fortran import newbervmain
+        # pipe to FORTRAN
+        args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
+                obs_alt, pmra, pmde]
+        berv, bjd, bervmax = newbervmain.newbervmain(*args)
+        # return berv, bjd, bervmax
+        return berv, bjd, bervmax
+
+
+
 def fit_ccf(rv, ccf, fit_type):
     """
     Fit the CCF to a guassian function
@@ -1655,7 +1731,7 @@ def test_fit_ccf(x, y, w, aguess, result):
     # imports ONLY for this test function
     plt = sPlt.plt
     # noinspection PyUnresolvedReferences
-    from SpirouDRS.spirouRV import fitgaus
+    from SpirouDRS.fortran import fitgaus
     import time
     # path for plot file (manually set)
     path = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
@@ -1698,9 +1774,6 @@ def test_fit_ccf(x, y, w, aguess, result):
     # turn back on interactive plotting if it was on before
     if on:
         plt.interactive('on')
-
-
-
 
 
 # =============================================================================

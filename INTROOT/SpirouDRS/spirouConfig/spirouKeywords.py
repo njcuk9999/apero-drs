@@ -115,7 +115,14 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_EM_TILT',
             'kw_EM_MINWAVE',
             'kw_EM_MAXWAVE',
-            'kw_EM_TRASCUT']
+            'kw_EM_TRASCUT',
+            'kw_DATE_OBS',
+            'kw_UTC_OBS',
+            'kw_OBJRA',
+            'kw_OBJDEC',
+            'kw_OBJEQUIN',
+            'kw_OBJRAPM',
+            'kw_OBJDECPM']
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -205,6 +212,27 @@ if p['IC_IMAGE_TYPE'] == 'H4RG':
     kw_ACQTIME_KEY_UNIX = ['MJDATE', None, '']
 else:
     kw_ACQTIME_KEY_UNIX = ['ACQTIME', None, '']
+
+# define the observation date HEADER key
+kw_DATE_OBS = ['DATE-OBS', None, '']
+
+# define the observation time HEADER key
+kw_UTC_OBS = ['UTC-OBS', None, '']
+
+# define the observation ra HEADER key
+kw_OBJRA = ['OBJRA', None, '']
+
+# define the observation dec HEADER key
+kw_OBJDEC = ['OBJDEC', None, '']
+
+# define the observation equinox HEADER key
+kw_OBJEQUIN = ['OBJEQUIN', None, '']
+
+# define the observation proper motion in ra HEADER key
+kw_OBJRAPM = ['OBJRAPM', None, '']
+
+# define the observation proper motion in dec HEADER key
+kw_OBJDECPM = ['OBJDECPM', None, '']
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 kw_RDNOISE = ['RDNOISE', None, '']

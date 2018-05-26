@@ -121,7 +121,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc = ParamDict()
     loc['E2DS'] = e2ds
     loc['NUMBER_ORDERS'] = nbo
-    loc.set_sources(['e2ds', 'number_orders'], __NAME__ + '/main()')
+    loc.set_sources(['E2DS', 'number_orders'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
@@ -138,6 +138,28 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
+
+    # ----------------------------------------------------------------------
+    # Read star parameters
+    # ----------------------------------------------------------------------
+    # TODO: remove H2RG dependency
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
+
+    #-----------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #-----------------------------------------------------------------------
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        loc = spirouRV.EarthVelocityCorrection(p, loc)
+    else:
+        loc['BERV'], loc['BERV_MAX'] = 0.0, 0.0
+        loc.set_sources(['BERV', 'BERV_MAX'], __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
