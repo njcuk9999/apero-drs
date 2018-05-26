@@ -140,6 +140,28 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     p['KW_CCD_CONAD'][1] = p['GAIN']
 
     # ----------------------------------------------------------------------
+    # Read star parameters
+    # ----------------------------------------------------------------------
+    # TODO: remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OJBEQUIN')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
+
+    #-----------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #-----------------------------------------------------------------------
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        loc = spirouRV.EarthVelocityCorrection(p, loc)
+    else:
+        loc['BERV'], loc['BERV_MAX'] = 0.0, 0.0
+        loc.set_sources(['BERV', 'BERV_MAX'], __NAME__ + '.main()')
+
+    # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # log
