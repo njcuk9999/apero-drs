@@ -1647,6 +1647,9 @@ def display_drs_title(p):
     # Log title
     display_title(title)
 
+    if p['DRS_DEBUG'] == 42:
+        display_ee()
+
 
 def display_title(title):
     """
@@ -1661,6 +1664,29 @@ def display_title(title):
     WLOG('', '',
          '{0}'.format(title))
     WLOG('', '', HEADER)
+
+
+def display_ee():
+
+    bcolors = spirouConfig.Constants.BColors
+
+    logo = ['',
+    '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
+    '    `ohmmmmmmmmmdy: +mmmmmmmmmmmmmy- `ydmmmh: sdddmmmmmmddho-                               ',
+    '   `ymmmmmdmmmmmmmd./mmmmmmhhhmmmmmm-/mmmmmmo ymmmmmmmmmmmmmmo                              ',
+    '   /mmmmm:.-:+ydmm/ :mmmmmy``.smmmmmo.ydmdho` ommmmmhsshmmmmmm.      ```                    ',
+    '   ommmmmhs+/-..::  .mmmmmmoshmmmmmd- `.-::-  +mmmmm:  `hmmmmm`  `-/+ooo+:.   .:::.   .:/// ',
+    '   .dmmmmmmmmmdyo.   mmmmmmmmmmmddo. oyyyhm/  :mmmmmy+osmmmmms  `osssssssss+` /sss-   :ssss ',
+    '    .ohdmmmmmmmmmmo  dmmmmmdo+/:.`   ymmmmm/  .mmmmmmmmmmmmms`  +sss+..-ossso`+sss-   :ssss ',
+    '   --.`.:/+sdmmmmmm: ymmmmmh         ymmmmm/   mmmmmmmmmddy-    ssss`   :ssss.osss.   :ssss ',
+    '  +mmmhs/-.-smmmmmm- ommmmmm`        hmmmmm/   dmmmmm/sysss+.  `ssss-  `+ssss`osss`   :ssss ',
+    ' -mmmmmmmmmmmmmmmms  /mmmmmm.        hmmmmm/   ymmmmm``+sssss/` /sssso+sssss- +sss:` .ossso ',
+    ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
+    '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
+              '']
+
+    for line in logo:
+        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC)
 
 
 def display_initial_parameterisation(p):
@@ -1768,7 +1794,6 @@ def display_custom_args(p, customargs):
 
     :return None:
     """
-
     wmsg = 'Now running : {0} with: '.format(p['PROGRAM'])
 
     WLOG('', p['LOG_OPT'], wmsg)
