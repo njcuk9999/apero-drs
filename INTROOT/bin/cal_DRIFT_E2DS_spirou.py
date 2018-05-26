@@ -18,6 +18,7 @@ from __future__ import division
 import numpy as np
 import os
 
+from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
