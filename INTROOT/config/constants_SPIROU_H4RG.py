@@ -409,6 +409,9 @@ ic_cosmic_thresh = 5
 #      snr = flux/sqrt(flux + noise^2)
 ic_drift_noise = 100.0
 
+# Option for the background correction [0/1]                        - [cal_drift]
+ic_drift_back_corr = 0
+
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
 

@@ -162,13 +162,14 @@ def main(night_name=None, reffile=None):
     # Background correction
     # ----------------------------------------------------------------------
     # log that we are performing background correction
-    WLOG('', p['LOG_OPT'], 'Perform background correction')
-    # get the box size from constants
-    bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
-    # Loop around the orders
-    for order_num in range(loc['NUMBER_ORDERS']):
-        miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
-        loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
+    if p['IC_DRIFT_BACK_CORR']==1:
+        WLOG('', p['LOG_OPT'], 'Perform background correction')
+        # get the box size from constants
+        bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+        # Loop around the orders
+        for order_num in range(loc['NUMBER_ORDERS']):
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
+            loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
 
     # ----------------------------------------------------------------------
     # Identify FP peaks in reference file
@@ -286,10 +287,11 @@ def main(night_name=None, reffile=None):
         # Background correction
         # ----------------------------------------------------------------------
         # Loop around the orders
-        for order_num in range(loc['NUMBER_ORDERS']):
-            miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+        if p['IC_DRIFT_BACK_CORR'] == 1:
+            for order_num in range(loc['NUMBER_ORDERS']):
+                miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
                                                   bsize)
-            loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+                loc['SPE'][order_num] = loc['SPE'][order_num] - miny
         # ------------------------------------------------------------------
         # calculate flux ratio
         # ------------------------------------------------------------------
