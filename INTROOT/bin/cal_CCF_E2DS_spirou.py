@@ -121,7 +121,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc = ParamDict()
     loc['E2DS'] = e2ds
     loc['NUMBER_ORDERS'] = nbo
-    loc.set_sources(['e2ds', 'number_orders'], __NAME__ + '/main()')
+    loc.set_sources(['E2DS', 'number_orders'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
@@ -146,7 +146,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
         p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
-        p = spirouImage.ReadParam(p, hdr, 'KW_OJBEQUIN')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
         p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
         p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
         p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
