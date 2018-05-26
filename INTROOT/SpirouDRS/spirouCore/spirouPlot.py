@@ -1010,7 +1010,7 @@ def ext_spectral_order_plot(p, loc):
     extraction = loc['E2DS'][selected_order]
     # select wavelength solution
     wave = loc['WAVE'][selected_order]
-    xlabel = 'Wavelength [$\AA$]'
+    xlabel = 'Wavelength [nm]'  #[$\AA$]
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1077,7 +1077,7 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     frame.plot(wave, extraction)
     # set title labels limits
     title = 'spectral order {0} fiber {1}'
-    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber))
     # turn off interactive plotting
     if not plt.isinteractive():
@@ -1488,7 +1488,7 @@ def drift_peak_plot_llpeak_amps(p, loc):
     frame.plot(llpeak[mask1], logamppeak[mask1], linestyle='none')
     frame.plot(llpeak[mask2], logamppeak[mask2], linestlye='none')
     # set title labels limits
-    frame.set(xlabel='Wavelength [$\AA$]', ylabel='flux',
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title='$log_{10}$(Max Amplitudes)')
     # turn off interactive plotting
     if not plt.isinteractive():
