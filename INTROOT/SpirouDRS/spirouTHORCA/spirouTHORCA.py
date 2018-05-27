@@ -9,6 +9,8 @@ Created on 2017-12-19 at 16:20
 
 """
 from __future__ import division
+from astropy import constants as cc
+from astropy import units as uu
 import numpy as np
 import warnings
 
@@ -36,6 +38,8 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
+# Speed of light
+c = cc.c.to(uu.km/uu.s).value
 
 
 # =============================================================================
@@ -352,7 +356,7 @@ def detect_bad_lines(p, loc, key=None):
         # Criteria 2
         # ---------------------------------------------------------------------
         # calculate the sig-fit for the lines
-        sigll = lines[:, 1]/lines[:, 0] * 300000
+        sigll = lines[:, 1]/lines[:, 0] * c
         # create mask
         badsig = sigll >= max_error_sigll
         # count number of bad sig lines
@@ -416,7 +420,7 @@ def fit_1d_solution(p, loc):
     centpix = loc['LL_OUT'].shape[1]//2
     # get the mean pixel scale (in km/s/pixel) of the central pixel
     norm = loc['DLL_OUT'][:, centpix]/loc['LL_OUT'][:, centpix]
-    meanpixscale = 300000 * np.sum(norm)/len(loc['LL_OUT'][:, centpix])
+    meanpixscale = c * np.sum(norm)/len(loc['LL_OUT'][:, centpix])
     # log message
     wmsg = 'On fiber {0} mean pixel scale at center: {1:.4f} [km/s/pixel]'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], meanpixscale))
@@ -904,7 +908,7 @@ def fit_1d_ll_solution(p, loc):
         # ---------------------------------------------------------------------
         # work out conversion factor
         # TODO: speed of light proper!
-        convert = 300000 / (final_dxdl[order_num] * final_details[order_num][0])
+        convert = c / (final_dxdl[order_num] * final_details[order_num][0])
         # sum the weights (recursively)
         sweight += np.sum(weight)
         # sum the weighted residuals in km/s
@@ -915,7 +919,7 @@ def fit_1d_ll_solution(p, loc):
         scale.append(convert)
     # calculate the final var and mean
     final_mean = (wsumres / sweight)
-    final_var = (wsumres2 / sweight) + (final_mean ** 2)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # log the global stats
     total_lines = np.sum(final_iter[:, 2])
     wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
@@ -939,8 +943,68 @@ def fit_1d_ll_solution(p, loc):
 
 
 def invert_1ds_ll_solution(p, loc):
-    pass
-
+    func_name = __NAME__ + '.invert_1ds_ll_solution()'
+    # get constants from p
+    fit_degree = p['IC_LL_DEGR_FIT']
+    # get data from loc
+    details = loc['FINAL_DETAILS']
+    iter = loc['FINAL_ITER']
+    # Get the number of orders
+    num_orders = loc['LL_INIT'].shape[0]
+    # loop around orders
+    inv_details = []
+    inv_params = []
+    sweight = 0.0
+    wsumres = 0.0
+    wsumres2 = 0.0
+    for order_num in np.arange(num_orders):
+        # get the lines and wavelength fit for this order
+        lines = details[order_num][0]
+        cfit = details[order_num][2]
+        wei = details[order_num][3]
+        # get the number of lines
+        num_lines = len(lines)
+        # set weights
+        weight = np.ones(num_lines, dtype=float)
+        # get fit coefficients
+        coeffs = np.polyfit(cfit, lines, fit_degree, w=weight)[::-1]
+        # get the y values for the coefficients
+        icfit = np.polyval(coeffs[::-1], cfit)
+        # work out the residuals
+        res = icfit - lines
+        # work out the normalised res in km/s
+        nres = c * (res / lines)
+        # append values to storage
+        inv_details.append([nres, wei])
+        inv_params.append(coeffs)
+        # ---------------------------------------------------------------------
+        # invert parameters
+        # ---------------------------------------------------------------------
+        # sum the weights (recursively)
+        sweight += np.sum(wei)
+        # sum the weighted residuals in km/s
+        wsumres += np.sum(nres * wei)
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.sum(wei * nres **2)
+    # calculate the final var and mean
+    final_mean = (wsumres / sweight)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the invertion process
+    total_lines = np.sum(iter[:, 2])
+    wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+             np.sqrt(final_var * 1000.0 / total_lines)]
+    wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'
+            '(error on mean value:{2:.2f}[m/s])'.format(*wargs))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    # save outputs to loc
+    loc['LL_MEAN'] = final_mean
+    loc['LL_VAR'] = final_var
+    loc['INV_PARAM'] = inv_params
+    loc['INV_DETAILS'] = inv_details
+    sources = ['LL_MEAN',  'LL_VAR', 'INV_PARAM', 'INV_DETAILS']
+    loc.set_sources(sources, func_name)
+    # return loc
+    return loc
 
 
 # =============================================================================
