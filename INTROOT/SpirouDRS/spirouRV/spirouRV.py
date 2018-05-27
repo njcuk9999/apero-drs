@@ -1578,7 +1578,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
-def earth_velocity_correction(p, loc):
+def earth_velocity_correction(p, loc, method='old'):
     func_name = __NAME__ + '.earth_velocity_correction()'
     # get the observation date
     obs_year = int(p['DATE-OBS'][0:4])
@@ -1590,7 +1590,7 @@ def earth_velocity_correction(p, loc):
     hourpart = float(utc[0])
     minpart = float(utc[1]) / 60.
     secondpart = float(utc[2]) / 3600.
-    exptimehours = p['EXPTIME'] * 3600. / 2.
+    exptimehours = (p['EXPTIME'] / 3600.) / 2.
     obs_hour = hourpart + minpart + secondpart + exptimehours
     # get the RA in hours
     objra = p['OBJRA'].split(':')
@@ -1618,7 +1618,7 @@ def earth_velocity_correction(p, loc):
             obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
             p['IC_LATIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
-    berv, bjd, bervmax = newbervmain(*args)
+    berv, bjd, bervmax = newbervmain(*args, method=method)
     # log output
     wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
     WLOG('info',p['LOG_OPT'], wmsg.format(berv))
@@ -1634,6 +1634,9 @@ def earth_velocity_correction(p, loc):
 def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
                 obs_lat, obs_alt, pmra, pmde, method='old'):
 
+    print(ra, dec, equinox, year, month, day, hour, obs_long,
+                obs_lat, obs_alt, pmra, pmde,)
+
     # if old use FORTRAN
     if method == 'old':
         # need to import
@@ -1644,6 +1647,38 @@ def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
         berv, bjd, bervmax = newbervmain.newbervmain(*args)
         # return berv, bjd, bervmax
         return berv, bjd, bervmax
+
+
+    if method == 'new':
+
+        # calculate JD time
+        from astropy.time import Time
+
+        seconds = hour * 3600
+        hh = seconds // 3600
+        mm = (seconds % 3600) // 60
+        ss = seconds - hh*3600 - mm*60
+
+        tstr = '{0:04.0f}-{1:02.0f}-{2:02.0f} {3:02.0f}:{4:02.0f}:{5:.2f}'
+
+        print(hour)
+        print(tstr.format(year, month, day, hh, mm, ss))
+
+        t = Time(tstr.format(year, month, day, hh, mm, ss), scale='utc')
+        jdutc = t.jd
+
+        # need import
+        import barycorrpy
+
+        bkwargs = dict(JDUTC=[jdutc], ra=ra, dec=dec, epoch=equinox,
+                       pmra=pmra, pmdec=pmde, px=0.0, rv=0.0,
+                       lat=obs_lat, longi=obs_lat, alt=obs_long,
+                       zmeas=0.0)
+        berv, _, _ = barycorrpy.get_BC_vel(**bkwargs)
+
+        return berv[0]/1000.0, 0.0, berv[0]/1000.0
+
+
 
 
 
