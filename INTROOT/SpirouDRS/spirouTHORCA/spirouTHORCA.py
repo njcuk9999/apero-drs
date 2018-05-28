@@ -39,8 +39,8 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
 # Speed of light
-c = cc.c.to(uu.km/uu.s).value
-
+# c = cc.c.to(uu.km/uu.s).value
+c = 300000
 
 # =============================================================================
 # Define functions
@@ -409,13 +409,11 @@ def fit_1d_solution(p, loc):
     # invert solution
     loc = invert_1ds_ll_solution(p, loc)
     # get the shape
-    nx, nbo = loc['FINAL_LL_PARAM'].shape
-    # reshape param array
-    params_ll_out = loc['FINAL_LL_FIT'].reshape(nx, nbo)
+    nx, nbo = loc['INV_PARAM'].shape
     # get new line list
-    loc['LL_OUT'] = get_ll_from_coefficients(params_ll_out, nx, nbo)
+    loc['LL_OUT'] = get_ll_from_coefficients(loc['INV_PARAM'], nx, nbo)
     # get the first derivative of the line list
-    loc['DLL_OUT'] = get_dll_from_coefficients(params_ll_out, nx, nbo)
+    loc['DLL_OUT'] = get_dll_from_coefficients(loc['INV_PARAM'], nx, nbo)
     # find the central pixel value
     centpix = loc['LL_OUT'].shape[1]//2
     # get the mean pixel scale (in km/s/pixel) of the central pixel
@@ -908,15 +906,20 @@ def fit_1d_ll_solution(p, loc):
         # ---------------------------------------------------------------------
         # work out conversion factor
         # TODO: speed of light proper!
-        convert = c / (final_dxdl[order_num] * final_details[order_num][0])
+        convert = c / (dxdl * details[-1][0])
+        # get res1
+        res1 = details[-1][1] - details[-1][2]
         # sum the weights (recursively)
-        sweight += np.sum(weight)
+        sweight += np.sum(details[-1][3])
         # sum the weighted residuals in km/s
-        wsumres += np.sum(res * convert * weight)
+        wsumres += np.sum(res1 * convert * details[-1][3])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(weight * (res * convert) ** 2 )
+        wsumres2 += np.sum(details[-1][3] * (res1 * convert) ** 2 )
         # store the conversion to km/s
         scale.append(convert)
+    # convert to arrays
+    final_iter = np.array(final_iter)
+    final_param = np.array(final_param)
     # calculate the final var and mean
     final_mean = (wsumres / sweight)
     final_var = (wsumres2 / sweight) - (final_mean ** 2)
@@ -924,7 +927,7 @@ def fit_1d_ll_solution(p, loc):
     total_lines = np.sum(final_iter[:, 2])
     wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
     wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
-              total_lines, np.sqrt(final_var * 1000.0 / total_lines)]
+              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
     wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
              'value:{3:.2f}[m/s])'.format(*wargs2))
     WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
@@ -992,14 +995,14 @@ def invert_1ds_ll_solution(p, loc):
     # log the invertion process
     total_lines = np.sum(iter[:, 2])
     wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
-             np.sqrt(final_var * 1000.0 / total_lines)]
+             1000.0 * np.sqrt(final_var / total_lines)]
     wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'
             '(error on mean value:{2:.2f}[m/s])'.format(*wargs))
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
     # save outputs to loc
     loc['LL_MEAN'] = final_mean
     loc['LL_VAR'] = final_var
-    loc['INV_PARAM'] = inv_params
+    loc['INV_PARAM'] = np.array(inv_params)
     loc['INV_DETAILS'] = inv_details
     sources = ['LL_MEAN',  'LL_VAR', 'INV_PARAM', 'INV_DETAILS']
     loc.set_sources(sources, func_name)
