@@ -130,6 +130,10 @@ if __name__ == '__main__':
         # clean lines
         loc = spirouTHORCA.DetectBadLines(p, loc)
 
+        # TODO: Remove this (loads old DRS data)
+        import numpy as np
+        loc['ALL_LINES'] = np.load('/home/ncook/Downloads/spirou_old/th_LINES.npy', encoding='bytes')
+
         # ------------------------------------------------------------------
         # Fit wavelength solution on identified lines
         # ------------------------------------------------------------------
