@@ -579,6 +579,18 @@ ccf_fit_type = 0
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 25
 
+#  Define the mode to work out the Earth Velocity calculation        - [cal_CCF]
+#      Options are:
+#           - "off" - berv is set to zero
+#           - "old" - berv is calculated with FORTRAN newbervmain.f
+#             WARNING: requires newbervmain.f to be compiled
+#                      with f2py -c -m newbervmain --noopt --quiet newbervmain.f
+#                      located in the SpirouDRS/fortran directory
+#           - "new" - berv is calculated using barycorrpy  but needs to be
+#                     installed (i.e. pip install barycorrpy)
+#                     CURRENTLY NOT WORKING!!!
+ccf_bervmode = "off"
+
 
 # -----------------------------------------------------------------------------
 #   cal_exposure_meter parameters
