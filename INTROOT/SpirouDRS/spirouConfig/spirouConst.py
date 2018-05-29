@@ -167,6 +167,57 @@ def CDATA_REL_FOLDER():
     return const_data_folder
 
 
+def CCF_MASK_DIR():
+    """
+    Define the ccf mask dir relative path
+
+    :return reldir: str, the relative path
+    """
+
+    ccf_mask_dir = './data/ccf_masks'
+    return ccf_mask_dir
+
+
+def BADPIX_DIR():
+    """
+    Define the badpix dir relative path
+
+    :return reldir: str, the relative path
+    """
+
+    badpix_dir = './data/badpix'
+    return badpix_dir
+
+
+def BARYCORRPY_DIR():
+    """
+    Define barycorrpy dir relative path
+
+    :return reldir: str, the relative path
+    """
+
+    barycorrpy_dir = './data/barcorrpy'
+    return barycorrpy_dir
+
+
+def RESET_CALIBDB_DIR():
+    """
+    Define the reset dir relative path
+    :return:
+    """
+    reset_calibdb_dir = './data/reset_calibDB'
+    return reset_calibdb_dir
+
+
+def WAVELENGTH_CATS_DIR():
+    """
+    Define the wavelength catalogues dir relative path
+    :return:
+    """
+    wavelength_cats_dir = './data/wavelength_cats'
+    return wavelength_cats_dir
+
+
 # =============================================================================
 # Get constants from constant file
 # =============================================================================
