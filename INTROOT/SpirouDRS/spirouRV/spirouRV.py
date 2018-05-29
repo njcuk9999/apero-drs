@@ -1613,7 +1613,7 @@ def earth_velocity_correction(p, loc, method='old'):
     #--------------------------------------------------------------------------
 
     WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
-    args = [target_alpha, target_delta, target_equinox, obs_year, obs_month,
+    args = [p, target_alpha, target_delta, target_equinox, obs_year, obs_month,
             obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
             p['IC_LATIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
@@ -1630,11 +1630,13 @@ def earth_velocity_correction(p, loc, method='old'):
     return loc
 
 
-def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
+def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
                 obs_lat, obs_alt, pmra, pmde, method='old'):
 
-    print(ra, dec, equinox, year, month, day, hour, obs_long,
-                obs_lat, obs_alt, pmra, pmde,)
+    # if method is off return zeros
+    if method == 'off':
+        WLOG('warning', p['LOG_OPT'], 'BERV not calculated.')
+        return 0.0, 0.0, 0.0
 
     # if old use FORTRAN
     if method == 'old':
@@ -1643,39 +1645,49 @@ def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
         # pipe to FORTRAN
         args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
                 obs_alt, pmra, pmde]
-        berv, bjd, bervmax = newbervmain.newbervmain(*args)
+        berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
         # return berv, bjd, bervmax
-        return berv, bjd, bervmax
+        return berv1, bjd1, bervmax1
 
 
     if method == 'new':
-
-        # calculate JD time
-        from astropy.time import Time
-
-        seconds = hour * 3600
-        hh = seconds // 3600
-        mm = (seconds % 3600) // 60
-        ss = seconds - hh*3600 - mm*60
-
-        tstr = '{0:04.0f}-{1:02.0f}-{2:02.0f} {3:02.0f}:{4:02.0f}:{5:.2f}'
-
-        print(hour)
-        print(tstr.format(year, month, day, hh, mm, ss))
-
-        t = Time(tstr.format(year, month, day, hh, mm, ss), scale='utc')
-        jdutc = t.jd
+        # calculate JD time (as Astropy.Time object)
+        from astropy.time import Time, TimeDelta
+        from astropy import units as uu
+        tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+        t = Time(tstr, scale='utc')
+        # add exposure time
+        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        t1 = t + tdelta
+        # ---------------------------------------------------------------------
+        # get reset directory location
+        # get package name and relative path
+        package = spirouConfig.Constants.PACKAGE()
+        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+        # get absolute folder path from package and relfolder
+        absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+        # get barycorrpy folder
+        data_folder = os.path.join(absfolder, 'barycorrpy', '')
+        # ---------------------------------------------------------------------
 
         # need import
         import barycorrpy
 
-        bkwargs = dict(JDUTC=[jdutc], ra=ra, dec=dec, epoch=equinox,
-                       pmra=pmra, pmdec=pmde, px=0.0, rv=0.0,
-                       lat=obs_lat, longi=obs_lat, alt=obs_long,
-                       zmeas=0.0)
-        berv, _, _ = barycorrpy.get_BC_vel(**bkwargs)
+        # TODO: zmeas needs to be set to the CCF shift result
+        # TODO: Need parallax and rv?
 
-        return berv[0]/1000.0, 0.0, berv[0]/1000.0
+        bkwargs = dict(JDUTC=[t1.jd], ra=ra, dec=dec, epoch=equinox,
+                       pmra=pmra, pmdec=pmde, px=20.0, rv=0.0,
+                       lat=obs_lat, longi=obs_lat, alt=obs_long,
+                       zmeas=0.0, leap_dir=data_folder)
+        bresults1 = barycorrpy.get_BC_vel(**bkwargs)
+        bresults2 = barycorrpy.utc_tdb.JDUTC_to_JDTDB(t1, fpath=data_folder)
+
+        berv2 = bresults1[0][0]/1000.0
+        bjd2 = bresults2[0].jd
+        bervmax2 = bresults1[0][0]/1000.0
+
+        return berv2, bjd2, bervmax2
 
 
 
