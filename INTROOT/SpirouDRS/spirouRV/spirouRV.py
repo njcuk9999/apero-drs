@@ -954,7 +954,7 @@ def locate_mask(p, filename):
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
-        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+        relfolder = spirouConfig.Constants.CCF_MASK_DIR()
         # get absolute folder path from package and relfolder
         absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
         # strip filename
@@ -1663,11 +1663,11 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # get reset directory location
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
-        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+        relfolder = spirouConfig.Constants.BARYCORRPY_DIR()
         # get absolute folder path from package and relfolder
         absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
         # get barycorrpy folder
-        data_folder = os.path.join(absfolder, 'barycorrpy', '')
+        data_folder = os.path.join(absfolder, '')
         # ---------------------------------------------------------------------
 
         # need import
