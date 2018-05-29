@@ -1119,7 +1119,6 @@ def coravelation(p, loc):
             # -----------------------------------------------------------------
             # fit the CCF
             fit_args = [rv_ccf, np.array(ccf_o), fit_type]
-            # TODO: Why comment this out?
             try:
                 ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
             except RuntimeError:
@@ -1578,7 +1577,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
-def earth_velocity_correction(p, loc):
+def earth_velocity_correction(p, loc, method='old'):
     func_name = __NAME__ + '.earth_velocity_correction()'
     # get the observation date
     obs_year = int(p['DATE-OBS'][0:4])
@@ -1590,7 +1589,7 @@ def earth_velocity_correction(p, loc):
     hourpart = float(utc[0])
     minpart = float(utc[1]) / 60.
     secondpart = float(utc[2]) / 3600.
-    exptimehours = p['EXPTIME'] * 3600. / 2.
+    exptimehours = (p['EXPTIME'] / 3600.) / 2.
     obs_hour = hourpart + minpart + secondpart + exptimehours
     # get the RA in hours
     objra = p['OBJRA'].split(':')
@@ -1614,11 +1613,11 @@ def earth_velocity_correction(p, loc):
     #--------------------------------------------------------------------------
 
     WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
-    args = [target_alpha, target_delta, target_equinox, obs_year, obs_month,
+    args = [p, target_alpha, target_delta, target_equinox, obs_year, obs_month,
             obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
             p['IC_LATIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
-    berv, bjd, bervmax = newbervmain(*args)
+    berv, bjd, bervmax = newbervmain(*args, method=method)
     # log output
     wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
     WLOG('info',p['LOG_OPT'], wmsg.format(berv))
@@ -1631,8 +1630,13 @@ def earth_velocity_correction(p, loc):
     return loc
 
 
-def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
+def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
                 obs_lat, obs_alt, pmra, pmde, method='old'):
+
+    # if method is off return zeros
+    if method == 'off':
+        WLOG('warning', p['LOG_OPT'], 'BERV not calculated.')
+        return 0.0, 0.0, 0.0
 
     # if old use FORTRAN
     if method == 'old':
@@ -1641,9 +1645,51 @@ def newbervmain(ra, dec, equinox, year, month, day, hour, obs_long,
         # pipe to FORTRAN
         args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
                 obs_alt, pmra, pmde]
-        berv, bjd, bervmax = newbervmain.newbervmain(*args)
+        berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
         # return berv, bjd, bervmax
-        return berv, bjd, bervmax
+        return berv1, bjd1, bervmax1
+
+
+    if method == 'new':
+        # calculate JD time (as Astropy.Time object)
+        from astropy.time import Time, TimeDelta
+        from astropy import units as uu
+        tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+        t = Time(tstr, scale='utc')
+        # add exposure time
+        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        t1 = t + tdelta
+        # ---------------------------------------------------------------------
+        # get reset directory location
+        # get package name and relative path
+        package = spirouConfig.Constants.PACKAGE()
+        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+        # get absolute folder path from package and relfolder
+        absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+        # get barycorrpy folder
+        data_folder = os.path.join(absfolder, 'barycorrpy', '')
+        # ---------------------------------------------------------------------
+
+        # need import
+        import barycorrpy
+
+        # TODO: zmeas needs to be set to the CCF shift result
+        # TODO: Need parallax and rv?
+
+        bkwargs = dict(JDUTC=[t1.jd], ra=ra, dec=dec, epoch=equinox,
+                       pmra=pmra, pmdec=pmde, px=20.0, rv=0.0,
+                       lat=obs_lat, longi=obs_lat, alt=obs_long,
+                       zmeas=0.0, leap_dir=data_folder)
+        bresults1 = barycorrpy.get_BC_vel(**bkwargs)
+        bresults2 = barycorrpy.utc_tdb.JDUTC_to_JDTDB(t1, fpath=data_folder)
+
+        berv2 = bresults1[0][0]/1000.0
+        bjd2 = bresults2[0].jd
+        bervmax2 = bresults1[0][0]/1000.0
+
+        return berv2, bjd2, bervmax2
+
+
 
 
 

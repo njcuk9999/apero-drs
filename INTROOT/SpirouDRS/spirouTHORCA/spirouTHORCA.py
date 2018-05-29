@@ -9,6 +9,8 @@ Created on 2017-12-19 at 16:20
 
 """
 from __future__ import division
+from astropy import constants as cc
+from astropy import units as uu
 import numpy as np
 import warnings
 
@@ -36,7 +38,9 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
-
+# Speed of light
+# c = cc.c.to(uu.km/uu.s).value
+c = 300000
 
 # =============================================================================
 # Define functions
@@ -352,7 +356,7 @@ def detect_bad_lines(p, loc, key=None):
         # Criteria 2
         # ---------------------------------------------------------------------
         # calculate the sig-fit for the lines
-        sigll = lines[:, 1]/lines[:, 0] * 300000
+        sigll = lines[:, 1]/lines[:, 0] * c
         # create mask
         badsig = sigll >= max_error_sigll
         # count number of bad sig lines
@@ -405,18 +409,16 @@ def fit_1d_solution(p, loc):
     # invert solution
     loc = invert_1ds_ll_solution(p, loc)
     # get the shape
-    nx, nbo = loc['FINAL_LL_PARAM'].shape
-    # reshape param array
-    params_ll_out = loc['FINAL_LL_FIT'].reshape(nx, nbo)
+    nx, nbo = loc['INV_PARAM'].shape
     # get new line list
-    loc['LL_OUT'] = get_ll_from_coefficients(params_ll_out, nx, nbo)
+    loc['LL_OUT'] = get_ll_from_coefficients(loc['INV_PARAM'], nx, nbo)
     # get the first derivative of the line list
-    loc['DLL_OUT'] = get_dll_from_coefficients(params_ll_out, nx, nbo)
+    loc['DLL_OUT'] = get_dll_from_coefficients(loc['INV_PARAM'], nx, nbo)
     # find the central pixel value
     centpix = loc['LL_OUT'].shape[1]//2
     # get the mean pixel scale (in km/s/pixel) of the central pixel
     norm = loc['DLL_OUT'][:, centpix]/loc['LL_OUT'][:, centpix]
-    meanpixscale = 300000 * np.sum(norm)/len(loc['LL_OUT'][:, centpix])
+    meanpixscale = c * np.sum(norm)/len(loc['LL_OUT'][:, centpix])
     # log message
     wmsg = 'On fiber {0} mean pixel scale at center: {1:.4f} [km/s/pixel]'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], meanpixscale))
@@ -904,23 +906,28 @@ def fit_1d_ll_solution(p, loc):
         # ---------------------------------------------------------------------
         # work out conversion factor
         # TODO: speed of light proper!
-        convert = 300000 / (final_dxdl[order_num] * final_details[order_num][0])
+        convert = c / (dxdl * details[-1][0])
+        # get res1
+        res1 = details[-1][1] - details[-1][2]
         # sum the weights (recursively)
-        sweight += np.sum(weight)
+        sweight += np.sum(details[-1][3])
         # sum the weighted residuals in km/s
-        wsumres += np.sum(res * convert * weight)
+        wsumres += np.sum(res1 * convert * details[-1][3])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(weight * (res * convert) ** 2 )
+        wsumres2 += np.sum(details[-1][3] * (res1 * convert) ** 2 )
         # store the conversion to km/s
         scale.append(convert)
+    # convert to arrays
+    final_iter = np.array(final_iter)
+    final_param = np.array(final_param)
     # calculate the final var and mean
     final_mean = (wsumres / sweight)
-    final_var = (wsumres2 / sweight) + (final_mean ** 2)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # log the global stats
     total_lines = np.sum(final_iter[:, 2])
     wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
     wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
-              total_lines, np.sqrt(final_var * 1000.0 / total_lines)]
+              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
     wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
              'value:{3:.2f}[m/s])'.format(*wargs2))
     WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
@@ -939,8 +946,68 @@ def fit_1d_ll_solution(p, loc):
 
 
 def invert_1ds_ll_solution(p, loc):
-    pass
-
+    func_name = __NAME__ + '.invert_1ds_ll_solution()'
+    # get constants from p
+    fit_degree = p['IC_LL_DEGR_FIT']
+    # get data from loc
+    details = loc['FINAL_DETAILS']
+    iter = loc['FINAL_ITER']
+    # Get the number of orders
+    num_orders = loc['LL_INIT'].shape[0]
+    # loop around orders
+    inv_details = []
+    inv_params = []
+    sweight = 0.0
+    wsumres = 0.0
+    wsumres2 = 0.0
+    for order_num in np.arange(num_orders):
+        # get the lines and wavelength fit for this order
+        lines = details[order_num][0]
+        cfit = details[order_num][2]
+        wei = details[order_num][3]
+        # get the number of lines
+        num_lines = len(lines)
+        # set weights
+        weight = np.ones(num_lines, dtype=float)
+        # get fit coefficients
+        coeffs = np.polyfit(cfit, lines, fit_degree, w=weight)[::-1]
+        # get the y values for the coefficients
+        icfit = np.polyval(coeffs[::-1], cfit)
+        # work out the residuals
+        res = icfit - lines
+        # work out the normalised res in km/s
+        nres = c * (res / lines)
+        # append values to storage
+        inv_details.append([nres, wei])
+        inv_params.append(coeffs)
+        # ---------------------------------------------------------------------
+        # invert parameters
+        # ---------------------------------------------------------------------
+        # sum the weights (recursively)
+        sweight += np.sum(wei)
+        # sum the weighted residuals in km/s
+        wsumres += np.sum(nres * wei)
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.sum(wei * nres **2)
+    # calculate the final var and mean
+    final_mean = (wsumres / sweight)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the invertion process
+    total_lines = np.sum(iter[:, 2])
+    wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+             1000.0 * np.sqrt(final_var / total_lines)]
+    wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'
+            '(error on mean value:{2:.2f}[m/s])'.format(*wargs))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    # save outputs to loc
+    loc['LL_MEAN'] = final_mean
+    loc['LL_VAR'] = final_var
+    loc['INV_PARAM'] = np.array(inv_params)
+    loc['INV_DETAILS'] = inv_details
+    sources = ['LL_MEAN',  'LL_VAR', 'INV_PARAM', 'INV_DETAILS']
+    loc.set_sources(sources, func_name)
+    # return loc
+    return loc
 
 
 # =============================================================================
