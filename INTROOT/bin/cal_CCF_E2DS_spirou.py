@@ -155,11 +155,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     #-----------------------------------------------------------------------
     #  Earth Velocity calculation
     #-----------------------------------------------------------------------
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        loc = spirouRV.EarthVelocityCorrection(p, loc)
-    else:
-        loc['BERV'], loc['BERV_MAX'] = 0.0, 0.0
-        loc.set_sources(['BERV', 'BERV_MAX'], __NAME__ + '.main()')
+    loc = spirouRV.EarthVelocityCorrection(p, loc, method=p['CCF_BERVMODE'])
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
