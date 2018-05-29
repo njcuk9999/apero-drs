@@ -292,6 +292,9 @@ def main(night_name=None, reffile=None):
         if p['IC_DRIFT_BACK_CORR']:
             # Loop around the orders
             for order_num in range(loc['NUMBER_ORDERS']):
+                # get the box size from constants
+                bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+                # Measurethe min and max flux
                 miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
                                                       bsize)
                 # subtract off the background (miny)
