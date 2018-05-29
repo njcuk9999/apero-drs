@@ -1118,7 +1118,7 @@ def locate_bad_pixels_full(p, image):
     threshold = p['BADPIX_FULL_THRESHOLD']
     # construct filepath
     package = spirouConfig.Constants.PACKAGE()
-    relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+    relfolder = spirouConfig.Constants.BADPIX_DIR()
     datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
     absfilename = os.path.join(datadir, filename)
     # check that filepath exists
@@ -1278,7 +1278,7 @@ def read_line_list(p=None, filename=None):
     func_name = __NAME__ + '.read_line_list()'
     # get SpirouDRS data folder
     package = spirouConfig.Constants.PACKAGE()
-    relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+    relfolder = spirouConfig.Constants.WAVELENGTH_CATS_DIR()
     datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
     # deal with p and filename being None
     if p is None and filename is None:
