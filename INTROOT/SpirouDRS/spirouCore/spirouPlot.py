@@ -23,6 +23,8 @@ gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
 for gui in gui_env:
     try:
         matplotlib.use(gui, warn=False, force=True)
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle
         break
     except:
         continue
@@ -31,13 +33,6 @@ if matplotlib.get_backend() == 'MacOSX':
                        'Qt5Agg not available']
 else:
     matplotlib_emsg = []
-
-# can now try to import matplotlib properly
-try:
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle
-except Exception as e:
-    matplotlib_emsg.append(e)
 
 
 # =============================================================================
