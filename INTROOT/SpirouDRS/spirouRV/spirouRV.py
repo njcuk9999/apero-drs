@@ -117,6 +117,7 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
     :return cpt: float, the total flux above the "cut" parameter
                  (cut * standard deviations above median)
     """
+    func_name = __NAME__ + '.renormalise_cosmic2d()'
     # flag (saturated) fluxes above threshold as "bad pixels"
     flag = (spe < threshold) & (speref < threshold)
     # get the dimensions of spe
@@ -143,14 +144,24 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
     # set the bad values to NaN
     znan = np.copy(z)
     znan[~goodvalues] = np.nan
-    # get the rms for each order
-    rms = np.nanstd(znan, axis=1)
+    # if we only have NaNs set rms to nan
+    if np.sum(np.isfinite(znan)) == 0:
+        rms = np.repeat(np.nan, znan.shape[0])
+    # else get the rms for each order
+    else:
+        rms = np.nanstd(znan, axis=1)
     # repeat the rms dim2 times
     rrms = np.repeat(rms, dim2).reshape((dim1, dim2))
     # for any values > cut*mean replace spef values with speref values
-    spefc = np.where(abs(z) > cut * rrms, spereff * rnormspe, spef)
+    with warnings.catch_warnings(record=True) as w:
+        spefc = np.where(abs(z) > cut * rrms, spereff * rnormspe, spef)
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
     # get the total z above cut*mean
-    cpt = np.sum(abs(z) > cut * rrms)
+    with warnings.catch_warnings(record=True) as w:
+        cpt = np.sum(abs(z) > cut * rrms)
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
     # create a normalise spectrum for the corrected spef
     cnormspe = np.sum(spefc, axis=1) / np.sum(spereff, axis=1)
     # get the normed spectrum for each pixel for each order
@@ -805,6 +816,7 @@ def drift_all_orders(loc, fileno, nomin, nomax):
                            shape = (number of files)
     """
 
+    func_name = __NAME__ + '.drift_all_orders()'
     # get data from loc
     drift = loc['DRIFT'][fileno, nomin:nomax]
     driftleft = loc['DRIFT_LEFT'][fileno, nomin:nomax]
@@ -812,11 +824,14 @@ def drift_all_orders(loc, fileno, nomin, nomax):
     errdrift = loc['ERRDRIFT'][fileno, nomin:nomax]
 
     # work out weighted mean drift
-    sumerr = np.sum(1.0/errdrift)
-    meanvr = np.sum(drift/errdrift) / sumerr
-    meanvrleft = np.sum(driftleft/errdrift) / sumerr
-    meanvrright = np.sum(driftright/errdrift) / sumerr
-    merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+    with warnings.catch_warnings(record=True) as w:
+        sumerr = np.sum(1.0/errdrift)
+        meanvr = np.sum(drift/errdrift) / sumerr
+        meanvrleft = np.sum(driftleft/errdrift) / sumerr
+        meanvrright = np.sum(driftright/errdrift) / sumerr
+        merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+    # log warnings
+    spirouCore.WarnLog(w, funcname=func_name)
 
     # add to storage
     loc['MEANRV'][fileno] = meanvr
@@ -939,7 +954,7 @@ def locate_mask(p, filename):
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
-        relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+        relfolder = spirouConfig.Constants.CCF_MASK_DIR()
         # get absolute folder path from package and relfolder
         absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
         # strip filename
@@ -1017,8 +1032,6 @@ def coravelation(p, loc):
     # -------------------------------------------------------------------------
     # get constants from p
     # -------------------------------------------------------------------------
-    berv = p['CCF_BERV']
-    berv_max = p['CCF_BERV_MAX']
     trv = p['TARGET_RV']
     ccf_width = p['CCF_WIDTH']
     ccf_step = p['CCF_STEP']
@@ -1039,6 +1052,9 @@ def coravelation(p, loc):
     s2d = loc['E2DSFF']
     # get the blaze values
     blaze = loc['BLAZE']
+    # get the Barycentric Earth Velocity calculation
+    berv = loc['BERV']
+    berv_max = loc['BERV_MAX']
     # -------------------------------------------------------------------------
     # log that we are computing ccf
     wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
@@ -1103,7 +1119,12 @@ def coravelation(p, loc):
             # -----------------------------------------------------------------
             # fit the CCF
             fit_args = [rv_ccf, np.array(ccf_o), fit_type]
-            ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            try:
+                ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
+            except RuntimeError:
+                ll_range, pix_passed = 0.0, 1.0
+                ccf_o, ccf_noise, ccf_o_fit = np.zeros((3, len(rv_ccf)))
+                ccf_o_results = np.zeros(4)
         else:
             # -----------------------------------------------------------------
             # else append empty stats
@@ -1556,6 +1577,122 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
+def earth_velocity_correction(p, loc, method='old'):
+    func_name = __NAME__ + '.earth_velocity_correction()'
+    # get the observation date
+    obs_year = int(p['DATE-OBS'][0:4])
+    obs_month = int(p['DATE-OBS'][5:7])
+    obs_day = int(p['DATE-OBS'][8:10])
+    #get the UTC observation time
+    utc = p['UTC-OBS'].split(':')
+    # convert to hours
+    hourpart = float(utc[0])
+    minpart = float(utc[1]) / 60.
+    secondpart = float(utc[2]) / 3600.
+    exptimehours = (p['EXPTIME'] / 3600.) / 2.
+    obs_hour = hourpart + minpart + secondpart + exptimehours
+    # get the RA in hours
+    objra = p['OBJRA'].split(':')
+    ra_hour = float(objra[0])
+    ra_min = float(objra[1]) / 60.
+    ra_second = float(objra[2]) / 3600.
+    target_alpha = ra_hour + ra_min + ra_second
+    # get the DEC in degrees
+    objdec = p['OBJDEC'].split(':')
+    dec_hour = float(objdec[0])
+    dec_min = np.sign(float(objdec[0])) * float(objdec[1]) / 60.
+    dec_second = np.sign(float(objdec[0])) * float(objdec[2]) / 3600.
+    target_delta = dec_hour + dec_min + dec_second
+    # set the proper motion and equinox
+    target_pmra = p['OBJRAPM']
+    target_pmde = p['OBJDECPM']
+    target_equinox = p['OBJEQUIN']
+
+    #--------------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #--------------------------------------------------------------------------
+
+    WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
+    args = [p, target_alpha, target_delta, target_equinox, obs_year, obs_month,
+            obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
+            p['IC_LATIT_OBS'], target_pmra, target_pmde]
+    # calculate BERV
+    berv, bjd, bervmax = newbervmain(*args, method=method)
+    # log output
+    wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
+    WLOG('info',p['LOG_OPT'], wmsg.format(berv))
+
+    # finally save berv, bjd, bervmax to p
+    loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
+    loc.set_sources(['BERV','BJD', 'BERV_MAX'], func_name)
+
+    # return p
+    return loc
+
+
+def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
+                obs_lat, obs_alt, pmra, pmde, method='old'):
+
+    # if method is off return zeros
+    if method == 'off':
+        WLOG('warning', p['LOG_OPT'], 'BERV not calculated.')
+        return 0.0, 0.0, 0.0
+
+    # if old use FORTRAN
+    if method == 'old':
+        # need to import
+        from SpirouDRS.fortran import newbervmain
+        # pipe to FORTRAN
+        args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
+                obs_alt, pmra, pmde]
+        berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
+        # return berv, bjd, bervmax
+        return berv1, bjd1, bervmax1
+
+
+    if method == 'new':
+        # calculate JD time (as Astropy.Time object)
+        from astropy.time import Time, TimeDelta
+        from astropy import units as uu
+        tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+        t = Time(tstr, scale='utc')
+        # add exposure time
+        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        t1 = t + tdelta
+        # ---------------------------------------------------------------------
+        # get reset directory location
+        # get package name and relative path
+        package = spirouConfig.Constants.PACKAGE()
+        relfolder = spirouConfig.Constants.BARYCORRPY_DIR()
+        # get absolute folder path from package and relfolder
+        absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+        # get barycorrpy folder
+        data_folder = os.path.join(absfolder, '')
+        # ---------------------------------------------------------------------
+
+        # need import
+        import barycorrpy
+
+        # TODO: zmeas needs to be set to the CCF shift result
+        # TODO: Need parallax and rv?
+
+        bkwargs = dict(JDUTC=[t1.jd], ra=ra, dec=dec, epoch=equinox,
+                       pmra=pmra, pmdec=pmde, px=20.0, rv=0.0,
+                       lat=obs_lat, longi=obs_lat, alt=obs_long,
+                       zmeas=0.0, leap_dir=data_folder)
+        bresults1 = barycorrpy.get_BC_vel(**bkwargs)
+        bresults2 = barycorrpy.utc_tdb.JDUTC_to_JDTDB(t1, fpath=data_folder)
+
+        berv2 = bresults1[0][0]/1000.0
+        bjd2 = bresults2[0].jd
+        bervmax2 = bresults1[0][0]/1000.0
+
+        return berv2, bjd2, bervmax2
+
+
+
+
+
 def fit_ccf(rv, ccf, fit_type):
     """
     Fit the CCF to a guassian function
@@ -1640,7 +1777,7 @@ def test_fit_ccf(x, y, w, aguess, result):
     # imports ONLY for this test function
     plt = sPlt.plt
     # noinspection PyUnresolvedReferences
-    from SpirouDRS.spirouRV import fitgaus
+    from SpirouDRS.fortran import fitgaus
     import time
     # path for plot file (manually set)
     path = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
@@ -1683,9 +1820,6 @@ def test_fit_ccf(x, y, w, aguess, result):
     # turn back on interactive plotting if it was on before
     if on:
         plt.interactive('on')
-
-
-
 
 
 # =============================================================================

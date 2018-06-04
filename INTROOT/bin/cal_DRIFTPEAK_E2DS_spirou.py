@@ -108,7 +108,7 @@ def main(night_name=None, reffile=None):
     loc = ParamDict()
     loc['SPEREF'] = speref
     loc['NUMBER_ORDERS'] = nbo
-    loc.set_sources(['speref', 'number_orders'], __NAME__ + '/main()')
+    loc.set_sources(['SPEREF', 'NUMBER_ORDERS'], __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Get lamp type
@@ -146,6 +146,7 @@ def main(night_name=None, reffile=None):
     loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
+
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
@@ -160,14 +161,17 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Background correction
     # ----------------------------------------------------------------------
-    # log that we are performing background correction
-    WLOG('', p['LOG_OPT'], 'Perform background correction')
-    # get the box size from constants
-    bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
-    # Loop around the orders
-    for order_num in range(loc['NUMBER_ORDERS']):
-        miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
-        loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
+    # test whether we want to subtract background
+    if p['IC_DRIFT_BACK_CORR']:
+        # Loop around the orders
+        for order_num in range(loc['NUMBER_ORDERS']):
+            # get the box size from constants
+            bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+            # Measurethe min and max flux
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+                                                  bsize)
+            # subtract off the background (miny)
+            loc['SPE'][order_num] = loc['SPE'][order_num] - miny
 
     # ----------------------------------------------------------------------
     # Identify FP peaks in reference file
@@ -284,11 +288,18 @@ def main(night_name=None, reffile=None):
         # ----------------------------------------------------------------------
         # Background correction
         # ----------------------------------------------------------------------
-        # Loop around the orders
-        for order_num in range(loc['NUMBER_ORDERS']):
-            miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
-                                                  bsize)
-            loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+        # test whether we want to subtract background
+        if p['IC_DRIFT_BACK_CORR']:
+            # Loop around the orders
+            for order_num in range(loc['NUMBER_ORDERS']):
+                # get the box size from constants
+                bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+                # Measurethe min and max flux
+                miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+                                                      bsize)
+                # subtract off the background (miny)
+                loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+
         # ------------------------------------------------------------------
         # calculate flux ratio
         # ------------------------------------------------------------------

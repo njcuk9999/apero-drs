@@ -7,6 +7,11 @@
 # Whether to plot (True or 1 to plot)
 DRS_PLOT = 1
 
+# Whether to run in interactive mode - False or 0 to be in non-interactive mode
+#    (If 0 DRS_PLOT will be forced to 0)
+#    Will stop any user input at the end of recipes if set to 0
+DRS_INTERACTIVE = 1
+
 # Whether to run in debug mode
 #      0: no debug
 #      1: basic debugging on errors
@@ -45,8 +50,8 @@ DRS_DATA_WORKING = '/drs/spirou/data/tmp'
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
-DRS_UCONFIG = '~/spirou_config_H2RG/'
-# DRS_UCONFIG = '~/spirou_config_H4RG/'
+# DRS_UCONFIG = '/home/ncook/spirou_config_H2RG/'
+DRS_UCONFIG = '/home/ncook/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings

@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.017'
+__version__ = '0.2.034'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-05-04'
+__date__ = '2018-05-28'
 
 
 # =============================================================================
@@ -165,6 +165,57 @@ def CDATA_REL_FOLDER():
     # Name of constant data folder (relative to PACKAGE() level)
     const_data_folder = './data'
     return const_data_folder
+
+
+def CCF_MASK_DIR():
+    """
+    Define the ccf mask dir relative path
+
+    :return reldir: str, the relative path
+    """
+
+    ccf_mask_dir = './data/ccf_masks'
+    return ccf_mask_dir
+
+
+def BADPIX_DIR():
+    """
+    Define the badpix dir relative path
+
+    :return reldir: str, the relative path
+    """
+
+    badpix_dir = './data/badpix'
+    return badpix_dir
+
+
+def BARYCORRPY_DIR():
+    """
+    Define barycorrpy dir relative path
+
+    :return reldir: str, the relative path
+    """
+
+    barycorrpy_dir = './data/barcorrpy'
+    return barycorrpy_dir
+
+
+def RESET_CALIBDB_DIR():
+    """
+    Define the reset dir relative path
+    :return:
+    """
+    reset_calibdb_dir = './data/reset_calibDB'
+    return reset_calibdb_dir
+
+
+def WAVELENGTH_CATS_DIR():
+    """
+    Define the wavelength catalogues dir relative path
+    :return:
+    """
+    wavelength_cats_dir = './data/wavelength_cats'
+    return wavelength_cats_dir
 
 
 # =============================================================================
@@ -761,40 +812,6 @@ def EXTRACT_LOCO_FILE(p):
 
 
 # noinspection PyPep8Naming
-def EXTRACT_E2DS_ALL_FILES(p, fiber=None):
-    """
-    Defines the extraction names (and locations) for the extraction process
-    when all types of E2DS file are to be written
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
-    :param fiber: string, the fiber name, if None tries to get the fiber name
-                  from "p" (i.e. p['FIBER'])
-
-    :return extfitslist: list of strings, the list of extraction files to use
-                         to save the extraction files
-    """
-    if fiber is None:
-        fiber = p['FIBER']
-    reducedfolder = p['REDUCED_DIR']
-    ext_names = ['simple', 'tilt', 'tiltweight', 'tiltweight2',
-                 'weight']
-    extfitslist = []
-    for ext_no in range(len(ext_names)):
-        extname = ext_names[ext_no]
-        ext_ext = '_e2ds_{0}_{1}.fits'.format(fiber, extname)
-        extfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', ext_ext)
-        extfits = os.path.join(reducedfolder, extfitsname)
-        extfitslist.append(extfits)
-    return extfitslist
-
-
-# noinspection PyPep8Naming
 def DRIFT_RAW_FILE(p):
     """
     Defines the drift_raw fits file name and location using
@@ -953,6 +970,76 @@ def CCF_TABLE_FILE(p):
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
     return ccf_table_file
+
+
+# noinspection PyPep8Naming
+def EM_SPE_FILE(p):
+    """
+    Defines the cal_exposure_meter telluric spectrum map
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = 'em_tell_spec_{0}.fits'.format(kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+def EM_WAVE_FILE(p):
+    """
+    Defines the cal_exposure_meter wavelength
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = 'em_wavemap_{0}.fits'.format(kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+def EM_MASK_FILE(p):
+    """
+    Defines the cal_exposure_meter telluric spectrum map
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = 'em_mask_map_{0}.fits'.format(kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
 
 
 # =============================================================================

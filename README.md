@@ -4,12 +4,12 @@
 
 # Most recent released version:
 
-- ![version 0.2.017 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.2.017) 
+- ![version 0.2.026 (alpha pre-release)](https://github.com/njcuk9999/spirou_py3/releases/tag/v0.2.026) 
 
 
 # Test data:
 
-- [version 0.1.003](http://genesis.astro.umontreal.ca/neil/)
+- [version 0.2.024](http://genesis.astro.umontreal.ca/neil/)
 
 
 # User manual

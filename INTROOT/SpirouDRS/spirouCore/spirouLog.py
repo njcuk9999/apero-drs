@@ -92,6 +92,8 @@ def logger(key='', option='', message='', printonly=False, logonly=False):
                     'list').format(message)]
         key = 'error'
     # loop around message (now all are lists)
+    errors = []
+
     for mess in message:
         # get the time format and display time zone from constants
         tfmt = spirouConfig.Constants.LOG_TIME_FORMAT()
@@ -118,17 +120,24 @@ def logger(key='', option='', message='', printonly=False, logonly=False):
                 writelog(cmd, key, logfilepath)
         except ConfigError as e:
             if not logonly:
-                printlogandcmd(e.message, e.level, human_time, dsec, option)
+                errors.append([e.message, e.level, human_time, dsec, option])
             warning = False
-            key = 'error'
         # if warning is True then we used TDATA and should report that
         if warning and TDATA_WARNING:
             wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
                     'path "TDATA"={0}')
             if not logonly:
-                printlogandcmd(wmsg.format(CPARAMS.get('TDATA', '')),
-                               'warning', human_time, dsec, option)
+                wmsgf = wmsg.format(CPARAMS.get('TDATA', ''))
+                errors.append([wmsgf, 'warning', human_time, dsec, option])
             TDATA_WARNING = 0
+
+    # print any errors caused above (and set key to error to exit after)
+    used = []
+    for error in errors:
+        key = 'error'
+        if error[0] not in used:
+            printlogandcmd(*error)
+            used.append(error[0])
 
     # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
     if key in EXIT_LEVELS:
@@ -251,7 +260,7 @@ def warninglogger(w, funcname=None):
             if funcname is None:
                 wargs = [wi.lineno, '', wi.message]
             else:
-                wargs = [wi.linno, '({0})'.format(funcname), wi.message]
+                wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
             # log message
             wmsg = 'python warning Line {0} {1} warning reads: {2}'
             logger('warning', wmsg.format(*wargs))

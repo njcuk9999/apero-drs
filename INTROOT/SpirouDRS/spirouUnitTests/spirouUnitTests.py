@@ -12,14 +12,24 @@ Created on 2018-05-01 at 12:32
 from __future__ import division
 import numpy as np
 import sys
+import os
 import time
-from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
+
+
+# TODO: This is a stupid fix for python 2 - should be done better
+try:
+    from . import spirouUnitRecipes
+    from . import unit_test_comp_functions as utc
+except ImportError:
+    from SpirouDRS.spirouUnitTests import spirouUnitRecipes
+    from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
+except ValueError:
+    import spirouUnitRecipes
+    import unit_test_comp_functions as utc
 
 
 # =============================================================================
@@ -44,9 +54,11 @@ RUN_KEY = 'RUN'
 H2RG_USER_PATH = '~/spirou_config_H2RG/'
 H4RG_USER_PATH = '~/spirou_config_H4RG/'
 # define old version reduced path
-OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710'
-# plot path
+OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/'
+# plot and save path
 RESULTSPATH = '/scratch/Projects/spirou_py3/unit_test_graphs/'
+# threshold for difference pass (comparison)
+THRESHOLD = -8
 # -----------------------------------------------------------------------------
 # list of valid recipes (first argument of each run)
 VALID = spirouUnitRecipes.VALID_RECIPES
@@ -89,12 +101,12 @@ def set_comp(p, rparams):
     return comp
 
 
-def get_runs(p, rparams):
+def get_runs(p, rparams, rfile):
     # set up storage
-    runs = OrderedDict()
+    runs = dict()
     # loop around the rparams and add keys with "RUN_KEY"
     for key in list(rparams.keys()):
-        if key.startswith(RUN_KEY):
+        if key.upper().startswith(RUN_KEY.upper()):
             #  get this iteration parameter
             run_i = rparams[key]
 
@@ -112,11 +124,23 @@ def get_runs(p, rparams):
             runs[key] = run_i
     # make sure we have some runs
     if len(runs) == 0:
-        eargs = [RUN_KEY, p['RFILE']]
+        eargs = [RUN_KEY, rfile]
         emsg = 'No runs ("{0}## = ") found in file {1}'
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # sort into order
+    unsorted = np.array(list(runs.keys()))
+    sorted = np.sort(unsorted)
+    # add an OrderedDict
+    if sys.version_info.major < 3:
+        from collections import OrderedDict
+        sorted_runs = OrderedDict()
+    else:
+        sorted_runs = dict()
+    # add runs to new dictionary in the correct order
+    for run_i in sorted:
+        sorted_runs[run_i] = runs[run_i]
     # return runs
-    return runs
+    return sorted_runs
 
 
 def unit_log_title(p, title=' START OF UNIT TESTS'):
@@ -154,7 +178,7 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     # display run title
     unit_log_title(p, ' ' + runtitle)
     # deal with arguments and generate list of expected outputs
-    args = spirouUnitRecipes.wrapper(p, runname, run_i)
+    args, name = spirouUnitRecipes.wrapper(p, runname, run_i)
     # start timer
     starttime = time.time()
     # run program
@@ -166,7 +190,7 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     # add to timer
     timing['{0}:{1}'.format(runname, name)] = endtime - starttime
     # get outputs
-    ll['outputs'] = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
+    ll['outputs'], _ = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
     # comparison (if required)
     if compare:
         # set the file path for the comparison results (plots and table)
@@ -175,7 +199,16 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
         cargs = [name, ll, new_out, old_out, errors, OLDPATH, filepath]
         new_out, old_out, errors = utc.compare(*cargs)
     # return the timing and the new and old outputs
-    return timing, new_out, old_out
+    return timing, new_out, old_out, errors
+
+
+def comparison_table(p, errors):
+    # set the file path for the comparison results (plots and table)
+    filepath = utc.get_folder_name(RESULTSPATH)
+    # construct table
+    utc.construct_error_table(errors, THRESHOLD, filepath, runname=p['runname'])
+    # log
+    WLOG('', p['LOG_OPT'], 'Comparison saved to file.')
 
 
 # =============================================================================

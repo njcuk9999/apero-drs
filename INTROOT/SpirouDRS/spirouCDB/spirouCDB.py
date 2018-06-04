@@ -285,7 +285,7 @@ def get_database(p, max_time=None, update=False):
             continue
         if line == '\n':
             continue
-        if line[0] == '#':
+        if line.strip()[0] == '#':
             continue
         # get elements from database
         try:
@@ -311,9 +311,11 @@ def get_database(p, max_time=None, update=False):
         if t_fmt_unix != t:
             lock.close()
             os.remove(lock_file)
-            emsg1 = 'Human time = {0} does not match unix time = {1} in calibDB'
-            emsg2 = ' - function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(t_fmt, t_human), emsg2])
+            emsg1 = 'Times do not match in calibDB'
+            emsg2 = '\tHuman time = {0}'.format(t_fmt)
+            emsg3 = '\tUnix time = {0}'.format(t_human)
+            emsg4 = ' - function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4])
         # t must be a float here --> exception
         try:
             t = float(t)

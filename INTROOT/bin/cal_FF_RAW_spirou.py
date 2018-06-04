@@ -9,7 +9,6 @@ Created on 2017-11-06 11:32
 
 @author: cook
 
-
 Last modified: 2017-12-11 at 15:11
 
 Up-to-date with cal_FF_RAW_spirou AT-4 V47
@@ -74,12 +73,20 @@ def main(night_name=None, files=None):
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
     # run specific start up
-    params2add = dict()
-    params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
-    params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-    p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                       prefixes=['dark_flat', 'flat_dark'],
-                                       add_to_p=params2add, calibdb=True)
+    # TODO: remove H2RG dependency
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
+                                           prefixes=['flat_flat'],
+                                           calibdb=True)
+        p['FIB_TYPE'] = p['FIBER_TYPES']
+        p.set_source('FIB_TYPE', __NAME__ + '__main__()')
+    else:
+        params2add = dict()
+        params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
+        params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
+        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
+                                           prefixes=['dark_flat', 'flat_dark'],
+                                           add_to_p=params2add, calibdb=True)
 
     # log processing image type
     p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
@@ -88,10 +95,16 @@ def main(night_name=None, files=None):
     WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
 
     # ----------------------------------------------------------------------
+    # Check for pre-processed file
+    # ----------------------------------------------------------------------
+    if p['IC_FORCE_PREPROCESS']:
+        spirouStartup.CheckPreProcess(p)
+
+    # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -176,6 +189,15 @@ def main(night_name=None, files=None):
         # set fiber in p
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()')
+
+        # get fiber parameters
+        # TODO: remove H2RG dependency
+        if p['IC_IMAGE_TYPE'] == 'H4RG':
+            params2add = spirouLOCOR.FiberParams(p, p['FIBER'])
+            for param in params2add:
+                p[param] = params2add[param]
+                p.set_source(param, __NAME__ + '.main()')
+
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
@@ -229,8 +251,10 @@ def main(night_name=None, files=None):
         # loop around each order
         for order_num in valid_orders:
             # extract this order
-            eargs = [p, loc, data2, order_profile, order_num]
-            e2ds, cpt = spirouEXTOR.ExtractTiltWeightOrder2(*eargs)
+            eargs = [p, loc, data2, order_num]
+            ekwargs = dict(mode=p['IC_FF_EXTRACT_TYPE'],
+                           order_profile=order_profile)
+            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             noise = p['SIGDET'] * np.sqrt(range1 + range2)
@@ -246,9 +270,9 @@ def main(night_name=None, files=None):
             # calculate the flat
             # TODO: Remove H2RG compatibility
             if p['IC_IMAGE_TYPE'] == 'H2RG':
-                flat = e2ds/blaze
+                flat = e2ds / blaze
             else:
-                flat = np.where(blaze>1,e2ds/blaze,1)
+                flat = np.where(blaze > 1, e2ds / blaze, 1)
             # calculate the rms
             rms = np.std(flat)
             # log the SNR RMS

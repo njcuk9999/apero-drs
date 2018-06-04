@@ -65,23 +65,23 @@ def get_folder_name(rawpath, foldername=None):
     path = os.path.join(rawpath, foldername)
 
     # test to see if path exists
-    if os.path.exists(path):
-        shutil.rmtree(path)
-
-    # add directory
-    os.mkdir(path)
+    if not os.path.exists(path):
+        # add directory
+        os.mkdir(path)
 
     # return directory
     return path
 
 
-def compare(name, ll, newoutputs, oldoutputs, errors, oldpath, resultspath):
+def compare(name, ll, newoutputs, oldoutputs, errors, oldreduced, resultspath):
 
     WLOG('', DPROG, 'Comparing files...')
     # define new output files from ll
     newfiles = ll['outputs']
     # define new path from p['reduced_dir']
     newpath = ll['p']['reduced_dir']
+    night_name = ll['p']['ARG_NIGHT_NAME']
+    oldpath = os.path.join(oldreduced, night_name)
     # get old output locations (that should be the same as new output files)
     lists = create_oldfiles(newfiles, oldpath, newpath)
     newoutputs[name], oldoutputs[name] = lists
@@ -150,11 +150,15 @@ def comparison_wrapper(name, oldfiles, newfiles, errors=None, path=None):
             errors += e2
         else:
             e1, e2 = [], []
+            errors += e0
 
         # print status
         if len(errors) > 0:
-            wmsg = '\t{0} differences found in {1}'
-            WLOG('', DPROG, wmsg.format(len(e0) + len(e1) + len(e2), newfile))
+            warg = len(e0) + len(e1) + len(e2)
+            wmsg1 = '\t{0} differences found'.format(warg)
+            wmsg2 = '\tOLDFILE = {0}'.format(oldfile)
+            wmsg3 = '\tNEWFILE = {0}'.format(newfile)
+            WLOG('', DPROG, [wmsg1, wmsg2, wmsg3])
         else:
             wmsg = '\tNo difference found in {0} - files the same'
             WLOG('', DPROG, wmsg.format(newfile))
@@ -568,7 +572,8 @@ def old_new_diff_pass(errors, threshold):
     return passed, ratio
 
 
-def construct_error_table(errors, threshold=-8, results_path='./'):
+def construct_error_table(errors, threshold=-8, results_path='./',
+                          runname=None):
     # get passed and ratio
     passed, ratio = old_new_diff_pass(errors, threshold)
 
@@ -588,7 +593,10 @@ def construct_error_table(errors, threshold=-8, results_path='./'):
     table['order_diff'] = ratio
 
     # construct filename
-    filename = os.path.split(sys.argv[0])[-1].split('.py')[0]
+    if runname is None:
+        filename = os.path.split(sys.argv[0])[-1].split('.py')[0]
+    else:
+        filename = str(runname)
     # construct path
     path = os.path.join(results_path, '{0}_results.fits'.format(filename))
     # write to file

@@ -84,10 +84,16 @@ def main(night_name=None, files=None):
     WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
 
     # ----------------------------------------------------------------------
+    # Check for pre-processed file
+    # ----------------------------------------------------------------------
+    if p['IC_FORCE_PREPROCESS']:
+        spirouStartup.CheckPreProcess(p)
+
+    # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, framemath='add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
 
     # ----------------------------------------------------------------------
     # Get basic image properties

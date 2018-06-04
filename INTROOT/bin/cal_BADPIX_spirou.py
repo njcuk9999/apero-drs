@@ -87,6 +87,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
                                          'DARK')
 
     # ----------------------------------------------------------------------
+    # Check for pre-processed file
+    # ----------------------------------------------------------------------
+    if p['IC_FORCE_PREPROCESS']:
+        spirouStartup.CheckPreProcess(p, filename=flatfilename)
+        spirouStartup.CheckPreProcess(p, filename=darkfilename)
+
+    # ----------------------------------------------------------------------
     # Read the darkfile and flatfile
     # ----------------------------------------------------------------------
     # Read the flat file
@@ -99,24 +106,28 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Normalise flat and median of flat
     # ----------------------------------------------------------------------
-    # TODO: method = new
     flat_med, flat_ref = spirouImage.NormMedianFlat(p, flat_ref)
 
     # ----------------------------------------------------------------------
     # Locate bad pixels
     # ----------------------------------------------------------------------
     bargs = [p, flat_ref, flat_med, dark_ref]
-    bad_pixel_map1, bstats = spirouImage.LocateBadPixels(*bargs)
+    bad_pixel_map1, bstats1 = spirouImage.LocateBadPixels(*bargs)
 
     # ----------------------------------------------------------------------
     # Locate bad pixels from full detector flat
     # ----------------------------------------------------------------------
-    bad_pixel_map2 = spirouImage.LocateFullBadPixels(p, flat_ref)
+    bad_pixel_map2, bstats2 = spirouImage.LocateFullBadPixels(p, flat_ref)
 
     # ----------------------------------------------------------------------
     # Combine bad pixel masks
     # ----------------------------------------------------------------------
     bad_pixel_map = bad_pixel_map1 | bad_pixel_map2
+    # total number of bad pixels
+    btotal = (np.sum(bad_pixel_map) / bad_pixel_map.size) * 100
+    # log result
+    text = 'Fraction of total bad pixels {0:.4f} %'
+    WLOG('', p['LOG_OPT'], text.format(btotal))
 
     # ----------------------------------------------------------------------
     # Plots
@@ -140,8 +151,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
                    getshape=False)
     badpixelmap = spirouImage.ResizeImage(badpixelmap, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('Image format changed to '
-                            '{0}x{1}').format(*badpixelmap.shape))
+    wmsg = 'Image format changed to {1}x{0}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*badpixelmap.shape))
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -175,11 +186,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
-    hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats[0])
-    hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats[1])
-    hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats[2])
-    hdict = spirouImage.AddKey(hdict, p['KW_BNFLAT'], value=bstats[3])
-    hdict = spirouImage.AddKey(hdict, p['KW_BBAD'], value=bstats[4])
+    hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
+    hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
+    hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])
+    hdict = spirouImage.AddKey(hdict, p['KW_BNFLAT'], value=bstats1[3])
+    hdict = spirouImage.AddKey(hdict, p['KW_BBAD'], value=bstats1[4])
+    hdict = spirouImage.AddKey(hdict, p['kw_BNILUM'], value=bstats2)
+    hdict = spirouImage.AddKey(hdict, p['kw_BTOT'], value=btotal)
 
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)

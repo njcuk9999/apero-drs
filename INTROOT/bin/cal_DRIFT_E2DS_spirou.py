@@ -18,6 +18,7 @@ from __future__ import division
 import numpy as np
 import os
 
+from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -135,6 +136,19 @@ def main(night_name=None, reffile=None):
     # get all values in flat that are zero to 1
     loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
 
+    # ----------------------------------------------------------------------
+    # Background correction
+    # ----------------------------------------------------------------------
+    # log that we are performing background correction
+    if p['IC_DRIFT_BACK_CORR']:
+        WLOG('', p['LOG_OPT'], 'Perform background correction')
+        # get the box size from constants
+        bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+        # Loop around the orders
+        for order_num in range(loc['NUMBER_ORDERS']):
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
+            loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
+
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
     # ------------------------------------------------------------------
@@ -225,6 +239,18 @@ def main(night_name=None, reffile=None):
         # get acqtime
         bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
                                         return_value=1)
+        # test whether we want to subtract background
+        if p['IC_DRIFT_BACK_CORR']:
+            # Loop around the orders
+            for order_num in range(loc['NUMBER_ORDERS']):
+                # get the box size from constants
+                bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
+                # Measurethe min and max flux
+                miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+                                                      bsize)
+                # subtract off the background (miny)
+                loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+
         # ------------------------------------------------------------------
         # Compute photon noise uncertainty for iteration file
         # ------------------------------------------------------------------
