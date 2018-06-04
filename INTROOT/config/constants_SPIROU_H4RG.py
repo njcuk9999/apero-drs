@@ -39,20 +39,32 @@ ic_image_type = "H4RG"
 ic_display_timeout = 0.5
 
 # -----------------------------------------------------------------------------
+#  CFHT variables
+# -----------------------------------------------------------------------------
+
+#  Defines the CFHT longitude West (deg)                             - [cal_CCF]
+ic_longit_obs = 155.468876
+#  Defines the CFHT latitude North (deg)                             - [cal_CCF]
+ic_latit_obs = 19.825252
+#  Defines the CFHT altitude (km)                                    - [cal_CCF]
+ic_altit_obs = 4.204
+
+
+# -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 100
-ic_ccdx_blue_high = 4000
+ic_ccdx_blue_low = 500
+ic_ccdx_blue_high = 3500
 ic_ccdy_blue_low = 2000
-ic_ccdy_blue_high = 4000
+ic_ccdy_blue_high = 3500
 
 #   Resize red window                                               - [cal_dark]
 ic_ccdx_red_low = 100
 ic_ccdx_red_high = 4000
-ic_ccdy_red_low = 750
-ic_ccdy_red_high = 1350
+ic_ccdy_red_low = 780
+ic_ccdy_red_high = 1200
 
 #   Resize image                                                     - [cal_loc]
 ic_ccdx_low = 4
@@ -89,11 +101,9 @@ qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
-#ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.5}
 ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.}
 
 #   Half-zone extraction width right side (formally plage2)           - [cal_ff]
-#ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.5}
 ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
@@ -110,6 +120,39 @@ orderp_file_fpall = {'AB': 'AB', 'A': 'AB', 'B': 'AB', 'C': 'C'}
 #       (formally ic_extnbsig)
 ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
 
+
+# -----------------------------------------------------------------------------
+#   cal_preprocess parameters
+# -----------------------------------------------------------------------------
+
+# force pre-processed files only (Should be 1 or True to check and       - [all]
+#     force DRS to accept pre-processed files only - i.e. rotated and
+#     corrected) - if 0 or False DRS will except any file
+#     (at users own risk)
+ic_force_preprocess = 1
+
+#   Define the suffix to apply to the pre-processed files                - [all]
+#       if "None" then no suffix is added (or checked for)
+processed_suffix = '_pp.fits'
+
+#   Define the number of dark amplifiers                              - [cal_pp]
+number_dark_amp = 5
+
+#   Define the total number of amplifiers                             - [cal_pp]
+total_amp_num = 32
+
+#   Define the number of un-illuminated reference pixels at           - [cal_pp]
+#       top of image
+number_ref_top = 4
+
+#   Define the number of un-illuminated reference pixels at           - [cal_pp]
+#       bottom of image
+number_ref_bottom = 4
+
+#   Define the number of bins used in the dark median process         - [cal_pp]
+dark_med_binnum = 32
+
+
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
 # -----------------------------------------------------------------------------
@@ -124,8 +167,8 @@ dark_qmax = 95
 histo_bins = 200
 
 #   The range of the histogram in ADU/s                             - [cal_dark]
-histo_range_low = -0.5
-histo_range_high = 5
+histo_range_low = -0.2
+histo_range_high = 0.8
 
 #   Define a bad pixel cut limit (in ADU/s)                         - [cal_dark]
 dark_cutlimit = 5.0
@@ -288,27 +331,18 @@ ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 10
+ic_blaze_fitn = 7    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 2
+ic_ff_order_plot = 27
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
-ic_ff_plot_all_orders = 1
+ic_ff_plot_all_orders = 0
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
 # -----------------------------------------------------------------------------
-#   Extraction option in tilt file:                         - [cal_slit, cal_FF]
-#             if 0 extraction by summation over constant range
-#             if 1 extraction by summation over constant sigma
-#                (not currently available)
-#             if 2 Horne extraction without cosmic elimination
-#                (not currently available)
-#             if 3 Horne extraction with cosmic elimination
-#                (not currently available)
-ic_extopt = 0
 
 #    Start order of the extraction in cal_ff                     - [cal_extract]
 #       if None starts from 0
@@ -323,23 +357,50 @@ ic_extnbsig = 1 #2.5
 
 #   Select extraction type                                       - [cal_extract]
 #        Should be one of the following:
-#                'simple'
-#                'tilt'
-#                'tiltweight'
-#                'weight'
-#                'all'    - for comparison (saves all)
-ic_extract_type = 'tiltweight'
+#                 0 - Simple extraction
+#                         (function = spirouEXTOR.extract_const_range)
+#
+#                 1 - weighted extraction
+#                         (function = spirouEXTOR.extract_weight)
+#
+#                 2 - tilt extraction
+#                         (function = spirouEXTOR.extract_tilt)
+#
+#                 3a - tilt weight extraction (old 1)
+#                         (function = spirouEXTOR.extract_tilt_weight)
+#
+#                 3b - tilt weight extraction 2 (old)
+#                         (function = spirouEXTOR.extract_tilt_weight_old2)
+#
+#                 3c - tilt weight extraction 2
+#                         (function = spirouEXTOR.extract_tilt_weight2)
+#
+#                 3d - tilt weight extraction 2 (cosmic correction)
+#                         (function = spirouEXTOR.extract_tilt_weight2cosm)
+ic_extract_type = '3d'  #'3d'
+# Now select the extraction type in cal_ff ONLY                       - [cal_FF]
+ic_ff_extract_type = '3c'
 
-#   Set the number of pixels to set as the border (needed   - [cal_slit, cal_FF]
-#       to allow for tilt to not go off edge of image)
+#   Set the number of pixels to set as                   - [cal_extract, cal_FF]
+#       the border (needed to allow for tilt to not go off edge of image)
 ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
-ic_ext_sigdet = 100
+ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
-ic_ext_order_plot = 5
+ic_ext_order_plot = 17
+
+#    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
+#        to cut
+#        ONLY USED IF EXTRACT_TYPE = '3d'
+ic_cosmic_sigcut = 0.25  # 0.25
+
+#    Defines the maximum number of iterations we use     - [cal_ff, cal_extract]
+#        to check for cosmics (for each pixel)
+#        ONLY USED IF EXTRACT_TYPE = '3d'
+ic_cosmic_thresh = 5
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
@@ -347,6 +408,9 @@ ic_ext_order_plot = 5
 #   The value of the noise for drift calculation                   - [cal_drift]
 #      snr = flux/sqrt(flux + noise^2)
 ic_drift_noise = 100.0
+
+#  Option for the background correction [0/1]                      - [cal_drift]
+ic_drift_back_corr = 0
 
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
@@ -515,6 +579,53 @@ ccf_fit_type = 0
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 25
 
+#  Define the mode to work out the Earth Velocity calculation        - [cal_CCF]
+#      Options are:
+#           - "off" - berv is set to zero
+#           - "old" - berv is calculated with FORTRAN newbervmain.f
+#             WARNING: requires newbervmain.f to be compiled
+#                      with f2py -c -m newbervmain --noopt --quiet newbervmain.f
+#                      located in the SpirouDRS/fortran directory
+#           - "new" - berv is calculated using barycorrpy  but needs to be
+#                     installed (i.e. pip install barycorrpy)
+#                     CURRENTLY NOT WORKING!!!
+ccf_bervmode = "off"
+
+
+# -----------------------------------------------------------------------------
+#   cal_exposure_meter parameters
+# -----------------------------------------------------------------------------
+
+#  Define the telluric threshold (transmission) to mask at            - [cal_em]
+em_tell_threshold = 0.95
+
+#  Define the minimum wavelength (in nm) to mask at                   - [cal_em]
+em_min_lambda = 1478.7
+
+#  Define the maximum wavelength (in nmm) to mask at                  - [cal_em]
+em_max_lambda = 1823.1
+
+#  Define what size we want the mask                                  - [cal_em]
+#      options are:
+#           - "raw" (4096 x 4096)
+#           - "drs" flipped in x and y and resized by
+#                (ic_ccdx_low, ic_ccdx_high, ic_ccdy_low, ic_ccdy_high
+em_output_type = "all"
+
+#  Define whether to combine with bad pixel mask or not               - [cal_em]
+#     if True badpixel mask is combined if False it is not
+em_combined_badpix = True
+
+#  Define whether to just save wavelength map                         - [cal_em]
+em_save_wave_map = True
+
+#  Define whether to save the telluric spectrum                       - [cal_em]
+em_save_tell_spec = True
+
+#  Define whether to save the exposure meter mask                     - [cal_em]
+em_save_mask_map = True
+
+
 # -----------------------------------------------------------------------------
 #   cal_hc parameters
 # -----------------------------------------------------------------------------
@@ -532,35 +643,17 @@ ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
 #  Define the type of catalogue to use for each lamp type             - [cal_HC]
 ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
 
-#
-# default = 5
-ic_ll_degr_fit = 4
+# Maximum sig-fit of the guessed lines                                - [cal_HC]
+#     fwhm/2.35 of th lines)
+ic_max_sigll_cal_lines = 5.2
 
-#
-ic_ll_sp_min = 900
+# Maximum error on first guess lines                                  - [cal_HC]
+# default = 1
+ic_max_errw_onfit = 1
 
-#
-ic_ll_sp_max = 2400
-
-# Maximum amplitude of the line
+# Maximum amplitude of the guessed lines                              - [cal_HC]
 # default = 2.0e5
 ic_max_ampl_line = 2.0e8
-
-#
-# default = 1
-ic_max_errw_infit = 1
-
-#
-# default = 50000  or 60000
-ic_resol = 55000
-
-#
-# default = 3   or 2.6
-ic_ll_free_span = 3
-
-#
-# default = 16.8
-ic_hc_noise = 30
 
 #  Defines order to which the solution is calculated                  - [cal_HC]
 #      previously called n_ord_final
@@ -569,7 +662,35 @@ cal_hc_n_ord_final = 24
 #  Defines echeele of first extracted order
 cal_hc_t_order_start = 66
 
-#
+# Define the minimum instrumental error                               - [cal_HC]
+ic_errx_min = 0.03
+
+#  Define the wavelength fit polynomial order                         - [cal_HC]
+# default = 5
+ic_ll_degr_fit = 4
+
+#  Define the max rms for the sigma-clip fit ll                       - [cal_HC]
+ic_max_llfit_rms = 3.0
+
+# NOT USED YET
+# default = 50000  or 60000
+ic_resol = 55000
+
+# NOT USED YET
+# default = 3   or 2.6
+ic_ll_free_span = 3
+
+# NOT USED YET
+# default = 16.8
+ic_hc_noise = 30
+
+# NOT USED YET
+ic_ll_sp_min = 900
+
+# NOT USED YET
+ic_ll_sp_max = 2400
+
+# NOT USED YET
 ic_ll_smooth = 0
 
 
@@ -578,13 +699,13 @@ ic_ll_smooth = 0
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                                   - [cal_dark]
-qc_max_darklevel = 0.5
+qc_max_darklevel = 0.07
 
 #   Max fraction of dead pixels                                     - [cal_dark]
-qc_max_dead = 20.0
+qc_max_dead = 1.0
 
 #   Max fraction of dark pixels (percent)                           - [cal_dark]
-qc_max_dark = 6.0
+qc_max_dark = 1.0
 
 #   Min dark exposure time                                          - [cal_dark]
 #   TODO: This should be set to 599.0
@@ -604,7 +725,7 @@ qc_loc_rmsmax_center = 100
 qc_loc_rmsmax_fwhm = 500
 
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
-qc_ff_rms = 0.12
+qc_ff_rms = 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
 qc_loc_flumax = 64500

@@ -53,6 +53,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BHOT',
             'kw_BNDARK',
             'kw_BNFLAT',
+            'kw_BNILUM',
+            'kw_BTOT',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
             'kw_CCF_CDELT',
@@ -73,6 +75,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
             'kw_DPRTYPE',
+            'kw_E2DS_EXTM',
+            'kw_E2DS_FUNC',
             'kw_E2DS_SNR',
             'kw_EXPTIME',
             'kw_EXTRA_SN',
@@ -103,11 +107,27 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
-            'kw_version']
+            'kw_version',
+            'kw_EM_TELLX',
+            'kw_EM_TELLY',
+            'kw_EM_LOCFILE',
+            'kw_EM_WAVE',
+            'kw_EM_TILT',
+            'kw_EM_MINWAVE',
+            'kw_EM_MAXWAVE',
+            'kw_EM_TRASCUT',
+            'kw_DATE_OBS',
+            'kw_UTC_OBS',
+            'kw_OBJRA',
+            'kw_OBJDEC',
+            'kw_OBJEQUIN',
+            'kw_OBJRAPM',
+            'kw_OBJDECPM']
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
               'DRS_VERSION',
+              'IC_IMAGE_TYPE',
               'IC_LOC_DELTA_WIDTH',
               'IC_LOCDFITC',
               'IC_LOCDFITP',
@@ -192,6 +212,27 @@ if p['IC_IMAGE_TYPE'] == 'H4RG':
     kw_ACQTIME_KEY_UNIX = ['MJDATE', None, '']
 else:
     kw_ACQTIME_KEY_UNIX = ['ACQTIME', None, '']
+
+# define the observation date HEADER key
+kw_DATE_OBS = ['DATE-OBS', None, '']
+
+# define the observation time HEADER key
+kw_UTC_OBS = ['UTC-OBS', None, '']
+
+# define the observation ra HEADER key
+kw_OBJRA = ['OBJRA', None, '']
+
+# define the observation dec HEADER key
+kw_OBJDEC = ['OBJDEC', None, '']
+
+# define the observation equinox HEADER key
+kw_OBJEQUIN = ['OBJEQUIN', None, '']
+
+# define the observation proper motion in ra HEADER key
+kw_OBJRAPM = ['OBJRAPM', None, '']
+
+# define the observation proper motion in dec HEADER key
+kw_OBJDECPM = ['OBJDECPM', None, '']
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 kw_RDNOISE = ['RDNOISE', None, '']
@@ -324,6 +365,10 @@ kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 # localization file used
 kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
+kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
+
+kw_E2DS_FUNC = ['EXTFUNC', '', 'Extrction function']
+
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
 # -----------------------------------------------------------------------------
@@ -345,6 +390,11 @@ kw_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
 # fraction of bad pixels with all criteria
 kw_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
 
+# fraction of un-illuminated pixels (from engineering flat)
+kw_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
+
+# fraction of total bad pixels
+kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
@@ -361,6 +411,19 @@ kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
 kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
 
+
+# -----------------------------------------------------------------------------
+# Define cal_exposure_meter variables
+# -----------------------------------------------------------------------------
+
+kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
+kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
+kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
+kw_EM_WAVE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+kw_EM_TILT = ['TILTFILE', 0.0, 'Tilt solution file used']
+kw_EM_MINWAVE = ['MINLAM', 0.0, 'Minimum lambda used in mask [nm]']
+kw_EM_MAXWAVE = ['MAXLAM', 0.0, 'Maximum lambda used in mask [nm]']
+kw_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 
 # -----------------------------------------------------------------------------
 # Define qc variables

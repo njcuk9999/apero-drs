@@ -9,6 +9,8 @@ Created on 2017-12-19 at 16:20
 
 """
 from __future__ import division
+from astropy import constants as cc
+from astropy import units as uu
 import numpy as np
 import warnings
 
@@ -36,7 +38,9 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
-
+# Speed of light
+# c = cc.c.to(uu.km/uu.s).value
+c = 300000
 
 # =============================================================================
 # Define functions
@@ -254,27 +258,36 @@ def get_lamp_parameters(p, filename=None, kind=None):
     return p
 
 
-def first_guess_at_wave_solution(p, loc):
+def first_guess_at_wave_solution(p, loc, mode='new'):
     """
     First guess at wave solution, consistency check, using the wavelength
     solutions line list
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-            CAL_HC_N_ORD_FINAL
-            CAL_HC_T_ORDER_START
-            log_opt
-            fiber
+            CAL_HC_N_ORD_FINAL: int, defines first order solution is calculated
+                                from
+            CAL_HC_T_ORDER_START: int, defines the first order solution is
+                                  calculated from
+            log_opt: string, log option, normally the program name
+            fiber: string, the fiber number
 
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
 
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
-                FIT_ORDERS
-                LL_INIT
-                LL_LINE
-                AMPL_LINE
+                FIT_ORDERS: numpy array, the orders to fit
+                LL_INIT: numpy array, the initial guess at the line list
+                LL_LINE: numpy array, the line list wavelengths from file
+                AMPL_LINE: numpy array, the line list amplitudes from file
+                ALL_LINES: list of numpy arrays, length = number of orders
+                            each numpy array contains gaussian parameters
+                            for each found line in that order
 
     """
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
@@ -301,7 +314,7 @@ def first_guess_at_wave_solution(p, loc):
     wmsg = 'On fiber {0} trying to identify lines using guess solution'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # find the lines
-    all_lines = find_lines(p, loc)
+    all_lines = find_lines(p, loc, mode=mode)
     # add all lines to loc
     loc['ALL_LINES'] = all_lines
     loc.set_source('ALL_LINES', func_name)
@@ -309,283 +322,108 @@ def first_guess_at_wave_solution(p, loc):
     return loc
 
 
-def find_lines(p, loc):
-    """
-    Find the lines on the E2DS spectrum
+def detect_bad_lines(p, loc, key=None):
 
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-            IC_LL_SP_MIN
-            IC_LL_SP_MAX
-            IC_RESOL
-            IC_LL_FREE_SPAN
-            IC_HC_NOISE
+    # get constants from p
+    max_error_onfit = p['IC_MAX_ERRW_ONFIT']
+    max_error_sigll = p['IC_MAX_SIGLL_CAL_LINES']
+    max_ampl_lines = p['IC_MAX_AMPL_LINE']
 
-    :param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            LL_INIT
-            LL_LINE
-            AMPL_LINE
-            DATA
-            FIT_ORDERS
-
-    :return:
-    """
-    func_name = __NAME__ + '.find_lines()'
-    # get parameters from p
-    ll_sp_min = p['IC_LL_SP_MIN']
-    ll_sp_max = p['IC_LL_SP_MAX']
-    resol = p['IC_RESOL']
-    ll_free_span = p['IC_LL_FREE_SPAN']
-    image_ron = p['IC_HC_NOISE']
-    # get parameters from loc
-    ll = loc['LL_INIT']
-    ll_line = loc['LL_LINE']
-    ampl_line = loc['AMPL_LINE']
-    datax = loc['DATA'][:p['CAL_HC_N_ORD_FINAL']]
-    torder = loc['FIT_ORDERS']
-    # set update a pixel array
-    xpos = np.arange(datax.shape[1])
-    # set up storage
-    all_cal_line_fit = []
-    # loop around the orders
-    for order_num in np.arange(datax.shape[0]):
-        # order extend (in wavelengths)
-        order_min, order_max = ll[order_num, 0], ll[order_num, -1]
-        # select lines based on boundaries
-        wave_mask = (ll_line >= order_min)
-        wave_mask &= (ll_line <= order_max)
-        wave_mask &= (ll_line >= ll_sp_min)
-        wave_mask &= (ll_line <= ll_sp_max)
-        # apply mask to ll_line and ampl_line
-        ll_line_s = ll_line[wave_mask]
-        ampl_line_s = ampl_line[wave_mask]
-        # check to make sure we have lines
-        if len(ll_line_s) > 0:
-            gauss_fit = []
-        else:
-            # if we have no lines print detailed error report and exit
-            emsg1 = 'Order {0}: NO LINES IDENTIFIED!!'.format(order_num)
-            emsg2args = [order_min, order_max]
-            emsg2 = '   Order limit: [{0:6.1f}-{1:6.1f}]'.format(*emsg2args)
-            emsg3args = [ll_sp_min, ll_sp_max]
-            emsg3 = '   Hard limit: [{0:6.1f}-{1:6.1f}]'.format(*emsg3args)
-            emsg4args = [ll_line[0], ll_line[-1]]
-            emsg4 = '   Line interval: [{0:6.1f}-{1:6.1f}]'.format(*emsg4args)
-            emsg5 = '       function={0}'.format(func_name)
-            emsg6 = ' Unable to reduce, check guess solution'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4,
-                                         emsg5, emsg6])
-            gauss_fit = []
-        # loop around the lines in kept line list
-        for ll_i in np.arange(len(ll_line_s)):
-            # get this iterations line
-            line = float(ll_line_s[ll_i])
-            # loop around these two span values
-            for span in [4.25, ll_free_span]:
-                # calculate line limits
-                ll_span_min = line - span * (line/(resol * 2.355))
-                ll_span_max = line + span * (line/(resol * 2.355))
-                # calculate line mask for each span
-                line_mask = ll[order_num] >= ll_span_min
-                line_mask &= ll[order_num] <= ll_span_max
-                # apply line mask to ll, xpos and data
-                sll = ll[order_num, :][line_mask]
-                sxpos = xpos[line_mask]
-                sdata = datax[order_num, :][line_mask]
-                # normalise sdata by the minimum sdata
-                sdata -= np.min(sdata)
-                # make sure we have more than 3 data points
-                if len(sxpos) < 3:
-                    wmsg = 'Resolution or ll_span are too small'
-                    WLOG('', p['LOG_OPT'], wmsg)
-                # work out a pixel weighting
-                line_weight = 1.0/(sdata + image_ron**2)
-                # check that the sum of the weighted flux is not zero
-                if np.sum(sdata * line_weight) != 0:
-                    # if it isn't zero set the line value to the
-                    #   weighted mean value
-                    line = np.sum(sll * sdata * line_weight)
-                    line /= np.sum(sdata * line_weight)
-                else:
-                    # if it is zero then just use the line
-                    line = float(ll_line_s[ll_i])
-            # perform the gaussian fit on the line
-            with warnings.catch_warnings(record=True) as w:
-
-                # TODO: PROBLEM WITH FIT_EMI_LINE
-                # TODO:  1 scipy.optimize.curve_fit does not give
-                # TODO:    same result as foutran fitgaus.fitgaus routine
-                # TODO:  2 fitgaus.fitgaus routine (in py3) does not give
-                # TODO:    same result as AT4-V48 version (py2 old)
-                # TODO:  3 scipy.optimize.curve_fit is slower
-
-                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight)
-            # check if gau_param[7] is positive
-            if gau_param[7] > 0:
-                gau_param[3] = ll_line_s[ll_i] - gau_param[0]
-                gau_param[4] = ampl_line_s[ll_i]
-            # finally append parameters to storage
-            gauss_fit.append(gau_param)
-        # finally reshape all the gauss_fit parameters
-        gauss_fit = np.array(gauss_fit).reshape(len(ll_line_s), 8)
-        # calculate stats for logging
-        min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
-        nlines_valid = np.sum(gauss_fit[:, 2] > 0)
-        nlines_total = len(gauss_fit[:, 2])
-        percentage_vlines = 100 * (nlines_valid/nlines_total)
-        # log the stats for this order
-        wmsg = 'Order {0:3} ({1:2}): [{2:6.1f} - {3:6.1f}]'
-        wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
-        wargs = [torder[order_num], order_num, min_ll, max_ll,
-                 nlines_valid, nlines_total, percentage_vlines]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-        all_cal_line_fit.append(gauss_fit)
-    # return all lines found (36 x number of lines found for order)
-    return all_cal_line_fit
-
-
-def fit_emi_line(sll, sxpos, sdata, weight):
-
-    # get fit degree
-    fitdegree = 2
-
-    # set data less than or equal to 1 to 1
-    smask = sdata > 1
-    sdata1 = np.where(smask, sdata, np.ones_like(sdata))
-    lsdata = np.log(sdata1)
-
-    # set coeff array
-    coeffs = np.zeros(fitdegree + 1)
-
-    # normalise the wavelength data
-    slln = (sll - sll[0])/(sll[-1]-sll[0])
-    # test for NaNs
-    if np.sum(~np.isfinite(slln)) != 0:
-        coeffs[2] = 0
-        slln = 0
-    # if no NaNs work out weights and fit
+    # deal with key
+    if key is None:
+        key = 'ALL_LINES'
+    elif key in loc:
+        pass
     else:
-        if not np.max(lsdata) == 0:
-            # weights = sqrt(weight * sdata^2)
-            weights = np.sqrt(weight*sdata**2)
-            # fit the lsdata with a weighted polyfit
-            coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
+        emsg = 'key = "{0}" not defined in "loc"'
+        WLOG('error', p['LOG_OPT'], emsg.format(key))
+        key = None
 
-    # perform a gaussian fit
-    gparams = np.zeros(8, dtype='float')
-    params = np.zeros(4, dtype='float')
+    # loop around each order
+    for order_num in range(len(loc[key])):
+        # get all lines 7
+        lines = np.array(loc[key][order_num])
+        # ---------------------------------------------------------------------
+        # Criteria 1
+        # ---------------------------------------------------------------------
+        # create mask
+        badfit = lines[:, 7] <= max_error_onfit
+        # count number of bad lines
+        num_badfit = np.sum(badfit)
+        # put all bad fit lines to zero
+        lines[:, 7][badfit] = 0.0
+        # ---------------------------------------------------------------------
+        # Criteria 2
+        # ---------------------------------------------------------------------
+        # calculate the sig-fit for the lines
+        sigll = lines[:, 1]/lines[:, 0] * c
+        # create mask
+        badsig = sigll >= max_error_sigll
+        # count number of bad sig lines
+        num_badsig = np.sum(badsig)
+        # put all bad sig lines to zero
+        lines[:, 7][badsig] = 0.0
+        # ---------------------------------------------------------------------
+        # Criteria 3
+        # ---------------------------------------------------------------------
+        # create mask
+        badampl = lines[:, 2] >= max_ampl_lines
+        # count number
+        num_badampl = np.sum(badampl)
+        # put all bad ampl to zero
+        lines[:, 7][badsig] = 0.0
+        # ---------------------------------------------------------------------
+        # log criteria
+        # ---------------------------------------------------------------------
+        # combine masks
+        badlines = badfit | badsig | badampl
+        # count number
+        num_bad, num_total = np.sum(badlines), badlines.size
+        # log only if we have bad
+        if np.sum(badlines) > 0:
+            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
+                     num_badfit]
+            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
+                    '[beyond (sig/ampl/err) limits]')
+            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+        # ---------------------------------------------------------------------
+        # Remove infinities
+        # ---------------------------------------------------------------------
+        # create mask
+        nanmask = ~np.isfinite(lines[:, 7])
+        # put all NaN/infs to zero
+        lines[:, 7][nanmask] = 0.0
+        # ---------------------------------------------------------------------
+        # add back to loc[key]
+        # ---------------------------------------------------------------------
+        loc[key][order_num] = lines
 
-    # only perform gaussian fit if coeffs[2] is negative
-    if coeffs[2] < 0:
-        # populate the guess for center
-        params[0] = -1 * coeffs[1] / (2 * coeffs[2])
-        # populate the guess for FWHM
-        params[1] = np.sqrt(-1/(2 * coeffs[2]))
-        # populate the guess for the amplitude
-        params[2] = np.exp(params[0]**2/(2 * params[1]**2) + coeffs[0])
-        # set up the guess (from params)
-        # f(x) = a1 * exp( -(x-a2)**2 / (2*a3**2) ) + a4
-        gcoeffs = np.array([params[2], params[0], params[1], 0.0])
-        # set up the weights for each pixel
-        invsig = np.sqrt(weight)
-        # fit a gaussian
-        fkwargs = dict(weights=invsig, guess=gcoeffs, return_fit=False,
-                       return_uncertainties=True)
-        try:
-            gcoeffs2, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
-
-            # TODO: Test of fitgaus.fitfaus FORTRAN ROUTINE
-            # TODO:     (requires fitgaus.so to be compiled and put in
-            # TODO:     SpirouDRS.spirouTHORA folder)
-            # from SpirouDRS.spirouTHORCA import fitgaus
-            # f = np.zeros_like(sdata)
-            # siga = np.zeros_like(gcoeffs)
-            # a = gcoeffs.copy()
-            # fitgaus.fitgaus(slln,sdata,invsig,a,siga,f)
-            # gcoeffs2 = a.copy()
-
-            # copy the gaussian fit coefficients into params
-            params[0] = gcoeffs2[1]
-            params[1] = gcoeffs2[2]
-            params[2] = gcoeffs2[0]
-            params[3] = siga[1]
-        except RuntimeError:
-            params[1] = 1
-            params[2] = 0
-            params[3] = 0
-
-        # test for NaNs
-        if np.sum(~np.isfinite(params)) != 0:
-            params[1] = 1
-            params[2] = 0
-            params[3] = 0
-    # if coefficient is positive
-    else:
-        params[0] = 0
-        params[1] = 1
-        params[2] = 0
-        params[3] = 0
-
-    # get the wavelength different and position diff
-    slldiff = sll[-1] - sll[0]
-    sxposdiff = sxpos[-1] - sxpos[0]
-
-    # set the gaussian parameters
-    gparams[0] = (params[0] * slldiff) + sll[0]
-    gparams[1] = params[1] * slldiff
-    gparams[2] = params[2]
-    gparams[3] = 0.0
-    gparams[4] = 0.0
-    gparams[5] = (params[0] * sxposdiff) + sxpos[0]
-    gparams[6] = params[1] * sxposdiff
-
-    # check params[3]
-    if params[3] * sxposdiff != 0:
-        gparams[7] = 1.0/(params[3] * sxposdiff)**2
-    else:
-        gparams[7] = 0.0
-
-    # return gparams
-    return gparams
+    # return loc
+    return loc
 
 
-def test_plot(x, y, guess=None, coeffs=None, weights=None):
+def fit_1d_solution(p, loc):
 
-    if weights is not None:
-        plt.errorbar(x, y, yerr=1/weights, label='data', ls='None', marker='x')
-    else:
-        plt.scatter(x, y, label='data')
-
-    if guess is not None:
-        yguess = gauss_function(x, *guess)
-        plt.plot(x, yguess, label='guess')
-
-    if coeffs is not None:
-        yfit = gauss_function(x, *coeffs)
-        plt.plot(x, yfit, label='fit')
-
-    plt.plot([coeffs[1], coeffs[1]], [np.min(y), np.max(y)], ls='--',
-             label='fit center')
-
-    plt.legend(loc=0)
-    plt.show()
-    plt.close()
-
-
-def gauss_function(x, a, x0, sigma, dc):
-    """
-    A standard 1D gaussian function (for fitting against)]=
-
-    :param x: numpy array (1D), the x data points
-    :param a: float, the amplitude
-    :param x0: float, the mean of the gaussian
-    :param sigma: float, the standard deviation (FWHM) of the gaussian
-    :param dc: float, the constant level below the gaussian
-
-    :return gauss: numpy array (1D), size = len(x), the output gaussian
-    """
-    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
+    # get 1d solution
+    loc = fit_1d_ll_solution(p, loc)
+    # invert solution
+    loc = invert_1ds_ll_solution(p, loc)
+    # get the shape
+    nx, nbo = loc['INV_PARAM'].shape
+    # get new line list
+    loc['LL_OUT'] = get_ll_from_coefficients(loc['INV_PARAM'], nx, nbo)
+    # get the first derivative of the line list
+    loc['DLL_OUT'] = get_dll_from_coefficients(loc['INV_PARAM'], nx, nbo)
+    # find the central pixel value
+    centpix = loc['LL_OUT'].shape[1]//2
+    # get the mean pixel scale (in km/s/pixel) of the central pixel
+    norm = loc['DLL_OUT'][:, centpix]/loc['LL_OUT'][:, centpix]
+    meanpixscale = c * np.sum(norm)/len(loc['LL_OUT'][:, centpix])
+    # log message
+    wmsg = 'On fiber {0} mean pixel scale at center: {1:.4f} [km/s/pixel]'
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], meanpixscale))
+    # return loc
+    return loc
 
 
 # =============================================================================
@@ -628,6 +466,548 @@ def decide_on_lamp_type(p, filename):
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
     # finally return lamp type
     return lamp_type
+
+
+def find_lines(p, loc, mode='new'):
+    """
+    Find the lines on the E2DS spectrum
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LL_SP_MIN
+            IC_LL_SP_MAX
+            IC_RESOL
+            IC_LL_FREE_SPAN
+            IC_HC_NOISE
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            LL_INIT
+            LL_LINE
+            AMPL_LINE
+            DATA
+            FIT_ORDERS
+
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
+    :return all_lines: list, all lines in format:
+
+                    [order1lines, order2lines, order3lines, ..., orderNlines]
+
+                    where order1lines = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
+                    (See fit_emi_line)
+
+    """
+    func_name = __NAME__ + '.find_lines()'
+    # get parameters from p
+    ll_sp_min = p['IC_LL_SP_MIN']
+    ll_sp_max = p['IC_LL_SP_MAX']
+    resol = p['IC_RESOL']
+    ll_free_span = p['IC_LL_FREE_SPAN']
+    image_ron = p['IC_HC_NOISE']
+    # get parameters from loc
+    ll = loc['LL_INIT']
+    ll_line = loc['LL_LINE']
+    ampl_line = loc['AMPL_LINE']
+    datax = loc['DATA'][:p['CAL_HC_N_ORD_FINAL']]
+    torder = loc['FIT_ORDERS']
+    # set update a pixel array
+    xpos = np.arange(datax.shape[1])
+    # set up storage
+    all_cal_line_fit = []
+    # loop around the orders
+    for order_num in np.arange(datax.shape[0]):
+        # order extend (in wavelengths)
+        order_min, order_max = ll[order_num, 0], ll[order_num, -1]
+        # select lines based on boundaries
+        wave_mask = (ll_line >= order_min)
+        wave_mask &= (ll_line <= order_max)
+        wave_mask &= (ll_line >= ll_sp_min)
+        wave_mask &= (ll_line <= ll_sp_max)
+        # apply mask to ll_line and ampl_line
+        ll_line_s = ll_line[wave_mask]
+        ampl_line_s = ampl_line[wave_mask]
+        # check to make sure we have lines
+        if not len(ll_line_s) > 0:
+            # if we have no lines print detailed error report and exit
+            emsg1 = 'Order {0}: NO LINES IDENTIFIED!!'.format(order_num)
+            emsg2args = [order_min, order_max]
+            emsg2 = '   Order limit: [{0:6.1f}-{1:6.1f}]'.format(*emsg2args)
+            emsg3args = [ll_sp_min, ll_sp_max]
+            emsg3 = '   Hard limit: [{0:6.1f}-{1:6.1f}]'.format(*emsg3args)
+            emsg4args = [ll_line[0], ll_line[-1]]
+            emsg4 = '   Line interval: [{0:6.1f}-{1:6.1f}]'.format(*emsg4args)
+            emsg5 = '       function={0}'.format(func_name)
+            emsg6 = ' Unable to reduce, check guess solution'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4,
+                                         emsg5, emsg6])
+        gauss_fit = []
+        # loop around the lines in kept line list
+        for ll_i in np.arange(len(ll_line_s)):
+            # get this iterations line
+            line = float(ll_line_s[ll_i])
+            # loop around these two span values
+            for span in [4.25, ll_free_span]:
+                # calculate line limits
+                ll_span_min = line - span * (line/(resol * 2.355))
+                ll_span_max = line + span * (line/(resol * 2.355))
+                # calculate line mask for each span
+                line_mask = ll[order_num] >= ll_span_min
+                line_mask &= ll[order_num] <= ll_span_max
+                # apply line mask to ll, xpos and data
+                sll = ll[order_num, :][line_mask]
+                sxpos = xpos[line_mask]
+                sdata = datax[order_num, :][line_mask]
+                # normalise sdata by the minimum sdata
+                sdata = sdata - np.min(sdata)
+                # make sure we have more than 3 data points
+                if len(sxpos) < 3:
+                    wmsg = 'Resolution or ll_span are too small'
+                    WLOG('', p['LOG_OPT'], wmsg)
+                # work out a pixel weighting
+                line_weight = 1.0/(sdata + image_ron**2)
+                # check that the sum of the weighted flux is not zero
+                if np.sum(sdata * line_weight) != 0:
+                    # if it isn't zero set the line value to the
+                    #   weighted mean value
+                    line = np.sum(sll * sdata * line_weight)
+                    line = line / np.sum(sdata * line_weight)
+                else:
+                    # if it is zero then just use the line
+                    line = float(ll_line_s[ll_i])
+            # perform the gaussian fit on the line
+            with warnings.catch_warnings(record=True) as w:
+                # TODO: PROBLEM WITH FIT_EMI_LINE
+                # TODO:  1 scipy.optimize.curve_fit does not give
+                # TODO:    same result as foutran fitgaus.fitgaus routine
+                # TODO:  2 fitgaus.fitgaus routine (in py3) does not give
+                # TODO:    same result as AT4-V48 version (py2 old)
+                # TODO:  3 scipy.optimize.curve_fit is slower
+                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight,
+                                         mode=mode)
+            # check if gau_param[7] is positive
+            if gau_param[7] > 0:
+                # Set the difference in input/output wavelength
+                gau_param[3] = ll_line_s[ll_i] - gau_param[0]
+                # Set the input amplitudes
+                gau_param[4] = ampl_line_s[ll_i]
+            # finally append parameters to storage
+            gauss_fit.append(gau_param)
+        # finally reshape all the gauss_fit parameters
+        gauss_fit = np.array(gauss_fit).reshape(len(ll_line_s), 8)
+        # calculate stats for logging
+        min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
+        nlines_valid = np.sum(gauss_fit[:, 2] > 0)
+        nlines_total = len(gauss_fit[:, 2])
+        percentage_vlines = 100 * (nlines_valid/nlines_total)
+        # log the stats for this order
+        wmsg = 'Order {0:3} ({1:2}): [{2:6.1f} - {3:6.1f}]'
+        wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
+        wargs = [torder[order_num], order_num, min_ll, max_ll,
+                 nlines_valid, nlines_total, percentage_vlines]
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        all_cal_line_fit.append(gauss_fit)
+    # return all lines found (36 x number of lines found for order)
+    return all_cal_line_fit
+
+
+def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
+    """
+    Fit emission line
+
+    :param sll:
+    :param sxpos:
+    :param sdata:
+    :param weight:
+    :param mode:
+
+    :return gparams: list of length = 8:
+                gparams[0] = output wavelengths
+                gparams[1] = output sigma (gauss fit width)
+                gparams[2] = output amplitude (gauss fit)
+                gparams[3] = difference in input/output wavelength
+                gparams[4] = input amplitudes
+                gparams[5] = output pixel positions
+                gparams[6] = output pixel sigma width
+                                  (gauss fit width in pixels)
+                gparams[7] = output weights for the pixel position
+    """
+
+
+    # get fit degree
+    fitdegree = 2
+
+    # set data less than or equal to 1 to 1
+    smask = sdata > 1
+    sdata1 = np.where(smask, sdata, np.ones_like(sdata))
+    lsdata = np.log(sdata1)
+
+    # set coeff array
+    coeffs = np.zeros(fitdegree + 1)
+
+    # normalise the wavelength data
+    slln = (sll - sll[0])/(sll[-1]-sll[0])
+    # test for NaNs
+    if np.sum(~np.isfinite(slln)) != 0:
+        coeffs[2] = 0
+        slln = 0
+    # if no NaNs work out weights and fit
+    else:
+        if not np.max(lsdata) == 0:
+            # weights = sqrt(weight * sdata^2)
+            weights = np.sqrt(weight*sdata**2)
+            # fit the lsdata with a weighted polyfit
+            coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
+
+    # perform a gaussian fit
+    gparams = np.zeros(8, dtype='float')
+    params = np.zeros(4, dtype='float')
+
+    # only perform gaussian fit if coeffs[2] (intercept) is negative
+    if coeffs[2] < 0:
+        # populate the guess for center (quadratic fit minimum)
+        params[0] = -1 * coeffs[1] / (2 * coeffs[2])
+        # populate the guess for FWHM
+        params[1] = np.sqrt(-1/(2 * coeffs[2]))
+        # populate the guess for the amplitude
+        params[2] = np.exp(params[0]**2/(2 * params[1]**2) + coeffs[0])
+        # set up the guess (from params)
+        # f(x) = a1 * exp( -(x-a2)**2 / (2*a3**2) ) + a4
+        gcoeffs = np.array([params[2], params[0], params[1], 0.0])
+        # set up the weights for each pixel
+        invsig = np.sqrt(weight)
+        # fit a gaussian
+        fkwargs = dict(weights=invsig, guess=gcoeffs, return_fit=False,
+                       return_uncertainties=True)
+        try:
+            if mode == 'new':
+                ag, siga = spirouMath.fitgaussian(slln, sdata, **fkwargs)
+
+            # TODO: Test of fitgaus.fitfaus FORTRAN ROUTINE
+            # TODO:     (requires fitgaus.so to be compiled and put in
+            # TODO:      SpirouDRS.spirouTHORA folder)
+            else:
+                from SpirouDRS.spirouTHORCA import fitgaus
+                f = np.zeros_like(sdata)
+                siga = np.zeros_like(gcoeffs)
+                ag = gcoeffs.copy()
+                fitgaus.fitgaus(slln,sdata,invsig,ag,siga,f)
+            # copy the gaussian fit coefficients into params
+            params[0] = ag[1]
+            params[1] = ag[2]
+            params[2] = ag[0]
+            params[3] = siga[1]
+        # if it breaks set parameters to bad parameters
+        except RuntimeError:
+            params[1] = 1
+            params[2] = 0
+            params[3] = 0
+        # test for NaNs - if NaNs set to bad parameters
+        if np.sum(~np.isfinite(params)) != 0:
+            params[1] = 1
+            params[2] = 0
+            params[3] = 0
+    # if coeff[2] (intercept) is positive set to bad parameters
+    else:
+        params[0] = 0
+        params[1] = 1
+        params[2] = 0
+        params[3] = 0
+
+    # get the wavelength different and position diff
+    slldiff = sll[-1] - sll[0]
+    sxposdiff = sxpos[-1] - sxpos[0]
+
+    # set the gaussian parameters
+    # Set the centre of the gaussian fit (in wavelengths)
+    gparams[0] = (params[0] * slldiff) + sll[0]
+    # Set width of gaussian fit (in wavelengths)
+    gparams[1] = params[1] * slldiff
+    # Set the amplitude of gaussian fit
+    gparams[2] = params[2]
+    # Set the difference in the input and output central wavelength fits
+    gparams[3] = 0.0
+    # Set the input amplitude
+    gparams[4] = 0.0
+    # Set the x pixel position (center)
+    gparams[5] = (params[0] * sxposdiff) + sxpos[0]
+    # Set the pixel width
+    gparams[6] = params[1] * sxposdiff
+    # Set the pixel weighting (depending on params[3]
+    if params[3] * sxposdiff != 0:
+        gparams[7] = 1.0/(params[3] * sxposdiff)**2
+    else:
+        gparams[7] = 0.0
+    # return gparams
+    return gparams
+
+
+def test_plot(x, y, guess=None, coeffs=None, weights=None):
+
+    if weights is not None:
+        plt.errorbar(x, y, yerr=1/weights, label='data', ls='None', marker='x')
+    else:
+        plt.scatter(x, y, label='data')
+
+    if guess is not None:
+        yguess = gauss_function(x, *guess)
+        plt.plot(x, yguess, label='guess')
+
+    if coeffs is not None:
+        yfit = gauss_function(x, *coeffs)
+        plt.plot(x, yfit, label='fit')
+
+    plt.plot([coeffs[1], coeffs[1]], [np.min(y), np.max(y)], ls='--',
+             label='fit center')
+
+    plt.legend(loc=0)
+    plt.show()
+    plt.close()
+
+
+def gauss_function(x, a, x0, sigma, dc):
+    """
+    A standard 1D gaussian function (for fitting against)]=
+
+    :param x: numpy array (1D), the x data points
+    :param a: float, the amplitude
+    :param x0: float, the mean of the gaussian
+    :param sigma: float, the standard deviation (FWHM) of the gaussian
+    :param dc: float, the constant level below the gaussian
+
+    :return gauss: numpy array (1D), size = len(x), the output gaussian
+    """
+    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
+
+
+def fit_1d_ll_solution(p, loc):
+
+    func_name = __NAME__ + '.fit_1d_ll_solution()'
+    # get constants from p
+    #   max_weight is the weight corresponding to IC_ERRX_MIN
+    max_weight = 1.0 / p['IC_ERRX_MIN'] ** 2
+    fit_degree = p['IC_LL_DEGR_FIT']
+    max_ll_fit_rms = p['IC_MAX_LLFIT_RMS']
+    threshold = 1e-30
+    # get data from loc
+    all_lines = loc['ALL_LINES']
+    torder = loc['FIT_ORDERS']
+    # Get the number of orders
+    num_orders = loc['LL_INIT'].shape[0]
+    # -------------------------------------------------------------------------
+    # set up all storage
+    final_iter = []       # will fill [wmean, var, length]
+    final_param = []      # will fill the fit coefficients
+    final_details = []    # will fill [lines, x_fit, cfit, weight]
+    final_dxdl = []       # will fill the derivative of the fit coefficients
+    scale = []            # conversion factor to km/s
+    # set up global stats
+    sweight = 0.0
+    wsumres = 0.0
+    wsumres2 = 0.0
+    # loop around orders
+    for order_num in np.arange(num_orders):
+        # ---------------------------------------------------------------------
+        # get this orders parameters
+        weights = all_lines[order_num][:, 7]
+        diff_in_out = all_lines[order_num][:, 3]
+        centers = all_lines[order_num][:, 0]
+        pixelcenters = all_lines[order_num][:, 5]
+        # ---------------------------------------------------------------------
+        # only keep the lines that have postive weight
+        goodlinemask = weights > threshold
+        lines = centers[goodlinemask] + diff_in_out[goodlinemask]
+        x_fit = pixelcenters[goodlinemask]
+        # get the weights and modify by max_weight
+        weight = (weights[goodlinemask] * max_weight)
+        weight = weight / (weights[goodlinemask] + max_weight)
+        # ---------------------------------------------------------------------
+        # iteratively try to improve the fit
+        improve = 1
+        iter, details = [], []
+        wmean, var = 0, 0
+        # sigma clip the largest rms until RMS < MAX_RMS
+        while improve:
+            # fit wavelength to pixel solution (with polynomial)
+            ww = np.sqrt(weight)
+            coeffs = np.polyfit(lines, x_fit, fit_degree, w=ww)[::-1]
+            # calculate the fit
+            cfit = np.polyval(coeffs[::-1], lines)
+            # calculate the variance
+            res = cfit - x_fit
+            wsig = np.sum(res**2 * weight) / np.sum(weight)
+            wmean = (np.sum(res * weight) / np.sum(weight))
+            var = wsig - (wmean ** 2)
+            # append stats
+            iter.append([wmean, var, coeffs])
+            details.append([lines, x_fit, cfit, weight])
+            # check improve condition (RMS > MAX_RMS)
+            ll_fit_rms = abs(res) * np.sqrt(weight)
+            badrms = ll_fit_rms > max_ll_fit_rms
+            improve = np.sum(badrms)
+            # set largest weighted residual to zero
+            largest = np.max(ll_fit_rms)
+            badpoints = ll_fit_rms == largest
+            weight[badpoints] = 0.0
+            # only keep the lines that have postive weight
+            goodmask = weight > 0.0
+            # check that we have points
+            if np.sum(goodmask) == 0:
+                emsg1 = ('Order {0}: Sigma clipping in 1D fit solution '
+                         'failed'.format(order_num))
+                emsg2 = ('\tRMS > MAX_RMS={0}'
+                         ''.format(max_ll_fit_rms))
+                emsg3 = '\tfunction = {0}'.format(func_name)
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            else:
+                lines = lines[goodmask]
+                x_fit = x_fit[goodmask]
+                weight = weight[goodmask]
+        # ---------------------------------------------------------------------
+        # log the fitted wave solution
+        wmsg1 = 'Fit wave. sol. order: {0:3d} ({1:2d}) [{2:.1f}- {3:.1f}]'
+        wargs1 = [torder[order_num], order_num, loc['LL_INIT'][order_num][0],
+                  loc['LL_INIT'][order_num][-1]]
+        wmsg2 = ('\tmean: {0:.4f}[mpix] rms={1:.5f} [mpix] ({2:2d} it.) '
+                 '[{3} --> {4} lines] ')
+        wargs2 = [wmean * 1000, np.sqrt(var) * 1000, len(iter),
+                  len(details[0][1]), len(details[-1][1])]
+        wmsgs = [wmsg1.format(*wargs1), wmsg2.format(*wargs2)]
+        WLOG('', p['LOG_OPT'] + p['FIBER'], wmsgs)
+        # ---------------------------------------------------------------------
+        # append to all storage
+        # ---------------------------------------------------------------------
+        # append the last wmean, var and number of lines
+        num_lines = len(details[-1][1])
+        final_iter.append([iter[-1][0], iter[-1][1], num_lines])
+        # append the last coefficients
+        final_param.append(iter[-1][2])
+        # append the last details [lines, x_fit, cfit, weight]
+        final_details.append(np.array(details[-1]))
+        # append the derivative of the coefficients
+        poly = np.poly1d(iter[-1][2][::-1])
+        dxdl = np.polyder(poly)(details[-1][0])
+        final_dxdl.append(dxdl)
+        # ---------------------------------------------------------------------
+        # global statistics
+        # ---------------------------------------------------------------------
+        # work out conversion factor
+        # TODO: speed of light proper!
+        convert = c / (dxdl * details[-1][0])
+        # get res1
+        res1 = details[-1][1] - details[-1][2]
+        # sum the weights (recursively)
+        sweight += np.sum(details[-1][3])
+        # sum the weighted residuals in km/s
+        wsumres += np.sum(res1 * convert * details[-1][3])
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.sum(details[-1][3] * (res1 * convert) ** 2 )
+        # store the conversion to km/s
+        scale.append(convert)
+    # convert to arrays
+    final_iter = np.array(final_iter)
+    final_param = np.array(final_param)
+    # calculate the final var and mean
+    final_mean = (wsumres / sweight)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the global stats
+    total_lines = np.sum(final_iter[:, 2])
+    wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+    wargs2 = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
+    wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+             'value:{3:.2f}[m/s])'.format(*wargs2))
+    WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+    # save outputs to loc
+    loc['FINAL_MEAN'] = final_mean
+    loc['FINAL_VAR'] = final_var
+    loc['FINAL_ITER'] = final_iter
+    loc['FINAL_PARAM'] = final_param
+    loc['FINAL_DETAILS'] = final_details
+    loc['SCALE'] = scale
+    sources = ['FINAL_MEAN',  'FINAL_VAR', 'FINAL_ITER', 'FINAL_PARAM',
+               'FINAL_DETAILS', 'SCALE']
+    loc.set_sources(sources, func_name)
+    # return loc
+    return loc
+
+
+def invert_1ds_ll_solution(p, loc):
+    func_name = __NAME__ + '.invert_1ds_ll_solution()'
+    # get constants from p
+    fit_degree = p['IC_LL_DEGR_FIT']
+    # get data from loc
+    details = loc['FINAL_DETAILS']
+    iter = loc['FINAL_ITER']
+    # Get the number of orders
+    num_orders = loc['LL_INIT'].shape[0]
+    # loop around orders
+    inv_details = []
+    inv_params = []
+    sweight = 0.0
+    wsumres = 0.0
+    wsumres2 = 0.0
+    for order_num in np.arange(num_orders):
+        # get the lines and wavelength fit for this order
+        lines = details[order_num][0]
+        cfit = details[order_num][2]
+        wei = details[order_num][3]
+        # get the number of lines
+        num_lines = len(lines)
+        # set weights
+        weight = np.ones(num_lines, dtype=float)
+        # get fit coefficients
+        coeffs = np.polyfit(cfit, lines, fit_degree, w=weight)[::-1]
+        # get the y values for the coefficients
+        icfit = np.polyval(coeffs[::-1], cfit)
+        # work out the residuals
+        res = icfit - lines
+        # work out the normalised res in km/s
+        nres = c * (res / lines)
+        # append values to storage
+        inv_details.append([nres, wei])
+        inv_params.append(coeffs)
+        # ---------------------------------------------------------------------
+        # invert parameters
+        # ---------------------------------------------------------------------
+        # sum the weights (recursively)
+        sweight += np.sum(wei)
+        # sum the weighted residuals in km/s
+        wsumres += np.sum(nres * wei)
+        # sum the weighted squared residuals in km/s
+        wsumres2 += np.sum(wei * nres **2)
+    # calculate the final var and mean
+    final_mean = (wsumres / sweight)
+    final_var = (wsumres2 / sweight) - (final_mean ** 2)
+    # log the invertion process
+    total_lines = np.sum(iter[:, 2])
+    wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
+             1000.0 * np.sqrt(final_var / total_lines)]
+    wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'
+            '(error on mean value:{2:.2f}[m/s])'.format(*wargs))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    # save outputs to loc
+    loc['LL_MEAN'] = final_mean
+    loc['LL_VAR'] = final_var
+    loc['INV_PARAM'] = np.array(inv_params)
+    loc['INV_DETAILS'] = inv_details
+    sources = ['LL_MEAN',  'LL_VAR', 'INV_PARAM', 'INV_DETAILS']
+    loc.set_sources(sources, func_name)
+    # return loc
+    return loc
 
 
 # =============================================================================

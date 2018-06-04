@@ -38,6 +38,15 @@ WLOG = spirouCore.wlog
 printc = spirouCore.PrintColour
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
+# These are the files copied from spirouConfig.Constants.CDATA_REL_FOLDER()
+#    into the calibDB
+CALIB_DB_DEFAULT_FILES = ['2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits',
+                          '2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits',
+                          '2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits',
+                          'spirou_wave_ini3.fits',
+                          'tapas_combined_za=20.000000.fits',
+                          'TAPAS_X_axis_speed_dv=0.5.fits',
+                          'master_calib_SPIROU.txt']
 
 
 # =============================================================================
@@ -59,11 +68,17 @@ def reset_confirmation(called=False):
         uinput = raw_input(e1 + 'Reset the DRS?\t' + e2)
     else:
         uinput = input(e1 + 'Reset the DRS?\t' + e2)
+    # line break
+    print('\n')
 
     if uinput.upper() != "YES" and (not called):
-        print(e1 + '\nResetting DRS aborted.' + e2)
-        # noinspection PyProtectedMember
-        os._exit(0)
+        WLOG('warning', '', 'Resetting DRS aborted.')
+        return False
+    elif uinput.upper() == "YES":
+        return True
+    else:
+        WLOG('warning', '', 'Resetting DRS aborted.')
+        return False
 
 
 def reset_reduced_folders(p, log=True):
@@ -92,17 +107,12 @@ def reset_calibdb(p, log=True):
     # get reset directory location
     # get package name and relative path
     package = spirouConfig.Constants.PACKAGE()
-    relfolder = spirouConfig.Constants.CDATA_REL_FOLDER()
+    relfolder = spirouConfig.Constants.RESET_CALIBDB_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
     # -------------------------------------------------------------------------
     # define needed files:
-    files = ['2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits',
-             '2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits',
-             'spirou_wave_ini3.fits',
-             'tapas_combined_za=20.000000.fits',
-             'TAPAS_X_axis_speed_dv=0.5.fits',
-             'master_calib_SPIROU.txt']
+    files = CALIB_DB_DEFAULT_FILES
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     for f in files:
@@ -176,10 +186,12 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
+    reset = True
     if warn:
-        reset_confirmation(called=called)
-    reset_reduced_folders(p, log)
-    reset_calibdb(p, log)
+        reset = reset_confirmation(called=called)
+    if reset:
+        reset_reduced_folders(p, log)
+        reset_calibdb(p, log)
     # reset_log(p)
     # ----------------------------------------------------------------------
     # End Message

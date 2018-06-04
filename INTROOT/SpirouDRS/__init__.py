@@ -23,7 +23,8 @@ from . import spirouLOCOR
 from . import spirouRV
 from . import spirouStartup
 from . import spirouTHORCA
-
+from . import spirouUnitTests
+from . import spirouTools
 
 # =============================================================================
 # Define variables
@@ -46,7 +47,9 @@ __all__ = ['spirouBACK',
            'spirouLOCOR',
            'spirouRV',
            'spirouStartup',
-           'spirouTHORCA']
+           'spirouTHORCA',
+           'spirouUnitTests',
+           'spirouTools']
 
 
 # =============================================================================

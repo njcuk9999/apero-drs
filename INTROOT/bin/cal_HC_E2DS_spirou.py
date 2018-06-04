@@ -44,9 +44,9 @@ ParamDict = spirouConfig.ParamDict
 #def main(night_name=None, files=None):
 if __name__ == '__main__':
     night_name = '20170710'
-    files = ['hcone_hcone02c61_e2ds_AB.fits', 'hcone_hcone03c61_e2ds_AB.fits',
-             'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
-             'hcone_hcone06c61_e2ds_AB.fits']
+    files = ['hcone_hcone02c61_e2ds_AB.fits']   #, 'hcone_hcone03c61_e2ds_AB.fits',
+             # 'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
+             # 'hcone_hcone06c61_e2ds_AB.fits']
 
     # ----------------------------------------------------------------------
     # Set up
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all files
-    data, hdr, cdr, nx, ny = spirouImage.ReadImageAndCombine(p, 'add')
+    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, 'add')
     # add data and hdr to loc
     loc = ParamDict()
     loc['DATA'], loc['HDR'] = data, hdr
@@ -116,7 +116,32 @@ if __name__ == '__main__':
         # ------------------------------------------------------------------
         # First guess at solution for each order
         # ------------------------------------------------------------------
-        loc = spirouTHORCA.FirstGuessSolution(p, loc)
+        # FIXME: Cannot get same number of lines identified
+        # Question: Tried with python gaussian fitting
+        # Question: Tried with Fortran fitgaus.fitgaus
+        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='new')
+
+        # ------------------------------------------------------------------
+        # Detect bad fit filtering and saturated lines
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = 'On fiber {0} cleaning list of identified lines'
+        WLOG('', p['LOG_OPT'], wmsg.format(fiber))
+        # clean lines
+        loc = spirouTHORCA.DetectBadLines(p, loc)
+
+        # TODO: Remove this (loads old DRS data)
+        import numpy as np
+        loc['ALL_LINES'] = np.load('/home/ncook/Downloads/spirou_old/th_LINES.npy', encoding='bytes')
+
+        # ------------------------------------------------------------------
+        # Fit wavelength solution on identified lines
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = 'On fiber {0} fitting wavelength solution on identified lines:'
+        WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber))
+        # fit lines
+        loc = spirouTHORCA.Fit1DSolution(p, loc)
 
 
     # ----------------------------------------------------------------------

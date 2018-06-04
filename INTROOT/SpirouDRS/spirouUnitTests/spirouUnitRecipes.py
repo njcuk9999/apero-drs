@@ -15,17 +15,18 @@ Created on 2018-05-01 at 13:06
 """
 from __future__ import division
 
-
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
 import cal_DARK_spirou
-import cal_DRIFT_RAW_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
+import cal_exposure_meter
 import cal_extract_RAW_spirou
+import cal_extract_RAW_spirouAB
+import cal_extract_RAW_spirouC
 import cal_FF_RAW_spirou
 import cal_HC_E2DS_spirou
 import cal_loc_RAW_spirou
@@ -52,10 +53,12 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_CCF_E2DS_spirou',
                  'cal_DARK_spirou',
-                 'cal_DRIFT_RAW_spirou',
                  'cal_DRIFT_E2DS_spirou',
                  'cal_DRIFTPEAK_E2DS_spirou',
+                 'cal_exposure_meter',
                  'cal_extract_RAW_spirou',
+                 'cal_extract_RAW_spirouAB',
+                 'cal_extract_RAW_spirouC',
                  'cal_FF_RAW_spirou',
                  'cal_HC_E2DS_spirou',
                  'cal_loc_RAW_spirou',
@@ -65,6 +68,26 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
 # =============================================================================
 # Define functions
 # =============================================================================
+def get_versions():
+    # aliases
+    cdriftpeak = cal_DRIFTPEAK_E2DS_spirou
+    # get versions
+    vv = dict()
+    vv[cal_BADPIX_spirou.__NAME__] = cal_BADPIX_spirou.__version__
+    vv[cal_CCF_E2DS_spirou.__NAME__] = cal_CCF_E2DS_spirou.__version__
+    vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
+    vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
+    vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
+    vv[cal_exposure_meter.__NAME__] = cal_exposure_meter.__version__
+    vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
+    vv[cal_extract_RAW_spirouAB.__NAME__] = cal_extract_RAW_spirouAB.__version__
+    vv[cal_extract_RAW_spirouC.__NAME__] = cal_extract_RAW_spirouC.__version__
+    vv[cal_FF_RAW_spirou.__NAME__] = cal_FF_RAW_spirou.__version__
+    vv[cal_HC_E2DS_spirou.__NAME__] = cal_HC_E2DS_spirou.__version__
+    vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
+    vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
+
+
 def wrapper(p, rname, inputs=None, outputs=None):
     # get name of run (should be first element in run list
     name = inputs[0]
@@ -81,24 +104,18 @@ def wrapper(p, rname, inputs=None, outputs=None):
     recipe_function = 'unit_test_{0}({1})'.format(name.lower(), strarg)
     # return the evaulated unit test function
     try:
-        varbs = eval(recipe_function)
+        varbs, name = eval(recipe_function)
     except NameError:
         WLOG('error', p['LOG_OPT'], 'Cannot run {0}'.format(recipe_function))
         varbs = []
     # return recipe inputs (or outputs)
-    return varbs
+    return varbs, name
 
 
 def run_main(p, name, args):
     # set the program name
-    try:
-        command = '{0}.main(**args)'.format(name)
-        ll = eval(command)
-    except Exception as e:
-        emsg1 = 'Cannot run recipe = {0}'.format(name)
-        emsg2 = '   Error was: {0}'.format(e)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-        ll = None
+    command = '{0}.main(**args)'.format(name)
+    ll = eval(command)
     # return locals
     return ll
 
@@ -130,12 +147,13 @@ def unit_test_cal_badpix_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.BADPIX_FILE(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_dark_spirou(rname, inputs, outputs=None):
@@ -165,12 +183,13 @@ def unit_test_cal_dark_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.DARK_FILE(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_loc_raw_spirou(rname, inputs, outputs=None):
@@ -201,7 +220,8 @@ def unit_test_cal_loc_raw_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.LOC_ORDER_PROFILE_FILE(outputs['p']),
@@ -209,7 +229,7 @@ def unit_test_cal_loc_raw_spirou(rname, inputs, outputs=None):
                 Constants.LOC_LOCO_FILE2(outputs['p']),
                 Constants.LOC_LOCO_FILE3(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_slit_spirou(rname, inputs, outputs=None):
@@ -238,12 +258,13 @@ def unit_test_cal_slit_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.SLIT_TILT_FILE(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_ff_raw_spirou(rname, inputs, outputs=None):
@@ -272,7 +293,8 @@ def unit_test_cal_ff_raw_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = []
@@ -280,7 +302,7 @@ def unit_test_cal_ff_raw_spirou(rname, inputs, outputs=None):
             outs.append(Constants.FF_BLAZE_FILE(outputs['p'], fiber))
             outs.append(Constants.FF_FLAT_FILE(outputs['p'], fiber))
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
@@ -288,7 +310,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
     unit_test_cal_extract_raw_spirou
 
     input = night_name files
-    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+    output = EXTRACT_E2DS_FILE
 
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
@@ -309,23 +331,23 @@ def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = []
         for fiber in outputs['p']['fib_type']:
             outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-            outs.append(Constants.EXTRACT_E2DS_ALL_FILES(outputs['p'], fiber))
         # return outs
-        return outs
+        return outs, name
 
 
-def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
+def unit_test_cal_extract_raw_spirouab(rname, inputs, outputs=None):
     """
-    unit_test_cal_drift_raw_spirou
+    unit_test_cal_extract_raw_spirou
 
     input = night_name files
-    output = DRIFT_RAW_FILE
+    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
 
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
@@ -339,19 +361,96 @@ def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
         :return outs: list of strings, the output filenames
     """
     # define name and arguments
-    name = 'cal_DRIFT_RAW_spirou'
+    name = 'cal_extract_RAW_spirouAB'
     arg_names = ['night_name', 'files']
-    arg_types = [str, str]
+    arg_types = [str, list]
 
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args =  get_args(name, rname, inputs, arg_names, arg_types)
+        # return args
+        return args, name
     # else define the outputs
     else:
-        outs = [Constants.DRIFT_RAW_FILE(outputs['p'])]
+        outs = []
+        for fiber in outputs['p']['fib_type']:
+            outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
         # return outs
-        return outs
+        return outs, name
+
+
+def unit_test_cal_extract_raw_spirouc(rname, inputs, outputs=None):
+    """
+    unit_test_cal_extract_raw_spirou
+
+    input = night_name files
+    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_extract_RAW_spirouC'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args =  get_args(name, rname, inputs, arg_names, arg_types)
+        # return args
+        return args, name
+    # else define the outputs
+    else:
+        outs = []
+        for fiber in outputs['p']['fib_type']:
+            outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
+        # return outs
+        return outs, name
+
+
+# def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
+#     """
+#     unit_test_cal_drift_raw_spirou
+#
+#     input = night_name files
+#     output = DRIFT_RAW_FILE
+#
+#     :param rname: string, identifier for this run
+#     :param inputs: list of objects, raw parameters to pass to run, if outputs
+#                    is None returns parameters to pass to file
+#     :param outputs: dictionary or None, output of code - locals() if not None
+#                     returns output filenames
+#
+#     if outputs is None:
+#         :return args: dict, the parameters to pass to the run
+#     else:
+#         :return outs: list of strings, the output filenames
+#     """
+#     # define name and arguments
+#     name = 'cal_DRIFT_RAW_spirou'
+#     arg_names = ['night_name', 'files']
+#     arg_types = [str, str]
+#
+#     # get the inputs (if outputs is None)
+#     if outputs is None:
+#         # get arguments
+#         args = get_args(name, rname, inputs, arg_names, arg_types)
+#         return args, name
+#     # else define the outputs
+#     else:
+#         outs = [Constants.DRIFT_RAW_FILE(outputs['p'])]
+#         # return outs
+#         return outs, name
 
 
 def unit_test_cal_drift_e2ds_spirou(rname, inputs, outputs=None):
@@ -380,13 +479,14 @@ def unit_test_cal_drift_e2ds_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.DRIFT_E2DS_FITS_FILE(outputs['p']),
                 Constants.DRIFT_E2DS_TBL_FILE(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs, outputs=None):
@@ -408,20 +508,21 @@ def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs, outputs=None):
         :return outs: list of strings, the output filenames
     """
     # define name and arguments
-    name = 'cal_DRIFTPAEK_E2DS_spirou'
+    name = 'cal_DRIFTPEAK_E2DS_spirou'
     arg_names = ['night_name', 'reffile']
     arg_types = [str, str]
 
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.DRIFTPEAK_E2DS_FITS_FILE(outputs['p']),
                 Constants.DRIFTPEAK_E2DS_TBL_FILE(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
 
 
 def unit_test_cal_ccf_e2ds_spirou(rname, inputs, outputs=None):
@@ -450,13 +551,60 @@ def unit_test_cal_ccf_e2ds_spirou(rname, inputs, outputs=None):
     # get the inputs (if outputs is None)
     if outputs is None:
         # get arguments
-        return get_args(name, rname, inputs, arg_names, arg_types)
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
     # else define the outputs
     else:
         outs = [Constants.CCF_FITS_FILE(outputs['p']),
                 Constants.CCF_TABLE_FILE(outputs['p'])]
         # return outs
-        return outs
+        return outs, name
+
+
+def unit_test_cal_exposure_meter(rname, inputs, outputs=None):
+    """
+    unit_test_cal_exposure_meter
+
+    input = night_name files
+    output = EM_SPE_FILE, EM_WAVE_FILE, EM_MASK_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_exposure_meter'
+    arg_names = ['night_name', 'reffile']
+    arg_types = [str, str]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        # deal with multiple output files defined by EM_OUTPUT_TYPE
+        if outputs['p']['EM_OUTPUT_TYPE'] != 'all':
+            outtypes = [str(outputs['p']['EM_OUTPUT_TYPE'])]
+        else:
+            outtypes = ["drs", "raw", "preprocess"]
+        outs = []
+        for outtype in outtypes:
+            outputs['p']['EM_OUTPUT_TYPE'] = outtype
+            outs.append(Constants.EM_SPE_FILE(outputs['p']))
+            outs.append(Constants.EM_WAVE_FILE(outputs['p']))
+            outs.append(Constants.EM_MASK_FILE(outputs['p']))
+        # return outs
+        return outs, name
 
 
 def get_args(name, rname, iargs, arg_names, arg_types):
@@ -500,7 +648,7 @@ def get_args(name, rname, iargs, arg_names, arg_types):
             # find the last value added to arg_names
             end_argument = args[arg_names[pos - 1]]
             # add the remaining arguments to this argument
-            for it in range(pos, len(iargs)):
+            for it in range(pos + 1, len(iargs)):
                 end_argument.append(iargs[it])
             # set the last argument to the end argument list
             args[arg_names[pos - 1]] = end_argument
