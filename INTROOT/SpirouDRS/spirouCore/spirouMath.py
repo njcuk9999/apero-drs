@@ -16,6 +16,8 @@ Version 0.0.0
 from __future__ import division
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.stats import chisquare
+from lmfit.models import Model, GaussianModel
 from datetime import datetime, tzinfo, timedelta
 from time import mktime
 from calendar import timegm
@@ -98,9 +100,11 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
                   for the fit parameters, only returned if return_fit = True
 
     """
+
     # if we don't have weights set them to be all equally weighted
     if weights is None:
         weights = np.ones(len(x))
+    weights = 1.0/weights
     # if we aren't provided a guess, make one
     if guess is None:
         guess = [np.max(y), np.mean(y), np.std(y), 0]
@@ -111,8 +115,10 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     if return_fit and return_uncertainties:
         # calculate the fit parameters
         yfit = gauss_function(x, *pfit)
+        #work out the normalisation constant
+        norm, _ = chisquare(y, yfit)/(len(y) - len(guess))
         # calculate the fit uncertainties based on pcov
-        efit = np.sqrt(np.diag(pcov))
+        efit = np.sqrt(np.diag(pcov)) * np.sqrt(norm)
         # return pfit, yfit and efit
         return pfit, yfit, efit
     # if just return fit
@@ -123,8 +129,13 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
         return pfit, yfit
     # if return uncertainties
     elif return_uncertainties:
+        # calculate the fit parameters
+        yfit = gauss_function(x, *pfit)
+        #work out the normalisation constant
+        chis, _ = chisquare(y, f_exp=yfit)
+        norm = chis / (len(y) - len(guess))
         # calculate the fit uncertainties based on pcov
-        efit = np.sqrt(np.diag(pcov))
+        efit = np.sqrt(np.diag(pcov)) * np.sqrt(norm)
         # return pfit and efit
         return pfit, efit
     # else just return the pfit
@@ -133,41 +144,37 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
         return pfit
 
 
-# def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
-#                 return_uncertainties=False):
-#     """
-#     Wrapper for fitgaus function
-#
-#     :param x:
-#     :param y:
-#     :param weights:
-#     :param guess:
-#     :param return_fit:
-#     :param return_uncertainties:
-#     :return:
-#     """
-#
-#     from SpirouDRS.spirouTHORCA import fitgaus
-#
-#     siga = np.zeros_like(guess)
-#     f = np.zeros_like(x)
-#
-#     coeffs = guess.copy()
-#
-#     fitgaus.fitgaus(x, y, weights, coeffs, siga, f)
-#
-#     yfit = f
-#     errorfit = siga
-#
-#     # deal with returns
-#     if return_fit and return_uncertainties:
-#         return coeffs, yfit, errorfit
-#     elif return_fit:
-#         return coeffs, yfit
-#     elif return_uncertainties:
-#         return coeffs, errorfit
-#     else:
-#         return coeffs
+def fitgaussian_lmfit(x, y, weights, return_fit=True,
+                      return_uncertainties=False):
+    # calculate guess
+    mod = GaussianModel()
+    params = mod.guess(y, x=x)
+    guess = np.array([params['height'].value,
+                      params['center'].value,
+                      params['sigma'].value,
+                      0.0])
+    # set up model fit
+    gmodel = Model(gauss_function)
+    # run model fit
+    out = gmodel.fit(y, x=x, a=guess[0], x0=guess[1], sigma=guess[2],
+                     dc=guess[3], params=None, weights=weights)
+    # extract out parameters
+    pfit = [out.values['a'], out.values['x0'], out.values['sigma'],
+            out.values['dc']]
+    # extract out standard errors
+    siga = [out.params['a'].stderr,
+            out.params['x0'].stderr,
+            out.params['sigma'].stderr,
+            out.params['dc'].stderr]
+    # return
+    if return_fit and return_uncertainties:
+         return np.array(pfit), np.array(siga), out.best_fit
+    elif return_uncertainties:
+        return np.array(pfit), np.array(siga)
+    elif return_fit:
+        return np.array(pfit), out.best_fit
+    else:
+        return np.array(pfit)
 
 
 def gauss_function(x, a, x0, sigma, dc):
