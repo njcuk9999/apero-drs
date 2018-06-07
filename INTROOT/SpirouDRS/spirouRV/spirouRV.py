@@ -1613,14 +1613,14 @@ def earth_velocity_correction(p, loc, method='old'):
     #--------------------------------------------------------------------------
 
     WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
-    args = [p, target_alpha, target_delta, target_equinox, obs_year, obs_month,
-            obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
-            p['IC_LATIT_OBS'], target_pmra, target_pmde]
+    args = [p, target_alpha, target_delta, target_equinox, obs_year,
+            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
+            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
     berv, bjd, bervmax = newbervmain(*args, method=method)
     # log output
     wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
-    WLOG('info',p['LOG_OPT'], wmsg.format(berv))
+    WLOG('info', p['LOG_OPT'], wmsg.format(berv))
 
     # finally save berv, bjd, bervmax to p
     loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
@@ -1643,12 +1643,12 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # need to import
         from SpirouDRS.fortran import newbervmain
         # pipe to FORTRAN
+        # newbervmain needs RA in hour, obs_long West and obs_alt in km
         args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
                 obs_alt, pmra, pmde]
         berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
         # return berv, bjd, bervmax
         return berv1, bjd1, bervmax1
-
 
     if method == 'new':
         # calculate JD time (as Astropy.Time object)
@@ -1669,28 +1669,32 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # get barycorrpy folder
         data_folder = os.path.join(absfolder, '')
         # ---------------------------------------------------------------------
-
         # need import
         import barycorrpy
 
-        # TODO: zmeas needs to be set to the CCF shift result
-        # TODO: Need parallax and rv?
+        # TODO: zmeas needs to be set to the CCF shift result --> NO
+        # TODO: Need parallax and rv? --> NO
+        # TODO barycorrpy needs RA in degree, obs_long East and obs_alt in m
 
-        bkwargs = dict(JDUTC=[t1.jd], ra=ra, dec=dec, epoch=equinox,
-                       pmra=pmra, pmdec=pmde, px=20.0, rv=0.0,
-                       lat=obs_lat, longi=obs_lat, alt=obs_long,
-                       zmeas=0.0, leap_dir=data_folder)
-        bresults1 = barycorrpy.get_BC_vel(**bkwargs)
-        bresults2 = barycorrpy.utc_tdb.JDUTC_to_JDTDB(t1, fpath=data_folder)
+        # set up the barycorr arguments
+        bkwargs = dict(ra=ra*15., dec=dec, epoch=equinox, pmra=pmra,
+                       pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,
+                       longi=obs_long*-1, alt=obs_alt*1000.,
+                       leap_dir=data_folder)
+
+        # get the julien UTC date for observation and obs + 1 year
+        jdutc=list(t1.jd + np.arange(0., 365., 1.5))
+        bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+        bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
 
         berv2 = bresults1[0][0]/1000.0
-        bjd2 = bresults2[0].jd
-        bervmax2 = bresults1[0][0]/1000.0
+        # bjd2 = bresults2[0].jd
+        bjd2 = bresults2[0][0]
+        # work ou the maximum barycentric correction
+        bervmax2 = np.max(abs(bresults1[0] / 1000.))
 
+        # return results
         return berv2, bjd2, bervmax2
-
-
-
 
 
 def fit_ccf(rv, ccf, fit_type):

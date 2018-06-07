@@ -1128,7 +1128,8 @@ def locate_bad_pixels_full(p, image):
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
-    mask = np.rot90(mdata, -1) < threshold
+    #mask = np.rot90(mdata, -1) < threshold
+    mask = np.abs(np.rot90(mdata, -1)-1) > threshold
 
     # -------------------------------------------------------------------------
     # log results
