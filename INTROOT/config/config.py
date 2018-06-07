@@ -86,7 +86,7 @@ COLOURED_LOG = True
 SPECIAL_NAME = 'special_config_SPIROU.py'
 
 #   Define the ICDP configuration file
-ICDP_NAME = 'constants_SPIROU_H2RG.py'
+ICDP_NAME = 'constants_SPIROU_H4RG.py'
 
 
 # -----------------------------------------------------------------------------
