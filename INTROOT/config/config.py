@@ -50,8 +50,8 @@ DRS_DATA_WORKING = '/drs/spirou/data/tmp'
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
-# DRS_UCONFIG = '/home/ncook/spirou_config_H2RG/'
-DRS_UCONFIG = '/home/ncook/spirou_config_H4RG/'
+# DRS_UCONFIG = '~/spirou_config_H2RG/'
+DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
