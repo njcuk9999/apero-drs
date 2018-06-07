@@ -101,10 +101,10 @@ qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
-ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.}
+ic_ext_range1_fpall = {'AB': 16., 'A': 8., 'B': 8., 'C': 7.}
 
 #   Half-zone extraction width right side (formally plage2)           - [cal_ff]
-ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.}
+ic_ext_range2_fpall = {'AB': 16., 'A': 8., 'B': 8., 'C': 7.}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
 #       (formally ic_ext_nbsig)
@@ -324,14 +324,14 @@ ff_end_order = None
 #   Manually set the sigdet to use in weighted tilt extraction        - [cal_ff]
 #       set to -1 to use from fitsfilename HEADER
 #       (formally ccdsigdet)
-ic_ff_sigdet = 100.0
+ic_ff_sigdet = -1
 
 #    Half size blaze smoothing window                                 - [cal_ff]
 ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 7    # 10
+ic_blaze_fitn = 10    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
 ic_ff_order_plot = 27
@@ -339,6 +339,11 @@ ic_ff_order_plot = 27
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
 ic_ff_plot_all_orders = 0
+
+#   Define the orders not to plot on the RMS plot                     - [cal_ff]
+#      should be a list of integers
+ff_rms_plot_skip_orders = [22, 23, 24, 25, 48]
+
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
@@ -530,7 +535,7 @@ badpix_flat_cut_ratio = 0.5
 
 #   Define the maximum flux in ADU/s to be considered too         - [cal_badpix]
 #       hot to be used (formally max_hotpix)
-badpix_max_hotpix = 100.0
+badpix_max_hotpix = 5 #  = dark_cutlimit !!!
 
 #   Percentile to normalise to when normalising and median        - [cal_badpix]
 #      filtering image [percentage]
@@ -589,7 +594,7 @@ ccf_num_orders_max = 25
 #           - "new" - berv is calculated using barycorrpy  but needs to be
 #                     installed (i.e. pip install barycorrpy)
 #                     CURRENTLY NOT WORKING!!!
-ccf_bervmode = "off"
+ccf_bervmode = "new"
 
 
 # -----------------------------------------------------------------------------
@@ -747,7 +752,7 @@ qc_loc_rmsmax_fwhm = 500
 qc_ff_rms = 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
-qc_loc_flumax = 64500
+qc_loc_flumax = 50000
 
 #   Maximum allowed RMS allowed for the RMS of the tilt             - [cal_slit]
 #        for the slit
@@ -761,7 +766,7 @@ qc_slit_max = 0.0
 
 #   Maximum signal allowed (set saturation limit)                - [cal_extract]
 #        however currently does not trigger qc
-qc_max_signal = 65500
+qc_max_signal = 50000
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings

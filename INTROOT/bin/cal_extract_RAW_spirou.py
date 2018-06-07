@@ -158,7 +158,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
     #  Put to zero all the negative pixels
     # TODO: Check if it makes sens to do that
-    data2 = np.where(data2<0, np.zeros_like(data2), data2)
+    # data2 = np.where(data2<0, np.zeros_like(data2), data2)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -216,6 +216,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
         loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
+        # ----------------------------------------------------------------------
+        # Read Flat file
+        # ----------------------------------------------------------------------
+        loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+        loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+        # get all values in flat that are zero to 1
+        loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
@@ -233,12 +241,23 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if p['FIBER'] in ['A', 'B', 'AB']:
+        # if fiber is AB take the average of the orders
+        if fiber == 'AB':
             # merge
             loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
             loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
             # set the number of order to half of the original
-            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2)
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        # if fiber is B take the even orders
+        elif fiber == 'B':
+            loc['ACC'] = loc['ACC'][:-1:2]
+            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        # if fiber is A take the even orders
+        elif fiber == 'A':
+            loc['ACC'] = loc['ACC'][1::2]
+            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
 
         # ------------------------------------------------------------------
         # Set up Extract storage
@@ -246,6 +265,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Create array to store extraction (for each order and each pixel
         # along order)
         loc['E2DS'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['E2DSFF'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE1'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE3'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE4'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
@@ -287,6 +307,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # add calculations to storage
             loc['E2DS'][order_num] = e2ds
+            loc['E2DSFF'][order_num] = e2ds/loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
@@ -305,7 +326,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # plot all orders or one order
             if p['IC_FF_PLOT_ALL_ORDERS']:
                 # plot image with all order fits (slower)
-                sPlt.ext_aorder_fit(p, loc, data2)
+                sPlt.ext_aorder_fit(p, loc, data2, max_signal / 10.)
             else:
                 # plot image with selected order fit and edge fit (faster)
                 # TODO: Remove H2RG dependency
@@ -324,9 +345,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # construct filename
         e2dsfits = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
         e2dsfitsname = os.path.split(e2dsfits)[-1]
+        e2dsfffits = spirouConfig.Constants.EXTRACT_E2DSFF_FILE(p)
+        e2dsfffitsname = os.path.split(e2dsfffits)[-1]
         # log that we are saving E2DS spectrum
         wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
         WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfitsname))
+        wmsg = 'Saving E2DSFF spectrum of Fiber {0} in {1}'
+        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfffitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # construct loco filename
@@ -351,6 +376,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
         # Save E2DS file
         spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
+        spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
