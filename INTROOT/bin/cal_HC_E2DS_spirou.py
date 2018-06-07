@@ -119,7 +119,7 @@ if __name__ == '__main__':
         # FIXME: Cannot get same number of lines identified
         # Question: Tried with python gaussian fitting
         # Question: Tried with Fortran fitgaus.fitgaus
-        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='new')
+        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='old')
 
         # ------------------------------------------------------------------
         # Detect bad fit filtering and saturated lines
@@ -130,10 +130,6 @@ if __name__ == '__main__':
         # clean lines
         loc = spirouTHORCA.DetectBadLines(p, loc)
 
-        # TODO: Remove this (loads old DRS data)
-        import numpy as np
-        loc['ALL_LINES'] = np.load('/home/ncook/Downloads/spirou_old/th_LINES.npy', encoding='bytes')
-
         # ------------------------------------------------------------------
         # Fit wavelength solution on identified lines
         # ------------------------------------------------------------------
@@ -143,42 +139,82 @@ if __name__ == '__main__':
         # fit lines
         loc = spirouTHORCA.Fit1DSolution(p, loc)
 
+        # ------------------------------------------------------------------
+        # calculate Littrow solution
+        # ------------------------------------------------------------------
+        loc = spirouTHORCA.CalcLittrowSolution(p, loc)
 
-    # ----------------------------------------------------------------------
-    # start ll solution
-    # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # extrapolate Littrow solution
+        # ------------------------------------------------------------------
+        loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc)
 
-    # ----------------------------------------------------------------------
-    # calculate wavelength solution
-    # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Plot littrow solution
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # start interactive plot
+            sPlt.start_interactive_session()
+            # plot littrow x pixels against fitted wavelength solution
+            sPlt.wave_littrow_extrap_plot(loc)
+            # end interactive session
+            sPlt.end_interactive_session()
 
-    # ----------------------------------------------------------------------
-    # find ll on spectrum
-    # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Second guess at solution for each order (using Littrow)
+        # ------------------------------------------------------------------
+        loc = spirouTHORCA.SecondGuessSolution(p, loc, mode='new')
 
-    # ----------------------------------------------------------------------
-    # detect bad fit filtering and saturated lines
-    # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Detect bad fit filtering and saturated lines (using Littrow)
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = 'On fiber {0} cleaning list of identified lines (second pass)'
+        WLOG('', p['LOG_OPT'], wmsg.format(fiber))
+        # clean lines
+        loc = spirouTHORCA.DetectBadLines(p, loc, key='ALL_LINES_2')
 
-    # ----------------------------------------------------------------------
-    # fit llsol
-    # ----------------------------------------------------------------------
 
-    # ----------------------------------------------------------------------
-    # extrapolate Littrow solution
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # repeat the line search loop
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Littrow test
-    # ----------------------------------------------------------------------
+        for it,lines in enumerate(loc['ALL_LINES_2']):
+            print(it, 'len={0}'.format(len(lines)))
 
     # ----------------------------------------------------------------------
     # Join 0-24 and 25-36 solutions
     # ----------------------------------------------------------------------
+
+    # import matplotlib.pyplot as plt
+    # plt.ioff()
+    # order_num = 7
+    # test_plot(loc['DATA'][order_num], loc['ALL_LINES_2'][order_num])
+    #
+    #
+    #
+    # def test_plot(data_y, all_lines_order):
+    #
+    #     fig, frame = plt.subplots(ncols=1, nrows=1)
+    #
+    #     frame.plot(data_y, color='k')
+    #
+    #     for line in all_lines_order:
+    #         if line[7] != 0:
+    #             frame.plot([line[5], line[5]], [0, line[2]])
+    #     plt.show()
+    #     plt.close()
+
+
+
+    # def test_plot2(all_lines_order):
+    #
+    #     import matplotlib.pyplot as plt
+    #     import numpy as np
+    #
+    #     mask = all_lines_order[:, 7] != 0
+    #     bins = np.arange(-0.1, 0.1, 25)
+    #
+    #
+    #     plt.hist(all_lines_order[:, 3][mask], bins=bins)
+    #     plt.show()
+    #     plt.close()
 
     # ----------------------------------------------------------------------
     # archive result in e2ds spectra
