@@ -139,6 +139,16 @@ def main(night_name=None, files=None):
     # log change in data size
     WLOG('', p['LOG_OPT'], ('Image format changed to '
                             '{0}x{1}').format(*data2.shape[::-1]))
+    # ----------------------------------------------------------------------
+    # Correct for the BADPIX mask (set all bad pixels to zero)
+    # ----------------------------------------------------------------------
+    # TODO: Remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+
+    #  Put to zero all the negative pixels
+    # TODO: Check if it makes sens to do that
+#    data2 = np.where(data2<0, np.zeros_like(data2), data2)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -215,12 +225,24 @@ def main(night_name=None, files=None):
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if fiber in ['A', 'B', 'AB']:
+        # if fiber is AB take the average of the orders
+        if fiber == 'AB':
             # merge
             loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
             loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
             # set the number of order to half of the original
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS']/2.0)
+        # if fiber is B take the even orders
+        elif fiber=='B':
+            loc['ACC'] = loc['ACC'][:-1:2]
+            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        # if fiber is A take the even orders
+        elif fiber =='A':
+            loc['ACC'] = loc['ACC'][1::2]
+            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
@@ -311,6 +333,8 @@ def main(night_name=None, files=None):
             sPlt.ff_sorder_tiltadj_e2ds_blaze(p, loc)
             # plot flat for selected order
             sPlt.ff_sorder_flat(p, loc)
+            # plot the RMS for all but skipped orders
+            sPlt.ff_rms_plot(p, loc)
 
         # ----------------------------------------------------------------------
         # Store Blaze in file
@@ -361,9 +385,15 @@ def main(night_name=None, files=None):
         #     # For some reason this test is ignored in old code
         #     passed = True
         #     WLOG('info', p['log_opt'], fail_msg[-1])
-        max_rms = np.max(loc['RMS'])
+
+        # get mask for removing certain orders in the RMS calculation
+        remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
+        mask=np.in1d(np.arange(len(loc['RMS'])), remove_orders)
+        # apply mask and calculate the maximum RMS
+        max_rms = np.max(loc['RMS'][~mask])
+        # apply the quality control based on the new RMS
         if max_rms > p['QC_FF_RMS']:
-            fmsg = 'abnormal RMS of FF ({0:.2f} > {1:.2f})'
+            fmsg = 'abnormal RMS of FF ({0:.3f} > {1:.3f})'
             fail_msg.append(fmsg.format(max_rms, p['QC_FF_RMS']))
             passed = False
 
