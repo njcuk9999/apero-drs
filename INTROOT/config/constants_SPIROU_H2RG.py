@@ -346,6 +346,11 @@ ic_ff_order_plot = 5
 #        (takes slightly longer than just one example order)
 ic_ff_plot_all_orders = 0
 
+
+#   Define the orders not to plot on the RMS plot                     - [cal_ff]
+#      should be a list of integers
+ff_rms_plot_skip_orders = []
+
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
 # -----------------------------------------------------------------------------
