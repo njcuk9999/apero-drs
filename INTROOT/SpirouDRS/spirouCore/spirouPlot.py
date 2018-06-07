@@ -843,6 +843,28 @@ def ff_sorder_flat(p, loc):
         plt.close()
 
 
+def ff_rms_plot(p, loc):
+
+    # get constants from p
+    remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # define a mask to select certain orders
+    mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
+    # apply mask to RMS array
+    rmsc = np.where(mask, 0, loc['RMS'])
+    # plot
+    frame.plot(np.arange(len(loc['RMS'])), rmsc)
+    # plot a statistic for mean SNR and mean RMS
+    wmsg = 'Mean S/N= {0:.1f} - Mean RMS = {1:.5f}'
+    wargs = [np.mean(loc['SNR']), np.mean(rmsc)]
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+
+
 # =============================================================================
 # extract plotting function
 # =============================================================================
@@ -909,7 +931,7 @@ def ext_sorder_fit(p, loc, image, cut=20000):
         plt.close()
 
 
-def ext_aorder_fit(p, loc, image):
+def ext_aorder_fit(p, loc, image, cut=20000):
     """
     Plots all orders and highlights selected order (defined in
     "IC_FF_ORDER_PLOT") on the image
@@ -931,7 +953,7 @@ def ext_aorder_fit(p, loc, image):
     """
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
     # get constants
-    selected_order = p['IC_FF_ORDER_PLOT']
+    selected_order = p['IC_EXT_ORDER_PLOT']
     fiber = p['FIBER']
     # set up fig
     plt.figure()
@@ -940,7 +962,7 @@ def ext_aorder_fit(p, loc, image):
     # set up axis
     frame = plt.subplot(111)
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
+    frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
     # loop around the order numbers
     for order_num in range(len(loc['ACC'])//p['NBFIB']):
         acc = loc['ACC'][order_num]

@@ -109,7 +109,7 @@ def main(night_name=None, files=None):
     satseuil = 64536.
     col = 2100
     seuil = 10000
-    slice = 20
+    slice = 5
 
     plt.ion()
     plt.clf()
@@ -121,10 +121,11 @@ def main(night_name=None, files=None):
     plt.figure()
     plt.clf()
 
-    centpart = data2[:, col - 10:col + 10]
+    centpart = data2[:, col - slice:col + slice]
 #    centpart = data2[col - slice:col + slice,:]
-    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
-    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
+#    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
+#    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
+    y = np.median(centpart, axis=1)
     # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))   ## weighted average
     plt.plot(np.arange(ny), y)
 
