@@ -672,6 +672,25 @@ ic_ll_degr_fit = 4
 #  Define the max rms for the sigma-clip fit ll                       - [cal_HC]
 ic_max_llfit_rms = 3.0
 
+#  Define the fit polynomial order for the Littrow fit                - [cal_HC]
+#      (fit across the orders)
+ic_Littrow_fit_deg = 4
+
+#  Define the littrow cut step                                        - [cal_HC]
+ic_Littrow_cut_step = 250
+
+#  Define the order to start the Littrow fit from                     - [cal_HC]
+#  (ends at cal_hc_n_ord_final)
+ic_Littrow_order_init = 0
+
+#  Define orders to ignore in Littrow fit                             - [cal_HC]
+ic_Littrow_remove_orders = []
+
+#  Define the order fit for the Littrow solution                      - [cal_HC]
+#      (fit along the orders)
+ic_Littrow_order_fit_deg = 4
+
+# ----------------------------------
 # NOT USED YET
 # default = 50000  or 60000
 ic_resol = 55000
