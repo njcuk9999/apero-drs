@@ -153,15 +153,15 @@ def main(night_name=None, files=None):
 
     # get number of bad dark pixels (as a fraction of total pixels)
     with warnings.catch_warnings(record=True) as w:
-        baddark = 100.0 * np.sum(data > p['DARK_CUTLIMIT'])
-        baddark /= np.product(data.shape)
+        baddark = 100.0 * np.sum(data0 > p['DARK_CUTLIMIT'])
+        baddark /= np.product(data0.shape)
     # log the fraction of bad dark pixels
     wmsg = 'Frac pixels with DARK > {0:.2f} ADU/s = {1:.3f} %'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['DARK_CUTLIMIT'], baddark))
 
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
-        datacutmask = ~((data > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
+        datacutmask = ~((data0 > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
     spirouCore.spirouLog.warninglogger(w)
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
@@ -262,8 +262,10 @@ def main(night_name=None, files=None):
                                value=p['MED_RED'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
+    # Set to zero dark value > dark_cutlimit
+    data0c = np.where(data0 > p['DARK_CUTLIMIT'], np.zeros_like(data0), data0)
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(darkfits, data0, hdict)
+    spirouImage.WriteImage(darkfits, data0c, hdict)
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
