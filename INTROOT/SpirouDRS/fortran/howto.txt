@@ -1,0 +1,5 @@
+# Run the following commands to install fortran routines:
+
+f2py -c -m newbervmain --noopt --quiet newbervmain.f
+
+f2py -c -m fitgaus --noopt --quiet fitgaus.f
