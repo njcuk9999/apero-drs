@@ -17,7 +17,6 @@ from __future__ import division
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
-from lmfit.models import Model, GaussianModel
 from datetime import datetime, tzinfo, timedelta
 from time import mktime
 from calendar import timegm
@@ -116,7 +115,8 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
         # calculate the fit parameters
         yfit = gauss_function(x, *pfit)
         #work out the normalisation constant
-        norm, _ = chisquare(y, yfit)/(len(y) - len(guess))
+        chis, _ = chisquare(y, f_exp=yfit)
+        norm = chis / (len(y) - len(guess))
         # calculate the fit uncertainties based on pcov
         efit = np.sqrt(np.diag(pcov)) * np.sqrt(norm)
         # return pfit, yfit and efit
@@ -146,6 +146,8 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
 
 def fitgaussian_lmfit(x, y, weights, return_fit=True,
                       return_uncertainties=False):
+
+    from lmfit.models import Model, GaussianModel
     # calculate guess
     mod = GaussianModel()
     params = mod.guess(y, x=x)
