@@ -703,8 +703,9 @@ ic_max_llfit_rms = 3.0
 #      (fit across the orders)
 ic_Littrow_fit_deg = 4
 
-#  Define the littrow cut step                                        - [cal_HC]
-ic_Littrow_cut_step = 250
+#  Define the littrow cut steps                                       - [cal_HC]
+ic_Littrow_cut_step_1 = 250
+ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from                     - [cal_HC]
 #  (ends at cal_hc_n_ord_final)
@@ -724,6 +725,19 @@ ic_ll_free_span_2 = 2.6
 #  Defines order to which the solution is calculated                  - [cal_HC]
 #      previously called n_ord_final (used AFTER littrow fit)
 cal_hc_n_ord_final_2 = 24
+
+#  Defines the mode to "find_lines"                                   - [cal_HC]
+#      Currently allowed modes are:
+#          0: Fortran "fitgaus" routine (requires SpirouDRS.fortran.figgaus.f
+#             to be compiled using f2py:
+#                 f2py -c -m fitgaus --noopt --quiet fitgaus.f
+#          1: Python fit using scipy.optimize.curve_fit
+#          2: Python fit using lmfit.models (Model, GaussianModel) - requires
+#              lmfit python module to be installed (pip install lmfit)
+#          3: Python (conversion of Fortran "fitgaus") - direct fortran gaussj
+#          4: Python (conversion of Fortran "fitgaus") - gaussj Melissa
+#          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
+hc_find_lines_mode = 0
 
 
 # -----------------------------------------------------------------------------
