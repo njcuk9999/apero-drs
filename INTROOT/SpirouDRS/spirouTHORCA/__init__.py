@@ -47,6 +47,8 @@ Getdll = spirouTHORCA.get_dll_from_coefficients
 
 GetLampParams = spirouTHORCA.get_lamp_parameters
 
+JoinOrders = spirouTHORCA.join_orders
+
 SecondGuessSolution = spirouTHORCA.second_guess_at_wave_solution
 
 
