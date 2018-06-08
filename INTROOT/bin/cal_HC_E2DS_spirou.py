@@ -44,9 +44,7 @@ ParamDict = spirouConfig.ParamDict
 #def main(night_name=None, files=None):
 if __name__ == '__main__':
     night_name = '20170710'
-    files = ['hcone_hcone02c61_e2ds_AB.fits']   #, 'hcone_hcone03c61_e2ds_AB.fits',
-             # 'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
-             # 'hcone_hcone06c61_e2ds_AB.fits']
+    files = ['hcone_neil_test_e2ds_AB.fits']
 
     # ----------------------------------------------------------------------
     # Set up
@@ -64,6 +62,9 @@ if __name__ == '__main__':
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
+
+    # set find line mode
+    find_lines_mode = p['HC_FIND_LINES_MODE']
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -119,7 +120,13 @@ if __name__ == '__main__':
         # FIXME: Cannot get same number of lines identified
         # Question: Tried with python gaussian fitting
         # Question: Tried with Fortran fitgaus.fitgaus
-        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='old')
+        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode=find_lines_mode)
+
+        # # TODO: Remove this (loads old DRS data)
+        # import numpy as np
+        # loc['ALL_LINES_1'] = np.load('/home/cook/spirou_config_H2RG/'
+        #                              'spirou_old_th_lines.py.npy',
+        #                              encoding='bytes')
 
         # ------------------------------------------------------------------
         # Detect bad fit filtering and saturated lines
@@ -128,7 +135,7 @@ if __name__ == '__main__':
         wmsg = 'On fiber {0} cleaning list of identified lines'
         WLOG('', p['LOG_OPT'], wmsg.format(fiber))
         # clean lines
-        loc = spirouTHORCA.DetectBadLines(p, loc)
+        loc = spirouTHORCA.DetectBadLines(p, loc, iteration=1)
 
         # ------------------------------------------------------------------
         # Fit wavelength solution on identified lines
@@ -137,17 +144,20 @@ if __name__ == '__main__':
         wmsg = 'On fiber {0} fitting wavelength solution on identified lines:'
         WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber))
         # fit lines
-        loc = spirouTHORCA.Fit1DSolution(p, loc)
+        fkwargs = dict(ll=loc['LL_INIT'], iteration=1)
+        loc = spirouTHORCA.Fit1DSolution(p, loc, **fkwargs)
 
         # ------------------------------------------------------------------
         # calculate Littrow solution
         # ------------------------------------------------------------------
-        loc = spirouTHORCA.CalcLittrowSolution(p, loc)
+        ckwargs = dict(ll=loc['LL_OUT_1'], iteration=1, log=False)
+        loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
         # ------------------------------------------------------------------
         # extrapolate Littrow solution
         # ------------------------------------------------------------------
-        loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc)
+        ekwargs = dict(ll=loc['LL_OUT_1'], iteration=1)
+        loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
 
         # ------------------------------------------------------------------
         # Plot littrow solution
@@ -156,14 +166,12 @@ if __name__ == '__main__':
             # start interactive plot
             sPlt.start_interactive_session()
             # plot littrow x pixels against fitted wavelength solution
-            sPlt.wave_littrow_extrap_plot(loc)
-            # end interactive session
-            sPlt.end_interactive_session()
+            sPlt.wave_littrow_extrap_plot(loc, iteration=1)
 
         # ------------------------------------------------------------------
         # Second guess at solution for each order (using Littrow)
         # ------------------------------------------------------------------
-        loc = spirouTHORCA.SecondGuessSolution(p, loc, mode='new')
+        loc = spirouTHORCA.SecondGuessSolution(p, loc, mode=find_lines_mode)
 
         # ------------------------------------------------------------------
         # Detect bad fit filtering and saturated lines (using Littrow)
@@ -172,53 +180,47 @@ if __name__ == '__main__':
         wmsg = 'On fiber {0} cleaning list of identified lines (second pass)'
         WLOG('', p['LOG_OPT'], wmsg.format(fiber))
         # clean lines
-        loc = spirouTHORCA.DetectBadLines(p, loc, key='ALL_LINES_2')
+        loc = spirouTHORCA.DetectBadLines(p, loc, iteration=2)
 
+        # ------------------------------------------------------------------
+        # Fit wavelength solution on identified lines (using Littrow)
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = ('On fiber {0} fitting wavelength solution on identified '
+                'lines: (second pass)')
+        WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber))
+        # fit lines
+        ll = loc['LITTROW_EXTRAP_SOL_1'][:p['CAL_HC_N_ORD_FINAL_2']]
+        loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
 
-        for it,lines in enumerate(loc['ALL_LINES_2']):
-            print(it, 'len={0}'.format(len(lines)))
+        # ------------------------------------------------------------------
+        # Littrow test
+        # ------------------------------------------------------------------
+        ckwargs = dict(ll=loc['LL_OUT_2'], iteration=2, log=True)
+        loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
+
+        # ------------------------------------------------------------------
+        # Plot wave solution littrow check
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # plot littrow x pixels against fitted wavelength solution
+            sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+            # end interactive session
+            sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # Join 0-24 and 25-36 solutions
     # ----------------------------------------------------------------------
-
-    # import matplotlib.pyplot as plt
-    # plt.ioff()
-    # order_num = 7
-    # test_plot(loc['DATA'][order_num], loc['ALL_LINES_2'][order_num])
-    #
-    #
-    #
-    # def test_plot(data_y, all_lines_order):
-    #
-    #     fig, frame = plt.subplots(ncols=1, nrows=1)
-    #
-    #     frame.plot(data_y, color='k')
-    #
-    #     for line in all_lines_order:
-    #         if line[7] != 0:
-    #             frame.plot([line[5], line[5]], [0, line[2]])
-    #     plt.show()
-    #     plt.close()
-
-
-
-    # def test_plot2(all_lines_order):
-    #
-    #     import matplotlib.pyplot as plt
-    #     import numpy as np
-    #
-    #     mask = all_lines_order[:, 7] != 0
-    #     bins = np.arange(-0.1, 0.1, 25)
-    #
-    #
-    #     plt.hist(all_lines_order[:, 3][mask], bins=bins)
-    #     plt.show()
-    #     plt.close()
+    loc = spirouTHORCA.JoinOrders(p, loc)
 
     # ----------------------------------------------------------------------
     # archive result in e2ds spectra
     # ----------------------------------------------------------------------
+
+    # log progress
+    wargs = []
+    wmsg = 'Write wavelength solution for Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # ----------------------------------------------------------------------
     # Save to result table
