@@ -648,6 +648,23 @@ ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
 #  Define the type of catalogue to use for each lamp type             - [cal_HC]
 ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
 
+#  Define the Resolution of detector                                  - [cal_HC]
+ic_resol = 55000
+
+#  Define wavelength free span parameter in find lines search         - [cal_HC]
+# default = 3   or 2.6
+ic_ll_free_span = 3
+
+#  Define minimum wavelength of the detector to use in find lines     - [cal_HC]
+ic_ll_sp_min = 900
+
+#  Define maximum wavelength of the detector to use in find lines     - [cal_HC]
+ic_ll_sp_max = 2400
+
+#  Define the read out noise to use in find lines                     - [cal_HC]
+# default = 16.8
+ic_hc_noise = 30
+
 # Maximum sig-fit of the guessed lines                                - [cal_HC]
 #     fwhm/2.35 of th lines)
 ic_max_sigll_cal_lines = 5.2
@@ -664,7 +681,7 @@ ic_max_ampl_line = 2.0e8
 #      previously called n_ord_final
 cal_hc_n_ord_final = 24
 
-#  Defines echeele of first extracted order
+#  Defines echeele of first extracted order                           - [cal_HC]
 cal_hc_t_order_start = 66
 
 # Define the minimum instrumental error                               - [cal_HC]
@@ -681,8 +698,9 @@ ic_max_llfit_rms = 3.0
 #      (fit across the orders)
 ic_Littrow_fit_deg = 4
 
-#  Define the littrow cut step                                        - [cal_HC]
-ic_Littrow_cut_step = 250
+#  Define the littrow cut steps                                       - [cal_HC]
+ic_Littrow_cut_step_1 = 250
+ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from                     - [cal_HC]
 #  (ends at cal_hc_n_ord_final)
@@ -695,27 +713,26 @@ ic_Littrow_remove_orders = []
 #      (fit along the orders)
 ic_Littrow_order_fit_deg = 4
 
-# ----------------------------------
-# NOT USED YET
-# default = 50000  or 60000
-ic_resol = 55000
+#  Define wavelength free span parameter in find lines search         - [cal_HC]
+#    (used AFTER littrow fit) default = 3
+ic_ll_free_span_2 = 2.6
 
-# NOT USED YET
-# default = 3   or 2.6
-ic_ll_free_span = 3
+#  Defines order to which the solution is calculated                  - [cal_HC]
+#      previously called n_ord_final (used AFTER littrow fit)
+cal_hc_n_ord_final_2 = 24
 
-# NOT USED YET
-# default = 16.8
-ic_hc_noise = 30
-
-# NOT USED YET
-ic_ll_sp_min = 900
-
-# NOT USED YET
-ic_ll_sp_max = 2400
-
-# NOT USED YET
-ic_ll_smooth = 0
+#  Defines the mode to "find_lines"                                   - [cal_HC]
+#      Currently allowed modes are:
+#          0: Fortran "fitgaus" routine (requires SpirouDRS.fortran.figgaus.f
+#             to be compiled using f2py:
+#                 f2py -c -m fitgaus --noopt --quiet fitgaus.f
+#          1: Python fit using scipy.optimize.curve_fit
+#          2: Python fit using lmfit.models (Model, GaussianModel) - requires
+#              lmfit python module to be installed (pip install lmfit)
+#          3: Python (conversion of Fortran "fitgaus") - direct fortran gaussj
+#          4: Python (conversion of Fortran "fitgaus") - gaussj Melissa
+#          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
+hc_find_lines_mode = 0
 
 
 # -----------------------------------------------------------------------------
