@@ -93,6 +93,8 @@ MakeTable = spirouTable.make_table
 
 MeasureDark = spirouImage.measure_dark
 
+MergeTable = spirouTable.merge_table
+
 NormMedianFlat = spirouImage.normalise_median_flat
 
 PPCorrectTopBottom = spirouImage.ref_top_bottom
