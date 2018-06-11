@@ -1556,6 +1556,72 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     if pause:
         time.sleep(1.0)
 
+
+# =============================================================================
+# wave solution plotting function
+# =============================================================================
+def wave_littrow_extrap_plot(loc, iteration=0):
+
+    # get the dimensions of the data
+    ydim, xdim = loc['DATA'].shape
+    # define the x axis data
+    x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
+    x_points = np.arange(xdim)
+    # define the y axis data
+    yfit_x_cut = loc['LITTROW_EXTRAP_{0}'.format(iteration)]
+    yfit = loc['LITTROW_EXTRAP_SOL_{0}'.format(iteration)]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # colours
+    colours = np.tile(['r', 'b', 'g', 'y', 'm', 'k', 'c'], ydim)
+    # loop around the orders and plot each line
+    for order_num in range(ydim):
+        # plot the solution for all x points
+        frame.plot(x_points, yfit[order_num],
+                   color=colours[order_num])
+        # plot the solution at the chosen cut points
+        frame.scatter(x_cut_points, yfit_x_cut[order_num],
+                      marker='o', s=10, color=colours[order_num])
+    # set axis labels
+    frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]')
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_littrow_check_plot(p, loc, iteration=0):
+    # get data from loc
+    x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # loop around the xcut points
+    for it in range(len(x_cut_points)):
+        # get x and y data
+        xx = loc['LITTROW_XX_{0}'.format(iteration)][it]
+        yy = loc['LITTROW_YY_{0}'.format(iteration)][it]
+        # plot graph
+        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]))
+    # set axis labels and title
+    title = 'Wavelength Solution Littrow Check fiber {0}'.format(p['FIBER'])
+    frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
+              title=title)
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 # =============================================================================
 # test functions (rewmove later)
 # =============================================================================

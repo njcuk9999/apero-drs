@@ -29,7 +29,11 @@ __all__ = ['DetectBadLines', 'FirstGuessSolution', 'Fit1DSolution',
 # Function aliases
 # =============================================================================
 
+CalcLittrowSolution = spirouTHORCA.calculate_littrow_sol
+
 DetectBadLines = spirouTHORCA.detect_bad_lines
+
+ExtrapolateLittrowSolution = spirouTHORCA.extrapolate_littrow_sol
 
 FirstGuessSolution = spirouTHORCA.first_guess_at_wave_solution
 
@@ -43,6 +47,9 @@ Getdll = spirouTHORCA.get_dll_from_coefficients
 
 GetLampParams = spirouTHORCA.get_lamp_parameters
 
+JoinOrders = spirouTHORCA.join_orders
+
+SecondGuessSolution = spirouTHORCA.second_guess_at_wave_solution
 
 
 # =============================================================================
