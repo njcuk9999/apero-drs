@@ -50,6 +50,16 @@ class MathException(Exception):
 # =============================================================================
 # Define functions
 # =============================================================================
+def fwhm(sigma=1.0):
+    """
+    Get the Full-width-half-maximum value from the sigma value (~2.3548)
+
+    :param sigma: float, the sigma, default value is 1.0 (normalised gaussian)
+    :return: 2 * sqrt(2 * log(2)) * sigma = 2.3548200450309493 * sigma
+    """
+    return 2 * np.sqrt(2 * np.log(2)) * sigma
+
+
 def polyval(p, x):
     """
     Faster version of numpy.polyval
