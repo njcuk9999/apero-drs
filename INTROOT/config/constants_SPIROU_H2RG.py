@@ -644,14 +644,31 @@ em_save_mask_map = True
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = {'UNe': 'hcone', 'TH': 'hctwo'}
+ic_lamps = {'UNe':'hcone', 'TH':'hctwo'}
 
 #  Define the catalogue line list to use for each lamp type           - [cal_HC]
 #      (dictionary)
-ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
+ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
 
 #  Define the type of catalogue to use for each lamp type             - [cal_HC]
-ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
+ic_cat_type_all = {'UNe': 'fullcat', 'TH':'thcat'}
+
+#  Define the Resolution of detector                                  - [cal_HC]
+ic_resol = 55000
+
+#  Define wavelength free span parameter in find lines search         - [cal_HC]
+# default = 3   or 2.6
+ic_ll_free_span = 3
+
+#  Define minimum wavelength of the detector to use in find lines     - [cal_HC]
+ic_ll_sp_min = 900
+
+#  Define maximum wavelength of the detector to use in find lines     - [cal_HC]
+ic_ll_sp_max = 2400
+
+#  Define the read out noise to use in find lines                     - [cal_HC]
+# default = 16.8
+ic_hc_noise = 30
 
 # Maximum sig-fit of the guessed lines                                - [cal_HC]
 #     fwhm/2.35 of th lines)
@@ -669,7 +686,7 @@ ic_max_ampl_line = 2.0e8
 #      previously called n_ord_final
 cal_hc_n_ord_final = 24
 
-#  Defines echeele of first extracted order
+#  Defines echeele of first extracted order                           - [cal_HC]
 cal_hc_t_order_start = 66
 
 # Define the minimum instrumental error                               - [cal_HC]
@@ -682,26 +699,65 @@ ic_ll_degr_fit = 4
 #  Define the max rms for the sigma-clip fit ll                       - [cal_HC]
 ic_max_llfit_rms = 3.0
 
-# NOT USED YET
-# default = 50000  or 60000
-ic_resol = 55000
+#  Define the fit polynomial order for the Littrow fit                - [cal_HC]
+#      (fit across the orders)
+ic_Littrow_fit_deg = 4
 
-# NOT USED YET
-# default = 3   or 2.6
-ic_ll_free_span = 3
+#  Define the littrow cut steps                                       - [cal_HC]
+ic_Littrow_cut_step_1 = 250
+ic_Littrow_cut_step_2 = 500
 
-# NOT USED YET
-# default = 16.8
-ic_hc_noise = 30
+#  Define the order to start the Littrow fit from                     - [cal_HC]
+#  (ends at cal_hc_n_ord_final)
+ic_Littrow_order_init = 0
 
-# NOT USED YET
-ic_ll_sp_min = 900
+#  Define orders to ignore in Littrow fit                             - [cal_HC]
+ic_Littrow_remove_orders = []
 
-# NOT USED YET
-ic_ll_sp_max = 2400
+#  Define the order fit for the Littrow solution                      - [cal_HC]
+#      (fit along the orders)
+ic_Littrow_order_fit_deg = 4
 
-# NOT USED YET
-ic_ll_smooth = 0
+#  Define wavelength free span parameter in find lines search         - [cal_HC]
+#    (used AFTER littrow fit) default = 3
+ic_ll_free_span_2 = 2.6
+
+#  Defines order to which the solution is calculated                  - [cal_HC]
+#      previously called n_ord_final (used AFTER littrow fit)
+cal_hc_n_ord_final_2 = 24
+
+#  Defines the mode to "find_lines"                                   - [cal_HC]
+#      Currently allowed modes are:
+#          0: Fortran "fitgaus" routine (requires SpirouDRS.fortran.figgaus.f
+#             to be compiled using f2py:
+#                 f2py -c -m fitgaus --noopt --quiet fitgaus.f
+#          1: Python fit using scipy.optimize.curve_fit
+#          2: Python fit using lmfit.models (Model, GaussianModel) - requires
+#              lmfit python module to be installed (pip install lmfit)
+#          3: Python (conversion of Fortran "fitgaus") - direct fortran gaussj
+#          4: Python (conversion of Fortran "fitgaus") - gaussj Melissa
+#          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
+hc_find_lines_mode = 0
+
+#  Define the CCF mask for the wave solution CCF calculation          - [cal_HC]
+ic_wave_ccf_mask = {'UNe': 'test_mask_UNe_firstguess_R50000.mas', 'TH':'test_mask_TH_R50000.mas'}
+
+#  Define the weight of the wave CCF mask                             - [cal_HC]
+#     (if 1 force all weights equal)
+ic_wave_ccf_w_mask_min = 1.0
+
+#  Define the wave CCF width of the template line                     - [cal_HC]
+#     (if 0 use natural)
+ic_wave_ccf_mask_width = 0.0
+
+#  Define the wave CCF half width                                     - [cal_HC]
+ic_wave_ccf_half_width = 10.0
+
+#  Define the wave CCF step                                           - [cal_HC]
+ic_wave_ccf_step = 0.1
+
+#  Define the type of fit for the wave CCF fit                        - [cal_HC]
+wave_ccf_fit_type = 1
 
 
 # -----------------------------------------------------------------------------
@@ -753,6 +809,15 @@ qc_slit_max = 0.0
 #   Maximum signal allowed (set saturation limit)                - [cal_extract]
 #        however currently does not trigger qc
 qc_max_signal = 65500
+
+#   Maximum littrow RMS value                                         - [cal_hc]
+#       (at x cut points)
+qc_rms_littrow_max = 0.3
+
+#   Maximum littrow devilation from wave solution                     - [cal_hc]
+#       (at x cut points)
+qc_dev_littrow_max = 0.9
+
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings
