@@ -1067,6 +1067,47 @@ def EM_MASK_FILE(p):
     return fitsfile
 
 
+def WAVE_FILE(p):
+    reducedfolder = p['REDUCED_DIR']
+    old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = p['ARG_FILE_NAMES'][0].replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    return wavefile
+
+
+def WAVE_TBL_FILE(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavetblfb = 'cal_HC_result.tbl'
+    wavetblfile = os.path.join(reducedfolder, wavetblfb)
+    return wavetblfile
+
+
+def WAVE_LINE_FILE(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavellext = '_hc_lines_{0}.tbl'.format(p['FIBER'])
+    wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
+    wavellfile = os.path.join(reducedfolder, wavellfn)
+    return wavellfile
+
+
+def WAVE_E2DS_COPY(p):
+    # get base filename
+    basefilename = os.path.basename(p['FITSFILENAME'])
+    # get path
+    path = os.path.dirname(p['FITSFILENAME'])
+    # get prefix
+    calibprefix = CALIB_PREFIX(p)
+    # construct filename
+    filename = '{0}_{1}'.format(calibprefix, basefilename)
+    # construct absolute path
+    e2dscopy = os.path.join(path, filename)
+    # return absolute path
+    return e2dscopy
+
+
 # =============================================================================
 # Define calibration database functions
 # =============================================================================
