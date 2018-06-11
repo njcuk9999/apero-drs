@@ -639,14 +639,14 @@ em_save_mask_map = True
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = {'UNe': 'hcone', 'TH': 'hctwo'}
+ic_lamps = {'UNe':'hcone', 'TH':'hctwo'}
 
 #  Define the catalogue line list to use for each lamp type           - [cal_HC]
 #      (dictionary)
-ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
+ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
 
 #  Define the type of catalogue to use for each lamp type             - [cal_HC]
-ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
+ic_cat_type_all = {'UNe': 'fullcat', 'TH':'thcat'}
 
 #  Define the Resolution of detector                                  - [cal_HC]
 ic_resol = 55000
@@ -734,6 +734,26 @@ cal_hc_n_ord_final_2 = 24
 #          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
 hc_find_lines_mode = 0
 
+#  Define the CCF mask for the wave solution CCF calculation          - [cal_HC]
+ic_wave_ccf_mask = {'UNe': 'test_mask_UNe_firstguess_R50000.mas', 'TH':'test_mask_TH_R50000.mas'}
+
+#  Define the weight of the wave CCF mask                             - [cal_HC]
+#     (if 1 force all weights equal)
+ic_wave_ccf_w_mask_min = 1.0
+
+#  Define the wave CCF width of the template line                     - [cal_HC]
+#     (if 0 use natural)
+ic_wave_ccf_mask_width = 0.0
+
+#  Define the wave CCF half width                                     - [cal_HC]
+ic_wave_ccf_half_width = 10.0
+
+#  Define the wave CCF step                                           - [cal_HC]
+ic_wave_ccf_step = 0.1
+
+#  Define the type of fit for the wave CCF fit                        - [cal_HC]
+wave_ccf_fit_type = 1
+
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
@@ -784,6 +804,15 @@ qc_slit_max = 0.0
 #   Maximum signal allowed (set saturation limit)                - [cal_extract]
 #        however currently does not trigger qc
 qc_max_signal = 50000
+
+#   Maximum littrow RMS value                                         - [cal_hc]
+#       (at x cut points)
+qc_rms_littrow_max = 0.3
+
+#   Maximum littrow devilation from wave solution                     - [cal_hc]
+#       (at x cut points)
+qc_dev_littrow_max = 0.9
+
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings
