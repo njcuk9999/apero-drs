@@ -88,7 +88,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     wave, whdr, _, nx, ny = rout
 
     # extract required keyword arguments from the header
-    keys = ['kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1']
+    keys = ['KW_WAVE_ORD_N', 'KW_WAVE_LL_DEG', 'KW_TH_NAXIS1']
     try:
         gkv = spirouConfig.GetKeywordValues(p, whdr, keys, read_file)
         nbo, degll, xsize = gkv
@@ -97,7 +97,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
         nbo, degll, xsize = 0, 0, 0
 
     # get the coefficients from the header
-    coeff_prefix = p['KW_TH_COEFF_PREFIX'][0]
+    coeff_prefix = p['KW_WAVE_PARAM'][0]
     param_ll = []
     # loop around the orders
     for order_num in range(nbo):
@@ -425,7 +425,7 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     # get the dimensions of the data
     ydim, xdim = loc['DATA'].shape
     # get inv_params
-    inv_params = loc['INV_PARAM_{0}'.format(iteration)]
+    inv_params = loc['LL_PARAM_{0}'.format(iteration)]
     # get new line list
     ll_out = get_ll_from_coefficients(inv_params, xdim, num_orders)
     # get the first derivative of the line list
@@ -648,7 +648,7 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     ll_line_2, ampl_line_2 = [], []
     for order_num in range(n_ord_final):
         # get this orders details
-        details = loc['FINAL_DETAILS_1'][order_num]
+        details = loc['X_DETAILS_1'][order_num]
         # append to lists
         ll_line_2 = np.append(ll_line_2, details[0])
         ampl_line_2 = np.append(ampl_line_2, details[3])
@@ -687,7 +687,7 @@ def join_orders(p, loc):
     # get data from loc
     # the second iteration outputs
     ll_out_2 = loc['LL_OUT_2']
-    param_out_2 = loc['INV_PARAM_2']
+    param_out_2 = loc['LL_PARAM_2']
 
     # the littrow extrapolation (for orders > n_ord_final_2)
     littrow_extrap_sol = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final_2:]
@@ -706,8 +706,8 @@ def join_orders(p, loc):
 
     # convert stacks to arrays and add to storage
     loc['LL_FINAL'] = np.vstack(ll_stack)
-    loc['PARAM_LL_FINAL'] = np.vstack(param_stack)
-    loc.set_sources(['LL_FINAL', 'PARAM_LL_FINAL'], func_name)
+    loc['LL_PARAM_FINAL'] = np.vstack(param_stack)
+    loc.set_sources(['LL_FINAL', 'LL_PARAM_FINAL'], func_name)
 
     # return loc
     return loc
@@ -1497,17 +1497,17 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
              'value:{3:.2f}[m/s])'.format(*wargs2))
     WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
     # save outputs to loc
-    loc['FINAL_MEAN_{0}'.format(iteration)] = final_mean
-    loc['FINAL_VAR_{0}'.format(iteration)] = final_var
-    loc['FINAL_ITER_{0}'.format(iteration)] = final_iter
-    loc['FINAL_PARAM_{0}'.format(iteration)] = final_param
-    loc['FINAL_DETAILS_{0}'.format(iteration)] = final_details
+    loc['X_MEAN_{0}'.format(iteration)] = final_mean
+    loc['X_VAR_{0}'.format(iteration)] = final_var
+    loc['X_ITER_{0}'.format(iteration)] = final_iter
+    loc['X_PARAM_{0}'.format(iteration)] = final_param
+    loc['X_DETAILS_{0}'.format(iteration)] = final_details
     loc['SCALE_{0}'.format(iteration)] = scale
-    sources = ['FINAL_MEAN_{0}'.format(iteration),
-               'FINAL_VAR_{0}'.format(iteration),
-               'FINAL_ITER_{0}'.format(iteration),
-               'FINAL_PARAM_{0}'.format(iteration),
-               'FINAL_DETAILS_{0}'.format(iteration),
+    sources = ['X_MEAN_{0}'.format(iteration),
+               'X_VAR_{0}'.format(iteration),
+               'X_ITER_{0}'.format(iteration),
+               'X_PARAM_{0}'.format(iteration),
+               'X_DETAILS_{0}'.format(iteration),
                'SCALE_{0}'.format(iteration)]
     loc.set_sources(sources, func_name)
     # return loc
@@ -1519,8 +1519,8 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
     # get constants from p
     fit_degree = p['IC_LL_DEGR_FIT']
     # get data from loc
-    details = loc['FINAL_DETAILS_{0}'.format(iteration)]
-    iter = loc['FINAL_ITER_{0}'.format(iteration)]
+    details = loc['X_DETAILS_{0}'.format(iteration)]
+    iter = loc['X_ITER_{0}'.format(iteration)]
     # Get the number of orders
     num_orders = ll.shape[0]
     # loop around orders
@@ -1571,12 +1571,12 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
     # save outputs to loc
     loc['LL_MEAN_{0}'.format(iteration)] = final_mean
     loc['LL_VAR_{0}'.format(iteration)] = final_var
-    loc['INV_PARAM_{0}'.format(iteration)] = np.array(inv_params)
-    loc['INV_DETAILS_{0}'.format(iteration)] = inv_details
+    loc['LL_PARAM_{0}'.format(iteration)] = np.array(inv_params)
+    loc['LL_DETAILS_{0}'.format(iteration)] = inv_details
     sources = ['LL_MEAN_{0}'.format(iteration),
                'LL_VAR_{0}'.format(iteration),
-               'INV_PARAM_{0}'.format(iteration),
-               'INV_DETAILS_{0}'.format(iteration)]
+               'LL_PARAM_{0}'.format(iteration),
+               'LL_DETAILS_{0}'.format(iteration)]
     loc.set_sources(sources, func_name)
     # return loc
     return loc
