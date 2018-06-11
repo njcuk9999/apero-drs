@@ -269,7 +269,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the contrast (ccf fit amplitude)
     loc['CONTRAST'] = np.abs(100*ccf_res[0])
     # get the FWHM value
-    loc['FWHM'] = ccf_res[2] * 2.3548
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+
     # ----------------------------------------------------------------------
     # set the source
     keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm',
