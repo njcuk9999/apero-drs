@@ -34,18 +34,6 @@ __date__ = '2018-06-11'
 # Define pre-functions
 # =============================================================================
 # noinspection PyPep8Naming
-def CONFIGFILE():
-    """
-    Defines the primary config filename
-
-    :return config_file: string, the primary config file filename
-    """
-    # Name of main config file (in CONFIGFOLDER() )
-    config_file = 'config.py'
-    return config_file
-
-
-# noinspection PyPep8Naming
 def PACKAGE():
     """
     Defines the package name (Used in code so MUST equal name of parent package)
@@ -136,6 +124,36 @@ def LATEST_EDIT():
     return date
 
 
+# =============================================================================
+# Define Constants
+# =============================================================================
+# noinspection PyPep8Naming
+def CONFIGFILE():
+    """
+    Defines the primary config filename
+
+    :return config_file: string, the primary config file filename
+    """
+    # Name of main config file (in CONFIGFOLDER() )
+    config_file = 'config.py'
+    return config_file
+
+
+# noinspection PyPep8Naming
+def RECIPE_CONTROL_FILE():
+    """
+    Defines the recipe control filename
+
+    :return recipe_control_file: string, the recipe control filename
+    """
+    recipe_control_file = 'recipe_control.txt'
+    recipe_control_format = 'csv'
+    return recipe_control_file, recipe_control_format
+
+
+# =============================================================================
+# Define Directories
+# =============================================================================
 # noinspection PyPep8Naming
 def CONFIGFOLDER():
     """
@@ -167,6 +185,7 @@ def CDATA_REL_FOLDER():
     return const_data_folder
 
 
+# noinspection PyPep8Naming
 def CCF_MASK_DIR():
     """
     Define the ccf mask dir relative path
@@ -178,6 +197,7 @@ def CCF_MASK_DIR():
     return ccf_mask_dir
 
 
+# noinspection PyPep8Naming
 def BADPIX_DIR():
     """
     Define the badpix dir relative path
@@ -189,6 +209,7 @@ def BADPIX_DIR():
     return badpix_dir
 
 
+# noinspection PyPep8Naming
 def BARYCORRPY_DIR():
     """
     Define barycorrpy dir relative path
@@ -200,6 +221,7 @@ def BARYCORRPY_DIR():
     return barycorrpy_dir
 
 
+# noinspection PyPep8Naming
 def RESET_CALIBDB_DIR():
     """
     Define the reset dir relative path
@@ -209,6 +231,7 @@ def RESET_CALIBDB_DIR():
     return reset_calibdb_dir
 
 
+# noinspection PyPep8Naming
 def WAVELENGTH_CATS_DIR():
     """
     Define the wavelength catalogues dir relative path
@@ -216,6 +239,16 @@ def WAVELENGTH_CATS_DIR():
     """
     wavelength_cats_dir = './data/wavelength_cats'
     return wavelength_cats_dir
+
+
+# noinspection PyPep8Naming
+def DATA_CONSTANT_DIR():
+    """
+    Define the data constants dir relative path
+    :return:
+    """
+    data_constant_dir = './data/constants/'
+    return data_constant_dir
 
 
 # =============================================================================
@@ -1021,6 +1054,7 @@ def EM_SPE_FILE(p):
     return fitsfile
 
 
+# noinspection PyPep8Naming
 def EM_WAVE_FILE(p):
     """
     Defines the cal_exposure_meter wavelength
@@ -1044,6 +1078,7 @@ def EM_WAVE_FILE(p):
     return fitsfile
 
 
+# noinspection PyPep8Naming
 def EM_MASK_FILE(p):
     """
     Defines the cal_exposure_meter telluric spectrum map
@@ -1067,6 +1102,7 @@ def EM_MASK_FILE(p):
     return fitsfile
 
 
+# noinspection PyPep8Naming
 def WAVE_FILE(p):
     reducedfolder = p['REDUCED_DIR']
     old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
@@ -1078,6 +1114,7 @@ def WAVE_FILE(p):
     return wavefile
 
 
+# noinspection PyPep8Naming
 def WAVE_TBL_FILE(p):
     reducedfolder = p['REDUCED_DIR']
     wavetblfb = 'cal_HC_result.tbl'
@@ -1085,6 +1122,7 @@ def WAVE_TBL_FILE(p):
     return wavetblfile
 
 
+# noinspection PyPep8Naming
 def WAVE_LINE_FILE(p):
     reducedfolder = p['REDUCED_DIR']
     wavellext = '_hc_lines_{0}.tbl'.format(p['FIBER'])
@@ -1093,6 +1131,7 @@ def WAVE_LINE_FILE(p):
     return wavellfile
 
 
+# noinspection PyPep8Naming
 def WAVE_E2DS_COPY(p):
     # get base filename
     basefilename = os.path.basename(p['FITSFILENAME'])
