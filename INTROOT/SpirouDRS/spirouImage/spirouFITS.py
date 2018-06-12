@@ -1069,7 +1069,7 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
         return 'UNKNOWN'
 
 
-def read_header(p=None, filepath=None, ext=0):
+def read_header(p=None, filepath=None, ext=0, return_comments=False):
     """
     Read the header from a file at "filepath" with extention "ext" (default=0)
 
@@ -1079,6 +1079,7 @@ def read_header(p=None, filepath=None, ext=0):
 
     :param filepath: string, filename and path of FITS file to open
     :param ext: int, extension in FITS rec to open (default = 0)
+    :param return_comments: bool, if True returns a dictionary of the comments
 
     :return hdict: dictionary, the dictionary with key value pairs
     """
@@ -1103,8 +1104,12 @@ def read_header(p=None, filepath=None, ext=0):
         header = None
     # load in to dictionary
     hdict = dict(zip(header.keys(), header.values()))
+    cdict = dict(zip(header.keys(), header.comments))
     # return hdict
-    return hdict
+    if return_comments:
+        return hdict, cdict
+    else:
+        return hdict
 
 
 def read_key(p, hdict=None, key=None):
