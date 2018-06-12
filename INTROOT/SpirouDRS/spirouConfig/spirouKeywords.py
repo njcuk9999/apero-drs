@@ -254,7 +254,7 @@ kw_root_drs_flat = ['FF', None, '']
 kw_root_drs_hc = ['LMP', None, '']
 
 # Define the key to get the data fits file type
-kw_DPRTYPE = ['DPRTYPE', None, '']
+kw_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
