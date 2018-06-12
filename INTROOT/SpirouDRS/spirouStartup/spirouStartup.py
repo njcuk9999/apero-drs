@@ -22,6 +22,7 @@ import code
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -322,6 +323,37 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     # -------------------------------------------------------------------------
     # return the parameter dictionary
     return p
+
+
+
+def initial_file_setup1(p, recipe, files=None, calibdb=False):
+
+    # deal with no files being defined
+    if files is None:
+        files = p['ARG_FILE_NAMES']
+    # check file based on recipe name
+    p = spirouImage.CheckFiles(p, files, recipe)
+    # -------------------------------------------------------------------------
+    # Calib DB setup
+    p = load_calibdb(p, calibdb)
+    # -------------------------------------------------------------------------
+    # log processing image type
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    # return p
+    return p
+
+
+def single_file_setup(p, filename, recipe=None):
+    # check file based on recipe name
+    p, path = spirouImage.IdentifyFile(p, filename, return_path=True)
+    # get location of file
+    location = get_file1(p, path, filename)
+    # log that we are processing this image
+    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    # return p
+    return location
 
 
 def load_calibdb(p, calibdb=True):
@@ -1221,6 +1253,47 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
     # log that we are processing this image
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
     WLOG('info', p['LOG_OPT'], wmsg.format(kind, p['PROGRAM']))
+    # if all conditions passed return full path
+    return location
+
+
+def get_file1(p, path, filename):
+    """
+    Get full file path and check the path and file exist
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+
+    :param path: string, either the directory to the folder (if name is None) or
+                 the full path to the file
+    :param name: string or None, the name of the file, if None name is assumed
+                 to be in path
+    :param prefixes: string, list of strings or None, if not None this
+                     substring must be in the filename
+    :param kind: string or None, the type of file (for logging)
+
+    :return location: string, the full file path of the file
+    """
+    # if path is None and name is None
+    if path is None:
+        WLOG('error', p['LOG_OPT'], 'No file defined')
+    # if name and path are not None
+    if filename is None:
+        filename = os.path.split(path)[-1]
+        path = path.split(filename)[0]
+    # join path and name
+    location = os.path.join(path, filename)
+    # test if path exists
+    if not os.path.exists(path):
+        emsg = 'Directory: {0} does not exist'
+        WLOG('error', p['LOG_OPT'], emsg.format(path))
+    # test if path + file exits
+    if not os.path.exists(location):
+        emsg = 'File : {0} does not exist at location {1}'
+        WLOG('error', p['LOG_OPT'], emsg.format(filename, path))
     # if all conditions passed return full path
     return location
 
