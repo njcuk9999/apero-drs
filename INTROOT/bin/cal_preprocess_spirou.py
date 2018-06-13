@@ -148,11 +148,9 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # TODO: Eventually remove H2RG fix
         # do not rotate for H2RG
-        if p['IC_IMAGE_TYPE'] == 'H2RG':
-            pass
-        else:
+        if p['IC_IMAGE_TYPE'] == 'H4RG':
             # rotation to match HARPS orientation (expected by DRS)
-            image = np.rot90(image, -1)
+            image = spirouImage.RotateImage(image, p['RAW_TO_PP_ROTATION'])
 
         # ------------------------------------------------------------------
         # Save rotated image
