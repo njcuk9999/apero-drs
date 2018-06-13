@@ -55,6 +55,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BNFLAT',
             'kw_BNILUM',
             'kw_BTOT',
+            'kw_CCAS',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
             'kw_CCF_CDELT',
@@ -67,6 +68,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CCF_MAXCPP',
             'kw_CCF_RV',
             'kw_CCF_RVC',
+            'kw_CREF',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -110,6 +112,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJEQUIN',
             'kw_OBJRA',
             'kw_OBJRAPM',
+            'kw_OBSTYPE',
             'kw_RDNOISE',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
@@ -180,24 +183,8 @@ spirouConfig.check_config(p, USE_PARAMS)
 #           folder, however they should be placed as strings in USE_PARAMS
 #
 # -----------------------------------------------------------------------------
-# General variables
-# -----------------------------------------------------------------------------
-# DRS version
-kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
-              'DRS version']
-
-# root keys (for use below and in finding keys later)
-kw_root_drs_loc = ['LO', None, '']
-kw_root_drs_flat = ['FF', None, '']
-kw_root_drs_hc = ['LMP', None, '']
-
-# -----------------------------------------------------------------------------
 # Required header keys (main fits file)
 # -----------------------------------------------------------------------------
-
-# Define the key to get the data fits file type
-kw_DPRTYPE = ['TPL_NAME', None, '']
-
 # define the HEADER key for acquisition time (used to get value only)
 #   in format YYYY-mm-dd-HH-MM-SS.ss
 # TODO: This switch will be obsolete after H2RG testing is over
@@ -244,10 +231,30 @@ kw_GAIN = ['GAIN', None, '']
 # define the exposure time HEADER key (used to get value only)
 kw_EXPTIME = ['EXPTIME', None, '']
 
+# define the observation type HEADER key
+kw_OBSTYPE = ['OBSTYPE', None, '']
+
+# define the science fiber type HEADER key
+kw_CCAS = ['SBCCAS_P', '', '']
+
+# define the reference fiber type HEADER key
+kw_CREF = ['SBCREF_P', '', '']
+
 
 # -----------------------------------------------------------------------------
-# Required header keys (other files)
+# Define general keywords
 # -----------------------------------------------------------------------------
+# DRS version
+kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+              'DRS version']
+
+# root keys (for use below and in finding keys later)
+kw_root_drs_loc = ['LO', None, '']
+kw_root_drs_flat = ['FF', None, '']
+kw_root_drs_hc = ['LMP', None, '']
+
+# Define the key to get the data fits file type
+kw_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables

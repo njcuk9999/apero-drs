@@ -530,7 +530,7 @@ def copy_files(p, header=None):
         if os.path.exists(newloc):
             # check if it is the same
             if filecmp.cmp(newloc, oldloc):
-                wmsg = 'Calibration file: {0} already exists - not copied'
+                wmsg = 'Cal. file: {0} already exists - not copied'
                 WLOG('', p['LOG_OPT'], wmsg.format(filename))
             # if it isn't then copy over it
             else:
@@ -543,7 +543,7 @@ def copy_files(p, header=None):
                 # try to copy --> if not raise an error and log it
                 try:
                     shutil.copyfile(oldloc, newloc)
-                    wmsg = 'Calibration file: {0} copied in dir {1}'
+                    wmsg = 'Cal. file: {0} copied in dir {1}'
                     WLOG('', p['LOG_OPT'], wmsg.format(filename, reduced_dir))
                 except IOError:
                     emsg1 = ('I/O problem on input file from calibDB: {0}'
