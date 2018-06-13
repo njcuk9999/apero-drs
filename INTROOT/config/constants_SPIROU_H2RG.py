@@ -152,6 +152,10 @@ number_ref_bottom = 4
 #   Define the number of bins used in the dark median process         - [cal_pp]
 dark_med_binnum = 32
 
+#   Define rotation angle                                             - [cal_pp]
+#       (in degrees counter-clockwise direction)
+raw_to_pp_rotation = 0
+
 
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
@@ -606,6 +610,10 @@ ccf_bervmode = "off"
 #   cal_exposure_meter parameters
 # -----------------------------------------------------------------------------
 
+#  Define which fiber to extract                                      - [cal_em]
+#     One of AB, A, B, or C
+em_fib_type = 'AB'
+
 #  Define the telluric threshold (transmission) to mask at            - [cal_em]
 em_tell_threshold = 0.95
 
@@ -637,7 +645,7 @@ em_save_mask_map = True
 
 
 # -----------------------------------------------------------------------------
-#   cal_hc parameters
+#   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
 #  Define the lamp types                                              - [cal_HC]
 #      these must be present in the the following dictionaries to
@@ -684,10 +692,10 @@ ic_max_ampl_line = 2.0e8
 
 #  Defines order to which the solution is calculated                  - [cal_HC]
 #      previously called n_ord_final
-cal_hc_n_ord_final = 24
+ic_hc_n_ord_final = 24
 
 #  Defines echeele of first extracted order                           - [cal_HC]
-cal_hc_t_order_start = 66
+ic_hc_t_order_start = 66
 
 # Define the minimum instrumental error                               - [cal_HC]
 ic_errx_min = 0.03
@@ -708,7 +716,7 @@ ic_Littrow_cut_step_1 = 250
 ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from                     - [cal_HC]
-#  (ends at cal_hc_n_ord_final)
+#  (ends at ic_hc_n_ord_final)
 ic_Littrow_order_init = 0
 
 #  Define orders to ignore in Littrow fit                             - [cal_HC]
@@ -724,7 +732,7 @@ ic_ll_free_span_2 = 2.6
 
 #  Defines order to which the solution is calculated                  - [cal_HC]
 #      previously called n_ord_final (used AFTER littrow fit)
-cal_hc_n_ord_final_2 = 24
+ic_hc_n_ord_final_2 = 24
 
 #  Defines the mode to "find_lines"                                   - [cal_HC]
 #      Currently allowed modes are:
@@ -758,6 +766,30 @@ ic_wave_ccf_step = 0.1
 
 #  Define the type of fit for the wave CCF fit                        - [cal_HC]
 wave_ccf_fit_type = 1
+
+#  Define first order FP solution is calculated from                - [cal_wave]
+ic_fp_n_ord_start = 0
+
+#  Defines last order FP solution is calculated to                  - [cal_wave]
+ic_fp_n_ord_final = 24
+
+#  Define the size of region where each line is fitted               -[cal_wave]
+ic_fp_size = 3
+
+#  Define the threshold to use in detecting the positions            -[cal_wave]
+#      of FP peaks
+ic_fp_threshold = 0.2
+
+#  Define the initial value of FP effective cavity width            - [cal_wave]
+#   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
+ic_fp_dopd0 = 2.45e7
+
+#  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
+#      the measured cavity width for each line
+ic_fp_fit_degree = 9
+
+#  Define the FP jump size that is too large                        - [cal_wave]
+ic_fp_large_jump = 0.7
 
 
 # -----------------------------------------------------------------------------
