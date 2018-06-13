@@ -75,12 +75,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, kind=None, calibdb=True)
-    # log processing image type
-    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
-    p.set_source('DPRTYPE', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
     # deal with fiber type
     if fiber_type is None:
         fiber_type = p['FIBER_TYPES']
@@ -95,22 +90,20 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # set fiber type
     p['FIB_TYPE'] = fiber_type
     p.set_source('FIB_TYPE', __NAME__ + '__main__()')
-
     # Overwrite keys from source
     for kwarg in kwargs:
         p[kwarg] = kwargs[kwarg]
-
-    # ----------------------------------------------------------------------
-    # Check for pre-processed file
-    # ----------------------------------------------------------------------
-    if p['IC_FORCE_PREPROCESS']:
-        spirouStartup.CheckPreProcess(p)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
     p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    data = spirouImage.FixNonPreProcess(p, data)
 
     # ----------------------------------------------------------------------
     # Get basic image properties
