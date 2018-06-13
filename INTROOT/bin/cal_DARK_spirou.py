@@ -69,25 +69,18 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, kind='dark', prefixes=['dark_dark'])
-
-    # log processing image type
-    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
-    p.set_source('DPRTYPE', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
-
-    # ----------------------------------------------------------------------
-    # Check for pre-processed file
-    # ----------------------------------------------------------------------
-    if p['IC_FORCE_PREPROCESS']:
-        spirouStartup.CheckPreProcess(p)
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
     p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='average')
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    data = spirouImage.FixNonPreProcess(p, data)
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -263,7 +256,12 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
     # Set to zero dark value > dark_cutlimit
-    data0c = np.where(data0 > p['DARK_CUTLIMIT'], np.zeros_like(data0), data0)
+    # TODO: Remove H2RG requirement
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        cutmask = data0 > p['DARK_CUTLIMIT']
+    else:
+        cutmask = np.zeros_like(data0)
+    data0c = np.where(cutmask, np.zeros_like(data0), data0)
     # write image and add header keys (via hdict)
     spirouImage.WriteImage(darkfits, data0c, hdict)
 
@@ -271,7 +269,6 @@ def main(night_name=None, files=None):
     # Save bad pixel mask
     # ----------------------------------------------------------------------
     # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
-
     # construct bad pixel file name
     badpixelfits = spirouConfig.Constants.DARK_BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
@@ -298,7 +295,6 @@ def main(night_name=None, files=None):
         spirouCDB.UpdateMaster(p, keydb, darkfitsname, hdr)
 
         # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
-
         # set badpix key
         keydb = 'BADPIX_OLD'
         # copy badpix fits file to calibDB folder
