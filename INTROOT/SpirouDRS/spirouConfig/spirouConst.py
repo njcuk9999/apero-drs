@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.041'
+__version__ = '0.2.044'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-06-11'
+__date__ = '2018-06-13'
 
 
 # =============================================================================
@@ -382,17 +382,18 @@ def LOG_OPT(p):
     try:
         arg_file_names = p['ARG_FILE_NAMES']
         program = p['PROGRAM']
-
-        if len(arg_file_names) == 0:
-            log_opt = program
-        elif len(arg_file_names) == 1:
-            index = arg_file_names[0].find('.')
-            lo_arg = [program, arg_file_names[0][index - 5: index]]
-            log_opt = '{0}:{1}'.format(*lo_arg)
-        else:
-            index = arg_file_names[0].find('.')
-            lo_arg = [program, arg_file_names[0][index - 5: index]]
-            log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+        #
+        # if len(arg_file_names) == 0:
+        #     log_opt = program
+        # elif len(arg_file_names) == 1:
+        #     index = arg_file_names[0].find('.')
+        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
+        #     log_opt = '{0}:{1}'.format(*lo_arg)
+        # else:
+        #     index = arg_file_names[0].find('.')
+        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
+        #     log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+        log_opt = program
     except Exception:
         log_opt = DEFAULT_LOG_OPT()
 
