@@ -7,4 +7,4 @@ comparison = False
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
-run019 = ['cal_CCF_E2DS_spirou', 'AT5/20180409', 'hcone_hcone_001_pp_e2ds_C.fits', 'UrNe.mas', 0, 10, 0.1]
+run013 = ['cal_exposure_meter', 'AT5/20180409', 'flat_dark_001_pp.fits']
