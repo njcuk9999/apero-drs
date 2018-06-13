@@ -68,30 +68,28 @@ def main(night_name=None, reffile=None):
     p = spirouStartup.Begin()
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
-        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'],
+                                                        recipe=__NAME__)
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile',
                                     mainfitsdir='reduced')
-    # as we have custom arguments need to load the calibration database
-    p = spirouStartup.LoadCalibDB(p)
+
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    # get reduced directory + night name
-    rdir = p['REDUCED_DIR']
-    # construct and test the reffile
-    gfkwargs = dict(path=rdir, name=p['REFFILE'], prefixes=['fp', 'hc'],
-                    kind='DRIFT')
-    reffilename = spirouStartup.GetFile(p, **gfkwargs)
+    reffilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                 filename=p['REFFILE'])
     p['REFFILENAME'] = reffilename
     p.set_source('REFFILENAME', __NAME__ + '.main()')
-    # get the fiber type
-    p['FIBER'] = spirouStartup.GetFiberType(p, reffilename)
-    fsource = __NAME__ + '/main()() & spirouStartup.GetFiberType()'
-    p.set_source('FIBER', fsource)
+
+    # ----------------------------------------------------------------------
+    # Once we have checked the e2dsfile we can load calibDB
+    # ----------------------------------------------------------------------
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
 
     # ----------------------------------------------------------------------
     # Read image file
