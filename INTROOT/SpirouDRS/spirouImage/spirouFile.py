@@ -15,8 +15,9 @@ import glob
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouStartup
 from SpirouDRS import spirouImage
+from SpirouDRS import spirouLOCOR
+
 
 # =============================================================================
 # Define variables
@@ -179,7 +180,6 @@ class Paths():
 # Define ID functions (pre-processing)
 # =============================================================================
 def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
-    func_name = __NAME__ + '.identify_file()'
     # ----------------------------------------------------------------------
     # load control file
     control = get_control_file()
@@ -188,14 +188,7 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
     control = control[rawmask]
     # ----------------------------------------------------------------------
     # get file header (if not passed in)
-    # get header if None
-    if hdr is None or cdr is None:
-        if not os.path.exists(filename):
-            emsg1 = 'Cannot read header. File does not exist ({0})'
-            emsg2 = '    fuction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
-        else:
-            hdr, cdr = spirouImage.ReadHeader(p, filename, return_comments=True)
+    hdr, cdr = get_header_file(p, filename, hdr, cdr)
     # ----------------------------------------------------------------------
     # Step 1: Look for odometer code in filename (e.g. d.fits f.fits o.fits)
     # get check and code
@@ -220,18 +213,44 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
 # Define ID functions (main recipes)
 # =============================================================================
 def check_file_id(p, filename, recipe, hdr=None, **kwargs):
-
     func_name = __NAME__ + '.check_file_id()'
     # remove .py from recipe (in case it is here)
     recipe = recipe.split('.py')[0]
-    # make sure filename has no path
-    basefilename = os.path.basename(filename)
-    # get returns
-    return_recipe = kwargs.get('return_recipe', False)
-    return_path = kwargs.get('return_path', False)
     # load control file
     control = get_control_file()
+    # get some needed paths
+    rawpath = spirouConfig.Constants.RAW_DIR(p)
+    reducedpath = spirouConfig.Constants.REDUCED_DIR(p)
+    # get returns
+    return_path = kwargs.get('return_path', False)
+    # ---------------------------------------------------------------------
+    # file must exist to continue
+    # ---------------------------------------------------------------------
+    if not os.path.exists(filename):
+        # get attempts at file name
+        rawfile = os.path.join(rawpath, filename)
+        reducedfile = os.path.join(reducedpath, filename)
+        # if rawfile exists we can narrow down the options
+        if os.path.exists(rawfile):
+            filename = rawfile
+            # narrow down control options
+            control = control[control['kind'] == 'RAW']
+        # if reducedfile exists we can narrow down the options
+        elif os.path.exists(reducedfile):
+            filename = reducedfile
+            # narrow down control options
+            control = control[control['kind'] == 'REDUC']
+        # if neither exist we have a problem
+        else:
+            emsg1 = 'File {0} does not exist'.format(filename)
+            emsg2 = '\tChecked raw and reduced folders.'
+            emsg3 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # make sure filename has no path
+    basefilename = os.path.basename(filename)
+    # ---------------------------------------------------------------------
     # Check that recipe is valid
+    # ---------------------------------------------------------------------
     if recipe not in control['Recipe']:
         emsg1 = 'No recipe named {0}'.format(recipe)
         emsg2 = '    function = {0}'.format(func_name)
@@ -240,14 +259,54 @@ def check_file_id(p, filename, recipe, hdr=None, **kwargs):
     else:
         recipemask = control['Recipe'] == recipe
         control = control[recipemask]
+    # ---------------------------------------------------------------------
+    # check recipe input type (raw or reduced)
+    kinds = np.unique(control['kind'])
+    # ---------------------------------------------------------------------
+    # Need to check preprocessing
+    # ---------------------------------------------------------------------
+    # if we only have raw file possibilities check for pre-processing
+    if len(kinds) == 1 and kinds[0] == 'RAW':
+        if p['IC_FORCE_PREPROCESS']:
+            check_preprocess(p, filename=filename)
+            p['PREPROCESSED'] = True
+        elif p['PROCESSED_SUFFIX'] in filename:
+            p['PREPROCESSED'] = True
+        else:
+            p['PREPROCESSED'] = False
+    else:
+        p['PREPROCESSED'] = True
+    # set preprocess source
+    p.set_source('PREPROCESSED', func_name)
+    # ---------------------------------------------------------------------
     # step 1: check filename
-    cond, control = check_id_filename(p, control, basefilename, recipe)
+    cond, control = check_id_filename(p, control, recipe, basefilename)
+    # ---------------------------------------------------------------------
     # step 2: if not filename check header key DPRTYPE
     if not cond:
-        cond, control = check_id_header(p, control, recipe, hdr)
-
-    # return p
-    return p
+        control = check_id_header(p, control, recipe, filename, hdr)
+    # ---------------------------------------------------------------------
+    # now we should have 1 row in control --> get properties for this file
+    p = get_properties_from_control(p, control)
+    # ---------------------------------------------------------------------
+    # if return recipe
+    if return_path:
+        # based on kind
+        if control['kind'].upper() == 'RAW':
+            path = rawpath
+        elif control['kind'].upper() == 'REDUC':
+            path = reducedpath
+        else:
+            emsg1 = 'Error in recipe control file'
+            emsg2 = '   Bad line: "kind" must be "RAW" or "REDUC". Line:'
+            line = control.__str__().split('\n')[2]
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, line])
+            path = ''
+        # return p and path
+        return p, path
+    else:
+        # return p
+        return p
 
 
 def check_files_id(p, files, recipe, hdr=None, **kwargs):
@@ -261,9 +320,86 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
     :param kwargs:
     :return:
     """
+    func_name = __NAME__ + '.check_files_id()'
+    # add new constant (for multiple files)
+    p['DPRTYPES'] = []
+    # loop around filenames in files
     for filename in files:
+        # check id for each file
         p = check_file_id(p, filename, recipe, hdr, **kwargs)
+        # append DPRTYPE to DPRTYPES
+        p['DPRTYPES'].append(str(p['DPRTYPE']))
+    # Need to check that all DPRTYPES are the same
+    if len(np.unique(p['DPRTYPES'])) != 1:
+        # add first error message
+        emsgs = ['Files are not all the same type']
+        # loop around files and print types
+        for it, dprtype in enumerate(p['DPRTYPES']):
+            basefilename = os.path.basename(files[it])
+            eargs = [basefilename, dprtype]
+            emsgs.append('\tFile {0} type={1}'.format(*eargs))
+        # add function name error message
+        emsgs.append('\tfunction = {0}'.format(func_name))
+        # log error message
+        WLOG('error', p['LOG_OPT'], emsgs)
+    # return p
     return p
+
+
+def check_preprocess(p, filename=None):
+    """
+    Check "filename" for p["PREPROCESS_SUFFIX"]. If filename is None uses
+    p["FITSFILENAME"]
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            PREPROCESS_SUFFIX: string, the suffix to look for and should be
+                               in filename if 'IC_FORCE_PREPROCESS' is True
+            IC_FORCE_PREPROCESS: bool, if True filename must have
+                                 PREPROCESS_SUFFIX
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+
+    :param filename: string or None, if defined must be a filename to check
+                     if None filename = p['FITSFILENAME']
+
+    :return checked: bool, True if file passes
+                           False if IC_FORCE_PREPROCESS is  False and file
+                           fails to find PREPROCESS_SUFFIX
+
+                           or WLOG error if fails and IC_FORCE_PREPROCESS is
+                           True and file fails to find PREPROCESS_SUFFIX
+    """
+    func_name = __NAME__ + '.check_preprocess()'
+    # get the suffix
+    suffix = p['PROCESSED_SUFFIX']
+    # get the filename
+    if filename is None:
+        filename = p['FITSFILENAME']
+    # make sure filename does not include a path
+    filename = os.path.basename(filename)
+    # check for the pre-process key
+    if p['IC_FORCE_PREPROCESS']:
+        # check that we have a suffix to check
+        if suffix == "None":
+            wmsg = 'Not checking for pre-processed file={0}'.format(filename)
+            WLOG('', p['LOG_OPT'], wmsg)
+            return 0
+        # else check file ends with
+        elif filename.endswith(suffix):
+            wmsg = 'Pre-processing valid for file={0}'.format(filename)
+            WLOG('', p['LOG_OPT'], wmsg)
+            return 1
+        # else generate helpful error
+        else:
+            emsgs = ['File not processed. Suffix="{0}" not '
+                     'found.'.format(suffix),
+                     '\tRun "cal_preprocess_spirou" or turn off '
+                     '"IC_FORCE_PREPROCESS"']
+            emsgs.append('\t\tfile = {0}'.format(filename))
+            emsgs.append('\t\tfunction = {0}'.format(func_name))
+            WLOG('error', p['LOG_OPT'], emsgs)
 
 
 # =============================================================================
@@ -281,6 +417,36 @@ def get_control_file():
     control = spirouImage.ReadTable(controlfile, fmt=controlfmt, comment='#')
     # return control
     return control
+
+
+def get_header_file(p, filename, hdr=None, cdr=None):
+    func_name = __NAME__ + '.get_header_file()'
+    # get header if None
+    if hdr is None:
+        if not os.path.exists(filename):
+            emsg1 = 'Cannot read header. File does not exist ({0})'
+            emsg2 = '    fuction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
+        else:
+            hdr, cdr = spirouImage.ReadHeader(p, filename, return_comments=True)
+    # return header and comments
+    return hdr, cdr
+
+
+def get_properties_from_control(p, control):
+    # ----------------------------------------------------------------------
+    # Get DPRTYPE
+    p['DPRTYPE'] = control['dprtype']
+    # ----------------------------------------------------------------------
+    # Get FIBER and fiber parameters
+    if control['fiber'] != 'None':
+        p['FIBER'] = control['fiber']
+        p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
+    else:
+        p['FIBER'] = None
+    # ----------------------------------------------------------------------
+    # return p
+    return p
 
 
 def odometer_code(control, filename):
@@ -336,7 +502,7 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         # get dstring
         dstring = control['dstring'][matchno]
         # log successful finding
-        wmsg = 'File {0} identified as {1}'
+        wmsg = 'File "{0}" identified as "{1}"'
         WLOG('info', p['LOG_OPT'], wmsg.format(basefilename, dprtype))
         # log mode (in debug mode)
         if p['DRS_DEBUG'] > 0:
@@ -345,9 +511,12 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         # add key to header
         hdr[p['KW_DPRTYPE'][0]] = dprtype
         cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
-        # update filename
-        newext = '_{0}.fits'.format(dstring)
-        newfilename = filename.replace('.fits', newext)
+        # update filename (if required)
+        if dstring not in basefilename:
+            newext = '_{0}.fits'.format(dstring)
+            newfilename = filename.replace('.fits', newext)
+        else:
+            newfilename = str(filename)
         # return new filename and header
         return newfilename, hdr, cdr
     else:
@@ -417,7 +586,7 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
             # get dpr type
             dprtype = control['dprtype'][u_it]
             # log successful finding
-            wmsg = 'File {0} identified as {1}'
+            wmsg = 'File "{0}" identified as "{1}"'
             WLOG('info', p['LOG_OPT'], wmsg.format(basefilename, dprtype))
             # log mode (in debug mode)
             if p['DRS_DEBUG'] > 0:
@@ -429,12 +598,12 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
             # return original filename and header
             return filename, hdr, cdr
     # if file not found log this
-    emsg = 'File {0} not identified as a valid DRS input.'
+    emsg = 'File "{0}" not identified as a valid DRS input.'
     WLOG('warning', p['LOG_OPT'], emsg.format(basefilename))
     return filename, hdr, cdr
 
 
-def check_id_filename(p, control, filename, recipe):
+def check_id_filename(p, control, recipe, filename):
     func_name = __NAME__ + '.check_id_filename()'
     # set un-found initial parameters
     found = False
@@ -445,10 +614,22 @@ def check_id_filename(p, control, filename, recipe):
         if found:
             continue
         # get this iterations values
-        dstring = control['dstring'][row]
-        # search for dstring in filename
-        if dstring in filename:
-            found = True
+        kind = control['kind'][row]
+        # ------------------------------------------------------------------
+        # deal with reduced files
+        if kind.upper() == 'REDUC':
+            found, dprtype = check_reduced_filename(p, filename, recipe,
+                                                    control[row])
+            # Need to set a new dprtype if reduced file
+            if found:
+                control['dprtype'][row] = dprtype
+        # ------------------------------------------------------------------
+        # deal with None
+        elif kind.upper() == 'RAW':
+            found = check_raw_filename(p, filename, recipe, control[row])
+        # ------------------------------------------------------------------
+        # if filename is found remember row
+        if found:
             found_row = int(row)
     # deal with no file found
     if not found:
@@ -458,11 +639,116 @@ def check_id_filename(p, control, filename, recipe):
         return found, control[found_row]
 
 
-def check_id_header(p, control, recipe, hdr=None):
+def check_id_header(p, control, recipe, filename, hdr=None):
+    # get base filename (no path)
+    basefilename = os.path.basename(filename)
+    # load header
+    hdr, _ = get_header_file(p, filename, hdr)
+    # check for DPRTYPE in header
+    if p['KW_DPRTYPE'][0] in hdr:
+        dprtype = hdr[p['KW_DPRTYPE'][0]]
+    # if we don't have it, obtain it
+    else:
+        _, hdr, _ = identify_unprocessed_file(p, filename, hdr=None, cdr=None)
+        dprtype = hdr[p['KW_DPRTYPE'][0]]
+    #-----------------------------------------------------------------------
+    # Only should be looking at the raw file for header info
+    #-----------------------------------------------------------------------
+    # we should not be here with anything but raw files
+    kinds = np.unique(control['kind'])
+    if (len(kinds) != 1) and  (kinds[0].upper() != 'RAW'):
+        emsg1 = 'File "{0}" not identified (not a raw file)'
+        emsg2 = 'Only raw files valid for recipe "{0}"'.format(recipe)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    #-----------------------------------------------------------------------
+    # use dprtype to select a single control setting
+    #-----------------------------------------------------------------------
+    # if DPRTYPE is None then let all files through
+    if 'None' in control['dprtype']:
+        # get the first row in control where dprtype == 'None'
+        row = np.where(control['dprtype'] == 'None')[0][0]
+        # filter control by this row
+        control = control[row]
+        # print warning
+        wmsg = 'DPRTYPE not checked for recipe="{0}"'.format(recipe)
+        WLOG('warning', p['LOG_OPT'], wmsg)
+    # else if DPRTYPE not in dprtypes then give error
+    elif dprtype not in control['dprtype']:
+        emsg1 = 'File "{0}" identified as "{1}"'.format(basefilename, dprtype)
+        emsg2 = 'Not valid for recipe "{0}"'.format(recipe)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # else we have the correct DPRTYPE --> select correct row of control
+    else:
+        # get the first row in control where dprtype is valid
+        row = np.where(control['dprtype'] == dprtype)[0][0]
+        # filter control by this row
+        control = control[row]
+    # return control
+    return control
 
-    cond = True
 
-    return cond, control
+
+def check_reduced_filename(p, filename, recipe, control):
+    # get variables from control
+    dstring = control['dstring']
+    ocode = control['ocode']
+    dprtype = control['dprtype']
+    desc = control['desc'].replace(' ', '_')
+    # check for None
+    c0 = dprtype == 'None'
+    c1 = dstring == 'None'
+    c2 = ocode == 'None'
+    # if both are None log warning
+    if c1 and c2:
+        wmsg = 'Filename not checked for recipe="{0}" (reduced file)'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(recipe))
+    # check dstring in filename
+    if not c1:
+        cond1 = dstring in filename
+    else:
+        cond1 = True
+    # check ocode in filename
+    if not c2:
+        cond2 = ocode in filename
+    else:
+        cond2 = True
+    # are conditions met?
+    found = cond1 and cond2
+
+    # set dprtype if we don't have one
+    if c0:
+        # add desc
+        dprtype = desc
+        # add dstring (if we have it)
+        if not c1:
+            dprtype += '_{0}'.format(dstring)
+        # add ocode (if we have it)
+        if not c2:
+            dprtype += '_{0}'.format(ocode)
+
+    # return found
+    return found, dprtype
+
+
+def check_raw_filename(p, filename, recipe, control):
+    # get variables from control
+    dstring = control['dstring']
+    # check for None
+    c1 = dstring == 'None'
+    # if both are None log warning
+    if c1:
+        wmsg = 'Filename not checked for recipe="{0}" (raw file)'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(recipe))
+    # check dstring in filename
+    if not c1:
+        cond1 = dstring in filename
+    else:
+        cond1 = True
+    # are conditions met?
+    found = cond1
+    # return found
+    return found
+
 
 # =============================================================================
 # Start of code
