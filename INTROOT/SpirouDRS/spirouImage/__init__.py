@@ -9,6 +9,7 @@ Created on 2017-10-30 at 17:09
 
 """
 from SpirouDRS import spirouConfig
+from . import spirouFile
 from . import spirouFITS
 from . import spirouImage
 from . import spirouTable
@@ -24,18 +25,19 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList',
-           'ConvertToE', 'ConvertToADU',
-           'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
-           'FitTilt', 'FlipImage',
-           'GetAllSimilarFiles', 'GetAcqTime',
-           'GetSigdet', 'GetExpTime', 'GetGain',
-           'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
-           'LocateBadPixels', 'MakeTable', 'MeasureDark',
-           'NormMedianFlat', 'ReadData',
-           'ReadImage', 'ReadTable', 'ReadImageAndCombine',
-           'ReadFlatFile', 'ReadHeader', 'ReadKey', 'Read2Dkey',
-           'ReadTiltFile', 'ReadWaveFile', 'ReadOrderProfile',
+__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
+           'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
+           'CorrectForDark', 'CorrectForBadPix', 'FitTilt', 'FlipImage',
+           'GetAllSimilarFiles', 'GetSigdet', 'GetExpTime', 'GetBadPixMap',
+           'GetGain', 'GetAcqTime', 'GetKey', 'GetKeys', 'GetTilt',
+           'GetTypeFromHeader', 'IdentifyUnProFile', 'InterpolateBadRegions',
+           'LocateBadPixels', 'LocateFullBadPixels',
+           'MakeTable', 'MeasureDark', 'MergeTable', 'NormMedianFlat',
+           'PPCorrectTopBottom', 'PPMedianFilterDarkAmps',
+           'PPMedianOneOverfNoise', 'ReadParam', 'ReadData', 'ReadImage',
+           'ReadTable', 'ReadImageAndCombine', 'ReadFlatFile', 'ReadHeader',
+           'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
+           'ReadWaveFile', 'ReadBlazeFile', 'ReadOrderProfile',
            'ResizeImage', 'WriteImage', 'WriteTable']
 
 # =============================================================================
@@ -46,6 +48,10 @@ AddKey = spirouFITS.add_new_key
 AddKey1DList = spirouFITS.add_key_1d_list
 
 AddKey2DList = spirouFITS.add_key_2d_list
+
+CheckFile = spirouFile.check_file_id
+
+CheckFiles = spirouFile.check_files_id
 
 ConvertToE = spirouImage.convert_to_e
 
@@ -60,6 +66,8 @@ CorrectForDark = spirouImage.correct_for_dark
 CorrectForBadPix = spirouImage.correct_for_badpix
 
 FitTilt = spirouImage.fit_tilt
+
+FixNonPreProcess = spirouImage.fix_non_preprocessed
 
 FlipImage = spirouImage.flip_image
 
@@ -82,6 +90,8 @@ GetKeys = spirouFITS.keyslookup
 GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
+
+IdentifyUnProFile = spirouFile.identify_unprocessed_file
 
 InterpolateBadRegions = spirouImage.interp_bad_regions
 
@@ -132,6 +142,8 @@ ReadBlazeFile = spirouFITS.read_blaze_file
 ReadOrderProfile = spirouFITS.read_order_profile_superposition
 
 ResizeImage = spirouImage.resize
+
+RotateImage = spirouImage.rotate
 
 WriteImage = spirouFITS.writeimage
 

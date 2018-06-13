@@ -43,13 +43,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-# cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
-
-#def main(night_name=None, files=None):
-if __name__ == '__main__':
-    night_name = '20170710'
-    files = ['hcone_neil_test_e2ds_AB.fits']
-
+def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -57,12 +51,8 @@ if __name__ == '__main__':
     p = spirouStartup.Begin()
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files, mainfitsdir='reduced')
-    # setup files
-    p = spirouStartup.InitialFileSetup(p, kind='cal_HC', prefixes='hc',
-                                       calibdb=True)
-    # get the fiber type
-    p['FIBER'] = spirouStartup.GetFiberType(p, p['FITSFILENAME'])
-    p.set_source('FIBER', __NAME__ + '/main()')
+    # setup files and get fiber
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
@@ -366,7 +356,6 @@ if __name__ == '__main__':
             # update the master calib DB file with new key
             spirouCDB.UpdateMaster(p, keydb, wavefitsname, hdr)
 
-
         # ------------------------------------------------------------------
         # on the fly CCF setup (parameters for cal_CCF)
         # ------------------------------------------------------------------
@@ -394,6 +383,14 @@ if __name__ == '__main__':
         # correct extracted image for flat
         loc['E2DSFF'] = data / loc['FLAT']
         loc.set_source('E2DSFF', __NAME__ + '/main()')
+        if p['IC_IMAGE_TYPE'] == 'H4RG':
+            p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
+            p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
+            p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
+            p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
+            p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
+            p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
+            p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
         #  Earth Velocity calculation
         if p['IC_IMAGE_TYPE'] == 'H4RG':
             loc = spirouRV.EarthVelocityCorrection(p, loc,
@@ -478,8 +475,6 @@ if __name__ == '__main__':
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
-
-def main():
     return dict(locals())
 
 

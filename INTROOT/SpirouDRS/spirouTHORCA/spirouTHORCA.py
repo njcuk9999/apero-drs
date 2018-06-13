@@ -267,9 +267,9 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-            CAL_HC_N_ORD_FINAL: int, defines first order solution is calculated
+            IC_HC_N_ORD_FINAL: int, defines first order solution is calculated
                                 from
-            CAL_HC_T_ORDER_START: int, defines the first order solution is
+            IC_HC_T_ORDER_START: int, defines the first order solution is
                                   calculated from
             log_opt: string, log option, normally the program name
             fiber: string, the fiber number
@@ -294,10 +294,10 @@ def first_guess_at_wave_solution(p, loc, mode=0):
     """
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
     # get used constants from p
-    n_order_final = p['CAL_HC_N_ORD_FINAL']
+    n_order_final = p['IC_HC_N_ORD_FINAL']
     freespan = p['IC_LL_FREE_SPAN']
     # set up the orders to fit
-    loc['ECHELLE_ORDERS'] = p['CAL_HC_T_ORDER_START'] - np.arange(n_order_final)
+    loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - np.arange(n_order_final)
     loc.set_source('ECHELLE_ORDERS', func_name)
 
     # get wave solution filename
@@ -308,7 +308,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     # get E2DS line list from wave_file
     ll_init, param_ll_init = get_e2ds_ll(p, loc['HDR'], filename=wave_file)
-    # only perform fit on orders 0 to p['CAL_HC_N_ORD_FINAL']
+    # only perform fit on orders 0 to p['IC_HC_N_ORD_FINAL']
     loc['LL_INIT'] = ll_init[:n_order_final]
     loc.set_source('LL_INIT', __NAME__ + func_name)
 
@@ -323,7 +323,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     # find the lines
     fargs = [p, loc['LL_INIT'], loc['LL_LINE'], loc['AMPL_LINE'],
-             loc['DATA'][:p['CAL_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
+             loc['DATA'][:p['IC_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
              freespan]
     all_lines = find_lines(*fargs, mode=mode)
     # add all lines to loc
@@ -453,7 +453,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     # get parameters from p
     remove_orders = p['IC_LITTROW_REMOVE_ORDERS']
     n_order_init = p['IC_LITTROW_ORDER_INIT']
-    n_order_final = p['CAL_HC_N_ORD_FINAL']
+    n_order_final = p['IC_HC_N_ORD_FINAL']
     x_cut_step = p['IC_LITTROW_CUT_STEP_{0}'.format(iteration)]
     fit_degree = p['IC_LITTROW_FIT_DEG']
     # get parameters from loc
@@ -471,7 +471,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
     # test if n_order_init is in remove_orders
     if n_order_final in remove_orders:
-        wargs = ["CAL_HC_N_ORD_FINAL", p['CAL_HC_N_ORD_FINAL'],
+        wargs = ["IC_HC_N_ORD_FINAL", p['IC_HC_N_ORD_FINAL'],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0]={1} in {2}'.format(*wargs)
         # TODO: Remove H2RG dependency
@@ -576,7 +576,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
     func_name = __NAME__ + '.extrapolate_littrow_sol()'
     # get parameters from p
     fit_degree = p['IC_LITTROW_ORDER_FIT_DEG']
-    t_order_start = p['CAL_HC_T_ORDER_START']
+    t_order_start = p['IC_HC_T_ORDER_START']
     n_order_init = p['IC_LITTROW_ORDER_INIT']
 
     # get parameters from loc
@@ -638,10 +638,10 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     # Update the free span wavelength value
     freespan = p['IC_LL_FREE_SPAN_2']
     # New final order value
-    n_ord_final = p['CAL_HC_N_ORD_FINAL']
-    n_ord_final_2 = p['CAL_HC_N_ORD_FINAL_2']
+    n_ord_final = p['IC_HC_N_ORD_FINAL']
+    n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
     # recalculate echelle order number
-    echelle_order = p['CAL_HC_T_ORDER_START'] - np.arange(n_ord_final_2)
+    echelle_order = p['IC_HC_T_ORDER_START'] - np.arange(n_ord_final_2)
 
     # set the starting point as the outputs from the first guess solution
     # loop around original order num
@@ -682,7 +682,7 @@ def join_orders(p, loc):
 
     func_name = __NAME__ + '.join_orders()'
     # get parameters from p
-    n_ord_final_2 = p['CAL_HC_N_ORD_FINAL_2']
+    n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
 
     # get data from loc
     # the second iteration outputs
