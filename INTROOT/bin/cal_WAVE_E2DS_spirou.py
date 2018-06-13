@@ -54,24 +54,28 @@ def main(night_name=None, hcfiles=None, fpfile=None):
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    fpfitsfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                   filename=p['FPFILE'])
+    fiber1 = str(p['FIBER'])
+    hcfilenames = spirouStartup.MultiFileSetup(p, recipe=__NAME__,
+                                               files=p['HCFILES'])
+    fiber2 = str(p['FIBER'])
+    # set the hcfilename to the first hcfilenames
+    hcfitsfilename = hcfilenames[0]
+
+    # ----------------------------------------------------------------------
+    # Once we have checked the e2dsfile we can load calibDB
+    # ----------------------------------------------------------------------
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
 
     # ----------------------------------------------------------------------
-    # Construct filenames and get fiber type
+    # Have to check that the fibers match
     # ----------------------------------------------------------------------
-    # get reduced directory + night name
-    rdir = p['REDUCED_DIR']
-    # construct and test the hcfile
-    fpfitsfilename = spirouStartup.GetFile(p, rdir, p['FPFILE'], 'fp', 'FP')
-    # construct and test fpfile
-    hcfilenames = spirouStartup.GetFiles(p, rdir, p['HCFILES'], 'hc', 'HC')
-    # set the hcfilename to the first hcfilenames
-    hcfitsfilename = hcfilenames[0]
-
-    # get the fiber type
-    fiber1 = spirouStartup.GetFiberType(p, fpfitsfilename)
-    fiber2 = spirouStartup.GetFiberType(p, hcfilenames[0])
     if fiber1 == fiber2:
         p['FIBER'] = fiber1
         fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
@@ -86,9 +90,9 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     # ----------------------------------------------------------------------
     # read and combine all HC files except the last (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(*rargs)
+    p, hcdata, hdr, cdr = spirouImage.ReadImageAndCombine(*rargs)
     # read last file (fpfitsfilename)
-    data3, hdr3, cdr3, nx3, ny3 = spirouImage.ReadImage(p, fpfitsfilename)
+    fpdata, hdr3, cdr3, nx3, ny3 = spirouImage.ReadImage(p, fpfitsfilename)
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
