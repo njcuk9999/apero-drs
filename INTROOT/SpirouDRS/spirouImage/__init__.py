@@ -25,7 +25,7 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFiles',
+__all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
            'CorrectForDark', 'CorrectForBadPix', 'FitTilt', 'FlipImage',
            'GetAllSimilarFiles', 'GetSigdet', 'GetExpTime', 'GetBadPixMap',
@@ -49,6 +49,8 @@ AddKey1DList = spirouFITS.add_key_1d_list
 
 AddKey2DList = spirouFITS.add_key_2d_list
 
+CheckFile = spirouFile.check_file_id
+
 CheckFiles = spirouFile.check_files_id
 
 ConvertToE = spirouImage.convert_to_e
@@ -64,6 +66,8 @@ CorrectForDark = spirouImage.correct_for_dark
 CorrectForBadPix = spirouImage.correct_for_badpix
 
 FitTilt = spirouImage.fit_tilt
+
+FixNonPreProcess = spirouImage.fix_non_preprocessed
 
 FlipImage = spirouImage.flip_image
 
@@ -138,6 +142,8 @@ ReadBlazeFile = spirouFITS.read_blaze_file
 ReadOrderProfile = spirouFITS.read_order_profile_superposition
 
 ResizeImage = spirouImage.resize
+
+RotateImage = spirouImage.rotate
 
 WriteImage = spirouFITS.writeimage
 
