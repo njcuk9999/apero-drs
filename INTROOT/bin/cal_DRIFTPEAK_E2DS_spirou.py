@@ -87,8 +87,8 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    reffilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                filename=p['REFFILE'])
+    p, reffilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                   filename=p['REFFILE'])
     p['REFFILENAME'] = reffilename
     p.set_source('REFFILENAME', __NAME__ + '.main()')
 
