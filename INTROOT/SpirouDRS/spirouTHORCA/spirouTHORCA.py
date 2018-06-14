@@ -7,6 +7,7 @@ Created on 2017-12-19 at 16:20
 
 @author: cook
 
+import rules: cannot import spirouWAVE
 """
 from __future__ import division
 from astropy import constants as cc
@@ -19,6 +20,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS.spirouCore import spirouMath
+
 
 # =============================================================================
 # Define variables
@@ -42,7 +44,7 @@ sPlt = spirouCore.sPlt
 plt = sPlt.plt
 # Speed of light
 speed_of_light = cc.c.to(uu.km/uu.s).value
-speed_of_light = 300000
+
 
 # =============================================================================
 # Define functions
@@ -114,104 +116,10 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     param_ll = np.array(param_ll).reshape((nbo, degll + 1))
 
     # get the line list
-    ll = get_ll_from_coefficients(param_ll, xsize, nbo)
+    ll = spirouMath.get_ll_from_coefficients(param_ll, xsize, nbo)
 
     # return ll and param_ll
     return ll, param_ll
-
-
-def get_ll_from_coefficients(params, nx, nbo):
-    """
-    Use the coefficient matrix "params" to construct fit values for each order
-    (dimension 0 of coefficient matrix) for values of x from 0 to nx
-    (interger steps)
-
-    :param params: numpy array (2D), the coefficient matrix
-                   size = (number of orders x number of fit coefficients)
-
-    :param nx: int, the number of values and the maximum value of x to use
-               the coefficients for, where x is such that
-
-                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
-
-                N = number of fit coefficients
-                and p is the coefficients for one order
-                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
-
-    :param nbo: int, the number of orders to use
-
-    :return ll: numpy array (2D): the yfit values for each order
-                (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
-    """
-    # create x values
-    xfit = np.arange(nx)
-    # create empty line list storage
-    ll = np.zeros((nbo, nx))
-    # loop around orders
-    for order_num in range(nbo):
-        # get the coefficients for this order and flip them
-        # (numpy needs them backwards)
-        coeffs = params[order_num][::-1]
-        # get the y fit using the coefficients for this order and xfit
-        # TODO: Check order of params[i]
-        # Question: This could be wrong - if fit parameters are order
-        # Question: differently
-        yfit = np.polyval(coeffs, xfit)
-        # add to line list storage
-        ll[order_num, :] = yfit
-    # return line list
-    return ll
-
-
-def get_dll_from_coefficients(params, nx, nbo):
-    """
-    Derivative of the coefficients, using the coefficient matrix "params"
-    to construct the derivative of the fit values for each order
-    (dimension 0 of coefficient matrix) for values of x from 0 to nx
-    (interger steps)
-
-    :param params: numpy array (2D), the coefficient matrix
-                   size = (number of orders x number of fit coefficients)
-
-    :param nx: int, the number of values and the maximum value of x to use
-               the coefficients for, where x is such that
-
-                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
-
-                dyfit = p[0]*(N-1)*x**(N-2) + p[1]*(N-2)*x**(N-3) + ... +
-                        p[N-3]*x + p[N-2]
-
-                N = number of fit coefficients
-                and p is the coefficients for one order
-                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
-
-    :param nbo: int, the number of orders to use
-
-    :return ll: numpy array (2D): the yfit values for each order
-                (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
-    """
-
-    # create x values
-    xfit = np.arange(nx)
-    # create empty line list storage
-    ll = np.zeros((nbo, nx))
-    # loop around orders
-    for order_num in range(nbo):
-        # get the coefficients for this order and flip them
-        coeffs = params[order_num]
-        # get the y fit using the coefficients for this order and xfit
-        # TODO: Check order of params[i]
-        # Question: This could be wrong - if fit parameters are order
-        # Question: differently
-        yfiti = []
-        # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
-        for it in range(len(coeffs)-1):
-            yfiti.append((it + 1) * coeffs[it + 1] * xfit**it)
-        yfit = np.sum(yfiti, axis=0)
-        # add to line list storage
-        ll[order_num, :] = yfit
-    # return line list
-    return ll
 
 
 def get_lamp_parameters(p, filename=None, kind=None):
@@ -297,17 +205,18 @@ def first_guess_at_wave_solution(p, loc, mode=0):
     n_order_final = p['IC_HC_N_ORD_FINAL']
     freespan = p['IC_LL_FREE_SPAN']
     # set up the orders to fit
-    loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - np.arange(n_order_final)
+    orderrange = np.arange( n_order_final)
+    loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
     loc.set_source('ECHELLE_ORDERS', func_name)
 
     # get wave solution filename
-    wave_file = spirouImage.ReadWaveFile(p, loc['HDR'], return_filename=True)
+    wave_file = spirouImage.ReadWaveFile(p, loc['HCHDR'], return_filename=True)
     # log wave file name
     wmsg = 'Reading initial wavelength solution in {0}'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wave_file))
 
     # get E2DS line list from wave_file
-    ll_init, param_ll_init = get_e2ds_ll(p, loc['HDR'], filename=wave_file)
+    ll_init, param_ll_init = get_e2ds_ll(p, loc['HCHDR'], filename=wave_file)
     # only perform fit on orders 0 to p['IC_HC_N_ORD_FINAL']
     loc['LL_INIT'] = ll_init[:n_order_final]
     loc.set_source('LL_INIT', __NAME__ + func_name)
@@ -323,7 +232,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     # find the lines
     fargs = [p, loc['LL_INIT'], loc['LL_LINE'], loc['AMPL_LINE'],
-             loc['DATA'][:p['IC_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
+             loc['HCDATA'][:p['IC_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
              freespan]
     all_lines = find_lines(*fargs, mode=mode)
     # add all lines to loc
@@ -423,13 +332,13 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     # get the total number of orders to fit
     num_orders = len(loc['ALL_LINES_{0}'.format(iteration)])
     # get the dimensions of the data
-    ydim, xdim = loc['DATA'].shape
+    ydim, xdim = loc['HCDATA'].shape
     # get inv_params
     inv_params = loc['LL_PARAM_{0}'.format(iteration)]
     # get new line list
-    ll_out = get_ll_from_coefficients(inv_params, xdim, num_orders)
+    ll_out = spirouMath.get_ll_from_coefficients(inv_params, xdim, num_orders)
     # get the first derivative of the line list
-    dll_out = get_dll_from_coefficients(inv_params, xdim, num_orders)
+    dll_out = spirouMath.get_dll_from_coefficients(inv_params, xdim, num_orders)
     # find the central pixel value
     centpix = ll_out.shape[1]//2
     # get the mean pixel scale (in km/s/pixel) of the central pixel
@@ -463,7 +372,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     if n_order_init in remove_orders:
         wargs = ["IC_LITTROW_ORDER_INIT", p['IC_LITTROW_ORDER_INIT'],
                  "IC_LITTROW_REMOVE_ORDERS"]
-        wmsg1 = 'Warning {0]={1} in {2}'.format(*wargs)
+        wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
         # TODO: Remove H2RG dependency
         wmsg2 = ('    Please check constants_SPIROU_{0}.py file'
                  ''.format(p['IC_IMAGE_TYPE']))
@@ -473,7 +382,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     if n_order_final in remove_orders:
         wargs = ["IC_HC_N_ORD_FINAL", p['IC_HC_N_ORD_FINAL'],
                  "IC_LITTROW_REMOVE_ORDERS"]
-        wmsg1 = 'Warning {0]={1} in {2}'.format(*wargs)
+        wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
         # TODO: Remove H2RG dependency
         wmsg2 = ('    Please check constants_SPIROU_{0}.py file'
                  ''.format(p['IC_IMAGE_TYPE']))
@@ -482,7 +391,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     # check that all remove orders exist
     for remove_order in remove_orders:
         if remove_order not in np.arange(n_order_final):
-            wargs1 = [remove_order, 'IC_LITTROW_REMOVE_ORDERS', 0,
+            wargs1 = [remove_order, 'IC_LITTROW_REMOVE_ORDERS', n_order_init,
                        n_order_final]
             wmsg1 = (' Invalid order number={0} in {1} must be between'
                      '{2} and {3}'.format(*wargs1))
@@ -496,7 +405,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     # get the total number of orders to fit
     num_orders = len(loc['ALL_LINES_{0}'.format(iteration)])
     # get the dimensions of the data
-    ydim, xdim = loc['DATA'].shape
+    ydim, xdim = loc['HCDATA'].shape
     # deal with removing orders (via weighting stats)
     rmask = np.ones(num_orders, dtype=bool)
     if len(remove_orders) > 0:
@@ -583,7 +492,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
     litt_param = loc['LITTROW_PARAM_{0}'.format(iteration)]
 
     # get the dimensions of the data
-    ydim, xdim = loc['DATA'].shape
+    ydim, xdim = loc['HCDATA'].shape
     # get the pixel positions
     x_points = np.arange(xdim)
     # construct the Littrow cut points (in pixels)
@@ -593,7 +502,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
 
     # set up storage
     littrow_extrap = np.zeros((ydim, len(x_cut_points)), dtype=float)
-    littrow_extrap_sol = np.zeros_like(loc['DATA'])
+    littrow_extrap_sol = np.zeros_like(loc['HCDATA'])
     littrow_extrap_param = np.zeros((ydim, fit_degree + 1),dtype=float)
 
     # calculate the echelle order position for this order
@@ -666,7 +575,7 @@ def second_guess_at_wave_solution(p, loc, mode=0):
 
     # find the lines
     ll = loc['LITTROW_EXTRAP_SOL_1'][:n_ord_final_2]
-    datax = loc['DATA'][:n_ord_final_2]
+    datax = loc['HCDATA'][:n_ord_final_2]
 
     fargs = [p, ll, ll_line_2, ampl_line_2, datax, echelle_order, freespan]
     all_lines = find_lines(*fargs, mode=mode)

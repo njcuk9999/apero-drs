@@ -224,6 +224,17 @@ def check_file_id(p, filename, recipe, hdr=None, **kwargs):
     # get returns
     return_path = kwargs.get('return_path', False)
     # ---------------------------------------------------------------------
+    # Check that recipe is valid
+    # ---------------------------------------------------------------------
+    if recipe not in control['Recipe']:
+        emsg1 = 'No recipe named {0}'.format(recipe)
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # Get mask of recipe and apply it to control
+    else:
+        recipemask = control['Recipe'] == recipe
+        control = control[recipemask]
+    # ---------------------------------------------------------------------
     # file must exist to continue
     # ---------------------------------------------------------------------
     if not os.path.exists(filename):
@@ -235,30 +246,29 @@ def check_file_id(p, filename, recipe, hdr=None, **kwargs):
             filename = rawfile
             # narrow down control options
             control = control[control['kind'] == 'RAW']
+            kind = 'raw'
         # if reducedfile exists we can narrow down the options
         elif os.path.exists(reducedfile):
             filename = reducedfile
             # narrow down control options
             control = control[control['kind'] == 'REDUC']
+            kind = 'reduced'
         # if neither exist we have a problem
         else:
             emsg1 = 'File {0} does not exist'.format(filename)
             emsg2 = '\tChecked raw and reduced folders.'
             emsg3 = '\tfunction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            kind = 'None'
     # make sure filename has no path
     basefilename = os.path.basename(filename)
-    # ---------------------------------------------------------------------
-    # Check that recipe is valid
-    # ---------------------------------------------------------------------
-    if recipe not in control['Recipe']:
-        emsg1 = 'No recipe named {0}'.format(recipe)
-        emsg2 = '    function = {0}'.format(func_name)
+
+    # check if we still have options
+    if len(control) == 0:
+        emsg1 = 'File "{0}" is a {1} file.'.format(basefilename, kind)
+        emsg2 = 'Not valid for recipe "{0}"'.format(recipe)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-    # Get mask of recipe and apply it to control
-    else:
-        recipemask = control['Recipe'] == recipe
-        control = control[recipemask]
+
     # ---------------------------------------------------------------------
     # check recipe input type (raw or reduced)
     kinds = np.unique(control['kind'])
@@ -442,8 +452,16 @@ def get_properties_from_control(p, control):
     if control['fiber'] != 'None':
         p['FIBER'] = control['fiber']
         p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
+        if p['DRS_DEBUG']:
+            # log that fiber was identified
+            wmsg = 'Identified file as {0}, fiber={1}'
+            WLOG('', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['FIBER']))
     else:
         p['FIBER'] = None
+        if p['DRS_DEBUG']:
+            # log that fiber was identified
+            wmsg = 'Identified file as {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(p['DPRTYPE']))
     # ----------------------------------------------------------------------
     # return p
     return p
@@ -608,6 +626,9 @@ def check_id_filename(p, control, recipe, filename):
     # set un-found initial parameters
     found = False
     found_row = None
+
+    dprtypes = list(control['dprtype'])
+
     # loop around rows in control
     for row in range(len(control)):
         # skip if already found
@@ -622,7 +643,7 @@ def check_id_filename(p, control, recipe, filename):
                                                     control[row])
             # Need to set a new dprtype if reduced file
             if found:
-                control['dprtype'][row] = dprtype
+                dprtypes[row] = dprtype
         # ------------------------------------------------------------------
         # deal with None
         elif kind.upper() == 'RAW':
@@ -631,6 +652,10 @@ def check_id_filename(p, control, recipe, filename):
         # if filename is found remember row
         if found:
             found_row = int(row)
+
+    # reassign control['dprtype'] to dprtypes
+    #     (needed as list before due to strings changing size)
+    control['dprtype'] = dprtypes
     # deal with no file found
     if not found:
         return found, control

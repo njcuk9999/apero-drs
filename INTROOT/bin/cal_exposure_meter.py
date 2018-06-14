@@ -60,8 +60,8 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    reffile = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                            filename=p['REFFILE'])
+    p, reffile = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                               filename=p['REFFILE'])
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB

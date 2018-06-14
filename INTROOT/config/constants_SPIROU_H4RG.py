@@ -642,94 +642,102 @@ em_save_mask_map = True
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
-#  Define the lamp types                                              - [cal_HC]
+#  Define the lamp types                                    - [cal_HC, cal_wave]
 #      these must be present in the the following dictionaries to
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
 ic_lamps = {'UNe':'hcone', 'TH':'hctwo'}
 
-#  Define the catalogue line list to use for each lamp type           - [cal_HC]
-#      (dictionary)
+#  Define the catalogue line list to use for each           - [cal_HC, cal_wave]
+#       lamp type (dictionary)
 ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
 
-#  Define the type of catalogue to use for each lamp type             - [cal_HC]
+#  Define the type of catalogue to use for each lamp type   - [cal_HC, cal_wave]
 ic_cat_type_all = {'UNe': 'fullcat', 'TH':'thcat'}
 
-#  Define the Resolution of detector                                  - [cal_HC]
+#  Define the Resolution of detector                        - [cal_HC, cal_wave]
 ic_resol = 55000
 
-#  Define wavelength free span parameter in find lines search         - [cal_HC]
+#  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
+#      lines search
 # default = 3   or 2.6
 ic_ll_free_span = 3
 
-#  Define minimum wavelength of the detector to use in find lines     - [cal_HC]
+#  Define minimum wavelength of the detector to use in      - [cal_HC, cal_wave]
+#     find lines
 ic_ll_sp_min = 900
 
-#  Define maximum wavelength of the detector to use in find lines     - [cal_HC]
+#  Define maximum wavelength of the detector to use in      - [cal_HC, cal_wave]
+#     find lines
 ic_ll_sp_max = 2400
 
-#  Define the read out noise to use in find lines                     - [cal_HC]
+#  Define the read out noise to use in find lines           - [cal_HC, cal_wave]
 # default = 16.8
 ic_hc_noise = 30
 
-# Maximum sig-fit of the guessed lines                                - [cal_HC]
+# Maximum sig-fit of the guessed lines                      - [cal_HC, cal_wave]
 #     fwhm/2.35 of th lines)
 ic_max_sigll_cal_lines = 5.2
 
-# Maximum error on first guess lines                                  - [cal_HC]
+# Maximum error on first guess lines                        - [cal_HC, cal_wave]
 # default = 1
 ic_max_errw_onfit = 1
 
-# Maximum amplitude of the guessed lines                              - [cal_HC]
+# Maximum amplitude of the guessed lines                    - [cal_HC, cal_wave]
 # default = 2.0e5
 ic_max_ampl_line = 2.0e8
 
-#  Defines order to which the solution is calculated                  - [cal_HC]
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
+#      previously called n_ord_final
+# QUESTION: Not used in cal_HC???
+ic_hc_n_ord_start = 0
+
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final
 ic_hc_n_ord_final = 24
 
-#  Defines echeele of first extracted order                           - [cal_HC]
+#  Defines echelle of first extracted order                 - [cal_HC, cal_wave]
 ic_hc_t_order_start = 66
 
-# Define the minimum instrumental error                               - [cal_HC]
+# Define the minimum instrumental error                     - [cal_HC, cal_wave]
 ic_errx_min = 0.03
 
-#  Define the wavelength fit polynomial order                         - [cal_HC]
+#  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
 # default = 5
 ic_ll_degr_fit = 4
 
-#  Define the max rms for the sigma-clip fit ll                       - [cal_HC]
+#  Define the max rms for the sigma-clip fit ll             - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
-#  Define the fit polynomial order for the Littrow fit                - [cal_HC]
+#  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
 ic_Littrow_fit_deg = 4
 
-#  Define the littrow cut steps                                       - [cal_HC]
+#  Define the littrow cut steps                             - [cal_HC, cal_wave]
 ic_Littrow_cut_step_1 = 250
 ic_Littrow_cut_step_2 = 500
 
-#  Define the order to start the Littrow fit from                     - [cal_HC]
+#  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
 #  (ends at ic_hc_n_ord_final)
 ic_Littrow_order_init = 0
 
-#  Define orders to ignore in Littrow fit                             - [cal_HC]
+#  Define orders to ignore in Littrow fit                   - [cal_HC, cal_wave]
 ic_Littrow_remove_orders = []
 
-#  Define the order fit for the Littrow solution                      - [cal_HC]
+#  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
 #      (fit along the orders)
 ic_Littrow_order_fit_deg = 4
 
-#  Define wavelength free span parameter in find lines search         - [cal_HC]
-#    (used AFTER littrow fit) default = 3
+#  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
+#    lines search (used AFTER littrow fit) default = 3
 ic_ll_free_span_2 = 2.6
 
-#  Defines order to which the solution is calculated                  - [cal_HC]
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
 ic_hc_n_ord_final_2 = 24
 
-#  Defines the mode to "find_lines"                                   - [cal_HC]
+#  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
 #      Currently allowed modes are:
 #          0: Fortran "fitgaus" routine (requires SpirouDRS.fortran.figgaus.f
 #             to be compiled using f2py:
@@ -742,24 +750,25 @@ ic_hc_n_ord_final_2 = 24
 #          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
 hc_find_lines_mode = 0
 
-#  Define the CCF mask for the wave solution CCF calculation          - [cal_HC]
+#  Define the CCF mask for the wave solution CCF            - [cal_HC, cal_wave]
+#       calculation
 ic_wave_ccf_mask = {'UNe': 'test_mask_UNe_firstguess_R50000.mas', 'TH':'test_mask_TH_R50000.mas'}
 
-#  Define the weight of the wave CCF mask                             - [cal_HC]
+#  Define the weight of the wave CCF mask                   - [cal_HC, cal_wave]
 #     (if 1 force all weights equal)
 ic_wave_ccf_w_mask_min = 1.0
 
-#  Define the wave CCF width of the template line                     - [cal_HC]
+#  Define the wave CCF width of the template line           - [cal_HC, cal_wave]
 #     (if 0 use natural)
 ic_wave_ccf_mask_width = 0.0
 
-#  Define the wave CCF half width                                     - [cal_HC]
+#  Define the wave CCF half width                           - [cal_HC, cal_wave]
 ic_wave_ccf_half_width = 10.0
 
-#  Define the wave CCF step                                           - [cal_HC]
+#  Define the wave CCF step                                 - [cal_HC, cal_wave]
 ic_wave_ccf_step = 0.1
 
-#  Define the type of fit for the wave CCF fit                        - [cal_HC]
+#  Define the type of fit for the wave CCF fit              - [cal_HC, cal_wave]
 wave_ccf_fit_type = 1
 
 #  Define first order FP solution is calculated from                - [cal_wave]
@@ -785,6 +794,30 @@ ic_fp_fit_degree = 9
 
 #  Define the FP jump size that is too large                        - [cal_wave]
 ic_fp_large_jump = 0.7
+
+#  Define the plot order for the comparison between spe and speref  - [cal_wave]
+ic_wave_idrift_plot_order = 14
+
+#  Define the noise to use in the instrument drift calculation      - [cal_wave]
+ic_wave_idrift_noise = 50.0
+
+#   The maximum flux for a good (unsaturated) pixel                 - [cal_wave]
+ic_wave_idrift_maxflux = 350000
+
+#   The size around a saturated pixel to flag as unusable           - [cal_wave]
+ic_wave_idrift_boxsize = 12
+
+#   Define the number of standard deviations cut at in              - [cal_wave]
+#       cosmic renormalisation (for instrumental drift calculation)
+ic_wave_idrift_cut_e2ds = 4.5
+
+#  Define the maximum uncertainty allowed on the RV                 - [cal_wave]
+#      (for instrumental drift calculation)
+ic_wave_idrift_max_err = 3.0
+
+#  Define the RV cut above which the RV from orders are not used    - [cal_wave]
+#      (for instrumental drift calculation)
+ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
@@ -837,13 +870,29 @@ qc_slit_max = 0.0
 #        however currently does not trigger qc
 qc_max_signal = 50000
 
-#   Maximum littrow RMS value                                         - [cal_hc]
+#   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
 #       (at x cut points)
-qc_rms_littrow_max = 0.3
+qc_hc_rms_littrow_max = 0.3
 
-#   Maximum littrow devilation from wave solution                     - [cal_hc]
+#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#        cal_wave (at x cut points)
+qc_hc_dev_littrow_max = 0.9
+
+#   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
 #       (at x cut points)
-qc_dev_littrow_max = 0.9
+qc_wave_rms_littrow_max = 0.1
+
+#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#       cal_wave (at x cut points)
+qc_wave_dev_littrow_max = 0.3
+
+#   Define the maximum number of orders to remove from RV            -[cal_wave]
+#       calculation (for instrumental drift calculation)
+qc_wave_idrift_nborderout = 15
+
+#   Define the maximum allowed drift (in m/s) in the                 -[cal_wave]
+#       instrumental drift calculation
+qc_wave_idrift_rv_max = 150.0
 
 
 # -----------------------------------------------------------------------------
