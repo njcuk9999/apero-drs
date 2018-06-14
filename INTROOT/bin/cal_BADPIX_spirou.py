@@ -78,10 +78,10 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
     # ----------------------------------------------------------------------
-    flatfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                 filename=p['FLATFILE'])
-    darkfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                 filename=p['DARKFILE'])
+    p, flatfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                    filename=p['FLATFILE'])
+    p, darkfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                    filename=p['DARKFILE'])
 
     # ----------------------------------------------------------------------
     # Read the darkfile and flatfile
