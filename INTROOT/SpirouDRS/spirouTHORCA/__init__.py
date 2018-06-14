@@ -10,6 +10,7 @@ Created on 2017-10-30 at 17:09
 """
 from SpirouDRS import spirouConfig
 from . import spirouTHORCA
+from . import spirouWAVE
 
 # =============================================================================
 # Define variables
@@ -22,12 +23,16 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['DetectBadLines', 'FirstGuessSolution', 'Fit1DSolution',
-           'GetE2DSll', 'Getll', 'Getdll', 'GetLampParams']
+__all__ = ['CalcInstrumentDrift', 'CalcLittrowSolution',
+           'DetectBadLines', 'ExtrapolateLittrowSolution',
+           'FirstGuessSolution', 'Fit1DSolution', 'FPWaveSolution',
+           'GetE2DSll', 'GetLampParams', 'JoinOrders', 'SecondGuessSolution']
+
 
 # =============================================================================
 # Function aliases
 # =============================================================================
+CalcInstrumentDrift = spirouWAVE.calculate_instrument_drift
 
 CalcLittrowSolution = spirouTHORCA.calculate_littrow_sol
 
@@ -39,11 +44,9 @@ FirstGuessSolution = spirouTHORCA.first_guess_at_wave_solution
 
 Fit1DSolution = spirouTHORCA.fit_1d_solution
 
+FPWaveSolution = spirouWAVE.fp_wavelength_sol
+
 GetE2DSll = spirouTHORCA.get_e2ds_ll
-
-Getll = spirouTHORCA.get_ll_from_coefficients
-
-Getdll = spirouTHORCA.get_dll_from_coefficients
 
 GetLampParams = spirouTHORCA.get_lamp_parameters
 
