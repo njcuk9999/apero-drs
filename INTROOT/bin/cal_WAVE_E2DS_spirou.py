@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-cal_WAVE_E2DS_spirou.py [night_directory] [HCfitsfilename] [FPfitsfilename]
+cal_WAVE_E2DS_spirou.py [night_directory] [FPfitsfilename] [HCfiles]
 
 Wavelength calibration incorporating the FP lines
 
@@ -13,11 +13,19 @@ Created on 2018-02-09 at 10:57
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import division
+import numpy as np
+import os
 
+from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
+from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTHORCA
+
+import cal_HC_E2DS_spirou
 
 # =============================================================================
 # Define variables
@@ -40,7 +48,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, hcfiles=None, fpfile=None):
+def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -49,20 +57,23 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
         customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
-                                                        last_multi=True)
+                                                        last_multi=True,
+                                                        recipe=__NAME__)
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsdir='reduced',
+                                    mainfitsfile='hcfiles')
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    fpfitsfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                   filename=p['FPFILE'])
+    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                      filename=p['FPFILE'])
     fiber1 = str(p['FIBER'])
-    hcfilenames = spirouStartup.MultiFileSetup(p, recipe=__NAME__,
-                                               files=p['HCFILES'])
+    p, hcfilenames = spirouStartup.MultiFileSetup(p, recipe=__NAME__,
+                                                  files=p['HCFILES'])
     fiber2 = str(p['FIBER'])
     # set the hcfilename to the first hcfilenames
     hcfitsfilename = hcfilenames[0]
@@ -84,99 +95,144 @@ def main(night_name=None, hcfiles=None, fpfile=None):
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # set the fiber type
+    p['FIB_TYP'] = [p['FIBER']]
+    p.set_source('FIB_TYP', __NAME__ + '/main()')
+
+    # set find line mode
+    find_lines_mode = p['HC_FIND_LINES_MODE']
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all HC files except the last (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    p, hcdata, hdr, cdr = spirouImage.ReadImageAndCombine(*rargs)
+    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(*rargs)
     # read last file (fpfitsfilename)
-    fpdata, hdr3, cdr3, nx3, ny3 = spirouImage.ReadImage(p, fpfitsfilename)
+    fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
+
+    # add data and hdr to loc
+    loc = ParamDict()
+    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
+    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+    # set the source
+    sources = ['HCDATA', 'HCHDR', 'HCCDR']
+    loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
+    sources = ['FPDATA', 'FPHDR', 'FPCDR']
+    loc.set_sources(sources, 'spirouImage.ReadImage()')
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
     # ----------------------------------------------------------------------
     # get sig det value
-    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
+    p = spirouImage.GetSigdet(p, hchdr, name='sigdet')
     # get exposure time
-    p = spirouImage.GetExpTime(p, hdr, name='exptime')
+    p = spirouImage.GetExpTime(p, hchdr, name='exptime')
     # get gain
-    p = spirouImage.GetGain(p, hdr, name='gain')
+    p = spirouImage.GetGain(p, hchdr, name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    p = spirouImage.GetAcqTime(p, hchdr, name='acqtime', kind='unix')
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
+    # get lamp parameters
+    p = spirouTHORCA.GetLampParams(p)
 
     # ----------------------------------------------------------------------
-    # start ll solution
+    # Obtain the flat
     # ----------------------------------------------------------------------
+    # get the flat
+    loc = spirouFLAT.GetFlat(p, loc, hchdr)
 
     # ----------------------------------------------------------------------
-    # Instrumental drift computation
+    # Read blaze
     # ----------------------------------------------------------------------
+    # get tilts
+    loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hchdr)
+    loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+
+    # correct the data with the flat
+    # TODO: Should this be used?
+    # log
+    # WLOG('', p['LOG_OPT'], 'Applying flat correction')
+    # loc['HCDATA'] = loc['HCDATA']/loc['FLAT']
+    # loc['FPDATA'] = loc['FPDATA']/loc['FLAT']
 
     # ----------------------------------------------------------------------
-    # calculate wavelength solution
+    # Start plotting session
     # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive plot
+        sPlt.start_interactive_session()
 
     # ----------------------------------------------------------------------
-    # find ll on spectrum
+    # loop around fiber type
     # ----------------------------------------------------------------------
+    for fiber in p['FIB_TYP']:
+        # set fiber type for inside loop
+        p['FIBER'] = fiber
+
+        # ------------------------------------------------------------------
+        # Instrumental drift computation (if previous solution exists)
+        # ------------------------------------------------------------------
+        # get key
+        keydb = 'HCREF_{0}'.format(p['FIBER'])
+        # check for key in calibDB
+        if keydb in p['CALIBDB'].keys():
+            # log process
+            wmsg = ('Doing Instrumental drift computation from previous '
+                    'calibration')
+            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+            # calculate instrument drift
+            loc = spirouTHORCA.CalcInstrumentDrift(p, loc)
+
+        # ------------------------------------------------------------------
+        # Wave solution
+        # ------------------------------------------------------------------
+        # log message for loop
+        wmsg = 'Processing Wavelength Calibration for Fiber {0}'
+        WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+
+        # ------------------------------------------------------------------
+        # Part 1 of cal_HC
+        # ------------------------------------------------------------------
+        p, loc = cal_HC_E2DS_spirou.part1(p, loc, mode=find_lines_mode)
+
+        # ------------------------------------------------------------------
+        # FP solution
+        # ------------------------------------------------------------------
+        # log message
+        wmsg = 'Calcaulting FP wave solution'
+        WLOG('', p['LOG_OPT'], wmsg)
+        # calculate FP wave solution
+        spirouTHORCA.FPWaveSolution(p, loc, mode=find_lines_mode)
+
+        # ------------------------------------------------------------------
+        # FP solution plots
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            # Plot the FP extracted spectrum against wavelength solution
+            sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
+            # Plot the measured FP cavity width offset against line number
+            sPlt.wave_local_width_offset_plot(loc)
+            # Plot the FP line wavelength residuals
+            sPlt.wave_fp_wavelength_residuals(loc)
+
+        # ------------------------------------------------------------------
+        # Part 2 of cal_HC
+        # ------------------------------------------------------------------
+        # set params for part2
+        p['QC_RMS_LITTROW_MAX'] = p['QC_WAVE_RMS_LITTROW_MAX']
+        p['QC_DEV_LITTROW_MAX'] = p['QC_WAVE_DEV_LITTROW_MAX']
+        # run part 2
+        p, loc = cal_HC_E2DS_spirou.part2(p, loc)
 
     # ----------------------------------------------------------------------
-    # detect bad fit filtering and saturated lines
+    # End plotting session
     # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # fit llsol
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # extrapolate Littrow solution
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # repeat the line search loop
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # FP solution
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Littrow test
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Join 0-24 and 25-36 solutions
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # archive result in e2ds spectra
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Save to result table
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Save th_line tbl file
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Compute CCF
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Update the calibration data base
-    # ----------------------------------------------------------------------
+    # end interactive session
+    sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # End Message
