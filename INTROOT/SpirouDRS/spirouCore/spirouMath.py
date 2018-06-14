@@ -204,6 +204,100 @@ def gauss_function(x, a, x0, sigma, dc):
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
 
 
+def get_ll_from_coefficients(params, nx, nbo):
+    """
+    Use the coefficient matrix "params" to construct fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param params: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+    """
+    # create x values
+    xfit = np.arange(nx)
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        # (numpy needs them backwards)
+        coeffs = params[order_num][::-1]
+        # get the y fit using the coefficients for this order and xfit
+        # TODO: Check order of params[i]
+        # Question: This could be wrong - if fit parameters are order
+        # Question: differently
+        yfit = np.polyval(coeffs, xfit)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
+
+def get_dll_from_coefficients(params, nx, nbo):
+    """
+    Derivative of the coefficients, using the coefficient matrix "params"
+    to construct the derivative of the fit values for each order
+    (dimension 0 of coefficient matrix) for values of x from 0 to nx
+    (interger steps)
+
+    :param params: numpy array (2D), the coefficient matrix
+                   size = (number of orders x number of fit coefficients)
+
+    :param nx: int, the number of values and the maximum value of x to use
+               the coefficients for, where x is such that
+
+                yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+                dyfit = p[0]*(N-1)*x**(N-2) + p[1]*(N-2)*x**(N-3) + ... +
+                        p[N-3]*x + p[N-2]
+
+                N = number of fit coefficients
+                and p is the coefficients for one order
+                (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+    :param nbo: int, the number of orders to use
+
+    :return ll: numpy array (2D): the yfit values for each order
+                (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
+    """
+
+    # create x values
+    xfit = np.arange(nx)
+    # create empty line list storage
+    ll = np.zeros((nbo, nx))
+    # loop around orders
+    for order_num in range(nbo):
+        # get the coefficients for this order and flip them
+        coeffs = params[order_num]
+        # get the y fit using the coefficients for this order and xfit
+        # TODO: Check order of params[i]
+        # Question: This could be wrong - if fit parameters are order
+        # Question: differently
+        yfiti = []
+        # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
+        for it in range(len(coeffs)-1):
+            yfiti.append((it + 1) * coeffs[it + 1] * xfit**it)
+        yfit = np.sum(yfiti, axis=0)
+        # add to line list storage
+        ll[order_num, :] = yfit
+    # return line list
+    return ll
+
+
 # =============================================================================
 # Time functions
 # =============================================================================
