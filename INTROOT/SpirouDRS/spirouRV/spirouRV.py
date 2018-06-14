@@ -19,7 +19,6 @@ import os
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouCore import spirouMath
 
 # =============================================================================
@@ -1075,7 +1074,8 @@ def coravelation(p, loc, log=False):
     # calculate modified coefficients
     coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # get the differential map
-    dll_map = spirouTHORCA.Getdll(coeff_ll_b, len(ll_map[0]), len(coeff_ll))
+    dll_map = spirouMath.get_dll_from_coefficients(coeff_ll_b, len(ll_map[0]),
+                                                   len(coeff_ll))
     # -------------------------------------------------------------------------
     # define some constants for loop
     constant1 = (1 + 1.55e-8) * (1 + berv_max/c)
