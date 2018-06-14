@@ -137,6 +137,8 @@ ReadLineList = spirouImage.read_line_list
 
 ReadWaveFile = spirouFITS.read_wave_file
 
+ReadHcrefFile = spirouFITS.read_hcref_file
+
 ReadBlazeFile = spirouFITS.read_blaze_file
 
 ReadOrderProfile = spirouFITS.read_order_profile_superposition
