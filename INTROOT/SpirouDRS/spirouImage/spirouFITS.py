@@ -247,7 +247,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
             WLOG('error', log_opt, [emsg1, emsg2])
     else:
         p['NBFRAMES'] = len(filenames) + 1
-        p.append_source('NBFRAMES', func_name)
+        p.set_source('NBFRAMES', func_name)
         filenames = list(filenames)
     # -------------------------------------------------------------------------
     # log that we are reading the image
@@ -455,6 +455,64 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
     else:
         # return the wave file
         return wave
+
+
+def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
+                    return_filename=False, required=True):
+    """
+    Reads the hcref file (from calib database or filename)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['FITSFILENAME']
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the WAVE file from the calib database
+                     keyword "HCREF_{fiber}"
+    :param key: string or None, if None key='HCREF' else uses string as key
+                from calibDB (first entry) to get wave file
+    :param return_header: bool, if True returns header file else just returns
+                          wave file
+    :param return_filename: bool, if true return the filename only
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
+
+    if return_filename is False and return header is False
+
+        :return hcref: numpy array (2D), the hc reference data (e2ds file)
+    elif return_filename is False:
+        :return wave: numpy array (2D), the wavelengths for each pixel
+                      (x-direction) for each order
+        :return hdict: dictionary, the header file of the wavelength solution
+    else:
+        :return read_file: string, the file name associated with the wavelength
+                           solution
+    """
+    if key is None:
+        key = 'HCREF_' + p['FIBER']
+    # get filename
+    if filename is None:
+        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+    else:
+        read_file = filename
+    # deal with returning filename only
+    if return_filename:
+        return read_file
+    # read read_file
+    rout = readimage(p, filename=read_file, log=False)
+    hcref, hdict, _, nx, ny = rout
+
+    if return_header:
+        return hcref, hdict
+    else:
+        # return the wave file
+        return hcref
 
 
 def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
