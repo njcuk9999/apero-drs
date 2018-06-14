@@ -368,11 +368,29 @@ def single_file_setup(p, recipe, filename, log=True):
             wmsg = 'Now processing Image TYPE {0} with {1} recipe'
         WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
     # return p
-    return location
+    return p, location
 
 
-def multi_file_setup(p, recipe, files=None):
-    return initial_file_setup(p, recipe, files, calibdb=False)
+def multi_file_setup(p, recipe, files=None, log=True):
+    func_name = __NAME__ + '.single_file_setup()'
+    # check file based on recipe name
+    locations = []
+    # loop around files
+    for filename in files:
+        p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
+        # get location of file
+        location = get_file(p, path, filename)
+        # append location to locations
+        locations.append(location)
+    # log processing image type
+    if log:
+        if p['DPRTYPE'] == 'None':
+            wmsg = 'Now processing Image(s) with {1} recipe'
+        else:
+            wmsg = 'Now processing Image(s) TYPE {0} with {1} recipe'
+        WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    # return p
+    return p, locations
 
 
 def load_calibdb(p, calibdb=True):
@@ -803,14 +821,15 @@ def set_arg_file_dir(p, mfd=None):
         location = 'mainfitsfile definition'
     elif mfd == 'reduced':
         p['ARG_FILE_DIR'] = red
-        location = 'DRS_DATA_REDUC'
+        location = 'spirouConfig.Constants.REDUCED_DIR()'
     elif mfd == 'calibdb':
         p['ARG_FILE_DIR'] = calib
         location = 'DRS_CALIB_DB'
     else:
         p['ARG_FILE_DIR'] = raw
-        location = 'DRS_DATA_RAW'
-
+        location = 'spirouConfig.Constants.RAW_DIR()'
+    # set ARG_FILE_DIR source
+    p.set_source('ARG_FILE_DIR', location)
     # check that ARG_FILE_DIR is valid
     if not os.path.exists(p['ARG_FILE_DIR']):
         # get arg path (path without [FOLDER] or NIGHT_NAME
@@ -1116,7 +1135,7 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     maxname = names[maxpos]
     maxkind = types[maxpos]
     # check the length of sys.argv (needs to be > maxpos + 2)
-    if len(sys.argv) > maxpos + 2:
+    if len(sys.argv) > maxpos + 3:
         # convert maxname to a list
         customdict[maxname] = [customdict[maxname]]
         # if maxpos = 0 then we are done
@@ -1137,6 +1156,8 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
                             '(Value = {2})')
                     eargs = [lognames[pos], TYPENAMES[maxkind], raw_value]
                     WLOG('error', DPROG, emsg.format(*eargs))
+    else:
+        customdict[maxname] = [customdict[maxname]]
     # return the new custom dictionary
     return customdict
 
@@ -1587,9 +1608,11 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
         if type(mff) == str:
             p['ARG_FILE_NAMES'] = [rawfilename]
             p['FITSFILENAME'] = abspathname
+            p.set_sources(['ARG_FILE_NAMES', 'FITSFILENAME'], func_name)
         elif type(mff) == list:
             p['ARG_FILE_NAMES'] = rawfilename
             p['FITSFILENAME'] = abspathname[0]
+            p.set_sources(['ARG_FILE_NAMES', 'FITSFILENAME'], func_name)
         else:
             eargs = [mff, p['ARG_FILE_DIR']]
             emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
