@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 
 
 # =============================================================================
-# Usable functions
+# User functions
 # =============================================================================
 def update_datebase(p, keys, filenames, hdrs, timekey=None):
     """
