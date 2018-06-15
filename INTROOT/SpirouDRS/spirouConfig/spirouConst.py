@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.045'
+__version__ = '0.2.047'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-06-14'
+__date__ = '2018-06-15'
 
 
 # =============================================================================
@@ -1146,6 +1146,18 @@ def WAVE_E2DS_COPY(p):
     e2dscopy = os.path.join(path, filename)
     # return absolute path
     return e2dscopy
+
+
+def OFF_LISTING_FILE(p):
+    # get constants from p
+    msg_dir = p['DRS_DATA_MSG']
+    night_name = p['ARG_NIGHT_NAME']
+    # get base filename
+    basefilename = 'listing_{0}.txt'.format(os.path.split(night_name)[-1])
+    # get absolute path
+    abspath = os.path.join(msg_dir, basefilename)
+    # return absolute path
+    return abspath
 
 
 # =============================================================================
