@@ -32,7 +32,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_SLIT_spirou.py'
+__NAME__ = 'cal_FF_RAW_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -72,39 +72,24 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
+
     # run specific start up
     # TODO: remove H2RG dependency
     if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                           prefixes=['flat_flat'],
-                                           calibdb=True)
         p['FIB_TYPE'] = p['FIBER_TYPES']
         p.set_source('FIB_TYPE', __NAME__ + '__main__()')
-    else:
-        params2add = dict()
-        params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
-        params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                           prefixes=['dark_flat', 'flat_dark'],
-                                           add_to_p=params2add, calibdb=True)
-
-    # log processing image type
-    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
-    p.set_source('DPRTYPE', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
-
-    # ----------------------------------------------------------------------
-    # Check for pre-processed file
-    # ----------------------------------------------------------------------
-    if p['IC_FORCE_PREPROCESS']:
-        spirouStartup.CheckPreProcess(p)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
     p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    data = spirouImage.FixNonPreProcess(p, data)
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -139,6 +124,16 @@ def main(night_name=None, files=None):
     # log change in data size
     WLOG('', p['LOG_OPT'], ('Image format changed to '
                             '{0}x{1}').format(*data2.shape[::-1]))
+    # ----------------------------------------------------------------------
+    # Correct for the BADPIX mask (set all bad pixels to zero)
+    # ----------------------------------------------------------------------
+    # TODO: Remove H2RG compatibility
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+
+    #  Put to zero all the negative pixels
+    # TODO: Check if it makes sens to do that
+#    data2 = np.where(data2<0, np.zeros_like(data2), data2)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -215,12 +210,24 @@ def main(night_name=None, files=None):
         # if we have an AB fiber merge fit coefficients by taking the average
         # of the coefficients
         # (i.e. average of the 1st and 2nd, average of 3rd and 4th, ...)
-        if fiber in ['A', 'B', 'AB']:
+        # if fiber is AB take the average of the orders
+        if fiber == 'AB':
             # merge
             loc['ACC'] = spirouLOCOR.MergeCoefficients(loc, loc['ACC'], step=2)
             loc['ASS'] = spirouLOCOR.MergeCoefficients(loc, loc['ASS'], step=2)
             # set the number of order to half of the original
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS']/2.0)
+        # if fiber is B take the even orders
+        elif fiber=='B':
+            loc['ACC'] = loc['ACC'][:-1:2]
+            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+        # if fiber is A take the even orders
+        elif fiber =='A':
+            loc['ACC'] = loc['ACC'][1::2]
+            loc['ASS'] = loc['ASS'][:-1:2]
+            loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
+
         # ------------------------------------------------------------------
         # Set up Extract storage
         # ------------------------------------------------------------------
@@ -311,6 +318,8 @@ def main(night_name=None, files=None):
             sPlt.ff_sorder_tiltadj_e2ds_blaze(p, loc)
             # plot flat for selected order
             sPlt.ff_sorder_flat(p, loc)
+            # plot the RMS for all but skipped orders
+            sPlt.ff_rms_plot(p, loc)
 
         # ----------------------------------------------------------------------
         # Store Blaze in file
@@ -361,9 +370,15 @@ def main(night_name=None, files=None):
         #     # For some reason this test is ignored in old code
         #     passed = True
         #     WLOG('info', p['log_opt'], fail_msg[-1])
-        max_rms = np.max(loc['RMS'])
+
+        # get mask for removing certain orders in the RMS calculation
+        remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
+        mask=np.in1d(np.arange(len(loc['RMS'])), remove_orders)
+        # apply mask and calculate the maximum RMS
+        max_rms = np.max(loc['RMS'][~mask])
+        # apply the quality control based on the new RMS
         if max_rms > p['QC_FF_RMS']:
-            fmsg = 'abnormal RMS of FF ({0:.2f} > {1:.2f})'
+            fmsg = 'abnormal RMS of FF ({0:.3f} > {1:.3f})'
             fail_msg.append(fmsg.format(max_rms, p['QC_FF_RMS']))
             passed = False
 
@@ -397,6 +412,16 @@ def main(night_name=None, files=None):
             spirouCDB.PutFile(p, blazefits)
             # update the master calib DB file with new key
             spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
+
+            # TODO: Remove H2RG requirement
+            # hack to allow A and B flat and blaze files
+            if p['IC_IMAGE_TYPE'] == 'H2RG':
+                if p['FIBER'] == 'AB':
+                    for fib in ['A', 'B']:
+                        keydb = 'FLAT_' + fib
+                        spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
+                        keydb = 'BLAZE_' + fib
+                        spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

@@ -24,27 +24,15 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.034'
+__version__ = '0.2.045'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
 __release__ = 'alpha pre-release'
-__date__ = '2018-05-28'
+__date__ = '2018-06-14'
 
 
 # =============================================================================
 # Define pre-functions
 # =============================================================================
-# noinspection PyPep8Naming
-def CONFIGFILE():
-    """
-    Defines the primary config filename
-
-    :return config_file: string, the primary config file filename
-    """
-    # Name of main config file (in CONFIGFOLDER() )
-    config_file = 'config.py'
-    return config_file
-
-
 # noinspection PyPep8Naming
 def PACKAGE():
     """
@@ -136,6 +124,36 @@ def LATEST_EDIT():
     return date
 
 
+# =============================================================================
+# Define Constants
+# =============================================================================
+# noinspection PyPep8Naming
+def CONFIGFILE():
+    """
+    Defines the primary config filename
+
+    :return config_file: string, the primary config file filename
+    """
+    # Name of main config file (in CONFIGFOLDER() )
+    config_file = 'config.py'
+    return config_file
+
+
+# noinspection PyPep8Naming
+def RECIPE_CONTROL_FILE():
+    """
+    Defines the recipe control filename
+
+    :return recipe_control_file: string, the recipe control filename
+    """
+    recipe_control_file = 'recipe_control.txt'
+    recipe_control_format = 'csv'
+    return recipe_control_file, recipe_control_format
+
+
+# =============================================================================
+# Define Directories
+# =============================================================================
 # noinspection PyPep8Naming
 def CONFIGFOLDER():
     """
@@ -167,6 +185,7 @@ def CDATA_REL_FOLDER():
     return const_data_folder
 
 
+# noinspection PyPep8Naming
 def CCF_MASK_DIR():
     """
     Define the ccf mask dir relative path
@@ -178,6 +197,7 @@ def CCF_MASK_DIR():
     return ccf_mask_dir
 
 
+# noinspection PyPep8Naming
 def BADPIX_DIR():
     """
     Define the badpix dir relative path
@@ -189,6 +209,7 @@ def BADPIX_DIR():
     return badpix_dir
 
 
+# noinspection PyPep8Naming
 def BARYCORRPY_DIR():
     """
     Define barycorrpy dir relative path
@@ -196,10 +217,11 @@ def BARYCORRPY_DIR():
     :return reldir: str, the relative path
     """
 
-    barycorrpy_dir = './data/barcorrpy'
+    barycorrpy_dir = './data/barycorrpy'
     return barycorrpy_dir
 
 
+# noinspection PyPep8Naming
 def RESET_CALIBDB_DIR():
     """
     Define the reset dir relative path
@@ -209,6 +231,7 @@ def RESET_CALIBDB_DIR():
     return reset_calibdb_dir
 
 
+# noinspection PyPep8Naming
 def WAVELENGTH_CATS_DIR():
     """
     Define the wavelength catalogues dir relative path
@@ -216,6 +239,16 @@ def WAVELENGTH_CATS_DIR():
     """
     wavelength_cats_dir = './data/wavelength_cats'
     return wavelength_cats_dir
+
+
+# noinspection PyPep8Naming
+def DATA_CONSTANT_DIR():
+    """
+    Define the data constants dir relative path
+    :return:
+    """
+    data_constant_dir = './data/constants/'
+    return data_constant_dir
 
 
 # =============================================================================
@@ -349,17 +382,18 @@ def LOG_OPT(p):
     try:
         arg_file_names = p['ARG_FILE_NAMES']
         program = p['PROGRAM']
-
-        if len(arg_file_names) == 0:
-            log_opt = program
-        elif len(arg_file_names) == 1:
-            index = arg_file_names[0].find('.')
-            lo_arg = [program, arg_file_names[0][index - 5: index]]
-            log_opt = '{0}:{1}'.format(*lo_arg)
-        else:
-            index = arg_file_names[0].find('.')
-            lo_arg = [program, arg_file_names[0][index - 5: index]]
-            log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+        #
+        # if len(arg_file_names) == 0:
+        #     log_opt = program
+        # elif len(arg_file_names) == 1:
+        #     index = arg_file_names[0].find('.')
+        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
+        #     log_opt = '{0}:{1}'.format(*lo_arg)
+        # else:
+        #     index = arg_file_names[0].find('.')
+        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
+        #     log_opt = '{0}:{1}+[...]'.format(*lo_arg)
+        log_opt = program
     except Exception:
         log_opt = DEFAULT_LOG_OPT()
 
@@ -782,6 +816,31 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     return e2dsfits
 
+# noinspection PyPep8Naming
+def EXTRACT_E2DSFF_FILE(p, fiber=None):
+    """
+    Defines the extraction E2DSFF file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    e2ds_ext = '_e2dsff_{0}.fits'.format(fiber)
+    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+    e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
+    return e2dsfits
+
 
 # noinspection PyPep8Naming
 def EXTRACT_LOCO_FILE(p):
@@ -996,6 +1055,7 @@ def EM_SPE_FILE(p):
     return fitsfile
 
 
+# noinspection PyPep8Naming
 def EM_WAVE_FILE(p):
     """
     Defines the cal_exposure_meter wavelength
@@ -1019,6 +1079,7 @@ def EM_WAVE_FILE(p):
     return fitsfile
 
 
+# noinspection PyPep8Naming
 def EM_MASK_FILE(p):
     """
     Defines the cal_exposure_meter telluric spectrum map
@@ -1040,6 +1101,51 @@ def EM_MASK_FILE(p):
     fitsfile = os.path.join(redfolder, filename)
     # return absolute path
     return fitsfile
+
+
+# noinspection PyPep8Naming
+def WAVE_FILE(p):
+    reducedfolder = p['REDUCED_DIR']
+    old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = p['ARG_FILE_NAMES'][0].replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    return wavefile
+
+
+# noinspection PyPep8Naming
+def WAVE_TBL_FILE(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavetblfb = 'cal_HC_result.tbl'
+    wavetblfile = os.path.join(reducedfolder, wavetblfb)
+    return wavetblfile
+
+
+# noinspection PyPep8Naming
+def WAVE_LINE_FILE(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavellext = '_hc_lines_{0}.tbl'.format(p['FIBER'])
+    wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
+    wavellfile = os.path.join(reducedfolder, wavellfn)
+    return wavellfile
+
+
+# noinspection PyPep8Naming
+def WAVE_E2DS_COPY(p):
+    # get base filename
+    basefilename = os.path.basename(p['FITSFILENAME'])
+    # get path
+    path = os.path.dirname(p['FITSFILENAME'])
+    # get prefix
+    calibprefix = CALIB_PREFIX(p)
+    # construct filename
+    filename = '{0}_{1}'.format(calibprefix, basefilename)
+    # construct absolute path
+    e2dscopy = os.path.join(path, filename)
+    # return absolute path
+    return e2dscopy
 
 
 # =============================================================================

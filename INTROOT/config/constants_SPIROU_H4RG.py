@@ -101,10 +101,10 @@ qc_loc_nbo_fpall = {'AB': 98, 'A': 49, 'B': 49, 'C': 49}
 fib_type_fpall = {'AB': ['AB'], 'A': ['A'], 'B': ['B'], 'C': ['C']}
 
 #   Half-zone extraction width left side (formally plage1)            - [cal_ff]
-ic_ext_range1_fpall = {'AB': 14.5, 'A': 0.0, 'B': 14.5, 'C': 7.}
+ic_ext_range1_fpall = {'AB': 16., 'A': 8., 'B': 8., 'C': 7.}
 
 #   Half-zone extraction width right side (formally plage2)           - [cal_ff]
-ic_ext_range2_fpall = {'AB': 14.5, 'A': 14.5, 'B': 0.0, 'C': 7.}
+ic_ext_range2_fpall = {'AB': 16., 'A': 8., 'B': 8., 'C': 7.}
 
 #   Half-zone extraction width for full extraction               - [cal_extract]
 #       (formally ic_ext_nbsig)
@@ -151,6 +151,10 @@ number_ref_bottom = 4
 
 #   Define the number of bins used in the dark median process         - [cal_pp]
 dark_med_binnum = 32
+
+#   Define rotation angle                                             - [cal_pp]
+#       (in degrees counter-clockwise direction)
+raw_to_pp_rotation = -90
 
 
 # -----------------------------------------------------------------------------
@@ -324,14 +328,14 @@ ff_end_order = None
 #   Manually set the sigdet to use in weighted tilt extraction        - [cal_ff]
 #       set to -1 to use from fitsfilename HEADER
 #       (formally ccdsigdet)
-ic_ff_sigdet = 100.0
+ic_ff_sigdet = -1
 
 #    Half size blaze smoothing window                                 - [cal_ff]
 ic_extfblaz = 50
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 7    # 10
+ic_blaze_fitn = 10    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
 ic_ff_order_plot = 27
@@ -339,6 +343,11 @@ ic_ff_order_plot = 27
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
 ic_ff_plot_all_orders = 0
+
+#   Define the orders not to plot on the RMS plot                     - [cal_ff]
+#      should be a list of integers
+ff_rms_plot_skip_orders = [22, 23, 24, 25, 48]
+
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
@@ -530,7 +539,7 @@ badpix_flat_cut_ratio = 0.5
 
 #   Define the maximum flux in ADU/s to be considered too         - [cal_badpix]
 #       hot to be used (formally max_hotpix)
-badpix_max_hotpix = 100.0
+badpix_max_hotpix = 5 #  = dark_cutlimit !!!
 
 #   Percentile to normalise to when normalising and median        - [cal_badpix]
 #      filtering image [percentage]
@@ -589,12 +598,16 @@ ccf_num_orders_max = 25
 #           - "new" - berv is calculated using barycorrpy  but needs to be
 #                     installed (i.e. pip install barycorrpy)
 #                     CURRENTLY NOT WORKING!!!
-ccf_bervmode = "off"
+ccf_bervmode = "new"
 
 
 # -----------------------------------------------------------------------------
 #   cal_exposure_meter parameters
 # -----------------------------------------------------------------------------
+
+#  Define which fiber to extract                                      - [cal_em]
+#     One of AB, A, B, or C
+em_fib_type = 'AB'
 
 #  Define the telluric threshold (transmission) to mask at            - [cal_em]
 em_tell_threshold = 0.95
@@ -627,71 +640,184 @@ em_save_mask_map = True
 
 
 # -----------------------------------------------------------------------------
-#   cal_hc parameters
+#   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
-#  Define the lamp types                                              - [cal_HC]
+#  Define the lamp types                                    - [cal_HC, cal_wave]
 #      these must be present in the the following dictionaries to
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = {'UNe': 'hcone', 'TH': 'hctwo'}
+ic_lamps = {'UNe':'hcone', 'TH':'hctwo'}
 
-#  Define the catalogue line list to use for each lamp type           - [cal_HC]
-#      (dictionary)
-ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
+#  Define the catalogue line list to use for each           - [cal_HC, cal_wave]
+#       lamp type (dictionary)
+ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
 
-#  Define the type of catalogue to use for each lamp type             - [cal_HC]
-ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
+#  Define the type of catalogue to use for each lamp type   - [cal_HC, cal_wave]
+ic_cat_type_all = {'UNe': 'fullcat', 'TH':'thcat'}
 
-# Maximum sig-fit of the guessed lines                                - [cal_HC]
-#     fwhm/2.35 of th lines)
-ic_max_sigll_cal_lines = 5.2
-
-# Maximum error on first guess lines                                  - [cal_HC]
-# default = 1
-ic_max_errw_onfit = 1
-
-# Maximum amplitude of the guessed lines                              - [cal_HC]
-# default = 2.0e5
-ic_max_ampl_line = 2.0e8
-
-#  Defines order to which the solution is calculated                  - [cal_HC]
-#      previously called n_ord_final
-cal_hc_n_ord_final = 24
-
-#  Defines echeele of first extracted order
-cal_hc_t_order_start = 66
-
-# Define the minimum instrumental error                               - [cal_HC]
-ic_errx_min = 0.03
-
-#  Define the wavelength fit polynomial order                         - [cal_HC]
-# default = 5
-ic_ll_degr_fit = 4
-
-#  Define the max rms for the sigma-clip fit ll                       - [cal_HC]
-ic_max_llfit_rms = 3.0
-
-# NOT USED YET
-# default = 50000  or 60000
+#  Define the Resolution of detector                        - [cal_HC, cal_wave]
 ic_resol = 55000
 
-# NOT USED YET
+#  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
+#      lines search
 # default = 3   or 2.6
 ic_ll_free_span = 3
 
-# NOT USED YET
+#  Define minimum wavelength of the detector to use in      - [cal_HC, cal_wave]
+#     find lines
+ic_ll_sp_min = 900
+
+#  Define maximum wavelength of the detector to use in      - [cal_HC, cal_wave]
+#     find lines
+ic_ll_sp_max = 2400
+
+#  Define the read out noise to use in find lines           - [cal_HC, cal_wave]
 # default = 16.8
 ic_hc_noise = 30
 
-# NOT USED YET
-ic_ll_sp_min = 900
+# Maximum sig-fit of the guessed lines                      - [cal_HC, cal_wave]
+#     fwhm/2.35 of th lines)
+ic_max_sigll_cal_lines = 5.2
 
-# NOT USED YET
-ic_ll_sp_max = 2400
+# Maximum error on first guess lines                        - [cal_HC, cal_wave]
+# default = 1
+ic_max_errw_onfit = 1
 
-# NOT USED YET
-ic_ll_smooth = 0
+# Maximum amplitude of the guessed lines                    - [cal_HC, cal_wave]
+# default = 2.0e5
+ic_max_ampl_line = 2.0e8
+
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
+#      previously called n_ord_final
+# QUESTION: Not used in cal_HC???
+ic_hc_n_ord_start = 0
+
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
+#      previously called n_ord_final
+ic_hc_n_ord_final = 24
+
+#  Defines echelle of first extracted order                 - [cal_HC, cal_wave]
+ic_hc_t_order_start = 66
+
+# Define the minimum instrumental error                     - [cal_HC, cal_wave]
+ic_errx_min = 0.03
+
+#  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
+# default = 5
+ic_ll_degr_fit = 4
+
+#  Define the max rms for the sigma-clip fit ll             - [cal_HC, cal_wave]
+ic_max_llfit_rms = 3.0
+
+#  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
+#      (fit across the orders)
+ic_Littrow_fit_deg = 4
+
+#  Define the littrow cut steps                             - [cal_HC, cal_wave]
+ic_Littrow_cut_step_1 = 250
+ic_Littrow_cut_step_2 = 500
+
+#  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
+#  (ends at ic_hc_n_ord_final)
+ic_Littrow_order_init = 0
+
+#  Define orders to ignore in Littrow fit                   - [cal_HC, cal_wave]
+ic_Littrow_remove_orders = []
+
+#  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
+#      (fit along the orders)
+ic_Littrow_order_fit_deg = 4
+
+#  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
+#    lines search (used AFTER littrow fit) default = 3
+ic_ll_free_span_2 = 2.6
+
+#  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
+#      previously called n_ord_final (used AFTER littrow fit)
+ic_hc_n_ord_final_2 = 24
+
+#  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
+#      Currently allowed modes are:
+#          0: Fortran "fitgaus" routine (requires SpirouDRS.fortran.figgaus.f
+#             to be compiled using f2py:
+#                 f2py -c -m fitgaus --noopt --quiet fitgaus.f
+#          1: Python fit using scipy.optimize.curve_fit
+#          2: Python fit using lmfit.models (Model, GaussianModel) - requires
+#              lmfit python module to be installed (pip install lmfit)
+#          3: Python (conversion of Fortran "fitgaus") - direct fortran gaussj
+#          4: Python (conversion of Fortran "fitgaus") - gaussj Melissa
+#          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
+hc_find_lines_mode = 0
+
+#  Define the CCF mask for the wave solution CCF            - [cal_HC, cal_wave]
+#       calculation
+ic_wave_ccf_mask = {'UNe': 'test_mask_UNe_firstguess_R50000.mas', 'TH':'test_mask_TH_R50000.mas'}
+
+#  Define the weight of the wave CCF mask                   - [cal_HC, cal_wave]
+#     (if 1 force all weights equal)
+ic_wave_ccf_w_mask_min = 1.0
+
+#  Define the wave CCF width of the template line           - [cal_HC, cal_wave]
+#     (if 0 use natural)
+ic_wave_ccf_mask_width = 0.0
+
+#  Define the wave CCF half width                           - [cal_HC, cal_wave]
+ic_wave_ccf_half_width = 10.0
+
+#  Define the wave CCF step                                 - [cal_HC, cal_wave]
+ic_wave_ccf_step = 0.1
+
+#  Define the type of fit for the wave CCF fit              - [cal_HC, cal_wave]
+wave_ccf_fit_type = 1
+
+#  Define first order FP solution is calculated from                - [cal_wave]
+ic_fp_n_ord_start = 0
+
+#  Defines last order FP solution is calculated to                  - [cal_wave]
+ic_fp_n_ord_final = 24
+
+#  Define the size of region where each line is fitted               -[cal_wave]
+ic_fp_size = 3
+
+#  Define the threshold to use in detecting the positions            -[cal_wave]
+#      of FP peaks
+ic_fp_threshold = 0.2
+
+#  Define the initial value of FP effective cavity width            - [cal_wave]
+#   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
+ic_fp_dopd0 = 2.45e7
+
+#  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
+#      the measured cavity width for each line
+ic_fp_fit_degree = 9
+
+#  Define the FP jump size that is too large                        - [cal_wave]
+ic_fp_large_jump = 0.7
+
+#  Define the plot order for the comparison between spe and speref  - [cal_wave]
+ic_wave_idrift_plot_order = 14
+
+#  Define the noise to use in the instrument drift calculation      - [cal_wave]
+ic_wave_idrift_noise = 50.0
+
+#   The maximum flux for a good (unsaturated) pixel                 - [cal_wave]
+ic_wave_idrift_maxflux = 350000
+
+#   The size around a saturated pixel to flag as unusable           - [cal_wave]
+ic_wave_idrift_boxsize = 12
+
+#   Define the number of standard deviations cut at in              - [cal_wave]
+#       cosmic renormalisation (for instrumental drift calculation)
+ic_wave_idrift_cut_e2ds = 4.5
+
+#  Define the maximum uncertainty allowed on the RV                 - [cal_wave]
+#      (for instrumental drift calculation)
+ic_wave_idrift_max_err = 3.0
+
+#  Define the RV cut above which the RV from orders are not used    - [cal_wave]
+#      (for instrumental drift calculation)
+ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
@@ -728,7 +854,7 @@ qc_loc_rmsmax_fwhm = 500
 qc_ff_rms = 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
-qc_loc_flumax = 64500
+qc_loc_flumax = 50000
 
 #   Maximum allowed RMS allowed for the RMS of the tilt             - [cal_slit]
 #        for the slit
@@ -742,7 +868,32 @@ qc_slit_max = 0.0
 
 #   Maximum signal allowed (set saturation limit)                - [cal_extract]
 #        however currently does not trigger qc
-qc_max_signal = 65500
+qc_max_signal = 50000
+
+#   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
+#       (at x cut points)
+qc_hc_rms_littrow_max = 0.3
+
+#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#        cal_wave (at x cut points)
+qc_hc_dev_littrow_max = 0.9
+
+#   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
+#       (at x cut points)
+qc_wave_rms_littrow_max = 0.1
+
+#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#       cal_wave (at x cut points)
+qc_wave_dev_littrow_max = 0.3
+
+#   Define the maximum number of orders to remove from RV            -[cal_wave]
+#       calculation (for instrumental drift calculation)
+qc_wave_idrift_nborderout = 15
+
+#   Define the maximum allowed drift (in m/s) in the                 -[cal_wave]
+#       instrumental drift calculation
+qc_wave_idrift_rv_max = 150.0
+
 
 # -----------------------------------------------------------------------------
 #  Calib DB settings

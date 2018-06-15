@@ -50,20 +50,18 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p)
-    p = spirouStartup.InitialFileSetup(p, kind=None, calibdb=False)
-     # log processing image type
-    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
-    p.set_source('DPRTYPE', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
-
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
     data, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    data = spirouImage.FixNonPreProcess(p, data, filename=p['FITSFILENAME'])
+
     # ----------------------------------------------------------------------
     # Get basic image properties
     # ----------------------------------------------------------------------
@@ -109,7 +107,7 @@ def main(night_name=None, files=None):
     satseuil = 64536.
     col = 2100
     seuil = 10000
-    slice = 20
+    slice = 5
 
     plt.ion()
     plt.clf()
@@ -121,10 +119,11 @@ def main(night_name=None, files=None):
     plt.figure()
     plt.clf()
 
-    centpart = data2[:, col - 10:col + 10]
+    centpart = data2[:, col - slice:col + slice]
 #    centpart = data2[col - slice:col + slice,:]
-    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
-    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
+#    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
+#    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
+    y = np.median(centpart, axis=1)
     # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))   ## weighted average
     plt.plot(np.arange(ny), y)
 
