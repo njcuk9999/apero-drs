@@ -667,7 +667,10 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            fx = fx / np.sum(fx)
+            if np.sum(fx) > 0:
+               fx = fx / np.sum(fx)
+            else:
+                fx = np.ones(np.shape(fx),'d')
             # weight values less than 0 to 1e-9
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in quadrature
@@ -752,7 +755,10 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            fx = fx / np.sum(fx)
+            if np.sum(fx) > 0:
+               fx = fx / np.sum(fx)
+            else:
+                fx = np.ones(np.shape(fx),'d')
             # weight values less than 0 to 1e-9
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in
@@ -799,7 +805,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     #       critical pixel values > sigcut * extraction
     #    or
     #       the loop exceeds "cosmic_threshold"
-    while (np.max(crit) > (sigcut * spe[ic])) and (nbloop < cosmic_threshold):
+    while (np.max(crit) > np.max((sigcut * spe[ic],1000.))) and (nbloop < cosmic_threshold):
         # TODO: Remove old print statement
         # wmsg = 'cosmic detected in line {0} with amp {1:.2f}'
         # print(wmsg.format(ic,np.max(crit)/spe[ic]))
