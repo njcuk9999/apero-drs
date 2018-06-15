@@ -24,7 +24,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'telluric_2d_mask.py'
+__NAME__ = 'cal_exposure_meter.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -52,34 +52,45 @@ def main(night_name=None, reffile=None):
     req, call, call_priority = [True], [reffile], [True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], name, req, call,
-                                                    call_priority, lname)
+                                                    call_priority, lname,
+                                                    recipe=__NAME__)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile')
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    p, reffile = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                               filename=p['REFFILE'])
+
+    # ----------------------------------------------------------------------
+    # Once we have checked the e2dsfile we can load calibDB
+    # ----------------------------------------------------------------------
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
 
     # ----------------------------------------------------------------------
-    # Construct reference filename and get fiber type
+    # Get the required fiber type from the constants file
     # ----------------------------------------------------------------------
-    # get reduced directory + night name
-    rdir = p['RAW_DIR']
-    # construct and test the reffile
-    reffile = spirouStartup.GetFile(p, rdir, p['REFFILE'], kind='TELLMASK')
     # get the fiber type (set to AB)
-    p['FIBER'] = 'AB'
+    p['FIBER'] = p['EM_FIB_TYPE']
 
     # ----------------------------------------------------------------------
     # Read flat image file
     # ----------------------------------------------------------------------
     # read the image data (for the header only)
     image, hdr, cdr, ny, nx = spirouImage.ReadData(p, reffile)
-    # create loc
-    loc = ParamDict()
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    image = spirouImage.FixNonPreProcess(p, image)
 
     # ----------------------------------------------------------------------
     # Get basic image properties
     # ----------------------------------------------------------------------
+    # create loc
+    loc = ParamDict()
     # get sig det value
     p = spirouImage.GetSigdet(p, hdr, name='sigdet')
     # get exposure time

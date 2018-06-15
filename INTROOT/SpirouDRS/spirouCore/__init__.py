@@ -25,7 +25,7 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['wlog', 'WarnLog',
-           'GaussFunction',
+           'GaussFunction', 'Getll', 'Getdll',
            'GetTimeNowUnix', 'GetTimeNowString',
            'Unix2stringTime', 'String2unixTime',
            'sPlt']
@@ -39,6 +39,10 @@ wlog = spirouLog.logger
 WarnLog = spirouLog.warninglogger
 
 GaussFunction = spirouMath.gauss_function
+
+Getll = spirouMath.get_ll_from_coefficients
+
+Getdll = spirouMath.get_dll_from_coefficients
 
 GetTimeNowUnix = spirouMath.get_time_now_unix
 

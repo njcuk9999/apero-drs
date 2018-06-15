@@ -85,32 +85,34 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     call_priority = [True, True, True, True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
-                                                    call_priority, lname)
+                                                    call_priority, lname,
+                                                    recipe=__NAME__)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='e2dsfile',
                                     mainfitsdir='reduced')
+
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    p, e2dsfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                    filename=p['E2DSFILE'])
+
+    # ----------------------------------------------------------------------
+    # Once we have checked the e2dsfile we can load calibDB
+    # ----------------------------------------------------------------------
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
 
+    # ----------------------------------------------------------------------
+    # Deal with optional run time arguments
+    # ----------------------------------------------------------------------
     # define default arguments (if ccf_width and ccf_step are not defined
     # in function call or run time arguments
     if 'ccf_width' not in p:
         p['CCF_WIDTH'] = p['IC_CCF_WIDTH']
     if 'ccf_step' not in p:
         p['CCF_STEP'] = p['IC_CCF_STEP']
-    # ----------------------------------------------------------------------
-    # Construct reference filename and get fiber type
-    # ----------------------------------------------------------------------
-    # get reduced directory + night name
-    rdir = p['REDUCED_DIR']
-    # construct and test the e2dsfile
-    e2dsfilename = spirouStartup.GetFile(p, rdir, p['E2DSFILE'], None,
-                                         'CCF')
-    # get the fiber type
-    p['FIBER'] = spirouStartup.GetFiberType(p, e2dsfilename)
-    fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
-    p.set_source('FIBER', fsource)
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -269,7 +271,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the contrast (ccf fit amplitude)
     loc['CONTRAST'] = np.abs(100*ccf_res[0])
     # get the FWHM value
-    loc['FWHM'] = ccf_res[2] * 2.3548
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+
     # ----------------------------------------------------------------------
     # set the source
     keys = ['average_ccf', 'maxcpp', 'rv', 'contrast', 'fwhm',

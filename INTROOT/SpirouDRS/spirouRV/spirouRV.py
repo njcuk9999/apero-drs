@@ -19,7 +19,6 @@ import os
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouCore import spirouMath
 
 # =============================================================================
@@ -975,7 +974,7 @@ def locate_mask(p, filename):
     return abspath
 
 
-def coravelation(p, loc):
+def coravelation(p, loc, log=False):
     """
     Calculate the CCF and fit it with a Gaussian profile
 
@@ -1029,11 +1028,10 @@ def coravelation(p, loc):
                            each RV
                            shape = (number of orders x number of RV points)
     """
+    func_name = __NAME__ + '.coravelation()'
     # -------------------------------------------------------------------------
     # get constants from p
     # -------------------------------------------------------------------------
-    trv = p['TARGET_RV']
-    ccf_width = p['CCF_WIDTH']
     ccf_step = p['CCF_STEP']
     det_noise = p['CCF_DET_NOISE']
     fit_type = p['CCF_FIT_TYPE']
@@ -1057,18 +1055,27 @@ def coravelation(p, loc):
     berv_max = loc['BERV_MAX']
     # -------------------------------------------------------------------------
     # log that we are computing ccf
-    wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
-    WLOG('', p['LOG_OPT'], wmsg.format(trv))
+    if log:
+        wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
+        WLOG('', p['LOG_OPT'], wmsg.format(p['TARGET_RV']))
     # -------------------------------------------------------------------------
+    # get rvmin and rvmax
+    if 'RVMIN' not in p:
+        p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+        p.set_source('RVMIN', func_name)
+    if 'RVMAX' not in p:
+        p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + ccf_step
+        p.set_source('RVMAX', func_name)
     # create a rv ccf range
-    rv_ccf = np.arange(trv - ccf_width, trv + ccf_width + ccf_step, ccf_step)
+    rv_ccf = np.arange(p['RVMIN'], p['RVMAX'], ccf_step)
     # -------------------------------------------------------------------------
     # calculate modified map
     ll_map_b = ll_map * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # calculate modified coefficients
     coeff_ll_b = coeff_ll * (1.0 + 1.55e-8) * (1.0 + berv / c)
     # get the differential map
-    dll_map = spirouTHORCA.Getdll(coeff_ll_b, len(ll_map[0]), len(coeff_ll))
+    dll_map = spirouMath.get_dll_from_coefficients(coeff_ll_b, len(ll_map[0]),
+                                                   len(coeff_ll))
     # -------------------------------------------------------------------------
     # define some constants for loop
     constant1 = (1 + 1.55e-8) * (1 + berv_max/c)
@@ -1216,9 +1223,6 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
     :return ccf_noise: numpy array (1D), the CCF noise for each RV value
     """
 
-    import time
-    times = []
-
     # speed of light in km/s
     c = CONSTANT_C / 1000.0
 
@@ -1242,7 +1246,6 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
         index_mask_blue = np.searchsorted(sp_ll_dll, mask_blue) + 1
         index_mask_red = np.searchsorted(sp_ll_dll, mask_red) + 1
 
-        sss = time.time()
         # work out the correlation of each bin
         cargs = [sp_flux, sp_ll, sp_dll, blaze, mask_blue, mask_red, mask_w,
                  index_mask_blue, index_mask_red, index_line_ctr, det_noise]
@@ -1250,8 +1253,6 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
             out, pix, llrange, sigout = correlbin(*cargs)
         else:
             out, pix, llrange, sigout = raw_correlbin(*cargs)
-
-        times.append(time.time() - sss)
 
         ccf.append(out), ccf_noise.append(sigout)
     # return the ccf, pix, llrange and ccf_noise
@@ -1555,26 +1556,31 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
         noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise**2
         llrangetmp = (pix_s[cond3] * dll_start + pix_e[cond3] * dll_end)
         # calculate sums
-        out_ccf += out[cond3] * weight * blaze_cent
-        pix += (pix_s[cond3] + pix_e[cond3]) * weight
+        out_ccf += np.sum(out[cond3] * weight * blaze_cent)
+        pix += np.sum((pix_s[cond3] + pix_e[cond3]) * weight)
         llrange += np.sum(llrangetmp * weight)
         ccf_noise += np.sum(noise[cond3] * weight**2)
-
+        # calculate fractional contributions
+        out_ccf_i = 0.0
+        llrange_i = 0.0
+        ccf_noise_i = 0.0
         for i in range(len(i_start)):
             start, end = i_start[cond3][i], i_end[cond3][i]
-            # output ccf calculation
-            out_ccf += np.sum((flux[start:end-1]/blaze[start:end-1]) * weight)
-            # pixel calculation
-            pix += np.sum(weight)
-            llrange += np.sum(dll[start:end-1] * weight)
+            out_ccf_i += np.sum(flux[start:end-1]/blaze[start:end-1])
+            llrange_i += np.sum(dll[start:end-1])
             # ccf noise calculation
             noisetmp = np.abs(flux[start:end-1] + det_noise**2)
-            ccf_noise += np.sum(noisetmp * weight**2)
-
+            ccf_noise_i += np.sum(noisetmp)
+        # add fractional contributions to totals
+        out_ccf += (np.sum(out_ccf_i * weight * blaze_cent))
+        pix += (np.sum(weight) * len(i_start))
+        llrange += (np.sum(llrange_i * weight))
+        ccf_noise += (np.sum(ccf_noise_i * weight **2))
     # sqrt the noise
     ccf_noise = np.sqrt(ccf_noise)
     # return parameters
     return out_ccf, pix, llrange, ccf_noise
+
 
 
 def earth_velocity_correction(p, loc, method='old'):
@@ -1613,14 +1619,14 @@ def earth_velocity_correction(p, loc, method='old'):
     #--------------------------------------------------------------------------
 
     WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
-    args = [p, target_alpha, target_delta, target_equinox, obs_year, obs_month,
-            obs_day, obs_hour, p['IC_LONGIT_OBS'], p['IC_LATIT_OBS'],
-            p['IC_LATIT_OBS'], target_pmra, target_pmde]
+    args = [p, target_alpha, target_delta, target_equinox, obs_year,
+            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
+            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra, target_pmde]
     # calculate BERV
     berv, bjd, bervmax = newbervmain(*args, method=method)
     # log output
     wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
-    WLOG('info',p['LOG_OPT'], wmsg.format(berv))
+    WLOG('info', p['LOG_OPT'], wmsg.format(berv))
 
     # finally save berv, bjd, bervmax to p
     loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
@@ -1643,12 +1649,12 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # need to import
         from SpirouDRS.fortran import newbervmain
         # pipe to FORTRAN
+        # newbervmain needs RA in hour, obs_long West and obs_alt in km
         args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
                 obs_alt, pmra, pmde]
         berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
         # return berv, bjd, bervmax
         return berv1, bjd1, bervmax1
-
 
     if method == 'new':
         # calculate JD time (as Astropy.Time object)
@@ -1669,28 +1675,32 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # get barycorrpy folder
         data_folder = os.path.join(absfolder, '')
         # ---------------------------------------------------------------------
-
         # need import
         import barycorrpy
 
-        # TODO: zmeas needs to be set to the CCF shift result
-        # TODO: Need parallax and rv?
+        # TODO: zmeas needs to be set to the CCF shift result --> NO
+        # TODO: Need parallax and rv? --> NO
+        # TODO barycorrpy needs RA in degree, obs_long East and obs_alt in m
 
-        bkwargs = dict(JDUTC=[t1.jd], ra=ra, dec=dec, epoch=equinox,
-                       pmra=pmra, pmdec=pmde, px=20.0, rv=0.0,
-                       lat=obs_lat, longi=obs_lat, alt=obs_long,
-                       zmeas=0.0, leap_dir=data_folder)
-        bresults1 = barycorrpy.get_BC_vel(**bkwargs)
-        bresults2 = barycorrpy.utc_tdb.JDUTC_to_JDTDB(t1, fpath=data_folder)
+        # set up the barycorr arguments
+        bkwargs = dict(ra=ra*15., dec=dec, epoch=equinox, pmra=pmra,
+                       pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,
+                       longi=obs_long*-1, alt=obs_alt*1000.,
+                       leap_dir=data_folder)
+
+        # get the julien UTC date for observation and obs + 1 year
+        jdutc=list(t1.jd + np.arange(0., 365., 1.5))
+        bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+        bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
 
         berv2 = bresults1[0][0]/1000.0
-        bjd2 = bresults2[0].jd
-        bervmax2 = bresults1[0][0]/1000.0
+        # bjd2 = bresults2[0].jd
+        bjd2 = bresults2[0][0]
+        # work ou the maximum barycentric correction
+        bervmax2 = np.max(abs(bresults1[0] / 1000.))
 
+        # return results
         return berv2, bjd2, bervmax2
-
-
-
 
 
 def fit_ccf(rv, ccf, fit_type):
@@ -1718,22 +1728,22 @@ def fit_ccf(rv, ccf, fit_type):
         WLOG('error', '', emsg.format(*eargs))
 
     # get constants
-    max_ = np.max(ccf)
+    max_ccf, min_ccf = np.max(ccf), np.min(ccf)
     argmin, argmax = np.argmin(ccf), np.argmax(ccf)
-    diff = max_ - np.min(ccf)
+    diff = max_ccf - min_ccf
     rvdiff = rv[1] - rv[0]
     # set up guess for gaussian fit
     # if fit_type == 0 then we have absorption lines
     if fit_type == 0:
         if np.max(ccf) != 0:
-            a = np.array([-diff/max_, rv[argmin], 4*rvdiff, 0])
+            a = np.array([-diff/max_ccf, rv[argmin], 4*rvdiff, 0])
         else:
             a = np.zeros(4)
-    # else (fit_type == 1) then we have emmision lines
+    # else (fit_type == 1) then we have emission lines
     else:
-        a = np.array([diff/max_, rv[argmax], 4*rvdiff, 1])
+        a = np.array([diff/max_ccf, rv[argmax], 4*rvdiff, 1])
     # normalise y
-    y = ccf/max_ - 1 + fit_type
+    y = ccf/max_ccf - 1 + fit_type
     # x is just the RVs
     x = rv
     # uniform weights
@@ -1744,7 +1754,7 @@ def fit_ccf(rv, ccf, fit_type):
     # TODO: remove this!
     # test_fit_ccf(x, y, w, a, result)
 
-    ccf_fit = (fit + 1 - fit_type)*max_
+    ccf_fit = (fit + 1 - fit_type)*max_ccf
     # return the best guess and the gaussian fit
     return result, ccf_fit
 

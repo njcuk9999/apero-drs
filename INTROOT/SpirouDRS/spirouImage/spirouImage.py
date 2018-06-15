@@ -120,6 +120,21 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         return newimage
 
 
+def rotate(image, rotation):
+    """
+    Rotates the image by rotation
+
+    :param image: numpy array (2D), the image to rotate
+    :param rotation: float, the rotational angle in degrees (counter-clockwise)
+                     must be a multiple of +/- 90 degrees
+
+    :return newimage:  numpy array (2D), the rotated image
+    """
+    rotation = int(rotation // 90)
+    newimage = np.rot90(image, rotation)
+    return newimage
+
+
 def flip_image(image, fliprows=True, flipcols=True):
     """
     Flips the image in the x and/or the y direction
@@ -427,6 +442,38 @@ def interp_bad_regions(p, image):
     image3 = (image2 * (1 - weights)) + (image * weights)
     # return corrected image
     return image3
+
+
+def fix_non_preprocessed(p, image, filename=None):
+
+    func_name = __NAME__ + '.fix_non_preprocessed()'
+    # if preprocessed not found calculate it
+    if 'PREPROCESSED' not in p:
+        if filename is None:
+            emsg1 = 'Need to identify whether file is preprocessed'
+            emsg2 = '\tPlease add "filename" to call to {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        else:
+            if p['PROCESSED_SUFFIX'] in filename:
+                p['PREPROCESSED'] = True
+            else:
+                p['PREPROCESSED'] = False
+    # get conditions for rotation
+    # TODO: remove H4RG dependency
+    cond1 = p['IC_IMAGE_TYPE'] == 'H4RG'
+    cond2 = not p['PREPROCESSED']
+    # if conditions met rotate
+    if cond1 and cond2:
+        # log warning
+        wmsg = 'Warning: Using non-preprocessed file!'
+        WLOG('warning', p['LOG_OPT'], wmsg)
+        # get rotation
+        rotation = p['RAW_TO_PP_ROTATION']
+        # rotate and return image
+        return rotate(image, rotation)
+    # else return image
+    else:
+        return image
 
 
 # =============================================================================
@@ -1128,7 +1175,8 @@ def locate_bad_pixels_full(p, image):
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
-    mask = np.rot90(mdata, -1) < threshold
+    #mask = np.rot90(mdata, -1) < threshold
+    mask = np.abs(np.rot90(mdata, -1)-1) > threshold
 
     # -------------------------------------------------------------------------
     # log results

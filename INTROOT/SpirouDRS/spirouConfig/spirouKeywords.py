@@ -55,6 +55,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BNFLAT',
             'kw_BNILUM',
             'kw_BTOT',
+            'kw_CCAS',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
             'kw_CCF_CDELT',
@@ -67,6 +68,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CCF_MAXCPP',
             'kw_CCF_RV',
             'kw_CCF_RVC',
+            'kw_CREF',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -74,10 +76,19 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_MED',
             'kw_DARK_R_DEAD',
             'kw_DARK_R_MED',
+            'kw_DATE_OBS',
             'kw_DPRTYPE',
             'kw_E2DS_EXTM',
             'kw_E2DS_FUNC',
             'kw_E2DS_SNR',
+            'kw_EM_LOCFILE',
+            'kw_EM_MAXWAVE',
+            'kw_EM_MINWAVE',
+            'kw_EM_TELLX',
+            'kw_EM_TELLY',
+            'kw_EM_TILT',
+            'kw_EM_TRASCUT',
+            'kw_EM_WAVE',
             'kw_EXPTIME',
             'kw_EXTRA_SN',
             'kw_FLAT_RMS',
@@ -96,33 +107,26 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_LOC_RMS_WID',
             'kw_LOC_SMAXPTS_CTR',
             'kw_LOC_SMAXPTS_WID',
+            'kw_OBJDEC',
+            'kw_OBJDECPM',
+            'kw_OBJEQUIN',
+            'kw_OBJRA',
+            'kw_OBJRAPM',
+            'kw_OBSTYPE',
             'kw_RDNOISE',
-            'kw_TH_COEFF_PREFIX',
-            'kw_TH_LL_D',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
-            'kw_TH_ORD_N',
             'kw_TILT',
+            'kw_UTC_OBS',
+            'kw_WAVE_LL_DEG',
+            'kw_WAVE_ORD_N',
+            'kw_WAVE_PARAM',
             'kw_drs_QC',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
-            'kw_version',
-            'kw_EM_TELLX',
-            'kw_EM_TELLY',
-            'kw_EM_LOCFILE',
-            'kw_EM_WAVE',
-            'kw_EM_TILT',
-            'kw_EM_MINWAVE',
-            'kw_EM_MAXWAVE',
-            'kw_EM_TRASCUT',
-            'kw_DATE_OBS',
-            'kw_UTC_OBS',
-            'kw_OBJRA',
-            'kw_OBJDEC',
-            'kw_OBJEQUIN',
-            'kw_OBJRAPM',
-            'kw_OBJDECPM']
+            'kw_version']
+
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -179,24 +183,8 @@ spirouConfig.check_config(p, USE_PARAMS)
 #           folder, however they should be placed as strings in USE_PARAMS
 #
 # -----------------------------------------------------------------------------
-# General variables
-# -----------------------------------------------------------------------------
-# DRS version
-kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
-              'DRS version']
-
-# root keys (for use below and in finding keys later)
-kw_root_drs_loc = ['LO', None, '']
-kw_root_drs_flat = ['FF', None, '']
-kw_root_drs_hc = ['LMP', None, '']
-
-# -----------------------------------------------------------------------------
 # Required header keys (main fits file)
 # -----------------------------------------------------------------------------
-
-# Define the key to get the data fits file type
-kw_DPRTYPE = ['TPL_NAME', None, '']
-
 # define the HEADER key for acquisition time (used to get value only)
 #   in format YYYY-mm-dd-HH-MM-SS.ss
 # TODO: This switch will be obsolete after H2RG testing is over
@@ -243,25 +231,30 @@ kw_GAIN = ['GAIN', None, '']
 # define the exposure time HEADER key (used to get value only)
 kw_EXPTIME = ['EXPTIME', None, '']
 
+# define the observation type HEADER key
+kw_OBSTYPE = ['OBSTYPE', None, '']
+
+# define the science fiber type HEADER key
+kw_CCAS = ['SBCCAS_P', '', '']
+
+# define the reference fiber type HEADER key
+kw_CREF = ['SBCREF_P', '', '']
+
 
 # -----------------------------------------------------------------------------
-# Required header keys (other files)
+# Define general keywords
 # -----------------------------------------------------------------------------
+# DRS version
+kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+              'DRS version']
 
-# the number of orders used in the TH line list                      [WAVE_AB]
-kw_TH_ORD_N = ['TH_ORD_N', None, '']
+# root keys (for use below and in finding keys later)
+kw_root_drs_loc = ['LO', None, '']
+kw_root_drs_flat = ['FF', None, '']
+kw_root_drs_hc = ['LMP', None, '']
 
-# the number of fit coefficients from the TH line list fit           [WAVE_AB]
-kw_TH_LL_D = ['TH_LL_D', None, '']
-
-# the x-axis dimension size for the TH line list file                [WAVE_AB]
-kw_TH_NAXIS1 = ['NAXIS1', None, '']
-
-# the y-axis dimension size for the TH line list file                [WAVE_AB]
-kw_TH_NAXIS2 = ['NAXIS2', None, '']
-
-# the prefix to use to get the TH line list fit coefficients         [WAVE_AB]
-kw_TH_COEFF_PREFIX = ['TH_LC', None, '']
+# Define the key to get the data fits file type
+kw_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -374,7 +367,6 @@ kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
 # -----------------------------------------------------------------------------
-
 # fraction of hot pixels
 kw_BHOT = ['BHOT', 0, 'Frac of hot px [%]']
 
@@ -413,9 +405,26 @@ kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
 
 
 # -----------------------------------------------------------------------------
+# Define wave variables
+# -----------------------------------------------------------------------------
+# the number of orders used in the TH line list                      [WAVE_AB]
+kw_WAVE_ORD_N = ['TH_ORD_N', None, 'nb orders in total']
+
+# the number of fit coefficients from the TH line list fit           [WAVE_AB]
+kw_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
+
+# the prefix to use to get the TH line list fit coefficients         [WAVE_AB]
+kw_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
+
+# the x-axis dimension size for the TH line list file                [WAVE_AB]
+kw_TH_NAXIS1 = ['NAXIS1', None, '']
+
+# the y-axis dimension size for the TH line list file                [WAVE_AB]
+kw_TH_NAXIS2 = ['NAXIS2', None, '']
+
+# -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
 # -----------------------------------------------------------------------------
-
 kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
 kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
 kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
@@ -424,6 +433,7 @@ kw_EM_TILT = ['TILTFILE', 0.0, 'Tilt solution file used']
 kw_EM_MINWAVE = ['MINLAM', 0.0, 'Minimum lambda used in mask [nm]']
 kw_EM_MAXWAVE = ['MAXLAM', 0.0, 'Maximum lambda used in mask [nm]']
 kw_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
+
 
 # -----------------------------------------------------------------------------
 # Define qc variables
