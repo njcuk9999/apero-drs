@@ -168,10 +168,10 @@ def main(night_name=None, reffile=None):
             # get the box size from constants
             bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
             # Measurethe min and max flux
-            miny, maxy = spirouBACK.MeasureMinMax(loc['SPE'][order_num],
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num],
                                                   bsize)
             # subtract off the background (miny)
-            loc['SPE'][order_num] = loc['SPE'][order_num] - miny
+            loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
 
     # ----------------------------------------------------------------------
     # Identify FP peaks in reference file
