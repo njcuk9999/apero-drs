@@ -299,7 +299,7 @@ def main(night_name=None, reffile=None):
         merr = 1./np.sqrt(np.sum((1./err_meanrv)**2))
         # Log the RV properties
         wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s '
-                '- Flux ratio= {3:.2f} - Nb Comsic= {4}')
+                '- Flux ratio= {3:.3f} - Nb Comsic= {4}')
         WLOG('', p['LOG_OPT'], wmsg.format(deltatime, meanrv, merr,
                                            meanfratio, cpt))
         # add this iteration to storage
