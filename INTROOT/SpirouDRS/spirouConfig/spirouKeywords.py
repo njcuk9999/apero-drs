@@ -68,6 +68,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CCF_MAXCPP',
             'kw_CCF_RV',
             'kw_CCF_RVC',
+            'kw_CDEN',
             'kw_CREF',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
@@ -110,6 +111,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJDEC',
             'kw_OBJDECPM',
             'kw_OBJEQUIN',
+            'kw_OBJNAME',
             'kw_OBJRA',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
@@ -213,6 +215,9 @@ kw_OBJRA = ['OBJRA', None, '']
 # define the observation dec HEADER key
 kw_OBJDEC = ['OBJDEC', None, '']
 
+# define the observation name
+kw_OBJNAME = ['OBJNAME', None, '']
+
 # define the observation equinox HEADER key
 kw_OBJEQUIN = ['OBJEQUIN', None, '']
 
@@ -235,11 +240,13 @@ kw_EXPTIME = ['EXPTIME', None, '']
 kw_OBSTYPE = ['OBSTYPE', None, '']
 
 # define the science fiber type HEADER key
-kw_CCAS = ['SBCCAS_P', '', '']
+kw_CCAS = ['SBCCAS_P', None, '']
 
 # define the reference fiber type HEADER key
-kw_CREF = ['SBCREF_P', '', '']
+kw_CREF = ['SBCREF_P', None, '']
 
+# define the density HEADER key
+kw_CDEN = ['SBCDEN_P', None, '']
 
 # -----------------------------------------------------------------------------
 # Define general keywords

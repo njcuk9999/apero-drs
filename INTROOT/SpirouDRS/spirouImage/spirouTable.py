@@ -98,7 +98,7 @@ def make_table(columns, values, formats=None, units=None):
         # set columns
         table[col] = val
         # if we have formats set format
-        if formats is not None:
+        if formats[c_it] is not None:
             if test_format(formats[c_it]):
                 table[col].format = formats[c_it]
             else:
