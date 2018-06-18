@@ -821,6 +821,28 @@ ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
+#   polarimtery parameters
+# -----------------------------------------------------------------------------
+#  Define all possible stokes parameters                          - [pol_spirou]
+ic_polar_stokes_params = ['V', 'Q', 'U']
+
+#  Define all possible fibers used for polarimetry                - [pol_spirou]
+ic_polar_fibers = ['A', 'B']
+
+#  Define the polarimetry method                                  - [pol_spirou]
+#    currently must be either:
+#         - Ratio
+#         - Difference
+ic_polar_method = 'Ratio'
+
+#  Define the polarimetry continuum bin size (for plotting)       - [pol_spirou]
+ic_polar_cont_binsize = 4000
+
+#  Define the polarimetry continuum overlap size (for plotting)   - [pol_spirou]
+ic_polar_cont_overlap = 0
+
+
+# -----------------------------------------------------------------------------
 #  Quality control settings
 # -----------------------------------------------------------------------------
 

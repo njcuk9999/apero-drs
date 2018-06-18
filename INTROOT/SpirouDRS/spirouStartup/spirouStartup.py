@@ -348,7 +348,7 @@ def initial_file_setup(p, recipe, files=None, calibdb=False):
         wmsg = 'Now processing Image with {1} recipe'
     else:
         wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], recipe))
     # -------------------------------------------------------------------------
     # return p
     return p
