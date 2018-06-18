@@ -69,6 +69,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CCF_RV',
             'kw_CCF_RVC',
             'kw_CDEN',
+            'kw_CMMTSEQ',
             'kw_CREF',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
@@ -117,7 +118,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBSTYPE',
             'kw_POL_STOKES',
             'kw_POL_NEXP',
-            'kw_POL_METHOD ',
+            'kw_POL_METHOD',
             'kw_RDNOISE',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
@@ -250,6 +251,9 @@ kw_CREF = ['SBCREF_P', None, '']
 
 # define the density HEADER key
 kw_CDEN = ['SBCDEN_P', None, '']
+
+# define polarisation HEADER key
+kw_CMMTSEQ = ['CMMTSEQ', None, '']
 
 # -----------------------------------------------------------------------------
 # Define general keywords
