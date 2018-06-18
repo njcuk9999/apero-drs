@@ -1471,7 +1471,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
     if name is None:
         name = key
     # get raw value
-    rawvalue = spirouFITS.keylookup(p, hdr, key, hdr['@@@hname'])
+    rawvalue = spirouFITS.keylookup(p, hdr, key)
     # get type casted value
     try:
         if dtype is None:
@@ -1498,7 +1498,10 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
         # assign value to p[name]
         p[name] = value
         # set source
-        p.set_source(name, hdr['@@@hname'])
+        if '@@@hname' in hdr:
+            p.set_source(name, hdr['@@@hname'])
+        else:
+            p.set_source(name, func_name + ' (via file HEADER)')
         # return p
         return p
 
