@@ -113,6 +113,9 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRA',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
+            'kw_POL_STOKES',
+            'kw_POL_NEXP',
+            'kw_POL_METHOD ',
             'kw_RDNOISE',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
@@ -403,7 +406,6 @@ kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
 kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
 
-
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
@@ -421,6 +423,15 @@ kw_TH_NAXIS1 = ['NAXIS1', None, '']
 
 # the y-axis dimension size for the TH line list file                [WAVE_AB]
 kw_TH_NAXIS2 = ['NAXIS2', None, '']
+
+
+# -----------------------------------------------------------------------------
+# Define polarimetry variables
+# -----------------------------------------------------------------------------
+kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, or V']
+kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
+kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
+
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
