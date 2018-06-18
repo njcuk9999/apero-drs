@@ -1763,8 +1763,8 @@ def polar_continuum_plot(loc, in_wavelengths=True):
     frame.plot(wl, pol, linestyle='None', marker='.',
                label='Degree of Polarization')
     # plot continuum sample points
-    frame.scatter(contxbin, contybin, linestyle='None', marker='o',
-                  label='Continuum Sampling')
+    frame.plot(contxbin, contybin, linestyle='None', marker='o',
+               label='Continuum Sampling')
     # plot continuum fit
     frame.plot(wl, contpol, label='Continuum Polarization')
     # ---------------------------------------------------------------------
