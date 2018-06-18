@@ -839,7 +839,7 @@ ic_polar_method = 'Ratio'
 ic_polar_cont_binsize = 4000
 
 #  Define the polarimetry continuum overlap size (for plotting)   - [pol_spirou]
-ic_poalr_cont_overlap = 0
+ic_polar_cont_overlap = 0
 
 
 # -----------------------------------------------------------------------------
