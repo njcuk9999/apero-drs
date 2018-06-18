@@ -14,15 +14,12 @@ Last modified: 2018-06-13 at 16:03
 Up-to-date with pol_spirou AT-4
 """
 from __future__ import division
-import numpy as np
 import os
 
-from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouImage
-
 from SpirouDRS import spirouPOLAR
 
 # =============================================================================
@@ -155,6 +152,7 @@ def main(night_name=None, files=None):
     
     # return a copy of locally defined variables in the memory
     return dict(locals())
+
 
 # =============================================================================
 # Start of code
