@@ -1730,33 +1730,93 @@ def wave_local_width_offset_plot(loc):
         plt.close()
 
 
-def wave_fp_wavelength_residuals(loc):
-    """
-    Plot the FP line wavelength residuals
+# =============================================================================
+# Polarimetry plotting functions
+# =============================================================================
+def polar_continuum_plot(loc, in_wavelengths=True):
 
-    :param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            FP_LL_POS: numpy array, the FP line initial wavelengths
-            FP_LL_POS_NEW: numpy array, the FP line updated wavelengths
-
-    :return None:
-    """
     # get data from loc
-    fp_ll = loc['FP_LL_POS']
-    fp_ll_new = loc['FP_LL_POS_NEW']
+    wl, pol = loc['FLAT_X'], loc['FLAT_POL']
+    contpol = loc['CONT_POL']
+    contxbin, contybin = loc['CONT_XBIN'], loc['CONT_YBIN']
+    stokes = loc['STOKES']
+    method, nexp = loc['METHOD'], loc['NEXPOSURES']
+    # ---------------------------------------------------------------------
     # set up fig
     plt.figure()
     # clear the current figure
     plt.clf()
     # set up axis
     frame = plt.subplot(111)
-    # plot fits
-    frame.scatter(fp_ll, fp_ll - fp_ll_new)
-    # set title labels limits
-    title = 'FP lines wavelength residuals'
-    frame.set(xlabel='Initial wavelength [nm]',
-              ylabel='New - Initial wavelength [nm]',
-              title=title)
+    # ---------------------------------------------------------------------
+    # set up labels
+    if in_wavelengths:
+        xlabel = 'wavelength (nm)'
+    else:
+        xlabel = 'order number + col (pixel)'
+    ylabel = 'Degree of polarization for Stokes {0} (%)'.format(stokes)
+    # set up title
+    title = 'Polarimatry: Stokes {0}, Method={1}, for {2} exposures'
+    titleargs = [stokes, method, nexp]
+    # ---------------------------------------------------------------------
+    # plot polarimetry data
+    frame.plot(wl, pol, linestyle='None', marker='.',
+               label='Degree of Polarization')
+    # plot continuum sample points
+    frame.scatter(contxbin, contybin, linestyle='None', marker='o',
+                  label='Continuum Sampling')
+    # plot continuum fit
+    frame.plot(wl, contpol, label='Continuum Polarization')
+    # ---------------------------------------------------------------------
+    # set title and labels
+    frame.set(title=title.format(*titleargs), xlabel=xlabel, ylabel=ylabel)
+    # ---------------------------------------------------------------------
+    # plot legend
+    frame.legend(loc=0)
+    # ---------------------------------------------------------------------
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def polar_result_plot(loc, in_wavelengths=True):
+    # get data from loc
+    wl, pol = loc['FLAT_X'], loc['FLAT_POL']
+    null1, null2 = loc['FLAT_NULL1'], loc['FLAT_NULL2']
+    stokes = loc['STOKES']
+    method, nexp = loc['METHOD'], loc['NEXPOSURES']
+    # ---------------------------------------------------------------------
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # ---------------------------------------------------------------------
+    # set up labels
+    if in_wavelengths:
+        xlabel = 'wavelength (nm)'
+    else:
+        xlabel = 'order number + col (pixel)'
+    ylabel = 'Degree of polarization for Stokes {0} (%)'.format(stokes)
+    # set up title
+    title = 'Polarimatry: Stokes {0}, Method={1}, for {2} exposures'
+    titleargs = [stokes, method, nexp]
+    # ---------------------------------------------------------------------
+    # plot polarimetry data
+    plt.plot(wl, pol, label='Degree of Polarization')
+    # plot null1 data
+    plt.plot(wl, null1, label='Null Polarization 1')
+    # plot null2 data
+    plt.plot(wl, null2, label='Null Polarization 2')
+    # ---------------------------------------------------------------------
+    # set title and labels
+    frame.set(title=title.format(*titleargs), xlabel=xlabel, ylabel=ylabel)
+    # ---------------------------------------------------------------------
+    # plot legend
+    frame.legend(loc=0)
+    # ---------------------------------------------------------------------
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
@@ -1764,7 +1824,7 @@ def wave_fp_wavelength_residuals(loc):
 
 
 # =============================================================================
-# test functions (rewmove later)
+# test functions (remove later)
 # =============================================================================
 # TODO: remove later
 def __test_smoothed_boxmean_image(image, image1, image2, size,
