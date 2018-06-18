@@ -127,7 +127,9 @@ def load_data(p, polardict, loc):
     # First identify which stokes parameter is used in the input data
     stokes_detected = []
     # loop around filenames in polardict
-    for entry in polardict.keys():
+    for filename in polardict.keys():
+        # get this entry
+        entry = polardict[filename]
         # condition 1: stokes parameter in defined parameters
         cond1 = entry['stokes'] in stokesparams
         # condition 2: stokes parameter not already detected
@@ -156,9 +158,14 @@ def load_data(p, polardict, loc):
     # set the source of data (for param dict)
     loc.set_source('DATA', func_name)
     # loop around the filenames in polardict
-    for entry in polardict.keys():
+    for filename in polardict.keys():
+        # get this entry
+        entry = polardict[filename]
+        # get fiber type
         fiber = entry['fiber']
+        # get exposure value
         exposure = entry['exposure']
+        # constrcut key string
         keystr = '{0}_{1}'.format(fiber, exposure)
         # save the basename for 1st exposure to loc
         # if exposure is 1 and fiber is A
@@ -282,7 +289,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
     loc['CONT_XBIN'] = xbin
     loc['CONT_YBIN'] = ybin
     # set source
-    loc.set_sources(['XDATA', 'CONT_POL', 'CONT_XBIN', 'CONT_YBIN'], func_name)
+    loc.set_sources(['CONT_POL', 'CONT_XBIN', 'CONT_YBIN'], func_name)
     # return loc
     return loc
 
@@ -358,7 +365,7 @@ def polarimetry_diff_method(p, loc):
     # ---------------------------------------------------------------------
     swapbeams = False
     G = []
-    for i in range(1, nexp + 1):
+    for i in range(1, int(nexp) + 1):
         if swapbeams:
             if i == 1 or i == 3:
                 # add B part
@@ -457,7 +464,7 @@ def polarimetry_ratio_method(p, loc):
     #          (Eq #12 on page 997 of Bagnulo et al. 2009 )
     # ---------------------------------------------------------------------
     flux_ratio = []
-    for i in range(1, nexp + 1):
+    for i in range(1, int(nexp) + 1):
         part1 = data['B_{0}'.format(i)]
         part2 = data['A_{0}'.format(i)]
         flux_ratio.append(part1 / part2)
