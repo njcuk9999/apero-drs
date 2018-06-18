@@ -52,7 +52,7 @@ time is output in UTC to nearest .1 seconds
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
-\subsection{warnlog}
+\subsection{WarnLog}
 
 Defined in \spirouCore\path{.spirouLog.warninglogger}
 
@@ -376,3 +376,78 @@ And all plotting functions from specific recipes.
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{Getll}
+
+Defined in \spirouCore\path{.spirouMath.get_ll_from_coefficients}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.Getll(params, nx, nbo)
+spirouCore.spirouMath.get_ll_from_coefficients(params, nx, nbo)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Use the coefficient matrix "params" to construct fit values for each order
+(dimension 0 of coefficient matrix) for values of x from 0 to nx
+(interger steps)
+
+:param params: numpy array (2D), the coefficient matrix
+               size = (number of orders x number of fit coefficients)
+
+:param nx: int, the number of values and the maximum value of x to use
+           the coefficients for, where x is such that
+
+            yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+            N = number of fit coefficients
+            and p is the coefficients for one order
+            (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+:param nbo: int, the number of orders to use
+
+:return ll: numpy array (2D): the yfit values for each order
+            (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{Getdll}
+
+Defined in \spirouTHORCA\path{.spirouTHORCA.get_dll_from_coefficients}
+
+\begin{pythonbox}
+from SpirouDRS import spirouCore
+spirouCore.Getdll(params, nx, nbo)
+spirouCore.spirouMath.get_dll_from_coefficients(params, nx, nbo)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Derivative of the coefficients, using the coefficient matrix "params"
+to construct the derivative of the fit values for each order
+(dimension 0 of coefficient matrix) for values of x from 0 to nx
+(interger steps)
+
+:param params: numpy array (2D), the coefficient matrix
+               size = (number of orders x number of fit coefficients)
+
+:param nx: int, the number of values and the maximum value of x to use
+           the coefficients for, where x is such that
+
+            yfit = p[0]*x**(N-1) + p[1]*x**(N-2) + ... + p[N-2]*x + p[N-1]
+
+            dyfit = p[0]*(N-1)*x**(N-2) + p[1]*(N-2)*x**(N-3) + ... +
+                    p[N-3]*x + p[N-2]
+
+            N = number of fit coefficients
+            and p is the coefficients for one order
+            (i.e. params = [ p_1, p_2, p_3, p_4, p_5, ... p_nbo]
+
+:param nbo: int, the number of orders to use
+
+:return ll: numpy array (2D): the yfit values for each order
+            (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
+\end{pythondocstring}
+\end{minipage}
