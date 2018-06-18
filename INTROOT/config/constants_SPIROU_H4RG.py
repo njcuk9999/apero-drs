@@ -152,7 +152,7 @@ number_ref_bottom = 4
 #   Define the number of bins used in the dark median process         - [cal_pp]
 dark_med_binnum = 32
 
-#   Define rotation angle                                             - [cal_pp]
+#   Define rotation angle (must be multiple of 90 degrees)            - [cal_pp]
 #       (in degrees counter-clockwise direction)
 raw_to_pp_rotation = -90
 
