@@ -843,12 +843,13 @@ def set_arg_file_dir(p, mfd=None):
             emsg1 = ('Fatal error cannot find '
                      'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']))
             emsg2 = '    in directory {0} ({1})'.format(arg_fp, location)
+            WLOG('error', DPROG, [emsg1, emsg2])
         # else it is the directory which is wrong (cal_validate was not run)
         else:
             emsg1 = ('Fatal error cannot find directory NIGHT_NAME="{0}"'
                      ''.format(p['ARG_FILE_DIR']))
-        # log error
-        WLOG('error', DPROG, [emsg1])
+            # log error
+            WLOG('error', DPROG, emsg1)
 
     # return p
     return p
