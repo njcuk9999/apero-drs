@@ -71,29 +71,21 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, kind='slit', prefixes='fp_fp',
-                                       calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
     # set the fiber type
     p['FIB_TYP'] = ['AB']
     p.set_source('FIB_TYP', __NAME__ + '/main()')
-
-    # log processing image type
-    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
-    p.set_source('DPRTYPE', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
-
-    # ----------------------------------------------------------------------
-    # Check for pre-processed file
-    # ----------------------------------------------------------------------
-    if p['IC_FORCE_PREPROCESS']:
-        spirouStartup.CheckPreProcess(p)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
     p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    data = spirouImage.FixNonPreProcess(p, data)
 
     # ----------------------------------------------------------------------
     # Get basic image properties

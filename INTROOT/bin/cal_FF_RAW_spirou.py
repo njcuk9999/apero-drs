@@ -32,7 +32,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_SLIT_spirou.py'
+__NAME__ = 'cal_FF_RAW_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -72,39 +72,24 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name, files)
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
+
     # run specific start up
     # TODO: remove H2RG dependency
     if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                           prefixes=['flat_flat'],
-                                           calibdb=True)
         p['FIB_TYPE'] = p['FIBER_TYPES']
         p.set_source('FIB_TYPE', __NAME__ + '__main__()')
-    else:
-        params2add = dict()
-        params2add['dark_flat'] = spirouLOCOR.FiberParams(p, 'C')
-        params2add['flat_dark'] = spirouLOCOR.FiberParams(p, 'AB')
-        p = spirouStartup.InitialFileSetup(p, kind='Flat-field',
-                                           prefixes=['dark_flat', 'flat_dark'],
-                                           add_to_p=params2add, calibdb=True)
-
-    # log processing image type
-    p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
-    p.set_source('DPRTYPE', __NAME__ + '/main()')
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
-
-    # ----------------------------------------------------------------------
-    # Check for pre-processed file
-    # ----------------------------------------------------------------------
-    if p['IC_FORCE_PREPROCESS']:
-        spirouStartup.CheckPreProcess(p)
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
     p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    data = spirouImage.FixNonPreProcess(p, data)
 
     # ----------------------------------------------------------------------
     # Get basic image properties
@@ -427,6 +412,16 @@ def main(night_name=None, files=None):
             spirouCDB.PutFile(p, blazefits)
             # update the master calib DB file with new key
             spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
+
+            # TODO: Remove H2RG requirement
+            # hack to allow A and B flat and blaze files
+            if p['IC_IMAGE_TYPE'] == 'H2RG':
+                if p['FIBER'] == 'AB':
+                    for fib in ['A', 'B']:
+                        keydb = 'FLAT_' + fib
+                        spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
+                        keydb = 'BLAZE_' + fib
+                        spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

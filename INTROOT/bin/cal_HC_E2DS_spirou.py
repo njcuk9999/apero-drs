@@ -10,11 +10,15 @@ Created on 2018-03-01 at 11:55
 @author: cook
 """
 from __future__ import division
+import numpy as np
+import os
 
+from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
+from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 
@@ -22,7 +26,7 @@ from SpirouDRS import spirouTHORCA
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_WAVE_E2DS_spirou.py'
+__NAME__ = 'cal_HC_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -39,15 +43,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-# cal_HC_E2DS_spirou.py 20170710 hcone_hcone02c61_e2ds_AB.fits hcone_hcone03c61_e2ds_AB.fits hcone_hcone04c61_e2ds_AB.fits hcone_hcone05c61_e2ds_AB.fits hcone_hcone06c61_e2ds_AB.fits
-
-#def main(night_name=None, files=None):
-if __name__ == '__main__':
-    night_name = '20170710'
-    files = ['hcone_hcone02c61_e2ds_AB.fits']   #, 'hcone_hcone03c61_e2ds_AB.fits',
-             # 'hcone_hcone04c61_e2ds_AB.fits', 'hcone_hcone05c61_e2ds_AB.fits',
-             # 'hcone_hcone06c61_e2ds_AB.fits']
-
+def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -55,38 +51,38 @@ if __name__ == '__main__':
     p = spirouStartup.Begin()
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files, mainfitsdir='reduced')
-    # setup files
-    p = spirouStartup.InitialFileSetup(p, kind='cal_HC', prefixes='hc',
-                                       calibdb=True)
-    # get the fiber type
-    p['FIBER'] = spirouStartup.GetFiberType(p, p['FITSFILENAME'])
-    p.set_source('FIBER', __NAME__ + '/main()')
+    # setup files and get fiber
+    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
+
+    # set find line mode
+    find_lines_mode = p['HC_FIND_LINES_MODE']
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read and combine all files
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, 'add')
+    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(p, 'add')
     # add data and hdr to loc
     loc = ParamDict()
-    loc['DATA'], loc['HDR'] = data, hdr
+    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
     # set the source
-    loc.set_sources(['data', 'hdr'], 'spirouImage.ReadImageAndCombine()')
+    sources = ['HCDATA', 'HCHDR', 'HCCDR']
+    loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
 
     # ----------------------------------------------------------------------
     # Get basic parameters
     # ----------------------------------------------------------------------
     # get sig det value
-    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
+    p = spirouImage.GetSigdet(p, loc['HCHDR'], name='sigdet')
     # get exposure time
-    p = spirouImage.GetExpTime(p, hdr, name='exptime')
+    p = spirouImage.GetExpTime(p, loc['HCHDR'], name='exptime')
     # get gain
-    p = spirouImage.GetGain(p, hdr, name='gain')
+    p = spirouImage.GetGain(p, loc['HCHDR'], name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    p = spirouImage.GetAcqTime(p, loc['HCHDR'], name='acqtime', kind='unix')
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
@@ -95,12 +91,22 @@ if __name__ == '__main__':
     p = spirouTHORCA.GetLampParams(p)
 
     # ----------------------------------------------------------------------
-    # Flat correction
+    # Obtain the flat
     # ----------------------------------------------------------------------
-    # log
-    WLOG('', p['LOG_OPT'], 'Applying flat correction')
     # get the flat
-    loc = spirouFLAT.CorrectFlat(p, loc, hdr)
+    loc = spirouFLAT.GetFlat(p, loc, hchdr)
+    # correct the data with the flat
+    # TODO: Should this be used?
+    # log
+    # WLOG('', p['LOG_OPT'], 'Applying flat correction')
+    # loc['HCDATA'] = loc['HCDATA']/loc['FLAT']
+
+    # ----------------------------------------------------------------------
+    # Start plotting session
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive plot
+        sPlt.start_interactive_session()
 
     # ----------------------------------------------------------------------
     # loop around fiber type
@@ -109,92 +115,31 @@ if __name__ == '__main__':
         # set fiber type for inside loop
         p['FIBER'] = fiber
 
+        # ------------------------------------------------------------------
+        # Wave solution
+        # ------------------------------------------------------------------
         # log message for loop
         wmsg = 'Processing Wavelength Calibration for Fiber {0}'
         WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
-
         # ------------------------------------------------------------------
-        # First guess at solution for each order
+        # Part 1
         # ------------------------------------------------------------------
-        # FIXME: Cannot get same number of lines identified
-        # Question: Tried with python gaussian fitting
-        # Question: Tried with Fortran fitgaus.fitgaus
-        loc = spirouTHORCA.FirstGuessSolution(p, loc, mode='new')
-
+        p, loc = part1(p, loc, mode=find_lines_mode)
         # ------------------------------------------------------------------
-        # Detect bad fit filtering and saturated lines
+        # Part 2
         # ------------------------------------------------------------------
-        # log message
-        wmsg = 'On fiber {0} cleaning list of identified lines'
-        WLOG('', p['LOG_OPT'], wmsg.format(fiber))
-        # clean lines
-        loc = spirouTHORCA.DetectBadLines(p, loc)
-
-        # TODO: Remove this (loads old DRS data)
-        import numpy as np
-        loc['ALL_LINES'] = np.load('/home/ncook/Downloads/spirou_old/th_LINES.npy', encoding='bytes')
-
+        # set params for part2
+        p['QC_RMS_LITTROW_MAX'] = p['QC_HC_RMS_LITTROW_MAX']
+        p['QC_DEV_LITTROW_MAX'] = p['QC_HC_DEV_LITTROW_MAX']
         # ------------------------------------------------------------------
-        # Fit wavelength solution on identified lines
-        # ------------------------------------------------------------------
-        # log message
-        wmsg = 'On fiber {0} fitting wavelength solution on identified lines:'
-        WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber))
-        # fit lines
-        loc = spirouTHORCA.Fit1DSolution(p, loc)
-
+        # run part 2
+        p, loc = part2(p, loc)
 
     # ----------------------------------------------------------------------
-    # start ll solution
+    # End plotting session
     # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # calculate wavelength solution
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # find ll on spectrum
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # detect bad fit filtering and saturated lines
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # fit llsol
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # extrapolate Littrow solution
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # repeat the line search loop
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Littrow test
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Join 0-24 and 25-36 solutions
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # archive result in e2ds spectra
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Save to result table
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Quality control
-    # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    # Update the calibration data base
-    # ----------------------------------------------------------------------
+    # end interactive session
+    sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # End Message
@@ -202,9 +147,384 @@ if __name__ == '__main__':
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
-
-def main():
     return dict(locals())
+
+
+def part1(p, loc, mode='old'):
+    # ------------------------------------------------------------------
+    # First guess at solution for each order
+    # ------------------------------------------------------------------
+    # FIXME: Cannot get same number of lines identified
+    # Question: Tried with python gaussian fitting
+    # Question: Tried with Fortran fitgaus.fitgaus
+    loc = spirouTHORCA.FirstGuessSolution(p, loc, mode=mode)
+
+    # ------------------------------------------------------------------
+    # Detect bad fit filtering and saturated lines
+    # ------------------------------------------------------------------
+    # log message
+    wmsg = 'On fiber {0} cleaning list of identified lines'
+    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER']))
+    # clean lines
+    loc = spirouTHORCA.DetectBadLines(p, loc, iteration=1)
+
+    # ------------------------------------------------------------------
+    # Fit wavelength solution on identified lines
+    # ------------------------------------------------------------------
+    # log message
+    wmsg = 'On fiber {0} fitting wavelength solution on identified lines:'
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+    # fit lines
+    fkwargs = dict(ll=loc['LL_INIT'], iteration=1)
+    loc = spirouTHORCA.Fit1DSolution(p, loc, **fkwargs)
+
+    # ------------------------------------------------------------------
+    # calculate Littrow solution
+    # ------------------------------------------------------------------
+    ckwargs = dict(ll=loc['LL_OUT_1'], iteration=1, log=False)
+    loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
+
+    # ------------------------------------------------------------------
+    # extrapolate Littrow solution
+    # ------------------------------------------------------------------
+    ekwargs = dict(ll=loc['LL_OUT_1'], iteration=1)
+    loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+
+    # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_extrap_plot(loc, iteration=1)
+
+    # ------------------------------------------------------------------
+    # Second guess at solution for each order (using Littrow)
+    # ------------------------------------------------------------------
+    loc = spirouTHORCA.SecondGuessSolution(p, loc, mode=mode)
+
+    # ------------------------------------------------------------------
+    # Detect bad fit filtering and saturated lines (using Littrow)
+    # ------------------------------------------------------------------
+    # log message
+    wmsg = 'On fiber {0} cleaning list of identified lines (second pass)'
+    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER']))
+    # clean lines
+    loc = spirouTHORCA.DetectBadLines(p, loc, iteration=2)
+
+    # ------------------------------------------------------------------
+    # return p and loc
+    return p, loc
+
+
+def part2(p, loc):
+    # ------------------------------------------------------------------
+    # Fit wavelength solution on identified lines (using Littrow)
+    # ------------------------------------------------------------------
+    # log message
+    wmsg = ('On fiber {0} fitting wavelength solution on identified '
+            'lines: (second pass)')
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+    # fit lines
+    ll = loc['LITTROW_EXTRAP_SOL_1'][:p['IC_HC_N_ORD_FINAL_2']]
+    loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
+
+    # ------------------------------------------------------------------
+    # Littrow test
+    # ------------------------------------------------------------------
+    ckwargs = dict(ll=loc['LL_OUT_2'], iteration=2, log=True)
+    loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
+
+    # ------------------------------------------------------------------
+    # Plot wave solution littrow check
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+
+    # ------------------------------------------------------------------
+    # Join 0-24 and 25-36 solutions
+    # ------------------------------------------------------------------
+    loc = spirouTHORCA.JoinOrders(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Quality control
+    # ----------------------------------------------------------------------
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    # check for infinites and NaNs in X_MEAN_2
+    if ~np.isfinite(loc['X_MEAN_2']):
+        # add failed message to the fail message list
+        fmsg = 'NaN or Inf in X_MEAN_2'
+        fail_msg.append(fmsg)
+        passed = False
+    # iterate through Littrow test cut values
+    for x_it in range(len(loc['X_CUT_POINTS_2'])):
+        # get x cut point
+        x_cut_point = loc['X_CUT_POINTS_2'][x_it]
+        # get the sigma for this cut point
+        sig_littrow = loc['LITTROW_SIG_2'][x_it]
+        # get the abs min and max dev littrow values
+        min_littrow = abs(loc['LITTROW_MINDEV_2'][x_it])
+        max_littrow = abs(loc['LITTROW_MAXDEV_2'][x_it])
+        # check if sig littrow is above maximum
+        rms_littrow_max = p['QC_RMS_LITTROW_MAX']
+        dev_littrow_max = p['QC_DEV_LITTROW_MAX']
+        if sig_littrow > rms_littrow_max:
+            fmsg = ('Littrow test (x={0}) failed (sig littrow = '
+                    '{1:.3f} > {2:.3f})')
+            fargs = [x_cut_point, sig_littrow, rms_littrow_max]
+            fail_msg.append(fmsg.format(*fargs))
+        # check if min/max littrow is out of bounds
+        if np.max([max_littrow, min_littrow]) > dev_littrow_max:
+            fmsg = ('Littrow test (x={0}) failed (min|max dev = '
+                    '{1:.3f}|{2:3f} > {1:3f})')
+            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max]
+            fail_msg.append(fmsg.format(*fargs))
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG('info', p['LOG_OPT'],
+             'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
+
+    # ------------------------------------------------------------------
+    # archive result in e2ds spectra
+    # ------------------------------------------------------------------
+    # get wave filename
+    wavefits = spirouConfig.Constants.WAVE_FILE(p)
+    wavefitsname = os.path.split(wavefits)[-1]
+
+    # log progress
+    wargs = [p['FIBER'], wavefitsname]
+    wmsg = 'Write wavelength solution for Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # write solution to fitsfilename header
+    # copy original keys
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # add quality control
+    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    # add number of orders
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                               value=loc['LL_PARAM_FINAL'].shape[0])
+    # add degree of fit
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                               value=loc['LL_PARAM_FINAL'].shape[1]-1)
+    # add wave solution
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                     values=loc['LL_PARAM_FINAL'])
+    # write original E2DS file and add header keys (via hdict)
+    spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
+    # write the wave "spectrum"
+    spirouImage.WriteImage(wavefits, loc['LL_FINAL'], hdict)
+
+    # get filename for E2DS calibDB copy of FITSFILENAME
+    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)
+    # make a copy of the E2DS file for the calibBD
+    spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # ------------------------------------------------------------------
+    # Save to result table
+    # ------------------------------------------------------------------
+    # calculate stats for table
+    final_mean = 1000 * loc['X_MEAN_2']
+    final_var = 1000 * loc['X_VAR_2']
+    num_iterations = int(np.sum(loc['X_ITER_2'][:, 2]))
+    err = 1000 * np.sqrt(final_var/num_iterations)
+    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_2'])
+    # construct filename
+    wavetbl = spirouConfig.Constants.WAVE_TBL_FILE(p)
+    wavetblname = os.path.split(wavetbl)[-1]
+    # construct and write table
+    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+                   'N_lines', 'err', 'rms_L0', 'rms_L1', 'rms_L2']
+    columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
+                     '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
+    columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
+                    [p['FIBER']], [final_mean], [final_var],
+                    [num_iterations], [err], [sig_littrow[0]],
+                    [sig_littrow[1]], [sig_littrow[2]]]
+    # make table
+    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # merge table
+    wmsg = 'Global result summary saved in {0}'
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
+    spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
+
+    # ------------------------------------------------------------------
+    # Save line list table file
+    # ------------------------------------------------------------------
+    # construct filename
+    wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE(p)
+    wavelltblname = os.path.split(wavelltbl)
+    # construct and write table
+    columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
+    columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
+                     '{:12.4f}', '{:12.4f}', '{:8.4f}']
+    columnvalues = []
+    # construct column values (flatten over orders)
+    for it in range(len(loc['X_DETAILS_2'])):
+        for jt in range(len(loc['X_DETAILS_2'][it][0])):
+            row = [float(it), loc['X_DETAILS_2'][it][0][jt],
+                   loc['LL_DETAILS_2'][it][0][jt],
+                   loc['X_DETAILS_2'][it][3][jt],
+                   loc['X_DETAILS_2'][it][1][jt],
+                   loc['X_DETAILS_2'][it][2][jt],
+                   loc['SCALE_2'][it][jt]]
+            columnvalues.append(row)
+
+    # log saving
+    wmsg = 'List of lines used saved in {0}'
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavelltblname))
+
+    # make table
+    columnvalues = np.array(columnvalues).T
+    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # write table
+    spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
+
+    # ------------------------------------------------------------------
+    # Move to calibDB and update calibDB
+    # ------------------------------------------------------------------
+    if p['QC']:
+        # set the wave key
+        keydb = 'WAVE_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouCDB.PutFile(p, wavefits)
+        # update the master calib DB file with new key
+        spirouCDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
+
+        # set the hcref key
+        keydb = 'HCREF_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouCDB.PutFile(p, wavefits)
+        # update the master calib DB file with new key
+        spirouCDB.UpdateMaster(p, keydb, e2dscopy_filename, loc['HCHDR'])
+
+    # ------------------------------------------------------------------
+    # on the fly CCF setup (parameters for cal_CCF)
+    # ------------------------------------------------------------------
+    # need to define CCF mask
+    p['CCF_MASK'] = p['IC_WAVE_CCF_MASK'][p['LAMP_TYPE']]
+    # need to define mask minimum and width
+    p['IC_W_MASK_MIN'] = p['IC_WAVE_CCF_W_MASK_MIN']
+    p['IC_MASK_WIDTH'] = p['IC_WAVE_CCF_MASK_WIDTH']
+    # set up RV_CCF min, max and step
+    p['RVMIN'] = -p['IC_WAVE_CCF_HALF_WIDTH']
+    p['RVMAX'] = p['IC_WAVE_CCF_HALF_WIDTH'] + p['IC_WAVE_CCF_STEP']
+    p['CCF_STEP'] = p['IC_WAVE_CCF_STEP']
+    # set fit type
+    p['CCF_FIT_TYPE'] = p['WAVE_CCF_FIT_TYPE']
+    # set sources
+    sources = ['CCF_MASK', 'IC_W_MASK_MIN', 'IC_MASK_WIDTH', 'RVMIN',
+               'RVMAX', 'CCF_STEP']
+    p.set_sources(sources, __NAME__ + '/main()')
+    # reset flat to all ones
+    loc['FLAT'] = np.ones(loc['HCDATA'].shape)
+    # set blaze to all ones
+    loc['BLAZE'] = np.ones(loc['HCDATA'].shape)
+    # set sources
+    loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    # correct extracted image for flat
+    loc['E2DSFF'] = loc['HCDATA'] / loc['FLAT']
+    loc.set_source('E2DSFF', __NAME__ + '/main()')
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_OBJRA', dtype=str)
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_OBJDEC', dtype=str)
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_OBJEQUIN')
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_OBJRAPM')
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_OBJDECPM')
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_DATE_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, loc['HCHDR'], 'KW_UTC_OBS', dtype=str)
+    #  Earth Velocity calculation
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        loc = spirouRV.EarthVelocityCorrection(p, loc,
+                                               method=p['CCF_BERVMODE'])
+    else:
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0, 0.0
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
+
+    # ------------------------------------------------------------------
+    # Calculate CCF
+    # ------------------------------------------------------------------
+    # log
+    WLOG('', p['LOG_OPT'], 'Computing CCF')
+    # get wave image
+    wave_ll, param_ll = spirouTHORCA.GetE2DSll(p, hdr=loc['HCHDR'])
+    # save to storage
+    loc['WAVE_LL'], loc['PARAM_LL'] = wave_ll, param_ll
+    source = __NAME__ + '/main() + spirouTHORCA.GetE2DSll()'
+    loc.set_sources(['wave_ll', 'param_ll'], source)
+    # get the CCF mask from file (check location of mask)
+    loc = spirouRV.GetCCFMask(p, loc)
+    # check and deal with mask in microns (should be in nm)
+    if np.mean(loc['LL_MASK_CTR']) < 2.0:
+        loc['LL_MASK_CTR'] *= 1000.0
+        loc['LL_MASK_D'] *= 1000.0
+    # calculate and fit the CCF
+    loc = spirouRV.Coravelation(p, loc, log=False)
+
+    # ------------------------------------------------------------------
+    # CCF stats
+    # ------------------------------------------------------------------
+    # get the average ccf
+    loc['AVERAGE_CCF'] = np.sum(loc['CCF'], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['AVERAGE_CCF']/np.max(loc['AVERAGE_CCF'])
+    # get the fit for the normalized average ccf
+    ccf_res, _ = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
+                                 fit_type=p['WAVE_CCF_FIT_TYPE'])
+
+    # ------------------------------------------------------------------
+    # Redo CCF - centered on CCF res
+    # ------------------------------------------------------------------
+    # set up RV_CCF min, max and step
+    p['RVMIN'] = ccf_res[1] -p['IC_WAVE_CCF_HALF_WIDTH']
+    p['RVMAX'] = (ccf_res[1] + p['IC_WAVE_CCF_HALF_WIDTH'] +
+                  p['IC_WAVE_CCF_STEP'])
+    # calculate and fit the CCF
+    loc = spirouRV.Coravelation(p, loc, log=False)
+
+    # ------------------------------------------------------------------
+    # Redo CCF stats
+    # ------------------------------------------------------------------
+    # get the average ccf
+    loc['AVERAGE_CCF'] = np.sum(loc['CCF'], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['AVERAGE_CCF']/np.max(loc['AVERAGE_CCF'])
+    # get the fit for the normalized average ccf
+    ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
+                                       fit_type=p['WAVE_CCF_FIT_TYPE'])
+    # correct ccf_res[0]
+    ccf_res[0] = ccf_res[0] / (1. + ccf_res[3])
+    loc['CCF_RES'] = ccf_res
+    loc['CCF_FIT'] = ccf_fit
+    # get the max cpp
+    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    # get the RV value from the normalised average ccf fit center location
+    loc['RV'] = float(ccf_res[1])
+    # get the contrast (ccf fit amplitude)
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+    # get the FWHM value
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+    # log the stats
+    wmsg = ('{0}: C={1:.1f}[%] RV={2:.5f}[km/s] '
+            'FWHM={3:.4f}[km/s] maxcpp={4:.1f}')
+    wargs = [p['FIBER'], loc['CONTRAST'], loc['RV'], loc['FWHM'],
+             loc['MAXCPP']]
+    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+
+    # ------------------------------------------------------------------
+    # return p and loc
+    return p, loc
 
 
 # =============================================================================

@@ -69,7 +69,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
     names = ['flatfile', 'darkfile']
     call = [flatfile, darkfile]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
+    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call,
+                                                    recipe=__NAME__)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='flatfile')
@@ -77,21 +78,10 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
     # ----------------------------------------------------------------------
-    # get raw directory + night name
-    raw_dir = p['RAW_DIR']
-    # construct and test the flatfile
-    flatfilename = spirouStartup.GetFile(p, raw_dir, p['FLATFILE'], 'flat_flat',
-                                         'FLAT')
-    # construct and test the darkfile
-    darkfilename = spirouStartup.GetFile(p, raw_dir, p['DARKFILE'], 'dark_dark',
-                                         'DARK')
-
-    # ----------------------------------------------------------------------
-    # Check for pre-processed file
-    # ----------------------------------------------------------------------
-    if p['IC_FORCE_PREPROCESS']:
-        spirouStartup.CheckPreProcess(p, filename=flatfilename)
-        spirouStartup.CheckPreProcess(p, filename=darkfilename)
+    p, flatfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                    filename=p['FLATFILE'])
+    p, darkfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
+                                                    filename=p['DARKFILE'])
 
     # ----------------------------------------------------------------------
     # Read the darkfile and flatfile
@@ -102,6 +92,12 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Read the dark file
     ddata = spirouImage.ReadImage(p, darkfilename, kind='DARK')
     dark_ref, dhdr, dcmt, nx2, ny2 = ddata
+
+    # ----------------------------------------------------------------------
+    # fix for un-preprocessed files
+    # ----------------------------------------------------------------------
+    fdata = spirouImage.FixNonPreProcess(p, fdata)
+    ddata = spirouImage.FixNonPreProcess(p, ddata)
 
     # ----------------------------------------------------------------------
     # Normalise flat and median of flat

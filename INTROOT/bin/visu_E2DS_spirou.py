@@ -53,26 +53,18 @@ def main(night_name=None, files=None):
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile',
                                     mainfitsdir='reduced')
-    p = spirouStartup.InitialFileSetup(p, kind=None, calibdb=False)
-     # log processing image type
 
-    # ----------------------------------------------------------------------
-    # Read wavelength solution
-    # ----------------------------------------------------------------------
-    # get wave image
+    # load the calibDB
     p = spirouStartup.LoadCalibDB(p)
-
-#    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    gfkwargs = dict(path=p['REDUCED_DIR'], name=p['REFFILE'])
+    gfkwargs = dict(path=p['REDUCED_DIR'], filename=p['REFFILE'])
     p['REFFILENAME'] = spirouStartup.GetFile(p, **gfkwargs)
     p.set_source('REFFILENAME', __NAME__ + '/main()')
     # get the fiber type
-#    p['FIBER'] = spirouStartup.GetFiberType(p, p['REFFILENAME'])
     p['FIBER']='AB'
     e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
     wave = spirouImage.ReadWaveFile(p)

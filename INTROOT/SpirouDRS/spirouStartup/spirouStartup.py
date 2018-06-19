@@ -22,6 +22,7 @@ import code
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -233,7 +234,8 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     return cparams
 
 
-def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
+# TODO: Remove - unused
+def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
                        contains=None, calibdb=False):
     """
     Run start up code (based on program and parameters defined in p before)
@@ -322,6 +324,73 @@ def initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
     # -------------------------------------------------------------------------
     # return the parameter dictionary
     return p
+
+
+def initial_file_setup(p, recipe, files=None, calibdb=False):
+    func_name = __NAME__ + '.initial_file_setup()'
+    # -------------------------------------------------------------------------
+    # deal with no files being defined
+    if files is None:
+        files = []
+        for filename in p['ARG_FILE_NAMES']:
+            files.append(os.path.join(p['ARG_FILE_DIR'], filename))
+    elif type(files) != list:
+        files = [files]
+    # -------------------------------------------------------------------------
+    # check file based on recipe name
+    p = spirouImage.CheckFiles(p, files, recipe)
+    # -------------------------------------------------------------------------
+    # Calib DB setup
+    p = load_calibdb(p, calibdb)
+    # -------------------------------------------------------------------------
+    # log processing image type
+    if p['DPRTYPE'] == 'None':
+        wmsg = 'Now processing Image with {1} recipe'
+    else:
+        wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    # -------------------------------------------------------------------------
+    # return p
+    return p
+
+
+def single_file_setup(p, recipe, filename, log=True):
+    func_name = __NAME__ + '.single_file_setup()'
+    # check file based on recipe name
+    p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
+    # get location of file
+    location = get_file(p, path, filename)
+    # log processing image type
+    if log:
+        if p['DPRTYPE'] == 'None':
+            wmsg = 'Now processing Image with {1} recipe'
+        else:
+            wmsg = 'Now processing Image TYPE {0} with {1} recipe'
+        WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    # return p
+    return p, location
+
+
+def multi_file_setup(p, recipe, files=None, log=True):
+    func_name = __NAME__ + '.single_file_setup()'
+    # check file based on recipe name
+    locations = []
+    # loop around files
+    for filename in files:
+        p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
+        # get location of file
+        location = get_file(p, path, filename)
+        # append location to locations
+        locations.append(location)
+    # log processing image type
+    if log:
+        if p['DPRTYPE'] == 'None':
+            wmsg = 'Now processing Image(s) with {1} recipe'
+        else:
+            wmsg = 'Now processing Image(s) TYPE {0} with {1} recipe'
+        WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    # return p
+    return p, locations
 
 
 def load_calibdb(p, calibdb=True):
@@ -454,62 +523,6 @@ def exit_script(ll, has_plots=True):
 # =============================================================================
 # Define general functions
 # =============================================================================
-def check_preprocess(p, filename=None):
-    """
-    Check "filename" for p["PREPROCESS_SUFFIX"]. If filename is None uses
-    p["FITSFILENAME"]
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-            PREPROCESS_SUFFIX: string, the suffix to look for and should be
-                               in filename if 'IC_FORCE_PREPROCESS' is True
-            IC_FORCE_PREPROCESS: bool, if True filename must have
-                                 PREPROCESS_SUFFIX
-            fitsfilename: string, the full path of for the main raw fits
-                          file for a recipe
-                          i.e. /data/raw/20170710/filename.fits
-
-    :param filename: string or None, if defined must be a filename to check
-                     if None filename = p['FITSFILENAME']
-
-    :return checked: bool, True if file passes
-                           False if IC_FORCE_PREPROCESS is  False and file
-                           fails to find PREPROCESS_SUFFIX
-
-                           or WLOG error if fails and IC_FORCE_PREPROCESS is
-                           True and file fails to find PREPROCESS_SUFFIX
-    """
-    func_name = __NAME__ + '.check_preprocess()'
-    # get the suffix
-    suffix = p['PROCESSED_SUFFIX']
-    # get the filename
-    if filename is None:
-        filename = p['FITSFILENAME']
-    # make sure filename does not include a path
-    filename = os.path.basename(filename)
-    # check for the pre-process key
-    if p['IC_FORCE_PREPROCESS']:
-        # check that we have a suffix to check
-        if suffix == "None":
-            wmsg = 'Not checking for pre-processed file={0}'.format(filename)
-            WLOG('', p['LOG_OPT'], wmsg)
-            return 0
-        # else check file ends with
-        elif filename.endswith(suffix):
-            wmsg = 'Pre-processing valid for file={0}'.format(filename)
-            WLOG('', p['LOG_OPT'], wmsg)
-            return 1
-        # else generate helpful error
-        else:
-            emsgs = ['File not processed. Suffix="{0}" not '
-                     'found.'.format(suffix),
-                     '\tRun "cal_preprocess_spirou" or turn off '
-                     '"IC_FORCE_PREPROCESS"']
-            emsgs.append('\t\tfile = {0}'.format(filename))
-            emsgs.append('\t\tfunction = {0}'.format(func_name))
-            WLOG('error', p['LOG_OPT'], emsgs)
-
-
 def check_key_fparams(p):
     # if fitsfilename exists it must be found
     if 'FITSFILENAME' in p:
@@ -808,14 +821,15 @@ def set_arg_file_dir(p, mfd=None):
         location = 'mainfitsfile definition'
     elif mfd == 'reduced':
         p['ARG_FILE_DIR'] = red
-        location = 'DRS_DATA_REDUC'
+        location = 'spirouConfig.Constants.REDUCED_DIR()'
     elif mfd == 'calibdb':
         p['ARG_FILE_DIR'] = calib
         location = 'DRS_CALIB_DB'
     else:
         p['ARG_FILE_DIR'] = raw
-        location = 'DRS_DATA_RAW'
-
+        location = 'spirouConfig.Constants.RAW_DIR()'
+    # set ARG_FILE_DIR source
+    p.set_source('ARG_FILE_DIR', location)
     # check that ARG_FILE_DIR is valid
     if not os.path.exists(p['ARG_FILE_DIR']):
         # get arg path (path without [FOLDER] or NIGHT_NAME
@@ -831,7 +845,7 @@ def set_arg_file_dir(p, mfd=None):
             emsg2 = '    in directory {0} ({1})'.format(arg_fp, location)
         # else it is the directory which is wrong (cal_validate was not run)
         else:
-            emsg1 = ('Fatail error cannot find directory {0}'
+            emsg1 = ('Fatal error cannot find directory {0}'
                      ''.format(location))
             emsg2 = '    {0}="{1}"'.format(location, arg_fp)
         # log error
@@ -984,7 +998,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
 
 
 def get_arguments(positions, types, names, required, calls, cprior, lognames,
-                  require_night_name=True):
+                  require_night_name=True, recipe=None):
     """
     Take the "positions" and extract from sys.argv[2:] (first arg is the program
     name, second arg is reserved for night_name) use "types" to force type
@@ -1049,7 +1063,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
                     emsgs = ['Argument Error: "{0}" is not defined'
                              ''.format(lognames[pos])]
                     emsgs.append(('   must be format:'.format(pos + 1)))
-                    eargs = [DPROG, ' '.join(lognames)]
+                    eargs = [recipe, ' '.join(lognames)]
                     # deal with difference between modes (i.e. no night_name)
                     if require_night_name:
                         emsg = '\t>>> {0} NIGHT_NAME {1}'
@@ -1057,7 +1071,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
                     else:
                         emsgs.append(('\t>>> {0} {1}'.format(*eargs)))
                     # log error
-                    WLOG('error', DPROG, emsgs)
+                    WLOG('error', recipe, emsgs)
                     raw_value = None
             # else we must use the value from calls
             else:
@@ -1078,7 +1092,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
         except ValueError:
             emsg = 'Arguments Error: "{0}" should be a {1} (Value = {2})'
             eargs = [lognames[pos], TYPENAMES[kind], raw_value]
-            WLOG('error', DPROG, emsg.format(*eargs))
+            WLOG('error', recipe, emsg.format(*eargs))
         except TypeError:
             pass
     # return dict
@@ -1121,7 +1135,7 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     maxname = names[maxpos]
     maxkind = types[maxpos]
     # check the length of sys.argv (needs to be > maxpos + 2)
-    if len(sys.argv) > maxpos + 2:
+    if len(sys.argv) > maxpos + 3:
         # convert maxname to a list
         customdict[maxname] = [customdict[maxname]]
         # if maxpos = 0 then we are done
@@ -1142,10 +1156,13 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
                             '(Value = {2})')
                     eargs = [lognames[pos], TYPENAMES[maxkind], raw_value]
                     WLOG('error', DPROG, emsg.format(*eargs))
+    else:
+        customdict[maxname] = [customdict[maxname]]
     # return the new custom dictionary
     return customdict
 
 
+# TODO: Remove - unused
 def get_files(p, path, names, prefixes=None, kind=None):
     """
     Get a set of full file path and check the path and file exist
@@ -1170,12 +1187,13 @@ def get_files(p, path, names, prefixes=None, kind=None):
     locations = []
     # loop around names of files
     for name in names:
-        locations.append(get_file(p, path, name, prefixes, kind))
+        locations.append(get_file1(p, path, name, prefixes, kind))
     # if all conditions passed return full path
     return locations
 
 
-def get_file(p, path, name=None, prefixes=None, kind=None):
+# TODO: Remove - unused
+def get_file1(p, path, name=None, prefixes=None, kind=None):
     """
     Get full file path and check the path and file exist
 
@@ -1225,7 +1243,49 @@ def get_file(p, path, name=None, prefixes=None, kind=None):
     return location
 
 
-def get_fiber_type(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
+def get_file(p, path, filename):
+    """
+    Get full file path and check the path and file exist
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+
+    :param path: string, either the directory to the folder (if name is None) or
+                 the full path to the file
+    :param name: string or None, the name of the file, if None name is assumed
+                 to be in path
+    :param prefixes: string, list of strings or None, if not None this
+                     substring must be in the filename
+    :param kind: string or None, the type of file (for logging)
+
+    :return location: string, the full file path of the file
+    """
+    # if path is None and name is None
+    if path is None:
+        WLOG('error', p['LOG_OPT'], 'No file defined')
+    # if name and path are not None
+    if filename is None:
+        filename = os.path.split(path)[-1]
+        path = path.split(filename)[0]
+    # join path and name
+    location = os.path.join(path, filename)
+    # test if path exists
+    if not os.path.exists(path):
+        emsg = 'Directory: {0} does not exist'
+        WLOG('error', p['LOG_OPT'], emsg.format(path))
+    # test if path + file exits
+    if not os.path.exists(location):
+        emsg = 'File : {0} does not exist at location {1}'
+        WLOG('error', p['LOG_OPT'], emsg.format(filename, path))
+    # if all conditions passed return full path
+    return location
+
+
+# TODO: Remove - unused
+def get_fiber_type1(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
     """
     Get fiber types and search for a valid fiber type in filename from the given
     suffix. "filename" and "suffix" are case insensitive.
@@ -1386,7 +1446,7 @@ def sort_version(messages=None):
 def get_custom_from_run_time_args(positions=None, types=None, names=None,
                                   required=None, calls=None, cprior=None,
                                   lognames=None, last_multi=False,
-                                  require_night_name=True):
+                                  require_night_name=True, recipe=None):
     """
     Extract custom arguments from defined positions in sys.argv (defined at
     run time)
@@ -1426,6 +1486,10 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     :return values: dictionary, if run time arguments are correct python type
                     the name-value pairs are returned
     """
+    # deal with no recipe
+    if recipe is None:
+        recipe = str(DPROG)
+    recipe = recipe.split('.py')[0]
     # deal with no positions (use length of types or names or exit with error)
     if positions is None:
         if types is not None:
@@ -1435,7 +1499,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         else:
             emsg = ('Either "positions", "name" or "types" must be defined to'
                     'get custom arguments.')
-            WLOG('', DPROG, emsg)
+            WLOG('', recipe, emsg)
     # deal with no types (set to strings)
     if types is None:
         types = [str]*len(positions)
@@ -1452,7 +1516,8 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         cprior = [False]*len(positions)
     # loop around positions test the type and add the value to dictionary
     customdict = get_arguments(positions, types, names, required, calls,
-                               cprior, lognames, require_night_name)
+                               cprior, lognames, require_night_name,
+                               recipe)
     # deal with the position needing to find additional parameters
     if last_multi:
         customdict = get_multi_last_argument(customdict, positions, types,
@@ -1543,9 +1608,11 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
         if type(mff) == str:
             p['ARG_FILE_NAMES'] = [rawfilename]
             p['FITSFILENAME'] = abspathname
+            p.set_sources(['ARG_FILE_NAMES', 'FITSFILENAME'], func_name)
         elif type(mff) == list:
             p['ARG_FILE_NAMES'] = rawfilename
             p['FITSFILENAME'] = abspathname[0]
+            p.set_sources(['ARG_FILE_NAMES', 'FITSFILENAME'], func_name)
         else:
             eargs = [mff, p['ARG_FILE_DIR']]
             emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
