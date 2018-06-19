@@ -602,11 +602,20 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         hdr[p['KW_DPRTYPE'][0]] = dprtype
         cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
         # update filename (if required)
-        if dstring not in basefilename:
+        newfilename = str(filename)
+        # now try updating filename
+        if (dstring == 'None') and (dstring not in basefilename):
+            # try setting dstring to OBSTYPE
+            if p['kw_OBJNAME'][0] in hdr:
+                # get the name of the object
+                name = hdr[p['kw_OBJNAME'][0]].strip()
+                # if name not in filename add if
+                if name not in filename:
+                    newext = '_{0}.fits'.format(name)
+                    newfilename = filename.replace('.fits', newext)
+        elif dstring not in basefilename:
             newext = '_{0}.fits'.format(dstring)
             newfilename = filename.replace('.fits', newext)
-        else:
-            newfilename = str(filename)
         # return new filename and header
         return newfilename, hdr, cdr
     else:
