@@ -5,13 +5,11 @@ off_listing_RAW_spirou.py [night_directory]
 
 Recipe to display raw frame + cut across orders + statistics
 
-Created on 2017-12-06 at 14:50
+Created on 2016-06-12
 
-@author: cook
+@author: fbouchy
 
-Last modified: 2017-12-11 at 15:23
-
-Up-to-date with cal_BADPIX_spirou AT-4 V47
+Last modified: 2016-06-15
 """
 from __future__ import division
 import numpy as np
@@ -37,64 +35,118 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
-# Get plotting functions
-sPlt = spirouCore.sPlt
-plt = sPlt.plt
+# Get param dictionary
+ParamDict = spirouConfig.ParamDict
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+def main(night_name=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin()
-    p = spirouStartup.LoadArguments(p)
+    p = spirouStartup.LoadArguments(p, night_name)
 
-    fitsdir=os.path.join(p['DRS_DATA_RAW'],p['ARG_NIGHT_NAME'])
-    files = os.listdir(fitsdir)
-    files.sort()
+    # ----------------------------------------------------------------------
+    # Get all files in raw night_name directory
+    # ----------------------------------------------------------------------
+    # get all files in DRS_DATA_RAW/ARG_NIGHT_NAME
+    files = os.listdir(p['ARG_FILE_DIR'])
+    # sort file by name
+    files = np.sort(files)
 
-#    outfile='listing_'+p['ARG_NIGHT_NAME']+'.txt'
-    outfile=p['DRS_DATA_MSG']+'listing_'+os.path.split(p['ARG_NIGHT_NAME'])[-1]+'.txt'
-    p = open(outfile, 'w')
-    line = 'file\ttype\tdate\tutc\texptime\tcas\tref\tdens\tobjname'
-    p.write(line + '\n')
-    line = '----\t----\t----\t---\t-------\t---\t---\t----\t------'
-    p.write(line + '\n')
+    # ----------------------------------------------------------------------
+    # Define storage for file header keys
+    # ----------------------------------------------------------------------
+    loc = ParamDict()
+    loc['FILES'] = []
+    loc['EXPTIME_ALL'] = []
+    loc['CAS_ALL'] = []
+    loc['REF_ALL'] = []
+    loc['DATE_ALL'] = []
+    loc['UTC_ALL'] = []
+    loc['OBSTYPE_ALL'] = []
+    loc['OBJNAME_ALL'] = []
+    loc['DENS_ALL'] = []
 
-    cpt=0
-
+    # ----------------------------------------------------------------------
+    # Loop around all files and extract required header keys
+    # ----------------------------------------------------------------------
+    # loop around files and extract properties
     for filename in files:
+        # skip any non-fits file files
+        if '.fits' not in filename:
+            continue
+        # skip non-preprocessed files
+        if p['PROCESSED_SUFFIX'] not in filename:
+            continue
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Analysing file: {0}'.format(filename))
+        # construct absolute path for file
+        fitsfilename = os.path.join(p['ARG_FILE_DIR'], filename)
+        # read file header
+        hdr = spirouImage.ReadHeader(p, filepath=fitsfilename)
+        # extract properties from header
+        fkwargs = dict(return_value=True, dtype=float)
+        gkwargs = dict(return_value=True, dtype=str)
+        exptime = spirouImage.ReadParam(p, hdr, 'kw_EXPTIME', **fkwargs)
+        cas = spirouImage.ReadParam(p, hdr, 'kw_CCAS', **gkwargs)
+        ref =  spirouImage.ReadParam(p, hdr, 'kw_CREF', **gkwargs)
+        date = spirouImage.ReadParam(p, hdr, 'kw_DATE_OBS', **gkwargs)
+        utc = spirouImage.ReadParam(p, hdr, 'kw_UTC_OBS', **gkwargs)
+        obstype = spirouImage.ReadParam(p, hdr, 'kw_OBSTYPE', **gkwargs)
+        objname = spirouImage.ReadParam(p, hdr, 'kw_OBJNAME', **gkwargs)
+        dens = spirouImage.ReadParam(p, hdr, 'kw_CDEN', **fkwargs)
+        # add to loc
+        loc['FILES'].append(filename)
+        loc['EXPTIME_ALL'].append(exptime)
+        loc['CAS_ALL'].append(cas)
+        loc['REF_ALL'].append(ref)
+        loc['DATE_ALL'].append(date)
+        loc['UTC_ALL'].append(utc)
+        loc['OBSTYPE_ALL'].append(obstype)
+        loc['OBJNAME_ALL'].append(objname)
+        loc['DENS_ALL'].append(dens)
+    # Make sure we have some files
+    if len(loc['EXPTIME_ALL']) == 0:
+        wmsg = 'No pre-processed (*{0}) files present.'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['PROCESSED_SUFFIX']))
 
-        if filename.find('_pp.fits') > 0:
-            header = fits.getheader(os.path.join(fitsdir,filename),ext=0)
-            exptime=header['EXPTIME']
-            cas=header['SBCCAS_P']
-            ref=header['SBCREF_P']
-            date=header['DATE-OBS']
-            utc=header['UTC-OBS']
-            obstype=header['OBSTYPE']
-            objname=header['OBJNAME']
-            dens=header['SBCDEN_P']
+    # ----------------------------------------------------------------------
+    # archive to table
+    # ----------------------------------------------------------------------
+    if len(loc['EXPTIME_ALL']) != 0:
+        # construct table filename
+        outfile = spirouConfig.Constants.OFF_LISTING_FILE(p)
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
+        # define column names
+        columns = ['file', 'type', 'date', 'utc', 'exptime', 'cas', 'ref',
+                   'dens', 'objname']
+        # define the format for each column
+        formats = [None, None, None, None, '{:.1f}', None, None, '{:.2f}', None]
 
-            line = filename + '\t' + obstype + '\t' + date + \
-           '\t' + utc + '\t' + '%.1f ' %(exptime) + '\t' + cas + '\t' + ref + \
-           '\t' + '%.2f' %(dens) + '\t' + objname
-            print(line)
-            p.write(line+'\n')
-            cpt = cpt + 1
+        # get the values for each column
+        values = [loc['FILES'], loc['OBSTYPE_ALL'], loc['DATE_ALL'],
+                  loc['UTC_ALL'], loc['EXPTIME_ALL'], loc['CAS_ALL'],
+                  loc['REF_ALL'], loc['DENS_ALL'], loc['OBJNAME_ALL']]
+        # construct astropy table from column names, values and formats
+        table = spirouImage.MakeTable(columns, values, formats)
+        # save table to file
+        spirouImage.WriteTable(table, outfile, fmt='ascii.rst')
 
-    if cpt==0:
-        print('No *_pp.fits files')
+        # log saving of file
+        wmsg = 'Listing of directory on file {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(outfile))
 
-    p.close()
-    print('Listing of directory on file ' + outfile)
-
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
     # return a copy of locally defined variables in the memory
-#    return dict(locals())
+    return dict(locals())
 
 
 # =============================================================================
@@ -103,8 +155,6 @@ def main(night_name=None, files=None):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
-    # exit message if in debug mode
-#    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code

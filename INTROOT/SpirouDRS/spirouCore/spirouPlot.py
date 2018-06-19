@@ -1556,6 +1556,213 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     if pause:
         time.sleep(1.0)
 
+
+# =============================================================================
+# wave solution plotting function
+# =============================================================================
+def wave_littrow_extrap_plot(loc, iteration=0):
+
+    # get the dimensions of the data
+    ydim, xdim = loc['HCDATA'].shape
+    # define the x axis data
+    x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
+    x_points = np.arange(xdim)
+    # define the y axis data
+    yfit_x_cut = loc['LITTROW_EXTRAP_{0}'.format(iteration)]
+    yfit = loc['LITTROW_EXTRAP_SOL_{0}'.format(iteration)]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # colours
+    colours = np.tile(['r', 'b', 'g', 'y', 'm', 'k', 'c'], ydim)
+    # loop around the orders and plot each line
+    for order_num in range(ydim):
+        # plot the solution for all x points
+        frame.plot(x_points, yfit[order_num],
+                   color=colours[order_num])
+        # plot the solution at the chosen cut points
+        frame.scatter(x_cut_points, yfit_x_cut[order_num],
+                      marker='o', s=10, color=colours[order_num])
+    # set axis labels
+    frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]')
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_littrow_check_plot(p, loc, iteration=0):
+    # get data from loc
+    x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # loop around the xcut points
+    for it in range(len(x_cut_points)):
+        # get x and y data
+        xx = loc['LITTROW_XX_{0}'.format(iteration)][it]
+        yy = loc['LITTROW_YY_{0}'.format(iteration)][it]
+        # plot graph
+        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]))
+    # set axis labels and title
+    title = 'Wavelength Solution Littrow Check fiber {0}'.format(p['FIBER'])
+    frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
+              title=title)
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_plot_instrument_drift(p, x, spe, speref):
+    # get constants from parameter file
+    selected_order = p['IC_WAVE_IDRIFT_PLOT_ORDER']
+    fiber = p['FIBER']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot
+    frame.plot(x[selected_order], spe[selected_order], label='data')
+    frame.plot(x[selected_order], speref[selected_order], label='reference')
+    # add legend
+    frame.legend(loc=0)
+    # set title labels limits
+    title = 'Comparison between data and reference order={0} fiber={1}'
+    frame.set(xlabel='Wavelength [Angstrom]', ylabel='e-',
+              title=title.format(selected_order, fiber))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_plot_final_fp_order(p, loc, iteration=0):
+    """
+    Plot the FP extracted spectrum against wavelength solution for the
+    final fitted order (defined in "IC_WAVE_FP_N_ORD_FINAL")
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_WAVE_FP_N_ORD_FINAL: int, defines the order to plot
+            fiber: string, the fiber used for this recipe (eg. AB or A or C)
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            FPDATA: numpy array (2D), the fp spectrum
+            LITTROW_EXTRAP_SOL_{0}: the wavelength solution derived from the
+                                    HC and Littrow-constrained where {0} is the
+                                    iteration number
+
+    :return None:
+    """
+    # get constants
+    selected_order = p['IC_FP_N_ORD_FINAL']
+    fiber = p['FIBER']
+    # get data from loc
+    wave = loc['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
+    fp_data = loc['FPDATA'][selected_order]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot
+    frame.plot(wave, fp_data)
+    # set title labels limits
+    title = 'spectral order {0} fiber {1}'
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux',
+              title=title.format(selected_order, fiber))
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_local_width_offset_plot(loc):
+    """
+    Plot the measured FP cavity width offset against line number
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            FP_M: numpy array, the fp line numbers
+            FP_DOPD_OFFSET: numpy array, the measured cavity width offsets
+            FP_DOPD_OFFSET_COEFF: numpy array, the fit coefficients
+                                  for the cavity width offsets
+
+    :return None:
+    """
+    # get data from loc
+    fp_m = loc['FP_M']
+    fp_dopd = loc['FP_DOPD_OFFSET']
+    fp_dopd_coeff = loc['FP_DOPD_OFFSET_COEFF']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.scatter(fp_m, fp_dopd, label='Measured')
+    frame.plot(np.sort(fp_m), np.polyval(fp_dopd_coeff[::-1], fp_m),
+               label='fit')
+    # set title labels limits
+    title = 'FP cavity width offset'
+    frame.set(xlabel='FP peak number',
+              ylabel='Local cavity width offset [micron]',
+              title=title)
+    # Add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_fp_wavelength_residuals(loc):
+    """
+    Plot the FP line wavelength residuals
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            FP_LL_POS: numpy array, the FP line initial wavelengths
+            FP_LL_POS_NEW: numpy array, the FP line updated wavelengths
+
+    :return None:
+    """
+    # get data from loc
+    fp_ll = loc['FP_LL_POS']
+    fp_ll_new = loc['FP_LL_POS_NEW']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.scatter(fp_ll, fp_ll - fp_ll_new)
+    # set title labels limits
+    title = 'FP lines wavelength residuals'
+    frame.set(xlabel='Initial wavelength [nm]',
+              ylabel='New - Initial wavelength [nm]',
+              title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 # =============================================================================
 # test functions (rewmove later)
 # =============================================================================

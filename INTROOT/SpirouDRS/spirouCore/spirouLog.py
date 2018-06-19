@@ -91,6 +91,19 @@ def logger(key='', option='', message='', printonly=False, logonly=False):
         message = [('Logging error: message="{0}" is not a valid string or '
                     'list').format(message)]
         key = 'error'
+    # check that key is valid
+    if key not in spirouConfig.Constants.LOG_TRIG_KEYS():
+        emsg = 'Logging error: key="{0}" not in LOG_TRIG_KEYS()'
+        message.append(emsg.format(key))
+        key = 'error'
+    if key not in spirouConfig.Constants.WRITE_LEVEL():
+        emsg = 'Logging error: key="{0}" not in WRITE_LEVEL()'
+        message.append(emsg.format(key))
+        key = 'error'
+    if key not in spirouConfig.Constants.COLOUREDLEVELS():
+        emsg = 'Logging error: key="{0}" not in COLOUREDLEVELS()'
+        message.append(emsg.format(key))
+        key = 'error'
     # loop around message (now all are lists)
     errors = []
 

@@ -12,7 +12,8 @@ Import rules: Not spirouLOCOR
 from __future__ import division
 import numpy as np
 import os
-from astropy.table import Table
+from astropy.table import Table, vstack
+from astropy.table import TableMergeError
 from astropy.io.registry import get_formats
 from astropy.io import ascii
 
@@ -97,14 +98,14 @@ def make_table(columns, values, formats=None, units=None):
         # set columns
         table[col] = val
         # if we have formats set format
-        if formats is not None:
-            if test_number_format(formats[c_it]):
+        if formats[c_it] is not None:
+            if test_format(formats[c_it]):
                 table[col].format = formats[c_it]
             else:
                 eargs1 = [formats[c_it], col]
                 emsg1 = 'Format "{0}" is invalid (Column = {1})'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', DPROG, [emsg1.format(eargs1), emsg2])
+                WLOG('error', DPROG, [emsg1.format(*eargs1), emsg2])
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -117,7 +118,8 @@ def write_table(table, filename, fmt='fits'):
     Writes a table to file "filename" with format "fmt"
 
     :param table: astropy table, the table to be writen to file
-    :param filename: string, the filename and location of the table to read
+    :param filename: string, the filename and location of the table
+                     to written to
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
 
@@ -149,6 +151,45 @@ def write_table(table, filename, fmt='fits'):
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
+
+def merge_table(table, filename, fmt='fits'):
+    """
+    If a file already exists for "filename" try to merge this new table with
+    the old one (requires all columns/formats to be the same).
+    If filename does not exist writes "table" as if new table
+
+    :param table:  astropy table, the new table to be merged to existing file
+    :param filename: string, the filename and location of the table
+                     to written to
+    :param fmt: string, the format of the table to read from (must be valid
+                for astropy.table to read - see below)
+
+    :return None:
+
+    astropy.table writeable formats are as follows:
+    """
+    func_name = __NAME__ + '.merge_table()'
+    # first try to open table
+    if os.path.exists(filename):
+        # read old table
+        old_table = read_table(filename, fmt)
+        # check against new table (colnames and formats)
+        old_table = prep_merge(filename, old_table, table)
+        # generate a new table
+        try:
+            new_table = vstack([old_table, table])
+        except TableMergeError as e:
+            emsg1 = 'Cannot merge file={0}'.format(filename)
+            emsg2 = '    Error reads: {0}'.format(e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            new_table = None
+        # write new table
+        write_table(new_table, filename, fmt)
+    # else just write the table
+    else:
+        write_table(table, filename, fmt)
 
 
 def read_table(filename, fmt, colnames=None, **kwargs):
@@ -223,7 +264,34 @@ def read_table(filename, fmt, colnames=None, **kwargs):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def test_number_format(fmt):
+def prep_merge(filename, table, preptable):
+    func_name = __NAME__ + '.prep_merge()'
+    # set up new table to store prepped data
+    newtable = Table()
+    # loop around all columns
+    for col in preptable.colnames:
+        # get required format
+        pformat = preptable[col].dtype
+        # check for column name
+        if col not in table.colnames:
+            emsg1 = 'Column {0} not in file {1}'.format(col, filename)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2])
+        # check format
+        if table[col].dtype != pformat:
+            try:
+                newtable[col] = np.array(table[col]).astype(pformat)
+            except Exception as e:
+                emsg1 = 'Incompatible data types for column={0} for file {1}'
+                emsg2 = '    error reads: {0}'.format(e)
+                WLOG('error', DPROG, [emsg1.format(col, filename), emsg2])
+        else:
+            newtable[col] = table[col]
+    # return prepped table
+    return newtable
+
+
+def test_format(fmt):
     """
     Test the format string with a floating point number
     :param fmt: string, the format string i.e. "7.4f"
@@ -231,7 +299,14 @@ def test_number_format(fmt):
     :return passed: bool, if valid returns True else returns False
     """
     try:
-        _ = ('{0:' + fmt + '}').format(123.456789)
+        if fmt.startswith('{') and fmt.endswith('}'):
+            return True
+        elif 's' in fmt:
+            return True
+        elif 'd' in fmt:
+            _ = ('{0:' + fmt + '}').format(123)
+        else:
+            _ = ('{0:' + fmt + '}').format(123.456789)
         return True
     except ValueError:
         return False
@@ -298,6 +373,8 @@ def update_docs():
     # update doc for write_table
     writemask = ftable['write?']
     write_table.__doc__ += string_formats(ftable, mask=writemask)
+    # update doc for merge_table
+    merge_table.__doc__ += string_formats(ftable, mask=None)
     # update doc for read_table
     readmask = ftable['read?']
     read_table.__doc__ += string_formats(ftable, mask=readmask)

@@ -73,7 +73,7 @@ def measure_blaze_for_order(p, y):
     return blaze
 
 
-def correct_flat(p=None, loc=None, hdr=None, filename=None):
+def get_flat(p=None, loc=None, hdr=None, filename=None):
     """
     Attempts to read the flat and if it fails uses a constant flat
 
@@ -113,22 +113,18 @@ def correct_flat(p=None, loc=None, hdr=None, filename=None):
         # read the flat
         flat = spirouImage.ReadFlatFile(p, hdr, required=False)
         # where the flat is zeros set it to ones
-        flat = np.where(flat == 0.0, np.ones_like(loc['DATA']), flat)
+        flat = np.where(flat == 0.0, np.ones_like(loc['HCDATA']), flat)
     # if there is no flat defined in calibDB use a ones array
     except ConfigError as e:
         # log warning
         wmsg = [e.message, '    Using constant flat instead.']
         WLOG('warning', p['LOG_OPT'], wmsg)
         # flat set to ones
-        flat = np.ones_like(loc['DATA'])
+        flat = np.ones_like(loc['HCDATA'])
 
     # add flat to loc
     loc['FLAT'] = flat
     loc.set_source('FLAT', func_name)
-
-    # correct the data with the flat
-    # TODO: Should this be used?
-    #loc['data'] = loc['data']/flat
 
     # return loc
     return loc
