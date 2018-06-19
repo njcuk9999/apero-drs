@@ -27,25 +27,25 @@ USER_CONFIG = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = "/drs/spirou/data/"
+TDATA = "/Users/edermartioli/SPIROU-pipeline/data/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/drs/spirou/INTROOT/'
+DRS_ROOT = '/Users/edermartioli/SpirouDRS/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/drs/spirou/data/raw'
+DRS_DATA_RAW = '/Users/edermartioli/SPIROU-pipeline/data/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/drs/spirou/data/reduced'
+DRS_DATA_REDUC = '/Users/edermartioli/SPIROU-pipeline/data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/drs/spirou/data/calibDB'
+DRS_CALIB_DB = '/Users/edermartioli/SPIROU-pipeline/data/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/drs/spirou/data/msg'
+DRS_DATA_MSG = '/Users/edermartioli/SPIROU-pipeline/data/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/drs/spirou/data/tmp'
+DRS_DATA_WORKING = '/Users/edermartioli/SPIROU-pipeline/data/tmp'
 
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
