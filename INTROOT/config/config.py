@@ -20,7 +20,7 @@ DRS_DEBUG = 0
 
 # Whether to use user config (True or 1 to use)
 #      if False (or 0) only uses default configuration files
-USER_CONFIG = 1
+USER_CONFIG = 0
 
 # -----------------------------------------------------------------------------
 # path settings
@@ -51,7 +51,7 @@ DRS_DATA_WORKING = '/Users/edermartioli/SPIROU-pipeline/data/tmp'
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
 # DRS_UCONFIG = '~/spirou_config_H2RG/'
-# DRS_UCONFIG = '~/spirou_config_H4RG/'
+DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
