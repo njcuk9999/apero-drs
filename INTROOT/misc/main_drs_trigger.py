@@ -24,8 +24,9 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 
-from SpirouDRS.spirouImage import spirouFile
 from SpirouDRS.spirouCore import spirouMath
+from SpirouDRS.spirouImage import spirouFile
+from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 
 # =============================================================================
 # Define variables
@@ -127,13 +128,10 @@ def main(night_name=None):
                 # display progress
                 iteration_bar(p, g_it, len(run_order), it, len(runi))
                 # get function from runs
-                func = imports[runi[it][0]]
-                # get night name from runs
-                nightname = runi[it][1]
-                # get files from runs
-                files = runi[it][2]
+                name = runi[it][0]
                 # run function
-                func.main(nightname, files)
+                args, name = spirouUnitRecipes.wrapper(p, name, inputs=runi[it])
+                ll = spirouUnitRecipes.run_main(p, name, args)
             # Skip any exit errors
             except SystemExit:
                 continue
@@ -326,7 +324,9 @@ def get_runs(requirements, files, nights):
             # append ufiles to run
             if len(ufiles) > 0:
                 for ufile in ufiles:
-                    runs[unight].append([name, unight] + [ufile])
+                    if type(ufile) not in [list, np.ndarray]:
+                        ufile = [ufile]
+                    runs[unight].append([name, unight] + ufile)
             else:
                 missed.append([unight, name])
     # return runs and names
@@ -346,7 +346,7 @@ def recipe_mode_1(req, nfiles):
     # loop around files and add files that have this suffix
     for filename in nfiles:
         if suffix in filename:
-            ufiles.append(filename)
+            ufiles.append(str(filename))
     # return files as a single list entry
     if len(ufiles) == 0:
         return []
@@ -360,7 +360,7 @@ def recipe_mode_2(req, nfiles):
     # if None in suffices use all files
     if None in suffices:
         for filename in nfiles:
-            runs = [filename]
+            runs = [str(filename)]
     else:
         runs = []
         # loop around suffixes
@@ -369,7 +369,7 @@ def recipe_mode_2(req, nfiles):
             # loop around files and add files that have this suffix
             for filename in nfiles:
                 if suffix in filename:
-                    ufiles.append(filename)
+                    ufiles.append(str(filename))
             if len(ufiles) > 0:
                 runs.append(ufiles)
     # return runs
@@ -386,9 +386,9 @@ def recipe_mode_3(req, nfiles):
         # loop around files and add files that have this suffix
         for filename in nfiles:
             if suffix in filename:
-                ufiles.append(filename)
+                ufiles.append(str(filename))
             elif suffix == 'None':
-                ufiles.append(filename)
+                ufiles.append(str(filename))
         sfiles.append(ufiles)
     if len(sfiles) == 0:
         return []
@@ -396,7 +396,7 @@ def recipe_mode_3(req, nfiles):
     only_run = []
     for s_it in range(len(suffices)):
         try:
-            only_run.append(sfiles[s_it][0])
+            only_run.append(str(sfiles[s_it][0]))
         except IndexError:
             return []
     # return runs
@@ -477,11 +477,11 @@ def add_to_history(p, night_name, runs):
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == "__main__":
-    # run main with no arguments (get from command line - sys.argv)
-    ll = main()
-    # exit message
-    spirouStartup.Exit(ll, has_plots=False)
+# if __name__ == "__main__":
+#     # run main with no arguments (get from command line - sys.argv)
+#     ll = main()
+#     # exit message
+#     spirouStartup.Exit(ll, has_plots=False)
 
 
 # =============================================================================
