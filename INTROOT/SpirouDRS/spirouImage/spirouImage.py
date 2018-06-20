@@ -445,6 +445,26 @@ def interp_bad_regions(p, image):
 
 
 def fix_non_preprocessed(p, image, filename=None):
+    """
+    If a raw file is not preprocessed, then fix it (i.e. rotate it) so
+    it conforms to DRS standards
+
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            PROCESSED_SUFFIX: string, the processed suffix
+            PREPROCESSED: bool, flag whether file is detected as
+                          pre-processed
+            IC_IMAGE_TYPE: string, the detector type
+            RAW_TO_PP_ROTATION: int, rotation angle in degrees (in degrees,
+                                counter-clockwise direction) must be a multiple
+                                of 90 degrees
+    :param image: numpy array (2D), the image to manipulate
+    :param filename: string, if p['PREPROCESSED'] is not defined the file
+                     is checked (can be done if PREPROCESSED in p
+
+    :return newimage: numpy array (2D), the new image that emulates a pre-
+                      processed file
+    """
 
     func_name = __NAME__ + '.fix_non_preprocessed()'
     # if preprocessed not found calculate it
@@ -1471,7 +1491,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
     if name is None:
         name = key
     # get raw value
-    rawvalue = spirouFITS.keylookup(p, hdr, key, hdr['@@@hname'])
+    rawvalue = spirouFITS.keylookup(p, hdr, key)
     # get type casted value
     try:
         if dtype is None:
@@ -1498,7 +1518,10 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
         # assign value to p[name]
         p[name] = value
         # set source
-        p.set_source(name, hdr['@@@hname'])
+        if '@@@hname' in hdr:
+            p.set_source(name, hdr['@@@hname'])
+        else:
+            p.set_source(name, func_name + ' (via file HEADER)')
         # return p
         return p
 

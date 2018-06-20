@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.045'
-__author__ = 'N. Cook, F. Bouchy, E. Artigau, I. Boisse, M. Hobson, C. Moutou'
+__version__ = '0.2.048'
+__author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ = '2018-06-14'
+__date__ = '2018-06-18'
 
 
 # =============================================================================
@@ -1146,6 +1146,54 @@ def WAVE_E2DS_COPY(p):
     e2dscopy = os.path.join(path, filename)
     # return absolute path
     return e2dscopy
+
+
+# noinspection PyPep8Naming
+def DEG_POL_FILE(p, loc):
+    # get reduced dir
+    reducedfolder = p['REDUCED_DIR']
+    # get base filename
+    basefilename = loc['BASENAME']
+    # get new extention
+    new_ext = '_pol.fits'
+    # get new filename
+    filename = basefilename.replace('.fits', new_ext)
+    # construct absolute path
+    deg_pol_filename = os.path.join(reducedfolder, filename)
+    # return absolute path
+    return deg_pol_filename
+
+
+# noinspection PyPep8Naming
+def NULL_POL1_FILE(p, loc):
+    # get reduced dir
+    reducedfolder = p['REDUCED_DIR']
+    # get base filename
+    basefilename = loc['BASENAME']
+    # get new extention
+    new_ext = '_null1_pol.fits'
+    # get new filename
+    filename = basefilename.replace('.fits', new_ext)
+    # construct absolute path
+    null_pol1_filename = os.path.join(reducedfolder, filename)
+    # return absolute path
+    return null_pol1_filename
+
+
+# noinspection PyPep8Naming
+def NULL_POL2_FILE(p, loc):
+    # get reduced dir
+    reducedfolder = p['REDUCED_DIR']
+    # get base filename
+    basefilename = loc['BASENAME']
+    # get new extention
+    new_ext = '_null2_pol.fits'
+    # get new filename
+    filename = basefilename.replace('.fits', new_ext)
+    # construct absolute path
+    null_pol2_filename = os.path.join(reducedfolder, filename)
+    # return absolute path
+    return null_pol2_filename
 
 
 # =============================================================================

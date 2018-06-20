@@ -12,85 +12,59 @@
 %----------------------------------------------------------------------------------------
 \subsection{Extraction}
 
-Defined in \spirouEXTOR\path{.spirouEXTOR.extract_wrapper}
+Defined in \spirouEXTOR\path{.spirouEXTOR.extraction_wrapper}
 
 \begin{pythonbox}
 from SpirouDRS import spirouEXTOR
-spirouEXTOR.Extraction(image, pos, sig, **kwargs)
-spirouEXTOR.spirouEXTOR.extract_wrapper(image, pos, sig, **kwargs)
+spirouEXTOR.Extraction(p, loc, image, rnum, mode=0, order_profile=None, **kwargs)
+spirouEXTOR.spirouEXTOR.extract_wrapper(p, loc, image, rnum, mode=0, order_profile=None, **kwargs)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Extraction wrapper - takes in image, pos, sig and kwargs and decides
-which extraction process to use.
+Extraction wrapper - takes in p, loc, image, rnum (order number) and mode
+and decides which extract method to run (based on mode), checks all
+required inputs are present and valid else displays a helpful error.
+
+:param p: parameter dictionary, ParamDict containing constants
+        Required parameters depends on mode selected
+:param loc: parameter dictionary, ParamDict containing data
+        Required parameters depends on mode selected
 
 :param image: numpy array (2D), the image
-:param pos: numpy array (1D), the position fit coefficients
-            size = number of coefficients for fit
-:param sig: numpy array (1D), the width fit coefficients
-            size = number of coefficients for fit
-:param kwargs: additional keyword arguments
+:param rnum: int, the order number for this iteration
+:param mode: string, the extraction mode, currently supported modes are:
 
-currently accepted keyword arguments are:
+        0 - Simple extraction
+                (function = spirouEXTOR.extract_const_range)
 
-    extopt:         int, Extraction option in tilt file:
-                     if 0 extraction by summation over constant range
-                     if 1 extraction by summation over constant sigma
-                        (not currently available)
-                     if 2 Horne extraction without cosmic elimination
-                        (not currently available)
-                     if 3 Horne extraction with cosmic elimination
-                        (not currently available)
+        1 - weighted extraction
+                (function = spirouEXTOR.extract_weight)
 
-    nbsig:          float,  distance away from center to extract out to +/-
-                    defaults to p['nbsig'] from constants_SPIROU.py
+        2 - tilt extraction
+                (function = spirouEXTOR.extract_tilt)
 
-    gain:           float, gain of the image
-                    defaults to p['gain'] from fitsfilename HEADER
+        3a - tilt weight extraction (old 1)
+                (function = spirouEXTOR.extract_tilt_weight)
 
-    sigdet:         float, the sigdet of the image
-                    defaults to p['sigdet'] from fitsfilename HEADER
+        3b - tilt weight extraction 2 (old)
+                (function = spirouEXTOR.extract_tilt_weight_old2)
 
-    range1:         float, Half-zone extraction width left side
-                    (formally plage1)
-                    defaults to p['ic_ext_range1'] from fiber parameters in
-                    constatns_SPIROU.txt
+        3c - tilt weight extraction 2
+                (function = spirouEXTOR.extract_tilt_weight2)
 
-    range2:         float, Half-zone extraction width left side
-                    (formally plage2)
-                    defaults to p['ic_ext_range2'] from fiber parameters in
-                    constatns_SPIROU.txt
+        3d - tilt weight extraction 2 (cosmic correction)
+                (function = spirouEXTOR.extract_tilt_weight2cosm)
 
-    tilt:           numpy array (1D), the tilt for this order, if defined
-                    uses tilt, if not defined does not
+:param order_profile: numpy array (2D) or None, the order profile image.
+                      Can be none if not used by extraction method.
+
+:param kwargs: keyword arguments, any value used from "p" or "loc" can be
+               overwritten with this parameter (which parameters depends on
+               which mode selected)
+:return: the outputs of extraction method function (see mode functions)
 \end{pythondocstring}
 \end{minipage}
 
-\noindent\begin{minipage}{\textwidth}
-\begin{pythondocstring}
-Extraction wrapper (continued)
-
-currently accepted keyword arguments are: (continued)
-
-    use_weight:    bool, if True use weighted extraction, if False or not
-                    defined does not use weighted extraction
-
-    order_profile:  numpy array (2D), the image with fit superposed on top,
-                    required for tilt and or weighted fit
-
-    mode:           if use_weight and tilt is not None then
-                    if mode = 'old'  will use old code (use this if
-                    exception generated)
-                    extract_tilt_weight_order_old() is run
-
-                    else mode = 'new' and
-                    extract_tilt_weight_order() is run
-
-:return spe: numpy array (1D), the extracted pixel values,
-             size = image.shape[1] (along the order direction)
-:return nbcos: int, zero in this case
-\end{pythondocstring}
-\end{minipage}
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
@@ -147,254 +121,41 @@ over constant range
 \noindent\begin{minipage}{\textwidth}
 \subsection{ExtractOrder}
 
-Defined in \spirouEXTOR\path{.spirouEXTOR.extract_order}
+Defined in \spirouEXTOR\path{.spirouEXTOR.get_extraction_method}
 
 \begin{pythonbox}
 from SpirouDRS import spirouEXTOR
-spirouEXTOR.ExtractOrder(pp, loc, image, rnum, **kwargs)
-spirouEXTOR.spirouEXTOR.extract_order(pp, loc, image, rnum, **kwargs)
+spirouEXTOR.GetExtMethod(p, mode)
+spirouEXTOR.spirouEXTOR.get_extraction_method(p, mode)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Extract order without tilt or weight using spirouEXTOR.extract_wrapper()
+Get the extraction method key and function
 
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            IC_EXTOPT: int, the extraction option
-            IC_EXT_RANGE: float, the upper and lower edge of the order
-                          in rows (y-axis) - half-zone width
-            gain: float, the gain of the image
+:param mode: string, the mode
 
-:param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            acc: numpy array (2D), the fit coefficients array for
-                  the centres fit
-                  shape = (number of orders x number of fit coefficients)
-            ass: numpy array (2D), the fit coefficients array for
-                  the widths fit
-                  shape = (number of orders x number of fit coefficients)
+    0 - Simple extraction
+            (function = spirouEXTOR.extract_const_range)
 
-:param image: numpy array (2D), the image
-:param rnum: int, the order number for this iteration
-:param kwargs: additional keywords to pass to the extraction wrapper
+    1 - weighted extraction
+            (function = spirouEXTOR.extract_weight)
 
-        - allowed keywords are:
+    2 - tilt extraction
+            (function = spirouEXTOR.extract_tilt)
 
-        range1  (defaults to "IC_EXT_RANGE")
-        range2  (defaults to "IC_EXT_RANGE")
-        gain    (defaults to "GAIN")
+    3a - tilt weight extraction (old 1)
+            (function = spirouEXTOR.extract_tilt_weight)
 
-:return cent: numpy array (1D), the extracted pixel values,
-             size = image.shape[1] (along the order direction)
-:return cpt: int, zero in this case
-\end{pythondocstring}
-\end{minipage}
+    3b - tilt weight extraction 2 (old)
+            (function = spirouEXTOR.extract_tilt_weight_old2)
 
-%----------------------------------------------------------------------------------------
+    3c - tilt weight extraction 2
+            (function = spirouEXTOR.extract_tilt_weight2)
 
-\noindent\begin{minipage}{\textwidth}
-\subsection{ExtractTiltOrder}
-
-Defined in \spirouEXTOR\path{.spirouEXTOR.extract_tilt_order}
-
-\begin{pythonbox}
-from SpirouDRS import spirouEXTOR
-spirouEXTOR.ExtractTiltOrder(pp, loc, image, rnum, **kwargs)
-spirouEXTOR.spirouEXTOR.extract_tilt_order(pp, loc, image, rnum, **kwargs)
-\end{pythonbox}
-
-\begin{pythondocstring}
-Extract order with tilt but without weight using
-spirouEXTOR.extract_wrapper()
-
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            IC_EXT_RANGE: float, the upper and lower edge of the order
-                          in rows (y-axis) - half-zone width
-            gain: float, the gain of the image
-
-:param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
-                  shape = (number of orders x number of fit coefficients)
-            ass: numpy array (2D), the fit coefficients array for
-                  the widths fit
-                  shape = (number of orders x number of fit coefficients)
-            tilt: numpy array (1D), the tilt angle of each order
-
-:param image: numpy array (2D), the image
-:param rnum: int, the order number for this iteration
-:param kwargs: additional keywords to pass to the extraction wrapper
-
-        - allowed keywords are:
-
-        range1  (defaults to "IC_EXT_RANGE")
-        range2  (defaults to "IC_EXT_RANGE")
-        gain    (defaults to "GAIN")
-
-:return cent: numpy array (1D), the extracted pixel values,
-             size = image.shape[1] (along the order direction)
-:return cpt: int, zero in this case
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-
-\noindent\begin{minipage}{\textwidth}
-\subsection{ExtractTiltWeightOrder}
-
-Defined in \spirouEXTOR\path{.extract_tilt_weight_order}
-
-\begin{pythonbox}
-from SpirouDRS import spirouEXTOR
-spirouEXTOR.ExtractTiltWeightOrder(pp, loc, image, orderp, rnum, **kwargs)
-spirouEXTOR.spirouEXTOR.extract_tilt_weight_order(pp, loc, image, orderp, rnum, **kwargs)
-\end{pythonbox}
-
-\begin{pythondocstring}
-Extract order with tilt and weight using
-spirouEXTOR.extract_wrapper() with mode=1
-(extract_tilt_weight_order_old() is run)
-
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            IC_EXT_RANGE: float, the upper and lower edge of the order
-                          in rows (y-axis) - half-zone width
-            gain: float, the gain of the image
-            sigdet: float, the read noise of the image
-
-:param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
-                  shape = (number of orders x number of fit coefficients)
-            ass: numpy array (2D), the fit coefficients array for
-                  the widths fit
-                  shape = (number of orders x number of fit coefficients)
-            tilt: numpy array (1D), the tilt angle of each order
-
-:param image: numpy array (2D), the image
-:param orderp: numpy array (2D), the order profile image
-:param rnum: int, the order number for this iteration
-:param kwargs: additional keywords to pass to the extraction wrapper
-
-        - allowed keywords are:
-
-        range1  (defaults to "IC_EXT_RANGE")
-        range2  (defaults to "IC_EXT_RANGE")
-        gain    (defaults to "GAIN")
-        sigdet  (defaults to "SIGDET")
-
-:return cent: numpy array (1D), the extracted pixel values,
-             size = image.shape[1] (along the order direction)
-:return cpt: int, zero in this case
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-
-\noindent\begin{minipage}{\textwidth}
-\subsection{ExtractTiltWeightOrder2}
-
-Defined in \spirouEXTOR\path{.extract_tilt_weight_order2}
-
-\begin{pythonbox}
-from SpirouDRS import spirouEXTOR
-spirouEXTOR.ExtractTiltWeightOrder2(pp, loc, image, orderp, rnum, **kwargs)
-spirouEXTOR.spirouEXTOR.extract_tilt_weight_order2(pp, loc, image, orderp, rnum, **kwargs)
-\end{pythonbox}
-
-\begin{pythondocstring}
-Extract order with tilt and weight using
-spirouEXTOR.extract_wrapper() with mode=2
-(extract_tilt_weight_order() is run)
-
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            IC_EXT_RANGE1: float, the upper edge of the order in rows
-                           (y-axis) - half-zone width (lower)
-            IC_EXT_RANGE2: float, the lower edge of the order in rows
-                           (y-axis) - half-zone width (upper)
-            gain: float, the gain of the image
-            sigdet: float, the read noise of the image
-
-:param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            acc: numpy array (2D), the fit coefficients array for
-                  the centres fit
-                  shape = (number of orders x number of fit coefficients)
-            ass: numpy array (2D), the fit coefficients array for
-                  the widths fit
-                  shape = (number of orders x number of fit coefficients)
-            tilt: numpy array (1D), the tilt angle of each order
-
-:param image: numpy array (2D), the image
-:param orderp: numpy array (2D), the order profile image
-:param rnum: int, the order number for this iteration
-:param kwargs: additional keywords to pass to the extraction wrapper
-
-        - allowed keywords are:
-
-        range1  (defaults to "IC_EXT_RANGE1")
-        range2  (defaults to "IC_EXT_RANGE2")
-        gain    (defaults to "GAIN")
-        sigdet  (defaults to "SIGDET")
-
-:return cent: numpy array (1D), the extracted pixel values,
-             size = image.shape[1] (along the order direction)
-:return cpt: int, zero in this case
-\end{pythondocstring}
-\end{minipage}
-
-%----------------------------------------------------------------------------------------
-
-\noindent\begin{minipage}{\textwidth}
-\subsection{ExtractWeightOrder}
-
-Defined in \spirouEXTOR\path{.spirouEXTOR.extract_weight_order}
-
-\begin{pythonbox}
-from SpirouDRS import spirouEXTOR
-spirouEXTOR.ExtractWeightOrder(pp, loc, image, orderp, rnum, **kwargs)
-spirouEXTOR.spirouEXTOR.extract_weight_order(pp, loc, image, orderp, rnum, **kwargs)
-\end{pythonbox}
-
-\begin{pythondocstring}
-Extract order with weight but without tilt using
-spirouEXTOR.extract_wrapper()
-
-:param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-            IC_EXT_RANGE: float, the upper and lower edge of the order
-                          in rows (y-axis) - half-zone width
-            gain: float, the gain of the image
-            sigdet: float, the read noise of the image
-
-:param loc: parameter dictionary, ParamDict containing data
-        Must contain at least:
-            acc: numpy array (2D), the fit coefficients array for
-                  the centers fit
-                  shape = (number of orders x number of fit coefficients)
-            ass: numpy array (2D), the fit coefficients array for
-                  the widths fit
-                  shape = (number of orders x number of fit coefficients)
-
-:param image: numpy array (2D), the image
-:param orderp: numpy array (2D), the order profile image
-:param rnum: int, the order number for this iteration
-:param kwargs: additional keywords to pass to the extraction wrapper
-
-        - allowed keywords are:
-
-        range1  (defaults to "IC_EXT_RANGE")
-        range2  (defaults to "IC_EXT_RANGE")
-        gain    (defaults to "GAIN")
-        sigdet  (defaults to "SIGDET")
-
-:return cent: numpy array (1D), the extracted pixel values,
-             size = image.shape[1] (along the order direction)
-:return cpt: int, zero in this case
+    3d - tilt weight extraction 2 (cosmic correction)
+            (function = spirouEXTOR.extract_tilt_weight2cosm)
+            
+:return: string the mode and function
 \end{pythondocstring}
 \end{minipage}
 

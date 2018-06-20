@@ -348,7 +348,7 @@ def initial_file_setup(p, recipe, files=None, calibdb=False):
         wmsg = 'Now processing Image with {1} recipe'
     else:
         wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], recipe))
     # -------------------------------------------------------------------------
     # return p
     return p
@@ -841,15 +841,15 @@ def set_arg_file_dir(p, mfd=None):
         #   is wrong
         if os.path.exists(arg_fp):
             emsg1 = ('Fatal error cannot find '
-                     '[FOLDER]="{0}"'.format(p['ARG_NIGHT_NAME']))
+                     'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']))
             emsg2 = '    in directory {0} ({1})'.format(arg_fp, location)
+            WLOG('error', DPROG, [emsg1, emsg2])
         # else it is the directory which is wrong (cal_validate was not run)
         else:
-            emsg1 = ('Fatal error cannot find directory {0}'
-                     ''.format(location))
-            emsg2 = '    {0}="{1}"'.format(location, arg_fp)
-        # log error
-        WLOG('error', DPROG, [emsg1, emsg2])
+            emsg1 = ('Fatal error cannot find directory NIGHT_NAME="{0}"'
+                     ''.format(p['ARG_FILE_DIR']))
+            # log error
+            WLOG('error', DPROG, emsg1)
 
     # return p
     return p

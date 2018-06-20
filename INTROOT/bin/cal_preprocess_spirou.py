@@ -9,10 +9,7 @@ Created on 2018-04-13 at 17:20
 
 @author: melissa-hobson
 """
-
-# {IMPORTS}
 from __future__ import division
-import numpy as np
 import os
 
 from SpirouDRS import spirouConfig
@@ -96,7 +93,7 @@ def main(night_name=None, ufiles=None):
             wmsg = 'File {0} does not exist... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-        elif p['PROCESSED_SUFFIX'] + '.fits' in ufile:
+        elif p['PROCESSED_SUFFIX'] in ufile:
             wmsg = 'File {0} has been processed... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue

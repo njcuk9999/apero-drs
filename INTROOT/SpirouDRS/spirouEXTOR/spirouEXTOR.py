@@ -322,8 +322,9 @@ def extract_AB_order(pp, loc, image, rnum):
 
 def get_extraction_method(p, mode):
     """
+    Get the extraction method key and function
 
-    :param mode: string,
+    :param mode: string, the mode
 
         0 - Simple extraction
                 (function = spirouEXTOR.extract_const_range)
@@ -345,6 +346,7 @@ def get_extraction_method(p, mode):
 
         3d - tilt weight extraction 2 (cosmic correction)
                 (function = spirouEXTOR.extract_tilt_weight2cosm)
+
     :return: string the mode and function
     """
 
@@ -667,7 +669,10 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            fx = fx / np.sum(fx)
+            if np.sum(fx) > 0:
+               fx = fx / np.sum(fx)
+            else:
+                fx = np.ones(fx.shape, dtype=float)
             # weight values less than 0 to 1e-9
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in quadrature
@@ -752,7 +757,10 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             # multiple the order_profile by the rotation matrix
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
-            fx = fx / np.sum(fx)
+            if np.sum(fx) > 0:
+               fx = fx / np.sum(fx)
+            else:
+                fx = np.ones(fx.shape, dtype=float)
             # weight values less than 0 to 1e-9
             raw_weights = np.where(sx > 0, 1, 1e-9)
             # weights are then modified by the gain and sigdet added in
@@ -799,7 +807,9 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     #       critical pixel values > sigcut * extraction
     #    or
     #       the loop exceeds "cosmic_threshold"
-    while (np.max(crit) > (sigcut * spe[ic])) and (nbloop < cosmic_threshold):
+    cond1 = np.max(crit) > np.max((sigcut * spe[ic],1000.))
+    cond2 = nbloop < cosmic_threshold
+    while cond1 and cond2:
         # TODO: Remove old print statement
         # wmsg = 'cosmic detected in line {0} with amp {1:.2f}'
         # print(wmsg.format(ic,np.max(crit)/spe[ic]))
@@ -818,6 +828,10 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
         cpt += 1
         # increase the loop counter
         nbloop += 1
+        # recalculate conditions
+        cond1 = np.max(crit) > np.max((sigcut * spe[ic], 1000.))
+        cond2 = nbloop < cosmic_threshold
+
     # finally return spe and cpt
     return spe, cpt
 
