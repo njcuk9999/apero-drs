@@ -133,8 +133,7 @@ def main(night_name=None):
                 # get files from runs
                 files = runi[it][2]
                 # run function
-                print(runi[it][0], nightname, files)
-                # func.main(nightname, files)
+                func.main(nightname, files)
             # Skip any exit errors
             except SystemExit:
                 continue
