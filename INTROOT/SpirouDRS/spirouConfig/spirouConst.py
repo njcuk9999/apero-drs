@@ -1196,6 +1196,18 @@ def NULL_POL2_FILE(p, loc):
     return null_pol2_filename
 
 
+def OFF_LISTING_FILE(p):
+    # get constants from p
+    msg_dir = p['DRS_DATA_MSG']
+    night_name = p['ARG_NIGHT_NAME']
+    # get base filename
+    basefilename = 'listing_{0}.txt'.format(os.path.split(night_name)[-1])
+    # get absolute path
+    abspath = os.path.join(msg_dir, basefilename)
+    # return absolute path
+    return abspath
+
+
 # =============================================================================
 # Define calibration database functions
 # =============================================================================
