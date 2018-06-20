@@ -412,7 +412,10 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
         # append DPRTYPE to DPRTYPES
         p['DPRTYPES'].append(str(p['DPRTYPE']))
     # Need to check that all DPRTYPES are the same
-    if len(np.unique(p['DPRTYPES'])) != 1:
+    if len(p['DPRTYPES']) == 0:
+        p['DPRTYPE'] = 'UNKNOWN'
+        return p
+    elif len(np.unique(p['DPRTYPES'])) != 1:
         # add first error message
         emsgs = ['Files are not all the same type']
         # loop around files and print types
@@ -424,8 +427,9 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
         emsgs.append('\tfunction = {0}'.format(func_name))
         # log error message
         WLOG('error', p['LOG_OPT'], emsgs)
-    # return p
-    return p
+    else:
+        # return p
+        return p
 
 
 def check_preprocess(p, filename=None):
