@@ -74,7 +74,7 @@ def main(night_name=None):
     # get requirements from control for each recipe
     requirements = get_requirements(p, control)
     # check files
-    runs, names, missed = get_runs(requirements, files, nights)
+    runs, missed = get_runs(requirements, files, nights)
 
     # ----------------------------------------------------------------------
     # For each night name ID when we don't have a full set
@@ -102,31 +102,42 @@ def main(night_name=None):
             wmsg = 'Code ended by user'
             WLOG('error', p['LOG_OPT'], wmsg)
 
+
     # ----------------------------------------------------------------------
     # Run given recipes
     # ----------------------------------------------------------------------
-
-    for it in range(len(runs)):
-        try:
-            # display progress
-            iteration_bar(p, it, len(runs))
-            # get function from runs
-            func = imports[runs[it][0]]
-            # get night name from runs
-            nightname = runs[it][1]
-            # get files from runs
-            files = runs[it][2]
-            # check and add to history
-            skip = add_to_history(p, nightname, runs)
-            # if skip then skip
-            if skip:
-                WLOG('', '', '\t Skipped run (Already processed)')
-                continue
-            # run function
-            func.main(nightname, files)
-        # Skip any exit errors
-        except SystemExit:
+    # sort groups by name (assumes all nights will be alphabetical
+    run_order = np.sort(list(runs.keys()))
+    # loop around group (night name)
+    for g_it in range(len(run_order)):
+        # get group
+        group = run_order[g_it]
+        # get this run
+        runi = runs[group]
+        # check and add to history
+        skip = add_to_history(p, group, runi)
+        # if skip then skip
+        if skip:
+            wmsg = '\t Skipped run (Already processed group={0})'
+            WLOG('', '', wmsg.format(group))
             continue
+        # loop around run in runs
+        for it in range(len(runi)):
+            try:
+                # display progress
+                iteration_bar(p, g_it, len(run_order), it, len(runi))
+                # get function from runs
+                func = imports[runi[it][0]]
+                # get night name from runs
+                nightname = runi[it][1]
+                # get files from runs
+                files = runi[it][2]
+                # run function
+                print(runi[it][0], nightname, files)
+                # func.main(nightname, files)
+            # Skip any exit errors
+            except SystemExit:
+                continue
 
     # clear some lines
     WLOG('', '', '')
@@ -283,11 +294,13 @@ def get_requirements(p, control):
 def get_runs(requirements, files, nights):
 
     # store runs
-    runs, names, missed = [], [], []
+    runs = dict()
+    missed = []
     # get unique night names
     unights = np.unique(nights)
     # loop around unique night names
     for unight in unights:
+        runs[unight] = []
         # create list of files for this unight
         mask = np.array(nights) == unight
         nfiles = np.array(files)[mask]
@@ -314,12 +327,11 @@ def get_runs(requirements, files, nights):
             # append ufiles to run
             if len(ufiles) > 0:
                 for ufile in ufiles:
-                    runs.append([name, unight] + [ufile])
-                    names.append(name)
+                    runs[unight].append([name, unight] + [ufile])
             else:
                 missed.append([unight, name])
     # return runs and names
-    return runs, names, missed
+    return runs, missed
 
 
 def recipe_mode_1(req, nfiles):
@@ -392,11 +404,12 @@ def recipe_mode_3(req, nfiles):
     return [only_run]
 
 
-def iteration_bar(p, it_number, total_number):
+def iteration_bar(p, it_number1, t_number1, it_number2, t_number2):
     WLOG('', '', '')
     WLOG('', '', '=' * 50)
-    wmsg = 'Processing run {0} of {1}'.format(it_number + 1, total_number)
-    WLOG('', p['LOG_OPT'], wmsg)
+    wmsg1 = 'Processing Group {0} of {1}'.format(it_number1 + 1, t_number1)
+    wmsg2 = '           Run {0} of {1}'.format(it_number2 + 1, t_number2)
+    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
     WLOG('', '', '=' * 50)
     WLOG('', '', '')
 
