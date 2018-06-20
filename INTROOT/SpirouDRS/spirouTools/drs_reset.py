@@ -52,32 +52,33 @@ CALIB_DB_DEFAULT_FILES = ['2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits',
 # =============================================================================
 # Define functions
 # =============================================================================
-def reset_confirmation(called=False):
+def reset_confirmation(name, called=False):
 
     # get the warning and error colours
     w1, w2 = printc('warning')
     e1, e2 = printc('error')
     # confirm reset
-    print(w1 + '\nAre you sure you wish to reset the DRS?' + w2)
-    print(w1 + '\tThis will remove all files in the reduced/calibDB '
-          'directories' + w2)
-    print(w1 + '\tIf you are sure you want to reset type "yes"\n' + w2)
+    wargs = [w1, name, w2]
+    print('{0}\nAre you sure you wish to reset the {1} directory?{2}'
+          ''.format(*wargs))
+    print('{0}\tIf you are sure you want to reset type "yes"\n{2}'
+          ''.format(*wargs))
     # user input
+    eargs = [e1, name, e2]
+
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
-        uinput = raw_input(e1 + 'Reset the DRS?\t' + e2)
+        uinput = raw_input('{0}\tReset the {1} directory?\t{2}'.format(*eargs))
     else:
-        uinput = input(e1 + 'Reset the DRS?\t' + e2)
+        uinput = input('{0}\tReset the {1} directory?\t{2}'.format(*eargs))
     # line break
     print('\n')
 
     if uinput.upper() != "YES" and (not called):
-        WLOG('warning', '', 'Resetting DRS aborted.')
         return False
     elif uinput.upper() == "YES":
         return True
     else:
-        WLOG('warning', '', 'Resetting DRS aborted.')
         return False
 
 
@@ -186,19 +187,25 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset = True
+    reset1, reset2, reset3 = True, True, True
     if warn:
-        reset = reset_confirmation(called=called)
-    if reset:
+        reset1 = reset_confirmation('Reduced', called=called)
+    if reset1:
         reset_reduced_folders(p, log)
+    if warn:
+        reset2 = reset_confirmation('CalibDB', called=called)
+    if reset2:
         reset_calibdb(p, log)
-    # reset_log(p)
+    if warn:
+        reset3 = reset_confirmation('Log', called=called)
+    if reset3:
+        reset_log(p)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     if log:
         wmsg = 'Recipe {0} has been successfully completed'
-        WLOG('info', DPROG, wmsg.format(DPROG))
+        WLOG('info', __NAME__, wmsg.format(__NAME__))
     # return a copy of locally defined variables in the memory
     if return_locals:
         return dict(locals())
