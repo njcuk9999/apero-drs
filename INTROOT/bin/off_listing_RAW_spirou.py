@@ -50,6 +50,12 @@ def main(night_name=None):
     p = spirouStartup.Begin()
     p = spirouStartup.LoadArguments(p, night_name)
 
+    # check that we have a night_name
+    if p['ARG_NIGHT_NAME'] == '':
+        emsg1 = 'Must define night name. Input should be:'
+        emsg2 = '\t >> {0} [NIGHT_NAME]'.format(__NAME__)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
     # ----------------------------------------------------------------------
     # Get all files in raw night_name directory
     # ----------------------------------------------------------------------
