@@ -477,11 +477,11 @@ def add_to_history(p, night_name, runs):
 # =============================================================================
 # Start of code
 # =============================================================================
-# if __name__ == "__main__":
-#     # run main with no arguments (get from command line - sys.argv)
-#     ll = main()
-#     # exit message
-#     spirouStartup.Exit(ll, has_plots=False)
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message
+    spirouStartup.Exit(ll, has_plots=False)
 
 
 # =============================================================================
