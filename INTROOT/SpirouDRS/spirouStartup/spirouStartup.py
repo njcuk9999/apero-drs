@@ -326,8 +326,30 @@ def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
     return p
 
 
-def initial_file_setup(p, recipe, files=None, calibdb=False):
+def initial_file_setup(p, recipe, files=None, calibdb=False,
+                       no_night_name=False, no_files=False):
     func_name = __NAME__ + '.initial_file_setup()'
+    log_opt = p['LOG_OPT']
+    # -------------------------------------------------------------------------
+    if not no_night_name:
+        # check ARG_NIGHT_NAME is not None
+        if p['ARG_NIGHT_NAME'] == '':
+            wmsg1 = 'Argument Error: No FOLDER defined at run time argument'
+            wmsg2 = '    format must be:'
+            emsg = '    >>> {0} [FOLDER] [Other Arguments]'
+            WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(recipe)])
+    if not no_files:
+        fits_fn = p['FITSFILENAME']
+        # -------------------------------------------------------------------------
+        # check that fitsfilename exists
+        if fits_fn is None:
+            wmsg1 = 'Argument Error: No fits file defined at run time argument'
+            wmsg2 = '    format must be:'
+            emsg = '    >>> {0}.py [FOLDER] [FILES]'
+            WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(recipe)])
+        if not os.path.exists(fits_fn):
+            WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
+
     # -------------------------------------------------------------------------
     # deal with no files being defined
     if files is None:
@@ -1928,7 +1950,7 @@ def display_help_file(p):
 
 
 # noinspection PyListCreation
-def display_system_info(logonly=True):
+def display_system_info(logonly=True, return_message=False):
     """
     Display system information via the WLOG command
 
@@ -1946,8 +1968,11 @@ def display_system_info(logonly=True):
     for it, arg in enumerate(sys.argv):
         messages.append("    Arg {0} = \"{1}\"".format(it + 1, arg))
     messages.append(HEADER)
-    # return messages for logger
-    WLOG('', '', messages, logonly=logonly)
+    if return_message:
+        return messages
+    else:
+        # return messages for logger
+        WLOG('', '', messages, logonly=logonly)
 
 
 # =============================================================================
