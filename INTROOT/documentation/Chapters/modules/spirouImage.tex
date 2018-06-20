@@ -784,40 +784,67 @@ and header key (DPRTYPE) accordingly
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
-\subsection{ReadParam}
+\subsection{InterpolateBadRegions}
 
-Defined in \spirouImage\path{.spirouImage.get_param}
+Defined in \spirouImage\path{.spirouImage.identify_unprocessed_file}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.ReadParam(p, hdr, name=None, kind='human', return_value=False)
-spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=False)
+spirouImage.InterpolateBadRegions
+spirouImage.spirouImage.interp_bad_regions
 \end{pythonbox}
 
 \begin{pythondocstring}
-Get the acquisition time from the header file, if there is not header file
-use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+Interpolate over the bad regions to fill in holes on image (only to be used
+for image localization)
 
 :param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-        "name" defined in call
-        parameter dictionary to give to value
+        Must contain at least:
+            IC_IMAGE_TYPE: string, the type of detector (H2RG or H4RG)
+            BAD_REGION_FIT: list of floats, the fit to the curvature
+            BAD_REGION_MED_SIZE: int, the median filter box size
+            BAD_REGION_THRESHOLD: float, the threshold below which the
+                                  image (normalised) should be regarded as
+                                  bad (and the pixels in the image that
+                                  should be set to the norm value)
+            BAD_REGION_KERNAL_SIZE: int, the box size used to do the
+                                    convolution
+            BAD_REGION_MED_SIZE2: int, the median filter box size used
+                                  during the convolution
+            BAD_REGION_GOOD_VALUE: float, the final good ratio value
+                                   (ratio between the original image and
+                                    the interpolated image) to accept
+                                    pixels as good pixels
 
-:param hdr: dictionary, the header dictionary created by
-            spirouFITS.ReadImage
-:param name: string, the name in parameter dictionary to give to value
-             if return_value is False (i.e. p[name] = value)
-:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
-             for time since 1970-01-01
-:param return_value: bool, if False value is returned in p as p[name]
-                     if True value is returned
+            BAD_REGION_BAD_VALUE: float, the final bad ratio value
+                                   (ratio between the original image and
+                                    the interpolated image) to reject
+                                    pixels as bad pixels
 
-:return p or value: dictionary or string or float, if return_value is False
-                    parameter dictionary is returned, if return_value is
-                    True and kind=='human' returns a string, if return_value
-                    is True and kind=='Unix' returns a float
+:param image: numpy array (2D), the image
+
+:return image3: numpy array (2D), the corrected image
 \end{pythondocstring}
 \end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{}
+
+Defined in \spirouImage\path{.spirouImage.}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.
+spirouImage.spirouImage.
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
 
 %----------------------------------------------------------------------------------------
 
@@ -1186,6 +1213,45 @@ if return_shape also returns:
     if len(data.shape)!=2
         :return shape: tuple, data.shape
         :return empty: None, blank entry
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadParam}
+
+Defined in \spirouImage\path{.spirouImage.get_param}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadParam(p, hdr, name=None, kind='human', return_value=False)
+spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the acquisition time from the header file, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        "name" defined in call
+        parameter dictionary to give to value
+
+:param hdr: dictionary, the header dictionary created by
+            spirouFITS.ReadImage
+:param name: string, the name in parameter dictionary to give to value
+             if return_value is False (i.e. p[name] = value)
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
+             for time since 1970-01-01
+:param return_value: bool, if False value is returned in p as p[name]
+                     if True value is returned
+
+:return p or value: dictionary or string or float, if return_value is False
+                    parameter dictionary is returned, if return_value is
+                    True and kind=='human' returns a string, if return_value
+                    is True and kind=='Unix' returns a float
 \end{pythondocstring}
 \end{minipage}
 
