@@ -234,7 +234,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     # find the lines
     fargs = [p, loc['LL_INIT'], loc['LL_LINE'], loc['AMPL_LINE'],
-             loc['HCDATA'][p['IC_HC_N_ORD_START']:p['IC_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
+             loc['HCDATA'][n_order_start:n_order_final], loc['ECHELLE_ORDERS'],
              freespan]
     all_lines = find_lines(*fargs, mode=mode)
     # add all lines to loc
@@ -271,7 +271,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # get all lines 7
         lines = np.array(loc[key][order_num])
         # keep only vqlid lines
-        testmask = lines[:,2]>0
+        testmask = lines[:,2] > 0
         lines = lines[testmask]
         # ---------------------------------------------------------------------
         # Criteria 1
@@ -320,8 +320,8 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
             wargs = [torder[order_num], t_ord_start - torder[order_num],
                      num_total - num_bad, num_badsig, num_badampl,
                      num_badfit]
-            wmsg = ('In Order {0:3} ({1:2}) keep {2} lines / ({3}/{4}/{5}) lines '
-                    '[beyond (sig/ampl/err) limits]')
+            wmsg = ('In Order {0:3} ({1:2}) keep {2} lines / ({3}/{4}/{5}) '
+                    'lines [beyond (sig/ampl/err) limits]')
             WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
         # ---------------------------------------------------------------------
         # Remove infinities
@@ -575,7 +575,8 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     n_ord_start_2 = p['IC_HC_N_ORD_START_2']
     n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
     # recalculate echelle order number
-    echelle_order = p['IC_HC_T_ORDER_START'] - np.arange(n_ord_start_2, n_ord_final_2)
+    o_orders = np.arange(n_ord_start_2, n_ord_final_2)
+    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
     loc['ECHELLE_ORDERS'] = echelle_order
     loc.set_source('ECHELLE_ORDERS', func_name)
 
@@ -636,27 +637,27 @@ def join_orders(p, loc):
     param_out_2 = loc['LL_PARAM_2']
 
     # the littrow extrapolation (for orders < n_ord_start_2)
-    littrow_extrap_sol_blue = loc['LITTROW_EXTRAP_SOL_2'][:n_ord_start_2]
-    littrow_extrap_sol_param_blue = loc['LITTROW_EXTRAP_PARAM_2'][:n_ord_start_2]
+    litt_extrap_sol_blue = loc['LITTROW_EXTRAP_SOL_2'][:n_ord_start_2]
+    litt_extrap_sol_param_blue = loc['LITTROW_EXTRAP_PARAM_2'][:n_ord_start_2]
 
     # the littrow extrapolation (for orders > n_ord_final_2)
-    littrow_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_2'][n_ord_final_2:]
-    littrow_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_2'][n_ord_final_2:]
+    litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_2'][n_ord_final_2:]
+    litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_2'][n_ord_final_2:]
 
     # create stack
     ll_stack, param_stack = [], []
     # add extrapolation from littrow to orders < n_ord_start_2
-    if len(littrow_extrap_sol_blue) > 0:
-        ll_stack.append(littrow_extrap_sol_blue)
-        param_stack.append(littrow_extrap_sol_param_blue)
+    if len(litt_extrap_sol_blue) > 0:
+        ll_stack.append(litt_extrap_sol_blue)
+        param_stack.append(litt_extrap_sol_param_blue)
     # add second iteration outputs
     if len(ll_out_2) > 0:
         ll_stack.append(ll_out_2)
         param_stack.append(param_out_2)
     # add extrapolation from littrow to orders > n_ord_final_2
-    if len(littrow_extrap_sol_red) > 0:
-        ll_stack.append(littrow_extrap_sol_red)
-        param_stack.append(littrow_extrap_sol_param_red)
+    if len(litt_extrap_sol_red) > 0:
+        ll_stack.append(litt_extrap_sol_red)
+        param_stack.append(litt_extrap_sol_param_red)
 
     # convert stacks to arrays and add to storage
     loc['LL_FINAL'] = np.vstack(ll_stack)
@@ -688,16 +689,18 @@ def decide_on_lamp_type(p, filename):
     lamp_type = None
     # loop around each lamp in defined lamp types
     for lamp in p['IC_LAMPS']:
-        # check for lamp in filename
-        if p['IC_LAMPS'][lamp] in filename:
-            # check if we have already found a lamp type
-            if lamp_type is not None:
-                emsg1 = ('Multiple lamp types found in file={0}, lamp type is '
-                         'ambiguous'.format(filename))
-                emsg2 = '    function={0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-            else:
-                lamp_type = lamp
+        # loop around the identifications of this lamp
+        for lamp_it in p['IC_LAMPS'][lamp]:
+            # check for lamp in filename
+            if lamp_it in filename:
+                # check if we have already found a lamp type
+                if lamp_type is not None:
+                    emsg1 = ('Multiple lamp types found in file={0}, '
+                             'lamp type is ambiguous'.format(filename))
+                    emsg2 = '    function={0}'.format(func_name)
+                    WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                else:
+                    lamp_type = lamp_it
     # check that lamp is defined
     if lamp_type is None:
         emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
@@ -853,8 +856,8 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
         # log the stats for this order
         wmsg = 'Order {0:3} ({1:2}): [{2:6.1f} - {3:6.1f}]'
         wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
-        wargs = [torder[order_num], t_ord_start - torder[order_num], min_ll, max_ll,
-                 nlines_valid, nlines_total, percentage_vlines]
+        wargs = [torder[order_num], t_ord_start - torder[order_num],
+                 min_ll, max_ll, nlines_valid, nlines_total, percentage_vlines]
         WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
         all_cal_line_fit.append(gauss_fit)
     # return all lines found (36 x number of lines found for order)
@@ -1401,8 +1404,8 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # ---------------------------------------------------------------------
         # log the fitted wave solution
         wmsg1 = 'Fit wave. sol. order: {0:3d} ({1:2d}) [{2:.1f}- {3:.1f}]'
-        wargs1 = [torder[order_num], t_ord_start - torder[order_num], ll[order_num][0],
-                  ll[order_num][-1]]
+        wargs1 = [torder[order_num], t_ord_start - torder[order_num],
+                  ll[order_num][0], ll[order_num][-1]]
         wmsg2 = ('\tmean: {0:.4f}[mpix] rms={1:.5f} [mpix] ({2:2d} it.) '
                  '[{3} --> {4} lines] ')
         wargs2 = [wmean * 1000, np.sqrt(var) * 1000, len(iter),
