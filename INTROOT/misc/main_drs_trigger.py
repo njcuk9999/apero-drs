@@ -45,7 +45,7 @@ printc = spirouCore.PrintColour
 HISTORY_FILE_NAME = 'HISTORY.txt'
 
 FORCE_REDO = False
-
+VERSION_REDO = False
 
 # =============================================================================
 # Define functions
@@ -115,8 +115,8 @@ def main(night_name=None):
         group = run_order[g_it]
         # get this run
         runi = runs[group]
-        # check and add to history
-        skip = add_to_history(p, group, runi)
+        # check if we should skip
+        skip = check_skip(p, group)
         # if skip then skip
         if skip:
             wmsg = '\t Skipped run (Already processed group={0})'
@@ -129,13 +129,16 @@ def main(night_name=None):
                 iteration_bar(p, g_it, len(run_order), it, len(runi))
                 # get function from runs
                 name = runi[it][0]
+                # make sure all arguments are python strings
+                run0 = [str(jt) for jt in runi[it]]
                 # run function
-                args, name = spirouUnitRecipes.wrapper(p, name, inputs=runi[it])
+                args, name = spirouUnitRecipes.wrapper(p, name, inputs=run0)
                 ll = spirouUnitRecipes.run_main(p, name, args)
             # Skip any exit errors
             except SystemExit:
                 continue
-
+        # check and add to history
+        add_to_history(p, group, runi)
     # clear some lines
     WLOG('', '', '')
     WLOG('', '', '=' * 50)
@@ -412,6 +415,40 @@ def iteration_bar(p, it_number1, t_number1, it_number2, t_number2):
     WLOG('', '', '=' * 50)
     WLOG('', '', '')
 
+def check_skip(p, night_name):
+    # get directory for run
+    dir = os.path.join(p['DRS_DATA_RAW'], night_name)
+    # check it exists
+    if not os.path.exists(dir):
+        emsg1 = 'Directory "{0}" does not exist'.format(dir)
+        emsg2 = '\tSomething wrong with night name={0}?'.format(night_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # construct filename
+    filename = os.path.join(dir, HISTORY_FILE_NAME)
+
+    # if file in directory delete it
+    if os.path.exists(filename):
+        # check is we want to redo regardless
+        if FORCE_REDO:
+            os.remove(filename)
+            return False
+        # load and readlines
+        f = open(filename, 'r')
+        lines = f.readlines()
+        f.close()
+        # get current version
+        cversion = p['DRS_VERSION'].strip()
+        # get file version
+        fversion = lines[6].split('=')[1].strip()
+        # check versions match
+        if (cversion != fversion) and VERSION_REDO:
+            os.remove(filename)
+            return False
+        else:
+            return True
+    else:
+        return False
+
 
 def add_to_history(p, night_name, runs):
     # get directory for run
@@ -424,13 +461,6 @@ def add_to_history(p, night_name, runs):
 
     # construct filename
     filename = os.path.join(dir, HISTORY_FILE_NAME)
-
-    # if file in directory delete it
-    if os.path.exists(filename):
-        if not FORCE_REDO:
-            return True
-        else:
-            os.remove(filename)
 
     # construct history
     lines = []
@@ -470,8 +500,7 @@ def add_to_history(p, night_name, runs):
     f.writelines(lines)
     f.close()
 
-    # we do not need to skip if we have reached this point
-    return False
+
 
 
 # =============================================================================
