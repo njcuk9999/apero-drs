@@ -70,19 +70,21 @@ def sort_polar_files(p, polardict):
         basename = os.path.basename(filename)
         # ------------------------------------------------------------------
         # try to get polarisation header key
-        if p['KW_CMMTSEQ'][0] in hdr:
+        if p['KW_CMMTSEQ'][0] in hdr and hdr[p['KW_CMMTSEQ'][0]] != "" :
             cmmtseq = hdr[p['KW_CMMTSEQ'][0]].split(" ")
             stokes, exposure = cmmtseq[0], int(cmmtseq[2][0])
             expstatus = True
         else:
-            wmsg = 'File {0} has empty key="{1}", setting Stokes={2}'
+            wmsg = 'File {0} has empty key="KW_CMMTSEQ", setting Stokes={1}'
             wargs = [filename, stokes]
             # Question: stokes here will be set to the last file value?
             WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            expstatus = False
         # ------------------------------------------------------------------
         # deal with fiber type
         fout = deal_with_fiber(p, filename, expstatus, exposure)
         fiber, expstatus, exposure, skip = fout
+                
         # deal with skip
         if skip:
             continue
@@ -130,15 +132,19 @@ def load_data(p, polardict, loc):
     for filename in polardict.keys():
         # get this entry
         entry = polardict[filename]
-        # condition 1: stokes parameter in defined parameters
-        cond1 = entry['stokes'] in stokesparams
-        # condition 2: stokes parameter not already detected
-        cond2 = entry['stokes'] not in stokes_detected
-        # if cond1 and cond2 append to detected list
-        if cond1 and cond2:
+        # condition 1: stokes parameter undefined
+        cond1 = entry['stokes'] == 'UNDEF'
+        # condition 2: stokes parameter in defined parameters
+        cond2 = entry['stokes'] in stokesparams
+        # condition 3: stokes parameter not already detected
+        cond3 = entry['stokes'] not in stokes_detected
+        # if (cond1 or cond2) and cond3 append to detected list
+        if (cond1 or cond2) and cond3:
             stokes_detected.append(entry['stokes'])
     # if more than one stokes parameter is identified then exit program
-    if len(stokes_detected) > 1:
+    if len(stokes_detected) == 0:
+        stokes_detected.append()
+    elif len(stokes_detected) > 1:
         wmsg = ('Identified more than one stokes parameter in the input '
                 'data... exiting')
         WLOG('error', p['LOG_OPT'], wmsg)
@@ -261,7 +267,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
             wl = np.append(wl, wldata[order_num])
         else:
             wl = np.append(wl, (order_num * xdim) + np.arange(xdim))
-        pol = np.append(pol, 100 * loc['POL'][order_num])
+        pol = np.append(pol, loc['POL'][order_num])
         null1 = np.append(null1, loc['NULL1'][order_num])
         null2 = np.append(null2, loc['NULL2'][order_num])
     # ---------------------------------------------------------------------
@@ -305,6 +311,7 @@ def deal_with_fiber(p, filename, expstatus, exposure):
         fiber = 'A'
         # Question why for A and not B???
         if not expstatus:
+            exposure += 1
             if exposure > 4:
                 exposure = 1
         # set skip

@@ -76,7 +76,7 @@ def main(night_name=None, files=None):
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files,
                                     mainfitsdir='reduced')
-    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p,recipe=__NAME__, calibdb=False)
 
     # ----------------------------------------------------------------------
     # Loop through files, identify and sort files and identify fiber types
@@ -85,7 +85,7 @@ def main(night_name=None, files=None):
     polardict = ParamDict()
     # sort files
     polardict = spirouPOLAR.SortPolarFiles(p, polardict)
-
+    
     # ----------------------------------------------------------------------
     # Load the input polarimetry data and check if provided data are
     #    sufficient for polarimetry calculation
@@ -94,23 +94,25 @@ def main(night_name=None, files=None):
     loc = ParamDict()
     # load files
     p, loc = spirouPOLAR.LoadPolarData(p, polardict, loc)
-
+    
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
+    #loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
+    wavefile = p['REDUCED_DIR']+'/'+'2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits'
+    loc['WAVE'] = spirouImage.ReadWaveFile(p, filename=wavefile)
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-
+    
     # ----------------------------------------------------------------------
     # Polarimetry computation
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculatePolarimetry(p, loc)
-
+    
     # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
-
+    
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
@@ -123,7 +125,7 @@ def main(night_name=None, files=None):
         sPlt.polar_result_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
-
+    
     # ------------------------------------------------------------------
     # Store polarimetry in file(s)
     # ------------------------------------------------------------------
