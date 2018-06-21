@@ -4,11 +4,11 @@ WAVE_A None spirou_wave_ini3.fits 2017-09-03-00:00:00.00 1504396800.0
 WAVE_B None spirou_wave_ini3.fits 2017-09-03-00:00:00.00 1504396800.0
 WAVE_C None 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits 2017-09-03-00:00:00.00 1504396800.0
 # H4RG File (Copied from SpirouDRS data folder)
-WAVE_AB None 2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits 2018-04-30-00:00:00.000000 1525046400.0
-WAVE_A None 2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits 2018-04-30-00:00:00.000000 1525046400.0
-WAVE_B None 2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits 2018-04-30-00:00:00.000000 1525046400.0
-WAVE_C None 2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits 2018-04-30-00:00:00.000000 1525046400.0
+WAVE_AB None spirou_wave_H4RG_v1.fits 2018-05-30-05:34:40.000000 1527658480
+WAVE_A None spirou_wave_H4RG_v1.fits 2018-05-30-05:34:40.000000 1527658480
+WAVE_B None spirou_wave_H4RG_v1.fits 2018-05-30-05:34:40.000000 1527658480
+WAVE_C None spirou_wave_H4RG_v1.fits 2018-05-30-05:34:40.000000 1527658480
 # Telluric files for exposuremeter
-EM_TELL_X None TAPAS_X_axis_speed_dv=0.5.fits 2018-04-30-00:00:00.000000 1525046400.0
-EM_TELL_Y None tapas_combined_za=20.000000.fits 2018-04-30-00:00:00.000000 1525046400.0
+EM_TELL_X None TAPAS_X_axis_speed_dv=0.5.fits 2018-05-30-05:34:40.000000 1527658480
+EM_TELL_Y None tapas_combined_za=20.000000.fits 2018-05-30-05:34:40.000000 1527658480
 # DRS processed
