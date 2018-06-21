@@ -1106,7 +1106,7 @@ def EM_MASK_FILE(p):
 # noinspection PyPep8Naming
 def WAVE_FILE(p):
     reducedfolder = p['REDUCED_DIR']
-    old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
     waveext = '_wave_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = p['ARG_FILE_NAMES'][0].replace(old_ext, waveext)
@@ -1141,7 +1141,7 @@ def WAVE_E2DS_COPY(p):
     # get prefix
     calibprefix = CALIB_PREFIX(p)
     # construct filename
-    filename = '{0}_{1}'.format(calibprefix, basefilename)
+    filename = '{0}{1}'.format(calibprefix, basefilename)
     # construct absolute path
     e2dscopy = os.path.join(path, filename)
     # return absolute path
