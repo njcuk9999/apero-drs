@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.048'
+__version__ = '0.2.052'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ = '2018-06-18'
+__date__ = '2018-06-21'
 
 
 # =============================================================================
