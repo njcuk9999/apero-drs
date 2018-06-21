@@ -700,7 +700,7 @@ def decide_on_lamp_type(p, filename):
                     emsg2 = '    function={0}'.format(func_name)
                     WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
                 else:
-                    lamp_type = lamp_it
+                    lamp_type = lamp
     # check that lamp is defined
     if lamp_type is None:
         emsg1 = 'Lamp type for file={0} cannot be identified.'.format(filename)
@@ -1055,7 +1055,7 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
                 gparams[7] = output weights for the pixel position
     """
 
-
+    func_name = __NAME__ + '.fit_emi_line()'
     # get fit degree
     fitdegree = 2
 
@@ -1077,7 +1077,10 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
             # weights = sqrt(weight * sdata^2)
             weights = np.sqrt(weight*sdata**2)
             # fit the lsdata with a weighted polyfit
-            coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
+            with warnings.catch_warnings(record=True) as w:
+                coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
+            spirouCore.WarnLog(w, funcname=func_name)
+
     # perform a gaussian fit
     gparams = np.zeros(8, dtype='float')
     params = np.zeros(4, dtype='float')
