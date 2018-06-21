@@ -115,9 +115,101 @@ where number = (row number * number of columns) + column number
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
+\subsection{CheckFile}
+
+Defined in \spirouFile\path{.check_file_id}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CheckFile(p, filename, recipe, hdr=None, **kwargs)
+spirouImage.spirouFile.check_file_id(p, filename, recipe, hdr=None, **kwargs)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Checks the "filename" against the "recipe" (using recipe control)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_FORCE_PREPROCESS: bool, if True only allows pre-processed files
+        PROCESSED_SUFFIX: string, the processed suffix
+        DRS_DATA_RAW: string, the directory that the raw data should
+                      be saved to/read from
+            DRS_DATA_REDUC: string, the directory that the reduced data
+                            should be saved to/read from
+        ARG_NIGHT_NAME: string, the folder within data raw directory
+                        containing files (also reduced directory) i.e.
+                        /data/raw/20170710 would be "20170710"
+        
+:param filename: string, the filename to check 
+:param recipe: string, the recipe name to check
+:param hdr: dictionary or None, if defined must be a HEADER dictionary if
+            none loaded from filename
+:param kwargs: keyword arguments. Current allowed keys are:
+                - return_path: bool, if True returns the path as well as p
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            PREPROCESSED: bool, flag whether file is detected as 
+                          pre-processed
+            DPRTYPE: string, the type from the recipe control file 
+            FIBER: string, if recipe control entry for this file has a
+                   fiber defined, fiber is set to this
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{CheckFiles}
+
+Defined in \spirouFile\path{.check_files_id}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CheckFiles(p, files, recipe, hdr=None, **kwargs)
+spirouImage.spirouFile.check_files_id(p, files, recipe, hdr=None, **kwargs)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Wrapper for spirouFile.check_file_id
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_FORCE_PREPROCESS: bool, if True only allows pre-processed files
+        PROCESSED_SUFFIX: string, the processed suffix
+        DRS_DATA_RAW: string, the directory that the raw data should
+                      be saved to/read from
+            DRS_DATA_REDUC: string, the directory that the reduced data
+                            should be saved to/read from
+        ARG_NIGHT_NAME: string, the folder within data raw directory
+                        containing files (also reduced directory) i.e.
+                        /data/raw/20170710 would be "20170710"
+:param files: list of strings, the files to check with check_file_id
+:param recipe: string, the recipe name to check
+:param hdr: dictionary or None, if defined must be a HEADER dictionary if
+            none loaded from filename
+:param kwargs: keyword arguments. Current allowed keys are:
+                - return_path: bool, if True returns the path as well as p
+:return p: parameter dictionary, the updated parameter dictionary
+    Adds the following:
+        PREPROCESSED: bool, flag whether file is detected as 
+                      pre-processed
+        DPRTYPE: string, the type from the recipe control file 
+        DPRTYPES: list of stings, the DPRTYPE for each file in "files"
+        FIBER: string, if recipe control entry for this file has a
+               fiber defined, fiber is set to this
+\end{pythondocstring}
+\end{minipage}
+
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
 \subsection{ConvertToE}
 
-Defined in \spirouImage\path{.}
+Defined in \spirouImage\path{.convert_to_e}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
@@ -284,6 +376,42 @@ value of p['ACQTIME_KEY'] as a keyword)
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
+\subsection{CorrectForBadPix}
+
+Defined in \spirouImage\path{.spirouImage.correct_for_badpix}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.CorrectForBadPix(p, image, header)
+spirouImage.spirouImage.correct_for_badpix(p, image, header)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Corrects "image" for "BADPIX" using calibDB file (header must contain
+value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            calibDB: dictionary, the calibration database dictionary
+                     (if not in "p" we construct it and need "max_time_unix"
+            max_time_unix: float, the unix time to use as the time of
+                            reference (used only if calibDB is not defined)
+            log_opt: string, log option, normally the program name
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+
+:param image: numpy array (2D), the image
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+
+:return corrected_image: numpy array (2D), the corrected image where all
+                         bad pixels are set to zeros
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
 \subsection{FitTilt}
 
 Defined in \spirouImage\path{.spirouImage.fit_tilt}
@@ -292,6 +420,44 @@ Defined in \spirouImage\path{.spirouImage.fit_tilt}
 from SpirouDRS import spirouImage
 spirouImage.FitTilt(pp, lloc)
 spirouImage.spirouImage.fit_tilt(pp, lloc)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Fit the tilt (lloc['tilt'] with a polynomial of size = p['ic_tilt_filt']
+return the coefficients, fit and residual rms in lloc dictionary
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_TILT_FIT: int, Order of polynomial to fit for tilt
+
+:param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            number_orders: int, the number of orders in reference spectrum
+            tilt: numpy array (1D), the tilt angle of each order
+
+:return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            xfit_tilt: numpy array (1D), the order numbers
+            yfit_tilt: numpy array (1D), the fit for the tilt angle of each
+                       order
+            a_tilt: numpy array (1D), the fit coefficients (generated by
+                    numpy.polyfit but IN REVERSE ORDER)
+            rms_tilt: float, the RMS (np.std) of the residuals of the
+                      tilt - tilt fit values
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FixNonPreProcess}
+
+Defined in \spirouImage\path{.spirouImage.fix_non_preprocessed}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.FixNonPreProcess
+spirouImage.spirouImage.fix_non_preprocessed
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -340,6 +506,73 @@ Flips the image in the x and/or the y direction
 :param flipcols: bool, if True reverses column order (axis = 1)
 
 :return newimage: numpy array (2D), the flipped image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{FixNonPreProcess}
+
+Defined in \spirouImage\path{.spirouImage.fix_non_preprocessed}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.FixNonPreProcess(p, image, filename=None)
+spirouImage.spirouImage.fix_non_preprocessed(p, image, filename=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+If a raw file is not preprocessed, then fix it (i.e. rotate it) so
+it conforms to DRS standards
+
+:param pp: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        PROCESSED_SUFFIX: string, the processed suffix
+        PREPROCESSED: bool, flag whether file is detected as
+                      pre-processed
+        IC_IMAGE_TYPE: string, the detector type
+        RAW_TO_PP_ROTATION: int, rotation angle in degrees (in degrees,
+                            counter-clockwise direction) must be a multiple
+                            of 90 degrees
+:param image: numpy array (2D), the image to manipulate
+:param filename: string, if p['PREPROCESSED'] is not defined the file
+                 is checked (can be done if PREPROCESSED in p
+
+:return newimage: numpy array (2D), the new image that emulates a pre-
+                  processed file
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{GetBadPixMap}
+
+Defined in \spirouImage\path{.spirouImage.get_badpixel_map}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.GetBadPixMap(p, header=None)
+spirouImage.spirouImage.get_badpixel_map(p, header=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the bad pixel map from the calibDB
+
+    Must contain at least:
+            calibDB: dictionary, the calibration database dictionary
+                     (if not in "p" we construct it and need "max_time_unix"
+            max_time_unix: float, the unix time to use as the time of
+                            reference (used only if calibDB is not defined)
+            log_opt: string, log option, normally the program name
+            DRS_CALIB_DB: string, the directory that the calibration
+                          files should be saved to/read from
+
+:param header: dictionary, the header dictionary created by
+               spirouFITS.ReadImage
+
+:return: badpixmask: numpy array (2D), the bad pixel mask
 \end{pythondocstring}
 \end{minipage}
 
@@ -513,40 +746,105 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
-\subsection{ReadParam}
+\subsection{IdentifyUnProFile}
 
-Defined in \spirouImage\path{.spirouImage.get_param}
+Defined in \spirouImage\path{.spirouImage.identify_unprocessed_file}
 
 \begin{pythonbox}
 from SpirouDRS import spirouImage
-spirouImage.ReadParam(p, hdr, name=None, kind='human', return_value=False)
-spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=False)
+spirouImage.IdentifyUnProFile(p, filename, hdr=None, cdr=None)
+spirouImage.spirouImage.identify_unprocessed_file(p, filename, hdr=None, cdr=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
-Get the acquisition time from the header file, if there is not header file
-use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+Identify a unprocessed raw file (from recipe control file), adds suffix
+and header key (DPRTYPE) accordingly
 
 :param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-        "name" defined in call
-        parameter dictionary to give to value
-
-:param hdr: dictionary, the header dictionary created by
-            spirouFITS.ReadImage
-:param name: string, the name in parameter dictionary to give to value
-             if return_value is False (i.e. p[name] = value)
-:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
-             for time since 1970-01-01
-:param return_value: bool, if False value is returned in p as p[name]
-                     if True value is returned
-
-:return p or value: dictionary or string or float, if return_value is False
-                    parameter dictionary is returned, if return_value is
-                    True and kind=='human' returns a string, if return_value
-                    is True and kind=='Unix' returns a float
+        Must contain at least:
+            DRS_DEBUG: int, if 0 not in debug mode else in various levels of
+                       debug
+            KW_DPRTYPE: list, keyword list [key, value, comment]
+            
+:param filename: string, the filename to check
+:param hdr: dictionary or None, the HEADER dictionary to check for keys and
+            associated values, if None attempt to open HEADER from filename
+:param cdr: dictionary or None, the HEADER dictionary to check for keys and
+            associated comments, if None attempt to open HEADER from 
+            filename
+            
+:return newfn: string, the new filename with added suffix
+:return hdr: dictionary, the HEADER with added HEADER key/value pair 
+             (DPRTYPE)
+:return cdr: dictionary, the HEADER with added HEADER key/comment pair
+             (DPRTYPE)
 \end{pythondocstring}
 \end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{InterpolateBadRegions}
+
+Defined in \spirouImage\path{.spirouImage.identify_unprocessed_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.InterpolateBadRegions
+spirouImage.spirouImage.interp_bad_regions
+\end{pythonbox}
+
+\begin{pythondocstring}
+Interpolate over the bad regions to fill in holes on image (only to be used
+for image localization)
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_IMAGE_TYPE: string, the type of detector (H2RG or H4RG)
+            BAD_REGION_FIT: list of floats, the fit to the curvature
+            BAD_REGION_MED_SIZE: int, the median filter box size
+            BAD_REGION_THRESHOLD: float, the threshold below which the
+                                  image (normalised) should be regarded as
+                                  bad (and the pixels in the image that
+                                  should be set to the norm value)
+            BAD_REGION_KERNAL_SIZE: int, the box size used to do the
+                                    convolution
+            BAD_REGION_MED_SIZE2: int, the median filter box size used
+                                  during the convolution
+            BAD_REGION_GOOD_VALUE: float, the final good ratio value
+                                   (ratio between the original image and
+                                    the interpolated image) to accept
+                                    pixels as good pixels
+
+            BAD_REGION_BAD_VALUE: float, the final bad ratio value
+                                   (ratio between the original image and
+                                    the interpolated image) to reject
+                                    pixels as bad pixels
+
+:param image: numpy array (2D), the image
+
+:return image3: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{}
+
+Defined in \spirouImage\path{.spirouImage.}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.
+spirouImage.spirouImage.
+\end{pythonbox}
+
+\begin{pythondocstring}
+
+\end{pythondocstring}
+\end{minipage}
+
 
 %----------------------------------------------------------------------------------------
 
@@ -915,6 +1213,45 @@ if return_shape also returns:
     if len(data.shape)!=2
         :return shape: tuple, data.shape
         :return empty: None, blank entry
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadParam}
+
+Defined in \spirouImage\path{.spirouImage.get_param}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadParam(p, hdr, name=None, kind='human', return_value=False)
+spirouImage.spirouImage.get_param(p, hdr, name=None, kind='human', return_value=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Get the acquisition time from the header file, if there is not header file
+use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        "name" defined in call
+        parameter dictionary to give to value
+
+:param hdr: dictionary, the header dictionary created by
+            spirouFITS.ReadImage
+:param name: string, the name in parameter dictionary to give to value
+             if return_value is False (i.e. p[name] = value)
+:param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'Unix'
+             for time since 1970-01-01
+:param return_value: bool, if False value is returned in p as p[name]
+                     if True value is returned
+
+:return p or value: dictionary or string or float, if return_value is False
+                    parameter dictionary is returned, if return_value is
+                    True and kind=='human' returns a string, if return_value
+                    is True and kind=='Unix' returns a float
 \end{pythondocstring}
 \end{minipage}
 

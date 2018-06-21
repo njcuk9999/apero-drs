@@ -326,8 +326,30 @@ def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
     return p
 
 
-def initial_file_setup(p, recipe, files=None, calibdb=False):
+def initial_file_setup(p, recipe, files=None, calibdb=False,
+                       no_night_name=False, no_files=False):
     func_name = __NAME__ + '.initial_file_setup()'
+    log_opt = p['LOG_OPT']
+    # -------------------------------------------------------------------------
+    if not no_night_name:
+        # check ARG_NIGHT_NAME is not None
+        if p['ARG_NIGHT_NAME'] == '':
+            wmsg1 = 'Argument Error: No FOLDER defined at run time argument'
+            wmsg2 = '    format must be:'
+            emsg = '    >>> {0} [FOLDER] [Other Arguments]'
+            WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(recipe)])
+    if not no_files:
+        fits_fn = p['FITSFILENAME']
+        # -------------------------------------------------------------------------
+        # check that fitsfilename exists
+        if fits_fn is None:
+            wmsg1 = 'Argument Error: No fits file defined at run time argument'
+            wmsg2 = '    format must be:'
+            emsg = '    >>> {0}.py [FOLDER] [FILES]'
+            WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(recipe)])
+        if not os.path.exists(fits_fn):
+            WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
+
     # -------------------------------------------------------------------------
     # deal with no files being defined
     if files is None:
@@ -348,7 +370,7 @@ def initial_file_setup(p, recipe, files=None, calibdb=False):
         wmsg = 'Now processing Image with {1} recipe'
     else:
         wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], recipe))
     # -------------------------------------------------------------------------
     # return p
     return p
@@ -841,15 +863,15 @@ def set_arg_file_dir(p, mfd=None):
         #   is wrong
         if os.path.exists(arg_fp):
             emsg1 = ('Fatal error cannot find '
-                     '[FOLDER]="{0}"'.format(p['ARG_NIGHT_NAME']))
+                     'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']))
             emsg2 = '    in directory {0} ({1})'.format(arg_fp, location)
+            WLOG('error', DPROG, [emsg1, emsg2])
         # else it is the directory which is wrong (cal_validate was not run)
         else:
-            emsg1 = ('Fatal error cannot find directory {0}'
-                     ''.format(location))
-            emsg2 = '    {0}="{1}"'.format(location, arg_fp)
-        # log error
-        WLOG('error', DPROG, [emsg1, emsg2])
+            emsg1 = ('Fatal error cannot find directory NIGHT_NAME="{0}"'
+                     ''.format(p['ARG_FILE_DIR']))
+            # log error
+            WLOG('error', DPROG, emsg1)
 
     # return p
     return p
@@ -1928,7 +1950,7 @@ def display_help_file(p):
 
 
 # noinspection PyListCreation
-def display_system_info(logonly=True):
+def display_system_info(logonly=True, return_message=False):
     """
     Display system information via the WLOG command
 
@@ -1946,8 +1968,11 @@ def display_system_info(logonly=True):
     for it, arg in enumerate(sys.argv):
         messages.append("    Arg {0} = \"{1}\"".format(it + 1, arg))
     messages.append(HEADER)
-    # return messages for logger
-    WLOG('', '', messages, logonly=logonly)
+    if return_message:
+        return messages
+    else:
+        # return messages for logger
+        WLOG('', '', messages, logonly=logonly)
 
 
 # =============================================================================

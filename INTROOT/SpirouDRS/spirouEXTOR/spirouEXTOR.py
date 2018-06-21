@@ -322,8 +322,9 @@ def extract_AB_order(pp, loc, image, rnum):
 
 def get_extraction_method(p, mode):
     """
+    Get the extraction method key and function
 
-    :param mode: string,
+    :param mode: string, the mode
 
         0 - Simple extraction
                 (function = spirouEXTOR.extract_const_range)
@@ -345,6 +346,7 @@ def get_extraction_method(p, mode):
 
         3d - tilt weight extraction 2 (cosmic correction)
                 (function = spirouEXTOR.extract_tilt_weight2cosm)
+
     :return: string the mode and function
     """
 
