@@ -38,15 +38,6 @@ WLOG = spirouCore.wlog
 printc = spirouCore.PrintColour
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
-# These are the files copied from spirouConfig.Constants.CDATA_REL_FOLDER()
-#    into the calibDB
-CALIB_DB_DEFAULT_FILES = ['2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits',
-                          '2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits',
-                          '2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits',
-                          'spirou_wave_ini3.fits',
-                          'tapas_combined_za=20.000000.fits',
-                          'TAPAS_X_axis_speed_dv=0.5.fits',
-                          'master_calib_SPIROU.txt']
 
 
 # =============================================================================
@@ -113,7 +104,7 @@ def reset_calibdb(p, log=True):
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
     # -------------------------------------------------------------------------
     # define needed files:
-    files = CALIB_DB_DEFAULT_FILES
+    files = os.listdir(absfolder)
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     for f in files:
