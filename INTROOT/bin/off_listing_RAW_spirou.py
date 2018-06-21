@@ -148,6 +148,16 @@ def main(night_name=None):
         wmsg = 'Listing of directory on file {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(outfile))
 
+        # print out to screen
+        WLOG('', '', '')
+        WLOG('', '', 'Listing table:')
+        WLOG('', '', '')
+        tablestring = table.__str__()
+        tablestrings = tablestring.split('\n')
+        WLOG('', '', '=' * len(tablestrings[0]))
+        WLOG('', '', tablestrings)
+        WLOG('', '', '=' * len(tablestrings[0]))
+
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
@@ -161,6 +171,8 @@ def main(night_name=None):
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
+    # exit message if in debug mode
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
