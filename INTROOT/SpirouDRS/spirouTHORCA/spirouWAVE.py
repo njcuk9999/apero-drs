@@ -10,6 +10,7 @@ Created on 2017-12-19 at 16:20
 """
 from __future__ import division
 import numpy as np
+import warnings
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -288,7 +289,9 @@ def fp_wavelength_sol(p, loc, mode='new'):
 
     # fit a polynomial to line number v measured difference in cavity
     #     width, weighted by blaze
-    coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
+    with warnings.catch_warnings(record=True) as w:
+        coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
+    spirouCore.WarnLog(w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
     # update line wavelengths using the new cavity width fit
