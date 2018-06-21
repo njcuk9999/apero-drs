@@ -183,10 +183,10 @@ dark_cutlimit = 5.0
 
 #   Size of the order_profile smoothed box                           - [cal_loc]
 #     (from pixel - size to pixel + size)
-loc_box_size = 5  # 10
+loc_box_size = 5   # 10
 
 #   row number of image to start processing at                       - [cal_loc]
-ic_offset = 0 #40
+ic_offset = 0  # 40
 
 #   Definition of the central column                       - [cal_loc, cal_slit]
 #      (formally ic_ccdcolc)
@@ -200,10 +200,10 @@ ic_ext_window = 15  #20 #40 #12
 ic_image_gap = 0
 
 #   Define the column separation for fitting orders                  - [cal_loc]
-ic_locstepc = 20 # 20
+ic_locstepc = 20  # 20
 
 #   Define minimum width of order to be accepted                     - [cal_loc]
-ic_widthmin = 10 # 5
+ic_widthmin = 10  # 5
 
 #   Define the noise multiplier threshold in order to accept an      - [cal_loc]
 #       order center as usable
@@ -241,7 +241,7 @@ bad_region_good_value = 0.5
 bad_region_bad_value = 0.25
 
 #   Half spacing between orders                                      - [cal_loc]
-ic_locnbpix = 45  #45
+ic_locnbpix = 45  # 45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
 ic_min_amplitude = 10 # 50
@@ -251,13 +251,13 @@ ic_min_amplitude = 10 # 50
 ic_locseuil = 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
-ic_satseuil = 1000 # 64536
+ic_satseuil = 1000   # 64536
 
 #   Order of polynomial to fit for positions                         - [cal_loc]
-ic_locdfitc = 4 #5
+ic_locdfitc = 4  # 5
 
 #   Order of polynomial to fit for widths                            - [cal_loc]
-ic_locdfitw = 4 #5
+ic_locdfitw = 4  # 5
 
 #   Order of polynomial to fit for position error             - [spirouKeywords]
 #      Currently not used
@@ -647,7 +647,8 @@ em_save_mask_map = True
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = {'UNe':'hcone', 'TH':'hctwo', 'UNe':'hc1', 'TH':'hc2'}
+#      values must be a list of strings to look for in filenames
+ic_lamps = {'UNe':['hcone', 'hc1'], 'TH':['hctwo', 'hc2']}
 
 #  Define the catalogue line list to use for each           - [cal_HC, cal_wave]
 #       lamp type (dictionary)
@@ -662,7 +663,7 @@ ic_resol = 65000
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #      lines search
 # default = 3   or 2.6
-ic_ll_free_span = [6.,3.5]
+ic_ll_free_span = [6., 3.5]
 
 #  Define minimum wavelength of the detector to use in      - [cal_HC, cal_wave]
 #     find lines
@@ -674,7 +675,7 @@ ic_ll_sp_max = 2400
 
 #  Define the read out noise to use in find lines           - [cal_HC, cal_wave]
 # default = 16.8
-ic_hc_noise = 60  #30
+ic_hc_noise = 60   # 30
 
 # Maximum sig-fit of the guessed lines                      - [cal_HC, cal_wave]
 #     fwhm/2.35 of th lines)
@@ -682,7 +683,7 @@ ic_max_sigll_cal_lines = 4   #5.2
 
 # Maximum error on first guess lines                        - [cal_HC, cal_wave]
 # default = 1
-ic_max_errw_onfit = 1 #1
+ic_max_errw_onfit = 1   # 1
 
 # Maximum amplitude of the guessed lines                    - [cal_HC, cal_wave]
 # default = 2.0e5
@@ -690,33 +691,32 @@ ic_max_ampl_line = 1.0e8
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final
-# QUESTION: Not used in cal_HC???
-ic_hc_n_ord_start = 13 #13
+ic_hc_n_ord_start = 13  # 13
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final
-ic_hc_n_ord_final = 40  #40
+ic_hc_n_ord_final = 40  # 40
 
 #  Defines echelle of first extracted order                 - [cal_HC, cal_wave]
 ic_hc_t_order_start = 79
 
 # Define the minimum instrumental error                     - [cal_HC, cal_wave]
-ic_errx_min = 0.01  #0.03
+ic_errx_min = 0.01  # 0.03
 
 #  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
 # default = 5
-ic_ll_degr_fit = 4  #4
+ic_ll_degr_fit = 4  # 4
 
 #  Define the max rms for the sigma-clip fit ll             - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg_1 = 5  #4
-ic_Littrow_fit_deg_2 = 7  #4
+ic_Littrow_fit_deg_1 = 5  # 4
+ic_Littrow_fit_deg_2 = 7  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
-ic_Littrow_cut_step_1 = 250 #
+ic_Littrow_cut_step_1 = 250
 ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
@@ -729,11 +729,11 @@ ic_Littrow_remove_orders = []
 #  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
 #      (fit along the orders)
 #TODO needs to be the same as ic_ll_degr_fit
-ic_Littrow_order_fit_deg = 4  #4
+ic_Littrow_order_fit_deg = 4  # 4
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #    lines search (used AFTER littrow fit) default = 3
-ic_ll_free_span_2 = [4.25, 3.0]  #2.6
+ic_ll_free_span_2 = [4.25, 3.0]  # 2.6
 
 #  Defines order from which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_start (used AFTER littrow fit)
@@ -905,7 +905,7 @@ qc_hc_rms_littrow_max = 0.1    #0.3
 
 #   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
 #        cal_wave (at x cut points)
-qc_hc_dev_littrow_max = 0.4 #0.9
+qc_hc_dev_littrow_max = 0.4  # 0.9
 
 #   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
 #       (at x cut points)
