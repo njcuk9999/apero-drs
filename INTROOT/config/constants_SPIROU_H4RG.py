@@ -399,7 +399,7 @@ ic_ext_tilt_bord = 2
 ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
-ic_ext_order_plot = 17
+ic_ext_order_plot = 25
 
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
@@ -419,7 +419,7 @@ ic_cosmic_thresh = 5
 ic_drift_noise = 100.0
 
 #  Option for the background correction [0/1]                      - [cal_drift]
-ic_drift_back_corr = 0
+ic_drift_back_corr = 1
 
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
@@ -647,7 +647,7 @@ em_save_mask_map = True
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = {'UNe':'hcone', 'TH':'hctwo'}
+ic_lamps = {'UNe':'hcone', 'TH':'hctwo', 'UNe':'hc1', 'TH':'hc2'}
 
 #  Define the catalogue line list to use for each           - [cal_HC, cal_wave]
 #       lamp type (dictionary)
@@ -657,12 +657,12 @@ ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
 ic_cat_type_all = {'UNe': 'fullcat', 'TH':'thcat'}
 
 #  Define the Resolution of detector                        - [cal_HC, cal_wave]
-ic_resol = 55000
+ic_resol = 65000
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #      lines search
 # default = 3   or 2.6
-ic_ll_free_span = 3
+ic_ll_free_span = [6.,3.5]
 
 #  Define minimum wavelength of the detector to use in      - [cal_HC, cal_wave]
 #     find lines
@@ -674,48 +674,49 @@ ic_ll_sp_max = 2400
 
 #  Define the read out noise to use in find lines           - [cal_HC, cal_wave]
 # default = 16.8
-ic_hc_noise = 30
+ic_hc_noise = 60  #30
 
 # Maximum sig-fit of the guessed lines                      - [cal_HC, cal_wave]
 #     fwhm/2.35 of th lines)
-ic_max_sigll_cal_lines = 5.2
+ic_max_sigll_cal_lines = 4   #5.2
 
 # Maximum error on first guess lines                        - [cal_HC, cal_wave]
 # default = 1
-ic_max_errw_onfit = 1
+ic_max_errw_onfit = 1 #1
 
 # Maximum amplitude of the guessed lines                    - [cal_HC, cal_wave]
 # default = 2.0e5
-ic_max_ampl_line = 2.0e8
+ic_max_ampl_line = 1.0e8
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final
 # QUESTION: Not used in cal_HC???
-ic_hc_n_ord_start = 0
+ic_hc_n_ord_start = 13 #13
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final
-ic_hc_n_ord_final = 24
+ic_hc_n_ord_final = 40  #40
 
 #  Defines echelle of first extracted order                 - [cal_HC, cal_wave]
-ic_hc_t_order_start = 66
+ic_hc_t_order_start = 79
 
 # Define the minimum instrumental error                     - [cal_HC, cal_wave]
-ic_errx_min = 0.03
+ic_errx_min = 0.01  #0.03
 
 #  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
 # default = 5
-ic_ll_degr_fit = 4
+ic_ll_degr_fit = 4  #4
 
 #  Define the max rms for the sigma-clip fit ll             - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg = 4
+ic_Littrow_fit_deg_1 = 5  #4
+ic_Littrow_fit_deg_2 = 7  #4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
-ic_Littrow_cut_step_1 = 250
+ic_Littrow_cut_step_1 = 250 #
 ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
@@ -727,15 +728,21 @@ ic_Littrow_remove_orders = []
 
 #  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
 #      (fit along the orders)
-ic_Littrow_order_fit_deg = 4
+#TODO needs to be the same as ic_ll_degr_fit
+ic_Littrow_order_fit_deg = 4  #4
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #    lines search (used AFTER littrow fit) default = 3
-ic_ll_free_span_2 = 2.6
+ic_ll_free_span_2 = [4.25, 3.0]  #2.6
+
+#  Defines order from which the solution is calculated        - [cal_HC, cal_wave]
+#      previously called n_ord_start (used AFTER littrow fit)
+ic_hc_n_ord_start_2 = 0
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
-ic_hc_n_ord_final_2 = 24
+ic_hc_n_ord_final_2 = 46
+
 
 #  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
 #      Currently allowed modes are:
@@ -872,11 +879,11 @@ qc_max_signal = 50000
 
 #   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
 #       (at x cut points)
-qc_hc_rms_littrow_max = 0.3
+qc_hc_rms_littrow_max = 0.1    #0.3
 
 #   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
 #        cal_wave (at x cut points)
-qc_hc_dev_littrow_max = 0.9
+qc_hc_dev_littrow_max = 0.4 #0.9
 
 #   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
 #       (at x cut points)
