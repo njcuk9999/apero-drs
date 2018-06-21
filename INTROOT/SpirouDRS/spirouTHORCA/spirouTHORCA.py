@@ -175,10 +175,11 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-            IC_HC_N_ORD_FINAL: int, defines first order solution is calculated
+            IC_HC_N_ORD_START: int, defines first order solution is calculated
+            IC_HC_N_ORD_FINAL: int, defines last order solution is calculated
                                 from
-            IC_HC_T_ORDER_START: int, defines the first order solution is
-                                  calculated from
+            IC_HC_T_ORDER_START: int, defines the echelle order of
+                                the first e2ds order
             log_opt: string, log option, normally the program name
             fiber: string, the fiber number
 
@@ -203,9 +204,10 @@ def first_guess_at_wave_solution(p, loc, mode=0):
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
     # get used constants from p
     n_order_final = p['IC_HC_N_ORD_FINAL']
+    n_order_start = p['IC_HC_N_ORD_START']
     freespan = p['IC_LL_FREE_SPAN']
     # set up the orders to fit
-    orderrange = np.arange( n_order_final)
+    orderrange = np.arange(n_order_start, n_order_final)
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
     loc.set_source('ECHELLE_ORDERS', func_name)
 
@@ -218,7 +220,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
     # get E2DS line list from wave_file
     ll_init, param_ll_init = get_e2ds_ll(p, loc['HCHDR'], filename=wave_file)
     # only perform fit on orders 0 to p['IC_HC_N_ORD_FINAL']
-    loc['LL_INIT'] = ll_init[:n_order_final]
+    loc['LL_INIT'] = ll_init[n_order_start:n_order_final]
     loc.set_source('LL_INIT', __NAME__ + func_name)
 
     # load line file (from p['IC_LL_LINE_FILE'])
@@ -232,7 +234,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     # find the lines
     fargs = [p, loc['LL_INIT'], loc['LL_LINE'], loc['AMPL_LINE'],
-             loc['HCDATA'][:p['IC_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
+             loc['HCDATA'][p['IC_HC_N_ORD_START']:p['IC_HC_N_ORD_FINAL']], loc['ECHELLE_ORDERS'],
              freespan]
     all_lines = find_lines(*fargs, mode=mode)
     # add all lines to loc
@@ -248,6 +250,9 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
     max_error_onfit = p['IC_MAX_ERRW_ONFIT']
     max_error_sigll = p['IC_MAX_SIGLL_CAL_LINES']
     max_ampl_lines = p['IC_MAX_AMPL_LINE']
+    t_ord_start = p['IC_HC_T_ORDER_START']
+    torder = loc['ECHELLE_ORDERS']
+
 
     # deal with key
     if key is None:
@@ -259,10 +264,15 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         WLOG('error', p['LOG_OPT'], emsg.format(key))
         key = None
 
+    #good lines count
+    good_lines_total = 0
     # loop around each order
     for order_num in range(len(loc[key])):
         # get all lines 7
         lines = np.array(loc[key][order_num])
+        # keep only vqlid lines
+        testmask = lines[:,2]>0
+        lines = lines[testmask]
         # ---------------------------------------------------------------------
         # Criteria 1
         # ---------------------------------------------------------------------
@@ -276,6 +286,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # Criteria 2
         # ---------------------------------------------------------------------
         # calculate the sig-fit for the lines
+        #TODO remove lines with sigll < 1 pixel ?
         sigll = lines[:, 1]/lines[:, 0] * speed_of_light
         # create mask
         badsig = sigll >= max_error_sigll
@@ -299,11 +310,17 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         badlines = badfit | badsig | badampl
         # count number
         num_bad, num_total = np.sum(badlines), badlines.size
+        good_lines_total += num_total - num_bad
         # log only if we have bad
         if np.sum(badlines) > 0:
-            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
+#            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
+#                     num_badfit]
+#            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
+#                    '[beyond (sig/ampl/err) limits]')
+            wargs = [torder[order_num], t_ord_start - torder[order_num],
+                     num_total - num_bad, num_badsig, num_badampl,
                      num_badfit]
-            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
+            wmsg = ('In Order {0:3} ({1:2}) keep {2} lines / ({3}/{4}/{5}) lines '
                     '[beyond (sig/ampl/err) limits]')
             WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
         # ---------------------------------------------------------------------
@@ -317,6 +334,10 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # add back to loc[key]
         # ---------------------------------------------------------------------
         loc[key][order_num] = lines
+    # print total of good lines
+    wargs = [good_lines_total]
+    wmsg = ('Total good lines: {0}')
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
 
     # return loc
     return loc
@@ -363,8 +384,9 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     remove_orders = p['IC_LITTROW_REMOVE_ORDERS']
     n_order_init = p['IC_LITTROW_ORDER_INIT']
     n_order_final = p['IC_HC_N_ORD_FINAL']
+    n_order_start = p['IC_HC_N_ORD_START']
     x_cut_step = p['IC_LITTROW_CUT_STEP_{0}'.format(iteration)]
-    fit_degree = p['IC_LITTROW_FIT_DEG']
+    fit_degree = p['IC_LITTROW_FIT_DEG_{0}'.format(iteration)]
     # get parameters from loc
     torder = loc['ECHELLE_ORDERS']
     ll_out = ll
@@ -399,7 +421,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
             WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2])
 
     # check to make sure we have some orders left
-    if len(np.unique(remove_orders)) == n_order_final:
+    if len(np.unique(remove_orders)) == n_order_final - n_order_start:
         wmsg = 'Cannot remove all orders. Check IC_LITTROW_REMOVE_ORDERS'
         WLOG('error', p['LOG_OPT'], wmsg)
     # get the total number of orders to fit
@@ -422,7 +444,8 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     # save to storage
     loc['X_CUT_POINTS_{0}'.format(iteration)] = x_cut_points
     # get the echelle order values
-    orderpos = torder[:n_order_final][rmask]
+    #TODO check if mask needs resizing
+    orderpos = torder[rmask]
     # get the inverse order number
     inv_orderpos = 1.0 / orderpos
     # loop around cut points and get littrow parameters and stats
@@ -430,7 +453,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         # this iterations x cut point
         x_cut_point = x_cut_points[it]
         # get the fractional wavelength contrib. at each x cut point
-        ll_point = ll_out[:n_order_final, x_cut_point][rmask]
+        ll_point = ll_out[:, x_cut_point][rmask]
         ll_start_point = ll_out[n_order_init, x_cut_point]
         frac_ll_point = ll_point/ll_start_point
         # fit the inverse order numbers against the fractional
@@ -548,25 +571,38 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     freespan = p['IC_LL_FREE_SPAN_2']
     # New final order value
     n_ord_final = p['IC_HC_N_ORD_FINAL']
+    n_ord_start = p['IC_HC_N_ORD_START']
+    n_ord_start_2 = p['IC_HC_N_ORD_START_2']
     n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
     # recalculate echelle order number
-    echelle_order = p['IC_HC_T_ORDER_START'] - np.arange(n_ord_final_2)
+    echelle_order = p['IC_HC_T_ORDER_START'] - np.arange(n_ord_start_2, n_ord_final_2)
+    loc['ECHELLE_ORDERS'] = echelle_order
+    loc.set_source('ECHELLE_ORDERS', func_name)
+
 
     # set the starting point as the outputs from the first guess solution
     # loop around original order num
-    ll_line_2, ampl_line_2 = [], []
-    for order_num in range(n_ord_final):
+#    ll_line_2, ampl_line_2 = [], []
+#    for order_num in range(n_ord_final - n_ord_start):
         # get this orders details
-        details = loc['X_DETAILS_1'][order_num]
+#        details = loc['X_DETAILS_1'][order_num]
         # append to lists
-        ll_line_2 = np.append(ll_line_2, details[0])
-        ampl_line_2 = np.append(ampl_line_2, details[3])
+#        ll_line_2 = np.append(ll_line_2, details[0])
+#        ampl_line_2 = np.append(ampl_line_2, details[3])
 
     # Now add in any lines which are outside the range of the first guess
     #    solution
-    lmask = loc['LL_LINE'] > np.max(ll_line_2)
-    ll_line_2 = np.append(ll_line_2, loc['LL_LINE'][lmask])
-    ampl_line_2 = np.append(ampl_line_2, loc['AMPL_LINE'][lmask])
+#    lmask = loc['LL_LINE'] > np.max(ll_line_2)
+#    lmask |= loc['LL_LINE'] < np.min(ll_line_2)
+#    ll_line_2 = np.append(ll_line_2, loc['LL_LINE'][lmask])
+#    ampl_line_2 = np.append(ampl_line_2, loc['AMPL_LINE'][lmask])
+#    ll_line_2_sortmask = ll_line_2.argsort()
+#    ll_line_2 = ll_line_2[ll_line_2_sortmask]
+#    ampl_line_2 = ampl_line_2[ll_line_2_sortmask]
+
+    #use whole catalogue
+    ll_line_2 = loc['LL_LINE']
+    ampl_line_2 = loc['AMPL_LINE']
 
     # log second pass
     wmsg = ('On fiber {0} trying to identify lines using guess solution '
@@ -574,8 +610,8 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
 
     # find the lines
-    ll = loc['LITTROW_EXTRAP_SOL_1'][:n_ord_final_2]
-    datax = loc['HCDATA'][:n_ord_final_2]
+    ll = loc['LITTROW_EXTRAP_SOL_1'][n_ord_start_2:n_ord_final_2]
+    datax = loc['HCDATA'][n_ord_start_2:n_ord_final_2]
 
     fargs = [p, ll, ll_line_2, ampl_line_2, datax, echelle_order, freespan]
     all_lines = find_lines(*fargs, mode=mode)
@@ -591,6 +627,7 @@ def join_orders(p, loc):
 
     func_name = __NAME__ + '.join_orders()'
     # get parameters from p
+    n_ord_start_2 = p['IC_HC_N_ORD_START_2']
     n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
 
     # get data from loc
@@ -598,20 +635,28 @@ def join_orders(p, loc):
     ll_out_2 = loc['LL_OUT_2']
     param_out_2 = loc['LL_PARAM_2']
 
+    # the littrow extrapolation (for orders < n_ord_start_2)
+    littrow_extrap_sol_blue = loc['LITTROW_EXTRAP_SOL_2'][:n_ord_start_2]
+    littrow_extrap_sol_param_blue = loc['LITTROW_EXTRAP_PARAM_2'][:n_ord_start_2]
+
     # the littrow extrapolation (for orders > n_ord_final_2)
-    littrow_extrap_sol = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final_2:]
-    littrow_extrap_sol_param = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final_2:]
+    littrow_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_2'][n_ord_final_2:]
+    littrow_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_2'][n_ord_final_2:]
 
     # create stack
     ll_stack, param_stack = [], []
+    # add extrapolation from littrow to orders < n_ord_start_2
+    if len(littrow_extrap_sol_blue) > 0:
+        ll_stack.append(littrow_extrap_sol_blue)
+        param_stack.append(littrow_extrap_sol_param_blue)
     # add second iteration outputs
     if len(ll_out_2) > 0:
         ll_stack.append(ll_out_2)
         param_stack.append(param_out_2)
     # add extrapolation from littrow to orders > n_ord_final_2
-    if len(littrow_extrap_sol) > 0:
-        ll_stack.append(littrow_extrap_sol)
-        param_stack.append(littrow_extrap_sol_param)
+    if len(littrow_extrap_sol_red) > 0:
+        ll_stack.append(littrow_extrap_sol_red)
+        param_stack.append(littrow_extrap_sol_param_red)
 
     # convert stacks to arrays and add to storage
     loc['LL_FINAL'] = np.vstack(ll_stack)
@@ -670,10 +715,10 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-            IC_LL_SP_MIN
-            IC_LL_SP_MAX
-            IC_RESOL
-            IC_LL_FREE_SPAN
+            IC_LL_SP_MIN   minimum wavelength of the catalog
+            IC_LL_SP_MAX   maximum wavelength of the catalog
+            IC_RESOL       Resolution of spectrograph
+            IC_LL_FREE_SPAN   window size in sigma unit
             IC_HC_NOISE
 
     :param ll:
@@ -710,6 +755,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
     # get parameters from p
     ll_sp_min = p['IC_LL_SP_MIN']
     ll_sp_max = p['IC_LL_SP_MAX']
+    t_ord_start = p['IC_HC_T_ORDER_START']
     resol = p['IC_RESOL']
     ll_free_span = freespan
     image_ron = p['IC_HC_NOISE']
@@ -750,7 +796,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
             # get this iterations line
             line = float(ll_line_s[ll_i])
             # loop around these two span values
-            for span in [4.25, ll_free_span]:
+            for span in ll_free_span:
                 # calculate line limits
                 ll_span_min = line - span * (line/(resol * 2.355))
                 ll_span_max = line + span * (line/(resol * 2.355))
@@ -763,8 +809,8 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
                 sdata = datax[order_num, :][line_mask]
                 # normalise sdata by the minimum sdata
                 sdata = sdata - np.min(sdata)
-                # make sure we have more than 3 data points
-                if len(sxpos) < 3:
+                # make sure we have more than 4 data points to fit a gaussian
+                if len(sxpos) < 4:
                     wmsg = 'Resolution or ll_span are too small'
                     WLOG('', p['LOG_OPT'], wmsg)
                 # work out a pixel weighting
@@ -799,14 +845,15 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
         # finally reshape all the gauss_fit parameters
         gauss_fit = np.array(gauss_fit).reshape(len(ll_line_s), 8)
         # calculate stats for logging
-        min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
+#        min_ll, max_ll = ll_line_s[0], ll_line_s[-1]
+        min_ll, max_ll = np.min(ll_line_s), np.max(ll_line_s)
         nlines_valid = np.sum(gauss_fit[:, 2] > 0)
         nlines_total = len(gauss_fit[:, 2])
         percentage_vlines = 100 * (nlines_valid/nlines_total)
         # log the stats for this order
         wmsg = 'Order {0:3} ({1:2}): [{2:6.1f} - {3:6.1f}]'
         wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
-        wargs = [torder[order_num], order_num, min_ll, max_ll,
+        wargs = [torder[order_num], t_ord_start - torder[order_num], min_ll, max_ll,
                  nlines_valid, nlines_total, percentage_vlines]
         WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
         all_cal_line_fit.append(gauss_fit)
@@ -1273,6 +1320,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
     max_weight = 1.0 / p['IC_ERRX_MIN'] ** 2
     fit_degree = p['IC_LL_DEGR_FIT']
     max_ll_fit_rms = p['IC_MAX_LLFIT_RMS']
+    t_ord_start = p['IC_HC_T_ORDER_START']
     threshold = 1e-30
     # get data from loc
     torder = loc['ECHELLE_ORDERS']
@@ -1353,7 +1401,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # ---------------------------------------------------------------------
         # log the fitted wave solution
         wmsg1 = 'Fit wave. sol. order: {0:3d} ({1:2d}) [{2:.1f}- {3:.1f}]'
-        wargs1 = [torder[order_num], order_num, ll[order_num][0],
+        wargs1 = [torder[order_num], t_ord_start - torder[order_num], ll[order_num][0],
                   ll[order_num][-1]]
         wmsg2 = ('\tmean: {0:.4f}[mpix] rms={1:.5f} [mpix] ({2:2d} it.) '
                  '[{3} --> {4} lines] ')
