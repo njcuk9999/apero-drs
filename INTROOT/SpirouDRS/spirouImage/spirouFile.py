@@ -180,6 +180,29 @@ class Paths():
 # Define ID functions (pre-processing)
 # =============================================================================
 def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
+    """
+    Identify a unprocessed raw file (from recipe control file), adds suffix
+    and header key (DPRTYPE) accordingly
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                DRS_DEBUG: int, if 0 not in debug mode else in various levels of
+                           debug
+                KW_DPRTYPE: list, keyword list [key, value, comment]
+
+    :param filename: string, the filename to check
+    :param hdr: dictionary or None, the HEADER dictionary to check for keys and
+                associated values, if None attempt to open HEADER from filename
+    :param cdr: dictionary or None, the HEADER dictionary to check for keys and
+                associated comments, if None attempt to open HEADER from
+                filename
+
+    :return newfn: string, the new filename with added suffix
+    :return hdr: dictionary, the HEADER with added HEADER key/value pair
+                 (DPRTYPE)
+    :return cdr: dictionary, the HEADER with added HEADER key/comment pair
+                 (DPRTYPE)
+    """
     # ----------------------------------------------------------------------
     # load control file
     control = get_control_file()
@@ -213,6 +236,36 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
 # Define ID functions (main recipes)
 # =============================================================================
 def check_file_id(p, filename, recipe, hdr=None, **kwargs):
+    """
+    Checks the "filename" against the "recipe" (using recipe control)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_FORCE_PREPROCESS: bool, if True only allows pre-processed files
+            PROCESSED_SUFFIX: string, the processed suffix
+            DRS_DATA_RAW: string, the directory that the raw data should
+                          be saved to/read from
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+            ARG_NIGHT_NAME: string, the folder within data raw directory
+                            containing files (also reduced directory) i.e.
+                            /data/raw/20170710 would be "20170710"
+
+    :param filename: string, the filename to check
+    :param recipe: string, the recipe name to check
+    :param hdr: dictionary or None, if defined must be a HEADER dictionary if
+                none loaded from filename
+    :param kwargs: keyword arguments. Current allowed keys are:
+                    - return_path: bool, if True returns the path as well as p
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                PREPROCESSED: bool, flag whether file is detected as
+                              pre-processed
+                DPRTYPE: string, the type from the recipe control file
+                FIBER: string, if recipe control entry for this file has a
+                       fiber defined, fiber is set to this
+    """
     func_name = __NAME__ + '.check_file_id()'
     # remove .py from recipe (in case it is here)
     recipe = recipe.split('.py')[0]
@@ -321,14 +374,33 @@ def check_file_id(p, filename, recipe, hdr=None, **kwargs):
 
 def check_files_id(p, files, recipe, hdr=None, **kwargs):
     """
-    Wrapper for check_file_id
+    Wrapper for spirouFile.check_file_id
 
-    :param p:
-    :param files:
-    :param recipe:
-    :param hdr:
-    :param kwargs:
-    :return:
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_FORCE_PREPROCESS: bool, if True only allows pre-processed files
+            PROCESSED_SUFFIX: string, the processed suffix
+            DRS_DATA_RAW: string, the directory that the raw data should
+                          be saved to/read from
+                DRS_DATA_REDUC: string, the directory that the reduced data
+                                should be saved to/read from
+            ARG_NIGHT_NAME: string, the folder within data raw directory
+                            containing files (also reduced directory) i.e.
+                            /data/raw/20170710 would be "20170710"
+    :param files: list of strings, the files to check with check_file_id
+    :param recipe: string, the recipe name to check
+    :param hdr: dictionary or None, if defined must be a HEADER dictionary if
+                none loaded from filename
+    :param kwargs: keyword arguments. Current allowed keys are:
+                    - return_path: bool, if True returns the path as well as p
+    :return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            PREPROCESSED: bool, flag whether file is detected as
+                          pre-processed
+            DPRTYPE: string, the type from the recipe control file
+            DPRTYPES: list of stings, the DPRTYPE for each file in "files"
+            FIBER: string, if recipe control entry for this file has a
+                   fiber defined, fiber is set to this
     """
     func_name = __NAME__ + '.check_files_id()'
     # add new constant (for multiple files)
@@ -340,7 +412,10 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
         # append DPRTYPE to DPRTYPES
         p['DPRTYPES'].append(str(p['DPRTYPE']))
     # Need to check that all DPRTYPES are the same
-    if len(np.unique(p['DPRTYPES'])) != 1:
+    if len(p['DPRTYPES']) == 0:
+        p['DPRTYPE'] = 'UNKNOWN'
+        return p
+    elif len(np.unique(p['DPRTYPES'])) != 1:
         # add first error message
         emsgs = ['Files are not all the same type']
         # loop around files and print types
@@ -352,8 +427,9 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
         emsgs.append('\tfunction = {0}'.format(func_name))
         # log error message
         WLOG('error', p['LOG_OPT'], emsgs)
-    # return p
-    return p
+    else:
+        # return p
+        return p
 
 
 def check_preprocess(p, filename=None):
@@ -530,11 +606,20 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         hdr[p['KW_DPRTYPE'][0]] = dprtype
         cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
         # update filename (if required)
-        if dstring not in basefilename:
+        newfilename = str(filename)
+        # now try updating filename
+        if (dstring == 'None') and (dstring not in basefilename):
+            # try setting dstring to OBSTYPE
+            if p['kw_OBJNAME'][0] in hdr:
+                # get the name of the object
+                name = hdr[p['kw_OBJNAME'][0]].strip()
+                # if name not in filename add if
+                if name not in filename:
+                    newext = '_{0}.fits'.format(name)
+                    newfilename = filename.replace('.fits', newext)
+        elif dstring not in basefilename:
             newext = '_{0}.fits'.format(dstring)
             newfilename = filename.replace('.fits', newext)
-        else:
-            newfilename = str(filename)
         # return new filename and header
         return newfilename, hdr, cdr
     else:
