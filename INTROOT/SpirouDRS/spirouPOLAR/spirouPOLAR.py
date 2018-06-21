@@ -232,7 +232,6 @@ def load_data(p, polardict, loc):
 
 
 def calculate_polarimetry_wrapper(p, loc):
-
     # get parameters from p
     method = p['IC_POLAR_METHOD']
     # decide which method to use
