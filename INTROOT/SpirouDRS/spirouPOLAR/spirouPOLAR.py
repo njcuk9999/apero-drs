@@ -260,7 +260,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
     ydim, xdim = loc['POL'].shape
     # ---------------------------------------------------------------------
     # flatten data (across orders)
-    wl, pol, null1, null2 = [], [], [], []
+    wl, pol, polerr, null1, null2 = [], [], [], [], []
     # loop around order data
     for order_num in range(ydim):
         if in_wavelength:
@@ -268,6 +268,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
         else:
             wl = np.append(wl, (order_num * xdim) + np.arange(xdim))
         pol = np.append(pol, loc['POL'][order_num])
+        polerr = np.append(pol, loc['POLERR'][order_num])
         null1 = np.append(null1, loc['NULL1'][order_num])
         null2 = np.append(null2, loc['NULL2'][order_num])
     # ---------------------------------------------------------------------
@@ -275,15 +276,17 @@ def calculate_continuum(p, loc, in_wavelength=True):
     sortmask = np.argsort(wl)
     wl = wl[sortmask]
     pol = pol[sortmask]
+    polerr = pol[sortmask]
     null1 = null1[sortmask]
     null2 = null2[sortmask]
     # save back to loc
     loc['FLAT_X'] = wl
     loc['FLAT_POL'] = pol
+    loc['FLAT_POLERR'] = polerr
     loc['FLAT_NULL1'] = null1
     loc['FLAT_NULL2'] = null2
     # update source
-    sources = ['FLAT_X', 'FLAT_POL', 'FLAT_NULL1', 'FLAT_NULL2']
+    sources = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_NULL1', 'FLAT_NULL2']
     loc.set_sources(sources, func_name)
     # ---------------------------------------------------------------------
     # calculate continuum polarization
@@ -362,17 +365,19 @@ def polarimetry_diff_method(p, loc):
     data_shape = loc['DATA']['A_1'].shape
     # initialize arrays to zeroes
     loc['POL'] = np.zeros(data_shape)
+    loc['POLERR'] = np.zeros(data_shape)
     loc['NULL1'] = np.zeros(data_shape)
     loc['NULL2'] = np.zeros(data_shape)
     # set source
-    loc.set_sources(['POL', 'NULL1', 'NULL2'], func_name)
-    # ---------------------------------------------------------------------
-    # STEP 1 - calculate the quantity Gn (Eq #12-14 on page 997 of
-    #          Bagnulo et al. 2009), n being the pair of exposures
-    # ---------------------------------------------------------------------
+    loc.set_sources(['POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
+
     swapbeams = False
-    G = []
+    G, gvar = [], []
     for i in range(1, int(nexp) + 1):
+        # ---------------------------------------------------------------------
+        # STEP 1 - calculate the quantity Gn (Eq #12-14 on page 997 of
+        #          Bagnulo et al. 2009), n being the pair of exposures
+        # ---------------------------------------------------------------------
         if swapbeams:
             if i == 1 or i == 3:
                 # add B part
@@ -389,45 +394,78 @@ def polarimetry_diff_method(p, loc):
             part2 = data['B_{0}'.format(i)] + data['A_{0}'.format(i)]
             G.append(part1 / part2)
 
+
+        # Calculate the variances for fiber A and B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension of e2ds files.
+        Avar = data['A_{0}'.format(i)]
+        Bvar = data['B_{0}'.format(i)]
+
+        # ---------------------------------------------------------------------
+        # STEP 2 - calculate the quantity g_n^2 (Eq #A4 on page 1013 of
+        #          Bagnulo et al. 2009), n being the pair of exposures
+        # ---------------------------------------------------------------------
+        nomin = 2.0 * data['B_{0}'.format(i)] * data['A_{0}'.format(i)]
+        denom = (data['B_{0}'.format(i)] + data['A_{0}'.format(i)]) ** (2.0)
+        factor1 = (nomin / denom) ** 2.0
+        AvarPart = Avar / (data['A_{0}'.format(i)] ** 2.0)
+        BvarPart = Bvar / (data['B_{0}'.format(i)] ** 2.0)
+        gvar.append(factor1 * (BvarPart + AvarPart))
+
+
     # if we have 4 exposures
     if nexp == 4:
         # -----------------------------------------------------------------
-        # STEP 2 - calculate the quantity Dm (Eq #18 on page 997 of
+        # STEP 3 - calculate the quantity Dm (Eq #18 on page 997 of
         #          Bagnulo et al. 2009 paper) and the quantity Dms with
         #          exposure 2 and 4 swapped, m being the pair of exposures
         # -----------------------------------------------------------------
         D1, D2 = G[0] - G[1], G[2] - G[3]
         D1s, D2s = G[0] - G[3], G[2] - G[1]
         # -----------------------------------------------------------------
-        # STEP 3 - calculate the degree of polarization for Stokes
+        # STEP 4 - calculate the degree of polarization for Stokes
         #          parameter (Eq #19 on page 997 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         loc['POL'] = (D1 + D2) / nexp
         # -----------------------------------------------------------------
-        # STEP 4 - calculate the first NULL spectrum
+        # STEP 5 - calculate the first NULL spectrum
         #          (Eq #20 on page 997 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         loc['NULL1'] = (D1 - D2) / nexp
         # -----------------------------------------------------------------
-        # STEP 5 - calculate the second NULL spectrum
+        # STEP 6 - calculate the second NULL spectrum
         #          (Eq #20 on page 997 of Bagnulo et al. 2009)
         #          with exposure 2 and 4 swapped
         # -----------------------------------------------------------------
         loc['NULL2'] = (D1s - D2s) / nexp
+        # -----------------------------------------------------------------
+        # STEP 7 - calculate the polarimetry error
+        #          (Eq #A3 on page 1013 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        sumOfgvar = gvar[0] + gvar[1] + gvar[2] + gvar[3]
+        loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0) )
+    
     # else if we have 2 exposures
     elif nexp == 2:
         # -----------------------------------------------------------------
-        # STEP 2 - calculate the quantity Dm
+        # STEP 3 - calculate the quantity Dm
         #          (Eq #18 on page 997 of Bagnulo et al. 2009) and
         #          the quantity Dms with exposure 2 and 4 swapped,
         #          m being the pair of exposures
         # -----------------------------------------------------------------
         D1 = G[0] - G[1]
         # -----------------------------------------------------------------
-        # STEP 3 - calculate the degree of polarization
+        # STEP 4 - calculate the degree of polarization
         #          (Eq #19 on page 997 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         loc['POL'] = D1 / nexp
+        # -----------------------------------------------------------------
+        # STEP 5 - calculate the polarimetry error
+        #          (Eq #A3 on page 1013 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        sumOfgvar = gvar[0] + gvar[1]
+        loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0) )
+
     # else we have insufficient data (should not get here)
     else:
         wmsg = ('Number of exposures in input data is not sufficient'
@@ -461,24 +499,40 @@ def polarimetry_ratio_method(p, loc):
     data_shape = loc['DATA']['A_1'].shape
     # initialize arrays to zeroes
     loc['POL'] = np.zeros(data_shape)
+    loc['POLERR'] = np.zeros(data_shape)
     loc['NULL1'] = np.zeros(data_shape)
     loc['NULL2'] = np.zeros(data_shape)
     # set source
     loc.set_sources(['POL', 'NULL1', 'NULL2'], func_name)
 
-    # ---------------------------------------------------------------------
-    # STEP 1 - calculate ratio of beams for each exposure
-    #          (Eq #12 on page 997 of Bagnulo et al. 2009 )
-    # ---------------------------------------------------------------------
-    flux_ratio = []
+    flux_ratio, var_term = [], []
     for i in range(1, int(nexp) + 1):
+        # ---------------------------------------------------------------------
+        # STEP 1 - calculate ratio of beams for each exposure
+        #          (Eq #12 on page 997 of Bagnulo et al. 2009 )
+        # ---------------------------------------------------------------------
         part1 = data['B_{0}'.format(i)]
         part2 = data['A_{0}'.format(i)]
         flux_ratio.append(part1 / part2)
+        
+        # Calculate the variances for fiber A and B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension of e2ds files.
+        Avar = data['A_{0}'.format(i)]
+        Bvar = data['B_{0}'.format(i)]
+
+        # ---------------------------------------------------------------------
+        # STEP 2 - calculate the error quantities for Eq #A10 on page 1014 of
+        #          Bagnulo et al. 2009
+        # ---------------------------------------------------------------------
+        var_term_part1 = Avar / (data['A_{0}'.format(i)] ** 2.0)
+        var_term_part2 = Bvar / (data['B_{0}'.format(i)] ** 2.0)
+        var_term.append(var_term_part1 + var_term_part2)
+
     # if we have 4 exposures
     if nexp == 4:
         # -----------------------------------------------------------------
-        # STEP 2 - calculate the quantity Rm
+        # STEP 3 - calculate the quantity Rm
         #          (Eq #23 on page 998 of Bagnulo et al. 2009) and
         #          the quantity Rms with exposure 2 and 4 swapped,
         #          m being the pair of exposures
@@ -486,42 +540,51 @@ def polarimetry_ratio_method(p, loc):
         R1, R2 = flux_ratio[0] / flux_ratio[1], flux_ratio[2] / flux_ratio[3]
         R1s, R2s = flux_ratio[0] / flux_ratio[3], flux_ratio[2] / flux_ratio[1]
         # -----------------------------------------------------------------
-        # STEP 3 - calculate the quantity R
+        # STEP 4 - calculate the quantity R
         #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         R = (R1 * R2) ** (1.0 / nexp)
         # -----------------------------------------------------------------
-        # STEP 4 - calculate the degree of polarization
+        # STEP 5 - calculate the degree of polarization
         #          (Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         loc['POL'] = (R - 1.0) / (R + 1.0)
         # -----------------------------------------------------------------
-        # STEP 5 - calculate the quantity RN1
+        # STEP 6 - calculate the quantity RN1
         #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         RN1 = (R1 / R2) ** (1.0 / nexp)
         # -----------------------------------------------------------------
-        # STEP 6 - calculate the first NULL spectrum
+        # STEP 7 - calculate the first NULL spectrum
         #          (Eq #25-26 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         loc['NULL1'] = (RN1 - 1.0) / (RN1 + 1.0)
         # -----------------------------------------------------------------
-        # STEP 7 - calculate the quantity RN2
+        # STEP 8 - calculate the quantity RN2
         #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009),
         #          with exposure 2 and 4 swapped
         # -----------------------------------------------------------------
         RN2 = (R1s / R2s) ** (1.0 / nexp)
         # -----------------------------------------------------------------
-        # STEP 8 - calculate the second NULL spectrum
+        # STEP 9 - calculate the second NULL spectrum
         #          (Eq #25-26 on page 998 of Bagnulo et al. 2009),
         #          with exposure 2 and 4 swapped
         # -----------------------------------------------------------------
         loc['NULL2'] = (RN2 - 1.0) / (RN2 + 1.0)
+        # -----------------------------------------------------------------
+        # STEP 10 - calculate the polarimetry error (Eq #A10 on page 1014
+        #           of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        numerPart1 = ( R1 * R2 ) ** (1.0/2.0)
+        denomPart1 = (( R1 * R2 ) ** (1.0/4.0) + 1.0) ** 4.0
+        Part1 = numerPart1 / (denomPart1 * 4.0)
+        sumvar = var_term[0] + var_term[1] + var_term[2] + var_term[3]
+        loc['POLERR'] = np.sqrt(Part1 * sumvar)
 
     # else if we have 2 exposures
     elif nexp == 2:
         # -----------------------------------------------------------------
-        # STEP 2 - calculate the quantity Rm
+        # STEP 3 - calculate the quantity Rm
         #          (Eq #23 on page 998 of Bagnulo et al. 2009) and
         #          the quantity Rms with exposure 2 and 4 swapped,
         #          m being the pair of exposures
@@ -529,17 +592,26 @@ def polarimetry_ratio_method(p, loc):
         R1 = flux_ratio[0] / flux_ratio[1]
 
         # -----------------------------------------------------------------
-        # STEP 3 - calculate the quantity R
+        # STEP 4 - calculate the quantity R
         #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         R = R1 ** (1.0 / nexp)
 
         # -----------------------------------------------------------------
-        # STEP 4 - calculate the degree of polarization
+        # STEP 5 - calculate the degree of polarization
         #          (Eq #24 on page 998 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         loc['POL'] = (R - 1.0) / (R + 1.0)
-
+        # -----------------------------------------------------------------
+        # STEP 6 - calculate the polarimetry error (Eq #A10 on page 1014
+        #           of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        numerPart1 = R1
+        denomPart1 = ((R1 ** 0.5) + 1.0) ** 4.0
+        Part1 = R1 / denomPart1
+        sumvar = var_term[0] + var_term[1]
+        loc['POLERR'] = np.sqrt(Part1 * sumvar)
+    
     # else we have insufficient data (should not get here)
     else:
         wmsg = ('Number of exposures in input data is not sufficient'
