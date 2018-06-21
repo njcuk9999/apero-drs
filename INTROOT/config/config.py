@@ -30,7 +30,7 @@ USER_CONFIG = 0
 TDATA = "/Users/edermartioli/SPIROU-pipeline/data/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/Users/edermartioli/SpirouDRS/'
+DRS_ROOT = '/Users/edermartioli/GitHub/spirou_py3/INTROOT/'
 
 #   Define the folder with the raw data files in
 DRS_DATA_RAW = '/Users/edermartioli/SPIROU-pipeline/data/raw'

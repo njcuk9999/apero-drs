@@ -1756,7 +1756,7 @@ def polar_continuum_plot(loc, in_wavelengths=True):
         xlabel = 'order number + col (pixel)'
     ylabel = 'Degree of polarization for Stokes {0} (%)'.format(stokes)
     # set up title
-    title = 'Polarimatry: Stokes {0}, Method={1}, for {2} exposures'
+    title = 'Polarimetry: Stokes {0}, Method={1}, for {2} exposures'
     titleargs = [stokes, method, nexp]
     # ---------------------------------------------------------------------
     # plot polarimetry data
@@ -1782,8 +1782,8 @@ def polar_continuum_plot(loc, in_wavelengths=True):
 
 def polar_result_plot(loc, in_wavelengths=True):
     # get data from loc
-    wl, pol = loc['FLAT_X'], loc['FLAT_POL']
-    null1, null2 = loc['FLAT_NULL1'], loc['FLAT_NULL2']
+    wl, pol = loc['FLAT_X'], 100.0*loc['FLAT_POL']
+    null1, null2 = 100.0*loc['FLAT_NULL1'], 100.0*loc['FLAT_NULL2']
     stokes = loc['STOKES']
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
     # ---------------------------------------------------------------------
