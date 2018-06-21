@@ -125,10 +125,11 @@ def main(night_name=None):
         # loop around run in runs
         for it in range(len(runi)):
             try:
-                # display progress
-                iteration_bar(p, g_it, len(run_order), it, len(runi))
                 # get function from runs
                 name = runi[it][0]
+                # display progress
+                iteration_bar(p, group, name, g_it, len(run_order),
+                              it, len(runi))
                 # make sure all arguments are python strings
                 run0 = [str(jt) for jt in runi[it]]
                 # run function
@@ -406,11 +407,16 @@ def recipe_mode_3(req, nfiles):
     return [only_run]
 
 
-def iteration_bar(p, it_number1, t_number1, it_number2, t_number2):
+def iteration_bar(p, nightname, name, it_number1, t_number1,
+                  it_number2, t_number2):
     WLOG('', '', '')
     WLOG('', '', '=' * 50)
-    wmsg1 = 'Processing Group {0} of {1}'.format(it_number1 + 1, t_number1)
-    wmsg2 = '           Run {0} of {1}'.format(it_number2 + 1, t_number2)
+
+    wargs1 = [nightname, it_number1 + 1, t_number1]
+    wargs2 = [name, it_number2 + 1, t_number2]
+
+    wmsg1 = 'Processing Group = {0:25s} ({1} of {2})'.format(*wargs1)
+    wmsg2 = '           Run   = {0:25s} ({1} of {2})'.format(*wargs2)
     WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
     WLOG('', '', '=' * 50)
     WLOG('', '', '')
