@@ -401,7 +401,7 @@ def LOG_OPT(p):
 
 
 # noinspection PyPep8Naming
-def PROGRAM():
+def PROGRAM(p=None):
     """
     Defines the recipe/code/program currently running (from sys.argv[0])
     '.py' is removed
@@ -411,7 +411,13 @@ def PROGRAM():
     # get run time parameters
     rparams = list(sys.argv)
     # get program name
-    program = os.path.basename(rparams[0]).split('.py')[0]
+    if (p is not None):
+        if 'RECIPE' in p:
+            program = p['RECIPE']
+        else:
+            program = os.path.basename(rparams[0]).split('.py')[0]
+    else:
+        program = os.path.basename(rparams[0]).split('.py')[0]
     # return program
     return program
 
