@@ -43,7 +43,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # need custom args (to accept full path or wild card
     if ufile is None or xsize is None or ysize is None:
         pos = [0, 1, 2]
