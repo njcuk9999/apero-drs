@@ -149,6 +149,8 @@ RotateImage = spirouImage.rotate
 
 WriteImage = spirouFITS.writeimage
 
+WriteImageMulti = spirouFITS.write_image_multi
+
 WriteTable = spirouTable.write_table
 
 # =============================================================================
