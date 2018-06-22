@@ -36,6 +36,7 @@ CalculatePolarimetry = spirouPOLAR.calculate_polarimetry_wrapper
 
 CalculateContinuum = spirouPOLAR.calculate_continuum
 
+CalculateStokesI = spirouPOLAR.calculate_stokes_I
 
 # =============================================================================
 # End of code
