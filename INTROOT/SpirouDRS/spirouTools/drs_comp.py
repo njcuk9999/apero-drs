@@ -22,6 +22,7 @@ from SpirouDRS import spirouStartup
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'drs_comp.py'
 # Get Logging function
 WLOG = spirouCore.wlog
 # Get plotting functions
@@ -158,7 +159,7 @@ if 1:
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
     pos = [0, 1]
     fmt = [str, str]

@@ -62,15 +62,14 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
     pos = [0, 1]
     fmt = [str, str]
     names = ['flatfile', 'darkfile']
     call = [flatfile, darkfile]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call,
-                                                    recipe=__NAME__)
+    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='flatfile')
@@ -78,10 +77,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
     # ----------------------------------------------------------------------
-    p, flatfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                    filename=p['FLATFILE'])
-    p, darkfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                    filename=p['DARKFILE'])
+    p, flatfilename = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'])
+    p, darkfilename = spirouStartup.SingleFileSetup(p, filename=p['DARKFILE'])
 
     # ----------------------------------------------------------------------
     # Read the darkfile and flatfile
@@ -165,7 +162,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('info', p['LOG_OPT'], wmsg.format(farg))
+            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -207,8 +204,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
