@@ -68,6 +68,9 @@ def run_begin(quiet=False):
                 DRS_NAME: string, the name of the DRS
                 DRS_VERSION: string, the version of the DRS
     """
+    func_name = __NAME__ + '.run_begin()'
+    # Clean WLOG
+    WLOG.clean_log()
     # Get config parameters from primary file
     try:
         cparams, warn_messages = spirouConfig.ReadConfigFile()
@@ -454,6 +457,19 @@ def load_calibdb(p, calibdb=True):
         if not os.path.isdir(calib_dir):
             os.makedirs(calib_dir)
     # return p (with calibration database)
+    return p
+
+
+def main_end_script(p):
+    func_name = __NAME__ + '.main_end_script()'
+    # log end message
+    wmsg = 'Recipe {0} has been successfully completed'
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    # add the logger messsages to p
+    p = WLOG.output_param_dict(p)
+    # finally clear out the log in WLOG
+    WLOG.clean_log()
+    # return p
     return p
 
 
