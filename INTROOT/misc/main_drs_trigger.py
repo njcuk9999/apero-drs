@@ -142,8 +142,18 @@ def main(night_name=None):
             # Skip any exit errors
             except Exception as e:
                 errors.append([runi[it], e])
+                emsg1 = 'Error caught and handled'
+                emsg2 = '\tError reads: {0}'.format(e)
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
+                WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
             except SystemExit as e:
                 errors.append([runi[it], e])
+                emsg1 = 'Exit caught and handled'
+                emsg2 = '\tError reads: {0}'.format(e)
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
+                WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
         # check and add to history
         add_to_history(p, group, runi, errors, logger_values)
     # clear some lines
