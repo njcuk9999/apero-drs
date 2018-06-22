@@ -142,6 +142,8 @@ def main(night_name=None):
             # Skip any exit errors
             except Exception as e:
                 errors.append([runi[it], e])
+            except SystemExit as e:
+                errors.append([runi[it], e])
         # check and add to history
         add_to_history(p, group, runi, errors, logger_values)
     # clear some lines
