@@ -20,7 +20,7 @@ from SpirouDRS.spirouCDB import spirouCDB
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'spirouKeywords.py'
+__NAME__ = 'drs_tools.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -31,7 +31,7 @@ ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouCore.wlog
 # get default config parameters
-PARAMS = spirouStartup.Begin(quiet=True)
+PARAMS = spirouStartup.Begin(recipe=__NAME__, quiet=True)
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------

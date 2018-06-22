@@ -61,7 +61,7 @@ def main(runname=None, quiet=False):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin(quiet=True)
+    p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # now get custom arguments
     ckwargs = dict(positions=[0], types=[str], names=['RUNNAME'],
                    calls=[runname], require_night_name=False,
