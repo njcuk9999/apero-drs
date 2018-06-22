@@ -353,7 +353,7 @@ def warninglogger(w, funcname=None):
                 wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
             # log message
             wmsg = 'python warning Line {0} {1} warning reads: {2}'
-            logger('warning', wmsg.format(*wargs))
+            wlog('warning', '', wmsg.format(*wargs))
 
 
 def get_logfilepath(utime):
