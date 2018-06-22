@@ -102,7 +102,7 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     #loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
     # Temporarily grabbing wave from reduction dir for testing - when test
-    # is done just uncomment above - Eder 
+    # is done just uncomment above - Eder
     wavefile = p['REDUCED_DIR']+'/'+'2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits'
     loc['WAVE'] = spirouImage.ReadWaveFile(p, filename=wavefile)
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
