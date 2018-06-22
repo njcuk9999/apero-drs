@@ -14,6 +14,7 @@ Created on 2018-05-01 at 13:06
 @author: cook
 """
 from __future__ import division
+import numpy as np
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -63,7 +64,8 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_HC_E2DS_spirou',
                  'cal_loc_RAW_spirou',
                  'cal_SLIT_spirou']
-
+# string type (as sometimes we have weird numpy strings
+PYTHON_STRINGS = [str, np.str_, np.str, np.str0]
 
 # =============================================================================
 # Define functions
@@ -629,7 +631,7 @@ def get_args(name, rname, iargs, arg_names, arg_types):
         # check type and set
         if type(value) == arg_types[pos]:
             args[arg_name] = value
-        elif (arg_types[pos] == list) and type(value) == str:
+        elif (arg_types[pos] == list) and type(value) in PYTHON_STRINGS:
             args[arg_name] = [value]
         else:
             try:
