@@ -652,7 +652,7 @@ em_save_mask_map = True
 #      be used
 #                  - ic_ll_line_file
 #                  - ic_cat_type
-ic_lamps = {'UNe':'hcone', 'TH':'hctwo'}
+ic_lamps = {'UNe':['hcone'], 'TH':['hctwo']}
 
 #  Define the catalogue line list to use for each           - [cal_HC, cal_wave]
 #       lamp type (dictionary)
@@ -736,7 +736,7 @@ ic_Littrow_order_fit_deg = 4
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #    lines search (used AFTER littrow fit) default = 3
-ic_ll_free_span_2 = 2.6
+ic_ll_free_span_2 = [4.25, 2.6]
 
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
