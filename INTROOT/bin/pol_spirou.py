@@ -109,6 +109,11 @@ def main(night_name=None, files=None):
     loc = spirouPOLAR.CalculatePolarimetry(p, loc)
     
     # ----------------------------------------------------------------------
+    # Stokes I computation
+    # ----------------------------------------------------------------------
+    loc = spirouPOLAR.CalculateStokesI(p, loc)
+  
+    # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
@@ -123,6 +128,8 @@ def main(night_name=None, files=None):
         sPlt.polar_continuum_plot(loc)
         # plot polarimetry results
         sPlt.polar_result_plot(loc)
+        # plot total flux (Stokes I)
+        sPlt.polar_stokesI_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
     
@@ -132,13 +139,15 @@ def main(night_name=None, files=None):
     # construct file names
     degpolfits = spirouConfig.Constants.DEG_POL_FILE(p, loc)
     degpolfitsname = os.path.split(degpolfits)[-1]
+    stokesIfits = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
+    stokesIfitsname = os.path.split(stokesIfits)[-1]
     nullpol1fits= spirouConfig.Constants.NULL_POL1_FILE(p, loc)
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
     nullpol2fits = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
     nullpol2fitsname = os.path.split(nullpol2fits)[-1]
     # log that we are saving POL spectrum
-    wmsg = 'Saving POL, NULL1, and NULL2 to {0}, {1}, {2}'
-    wargs = [degpolfitsname, nullpol1fitsname, nullpol2fitsname]
+    wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
+    wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname, nullpol2fitsname]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
     # add keys from original header of base file
@@ -152,6 +161,8 @@ def main(night_name=None, files=None):
 
     # save POL data to file
     spirouImage.WriteImage(degpolfits, loc['POL'], hdict)
+    # save STOKESI data to file
+    spirouImage.WriteImage(stokesIfits, loc['STOKESI'], hdict)
     # save NULL1 data to file
     spirouImage.WriteImage(nullpol1fits, loc['NULL1'], hdict)
     # save NULL2 data to file
