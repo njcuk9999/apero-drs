@@ -53,12 +53,13 @@ HEADER = ' *****************************************'
 # =============================================================================
 # Define setup functions
 # =============================================================================
-def run_begin(quiet=False):
+def run_begin(recipe, quiet=False):
     """
     Begin DRS - Must be run at start of every recipe
     - loads the parameters from the primary configuration file, displays
       title, checks priamry constants and displays initial parameterization
 
+    :param recipe: string, the recipe name
     :param quiet: bool, if True no messages are displayed
 
     :return cparams: parameter dictionary, ParamDict constants from primary
@@ -69,6 +70,7 @@ def run_begin(quiet=False):
                 DRS_VERSION: string, the version of the DRS
     """
     func_name = __NAME__ + '.run_begin()'
+
     # Clean WLOG
     WLOG.clean_log()
     # Get config parameters from primary file
@@ -82,6 +84,9 @@ def run_begin(quiet=False):
     if len(warn_messages) > 0:
         WLOG('warning', DPROG, warn_messages)
 
+    # set recipe name
+    cparams['RECIPE'] = recipe.split('.py')[0]
+    cparams.set_source('RECIPE', func_name)
     # get variables from spirouConst
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
@@ -329,10 +334,11 @@ def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
     return p
 
 
-def initial_file_setup(p, recipe, files=None, calibdb=False,
-                       no_night_name=False, no_files=False):
+def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
+                       no_files=False):
     func_name = __NAME__ + '.initial_file_setup()'
     log_opt = p['LOG_OPT']
+    recipe = p['RECIPE']
     # -------------------------------------------------------------------------
     if not no_night_name:
         # check ARG_NIGHT_NAME is not None
@@ -379,8 +385,10 @@ def initial_file_setup(p, recipe, files=None, calibdb=False,
     return p
 
 
-def single_file_setup(p, recipe, filename, log=True):
+def single_file_setup(p, filename, log=True):
     func_name = __NAME__ + '.single_file_setup()'
+
+    recipe = p['RECIPE']
     # check file based on recipe name
     p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
     # get location of file
@@ -396,10 +404,11 @@ def single_file_setup(p, recipe, filename, log=True):
     return p, location
 
 
-def multi_file_setup(p, recipe, files=None, log=True):
+def multi_file_setup(p, files=None, log=True):
     func_name = __NAME__ + '.single_file_setup()'
     # check file based on recipe name
     locations = []
+    recipe = p['RECIPE']
     # loop around files
     for filename in files:
         p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
@@ -624,7 +633,7 @@ def run_time_args(p, mainfitsdir):
     cname = spirouConfig.Constants.__NAME__
 
     # get program name
-    p['PROGRAM'] = spirouConfig.Constants.PROGRAM()
+    p['PROGRAM'] = spirouConfig.Constants.PROGRAM(p)
     p.set_source('PROGRAM', cname + '/PROGRAM()')
 
     # get night name and filenames
@@ -699,7 +708,7 @@ def run_time_custom_args(p, customargs, mainfitsdir):
     source = __NAME__ + '/run_time_custom_args()'
     sconst = 'spirouConfig.Constants.'
     # get program name
-    p['PROGRAM'] = spirouConfig.Constants.PROGRAM()
+    p['PROGRAM'] = spirouConfig.Constants.PROGRAM(p)
     p.set_source('program', source + ' & {0}PROGRAM()'.format(sconst))
     # get the logging option
     p['LOG_OPT'] = p['PROGRAM']
@@ -808,6 +817,9 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
         p['FITSFILENAME'] = os.path.join(p['ARG_FILE_DIR'], checkfiles[0])
         # set source
         p.set_source('FITSFILENAME', func_name)
+    # set string file names
+    p['STR_FILE_NAMES'] = ', '.join(p['ARG_FILE_NAMES'])
+    p.set_source('STR_FILE_NAMES', func_name)
     # finally return the updated cparams
     return p
 
@@ -1702,7 +1714,7 @@ def load_minimum(p, customargs=None):
     source = __NAME__ + '.load_minimum()'
     sconst = 'spirouConfig.Constants.'
     # get program name
-    p['PROGRAM'] = spirouConfig.Constants.PROGRAM()
+    p['PROGRAM'] = spirouConfig.Constants.PROGRAM(p)
     p.set_source('PROGRAM', source + ' & {0}PROGRAM()'.format(sconst))
     # get the logging option
     p['LOG_OPT'] = p['PROGRAM']
