@@ -309,7 +309,7 @@ def main(debug_mode=0):
     from SpirouDRS import spirouConfig
     from SpirouDRS.spirouCore import spirouLog
     # get log
-    wlog = spirouLog.logger
+    wlog = spirouLog.wlog
     # Get config parameters
     cparams, _ = spirouConfig.ReadConfigFile()
     # get drs_name and drs_version

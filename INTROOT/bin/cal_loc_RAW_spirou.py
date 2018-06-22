@@ -352,7 +352,7 @@ def main(night_name=None, files=None):
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('info', p['LOG_OPT'], wmsg.format(farg))
+            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -480,8 +480,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

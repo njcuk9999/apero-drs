@@ -161,6 +161,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
