@@ -47,7 +47,7 @@ def main(night_name=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name)
 
     # check that we have a night_name
@@ -161,6 +161,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

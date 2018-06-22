@@ -48,8 +48,11 @@ def main(night_name=None, files=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
-    p = spirouStartup.LoadArguments(p)
+    p = spirouStartup.Begin(recipe=__NAME__)
+    p = spirouStartup.LoadArguments(p, night_name, files)
+
+    # force plotting to 1
+    p['DRS_PLOT'] = 1
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -130,8 +133,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
@@ -143,7 +145,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll, has_plots=False)
+    spirouStartup.Exit(ll, has_plots=True)
 
 # =============================================================================
 # End of code

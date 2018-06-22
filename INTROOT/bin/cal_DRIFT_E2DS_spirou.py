@@ -65,11 +65,10 @@ def main(night_name=None, reffile=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
-        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'],
-                                                        recipe=__NAME__)
+        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
@@ -80,8 +79,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, reffilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                   filename=p['REFFILE'])
+    p, reffilename = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
     p['REFFILENAME'] = reffilename
     p.set_source('REFFILENAME', __NAME__ + '.main()')
 
@@ -384,8 +382,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

@@ -34,7 +34,7 @@ __all__ = ['wlog', 'WarnLog',
 # =============================================================================
 # Function aliases
 # =============================================================================
-wlog = spirouLog.logger
+wlog = spirouLog.wlog
 
 WarnLog = spirouLog.warninglogger
 
