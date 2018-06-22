@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.048'
+__version__ = '0.2.052'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ = '2018-06-18'
+__date__ = '2018-06-21'
 
 
 # =============================================================================
@@ -1106,7 +1106,7 @@ def EM_MASK_FILE(p):
 # noinspection PyPep8Naming
 def WAVE_FILE(p):
     reducedfolder = p['REDUCED_DIR']
-    old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
     waveext = '_wave_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = p['ARG_FILE_NAMES'][0].replace(old_ext, waveext)
@@ -1141,7 +1141,7 @@ def WAVE_E2DS_COPY(p):
     # get prefix
     calibprefix = CALIB_PREFIX(p)
     # construct filename
-    filename = '{0}_{1}'.format(calibprefix, basefilename)
+    filename = '{0}{1}'.format(calibprefix, basefilename)
     # construct absolute path
     e2dscopy = os.path.join(path, filename)
     # return absolute path
@@ -1194,6 +1194,18 @@ def NULL_POL2_FILE(p, loc):
     null_pol2_filename = os.path.join(reducedfolder, filename)
     # return absolute path
     return null_pol2_filename
+
+
+def OFF_LISTING_FILE(p):
+    # get constants from p
+    msg_dir = p['DRS_DATA_MSG']
+    night_name = p['ARG_NIGHT_NAME']
+    # get base filename
+    basefilename = 'listing_{0}.txt'.format(os.path.split(night_name)[-1])
+    # get absolute path
+    abspath = os.path.join(msg_dir, basefilename)
+    # return absolute path
+    return abspath
 
 
 # =============================================================================

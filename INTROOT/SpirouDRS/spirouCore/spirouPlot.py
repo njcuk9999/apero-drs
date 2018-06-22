@@ -1611,7 +1611,8 @@ def wave_littrow_check_plot(p, loc, iteration=0):
         # plot graph
         frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]))
     # set axis labels and title
-    title = 'Wavelength Solution Littrow Check fiber {0}'.format(p['FIBER'])
+    targs = [iteration, p['FIBER']]
+    title = 'Wavelength Solution Littrow Check {0} fiber {1}'.format(*targs)
     frame.set(xlabel='Order number', ylabel='Diff/Littrow [km/s]',
               title=title)
     # add legend
@@ -1681,9 +1682,9 @@ def wave_plot_final_fp_order(p, loc, iteration=0):
     # plot
     frame.plot(wave, fp_data)
     # set title labels limits
-    title = 'spectral order {0} fiber {1}'
+    title = 'spectral order {0} fiber {1} (iteration = {2})'
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
-              title=title.format(selected_order, fiber))
+              title=title.format(selected_order, fiber, iteration))
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
@@ -1724,6 +1725,39 @@ def wave_local_width_offset_plot(loc):
               title=title)
     # Add legend
     frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def wave_fp_wavelength_residuals(loc):
+    """
+    Plot the FP line wavelength residuals
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                FP_LL_POS: numpy array, the FP line initial wavelengths
+                FP_LL_POS_NEW: numpy array, the FP line updated wavelengths
+
+    :return None:
+    """
+    # get data from loc
+    fp_ll = loc['FP_LL_POS']
+    fp_ll_new = loc['FP_LL_POS_NEW']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.scatter(fp_ll, fp_ll - fp_ll_new)
+    # set title labels limits
+    title = 'FP lines wavelength residuals'
+    frame.set(xlabel='Initial wavelength [nm]',
+              ylabel='New - Initial wavelength [nm]',
+              title=title)
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
