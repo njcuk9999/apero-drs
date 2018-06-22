@@ -76,7 +76,7 @@ def main(night_name=None, files=None):
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files,
                                     mainfitsdir='reduced')
-    p = spirouStartup.InitialFileSetup(p, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, calibdb=False)
 
     # ----------------------------------------------------------------------
     # Loop through files, identify and sort files and identify fiber types
@@ -160,9 +160,10 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_POL_METHOD'], value=loc['METHOD'])
 
     # save POL data to file
-    spirouImage.WriteImage(degpolfits, loc['POL'], hdict)
+    spirouImage.WriteImageMulti(degpolfits, [loc['POL'],loc['POLERR']], hdict)
     # save STOKESI data to file
-    spirouImage.WriteImage(stokesIfits, loc['STOKESI'], hdict)
+    spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'],loc['STOKESIERR']],
+                                hdict)
     # save NULL1 data to file
     spirouImage.WriteImage(nullpol1fits, loc['NULL1'], hdict)
     # save NULL2 data to file
