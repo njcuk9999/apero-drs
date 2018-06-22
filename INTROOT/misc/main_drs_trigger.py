@@ -55,7 +55,7 @@ def main(night_name=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name=night_name)
 
     # ----------------------------------------------------------------------
@@ -123,6 +123,8 @@ def main(night_name=None):
             WLOG('', '', wmsg.format(group))
             continue
         # loop around run in runs
+        errors = []
+        logger_values = []
         for it in range(len(runi)):
             try:
                 # get function from runs
@@ -135,11 +137,25 @@ def main(night_name=None):
                 # run function
                 args, name = spirouUnitRecipes.wrapper(p, name, inputs=run0)
                 ll = spirouUnitRecipes.run_main(p, name, args)
+                # add logger values
+                logger_values.append(get_logger_values(ll))
             # Skip any exit errors
-            except SystemExit:
-                continue
+            except Exception as e:
+                errors.append([runi[it], e])
+                emsg1 = 'Error caught and handled'
+                emsg2 = '\tError reads: {0}'.format(e)
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
+                WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
+            except SystemExit as e:
+                errors.append([runi[it], e])
+                emsg1 = 'Exit caught and handled'
+                emsg2 = '\tError reads: {0}'.format(e)
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
+                WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG('', '', spirouStartup.spirouStartup.HEADER)
         # check and add to history
-        add_to_history(p, group, runi)
+        add_to_history(p, group, runi, errors, logger_values)
     # clear some lines
     WLOG('', '', '')
     WLOG('', '', '=' * 50)
@@ -337,6 +353,21 @@ def get_runs(requirements, files, nights):
     return runs, missed
 
 
+def get_logger_values(pp):
+    # get param dict from run
+    p = pp['p']
+    # get the log storage keys
+    storekeys = spirouConfig.Constants.LOG_STORAGE_KEYS()
+    # add the full log
+    loggers = dict()
+    loggers['LOGGER_FULL'] = p['LOGGER_FULL']
+    # loop aroudn the storage keys and add
+    for key in storekeys:
+        loggers[storekeys[key]] = p[storekeys[key]]
+    # return loggers
+    return loggers
+
+
 def recipe_mode_1(req, nfiles):
     # Way 1: recipe requires 1 run with 1 suffix
 
@@ -456,7 +487,7 @@ def check_skip(p, night_name):
         return False
 
 
-def add_to_history(p, night_name, runs):
+def add_to_history(p, night_name, runs, errors, loggers):
     # get directory for run
     dir = os.path.join(p['DRS_DATA_RAW'], night_name)
     # check it exists
@@ -501,12 +532,73 @@ def add_to_history(p, night_name, runs):
     for message in messages:
         lines.append(message + '\n')
 
+    # Next add all errors
+    lines.append('\n\n\n\n')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append(' * EXIT Errors (FATAL)')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append('\n')
+    # loop around the errors
+    for error in errors:
+        run_it = error[0]
+        files = run_it[2]
+        if type(files) != list:
+            files = [files]
+        args = [run_it[0], run_it[1], ' '.join(files)]
+        lines.append('\t{0} {1} {2}\n'.format(*args))
+        lines.append('\t\tError reads: {0}'.format(error[1]))
+
+    # loop around the log errors
+    lines.append('\n\n\n\n')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append(' * Logger Errors')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append('\n')
+    storekeys = spirouConfig.Constants.LOG_STORAGE_KEYS()
+    for it in range(len(runs)):
+        log_print(lines, it, runs, loggers, storekeys, key='error')
+
+    # loop around the log warnings
+    lines.append('\n\n\n\n')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append(' * Logger warnings')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append('\n')
+    storekeys = spirouConfig.Constants.LOG_STORAGE_KEYS()
+    for it in range(len(runs)):
+        log_print(lines, it, runs, loggers, storekeys, key='warning')
+    lines.append('\n')
+
+    # loop around the log info
+    lines.append('\n\n\n\n')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append(' * Logger info')
+    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
+    lines.append('\n')
+    storekeys = spirouConfig.Constants.LOG_STORAGE_KEYS()
+    for it in range(len(runs)):
+        log_print(lines, it, runs, loggers, storekeys, key='info')
+    lines.append('\n')
+
     # open file with write
     f = open(filename, 'w')
     f.writelines(lines)
     f.close()
 
 
+def log_print(lines, it, runs, loggers, storekeys, key='error'):
+    recipe = runs[it][0]
+    nn = runs[it][1]
+    files = runs[it][2]
+    if type(files) != list:
+        files = [files]
+    log_errors = loggers[it][storekeys[key]]
+    if len(log_errors) > 0:
+        args = [recipe, nn, ' '.join(files)]
+        lines.append('\t{0} {1} {2}\n'.format(*args))
+        for log_error in log_errors:
+            lines.append('\t\t{0} || {1}\n'.format(*log_error))
+    return lines
 
 
 # =============================================================================

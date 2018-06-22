@@ -401,7 +401,7 @@ def LOG_OPT(p):
 
 
 # noinspection PyPep8Naming
-def PROGRAM():
+def PROGRAM(p=None):
     """
     Defines the recipe/code/program currently running (from sys.argv[0])
     '.py' is removed
@@ -411,7 +411,13 @@ def PROGRAM():
     # get run time parameters
     rparams = list(sys.argv)
     # get program name
-    program = os.path.basename(rparams[0]).split('.py')[0]
+    if (p is not None):
+        if 'RECIPE' in p:
+            program = p['RECIPE']
+        else:
+            program = os.path.basename(rparams[0]).split('.py')[0]
+    else:
+        program = os.path.basename(rparams[0]).split('.py')[0]
     # return program
     return program
 
@@ -1105,11 +1111,18 @@ def EM_MASK_FILE(p):
 
 # noinspection PyPep8Naming
 def WAVE_FILE(p):
+    # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
-    old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
     waveext = '_wave_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
-    wavefn = p['ARG_FILE_NAMES'][0].replace(old_ext, waveext)
+    wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
     wavefile = os.path.join(reducedfolder, wavefilename)
     return wavefile
@@ -1569,6 +1582,13 @@ def WRITE_LEVEL():
     write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
     return write_level
 
+
+def LOG_STORAGE_KEYS():
+    # The storage key to use for each key
+    storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
+                    warning='LOGGER_WARNING', info='LOGGER_INFO',
+                    graph='LOGGER_ALL')
+    return storekey
 
 # noinspection PyPep8Naming
 def LOG_CAUGHT_WARNINGS():

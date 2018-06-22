@@ -174,7 +174,7 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin(quiet=log)
+    p = spirouStartup.Begin(recipe=__NAME__, quiet=log)
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
