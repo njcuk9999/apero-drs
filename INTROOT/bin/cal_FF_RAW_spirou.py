@@ -70,9 +70,9 @@ def main(night_name=None, files=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
 
     # run specific start up
     # TODO: remove H2RG dependency

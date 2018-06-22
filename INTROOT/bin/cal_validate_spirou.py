@@ -344,7 +344,7 @@ def debug_message(program, sub=False):
 
 def try_to_read_config_file():
     from SpirouDRS.spirouStartup import Begin
-    p = Begin(quiet=True)
+    p = Begin(recipe=__NAME__, quiet=True)
     return p
 
 

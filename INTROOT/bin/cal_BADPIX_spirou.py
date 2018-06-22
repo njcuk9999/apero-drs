@@ -62,15 +62,14 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
     pos = [0, 1]
     fmt = [str, str]
     names = ['flatfile', 'darkfile']
     call = [flatfile, darkfile]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call,
-                                                    recipe=__NAME__)
+    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='flatfile')
