@@ -41,6 +41,8 @@ def main():
     # ----------------------------------------------------------------------
     # program name
     program = __NAME__.replace('.py', '')
+    p = spirouConfig.ParamDict()
+    p['LOG_OPT'], p['PROGRAM'] = program
 
     # log run
     WLOG('info', program, 'Now Running reset script.')
@@ -51,8 +53,7 @@ def main():
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', program, program)
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
