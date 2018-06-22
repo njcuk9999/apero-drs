@@ -332,7 +332,7 @@ def set_up():
     """
     # Set up
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # need custom args (to accept full path or wild card
     args, kwargs = [p, 'ICDP_NAME'], dict(required=True, logthis=False)
     p = spirouStartup.LoadOtherConfig(*args, **kwargs)

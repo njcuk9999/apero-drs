@@ -70,7 +70,7 @@ def list_calib_files(prefix=None, suffix=None, substring=None, nightname=None,
 def display_calibdb(max_time=None):
 
     # load other config
-    p = spirouStartup.Begin(quiet=True)
+    p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # add custom args straight to p
     p = spirouStartup.LoadMinimum(p, customargs={})
     # set path
