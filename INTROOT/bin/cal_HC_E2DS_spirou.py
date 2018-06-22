@@ -63,11 +63,11 @@ def main(night_name=None, files=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files, mainfitsdir='reduced')
     # setup files and get fiber
-    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')

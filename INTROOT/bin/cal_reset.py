@@ -40,9 +40,9 @@ def main():
     # Run Reset
     # ----------------------------------------------------------------------
     # program name
-    program = __NAME__.replace('.py', '')
+    program = __NAME__.split('.py')[0]
     p = spirouConfig.ParamDict()
-    p['LOG_OPT'], p['PROGRAM'] = program
+    p['LOG_OPT'], p['PROGRAM'] = program, program
 
     # log run
     WLOG('info', program, 'Now Running reset script.')

@@ -73,8 +73,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
-
+    p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
     pos = [0, 1, 2, 3, 4]
     fmt = [str, str, float, float, float]
@@ -85,8 +84,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     call_priority = [True, True, True, True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
-                                                    call_priority, lname,
-                                                    recipe=__NAME__)
+                                                    call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='e2dsfile',
@@ -95,8 +93,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, e2dsfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                    filename=p['E2DSFILE'])
+    p, e2dsfilename = spirouStartup.SingleFileSetup(p, filename=p['E2DSFILE'])
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
