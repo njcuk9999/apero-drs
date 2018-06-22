@@ -63,11 +63,11 @@ def main(night_name=None, files=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files, mainfitsdir='reduced')
     # setup files and get fiber
-    p = spirouStartup.InitialFileSetup(p, recipe=__NAME__, calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
@@ -160,8 +160,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

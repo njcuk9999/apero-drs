@@ -41,125 +41,202 @@ EXIT_LEVELS = spirouConfig.Constants.EXIT_LEVELS()
 WARN = spirouConfig.Constants.LOG_CAUGHT_WARNINGS()
 # Get the Config error
 ConfigError = spirouConfig.ConfigError
-# Constant for warning about using tdata
-TDATA_WARNING = 1
+
+
+# =============================================================================
+# Define classes
+# =============================================================================
+class logger():
+
+    def __init__(self, paramdict=None):
+        """
+        Construct logger (storage param dict here)
+        :param paramdict:
+        """
+        # save the parameter dictionary for access to constants
+        if paramdict is None:
+            self.pin = spirouConfig.ParamDict()
+        else:
+            self.pin = paramdict
+        # save output parameter dictionary for saving to file
+        self.pout = spirouConfig.ParamDict()
+        # get log storage keys
+        storekey = spirouConfig.Constants.LOG_STORAGE_KEYS()
+        # add log stats to pout
+        for key in storekey:
+            self.pout[storekey[key]] = []
+        self.pout['LOGGER_FULL'] = []
+        # add tdata_warning key
+        self.pout['TDATA_WARNING'] = 1
+
+
+    def __call__(self, key='', option='', message='', printonly=False,
+                 logonly=False):
+        """
+        Function-like cal to instance of logger (i.e. WLOG)
+        Parses a key (error/warning/info/graph), an option and a message to the
+        stdout and the log file.
+
+        keys are controlled by "spirouConfig.Constants.LOG_TRIG_KEYS()"
+        printing to screen is controlled by "PRINT_LEVEL" constant (config.py)
+        printing to log file is controlled by "LOG_LEVEL" constant (config.py)
+        based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
+
+        :param key: string, either "error" or "warning" or "info" or graph,
+                    this gives a character code in output
+        :param option: string, option code
+        :param message: string or list of strings, message to display or
+                        messages to display (1 line for each message in list)
+        :param printonly: bool, print only do not save to log (default = False)
+        :param logonly: bool, log only do not save to log (default = False)
+
+        output to stdout/log is as follows:
+
+            HH:MM:SS.S - CODE |option|message
+
+        time is output in UTC to nearest .1 seconds
+
+        :return None:
+        """
+        # if key is '' then set it to all
+        if len(key) == 0:
+            key = 'all'
+        # deal with both printonly and logonly set to True (bad)
+        if printonly and logonly:
+            printonly, logonly = False, False
+        # deal with message type (make into a list)
+        if type(message) == str:
+            message = [message]
+        elif type(list):
+            message = list(message)
+        else:
+            message = [('Logging error: message="{0}" is not a valid string or '
+                        'list').format(message)]
+            key = 'error'
+        # check that key is valid
+        if key not in spirouConfig.Constants.LOG_TRIG_KEYS():
+            emsg = 'Logging error: key="{0}" not in LOG_TRIG_KEYS()'
+            message.append(emsg.format(key))
+            key = 'error'
+        if key not in spirouConfig.Constants.WRITE_LEVEL():
+            emsg = 'Logging error: key="{0}" not in WRITE_LEVEL()'
+            message.append(emsg.format(key))
+            key = 'error'
+        if key not in spirouConfig.Constants.COLOUREDLEVELS():
+            emsg = 'Logging error: key="{0}" not in COLOUREDLEVELS()'
+            message.append(emsg.format(key))
+            key = 'error'
+        # loop around message (now all are lists)
+        errors = []
+
+        for mess in message:
+            # get the time format and display time zone from constants
+            tfmt = spirouConfig.Constants.LOG_TIME_FORMAT()
+            zone = spirouConfig.Constants.LOG_TIMEZONE()
+            # Get the time now in human readable format
+            unix_time = spirouMath.get_time_now_unix(zone=zone)
+            human_time = spirouMath.get_time_now_string(fmt=tfmt, zone=zone)
+            # Get the first decimal part of the unix time
+            dsec = int((unix_time - int(unix_time)) * 10)
+            # Get the key code (default is a whitespace)
+            code = TRIG_KEY.get(key, ' ')
+            # construct the log and log error
+            cmdargs = [human_time, dsec, code, option, mess]
+            cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+            # add to logger storage
+            self.logger_storage(key, human_time, mess, printonly)
+            # print to stdout
+            if not logonly:
+                printlog(cmd, key)
+            # get logfilepath
+            try:
+                logfilepath, warning = get_logfilepath(unix_time)
+                # write to log file
+                if not printonly:
+                    writelog(cmd, key, logfilepath)
+            except ConfigError as e:
+                if not logonly:
+                    errors.append(
+                        [e.message, e.level, human_time, dsec, option])
+                warning = False
+            # if warning is True then we used TDATA and should report that
+            if warning and self.pout['TDATA_WARNING']:
+                wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
+                        'path "TDATA"={0}')
+                if not logonly:
+                    wmsgf = wmsg.format(CPARAMS.get('TDATA', ''))
+                    errors.append([wmsgf, 'warning', human_time, dsec, option])
+                self.pout['TDATA_WARNING'] = 0
+
+        # print any errors caused above (and set key to error to exit after)
+        used = []
+        for error in errors:
+            key = 'error'
+            if error[0] not in used:
+                self.logger_storage(key, error[2], error[0])
+                printlogandcmd(*error)
+                used.append(error[0])
+
+        # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
+        if key in EXIT_LEVELS:
+            if spirouConfig.Constants.DEBUG():
+                debug_start()
+            else:
+                EXIT_TYPE(1)
+
+    def update_param_dict(self, paramdict):
+        for key in paramdict:
+            # set pin value from paramdict
+            self.pin[key] = paramdict[key]
+            # set source from paramdict (or set to None)
+            self.pin.set_source(key, paramdict.sources.get(key, None))
+
+    def output_param_dict(self, paramdict):
+        for key in self.pout:
+            # get value
+            value = self.pout[key]
+            # set value from pout (make sure it is copied)
+            paramdict[key] = type(value)(value)
+            # set source from pout
+            paramdict.set_source(key, self.pout.sources.get(key, None))
+        # return paramdict
+        return paramdict
+
+    def logger_storage(self, key, ttime, mess, printonly=False):
+        if printonly:
+            return 0
+        # get log storage keys
+        storekey = spirouConfig.Constants.LOG_STORAGE_KEYS()
+        # find if key is defined in storage
+        if key in storekey:
+            # if key is in LOG just append message to list
+            if storekey[key] in self.pout:
+                self.pout[storekey[key]].append([ttime, mess])
+            # if key isn't in LOG make new list (for future append)
+            else:
+                self.pout[storekey[key]] = [[ttime, mess]]
+        # add to full log
+        self.pout['LOGGER_FULL'].append([[ttime, mess]])
+
+    def clean_log(self):
+        # get log storage keys
+        storekey = spirouConfig.Constants.LOG_STORAGE_KEYS()
+
+        for key in storekey:
+            self.pout[storekey[key]] = []
+        self.pout['LOGGER_FULL'] = []
+
+
+# =============================================================================
+# Define our instance of wlog
+# =============================================================================
+# Get our instance of logger
+wlog = logger()
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def logger(key='', option='', message='', printonly=False, logonly=False):
-    """
-    Parses a key (error/warning/info/graph), an option and a message to the
-    stdout and the log file.
-
-    keys are controlled by "spirouConfig.Constants.LOG_TRIG_KEYS()"
-    printing to screen is controlled by "PRINT_LEVEL" constant (config.py)
-    printing to log file is controlled by "LOG_LEVEL" constant (config.py)
-    based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
-
-    :param key: string, either "error" or "warning" or "info" or graph, this
-                gives a character code in output
-    :param option: string, option code
-    :param message: string or list of strings, message to display or messages
-                    to display (1 line for each message in list)
-    :param printonly: bool, print only do not save to log (default = False)
-    :param logonly: bool, log only do not save to log (default = False)
-
-    output to stdout/log is as follows:
-
-        HH:MM:SS.S - CODE |option|message
-
-    time is output in UTC to nearest .1 seconds
-
-    :return None:
-    """
-    # allow tdata_warning to be changed
-    global TDATA_WARNING
-    # if key is '' then set it to all
-    if len(key) == 0:
-        key = 'all'
-    # deal with both printonly and logonly set to True (bad)
-    if printonly and logonly:
-        printonly, logonly = False, False
-    # deal with message type (make into a list)
-    if type(message) == str:
-        message = [message]
-    elif type(list):
-        message = list(message)
-    else:
-        message = [('Logging error: message="{0}" is not a valid string or '
-                    'list').format(message)]
-        key = 'error'
-    # check that key is valid
-    if key not in spirouConfig.Constants.LOG_TRIG_KEYS():
-        emsg = 'Logging error: key="{0}" not in LOG_TRIG_KEYS()'
-        message.append(emsg.format(key))
-        key = 'error'
-    if key not in spirouConfig.Constants.WRITE_LEVEL():
-        emsg = 'Logging error: key="{0}" not in WRITE_LEVEL()'
-        message.append(emsg.format(key))
-        key = 'error'
-    if key not in spirouConfig.Constants.COLOUREDLEVELS():
-        emsg = 'Logging error: key="{0}" not in COLOUREDLEVELS()'
-        message.append(emsg.format(key))
-        key = 'error'
-    # loop around message (now all are lists)
-    errors = []
-
-    for mess in message:
-        # get the time format and display time zone from constants
-        tfmt = spirouConfig.Constants.LOG_TIME_FORMAT()
-        zone = spirouConfig.Constants.LOG_TIMEZONE()
-        # Get the time now in human readable format
-        unix_time = spirouMath.get_time_now_unix(zone=zone)
-        human_time = spirouMath.get_time_now_string(fmt=tfmt, zone=zone)
-
-        # Get the first decimal part of the unix time
-        dsec = int((unix_time - int(unix_time)) * 10)
-        # Get the key code (default is a whitespace)
-        code = TRIG_KEY.get(key, ' ')
-        # construct the log and log error
-        cmdargs = [human_time, dsec, code, option, mess]
-        cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-        # print to stdout
-        if not logonly:
-            printlog(cmd, key)
-        # get logfilepath
-        try:
-            logfilepath, warning = get_logfilepath(unix_time)
-            # write to log file
-            if not printonly:
-                writelog(cmd, key, logfilepath)
-        except ConfigError as e:
-            if not logonly:
-                errors.append([e.message, e.level, human_time, dsec, option])
-            warning = False
-        # if warning is True then we used TDATA and should report that
-        if warning and TDATA_WARNING:
-            wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
-                    'path "TDATA"={0}')
-            if not logonly:
-                wmsgf = wmsg.format(CPARAMS.get('TDATA', ''))
-                errors.append([wmsgf, 'warning', human_time, dsec, option])
-            TDATA_WARNING = 0
-
-    # print any errors caused above (and set key to error to exit after)
-    used = []
-    for error in errors:
-        key = 'error'
-        if error[0] not in used:
-            printlogandcmd(*error)
-            used.append(error[0])
-
-    # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
-    if key in EXIT_LEVELS:
-        if spirouConfig.Constants.DEBUG():
-            debug_start()
-        else:
-            EXIT_TYPE(1)
-
-
 def printlogandcmd(message, key, human_time, dsec, option):
     """
     Prints log to standard output/screen (for internal use only when
@@ -276,7 +353,7 @@ def warninglogger(w, funcname=None):
                 wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
             # log message
             wmsg = 'python warning Line {0} {1} warning reads: {2}'
-            logger('warning', wmsg.format(*wargs))
+            wlog('warning', '', wmsg.format(*wargs))
 
 
 def get_logfilepath(utime):

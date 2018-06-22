@@ -20,7 +20,7 @@ from SpirouDRS.spirouCDB import spirouCDB
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'spirouKeywords.py'
+__NAME__ = 'drs_tools.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -31,7 +31,7 @@ ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouCore.wlog
 # get default config parameters
-PARAMS = spirouStartup.Begin(quiet=True)
+PARAMS = spirouStartup.Begin(recipe=__NAME__, quiet=True)
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ def list_calib_files(prefix=None, suffix=None, substring=None, nightname=None,
 def display_calibdb(max_time=None):
 
     # load other config
-    p = spirouStartup.Begin(quiet=True)
+    p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # add custom args straight to p
     p = spirouStartup.LoadMinimum(p, customargs={})
     # set path

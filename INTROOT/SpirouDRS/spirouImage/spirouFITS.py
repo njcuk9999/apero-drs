@@ -347,6 +347,127 @@ def writeimage(filename, image, hdict=None, dtype=None):
     spirouCore.spirouLog.warninglogger(w)
 
 
+def write_image_multi(filename, image_list, hdict=None, dtype=None,
+                      hdicts=None, dtypes=None):
+    """
+    Writes a set of images (image_list") and its header to file
+
+    :param filename: string, filename to save the fits file to
+    :param image_list: list of "numy arrys", the list of images to save each
+                       image must be a numpy array (2D)
+    :param hdict: dictionary or None, header dictionary to write to fits file.
+                  Written to the primary only! (see hdicts for adding to all)
+
+                Must be in form:
+
+                        hdict[key] = (value, comment)
+                or
+                        hdict[key] = value     (comment will be equal to
+                                                "UNKNOWN"
+                if None does not write header to fits file
+
+    :param dtype: None or hdu format type, forces the image to be in the
+                  format type specified (if not None). Written to the
+                  primary only! (see dtypes for adding to all)
+
+                  valid formats are for example: 'int32', 'float64'
+
+    :param hdicts: list form of hdict (to allow header for each image) to not
+                   set a dictionary use element value as None
+                   i.e. [hdict1, hdict2, None, hdict3]
+
+    :param dtypes: list form of dtype (to allow dtype to be added to each image)
+                   to not force set a dtype use element value as None
+                   i.e. [dtype1, None, dtype2]
+
+    :return None:
+    """
+    func_name = __NAME__ + '.write_image_multi()'
+    # check if file exists and remove it if it does
+    if os.path.exists(filename):
+        try:
+            os.remove(filename)
+        except Exception as e:
+            emsg1 = ' File {0} already exists and cannot be overwritten.'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
+    # check if image_list is a list
+    if type(image_list) not in [np.ndarray, list]:
+        emsg1 = '"image_list" must be a list of images (currently type={0})'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1.format(type(image_list)), emsg2])
+    # else we need to check hdict and dtype are lists
+    else:
+        # handle multiple dtypes
+        if dtypes is not None:
+            if len(dtypes) != len(image_list):
+                emsg1 = ('dtypes must be the same length as image_list')
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', DPROG, [emsg1, emsg2])
+        elif type(dtype) not in [np.ndarray, list]:
+            dtypes = [dtype] + [None] * (len(image_list) - 1)
+        elif len(dtype) != len(image_list):
+            emsg1 = ('If "dtype" is a list it must be the same length as '
+                     'image_list')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2])
+        else:
+            dtypes = dtype
+        # handle multiple hdicts
+        if hdicts is not None:
+            if len(hdicts) != len(image_list):
+                emsg1 = ('dtypes must be the same length as image_list')
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', DPROG, [emsg1, emsg2])
+
+        elif type(hdict) not in [np.ndarray, list]:
+            hdicts = [hdict] + [None] * (len(image_list) - 1)
+        elif len(hdict) != len(image_list):
+            emsg1 = ('If "hdict" is a list it must be the same length as '
+                     'image_list')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2])
+        else:
+            hdicts = hdict
+    # create the multi HDU list
+    try:
+        # add the first image to the primary hdu
+        hdu1 = fits.PrimaryHDU(image_list[0])
+        # add all others afterwards
+        hdus = [hdu1]
+        for image in image_list[1: ]:
+            hdus.append(fits.ImageHDU(image))
+        # add to HDU list
+        hdu = fits.HDUList(hdus)
+    except Exception as e:
+        emsg1 = 'Cannot open image with astropy.io.fits'
+        emsg2 = '    Error {0}: {1}'.format(type(e), e)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        hdu = None
+    # force type
+    if dtypes is not None:
+        for it in range(len(hdu)):
+            if dtypes[it] is not None:
+                hdu[it].scale(type=dtypes[it], **SCALEARGS)
+    # add header keys to the hdu header
+    if hdicts is not None:
+        for it in range(len(hdu)):
+            if hdicts[it] is not None:
+                for key in list(hdicts[it].keys()):
+                    hdu[it].header[key] = hdicts[it][key]
+    # write to file
+    with warnings.catch_warnings(record=True) as w:
+        try:
+            hdu.writeto(filename, overwrite=True)
+        except Exception as e:
+            emsg1 = 'Cannot write image to fits file {0}'.format(filename)
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
+
 def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
                    required=True):
     """
