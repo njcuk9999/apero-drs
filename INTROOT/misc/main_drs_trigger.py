@@ -147,6 +147,7 @@ def main(night_name=None):
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
                 WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
+                logger_values.append([])
             except SystemExit as e:
                 errors.append([runi[it], e])
                 emsg1 = 'Exit caught and handled'
@@ -154,6 +155,7 @@ def main(night_name=None):
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
                 WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
+                logger_values.append([])
         # check and add to history
         add_to_history(p, group, runi, errors, logger_values)
     # clear some lines
@@ -592,6 +594,10 @@ def log_print(lines, it, runs, loggers, storekeys, key='error'):
     files = runs[it][2]
     if type(files) != list:
         files = [files]
+    if len(loggers) - 1 <= it:
+        return lines
+    if len(loggers[it]) == 0:
+        return lines
     log_errors = loggers[it][storekeys[key]]
     if len(log_errors) > 0:
         args = [recipe, nn, ' '.join(files)]
