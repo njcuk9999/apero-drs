@@ -37,6 +37,8 @@ DisplayTitle = spirouStartup.display_title
 
 DisplaySysInfo = spirouStartup.display_system_info
 
+End = spirouStartup.main_end_script
+
 Exit = spirouStartup.exit_script
 
 GetCustomFromRuntime = spirouStartup.get_custom_from_run_time_args

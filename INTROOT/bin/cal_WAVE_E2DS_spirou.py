@@ -53,12 +53,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
         customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
-                                                        last_multi=True,
-                                                        recipe=__NAME__)
+                                                        last_multi=True)
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
     # get parameters from configuration files and run time arguments
@@ -69,11 +68,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, recipe=__NAME__,
-                                                      filename=p['FPFILE'])
+    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['FPFILE'])
     fiber1 = str(p['FIBER'])
-    p, hcfilenames = spirouStartup.MultiFileSetup(p, recipe=__NAME__,
-                                                  files=p['HCFILES'])
+    p, hcfilenames = spirouStartup.MultiFileSetup(p, files=p['HCFILES'])
     fiber2 = str(p['FIBER'])
     # set the hcfilename to the first hcfilenames
     hcfitsfilename = hcfilenames[0]
@@ -237,8 +234,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
