@@ -32,6 +32,11 @@ import cal_FF_RAW_spirou
 import cal_HC_E2DS_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
+import cal_preprocess_spirou
+import off_listing_RAW_spirou
+import visu_RAW_spirou
+import visu_E2DS_spirou
+import pol_spirou
 
 
 # =============================================================================
@@ -63,7 +68,12 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_FF_RAW_spirou',
                  'cal_HC_E2DS_spirou',
                  'cal_loc_RAW_spirou',
-                 'cal_SLIT_spirou']
+                 'cal_SLIT_spirou',
+                 'cal_preprocess_spirou',
+                 'off_listing_RAW_spirou',
+                 'visu_RAW_spirou',
+                 'visu_E2DS_spirou',
+                 'pol_spirou']
 # string type (as sometimes we have weird numpy strings
 PYTHON_STRINGS = [str, np.str_, np.str, np.str0]
 
@@ -88,6 +98,11 @@ def get_versions():
     vv[cal_HC_E2DS_spirou.__NAME__] = cal_HC_E2DS_spirou.__version__
     vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
     vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
+    vv[cal_preprocess_spirou.__NAME__] = cal_preprocess_spirou.__version__
+    vv[off_listing_RAW_spirou.__NAME__] = off_listing_RAW_spirou.__version__
+    vv[visu_RAW_spirou.__NAME__] = visu_RAW_spirou.__version__
+    vv[visu_E2DS_spirou.__NAME__] = visu_E2DS_spirou.__version__
+    vv[pol_spirou.__NAME__] = pol_spirou.__version__
 
 
 def wrapper(p, rname, inputs=None, outputs=None):
@@ -107,8 +122,10 @@ def wrapper(p, rname, inputs=None, outputs=None):
     # return the evaulated unit test function
     try:
         varbs, name = eval(recipe_function)
-    except NameError:
-        WLOG('error', p['LOG_OPT'], 'Cannot run {0}'.format(recipe_function))
+    except NameError as e:
+        emsg1 = 'NameError: Cannot run {0}'.format(recipe_function)
+        emsg2 = '\tError reads: {0}'.format(e)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         varbs = []
     # return recipe inputs (or outputs)
     return varbs, name
@@ -605,6 +622,186 @@ def unit_test_cal_exposure_meter(rname, inputs, outputs=None):
             outs.append(Constants.EM_SPE_FILE(outputs['p']))
             outs.append(Constants.EM_WAVE_FILE(outputs['p']))
             outs.append(Constants.EM_MASK_FILE(outputs['p']))
+        # return outs
+        return outs, name
+
+
+def unit_test_cal_preprocess_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_driftpeak_e2ds_spirou
+
+    input = night_name files
+    output = DRIFTPEAK_E2DS_FITS_FILE, DRIFTPEAK_E2DS_TBL_FILE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_preprocess_spirou'
+    arg_names = ['night_name', 'ufiles']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        outs = []
+        # return outs
+        return outs, name
+
+
+def unit_test_off_listing_raw_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_exposure_meter
+
+    input = night_name files
+    output = EM_SPE_FILE, EM_WAVE_FILE, EM_MASK_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'off_listing_RAW_spirou'
+    arg_names = ['night_name']
+    arg_types = [str]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        outs = [Constants.OFF_LISTING_FILE(outputs['p'])]
+        # return outs
+        return outs, name
+
+
+def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_ff_raw_spirou
+
+    input = night_name files
+    output = FF_BLAZE_FILE, FF_FLAT_FILE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'visu_RAW_spirou'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        outs = []
+        # return outs
+        return outs, name
+
+
+def unit_test_visu_e2ds_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_driftpeak_e2ds_spirou
+
+    input = night_name files
+    output = DRIFTPEAK_E2DS_FITS_FILE, DRIFTPEAK_E2DS_TBL_FILE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'visu_E2DS_spirou'
+    arg_names = ['night_name', 'reffile']
+    arg_types = [str, str]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        outs = []
+        # return outs
+        return outs, name
+
+
+def unit_test_pol_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_driftpeak_e2ds_spirou
+
+    input = night_name files
+    output = DRIFTPEAK_E2DS_FITS_FILE, DRIFTPEAK_E2DS_TBL_FILE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'pol_spirou'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        oargs = [outputs['p'], outputs['loc']]
+        outs = [spirouConfig.Constants.DEG_POL_FILE(*oargs)]
+        outs.append(spirouConfig.Constants.STOKESI_POL_FILE(*oargs))
+        outs.append(spirouConfig.Constants.NULL_POL1_FILE(*oargs))
+        outs.append(spirouConfig.Constants.NULL_POL2_FILE(*oargs))
         # return outs
         return outs, name
 
