@@ -403,7 +403,7 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
     c_database = ParamDict()
     # get match
     match = p['CALIB_DB_MATCH']
-    # log match method
+    # log calibDB match method
     wmsg = 'CalibDB loaded with method {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(match))
     # get max time unix and human
