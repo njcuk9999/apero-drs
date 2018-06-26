@@ -167,8 +167,8 @@ def main(night_name=None, files=None):
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value="I")
     # add combined exposure time parameter keyword to header
-    comb_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=comb_exptime)
+    tot_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
     # save STOKESI data to file
     spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'],loc['STOKESIERR']],
                                 hdict)
