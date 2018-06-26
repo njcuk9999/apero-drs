@@ -122,7 +122,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
     return ll, param_ll
 
 
-def get_lamp_parameters(p, filename=None, kind=None):
+def get_lamp_parameters(p, header, filename=None, kind=None):
     """
     Get lamp parameters from either a specified lamp type="kind" or a filename
     or from p['ARG_FILE_NAMES'][0] (if no filename or kind defined)
@@ -131,6 +131,7 @@ def get_lamp_parameters(p, filename=None, kind=None):
         Must contain at least:
             IC_LAMPS: list of strings, the different allowed lamp types
             log_opt: string, log option, normally the program name
+    :param header: e2ds hc fitsfile header
     :param filename: string or None, the filename to check for the lamp
                      substring in
     :param kind: string or None, the lamp type
@@ -143,6 +144,20 @@ def get_lamp_parameters(p, filename=None, kind=None):
     """
 
     func_name = __NAME__ + '.get_lamp_parameters()'
+    # get relevant (cass/ref) fiber position (for lamp identification)
+    gkwargs = dict(return_value=True, dtype=str)
+    if p['FIB_TYP']==['C']:
+        p['FIB_POS'] = spirouImage.ReadParam(p, header, 'kw_CREF',
+                                             **gkwargs)
+    elif p['FIB_TYP'] in (['AB'], ['A'], ['B']):
+        p['FIB_POS'] = spirouImage.ReadParam(p, header, 'kw_CCAS',
+                                             **gkwargs)
+    else:
+        emsg1 = ('Fiber position cannot be identified for fiber={0}'
+                 .format(p['FIB_TYP']))
+        emsg2 = '    function={0}'.format(__NAME__)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
     # identify lamp
     if kind is not None:
         lamp = kind
@@ -714,7 +729,6 @@ def decide_on_lamp_type(p, filename):
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
     # finally return lamp type
     return lamp_type
-
 
 def decide_on_lamp_type_old(p, filename):
     """
