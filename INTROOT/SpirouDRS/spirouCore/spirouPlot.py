@@ -48,7 +48,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
-WLOG = spirouLog.logger
+WLOG = spirouLog.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
