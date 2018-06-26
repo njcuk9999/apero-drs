@@ -1170,11 +1170,27 @@ def DEG_POL_FILE(p, loc):
     # get new extention
     new_ext = '_pol.fits'
     # get new filename
-    filename = basefilename.replace('.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     deg_pol_filename = os.path.join(reducedfolder, filename)
     # return absolute path
     return deg_pol_filename
+
+
+# noinspection PyPep8Naming
+def STOKESI_POL_FILE(p, loc):
+    # get reduced dir
+    reducedfolder = p['REDUCED_DIR']
+    # get base filename
+    basefilename = loc['BASENAME']
+    # get new extention
+    new_ext = '_StokesI.fits'
+    # get new filename
+    filename = basefilename.replace('_A.fits', new_ext)
+    # construct absolute path
+    stokesI_filename = os.path.join(reducedfolder, filename)
+    # return absolute path
+    return stokesI_filename
 
 
 # noinspection PyPep8Naming
@@ -1186,7 +1202,7 @@ def NULL_POL1_FILE(p, loc):
     # get new extention
     new_ext = '_null1_pol.fits'
     # get new filename
-    filename = basefilename.replace('.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     null_pol1_filename = os.path.join(reducedfolder, filename)
     # return absolute path
@@ -1202,7 +1218,7 @@ def NULL_POL2_FILE(p, loc):
     # get new extention
     new_ext = '_null2_pol.fits'
     # get new filename
-    filename = basefilename.replace('.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     null_pol2_filename = os.path.join(reducedfolder, filename)
     # return absolute path

@@ -23,7 +23,8 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['SortPolarFiles']
+__all__ = ['LoadPolarData', 'SortPolarFiles', 'CalculatePolarimetry',
+           'CalculateContinuum', 'CalculateStokesI']
 
 # =============================================================================
 # Function aliases
@@ -36,6 +37,7 @@ CalculatePolarimetry = spirouPOLAR.calculate_polarimetry_wrapper
 
 CalculateContinuum = spirouPOLAR.calculate_continuum
 
+CalculateStokesI = spirouPOLAR.calculate_stokes_I
 
 # =============================================================================
 # End of code
