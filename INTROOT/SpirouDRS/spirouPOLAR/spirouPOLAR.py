@@ -679,7 +679,7 @@ def calculate_stokes_I(p, loc):
     # return loc
     return loc
 
-
+                
 def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
               mode="median", use_linear_fit=False):
     """

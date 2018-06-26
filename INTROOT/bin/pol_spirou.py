@@ -86,7 +86,7 @@ def main(night_name=None, files=None):
     polardict = ParamDict()
     # sort files
     polardict = spirouPOLAR.SortPolarFiles(p, polardict)
-
+    
     # ----------------------------------------------------------------------
     # Load the input polarimetry data and check if provided data are
     #    sufficient for polarimetry calculation
@@ -95,7 +95,7 @@ def main(night_name=None, files=None):
     loc = ParamDict()
     # load files
     p, loc = spirouPOLAR.LoadPolarData(p, polardict, loc)
-
+    
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
@@ -107,12 +107,17 @@ def main(night_name=None, files=None):
     # wavefile = os.path.join(p['REDUCED_DIR'], wavefilename)
     # loc['WAVE'] = spirouImage.ReadWaveFile(p, filename=wavefile)
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-
+    
     # ----------------------------------------------------------------------
     # Polarimetry computation
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculatePolarimetry(p, loc)
-
+    
+    # ----------------------------------------------------------------------
+    # Stokes I computation
+    # ----------------------------------------------------------------------
+    loc = spirouPOLAR.CalculateStokesI(p, loc)
+  
     # ----------------------------------------------------------------------
     # Stokes I computation
     # ----------------------------------------------------------------------
@@ -122,7 +127,7 @@ def main(night_name=None, files=None):
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
-
+    
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
@@ -137,7 +142,7 @@ def main(night_name=None, files=None):
         sPlt.polar_stokesI_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
-
+    
     # ------------------------------------------------------------------
     # Store polarimetry in file(s)
     # ------------------------------------------------------------------

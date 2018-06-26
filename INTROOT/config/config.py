@@ -20,7 +20,7 @@ DRS_DEBUG = 0
 
 # Whether to use user config (True or 1 to use)
 #      if False (or 0) only uses default configuration files
-USER_CONFIG = 1
+USER_CONFIG = 0
 
 # -----------------------------------------------------------------------------
 # path settings
@@ -30,31 +30,31 @@ USER_CONFIG = 1
 # then copy this section to a new config.py at that path
 
 #   Define the DATA directory
-TDATA = "/drs/spirou/data/"
+TDATA = "/Users/edermartioli/SPIROU-pipeline/data/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/drs/spirou/INTROOT/'
+DRS_ROOT = '/Users/edermartioli/GitHub/spirou_py3/INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/drs/spirou/data/raw'
+DRS_DATA_RAW = '/Users/edermartioli/SPIROU-pipeline/data/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/drs/spirou/data/reduced'
+DRS_DATA_REDUC = '/Users/edermartioli/SPIROU-pipeline/data/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/drs/spirou/data/calibDB'
+DRS_CALIB_DB = '/Users/edermartioli/SPIROU-pipeline/data/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/drs/spirou/data/msg'
+DRS_DATA_MSG = '/Users/edermartioli/SPIROU-pipeline/data/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/drs/spirou/data/tmp'
+DRS_DATA_WORKING = '/Users/edermartioli/SPIROU-pipeline/data/tmp'
 
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
 # DRS_UCONFIG = '~/spirou_config_H2RG/'
-# DRS_UCONFIG = '~/spirou_config_H4RG/'
+DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
 # Logging settings
