@@ -131,6 +131,9 @@ def get_lamp_parameters(p, header, filename=None, kind=None):
         Must contain at least:
             IC_LAMPS: list of strings, the different allowed lamp types
             log_opt: string, log option, normally the program name
+            KW_CREF: string, the HEADER keyowrd store of the reference fiber
+            KW_CCAS: string, the HEADER keyword store of the science fiber
+
     :param header: e2ds hc fitsfile header
     :param filename: string or None, the filename to check for the lamp
                      substring in
@@ -146,17 +149,19 @@ def get_lamp_parameters(p, header, filename=None, kind=None):
     func_name = __NAME__ + '.get_lamp_parameters()'
     # get relevant (cass/ref) fiber position (for lamp identification)
     gkwargs = dict(return_value=True, dtype=str)
-    if p['FIB_TYP']==['C']:
-        p['FIB_POS'] = spirouImage.ReadParam(p, header, 'kw_CREF',
-                                             **gkwargs)
-    elif p['FIB_TYP'] in (['AB'], ['A'], ['B']):
-        p['FIB_POS'] = spirouImage.ReadParam(p, header, 'kw_CCAS',
-                                             **gkwargs)
+    if p['FIBER'] == 'C':
+        p['FIB_POS'] = spirouImage.ReadParam(p, header, 'kw_CREF', **gkwargs)
+        p['FIB_POS_ID'] = p['kw_CREF'][0]
+    elif p['FIBER'] in ['AB', 'A', 'B']:
+        p['FIB_POS'] = spirouImage.ReadParam(p, header, 'kw_CCAS', **gkwargs)
+        p['FIB_POS_ID'] = p['kw_CCAS'][0]
     else:
         emsg1 = ('Fiber position cannot be identified for fiber={0}'
                  .format(p['FIB_TYP']))
         emsg2 = '    function={0}'.format(__NAME__)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # set the source of fib_pos
+    p.set_sources(['FIB_POS', 'FIB_POS_ID'], func_name)
 
     # identify lamp
     if kind is not None:
@@ -694,8 +699,8 @@ def decide_on_lamp_type(p, filename):
         Must contain at least:
             IC_LAMPS: list of strings, the different allowed lamp types
             log_opt: string, log option, normally the program name
-            KW_CCAS: string, position of Cass fiber
-            KW_CREF: string; position of Ref fiber
+            FIB_POS: string, position of the fiber
+            FIB_POS_ID: string; the HEADER key for the fiber
     :param filename: string, the filename to check for the lamp substring in
 
     :return lamp_type: string, the lamp type for this file (one of the values
@@ -704,6 +709,7 @@ def decide_on_lamp_type(p, filename):
     func_name = __NAME__ + '.decide_on_lamp_type()'
     # get fiber position from p
     fib_pos = p['FIB_POS']
+    fib_pos_id = p['FIB_POS_ID']
     # storage for lamp type
     lamp_type = None
     # loop around each lamp in defined lamp types
@@ -722,13 +728,16 @@ def decide_on_lamp_type(p, filename):
                     lamp_type = lamp
     # check that lamp is defined
     if lamp_type is None:
-        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(fib_pos)
-        emsg2 = ('    Must be one of the following: {0}'
+        emsg1 = ('Lamp type for file="{0}" cannot be identified.'
+                 ''.format(filename))
+        emsg2 = '\tHeader key {0}="{1}"'.format(fib_pos_id, fib_pos)
+        emsg3 = ('\tMust be one of the following: {0}'
                  ''.format(', '.join(p['IC_LAMPS'])))
-        emsg3 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        emsg4 = '\t\tfunction={0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4])
     # finally return lamp type
     return lamp_type
+
 
 def decide_on_lamp_type_old(p, filename):
     """
