@@ -32,6 +32,8 @@ import cal_FF_RAW_spirou
 import cal_HC_E2DS_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
+import cal_WAVE_E2DS_spirou
+import cal_WAVE_NEW_E2DS_spirou
 import cal_preprocess_spirou
 import off_listing_RAW_spirou
 import visu_RAW_spirou
@@ -69,6 +71,8 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_HC_E2DS_spirou',
                  'cal_loc_RAW_spirou',
                  'cal_SLIT_spirou',
+                 'cal_WAVE_E2DS_spirou',
+                 'cal_WAVE_NEW_E2DS_spirou',
                  'cal_preprocess_spirou',
                  'off_listing_RAW_spirou',
                  'visu_RAW_spirou',
@@ -98,6 +102,8 @@ def get_versions():
     vv[cal_HC_E2DS_spirou.__NAME__] = cal_HC_E2DS_spirou.__version__
     vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
     vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
+    vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
+    vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou.__version__
     vv[cal_preprocess_spirou.__NAME__] = cal_preprocess_spirou.__version__
     vv[off_listing_RAW_spirou.__NAME__] = off_listing_RAW_spirou.__version__
     vv[visu_RAW_spirou.__NAME__] = visu_RAW_spirou.__version__
@@ -576,6 +582,114 @@ def unit_test_cal_ccf_e2ds_spirou(rname, inputs, outputs=None):
     else:
         outs = [Constants.CCF_FITS_FILE(outputs['p']),
                 Constants.CCF_TABLE_FILE(outputs['p'])]
+        # return outs
+        return outs, name
+
+
+def unit_test_cal_hc_e2ds_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_extract_raw_spirou
+
+    input = night_name files
+    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_HC_E2DS_spirou'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args =  get_args(name, rname, inputs, arg_names, arg_types)
+        # return args
+        return args, name
+    # else define the outputs
+    else:
+        outs = [spirouConfig.Constants.WAVE_LINE_FILE(outputs['p'])]
+        # return outs
+        return outs, name
+
+
+def unit_test_cal_wave_new_e2ds_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_extract_raw_spirou
+
+    input = night_name files
+    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_WAVE_E2DS_spirou'
+    arg_names = ['night_name', 'fpfile', 'hcfiles']
+    arg_types = [str, str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args =  get_args(name, rname, inputs, arg_names, arg_types)
+        # return args
+        return args, name
+    # else define the outputs
+    else:
+        outs = [spirouConfig.Constants.WAVE_LINE_FILE(outputs['p'])]
+        # return outs
+        return outs, name
+
+
+def unit_test_cal_wave_e2ds_spirou(rname, inputs, outputs=None):
+    """
+    unit_test_cal_extract_raw_spirou
+
+    input = night_name files
+    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_WAVE_E2DS_spirou'
+    arg_names = ['night_name', 'fpfile', 'hcfiles']
+    arg_types = [str, str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args =  get_args(name, rname, inputs, arg_names, arg_types)
+        # return args
+        return args, name
+    # else define the outputs
+    else:
+        outs = [spirouConfig.Constants.WAVE_LINE_FILE(outputs['p'])]
         # return outs
         return outs, name
 
