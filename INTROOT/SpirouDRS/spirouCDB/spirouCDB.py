@@ -404,11 +404,14 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
     # get match
     match = p['CALIB_DB_MATCH']
     # log calibDB match method
-    wmsg = 'CalibDB loaded with method {0}'
+    wmsg = 'CalibDB loaded with method "{0}"'
     WLOG('', p['LOG_OPT'], wmsg.format(match))
     # get max time unix and human
     maxtime_u = p['MAX_TIME_UNIX']
     maxtime_h = p['MAX_TIME_HUMAN']
+    # display max time
+    wmsg = '\tMax time used = {0} ({1})'
+    WLOG('', p['LOG_OPT'], wmsg.format(maxtime_h, maxtime_u))
     # get unique keys
     ukeys = np.unique(keys)
     # loop around unique keys
