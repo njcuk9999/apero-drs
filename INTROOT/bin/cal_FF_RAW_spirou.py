@@ -319,7 +319,7 @@ def main(night_name=None, files=None):
             # plot flat for selected order
             sPlt.ff_sorder_flat(p, loc)
             # plot the RMS for all but skipped orders
-            sPlt.ff_rms_plot(p, loc)
+            #sPlt.ff_rms_plot(p, loc)
 
         # ----------------------------------------------------------------------
         # Store Blaze in file
