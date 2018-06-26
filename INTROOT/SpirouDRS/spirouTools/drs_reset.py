@@ -73,6 +73,32 @@ def reset_confirmation(name, called=False):
         return False
 
 
+def custom_confirmation(messages, inputmessage, response='Y'):
+    # line break
+    print('\n')
+    # get the warning and error colours
+    w1, w2 = printc('warning')
+    e1, e2 = printc('error')
+    # confirm reset
+    for message in messages:
+        print('{0}{1}{2}'.format(w1, message, w2))
+    # user input
+    eargs = [e1, inputmessage, e2]
+
+    if sys.version_info.major < 3:
+        # noinspection PyUnresolvedReferences
+        uinput = raw_input('{0}{1}{2}'.format(*eargs))
+    else:
+        uinput = input('{0}{1}{2}'.format(*eargs))
+    # line break
+    print('\n')
+
+    if uinput.upper() == response.upper():
+        return True
+    else:
+        return False
+
+
 def reset_reduced_folders(p, log=True):
 
     # log progress
