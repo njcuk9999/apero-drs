@@ -443,7 +443,7 @@ kw_TH_NAXIS2 = ['NAXIS2', None, '']
 kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
-kw_POL_EXPTIME = ['POLETIME', '', 'Combined exposure time (sec)']
+kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
