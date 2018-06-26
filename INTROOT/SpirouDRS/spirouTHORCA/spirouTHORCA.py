@@ -679,6 +679,51 @@ def decide_on_lamp_type(p, filename):
         Must contain at least:
             IC_LAMPS: list of strings, the different allowed lamp types
             log_opt: string, log option, normally the program name
+            KW_CCAS: string, position of Cass fiber
+            KW_CREF: string; position of Ref fiber
+    :param filename: string, the filename to check for the lamp substring in
+
+    :return lamp_type: string, the lamp type for this file (one of the values
+                       in p['IC_LAMPS']
+    """
+    func_name = __NAME__ + '.decide_on_lamp_type()'
+    # get fiber position from p
+    fib_pos = p['FIB_POS']
+    # storage for lamp type
+    lamp_type = None
+    # loop around each lamp in defined lamp types
+    for lamp in p['IC_LAMPS']:
+        # loop around the identifications of this lamp
+        for lamp_it in p['IC_LAMPS'][lamp]:
+            # check for lamp in filename
+            if lamp_it in fib_pos:
+                # check if we have already found a lamp type
+                if lamp_type is not None:
+                    emsg1 = ('Multiple lamp types found for fiber pos={0}, '
+                             'lamp type is ambiguous'.format(fib_pos))
+                    emsg2 = '    function={0}'.format(func_name)
+                    WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                else:
+                    lamp_type = lamp
+    # check that lamp is defined
+    if lamp_type is None:
+        emsg1 = 'Lamp type for file={0} cannot be identified.'.format(fib_pos)
+        emsg2 = ('    Must be one of the following: {0}'
+                 ''.format(', '.join(p['IC_LAMPS'])))
+        emsg3 = '    function={0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # finally return lamp type
+    return lamp_type
+
+
+def decide_on_lamp_type_old(p, filename):
+    """
+    From a filename and p['IC_LAMPS'] decide on a lamp type for the file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LAMPS: list of strings, the different allowed lamp types
+            log_opt: string, log option, normally the program name
     :param filename: string, the filename to check for the lamp substring in
 
     :return lamp_type: string, the lamp type for this file (one of the values
