@@ -77,6 +77,7 @@ def sort_polar_files(p, polardict):
         else:
             wmsg = 'File {0} has empty key="{1}", setting Stokes={2}'
             wargs = [filename,  p['KW_CMMTSEQ'][0], stokes]
+
             # Question: stokes here will be set to the last file value?
             WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
             expstatus = False
@@ -84,7 +85,7 @@ def sort_polar_files(p, polardict):
         # deal with fiber type
         fout = deal_with_fiber(p, filename, expstatus, exposure)
         fiber, expstatus, exposure, skip = fout
-
+        
         # deal with skip
         if skip:
             continue
@@ -449,6 +450,7 @@ def polarimetry_diff_method(p, loc):
         # -----------------------------------------------------------------
         sumOfgvar = gvar[0] + gvar[1] + gvar[2] + gvar[3]
         loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0) )
+
 
     # else if we have 2 exposures
     elif nexp == 2:
