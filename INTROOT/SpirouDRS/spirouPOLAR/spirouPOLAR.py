@@ -277,19 +277,15 @@ def calculate_continuum(p, loc, in_wavelength=True):
     # ---------------------------------------------------------------------
     # sort by wavelength (or pixel number)
     sortmask = np.argsort(wl)
-    wl = wl[sortmask]
-    pol = pol[sortmask]
-    polerr = pol[sortmask]
-    null1 = null1[sortmask]
-    null2 = null2[sortmask]
+
     # save back to loc
-    loc['FLAT_X'] = wl
-    loc['FLAT_POL'] = pol
-    loc['FLAT_POLERR'] = polerr
-    loc['FLAT_STOKESI'] = stokesI
-    loc['FLAT_STOKESIERR'] = stokesIerr
-    loc['FLAT_NULL1'] = null1
-    loc['FLAT_NULL2'] = null2
+    loc['FLAT_X'] = wl[sortmask]
+    loc['FLAT_POL'] = pol[sortmask]
+    loc['FLAT_POLERR'] = polerr[sortmask]
+    loc['FLAT_STOKESI'] = stokesI[sortmask]
+    loc['FLAT_STOKESIERR'] = stokesIerr[sortmask]
+    loc['FLAT_NULL1'] = null1[sortmask]
+    loc['FLAT_NULL2'] = null2[sortmask]
     # update source
     sources = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
                'FLAT_STOKESIERR','FLAT_NULL1', 'FLAT_NULL2']
