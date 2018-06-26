@@ -774,7 +774,7 @@ def check_id_header(p, control, recipe, filename, hdr=None):
     # use dprtype to select a single control setting
     #-----------------------------------------------------------------------
     # if DPRTYPE is None then let all files through
-    if 'None' in control['dprtype']:
+    if 'None' in control['dprtype'] and kinds[0].upper() == 'RAW':
         # get the first row in control where dprtype == 'None'
         row = np.where(control['dprtype'] == 'None')[0][0]
         # filter control by this row
