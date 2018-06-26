@@ -1859,7 +1859,7 @@ def polar_result_plot(loc, in_wavelengths=True):
 
 def polar_stokesI_plot(loc, in_wavelengths=True):
     # get data from loc
-    wl, stokesI = loc['FLAT_X'], loc['FLAT_STOKESI']
+    wl, stokesI, stokesIerr = loc['FLAT_X'], loc['FLAT_STOKESI'], loc['FLAT_STOKESIERR']
     stokes = 'I'
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
     # ---------------------------------------------------------------------
@@ -1881,7 +1881,7 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
     titleargs = [stokes, method, nexp]
     # ---------------------------------------------------------------------
     # plot polarimetry data
-    plt.plot(wl, stokesI, label='Stokes I')
+    plt.errorbar(wl, stokesI, yerr=stokesIerr,fmt='-',label='Stokes I', alpha=0.5)
     # ---------------------------------------------------------------------
     # set title and labels
     frame.set(title=title.format(*titleargs), xlabel=xlabel, ylabel=ylabel)

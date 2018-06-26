@@ -112,11 +112,6 @@ def main(night_name=None, files=None):
     loc = spirouPOLAR.CalculateStokesI(p, loc)
   
     # ----------------------------------------------------------------------
-    # Stokes I computation
-    # ----------------------------------------------------------------------
-    loc = spirouPOLAR.CalculateStokesI(p, loc)
-
-    # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
@@ -164,13 +159,20 @@ def main(night_name=None, files=None):
 
     # save POL data to file
     spirouImage.WriteImageMulti(degpolfits, [loc['POL'],loc['POLERR']], hdict)
-    # save STOKESI data to file
-    spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'],loc['STOKESIERR']],
-                                hdict)
     # save NULL1 data to file
     spirouImage.WriteImage(nullpol1fits, loc['NULL1'], hdict)
     # save NULL2 data to file
     spirouImage.WriteImage(nullpol2fits, loc['NULL2'], hdict)
+
+    # add stokes parameter keyword to header
+    hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value="I")
+    # add combined exposure time parameter keyword to header
+    comb_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=comb_exptime)
+    # save STOKESI data to file
+    spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'],loc['STOKESIERR']],
+                                hdict)
+
 
     # ----------------------------------------------------------------------
     # End Message
