@@ -307,8 +307,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # Log if saturation level reached
             satvalue = (flux/p['GAIN'])/(range1 + range2)
             if satvalue > (p['QC_LOC_FLUMAX'] * p['NBFRAMES']):
-                wmsg = 'SATURATION LEVEL REACHED on Fiber {0}'
-                WLOG('warning', p['LOG_OPT'], wmsg.format(fiber))
+                wmsg = 'SATURATION LEVEL REACHED on Fiber {0} order={1}'
+                WLOG('warning', p['LOG_OPT'], wmsg.format(fiber, order_num))
 
         # ------------------------------------------------------------------
         # Plots
