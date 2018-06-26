@@ -110,11 +110,6 @@ def main(night_name=None, files=None):
     # Stokes I computation
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateStokesI(p, loc)
-  
-    # ----------------------------------------------------------------------
-    # Stokes I computation
-    # ----------------------------------------------------------------------
-    loc = spirouPOLAR.CalculateStokesI(p, loc)
 
     # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
