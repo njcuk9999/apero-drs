@@ -344,6 +344,12 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_LINES'],
                                value=np.sum(loc['TOT_LINE']))
+
+    # add berv values
+    hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BERVMAX'], value=loc['BERV_MAX'])
+
     # write image and add header keys (via hdict)
     spirouImage.WriteImage(corfile, data, hdict)
 
