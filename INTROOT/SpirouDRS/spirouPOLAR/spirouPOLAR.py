@@ -75,13 +75,9 @@ def sort_polar_files(p, polardict):
             stokes, exposure = cmmtseq[0], int(cmmtseq[2][0])
             expstatus = True
         else:
-<<<<<<< HEAD
-            wmsg = 'File {0} has empty key="KW_CMMTSEQ", setting Stokes={1}'
-            wargs = [filename, stokes]
-=======
             wmsg = 'File {0} has empty key="{1}", setting Stokes={2}'
             wargs = [filename,  p['KW_CMMTSEQ'][0], stokes]
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
+
             # Question: stokes here will be set to the last file value?
             WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
             expstatus = False
@@ -89,11 +85,7 @@ def sort_polar_files(p, polardict):
         # deal with fiber type
         fout = deal_with_fiber(p, filename, expstatus, exposure)
         fiber, expstatus, exposure, skip = fout
-<<<<<<< HEAD
-                
-=======
-
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
+        
         # deal with skip
         if skip:
             continue
@@ -458,11 +450,8 @@ def polarimetry_diff_method(p, loc):
         # -----------------------------------------------------------------
         sumOfgvar = gvar[0] + gvar[1] + gvar[2] + gvar[3]
         loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0) )
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
+
     # else if we have 2 exposures
     elif nexp == 2:
         # -----------------------------------------------------------------
@@ -532,11 +521,7 @@ def polarimetry_ratio_method(p, loc):
         part1 = data['B_{0}'.format(i)]
         part2 = data['A_{0}'.format(i)]
         flux_ratio.append(part1 / part2)
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
         # Calculate the variances for fiber A and B, assuming Poisson noise
         # only. In fact the errors should be obtained from extraction, i.e.
         # from the error extension of e2ds files.
@@ -633,11 +618,7 @@ def polarimetry_ratio_method(p, loc):
         Part1 = R1 / denomPart1
         sumvar = var_term[0] + var_term[1]
         loc['POLERR'] = np.sqrt(Part1 * sumvar)
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
     # else we have insufficient data (should not get here)
     else:
         wmsg = ('Number of exposures in input data is not sufficient'
@@ -672,11 +653,7 @@ def calculate_stokes_I(p, loc):
     loc['STOKESIERR'] = np.zeros(data_shape)
     # set source
     loc.set_sources(['STOKESI', 'STOKESIERR'], func_name)
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
     flux, var = [], []
     for i in range(1, int(nexp) + 1):
         # Calculate sum of fluxes from fibers A and B
@@ -703,12 +680,8 @@ def calculate_stokes_I(p, loc):
     WLOG('info', p['LOG_OPT'], wmsg.format(name))
     # return loc
     return loc
-<<<<<<< HEAD
-=======
 
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
 
-                
 def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
               mode="median", use_linear_fit=False):
     """
