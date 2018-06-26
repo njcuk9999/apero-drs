@@ -76,14 +76,7 @@ def main(night_name=None, files=None):
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, files,
                                     mainfitsdir='reduced')
-<<<<<<< HEAD
-    # I've set calibdb=False for tests to avoid unmatched time error - Eder
-    p = spirouStartup.InitialFileSetup(p, calibdb=False)
-    #p = spirouStartup.InitialFileSetup(p, calibdb=True)
-=======
-    # do the initial file setup (must have set up your calibDB properly!)
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
 
     # ----------------------------------------------------------------------
     # Loop through files, identify and sort files and identify fiber types
@@ -105,21 +98,7 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
-<<<<<<< HEAD
-    #loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
-    # Temporarily grabbing wave from reduction dir for testing - when test
-    # is done just uncomment above - Eder
-    wavefile = p['REDUCED_DIR']+'/'+'2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits'
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, filename=wavefile)
-=======
     loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
-    # Temporarily grabbing wave from reduction dir for testing - when test
-    # is done just uncomment above - Eder
-    # TODO: This is not needed if calibDB is set up correctly - Neil
-    # wavefilename = '2018-04-16_17-04-32_hcone_hcone_001c_pp_wave_C.fits'
-    # wavefile = os.path.join(p['REDUCED_DIR'], wavefilename)
-    # loc['WAVE'] = spirouImage.ReadWaveFile(p, filename=wavefile)
->>>>>>> 70d19a349cae6d646612574f3ae884cbd30535ab
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
     
     # ----------------------------------------------------------------------
