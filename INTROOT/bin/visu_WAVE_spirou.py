@@ -15,9 +15,7 @@ Last modified: 2018-06-22
 """
 from __future__ import division
 import numpy as np
-import os
 
-from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -119,19 +117,17 @@ def main(night_name=None, files=None):
         plt.plot(wave[order_num], e2ds[order_num])
 
     for line in range(len(ll_line_cat)):
-        plt.vlines(ll_line_cat[line],0,100000+
+        plt.vlines(ll_line_cat[line], 0, 200000 +
                    max(np.min(e2ds), ampl_line_cat[line]),
                    colors='darkgreen', linestyles='dashed')
 
     for line in range(len(ll_line_fit)):
-        plt.vlines(ll_line_fit[line],0,100000+
+        plt.vlines(ll_line_fit[line], 0, 200000 +
                    max(np.min(e2ds), ampl_line_fit[line]),
-                   colors = 'magenta', linestyles='dashdot')
-
+                   colors='magenta', linestyles='dashdot')
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Flux e-')
-
 
     # ----------------------------------------------------------------------
     # End Message
