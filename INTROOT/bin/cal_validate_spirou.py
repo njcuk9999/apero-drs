@@ -327,9 +327,27 @@ def main(debug_mode=0):
         print('\n')
         print('Validation successful. DRS installed corrected.')
     else:
-        wlog('', '', '')
-        wlog('', '', 'Validation successful. DRS installed corrected.')
+        wlog('', __NAME__, '')
+        wlog('', __NAME__, 'Validation successful. DRS installed corrected.')
 
+    # -------------------------------------------------------------------------
+    # Currently some files are required to run the DRS (calibDB setup)
+    # -------------------------------------------------------------------------
+
+    from SpirouDRS.spirouTools import drs_reset
+
+    # log and ask user to confirm
+    messages = ['\nFirst time installation?', '\nAdd required files to DRS?\n']
+    inputmessage = '\n\tSetup calibration database? [Y]es or [N]o\t'
+    uinput = drs_reset.custom_confirmation(messages, inputmessage)
+    # add calibDB files
+    if uinput:
+        drs_reset.reset_calibdb(cparams, log=True)
+        wlog('', __NAME__, 'Calibration database setup correctly.')
+    else:
+        wlog('', __NAME__, 'Assuming files setup correctly.')
+
+    # -------------------------------------------------------------------------
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
