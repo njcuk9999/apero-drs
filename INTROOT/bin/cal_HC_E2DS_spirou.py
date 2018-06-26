@@ -103,7 +103,7 @@ def main(night_name=None, files=None):
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
     # get lamp parameters
-    p = spirouTHORCA.GetLampParams(p)
+    p = spirouTHORCA.GetLampParams(p, loc['HCHDR'])
 
     # ----------------------------------------------------------------------
     # Obtain the flat
