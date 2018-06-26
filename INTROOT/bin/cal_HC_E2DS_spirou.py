@@ -102,6 +102,19 @@ def main(night_name=None, files=None):
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
+    # get relevant (cass/ref) fiber position (for lamp identification)
+    gkwargs = dict(return_value=True, dtype=str)
+    if p['FIB_TYP']==['C']:
+        p['FIB_POS'] = spirouImage.ReadParam(p, loc['HCHDR'], 'kw_CREF',
+                                             **gkwargs)
+    elif p['FIB_TYP'] in (['AB'], ['A'], ['B']):
+        p['FIB_POS'] = spirouImage.ReadParam(p, loc['HCHDR'], 'kw_CCAS',
+                                             **gkwargs)
+    else:
+        emsg1 = ('Fiber position cannot be identified for fiber={0}'
+                 .format(p['FIB_TYP']))
+        emsg2 = '    function={0}'.format(__NAME__)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get lamp parameters
     p = spirouTHORCA.GetLampParams(p)
 
