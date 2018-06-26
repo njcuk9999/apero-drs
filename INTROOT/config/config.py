@@ -16,7 +16,7 @@ DRS_INTERACTIVE = 1
 #      0: no debug
 #      1: basic debugging on errors
 #      2: recipes specific (plots and some code runs)
-DRS_DEBUG = 0
+DRS_DEBUG = 42
 
 # Whether to use user config (True or 1 to use)
 #      if False (or 0) only uses default configuration files
@@ -27,30 +27,30 @@ USER_CONFIG = 1
 # -----------------------------------------------------------------------------
 
 #   Define the DATA directory
-TDATA = "/drs/spirou/data/"
+TDATA = "/home/data/CFHT/"
 
 #   Define the root installation directory (INTROOT)
-DRS_ROOT = '/drs/spirou/INTROOT/'
+DRS_ROOT = '/home/mhobson/spirou_py3/INTROOT/'
 
 #   Define the folder with the raw data files in
-DRS_DATA_RAW = '/drs/spirou/data/raw'
+DRS_DATA_RAW = '/home/data/CFHT/raw'
 
 #   Define the directory that the reduced data should be saved to/read from
-DRS_DATA_REDUC = '/drs/spirou/data/reduced'
+DRS_DATA_REDUC = '/home/data/CFHT/reduced'
 
 #   Define the directory that the calibration files should be saved to/read from
-DRS_CALIB_DB = '/drs/spirou/data/calibDB'
+DRS_CALIB_DB = '/home/data/CFHT/calibDB'
 
 #   Define the directory that the log messages are stored in
-DRS_DATA_MSG = '/drs/spirou/data/msg'
+DRS_DATA_MSG = '/home/data/CFHT/msg'
 
 #   Define the working directory
-DRS_DATA_WORKING = '/drs/spirou/data/tmp'
+DRS_DATA_WORKING = '/home/data/CFHT/tmp'
 
 #   Define the user directory
 #        (overwritten by DRS_UCONFIG environmental variable)
 #      If only using default config file (i.e this file) comment this line out
-# DRS_UCONFIG = '~/spirou_config_H2RG/'
+# DRS_UCONFIG = '/home/mhobson/spirou_py3/INTROOT/config'
 # DRS_UCONFIG = '~/spirou_config_H4RG/'
 
 # -----------------------------------------------------------------------------
