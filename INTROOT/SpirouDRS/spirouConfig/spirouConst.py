@@ -1009,7 +1009,10 @@ def CCF_FITS_FILE(p):
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['CCF_MASK'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
-    corfilename = p['E2DSFILE'].replace('_e2ds', newext)
+    if '_e2dsff' in p['E2DSFILE']:
+        corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+    else:
+        corfilename = p['E2DSFILE'].replace('_e2ds', newext)
 
     corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf file location and name
