@@ -117,7 +117,8 @@ def get_runs(p, rparams, rfile):
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             # check that first entry is a valid recipe
             if run_i[0] not in VALID:
-                emsg1 = '"{0}" does not start with a valid DRS recipe'
+                emsg1 = ('"{0}" does not start with a valid DRS recipe'
+                         '').format(key)
                 emsg2 = '   {0}[0]={1}'.format(key, run_i[0])
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             # append to runs
