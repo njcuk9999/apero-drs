@@ -336,6 +336,44 @@ def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
 
 def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
                        no_files=False, skipcheck=False):
+    """
+    Sets up the initial files (obtained with load_arguments) for a standard run
+     (i.e. requiring night_name and files) and performs checks based on the
+     recipe name p['RECIPE'] to see if files are correct for this recipe. If
+     calibdb is True loads the calibration database, if no_night_name is True
+     no night name is required. If no files is True no files are required. If
+     skipcheck is True file is not checked.
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, log option, normally the program name
+            RECIPE: string, the recipe name (must be defined in recipe control
+                    file)
+            arg_night_name: string, the folder within data raw directory
+                            containing files (also reduced directory) i.e.
+                            /data/raw/20170710 would be "20170710"
+            arg_file_names: list, list of files taken from the command line
+                            (or call to recipe function) must have at least
+                            one string filename in the list
+            fitsfilename: string, the full path of for the main raw fits
+                          file for a recipe
+                          i.e. /data/raw/20170710/filename.fits
+
+    :param files: list or None, the files passed in as arguments
+                  (If None comes from ARG_FILE_NAMES)
+    :param calibdb: bool, if True calibration database loaded
+    :param no_night_name: bool, if True no night name expected
+    :param no_files: bool, if True no files expected
+    :param skipcheck: bool, if True does not check files
+
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                DPRTYPE: string, the datatype header key
+                PREPROCESSED: bool, if True file is processed (or unchecked)
+
+    returns SystemExit if file is not valid for recipe
+    """
     func_name = __NAME__ + '.initial_file_setup()'
     log_opt = p['LOG_OPT']
     recipe = p['RECIPE']
@@ -386,6 +424,28 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
 
 
 def single_file_setup(p, filename, log=True, skipcheck=False):
+    """
+    Check "filename" is valid for recipe p["RECIPE"] and get the correct path,
+    logs the output if log is True, and skips the check if skipcheck is True
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, log option, normally the program name
+            RECIPE: string, the recipe name (must be defined in recipe control
+                    file)
+    :param filename: string, the filename to check
+    :param log: bool, whether to log "Now Processing" message
+    :param skipcheck: bool, whether to skip the check
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                DPRTYPE: string, the datatype header key
+                PREPROCESSED: bool, if True file is processed (or unchecked)
+    :return location: string, the path of the filename (i.e. the raw or
+                      reduced directory)
+
+    returns SystemExit if file is not valid for recipe
+    """
     func_name = __NAME__ + '.single_file_setup()'
 
     recipe = p['RECIPE']
@@ -406,6 +466,30 @@ def single_file_setup(p, filename, log=True, skipcheck=False):
 
 
 def multi_file_setup(p, files=None, log=True, skipcheck=False):
+    """
+    Wrapper for single_file_setup, checks that "files" are valid for recipe
+    p["RECIPE"] and get the correct path, logs the output if log is True,
+    and skips the check if skipcheck is True
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, log option, normally the program name
+            RECIPE: string, the recipe name (must be defined in recipe control
+                    file)
+    :param files: list of string, the filenames to check
+    :param log: bool, whether to log "Now Processing" message
+    :param skipcheck: bool, whether to skip the check
+
+    :return p: parameter dictionary, the updated parameter dictionary
+            Adds the following:
+                DPRTYPE: string, the datatype header key
+                PREPROCESSED: bool, if True file is processed (or unchecked)
+    :return locations: list of string, the paths of the filename
+                       (i.e. the raw or reduced directory)
+
+    returns SystemExit if any file is not valid for recipe
+    """
+
     func_name = __NAME__ + '.single_file_setup()'
     # check file based on recipe name
     locations = []
