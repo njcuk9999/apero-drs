@@ -20,6 +20,7 @@ from . import spirouEXTOR
 from . import spirouFLAT
 from . import spirouImage
 from . import spirouLOCOR
+from . import spirouPOLAR
 from . import spirouRV
 from . import spirouStartup
 from . import spirouTHORCA
@@ -88,6 +89,9 @@ if __name__ == "__main__":
     # spirouLOCOR
     print('\n\t' + spirouLOCOR.__NAME__)
     print('\t\t--' + spirouLOCOR.spirouLOCOR.__NAME__)
+    # spirouPOLAR
+    print('\n\t' + spirouPOLAR.__NAME__)
+    print('\t\t--' + spirouPOLAR.spirouPOLAR.__NAME__)
     # spirouRV
     print('\n\t' + spirouRV.__NAME__)
     print('\t\t--' + spirouRV.spirouRV.__NAME__)
