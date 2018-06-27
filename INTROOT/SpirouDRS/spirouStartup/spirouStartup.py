@@ -335,7 +335,7 @@ def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
 
 
 def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
-                       no_files=False):
+                       no_files=False, skipcheck=False):
     func_name = __NAME__ + '.initial_file_setup()'
     log_opt = p['LOG_OPT']
     recipe = p['RECIPE']
@@ -369,7 +369,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
         files = [files]
     # -------------------------------------------------------------------------
     # check file based on recipe name
-    p = spirouImage.CheckFiles(p, files, recipe)
+    p = spirouImage.CheckFiles(p, files, recipe, skipcheck)
     # -------------------------------------------------------------------------
     # Calib DB setup
     p = load_calibdb(p, calibdb)
@@ -385,12 +385,13 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
     return p
 
 
-def single_file_setup(p, filename, log=True):
+def single_file_setup(p, filename, log=True, skipcheck=False):
     func_name = __NAME__ + '.single_file_setup()'
 
     recipe = p['RECIPE']
     # check file based on recipe name
-    p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
+    p, path = spirouImage.CheckFile(p, filename, recipe, skipcheck,
+                                    return_path=True)
     # get location of file
     location = get_file(p, path, filename)
     # log processing image type
@@ -404,14 +405,15 @@ def single_file_setup(p, filename, log=True):
     return p, location
 
 
-def multi_file_setup(p, files=None, log=True):
+def multi_file_setup(p, files=None, log=True, skipcheck=False):
     func_name = __NAME__ + '.single_file_setup()'
     # check file based on recipe name
     locations = []
     recipe = p['RECIPE']
     # loop around files
     for filename in files:
-        p, path = spirouImage.CheckFile(p, filename, recipe, return_path=True)
+        p, path = spirouImage.CheckFile(p, filename, recipe, skipcheck,
+                                        return_path=True)
         # get location of file
         location = get_file(p, path, filename)
         # append location to locations
