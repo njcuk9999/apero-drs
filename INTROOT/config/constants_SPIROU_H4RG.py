@@ -707,7 +707,7 @@ ic_errx_min = 0.01  # 0.03
 # default = 5
 ic_ll_degr_fit = 4  # 4
 
-#  Define the max rms for the sigma-clip fit ll             - [cal_HC, cal_wave]
+#  Define the max rms for the wavelength sigma-clip fit     - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
