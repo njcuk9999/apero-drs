@@ -235,7 +235,7 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
 # =============================================================================
 # Define ID functions (main recipes)
 # =============================================================================
-def check_file_id(p, filename, recipe, hdr=None, **kwargs):
+def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, **kwargs):
     """
     Checks the "filename" against the "recipe" (using recipe control)
 
@@ -279,7 +279,20 @@ def check_file_id(p, filename, recipe, hdr=None, **kwargs):
     # ---------------------------------------------------------------------
     # Check that recipe is valid
     # ---------------------------------------------------------------------
-    if recipe not in control['Recipe']:
+    if skipcheck:
+        # log that we are skipping checks
+        wmsg = 'Skipping filename check'
+        WLOG('warning', p['LOG_OPT'], [wmsg])
+        # add values to p for skipped
+        p['DPRTYPE'] = 'None'
+        p['PREPROCESSED'] = True
+        p.set_sources(['DPRTYPE', 'PREPROCESSED'], func_name)
+        # deal with return
+        if return_path:
+           return p, p['ARG_FILE_DIR']
+        else:
+           return p
+    elif recipe not in control['Recipe']:
         emsg1 = 'No recipe named {0}'.format(recipe)
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
