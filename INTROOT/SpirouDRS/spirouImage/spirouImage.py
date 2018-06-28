@@ -1173,6 +1173,23 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
 
 
 def locate_bad_pixels_full(p, image):
+    """
+    Locate the bad pixels identified from the full engineering flat image
+    (location defined from p['BADPIX_FULL_FLAT'])
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_IMAGE_TYPE: string, the detector type (this step is only for
+                           H4RG)
+            LOG_OPT: string, log option, normally the program name
+            BADPIX_FULL_FLAT: string, the full engineering flat filename
+            BADPIX_FULL_THRESHOLD: float, the threshold on the engineering
+                                   above which the data is good
+    :param image: numpy array (2D), the image to correct (for size only)
+
+    :return newimage: numpy array (2D), the mask of the bad pixels
+    :return stats: float, the fraction of un-illuminated pixels (percentage)
+    """
 
     # TODO: remove H2RG dependencies
     # if we are using H2RG we don't need this map
@@ -1338,9 +1355,8 @@ def read_line_list(p=None, filename=None):
 
     :param filename: string or None, if defined the filename
 
-    # TODO: what are ll and amp
-    :return ll:
-    :return amp:
+    :return ll: numpy array (1D), the wavelengths of the lines from line list
+    :return amp: numpy array (1D), the amplitudes of the lines from line list
     """
 
     func_name = __NAME__ + '.read_line_list()'
