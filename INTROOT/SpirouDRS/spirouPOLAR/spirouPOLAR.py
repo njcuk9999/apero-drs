@@ -142,6 +142,7 @@ def load_data(p, polardict, loc):
         # if (cond1 or cond2) and cond3 append to detected list
         if (cond1 or cond2) and cond3:
             stokes_detected.append(entry['stokes'])
+    # TODO: This needs fixing will cause error
     # if more than one stokes parameter is identified then exit program
     if len(stokes_detected) == 0:
         stokes_detected.append()
@@ -305,6 +306,54 @@ def calculate_continuum(p, loc, in_wavelength=True):
     loc['CONT_YBIN'] = ybin
     # set source
     loc.set_sources(['CONT_POL', 'CONT_XBIN', 'CONT_YBIN'], func_name)
+    # return loc
+    return loc
+
+
+def calculate_stokes_I(p, loc):
+    func_name = __NAME__ + '.calculate_stokes_I()'
+    name = 'CalculateStokesI'
+    # log start of Stokes I calculations
+    wmsg = 'Running function {0} to calculate Stokes I total flux'
+    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    # get parameters from loc
+    data = loc['DATA']
+    nexp = float(loc['NEXPOSURES'])
+    # ---------------------------------------------------------------------
+    # set up storage
+    # ---------------------------------------------------------------------
+    # store Stokes I variables in loc
+    data_shape = loc['DATA']['A_1'].shape
+    # initialize arrays to zeroes
+    loc['STOKESI'] = np.zeros(data_shape)
+    loc['STOKESIERR'] = np.zeros(data_shape)
+    # set source
+    loc.set_sources(['STOKESI', 'STOKESIERR'], func_name)
+
+    flux, var = [], []
+    for i in range(1, int(nexp) + 1):
+        # Calculate sum of fluxes from fibers A and B
+        fluxAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
+        # Save A+B flux for each exposure
+        flux.append(fluxAB)
+
+        # Calculate the variances for fiber A+B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension in the e2ds files.
+        varAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
+        # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
+        var.append(varAB)
+
+    # Sum fluxes and variances from different exposures
+    for i in range(len(flux)) :
+        loc['STOKESI'] += flux[i]
+        loc['STOKESIERR'] += var[i]
+    # Calcualte errors -> sigma = sqrt(variance)
+    loc['STOKESIERR'] = np.sqrt(loc['STOKESIERR'])
+
+    # log end of Stokes I intensity calculations
+    wmsg = 'Routine {0} run successfully'
+    WLOG('info', p['LOG_OPT'], wmsg.format(name))
     # return loc
     return loc
 
@@ -629,53 +678,6 @@ def polarimetry_ratio_method(p, loc):
     loc['METHOD'] = 'Ratio'
     loc.set_source('METHOD', func_name)
     # log end of polarimetry calculations
-    wmsg = 'Routine {0} run successfully'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
-    # return loc
-    return loc
-
-def calculate_stokes_I(p, loc):
-    func_name = __NAME__ + '.calculate_stokes_I()'
-    name = 'CalculateStokesI'
-    # log start of Stokes I calculations
-    wmsg = 'Running function {0} to calculate Stokes I total flux'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
-    # get parameters from loc
-    data = loc['DATA']
-    nexp = float(loc['NEXPOSURES'])
-    # ---------------------------------------------------------------------
-    # set up storage
-    # ---------------------------------------------------------------------
-    # store Stokes I variables in loc
-    data_shape = loc['DATA']['A_1'].shape
-    # initialize arrays to zeroes
-    loc['STOKESI'] = np.zeros(data_shape)
-    loc['STOKESIERR'] = np.zeros(data_shape)
-    # set source
-    loc.set_sources(['STOKESI', 'STOKESIERR'], func_name)
-
-    flux, var = [], []
-    for i in range(1, int(nexp) + 1):
-        # Calculate sum of fluxes from fibers A and B
-        fluxAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
-        # Save A+B flux for each exposure
-        flux.append(fluxAB)
-
-        # Calculate the variances for fiber A+B, assuming Poisson noise
-        # only. In fact the errors should be obtained from extraction, i.e.
-        # from the error extension in the e2ds files.
-        varAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
-        # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
-        var.append(varAB)
-
-    # Sum fluxes and variances from different exposures
-    for i in range(len(flux)) :
-        loc['STOKESI'] += flux[i]
-        loc['STOKESIERR'] += var[i]
-    # Calcualte errors -> sigma = sqrt(variance)
-    loc['STOKESIERR'] = np.sqrt(loc['STOKESIERR'])
-
-    # log end of Stokes I intensity calculations
     wmsg = 'Routine {0} run successfully'
     WLOG('info', p['LOG_OPT'], wmsg.format(name))
     # return loc

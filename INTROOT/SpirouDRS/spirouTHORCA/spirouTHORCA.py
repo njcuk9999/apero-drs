@@ -205,6 +205,7 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
+            ECHELLE_ORDERS: numpy array (1D), the echelle order numbers
 
     :param mode: string, if mode="new" uses python to work out gaussian fit
                          if mode="old" uses FORTRAN (testing only) requires
@@ -219,6 +220,20 @@ def first_guess_at_wave_solution(p, loc, mode=0):
                 ALL_LINES: list of numpy arrays, length = number of orders
                             each numpy array contains gaussian parameters
                             for each found line in that order
+
+    ALL_LINES_i definition:
+        ALL_LINES_i[row] = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
 
     """
     func_name = __NAME__ + '.first_guess_at_wave_solution()'
@@ -265,6 +280,57 @@ def first_guess_at_wave_solution(p, loc, mode=0):
 
 
 def detect_bad_lines(p, loc, key=None, iteration=0):
+    """
+    Detect and filter out the bad lines for this iteration
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_MAX_ERRW_ONFIT: float, the maximum error on the first guess
+                               lines
+            IC_MAX_SIGLL_CAL_LINES: float, the maximum sigma fit of the guessed
+                                    lines
+            IC_MAX_AMPL_LINE: float, the maximum amplitude the guessed lines
+                              can have
+            IC_HC_T_ORDER_START: int, the echelle number of the first
+                                 extracted order
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ECHELLE_ORDERS: numpy array (1D), the echelle order numbers
+            ALL_LINES_i or "key": if key is None use ALL_LINES_i
+                                  where i = iteration
+                         list of numpy arrays, length = number of orders
+                         each numpy array contains gaussian parameters
+                         for each found line in that order
+
+    :param key: string or None, if string should exist in "loc" and replaces
+                "ALL_LINES_i" where i = iteration, and should point to a list
+                of numpy arrays, length = number of orders, each numpy array
+                contains gaussian parameters for each found line in that order
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            ALL_LINES_i or "key": list of numpy arrays, ALL_LINES_i or key input
+                                  with the bad lines filtered out
+
+    ALL_LINES_i definition:
+        ALL_LINES_i[row] = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
+
+    """
 
     # get constants from p
     max_error_onfit = p['IC_MAX_ERRW_ONFIT']
@@ -364,6 +430,78 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
 
 
 def fit_1d_solution(p, loc, ll, iteration=0):
+    """
+    Fits the 1D solution between wavelength and pixel postion and inverts it
+    into a fit between pixel position and wavelength
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, log option, normally the program name
+            FIBER: string, the fiber type (i.e. AB or A or B or C)
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ECHELLE_ORDERS: numpy array (1D), the echelle order numbers
+            HCDATA: numpy array (2D), the image data (used for shape)
+            ALL_LINES_i: list of numpy arrays, length = number of orders
+                         each numpy array contains gaussian parameters
+                         for each found line in that order
+            IC_ERRX_MIN: float, the minimum instrumental error
+            IC_LL_DEGR_FIT: int, the wavelength fit polynomial order
+            IC_MAX_LLFIT_RMS: float, the max rms for the wavelength
+                              sigma-clip fit
+            IC_HC_T_ORDER_START: int, defines the echelle order of
+                                the first e2ds order
+
+    :param ll: numpy array (1D), the initial guess wavelengths for each line
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                X_MEAN_i: float, the mean residual from the fit [km/s]
+                X_VAR_i: float, the rms residual from the fit [km/s]
+                X_ITER_i: numpy array(1D), the last line central position, FWHM
+                and the number of lines in each order
+                X_PARAM_i: numpy array (1D), the coefficients of the fit to x
+                           pixel position as a function of wavelength
+                X_DETAILS_i: list, [lines, xfit, cfit, weight] where
+                             lines= original wavelength-centers used for the fit
+                             xfit= original pixel-centers used for the fit
+                             cfit= fitted pixel-centers using fit coefficients
+                             weight=the line weights used
+                SCALE_i: list, the convertion for each line into wavelength
+                LL_MEAN_i: float, the mean residual after inversion [km/s]
+                LL_VAR_i: float, the rms residual after inversion [km/s]
+                LL_PARAM_i: numpy array (1D), the cofficients of the inverted
+                            fit (i.e. wavelength as a function of x pixel
+                            position)
+                LL_DETAILS_i: numpy array (1D), the [nres, wei] where
+                              nres = normalised residuals in km/s
+                              wei = the line weights
+                LL_OUT_i: numpy array (2D), the output wavelengths for each
+                          pixel and each order (in the shape of original image)
+                DLL_OUT_i: numpy array (2D), the output delta wavelengths for
+                           each pixel and each order (in the shape of original
+                           image)
+
+                where i = iteration
+
+    ALL_LINES_i definition:
+        ALL_LINES_i[row] = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
+    """
 
     func_name = __NAME__ + '.fit_1d_solution()'
     # get 1d solution
@@ -398,7 +536,76 @@ def fit_1d_solution(p, loc, ll, iteration=0):
 
 
 def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
+    """
+    Calculate the Littrow solution for this iteration for a set of cut points
 
+    Uses ALL_LINES_i  where i = iteration to calculate the littrow solutions
+    for defiend cut points (given a cut_step and fit_deg of
+    IC_LITTROW_CUT_STEP_i and IC_LITTROW_FIT_DEG_i where i = iteration)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, log option, normally the program name
+            FIBER: string, the fiber type (i.e. AB or A or B or C)
+            IC_LITTROW_REMOVE_ORDERS: list of ints, if not empty removes these
+                                      orders from influencing the fit
+            IC_LITTROW_ORDER_INIT: int, defines the first order to for the fit
+                                   solution
+            IC_HC_N_ORD_START: int, defines first order HC solution was
+                               calculated from
+            IC_HC_N_ORD_FINAL: int, defines last order HC solution was
+                               calculated to
+            IC_LITTROW_CUT_STEP_i: int, defines the step to use between
+                                   cut points
+            IC_LITTROW_FIT_DEG_i: int, defines the polynomial fit degree
+
+            where i = iteration
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ECHELLE_ORDERS: numpy array (1D), the echelle order numbers
+            HCDATA: numpy array (2D), the image data (used for shape)
+            ALL_LINES_i: list of numpy arrays, length = number of orders
+                         each numpy array contains gaussian parameters
+                         for each found line in that order
+
+            where i = iteration
+
+    :param ll: numpy array (1D), the initial guess wavelengths for each line
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+    :param log: bool, if True will print a final log message on completion with
+                some stats
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                X_CUT_POINTS_i: numpy array (1D), the x pixel cut points
+                LITTROW_MEAN_i: list, the mean position of each cut point
+                LITTROW_SIG_i: list, the mean FWHM of each cut point
+                LITTROW_MINDEV_i: list, the minimum deviation of each cut point
+                LITTROW_MAXDEV_i: list, the maximum deviation of each cut point
+                LITTROW_PARAM_i: list of numpy arrays, the gaussian fit
+                                 coefficients of each cut point
+                LITTROW_XX_i: list, the order positions of each cut point
+                LITTROW_YY_i: list, the residual fit of each cut point
+
+                where i = iteration
+
+    ALL_LINES_i definition:
+        ALL_LINES_i[row] = [gparams1, gparams2, ..., gparamsN]
+
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
+    """
     func_name = __NAME__ + '.calculate_littrow_sol()'
     # get parameters from p
     remove_orders = p['IC_LITTROW_REMOVE_ORDERS']
@@ -524,6 +731,47 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
 
 
 def extrapolate_littrow_sol(p, loc, ll, iteration=0):
+    """
+    Extrapolate and fit the Littrow solution at defined points and return
+    the wavelengths, solutions, and cofficients of the littorw fits
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LITTROW_ORDER_FIT_DEG: int, defines the polynomial fit degree
+            IC_HC_T_ORDER_START
+            IC_LITTROW_ORDER_INIT int, defines the first order to for the fit
+                                   solution
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            HCDATA: numpy array (2D), the image data (used for shape)
+            LITTROW_PARAM_i: list of numpy arrays, the gaussian fit
+                             coefficients of each cut point
+            X_CUT_POINTS_i: numpy array (1D), the x pixel cut points
+
+            where i = iteration
+
+    :param ll: numpy array (1D), the initial guess wavelengths for each line
+    :param iteration: int, the iteration number (used so we can store multiple
+                      calculations in loc, defines "i" in input and outputs
+                      from p and loc
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                LITTROW_EXTRAP_i: numpy array (2D),
+                                  size=([no. orders] by [no. cut points])
+                                  the wavelength values at each cut point for
+                                  each order
+                LITTROW_EXTRAP_SOL_i: numpy array (2D),
+                                  size=([no. orders] by [no. cut points])
+                                  the wavelength solution at each cut point for
+                                  each order
+                LITTROW_EXTRAP_PARAM_i: numy array (2D),
+                                  size=([no. orders] by [the fit degree +1])
+                                  the coefficients of the fits for each cut
+                                  point for each order
+
+                where i = iteration
+    """
 
     func_name = __NAME__ + '.extrapolate_littrow_sol()'
     # get parameters from p
@@ -585,13 +833,65 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
 
 
 def second_guess_at_wave_solution(p, loc, mode=0):
+    """
+    Second guess at wave solution, consistency check, using the wavelength
+    solutions line list
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_LL_SP_MIN: int, minimum wavelength of the catalog
+            IC_LL_SP_MAX: int, maximum wavelength of the catalog
+            IC_RESOL: int, Resolution of spectrograph
+            IC_LL_FREE_SPAN_2: int, window size in sigma unit
+            IC_HC_N_ORD_START_2: int, defines first order solution is
+                                 calculated from
+            IC_HC_N_ORD_FINAL_2: int, defines last order solution is
+                                 calculated from
+            IC_HC_T_ORDER_START: int, defines the echelle order of
+                                the first e2ds order
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            ECHELLE_ORDERS: numpy array (1D), the echelle order numbers
+            HCDATA: numpy array (2D), the image data
+            LL_LINE: numpy array, the line list wavelengths from file
+            AMPL_LINE: numpy array, the line list amplitudes from file
+            LITTROW_EXTRAP_SOL_1: numpy array (2D),
+                              size=([no. orders] by [no. cut points])
+                              the wavelength solution at each cut point for
+                              each order
+
+    :param mode: string, if mode="new" uses python to work out gaussian fit
+                         if mode="old" uses FORTRAN (testing only) requires
+                         compiling of FORTRAN fitgaus into spirouTHORCA dir
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                ALL_LINES_2: list of numpy arrays, length = number of orders
+                             each numpy array contains gaussian parameters
+                             for each found line in that order
+
+    ALL_LINES_2 definition:
+        ALL_LINES_2[row] = [gparams1, gparams2, ..., gparamsN]
+                    where:
+                        gparams[0] = output wavelengths
+                        gparams[1] = output sigma (gauss fit width)
+                        gparams[2] = output amplitude (gauss fit)
+                        gparams[3] = difference in input/output wavelength
+                        gparams[4] = input amplitudes
+                        gparams[5] = output pixel positions
+                        gparams[6] = output pixel sigma width
+                                          (gauss fit width in pixels)
+                        gparams[7] = output weights for the pixel position
+
+    """
 
     func_name = __NAME__ + '.second_guess_at_wave_solution()'
     # Update the free span wavelength value
     freespan = p['IC_LL_FREE_SPAN_2']
     # New final order value
-    n_ord_final = p['IC_HC_N_ORD_FINAL']
-    n_ord_start = p['IC_HC_N_ORD_START']
+    # n_ord_final = p['IC_HC_N_ORD_FINAL']
+    # n_ord_start = p['IC_HC_N_ORD_START']
     n_ord_start_2 = p['IC_HC_N_ORD_START_2']
     n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
     # recalculate echelle order number
@@ -603,23 +903,23 @@ def second_guess_at_wave_solution(p, loc, mode=0):
 
     # set the starting point as the outputs from the first guess solution
     # loop around original order num
-#    ll_line_2, ampl_line_2 = [], []
-#    for order_num in range(n_ord_final - n_ord_start):
-        # get this orders details
-#        details = loc['X_DETAILS_1'][order_num]
-        # append to lists
-#        ll_line_2 = np.append(ll_line_2, details[0])
-#        ampl_line_2 = np.append(ampl_line_2, details[3])
+    # ll_line_2, ampl_line_2 = [], []
+    # for order_num in range(n_ord_final - n_ord_start):
+    #     get this orders details
+    #    details = loc['X_DETAILS_1'][order_num]
+    #     append to lists
+    #    ll_line_2 = np.append(ll_line_2, details[0])
+    #    ampl_line_2 = np.append(ampl_line_2, details[3])
 
     # Now add in any lines which are outside the range of the first guess
     #    solution
-#    lmask = loc['LL_LINE'] > np.max(ll_line_2)
-#    lmask |= loc['LL_LINE'] < np.min(ll_line_2)
-#    ll_line_2 = np.append(ll_line_2, loc['LL_LINE'][lmask])
-#    ampl_line_2 = np.append(ampl_line_2, loc['AMPL_LINE'][lmask])
-#    ll_line_2_sortmask = ll_line_2.argsort()
-#    ll_line_2 = ll_line_2[ll_line_2_sortmask]
-#    ampl_line_2 = ampl_line_2[ll_line_2_sortmask]
+    # lmask = loc['LL_LINE'] > np.max(ll_line_2)
+    # lmask |= loc['LL_LINE'] < np.min(ll_line_2)
+    # ll_line_2 = np.append(ll_line_2, loc['LL_LINE'][lmask])
+    # ampl_line_2 = np.append(ampl_line_2, loc['AMPL_LINE'][lmask])
+    # ll_line_2_sortmask = ll_line_2.argsort()
+    # ll_line_2 = ll_line_2[ll_line_2_sortmask]
+    # ampl_line_2 = ampl_line_2[ll_line_2_sortmask]
 
     #use whole catalogue
     ll_line_2 = loc['LL_LINE']
@@ -645,6 +945,39 @@ def second_guess_at_wave_solution(p, loc, mode=0):
 
 
 def join_orders(p, loc):
+    """
+    Merge the littrow extrapolated solutions with the fitted line solutions
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_HC_N_ORD_START: int, defines first order solution is calculated
+            IC_HC_N_ORD_FINAL: int, defines last order solution is calculated
+                                from
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            LL_OUT_2: numpy array (2D), the output wavelengths for each
+                      pixel and each order (in the shape of original image)
+            DLL_OUT_2: numpy array (2D), the output delta wavelengths for
+                       each pixel and each order (in the shape of original
+                       image)
+            LITTROW_EXTRAP_SOL_2: numpy array (2D),
+                              size=([no. orders] by [no. cut points])
+                              the wavelength solution at each cut point for
+                              each order
+            LITTROW_EXTRAP_PARAM_2: numy array (2D),
+                              size=([no. orders] by [the fit degree +1])
+                              the coefficients of the fits for each cut
+                              point for each order
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            LL_FINAL: numpy array, the joined littrow extrapolated and fitted
+                      solution wavelengths
+            LL_PARAM_FINAL: numpy array, the joined littrow extrapolated and
+                            fitted fit coefficients
+
+    """
 
     func_name = __NAME__ + '.join_orders()'
     # get parameters from p
@@ -788,8 +1121,8 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
         Must contain at least:
             IC_LL_SP_MIN   minimum wavelength of the catalog
             IC_LL_SP_MAX   maximum wavelength of the catalog
-            IC_RESOL       Resolution of spectrograph
-            IC_LL_FREE_SPAN   window size in sigma unit
+            IC_RESOL: int, Resolution of spectrograph
+            IC_LL_FREE_SPAN: int, window size in sigma unit
             IC_HC_NOISE
 
     :param ll:
@@ -805,21 +1138,21 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
 
     :return all_lines: list, all lines in format:
 
-                    [order1lines, order2lines, order3lines, ..., orderNlines]
+            [order1lines, order2lines, order3lines, ..., orderNlines]
 
-                    where order1lines = [gparams1, gparams2, ..., gparamsN]
+            where order1lines = [gparams1, gparams2, ..., gparamsN]
 
-                    where:
-                        gparams[0] = output wavelengths
-                        gparams[1] = output sigma (gauss fit width)
-                        gparams[2] = output amplitude (gauss fit)
-                        gparams[3] = difference in input/output wavelength
-                        gparams[4] = input amplitudes
-                        gparams[5] = output pixel positions
-                        gparams[6] = output pixel sigma width
-                                          (gauss fit width in pixels)
-                        gparams[7] = output weights for the pixel position
-                    (See fit_emi_line)
+            where:
+                gparams[0] = output wavelengths
+                gparams[1] = output sigma (gauss fit width)
+                gparams[2] = output amplitude (gauss fit)
+                gparams[3] = difference in input/output wavelength
+                gparams[4] = input amplitudes
+                gparams[5] = output pixel positions
+                gparams[6] = output pixel sigma width
+                                  (gauss fit width in pixels)
+                gparams[7] = output weights for the pixel position
+            (See fit_emi_line)
 
     """
     func_name = __NAME__ + '.find_lines()'

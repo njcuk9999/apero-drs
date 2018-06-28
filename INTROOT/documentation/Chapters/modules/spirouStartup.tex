@@ -25,6 +25,7 @@ Begin DRS - Must be run at start of every recipe
 - loads the parameters from the primary configuration file, displays
   title, checks priamry constants and displays initial parameterization
 
+:param recipe: string, the recipe name
 :param quiet: bool, if True no messages are displayed
 
 :return cparams: parameter dictionary, ParamDict constants from primary
@@ -265,7 +266,7 @@ Deal with loading run time arguments:
                    if defined overwrites call from
                    command line (i.e. overwrites sys.argv)
 
-                   stored in p['arg_night_name']
+                   stored in p['ARG_NIGHT_NAME']
 
 :param files: list of strings or None, the files to use for this program
 
@@ -274,21 +275,21 @@ Deal with loading run time arguments:
 
               if defined overwrites call from command line
 
-              stored in p['arg_file_names']
+              stored in p['ARG_FILE_NAMES']
 
 :param customargs: None or list of strings, if list of strings then instead
                    of getting the standard runtime arguments
 
        i.e. in form:
 
-            program.py rawdirectory arg_file_names[0] arg_file_names[1]...
+            program.py night_dir arg_file_names[0] arg_file_names[1]...
 
        loads all arguments into customargs
 
-       i.e. if customargs = ['rawdir', 'filename', 'a', 'b', 'c']
+       i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
        expects command line arguments to be:
 
-            program.py rawdir filename a b c
+            program.py night_dir filename a b c
 
 :param mainfitsfile: string or None, if "customargs" is not None (i.e. if we
                      are using custom arguments) we must define one
@@ -309,6 +310,8 @@ Deal with loading run time arguments:
                         'calibdb' - the DRS_CALIB_DB folder
                         or the full path to the file
 
+
+
 :param quiet: bool, if True does not print or log messages
 
 :return p: dictionary, parameter dictionary
@@ -324,63 +327,49 @@ Defined in \spirouStartup\path{.spirouStartup.initial_file_setup}
 
 \begin{pythonbox}
 from SpirouDRS import spirouStartup
-spirouStartup.InitialFileSetup(p, kind=None, prefixes=None, add_to_p=None,
-                               contains=None, calibdb=False)
-spirouStartup.spirouStartup.initial_file_setup(p, kind=None, prefixes=None, add_to_p=None,
-                                               contains=None, calibdb=False)
+spirouStartup.InitialFileSetup(p, files=None, calibdb=False, no_night_name=False,
+                               no_files=False, skipcheck=False)
+spirouStartup.spirouStartup.initial_file_setup(p, files=None, calibdb=False, 
+                                               no_night_name=False, no_files=False, skipcheck=False)
+\end{pythonbox}
 
 \begin{pythondocstring}
-Run start up code (based on program and parameters defined in p before)
+Sets up the initial files (obtained with load_arguments) for a standard run
+ (i.e. requiring night_name and files) and performs checks based on the
+ recipe name p['RECIPE'] to see if files are correct for this recipe. If
+ calibdb is True loads the calibration database, if no_night_name is True
+ no night name is required. If no files is True no files are required. If
+ skipcheck is True file is not checked.
 
 :param p: parameter dictionary, ParamDict containing constants
     Must contain at least:
-            log_opt: string, log option, normally the program name
-            fitsfilename: string, the full path of for the main raw fits
-                          file for a recipe
-                          i.e. /data/raw/20170710/filename.fits
-            arg_file_names: list, list of files taken from the command line
-                            (or call to recipe function) must have at least
-                            one string filename in the list
-            program: string, the recipe/way the script was called
-                     i.e. from sys.argv[0]
-            reduced_dir: string, the reduced data directory
-                         (i.e. p['DRS_DATA_REDUC']/p['arg_night_name'])
-            DRS_DATA_REDUC: string, the directory that the reduced data
-                            should be saved to/read from
-            DRS_CALIB_DB: string, the directory that the calibration
-                          files should be saved to/read from
+        LOG_OPT: string, log option, normally the program name
+        RECIPE: string, the recipe name (must be defined in recipe control
+                file)
+        arg_night_name: string, the folder within data raw directory
+                        containing files (also reduced directory) i.e.
+                        /data/raw/20170710 would be "20170710"
+        arg_file_names: list, list of files taken from the command line
+                        (or call to recipe function) must have at least
+                        one string filename in the list
+        fitsfilename: string, the full path of for the main raw fits
+                      file for a recipe
+                      i.e. /data/raw/20170710/filename.fits
+                          
+:param files: list or None, the files passed in as arguments 
+              (If None comes from ARG_FILE_NAMES) 
+:param calibdb: bool, if True calibration database loaded
+:param no_night_name: bool, if True no night name expected
+:param no_files: bool, if True no files expected
+:param skipcheck: bool, if True does not check files
 
-:param kind: string, description of program we are running (i.e. dark)
-
-:param prefixes: list of strings, prefixes to look for in file name
-:param prefixes: list of strings, prefixes to look for in file name
-                 will exit code if none of the prefixes are found
-                 (prefix = None if no prefixes are needed to be found)
-
-:param add_to_p: dictionary structure:
-
-        add_to_p[prefix1] = dict(key1=value1, key2=value2)
-        add_to_p[prefix2] = dict(key3=value3, key4=value4)
-
-        where prefix1 and prefix2 are the strings in "prefixes"
-
-        This will add the sub dictionaries to the main parameter dictionary
-        based on which prefix is found
-
-        i.e. if prefix1 is found key "value3" and "value4" above are added
-        (with "key3" and "key4") to the parameter dictionary p
-
-:param contains: string or None: if not None then input files must contain
-                 this sub string else error is raised
-
-:param calibdb: bool, if True calibDB folder and files are required and
-                program will log and exit if they are not found
-                if False, program will create calibDB folder
 
 :return p: parameter dictionary, the updated parameter dictionary
         Adds the following:
-            calibDB: dictionary, the calibration database dictionary
-            prefixes from add_to_p (see spirouStartup.deal_with_prefixes)
+            DPRTYPE: string, the datatype header key
+            PREPROCESSED: bool, if True file is processed (or unchecked)
+            
+returns SystemExit if file is not valid for recipe
 \end{pythondocstring}
 \end{minipage}
 
@@ -420,6 +409,164 @@ InitialFileSetup is not used (i.e. when custom arguments are used)
 \end{pythondocstring}
 \end{minipage}
 
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{LoadMinimum}
+
+Defined in \spirouStartup\path{.spirouStartup.load_minimum}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.LoadMinimum(p, customargs=None)
+spirouStartup.spirouStartup.load_minimum(p, customargs=None)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Load minimal settings (without fitsfilename, arg_file_names, arg_file_dir
+etc)
+
+:param p: parameter dictionary, ParamDict containing constants
+:param customargs: None or list of strings, if list of strings then instead
+                   of getting the standard runtime arguments
+
+       i.e. in form:
+
+            program.py night_dir arg_file_names[0] arg_file_names[1]...
+
+       loads all arguments into customargs
+
+       i.e. if customargs = ['night_dir', 'filename', 'a', 'b', 'c']
+       expects command line arguments to be:
+
+            program.py night_dir filename a b c
+
+:return p: dictionary, parameter dictionary
+        Adds the following:
+            program: string, the recipe/way the script was called
+                     i.e. from sys.argv[0]
+            log_opt: string, log option, normally the program name
+            arg_night_name: string, empty (i.e. '')
+            reduced_dir: string, the reduced data directory
+                         (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+            raw_dir: string, the raw data directory
+                     (i.e. p['DRS_DATA_RAW']/p['ARG_NIGHT_NAME'])
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{LoadOtherConfig}
+
+Defined in \spirouStartup\path{.spirouStartup.load_other_config_file}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.LoadOtherConfig(p, key, logthis=True, required=False)
+spirouStartup.spirouStartup.load_other_config_file(p, key, logthis=True, required=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Load a secondary configuration file from p[key] with wrapper to deal
+with ConfigErrors (pushed to WLOG)
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+            key: "key" defined in call
+
+:param key: string, the key in "p" storing the location of the secondary
+            configuration file
+:param logthis: bool, if True loading of this config file is logged to
+                screen/log file
+:param required: bool, if required is True then the secondary config file
+                 is required for the DRS to run and a ConfigError is raised
+                 (program exit)
+
+:return p: parameter, dictionary, the updated parameter dictionary with
+           the secondary configuration files loaded into it as key/value
+           pairs
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{SingleFileSetup}
+
+Defined in \spirouStartup\path{.spirouStartup.}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.SingleFileSetup(p, filename, log=True, skipcheck=False)
+spirouStartup.spirouStartup.single_file_setup(p, filename, log=True, skipcheck=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Check "filename" is valid for recipe p["RECIPE"] and get the correct path,
+logs the output if log is True, and skips the check if skipcheck is True
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        LOG_OPT: string, log option, normally the program name
+        RECIPE: string, the recipe name (must be defined in recipe control
+                file)
+:param filename: string, the filename to check
+:param log: bool, whether to log "Now Processing" message
+:param skipcheck: bool, whether to skip the check
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            DPRTYPE: string, the datatype header key
+            PREPROCESSED: bool, if True file is processed (or unchecked)
+:return location: string, the path of the filename (i.e. the raw or
+                  reduced directory)
+
+returns SystemExit if file is not valid for recipe
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{MultiFileSetup}
+
+Defined in \spirouStartup\path{.spirouStartup.multi_file_setup}
+
+\begin{pythonbox}
+from SpirouDRS import spirouStartup
+spirouStartup.MultiFileSetup(p, files=None, log=True, skipcheck=False)
+spirouStartup.spirouStartup.multi_file_setup(p, files=None, log=True, skipcheck=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Wrapper for single_file_setup, checks that "files" are valid for recipe 
+p["RECIPE"] and get the correct path, logs the output if log is True, 
+and skips the check if skipcheck is True
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        LOG_OPT: string, log option, normally the program name
+        RECIPE: string, the recipe name (must be defined in recipe control
+                file)
+:param files: list of string, the filenames to check
+:param log: bool, whether to log "Now Processing" message
+:param skipcheck: bool, whether to skip the check
+
+:return p: parameter dictionary, the updated parameter dictionary
+        Adds the following:
+            DPRTYPE: string, the datatype header key
+            PREPROCESSED: bool, if True file is processed (or unchecked)
+:return locations: list of string, the paths of the filename 
+                   (i.e. the raw or reduced directory)
+
+returns SystemExit if any file is not valid for recipe
+\end{pythondocstring}
+\end{minipage}
 
 
 %----------------------------------------------------------------------------------------

@@ -5,12 +5,12 @@
 % Manual version, authors and dates
 % ----------------------------------------------
 % the current versions of the manuals
-\newcommand{\MyVersion}{0.2.013}
+\newcommand{\MyVersion}{0.3.002}
 \newcommand{\MyVersionUser}{\MyVersion}
 \newcommand{\MyVersionDev}{\MyVersion}
 
 % the last date modified for the manuals
-\newcommand{\MyDate}{2018-06-18}
+\newcommand{\MyDate}{2018-06-28}
 \newcommand{\MyDateUser}{\MyDate}
 \newcommand{\MyDateDev}{\MyDate}
 
@@ -25,7 +25,7 @@
 % DRS variables
 % ----------------------------------------------
 % The version of the DRS code
-\newcommand{\MyCodeVersion}{0.2.048 (alpha pre-release)}
+\newcommand{\MyCodeVersion}{0.2.056 (alpha pre-release)}
 
 % The instrument
 \newcommand{\instrument}{SPIRou\,}
@@ -74,6 +74,18 @@
 
 \newcommand{\polspirou}{\definevariable{ch:the_recipes:pol_spirou}{pol\_spirou}\,}
 
+\newcommand{\calpreprocess}{\definevariable{ch:the_recipes}{cal\_preprocess\_spirou}\,}
+
+\newcommand{\calexometer}{\definevariable{ch:the_recipes}{cal\_exposure\_meter}\,}
+
+\newcommand{\offlisting}{\definevariable{ch:the_recipes}{off\_listing\_RAW\_spioru}\,}
+
+\newcommand{\visuEDS}{\definevariable{ch:the_recipes}{visu\_E2DS\_spirou}\,}
+
+\newcommand{\visuRAW}{\definevariable{ch:the_recipes}{visu\_RAW\_spirou}\,}
+
+\newcommand{\visuWAVE}{\definevariable{ch:the_recipes}{visu\_WAVE\_spirou}\,}
+
 \newcommand{\calvalidate}{\definevariable{ch:the_recipes:cal_validate_spirou}{cal\_validate\_spirou}\,}
 
 % Define all recipes
@@ -113,6 +125,10 @@
 \newcommand{\spirouStartup}{\definevariable{ch:the_module:spirouStartup}{SpirouDRS{\hskip 0pt}.spirouStartup}\,}
 
 \newcommand{\spirouTHORCA}{\definevariable{ch:the_module:spirouTHORCA}{SpirouDRS{\hskip 0pt}.spirouTHORCA}\,}
+
+\newcommand{\spirouPOLAR}{\definevariable{ch:the_module:spirouPOLAR}{SpirouDRS{\hskip 0pt}.spirouPOLAR}\,}
+
+\newcommand{\spirouExposeMeter}{\definevariable{ch:the_module:spirouImage}{SpirouDRS{\hskip 0pt}.spirouExposeMeter}\,}
 
 % python specifics
 \newcommand{\MAIN}{\twound{main}\twound{()}\,}
