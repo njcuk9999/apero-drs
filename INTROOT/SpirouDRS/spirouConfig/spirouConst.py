@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ = '0.2.052'
+__version__ = '0.2.055'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ = '2018-06-21'
+__date__ = '2018-06-26'
 
 
 # =============================================================================
@@ -1009,7 +1009,10 @@ def CCF_FITS_FILE(p):
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['CCF_MASK'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
-    corfilename = p['E2DSFILE'].replace('_e2ds', newext)
+    if '_e2dsff' in p['E2DSFILE']:
+        corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+    else:
+        corfilename = p['E2DSFILE'].replace('_e2ds', newext)
 
     corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf file location and name
@@ -1170,11 +1173,27 @@ def DEG_POL_FILE(p, loc):
     # get new extention
     new_ext = '_pol.fits'
     # get new filename
-    filename = basefilename.replace('.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     deg_pol_filename = os.path.join(reducedfolder, filename)
     # return absolute path
     return deg_pol_filename
+
+
+# noinspection PyPep8Naming
+def STOKESI_POL_FILE(p, loc):
+    # get reduced dir
+    reducedfolder = p['REDUCED_DIR']
+    # get base filename
+    basefilename = loc['BASENAME']
+    # get new extention
+    new_ext = '_StokesI.fits'
+    # get new filename
+    filename = basefilename.replace('_A.fits', new_ext)
+    # construct absolute path
+    stokesI_filename = os.path.join(reducedfolder, filename)
+    # return absolute path
+    return stokesI_filename
 
 
 # noinspection PyPep8Naming
@@ -1186,7 +1205,7 @@ def NULL_POL1_FILE(p, loc):
     # get new extention
     new_ext = '_null1_pol.fits'
     # get new filename
-    filename = basefilename.replace('.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     null_pol1_filename = os.path.join(reducedfolder, filename)
     # return absolute path
@@ -1202,7 +1221,7 @@ def NULL_POL2_FILE(p, loc):
     # get new extention
     new_ext = '_null2_pol.fits'
     # get new filename
-    filename = basefilename.replace('.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     null_pol2_filename = os.path.join(reducedfolder, filename)
     # return absolute path

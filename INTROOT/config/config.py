@@ -26,6 +26,9 @@ USER_CONFIG = 1
 # path settings
 # -----------------------------------------------------------------------------
 
+# DO NOT change in here! Please add DRS_UCONFIG to your environmental settings
+# then copy this section to a new config.py at that path
+
 #   Define the DATA directory
 TDATA = "/home/data/CFHT/"
 
