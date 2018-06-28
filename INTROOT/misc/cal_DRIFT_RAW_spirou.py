@@ -141,7 +141,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # Get localisation coefficients
     # ----------------------------------------------------------------------
     # original there is a loop but it is not used --> removed
-    p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
+    p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
     # get localisation fit coefficients
     loc = spirouLOCOR.GetCoeffs(p, hdr)
 
