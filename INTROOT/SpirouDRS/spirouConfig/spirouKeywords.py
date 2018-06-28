@@ -50,6 +50,9 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_UNIX',
             'kw_BBAD',
             'kw_BBFLAT',
+            'kw_BERV',
+            'kw_BJD',
+            'kw_BERV_MAX',
             'kw_BHOT',
             'kw_BNDARK',
             'kw_BNFLAT',
@@ -417,6 +420,10 @@ kw_CCF_CONTRAST = ['CCFCONTR', 0, 'Contrast of  CCF (%)']
 kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
 kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
 kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
+kw_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
+kw_BJD = ['BJD', 0, 'Barycorrpy BJD']
+kw_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
+
 
 # -----------------------------------------------------------------------------
 # Define wave variables
