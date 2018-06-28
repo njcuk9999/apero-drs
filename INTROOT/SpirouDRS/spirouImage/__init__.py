@@ -28,10 +28,10 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
            'CorrectForDark', 'CorrectForBadPix', 'FitTilt', 'FlipImage',
-           'GetAllSimilarFiles', 'GetSigdet', 'GetExpTime', 'GetBadPixMap',
-           'GetGain', 'GetAcqTime', 'GetKey', 'GetKeys', 'GetTilt',
-           'GetTypeFromHeader', 'IdentifyUnProFile', 'InterpolateBadRegions',
-           'LocateBadPixels', 'LocateFullBadPixels',
+           'FiberParams', 'GetAllSimilarFiles', 'GetSigdet', 'GetExpTime',
+           'GetBadPixMap', 'GetGain', 'GetAcqTime', 'GetKey', 'GetKeys',
+           'GetTilt', 'GetTypeFromHeader', 'IdentifyUnProFile',
+           'InterpolateBadRegions', 'LocateBadPixels', 'LocateFullBadPixels',
            'MakeTable', 'MeasureDark', 'MergeTable', 'NormMedianFlat',
            'PPCorrectTopBottom', 'PPMedianFilterDarkAmps',
            'PPMedianOneOverfNoise', 'ReadParam', 'ReadData', 'ReadImage',
@@ -39,6 +39,7 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
            'ReadWaveFile', 'ReadBlazeFile', 'ReadOrderProfile',
            'ResizeImage', 'WriteImage', 'WriteTable']
+
 
 # =============================================================================
 # Function aliases
@@ -70,6 +71,8 @@ FitTilt = spirouImage.fit_tilt
 FixNonPreProcess = spirouImage.fix_non_preprocessed
 
 FlipImage = spirouImage.flip_image
+
+FiberParams = spirouFile.fiber_params
 
 GetAllSimilarFiles = spirouImage.get_all_similar_files
 

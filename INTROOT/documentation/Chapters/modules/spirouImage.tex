@@ -410,6 +410,37 @@ value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{FiberParams}
+
+Defined in \spirouImage\path{.spirouFile.fiber_params}
+
+\begin{pythonbox}
+from SpirouDRS import spirouLOCOR
+spirouImage.FiberParams(pp, fiber, merge=False)
+spirouImage.spirouFile.fiber_params(pp, fiber, merge=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Takes the parameters defined in FIBER_PARAMS from parameter dictionary
+(i.e. from config files) and adds the correct parameter to a fiber
+parameter dictionary
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param fiber: string, the fiber type (and suffix used in configuration file)
+              i.e. for fiber AB fiber="AB" and nbfib_AB should be present
+              in config if "nbfib" is in FIBER_PARAMS
+:param merge: bool, if True merges with pp and returns
+
+:return fparam: dictionary, the fiber parameter dictionary (if merge False)
+:treun pp: dictionary, parameter dictionary (if merge True)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
 \subsection{FitTilt}
