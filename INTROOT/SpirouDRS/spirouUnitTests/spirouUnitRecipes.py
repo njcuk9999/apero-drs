@@ -15,6 +15,7 @@ Created on 2018-05-01 at 13:06
 """
 from __future__ import division
 import numpy as np
+import sys
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -79,7 +80,11 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'visu_E2DS_spirou',
                  'pol_spirou']
 # string type (as sometimes we have weird numpy strings
-PYTHON_STRINGS = [str, np.str_, np.str, np.str0]
+if sys.version_info.major > 2:
+    PYTHON_STRINGS = [str, np.str_, np.str, np.str0]
+else:
+    PYTHON_STRINGS = [str, np.str_, np.str]
+
 
 # =============================================================================
 # Define functions
