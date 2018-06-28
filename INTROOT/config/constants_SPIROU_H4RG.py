@@ -828,7 +828,7 @@ ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
-#   polarimtery parameters
+#   polarimetry parameters
 # -----------------------------------------------------------------------------
 #  Define all possible stokes parameters                          - [pol_spirou]
 ic_polar_stokes_params = ['V', 'Q', 'U']
@@ -847,6 +847,9 @@ ic_polar_cont_binsize = 4000
 
 #  Define the polarimetry continuum overlap size (for plotting)   - [pol_spirou]
 ic_polar_cont_overlap = 0
+
+#  Define the telluric mask for calculation of continnum          - [pol_spirou]
+ic_polar_cont_tellmask = 'telluric2.mas'
 
 
 # -----------------------------------------------------------------------------
