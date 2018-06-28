@@ -15,9 +15,7 @@ Last modified: 2018-06-22
 """
 from __future__ import division
 import numpy as np
-import os
 
-from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -49,16 +47,17 @@ def main(night_name=None, files=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    # TODO add this recipe to recipe control
+    p = spirouStartup.Begin(recipe='cal_HC_E2DS_spirou.py')
+    # get parameters from configuration files and run time arguments
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile',
                                     mainfitsdir='reduced')
-
-    # load the calibDB
-    p = spirouStartup.LoadCalibDB(p)
-    # get lamp parameters
-    p = spirouTHORCA.GetLampParams(p)
+    # setup files and get fiber
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
+    # set the fiber type
+    p['FIB_TYP'] = [p['FIBER']]
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -74,14 +73,37 @@ def main(night_name=None, files=None):
     blaze = spirouImage.ReadBlazeFile(p)
 
     # ----------------------------------------------------------------------
+    # Get lamp params
+    # ----------------------------------------------------------------------
+
+    # get relevant (cass/ref) fiber position (for lamp identification)
+    p['FIB_TYP'] = [p['FIBER']]
+    gkwargs = dict(return_value=True, dtype=str)
+    if p['FIB_TYP'] == ['C']:
+        p['FIB_POS'] = spirouImage.ReadParam(p, hdr, 'kw_CREF',
+                                             **gkwargs)
+    elif p['FIB_TYP'] in (['AB'], ['A'], ['B']):
+        p['FIB_POS'] = spirouImage.ReadParam(p, hdr, 'kw_CCAS',
+                                             **gkwargs)
+    else:
+        emsg1 = ('Fiber position cannot be identified for fiber={0}'
+                 .format(p['FIB_TYP']))
+        emsg2 = '    function={0}'.format(__NAME__)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # get lamp parameters
+    p = spirouTHORCA.GetLampParams(p)
+
+    # ----------------------------------------------------------------------
     # Get catalogue and fitted line list
     # ----------------------------------------------------------------------
     # load line file (from p['IC_LL_LINE_FILE'])
     ll_line_cat, ampl_line_cat = spirouImage.ReadLineList(p)
     # construct fitted lines table filename
     wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE(p)
+    WLOG('', p['LOG_OPT'], wavelltbl)
     # read fitted lines
-    ll_line_fit, ampl_line_fit = np.genfromtxt(wavelltbl, skip_header=2,
+    ll_line_fit, ampl_line_fit = np.genfromtxt(wavelltbl, skip_header=4,
+                                               skip_footer=2, unpack=True,
                                                usecols=(1, 3))
 
     # ----------------------------------------------------------------------
@@ -91,15 +113,18 @@ def main(night_name=None, files=None):
     plt.ion()
     plt.figure()
 
-    for i in np.arange(nx):
-        plt.plot(wave[i], e2ds[i])
+    for order_num in np.arange(nx):
+        plt.plot(wave[order_num], e2ds[order_num])
 
     for line in range(len(ll_line_cat)):
-        plt.vlines(ll_line_cat[i],0,max(min(e2ds), ampl_line_cat[i]))
+        plt.vlines(ll_line_cat[line], 0, 200000 +
+                   max(np.min(e2ds), ampl_line_cat[line]),
+                   colors='darkgreen', linestyles='dashed')
 
     for line in range(len(ll_line_fit)):
-        plt.vlines(ll_line_fit[i],0,max(min(e2ds), ampl_line_fit[i]))
-
+        plt.vlines(ll_line_fit[line], 0, 200000 +
+                   max(np.min(e2ds), ampl_line_fit[line]),
+                   colors='magenta', linestyles='dashdot')
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Flux e-')

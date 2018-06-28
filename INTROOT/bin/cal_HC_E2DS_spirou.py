@@ -116,7 +116,7 @@ def main(night_name=None, files=None):
         emsg2 = '    function={0}'.format(__NAME__)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get lamp parameters
-    p = spirouTHORCA.GetLampParams(p)
+    p = spirouTHORCA.GetLampParams(p, loc['HCHDR'])
 
     # ----------------------------------------------------------------------
     # Obtain the flat

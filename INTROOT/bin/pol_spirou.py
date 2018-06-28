@@ -85,7 +85,7 @@ def main(night_name=None, files=None):
     polardict = ParamDict()
     # sort files
     polardict = spirouPOLAR.SortPolarFiles(p, polardict)
-
+    
     # ----------------------------------------------------------------------
     # Load the input polarimetry data and check if provided data are
     #    sufficient for polarimetry calculation
@@ -94,23 +94,28 @@ def main(night_name=None, files=None):
     loc = ParamDict()
     # load files
     p, loc = spirouPOLAR.LoadPolarData(p, polardict, loc)
-
+    
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
     loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-
+    
     # ----------------------------------------------------------------------
     # Polarimetry computation
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculatePolarimetry(p, loc)
+    
+    # ----------------------------------------------------------------------
+    # Stokes I computation
+    # ----------------------------------------------------------------------
+    loc = spirouPOLAR.CalculateStokesI(p, loc)
 
     # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
-
+    
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
@@ -121,22 +126,26 @@ def main(night_name=None, files=None):
         sPlt.polar_continuum_plot(loc)
         # plot polarimetry results
         sPlt.polar_result_plot(loc)
+        # plot total flux (Stokes I)
+        sPlt.polar_stokesI_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
-
+    
     # ------------------------------------------------------------------
     # Store polarimetry in file(s)
     # ------------------------------------------------------------------
     # construct file names
     degpolfits = spirouConfig.Constants.DEG_POL_FILE(p, loc)
     degpolfitsname = os.path.split(degpolfits)[-1]
+    stokesIfits = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
+    stokesIfitsname = os.path.split(stokesIfits)[-1]
     nullpol1fits= spirouConfig.Constants.NULL_POL1_FILE(p, loc)
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
     nullpol2fits = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
     nullpol2fitsname = os.path.split(nullpol2fits)[-1]
     # log that we are saving POL spectrum
-    wmsg = 'Saving POL, NULL1, and NULL2 to {0}, {1}, {2}'
-    wargs = [degpolfitsname, nullpol1fitsname, nullpol2fitsname]
+    wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
+    wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname, nullpol2fitsname]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
     # add keys from original header of base file
@@ -149,7 +158,10 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_POL_METHOD'], value=loc['METHOD'])
 
     # save POL data to file
-    spirouImage.WriteImage(degpolfits, loc['POL'], hdict)
+    spirouImage.WriteImageMulti(degpolfits, [loc['POL'],loc['POLERR']], hdict)
+    # save STOKESI data to file
+    spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'],loc['STOKESIERR']],
+                                hdict)
     # save NULL1 data to file
     spirouImage.WriteImage(nullpol1fits, loc['NULL1'], hdict)
     # save NULL2 data to file

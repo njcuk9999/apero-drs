@@ -46,12 +46,12 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, hcfiles=None, fpfile=None):
+def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    p = spirouStartup.Begin()
+    p = spirouStartup.Begin(recipe=__NAME__)
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
         customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
@@ -59,28 +59,29 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
-    # as we have custom arguments need to load the calibration database
-    p = spirouStartup.LoadCalibDB(p)
-
-    # set find line mode
-    find_lines_mode = p['HC_FIND_LINES_MODE']
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsdir='reduced',
+                                    mainfitsfile='hcfiles')
 
     # ----------------------------------------------------------------------
-    # Construct filenames and get fiber type
+    # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    # get reduced directory + night name
-    rdir = p['REDUCED_DIR']
-    # construct and test the hcfile
-    fpfitsfilename = spirouStartup.GetFile(p, rdir, p['FPFILE'], 'fp', 'FP')
-    # construct and test fpfile
-    hcfilenames = spirouStartup.GetFiles(p, rdir, p['HCFILES'], 'hc', 'HC')
+    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['FPFILE'])
+    fiber1 = str(p['FIBER'])
+    p, hcfilenames = spirouStartup.MultiFileSetup(p, files=p['HCFILES'])
+    fiber2 = str(p['FIBER'])
     # set the hcfilename to the first hcfilenames
     hcfitsfilename = hcfilenames[0]
 
-    # get the fiber type
-    fiber1 = spirouStartup.GetFiberType(p, fpfitsfilename)
-    fiber2 = spirouStartup.GetFiberType(p, hcfilenames[0])
+    # ----------------------------------------------------------------------
+    # Once we have checked the e2dsfile we can load calibDB
+    # ----------------------------------------------------------------------
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
+
+    # ----------------------------------------------------------------------
+    # Have to check that the fibers match
+    # ----------------------------------------------------------------------
     if fiber1 == fiber2:
         p['FIBER'] = fiber1
         fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
@@ -89,6 +90,12 @@ def main(night_name=None, hcfiles=None, fpfile=None):
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # set the fiber type
+    p['FIB_TYP'] = [p['FIBER']]
+    p.set_source('FIB_TYP', __NAME__ + '/main()')
+
+    # set find line mode
+    find_lines_mode = p['HC_FIND_LINES_MODE']
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -113,19 +120,19 @@ def main(night_name=None, hcfiles=None, fpfile=None):
     # Get basic image properties for reference file
     # ----------------------------------------------------------------------
     # get sig det value
-    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
+    p = spirouImage.GetSigdet(p, hchdr, name='sigdet')
     # get exposure time
-    p = spirouImage.GetExpTime(p, hdr, name='exptime')
+    p = spirouImage.GetExpTime(p, hchdr, name='exptime')
     # get gain
-    p = spirouImage.GetGain(p, hdr, name='gain')
+    p = spirouImage.GetGain(p, hchdr, name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    p = spirouImage.GetAcqTime(p, hchdr, name='acqtime', kind='unix')
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
     # get lamp parameters
-    p = spirouTHORCA.GetLampParams(p)
+    p = spirouTHORCA.GetLampParams(p, hchdr)
 
     # ----------------------------------------------------------------------
     # define wave filename - TODO
