@@ -76,22 +76,8 @@ def main(night_name=None, files=None):
     # Get lamp params
     # ----------------------------------------------------------------------
 
-    # get relevant (cass/ref) fiber position (for lamp identification)
-    p['FIB_TYP'] = [p['FIBER']]
-    gkwargs = dict(return_value=True, dtype=str)
-    if p['FIB_TYP'] == ['C']:
-        p['FIB_POS'] = spirouImage.ReadParam(p, hdr, 'kw_CREF',
-                                             **gkwargs)
-    elif p['FIB_TYP'] in (['AB'], ['A'], ['B']):
-        p['FIB_POS'] = spirouImage.ReadParam(p, hdr, 'kw_CCAS',
-                                             **gkwargs)
-    else:
-        emsg1 = ('Fiber position cannot be identified for fiber={0}'
-                 .format(p['FIB_TYP']))
-        emsg2 = '    function={0}'.format(__NAME__)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get lamp parameters
-    p = spirouTHORCA.GetLampParams(p)
+    p = spirouTHORCA.GetLampParams(p, hdr)
 
     # ----------------------------------------------------------------------
     # Get catalogue and fitted line list
