@@ -623,6 +623,8 @@ em_max_lambda = 1823.1
 #           - "raw" (4096 x 4096)
 #           - "drs" flipped in x and y and resized by
 #                (ic_ccdx_low, ic_ccdx_high, ic_ccdy_low, ic_ccdy_high
+#           - "pre-process" (4096 x 4096) and rotated from raw
+#           - "all" - all of the above
 em_output_type = "all"
 
 #  Define whether to combine with bad pixel mask or not               - [cal_em]
