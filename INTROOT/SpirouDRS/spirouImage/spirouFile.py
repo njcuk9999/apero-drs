@@ -15,8 +15,8 @@ import glob
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouImage
-from SpirouDRS import spirouLOCOR
+from . import spirouFITS
+from . import spirouTable
 
 
 # =============================================================================
@@ -29,6 +29,9 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+ConfigError = spirouConfig.ConfigError
 # Get Logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
@@ -501,6 +504,35 @@ def check_preprocess(p, filename=None):
             WLOG('error', p['LOG_OPT'], emsgs)
 
 
+def fiber_params(pp, fiber, merge=False):
+    """
+    Takes the parameters defined in FIBER_PARAMS from parameter dictionary
+    (i.e. from config files) and adds the correct parameter to a fiber
+    parameter dictionary
+
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
+    :param fiber: string, the fiber type (and suffix used in confiruation file)
+                  i.e. for fiber AB fiber="AB" and nbfib_AB should be present
+                  in config if "nbfib" is in FIBER_PARAMS
+    :param merge: bool, if True merges with pp and returns
+
+    :return fparam: dictionary, the fiber parameter dictionary (if merge False)
+    :treun pp: dictionary, paramter dictionary (if merge True)
+    """
+    # get dictionary parameters for suffix _fpall
+    try:
+        fparams = spirouConfig.ExtractDictParams(pp, '_fpall', fiber,
+                                                 merge=merge)
+    except ConfigError as e:
+        WLOG(e.level, pp['LOG_OPT'], e.msg)
+        fparams = ParamDict()
+    # return fiber dictionary
+    return fparams
+
+
 # =============================================================================
 # Define worker functions
 # =============================================================================
@@ -513,7 +545,7 @@ def get_control_file():
     controlfn, controlfmt = spirouConfig.Constants.RECIPE_CONTROL_FILE()
     controlfile = os.path.join(datadir, controlfn)
     # load control file
-    control = spirouImage.ReadTable(controlfile, fmt=controlfmt, comment='#')
+    control = spirouTable.read_table(controlfile, fmt=controlfmt, comment='#')
     # return control
     return control
 
@@ -527,7 +559,7 @@ def get_header_file(p, filename, hdr=None, cdr=None):
             emsg2 = '    fuction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
         else:
-            hdr, cdr = spirouImage.ReadHeader(p, filename, return_comments=True)
+            hdr, cdr = spirouFITS.read_header(p, filename, return_comments=True)
     # return header and comments
     return hdr, cdr
 
@@ -540,7 +572,7 @@ def get_properties_from_control(p, control):
     # Get FIBER and fiber parameters
     if control['fiber'] != 'None':
         p['FIBER'] = control['fiber']
-        p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
+        p = fiber_params(p, p['FIBER'], merge=True)
         if p['DRS_DEBUG']:
             # log that fiber was identified
             wmsg = 'Identified file as {0}, fiber={1}'
