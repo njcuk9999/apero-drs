@@ -1561,7 +1561,145 @@ then the whole image (E2DS file) is rejected. Value must be a float larger than 
 
 \begin{itemize}
 
-\item Items needed
+% IC_LAMPS
+\item \namedlabel{text:ic_lamps} \ParameterEntry{Lamp types}
+{Define the lamp types. These must be present in \definevariable{text:ic_ll_line_file_all}{IC\_LL\_LINE\_FILE\_ALL} and \definevariable{text:ic_cat_type_all}{IC\_CAT\_TYPE\_ALL} to be used. Each dictionary entry must be a list of strings (to look for in the header).}
+{IC\_LAMPS}{\lstinline[style=pythoninline]| dict(UNe=['hcone', 'hc1'], TH=['hctwo', 'hc2']) |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{decide_on_lamp_type}}{Public}
+
+% IC_LL_LINE_FILE_ALL
+\item \namedlabel{text:ic_ll_line_file_all} \ParameterEntry{Catalogue line list files}
+{Define the lamp types. These must be present in \definevariable{text:ic_lamps}{IC\_LAMPS} and \definevariable{text:ic_cat_type_all}{IC\_CAT\_TYPE\_ALL} to be used.}
+{IC\_LL\_LINE\_FILE\_ALL}{\lstinline[style=pythoninline]| dict(UNe='catalogue_UNe.dat', TH='catalogue_ThAr.dat') |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{get_lamp_parameters}}{Public}
+
+% IC_CAT_TYPE_ALL
+\item \namedlabel{text:ic_cat_type_all} \ParameterEntry{Type of line list catalogue}
+{Define the lamp types. These must be present in \definevariable{text:ic_lamps}{IC\_LAMPS} and \definevariable{text:ic_ll_line_file_all}{IC\_LL\_LINE\_FILE\_ALL} to be used.}
+{IC\_CAT\_TYPE\_ALL}{\lstinline[style=pythoninline]| dict(UNe='fullcat', TH='thcat') |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{get_lamp_parameters}}{Public}
+
+% IC_RESOL
+\item \namedlabel{text:ic_resol} \ParameterEntry{Resolution of the detector}
+{Define the resolution of the detector}
+{IC\_RESOL}{65000}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_FREE_SPAN
+\item \namedlabel{text:ic_ll_free_span} \ParameterEntry{Wavelength free-span}
+{Define the wavelength free span parameter in find lines. Must be a list of line widths (in pixels). Ordered from largest to smallest.}
+{IC\_LL\_FREE\_SPAN}{[6.0, 3.5]}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_SP_MIN
+\item \namedlabel{text:ic_ll_sp_min} \ParameterEntry{Minimum wavelength - find lines}
+{Define the minimum wavelength of the detector to use in find lines (in nm).}
+{IC\_LL\_SP\_MIN}{900}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_SP_MAX
+\item \namedlabel{text:ic_ll_sp_max} \ParameterEntry{Maximum wavelength - find lines}
+{Define the maximum wavelength of the detector to use in find lines (in nm).}
+{IC\_LL\_SP\_MAX}{2400}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_HC_NOISE
+\item \namedlabel{text:ic_hc_noise} \ParameterEntry{Readout noise - find lines}
+{Define the read out noise to use in find lines}
+{IC\_HC\_NOISE}{60}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_MAX_SIGLL_CAL_LINES
+\item \namedlabel{text:ic_max_sigll_cal_lines} \ParameterEntry{Maximum sig-fit of guess lines}
+{Define the maximum sigma fit of the guessed lines (FWHM/2.35 of the lines). Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_SIGLL\_CAL\_LINES}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_MAX_ERRW_ONFIT
+\item \namedlabel{text:ic_max_errw_onfit} \ParameterEntry{Maximum error on guess lines}
+{Define the maximum error on the guess of the lines. Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_ERRW\_ONFIT}{1}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_MAX_AMPL_LINE
+\item \namedlabel{text:ic_max_ampl_line} \ParameterEntry{Maximum amplitude on guess lines}
+{Define the maximum amplitude on the guess of the lines. Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_AMPL\_LINE}{1.0e8}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_HC_N_ORD_START
+\item \namedlabel{text:ic_hc_n_ord_start} \ParameterEntry{Wave solution first order}
+{Defines the first order to at which the wave solution is calculated.}
+{IC\_HC\_N\_ORD\_START}{13}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{calculate_littrow_sol}}{Public}
+
+% IC_HC_N_ORD_FINAL
+\item \namedlabel{text:ic_hc_n_ord_final} \ParameterEntry{Wave solution last order}
+{Defines the last order to at which the wave solution is calculated.}
+{IC\_HC\_N\_ORD\_START}{40}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{calculate_littrow_sol}, \spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_HC_T_ORDER_START
+\item \namedlabel{text:ic_hc_t_order_start} \ParameterEntry{First echelle order number}
+{Defines the first echelle order number extracted.}
+{IC\_HC\_T\_ORDER\_START}{79}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{detect_bad_lines}, \spirouTHORCA.\path{extrapolate_littrow_sol}, \spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}, \spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_ERRX_MIN
+\item \namedlabel{text:ic_errx_min} \ParameterEntry{Minimum x error in 1D fit}
+{Define the maximum weight given to a line via defining the minimum instrumental error, such that:
+\begin{equation}
+\text{max\_weight} = 1.0 / (\text{IC\_ERRX\_MIN})^2
+\end{equation}
+}
+{IC\_ERRX\_MIN}{0.01}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_LL_DEGR_FIT
+\item \namedlabel{text:ic_ll_degr_fit} \ParameterEntry{Wavelength solution poly-fit degree}
+{Define the wavelength fit polynomial order}
+{IC\_LL\_DEGR\_FIT}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}, \spirouTHORCA.\path{invert_1ds_ll_solution}}{Public}
+
+% IC_MAX_LLFIT_RMS
+\item \namedlabel{text:ic_max_llfit_rms} \ParameterEntry{Maximum RMS for wave solution sigma-clip fit}
+{Define the maximum RMS for the wavelength sigma-clip fitting process}
+{IC\_MAX\_LLFIT\_RMS}{3.0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_LITTROW_FIT_DEG_1
+\item \namedlabel{text:ic_littrow_fit_deg_1} \ParameterEntry{Littrow poly-fit degree 1}
+{Define the polynomial fit degree for the Littrow fit (iteration 1)}
+{IC\_LITTROW\_FIT\_DEG\_1}{5}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=1}{Public}
+
+% IC_LITTROW_FIT_DEG_2
+\item \namedlabel{text:ic_littrow_fit_deg_2} \ParameterEntry{Littrow poly-fit degree 2}
+{Define the polynomial fit degree for the Littrow fit (iteration 2)}
+{IC\_LITTROW\_FIT\_DEG\_2}{7}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=2}{Public}
+
+% IC_LITTROW_CUT_STEP_1
+\item \namedlabel{text:ic_littrow_cut_step_1} \ParameterEntry{Littrow cut steps}
+{Define the x-pixel interval between positions to measure the Littrow at (iteration 1)
+i.e.:
+\begin{equation}
+xcutpoints = [1 * step, 2 * step, 3 * step, ..., (N-1) * step]
+\end{equation}
+where `step' = IC\_LITTROW\_CUT\_STEP\_1 and `N' = length of x-dimension divided by `step'.}
+{IC\_LITTROW\_CUT\_STEP\_1}{250}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=1}{Public}
+
+% IC_LITTROW_CUT_STEP_2
+\item \namedlabel{text:ic_littrow_cut_step_2} \ParameterEntry{Littrow cut steps}
+{Define the x-pixel interval between positions to measure the Littrow at (iteration 2)
+i.e.:
+\begin{equation}
+xcutpoints = [1 * step, 2 * step, 3 * step, ..., (N-1) * step]
+\end{equation}
+where `step' = IC\_LITTROW\_CUT\_STEP\_2 and `N' = length of x-dimension divided by `step'.}
+{IC\_LITTROW\_CUT\_STEP\_2}{500}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=2}{Public}
 
 \end{itemize}
 
