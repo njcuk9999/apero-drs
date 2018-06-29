@@ -41,35 +41,6 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def fiber_params(pp, fiber, merge=False):
-    """
-    Takes the parameters defined in FIBER_PARAMS from parameter dictionary
-    (i.e. from config files) and adds the correct parameter to a fiber
-    parameter dictionary
-
-    :param pp: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-
-    :param fiber: string, the fiber type (and suffix used in confiruation file)
-                  i.e. for fiber AB fiber="AB" and nbfib_AB should be present
-                  in config if "nbfib" is in FIBER_PARAMS
-    :param merge: bool, if True merges with pp and returns
-
-    :return fparam: dictionary, the fiber parameter dictionary (if merge False)
-    :treun pp: dictionary, paramter dictionary (if merge True)
-    """
-    # get dictionary parameters for suffix _fpall
-    try:
-        fparams = spirouConfig.ExtractDictParams(pp, '_fpall', fiber,
-                                                 merge=merge)
-    except ConfigError as e:
-        WLOG(e.level, pp['LOG_OPT'], e.msg)
-        fparams = ParamDict()
-    # return fiber dictionary
-    return fparams
-
-
 def get_loc_coefficients(p, hdr=None, loc=None):
     """
     Extracts loco coefficients from parameters keys (uses header="hdr" provided

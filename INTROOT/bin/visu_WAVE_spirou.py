@@ -96,24 +96,58 @@ def main(night_name=None, files=None):
     # Plots
     # ----------------------------------------------------------------------
 
-    plt.ion()
+
+
+
+    # start interactive plot
+    sPlt.start_interactive_session()
+
     plt.figure()
 
     for order_num in np.arange(nx):
         plt.plot(wave[order_num], e2ds[order_num])
 
+    # get heights
+    heights = []
     for line in range(len(ll_line_cat)):
-        plt.vlines(ll_line_cat[line], 0, 200000 +
-                   max(np.min(e2ds), ampl_line_cat[line]),
-                   colors='darkgreen', linestyles='dashed')
+        heights.append(200000 + np.max([np.min(e2ds), ampl_line_cat[line]]))
+    # plot ll_line_cat
+    plt.vlines(ll_line_cat, 0, heights, colors='darkgreen',
+               linestyles='dashed')
 
-    for line in range(len(ll_line_fit)):
-        plt.vlines(ll_line_fit[line], 0, 200000 +
-                   max(np.min(e2ds), ampl_line_fit[line]),
-                   colors='magenta', linestyles='dashdot')
+    # get heights
+    heights = []
+    for line in range(len(ll_line_cat)):
+        heights.append(200000 + np.max([np.min(e2ds), ampl_line_fit[line]]))
+    # plot ll_line_fit
+    plt.vlines(ll_line_fit, 0, heights, colors='magenta',
+               linestyles='dashdot')
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Flux e-')
+
+    # end interactive session
+    sPlt.end_interactive_session()
+
+    # old code:
+    # plt.ion()
+    # plt.figure()
+    #
+    # for order_num in np.arange(nx):
+    #     plt.plot(wave[order_num], e2ds[order_num])
+    #
+    # for line in range(len(ll_line_cat)):
+    #     plt.vlines(ll_line_cat[line], 0, 200000 +
+    #                max(np.min(e2ds), ampl_line_cat[line]),
+    #                colors='darkgreen', linestyles='dashed')
+    #
+    # for line in range(len(ll_line_fit)):
+    #     plt.vlines(ll_line_fit[line], 0, 200000 +
+    #                max(np.min(e2ds), ampl_line_fit[line]),
+    #                colors='magenta', linestyles='dashdot')
+    #
+    # plt.xlabel('Wavelength [nm]')
+    # plt.ylabel('Flux e-')
 
     # ----------------------------------------------------------------------
     # End Message

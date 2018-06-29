@@ -623,6 +623,8 @@ em_max_lambda = 1823.1
 #           - "raw" (4096 x 4096)
 #           - "drs" flipped in x and y and resized by
 #                (ic_ccdx_low, ic_ccdx_high, ic_ccdy_low, ic_ccdy_high
+#           - "pre-process" (4096 x 4096) and rotated from raw
+#           - "all" - all of the above
 em_output_type = "all"
 
 #  Define whether to combine with bad pixel mask or not               - [cal_em]
@@ -707,7 +709,7 @@ ic_errx_min = 0.01  # 0.03
 # default = 5
 ic_ll_degr_fit = 4  # 4
 
-#  Define the max rms for the sigma-clip fit ll             - [cal_HC, cal_wave]
+#  Define the max rms for the wavelength sigma-clip fit     - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
