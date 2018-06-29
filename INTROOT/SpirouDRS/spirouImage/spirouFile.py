@@ -15,8 +15,8 @@ import glob
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouImage
-from SpirouDRS import spirouLOCOR
+from . import spirouFITS
+from . import spirouTable
 
 
 # =============================================================================
@@ -29,6 +29,9 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+ConfigError = spirouConfig.ConfigError
 # Get Logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
@@ -235,7 +238,7 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
 # =============================================================================
 # Define ID functions (main recipes)
 # =============================================================================
-def check_file_id(p, filename, recipe, hdr=None, **kwargs):
+def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, **kwargs):
     """
     Checks the "filename" against the "recipe" (using recipe control)
 
@@ -279,7 +282,20 @@ def check_file_id(p, filename, recipe, hdr=None, **kwargs):
     # ---------------------------------------------------------------------
     # Check that recipe is valid
     # ---------------------------------------------------------------------
-    if recipe not in control['Recipe']:
+    if skipcheck:
+        # log that we are skipping checks
+        wmsg = 'Skipping filename check'
+        WLOG('warning', p['LOG_OPT'], [wmsg])
+        # add values to p for skipped
+        p['DPRTYPE'] = 'None'
+        p['PREPROCESSED'] = True
+        p.set_sources(['DPRTYPE', 'PREPROCESSED'], func_name)
+        # deal with return
+        if return_path:
+           return p, p['ARG_FILE_DIR']
+        else:
+           return p
+    elif recipe not in control['Recipe']:
         emsg1 = 'No recipe named {0}'.format(recipe)
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
@@ -488,6 +504,35 @@ def check_preprocess(p, filename=None):
             WLOG('error', p['LOG_OPT'], emsgs)
 
 
+def fiber_params(pp, fiber, merge=False):
+    """
+    Takes the parameters defined in FIBER_PARAMS from parameter dictionary
+    (i.e. from config files) and adds the correct parameter to a fiber
+    parameter dictionary
+
+    :param pp: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+
+    :param fiber: string, the fiber type (and suffix used in confiruation file)
+                  i.e. for fiber AB fiber="AB" and nbfib_AB should be present
+                  in config if "nbfib" is in FIBER_PARAMS
+    :param merge: bool, if True merges with pp and returns
+
+    :return fparam: dictionary, the fiber parameter dictionary (if merge False)
+    :treun pp: dictionary, paramter dictionary (if merge True)
+    """
+    # get dictionary parameters for suffix _fpall
+    try:
+        fparams = spirouConfig.ExtractDictParams(pp, '_fpall', fiber,
+                                                 merge=merge)
+    except ConfigError as e:
+        WLOG(e.level, pp['LOG_OPT'], e.msg)
+        fparams = ParamDict()
+    # return fiber dictionary
+    return fparams
+
+
 # =============================================================================
 # Define worker functions
 # =============================================================================
@@ -500,7 +545,7 @@ def get_control_file():
     controlfn, controlfmt = spirouConfig.Constants.RECIPE_CONTROL_FILE()
     controlfile = os.path.join(datadir, controlfn)
     # load control file
-    control = spirouImage.ReadTable(controlfile, fmt=controlfmt, comment='#')
+    control = spirouTable.read_table(controlfile, fmt=controlfmt, comment='#')
     # return control
     return control
 
@@ -514,7 +559,7 @@ def get_header_file(p, filename, hdr=None, cdr=None):
             emsg2 = '    fuction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
         else:
-            hdr, cdr = spirouImage.ReadHeader(p, filename, return_comments=True)
+            hdr, cdr = spirouFITS.read_header(p, filename, return_comments=True)
     # return header and comments
     return hdr, cdr
 
@@ -527,7 +572,7 @@ def get_properties_from_control(p, control):
     # Get FIBER and fiber parameters
     if control['fiber'] != 'None':
         p['FIBER'] = control['fiber']
-        p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
+        p = fiber_params(p, p['FIBER'], merge=True)
         if p['DRS_DEBUG']:
             # log that fiber was identified
             wmsg = 'Identified file as {0}, fiber={1}'
