@@ -759,27 +759,6 @@ ic_hc_n_ord_final_2 = 46
 #          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
 hc_find_lines_mode = 0
 
-#  Define the CCF mask for the wave solution CCF            - [cal_HC, cal_wave]
-#       calculation
-ic_wave_ccf_mask = {'UNe': 'test_mask_UNe_firstguess_R50000.mas', 'TH':'test_mask_TH_R50000.mas'}
-
-#  Define the weight of the wave CCF mask                   - [cal_HC, cal_wave]
-#     (if 1 force all weights equal)
-ic_wave_ccf_w_mask_min = 1.0
-
-#  Define the wave CCF width of the template line           - [cal_HC, cal_wave]
-#     (if 0 use natural)
-ic_wave_ccf_mask_width = 0.0
-
-#  Define the wave CCF half width                           - [cal_HC, cal_wave]
-ic_wave_ccf_half_width = 10.0
-
-#  Define the wave CCF step                                 - [cal_HC, cal_wave]
-ic_wave_ccf_step = 0.1
-
-#  Define the type of fit for the wave CCF fit              - [cal_HC, cal_wave]
-wave_ccf_fit_type = 1
-
 #  Define first order FP solution is calculated from                - [cal_wave]
 ic_fp_n_ord_start = 0
 
