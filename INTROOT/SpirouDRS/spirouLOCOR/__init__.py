@@ -22,8 +22,7 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['BoxSmoothedImage', 'CalcLocoFits',
-           'FiberParams', 'FindPosCentCol',
+__all__ = ['BoxSmoothedImage', 'CalcLocoFits', 'FindPosCentCol',
            'FindOrderCtrs', 'GetCoeffs',
            'ImageLocSuperimp', 'InitialOrderFit',
            'LocCentralOrderPos', 'MergeCoefficients',
@@ -35,8 +34,6 @@ __all__ = ['BoxSmoothedImage', 'CalcLocoFits',
 BoxSmoothedImage = spirouLOCOR.smoothed_boxmean_image
 
 CalcLocoFits = spirouLOCOR.calculate_location_fits
-
-FiberParams = spirouLOCOR.fiber_params
 
 FindPosCentCol = spirouLOCOR.find_position_of_cent_col
 

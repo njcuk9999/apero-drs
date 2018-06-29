@@ -188,7 +188,7 @@ def main(night_name=None, files=None):
         # get fiber parameters
         # TODO: remove H2RG dependency
         if p['IC_IMAGE_TYPE'] == 'H4RG':
-            params2add = spirouLOCOR.FiberParams(p, p['FIBER'])
+            params2add = spirouImage.FiberParams(p, p['FIBER'])
             for param in params2add:
                 p[param] = params2add[param]
                 p.set_source(param, __NAME__ + '.main()')
@@ -197,7 +197,7 @@ def main(night_name=None, files=None):
         # Get localisation coefficients
         # ------------------------------------------------------------------
         # get this fibers parameters
-        p = spirouLOCOR.FiberParams(p, fiber, merge=True)
+        p = spirouImage.FiberParams(p, fiber, merge=True)
         # get localisation fit coefficients
         loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
         # ------------------------------------------------------------------
