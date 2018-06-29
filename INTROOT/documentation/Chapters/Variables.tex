@@ -1781,41 +1781,41 @@ pip install lmfit
 {\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{insert_fp_lines}}{Public}
 
 % IC_FP_N_ORD_FINAL
-\item \namedlabel{text:} \ParameterEntry{FP solution - last order}
+\item \namedlabel{text:ic_fp_n_ord_final} \ParameterEntry{FP solution - last order}
 {Defines the last order to stop the FP solution fitting at.}
 {IC\_FP\_N\_ORD\_FINAL}{24}
 {\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{insert_fp_lines}, \spirouPlot.\path{wave_plot_final_fp_order}}{Public}
 
 % IC_FP_SIZE
-\item \namedlabel{text:} \ParameterEntry{FP solution - region size}
+\item \namedlabel{text:ic_fp_size} \ParameterEntry{FP solution - region size}
 {Region size (in pixels) that each FP peak is fitted to}
 {IC\_FP\_SIZE}{3}
 {\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
 
 % IC_FP_THRESHOLD
-\item \namedlabel{text:} \ParameterEntry{FP solution - position threshold}
+\item \namedlabel{text:ic_fp_threshold} \ParameterEntry{FP solution - position threshold}
 {Defines the threshold used in detecting the positions of the FP peaks.}
 {IC\_FP\_THRESHOLD}{0.2}
 {\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
 
-% IC_FP_DPOD0
-\item \namedlabel{text:} \ParameterEntry{FP solution - cavity width}
+% IC_FP_DOPD0
+\item \namedlabel{text:ic_fp_dopd0} \ParameterEntry{FP solution - cavity width}
 {Defines the initial value of the FP effective cavity width (in nm). For SPIRou this is: 
 \begin{equation}
 2 \times d = 24.5 mm = 24.5\times10^{6} nm
 \end{equation}
 }
-{IC\_FP\_DPOD0}{2.45e7}
+{IC\_FP\_DOPD0}{2.45e7}
 {\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{find_fp_lines}, \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
 
 % IC_FP_FIT_DEGREE
-\item \namedlabel{text:} \ParameterEntry{FP solution - poly-fit degree}
+\item \namedlabel{text:ic_fp_fit_degree} \ParameterEntry{FP solution - poly-fit degree}
 {Defines the polynomial fit degree between FP line numbers and the measured cavity width for each line.}
 {IC\_FP\_FIT\_DEGREE}{9}
 {\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
 
 % IC_FP_LARGE_JUMP
-\item \namedlabel{text:} \ParameterEntry{FP solution - large jump size}
+\item \namedlabel{text:ic_fp_large_jump} \ParameterEntry{FP solution - large jump size}
 {Defines the ``jump'' value (in pixels) that is considered too large between the current and previous FP peaks.}
 {IC\_FP\_LARGE\_JUMP}{0.7}
 {\calWAVE}{\constantsfile}{ \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
