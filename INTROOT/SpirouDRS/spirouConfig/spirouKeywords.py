@@ -122,6 +122,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_STOKES',
             'kw_POL_NEXP',
             'kw_POL_METHOD',
+            'kw_POL_EXPTIME',
             'kw_RDNOISE',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
@@ -446,10 +447,10 @@ kw_TH_NAXIS2 = ['NAXIS2', None, '']
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
 # -----------------------------------------------------------------------------
-kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, or V']
+kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
-
+kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
