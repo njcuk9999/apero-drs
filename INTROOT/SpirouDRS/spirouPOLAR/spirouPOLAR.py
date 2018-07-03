@@ -50,14 +50,15 @@ def sort_polar_files(p, polardict):
     Function to sort input data for polarimetry.
         
     :param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-    p['LOG_OPT']: string, option for logging
-    p['REDUCED_DIR']: string, directory path where reduced data are stored
-    p['ARG_FILE_NAMES']: list, list of input filenames
-    p['KW_CMMTSEQ']: string, FITS keyword where to find polarimetry information
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            REDUCED_DIR: string, directory path where reduced data are stored
+            ARG_FILE_NAMES: list, list of input filenames
+            KW_CMMTSEQ: string, FITS keyword where to find polarimetry
+                        information
     
     :return polardict: dictionary, ParamDict containing information on the
-    input data
+                       input data
     """
 
     func_name = __NAME__ + '.sort_polar_files()'
@@ -140,27 +141,27 @@ def load_data(p, polardict, loc):
     Function to load input E2DS data for polarimetry.
         
     :param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-    p['LOG_OPT']: string, option for logging
-    p['IC_POLAR_STOKES_PARAMS']: list, list of stokes parameters
-    p['IC_POLAR_FIBERS']: list, list of fiber types used in polarimetry
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            IC_POLAR_STOKES_PARAMS: list, list of stokes parameters
+            IC_POLAR_FIBERS: list, list of fiber types used in polarimetry
     
     :param polardict: dictionary, ParamDict containing information on the
-    input data
+                      input data
         
     :param loc: parameter dictionary, ParamDict to store data
         
     :return p, loc: parameter dictionaries,
-    The updated parameter dictionary adds/updates the following:
-    p['FIBER']: saves reference fiber used for base file in polar sequence
-    The updated data dictionary adds/updates the following:
-    loc['DATA']: array of numpy arrays (2D), E2DS data from all fibers in
-    all input exposures.
-    loc['BASENAME'], string, basename for base FITS file
-    loc['HDR']: dictionary, header from base FITS file
-    loc['CDR']: dictionary, header comments from base FITS file
-    loc['STOKES']: string, stokes parameter detected in sequence
-    loc['NEXPOSURES']: int, number of exposures in polar sequence
+        The updated parameter dictionary adds/updates the following:
+            FIBER: saves reference fiber used for base file in polar sequence
+                   The updated data dictionary adds/updates the following:
+            DATA: array of numpy arrays (2D), E2DS data from all fibers in
+                  all input exposures.
+            BASENAME, string, basename for base FITS file
+            HDR: dictionary, header from base FITS file
+            CDR: dictionary, header comments from base FITS file
+            STOKES: string, stokes parameter detected in sequence
+            NEXPOSURES: int, number of exposures in polar sequence
     """
     
     func_name = __NAME__ + '.load_data()'
@@ -280,13 +281,15 @@ def calculate_polarimetry_wrapper(p, loc):
     the Ratio or Difference methods.
         
     :param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-    p['LOG_OPT']: string, option for logging
-    p['IC_POLAR_METHOD']: string, to define polar method "Ratio" or "Difference"
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            IC_POLAR_METHOD: string, to define polar method "Ratio" or
+                             "Difference"
 
     :param loc: parameter dictionary, ParamDict containing data
         
-    :return polarimetry_diff_method(..) or polarimetry_ratio_method():
+    :return polarfunc: function, either polarimetry_diff_method(p, loc)
+                       or polarimetry_ratio_method(p, loc)
     """
 
     # get parameters from p
@@ -307,34 +310,41 @@ def calculate_continuum(p, loc, in_wavelength=True):
     Function to calculate the continuum polarization
         
     :param p: parameter dictionary, ParamDict containing constants
-    Must contain at least:
-    p['LOG_OPT']: string, option for logging
-    p['IC_POLAR_CONT_BINSIZE']: int, number of points in each sample bin
-    p['IC_POLAR_CONT_OVERLAP']: int, number of points to overlap before and
-    after each sample bin
-    p['IC_POLAR_CONT_TELLMASK']: list of float pairs, list of telluric bands,
-    i.e, a list of wavelength ranges ([wl0,wlf]) for telluric absorption
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            IC_POLAR_CONT_BINSIZE: int, number of points in each sample bin
+            IC_POLAR_CONT_OVERLAP: int, number of points to overlap before and
+                                   after each sample bin
+            IC_POLAR_CONT_TELLMASK: list of float pairs, list of telluric bands,
+                                    i.e, a list of wavelength ranges ([wl0,wlf])
+                                    for telluric absorption
         
     :param loc: parameter dictionary, ParamDict containing data
-    Must contain at least:
-    loc['POL']: numpy array (2D), e2ds degree of polarization data
-    loc['POLERR']: numpy array (2D), e2ds errors of degree of polarization
-    loc['NULL1']: numpy array (2D), e2ds 1st null polarization
-    loc['NULL2']: numpy array (2D), e2ds 2nd null polarization
-    loc['STOKESI']: numpy array (2D), e2ds Stokes I data
-    loc['STOKESIERR']: numpy array (2D), e2ds errors of Stokes I
+        Must contain at least:
+            POL: numpy array (2D), e2ds degree of polarization data
+            POLERR: numpy array (2D), e2ds errors of degree of polarization
+            NULL1: numpy array (2D), e2ds 1st null polarization
+            NULL2: numpy array (2D), e2ds 2nd null polarization
+            STOKESI: numpy array (2D), e2ds Stokes I data
+            STOKESIERR: numpy array (2D), e2ds errors of Stokes I
         
     :param in_wavelength: bool, to indicate whether or not there is wave cal
 
     :return loc: parameter dictionary, the updated parameter dictionary
-    Adds/updates the following:
-    loc['FLAT_X'], loc['FLAT_POL'], loc['FLAT_POLERR'], loc['FLAT_STOKESI'],
-    loc['FLAT_STOKESIERR'], loc['FLAT_NULL1'], loc['FLAT_NULL2']: numpy 
-    array (1D), flatten polarimetric data
-    loc['CONT_POL']: numpy array (1D), e2ds continuum polarization data
-    interpolated from xbin, ybin points, same shape as loc['FLAT_POL']
-    loc['CONT_XBIN'], loc['CONT_YBIN']: numpy array (1D), continuum 
-    polarization samples
+        Adds/updates the following:
+            FLAT_X: numpy array (1D), flatten polarimetric x data
+            FLAT_POL: numpy array (1D), flatten polarimetric pol data
+            FLAT_POLERR: numpy array (1D), flatten polarimetric pol error data
+            FLAT_STOKESI: numpy array (1D), flatten polarimetric stokes I data
+            FLAT_STOKESIERR: numpy array (1D), flatten polarimetric stokes I
+                             error data
+            FLAT_NULL1: numpy array (1D), flatten polarimetric null1 data
+            FLAT_NULL2: numpy array (1D), flatten polarimetric null2 data
+            CONT_POL: numpy array (1D), e2ds continuum polarization data
+                      interpolated from xbin, ybin points, same shape as
+                      FLAT_POL
+            CONT_XBIN: numpy array (1D), continuum in x polarization samples
+            CONT_YBIN: numpy array (1D), continuum in y polarization samples
     """
 
     func_name = __NAME__ + '.calculate_continuum()'
@@ -398,6 +408,26 @@ def calculate_continuum(p, loc, in_wavelength=True):
 
 
 def calculate_stokes_I(p, loc):
+    """
+    Function to calculate the Stokes I polarization
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, option for logging
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            DATA: array of numpy arrays (2D), E2DS data from all fibers in
+                  all input exposures.
+            NEXPOSURES: int, number of exposures in polar sequence
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            STOKESI: numpy array (2D), the Stokes I parameters, same shape as
+                     DATA
+            STOKESIERR: numpy array (2D), the Stokes I error parameters, same
+                        shape as DATA
+    """
     func_name = __NAME__ + '.calculate_stokes_I()'
     name = 'CalculateStokesI'
     # log start of Stokes I calculations
