@@ -19,6 +19,7 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouRV
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -394,7 +395,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
     # ---------------------------------------------------------------------
     # calculate continuum polarization
     contpol, xbin, ybin = continuum(loc['FLAT_X'], loc['FLAT_POL'],
-                                    binsize=pol_binsize,overlap=pol_overlap,
+                                    binsize=pol_binsize, overlap=pol_overlap,
                                     telluric_bands=p['IC_POLAR_CONT_TELLMASK'])
     # ---------------------------------------------------------------------
     # save continuum data to loc
