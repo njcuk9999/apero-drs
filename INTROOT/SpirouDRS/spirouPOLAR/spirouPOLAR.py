@@ -311,7 +311,8 @@ def calculate_continuum(p, loc, in_wavelength=True):
     p['IC_POLAR_CONT_BINSIZE']: int, number of points in each sample bin
     p['IC_POLAR_CONT_OVERLAP']: int, number of points to overlap before and
     after each sample bin
-    p['IC_POLAR_CONT_TELLMASK']: string, filename of telluric mask
+    p['IC_POLAR_CONT_TELLMASK']: list of float pairs, list of telluric bands,
+    i.e, a list of wavelength ranges ([wl0,wlf]) for telluric absorption
         
     :param loc: parameter dictionary, ParamDict containing data
     Must contain at least:
@@ -380,15 +381,10 @@ def calculate_continuum(p, loc, in_wavelength=True):
     loc.set_sources(sources, func_name)
 
     # ---------------------------------------------------------------------
-    # load telluric mask:
-    filename = spirouRV.spirouRV.locate_mask(p, p['IC_POLAR_CONT_TELLMASK'])
-    cols = ['ll_mask_s', 'll_mask_e', 'w_mask']
-    mask = spirouImage.ReadTable(filename, fmt='ascii', colnames=cols)
-
-    # ---------------------------------------------------------------------
     # calculate continuum polarization
-    contpol, xbin, ybin = continuum(wl, pol, binsize=pol_binsize,
-                                    overlap=pol_overlap, telluric_mask=mask)
+    contpol, xbin, ybin = continuum(loc['FLAT_X'], loc['FLAT_POL'],
+                                    binsize=pol_binsize,overlap=pol_overlap,
+                                    telluric_bands=p['IC_POLAR_CONT_TELLMASK'])
     # ---------------------------------------------------------------------
     # save continuum data to loc
     loc['CONT_POL'] = contpol
@@ -464,13 +460,13 @@ def polarimetry_diff_method(p, loc):
         
     :return loc: parameter dictionary, the updated parameter dictionary
     Adds/updates the following:
-    loc['POL']: numpy array (2D), e2ds degree of polarization data, which 
-    should be the same shape as loc[DATA][FIBER_EXP]
-    loc['POLERR']: numpy array (2D), e2ds errors of degree of polarization, 
+    loc['POL']: numpy array (2D), degree of polarization data, which
+    should be the same shape as E2DS files, i.e, loc[DATA][FIBER_EXP]
+    loc['POLERR']: numpy array (2D), errors of degree of polarization,
     same shape as loc['POL']
-    loc['NULL1']: numpy array (2D), e2ds 1st null polarization, same shape as 
+    loc['NULL1']: numpy array (2D), 1st null polarization, same shape as
     loc['POL']
-    loc['NULL2']: numpy array (2D), e2ds 2nd null polarization, same shape as 
+    loc['NULL2']: numpy array (2D), 2nd null polarization, same shape as
     loc['POL']
     """
 
@@ -615,13 +611,13 @@ def polarimetry_ratio_method(p, loc):
         
     :return loc: parameter dictionary, the updated parameter dictionary
     Adds/updates the following:
-    loc['POL']: numpy array (2D), e2ds degree of polarization data, which 
-    should be the same shape as loc[DATA][FIBER_EXP]
-    loc['POLERR']: numpy array (2D), e2ds errors of degree of polarization, 
+    loc['POL']: numpy array (2D), degree of polarization data, which
+    should be the same shape as E2DS files, i.e, loc[DATA][FIBER_EXP]
+    loc['POLERR']: numpy array (2D), errors of degree of polarization,
     same shape as loc['POL']
-    loc['NULL1']: numpy array (2D), e2ds 1st null polarization, same shape as 
+    loc['NULL1']: numpy array (2D), 1st null polarization, same shape as
     loc['POL']
-    loc['NULL2']: numpy array (2D), e2ds 2nd null polarization, same shape as 
+    loc['NULL2']: numpy array (2D), 2nd null polarization, same shape as
     loc['POL']
     """
     func_name = __NAME__ + '.polarimetry_ratio_method()'
@@ -647,6 +643,10 @@ def polarimetry_ratio_method(p, loc):
     loc.set_sources(['POL', 'NULL1', 'NULL2'], func_name)
 
     flux_ratio, var_term = [], []
+    
+    # Ignore numpy warnings to avoid warning message: "RuntimeWarning: invalid
+    # value encountered in power ...", apparently a memory issue?
+    np.warnings.filterwarnings('ignore')
     
     for i in range(1, int(nexp) + 1):
         # ---------------------------------------------------------------------
@@ -775,8 +775,8 @@ def polarimetry_ratio_method(p, loc):
 
 def calculate_stokes_I(p, loc):
     """
-    Function to calculate Stokes I, i.e. the total flux from the sum of flux
-    from all exposures in polar sequence
+    Function to calculate Stokes I, i.e. the total flux from the sum of fluxes
+    of all exposures in polar sequence
         
     :param p: parameter dictionary, ParamDict containing constants
     Must contain at least:
@@ -790,9 +790,9 @@ def calculate_stokes_I(p, loc):
         
     :return loc: parameter dictionary, the updated parameter dictionary
     Adds/updates the following:
-    loc['STOKESI']: numpy array (2D), e2ds Stokes I data, which should be 
-    the same shape as loc[DATA][FIBER_EXP]
-    loc['STOKESIERR']: numpy array (2D), e2ds errors of Stokes I, same shape 
+    loc['STOKESI']: numpy array (2D), Stokes I data, which should be the same 
+    shape as E2DS files, i.e, loc[DATA][FIBER_EXP]
+    loc['STOKESIERR']: numpy array (2D), errors of Stokes I, same shape
     as loc['STOKESI']
     """
 
@@ -844,7 +844,7 @@ def calculate_stokes_I(p, loc):
 
 
 def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
-              mode="median", use_linear_fit=False, telluric_mask=None):
+              mode="median", use_linear_fit=False, telluric_bands=None):
     """
     Function to calculate continuum
     :param x,y: numpy array (1D), input data (x and y must be of the same size)
@@ -855,12 +855,8 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     :param mode: string, set combine mode, where mode accepts "median", "mean",
     "max"
     :param use_linear_fit: bool, whether to use the linar fit
-    :param telluric_mask: dictionary, three columns to access like:
-                          mask['ll_mask_s'], mask['ll_mask_ctr'], 
-                          mask['w_mask'], where:
-    ll_mask_d: numpy array (1D), the size (in wavelengths)
-    ll_mask_ctr: numpy array (1D), the central point (in wavelengths)
-    w_mask: numpy array (1D), the weight mask
+    :param telluric_bands: list of float pairs, list of IR telluric bands, i.e,
+    a list of wavelength ranges ([wl0,wlf]) for telluric absorption
     
     :return continuum, xbin, ybin
         continuum: numpy array (1D) of the same size as input arrays containing
@@ -875,7 +871,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
 
     # initialize arrays to store binned data
     xbin, ybin = [], []
-
+                       
     for i in range(nbins):
         # get first and last index within the bin
         idx0 = i * binsize - overlap
@@ -883,38 +879,48 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         # if it reaches the edges then it reset the indexes
         if idx0 < 0:
             idx0 = 0
-        if idxf > len(x):
+        if idxf >= len(x):
             idxf = len(x) - 1
         # get data within the bin
-        xtmp = x[idx0:idxf]
-        ytmp = y[idx0:idxf]
-        # calculate mean x within the bin
-        xmean = np.mean(xtmp)
-        # calculate median y within the bin
-        medy = np.median(ytmp)
+        xbin_tmp = np.array(x[idx0:idxf])
+        ybin_tmp = np.array(y[idx0:idxf])
 
-        if medy and not np.isnan(medy):
+        # create mask of telluric bands
+        telluric_mask = np.full(np.shape(xbin_tmp), False, dtype=bool)
+        for band in telluric_bands :
+            telluric_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
+
+        # mask data within telluric bands
+        xtmp = xbin_tmp[~telluric_mask]
+        ytmp = ybin_tmp[~telluric_mask]
+        
+        # create mask to get rid of NaNs
+        nanmask = np.logical_not(np.isnan(ytmp))
+        if len(xtmp[nanmask]) > 2 :
+            # calculate mean x within the bin
+            xmean = np.mean(xtmp[nanmask])
+            # calculate median y within the bin
+            medy = np.median(ytmp[nanmask])
+
             # calculate median deviation
-            medydev = np.median(np.absolute(ytmp - medy))
+            medydev = np.median(np.absolute(ytmp[nanmask] - medy))
             # create mask to filter data outside n*sigma range
-            filtermask = (ytmp > medy) & (ytmp < medy + sigmaclip * medydev)
-            # save mean x wihthin bin
-            xbin.append(xmean)
-            if len(ytmp[filtermask]) > 2:
+            filtermask = (ytmp[nanmask] > medy) & (ytmp[nanmask] < medy + sigmaclip * medydev)
+            if len(ytmp[nanmask][filtermask]) > 2:
+                # save mean x wihthin bin
+                xbin.append(xmean)
                 if mode == 'max':
                     # save maximum y of filtered data
-                    ybin.append(np.max(ytmp[filtermask]))
+                    ybin.append(np.max(ytmp[nanmask][filtermask]))
                 elif mode == 'median':
                     # save median y of filtered data
-                    ybin.append(np.median(ytmp[filtermask]))
+                    ybin.append(np.median(ytmp[nanmask][filtermask]))
                 elif mode == 'mean':
                     # save mean y of filtered data
-                    ybin.append(np.mean(ytmp[filtermask]))
+                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
                     emsg = 'Can not recognize selected mode="{0}"...exiting'
                     WLOG('error', DPROG, emsg.format(mode))
-            else:
-                continue
 
     # Option to use a linearfit within a given window
     if use_linear_fit:
@@ -944,8 +950,9 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         xbin, ybin = newxbin, newybin
 
     # interpolate points applying an Spline to the bin data
-    sfit = UnivariateSpline(xbin, ybin, s=1)
-
+    sfit = UnivariateSpline(xbin, ybin)
+    sfit.set_smoothing_factor(0.5)
+    
     # Resample interpolation to the original grid
     continuum = sfit(x)
     # return continuum and x and y bins

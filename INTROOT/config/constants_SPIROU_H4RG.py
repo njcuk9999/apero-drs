@@ -843,13 +843,13 @@ ic_polar_fibers = ['A', 'B']
 ic_polar_method = 'Ratio'
 
 #  Define the polarimetry continuum bin size (for plotting)       - [pol_spirou]
-ic_polar_cont_binsize = 4000
+ic_polar_cont_binsize = 1000
 
 #  Define the polarimetry continuum overlap size (for plotting)   - [pol_spirou]
 ic_polar_cont_overlap = 0
 
 #  Define the telluric mask for calculation of continnum          - [pol_spirou]
-ic_polar_cont_tellmask = 'telluric2.mas'
+ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]]
 
 
 # -----------------------------------------------------------------------------
