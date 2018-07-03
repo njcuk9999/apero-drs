@@ -410,6 +410,37 @@ value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
 \end{minipage}
 
 %----------------------------------------------------------------------------------------
+\noindent\begin{minipage}{\textwidth}
+\subsection{FiberParams}
+
+Defined in \spirouImage\path{.spirouFile.fiber_params}
+
+\begin{pythonbox}
+from SpirouDRS import spirouLOCOR
+spirouImage.FiberParams(pp, fiber, merge=False)
+spirouImage.spirouFile.fiber_params(pp, fiber, merge=False)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Takes the parameters defined in FIBER_PARAMS from parameter dictionary
+(i.e. from config files) and adds the correct parameter to a fiber
+parameter dictionary
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+            log_opt: string, log option, normally the program name
+
+:param fiber: string, the fiber type (and suffix used in configuration file)
+              i.e. for fiber AB fiber="AB" and nbfib_AB should be present
+              in config if "nbfib" is in FIBER_PARAMS
+:param merge: bool, if True merges with pp and returns
+
+:return fparam: dictionary, the fiber parameter dictionary (if merge False)
+:treun pp: dictionary, parameter dictionary (if merge True)
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
 \subsection{FitTilt}
@@ -830,25 +861,6 @@ for image localization)
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
-\subsection{}
-
-Defined in \spirouImage\path{.spirouImage.}
-
-\begin{pythonbox}
-from SpirouDRS import spirouImage
-spirouImage.
-spirouImage.spirouImage.
-\end{pythonbox}
-
-\begin{pythondocstring}
-
-\end{pythondocstring}
-\end{minipage}
-
-
-%----------------------------------------------------------------------------------------
-
-\noindent\begin{minipage}{\textwidth}
 \subsection{GetKey}
 
 Defined in \spirouImage\path{.spirouFITS.keylookup}
@@ -993,6 +1005,7 @@ using "keywordstore"
 \end{pythondocstring}
 \end{minipage}
 
+
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
@@ -1034,6 +1047,39 @@ Locate the bad pixels in the flat image and the dark image
                         Fraction of NaN pixels in dark [%]
                         Fraction of NaN pixels in flat [%]
                         Fraction of bad pixels with all criteria [%]
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{LocateFullBadPixels}
+
+Defined in \spirouImage\path{.spirouImage.locate_bad_pixels_full}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.LocateFullBadPixels(p, image)
+spirouImage.spirouImage.locate_bad_pixels_full(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Locate the bad pixels identified from the full engineering flat image
+(location defined from p['BADPIX_FULL_FLAT'])
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        IC_IMAGE_TYPE: string, the detector type (this step is only for
+                       H4RG)
+        LOG_OPT: string, log option, normally the program name
+        BADPIX_FULL_FLAT: string, the full engineering flat filename
+        BADPIX_FULL_THRESHOLD: float, the threshold on the engineering
+                               above which the data is good
+:param image: numpy array (2D), the image to correct (for size only)
+
+:return newimage: numpy array (2D), the mask of the bad pixels
+:return stats: float, the fraction of un-illuminated pixels (percentage)
 \end{pythondocstring}
 \end{minipage}
 
@@ -1128,6 +1174,36 @@ Measure the dark pixels in "image"
 \end{pythondocstring}
 \end{minipage}
 
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{MergeTable}
+
+Defined in \spirouImage\path{.spirouTable.merge_table}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.MergeTable(table, filename, fmt='fits')
+spirouImage.spirouTable.merge_table(table, filename, fmt='fits')
+\end{pythonbox}
+
+\begin{pythondocstring}
+If a file already exists for "filename" try to merge this new table with
+the old one (requires all columns/formats to be the same).
+If filename does not exist writes "table" as if new table
+
+:param table:  astropy table, the new table to be merged to existing file
+:param filename: string, the filename and location of the table
+                 to written to
+:param fmt: string, the format of the table to read from (must be valid
+            for astropy.table to read)
+
+:return None:
+\end{pythondocstring}
+\end{minipage}
+
+
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
@@ -1172,6 +1248,105 @@ the 90th percentile
 \end{pythondocstring}
 \end{minipage}
 
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{PPCorrectTopBottom}
+
+Defined in \spirouImage\path{.spirouImage.ref_top_bottom}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.PPCorrectTopBottom(p, image)
+spirouImage.spirouImage.ref_top_bottom(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Correction for the top and bottom reference pixels
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                           detector
+            NUMBER_REF_TOP: int, the number of reference pixels at the top
+                            of the image (highest y pixel values)
+            NUMBER_REF_BOTTOM: int, the number of reference pixels at the
+                               bottom of the image (lowest y pixel values)
+:param image: numpy array (2D), the image
+
+:return image: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{PPMedianFilterDarkAmps}
+
+Defined in \spirouImage\path{.spirouImage.median_filter_dark_amp}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.PPMedianFilterDarkAmps(p, image)
+spirouImage.spirouImage.median_filter_dark_amp(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Use the dark amplifiers to produce a median pattern and apply this to the
+image
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                           detector
+            NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                             amplifiers on the detector
+            DARK_MED_BINNUM: int, the number of bins to use in the median
+                             filter binning process (higher number = finer
+                             bins, lower number = bigger bins)
+:param image: numpy array (2D), the image
+
+:return image: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{PPMedianOneOverfNoise}
+
+Defined in \spirouImage\path{.spirouImage.median_one_over_f_noise}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.PPMedianOneOverfNoise(p, image)
+spirouImage.spirouImage.median_one_over_f_noise(p, image)
+\end{pythonbox}
+
+\begin{pythondocstring}
+Use the top and bottom reference pixels to create a map of the 1/f noise
+and apply it to the image
+
+:param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            NUMBER_REF_TOP: int, the number of reference pixels at the top
+                            of the image (highest y pixel values)
+            NUMBER_REF_BOTTOM: int, the number of reference pixels at the
+                               bottom of the image (lowest y pixel values)
+            NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                             amplifiers on the detector
+            DARK_MED_BINNUM: int, the number of bins to use in the median
+                             filter binning process (higher number = finer
+                             bins, lower number = bigger bins)
+:param image: numpy array (2D), the image
+
+:return image: numpy array (2D), the corrected image
+\end{pythondocstring}
+\end{minipage}
+
+
 %----------------------------------------------------------------------------------------
 
 \noindent\begin{minipage}{\textwidth}
@@ -1213,6 +1388,39 @@ if return_shape also returns:
     if len(data.shape)!=2
         :return shape: tuple, data.shape
         :return empty: None, blank entry
+\end{pythondocstring}
+\end{minipage}
+
+
+%----------------------------------------------------------------------------------------
+
+\noindent\begin{minipage}{\textwidth}
+\subsection{ReadLineList}
+
+Defined in \spirouImage\path{.spirouImage.read_line_list}
+
+\begin{pythonbox}
+from SpirouDRS import spirouImage
+spirouImage.ReadLineList
+spirouImage.spirouImage.read_line_list
+\end{pythonbox}
+
+\begin{pythondocstring}
+Read the line list file (if filename is None construct file from
+p['IC_LL_LINE_FILE']
+
+:param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+        log_opt: string, log option, normally the program name
+
+    May contain
+        IC_LL_LINE_FILE: string, the file name of the line list to use
+                         (required if filename is None)
+
+:param filename: string or None, if defined the filename
+
+:return ll: numpy array (1D), the wavelengths of the lines from line list
+:return amp: numpy array (1D), the amplitudes of the lines from line list
 \end{pythondocstring}
 \end{minipage}
 

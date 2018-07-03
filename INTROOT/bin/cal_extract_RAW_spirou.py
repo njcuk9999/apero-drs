@@ -221,7 +221,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Get localisation coefficients
         # ------------------------------------------------------------------
         # get this fibers parameters
-        p = spirouLOCOR.FiberParams(p, p['FIBER'], merge=True)
+        p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
         # get localisation fit coefficients
         loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
         # ------------------------------------------------------------------
