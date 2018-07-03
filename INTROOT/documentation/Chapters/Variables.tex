@@ -563,6 +563,18 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 \begin{itemize}
 
+% PP_MODE
+\item \namedlabel{text:pp_mode} \ParameterEntry{Preprocessing Mode}
+{Defines the preprocessing output type. Currently expected values are:
+\begin{itemize}
+	\item 0: Adds only the \definevariable{text:processed_suffix}{PROCESSED\_SUFFIX}
+	\item 1: Adds the \definevariable{text:processed_suffix}{PROCESSED\_SUFFIX} and an identifying suffix (i.e. \path{flat_dark}, \path{dark_dark} etc.)
+\end{itemize}
+}
+{PP\_MODE}{0}
+{\calpreprocess}{\constantsfile}{\spirouFile.\path{id_mode}}{Public}
+
+
 % IC_FORCE_PREPROCESS
 \item \namedlabel{text:ic_force_preprocess} \ParameterEntry{Force Pre-processing}
 {Defines whether the DRS should force pre-processed files only. If True (or 1) only files that are pre-processed will be allowed to be used in the DRS (an error will be generated on un-preprocessed files). If False (or 0) any file will be accepted (but un-preprocessed files will be assumed to be raw and hence rotated, as in pre-processing).}
@@ -1972,6 +1984,58 @@ pip install barycorrpy
 \fi
 
 \end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Polarimetry variables}
+\label{ch:variables:polarimetry}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% IC_POLAR_STOKES_PARAMS
+\item \namedlabel{text:ic_polar_stokes_params} \ParameterEntry{Stokes parameters}
+{Define all possible stokes parameters}
+{IC\_POLAR\_STOKES\_PARAMS}{\lstinline[style=pythoninline]| ['V', 'Q', 'U']|}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{load_data}}{Public}
+
+% IC_POLAR_FIBERS
+\item \namedlabel{text:ic_polar_fibers} \ParameterEntry{Polar fibers}
+{Define all possible fibers used for polarimetry}
+{IC\_POLAR\_FIBERS}{\lstinline[style=pythoninline]| ['A', 'B']|}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{load_data}}{Public}
+
+% IC_POLAR_METHOD
+\item \namedlabel{text:ic_polar_method} \ParameterEntry{Polar method}
+{Define the polarimetry method. Currently must be either: ``Ratio'' or ``Difference''.}
+{IC\_POLAR\_METHOD}{'Ratio'}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_polarimetry_wrapper}}{Public}
+
+% IC_POLAR_CONT_BINSIZE
+\item \namedlabel{text:ic_polar_cont_binsize} \ParameterEntry{Polar continuum bin size}
+{Define the polarimetry continuum bin size (for plotting)}
+{IC\_POLAR\_CONT\_BINSIZE}{1000}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+% IC_POLAR_CONT_OVERLAP
+\item \namedlabel{text:ic_polar_cont_overlap} \ParameterEntry{Polar continuum overlap size}
+{Define the polarimetry continuum overlap size (for plotting)}
+{IC\_POLAR\_CONT\_OVERLAP}{0}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+% IC_POLAR_CONT_TELLMASK
+\item \namedlabel{text:ic_polar_cont_tellmask} \ParameterEntry{Polar tell mask}
+{Define the telluric mask for calculation of the continuum.}
+{IC\_POLAR\_CONT\_TELLMASK}
+{\lstinline[style=pythoninline]| [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]] |}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+\end{itemize}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
