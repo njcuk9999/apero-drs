@@ -884,7 +884,7 @@ qc_max_signal = 50000
 #       (at x cut points)
 qc_hc_rms_littrow_max = 0.1    #0.3
 
-#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #        cal_wave (at x cut points)
 qc_hc_dev_littrow_max = 0.4  # 0.9
 
@@ -892,7 +892,7 @@ qc_hc_dev_littrow_max = 0.4  # 0.9
 #       (at x cut points)
 qc_wave_rms_littrow_max = 0.1
 
-#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #       cal_wave (at x cut points)
 qc_wave_dev_littrow_max = 0.3
 
