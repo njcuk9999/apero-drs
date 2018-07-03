@@ -76,6 +76,8 @@
 
 \newcommand{\calpreprocess}{\definevariable{ch:the_recipes}{cal\_preprocess\_spirou}\,}
 
+\newcommand{\calreset}{\definevariable{ch:the_recipes}{cal\_reset}\,}
+
 \newcommand{\calexometer}{\definevariable{ch:the_recipes}{cal\_exposure\_meter}\,}
 
 \newcommand{\offlisting}{\definevariable{ch:the_recipes}{off\_listing\_RAW\_spioru}\,}
@@ -144,7 +146,9 @@
 \newcommand{\ConfigError}{\definevariable{ch:the_module:spirouConfig:ConfigError}{ConfigError}\,}
 
 % variable the user should identify with their installation directory
-\newcommand{\InstallDIR}{\definevariable{text:drs_root}{DRS\_ROOT}\,}
+\newcommand{\InstallDIR}{\definevariable{text:drs_root}{DRS\_DIR}\,}
+
+\newcommand{\userDIR}{USER\_DIR\,}
 
 \newcommand{\reduceddir}{\definevariable{text:reduced_dir}{reduced\_dir}\,}
 
@@ -167,7 +171,7 @@
 
 % name of the config directory
 \newcommand{\configdir}{config\,}
-\newcommand{\configdirrelpath}{../\configdir\,}
+\newcommand{\configdirrelpath}{\userDIR/\configdir\,}
 % name of the main config file
 \newcommand{\configtxtfile}{\configdirrelpath/config.py\,}
 \newcommand{\configtxtfilerelpath}{\configtxtfile}
