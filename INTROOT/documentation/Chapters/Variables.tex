@@ -163,6 +163,12 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 {DRS\_PLOT}{1}
 {\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
 
+% DRS_INTERACTIVE
+\item \namedlabel{text:drs_interactive} \ParameterEntry{Interactive switch}
+{Defines whether to run in interactive mode. If False or 0 will be set to non-interactive mode (i.e. \definevariable{text:drs_plot}{DRS\_PLOT} will be set to 0). Will stop any user input at the end of recipes if set to 0.}
+{DRS\_INTERACTIVE}{1}
+{\AllRecipes}{\configtxtfile}{\AllRecipes}{Public}
+
 % interactive_plots
 \ifdevguide
 \item \ParameterEntry{Use matplotlib interactive plot environment}
@@ -272,11 +278,37 @@ The variables are currently stored in two places. The first (\configtxtfile) con
 {Defines the custom configuration directory. Value must be a string containing a valid file location.}
 {DRS\_UCONFIG}{$\sim$/spirou\_config/}{\AllRecipes}{\configtxtfile}{\spirouConst}{Public}
 
-
 \end{itemize}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{Observatory variables}
+\label{ch:variables:observatory}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{itemize}
+
+% IC_LONGIT_OBS
+\item \namedlabel{text:ic_longit_obs} \ParameterEntry{CFHT Longitude}
+{Defines the CFHT longitude West (in degrees)}
+{IC\_LONGIT\_OBS}{155.468876}
+{\calCCF}{\constantsfile}{\spirouRV.\path{earth_velocity_correction}}{Public}
+
+% IC_LATIT_OBS
+\item \namedlabel{text:ic_longit_obs} \ParameterEntry{CFHT Longitude}
+{Defines the CFHT latitude North (in degrees)}
+{IC\_LATIT\_OBS}{19.825252}
+{\calCCF}{\constantsfile}{\spirouRV.\path{earth_velocity_correction}}{Public}
+
+% IC_ALTIT_OBS
+\item \namedlabel{text:ic_longit_obs} \ParameterEntry{CFHT Longitude}
+{Defines the CFHT altitude (in km)}
+{IC\_ALTIT\_OBS}{4.204}
+{\calCCF}{\constantsfile}{\spirouRV.\path{earth_velocity_correction}}{Public}
+
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -519,6 +551,68 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Pre-processing variables}
+\label{ch:variables:preprocessing}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% IC_FORCE_PREPROCESS
+\item \namedlabel{text:ic_force_preprocess} \ParameterEntry{Force Pre-processing}
+{Defines whether the DRS should force pre-processed files only. If True (or 1) only files that are pre-processed will be allowed to be used in the DRS (an error will be generated on un-preprocessed files). If False (or 0) any file will be accepted (but un-preprocessed files will be assumed to be raw and hence rotated, as in pre-processing).}
+{IC\_FORCE\_PREPROCESS}{1}
+{\AllRecipes}{\constantsfile}
+{\spirouFile.\path{check_file_id}, \spirouFile.\path{check_preprocess}}{Public}
+
+% PROCESSED_SUFFIX
+\item \namedlabel{text:processed_suffix} \ParameterEntry{Pre-processing suffix}
+{Defines the suffix to apply to the pre-processed files. If "None" then no suffix is added (or checked for).}
+{PROCESSED\_SUFFIX}{"\_pp.fits"}
+{\AllRecipes}{\constantsfile}{\calpreprocess.main, \offlisting.main, \spirouFile.\path{check_file_id}, \spirouFile.\path{check_preprocess}, \spirouImage.\path{fix_non_preprocessed}}{Public}
+
+% NUMBER_DARK_AMP
+\item \namedlabel{text:number_dark_amp} \ParameterEntry{Number of dark amplifiers}
+{Defines the number of dark amplifiers on the detector}
+{NUMBER\_DARK\_AMP}{5}
+{\calpreprocess}{\constantsfile}{\spirouImage.\path{median_filter_dark_amp}}{Public}
+
+% TOTAL_AMP_NUM
+\item \namedlabel{text:total_amp_num} \ParameterEntry{Total number of amplifiers}
+{Defines the total number of amplifiers on the detector}
+{TOTAL\_AMP\_NUM}{32}
+{\calpreprocess}{\constantsfile}{\spirouImage.\path{ref_top_bottom}, \spirouImage.\path{median_filter_dark_amp}}{Public}
+
+% NUMBER_REF_TOP
+\item \namedlabel{text:number_ref_top} \ParameterEntry{Number of top reference pixels}
+{Defines the number of un-illuminated reference pixels at the top of the image.}
+{NUMBER\_REF\_TOP}{4}
+{\calpreprocess}{\constantsfile}{\spirouImage.\path{ref_top_bottom}, \spirouImage.\path{median_one_over_f_noise}}{Public}
+
+% NUMBER_REF_BOTTOM
+\item \namedlabel{text:number_ref_top} \ParameterEntry{Number of bottom reference pixels}
+{Defines the number of un-illuminated reference pixels at the bottom of the image.}
+{NUMBER\_REF\_BOTTOM}{4}
+{\calpreprocess}{\constantsfile}{\spirouImage.\path{ref_top_bottom}, \spirouImage.\path{median_one_over_f_noise}}{Public}
+
+% DARK_MED_BINNUM
+\item \namedlabel{text:dark_med_binnum} \ParameterEntry{Number of bins in dark median process}
+{Define the number of bins used in the dark media process.}
+{DARK\_MED\_BINNUM}{32}
+{\calpreprocess}{\constantsfile}{\spirouImage.\path{median_filter_dark_amp}, \spirouImage.\path{median_one_over_f_noise}}{Public}
+
+% RAW_TO_PP_ROTATION
+\item \namedlabel{text:raw_pp_rotation} \ParameterEntry{Raw to Pre-processed rotation}
+{Defines the rotation angle of the raw images compared to that expected by the DRS. Value must be multiple of 90 degrees (in degrees counter-clockwise direction).}
+{RAW\_TO\_PP\_ROTATION}{-90}
+{\AllRecipes}{\constantsfile}{\calpreprocess.main, \spirouImage.\path{fix_non_preprocessed}}{Public}
+
+\end{itemize}
 
 
 
@@ -991,13 +1085,29 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 {\calFFraw}{\constantsfile}{\calFFraw.\progMAIN}{Public}
 \DevNote{This is a new plot, instead of plotting one selected order plots all orders - this is obviously slightly slower than just plotting one example order.}
 
+% FF_RMS_PLOT_SKIP_ORDERS
+\item \namedlabel{text:ff_rms_plot_skip_orders} \ParameterEntry{Flat-field plot skip orders}
+{Define the orders not to plot on the RMS flat-field plot. Should be a valid python list of integers (with each value being an integer between 0 and the maximum number of orders)}
+{FF\_RMS\_PLOT\_SKIP\_ORDERS}{{\lstinline[style=pythoninline]| [22, 23, 24, 25, 48] |}}
+{\calFFraw}{\constantsfile}{\spirouPlot.\path{ff_rms_plot}}{Public}
+
+% IC_FF_EXTRACT_TYPE
+\item \namedlabel{text:ic_ff_extract_type} \ParameterEntry{Flat-field extraction type}
+{Defines the extraction type for the flat-fielding. Must be one of the following:
+\begin{itemize}
+	\item "0" - Simple extraction (function = \spirouEXTOR.\path{extract_const_range})
+	\item "1" - Wieghted extraction (function = \spirouEXTOR.\path{extract_weight})
+	\item "2" - tilt extraction (function = \spirouEXTOR.\path{extract_tilt})
+	\item "3a" - tilt weight extraction - old (function = \spirouEXTOR.\path{extract_tilt_weight})
+	\item "3b" - tilt weight extraction 2 - old (function = \spirouEXTOR.\path{extract_tilt_weight_old2})
+	\item "3c" - tilt weight extraction 2 (function = \spirouEXTOR.\path{extract_tilt_weight2})
+	\item "3d" - tilt weight extraction 2 - with cosmic correction (function = \spirouEXTOR.\path{extract_tilt_weight2cosm})
 \end{itemize}
+}
+{IC\_FF\_EXTRACT\_TYPE}{"3c"}
+{\calFFraw}{\constantsfile}{\calFFraw.main, \spirouEXTOR.\path{extraction_wrapper}}{Public}
 
-
-
-
-
-
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1050,20 +1160,19 @@ max(|\text{residuals/data}|)\times100 > \text{ic\_max\_ptp\_fracfwhm}
 
 % ic_extract_type
 \item \namedlabel{text:ic_extract_type} \ParameterEntry{Extraction type}
-{Defines which type of extraction should be used in \calextractRAW. This variable is overwritten if using \calextractRAWAB or \calextractRAWC. The value must be one of the following:
+{Defines the extraction type for the \calextractRAW. Must be one of the following:
 \begin{itemize}
-\item simple \dotfill just does extraction as is.
-\item tilt \dotfill does the extraction and corrects for tilt
-\item weight \dotfill does the extraction with a weighting for bad pixels
-\item tiltweight \dotfill does the extraction + `tilt' + `weight'
-\item all \dotfill performs all extractions (saves separately). The E2DS file=`weight'.
+	\item "0" - Simple extraction (function = \spirouEXTOR.\path{extract_const_range})
+	\item "1" - Wieghted extraction (function = \spirouEXTOR.\path{extract_weight})
+	\item "2" - tilt extraction (function = \spirouEXTOR.\path{extract_tilt})
+	\item "3a" - tilt weight extraction - old (function = \spirouEXTOR.\path{extract_tilt_weight})
+	\item "3b" - tilt weight extraction 2 - old (function = \spirouEXTOR.\path{extract_tilt_weight_old2})
+	\item "3c" - tilt weight extraction 2 (function = \spirouEXTOR.\path{extract_tilt_weight2})
+	\item "3d" - tilt weight extraction 2 - with cosmic correction (function = \spirouEXTOR.\path{extract_tilt_weight2cosm})
 \end{itemize}
-Value should be a python string with one of the above values only. Any other value will cause an error and a recipe to exit.
 }
-{ic\_extract\_type}{tiltweight}
+{ic\_extract\_type}{"3d"}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
-\DevNote{For all we should probably use tiltweight but as \calextractRAWAB and \calextractRAWC currently use weight for the E2DS this is set to reproduce this.}
-
 
 % IC_EXT_TILT_BORD
 \item \ParameterEntry{Tilt border}
@@ -1082,7 +1191,20 @@ Value should be a python string with one of the above values only. Any other val
 \item \ParameterEntry{Selected order in extract fit order plot}
 {Defines the selected order to plot the fit for in the extract fit order plot. Value must be between zero and the maximum number of orders.}
 {ic\_ext\_order\_plot}{20}
-{\calextractRAW}{\constantsfile}{\spirouPlot. ext\_selected\_order\_plot()}{Public}
+{\calextractRAW}{\constantsfile}{\spirouPlot.ext\_selected\_order\_plot()}{Public}
+
+
+% ic_cosmic_sigcut
+\item \namedlabel{text:ic_cosmic_sigcut} \ParameterEntry{Cosmic Sig Cut}
+{Defines the percentage of (normalized) flux above which we detect as cosmics.}
+{IC\_COSMIC\_SIGCUT}{0.25}
+{\calFFraw, \calextractRAW}{\constantsfile}{\spirouEXTOR.\path{extraction_wrapper}, \spirouEXTOR.\path{extract_tilt_weight2cosm}}{Public}
+
+% ic_cosmic_thresh
+\item \namedlabel{text:ic_cosmic_thresh} \ParameterEntry{Max Cosmic Threshold}
+{Defines the maximum number of iterations to check for cosmics (for each pixel).}
+{IC\_COSMIC\_THRES}{5}
+{\calFFraw, \calextractRAW}{\constantsfile}{\spirouEXTOR.\path{extraction_wrapper}, \spirouEXTOR.\path{extract_tilt_weight2cosm}}{Public}
 
 \end{itemize}
 
@@ -1114,6 +1236,13 @@ Value must be a float larger than zero.
 }
 {ic\_drift\_noise}{100.0}
 {\calDRIFTRAW}{\constantsfile}{\calDRIFTRAW.\progMAIN}{Public}
+
+
+% ic_drift_back_corr
+\item \namedlabel{text:ic_drift_back_corr} \ParameterEntry{Do background correction}
+{Defines whether the background correction is done.}
+{IC\_DRIFT\_BACK\_CORR}{1}
+{\calDRIFTE, \calDRIFTPEAK}{\constantsfile}{\calDRIFTE.\progMAIN, \calDRIFTPEAK.\progMAIN}{Public}
 
 
 % ic_drift_maxflux
@@ -1421,6 +1550,278 @@ then the whole image (E2DS file) is rejected. Value must be a float larger than 
 \end{itemize}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Wavelength solution variables}
+\label{ch:variables:wave}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% IC_LAMPS
+\item \namedlabel{text:ic_lamps} \ParameterEntry{Lamp types}
+{Define the lamp types. These must be present in \definevariable{text:ic_ll_line_file_all}{IC\_LL\_LINE\_FILE\_ALL} and \definevariable{text:ic_cat_type_all}{IC\_CAT\_TYPE\_ALL} to be used. Each dictionary entry must be a list of strings (to look for in the header).}
+{IC\_LAMPS}{\lstinline[style=pythoninline]| dict(UNe=['hcone', 'hc1'], TH=['hctwo', 'hc2']) |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{decide_on_lamp_type}}{Public}
+
+% IC_LL_LINE_FILE_ALL
+\item \namedlabel{text:ic_ll_line_file_all} \ParameterEntry{Catalogue line list files}
+{Define the lamp types. These must be present in \definevariable{text:ic_lamps}{IC\_LAMPS} and \definevariable{text:ic_cat_type_all}{IC\_CAT\_TYPE\_ALL} to be used.}
+{IC\_LL\_LINE\_FILE\_ALL}{\lstinline[style=pythoninline]| dict(UNe='catalogue_UNe.dat', TH='catalogue_ThAr.dat') |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{get_lamp_parameters}}{Public}
+
+% IC_CAT_TYPE_ALL
+\item \namedlabel{text:ic_cat_type_all} \ParameterEntry{Type of line list catalogue}
+{Define the lamp types. These must be present in \definevariable{text:ic_lamps}{IC\_LAMPS} and \definevariable{text:ic_ll_line_file_all}{IC\_LL\_LINE\_FILE\_ALL} to be used.}
+{IC\_CAT\_TYPE\_ALL}{\lstinline[style=pythoninline]| dict(UNe='fullcat', TH='thcat') |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{get_lamp_parameters}}{Public}
+
+% IC_RESOL
+\item \namedlabel{text:ic_resol} \ParameterEntry{Resolution of the detector}
+{Define the resolution of the detector}
+{IC\_RESOL}{65000}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_FREE_SPAN
+\item \namedlabel{text:ic_ll_free_span} \ParameterEntry{Wavelength free-span}
+{Define the wavelength free span parameter in find lines. Must be a list of line widths (in pixels). Ordered from largest to smallest.}
+{IC\_LL\_FREE\_SPAN}{\lstinline[style=pythoninline]| [6.0, 3.5] |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_SP_MIN
+\item \namedlabel{text:ic_ll_sp_min} \ParameterEntry{Minimum wavelength - find lines}
+{Define the minimum wavelength of the detector to use in find lines (in nm).}
+{IC\_LL\_SP\_MIN}{900}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_SP_MAX
+\item \namedlabel{text:ic_ll_sp_max} \ParameterEntry{Maximum wavelength - find lines}
+{Define the maximum wavelength of the detector to use in find lines (in nm).}
+{IC\_LL\_SP\_MAX}{2400}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_HC_NOISE
+\item \namedlabel{text:ic_hc_noise} \ParameterEntry{Readout noise - find lines}
+{Define the read out noise to use in find lines}
+{IC\_HC\_NOISE}{60}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_MAX_SIGLL_CAL_LINES
+\item \namedlabel{text:ic_max_sigll_cal_lines} \ParameterEntry{Maximum sig-fit of guess lines}
+{Define the maximum sigma fit of the guessed lines (FWHM/2.35 of the lines). Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_SIGLL\_CAL\_LINES}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_MAX_ERRW_ONFIT
+\item \namedlabel{text:ic_max_errw_onfit} \ParameterEntry{Maximum error on guess lines}
+{Define the maximum error on the guess of the lines. Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_ERRW\_ONFIT}{1}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_MAX_AMPL_LINE
+\item \namedlabel{text:ic_max_ampl_line} \ParameterEntry{Maximum amplitude on guess lines}
+{Define the maximum amplitude on the guess of the lines. Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_AMPL\_LINE}{1.0e8}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_HC_N_ORD_START
+\item \namedlabel{text:ic_hc_n_ord_start} \ParameterEntry{Wave solution first order}
+{Defines the first order to at which the wave solution is calculated.}
+{IC\_HC\_N\_ORD\_START}{13}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{calculate_littrow_sol}}{Public}
+
+% IC_HC_N_ORD_FINAL
+\item \namedlabel{text:ic_hc_n_ord_final} \ParameterEntry{Wave solution last order}
+{Defines the last order to at which the wave solution is calculated.}
+{IC\_HC\_N\_ORD\_START}{40}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{calculate_littrow_sol}, \spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_HC_T_ORDER_START
+\item \namedlabel{text:ic_hc_t_order_start} \ParameterEntry{First echelle order number}
+{Defines the first echelle order number extracted.}
+{IC\_HC\_T\_ORDER\_START}{79}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{detect_bad_lines}, \spirouTHORCA.\path{extrapolate_littrow_sol}, \spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}, \spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_ERRX_MIN
+\item \namedlabel{text:ic_errx_min} \ParameterEntry{Minimum x error in 1D fit}
+{Define the maximum weight given to a line via defining the minimum instrumental error, such that:
+\begin{equation}
+\text{max\_weight} = 1.0 / (\text{IC\_ERRX\_MIN})^2
+\end{equation}
+}
+{IC\_ERRX\_MIN}{0.01}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_LL_DEGR_FIT
+\item \namedlabel{text:ic_ll_degr_fit} \ParameterEntry{Wavelength solution poly-fit degree}
+{Define the wavelength fit polynomial order}
+{IC\_LL\_DEGR\_FIT}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}, \spirouTHORCA.\path{invert_1ds_ll_solution}}{Public}
+
+% IC_MAX_LLFIT_RMS
+\item \namedlabel{text:ic_max_llfit_rms} \ParameterEntry{Maximum RMS for wave solution sigma-clip fit}
+{Define the maximum RMS for the wavelength sigma-clip fitting process}
+{IC\_MAX\_LLFIT\_RMS}{3.0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_LITTROW_FIT_DEG_1
+\item \namedlabel{text:ic_littrow_fit_deg_1} \ParameterEntry{Littrow poly-fit degree 1}
+{Define the polynomial fit degree for the Littrow fit (iteration 1)}
+{IC\_LITTROW\_FIT\_DEG\_1}{5}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=1}{Public}
+
+% IC_LITTROW_FIT_DEG_2
+\item \namedlabel{text:ic_littrow_fit_deg_2} \ParameterEntry{Littrow poly-fit degree 2}
+{Define the polynomial fit degree for the Littrow fit (iteration 2)}
+{IC\_LITTROW\_FIT\_DEG\_2}{7}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=2}{Public}
+
+% IC_LITTROW_CUT_STEP_1
+\item \namedlabel{text:ic_littrow_cut_step_1} \ParameterEntry{Littrow cut steps}
+{Define the x-pixel interval between positions to measure the Littrow at (iteration 1)
+i.e.:
+\begin{equation}
+xcutpoints = [1 * step, 2 * step, 3 * step, ..., (N-1) * step]
+\end{equation}
+where `step' = IC\_LITTROW\_CUT\_STEP\_1 and `N' = length of x-dimension divided by `step'.}
+{IC\_LITTROW\_CUT\_STEP\_1}{250}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=1}{Public}
+
+% IC_LITTROW_CUT_STEP_2
+\item \namedlabel{text:ic_littrow_cut_step_2} \ParameterEntry{Littrow cut steps}
+{Define the x-pixel interval between positions to measure the Littrow at (iteration 2)
+i.e.:
+\begin{equation}
+xcutpoints = [1 * step, 2 * step, 3 * step, ..., (N-1) * step]
+\end{equation}
+where `step' = IC\_LITTROW\_CUT\_STEP\_2 and `N' = length of x-dimension divided by `step'.}
+{IC\_LITTROW\_CUT\_STEP\_2}{500}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=2}{Public}
+
+% IC_LITTROW_ORDER_INIT
+\item \namedlabel{text:ic_littrow_order_init} \ParameterEntry{Littrow fit - first order}
+{Defines the first order to start the LIttrow fit from}
+{IC\_LITTROW\_ORDER\_INIT}{0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol}, \spirouTHORCA.\path{extrapolate_littrow_sol}}{Public}
+
+% IC_LITTROW_REMOVE_ORDERS
+\item \namedlabel{text:ic_littrow_remove_orders} \ParameterEntry{Littrow fit - remove orders}
+{Define the orders to ignore to ignore in the Littrow fit. Must be a valid python list of integers where each integer is a number between zero and the maximum number of orders.}
+{IC\_LITTROW\_REMOVE\_ORDERS}{\lstinline[style=pythoninline]| [] |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol}}{Public}
+
+% IC_LITTROW_ORDER_FIT_DEG
+\item \namedlabel{text:ic_ll_degr_fit} \ParameterEntry{Littrow-Wavelength solution poly-fit degree}
+{Define the wavelength fit polynomial order}
+{IC\_LITTROW\_ORDER\_FIT\_DEG}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{extrapolate_littrow_sol}}{Public}
+\DevNote{Same as IC\_LL\_DEGR\_FIT?}
+
+% IC_LL_FREE_SPAN_2
+\item \namedlabel{text:ic_ll_free_span_2} \ParameterEntry{Wavelength free-span 2}
+{Define the wavelength free span parameter in find lines used after Littrow fit. Must be a list of line widths (in pixels). Ordered from largest to smallest.}
+{IC\_LL\_FREE\_SPAN\_2}{\lstinline[style=pythoninline]| [4.25, 3.0] |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_HC_N_ORD_START_2
+\item \namedlabel{text:ic_hc_n_ord_start_2} \ParameterEntry{Wave solution first order 2}
+{Defines the first order to at which the wave solution is calculated used after Littrow fit.}
+{IC\_HC\_N\_ORD\_START\_2}{0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{join_orders}, \spirouWAVE.\path{insert_fp_lines}}{Public}
+
+% IC_HC_N_ORD_FINAL_2
+\item \namedlabel{text:ic_hc_n_ord_final_2} \ParameterEntry{Wave solution last order 2}
+{Defines the last order to at which the wave solution is calculated used after Littrow fit.}
+{IC\_HC\_N\_ORD\_START\_2}{46}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{join_orders}, \spirouWAVE.\path{insert_fp_lines}}{Public}
+
+% HC_FIND_LINES_MODE
+\item \namedlabel{text:hc_find_lines_mode} 
+\begin{minipage}[t]{\textwidth}\ParameterEntry{Find lines mode}
+{Defines the mode to find lines. Currently allowed modes are:
+\begin{itemize}
+	\item 0: Fortran \path{fitgaus.f} routine
+	\item 1: Python fit using \path{scipy.optimize.curve_fit}
+	\item 2: Python fit using \path{lmfit.models} (Model, GaussianModel)
+	\item 3: Python conversion of Fortran `fitgaus' - direct translation
+	\item 4: Python conversion of Fortran `fitgaus' - gaussj improvement MH
+	\item 5: Python conversion of Fortran `fitgaus' - gaussj improvement NJC
+\end{itemize}
+where value must be an integer between 0 and 5.
+}
+{HC\_FIND\_LINES\_MODE}{0}
+{\calHC, \calWAVE}{\constantsfile}{\calHC.\progMAIN, \calWAVE.\progMAIN, but used in \spirouTHORCA.\path{fitgaus_wrapper} via \spirouTHORCA.\path{fit_emi_line} via \spirouTHORCA.\path{find_lines}}{Public}
+
+\ifdevguide
+\begin{note}
+If mode = 0 fitgaus.f needs to be compiled with:
+\begin{cmdbox}
+f2py -c -m fitgaus --noopt --quiet fitgaus.f
+\end{cmdbox}
+While located in the \path{.../INTROOT/SpirouDRS/fortan} directory.
+\end{note}
+
+\begin{note}
+If mode = 2 lmfit must be installed with
+\begin{cmdbox}
+pip install lmfit
+\end{cmdbox}
+\end{note}
+\fi
+\end{minipage}
+
+
+% IC_FP_N_ORD_START
+\item \namedlabel{text:ic_fp_n_ord_start} \ParameterEntry{FP solution - first order}
+{Defines the first order to start the FP solution fitting at.}
+{IC\_FP\_N\_ORD\_START}{0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{insert_fp_lines}}{Public}
+
+% IC_FP_N_ORD_FINAL
+\item \namedlabel{text:ic_fp_n_ord_final} \ParameterEntry{FP solution - last order}
+{Defines the last order to stop the FP solution fitting at.}
+{IC\_FP\_N\_ORD\_FINAL}{24}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{insert_fp_lines}, \spirouPlot.\path{wave_plot_final_fp_order}}{Public}
+
+% IC_FP_SIZE
+\item \namedlabel{text:ic_fp_size} \ParameterEntry{FP solution - region size}
+{Region size (in pixels) that each FP peak is fitted to}
+{IC\_FP\_SIZE}{3}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
+
+% IC_FP_THRESHOLD
+\item \namedlabel{text:ic_fp_threshold} \ParameterEntry{FP solution - position threshold}
+{Defines the threshold used in detecting the positions of the FP peaks.}
+{IC\_FP\_THRESHOLD}{0.2}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
+
+% IC_FP_DOPD0
+\item \namedlabel{text:ic_fp_dopd0} \ParameterEntry{FP solution - cavity width}
+{Defines the initial value of the FP effective cavity width (in nm). For SPIRou this is: 
+\begin{equation}
+2 \times d = 24.5 mm = 24.5\times10^{6} nm
+\end{equation}
+}
+{IC\_FP\_DOPD0}{2.45e7}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{find_fp_lines}, \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
+
+% IC_FP_FIT_DEGREE
+\item \namedlabel{text:ic_fp_fit_degree} \ParameterEntry{FP solution - poly-fit degree}
+{Defines the polynomial fit degree between FP line numbers and the measured cavity width for each line.}
+{IC\_FP\_FIT\_DEGREE}{9}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
+
+% IC_FP_LARGE_JUMP
+\item \namedlabel{text:ic_fp_large_jump} \ParameterEntry{FP solution - large jump size}
+{Defines the ``jump'' value (in pixels) that is considered too large between the current and previous FP peaks.}
+{IC\_FP\_LARGE\_JUMP}{0.7}
+{\calWAVE}{\constantsfile}{ \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
+
+
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1496,8 +1897,118 @@ then the whole image (E2DS file) is rejected. Value must be a float larger than 
 {ccf\_num\_orders\_max}{25}
 {\calCCF}{\constantsfile}{\calCCF.main()}{Public}
 
+
+% CCF_BERVMODE
+\item \namedlabel{text:ccf_bervmode} \ParameterEntry{Earth velocity calculation mode}
+{Deine the mode to work out the Earth velocity correction calculation. Options are:
+\begin{itemize}
+	\item "off" - berv is set to zero
+	\item "old" - berv is calculated with FORTRAN newbervmain.f
+	\item "new" - berv is calculated using barycorrpy
+\end{itemize}
+}
+{CCF\_BERVMODE}{"new"}
+{\calCCF}{\constantsfile}{\calCCF.\progMAIN, \spirouRV.\path{EarthVelocityCorrection}}{Public}
+
+\ifdevguide
+
+\begin{note}
+If mode = "old" newbervmain.f needs to be compiled with:
+\begin{cmdbox}
+f2py -c -m newbervmain --noopt --quiet newbervmain.f
+\end{cmdbox}
+While located in the \path{\ldots/INTROOT/SpirouDRS/fortan} directory.
+\end{note}
+
+\begin{note}
+If mode = "new" barycorrpy must be installed with
+\begin{cmdbox}
+pip install barycorrpy
+\end{cmdbox}
+\end{note}
+
+\fi
+
 \end{itemize}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Exoposure-meter variables}
+\label{ch:variables:exopsuremeter}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% EM_FIB_TYPE
+\item \namedlabel{text:em_fib_type} \ParameterEntry{Exposure-meter Fiber Type}
+{Define which fiber to extract. Must be either AB or A or B or C.}
+{EM\_FIB\_TYPE}{"AB"}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN}{Public}
+
+% EM_TELL_THRESHOLD
+\item \namedlabel{text:em_tell_threshold} \ParameterEntry{Telluric threshold}
+{Define the telluric threshold (transmission) level to mask at.}
+{EM\_TELL\_THRESHOLD}{0.95}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN, \spirouExposeMeter.\path{create_mask}}{Public}
+
+% EM_MIN_LAMBDA
+\item \namedlabel{text:em_min_lambda} \ParameterEntry{Minimum wavelength for exposure-meter}
+{Define the minimum wavelength (in nm) to mask at.}
+{EM\_MIN\_LAMBDA}{1478.7}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN, \spirouExposeMeter.\path{create_mask}}{Public}
+
+% EM_MAX_LAMBDA
+\item \namedlabel{text:em_max_lambda} \ParameterEntry{Maximum wavelength for exposure-meter}
+{Define the maximum wavelength (in nm) to mask at.}
+{EM\_MAX\_LAMBDA}{1823.1}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN, \spirouExposeMeter.\path{create_mask}}{Public}
+
+% EM_OUTPUT_TYPE
+\item \namedlabel{text:em_output_type} \ParameterEntry{Exposure-meter file output type}
+{Define what shape/properties we want the output mask to be. Options are:
+\begin{itemize}
+	\item "raw" - shape and rotation as in the raw input files
+	\item "drs" - shape and rotation as in the DRS files
+	\item "preprocess" - shape and rotation as in the pre-processed files
+	\item "all" - produces all of the above
+\end{itemize}
+}
+{EM\_OUTPUT\_TYPE}{"all"}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN, \spirouCONST.\path{EM_SPE_FILE}, \spirouCONST.\path{EM_WAVE_FILE}, \spirouCONST.\path{EM_MASK_FILE}}{Public}
+
+
+% EM_COMBINED_BADPIX
+\item \namedlabel{text:em_combined_badpix} \ParameterEntry{Exposure-meter - include bad pixel mask}
+{Define whether to combine exposure meter mask with the bad pixel mask. If True bad pixel mask is combined if False it is not.}
+{EM\_COMBINED\_BADPIX}{True}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN}{Public}
+
+% EM_SAVE_WAVE_MAP
+\item \namedlabel{text:em_save_wave_map} \ParameterEntry{Exposure-meter - save wave map}
+{Define whether to save the 2D wavelength map. If True saves map if False does not save the map.}
+{EM\_SAVE\_WAVE\_MAP}{True}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN}{Public}
+
+% EM_SAVE_TELL_SPEC
+\item \namedlabel{text:em_save_tell_spec} \ParameterEntry{Exposure-meter - save telluric spectrum}
+{Define whether to save the telluric spectrum mapped on to the 2D wavelength map. If True saves map if False does not save the map.}
+{EM\_SAVE\_TELL\_SPEC}{True}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN}{Public}
+
+
+% EM_SAVE_MASK_MAP
+\item \namedlabel{text:em_save_tell_spec} \ParameterEntry{Exposure-meter - save mask}
+{Define whether to save the mask mapped on to the 2D wavelength map. If True saves map if False does not save the map.}
+{EM\_SAVE\_MASK\_MAP}{True}
+{\calexometer}{\constantsfile}{\calexometer.\progMAIN}{Public}
+
+
+
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1773,6 +2284,13 @@ Value must be a float greater than zero.
 {Chooses the display format for the program in the logging system.}
 {log\_opt}
 {\AllRecipes}{\spirouConst.LOG\_OPT()}{\spirouStartup.run\_time\_args()}
+
+
+% recipe
+\item \namedlabel{text:recipe} \PseudoParamEntry{The Recipe name}
+{The definition of the recipe name (usually from \_\_NAME\_\_).}
+{recipe}
+{\AllRecipes}{\AllRecipes}{\AllRecipes}
 
 
 % manual_file

@@ -44,6 +44,44 @@ sPlt = spirouCore.sPlt
 # User functions
 # =============================================================================
 def calculate_instrument_drift(p, loc):
+    """
+    Calculate the instrumental drift between the reference file and the current
+    file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                log_opt: string, log option, normally the program name
+                DRS_PLOT: bool, if True do plots else do not
+                FIBER: string, the fiber type (i.e. AB or A or B or C)
+                IC_HC_N_ORD_FINAL: int, the order to which the solution is
+                                   calculated
+                IC_WAVE_IDRIFT_NOISE: float, the noise used in drift calculation
+                IC_WAVE_IDRIFT_BOXSIZE: int, the size around a saturated pixel
+                                        to count as bad
+                IC_WAVE_IDRIFT_MAXFLUX: int, the maximum flux for a good
+                                        (unsaturated) pixel
+                IC_WAVE_IDRIFT_RV_CUT: float, the rv cut above which rv from
+                                       orders are not used
+                QC_WAVE_IDRIFT_NBORDEROUT: int, the maximum number of orders to
+                                           remove from RV calculation
+                QC_WAVE_IDRIFT_RV_MAX: float, the maximum allowed drift (in m/s)
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            HCDATA: numpy array (2D), the image data
+            HCHDR: dictionary, the header dictionary for HCDATA
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                DRIFT_REF: string, the filename of the reference data
+                DRIFT_RV: float, the mean instrumental RV
+                DRIFT_NBCOS: int, the number of cosmic pixels found
+                DRIFT_RFLUX: float, the mean flux ratio
+                DRIFT_NBORDKILL: int, the number of orders removed
+                DRIFT_NOISE: flat, the weighted mean uncertainty on the RV
+    """
+
+
 
     func_name = __NAME__ + '.calculate_instrument_drift()'
     # get used constants from p
