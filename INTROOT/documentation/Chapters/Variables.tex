@@ -563,6 +563,18 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 \begin{itemize}
 
+% PP_MODE
+\item \namedlabel{text:pp_mode} \ParameterEntry{Preprocessing Mode}
+{Defines the preprocessing output type. Currently expected values are:
+\begin{itemize}
+	\item 0: Adds only the \definevariable{text:processed_suffix}{PROCESSED\_SUFFIX}
+	\item 1: Adds the \definevariable{text:processed_suffix}{PROCESSED\_SUFFIX} and an identifying suffix (i.e. \path{flat_dark}, \path{dark_dark} etc.)
+\end{itemize}
+}
+{PP\_MODE}{0}
+{\calpreprocess}{\constantsfile}{\spirouFile.\path{id_mode}}{Public}
+
+
 % IC_FORCE_PREPROCESS
 \item \namedlabel{text:ic_force_preprocess} \ParameterEntry{Force Pre-processing}
 {Defines whether the DRS should force pre-processed files only. If True (or 1) only files that are pre-processed will be allowed to be used in the DRS (an error will be generated on un-preprocessed files). If False (or 0) any file will be accepted (but un-preprocessed files will be assumed to be raw and hence rotated, as in pre-processing).}
@@ -1820,6 +1832,48 @@ pip install lmfit
 {IC\_FP\_LARGE\_JUMP}{0.7}
 {\calWAVE}{\constantsfile}{ \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
 
+% IC_WAVE_IDRIFT_PLOT_ORDER
+\item \namedlabel{text:ic_wave_idrift_plot_order} \ParameterEntry{Instrumental drift plot order}
+{Defines the plot order for the comparison between the reference spectrum and this iterations spectrum during the instrumental drift calculation. Must be an integer between zero and the maximum number of orders.}
+{IC\_WAVE\_IDRIFT\_PLOT\_ORDER}{14}
+{\calWAVE}{\constantsfile}{\spirouPlot.\path{wave_plot_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_NOISE
+\item \namedlabel{text:ic_wave_idrift_noise} \ParameterEntry{Instrumental drift noise}
+{Defines the noise to use in the instrumental drift calculation}
+{IC\_WAVE\_IDRIFT\_NOISE}{50.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_MAXFLUX
+\item \namedlabel{text:ic_wave_idrift_maxflux} \ParameterEntry{Instrumental drift maximum flux}
+{Defines the maximum flux for a good (unsaturated) pixel to use in the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_MAXFLUX}{350000}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_BOXSIZE
+\item \namedlabel{text:ic_wave_idrift_boxsize} \ParameterEntry{Instrumental drift saturation box size}
+{Defines the size around a saturated pixel to flag as unusable in the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_BOXSIZE}{12}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_CUT_E2DS
+\item \namedlabel{text:ic_wave_idrift_cut_e2ds} \ParameterEntry{Instrumental drift cosmic sigma}
+{Defines the number of standard deviations to cut at in the cosmic re-normalization calculation during the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_CUT\_E2DS}{4.5}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_MAX_ERR
+\item \namedlabel{text:ic_wave_idrift_max_err} \ParameterEntry{Instrumental drift maximum uncertainty}
+{Defines the maximum uncertainty allowed on the RV for a given order. Used during the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_MAX\_ERR}{3.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_RV_CUT
+\item \namedlabel{text:ic_wave_idrift_rv_cut} \ParameterEntry{Instrumental drift RV cut}
+{Defines the RV cut above which the RV from orders are not used. Used during the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_RV\_CUT}{20.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
 
 \end{itemize}
 
@@ -1930,6 +1984,58 @@ pip install barycorrpy
 \fi
 
 \end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Polarimetry variables}
+\label{ch:variables:polarimetry}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% IC_POLAR_STOKES_PARAMS
+\item \namedlabel{text:ic_polar_stokes_params} \ParameterEntry{Stokes parameters}
+{Define all possible stokes parameters}
+{IC\_POLAR\_STOKES\_PARAMS}{\lstinline[style=pythoninline]| ['V', 'Q', 'U']|}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{load_data}}{Public}
+
+% IC_POLAR_FIBERS
+\item \namedlabel{text:ic_polar_fibers} \ParameterEntry{Polar fibers}
+{Define all possible fibers used for polarimetry}
+{IC\_POLAR\_FIBERS}{\lstinline[style=pythoninline]| ['A', 'B']|}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{load_data}}{Public}
+
+% IC_POLAR_METHOD
+\item \namedlabel{text:ic_polar_method} \ParameterEntry{Polar method}
+{Define the polarimetry method. Currently must be either: ``Ratio'' or ``Difference''.}
+{IC\_POLAR\_METHOD}{'Ratio'}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_polarimetry_wrapper}}{Public}
+
+% IC_POLAR_CONT_BINSIZE
+\item \namedlabel{text:ic_polar_cont_binsize} \ParameterEntry{Polar continuum bin size}
+{Define the polarimetry continuum bin size (for plotting)}
+{IC\_POLAR\_CONT\_BINSIZE}{1000}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+% IC_POLAR_CONT_OVERLAP
+\item \namedlabel{text:ic_polar_cont_overlap} \ParameterEntry{Polar continuum overlap size}
+{Define the polarimetry continuum overlap size (for plotting)}
+{IC\_POLAR\_CONT\_OVERLAP}{0}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+% IC_POLAR_CONT_TELLMASK
+\item \namedlabel{text:ic_polar_cont_tellmask} \ParameterEntry{Polar tell mask}
+{Define the telluric mask for calculation of the continuum.}
+{IC\_POLAR\_CONT\_TELLMASK}
+{\lstinline[style=pythoninline]| [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]] |}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+\end{itemize}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2152,6 +2258,43 @@ Value must be a float greater than zero.
 {qc\_max\_signal}{65500}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
 \DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
+
+
+% QC_HC_RMS_LITTROW_MAX
+\item \namedlabel{text:qc_hc_rms_littrow_max} \ParameterEntry{Maximum Littrow RMS (HC)}
+{Defines the maximum Littrow RMS value for \calHC.}
+{QC\_HC\_RMS\_LITTROW\_MAX}{0.1}
+{\calHC}{\constantsfile}{\calHC.\progMAIN}{Public}
+
+% QC_HC_DEV_LITTROW_MAX
+\item \namedlabel{text:qc_hc_dev_littrow_max} \ParameterEntry{Maximum Littrow Deviation (HC)}
+{Defines the maximum Littrow deviation from the wave solution for \calHC.}
+{QC\_HC\_DEV\_LITTROW\_MAX}{0.4}
+{\calHC}{\constantsfile}{\calHC.\progMAIN}{Public}
+
+% QC_WAVE_RMS_LITTROW_MAX
+\item \namedlabel{text:qc_wave_rms_littrow_max} \ParameterEntry{Maximum Littrow RMS (WAVE)}
+{Defines the maximum Littrow RMS value for \calWAVE}
+{QC\_WAVE\_RMS\_LITTROW\_MAX}{0.1}
+{\calWAVE}{\constantsfile}{\calWAVE.\progMAIN}{Public}
+
+% QC_WAVE_DEV_LITTROW_MAX
+\item \namedlabel{text:qc_wave_dev_littrow_max} \ParameterEntry{Maximum Littrow Deviation (WAVE)}
+{Defines the maximum Littrow deviation from the wave solution for \calWAVE.}
+{QC\_WAVE\_DEV\_LITTROW\_MAX}{0.3}
+{\calWAVE}{\constantsfile}{\calWAVE.\progMAIN}{Public}
+
+% QC_WAVE_IDRIFT_NBORDEROUT
+\item \namedlabel{text:qc_wave_idrift_nborderout} \ParameterEntry{Instrumental drift, maximum No. order removed}
+{Defines the maximum number of orders allowed to be removed from the RV calculation in order to pass the quality control, for the instrumental drift calculation.}
+{QC\_WAVE\_IDRIFT\_NBORDEROUT}{15}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% QC_WAVE_IDRIFT_RV_MAX
+\item \namedlabel{text:qc_wave_idrift_rv_max} \ParameterEntry{Instrumental drift, maximum allowed RV}
+{Defines the maximum allowed RV drift (in m/s) allowed for the instrumental drift calculation.}
+{QC\_WAVE\_IDRIFT\_RV\_MAX}{150.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
 
 
 \end{itemize}

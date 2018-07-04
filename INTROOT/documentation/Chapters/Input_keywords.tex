@@ -15,13 +15,6 @@ The following keywords are required by the current recipes to run.
 
 \begin{itemize}
 
-% TPL_NAME
-\item \KeywordEntry{Data fits file type}
-{The data fits file type (template Name)}
-{kw\_DPRTYPE}
-{TPL\_NAME}{"DATA"}{template Name}
-{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
-
 % ACQTIME1
 \item \namedlabel{text:acqtime1} \KeywordEntry{Acquisition time (human readable)}
 {The acquisition time in format YYYY-mm-dd-HH-MM-SS.ss}
@@ -34,6 +27,62 @@ The following keywords are required by the current recipes to run.
 {The acquisition time in in unix time format (time since 1970-01-01-00-00-00)}
 {kw\_ACQTIME\_KEY\_UNIX}
 {ACQTIME}{000000000.00}{Date in unix time at start of observation}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% DATE-OBS
+\item \KeywordEntry{Observation date}
+{The observation date in format YYYY-mm-DD}
+{kw\_DATE\_OBS}
+{DATE-OBS}{YYYY-mm-DD}{Date at start of observation (UTC)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% UTC-OBS
+\item \KeywordEntry{Observation time}
+{The observation time in format HH:MM:SS.SS}
+{kw\_UTC\_OBS}
+{UTC-OBS}{HH:MM:SS.SS}{Time at start of observation (UTC)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBJRA
+\item \KeywordEntry{Object Right Ascension}
+{The object Right Ascension in HH:MM:SS.SS}
+{kw\_OBJRA}
+{OBJRA}{HH:MM:SS.SS}{Target right ascension}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBJDEC
+\item \KeywordEntry{Object Declination}
+{The object Declination in DD:MM:SS.SS}
+{kw\_OBJDEC}
+{OBJDEC}{DD:MM:SS.SS}{Target declination}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBJNAME
+\item \KeywordEntry{Object Name}
+{The object name}
+{kw\_OBJNAME}
+{OBJNAME}{Name}{Target name}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBJEQUIN
+\item \KeywordEntry{Object Equinox}
+{The object equinox}
+{kw\_OBJEQUIN}
+{OBJEQUIN}{DDDD.D}{Target equinox}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBJRAPM
+\item \KeywordEntry{Object Right Ascension in proper motion}
+{The Object Right Ascension in proper motion [as/yr]}
+{kw\_OBJRAPM}
+{OBJRAPM}{D.DD}{Target right ascension proper motion in as/yr}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBJDECPM
+\item \KeywordEntry{Object Declination in proper motion}
+{The Object Declination in proper motion [as/yr]}
+{kw\_OBJDECPM}
+{OBJDECPM}{D.DD}{Target declination proper motion in as/yr}
 {\AllRecipes}{\spirouKeywords}{\spirouKeywords}
 
 % RDNOISE
@@ -56,6 +105,45 @@ The following keywords are required by the current recipes to run.
 {kw\_EXPTIME}
 {EXPTIME}{0.0}{Integration time (seconds)}
 {\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% OBSTYPE
+\item \KeywordEntry{Observation Type}
+{The observation type}
+{kw\_OBSTYPE}
+{OBSTYPE}{Object}{Observation / Exposure type}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% CCAS
+\item \KeywordEntry{Cassegrain Fiber Position}
+{The cassegrain fiber position}
+{kw\_CCAS}
+{SBCCAS\_P}{pos\_pk}{SPIRou Cassegrain Fiber Position (predefined)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% CREF
+\item \KeywordEntry{Reference Fiber Position}
+{The reference fiber position}
+{kw\_CREF}
+{SBCREF\_P}{pos\_pk}{SPIRou Reference Fiber Position (predefined)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% CDEN
+\item \KeywordEntry{Calibration reference density}
+{The calibration reference density}
+{kw\_CDEN}
+{SBCDEN\_P}{1.2}{SPIRou Calib-Reference density (0 to 3.3)}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+
+% CMMTSEQ
+\item \KeywordEntry{Exposure Sequence}
+{The exposure sequence description}
+{kw\_CMMTSEQ}
+{CMMTSEQ}{\{X\} exposure A of B}{}
+{\AllRecipes}{\spirouKeywords}{\spirouKeywords}
+\begin{note}
+where X = a Stoke parameter and A and B are integers. \\
+e.g. ``V exposure 2, sequence 1 of 1''
+\end{note}
 
 \end{itemize}
 
