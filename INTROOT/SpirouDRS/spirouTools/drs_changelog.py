@@ -11,6 +11,7 @@ Created on 2018-07-04 at 11:44
 """
 from __future__ import division
 import numpy as np
+import sys
 import os
 from datetime import datetime
 
@@ -42,7 +43,15 @@ PATH = spirouConfig.spirouConfigFile.get_relative_folder(*rargs)
 FILENAME = os.path.join(PATH, 'CHANGELOG.md')
 TMPFILENAME = 'CHANGELOG.tmp'
 TMPFILENAME2 = 'CHANGELOGLINE.tmp'
+VERSIONFILE = os.path.join(PATH, 'VERSION.txt')
 REVKEY = '(rev.'
+
+rargs = [CONSTANTS.PACKAGE(), './spirouConfig']
+CONSTPATH = spirouConfig.spirouConfigFile.get_relative_folder(*rargs)
+CONSTFILE = os.path.join(CONSTPATH, 'spirouConst.py')
+
+VERSIONSTR = '__version__ = '
+DATESTR = '__date__ = '
 
 # =============================================================================
 # Define functions
@@ -241,6 +250,80 @@ def get_last_entry(filename):
         return last_commit
 
 
+def update_version_file(filename, version):
+    # read file and delete
+    f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+    os.remove(filename)
+    # edit first line
+    lines[0] = 'DRS_VERSION = {0}\n'.format(version)
+    # write file and save
+    f = open(filename, 'w')
+    f.writelines(lines)
+    f.close()
+
+
+def update_py_version(filename, version):
+    # read const file
+    f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+    # find version and date to change
+    version_it, date_it = None, None
+    for it, line in enumerate(lines):
+        if line.startswith(VERSIONSTR):
+            version_it = it
+        if line.startswith(DATESTR):
+            date_it = it
+    # while loop for user input
+    cond = True
+    uinput1 = None
+    while cond:
+        # ask to update version
+        print('Current version is "{0}"'.format(version))
+        print('New version [Y]es or [N]o?')
+        # deal with python 2 / python 3 input method
+        if sys.version_info.major < 3:
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('\t>> ')      # note python 3 wont find this!
+        else:
+            uinput = input('\t>> ')
+
+        # deal with version input
+        if 'Y' in uinput.upper():
+            print('\nEnter new version number:')
+            if sys.version_info.major < 3:
+                # noinspection PyUnresolvedReferences
+                uinput1 = raw_input('\t>> ')    # note python 3 wont find this!
+            else:
+                uinput1 = input('\t>> ')
+                print('\nNew version is "{0}"'.format(uinput1))
+            print('Accept version [Y]es or [N]o?')
+            if sys.version_info.major < 3:
+                # noinspection PyUnresolvedReferences
+                uinput2 = raw_input('\t>> ')    # note python 3 wont find this!
+            else:
+                uinput2 = input('\t>> ')
+            if 'Y' in uinput2.upper():
+                cond = False
+        else:
+            cond = False
+            uinput1 = None
+
+    if uinput1 is not None:
+        # update version
+        lines[version_it] = '{0} \'{1}\''.format(VERSIONSTR, uinput1)
+        # update date
+        dt = datetime.now()
+        dargs = [DATESTR, dt.year, dt.month, dt.day]
+        lines[date_it] = '{0} \'{1:04d}-{2:02d}-{3:02d}\''.format(*dargs)
+        # write lines
+        f = open(filename, 'w')
+        f.writelines(lines)
+        f.close()
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -262,7 +345,10 @@ if __name__ == "__main__":
     update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
     # get lines group them and save to full file
     process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
-
+    # update version text file
+    update_version_file(VERSIONFILE, version)
+    # increment version in config files
+    update_py_version(CONSTFILE, version)
 
 # =============================================================================
 # End of code
