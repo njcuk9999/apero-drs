@@ -3547,19 +3547,11 @@
 	- updated date and version (rev.a334fe2a)
 
 
-
-================================================================================
-* Tue Jul 03 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.058
-
-================================================================================
-	- updated date and version (rev.a35bda77)
-
-
-
 ================================================================================
 * Wed Jul 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.058
 
 ================================================================================
+	- update change log (rev.17012c5b)
 	- the output changelog (rev.5b9c1771)
 	- added functionality to update VERSION.txt and the version in the spirouConst.py file (rev.f93ca422)
 	- DRS version added to VERSION.txt (rev.716e6da5)
