@@ -322,6 +322,10 @@ def update_py_version(filename, version):
         f = open(filename, 'w')
         f.writelines(lines)
         f.close()
+        # update version number
+        version = uinput1
+    # return version
+    return version
 
 
 # =============================================================================
@@ -334,6 +338,10 @@ if __name__ == "__main__":
     p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # get the version
     version = p['DRS_VERSION']
+    # update version text file
+    update_version_file(VERSIONFILE, version)
+    # increment version in config files
+    version = update_py_version(CONSTFILE, version)
     # check full log file for previous entries
     since = get_last_entry(FILENAME)
     # log if not None
@@ -345,10 +353,7 @@ if __name__ == "__main__":
     update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
     # get lines group them and save to full file
     process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
-    # update version text file
-    update_version_file(VERSIONFILE, version)
-    # increment version in config files
-    update_py_version(CONSTFILE, version)
+
 
 # =============================================================================
 # End of code
