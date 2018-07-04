@@ -15,16 +15,14 @@ Below is the current to do list and any things that need to be addressed before 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
+	\item Remove H2RG requirements
 	\item Write help files for each recipe (In \InstallDIR/man filenames should be `recipe name'.info)
 	\item Need to sort out public and private variables (and keywords), some variables not needed to be changed by user -- private and public configuration files
-	\item Should have user configuration file too, for example, \textcolor{blue}{/home/\$user/.spirou\_config} and call the default values from a private location
-	\item Check configuration variable values are valid at start-up of recipes (avoids crashes later)
 	\item \textcolor{red}{Can we remove `special\_config\_SPIROU' configuration file call as the file does not exist?}
 	\item \textcolor{red}{fitsfilename is the last file in a group of files - is this correct or should it be the first (as initially defined)?}
-	\item \textcolor{red}{`nbcos' in \spirouImage is not used - what is it?}
-	\item \textcolor{red}{`image\_gap' in \spirouLOCOR is set to zero, what is this?}
-	\item \textcolor{red}{Some keywords added to header but not updated in any recipe - should they be removed (or updated)?}
 	\item Write a set-up.py installer / checker for prerequisites (Last step)
+	\item Need axis labels for all plots
+
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,48 +34,10 @@ Below is the current to do list and any things that need to be addressed before 
 
 \begin{itemize}
 	\item Write introduction (leading paragraph) \dotfill Dev
-	\item \sout{Write installation} \dotfill User + Dev
-	\item \sout{Write data architecture} \dotfill User + Dev
-	\item \sout{Write using the DRS} \dotfill User + Dev
-	\item \sout{Write summary of changes} \dotfill Dev
-	\item \sout{Write Todo chapter} \dotfill Dev
-	\item \sout{Write coding style chapter} \dotfill Dev
-	\item \sout{Write documentation chapter} \dotfill Dev
-	\item \sout{Write input keywords chapter} \dotfill Dev
-	\item \sout{Write variables chapter} \dotfill User + Dev
-	\item \sout{Write output keywords chapter} \dotfill Dev
-	\item Write recipes chapter \dotfill User + Dev
-	\item \sout{Write module chapter} \dotfill Dev
+	\item Update output keywords
+	\item Update recipes chapter \dotfill User + Dev
 \end{itemize}
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_DARK\_spirou recipe}
-\label{ch:todo:cal_DARK_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 v43 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-\end{itemize}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_loc\_RAW\_spirou recipe}
-\label{ch:todo:cal_loc_RAW_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 v43 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -85,13 +45,10 @@ Below is the current to do list and any things that need to be addressed before 
 \label{ch:todo:cal_SLIT_spirou}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \begin{itemize}
-	\item \sout{convert code from AT-4 v43 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
+	\item fiber loop overwrites loc
 \end{itemize}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -101,12 +58,8 @@ Below is the current to do list and any things that need to be addressed before 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-	\item \sout{convert code from AT-4 v43 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
 	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted  -- background set to zero.
 	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -117,72 +70,11 @@ Below is the current to do list and any things that need to be addressed before 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-	\item \sout{convert code from AT-4 v43 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
 	\item \spirouBACK.measure\_background\_flatfield() needs converting from C to python (interpol.c) - currently not used so not converted -- background set to zero.
 	\item \textcolor{red}{\spirouBACK.measure\_min\_max() why is the max\_signal the third biggest value and not a percentile?}
 	\item \textcolor{red}{Quality control test \definevariable{text:qc_max_signal}{QC\_MAX\_SIGNAL} ignored for some reason - Why?}
-	\item \textcolor{red}{Inconsistency in adding ``lower'' and ``upper'' contribution due to pixel rounding in pixel extraction process.}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
 \end{itemize}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_DRIFT\_RAW\_spirou recipe}
-\label{ch:todo:cal_DRIFT_RAW_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 v43 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-\end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_BADPIX\_spirou recipe}
-\label{ch:todo:cal_BADPIX_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-\end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_DRIFT\_E2DS\_spirou recipe}
-\label{ch:todo:cal_DRIFT_E2DS_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Update from AT-4 v43 to current}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-\end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_DRIFT-PEAK\_E2DS\_spirou recipe}
-\label{ch:todo:cal_DRIFTPEAK_E2DS_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -193,9 +85,7 @@ Below is the current to do list and any things that need to be addressed before 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-	\item convert code from AT-4 to run on python 3
-	\item add variables and keywords to documentation
-	\item Unit test - comparing outputs this version to AT-4
+	\item replace Fortran `fitgaus.f' routine with python (including testing different versions)
 \end{itemize}
 
 
@@ -207,36 +97,6 @@ Below is the current to do list and any things that need to be addressed before 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{itemize}
-	\item convert code from AT-4 to run on python 3
-	\item add variables and keywords to documentation
-	\item Unit test - comparing outputs this version to AT-4
-\end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The cal\_CCF\_E2DS\_spirou recipe}
-\label{ch:todo:cal_CCF_E2DS_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item \sout{convert code from AT-4 to run on python 3}
-	\item \sout{add variables and keywords to documentation}
-	\item \sout{Unit test - comparing outputs this version to AT-4}
-	\item \textcolor{red}{Speed up correlation function in python.}
-\end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\section{The pol\_spirou recipe}
-\label{ch:todo:pol_spirou}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
-	\item convert code from AT-4 to run on python 3
-	\item add variables and keywords to documentation
-	\item Unit test - comparing outputs this version to AT-4
+	\item compare cal\_WAVE to cal\_WAVE\_NEW
+	\item see Section \ref{ch:todo:cal_HC_E2DS_spirou}
 \end{itemize}

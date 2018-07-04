@@ -125,6 +125,12 @@ ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
 #   cal_preprocess parameters
 # -----------------------------------------------------------------------------
 
+# define output type. Currently excepted values are:                  - [cal_pp]
+#    mode=0:    adds only the processed_suffix
+#    mode=1:    adds the processed_suffix and an identifying suffix
+#               (i.e. flat_dark, dark_dark etc)
+pp_mode = 0
+
 # force pre-processed files only (Should be 1 or True to check and       - [all]
 #     force DRS to accept pre-processed files only - i.e. rotated and
 #     corrected) - if 0 or False DRS will except any file
@@ -887,7 +893,7 @@ qc_max_signal = 50000
 #       (at x cut points)
 qc_hc_rms_littrow_max = 0.1    #0.3
 
-#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #        cal_wave (at x cut points)
 qc_hc_dev_littrow_max = 0.4  # 0.9
 
@@ -895,7 +901,7 @@ qc_hc_dev_littrow_max = 0.4  # 0.9
 #       (at x cut points)
 qc_wave_rms_littrow_max = 0.1
 
-#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #       cal_wave (at x cut points)
 qc_wave_dev_littrow_max = 0.3
 
