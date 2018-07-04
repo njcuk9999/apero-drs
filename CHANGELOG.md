@@ -3545,3 +3545,24 @@
 	- rebuilt pdf (rev.58d829da)
 	- updated date and version (rev.a35bda77)
 	- updated date and version (rev.a334fe2a)
+
+
+
+================================================================================
+* Tue Jul 03 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.058
+
+================================================================================
+	- updated date and version (rev.a35bda77)
+
+
+
+================================================================================
+* Wed Jul 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.058
+
+================================================================================
+	- the output changelog (rev.5b9c1771)
+	- added functionality to update VERSION.txt and the version in the spirouConst.py file (rev.f93ca422)
+	- DRS version added to VERSION.txt (rev.716e6da5)
+	- recipe to get/update change log (moved to spirouTools - final location) (rev.366f9e2d)
+	- recipe to get/update change log (rev.466217d8)
+	- output: the change log (backup) (rev.e3ae78d8)
