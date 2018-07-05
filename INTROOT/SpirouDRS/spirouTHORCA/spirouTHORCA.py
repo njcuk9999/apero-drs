@@ -1602,7 +1602,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
     elif mode == 1:
         fkwargs = dict(weights=invsig, guess=guess, return_fit=True,
                        return_uncertainties=True)
-        ag, siga, cfit = spirouMath.fitgaussian(x, y, **fkwargs)
+        ag, cfit, siga = spirouMath.fitgaussian(x, y, **fkwargs)
     elif mode == 2:
         fkwargs = dict(weights=invsig, return_fit=True,
                        return_uncertainties=True)
