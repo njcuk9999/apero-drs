@@ -19,7 +19,7 @@ import os
 # =============================================================================
 # Define variables
 # =============================================================================
-WORKSPACE = '/scratch/Projects/spirou_py3/data_h4rg/reduced_backup/'
+WORKSPACE = '/home/ncook/Downloads/data_h4rg/reduced_backup/'
 
 FOLDER1 = WORKSPACE + 'FIND_LINDS_TEST/FORTRAN'
 FOLDER2 = WORKSPACE + 'FIND_LINDS_TEST/SCIPY'
@@ -35,6 +35,10 @@ def plot_wave(y1, y2):
 
     plt.figure()
     for order in range(ydim):
+
+        if not (13 <= order <= 40):
+            continue
+
         plt.plot(y1[order], color='r')
         plt.text(-10, y1[order][0], s=order, color='r')
 
@@ -55,6 +59,10 @@ def plot_wave_residual(y1, y2):
 
     plt.figure()
     for order in range(ydim):
+
+        if not (13 <= order <= 40):
+            continue
+
         colorVal = scalarMap.to_rgba(order)
 
         plt.plot(y1[order] - y2[order], label='Order = {0}'.format(order),
