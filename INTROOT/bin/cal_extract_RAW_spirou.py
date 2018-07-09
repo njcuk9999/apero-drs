@@ -185,6 +185,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     else:
         background = np.zeros_like(data2)
 
+
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -193,6 +194,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # get tilts
     loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+
+    #-----------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #-----------------------------------------------------------------------
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p, loc = spirouEXTOR.GetEarthVelocityCorrection(p, loc, hdr)
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -347,6 +354,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfffitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        # add barycentric keys to header
+        hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'],
+                                   value=loc['BERV_MAX'])
         # construct loco filename
         locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
