@@ -594,7 +594,8 @@ ccf_fit_type = 0
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 25
 
-#  Define the mode to work out the Earth Velocity calculation        - [cal_CCF]
+#  Define the mode to work out the Earth Velocity       - [cal_extract, cal_CCF]
+#     correction calculation
 #      Options are:
 #           - "off" - berv is set to zero
 #           - "old" - berv is calculated with FORTRAN newbervmain.f
@@ -604,7 +605,7 @@ ccf_num_orders_max = 25
 #           - "new" - berv is calculated using barycorrpy  but needs to be
 #                     installed (i.e. pip install barycorrpy)
 #                     CURRENTLY NOT WORKING!!!
-ccf_bervmode = "new"
+bervmode = "new"
 
 
 # -----------------------------------------------------------------------------
