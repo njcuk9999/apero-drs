@@ -22,12 +22,14 @@ __author__ = Constants.AUTHORS()
 __date__ = Constants.LATEST_EDIT()
 __release__ = Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['Extraction', 'ExtractABOrderOffset',
-           'GetExtMethod', 'GetValidOrders']
+__all__ = ['EarthVelocityCorrection', 'Extraction', 'ExtractABOrderOffset',
+           'GetEarthVelocityCorrection', 'GetExtMethod', 'GetValidOrders']
 
 # =============================================================================
 # Function aliases
 # =============================================================================
+EarthVelocityCorrection = spirouEXTOR.earth_velocity_correction
+
 Extraction = spirouEXTOR.extraction_wrapper
 
 # Extraction = spirouEXTOR.extract_wrapper
@@ -43,6 +45,8 @@ ExtractABOrderOffset = spirouEXTOR.extract_AB_order
 # ExtractTiltWeightOrder2 = spirouEXTOR.extract_tilt_weight_order2
 #
 # ExtractWeightOrder = spirouEXTOR.extract_weight_order
+
+GetEarthVelocityCorrection = spirouEXTOR.get_earth_velocity_correction
 
 GetExtMethod = spirouEXTOR.get_extraction_method
 
