@@ -10,9 +10,11 @@ Created on 2017-11-07 at 13:46
 """
 from __future__ import division
 import numpy as np
+import os
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -395,6 +397,175 @@ def get_extraction_method(p, mode):
         emsg1 = 'Extraction methods "modes" not up-to-date.'
         emsg2 = '   function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
+
+# =============================================================================
+# Addition non-extraction function
+# =============================================================================
+def get_earth_velocity_correction(p, loc, hdr):
+
+    if p['KW_BERV'][0] in hdr:
+        loc['BERV'] = hdr['KW_BERV']
+        loc['BJD'] = hdr['KW_BJD']
+        loc['BERV_MAX'] = hdr['KW_BERV_MAX']
+        return loc
+
+    # ----------------------------------------------------------------------
+    # Read star parameters
+    # ----------------------------------------------------------------------
+    # TODO: remove H2RG dependency
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
+
+    #-----------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #-----------------------------------------------------------------------
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
+    else:
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0,0.0
+        loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
+
+    # return loc
+    return p, loc
+
+
+def earth_velocity_correction(p, loc, method='old'):
+    func_name = __NAME__ + '.earth_velocity_correction()'
+    # get the observation date
+    obs_year = int(p['DATE-OBS'][0:4])
+    obs_month = int(p['DATE-OBS'][5:7])
+    obs_day = int(p['DATE-OBS'][8:10])
+    #get the UTC observation time
+    utc = p['UTC-OBS'].split(':')
+    # convert to hours
+    hourpart = float(utc[0])
+    minpart = float(utc[1]) / 60.
+    secondpart = float(utc[2]) / 3600.
+    exptimehours = (p['EXPTIME'] / 3600.) / 2.
+    obs_hour = hourpart + minpart + secondpart + exptimehours
+    # get the RA in hours
+    objra = p['OBJRA'].split(':')
+    ra_hour = float(objra[0])
+    ra_min = float(objra[1]) / 60.
+    ra_second = float(objra[2]) / 3600.
+    target_alpha = ra_hour + ra_min + ra_second
+    # get the DEC in degrees
+    objdec = p['OBJDEC'].split(':')
+    dec_hour = float(objdec[0])
+    dec_min = np.sign(float(objdec[0])) * float(objdec[1]) / 60.
+    dec_second = np.sign(float(objdec[0])) * float(objdec[2]) / 3600.
+    target_delta = dec_hour + dec_min + dec_second
+    # set the proper motion and equinox
+    target_pmra = p['OBJRAPM']
+    target_pmde = p['OBJDECPM']
+    target_equinox = p['OBJEQUIN']
+
+    #--------------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #--------------------------------------------------------------------------
+
+    WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
+    args = [p, target_alpha, target_delta, target_equinox, obs_year,
+            obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
+            p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra, target_pmde]
+    # calculate BERV
+    berv, bjd, bervmax = newbervmain(*args, method=method)
+    # log output
+    wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
+    WLOG('info', p['LOG_OPT'], wmsg.format(berv))
+
+    # finally save berv, bjd, bervmax to p
+    loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
+    loc.set_sources(['BERV','BJD', 'BERV_MAX'], func_name)
+
+    # return p
+    return loc
+
+
+def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
+                obs_lat, obs_alt, pmra, pmde, method='old'):
+
+    # if method is off return zeros
+    if method == 'off':
+        WLOG('warning', p['LOG_OPT'], 'BERV not calculated.')
+        return 0.0, 0.0, 0.0
+
+    # if old use FORTRAN
+    if method == 'old':
+        # need to import
+        try:
+            from SpirouDRS.fortran import newbervmain
+        except:
+            emsg1 = ('For method="old" must compile fortran routine '
+                     '"newbervmain" in the SpirouDRS/fortran directory:')
+            emsg2 = '\t>>> f2py -c -m newbervmain --noopt --quiet newbervmain.f'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        # pipe to FORTRAN
+        # newbervmain needs RA in hour, obs_long West and obs_alt in km
+        args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
+                obs_alt, pmra, pmde]
+        berv1, bjd1, bervmax1 = newbervmain.newbervmain(*args)
+        # return berv, bjd, bervmax
+        return berv1, bjd1, bervmax1
+
+    if method == 'new':
+        # calculate JD time (as Astropy.Time object)
+        from astropy.time import Time, TimeDelta
+        from astropy import units as uu
+        tstr = '{0} {1}'.format(p['DATE-OBS'], p['UTC-OBS'])
+        t = Time(tstr, scale='utc')
+        # add exposure time
+        tdelta = TimeDelta(((p['EXPTIME'] / 3600.) / 2.) * uu.s)
+        t1 = t + tdelta
+        # ---------------------------------------------------------------------
+        # get reset directory location
+        # get package name and relative path
+        package = spirouConfig.Constants.PACKAGE()
+        relfolder = spirouConfig.Constants.BARYCORRPY_DIR()
+        # get absolute folder path from package and relfolder
+        absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+        # get barycorrpy folder
+        data_folder = os.path.join(absfolder, '')
+        # ---------------------------------------------------------------------
+        # need import
+        try:
+            import barycorrpy
+        except:
+            emsg1 = 'For method="new" must have barcorrpy installed '
+            emsg2 = '\ti.e. ">>> pip install barycorrpy'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
+
+        # TODO: zmeas needs to be set to the CCF shift result --> NO
+        # TODO: Need parallax and rv? --> NO
+        # TODO barycorrpy needs RA in degree, obs_long East and obs_alt in m
+
+        # set up the barycorr arguments
+        bkwargs = dict(ra=ra*15., dec=dec, epoch=equinox, pmra=pmra,
+                       pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,
+                       longi=obs_long*-1, alt=obs_alt*1000.,
+                       leap_dir=data_folder)
+
+        # get the julien UTC date for observation and obs + 1 year
+        jdutc=list(t1.jd + np.arange(0., 365., 1.5))
+        bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
+        bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
+
+        berv2 = bresults1[0][0]/1000.0
+        # bjd2 = bresults2[0].jd
+        bjd2 = bresults2[0][0]
+        # work ou the maximum barycentric correction
+        bervmax2 = np.max(abs(bresults1[0] / 1000.))
+
+        # return results
+        return berv2, bjd2, bervmax2
 
 
 # =============================================================================
