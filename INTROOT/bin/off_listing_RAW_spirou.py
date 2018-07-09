@@ -152,10 +152,13 @@ def main(night_name=None):
         WLOG('', '', '')
         WLOG('', '', 'Listing table:')
         WLOG('', '', '')
+        f = open(outfile, 'r')
+        lines = f.readlines()
+        f.close()
         tablestring = table.__str__()
         tablestrings = tablestring.split('\n')
         WLOG('', '', '=' * len(tablestrings[0]))
-        WLOG('', '', tablestrings)
+        WLOG('', '', lines)
         WLOG('', '', '=' * len(tablestrings[0]))
 
     # ----------------------------------------------------------------------
