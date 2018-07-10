@@ -297,6 +297,7 @@ if __name__ == '__main__':
         # ----------------------------------------------------------------------
         # save E2DS nan filled
         # construct spectrum filename
+        # TODO: Define filename in spirouConfig.Constants
         specfitsfile = os.path.join(p['REDUCED_DIR'], 'test_spe.fits')
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
@@ -307,6 +308,7 @@ if __name__ == '__main__':
         # ----------------------------------------------------------------------
         # save E2DS 0 filled
         # construct spectrum filename
+        # TODO: Define filename in spirouConfig.Constants
         specfitsfile = os.path.join(p['REDUCED_DIR'], 'test_spe0.fits')
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
