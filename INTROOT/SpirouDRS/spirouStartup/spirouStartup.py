@@ -184,7 +184,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # -------------------------------------------------------------------------
     # deal with arg_night_name defined in call
     if night_name is not None:
-        cparams['ARG_NIGHT_NAME'] = night_name
+        cparams['ARG_NIGHT_NAME'] = str(night_name)
     # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
