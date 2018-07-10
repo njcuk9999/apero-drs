@@ -23,8 +23,14 @@ WORKSPACE = '/home/ncook/Downloads/data_h4rg/reduced_backup/'
 
 FOLDER1 = WORKSPACE + 'FIND_LINDS_TEST/FORTRAN'
 FOLDER2 = WORKSPACE + 'FIND_LINDS_TEST/SCIPY'
-FILENAME = '20180409_hcone_hcone_001_pp_wave_AB.fits'
+FILENAME1 = '180529_2279845c_hc_pp_wave_AB.fits'
+FILENAME2 = '180529_2279845e_hc_pp_wave_AB.fits'
 # -----------------------------------------------------------------------------
+FIRST = 13
+LAST = 40
+
+FIRST = 0
+LAST = 50
 
 # =============================================================================
 # Define functions
@@ -60,7 +66,7 @@ def plot_wave_residual(y1, y2):
     plt.figure()
     for order in range(ydim):
 
-        if not (13 <= order <= 40):
+        if not (FIRST <= order <= LAST):
             continue
 
         colorVal = scalarMap.to_rgba(order)
@@ -80,8 +86,8 @@ def plot_wave_residual(y1, y2):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # get data in each folder
-    data1 = fits.getdata(os.path.join(FOLDER1, FILENAME))
-    data2 = fits.getdata(os.path.join(FOLDER2, FILENAME))
+    data1 = fits.getdata(os.path.join(FOLDER1, FILENAME1))
+    data2 = fits.getdata(os.path.join(FOLDER2, FILENAME2))
 
     # plot data
     plot_wave(data1, data2)
