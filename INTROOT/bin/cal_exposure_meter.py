@@ -71,7 +71,9 @@ def main(night_name=None, reffile=None):
     # Get the required fiber type from the constants file
     # ----------------------------------------------------------------------
     # get the fiber type (set to AB)
+    # TODO: SET EM_FIB_TYPE to FIBER_TYPES
     p['FIBER'] = p['EM_FIB_TYPE']
+    p['FIBER_TYPES'] = ['AB']
 
     # ----------------------------------------------------------------------
     # Read flat image file
@@ -152,10 +154,17 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Get localisation coefficients
     # ------------------------------------------------------------------
+    # storage for fiber parameters
+    loc['ALL_ACC'] = dict()
+    loc['ALL_ASS'] = dict()
     # get this fibers parameters
-    p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
-    # get localisation fit coefficients
-    loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+    for fiber in p['FIBER_TYPES']:
+        p = spirouImage.FiberParams(p, fiber, merge=True)
+        # get localisation fit coefficients
+        loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+        # save all fibers
+        loc['ALL_ACC'][fiber] = loc['ACC']
+        loc['ALL_ASS'][fiber] = loc['ASS']
 
     # ------------------------------------------------------------------
     # Get telluric and telluric mask and add to loc
@@ -172,7 +181,7 @@ def main(night_name=None, reffile=None):
     # log progress
     WLOG('', p['LOG_OPT'], 'Making 2D map of order locations')
     # make the 2D wave-image
-    loc = spirouExM.order_profile(loc)
+    loc = spirouExM.order_profile(p, loc)
 
     # ------------------------------------------------------------------
     # Make 2D map of wavelengths accounting for tilt
@@ -180,7 +189,7 @@ def main(night_name=None, reffile=None):
     # log progress
     WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
     # make the 2D map of wavelength
-    loc = spirouExM.create_wavelength_image(loc)
+    loc = spirouExM.create_wavelength_image(p, loc)
 
     # ------------------------------------------------------------------
     # Use spectra wavelength to create 2D image from wave-image
@@ -344,13 +353,13 @@ def main(night_name=None, reffile=None):
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
-if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # run main with no arguments (get from command line - sys.argv)
-    ll = main()
-    # exit message
-    spirouStartup.Exit(ll)
+# # Main code here
+# if __name__ == "__main__":
+#     # ----------------------------------------------------------------------
+#     # run main with no arguments (get from command line - sys.argv)
+#     ll = main()
+#     # exit message
+#     spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
