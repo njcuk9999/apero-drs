@@ -52,11 +52,12 @@ if __name__ == '__main__':
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
-    name, lname = ['reffile'], ['Reference file']
-    req, call, call_priority = [True], [reffile], [True]
+    name, lname = ['reffile', 'e2dsprefix'], ['Reference file', 'E2DS Prefix']
+    req, call, call_priority = [True, True], [reffile, e2dsprefix], [True, True]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime([0], [str], name, req, call,
-                                                    call_priority, lname)
+    customargs = spirouStartup.GetCustomFromRuntime([0, 1], [str, str], name,
+                                                    req, call, call_priority,
+                                                    lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile')
@@ -181,7 +182,7 @@ if __name__ == '__main__':
         # Get file names
         # ------------------------------------------------------------------
         # get files using e2ds
-        e2dsfilename = '{0}_{1}.fits'.format(e2dsprefix, fiber)
+        e2dsfilename = '{0}_{1}.fits'.format(p['E2DSPREFIX'], fiber)
         e2dsfile = os.path.join(p['REDUCED_DIR'], e2dsfilename)
         # get data
         e2dsdata, hdr, cdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
@@ -297,8 +298,7 @@ if __name__ == '__main__':
         # ----------------------------------------------------------------------
         # save E2DS nan filled
         # construct spectrum filename
-        # TODO: Define filename in spirouConfig.Constants
-        specfitsfile = os.path.join(p['REDUCED_DIR'], 'test_spe.fits')
+        specfitsfile = spirouConfig.Constants.WAVE_MAP_SPE_FILE(p)
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
@@ -307,9 +307,7 @@ if __name__ == '__main__':
         spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
         # ----------------------------------------------------------------------
         # save E2DS 0 filled
-        # construct spectrum filename
-        # TODO: Define filename in spirouConfig.Constants
-        specfitsfile = os.path.join(p['REDUCED_DIR'], 'test_spe0.fits')
+        specfitsfile = spirouConfig.Constants.WAVE_MAP_SPE0_FILE(p)
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
