@@ -1113,6 +1113,58 @@ def EM_MASK_FILE(p):
 
 
 # noinspection PyPep8Naming
+def WAVE_MAP_SPE_FILE(p):
+    """
+    Defines the cal_exposure_meter wavelength
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get prefix
+    prefix = p['E2DSPREFIX']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = '{0}_{1}_{2}.fits'.format(prefix, 'SPE', kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+# noinspection PyPep8Naming
+def WAVE_MAP_SPE0_FILE(p):
+    """
+    Defines the cal_exposure_meter wavelength
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get prefix
+    prefix = p['E2DSPREFIX']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = '{0}_{1}_{2}.fits'.format(prefix, 'SPE0', kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+# noinspection PyPep8Naming
 def WAVE_FILE(p):
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
