@@ -11,9 +11,8 @@ Created on 2017-10-11 at 10:43
 
 Version 0.0.1
 """
-
 from . import spirouBACK
-from . import spirouCDB
+from . import spirouDB
 from . import spirouConfig
 from . import spirouCore
 from . import spirouEXTOR
@@ -39,9 +38,9 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['spirouBACK',
-           'spirouCDB',
            'spirouConfig',
            'spirouCore',
+           'spirouDB',
            'spirouEXTOR',
            'spirouFLAT',
            'spirouImage',
@@ -63,9 +62,9 @@ if __name__ == "__main__":
     # spirouBACK
     print('\n\t' + spirouBACK.__NAME__)
     print('\t\t--' + spirouBACK.spirouBACK.__NAME__)
-    # spirouCDB
-    print('\n\t' + spirouCDB.__NAME__)
-    print('\t\t--' + spirouCDB.spirouCDB.__NAME__)
+    # spirouDB
+    print('\n\t' + spirouDB.__NAME__)
+    print('\t\t--' + spirouDB.spirouCDB.__NAME__)
     # spirouConfig
     print('\n\t' + spirouConfig.__NAME__)
     print('\t\t--' + spirouConfig.spirouConfig.__NAME__)
