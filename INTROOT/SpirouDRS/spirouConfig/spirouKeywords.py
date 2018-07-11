@@ -378,7 +378,7 @@ kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
 kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
 
-kw_E2DS_FUNC = ['EXTFUNC', '', 'Extrction function']
+kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
