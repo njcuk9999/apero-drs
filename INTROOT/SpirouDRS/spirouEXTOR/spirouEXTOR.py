@@ -405,10 +405,10 @@ def get_extraction_method(p, mode):
 def get_earth_velocity_correction(p, loc, hdr):
 
     if p['KW_BERV'][0] in hdr:
-        loc['BERV'] = hdr['KW_BERV']
-        loc['BJD'] = hdr['KW_BJD']
-        loc['BERV_MAX'] = hdr['KW_BERV_MAX']
-        return loc
+        loc['BERV'] = hdr[p['KW_BERV'][0]]
+        loc['BJD'] = hdr[p['KW_BJD'][0]]
+        loc['BERV_MAX'] = hdr[p['KW_BERV_MAX'][0]]
+        return p, loc
 
     # ----------------------------------------------------------------------
     # Read star parameters
