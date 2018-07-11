@@ -16,7 +16,7 @@ import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from . import spirouFITS
 from . import spirouImage
 
@@ -67,8 +67,8 @@ def get_telluric(p, loc, hdr):
 
     func_name = __NAME__ + '.get_telluric()'
     # load the telluric model
-    txfile = spirouCDB.GetFile(p, 'EM_TELL_X', hdr, required=True)
-    tyfile = spirouCDB.GetFile(p, 'EM_TELL_Y', hdr, required=True)
+    txfile = spirouDB.GetCalibFile(p, 'EM_TELL_X', hdr, required=True)
+    tyfile = spirouDB.GetCalibFile(p, 'EM_TELL_Y', hdr, required=True)
     # add to p
     p['TELLWAVE'] = txfile
     p['TELLSPE'] = tyfile
