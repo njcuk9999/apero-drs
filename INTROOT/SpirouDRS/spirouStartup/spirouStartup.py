@@ -19,7 +19,7 @@ import os
 import sys
 import code
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -541,9 +541,9 @@ def load_calibdb(p, calibdb=True):
             WLOG('error', p['LOG_OPT'],
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
         # then make sure files are copied
-        spirouCDB.CopyCDBfiles(p)
+        spirouDB.CopyCDBfiles(p)
         # then load the calibdb into p
-        calib_db, p = spirouCDB.GetDatabase(p)
+        calib_db, p = spirouDB.GetCalibDatabase(p)
         p['CALIBDB'] = calib_db
         p.set_source('CALIBDB', __NAME__ + '/run_startup()')
     else:
