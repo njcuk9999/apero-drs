@@ -18,7 +18,7 @@ import scipy
 from scipy.ndimage import filters, median_filter
 from scipy.interpolate import InterpolatedUnivariateSpline as InterpUSpline
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
@@ -828,9 +828,9 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
-        acqtime = spirouCDB.GetAcqTime(p, header)
+        acqtime = spirouDB.GetAcqTime(p, header)
         # get calibDB
-        cdb, p = spirouCDB.GetDatabase(p, acqtime)
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
     else:
         try:
             cdb = p['CALIBDB']
@@ -890,9 +890,9 @@ def get_badpixel_map(p, header=None):
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
-        acqtime = spirouCDB.GetAcqTime(p, header)
+        acqtime = spirouDB.GetAcqTime(p, header)
         # get calibDB
-        cdb, p = spirouCDB.GetDatabase(p, acqtime)
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
     else:
         try:
             cdb = p['CALIBDB']
@@ -1570,7 +1570,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
     if name is None:
         name = 'acqtime'
     # get header keyword
-    value = spirouCDB.GetAcqTime(p, hdr, kind=kind)
+    value = spirouDB.GetAcqTime(p, hdr, kind=kind)
     # deal with return value
     if return_value:
         return value
