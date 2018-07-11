@@ -21,7 +21,7 @@ from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
@@ -504,12 +504,15 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
         key = 'TILT'
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename
     if return_filename:
         return read_file
+    # log tilt file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
@@ -561,12 +564,15 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         key = 'WAVE_' + p['FIBER']
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename only
     if return_filename:
         return read_file
+    # log wave file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -619,7 +625,7 @@ def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
         key = 'HCREF_' + p['FIBER']
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename only
@@ -671,9 +677,12 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # log flat file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
@@ -716,9 +725,12 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # log blaze file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
@@ -775,9 +787,12 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
         key = None
     # construct read filename from calibDB or from "filename"
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # log order profile file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
