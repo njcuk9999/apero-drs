@@ -19,7 +19,7 @@ from __future__ import division
 import numpy as np
 import os
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -256,9 +256,9 @@ def main(night_name=None, files=None):
     if p['QC']:
         keydb = 'TILT'
         # copy localisation file to the calibDB folder
-        spirouCDB.PutFile(p, tiltfits)
+        spirouDB.PutCalibFile(p, tiltfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, tiltfitsname, hdr)
+        spirouDB.UpdateCalibMaster(p, keydb, tiltfitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
