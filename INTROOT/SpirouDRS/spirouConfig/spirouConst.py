@@ -232,6 +232,16 @@ def RESET_CALIBDB_DIR():
 
 
 # noinspection PyPep8Naming
+def RESET_TELLUDB_DIR():
+    """
+    Define the reset dir relative path
+    :return:
+    """
+    reset_telludb_dir = './data/reset_telluDB'
+    return reset_telludb_dir
+
+
+# noinspection PyPep8Naming
 def WAVELENGTH_CATS_DIR():
     """
     Define the wavelength catalogues dir relative path
@@ -1293,7 +1303,7 @@ def OFF_LISTING_FILE(p):
 
 
 # =============================================================================
-# Define calibration database functions
+# Define database functions
 # =============================================================================
 # noinspection PyPep8Naming
 def CALIBDB_MASTERFILE(p):
@@ -1347,6 +1357,61 @@ def CALIB_PREFIX(p):
     argnightname = p['ARG_NIGHT_NAME'].split('/')[-1]
     calib_prefix = argnightname + '_'
     return calib_prefix
+
+
+# noinspection PyPep8Naming
+def TELLUDB_MASTERFILE(p):
+    """
+    Define the name and location of the calibration database file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                IC_CALIBDB_FILENAME: string, the name of the calibration
+                                     database file
+    :return string: the path and location of the calibration database file
+    """
+    masterfilepath = os.path.join(p['DRS_TELLU_DB'], p['IC_TELLUDB_FILENAME'])
+    return masterfilepath
+
+
+# noinspection PyPep8Naming
+def TELLUDB_LOCKFILE(p):
+    """
+    Define the location and filename of the lock file for the calibration
+    database
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                CALIB_DB_MATCH: string, either "closest" or "older"
+                                whether to use the "closest" time
+                                ("closest") or the closest time that is
+                                older ("older") than "max_time_unix"
+    :return lockfilepath: string, the location and filename of the lock file
+                          for the calibration database
+    """
+    lockfilepath = os.path.join(p['DRS_TELLU_DB'], 'lock_telluDB')
+    return lockfilepath
+
+
+# noinspection PyPep8Naming
+def TELLU_PREFIX(p):
+    """
+    Define the calibration database file prefix (using arg_night_name)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+    :return calib_prefix: string the calibration database prefix to add to all
+                          calibration database files
+    """
+    argnightname = p['ARG_NIGHT_NAME'].split('/')[-1]
+    calib_prefix = argnightname + '_'
+    return calib_prefix
+
 
 
 # =============================================================================
@@ -1430,6 +1495,34 @@ def DATE_FMT_CALIBDB():
     """
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
+
+
+# noinspection PyPep8Naming
+def DATE_FMT_TELLUDB():
+    """
+    The date format for string timestamp in the telluric database
+
+    Commonly used format codes:
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return date_fmt_telludb: string, the string timestamp format for the
+                              calibration database
+    """
+    date_fmt_telludb = '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt_telludb
 
 
 # noinspection PyPep8Naming

@@ -916,7 +916,7 @@ qc_wave_idrift_rv_max = 150.0
 
 
 # -----------------------------------------------------------------------------
-#  Calib DB settings
+#  Calibration DB settings
 # -----------------------------------------------------------------------------
 
 #   Define calibd DB master filename                                     - [all]
@@ -937,6 +937,32 @@ calib_max_wait = 3600
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 calib_db_match = 'closest'
+
+
+# -----------------------------------------------------------------------------
+#  Telluric DB settings
+# -----------------------------------------------------------------------------
+
+#   Define tellu DB master filename                                     - [all]
+#      (formally ic_tellu_db_master_file)
+ic_telluDB_filename = 'master_tellu_SPIROU.txt'
+
+#   the maximum wait time for telluric database file to be            - [all]
+#       in use (locked) after which an error is raised (in seconds)
+tellu_max_wait = 3600
+
+#   Define the match type for telluDB files                              - [all]
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         telluDB file will be used
+tellu_db_match = 'closest'
+
+
 
 # -----------------------------------------------------------------------------
 #  End of constants file
