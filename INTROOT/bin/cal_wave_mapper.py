@@ -24,7 +24,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_exposure_meter.py'
+__NAME__ = 'cal_wave_mapper.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -37,15 +37,13 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
+e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
 
 # =============================================================================
 # Define main program function
 # =============================================================================
-#def main(night_name=None, reffile=None, e2dsprefix=None):
-if __name__ == '__main__':
-
-    night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
-    e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
+def main(night_name=None, reffile=None, e2dsprefix=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -331,19 +329,19 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
-    # return dict(locals())
+    return dict(locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
 # # Main code here
-# if __name__ == "__main__":
-#     # ----------------------------------------------------------------------
-#     # run main with no arguments (get from command line - sys.argv)
-#     ll = main()
-#     # exit message
-#     spirouStartup.Exit(ll)
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
