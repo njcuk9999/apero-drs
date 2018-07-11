@@ -728,7 +728,7 @@ def polarimetry_ratio_method(p, loc):
     flux_ratio, var_term = [], []
     
     # Ignore numpy warnings to avoid warning message: "RuntimeWarning: invalid
-    # value encountered in power ...", apparently a memory issue?
+    # value encountered in power ..."
     np.warnings.filterwarnings('ignore')
     
     for i in range(1, int(nexp) + 1):
