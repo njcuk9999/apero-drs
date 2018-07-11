@@ -20,20 +20,17 @@ The file structure should look as follows:
 \customdirtree{%
 .1 \{dir\}.
 .2 \{DRS\_ROOT\}.
-.3 bin.
-.4 \DTcomment{Recipes}.
-.3 config.
-.4 \DTcomment{Configuration files}.
-.3 documentation.
-.4 \DTcomment{Documentation files}.
-.3 SpirouDRS.
-.4 \DTcomment{The DRS Module}.
+.3 bin \DTcomment{Recipes}.
+.3 config \DTcomment{Configuration files}.
+.3 documentation \DTcomment{Documentation files}.
+.3 man \DTcomment{Manual files}.
+.3 misc \DTcomment{Other scripts}.
+.3 SpirouDRS \DTcomment{The DRS Module}.
 .1 \{TDATA\}*.
 .2 calibDB.
-.2 msg.
-.2 raw.
-.3 YYYYMMDD \DTcomment{Observation directory}.
-.4 \DTcomment{Raw observation files}. 
+.2 msg
+.2 raw \DTcomment{Observation directories}.
+.3 YYYYMMDD \DTcomment{Raw observation files}. 
 .2 reduced.
 .2 tmp.
 }
@@ -49,6 +46,8 @@ The file structure should look as follows:
 .3 bin.
 .3 config.
 .3 documentation.
+.3 man.
+.3 misc.
 .3 SpirouDRS.
 .2 data.
 .3 calibDB.
@@ -60,6 +59,8 @@ The file structure should look as follows:
 }
 \end{tcustomdir}
 
+\clearpage
+\newpage
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -94,36 +95,28 @@ The bin directory is located in the \definevariable{text:drs_root}{DRS\_ROOT} di
 .1 \{dir\}.
 .2 \{DRS\_ROOT\}.
 .3 bin \DTcomment{Recipes}.
-.4 \calbadpix.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_BADPIX_spirou}}.
-.4 \calCCF.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_CCF_E2DS_spirou}}.
-.4 \calDARK.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DARK_spirou}}.
-.4 \calDRIFTRAW.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
-.4 \calDRIFTE.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
-.4 \calDRIFTPEAK.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
-.4 \calextractRAW.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
-.4 \calextractRAWAB.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
-.4 \calextractRAWC.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
-.4 \calFFraw.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_FF_RAW_spirou}}.
-.4 \calHC.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_HC_E2DS_spirou}}.
-.4 \callocRAW.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_loc_RAW_spirou}}.
-.4 \calSLIT.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_SLIT_spirou}}.
-.4 \calvalidate.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_validate_spirou}}.
-.4 \calWAVE.
-.5 \DTcomment{See Section \ref{ch:the_recipes:cal_WAVE_E2DS_spirou}}.
+.4 \calbadpix \DTcomment{See Section \ref{ch:the_recipes:cal_BADPIX_spirou}}.
+.4 \calCCF \DTcomment{See Section \ref{ch:the_recipes:cal_CCF_E2DS_spirou}}.
+.4 \calDARK \DTcomment{See Section \ref{ch:the_recipes:cal_DARK_spirou}}.
+.4 \calDRIFTE \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
+.4 \calDRIFTPEAK \DTcomment{See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou}}.
+.4 \calexometer.
+.4 \calextractRAW \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
+.4 \calextractRAWAB \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
+.4 \calextractRAWC \DTcomment{See Section \ref{ch:the_recipes:cal_extract_RAW_spirou}}.
+.4 \calFFraw \DTcomment{See Section \ref{ch:the_recipes:cal_FF_RAW_spirou}}.
+.4 \calHC \DTcomment{See Section \ref{ch:the_recipes:cal_HC_E2DS_spirou}}.
+.4 \callocRAW \DTcomment{See Section \ref{ch:the_recipes:cal_loc_RAW_spirou}}.
+.4 \calpreprocess.
+.4 \calreset.
+.4 \calSLIT \DTcomment{See Section \ref{ch:the_recipes:cal_SLIT_spirou}}.
+.4 \calvalidate \DTcomment{See Section \ref{ch:the_recipes:cal_validate_spirou}}.
+.4 \calWAVE \DTcomment{See Section \ref{ch:the_recipes:cal_WAVE_E2DS_spirou}}.
+.4 \offlisting.
+.4 \polspirou.
+.4 \visuEDS.
+.4 \visuRAW.
+.4 \visuWAVE.
 }
 \end{tcustomdir}
 
@@ -146,28 +139,21 @@ The file structure is as follows:
 \begin{tcustomdir}
 \customdirtree{%
 .1 SpirouDRS.
-.2 spirouBACK \DTcomment{The SPIRou background module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouBACK}}.
-.2 spirouCDB \DTcomment{The SPIRou calibration database module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouCDB}}.
-.2 spirouConfig \DTcomment{The SPIRou configuration tools module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouConfig}}.
-.2 spirouCore \DTcomment{The SPIRou core modules}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouCore}}.
-.2 spirouEXTOR \DTcomment{The SPIRou extraction module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouEXTOR}}.
-.2 spirouFLAT \DTcomment{The SPIRou Flat field module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouFLAT}}.
-.2 spirouImage \DTcomment{The SPIRou image module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouImage}}.
-.2 spirouLOCOR \DTcomment{The SPIRou localization module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouLOCOR}}.
-.2 spirouRV \DTcomment{The SPIRou radial velocity module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouRV}}.
-.2 spirouStartup \DTcomment{The SPIRou start up tools module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouStartup}}.
-.2 spirouTHORCA \DTcomment{The SPIRou THORCA module}.
-.3 \DTcomment{See Section \ref{ch:the_module:spirouTHORCA}}.
+.2 data \DTcomment{The DRS data directory}.
+.2 fortran \DTcomment{The Fortran script directory}.
+.2 spirouBACK \DTcomment{The SPIRou background module (Section \ref{ch:the_module:spirouBACK})}.
+.2 spirouCDB \DTcomment{The SPIRou calibration database module (Section \ref{ch:the_module:spirouCDB})}.
+.2 spirouConfig \DTcomment{The SPIRou configuration tools module (Section \ref{ch:the_module:spirouConfig})}.
+.2 spirouCore \DTcomment{The SPIRou core modules (Section \ref{ch:the_module:spirouCore})}.
+.2 spirouEXTOR \DTcomment{The SPIRou extraction module (Section \ref{ch:the_module:spirouEXTOR})}.
+.2 spirouFLAT \DTcomment{The SPIRou Flat field module (Section \ref{ch:the_module:spirouFLAT})}.
+.2 spirouImage \DTcomment{The SPIRou image module (Section \ref{ch:the_module:spirouImage})}.
+.2 spirouLOCOR \DTcomment{The SPIRou localization module (Section \ref{ch:the_module:spirouLOCOR})}.
+.2 spirouPOLAR \DTcomment{The SPIRou polarization module}.
+.2 spirouRV \DTcomment{The SPIRou radial velocity module (Section \ref{ch:the_module:spirouRV})}.
+.2 spirouStartup \DTcomment{The SPIRou start up tools module (Section \ref{ch:the_module:spirouStartup})}.
+.2 spirouTHORCA \DTcomment{The SPIRou THORCA module (Section \ref{ch:the_module:spirouTHORCA})}.
+.2 spirouTools \DTcomment{The SPIRou tools module}.
 .2 spirouUnitTests \DTcomment{The SPIRou unit tests module}.
 }
 \end{tcustomdir}
@@ -179,8 +165,6 @@ The file structure is as follows:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
-\clearpage
-\newpage
 \section{The data root directory}
 \label{ch:data_architecture:data_root_folder}
 %%
@@ -200,12 +184,15 @@ The raw observed data is stored under the \definevariable{text:drs_data_raw}{DRS
 .1 \{DRS\_DATA\_RAW\}.
 .2 YYYYMMDD \DTcomment{night\_repository}.
 .3 \DTcomment{Raw observation files}. 
-.3 dark\_dark\{name\}.fits.
-.3 dark\_flat\{name\}.fits.
-.3 flat\_dark\{name\}.fits.
-.3 fp\_fp\{name\}.fits.
+.3 \{odometer number\}d.fits.
+.3 \{odometer number\}f.fits.
+.3 \{odometer number\}a.fits.
+.3 \{odometer number\}c.fits.
+.3 \{odometer number\}o.fits.
 }
 \end{tcustomdir}
+
+where d=dark, f=flat, a=align, c=comparison and o=object
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
