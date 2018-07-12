@@ -8,20 +8,32 @@ Created on 2018-07-12 08:18
 @author: ncook
 Version 0.0.1
 """
+from SpirouDRS import spirouConfig
+from . import spirouTelluric
 
 # =============================================================================
 # Define variables
 # =============================================================================
-WORKSPACE = './'
+# Name of program
+__NAME__ = 'spirouUnitTests.__init__()'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 
-
-# -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def function():
-    pass
+
+ConstructConvolutionKernel1 = spirouTelluric.construct_convolution_kernal1
+
+ConstructConvolutionKernel2 = spirouTelluric.construct_convolution_kernal2
+
+GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
+
+GetNormalizedBlaze = spirouTelluric.get_normalized_blaze
 
 
 # =============================================================================
