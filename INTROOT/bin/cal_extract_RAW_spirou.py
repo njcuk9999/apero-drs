@@ -213,8 +213,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+        wdata = spirouImage.ReadWaveFile(p, hdr, return_header=True)
+        loc['WAVE'], loc['WAVEHDR'] = wdata
         loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+        # get wave params from wave header
+        loc['WAVEPARAMS'] = spirouImage.ReadWaveParams(p, loc['WAVEHDR'])
 
         # ----------------------------------------------------------------------
         # Read Flat file
@@ -379,6 +382,15 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add localization file keys to header
         root = p['KW_ROOT_DRS_LOC'][0]
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
+        # add wave solution number of orders
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                                   value=loc['WAVEPARAMS'].shape[0])
+        # add wave solution degree of fit
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                                   value=loc['WAVEPARAMS'].shape[1] - 1)
+        # add wave solution coefficients
+        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                         values=loc['WAVEPARAMS'])
         # Save E2DS file
         spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
         spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
