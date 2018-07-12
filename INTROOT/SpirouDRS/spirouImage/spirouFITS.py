@@ -584,6 +584,68 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         return wave
 
 
+def read_wave_params(p, hdr):
+    func_name = __NAME__ + '.read_wave_params()'
+    # get constants from p
+    key = p['KW_WAVE_PARAM'][0]
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # get dim1 value
+    if dim1key in hdr:
+        dim1 = hdr[dim1key]
+    else:
+        emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim1)'
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(dim1key), emsg2])
+        dim1 = None
+    # get dim2 value
+    if dim2key in hdr:
+        dim2 = hdr[dim2key] + 1
+    else:
+        emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim2)'
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(dim2key), emsg2])
+        dim2 = None
+    # get wave params from header
+    wave_params = read_key_2d_list(p, hdr, key, dim1, dim2)
+    # return 2d list
+    return wave_params
+
+
+def get_wave_solution(p, image=None, hdr=None):
+    func_name = __NAME__ + '.get_wave_solution()'
+    # get constants from p
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # if we have no header use calibDB to get wave solution
+    if hdr is None:
+        wave = read_wave_file(p)
+    # check for wave params
+    elif (dim1key in hdr) and (dim2key in hdr) and (image is not None):
+        # get the wave parmaeters from the header
+        wave_params = read_wave_params(p, hdr)
+        # get the dimensions
+        dim1 = hdr[dim1key]
+        # check that dim1 is the correct number of orders
+        if dim1 != image.shape[0]:
+            emsg1 = ('Number of orders in HEADER ({0}={1}) not compatible with '
+                    'number of orders in image ({2}')
+            eargs = [dim1key, dim1, image.shape[0]]
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        # define empty wave solution
+        wave = np.zeros_like(image)
+        xpixels = np.arange(image.shape[1])
+        # load the wave solution for each order
+        for order_num in range(dim1):
+            wave[order_num] = np.polyval(wave_params[::-1], xpixels)
+    # else we use the calibDB (using the header) to get the wave solution
+    else:
+        wave = read_wave_file(p, hdr)
+    # return wave solution
+    return wave
+
+
 def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
                     return_filename=False, required=True):
     """
@@ -1369,7 +1431,7 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 # set the value
                 values[i_it][j_it] = float(hdict[keyname])
             except KeyError:
-                emsg1 = ('Cannot find key with nbo={1} nbc={2} in "hdict"'
+                emsg1 = ('Cannot find key with dim1={1} dim2={2} in "hdict"'
                          '').format(keyname, dim1, dim2)
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
