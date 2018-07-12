@@ -816,6 +816,65 @@ ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
+#  Telluric parameters
+# -----------------------------------------------------------------------------
+tellu_fiber = 'AB'
+
+tellu_suffix = 'e2dsff'
+
+tellu_blaze_percentile = 95
+
+# Define level above which the blaze is high enough to          - [obj_mk_tellu]
+#     accurately measure telluric
+tellu_cut_blaze_norm = 0.2
+
+# Define mean line width expressed in pix
+fwhm_pixel_lsf = 2.1
+
+# Define list of absorbers in the tapas fits table
+tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
+
+# Define min transmission in tapas models to consider an        - [obj_mk_tellu]
+#     element part of continuum
+transmisson_cut = 0.98
+
+# Define the number of iterations to find the SED of hot        - [obj_mk_tellu]
+# stars + sigma clipping
+n_iter_sed_hotstar = 5
+
+# Define the smoothing parameter for the interpolation of       - [obj_mk_tellu]
+#     the hot star continuum. Needs to be reasonably matched
+#     to the true width
+tellu_vsini = 250.0
+
+# Define the median sampling expressed in km/s / pix
+tellu_med_sampling = 2.2
+
+tellu_sigma_dev = 5
+
+tellu_bad_threshold = 1.2
+
+tellu_nan_threshold = 0.2
+
+tellu_abso_maps = False
+
+tellu_abso_low_thres = 0.01
+tellu_abso_high_thres = 1.05
+
+tellu_abso_sig_n_iter = 5
+
+tellu_abso_sig_thres = -1
+
+tellu_abso_dv_order = 33
+
+tellu_abso_dv_size = 5
+
+tellu_abso_dv_good_thres = 0.2
+
+
+
+
+# -----------------------------------------------------------------------------
 #   polarimetry parameters
 # -----------------------------------------------------------------------------
 #  Define all possible stokes parameters                          - [pol_spirou]
