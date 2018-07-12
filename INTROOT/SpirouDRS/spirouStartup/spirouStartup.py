@@ -630,6 +630,10 @@ def exit_script(ll, has_plots=True):
             except Exception:
                 pass
         if not find_interactive():
+            # add some imports to locals
+            ll['np'], ll['plt'], ll['WLOG'] = np, spirouCore.sPlt.plt, WLOG
+            ll['os'], ll['sys'], ll['ParamDict'] = os, sys, ParamDict
+            # run code
             code.interact(local=ll)
     # if "No" and not interactive quit python/ipython
     elif not find_interactive():
