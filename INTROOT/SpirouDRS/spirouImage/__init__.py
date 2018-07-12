@@ -94,6 +94,8 @@ GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
+GetWaveSolution = spirouImage.get_wave_solution
+
 IdentifyUnProFile = spirouFile.identify_unprocessed_file
 
 InterpolateBadRegions = spirouImage.interp_bad_regions
@@ -141,6 +143,8 @@ ReadTiltFile = spirouFITS.read_tilt_file
 ReadLineList = spirouImage.read_line_list
 
 ReadWaveFile = spirouFITS.read_wave_file
+
+ReadWaveParams = spirouFITS.read_wave_params
 
 ReadHcrefFile = spirouFITS.read_hcref_file
 
