@@ -1763,6 +1763,33 @@ def wave_fp_wavelength_residuals(loc):
         plt.show()
         plt.close()
 
+# =============================================================================
+# wave solution plotting function
+# =============================================================================
+def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
+
+    # get data from loc
+    wave = loc['WAVE'][order_num, :]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot trans_map and spectra
+    frame.plot(wave, sp[order_num, :], 'r.')
+    frame.plot(wave, sp[order_num, fmask], 'b.')
+    frame.plot(wave, sed, 'r-')
+    frame.plot(wave, trans, 'c-')
+    frame.plot(wave, sp[order_num, :] / sed[:], 'g-')
+    frame.plot(wave, np.ones_like(sed), 'r-')
+    frame.plot(wave, ww, 'k-')
+    frame.set_title(outfile)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
 
 # =============================================================================
 # Polarimetry plotting functions
