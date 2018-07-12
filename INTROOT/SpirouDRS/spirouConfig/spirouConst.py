@@ -1227,6 +1227,55 @@ def WAVE_E2DS_COPY(p):
 
 
 # noinspection PyPep8Naming
+def TELLU_TRANS_MAP_FILE(p, filename):
+
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    newext = '_trans.fits'
+    oldext = '.fits'
+    # construct filename
+    filename = filename.replace(oldext, newext)
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+def TELLU_ABSO_MAP_FILE(p):
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    filename = 'abso_map.fits'
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+def TELLU_ABSO_MEDIAN_FILE(p):
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    filename = 'abso_median.fits'
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+def TELLU_ABSO_NORM_MAP_FILE(p):
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    filename = 'abso_map_norm.fits'
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+# noinspection PyPep8Naming
 def DEG_POL_FILE(p, loc):
     # get reduced dir
     reducedfolder = p['REDUCED_DIR']
