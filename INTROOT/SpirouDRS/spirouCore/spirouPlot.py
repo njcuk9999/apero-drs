@@ -1763,6 +1763,7 @@ def wave_fp_wavelength_residuals(loc):
         plt.show()
         plt.close()
 
+
 # =============================================================================
 # wave solution plotting function
 # =============================================================================
@@ -1785,6 +1786,30 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
     frame.plot(wave, np.ones_like(sed), 'r-')
     frame.plot(wave, ww, 'k-')
     frame.set_title(outfile)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_pca_comp_plot(p, loc):
+
+    # get constants from p
+    npc = p['TELLU_NUMBER_OF_PRINCIPLE_COMP']
+    # get data from loc
+    wave = loc['WAVE'].ravel()
+    pc = loc['PC']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot principle components
+    for it in range(npc):
+        frame.plot(wave, pc[:, it], label='pc {0}'.format(it + 1))
+    # add legend
+    frame.legend(loc=0)
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
