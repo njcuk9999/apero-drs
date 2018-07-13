@@ -38,10 +38,10 @@ SIG_FWHM = spirouCore.spirouMath.fwhm
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_normalized_blaze(p, loc):
+def get_normalized_blaze(p, loc, hdr):
     func_name = __NAME__ + '.get_normalized_blaze()'
     # Get the blaze
-    blaze = np.zeros(49, 4088)
+    blaze = spirouImage.ReadBlazeFile(p, hdr)
     # we mask domains that have <20% of the peak blaze of their respective order
     blaze_norm = np.array(blaze)
     for iord in range(blaze.shape[0]):
@@ -155,7 +155,55 @@ def construct_convolution_kernal2(p, loc):
     return loc
 
 
-# =============================================================================
+def calculate_absorption_pca(p, loc, x, mask):
+    func_name = __NAME__ + '.calculate_absorption_pca()'
+    # get constants from p
+    npc = p['TELLU_NUMBER_OF_PRINCIPLE_COMP']
+
+    # get eigen values
+    eig_u, eig_s, eig_vt = np.linalg.svd(x[:, mask], full_matrices=False)
+
+    # create pc image
+    pc = np.zeros(np.product(loc['DATA'].shape), npc)
+
+    # fill pc image
+    for it in range(npc):
+        for jt in range(x.shape[0]):
+            pc[:, it] += eig_u[jt, it] * x[jt, :]
+
+    # normalise the pc image
+    for it in range(npc):
+        pc[:, it] = pc[:, it] / np.sum(pc[mask, it] **2)
+
+    # save pc image to loc
+    loc['PC'] = pc
+    loc.set_source('PC', func_name)
+    # return loc
+
+
+def get_berv_value(p, hdr, filename=None):
+
+    # deal with no filename
+    if filename is None:
+        if '@@@fname' in hdr:
+            filename = hdr['@@@fname']
+        else:
+            filename = 'UNKNOWN'
+
+    # Check for BERV key in header
+    if p['KW_BERV'][0] not in hdr:
+        emsg = 'HEADER error, file="{0}". Keyword {1} not found'
+        eargs = [filename, p['KW_BERV'][0]]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # Get the Barycentric correction from header
+    dv = hdr[p['KW_BERV'][0]]
+    bjd = hdr[p['KW_BJD'][0]]
+    bvmax = hdr[p['KW_BERV_MAX'][0]]
+    # return dv, bjd, dvmax
+    return dv, bjd, bvmax
+
+
+# ========================h=====================================================
 # Start of code
 # =============================================================================
 # Main code here
