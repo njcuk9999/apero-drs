@@ -68,8 +68,15 @@ def get_database_tell_mole(p):
     for value in values:
         # get this iterations value from value
         _, filename, humantime, unixtime = value.split()
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         # add to array
-        filenames = np.append(filenames, filename)
+        filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humantime)
         unixtimes = np.append(unixtimes, float(unixtime))
 
@@ -104,8 +111,15 @@ def get_database_tell_conv(p):
     for value in values:
         # get this iterations value from value
         _, filename, humantime, unixtime = value.split()
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         # add to array
-        filenames = np.append(filenames, filename)
+        filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humantime)
         unixtimes = np.append(unixtimes, float(unixtime))
 
@@ -139,8 +153,15 @@ def get_database_sky(p):
     for value in values:
         # get this iterations value from value
         _, filename, humantime, unixtime = value.split()
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         # add to array
-        filenames = np.append(filenames, filename)
+        filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humantime)
         unixtimes = np.append(unixtimes, float(unixtime))
 
@@ -174,8 +195,15 @@ def get_database_tell_map(p):
     for value in values:
         # get this iterations value from value
         _, filename, humant, unixt, objname, airmass, watercol = value.split()
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         # add to array
-        filenames = np.append(filenames, filename)
+        filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humant)
         unixtimes = np.append(unixtimes, float(unixt))
         objnames = np.append(objnames, objname)
