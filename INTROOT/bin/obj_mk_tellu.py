@@ -11,10 +11,10 @@ Created on 2018-07-12 07:49
 from __future__ import division
 import numpy as np
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTelluric
@@ -91,6 +91,9 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # construct extension
     tellu_ext = '{0}_{1}.fits'
+    # get current telluric maps from telluDB
+    tellu_db_data = spirouDB.GetDatabaseTellMap(p)
+    tellu_db_files = tellu_db_data[0]
     # storage for valid output files
     loc['OUTPUTFILES'] = []
     # loop around the files
@@ -114,8 +117,8 @@ def main(night_name=None, files=None):
         loc['OUTPUTFILES'].append(outfile)
 
         # if we already have the file skip it
-        if os.path.exists(outfile):
-            wmsg = 'File {0} exists, skipping'
+        if outfile in tellu_db_files:
+            wmsg = 'File {0} exists in telluDB, skipping'
             WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
             continue
 
@@ -189,10 +192,35 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         spirouImage.WriteImage(outfile, transmission_map, hdict)
 
+        # ----------------------------------------------------------------------
+        # Quality control
+        # ----------------------------------------------------------------------
+        # set passed variable and fail message list
+        passed, fail_msg = True, []
+        if passed:
+            WLOG('info', p['LOG_OPT'],
+                 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+            p['QC'] = 1
+            p.set_source('QC', __NAME__ + '/main()')
+        else:
+            for farg in fail_msg:
+                wmsg = 'QUALITY CONTROL FAILED: {0}'
+                WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            p['QC'] = 0
+            p.set_source('QC', __NAME__ + '/main()')
+
         # ------------------------------------------------------------------
         # Add transmission map to telluDB
         # ------------------------------------------------------------------
-        # TODO
+        if p['QC']:
+            # copy tellu file to the telluDB folder
+            spirouDB.PutTelluFile(p, outfile)
+            # TODO: work out these values (placeholders currently)
+            airmass = 0.0
+            watercol = 10.0
+            # update the master tellu DB file with transmission map
+            targs = [p, outfile, p['DATAHDR'], airmass, watercol]
+            spirouDB.UpdateDatabaseTellMap(*targs)
 
     # ----------------------------------------------------------------------
     # Optional Absorption maps
