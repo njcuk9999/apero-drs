@@ -112,7 +112,6 @@ def get_database(p, update=False, dbkind=None):
             lineedit = line.replace('\n', '')
             emsg2 = '   Line {0}: "{1}"'.format(l_it + 1, lineedit)
             WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
-            key, dirname, filename, t_fmt, t = None, None, None, None, None
 
     # Need to check if lists are empty after loop
     # Must close and remove lock file before exiting
@@ -133,9 +132,60 @@ def get_database(p, update=False, dbkind=None):
     return t_database
 
 
+# TODO: Write this function based on "get acquisition time
+def get_times_from_header(p, header=None, filename=None):
+    func_name = __NAME__ + '.get_times_from_header()'
 
-def get_times_from_header(p, hdr=None):
+    # if we don't have header get it (using 'fitsfilename')
+    if header is None:
+        # deal with no filename
+        if filename is None:
+            if os.path.exists(p['ARG_FILE_NAMES'][0]):
+                headerfile = p['ARG_FILE_NAMES'][0]
+            else:
+                headerfile = os.path.join(p['ARG_FILE_DIR'],
+                                          p['ARG_FILE_NAMES'][0])
 
+            if not os.path.exists(headerfile):
+                emsg1 = '"header" and "filename" not defined in {0}'
+                emsg2 = '   AND "arg_file_names" not defined in ParamDict'
+                eargs = func_name
+                WLOG('error', p['LOG_OPT'], [emsg1.format(eargs), emsg2])
+        # else we have a filename defined
+        else:
+            headerfile = filename
+            # if rawfile does not exist make error
+            if not os.path.exists(headerfile):
+                emsg = ('"header" not defined in {0} and "filename" '
+                        'path not found.')
+                WLOG('error', p['LOG_OPT'], emsg.format(func_name))
+        # get file
+        header = fits.getheader(headerfile, ext=0)
+    else:
+        # else we have header just try to identify it from custom keys
+        if '@@@fname' in header:
+            headerfile = header['@@@fname']
+        else:
+            headerfile = 'UNKNOWN'
+
+    # try getting unix time
+    if p['KW_ACQTIME_KEY_UNIX'][0] in header:
+        unix_time = header[p['KW_ACQTIME_KEY_UNIX'][0]]
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        human_time = spirouMath.unixtime2stringtime(unix_time, header_fmt)
+    # else try getting human time
+    elif p['KW_ACQTIME_KEY'][0] in header:
+        human_time = header[p['KW_ACQTIME_KEY'][0]]
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        unix_time = spirouMath.stringtime2unixtime(human_time, header_fmt)
+    # else raise error
+    else:
+        eargs = [p['KW_ACQTIME_KEY'][0], p['KW_ACQTIME_KEY_UNIX'][0],
+                 headerfile, func_name]
+        WLOG('error', p['LOG_OPT'], ('Keys {0} or {1} not in HEADER file of {1}'
+                                     ' for function {2}'.format(*eargs)))
+        human_time, unix_time= None, None
+    # return human time and unix time
     return human_time, unix_time
 
 
