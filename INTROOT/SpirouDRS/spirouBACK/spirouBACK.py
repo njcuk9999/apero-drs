@@ -11,6 +11,7 @@ Created on 2017-11-10 at 14:33
 from __future__ import division
 import numpy as np
 import warnings
+from scipy.interpolate import griddata
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -67,8 +68,7 @@ def measure_background_flatfield(p, image):
 
     # get constants
     size = p['IC_BKGR_WINDOW']
-    # set the background image to zeros
-    background = np.zeros_like(image)
+    percent = p['IC_BKGR_PERCENT']
     # create the box centers
     xc = np.arange(size, image.shape[0], 2*size)
     yc = np.arange(size, image.shape[1], 2*size)
@@ -77,20 +77,48 @@ def measure_background_flatfield(p, image):
     # loop around all boxes with centers xc and yc
     for i_it in range(len(xc)):
         for j_it in range(len(yc)):
-            xci, yci = xc[i_it], yc[i_it]
+            xci, yci = xc[i_it], yc[j_it]
             # get the pixels for this box
             subframe = image[xci-size:xci+size, yci-size:yci+size].ravel()
             # get the (2*size)th minimum pixel
-            minlevel[i_it, j_it] = np.sort(subframe)[2 * size]
+#            minlevel[i_it, j_it] = np.median(np.sort(np.compress(subframe>0,subframe))[2 * size])
+            mask=subframe>0
+            minlevel[i_it, j_it] = np.max([np.percentile(subframe[mask],percent),0])
 
-    # loop around columns
-    # TODO: background spline interpolation - need to understand interpol.c
-    # warning about not background code
-    wmsg = 'No interpolation done in {0} (FUNCTION INCOMPLETE)'
-    WLOG('warning', p['LOG_OPT'], wmsg.format(func_name))
+    gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size, size:image.shape[1]:2 * size]
+    gridx2, gridy2 = np.indices(image.shape)
+
+    minlevel2 = np.zeros((minlevel.shape[0] + 2, minlevel.shape[1] + 2), dtype=float)
+    minlevel2[1:-1, 1:-1] = minlevel
+    minlevel2[0, 1:-1] = minlevel[0]
+    minlevel2[-1, 1:-1] = minlevel[-1]
+    minlevel2[1:-1, 0] = minlevel[:, 0]
+    minlevel2[1:-1, -1] = minlevel[:, -1]
+    minlevel2[0, 0] = minlevel[0, 0]
+    minlevel2[-1, -1] = minlevel[-1, -1]
+    minlevel2[0, -1] = minlevel[0, -1]
+    minlevel2[-1, 0] = minlevel[-1, 0]
+
+    gridx1c = np.zeros((gridx1.shape[0] + 2, gridx1.shape[1] + 2), dtype=float)
+    gridx1c[1:-1, 1:-1] = gridx1
+    gridx1c[0, :] = 0
+    gridx1c[-1, :] = np.shape(image)[0]
+    gridx1c[:, 0] = gridx1c[:, 1]
+    gridx1c[:, -1] = gridx1c[:, -2]
+
+    gridy1c = np.zeros((gridy1.shape[0] + 2, gridy1.shape[1] + 2), dtype=float)
+    gridy1c[1:-1, 1:-1] = gridy1
+    gridy1c[:, 0] = 0
+    gridy1c[:, -1] = np.shape(image)[1]
+    gridy1c[0, :] = gridy1c[1, :]
+    gridy1c[-1, :] = gridy1c[-2, :]
+
+    points = np.array([gridx1c.ravel(), gridy1c.ravel()]).T
+    background = griddata(points, minlevel2.ravel(), (gridx2, gridy2), method='linear')
+#    background = np.where(np.isnan(background),np.max([0.,np.min(minlevel2)]),background)
 
     # return background, xc, yc and minlevel
-    return background, xc, yc, minlevel
+    return background, gridx1c, gridy1c, minlevel2
 
 
 def measure_background_and_get_central_pixels(pp, loc, image):
