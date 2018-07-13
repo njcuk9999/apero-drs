@@ -262,8 +262,10 @@ def update_database_tell_mole(p, key, filename, hdr=None):
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
 
 
-def update_database_tell_conv(p, key, filename, hdr=None):
+def update_database_tell_conv(p, filename, hdr=None):
 
+    # define key for telluric convolve file
+    key = 'TELL_CONV'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
@@ -276,8 +278,10 @@ def update_database_tell_conv(p, key, filename, hdr=None):
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
 
 
-def update_database_sky(p, key, filename, hdr=None):
+def update_database_sky(p, filename, hdr=None):
 
+    # define key for sky
+    key = 'SKY'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
@@ -290,8 +294,10 @@ def update_database_sky(p, key, filename, hdr=None):
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
 
 
-def update_database_tell_map(p, key, filename, objname, airmass, watercol,
+def update_database_tell_map(p, filename, objname, airmass, watercol,
                              hdr=None):
+    # define key
+    key = 'TELL_MAP'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
