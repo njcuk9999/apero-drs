@@ -53,8 +53,6 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p)
     # set up function name
     main_name = __NAME__ + '.main()'
-    # set up data storage
-    loc = ParamDict()
     # ------------------------------------------------------------------
     # Load first file
     # ------------------------------------------------------------------
@@ -73,7 +71,7 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Get and Normalise the blaze
     # ------------------------------------------------------------------
-    loc = spirouTelluric.GetNormalizedBlaze(p, loc)
+    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
 
     # ------------------------------------------------------------------
     # Construct convolution kernels
