@@ -17,6 +17,7 @@ import warnings
 import scipy
 from scipy.ndimage import filters, median_filter
 from scipy.interpolate import InterpolatedUnivariateSpline as InterpUSpline
+from scipy.interpolate import griddata
 
 from SpirouDRS import spirouCDB
 from SpirouDRS import spirouConfig
@@ -1262,8 +1263,10 @@ def get_tilt(pp, lloc, image):
     lloc.set_source('TILT', __NAME__ + '/get_tilt()')
     # Over sample the data and interpolate new extraction values
     pixels = np.arange(image.shape[1])
+#    pixels = np.arange(1000)
     os_fac = pp['IC_TILT_COI']
     os_pixels = np.arange(image.shape[1] * os_fac) / os_fac
+#    os_pixels = np.arange(1000 * os_fac) / os_fac
     # loop around each order
     for order_num in range(0, nbo, 2):
         # extract this AB order
@@ -1280,6 +1283,7 @@ def get_tilt(pp, lloc, image):
         #   and the middle pixel + 10 * p['COI']
         coi = int(os_fac)
         pos = int(image.shape[1] * coi / 2)
+#        pos = int(1000 * coi / 2)
         delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
         # get the angle of the tilt
         angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['OFFSET'])))
@@ -1581,6 +1585,68 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
         p.set_source(name, hdr['@@@hname'])
         # return p
         return p
+
+
+# TODO insert paremeter dictionnary
+
+def e2dstos1d(wave,e2dsffb,bin):
+    """
+    Convert E2DS (2-dimension) spectra to 1-dimension spectra
+    with merged spectral orders and regular sampling
+
+
+    :param wave: wavelength solution
+    :param e2dsffb : e2ds falt-fielded and blaze corrected
+    :param bin : S1d sampling in nm
+    """
+
+    for o in range(len(e2dsffb)):
+
+        x = wave[o] * 1.
+        y = e2dsffb[o] * 1.
+
+        # Integral Calculation yy by summation
+        dx = np.concatenate((np.array([x[1] - x[0]]), (x[2:] - x[0:-2]) / 2., np.array([x[-1] - x[-2]])))
+        stepmax = np.max(dx)
+        yy = np.concatenate((np.array([0.]), np.cumsum(y * dx)))
+        xx = np.concatenate((x - dx / 2., np.array([x[-1] + dx[-1] / 2.])))
+
+        # Computation of the new coordinates
+        if o == 0:
+            l1 = 1. * (int(np.compress(y > 0., x)[0] * (1. / bin)) + 1) / (1. / bin) + bin
+            l2 = 1. * (int(np.compress(y > 0., x)[-1] * (1. / bin))) / (1. / bin) - bin
+        else:
+            l1 = 1. * (int(x[0] * (1. / bin)) + 1) / (1. / bin) + bin
+            l2 = 1. * (int(x[-1] * (1. / bin))) / (1. / bin) - bin
+
+        # Interpolation by cubic spline
+        xxi = np.arange(l1, l2 + bin, bin) - bin / 2.
+        yyi = griddata(xx, yy, xxi, method='cubic')
+
+        # Computation of the derivation
+        xi = xxi[0:-1] + bin / 2.
+        yi = (yyi[1:] - yyi[0:-1]) / bin
+
+        # Merging of orders
+        if o == 0:
+            xs1d = xi * 1.
+            ys1d = yi * 1.
+
+        lim1 = xs1d[-1]
+        lim2 = xi[0]
+        if lim1 < lim2:
+            zone0x = np.arange(lim1 + bin, lim2, bin)
+            zone0y = np.zeros(len(zone0x), 'd')
+            ys1d = np.concatenate((ys1d, zone0y, yi))
+            xs1d = np.concatenate((xs1d, zone0x, xi))
+        else:
+            ind = int(round((lim1 - lim2) / bin))
+            w = 1. - np.arange(ind * 1. + 1.) / ind
+            zonec = ys1d[-ind - 1:] * w + yi[0:ind + 1] * (1. - w)
+            ys1d = np.concatenate((ys1d[:-ind - 1], zonec, yi[ind + 1:]))
+            xs1d = np.concatenate((xs1d[:-ind - 1], xi))
+
+    return xs1d, ys1d
 
 
 # =============================================================================
