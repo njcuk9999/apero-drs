@@ -163,9 +163,12 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
+        background, gridx, gridy, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
     else:
         background = np.zeros_like(data2)
+
+#    data2=data2-background
+    data2=np.where(data2>0,data2-background,0)
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -181,6 +184,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['FIB_TYPE']:
+#    for fiber in ['AB']:
         # set fiber in p
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()')
