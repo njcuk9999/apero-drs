@@ -19,6 +19,7 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTelluric
 
 # =============================================================================
 # Define variables
@@ -108,13 +109,8 @@ def main(night_name=None):
         image = image.reshape(loc['DATA'].shape)
         # Load the data for this file
         tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
-        # Check for BERV key in header
-        if p['KW_BERV'][0] not in thdr:
-            emsg = 'HEADER error, file="{0}". Keyword {1} not found'
-            eargs = [filename, p['KW_BERV'][0]]
-            WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
         # Get the Barycentric correction from header
-        dv = thdr[p['KW_BERV'][0]]
+        dv, _, _ = spirouTelluric.GetBERV(p, thdr)
 
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
