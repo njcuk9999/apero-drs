@@ -315,10 +315,13 @@ ic_slit_order_plot = 20 * 2
 # -----------------------------------------------------------------------------
 
 #    Do background measurement (True = 1, False = 0)                  - [cal_ff]
-ic_do_bkgr_subtraction = 0
+ic_do_bkgr_subtraction = 1
+
+#    Do background percentile to compute minium value (%)                  - [cal_ff]
+ic_bkgr_percent = 3
 
 #    Half-size of window for background measurements                  - [cal_ff]
-ic_bkgr_window = 100
+ic_bkgr_window = 50
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 49  #36
@@ -344,7 +347,7 @@ ic_extfblaz = 50
 ic_blaze_fitn = 10    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 27
+ic_ff_order_plot = 4
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
@@ -417,15 +420,19 @@ ic_cosmic_sigcut = 0.25  # 0.25
 #        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_thresh = 5
 
+#    Define the spectral bin for S1D spectra (nm)   - [cal_extract]
+ic_bin_s1d = 0.005
+
+
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
 # -----------------------------------------------------------------------------
 #   The value of the noise for drift calculation                   - [cal_drift]
 #      snr = flux/sqrt(flux + noise^2)
-ic_drift_noise = 100.0
+ic_drift_noise = 8.0  # 100
 
 #  Option for the background correction [0/1]                      - [cal_drift]
-ic_drift_back_corr = 1
+ic_drift_back_corr = 0
 
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
@@ -501,13 +508,13 @@ drift_peak_inter_peak_spacing = 5
 #    Define the expected width of FP peaks - used to          - [cal_drift-peak]
 #        "normalise" peaks (which are then subsequently removed
 #        if > drift_peak_norm_width_cut
-drift_peak_exp_width = 0.8
+drift_peak_exp_width = 0.9  # 0.8
 
 #    Define the "normalised" width of FP peaks that is too    - [cal_drift-peak]
 #        large normalised width = FP FWHM - drift_peak_exp_width
 #        cut is essentially:
 #           FP FWHM < (drift_peak_exp_width + drift_peak_norm_width_cut)
-drift_peak_norm_width_cut = 0.2
+drift_peak_norm_width_cut = 0.25   #0.2
 
 #    Define whether to fit a gaussain (slow) or adjust a      - [cal_drift-peak]
 #        barycenter to get the drift
@@ -592,7 +599,7 @@ ccf_fit_type = 0
 
 #  Define the number of orders (from zero to ccf_num_orders_max)     - [cal_CCF]
 #      to use to calculate the CCF and RV
-ccf_num_orders_max = 25
+ccf_num_orders_max = 48
 
 #  Define the mode to work out the Earth Velocity calculation        - [cal_CCF]
 #      Options are:
