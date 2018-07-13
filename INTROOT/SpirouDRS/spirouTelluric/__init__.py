@@ -35,6 +35,10 @@ GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
 
 GetNormalizedBlaze = spirouTelluric.get_normalized_blaze
 
+GetBERV = spirouTelluric.get_berv_value
+
+CalculateAbsorptionPCA = spirouTelluric.calculate_absorption_pca
+
 
 # =============================================================================
 # Start of code
