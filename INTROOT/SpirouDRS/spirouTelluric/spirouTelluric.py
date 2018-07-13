@@ -14,7 +14,8 @@ from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-
+from SpirouDRS import spirouDB
+from SpirouDRS import spirouImage
 
 # =============================================================================
 # Define variables
@@ -77,13 +78,12 @@ def construct_convolution_kernal1(p, loc):
 def get_molecular_tell_lines(p, loc):
     func_name = __NAME__ + '.get_molecular_tell_lines()'
     # get x and y dimension
-    # TODO: Don't have data (and therefore size) at this point
     ydim, xdim = loc['DATA'].shape
     # representative atmospheric transmission
     # tapas = pyfits.getdata('tapas_model.fits')
-    # TODO: Use Spirou to open file
-    # TODO: Get file name from TELLUDB
-    tapas = Table.read(file_tapas_spectra)
+    tapas_file = spirouDB.GetDatabaseTellMole(p)
+    tdata = spirouImage.ReadImage(p, tapas_file, kind='FLAT')
+    tapas, thdr, tcmt, _, _ = tdata
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
     # TODO: Get tapas_file_name from SpirouConstants
