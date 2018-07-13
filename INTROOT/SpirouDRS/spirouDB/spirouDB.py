@@ -241,7 +241,14 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
     """
     func_name = __NAME__ + '.write_files_to_master()'
     # construct master filename
-    masterfile = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+    if 'Telluric' in dbkind:
+        masterfile = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+    elif 'Calibration'in dbkind:
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+    else:
+        emsg1 = 'Invalid Database kind ({0})'.format(dbkind)
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # try to
     try:
         f = open(masterfile, 'a')
