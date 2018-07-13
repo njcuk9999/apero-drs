@@ -195,7 +195,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     # if we don't have header get it (using 'fitsfilename')
     if header is None:
         # deal with no filename
-        if filename is None and header is None:
+        if filename is None:
             if os.path.exists(p['ARG_FILE_NAMES'][0]):
                 rfile = p['ARG_FILE_NAMES'][0]
             else:
