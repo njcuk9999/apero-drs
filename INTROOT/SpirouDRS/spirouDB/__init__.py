@@ -27,7 +27,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['CopyCDBfiles', 'GetAcqTime', 'GetCalibDatabase', 'GetCalibFile',
            'PutCalibFile', 'UpdateCalibMaster',
            'GetDatabaseTellMole', 'GetDatabaseTellConv',
-           'GetDatabaseSky', 'GetDatabaseTellMap']
+           'GetDatabaseSky', 'GetDatabaseTellMap', 'PutTelluFile']
 
 # =============================================================================
 # Function aliases
@@ -51,6 +51,16 @@ GetDatabaseTellConv = spirouTDB.get_database_tell_conv
 GetDatabaseSky = spirouTDB.get_database_sky
 
 GetDatabaseTellMap = spirouTDB.get_database_tell_map
+
+PutTelluFile = spirouTDB.put_file
+
+UpdateDatabaseTellMol = spirouTDB.update_database_tell_mole
+
+UpdateDatabaseTellConv = spirouTDB.update_database_tell_conv
+
+UpdateDatabaseSky = spirouTDB.update_database_sky
+
+UpdateDatabaseTellMap = spirouTDB.update_database_tell_map
 
 # =============================================================================
 # End of code
