@@ -89,6 +89,7 @@ def get_database_tell_mole(p):
 
 
 # TODO: Figure out how we use this with no wave file
+# TODO: Currently just returns most recent
 def get_database_tell_conv(p):
     func_name = __NAME__ + '.get_database_tell_conv()'
     # define key
@@ -217,6 +218,53 @@ def get_database_tell_map(p):
     return filenames[sort], objnames[sort], airmasses[sort], watercols[sort]
 
 
+
+# TODO: Might require OBJNAME to select file (not most recent)
+def get_database_tell_template(p, required=True):
+    func_name = __NAME__ + '.get_database_tell_template()'
+    # define key
+    key = 'TELL_TEMP'
+    # get the telluric database (all lines)
+    t_database = spirouDB.get_database(p, dbkind='Telluric')
+    # check for key in database
+    if key not in t_database:
+        if not required:
+            return None
+        else:
+            # generate error message
+            emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
+            emsg2 = '   function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            return 0
+
+    # filter database by key
+    values = t_database[key]
+
+    # extract parameters from database values
+    filenames, humantimes, unixtimes = [], [], []
+    for value in values:
+        # get this iterations value from value
+        _, filename, humantime, unixtime = value.split()
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        # add to array
+        filenames = np.append(filenames, absfilename)
+        humantimes = np.append(humantimes, humantime)
+        unixtimes = np.append(unixtimes, float(unixtime))
+
+    # for tell_mole we only want to use the most recent key (if more than one)
+    # sort by unixtime
+    sort = np.argsort(unixtimes)
+
+    # only returning most recent filename
+    return filenames[sort][-1]
+
+
 # TODO: Move to spirouDB?
 def put_file(p, inputfile):
     """
@@ -248,8 +296,10 @@ def put_file(p, inputfile):
         WLOG('', p['LOG_OPT'], [emsg1, emsg2])
 
 
-def update_database_tell_mole(p, key, filename, hdr=None):
+def update_database_tell_mole(p, filename, hdr=None):
 
+    # define key for telluric convolve file
+    key = 'TELL_MOLE'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
@@ -303,6 +353,22 @@ def update_database_tell_map(p, filename, objname, airmass, watercol,
     # set up line
     args = [key, filename, h_time, u_time, objname, airmass, watercol]
     line = '{0} {1} {2} {3} {4} {5} {6}'.format(*args)
+    # push into list
+    keys = [key]
+    lines = [line]
+    # update database
+    spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
+
+
+def update_database_tell_temp(p, filename, hdr=None):
+
+    # define key for telluric convolve file
+    key = 'TELL_TEMP'
+    # get h_time and u_time
+    h_time, u_time = spirouDB.get_times_from_header(p, hdr)
+    # set up line
+    args = [key, filename, h_time, u_time]
+    line = '{0} {1} {2} {3}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
