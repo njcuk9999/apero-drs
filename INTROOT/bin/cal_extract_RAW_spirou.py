@@ -151,7 +151,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
     #  Put to zero all the negative pixels
     # TODO: Check if it makes sens to do that
-    # data2 = np.where(data2<0, np.zeros_like(data2), data2)
+#    data2 = np.where(data2<0, 1.e-7, data2)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -185,6 +185,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     else:
         background = np.zeros_like(data2)
 
+    data2=np.where(data2>0,data2-background,0)
+
+
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -199,6 +202,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['FIB_TYPE']:
+#    for fiber in ['AB']:
         # set fiber
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()()')
@@ -217,7 +221,16 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # get all values in flat that are zero to 1
         loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
 
-        # ------------------------------------------------------------------
+
+        # ----------------------------------------------------------------------
+        # Read Blaze file
+        # ----------------------------------------------------------------------
+        loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+        loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+
+
+
+# ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
         # get this fibers parameters
@@ -370,6 +383,25 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Save E2DS file
         spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
         spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
+
+
+        #----------------------------
+        # 1-dimension spectral S1D
+        #-----------------------------
+
+        e2dsffb=loc['E2DSFF']/loc['BLAZE']
+        bins1d=p['IC_BIN_S1D']
+        xs1d, ys1d = spirouImage.e2dstos1d(loc['WAVE'][1:48], e2dsffb[1:48], bins1d)
+        if p['DRS_PLOT']:
+            sPlt.plt.figure()
+            sPlt.plt.plot(xs1d,ys1d)
+
+        s1dfitsname=p['ARG_FILE_NAMES'][0].replace('.fits', '_s1d_{0}.fits'.format(fiber))
+        s1dfits=os.path.join(p['REDUCED_DIR'],s1dfitsname)
+        spirouImage.write_s1d(s1dfits,xs1d,ys1d,bins1d)
+        wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
+        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfitsname))
+
 
     # ----------------------------------------------------------------------
     # Quality control
