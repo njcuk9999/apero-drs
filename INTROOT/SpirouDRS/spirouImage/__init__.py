@@ -156,6 +156,10 @@ WriteImageMulti = spirouFITS.write_image_multi
 
 WriteTable = spirouTable.write_table
 
+e2dstos1d = spirouImage.e2dstos1d
+
+write_s1d = spirouFITS.write_s1d
+
 # =============================================================================
 # End of code
 # =============================================================================
