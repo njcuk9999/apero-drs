@@ -43,6 +43,55 @@ sPlt = spirouCore.sPlt
 CONSTANT_C = constants.c.value
 
 
+def interp_at_shifted_wavelengths(p, loc, thdr):
+    func_name = __NAME__ + '.interp_at_shifted_wavelengths()'
+    # Get the Barycentric correction from header
+    dv, _, _ = spirouTelluric.GetBERV(p, thdr)
+    # set up storage for template
+    template2 = np.zeros_like(loc['DATA'])
+    ydim, xdim = loc['DATA'].shape
+    # loop around orders
+    for order_num in range(ydim):
+        # find good (not NaN) pixels
+        keep = np.isfinite(loc['TEMPLATE'][order_num, :])
+        # if we have enough values spline them
+        if np.sum(keep) > p['TELLU_FIT_KEEP_FRAC']:
+            # define keep wave
+            keepwave = loc['WAVE_IT'][order_num, keep]
+            # define keep temp
+            keeptemp = loc['TEMPLATE'][order_num, keep]
+            # calculate interpolation for keep temp at keep wave
+            spline = IUVSpline(keepwave, keeptemp, ext=3)
+            # interpolate at shifted values
+            dvshift = 1 + (dv / CONSTANT_C)
+            waveshift = loc['WAVE_IT'][order_num, :] * dvshift
+            # interpolate at shifted wavelength
+            start = order_num * xdim
+            end = order_num * xdim + xdim
+            template2[start:end] = spline(waveshift)
+    # debug plot
+    if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+        # start interactive plot
+        sPlt.start_interactive_session()
+        # plot the transmission map plot
+        sPlt.tellu_fit_tellu_spline_plot(p, loc, sp, template2)
+        # end interactive session
+        sPlt.end_interactive_session()
+    # save to loc
+    loc['TEMPLATE2'] = template2
+    loc.set_source('TEMPLATE2', func_name)
+    # return loc
+    return loc
+
+
+def make_template2(p, loc):
+
+    # set up storage for template
+    template2 = np.zeros_like(loc['DATA'])
+    ydim, xdim = loc['DATA'].shape
+
+
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -63,7 +112,19 @@ def main(night_name=None, files=None):
     # number of principal components to be used
     p['TELLU_NUMBER_OF_PRINCIPLE_COMP'] = 5
 
-    p['TELLU_FIT_KEEP_FRAC'] = 20
+    p['TELLU_FIT_KEEP_FRAC'] = 20.0
+
+    p['TELLU_PLOT_ORDER'] = 35
+
+    p['tellu_fit_min_transmission'] = 0.2
+    p['tellu_lambda_min'] = 1000.0
+    p['tellu_lambda_max'] = 2100.0
+
+    p['TELLU_FIT_VSINI'] = 15.0
+
+    p['TELLU_FIT_NITER'] = 4
+
+    p['TELLU_FIT_VSINI2'] = 30.0
 
     # TODO =================================================================
 
@@ -206,30 +267,108 @@ def main(night_name=None, files=None):
         loc['WAVE_IT'] = spirouImage.GetWaveSolution(p, tdata, thdr)
 
         # ------------------------------------------------------------------
-        # Interpolate at shifted wavelengths
+        # Interpolate at shifted wavelengths (if we have a template)
         # ------------------------------------------------------------------
         if loc['FLAG_TEMPLATE']:
-            # Get the Barycentric correction from header
-            dv, _, _ = spirouTelluric.GetBERV(p, thdr)
-            # set up storage for template
-            template2 = np.zeros_like(loc['DATA'])
-            # loop around orders
-            for order_num in range(loc['DATA'].shape[0]):
-                # find good (not NaN) pixels
-                keep = np.isfinite(loc['TEMPLATE'][order_num, :])
-                # if we have enough values spline them
-                if np.sum(keep) > p['TELLU_FIT_KEEP_FRAC']:
-                    # define keep wave
-                    keepwave = loc['WAVE_IT'][order_num, keep]
-                    # define keep temp
-                    keeptemp = loc['TEMPLATE'][order_num, keep]
-                    # calculate interpolation for keep temp at keep wave
-                    spline = IUVSpline(keepwave, keeptemp, ext=3)
-                    # interpolate at shifted values
-                    dvshift =  1 + (dv / CONSTANT_C)
-                    waveshift = loc['WAVE_IT'][order_num, :]  * dvshift
+            loc = interp_at_shifted_wavelengths(p, loc, thdr)
 
-                    # TODO: Got to here
+        # ------------------------------------------------------------------
+        # Something
+        # ------------------------------------------------------------------
+        # get data dimensions
+        ydim, xdim = loc['DATA'].shape
+        # redefine storage for recon absorption
+        recon_abso = np.ones(np.product(loc['DATA'].shape))
+        # flatten spectrum and wavelengths
+        sp2 = sp.ravel()
+        wave2 = loc['WAVE_IT'].ravel()
+        # get the normalisation factor
+        norm = np.nanmedian(sp2)
+        # define the good pixels as those above minimum transmission
+        keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
+        # also require wavelength constraints
+        keep &= (wave2 > p['TELLU_LAMBDA_MIN'])
+        keep &= (wave2 < p['TELLU_LAMBDA_MAX'])
+        # construct convolution kernel
+        loc = spirouTelluric.ConstructConvKernel2(p, loc, p['TELLU_FIT_VSINI'])
+        # ------------------------------------------------------------------
+        # loop around a number of times
+        for ite in range(p['TELLU_FIT_NITER']):
+            # --------------------------------------------------------------
+            # if we don't have a template construct one
+            if not loc['FLAG_TEMPLATE']:
+                # define template2 to fill
+                template2 = np.zeros(np.product(loc['DATA']))
+                # loop around orders
+                for order_num in range(ydim):
+                    # get start and end points
+                    start = order_num * xdim
+                    end = order_num * xdim + xdim
+                    # produce a mask of good transmission
+                    order_tapas = tapas_all_species[0, start:end]
+                    mask = order_tapas > p['TRANSMISSION_CUT']
+                    # get good transmission spectrum
+                    spgood = sp[order_num, :] * np.array(mask, dtype=float)
+                    recongood = recon_abso[start:end]
+                    # convolve spectrum
+                    ckwargs = dict(v=loc['KER2'], mode='same')
+                    sp2b= np.convolve(spgood / recon_abso, **ckwargs)
+                    # convolve mask for weights
+                    ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
+                    # wave weighted convolved spectrum into template2
+                    template2[start, end] = sp2b / ww
+            # else we have template so load it
+            else:
+                template2 = loc['TEMPLATE2']
+            # --------------------------------------------------------------
+            # get dd
+            dd = (sp2 / template2) / recon_abso
+            # --------------------------------------------------------------
+            if loc['FLAG_TEMPLATE']:
+                # construct convolution kernel
+                vsini = p['TELLU_FIT_VSINI2']
+                loc = spirouTelluric.ConstructConvKernel2(p, loc, vsini)
+                # loop around orders
+                for order_num in range(ydim):
+                    # get start and end points
+                    start = order_num * xdim
+                    end = order_num * xdim + xdim
+                    # produce a mask of good transmission
+                    order_tapas = tapas_all_species[0, start:end]
+                    mask = order_tapas > p['TRANSMISSION_CUT']
+                    # get good transmission spectrum
+                    ddgood = dd[start:end] * np.array(mask, dtype=float)
+                    recongood = recon_abso[start:end]
+                    # convolve spectrum
+                    ckwargs = dict(v=loc['KER2'], mode='same')
+                    sp2b= np.convolve(ddgood / recon_abso, **ckwargs)
+                    # convolve mask for weights
+                    ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
+                    # wave weighted convolved spectrum into dd
+                    dd[start:end] = dd[start:end] / (sp2b / ww)
+            # --------------------------------------------------------------
+            # Log dd and subtract median
+            # --------------------------------------------------------------
+            # log dd
+            log_dd = np.log(dd)
+            # --------------------------------------------------------------
+            # subtract off the median from each order
+            for order_num in range(ydim):
+                # get start and end points
+                start = order_num * xdim
+                end = order_num * xdim + xdim
+                # get median
+                log_dd_med = np.nanmedian(log_dd[start:end])
+                # subtract of median
+                log_dd[start:end] = log_dd[start:end] - log_dd_med
+            # --------------------------------------------------------------
+            # identify good pixels to keep
+            keep &= np.isfinite(log_dd)
+            keep &= np.sum(np.isfinite(loc['PC']), axis=1) == loc['NPC']
+            # log number of kept pixels
+            wmsg = 'Number to keep total = {0}'.format(np.sum(keep))
+            WLOG('', p['LOG_OPT'], wmsg)
+
 
     # ----------------------------------------------------------------------
     # End Message
