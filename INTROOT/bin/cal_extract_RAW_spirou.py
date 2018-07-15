@@ -198,7 +198,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     #  Earth Velocity calculation
     #-----------------------------------------------------------------------
     if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p, loc = spirouEXTOR.GetEarthVelocityCorrection(p, loc, hdr)
+        p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -428,8 +428,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(hdict, p['KW_CRPIX1'], value=1.0)
         hdict = spirouImage.AddKey(hdict, p['KW_CRVAL1'], value=xs1d[0])
         hdict = spirouImage.AddKey(hdict, p['KW_CDELT1'], value=p['IC_BIN_S1D'])
-        hdict = spirouImage.AddKey(hdict, p['CTYPE1'], value='nm')
-        hdict = spirouImage.AddKey(hdict, p['BUNIT'], value='Ralative Flux')
+        hdict = spirouImage.AddKey(hdict, p['KW_CTYPE1'], value='nm')
+        hdict = spirouImage.AddKey(hdict, p['KW_BUNIT'], value='Ralative Flux')
         # log writing to file
         wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
         WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfilename))
