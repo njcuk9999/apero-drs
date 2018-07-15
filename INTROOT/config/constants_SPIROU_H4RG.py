@@ -420,8 +420,14 @@ ic_cosmic_sigcut = 0.25  # 0.25
 #        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_thresh = 5
 
-#    Define the spectral bin for S1D spectra (nm)   - [cal_extract]
+#    Define the spectral bin for S1D spectra (nm)                - [cal_extract]
 ic_bin_s1d = 0.005
+
+#    Define the first order for the S1D spectra                  - [cal_extract]
+ic_start_order_1d = 1
+
+#    Define the last order for the S1D spectra                   - [cal_extract]
+ic_end_order_1d = 48
 
 
 # -----------------------------------------------------------------------------
