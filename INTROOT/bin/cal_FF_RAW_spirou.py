@@ -164,7 +164,7 @@ def main(night_name=None, files=None):
         WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
         bdata = spirouBACK.MeasureBackgroundFF(p, data2)
-        background, gridx, gridy, minlevel
+        background, gridx, gridy, minlevel = bdata
     else:
         background = np.zeros_like(data2)
 
