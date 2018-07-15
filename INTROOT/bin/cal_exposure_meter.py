@@ -353,13 +353,13 @@ def main(night_name=None, reffile=None):
 # =============================================================================
 # Start of code
 # =============================================================================
-# # Main code here
-# if __name__ == "__main__":
-#     # ----------------------------------------------------------------------
-#     # run main with no arguments (get from command line - sys.argv)
-#     ll = main()
-#     # exit message
-#     spirouStartup.Exit(ll)
+# Main code here
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
