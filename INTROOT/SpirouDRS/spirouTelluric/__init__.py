@@ -27,9 +27,9 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Define functions
 # =============================================================================
 
-ConstructConvolutionKernel1 = spirouTelluric.construct_convolution_kernal1
+ConstructConvKernel1 = spirouTelluric.construct_convolution_kernal1
 
-ConstructConvolutionKernel2 = spirouTelluric.construct_convolution_kernal2
+ConstructConvKernel2 = spirouTelluric.construct_convolution_kernal2
 
 GetMolecularTellLines = spirouTelluric.get_molecular_tell_lines
 
