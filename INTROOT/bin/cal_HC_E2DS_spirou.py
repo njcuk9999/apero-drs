@@ -13,7 +13,7 @@ from __future__ import division
 import numpy as np
 import os
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouFLAT
@@ -441,17 +441,17 @@ def part2(p, loc):
         # set the wave key
         keydb = 'WAVE_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder
-        spirouCDB.PutFile(p, wavefits)
+        spirouDB.PutCalibFile(p, wavefits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
+        spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
 
         # set the hcref key
         keydb = 'HCREF_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder
-        spirouCDB.PutFile(p, e2dscopy_filename)
+        spirouDB.PutCalibFile(p, e2dscopy_filename)
         # update the master calib DB file with new key
         e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
-        spirouCDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+        spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # return p and loc
     return p, loc

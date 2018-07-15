@@ -44,8 +44,6 @@ DriftPerOrder = spirouRV.drift_per_order
 
 DriftAllOrders = spirouRV.drift_all_orders
 
-EarthVelocityCorrection = spirouRV.earth_velocity_correction
-
 FitCCF = spirouRV.fit_ccf
 
 GetDrift = spirouRV.get_drift

@@ -15,7 +15,7 @@ from astropy import units as uu
 import numpy as np
 import warnings
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -81,7 +81,7 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
         key = 'WAVE_AB'
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr)
+        read_file = spirouDB.GetCalibFile(p, key, hdr)
     else:
         read_file = filename
 
@@ -1602,7 +1602,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
     elif mode == 1:
         fkwargs = dict(weights=invsig, guess=guess, return_fit=True,
                        return_uncertainties=True)
-        ag, siga, cfit = spirouMath.fitgaussian(x, y, **fkwargs)
+        ag, cfit, siga = spirouMath.fitgaussian(x, y, **fkwargs)
     elif mode == 2:
         fkwargs = dict(weights=invsig, return_fit=True,
                        return_uncertainties=True)
