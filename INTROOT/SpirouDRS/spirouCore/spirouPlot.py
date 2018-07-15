@@ -1816,6 +1816,42 @@ def tellu_pca_comp_plot(p, loc):
         plt.close()
 
 
+
+def tellu_fit_tellu_spline_plot(p, loc, sp, template2):
+    # get constants from p
+    selected_order = p['TELLU_PLOT_ORDER']
+    # get data from loc
+    data = loc['DATA']
+    ydim, xdim = data.shape
+    wave = loc['WAVE_IT']
+    # get selected order wave lengths
+    swave = wave[selected_order, :]
+    # get selected order for sp
+    ssp = sp[selected_order, :]
+    # get template2 at selected order
+    start, end = selected_order * xdim, selected_order * xdim + xdim
+    stemp = template2[start: end]
+    # recovered absorption
+    srecov = sp/stemp
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectra for selected order
+    frame.plot(swave, ssp/np.nanmedian(ssp), label='Observed SP')
+    frame.plot(swave, stemp/np.nanmedian(stemp), label='Template SP')
+    frame.plot(swave, srecov/np.nanmedian(srecov), label='Recov abso SP')
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+
 # =============================================================================
 # Polarimetry plotting functions
 # =============================================================================
