@@ -1694,6 +1694,12 @@ def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
 
 
 # noinspection PyPep8Naming
+def CHARACTER_LOG_LENGTH():
+    length = 80
+    return length
+
+
+# noinspection PyPep8Naming
 def LOG_TIMEZONE():
     """
     The time zone to use in timestamps for logging (i.e. UTC)
