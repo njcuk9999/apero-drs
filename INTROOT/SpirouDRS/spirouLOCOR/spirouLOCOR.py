@@ -297,7 +297,7 @@ def find_order_centers(pp, image, loc, order_num):
                 if pp['IC_IMAGE_TYPE'] == "H2RG":
                     center = float(rowcenter)
                 else:
-                    center = float(rowcenter)-1 # to force the order curvature
+                    center = float(rowcenter)-1  # to force the order curvature
         # add these positions to storage
         loc['CTRO'][order_num, col] = center
         loc['SIGO'][order_num, col] = width
