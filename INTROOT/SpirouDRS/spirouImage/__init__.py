@@ -27,13 +27,13 @@ __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
-           'CorrectForDark', 'CorrectForBadPix', 'FitTilt', 'FlipImage',
-           'FiberParams', 'GetAllSimilarFiles', 'GetSigdet', 'GetExpTime',
-           'GetBadPixMap', 'GetGain', 'GetAcqTime', 'GetKey', 'GetKeys',
-           'GetTilt', 'GetTypeFromHeader', 'IdentifyUnProFile',
-           'InterpolateBadRegions', 'LocateBadPixels', 'LocateFullBadPixels',
-           'MakeTable', 'MeasureDark', 'MergeTable', 'NormMedianFlat',
-           'PPCorrectTopBottom', 'PPMedianFilterDarkAmps',
+           'CorrectForDark', 'CorrectForBadPix', 'E2DStoS1D',
+           'FitTilt', 'FlipImage', 'FiberParams', 'GetAllSimilarFiles',
+           'GetSigdet', 'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
+           'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
+           'IdentifyUnProFile', 'InterpolateBadRegions', 'LocateBadPixels',
+           'LocateFullBadPixels', 'MakeTable', 'MeasureDark', 'MergeTable',
+           'NormMedianFlat', 'PPCorrectTopBottom', 'PPMedianFilterDarkAmps',
            'PPMedianOneOverfNoise', 'ReadParam', 'ReadData', 'ReadImage',
            'ReadTable', 'ReadImageAndCombine', 'ReadFlatFile', 'ReadHeader',
            'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
@@ -65,6 +65,8 @@ CopyRootKeys = spirouFITS.copy_root_keys
 CorrectForDark = spirouImage.correct_for_dark
 
 CorrectForBadPix = spirouImage.correct_for_badpix
+
+E2DStoS1D = spirouImage.e2dstos1d
 
 FitTilt = spirouImage.fit_tilt
 
@@ -160,13 +162,10 @@ WriteImage = spirouFITS.writeimage
 
 WriteImageMulti = spirouFITS.write_image_multi
 
+WriteS1D = spirouFITS.write_s1d
+
 WriteTable = spirouTable.write_table
 
-# TODO: FIX PROBLEMS: FIX ALIAS
-e2dstos1d = spirouImage.e2dstos1d
-
-# TODO: FIX PROBLEMS: FIX ALIAS
-write_s1d = spirouFITS.write_s1d
 
 # =============================================================================
 # End of code
