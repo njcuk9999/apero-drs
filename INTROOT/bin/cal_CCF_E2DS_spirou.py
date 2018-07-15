@@ -143,7 +143,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     #  Earth Velocity calculation
     #-----------------------------------------------------------------------
     if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p, loc = spirouEXTOR.GetEarthVelocityCorrection(p, loc, hdr)
+        p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
