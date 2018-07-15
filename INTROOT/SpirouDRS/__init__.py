@@ -22,9 +22,11 @@ from . import spirouLOCOR
 from . import spirouPOLAR
 from . import spirouRV
 from . import spirouStartup
+from . import spirouTelluric
 from . import spirouTHORCA
 from . import spirouUnitTests
 from . import spirouTools
+
 
 # =============================================================================
 # Define variables
@@ -48,6 +50,7 @@ __all__ = ['spirouBACK',
            'spirouPOLAR',
            'spirouRV',
            'spirouStartup',
+           'spirouTelluric',
            'spirouTHORCA',
            'spirouUnitTests',
            'spirouTools']
@@ -97,6 +100,9 @@ if __name__ == "__main__":
     # spirouStartup
     print('\n\t' + spirouStartup.__NAME__)
     print('\t\t--' + spirouStartup.spirouStartup.__NAME__)
+    # spirouTelluric
+    print('\n\t' + spirouTelluric.__NAME__)
+    print('\t\t--' + spirouTelluric.spirouTelluric.__NAME__)
     # spirouTHORCA
     print('\n\t' + spirouTHORCA.__NAME__)
     print('\t\t--' + spirouTHORCA.spirouTHORCA.__NAME__)
