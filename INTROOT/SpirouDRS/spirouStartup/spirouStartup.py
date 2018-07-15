@@ -1893,7 +1893,7 @@ def display_ee():
               '']
 
     for line in logo:
-        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC)
+        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
 
 
 def display_initial_parameterisation(p):
