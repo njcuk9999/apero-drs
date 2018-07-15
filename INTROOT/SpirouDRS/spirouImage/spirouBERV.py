@@ -20,7 +20,7 @@ from . import spirouImage
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'spirouEXTOR.py'
+__NAME__ = 'spirouBERV.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
