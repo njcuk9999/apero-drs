@@ -163,9 +163,14 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
+        bdata = spirouBACK.MeasureBackgroundFF(p, data2)
+        background, gridx, gridy, minlevel
     else:
         background = np.zeros_like(data2)
+
+    # data2=data2-background
+    # correct data2 with background (where positive)
+    data2=np.where(data2>0,data2-background,0)
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
