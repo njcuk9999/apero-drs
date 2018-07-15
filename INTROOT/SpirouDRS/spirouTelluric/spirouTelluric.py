@@ -137,11 +137,11 @@ def get_molecular_tell_lines(p, loc):
     return loc
 
 
-def construct_convolution_kernal2(p, loc):
+def construct_convolution_kernal2(p, loc, vsini):
     func_name = __NAME__ + '.construct_convolution_kernal2()'
 
     # gaussian ew for vinsi km/s
-    ew = p['TELLU_VSINI'] / p['TELLU_MED_SAMPLING'] / 2.354
+    ew = vsini / p['TELLU_MED_SAMPLING'] / SIG_FWHM
     # set up the kernel exponent
     xx = np.arange(ew * 6) - ew * 3
     # kernal is the a gaussian
@@ -177,7 +177,8 @@ def calculate_absorption_pca(p, loc, x, mask):
 
     # save pc image to loc
     loc['PC'] = pc
-    loc.set_source('PC', func_name)
+    loc['NPC'] = npc
+    loc.set_sources(['PC', 'NPC'], func_name)
     # return loc
 
 
