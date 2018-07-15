@@ -887,6 +887,16 @@ def EXTRACT_LOCO_FILE(p):
 
 
 # noinspection PyPep8Naming
+def EXTRACT_S1D_FILE(p):
+
+    reducedfolder = p['REDUCED_DIR']
+    newext = '_s1d_{0}.fits'
+    oldext = '.fits'
+    filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
+    absfilepath = os.path.join(reducedfolder, filename)
+    return absfilepath
+
+# noinspection PyPep8Naming
 def DRIFT_RAW_FILE(p):
     """
     Defines the drift_raw fits file name and location using
