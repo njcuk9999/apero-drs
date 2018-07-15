@@ -284,29 +284,6 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     return p, image, header, comments
 
 
-# TODO: FIX PROBLEMS: WRITE DOC STRING
-def write_s1d(fitsfilename, xs1d, ys1d, xstep):
-    "Create the FITS file and write data S1D."
-
-    # TODO: FIX PROBLEMS: Should use spirou write functions!!!
-    # TODO: FIX PROBLEMS: Header keys via hdict
-    # TODO: FIX PROBLEMS: Need checks!!
-
-    # TODO: FIX PROBLEMS: NEED COMMENTS
-    if os.path.exists(fitsfilename):  # Si fichier existant
-        os.remove(fitsfilename)  # alors detruit
-
-    hdu = fits.PrimaryHDU(ys1d)
-
-    hdu.header['CRPIX1'] = (1., 'Reference pixel')
-    hdu.header['CRVAL1'] = (xs1d[0], 'Coordinate at reference pixel [nm]')
-    hdu.header['CDELT1'] = (xstep, 'Coordinate increment par pixel [nm]')
-    hdu.header['CTYPE1'] = ('nm', 'Units of coordinate')
-    hdu.header['BUNIT'] = ('Relative Flux', 'Units of data values')
-
-    hdu.writeto(fitsfilename, overwrite=True)
-
-
 def writeimage(filename, image, hdict=None, dtype=None):
     """
     Writes an image and its header to file
@@ -489,6 +466,7 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
 
 
 def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
