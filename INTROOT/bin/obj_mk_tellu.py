@@ -76,8 +76,8 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Construct convolution kernels
     # ------------------------------------------------------------------
-    loc = spirouTelluric.ConstructConvolutionKernel1(p, loc)
-    loc = spirouTelluric.ConstructConvolutionKernel2(p, loc)
+    loc = spirouTelluric.ConstructConvKernel1(p, loc)
+    loc = spirouTelluric.ConstructConvKernel2(p, loc, vsini=p['TELLU_VSINI'])
 
     # ------------------------------------------------------------------
     # Get molecular telluric lines
@@ -166,9 +166,6 @@ def main(night_name=None, files=None):
             bad = (sp[order_num, :] / sed[:] > 1.2)
             sed[bad] = np.nan
 
-            # --------------------------------------------------------------
-            # Plots
-            # --------------------------------------------------------------
             # debug plot
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
                 # start interactive plot
