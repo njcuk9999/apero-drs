@@ -9,6 +9,7 @@ Created on 2017-10-30 at 17:09
 
 """
 from SpirouDRS import spirouConfig
+from . import spirouBERV
 from . import spirouFile
 from . import spirouFITS
 from . import spirouImage
@@ -38,7 +39,8 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ReadTable', 'ReadImageAndCombine', 'ReadFlatFile', 'ReadHeader',
            'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
            'ReadWaveFile', 'ReadBlazeFile', 'ReadOrderProfile',
-           'ResizeImage', 'WriteImage', 'WriteTable']
+           'ResizeImage', 'WriteImage', 'WriteTable',
+           'GetEarthVelocityCorrection', 'EarthVelocityCorrection']
 
 
 # =============================================================================
@@ -68,6 +70,8 @@ CorrectForBadPix = spirouImage.correct_for_badpix
 
 E2DStoS1D = spirouImage.e2dstos1d
 
+EarthVelocityCorrection = spirouBERV.earth_velocity_correction
+
 FitTilt = spirouImage.fit_tilt
 
 FixNonPreProcess = spirouImage.fix_non_preprocessed
@@ -81,6 +85,8 @@ GetAllSimilarFiles = spirouImage.get_all_similar_files
 GetSigdet = spirouImage.get_sigdet
 
 GetExpTime = spirouImage.get_exptime
+
+GetEarthVelocityCorrection = spirouBERV.get_earth_velocity_correction
 
 GetBadPixMap = spirouImage.get_badpixel_map
 
@@ -96,7 +102,7 @@ GetTilt = spirouImage.get_tilt
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
-GetWaveSolution = spirouImage.get_wave_solution
+GetWaveSolution = spirouFITS.get_wave_solution
 
 IdentifyUnProFile = spirouFile.identify_unprocessed_file
 
@@ -161,8 +167,6 @@ RotateImage = spirouImage.rotate
 WriteImage = spirouFITS.writeimage
 
 WriteImageMulti = spirouFITS.write_image_multi
-
-WriteS1D = spirouFITS.write_s1d
 
 WriteTable = spirouTable.write_table
 
