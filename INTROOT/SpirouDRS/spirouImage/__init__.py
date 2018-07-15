@@ -162,6 +162,12 @@ WriteImageMulti = spirouFITS.write_image_multi
 
 WriteTable = spirouTable.write_table
 
+# TODO: FIX PROBLEMS: FIX ALIAS
+e2dstos1d = spirouImage.e2dstos1d
+
+# TODO: FIX PROBLEMS: FIX ALIAS
+write_s1d = spirouFITS.write_s1d
+
 # =============================================================================
 # End of code
 # =============================================================================
