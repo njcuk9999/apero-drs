@@ -405,25 +405,36 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # 1-dimension spectral S1D
         #------------------------------------------------------------------
-
-        e2dsffb=loc['E2DSFF']/loc['BLAZE']
-        bins1d=p['IC_BIN_S1D']
-
-        #TODO: FIX PROBLEMS WITH THIS: Capitalize function fix line lenght
-        xs1d, ys1d = spirouImage.e2dstos1d(loc['WAVE'][1:48], e2dsffb[1:48], bins1d)
-        # TODO: FIX PROBLEMS WITH THIS
+        # normalise E2DSFF with the blaze function
+        e2dsffb = loc['E2DSFF'] / loc['BLAZE']
+        # only want certain orders
+        s1dwave = loc['WAVE'][p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
+        s1de2dsffb = e2dsffb[p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
+        # get arguments for E2DS to S1D
+        e2dsargs = [s1dwave, s1de2dsffb, p['IC_BIN_S1D']]
+        # get 1D spectrum
+        xs1d, ys1d = spirouImage.E2DStoS1D(*e2dsargs)
+        # Plot the 1D spectrum
         if p['DRS_PLOT']:
-            # TODO: FIX PROBLEMS WITH THIS: Move to plots
-            sPlt.plt.figure()
-            sPlt.plt.plot(xs1d,ys1d)
-        # TODO: FIX PROBLEMS: Move to spirouConfig
-        s1dfitsname=p['ARG_FILE_NAMES'][0].replace('.fits', '_s1d_{0}.fits'.format(fiber))
-        s1dfits=os.path.join(p['REDUCED_DIR'],s1dfitsname)
-        # TODO: FIX PROBLEMS: Capitalize function
-        spirouImage.write_s1d(s1dfits,xs1d,ys1d,bins1d)
-        wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
-        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfitsname))
+            sPlt.ext_1d_spectrum_plot(p, xs1d, ys1d)
 
+        # construct file name
+        s1dfile = spirouConfig.Constants.EXTRACT_S1D_FILE(p)
+        s1dfilename = os.path.basename(s1dfile)
+
+        # add header keys
+        # TODO: Do we want any of the E2DS keys??
+        hdict = dict()
+        hdict = spirouImage.AddKey(hdict, p['KW_CRPIX1'], value=1.0)
+        hdict = spirouImage.AddKey(hdict, p['KW_CRVAL1'], value=xs1d[0])
+        hdict = spirouImage.AddKey(hdict, p['KW_CDELT1'], value=p['IC_BIN_S1D'])
+        hdict = spirouImage.AddKey(hdict, p['CTYPE1'], value='nm')
+        hdict = spirouImage.AddKey(hdict, p['BUNIT'], value='Ralative Flux')
+        # log writing to file
+        wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
+        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfilename))
+        # Write to file
+        spirouImage.WriteImage(s1dfile, ys1d, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
