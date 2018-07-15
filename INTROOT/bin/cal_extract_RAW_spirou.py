@@ -16,7 +16,6 @@ Up-to-date with cal_extract_RAW_spirouALL AT-4 V47
 from __future__ import division
 import numpy as np
 import os
-import time
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -227,6 +226,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # get all values in flat that are zero to 1
         loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
 
+
+        # ------------------------------------------------------------------
+        # Read Blaze file
+        # ------------------------------------------------------------------
+        loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+        blazesource = __NAME__ + '/main() + /spirouImage.ReadBlazeFile'
+        loc.set_source('BLAZE', blazesource)
+
         # ------------------------------------------------------------------
         # Get localisation coefficients
         # ------------------------------------------------------------------
@@ -394,6 +401,29 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Save E2DS file
         spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
         spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
+
+        # ------------------------------------------------------------------
+        # 1-dimension spectral S1D
+        #------------------------------------------------------------------
+
+        e2dsffb=loc['E2DSFF']/loc['BLAZE']
+        bins1d=p['IC_BIN_S1D']
+
+        #TODO: FIX PROBLEMS WITH THIS: Capitalize function fix line lenght
+        xs1d, ys1d = spirouImage.e2dstos1d(loc['WAVE'][1:48], e2dsffb[1:48], bins1d)
+        # TODO: FIX PROBLEMS WITH THIS
+        if p['DRS_PLOT']:
+            # TODO: FIX PROBLEMS WITH THIS: Move to plots
+            sPlt.plt.figure()
+            sPlt.plt.plot(xs1d,ys1d)
+        # TODO: FIX PROBLEMS: Move to spirouConfig
+        s1dfitsname=p['ARG_FILE_NAMES'][0].replace('.fits', '_s1d_{0}.fits'.format(fiber))
+        s1dfits=os.path.join(p['REDUCED_DIR'],s1dfitsname)
+        # TODO: FIX PROBLEMS: Capitalize function
+        spirouImage.write_s1d(s1dfits,xs1d,ys1d,bins1d)
+        wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
+        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfitsname))
+
 
     # ----------------------------------------------------------------------
     # Quality control
