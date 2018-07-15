@@ -74,6 +74,11 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CDEN',
             'kw_CMMTSEQ',
             'kw_CREF',
+            'kw_CRPIX1',
+            'kw_CRVAL1',
+            'kw_CDELT1',
+            'kw_CTYPE1',
+            'kw_BUNIT',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -372,7 +377,7 @@ kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 # -----------------------------------------------------------------------------
 # Define cal_EXTRACT variables
 # -----------------------------------------------------------------------------
-
+# TODO: Comment this section
 # localization file used
 kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
@@ -381,6 +386,12 @@ kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
 kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
+
+kw_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
+kw_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
+kw_CDELT1 = ['CDELT1', 0, 'Coordinate at reference pixel [nm]']
+kw_CTYPE1 = ['CTYPE1', 'nm', 'Units of coordinate']
+kw_BUNIT = ['BUNIT', '', 'Units of data values']
 
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
@@ -409,7 +420,7 @@ kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
 # -----------------------------------------------------------------------------
-
+# TODO: Comment this section
 kw_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
 kw_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
 kw_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
@@ -447,6 +458,7 @@ kw_TH_NAXIS2 = ['NAXIS2', None, '']
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
 # -----------------------------------------------------------------------------
+# TODO: Comment this section
 kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
@@ -455,6 +467,7 @@ kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
 # -----------------------------------------------------------------------------
+# TODO: Comment this section
 kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
 kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
 kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']

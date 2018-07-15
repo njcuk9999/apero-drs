@@ -14,6 +14,7 @@ import numpy as np
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
 
+
 # =============================================================================
 # Define variables
 # =============================================================================

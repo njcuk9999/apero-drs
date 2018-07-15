@@ -11,9 +11,8 @@ Created on 2017-10-11 at 10:43
 
 Version 0.0.1
 """
-
 from . import spirouBACK
-from . import spirouCDB
+from . import spirouDB
 from . import spirouConfig
 from . import spirouCore
 from . import spirouEXTOR
@@ -23,9 +22,11 @@ from . import spirouLOCOR
 from . import spirouPOLAR
 from . import spirouRV
 from . import spirouStartup
+from . import spirouTelluric
 from . import spirouTHORCA
 from . import spirouUnitTests
 from . import spirouTools
+
 
 # =============================================================================
 # Define variables
@@ -39,9 +40,9 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['spirouBACK',
-           'spirouCDB',
            'spirouConfig',
            'spirouCore',
+           'spirouDB',
            'spirouEXTOR',
            'spirouFLAT',
            'spirouImage',
@@ -49,6 +50,7 @@ __all__ = ['spirouBACK',
            'spirouPOLAR',
            'spirouRV',
            'spirouStartup',
+           'spirouTelluric',
            'spirouTHORCA',
            'spirouUnitTests',
            'spirouTools']
@@ -63,9 +65,9 @@ if __name__ == "__main__":
     # spirouBACK
     print('\n\t' + spirouBACK.__NAME__)
     print('\t\t--' + spirouBACK.spirouBACK.__NAME__)
-    # spirouCDB
-    print('\n\t' + spirouCDB.__NAME__)
-    print('\t\t--' + spirouCDB.spirouCDB.__NAME__)
+    # spirouDB
+    print('\n\t' + spirouDB.__NAME__)
+    print('\t\t--' + spirouDB.spirouCDB.__NAME__)
     # spirouConfig
     print('\n\t' + spirouConfig.__NAME__)
     print('\t\t--' + spirouConfig.spirouConfig.__NAME__)
@@ -98,6 +100,9 @@ if __name__ == "__main__":
     # spirouStartup
     print('\n\t' + spirouStartup.__NAME__)
     print('\t\t--' + spirouStartup.spirouStartup.__NAME__)
+    # spirouTelluric
+    print('\n\t' + spirouTelluric.__NAME__)
+    print('\t\t--' + spirouTelluric.spirouTelluric.__NAME__)
     # spirouTHORCA
     print('\n\t' + spirouTHORCA.__NAME__)
     print('\t\t--' + spirouTHORCA.spirouTHORCA.__NAME__)

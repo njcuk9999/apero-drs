@@ -152,7 +152,51 @@ def reset_calibdb(p, log=True):
             if log:
                 wmsg = 'File {0} does not exists in {1} - cannot add'
                 WLOG('warning', DPROG, wmsg.format(f, absfolder))
+
+
+def reset_telludb(p, log=True):
+    # TODO: eventually the telluDB should be reset to empty
+    # TODO:    Thus this function will not be needed
+
+    # log progress
+    WLOG('', DPROG, 'Resetting telluric database')
+
+    # remove files currently in telluDB
+    calib_dir = p['DRS_TELLU_DB']
+    # loop around files and folders in tellu_dir
+    remove_all(calib_dir, log)
+
     # -------------------------------------------------------------------------
+    # get reset directory location
+    # get package name and relative path
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.RESET_CALIBDB_DIR()
+    # get absolute folder path from package and relfolder
+    absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # -------------------------------------------------------------------------
+    # define needed files:
+    files = os.listdir(absfolder)
+    # -------------------------------------------------------------------------
+    # copy required telluDB files to DRS_TELLU_DB path
+    for f in files:
+        # get old and new paths
+        oldpath = os.path.join(absfolder, f)
+        newpath = os.path.join(calib_dir, f)
+        # check that old path exists
+        if os.path.exists(oldpath):
+            # log progress
+            if log:
+                wmsg = 'Adding file: {0} to {1}'
+                WLOG('', DPROG, wmsg.format(f, p['DRS_TELLU_DB']))
+            # remove the old file
+            if os.path.exists(newpath):
+                os.remove(newpath)
+            # copy over the new file
+            shutil.copy(oldpath, newpath)
+        else:
+            if log:
+                wmsg = 'File {0} does not exists in {1} - cannot add'
+                WLOG('warning', DPROG, wmsg.format(f, absfolder))
 
 
 def reset_log(p):
@@ -214,8 +258,12 @@ def main(return_locals=False, warn=True, log=True, called=False):
     if reset2:
         reset_calibdb(p, log)
     if warn:
-        reset3 = reset_confirmation('Log', called=called)
+        reset3 = reset_confirmation('TelluDB', called=called)
     if reset3:
+        reset_telludb(p, log)
+    if warn:
+        reset4 = reset_confirmation('Log', called=called)
+    if reset4:
         reset_log(p)
     # ----------------------------------------------------------------------
     # End Message

@@ -15,7 +15,7 @@ import os
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
-from SpirouDRS.spirouCDB import spirouCDB
+from SpirouDRS.spirouDB import spirouCDB
 
 # =============================================================================
 # Define variables

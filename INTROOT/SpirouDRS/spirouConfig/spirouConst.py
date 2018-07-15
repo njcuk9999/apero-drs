@@ -232,6 +232,16 @@ def RESET_CALIBDB_DIR():
 
 
 # noinspection PyPep8Naming
+def RESET_TELLUDB_DIR():
+    """
+    Define the reset dir relative path
+    :return:
+    """
+    reset_telludb_dir = './data/reset_telluDB'
+    return reset_telludb_dir
+
+
+# noinspection PyPep8Naming
 def WAVELENGTH_CATS_DIR():
     """
     Define the wavelength catalogues dir relative path
@@ -877,6 +887,16 @@ def EXTRACT_LOCO_FILE(p):
 
 
 # noinspection PyPep8Naming
+def EXTRACT_S1D_FILE(p):
+
+    reducedfolder = p['REDUCED_DIR']
+    newext = '_s1d_{0}.fits'
+    oldext = '.fits'
+    filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
+    absfilepath = os.path.join(reducedfolder, filename)
+    return absfilepath
+
+# noinspection PyPep8Naming
 def DRIFT_RAW_FILE(p):
     """
     Defines the drift_raw fits file name and location using
@@ -1113,6 +1133,58 @@ def EM_MASK_FILE(p):
 
 
 # noinspection PyPep8Naming
+def WAVE_MAP_SPE_FILE(p):
+    """
+    Defines the cal_exposure_meter wavelength
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get prefix
+    prefix = p['E2DSPREFIX']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = '{0}_{1}_{2}.fits'.format(prefix, 'SPE', kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+# noinspection PyPep8Naming
+def WAVE_MAP_SPE0_FILE(p):
+    """
+    Defines the cal_exposure_meter wavelength
+
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                em_output_type: string, the type of output generated
+
+    :return fitsfile: string, absolute path for the output
+    """
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get prefix
+    prefix = p['E2DSPREFIX']
+    # get output type (distinguish)
+    kind = p['EM_OUTPUT_TYPE']
+    # construct file name
+    filename = '{0}_{1}_{2}.fits'.format(prefix, 'SPE0', kind)
+    # construct absolute path
+    fitsfile = os.path.join(redfolder, filename)
+    # return absolute path
+    return fitsfile
+
+
+# noinspection PyPep8Naming
 def WAVE_FILE(p):
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
@@ -1162,6 +1234,55 @@ def WAVE_E2DS_COPY(p):
     e2dscopy = os.path.join(path, filename)
     # return absolute path
     return e2dscopy
+
+
+# noinspection PyPep8Naming
+def TELLU_TRANS_MAP_FILE(p, filename):
+
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    newext = '_trans.fits'
+    oldext = '.fits'
+    # construct filename
+    filename = filename.replace(oldext, newext)
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+def TELLU_ABSO_MAP_FILE(p):
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    filename = 'abso_map.fits'
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+def TELLU_ABSO_MEDIAN_FILE(p):
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    filename = 'abso_median.fits'
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+def TELLU_ABSO_NORM_MAP_FILE(p):
+    # get path
+    path = p['ARG_FILE_DIR']
+    # get extension
+    filename = 'abso_map_norm.fits'
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
 
 
 # noinspection PyPep8Naming
@@ -1241,7 +1362,7 @@ def OFF_LISTING_FILE(p):
 
 
 # =============================================================================
-# Define calibration database functions
+# Define database functions
 # =============================================================================
 # noinspection PyPep8Naming
 def CALIBDB_MASTERFILE(p):
@@ -1295,6 +1416,61 @@ def CALIB_PREFIX(p):
     argnightname = p['ARG_NIGHT_NAME'].split('/')[-1]
     calib_prefix = argnightname + '_'
     return calib_prefix
+
+
+# noinspection PyPep8Naming
+def TELLUDB_MASTERFILE(p):
+    """
+    Define the name and location of the calibration database file
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_CALIB_DB: string, the directory that the calibration
+                              files should be saved to/read from
+                IC_CALIBDB_FILENAME: string, the name of the calibration
+                                     database file
+    :return string: the path and location of the calibration database file
+    """
+    masterfilepath = os.path.join(p['DRS_TELLU_DB'], p['IC_TELLUDB_FILENAME'])
+    return masterfilepath
+
+
+# noinspection PyPep8Naming
+def TELLUDB_LOCKFILE(p):
+    """
+    Define the location and filename of the lock file for the calibration
+    database
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                CALIB_DB_MATCH: string, either "closest" or "older"
+                                whether to use the "closest" time
+                                ("closest") or the closest time that is
+                                older ("older") than "max_time_unix"
+    :return lockfilepath: string, the location and filename of the lock file
+                          for the calibration database
+    """
+    lockfilepath = os.path.join(p['DRS_TELLU_DB'], 'lock_telluDB')
+    return lockfilepath
+
+
+# noinspection PyPep8Naming
+def TELLU_PREFIX(p):
+    """
+    Define the calibration database file prefix (using arg_night_name)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+    :return calib_prefix: string the calibration database prefix to add to all
+                          calibration database files
+    """
+    argnightname = p['ARG_NIGHT_NAME'].split('/')[-1]
+    calib_prefix = argnightname + '_'
+    return calib_prefix
+
 
 
 # =============================================================================
@@ -1378,6 +1554,34 @@ def DATE_FMT_CALIBDB():
     """
     date_fmt_calibdb = '%Y-%m-%d-%H:%M:%S.%f'
     return date_fmt_calibdb
+
+
+# noinspection PyPep8Naming
+def DATE_FMT_TELLUDB():
+    """
+    The date format for string timestamp in the telluric database
+
+    Commonly used format codes:
+        %Y  Year with century as a decimal number.
+        %m  Month as a decimal number [01,12].
+        %d  Day of the month as a decimal number [01,31].
+        %H  Hour (24-hour clock) as a decimal number [00,23].
+        %M  Minute as a decimal number [00,59].
+        %S  Second as a decimal number [00,61].
+        %z  Time zone offset from UTC.
+        %a  Locale's abbreviated weekday name.
+        %A  Locale's full weekday name.
+        %b  Locale's abbreviated month name.
+        %B  Locale's full month name.
+        %c  Locale's appropriate date and time representation.
+        %I  Hour (12-hour clock) as a decimal number [01,12].
+        %p  Locale's equivalent of either AM or PM.
+
+    :return date_fmt_telludb: string, the string timestamp format for the
+                              calibration database
+    """
+    date_fmt_telludb = '%Y-%m-%d-%H:%M:%S.%f'
+    return date_fmt_telludb
 
 
 # noinspection PyPep8Naming
@@ -1487,6 +1691,12 @@ def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
     lpath = os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
     # return lpath
     return lpath
+
+
+# noinspection PyPep8Naming
+def CHARACTER_LOG_LENGTH():
+    length = 80
+    return length
 
 
 # noinspection PyPep8Naming
