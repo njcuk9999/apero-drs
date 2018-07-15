@@ -1047,6 +1047,26 @@ def ext_spectral_order_plot(p, loc):
         plt.close()
 
 
+def ext_1d_spectrum_plot(p, x, y):
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(x, y)
+    # set title
+    targs = [p['IC_START_ORDER_1D'], p['IC_END_ORDER_1D']]
+    title = 'Spectrum (1D) Order {0} to {1}'.format(*targs)
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 # =============================================================================
 # drift plotting function
 # =============================================================================
