@@ -1836,7 +1836,6 @@ def tellu_pca_comp_plot(p, loc):
         plt.close()
 
 
-
 def tellu_fit_tellu_spline_plot(p, loc, sp, template2):
     # get constants from p
     selected_order = p['TELLU_PLOT_ORDER']
@@ -1870,6 +1869,35 @@ def tellu_fit_tellu_spline_plot(p, loc, sp, template2):
         plt.show()
         plt.close()
 
+
+def tellu_fit_recon_abso_plot(p, loc):
+
+    # get constants from p
+    selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
+    # get data dimensions
+    ydim, xdim = loc['DATA']
+    # get the data from loc for selected order
+    start, end = selected_order * xdim, selected_order * xdim + xdim
+    swave = loc['WAVE_IT'][start:end]
+    ssp2 = loc['SP2'][start:end]
+    stemp2 = loc['TEMPLATE2'][start:end]
+    srecon_abso = loc['RECON_ABSO'][start:end]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectra for selected order
+    frame.plot(swave, ssp2/np.nanmedian(ssp2), color='g', label='Cleaned SP')
+    frame.plot(swave, stemp2/np.nanmedian(stemp2), color='c', label='Template')
+    frame.plot(swave, srecon_abso, color='r', label='recon abso')
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
 
 
 # =============================================================================
