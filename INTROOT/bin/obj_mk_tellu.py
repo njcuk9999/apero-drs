@@ -213,6 +213,8 @@ def main(night_name=None, files=None):
             # TODO: work out these values (placeholders currently)
             airmass = 0.0
             watercol = 10.0
+            # TODO: Can't figured out where to get watercol from
+            # TODO: Airmass from header? Which key?
             # update the master tellu DB file with transmission map
             targs = [p, outfile, p['DATAHDR'], airmass, watercol]
             spirouDB.UpdateDatabaseTellMap(*targs)
