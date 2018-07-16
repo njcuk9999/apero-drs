@@ -1836,13 +1836,15 @@ def tellu_pca_comp_plot(p, loc):
         plt.close()
 
 
-def tellu_fit_tellu_spline_plot(p, loc, sp, template2):
+def tellu_fit_tellu_spline_plot(p, loc):
     # get constants from p
     selected_order = p['TELLU_PLOT_ORDER']
     # get data from loc
     data = loc['DATA']
     ydim, xdim = data.shape
     wave = loc['WAVE_IT']
+    sp = loc['SP']
+    template2 = loc['TEMPLATE2']
     # get selected order wave lengths
     swave = wave[selected_order, :]
     # get selected order for sp
