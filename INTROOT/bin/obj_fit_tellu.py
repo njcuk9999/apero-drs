@@ -38,10 +38,6 @@ ParamDict = spirouConfig.ParamDict
 SIG_FWHM = spirouCore.spirouMath.fwhm
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# get speed of light
-# noinspection PyUnresolvedReferences
-CONSTANT_C = constants.c.value
-
 
 
 # =============================================================================
@@ -80,6 +76,13 @@ def main(night_name=None, files=None):
     # Load transmission files
     # ----------------------------------------------------------------------
     trans_files = spirouDB.GetDatabaseTellMap(p)
+
+    # ----------------------------------------------------------------------
+    # Start plotting
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive plot
+        sPlt.start_interactive_session()
 
     # ----------------------------------------------------------------------
     # Load template (if available)
@@ -153,12 +156,8 @@ def main(night_name=None, files=None):
     # Plot PCA components
     # debug plot
     if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-        # start interactive plot
-        sPlt.start_interactive_session()
         # plot the transmission map plot
         sPlt.tellu_pca_comp_plot(p, loc)
-        # end interactive session
-        sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # Loop around telluric files
@@ -180,6 +179,7 @@ def main(night_name=None, files=None):
             wmsg = 'File "{0}" exist, skipping.'
             WLOG('', p['LOG_OPT'], wmsg.format(outfilename1))
             continue
+
         # ------------------------------------------------------------------
         # Read filename
         # ------------------------------------------------------------------
@@ -199,6 +199,15 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         if loc['FLAG_TEMPLATE']:
             loc = spirouTelluric.InterpAtShiftedWavelengths(p, loc, thdr)
+
+            # debug plot
+            if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+                # start interactive plot
+                sPlt.start_interactive_session()
+                # plot the transmission map plot
+                sPlt.tellu_fit_tellu_spline_plot(p, loc)
+                # end interactive session
+                sPlt.end_interactive_session()
 
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption
@@ -253,6 +262,14 @@ def main(night_name=None, files=None):
         spirouImage.WriteImage(outfile2, recon_abso2, hdict)
 
     # ----------------------------------------------------------------------
+    # End plotting
+    # ----------------------------------------------------------------------
+    # debug plot
+    if p['DRS_PLOT']:
+        # end interactive session
+        sPlt.end_interactive_session()
+
+    # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
@@ -273,8 +290,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-
-
-
