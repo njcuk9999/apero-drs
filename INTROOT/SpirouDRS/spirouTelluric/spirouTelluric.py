@@ -206,7 +206,7 @@ def get_berv_value(p, hdr, filename=None):
 def interp_at_shifted_wavelengths(p, loc, thdr):
     func_name = __NAME__ + '.interp_at_shifted_wavelengths()'
     # Get the Barycentric correction from header
-    dv, _, _ = spirouTelluric.GetBERV(p, thdr)
+    dv, _, _ = get_berv_value(p, thdr)
     # set up storage for template
     template2 = np.zeros_like(loc['DATA'])
     ydim, xdim = loc['DATA'].shape
@@ -229,14 +229,7 @@ def interp_at_shifted_wavelengths(p, loc, thdr):
             start = order_num * xdim
             end = order_num * xdim + xdim
             template2[start:end] = spline(waveshift)
-    # debug plot
-    if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-        # start interactive plot
-        sPlt.start_interactive_session()
-        # plot the transmission map plot
-        sPlt.tellu_fit_tellu_spline_plot(p, loc, sp, template2)
-        # end interactive session
-        sPlt.end_interactive_session()
+
     # save to loc
     loc['TEMPLATE2'] = template2
     loc.set_source('TEMPLATE2', func_name)
@@ -264,7 +257,7 @@ def calc_recon_abso(p, loc):
     keep &= (wave2 > p['TELLU_LAMBDA_MIN'])
     keep &= (wave2 < p['TELLU_LAMBDA_MAX'])
     # construct convolution kernel
-    loc = spirouTelluric.ConstructConvKernel2(p, loc, p['TELLU_FIT_VSINI'])
+    loc = construct_convolution_kernal2(p, loc, p['TELLU_FIT_VSINI'])
     # ------------------------------------------------------------------
     # loop around a number of times
     for ite in range(p['TELLU_FIT_NITER']):
@@ -301,7 +294,7 @@ def calc_recon_abso(p, loc):
         if loc['FLAG_TEMPLATE']:
             # construct convolution kernel
             vsini = p['TELLU_FIT_VSINI2']
-            loc = spirouTelluric.ConstructConvKernel2(p, loc, vsini)
+            loc = construct_convolution_kernal2(p, loc, vsini)
             # loop around orders
             for order_num in range(ydim):
                 # get start and end points
@@ -344,7 +337,7 @@ def calc_recon_abso(p, loc):
         # --------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
         largs = log_dd[keep], loc['pc'][keep, :]
-        amps, recon = spirouTelluric.LinMini(*largs)
+        amps, recon = lin_mini(*largs)
         # --------------------------------------------------------------
         # set up storage for absorption array 2
         abso2 = np.zeros(len(dd))
@@ -384,7 +377,7 @@ def calc_molecular_absorption(p, loc):
     klog_tapas_abso = log_tapas_abso[keep]
 
     # work out amplitudes and recon
-    amps, recon = spirouTelluric.LinMini(klog_recon_abso, klog_tapas_abso)
+    amps, recon = lin_mini(klog_recon_abso, klog_tapas_abso)
 
     # set up empty log recon array
     log_recon = np.zeros(loc['DATA'].shape)
