@@ -1252,6 +1252,7 @@ def TELLU_TRANS_MAP_FILE(p, filename):
     return outfile
 
 
+# noinspection PyPep8Naming
 def TELLU_ABSO_MAP_FILE(p):
     # get path
     path = p['ARG_FILE_DIR']
@@ -1263,6 +1264,7 @@ def TELLU_ABSO_MAP_FILE(p):
     return outfile
 
 
+# noinspection PyPep8Naming
 def TELLU_ABSO_MEDIAN_FILE(p):
     # get path
     path = p['ARG_FILE_DIR']
@@ -1274,6 +1276,7 @@ def TELLU_ABSO_MEDIAN_FILE(p):
     return outfile
 
 
+# noinspection PyPep8Naming
 def TELLU_ABSO_NORM_MAP_FILE(p):
     # get path
     path = p['ARG_FILE_DIR']
@@ -1283,6 +1286,24 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
     outfile = os.path.join(path, filename)
     # return absolute path
     return outfile
+
+
+# noinspection PyPep8Naming
+def TELLU_FIT_OUT_FILE(p, filename):
+    oldext = '.fits'
+    newext = '_tellu.fits'
+    outfilename1 = os.path.basename(filename).replace(oldext, newext)
+    outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
+    return outfile1
+
+
+# noinspection PyPep8Naming
+def TELLU_FIT_RECON_FilE(p, filename):
+    oldext = '.fits'
+    newext = '_tellu_recon.fits'
+    outfilename2 = os.path.basename(filename).replace(oldext, newext)
+    outfile2 = os.path.join(p['ARG_FILE_DIR'], outfilename2)
+    return outfile2
 
 
 # noinspection PyPep8Naming
