@@ -39,6 +39,14 @@ GetBERV = spirouTelluric.get_berv_value
 
 CalculateAbsorptionPCA = spirouTelluric.calculate_absorption_pca
 
+CalcReconAbso = spirouTelluric.calc_recon_abso
+
+CalcMolecularAbsorption = spirouTelluric.calc_molecular_absorption
+
+InterpAtShiftedWavelengths = spirouTelluric.interp_at_shifted_wavelengths
+
+LinMini = spirouTelluric.lin_mini
+
 
 # =============================================================================
 # Start of code
