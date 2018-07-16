@@ -129,6 +129,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_METHOD',
             'kw_POL_EXPTIME',
             'kw_RDNOISE',
+            'kw_TELLU_ABSO',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
@@ -439,21 +440,27 @@ kw_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
-# the number of orders used in the TH line list                      [WAVE_AB]
+# the number of orders used in the TH line list                        [WAVE_AB]
 kw_WAVE_ORD_N = ['TH_ORD_N', None, 'nb orders in total']
 
-# the number of fit coefficients from the TH line list fit           [WAVE_AB]
+# the number of fit coefficients from the TH line list fit             [WAVE_AB]
 kw_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
 
-# the prefix to use to get the TH line list fit coefficients         [WAVE_AB]
+# the prefix to use to get the TH line list fit coefficients           [WAVE_AB]
 kw_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
 
-# the x-axis dimension size for the TH line list file                [WAVE_AB]
+# the x-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS1 = ['NAXIS1', None, '']
 
-# the y-axis dimension size for the TH line list file                [WAVE_AB]
+# the y-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS2 = ['NAXIS2', None, '']
 
+
+# -----------------------------------------------------------------------------
+# Define telluric variables
+# -----------------------------------------------------------------------------
+# Telluric absorption prefix (i.e. ABSO_H20)                     [OBJ_FIT_TELLU]
+kw_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
 
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
