@@ -86,7 +86,10 @@ def end_interactive_session(interactive=False):
 
     :return None:
     """
-    if not interactive and not INTERACTIVE_PLOTS:
+    if not interactive:
+        plt.show()
+        plt.close()
+    elif not INTERACTIVE_PLOTS:
         plt.show()
         plt.close()
 
@@ -1799,13 +1802,15 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
     frame = plt.subplot(111)
     # plot trans_map and spectra
     frame.plot(wave, sp[order_num, :], 'r.')
-    frame.plot(wave, sp[order_num, fmask], 'b.')
+    frame.plot(wave[fmask], sp[order_num][fmask], 'b.')
     frame.plot(wave, sed, 'r-')
     frame.plot(wave, trans, 'c-')
     frame.plot(wave, sp[order_num, :] / sed[:], 'g-')
     frame.plot(wave, np.ones_like(sed), 'r-')
     frame.plot(wave, ww, 'k-')
     frame.set_title(outfile)
+    # set limit
+    frame.set(ylim=[0.75, 1.15])
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
