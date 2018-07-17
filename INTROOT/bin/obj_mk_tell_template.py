@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 
-# CODE DESCRIPTION HERE
+obj_mk_tell_Template.py NIGHT_NAME FILES
+
+REFFILE = FILES[0] This is the file used to get the object name and date from
+the header (used for getting/setting telluric/calibration database info
+(saved into telluDB under "TELL_TEMP
+" keys)
 
 Created on 2018-07-13 05:16
 @author: ncook
@@ -47,52 +52,63 @@ CONSTANT_C = constants.c.value
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None):
+def main(night_name=None, files=None):
+
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name)
-    p = spirouStartup.InitialFileSetup(p, calibdb=True, no_files=True)
-
-    # TODO: Add constants to constant file
-    p['TELLU_TEMPLATE_OBJ'] = 'Gl699'
-
-    p['TELLU_TEMPLATE_KEEP_LIMIT'] = 0.5
-
-    p['TELLU_TEMPLATE_MED_LOW'] = 2048 - 128
-    p['TELLU_TEMPLATE_MED_HIGH'] = 2048 + 128
-
-
-    # ----------------------------------------------------------------------
-    # Get database files
-    # ----------------------------------------------------------------------
-    # get current telluric maps from telluDB
-    tellu_db_data = spirouDB.GetDatabaseTellMap(p)
-    tellu_db_files, tellu_db_names = tellu_db_data[0]
-    # filter by object name (only keep TELLU_TEMPLATE_OBJ objects
-    files = []
-    for it in range(len(tellu_db_files)):
-        if p['TELLU_TEMPLATE_OBJ'] in tellu_db_names[it]:
-            files.append(tellu_db_files[it])
+    p = spirouStartup.LoadArguments(p, night_name, files,
+                                    mainfitsdir='reduced')
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
+    # set up function name
+    main_name = __NAME__ + '.main()'
 
     # ----------------------------------------------------------------------
     # load up first file
     # ----------------------------------------------------------------------
     # construct loc parameter dictionary for storing data
     loc = ParamDict()
-    # define fits filename as first file
-    p['FITSFILENAME'] = files[0]
     # read first file and assign values
-    rdata = spirouImage.ReadImage(p, files[0])
+    rdata = spirouImage.ReadImage(p, p['FITSFILENAME'])
     loc['DATA'], loc['DATAHDR'], loc['DATACDR'] = rdata[:3]
+    # TODO: Question: Is this per star? If so should the original file be
+    # TODO: Question:   a user input --> No input file would require objname
+    # TODO: Question:   from somewhere else?
+    # TODO: Add constants to constant file
+    if p['KW_OBJNAME'][0] in loc['DATAHDR']:
+        p['TELLU_TEMPLATE_OBJ'] = loc['DATAHDR'][p['KW_OBJNAME'][0]]
+    else:
+        emsg = 'HEADER key = {0} not in file = {1}'
+        eargs = [p['KW_OBJNAME'][0], p['FITSFILENAME']]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+
+    # ------------------------------------------------------------------
+    # Get the wave solution
+    # ------------------------------------------------------------------
+    loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
+    # set source
+    loc.set_source('WAVE', main_name)
+
+    # ----------------------------------------------------------------------
+    # Get database files
+    # ----------------------------------------------------------------------
+    # get current telluric maps from telluDB
+    tellu_db_data = spirouDB.GetDatabaseTellMap(p)
+    tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
+    # filter by object name (only keep TELLU_TEMPLATE_OBJ objects
+    tell_files = []
+    for it in range(len(tellu_db_files)):
+        if p['TELLU_TEMPLATE_OBJ'] in tellu_db_names[it]:
+            tell_files.append(tellu_db_files[it])
+
 
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
     # set up flat size
-    dims = [loc['DATA'].shape[0], loc['DATA'].shape[1], len(files)]
+    dims = [loc['DATA'].shape[0], loc['DATA'].shape[1], len(tell_files)]
     flatsize = np.product(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
@@ -101,7 +117,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # Loop around files
     # ----------------------------------------------------------------------
-    for it, filename in enumerate(files):
+    for it, filename in enumerate(tell_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
         # create image for storage
@@ -114,10 +130,10 @@ def main(night_name=None):
 
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
-        wargs = [it + 1, len(files), basefilename]
+        wargs = [it + 1, len(tell_files), basefilename]
 
         # loop around orders
-        for order_num in range(loc['DATA'][0]):
+        for order_num in range(loc['DATA'].shape[0]):
             # find nans
             keep = np.isfinite(tdata[order_num, :])
             # normalise the tdata
@@ -154,15 +170,10 @@ def main(night_name=None):
     # make median image
     big_cube_med = np.median(big_cube, axis=2)
 
-    # ----------------------------------------------------------------------
-    # Save cubes to file
-    # ----------------------------------------------------------------------
 
-    # TODO: move to spirou
-    # TODO: move file definitions to spirouConfig
-    fits.writeto('tmp.fits', big_cube, clobber=True)
-    fits.writeto('tmp0.fits', big_cube0, clobber=True)
-
+    # ----------------------------------------------------------------------
+    # Write Cube median (the template) to file
+    # ----------------------------------------------------------------------
     # TODO: move file definition to spirouConfig
     reduced_dir = p['DRS_DATA_REDUC']
     outfilename = 'Template_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
@@ -172,6 +183,24 @@ def main(night_name=None):
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # write to file
     spirouImage.WriteImage(outfilename, big_cube_med, hdict)
+
+
+    # ----------------------------------------------------------------------
+    # Update the telluric database with the template
+    # ----------------------------------------------------------------------
+    spirouDB.UpdateDatabaseTellTemp(p, outfilename, loc['DATAHDR'])
+
+    # ----------------------------------------------------------------------
+    # Save cubes to file
+    # ----------------------------------------------------------------------
+    reduced_dir = p['DRS_DATA_REDUC']
+    outfilename1 = 'BigCube_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
+    outfile1 = os.path.join(reduced_dir, outfilename)
+    outfilename2 = 'BigCube0_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
+    outfile2 = os.path.join(reduced_dir, outfilename)
+
+    spirouImage.WriteImageMulti(outfile1, big_cube, hdict)
+    spirouImage.WriteImageMulti(outfile2, big_cube0, hdict)
 
     # ----------------------------------------------------------------------
     # End Message
@@ -189,7 +218,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
