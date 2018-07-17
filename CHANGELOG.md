@@ -3750,3 +3750,26 @@
 	- updating integration of tellu files: added constants (need commenting!) (rev.b1f12bfa)
 	- updating integration of tellu files (rev.426ff830)
 	- updating integration of tellu files (rev.f4ef1297)
+
+
+
+================================================================================
+* Tue Jul 17 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.68
+
+================================================================================
+	- copy (same) (rev.ea4f78ac)
+	- update tellu recipes: fix bug with file name (rev.50acc4f5)
+	- update tellu recipes: drs telluDB reset now resets telluDB not calibDB (fix typos) (rev.e796a80b)
+	- update tellu recipes: fix after test run FWHM is function not object (rev.05659100)
+	- update tellu recipes: fix after test run - telluDB get database values are already split on spaces (rev.5c1ada01)
+	- update tellu recipes: fix after test run - fix bug (needed ```enumerate(lines)```) (rev.7c832174)
+	- update tellu recipes: fix after test run - add alias to update_datebase_tell_temp (rev.9655cb6f)
+	- possible bug fix: tried to separate out interactive options in end_interactive_session function (rev.a839f26d)
+	- possible bug fix: tried to reduce repetition of displayed warnings (rev.e301be46)
+	- update tellu recipes: added AIRMASS header key (rev.77c67374)
+	- bug fix: fix file name ````'_s1d_{0}.fits'``` --> ```'_s1d_{0}.fits'.format(p['FIBER'])``` (rev.706e4a4b)
+	- update tellu recipes: add required line in master telluDB (rev.0a14e56d)
+	- update tellu recipes: add obj_mk_tell_template to recipe control (rev.7c9895ad)
+	- update tellu recipes: move obj_mk_tell_template constantsto here and correct some bugs after test run (rev.98bbfe8a)
+	- update tellu recipes: fix after test run (rev.4c405049)
+	- update tellu recipes: fix after test run (rev.f8387526)
