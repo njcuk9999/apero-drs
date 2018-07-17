@@ -38,58 +38,6 @@ ParamDict = spirouConfig.ParamDict
 SIG_FWHM = spirouCore.spirouMath.fwhm
 # Get plotting functions
 sPlt = spirouCore.sPlt
-# get speed of light
-# noinspection PyUnresolvedReferences
-CONSTANT_C = constants.c.value
-
-
-def interp_at_shifted_wavelengths(p, loc, thdr):
-    func_name = __NAME__ + '.interp_at_shifted_wavelengths()'
-    # Get the Barycentric correction from header
-    dv, _, _ = spirouTelluric.GetBERV(p, thdr)
-    # set up storage for template
-    template2 = np.zeros_like(loc['DATA'])
-    ydim, xdim = loc['DATA'].shape
-    # loop around orders
-    for order_num in range(ydim):
-        # find good (not NaN) pixels
-        keep = np.isfinite(loc['TEMPLATE'][order_num, :])
-        # if we have enough values spline them
-        if np.sum(keep) > p['TELLU_FIT_KEEP_FRAC']:
-            # define keep wave
-            keepwave = loc['WAVE_IT'][order_num, keep]
-            # define keep temp
-            keeptemp = loc['TEMPLATE'][order_num, keep]
-            # calculate interpolation for keep temp at keep wave
-            spline = IUVSpline(keepwave, keeptemp, ext=3)
-            # interpolate at shifted values
-            dvshift = 1 + (dv / CONSTANT_C)
-            waveshift = loc['WAVE_IT'][order_num, :] * dvshift
-            # interpolate at shifted wavelength
-            start = order_num * xdim
-            end = order_num * xdim + xdim
-            template2[start:end] = spline(waveshift)
-    # debug plot
-    if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-        # start interactive plot
-        sPlt.start_interactive_session()
-        # plot the transmission map plot
-        sPlt.tellu_fit_tellu_spline_plot(p, loc, sp, template2)
-        # end interactive session
-        sPlt.end_interactive_session()
-    # save to loc
-    loc['TEMPLATE2'] = template2
-    loc.set_source('TEMPLATE2', func_name)
-    # return loc
-    return loc
-
-
-def make_template2(p, loc):
-
-    # set up storage for template
-    template2 = np.zeros_like(loc['DATA'])
-    ydim, xdim = loc['DATA'].shape
-
 
 
 # =============================================================================
@@ -105,28 +53,6 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p)
     # set up function name
     main_name = __NAME__ + '.main()'
-
-    # TODO =================================================================
-    # TODO: Move to constants file
-    # TODO =================================================================
-    # number of principal components to be used
-    p['TELLU_NUMBER_OF_PRINCIPLE_COMP'] = 5
-
-    p['TELLU_FIT_KEEP_FRAC'] = 20.0
-
-    p['TELLU_PLOT_ORDER'] = 35
-
-    p['tellu_fit_min_transmission'] = 0.2
-    p['tellu_lambda_min'] = 1000.0
-    p['tellu_lambda_max'] = 2100.0
-
-    p['TELLU_FIT_VSINI'] = 15.0
-
-    p['TELLU_FIT_NITER'] = 4
-
-    p['TELLU_FIT_VSINI2'] = 30.0
-
-    # TODO =================================================================
 
     # ------------------------------------------------------------------
     # Load first file
@@ -150,6 +76,13 @@ def main(night_name=None, files=None):
     # Load transmission files
     # ----------------------------------------------------------------------
     trans_files = spirouDB.GetDatabaseTellMap(p)
+
+    # ----------------------------------------------------------------------
+    # Start plotting
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # start interactive plot
+        sPlt.start_interactive_session()
 
     # ----------------------------------------------------------------------
     # Load template (if available)
@@ -182,7 +115,8 @@ def main(night_name=None, files=None):
     # TODO: Currently just selects the most recent
     tapas_file_name = spirouDB.GetDatabaseTellConv(p)
     # load atmospheric transmission
-    tapas_all_species = np.load(tapas_file_name)
+    loc['TAPAS_ALL_SPECIES'] = np.load(tapas_file_name)
+    loc.set_source('TAPAS_ALL_SPECIES', main_name)
 
     # ----------------------------------------------------------------------
     # Generate the absorption map
@@ -222,12 +156,8 @@ def main(night_name=None, files=None):
     # Plot PCA components
     # debug plot
     if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-        # start interactive plot
-        sPlt.start_interactive_session()
         # plot the transmission map plot
         sPlt.tellu_pca_comp_plot(p, loc)
-        # end interactive session
-        sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # Loop around telluric files
@@ -236,16 +166,11 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Construct output file names
         # ------------------------------------------------------------------
-        # TODO: Move to spirouConfig
-        oldext = '.fits'
-        newext = '_tellu_free.fits'
-        outfilename1 = os.path.basename(filename).replace(oldext, newext)
-        outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
-        # TODO: move to spirouConfig
-        oldext = '.fits'
-        newext = '_tellu.fits'
-        outfilename2 = os.path.basename(filename).replace(oldext, newext)
-        outfile2 = os.path.join(p['ARG_FILE_DIR'], outfilename2)
+        outfile1 = spirouConfig.Constants.TELLU_FIT_OUT_FILE(p, filename)
+        outfilename1 = os.path.basename(outfile1)
+        outfile2 = spirouConfig.Constants.TELLU_FIT_RECON_FilE(p, filename)
+        outfilename2 = os.path.basename(outfile2)
+
         # ------------------------------------------------------------------
         # Skip if output file already exists
         # ------------------------------------------------------------------
@@ -254,121 +179,95 @@ def main(night_name=None, files=None):
             wmsg = 'File "{0}" exist, skipping.'
             WLOG('', p['LOG_OPT'], wmsg.format(outfilename1))
             continue
+
         # ------------------------------------------------------------------
         # Read filename
         # ------------------------------------------------------------------
         # read image
-        tdata, thdr, hcdr, _, _ = spirouImage.ReadImage(p, filename)
+        tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # normalise with blaze function
-        sp = tdata / loc['NBLAZE']
+        loc['SP'] = tdata / loc['NBLAZE']
+        loc.set_source('SP', main_name)
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
         loc['WAVE_IT'] = spirouImage.GetWaveSolution(p, tdata, thdr)
+        loc.set_source('WAVE_IT', main_name)
 
         # ------------------------------------------------------------------
         # Interpolate at shifted wavelengths (if we have a template)
         # ------------------------------------------------------------------
         if loc['FLAG_TEMPLATE']:
-            loc = interp_at_shifted_wavelengths(p, loc, thdr)
+            loc = spirouTelluric.InterpAtShiftedWavelengths(p, loc, thdr)
+
+            # debug plot
+            if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+                # start interactive plot
+                sPlt.start_interactive_session()
+                # plot the transmission map plot
+                sPlt.tellu_fit_tellu_spline_plot(p, loc)
+                # end interactive session
+                sPlt.end_interactive_session()
 
         # ------------------------------------------------------------------
-        # Something
+        # Calculate reconstructed absorption
         # ------------------------------------------------------------------
-        # get data dimensions
+        loc = spirouTelluric.CalcReconAbso(p, loc)
+        # debug plot
+        if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+            # start interactive plot
+            sPlt.start_interactive_session()
+            # plot the recon abso plot
+            sPlt.tellu_fit_recon_abso_plot(p, loc)
+            # end interactive session
+            sPlt.end_interactive_session()
+
+        # ------------------------------------------------------------------
+        # Get molecular absorption
+        # ------------------------------------------------------------------
+        loc = spirouTelluric.CalcMolecularAbsorption(p, loc)
+
+        # ------------------------------------------------------------------
+        # Write corrected spectrum to E2DS
+        # ------------------------------------------------------------------
+        # reform the E2DS
+        sp_out = loc['SP2'] / loc['RECON_ABSO']
+        sp_out = sp_out.reshape(loc['DATA'].shape)
+        # copy original keys
+        hdict = spirouImage.CopyOriginalKeys(thdr, tcdr)
+        # write sp_out to file
+        spirouImage.WriteImage(outfile1, sp_out, hdict)
+
+        # ------------------------------------------------------------------
+        # Write reconstructed absorption to E2DS
+        # ------------------------------------------------------------------
+        # set up empty storage
+        recon_abso2 = np.zeros_like(loc['DATA'])
+        # get dimensions of data
         ydim, xdim = loc['DATA'].shape
-        # redefine storage for recon absorption
-        recon_abso = np.ones(np.product(loc['DATA'].shape))
-        # flatten spectrum and wavelengths
-        sp2 = sp.ravel()
-        wave2 = loc['WAVE_IT'].ravel()
-        # get the normalisation factor
-        norm = np.nanmedian(sp2)
-        # define the good pixels as those above minimum transmission
-        keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
-        # also require wavelength constraints
-        keep &= (wave2 > p['TELLU_LAMBDA_MIN'])
-        keep &= (wave2 < p['TELLU_LAMBDA_MAX'])
-        # construct convolution kernel
-        loc = spirouTelluric.ConstructConvKernel2(p, loc, p['TELLU_FIT_VSINI'])
-        # ------------------------------------------------------------------
-        # loop around a number of times
-        for ite in range(p['TELLU_FIT_NITER']):
-            # --------------------------------------------------------------
-            # if we don't have a template construct one
-            if not loc['FLAG_TEMPLATE']:
-                # define template2 to fill
-                template2 = np.zeros(np.product(loc['DATA']))
-                # loop around orders
-                for order_num in range(ydim):
-                    # get start and end points
-                    start = order_num * xdim
-                    end = order_num * xdim + xdim
-                    # produce a mask of good transmission
-                    order_tapas = tapas_all_species[0, start:end]
-                    mask = order_tapas > p['TRANSMISSION_CUT']
-                    # get good transmission spectrum
-                    spgood = sp[order_num, :] * np.array(mask, dtype=float)
-                    recongood = recon_abso[start:end]
-                    # convolve spectrum
-                    ckwargs = dict(v=loc['KER2'], mode='same')
-                    sp2b= np.convolve(spgood / recon_abso, **ckwargs)
-                    # convolve mask for weights
-                    ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
-                    # wave weighted convolved spectrum into template2
-                    template2[start, end] = sp2b / ww
-            # else we have template so load it
-            else:
-                template2 = loc['TEMPLATE2']
-            # --------------------------------------------------------------
-            # get dd
-            dd = (sp2 / template2) / recon_abso
-            # --------------------------------------------------------------
-            if loc['FLAG_TEMPLATE']:
-                # construct convolution kernel
-                vsini = p['TELLU_FIT_VSINI2']
-                loc = spirouTelluric.ConstructConvKernel2(p, loc, vsini)
-                # loop around orders
-                for order_num in range(ydim):
-                    # get start and end points
-                    start = order_num * xdim
-                    end = order_num * xdim + xdim
-                    # produce a mask of good transmission
-                    order_tapas = tapas_all_species[0, start:end]
-                    mask = order_tapas > p['TRANSMISSION_CUT']
-                    # get good transmission spectrum
-                    ddgood = dd[start:end] * np.array(mask, dtype=float)
-                    recongood = recon_abso[start:end]
-                    # convolve spectrum
-                    ckwargs = dict(v=loc['KER2'], mode='same')
-                    sp2b= np.convolve(ddgood / recon_abso, **ckwargs)
-                    # convolve mask for weights
-                    ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
-                    # wave weighted convolved spectrum into dd
-                    dd[start:end] = dd[start:end] / (sp2b / ww)
-            # --------------------------------------------------------------
-            # Log dd and subtract median
-            # --------------------------------------------------------------
-            # log dd
-            log_dd = np.log(dd)
-            # --------------------------------------------------------------
-            # subtract off the median from each order
-            for order_num in range(ydim):
-                # get start and end points
-                start = order_num * xdim
-                end = order_num * xdim + xdim
-                # get median
-                log_dd_med = np.nanmedian(log_dd[start:end])
-                # subtract of median
-                log_dd[start:end] = log_dd[start:end] - log_dd_med
-            # --------------------------------------------------------------
-            # identify good pixels to keep
-            keep &= np.isfinite(log_dd)
-            keep &= np.sum(np.isfinite(loc['PC']), axis=1) == loc['NPC']
-            # log number of kept pixels
-            wmsg = 'Number to keep total = {0}'.format(np.sum(keep))
-            WLOG('', p['LOG_OPT'], wmsg)
+        # loop around orders
+        for order_num in range(ydim):
+            # get start and end points
+            start, end = xdim * order_num, xdim * order_num + xdim
+            # save to storage
+            recon_abso2[order_num, :] = loc['RECON_ABSO'][start:end]
+        # add molecular absorption to file
+        for it, molecule in p['TELLU_ABSORBERS'][1:]:
+            # get molecule keyword store and key
+            molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'], molecule.upper())
+            molkws = [molkey, 0, 'Absorption in {0}'.format(molecule.upper())]
+            # load into hdict
+            hdict = spirouImage.AddKey(hdict, molkws, value=loc[molkey])
+        # write recon_abso to file
+        spirouImage.WriteImage(outfile2, recon_abso2, hdict)
 
+    # ----------------------------------------------------------------------
+    # End plotting
+    # ----------------------------------------------------------------------
+    # debug plot
+    if p['DRS_PLOT']:
+        # end interactive session
+        sPlt.end_interactive_session()
 
     # ----------------------------------------------------------------------
     # End Message
@@ -391,8 +290,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-
-
-

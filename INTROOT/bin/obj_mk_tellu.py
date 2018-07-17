@@ -3,7 +3,9 @@
 """
 obj_mk_tellu [night_directory] [files]
 
-Creates the tranmissions maps for a file (or individually for a set of files)
+Creates the transmission maps for a file (or individually for a set of files)
+(saved into telluDB under "TELL_MAP" keys)
+
 
 Created on 2018-07-12 07:49
 @author: ncook
@@ -11,6 +13,7 @@ Created on 2018-07-12 07:49
 from __future__ import division
 import numpy as np
 import os
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -38,6 +41,7 @@ SIG_FWHM = spirouCore.spirouMath.fwhm
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+FORCE_PLOT_ON = False
 
 # =============================================================================
 # Define functions
@@ -49,8 +53,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p)
+    p = spirouStartup.LoadArguments(p, night_name, files,
+                                    mainfitsdir='reduced')
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set up function name
     main_name = __NAME__ + '.main()'
     # ------------------------------------------------------------------
@@ -58,7 +63,7 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     loc = ParamDict()
     rd = spirouImage.ReadImage(p, p['FITSFILENAME'])
-    loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['XDIM'], loc['YDIM'] = rd
+    loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['YDIM'], loc['XDIM'] = rd
     loc.set_sources(['DATA', 'DATAHDR', 'DATACDR', 'XDIM', 'YDIM'], main_name)
 
     # ------------------------------------------------------------------
@@ -90,14 +95,14 @@ def main(night_name=None, files=None):
     # construct extension
     tellu_ext = '{0}_{1}.fits'
     # get current telluric maps from telluDB
-    tellu_db_data = spirouDB.GetDatabaseTellMap(p)
+    tellu_db_data = spirouDB.GetDatabaseTellMap(p, required=False)
     tellu_db_files = tellu_db_data[0]
     # storage for valid output files
     loc['OUTPUTFILES'] = []
     # loop around the files
     for basefilename in p['ARG_FILE_NAMES']:
         # ------------------------------------------------------------------
-        # Check that we can process file
+        # Get absolute path of filename
         # ------------------------------------------------------------------
         filename = os.path.join(p['ARG_FILE_DIR'], basefilename)
 
@@ -135,7 +140,7 @@ def main(night_name=None, files=None):
             # keep track of the pixels that are considered valid for the SED
             #    determination
             mask1 = trans > p['TRANSMISSION_CUT']
-            mask1 &= np.isfinite((p['NBLAZE'][order_num]))
+            mask1 &= np.isfinite(loc['NBLAZE'][order_num, :])
             # normalise the spectrum
             sp[order_num, :] /= np.nanmedian(sp[order_num, :])
             # create a float mask
@@ -153,7 +158,8 @@ def main(night_name=None, files=None):
                 # convolve with mask to get weights
                 ww = np.convolve(fmask, loc['KER2'], mode='same')
                 # normalise the spectrum by the weights
-                sp2bw = sp2b / ww
+                with warnings.catch_warnings(record=True) as w:
+                    sp2bw = sp2b / ww
                 # set zero pixels to 1
                 sp2bw[sp2b == 0] = 1
                 # recalculate the mask using the deviation from original
@@ -167,14 +173,16 @@ def main(night_name=None, files=None):
             sed[bad] = np.nan
 
             # debug plot
-            if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-                # start interactive plot
-                sPlt.start_interactive_session()
+            if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1) and FORCE_PLOT_ON:
+                # start non-interactive plot
+                sPlt.plt.ioff()
                 # plot the transmission map plot
-                pargs = [order_num, fmask, sed, trans, sp, ww, outfilename]
+                pargs = [order_num, mask1, sed, trans, sp, ww, outfilename]
                 sPlt.tellu_trans_map_plot(loc, *pargs)
-                # end interactive session
-                sPlt.end_interactive_session()
+                # show and close
+                sPlt.plt.show()
+                sPlt.plt.close()
+
 
             # set all values below a threshold to NaN
             sed[ww < p['TELLU_NAN_THRESHOLD']] = np.nan
@@ -211,10 +219,13 @@ def main(night_name=None, files=None):
             # copy tellu file to the telluDB folder
             spirouDB.PutTelluFile(p, outfile)
             # TODO: work out these values (placeholders currently)
-            airmass = 0.0
-            watercol = 10.0
+            airmass = loc['DATAHDR'][p['KW_AIRMASS'][0]]
+            watercol = -9999.0
+            # TODO: Can't figured out where to get watercol from
+            # TODO: Airmass from header? Which key?
+            name = loc['DATAHDR'][p['KW_OBJNAME'][0]]
             # update the master tellu DB file with transmission map
-            targs = [p, outfile, p['DATAHDR'], airmass, watercol]
+            targs = [p, outfilename, name, airmass, watercol]
             spirouDB.UpdateDatabaseTellMap(*targs)
 
     # ----------------------------------------------------------------------
@@ -348,7 +359,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
