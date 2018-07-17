@@ -67,7 +67,7 @@ def get_database_tell_mole(p):
     filenames, humantimes, unixtimes = [], [], []
     for value in values:
         # get this iterations value from value
-        _, filename, humantime, unixtime = value.split()
+        _, filename, humantime, unixtime = value
         # get absfilename
         absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
         # check filename exists
@@ -111,7 +111,7 @@ def get_database_tell_conv(p):
     filenames, humantimes, unixtimes = [], [], []
     for value in values:
         # get this iterations value from value
-        _, filename, humantime, unixtime = value.split()
+        _, filename, humantime, unixtime = value
         # get absfilename
         absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
         # check filename exists
@@ -135,7 +135,7 @@ def get_database_tell_conv(p):
 def get_database_sky(p):
     func_name = __NAME__ + '.get_database_sky()'
     # define key
-    key = 'TELL_CONV'
+    key = 'SKY'
     # get the telluric database (all lines)
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
@@ -153,7 +153,7 @@ def get_database_sky(p):
     filenames, humantimes, unixtimes = [], [], []
     for value in values:
         # get this iterations value from value
-        _, filename, humantime, unixtime = value.split()
+        _, filename, humantime, unixtime = value
         # get absfilename
         absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
         # check filename exists
@@ -173,13 +173,15 @@ def get_database_sky(p):
     return filenames[sort]
 
 
-def get_database_tell_map(p):
-    func_name = __NAME__ + '.get_database_sky()'
+def get_database_tell_map(p, required=True):
+    func_name = __NAME__ + '.get_database_tell_map()'
     # define key
-    key = 'TELL_CONV'
+    key = 'TELL_MAP'
     # get the telluric database (all lines)
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
+    if not required and key not in t_database:
+        return [],[], [], []
     if key not in t_database:
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
@@ -195,7 +197,7 @@ def get_database_tell_map(p):
     airmasses, watercols = [], []
     for value in values:
         # get this iterations value from value
-        _, filename, humant, unixt, objname, airmass, watercol = value.split()
+        _, filename, humant, unixt, objname, airmass, watercol = value
         # get absfilename
         absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
         # check filename exists
@@ -244,7 +246,7 @@ def get_database_tell_template(p, required=True):
     filenames, humantimes, unixtimes = [], [], []
     for value in values:
         # get this iterations value from value
-        _, filename, humantime, unixtime = value.split()
+        _, filename, humantime, unixtime = value
         # get absfilename
         absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
         # check filename exists
@@ -304,7 +306,7 @@ def update_database_tell_mole(p, filename, hdr=None):
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
     args = [key, filename, h_time, u_time]
-    line = '{0} {1} {2} {3}'.format(*args)
+    line = '\n{0} {1} {2} {3}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
@@ -320,7 +322,7 @@ def update_database_tell_conv(p, filename, hdr=None):
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
     args = [key, filename, h_time, u_time]
-    line = '{0} {1} {2} {3}'.format(*args)
+    line = '\n{0} {1} {2} {3}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
@@ -336,7 +338,7 @@ def update_database_sky(p, filename, hdr=None):
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
     args = [key, filename, h_time, u_time]
-    line = '{0} {1} {2} {3}'.format(*args)
+    line = '\n{0} {1} {2} {3}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
@@ -352,7 +354,7 @@ def update_database_tell_map(p, filename, objname, airmass, watercol,
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
     args = [key, filename, h_time, u_time, objname, airmass, watercol]
-    line = '{0} {1} {2} {3} {4} {5} {6}'.format(*args)
+    line = '\n{0} {1} {2} {3} {4} {5} {6}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
@@ -368,7 +370,7 @@ def update_database_tell_temp(p, filename, hdr=None):
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
     args = [key, filename, h_time, u_time]
-    line = '{0} {1} {2} {3}'.format(*args)
+    line = '\n{0} {1} {2} {3}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
