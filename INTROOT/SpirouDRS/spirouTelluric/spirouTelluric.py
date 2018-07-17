@@ -32,7 +32,7 @@ WLOG = spirouCore.wlog
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
 # Get sigma FWHM
-SIG_FWHM = spirouCore.spirouMath.fwhm
+SIG_FWHM = spirouCore.spirouMath.fwhm()
 
 
 # =============================================================================
@@ -47,7 +47,7 @@ def get_normalized_blaze(p, loc, hdr):
     for iord in range(blaze.shape[0]):
         blaze_norm[iord, :] /= np.percentile(blaze_norm[iord, :],
                                              p['TELLU_BLAZE_PERCENTILE'])
-    blaze_norm[blaze_norm < p['CUT_BLAZE_NORM']] = np.nan
+    blaze_norm[blaze_norm < p['TELLU_CUT_BLAZE_NORM']] = np.nan
     # add to loc
     loc['BLAZE'] = blaze
     loc['NBLAZE'] = blaze_norm
@@ -88,6 +88,8 @@ def get_molecular_tell_lines(p, loc):
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
     # TODO: Get tapas_file_name from SpirouConstants
     # TODO: where do we get wave file from now constants are from E2DS file???
+    # Currently have to set to fitsfilename (the input name)
+    wave_file = p['FITSFILENAME']
     tapas_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
     # if we already have a file for this wavelength just open it
     try:
@@ -101,7 +103,6 @@ def get_molecular_tell_lines(p, loc):
         # loop around each molecule in the absorbers list
         #    (must be in
         for n_species, molecule in enumerate(p['TELLU_ABSORBERS']):
-            print('molecule --> ' + molecule)
             # log process
             wmsg = 'Processing molecule: {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(molecule))
@@ -132,7 +133,7 @@ def get_molecular_tell_lines(p, loc):
         np.save(tapas_file_name, tapas_all_species)
     # finally add all species to loc
     loc['TAPAS_ALL_SPECIES'] = tapas_all_species
-    loc.set_sourceS('TAPAS_ALL_SPECIES', func_name)
+    loc.set_source('TAPAS_ALL_SPECIES', func_name)
     # return loc
     return loc
 
@@ -194,11 +195,14 @@ def get_berv_value(p, hdr, filename=None):
     if p['KW_BERV'][0] not in hdr:
         emsg = 'HEADER error, file="{0}". Keyword {1} not found'
         eargs = [filename, p['KW_BERV'][0]]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
-    # Get the Barycentric correction from header
-    dv = hdr[p['KW_BERV'][0]]
-    bjd = hdr[p['KW_BJD'][0]]
-    bvmax = hdr[p['KW_BERV_MAX'][0]]
+        # TODO: CHANGE TO ERROR
+        WLOG('warning', p['LOG_OPT'], emsg.format(*eargs))
+        dv, bjd, bvmax = 0.0, -9999, 0.0
+    else:
+        # Get the Barycentric correction from header
+        dv = hdr[p['KW_BERV'][0]]
+        bjd = hdr[p['KW_BJD'][0]]
+        bvmax = hdr[p['KW_BERV_MAX'][0]]
     # return dv, bjd, dvmax
     return dv, bjd, bvmax
 
