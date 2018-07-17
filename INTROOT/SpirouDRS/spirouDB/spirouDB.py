@@ -78,14 +78,14 @@ def get_database(p, update=False, dbkind=None):
     if 'telluDB' in p and not update:
         return p['TELLUDB'], p
     # get and check the lock file
-    lock, lock_file = get_check_lock_file(p)
+    lock, lock_file = get_check_lock_file(p, dbkind)
     # try to open the master file
     lines = read_master_file(p, lock, lock_file, dbkind)
 
     # store into dictionary of keys
     t_database = dict()
     # loop around lines in file
-    for l_it, line in lines:
+    for l_it, line in enumerate(lines):
         # ignore blank lines or lines starting with '#'
         if len(line) == 0:
             continue
