@@ -162,15 +162,15 @@ def reset_telludb(p, log=True):
     WLOG('', DPROG, 'Resetting telluric database')
 
     # remove files currently in telluDB
-    calib_dir = p['DRS_TELLU_DB']
+    tellu_dir = p['DRS_TELLU_DB']
     # loop around files and folders in tellu_dir
-    remove_all(calib_dir, log)
+    remove_all(tellu_dir, log)
 
     # -------------------------------------------------------------------------
     # get reset directory location
     # get package name and relative path
     package = spirouConfig.Constants.PACKAGE()
-    relfolder = spirouConfig.Constants.RESET_CALIBDB_DIR()
+    relfolder = spirouConfig.Constants.RESET_TELLUDB_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
     # -------------------------------------------------------------------------
@@ -181,7 +181,7 @@ def reset_telludb(p, log=True):
     for f in files:
         # get old and new paths
         oldpath = os.path.join(absfolder, f)
-        newpath = os.path.join(calib_dir, f)
+        newpath = os.path.join(tellu_dir, f)
         # check that old path exists
         if os.path.exists(oldpath):
             # log progress
