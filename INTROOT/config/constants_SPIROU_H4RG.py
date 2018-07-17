@@ -849,7 +849,7 @@ tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
 
 # Define min transmission in tapas models to consider an        - [obj_mk_tellu]
 #     element part of continuum
-transmisson_cut = 0.98
+transmission_cut = 0.98
 
 # Define the number of iterations to find the SED of hot        - [obj_mk_tellu]
 # stars + sigma clipping
@@ -863,29 +863,34 @@ tellu_vsini = 250.0
 # Define the median sampling expressed in km/s / pix
 tellu_med_sampling = 2.2
 
+#TODO: Need comments
 tellu_sigma_dev = 5
-
 tellu_bad_threshold = 1.2
-
 tellu_nan_threshold = 0.2
-
 tellu_abso_maps = False
-
 tellu_abso_low_thres = 0.01
 tellu_abso_high_thres = 1.05
-
 tellu_abso_sig_n_iter = 5
-
 tellu_abso_sig_thres = -1
-
 tellu_abso_dv_order = 33
-
 tellu_abso_dv_size = 5
-
 tellu_abso_dv_good_thres = 0.2
 
+tellu_template_keep_limit = 0.5
+tellu_template_med_low = 2048 - 128
+tellu_template_med_high = 2048 + 128
 
-
+tellu_number_of_principle_comp = 5
+tellu_fit_keep_frac = 20.0
+tellu_plot_order = 35
+tellu_fit_min_transmission = 0.2
+tellu_lambda_min = 1000.0
+tellu_lambda_max = 1000.0
+tellu_fit_vsini = 15.0
+tellu_fit_niter = 4
+tellu_fit_vsini2 = 30.0
+tellu_fit_recon_plt_order = 33
+tellu_fit_log_limit = -0.5
 
 # -----------------------------------------------------------------------------
 #   polarimetry parameters

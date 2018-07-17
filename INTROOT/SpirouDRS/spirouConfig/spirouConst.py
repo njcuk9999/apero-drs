@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.061'
+__version__ =  '0.2.68'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-07-15'
+__date__ =  '2018-07-17'
 
 
 # =============================================================================
@@ -890,7 +890,7 @@ def EXTRACT_LOCO_FILE(p):
 def EXTRACT_S1D_FILE(p):
 
     reducedfolder = p['REDUCED_DIR']
-    newext = '_s1d_{0}.fits'
+    newext = '_s1d_{0}.fits'.format(p['FIBER'])
     oldext = '.fits'
     filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
     absfilepath = os.path.join(reducedfolder, filename)
@@ -1252,6 +1252,7 @@ def TELLU_TRANS_MAP_FILE(p, filename):
     return outfile
 
 
+# noinspection PyPep8Naming
 def TELLU_ABSO_MAP_FILE(p):
     # get path
     path = p['ARG_FILE_DIR']
@@ -1263,6 +1264,7 @@ def TELLU_ABSO_MAP_FILE(p):
     return outfile
 
 
+# noinspection PyPep8Naming
 def TELLU_ABSO_MEDIAN_FILE(p):
     # get path
     path = p['ARG_FILE_DIR']
@@ -1274,6 +1276,7 @@ def TELLU_ABSO_MEDIAN_FILE(p):
     return outfile
 
 
+# noinspection PyPep8Naming
 def TELLU_ABSO_NORM_MAP_FILE(p):
     # get path
     path = p['ARG_FILE_DIR']
@@ -1283,6 +1286,24 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
     outfile = os.path.join(path, filename)
     # return absolute path
     return outfile
+
+
+# noinspection PyPep8Naming
+def TELLU_FIT_OUT_FILE(p, filename):
+    oldext = '.fits'
+    newext = '_tellu.fits'
+    outfilename1 = os.path.basename(filename).replace(oldext, newext)
+    outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
+    return outfile1
+
+
+# noinspection PyPep8Naming
+def TELLU_FIT_RECON_FilE(p, filename):
+    oldext = '.fits'
+    newext = '_tellu_recon.fits'
+    outfilename2 = os.path.basename(filename).replace(oldext, newext)
+    outfile2 = os.path.join(p['ARG_FILE_DIR'], outfilename2)
+    return outfile2
 
 
 # noinspection PyPep8Naming

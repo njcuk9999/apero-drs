@@ -368,6 +368,7 @@ def warninglogger(w, funcname=None):
     :return:
     """
     # deal with warnings
+    displayed_warnings = []
     if WARN and (len(w) > 0):
         for wi in w:
             # if we have a function name then use it else just report the
@@ -376,9 +377,16 @@ def warninglogger(w, funcname=None):
                 wargs = [wi.lineno, '', wi.message]
             else:
                 wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
+
             # log message
             wmsg = 'python warning Line {0} {1} warning reads: {2}'
-            wlog('warning', '', wmsg.format(*wargs))
+            wmsg = wmsg.format(*wargs)
+            # if we have already display this warning don't again
+            if wmsg in displayed_warnings:
+                continue
+            else:
+                wlog('warning', '', wmsg)
+                displayed_warnings.append(wmsg)
 
 
 def get_logfilepath(utime):

@@ -3571,7 +3571,7 @@
 
 
 ================================================================================
-* Mon Jul 09 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.060
+* Mon Jul 09 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.061
 
 ================================================================================
 	- removed berv calculation from RV module (rev.ee54c282)
@@ -3591,7 +3591,7 @@
 
 
 ================================================================================
-* Tue Jul 10 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.060
+* Tue Jul 10 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.062
 
 ================================================================================
 	- added filename functions (WAVE_MAP_SPE_FILE and WAVE_MAP_SPE0_FILE) (rev.200b94f3)
@@ -3607,7 +3607,7 @@
 
 
 ================================================================================
-* Wed Jul 11 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.060
+* Wed Jul 11 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.063
 
 ================================================================================
 	- add master_tellu_spirou file (rev.b802cfeb)
@@ -3644,7 +3644,7 @@
 
 
 ================================================================================
-* Thu Jul 12 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.060
+* Thu Jul 12 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.064
 
 ================================================================================
 	- first commit - added obj_mk_tellu functions (rev.11cb25f1)
@@ -3667,7 +3667,7 @@
 
 
 ================================================================================
-* Fri Jul 13 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.060
+* Fri Jul 13 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.065
 
 ================================================================================
 	- add functions: calculate_absorption_pca, get_berv_value (rev.7b7973a7)
@@ -3696,7 +3696,7 @@
 
 
 ================================================================================
-* Sun Jul 15 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.060
+* Sun Jul 15 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.066
 
 ================================================================================
 	- add new mask from Xavier (rev.44edfbf3)
@@ -3732,3 +3732,44 @@
 	- added tellu_fit_tellu_spline_plot function (rev.ea195472)
 	- update ConstructConvKernel2 function (rev.c840a850)
 	- continued to merge Etiennes code (rev.5e0792a8)
+
+
+
+================================================================================
+* Mon Jul 16 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.67
+
+================================================================================
+	- telluric integration: bug fixes (after move of functions) (rev.e14337ef)
+	- updated call to plot (rev.0e42ee0a)
+	- moved debug plot back to main code (rev.632d5eec)
+	- updating integration of tellu files: added functions - interp_at_shifted_wavelengths, calc_recon_abso, calc_molecular_absorption and lin_mini (rev.eca587ea)
+	- updating integration of tellu files: added new function aliases (rev.a5e68450)
+	- updating integration of tellu files: added plot function "tellu_fit_recon_abso_plot" (rev.b47ec6b3)
+	- updating integration of tellu files: Added abso output keyword (rev.b719cd11)
+	- updating integration of tellu files; Added filename pseudo constants (rev.1e33b4a1)
+	- updating integration of tellu files: added constants (need commenting!) (rev.b1f12bfa)
+	- updating integration of tellu files (rev.426ff830)
+	- updating integration of tellu files (rev.f4ef1297)
+
+
+
+================================================================================
+* Tue Jul 17 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.68
+
+================================================================================
+	- copy (same) (rev.ea4f78ac)
+	- update tellu recipes: fix bug with file name (rev.50acc4f5)
+	- update tellu recipes: drs telluDB reset now resets telluDB not calibDB (fix typos) (rev.e796a80b)
+	- update tellu recipes: fix after test run FWHM is function not object (rev.05659100)
+	- update tellu recipes: fix after test run - telluDB get database values are already split on spaces (rev.5c1ada01)
+	- update tellu recipes: fix after test run - fix bug (needed ```enumerate(lines)```) (rev.7c832174)
+	- update tellu recipes: fix after test run - add alias to update_datebase_tell_temp (rev.9655cb6f)
+	- possible bug fix: tried to separate out interactive options in end_interactive_session function (rev.a839f26d)
+	- possible bug fix: tried to reduce repetition of displayed warnings (rev.e301be46)
+	- update tellu recipes: added AIRMASS header key (rev.77c67374)
+	- bug fix: fix file name ````'_s1d_{0}.fits'``` --> ```'_s1d_{0}.fits'.format(p['FIBER'])``` (rev.706e4a4b)
+	- update tellu recipes: add required line in master telluDB (rev.0a14e56d)
+	- update tellu recipes: add obj_mk_tell_template to recipe control (rev.7c9895ad)
+	- update tellu recipes: move obj_mk_tell_template constantsto here and correct some bugs after test run (rev.98bbfe8a)
+	- update tellu recipes: fix after test run (rev.4c405049)
+	- update tellu recipes: fix after test run (rev.f8387526)
