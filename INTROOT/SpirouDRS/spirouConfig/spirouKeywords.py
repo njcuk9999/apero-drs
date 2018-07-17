@@ -48,6 +48,7 @@ p = spirouConfig.check_params(p)
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_UNIX',
+            'kw_AIRMASS',
             'kw_BBAD',
             'kw_BBFLAT',
             'kw_BERV',
@@ -264,6 +265,9 @@ kw_CDEN = ['SBCDEN_P', None, '']
 
 # define polarisation HEADER key
 kw_CMMTSEQ = ['CMMTSEQ', None, '']
+
+# define the airmass HEADER key
+kw_AIRMASS = ['AIRMASS', None, '']
 
 # -----------------------------------------------------------------------------
 # Define general keywords
