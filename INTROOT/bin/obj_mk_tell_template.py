@@ -182,7 +182,7 @@ def main(night_name=None, files=None):
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # write to file
-    spirouImage.WriteImage(outfilename, big_cube_med, hdict)
+    spirouImage.WriteImage(outfile, big_cube_med, hdict)
 
 
     # ----------------------------------------------------------------------
