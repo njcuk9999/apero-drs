@@ -890,7 +890,7 @@ def EXTRACT_LOCO_FILE(p):
 def EXTRACT_S1D_FILE(p):
 
     reducedfolder = p['REDUCED_DIR']
-    newext = '_s1d_{0}.fits'
+    newext = '_s1d_{0}.fits'.format(p['FIBER'])
     oldext = '.fits'
     filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
     absfilepath = os.path.join(reducedfolder, filename)
