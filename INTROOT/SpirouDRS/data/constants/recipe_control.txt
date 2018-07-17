@@ -110,6 +110,14 @@ obj_mk_tellu, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6
 obj_mk_tellu, 1, e2dsff_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
 obj_mk_tellu, 1, e2dsff_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
 obj_mk_tellu, 1, e2dsff_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2ds_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2ds_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2ds_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2dsff_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2dsff_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, e2dsff_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
 cal_exposure_meter, 1, o, None, None, None, None, None, None, RAW, EXTRACT, -12, 1
 cal_wave_mapper, 1, o, None, None, None, None, None, None, RAW, EXTRACT, -13, 1
 pol_spirou, 1, e2ds, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
