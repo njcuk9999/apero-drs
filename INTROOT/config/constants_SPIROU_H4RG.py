@@ -849,7 +849,7 @@ tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
 
 # Define min transmission in tapas models to consider an        - [obj_mk_tellu]
 #     element part of continuum
-transmisson_cut = 0.98
+transmission_cut = 0.98
 
 # Define the number of iterations to find the SED of hot        - [obj_mk_tellu]
 # stars + sigma clipping
@@ -875,6 +875,11 @@ tellu_abso_sig_thres = -1
 tellu_abso_dv_order = 33
 tellu_abso_dv_size = 5
 tellu_abso_dv_good_thres = 0.2
+
+tellu_template_keep_limit = 0.5
+tellu_template_med_low = 2048 - 128
+tellu_template_med_high = 2048 + 128
+
 tellu_number_of_principle_comp = 5
 tellu_fit_keep_frac = 20.0
 tellu_plot_order = 35
