@@ -88,6 +88,12 @@ def main(night_name=None, files=None):
     # Get molecular telluric lines
     # ------------------------------------------------------------------
     loc = spirouTelluric.GetMolecularTellLines(p, loc)
+    # if TAPAS FNAME is not None we generated a new file so should add to tellDB
+    if loc['TAPAS_FNAME'] is not None:
+        # add to the telluric database
+        spirouDB.UpdateDatabaseTellConv(p, loc['TAPAS_FNAME'], loc['DATAHDR'])
+        # put file in telluDB
+        spirouDB.PutTelluFile(p, loc['TAPAS_ABSNAME'])
 
     # ------------------------------------------------------------------
     # Loop around the files
@@ -124,6 +130,10 @@ def main(night_name=None, files=None):
             wmsg = 'File {0} exists in telluDB, skipping'
             WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
             continue
+        else:
+            # log processing file
+            wmsg = 'Processing file {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
 
         # ------------------------------------------------------------------
         # loop around the orders
