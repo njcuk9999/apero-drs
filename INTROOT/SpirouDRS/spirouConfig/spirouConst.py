@@ -1291,7 +1291,7 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
 # noinspection PyPep8Naming
 def TELLU_FIT_OUT_FILE(p, filename):
     oldext = '.fits'
-    newext = '_tellu.fits'
+    newext = '_tellu_corrected.fits'
     outfilename1 = os.path.basename(filename).replace(oldext, newext)
     outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
     return outfile1
