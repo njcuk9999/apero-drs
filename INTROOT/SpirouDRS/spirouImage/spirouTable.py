@@ -260,6 +260,12 @@ def read_table(filename, fmt, colnames=None, **kwargs):
     return table
 
 
+def print_full_table(table):
+    tablestrings = table.pformat(max_lines=len(table)*10)
+    WLOG('', '', '=' * len(tablestrings[0]))
+    WLOG('', '', tablestrings)
+    WLOG('', '', '=' * len(tablestrings[0]))
+
 
 # =============================================================================
 # Define worker functions

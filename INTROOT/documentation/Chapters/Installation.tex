@@ -83,8 +83,8 @@ Before installing the DRS you must have one of the following:
 A valid version of the Anaconda python distribution (for python 2 or python 3)
 \noindent Currently tested version of python are:
 \begin{itemize}
-\item Python 2.7.13 and Anaconda 4.4.0
-\item Python 3.6.3 and Anaconda 5.0.1 --- RECOMMENDED
+\item Python 2.7.13 and Anaconda 4.4.0 (or later)
+\item Python 3.6.3 and Anaconda 5.0.1 (or later) --- RECOMMENDED
 \end{itemize}
 
 
@@ -117,6 +117,10 @@ An up-to-date version of python (either python 2 or python 3) and the following 
 \end{itemize}
 
 
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 \clearpage
@@ -129,6 +133,7 @@ An up-to-date version of python (either python 2 or python 3) and the following 
 Currently the DRS has to be installed manually. This involves the following steps:
 \begin{enumerate}
 \item Extraction (Section \ref{ch:install:installunix:extraction})
+\item Copy the config file to a user defined path (Section \ref{ch:install:installunix:copy_config})
 \item Modify environmental settings (Section \ref{ch:install:installunix:environ_settings})
 \item Make recipes executable (Section \ref{ch:install:installunix:executable})
 \end{enumerate}
@@ -147,24 +152,35 @@ unzip DRS.zip
 \end{cmdbox}
 
 % -------------------------------------------------------
+\subsection{Copy the config file to a user defined path}
+\label{ch:install:installunix:copy_config}
+% -------------------------------------------------------
+Copy the config file (\InstallDIR\path{/INTROOT/config/config.py}) to a user directory (e.g. \path{/home/user/spirou/} or \path{/Users/user/spirou/}) hereinafter \userDIR. One can also copy the constants file (\constantsfile). This config file (and constants file if copied) will overwrite any default values in the DRS folder (\InstallDIR\path{/INTROOT/config/}).
+
+\begin{note}
+One does not need every value that is present in the default files only those values which are to be changed (this is a good way to keep track on non-default values that the DRS will use).
+\end{note}
+
+% -------------------------------------------------------
 \subsection{Modify environmental settings}
 \label{ch:install:installunix:environ_settings}
 % -------------------------------------------------------
 
-The next step is to modify your PATH and PYTHONPATH environmental variables (to include the \InstallDIR. This depends which shell you are using (type `\lstinline[style=bashstyle]{echo $0}' to find out which).
+The next step is to modify your PATH and PYTHONPATH environmental variables (to include the \InstallDIR) and add a new environmental variable `DRS\_UCONFIG'. This depends which shell you are using (type `\lstinline[style=bashstyle]{echo $0}' to find out which).
 
 \begin{itemize}
 	\item In bash open the `.bashrc' or `.bash\_profile' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-	@export@ <PATH>=".:(*\InstallDIR*)/bin/:{(*\$*)PATH}"
-	@export@ <PYTHONPATH>=".:(*\InstallDIR*):(*\InstallDIR*)/bin/:{(*\$*)PYTHONPATH}"
+	@export@ <PATH>="(*\InstallDIR*)/INTROOT/bin/":{(*\$*)PATH}
+	@export@ <PYTHONPATH>="(*\InstallDIR*)/INTROOT/":"(*\InstallDIR*)/INTROOT/bin/":{(*\$*)PYTHONPATH}
+	@export@ <DRS_UCONFIG>="(*\userDIR*)"
 	\end{bashbox}
 
 	\item In csh/tcsh open the `.cshrc' or `.tcshrc' text file in your home ($\sim$) directory (or create it if it doesn't exist).
 
 	\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
-	@setenv@ <PATH> ".:(*\InstallDIR*)/bin/":{(*\$*){PATH}}"
+	@setenv@ <PATH> ".:(*\InstallDIR*)/INTROOT/bin/":{(*\$*){PATH}}"
 	\end{cshbox}
 
 	In csh/tcsh one has to check whether `\$PYTHONPATH' exists before adding to the PYTHONPATH. To check type:
@@ -173,29 +189,22 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 	echo (*\$*)PYTHONPATH
 	\end{cmdbox}
 
-	\begin{itemize}
-	\item \begin{thighlight}
+	\begin{thighlight}
 		If the response is:
 		\begin{cmdboxprint}
 		PYTHONPATH: Undefined variable.
 		\end{cmdboxprint}
 
 		Then in the `.cshrc' or `.tcshrc' add: 
-
 		\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
 		@setenv@ <PYTHONPATH> ".:(*\InstallDIR*):(*\InstallDIR*)/bin/"
 		\end{cshbox}
-		\end{thighlight}
 
-	\item \begin{thighlight}
 		If the response is some paths, then in the `.cshrc' or `.tcshrc' add: 
-
 		\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
 		@setenv@ <PYTHONPATH> ".:(*\InstallDIR*):(*\InstallDIR*)/bin/:(*\$*){PYTHONPATH}"
 		\end{cshbox}
-		\end{thighlight}
-
-	\end{itemize}
+	\end{thighlight}
 
 \end{itemize}
 
@@ -221,9 +230,7 @@ chmod +x (*\InstallDIR*)/bin/*.py
 
 Before running the DRS one must set the data paths. \\
 
-\noindent The `\configtxtfile' file is located in the \InstallDIR in the config folder.
-
-i.e. at \InstallDIR{/config/\configtxtfile} \\
+\noindent The `\configtxtfile' file should be located in the \userDIR directory.
 
 \noindent The following keywords \textbf{must} be changed (and must be a valid path):
 \begin{thighlight}
@@ -243,6 +250,7 @@ i.e. at \InstallDIR{/config/\configtxtfile} \\
 \begin{note}
 Some text editors (such as TextEdit on macOS) use `smart speech-marks' these characters are invalid for python and thus care must be taken when editing the configuration files. The \calvalidate recipe (Section \ref{ch:install:validating_installunix}) will check for invalid characters and show the lines which do not have valid characters (valid characters are ASCII letters, digits, punctuation and white spaces as defined by pythons `\Program{string}' module). We suggest using text editors such as \Program{sublime-text} or a python IDE such as \Program{Pycharm}.
 \end{note}
+where \definevariable{text:drs_root}{DRS\_ROOT} should be ``\InstallDIR/INTROOT''.
 
 \vspace{0.25cm}
 
@@ -253,7 +261,7 @@ If one is using the DRS in the default setup one needs to make sure the followin
 \begin{itemize}
 	\item \definevariable{text:user_config}{USER\_CONFIG} is set to a value of 0 (or False)
 	\item \definevariable{text:drs_debug}{DRS\_DEBUG} is set to a value of 0 (or False)
-	\item \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'
+	\item \definevariable{text:icdp_name}{ICDP\_NAME} is set to `\constantsfile'
 \end{itemize}
 
 \noindent The following keywords can be changed: \\
@@ -261,6 +269,8 @@ If one is using the DRS in the default setup one needs to make sure the followin
 \begin{table}[H]
 \begin{tabular}{>{\color{red}}l c r c p{5cm}}
 \definevariable{text:drs_plot}{DRS\_PLOT}    & = & 1     & / & Whether to show plots \\
+\definevariable{text:drs_interactive}{DRS\_INTERACTIVE}    & = & 1     & / & Whether to run in interactive mode \\
+\definevariable{text:coloured_log}{COLOURED\_LOG}     & = & True     & / & Whether to have coloured text. \\
 \definevariable{text:print_level}{PRINT\_LEVEL} & = & "all" & / & Level at which to print \\
 \definevariable{text:log_level}{LOG\_LEVEL}   & = & "all" & / & Level at which to log in log file \\
 \end{tabular}
@@ -338,6 +348,24 @@ HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
 @g
 \end{cmdboxprintspecial}
 
+\noindent One will then be asked whether to set-up the calibration database (for first time use only). The following should appear:
+
+\begin{cmdboxprintspecial}
+@y		First time installation?
+		Add required files to DRS?@y
+@r			Setup calibration database? [Y]es or [N]o @r
+\end{cmdboxprintspecial}
+
+\noindent to which the answer ``Yes'' will copy the calibration database files into the \masterCALIBDBfile and the fits files into the \definevariable{text:drs_calib_db}{calibDB} directory.
+
+
+
+
+
+
+
+
+
 
 
 
@@ -353,9 +381,30 @@ HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
 This is very similar currently to the Linux/\mac installation (in the future a `.exe' file will be given).
 
 \begin{enumerate}
-\item Extract to \InstallDIR\, with your favourite unzipping software.
+\item Extract to \InstallDIR\, with your favourite unzipping software (Section \ref{ch:install:install_win:extraction}).
+\item Copy the config file to a user defined path (Section \ref{ch:install:install_win:copy_config})
 \item Add \InstallDIR\, to your PYTHONPATH (Section \ref{ch:install:install_win:environ_settings})
 \end{enumerate}
+
+
+
+% -------------------------------------------------------
+\subsection{Extraction}
+\label{ch:install:install_win:extraction}
+% -------------------------------------------------------
+
+The first step is to extract the DRS into a folder (the \InstallDIR).
+
+
+% -------------------------------------------------------
+\subsection{Copy the config file to a user defined path}
+\label{ch:install:install_win:copy_config}
+% -------------------------------------------------------
+Copy the config file (\InstallDIR\path{/INTROOT/config/config.py}) to a user directory (e.g. \path{C:\Users\user\spirou\}) hereinafter \userDIR. One can also copy the constants file (\constantsfile). This config file (and constants file if copied) will overwrite any default values in the DRS folder (\InstallDIR\path{/INTROOT/config/}).
+
+\begin{note}
+One does not need every value that is present in the default files only those values which are to be changed (this is a good way to keep track on non-default values that the DRS will use).
+\end{note}
 
 % -------------------------------------------------------
 \subsection{How to modify environmental settings in windows}
@@ -370,7 +419,7 @@ This process is a little more convoluted than on Linux or \mac system.
 
 \item under system variable `Path' click edit and add:
 \begin{textbox}[title={In "Environmental Variables"}]
-(*\InstallDIR*);(*\InstallDIR*)\bin;
+(*\InstallDIR*);(*\InstallDIR*)\INTROOT\bin;
 \end{textbox}
 
 \item if under system variable `PYTHONPATH' exists click edit and add `\InstallDIR;'\, to the end.
@@ -378,13 +427,18 @@ This process is a little more convoluted than on Linux or \mac system.
 \noindent i.e.
 
 \begin{textbox}[title={In "Environmental Variables"}]
-(*\InstallDIR*);(*\InstallDIR*)\bin;
+(*\InstallDIR*);(*\InstallDIR*)\INTROOT\bin;
 \end{textbox}
 
 \item if under system variables `PYTHONPATH' does not exist create a new variable called `PYTHONPATH' and add:
 
 \begin{textbox}[title={In "Environmental Variables"}]
-%PYTHONPATH%;(*\InstallDIR*);(*\InstallDIR*)\bin\;
+%PYTHONPATH%;(*\InstallDIR*)\INTROOT\;(*\InstallDIR*)\INTROOT\bin\;
+\end{textbox}
+
+\item Add the following path to a new environmental variable
+\begin{textbox}[title={In "Environmental Variables"}]
+%DRS_UCONFIG%;(*\userDIR*);
 \end{textbox}
 
 \end{enumerate}
@@ -450,16 +504,14 @@ This process is a little more convoluted than on Linux or \mac system.
 
 Before running the DRS one must set the data paths. \\
 
-\noindent The `\configtxtfile' file is located in the \InstallDIR in the config folder.
-
-i.e. at \InstallDIR\path{\\config\\}{configtxtfile} \\
+\noindent The `\configtxtfile' file should be located in the \userDIR directory.
 
 \noindent The following keywords \textbf{must} be changed (and must be a valid path):
 \begin{thighlight}
 \begin{table}[H]
 {\footnotesize
 \begin{tabular}{p{4cm} p{0.05cm} p{2.5cm} p{0.05cm} p{5.5cm}}
-\definevariable{text:drs_root}{TDATA}            & = & \path{C:\\Users\\User\\Documents\\drs\\data}        & / & Define the DATA directory\\
+\definevariable{text:drs_root}{TDATA}            & = & \path{C:\\Users\\User\Documents\\drs\\data}        & / & Define the DATA directory\\
 &&&&\\
 \definevariable{text:drs_root}{DRS\_ROOT}         & = & \path{C:\\Users\\User\\Documents\\drs\\INTROOT}     & / & Define the installation directory \\
 \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW}     & = & \path{C:\\Users\\User\\Documents\\drs\\data\\raw}    & / & Define the folder with the raw data files in \\
@@ -477,6 +529,7 @@ Note: On windows paths in windows must have a `\textbackslash\textbackslash' als
 
 \vspace{0.25cm}
 
+
 \subsection{Other configuration parameters}
 
 If one is using the DRS in the default setup one needs to make sure the following parameters are set correctly:
@@ -484,7 +537,7 @@ If one is using the DRS in the default setup one needs to make sure the followin
 \begin{itemize}
 	\item \definevariable{text:user_config}{USER\_CONFIG} is set to a value of 0 (or False)
 	\item \definevariable{text:drs_debug}{DRS\_DEBUG} is set to a value of 0 (or False)
-	\item \definevariable{text:icdp_name}{ICDP\_NAME} is set to `constants\_SPIROU.py'
+	\item \definevariable{text:icdp_name}{ICDP\_NAME} is set to `\constantsfile'
 \end{itemize}
 
 \noindent The following keywords can be changed: \\
@@ -492,6 +545,8 @@ If one is using the DRS in the default setup one needs to make sure the followin
 \begin{table}[H]
 \begin{tabular}{>{\color{red}}l c r c p{5cm}}
 \definevariable{text:drs_plot}{DRS\_PLOT}    & = & 1     & / & Whether to show plots \\
+\definevariable{text:drs_interactive}{DRS\_INTERACTIVE}    & = & 1     & / & Whether to run in interactive mode \\
+\definevariable{text:coloured_log}{COLOURED\_LOG}     & = & True     & / & Whether to have coloured text. \\
 \definevariable{text:print_level}{PRINT\_LEVEL} & = & "all" & / & Level at which to print \\
 \definevariable{text:log_level}{LOG\_LEVEL}   & = & "all" & / & Level at which to log in log file \\
 \end{tabular}
@@ -543,113 +598,38 @@ cal_validate_spirou.main()
 
 \end{itemize}
 
+
 \noindent If validation is successful the following should appear:
+
 \begin{cmdboxprintspecial}
 @g
-17:34:19.0 -   || *****************************************
-17:34:19.0 -   || * SPIROU @(#) Geneva Observatory (0.1.016)
-17:34:19.0 -   || *****************************************
-17:34:19.0 -   ||(dir_data_raw)      DRS_DATA_RAW=C:\\Users\\User\\Documents\\drs\\data\\raw
-17:34:19.0 -   ||(dir_data_reduc)    DRS_DATA_REDUC=C:\\Users\\User\\Documents\\drs\\data\\reduced
-17:34:19.0 -   ||(dir_calib_db)      DRS_CALIB_DB=C:\\Users\\User\\Documents\\drs\\data\\calibDB
-17:34:19.0 -   ||(dir_data_msg)      DRS_DATA_MSG=C:\\Users\\User\\Documents\\drs\\data\\msg
-17:34:19.0 -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
-17:34:19.0 -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
-17:34:19.0 -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
-17:34:19.0 -   ||(used_date)         DRS_USED_DATE=undefined
-17:34:19.0 -   ||(working_dir)       DRS_DATA_WORKING=C:\\Users\\User\\Documents\\drs\\data\\tmp
-17:34:19.0 -   ||                    DRS_INTERACTIVE is not set, running on-line mode
-17:34:19.0 -   ||                    DRS_DEBUG is set, debug mode level:1
-17:34:19.0 -   ||
-17:34:19.0 -   ||Validation successful. DRS installed corrected.
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   || * SPIROU @(#) Geneva Observatory (0.0.1)
+HH:MM:SS.S -   || *****************************************
+HH:MM:SS.S -   ||(dir_data_raw)      DRS_DATA_RAW=/drs/data/raw
+HH:MM:SS.S -   ||(dir_data_reduc)    DRS_DATA_REDUC=/drs/data/reduced
+HH:MM:SS.S -   ||(dir_calib_db)      DRS_CALIB_DB=/drs/data/calibDB
+HH:MM:SS.S -   ||(dir_data_msg)      DRS_DATA_MSG=/drs/data/msg
+HH:MM:SS.S -   ||(print_level)       PRINT_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(log_level)         LOG_LEVEL=all         %(error/warning/info/all)
+HH:MM:SS.S -   ||(plot_graph)        DRS_PLOT=1            %(def/undef/trigger)
+HH:MM:SS.S -   ||(used_date)         DRS_USED_DATE=undefined
+HH:MM:SS.S -   ||(working_dir)       DRS_DATA_WORKING=/drs/data/tmp/
+HH:MM:SS.S -   ||                    DRS_INTERACTIVE is not set, running on-line mode
+HH:MM:SS.S -   ||
+HH:MM:SS.S -   ||Validation successful. DRS installed corrected.
 @g
 \end{cmdboxprintspecial}
 
+\noindent One will then be asked whether to set-up the calibration database (for first time use only). The following should appear:
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-\clearpage
-\newpage
-\section{Setting up custom constant files}
-\label{ch:install:custom_constant_files}
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-It is also possible to set up custom constant files (in a folder separate from the DRS).
-
-To do this one need to change the \definevariable{text:user_config}{USER\_CONFIG} parameter to 1 (or True). This tells the DRS to look for \definevariable{text:drs_uconfig}{DRS\_UCONFIG} parameter either in the master config file (\configtxtfile) and in the system environment (for the variable `DRS\_UCONFIG').
-
-\begin{note}
-The path set in the system environment takes precedence over the path set in the master config file (\configtxtfile).
-\end{note}
-
-\noindent All constants are loaded initial from the master file and then any parameter in the configuration file at the custom location overwrites the value in the master file. \\
-
-\noindent For example:
-
-\begin{textbox}[title={In ".../INTROOT/config/config.py"}]
-USER_CONFIG = 1
-DRS_ROOT = '/drs/spirou/INTROOT/'
-DRS_DATA_RAW = '/drs/spirou/data/raw'
-DRS_DATA_REDUC = '/drs/spirou/data/reduced'
-DRS_UCONFIG = '/home/user/spirou/config.py'
-\end{textbox}
-\begin{textbox}[title={In "/home/user/spirou/config.py"}]
-DRS_DATA_RAW = '/DATA/RAW'
-DRS_DATA_REDIC = '/DATA/RED'
-\end{textbox}
-
-\noindent \textbf{OR}
-
-\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-@export@ DRS_UCONFIG=/home/user/spirou/config.py
-\end{bashbox}
-\begin{textbox}[title={In ".../INTROOT/config/config.py"}]
-USER_CONFIG = 1
-DRS_ROOT = '/drs/spirou/INTROOT/'
-DRS_DATA_RAW = '/drs/spirou/data/raw'
-DRS_DATA_REDUC = '/drs/spirou/data/reduced'
-\end{textbox}
-\begin{textbox}[title={In "/home/user/spirou/config.py"}]
-DRS_DATA_RAW = '/DATA/RAW'
-DRS_DATA_REDIC = '/DATA/RED'
-\end{textbox}
-
-\vspace{0.5cm}
-
-\noindent Then once the DRS runs, \definevariable{text:drs_root}{DRS\_ROOT} is set from \path{/INTROOT/config/config.py} and \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} and \definevariable{text:drs_data_raw}{DRS\_DATA\_REDUC} are set from \path{/home/user/spirou/config.py} and thus the variables set will be:
 \begin{cmdboxprintspecial}
-@gDRS_ROOT = '/drs/spirou/INTROOT/' 
-DRS_DATA_RAW = '/DATA/RAW'
-DRS_DATA_REDIC = '/DATA/RED'@g
+@y		First time installation?
+		Add required files to DRS?@y
+@r			Setup calibration database? [Y]es or [N]o @r
 \end{cmdboxprintspecial}
 
-\vspace{0.5cm}
-
-\begin{note}
-Constants/variables set in the custom constant files \textbf{always} take precedence over the master files.
-\end{note}
-
-\begin{note}
-Any constant/variable not set in a custom constant file is taken from the master files.
-\end{note}
-
-\begin{note}
-For other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME} the name can be changed in the master configuration file (\configtxtfile) thus allowing an easy switch between constant files. The custom path will always use \definevariable{text:icdp_name}{ICDP\_NAME} to locate the file.
-\end{note}
-
-\noindent This also works for other configuration files (i.e. \definevariable{text:icdp_name}{ICDP\_NAME}). Thus one can have a completely separate ste of configuration files and switch between folders in the master configuration file (\configtxtfile) or by editing the environmental variables.
-
-\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-@export@ DRS_UCONFIG=/home/user/spirou/config.py
-\end{bashbox}
-
-\begin{cshbox}[title={e.g. in $\sim$/.tcshrc}]
-@setenv@ DRS_UCONFIG /home/user/spirou/config.py
-\end{cshbox}
-
-See the config folder (\path{.../config/}) for example \definevariable{text:drs_uconfig}{DRS\_UCONFIG} directories and files.
+\noindent to which the answer ``Yes'' will copy the calibration database files into the \masterCALIBDBfile and the fits files into the \definevariable{text:drs_calib_db}{calibDB} directory.
 
 
 \ifdevguide
@@ -657,14 +637,14 @@ See the config folder (\path{.../config/}) for example \definevariable{text:drs_
 %%
 \clearpage
 \newpage
-\section{Changing the detector}
+\section{Having multiple set-ups}
 \label{ch:install:detect_setup}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\noindent During development there is a period when both the H2RG and H4RG will be needed.
+\noindent During development there is a period when both the H2RG and H4RG will be needed. As well as this there may be circumstances where one wants to switch between sets of constants. 
 
-\noindent This is a simple guide to switch between the detectors.
+\noindent This is a simple guide to switch between config and constant files.
 
 \begin{note}
 The best and cleanest way to do this is to set up a custom directory for each detectors settings (i.e. see Section \ref{ch:install:custom_constant_files})

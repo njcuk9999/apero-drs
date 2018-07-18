@@ -44,6 +44,9 @@ DRS_DATA_REDUC = '/drs/spirou/data/reduced'
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = '/drs/spirou/data/calibDB'
 
+#   Define the directory that the calibration files should be saved to/read from
+DRS_TELLU_DB = '/drs/spirou/data/telluDB'
+
 #   Define the directory that the log messages are stored in
 DRS_DATA_MSG = '/drs/spirou/data/msg'
 

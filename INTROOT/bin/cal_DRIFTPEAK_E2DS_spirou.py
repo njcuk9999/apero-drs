@@ -46,7 +46,6 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # switch between new and old
-# TODO: Should be new
 OLDCODEEXACT = False
 
 

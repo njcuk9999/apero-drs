@@ -17,6 +17,7 @@ from scipy import stats
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
+from SpirouDRS import spirouRV
 
 
 # =============================================================================
@@ -46,6 +47,21 @@ sPlt = spirouCore.sPlt
 # Define user functions
 # =============================================================================
 def sort_polar_files(p, polardict):
+    """
+    Function to sort input data for polarimetry.
+        
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            REDUCED_DIR: string, directory path where reduced data are stored
+            ARG_FILE_NAMES: list, list of input filenames
+            KW_CMMTSEQ: string, FITS keyword where to find polarimetry
+                        information
+    
+    :return polardict: dictionary, ParamDict containing information on the
+                       input data
+    """
+
     func_name = __NAME__ + '.sort_polar_files()'
     # get constants from p
     rdir = p['REDUCED_DIR']
@@ -122,6 +138,33 @@ def sort_polar_files(p, polardict):
 
 
 def load_data(p, polardict, loc):
+    """
+    Function to load input E2DS data for polarimetry.
+        
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            IC_POLAR_STOKES_PARAMS: list, list of stokes parameters
+            IC_POLAR_FIBERS: list, list of fiber types used in polarimetry
+    
+    :param polardict: dictionary, ParamDict containing information on the
+                      input data
+        
+    :param loc: parameter dictionary, ParamDict to store data
+        
+    :return p, loc: parameter dictionaries,
+        The updated parameter dictionary adds/updates the following:
+            FIBER: saves reference fiber used for base file in polar sequence
+                   The updated data dictionary adds/updates the following:
+            DATA: array of numpy arrays (2D), E2DS data from all fibers in
+                  all input exposures.
+            BASENAME, string, basename for base FITS file
+            HDR: dictionary, header from base FITS file
+            CDR: dictionary, header comments from base FITS file
+            STOKES: string, stokes parameter detected in sequence
+            NEXPOSURES: int, number of exposures in polar sequence
+    """
+    
     func_name = __NAME__ + '.load_data()'
     # get constants from p
     stokesparams = p['IC_POLAR_STOKES_PARAMS']
@@ -145,7 +188,7 @@ def load_data(p, polardict, loc):
     # TODO: This needs fixing will cause error
     # if more than one stokes parameter is identified then exit program
     if len(stokes_detected) == 0:
-        stokes_detected.append()
+        stokes_detected.append('UNDEF')
     elif len(stokes_detected) > 1:
         wmsg = ('Identified more than one stokes parameter in the input '
                 'data... exiting')
@@ -234,6 +277,22 @@ def load_data(p, polardict, loc):
 
 
 def calculate_polarimetry_wrapper(p, loc):
+    """
+    Function to call functions to calculate polarimetry either using
+    the Ratio or Difference methods.
+        
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            IC_POLAR_METHOD: string, to define polar method "Ratio" or
+                             "Difference"
+
+    :param loc: parameter dictionary, ParamDict containing data
+        
+    :return polarfunc: function, either polarimetry_diff_method(p, loc)
+                       or polarimetry_ratio_method(p, loc)
+    """
+
     # get parameters from p
     method = p['IC_POLAR_METHOD']
     # decide which method to use
@@ -248,6 +307,47 @@ def calculate_polarimetry_wrapper(p, loc):
 
 
 def calculate_continuum(p, loc, in_wavelength=True):
+    """
+    Function to calculate the continuum polarization
+        
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, option for logging
+            IC_POLAR_CONT_BINSIZE: int, number of points in each sample bin
+            IC_POLAR_CONT_OVERLAP: int, number of points to overlap before and
+                                   after each sample bin
+            IC_POLAR_CONT_TELLMASK: list of float pairs, list of telluric bands,
+                                    i.e, a list of wavelength ranges ([wl0,wlf])
+                                    for telluric absorption
+        
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            POL: numpy array (2D), e2ds degree of polarization data
+            POLERR: numpy array (2D), e2ds errors of degree of polarization
+            NULL1: numpy array (2D), e2ds 1st null polarization
+            NULL2: numpy array (2D), e2ds 2nd null polarization
+            STOKESI: numpy array (2D), e2ds Stokes I data
+            STOKESIERR: numpy array (2D), e2ds errors of Stokes I
+        
+    :param in_wavelength: bool, to indicate whether or not there is wave cal
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            FLAT_X: numpy array (1D), flatten polarimetric x data
+            FLAT_POL: numpy array (1D), flatten polarimetric pol data
+            FLAT_POLERR: numpy array (1D), flatten polarimetric pol error data
+            FLAT_STOKESI: numpy array (1D), flatten polarimetric stokes I data
+            FLAT_STOKESIERR: numpy array (1D), flatten polarimetric stokes I
+                             error data
+            FLAT_NULL1: numpy array (1D), flatten polarimetric null1 data
+            FLAT_NULL2: numpy array (1D), flatten polarimetric null2 data
+            CONT_POL: numpy array (1D), e2ds continuum polarization data
+                      interpolated from xbin, ybin points, same shape as
+                      FLAT_POL
+            CONT_XBIN: numpy array (1D), continuum in x polarization samples
+            CONT_YBIN: numpy array (1D), continuum in y polarization samples
+    """
+
     func_name = __NAME__ + '.calculate_continuum()'
     # get constants from p
     pol_binsize = p['IC_POLAR_CONT_BINSIZE']
@@ -278,27 +378,25 @@ def calculate_continuum(p, loc, in_wavelength=True):
     # ---------------------------------------------------------------------
     # sort by wavelength (or pixel number)
     sortmask = np.argsort(wl)
-    wl = wl[sortmask]
-    pol = pol[sortmask]
-    polerr = pol[sortmask]
-    null1 = null1[sortmask]
-    null2 = null2[sortmask]
+
     # save back to loc
-    loc['FLAT_X'] = wl
-    loc['FLAT_POL'] = pol
-    loc['FLAT_POLERR'] = polerr
-    loc['FLAT_STOKESI'] = stokesI
-    loc['FLAT_STOKESIERR'] = stokesIerr
-    loc['FLAT_NULL1'] = null1
-    loc['FLAT_NULL2'] = null2
+    loc['FLAT_X'] = wl[sortmask]
+    loc['FLAT_POL'] = pol[sortmask]
+    loc['FLAT_POLERR'] = polerr[sortmask]
+    loc['FLAT_STOKESI'] = stokesI[sortmask]
+    loc['FLAT_STOKESIERR'] = stokesIerr[sortmask]
+    loc['FLAT_NULL1'] = null1[sortmask]
+    loc['FLAT_NULL2'] = null2[sortmask]
     # update source
     sources = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
                'FLAT_STOKESIERR','FLAT_NULL1', 'FLAT_NULL2']
     loc.set_sources(sources, func_name)
+
     # ---------------------------------------------------------------------
     # calculate continuum polarization
-    contpol, xbin, ybin = continuum(wl, pol, binsize=pol_binsize,
-                                    overlap=pol_overlap)
+    contpol, xbin, ybin = continuum(loc['FLAT_X'], loc['FLAT_POL'],
+                                    binsize=pol_binsize, overlap=pol_overlap,
+                                    telluric_bands=p['IC_POLAR_CONT_TELLMASK'])
     # ---------------------------------------------------------------------
     # save continuum data to loc
     loc['CONT_POL'] = contpol
@@ -311,6 +409,26 @@ def calculate_continuum(p, loc, in_wavelength=True):
 
 
 def calculate_stokes_I(p, loc):
+    """
+    Function to calculate the Stokes I polarization
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, option for logging
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            DATA: array of numpy arrays (2D), E2DS data from all fibers in
+                  all input exposures.
+            NEXPOSURES: int, number of exposures in polar sequence
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            STOKESI: numpy array (2D), the Stokes I parameters, same shape as
+                     DATA
+            STOKESIERR: numpy array (2D), the Stokes I error parameters, same
+                        shape as DATA
+    """
     func_name = __NAME__ + '.calculate_stokes_I()'
     name = 'CalculateStokesI'
     # log start of Stokes I calculations
@@ -405,6 +523,33 @@ def deal_with_fiber(p, filename, expstatus, exposure):
 
 
 def polarimetry_diff_method(p, loc):
+    """
+    Function to calculate polarimetry using the difference method as described
+    in the paper:
+    Bagnulo et al., PASP, Volume 121, Issue 883, pp. 993 (2009)
+        
+    :param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+    p['LOG_OPT']: string, option for logging
+        
+    :param loc: parameter dictionary, ParamDict containing data
+    Must contain at least:
+    loc['DATA']: numpy array (2D) containing the e2ds flux data for all 
+    exposures {1,..,NEXPOSURES}, and for all fibers {A,B}
+    loc['NEXPOSURES']: number of polarimetry exposures
+        
+    :return loc: parameter dictionary, the updated parameter dictionary
+    Adds/updates the following:
+    loc['POL']: numpy array (2D), degree of polarization data, which
+    should be the same shape as E2DS files, i.e, loc[DATA][FIBER_EXP]
+    loc['POLERR']: numpy array (2D), errors of degree of polarization,
+    same shape as loc['POL']
+    loc['NULL1']: numpy array (2D), 1st null polarization, same shape as
+    loc['POL']
+    loc['NULL2']: numpy array (2D), 2nd null polarization, same shape as
+    loc['POL']
+    """
+
     func_name = __NAME__ + '.polarimetry_diff_method()'
     name = 'polarimetryDiffMethod'
     # log start of polarimetry calculations
@@ -426,29 +571,15 @@ def polarimetry_diff_method(p, loc):
     # set source
     loc.set_sources(['POL', 'POLERR', 'NULL1', 'NULL2'], func_name)
 
-    swapbeams = False
     G, gvar = [], []
     for i in range(1, int(nexp) + 1):
         # ---------------------------------------------------------------------
         # STEP 1 - calculate the quantity Gn (Eq #12-14 on page 997 of
         #          Bagnulo et al. 2009), n being the pair of exposures
         # ---------------------------------------------------------------------
-        if swapbeams:
-            if i == 1 or i == 3:
-                # add B part
-                part1 = (data['B_{0}'.format(i)] - data['B_{0}'.format(i + 1)])
-                part2 = (data['B_{0}'.format(i)] + data['B_{0}'.format(i + 1)])
-                G.append(part1 / part2)
-            elif i == 2 or i == 4:
-                # add A part
-                part1 = (data['A_{0}'.format(i - 1)] - data['A_{0}'.format(i)])
-                part2 = (data['A_{0}'.format(i - 1)] + data['A_{0}'.format(i)])
-                G.append(part1 / part2)
-        else:
-            part1 = data['B_{0}'.format(i)] - data['A_{0}'.format(i)]
-            part2 = data['B_{0}'.format(i)] + data['A_{0}'.format(i)]
-            G.append(part1 / part2)
-
+        part1 = data['A_{0}'.format(i)] - data['B_{0}'.format(i)]
+        part2 = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
+        G.append(part1 / part2)
 
         # Calculate the variances for fiber A and B, assuming Poisson noise
         # only. In fact the errors should be obtained from extraction, i.e.
@@ -460,12 +591,12 @@ def polarimetry_diff_method(p, loc):
         # STEP 2 - calculate the quantity g_n^2 (Eq #A4 on page 1013 of
         #          Bagnulo et al. 2009), n being the pair of exposures
         # ---------------------------------------------------------------------
-        nomin = 2.0 * data['B_{0}'.format(i)] * data['A_{0}'.format(i)]
-        denom = (data['B_{0}'.format(i)] + data['A_{0}'.format(i)]) ** (2.0)
+        nomin = 2.0 * data['A_{0}'.format(i)] * data['B_{0}'.format(i)]
+        denom = (data['A_{0}'.format(i)] + data['B_{0}'.format(i)]) ** (2.0)
         factor1 = (nomin / denom) ** 2.0
         AvarPart = Avar / (data['A_{0}'.format(i)] ** 2.0)
         BvarPart = Bvar / (data['B_{0}'.format(i)] ** 2.0)
-        gvar.append(factor1 * (BvarPart + AvarPart))
+        gvar.append(factor1 * (AvarPart + BvarPart))
 
 
     # if we have 4 exposures
@@ -473,10 +604,14 @@ def polarimetry_diff_method(p, loc):
         # -----------------------------------------------------------------
         # STEP 3 - calculate the quantity Dm (Eq #18 on page 997 of
         #          Bagnulo et al. 2009 paper) and the quantity Dms with
-        #          exposure 2 and 4 swapped, m being the pair of exposures
+        #          exposures 2 and 4 swapped, m being the pair of exposures
+        #          Ps. Notice that SPIRou design is such that the angles of
+        #          the exposures that correspond to different angles of the
+        #          retarder are obtained in the order (1)->(2)->(4)->(3),
+        #          which explains the swap between G[3] and G[2].
         # -----------------------------------------------------------------
-        D1, D2 = G[0] - G[1], G[2] - G[3]
-        D1s, D2s = G[0] - G[3], G[2] - G[1]
+        D1, D2 = G[0] - G[1], G[3] - G[2]
+        D1s, D2s = G[0] - G[2], G[3] - G[1]
         # -----------------------------------------------------------------
         # STEP 4 - calculate the degree of polarization for Stokes
         #          parameter (Eq #19 on page 997 of Bagnulo et al. 2009)
@@ -539,6 +674,32 @@ def polarimetry_diff_method(p, loc):
 
 
 def polarimetry_ratio_method(p, loc):
+    """
+    Function to calculate polarimetry using the ratio method as described
+    in the paper:
+    Bagnulo et al., PASP, Volume 121, Issue 883, pp. 993 (2009)
+        
+    :param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+    p['LOG_OPT']: string, option for logging
+        
+    :param loc: parameter dictionary, ParamDict containing data
+    Must contain at least:
+    loc['DATA']: numpy array (2D) containing the e2ds flux data for all 
+    exposures {1,..,NEXPOSURES}, and for all fibers {A,B}
+    loc['NEXPOSURES']: number of polarimetry exposures
+        
+    :return loc: parameter dictionary, the updated parameter dictionary
+    Adds/updates the following:
+    loc['POL']: numpy array (2D), degree of polarization data, which
+    should be the same shape as E2DS files, i.e, loc[DATA][FIBER_EXP]
+    loc['POLERR']: numpy array (2D), errors of degree of polarization,
+    same shape as loc['POL']
+    loc['NULL1']: numpy array (2D), 1st null polarization, same shape as
+    loc['POL']
+    loc['NULL2']: numpy array (2D), 2nd null polarization, same shape as
+    loc['POL']
+    """
     func_name = __NAME__ + '.polarimetry_ratio_method()'
     name = 'polarimetryRatioMethod'
 
@@ -562,13 +723,18 @@ def polarimetry_ratio_method(p, loc):
     loc.set_sources(['POL', 'NULL1', 'NULL2'], func_name)
 
     flux_ratio, var_term = [], []
+    
+    # Ignore numpy warnings to avoid warning message: "RuntimeWarning: invalid
+    # value encountered in power ...", apparently a memory issue?
+    np.warnings.filterwarnings('ignore')
+    
     for i in range(1, int(nexp) + 1):
         # ---------------------------------------------------------------------
         # STEP 1 - calculate ratio of beams for each exposure
         #          (Eq #12 on page 997 of Bagnulo et al. 2009 )
         # ---------------------------------------------------------------------
-        part1 = data['B_{0}'.format(i)]
-        part2 = data['A_{0}'.format(i)]
+        part1 = data['A_{0}'.format(i)]
+        part2 = data['B_{0}'.format(i)]
         flux_ratio.append(part1 / part2)
 
         # Calculate the variances for fiber A and B, assuming Poisson noise
@@ -592,9 +758,13 @@ def polarimetry_ratio_method(p, loc):
         #          (Eq #23 on page 998 of Bagnulo et al. 2009) and
         #          the quantity Rms with exposure 2 and 4 swapped,
         #          m being the pair of exposures
+        #          Ps. Notice that SPIRou design is such that the angles of
+        #          the exposures that correspond to different angles of the
+        #          retarder are obtained in the order (1)->(2)->(4)->(3),which
+        #          explains the swap between flux_ratio[3] and flux_ratio[2].
         # -----------------------------------------------------------------
-        R1, R2 = flux_ratio[0] / flux_ratio[1], flux_ratio[2] / flux_ratio[3]
-        R1s, R2s = flux_ratio[0] / flux_ratio[3], flux_ratio[2] / flux_ratio[1]
+        R1, R2 = flux_ratio[0] / flux_ratio[1], flux_ratio[3] / flux_ratio[2]
+        R1s, R2s = flux_ratio[0] / flux_ratio[2], flux_ratio[3] / flux_ratio[1]
         # -----------------------------------------------------------------
         # STEP 4 - calculate the quantity R
         #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
@@ -684,25 +854,97 @@ def polarimetry_ratio_method(p, loc):
     return loc
 
 
+def calculate_stokes_I(p, loc):
+    """
+    Function to calculate Stokes I, i.e. the total flux from the sum of fluxes
+    of all exposures in polar sequence
+        
+    :param p: parameter dictionary, ParamDict containing constants
+    Must contain at least:
+    p['LOG_OPT']: string, option for logging
+        
+    :param loc: parameter dictionary, ParamDict containing data
+    Must contain at least:
+    loc['DATA']: numpy array (2D) containing the e2ds flux data for all 
+    exposures {1,..,NEXPOSURES}, and for all fibers {A,B}
+    loc['NEXPOSURES']: number of polarimetry exposures
+        
+    :return loc: parameter dictionary, the updated parameter dictionary
+    Adds/updates the following:
+    loc['STOKESI']: numpy array (2D), Stokes I data, which should be the same 
+    shape as E2DS files, i.e, loc[DATA][FIBER_EXP]
+    loc['STOKESIERR']: numpy array (2D), errors of Stokes I, same shape
+    as loc['STOKESI']
+    """
+
+    func_name = __NAME__ + '.calculate_stokes_I()'
+    name = 'CalculateStokesI'
+    # log start of Stokes I calculations
+    wmsg = 'Running function {0} to calculate Stokes I total flux'
+    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    # get parameters from loc
+    data = loc['DATA']
+    nexp = float(loc['NEXPOSURES'])
+    # ---------------------------------------------------------------------
+    # set up storage
+    # ---------------------------------------------------------------------
+    # store Stokes I variables in loc
+    data_shape = loc['DATA']['A_1'].shape
+    # initialize arrays to zeroes
+    loc['STOKESI'] = np.zeros(data_shape)
+    loc['STOKESIERR'] = np.zeros(data_shape)
+    # set source
+    loc.set_sources(['STOKESI', 'STOKESIERR'], func_name)
+
+    flux, var = [], []
+    for i in range(1, int(nexp) + 1):
+        # Calculate sum of fluxes from fibers A and B
+        fluxAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
+        # Save A+B flux for each exposure
+        flux.append(fluxAB)
+
+        # Calculate the variances for fiber A+B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension in the e2ds files.
+        varAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
+        # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
+        var.append(varAB)
+
+    # Sum fluxes and variances from different exposures
+    for i in range(len(flux)) :
+        loc['STOKESI'] += flux[i]
+        loc['STOKESIERR'] += var[i]
+    # Calcualte errors -> sigma = sqrt(variance)
+    loc['STOKESIERR'] = np.sqrt(loc['STOKESIERR'])
+
+    # log end of Stokes I intensity calculations
+    wmsg = 'Routine {0} run successfully'
+    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    # return loc
+    return loc
+
+
 def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
-              mode="median", use_linear_fit=False):
+              mode="median", use_linear_fit=False, telluric_bands=None):
     """
     Function to calculate continuum
-    :param x,y input data arrays (must be of the same size)
-    :param binsize number of points in each bin
-    :param overlap number of points to overlap with adjacent bins
-    :param sigmaclip number of times sigma to cut-off points
-    :param window number of bins to use in local fit
-    :param mode string to set which combine mode.
-           mode accepts: "median", "mean", "max"
+    :param x,y: numpy array (1D), input data (x and y must be of the same size)
+    :param binsize: int, number of points in each bin
+    :param overlap: int, number of points to overlap with adjacent bins
+    :param sigmaclip: int, number of times sigma to cut-off points
+    :param window: int, number of bins to use in local fit
+    :param mode: string, set combine mode, where mode accepts "median", "mean",
+    "max"
     :param use_linear_fit: bool, whether to use the linar fit
-
+    :param telluric_bands: list of float pairs, list of IR telluric bands, i.e,
+    a list of wavelength ranges ([wl0,wlf]) for telluric absorption
+    
     :return continuum, xbin, ybin
-        continuum: array of the same size as input arrays containing the
-                   continuum data already interpolated to the same points
+        continuum: numpy array (1D) of the same size as input arrays containing
+                   the continuum data already interpolated to the same points
                    as input data.
-        xbin,ybin: arrays containing the bins used to interpolate data for
-        obtaining the continuum
+        xbin,ybin: numpy arrays (1D) containing the bins used to interpolate 
+        data for obtaining the continuum
     """
 
     # set number of bins given the input array length and the bin size
@@ -710,7 +952,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
 
     # initialize arrays to store binned data
     xbin, ybin = [], []
-
+                       
     for i in range(nbins):
         # get first and last index within the bin
         idx0 = i * binsize - overlap
@@ -718,38 +960,48 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         # if it reaches the edges then it reset the indexes
         if idx0 < 0:
             idx0 = 0
-        if idxf > len(x):
+        if idxf >= len(x):
             idxf = len(x) - 1
         # get data within the bin
-        xtmp = x[idx0:idxf]
-        ytmp = y[idx0:idxf]
-        # calculate mean x within the bin
-        xmean = np.mean(xtmp)
-        # calculate median y within the bin
-        medy = np.median(ytmp)
+        xbin_tmp = np.array(x[idx0:idxf])
+        ybin_tmp = np.array(y[idx0:idxf])
 
-        if medy and not np.isnan(medy):
+        # create mask of telluric bands
+        telluric_mask = np.full(np.shape(xbin_tmp), False, dtype=bool)
+        for band in telluric_bands :
+            telluric_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
+
+        # mask data within telluric bands
+        xtmp = xbin_tmp[~telluric_mask]
+        ytmp = ybin_tmp[~telluric_mask]
+        
+        # create mask to get rid of NaNs
+        nanmask = np.logical_not(np.isnan(ytmp))
+        if len(xtmp[nanmask]) > 2 :
+            # calculate mean x within the bin
+            xmean = np.mean(xtmp[nanmask])
+            # calculate median y within the bin
+            medy = np.median(ytmp[nanmask])
+
             # calculate median deviation
-            medydev = np.median(np.absolute(ytmp - medy))
+            medydev = np.median(np.absolute(ytmp[nanmask] - medy))
             # create mask to filter data outside n*sigma range
-            filtermask = (ytmp > medy) & (ytmp < medy + sigmaclip * medydev)
-            # save mean x wihthin bin
-            xbin.append(xmean)
-            if len(ytmp[filtermask]) > 2:
+            filtermask = (ytmp[nanmask] > medy) & (ytmp[nanmask] < medy + sigmaclip * medydev)
+            if len(ytmp[nanmask][filtermask]) > 2:
+                # save mean x wihthin bin
+                xbin.append(xmean)
                 if mode == 'max':
                     # save maximum y of filtered data
-                    ybin.append(np.max(ytmp[filtermask]))
+                    ybin.append(np.max(ytmp[nanmask][filtermask]))
                 elif mode == 'median':
                     # save median y of filtered data
-                    ybin.append(np.median(ytmp[filtermask]))
+                    ybin.append(np.median(ytmp[nanmask][filtermask]))
                 elif mode == 'mean':
                     # save mean y of filtered data
-                    ybin.append(np.mean(ytmp[filtermask]))
+                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
                     emsg = 'Can not recognize selected mode="{0}"...exiting'
                     WLOG('error', DPROG, emsg.format(mode))
-            else:
-                continue
 
     # Option to use a linearfit within a given window
     if use_linear_fit:
@@ -779,8 +1031,9 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         xbin, ybin = newxbin, newybin
 
     # interpolate points applying an Spline to the bin data
-    sfit = UnivariateSpline(xbin, ybin, s=1)
-
+    sfit = UnivariateSpline(xbin, ybin)
+    sfit.set_smoothing_factor(0.5)
+    
     # Resample interpolation to the original grid
     continuum = sfit(x)
     # return continuum and x and y bins
