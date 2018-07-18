@@ -21,7 +21,7 @@ import numpy as np
 import os
 import warnings
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -290,17 +290,17 @@ def main(night_name=None, files=None):
         # set dark key
         keydb = 'DARK'
         # copy dark fits file to the calibDB folder
-        spirouCDB.PutFile(p, darkfits)
+        spirouDB.PutCalibFile(p, darkfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, darkfitsname, hdr)
+        spirouDB.UpdateCalibMaster(p, keydb, darkfitsname, hdr)
 
         # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
         # set badpix key
         keydb = 'BADPIX_OLD'
         # copy badpix fits file to calibDB folder
-        spirouCDB.PutFile(p, badpixelfits)
+        spirouDB.PutCalibFile(p, badpixelfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, badpixelfitsname, hdr)
+        spirouDB.UpdateCalibMaster(p, keydb, badpixelfitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

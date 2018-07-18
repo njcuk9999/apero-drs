@@ -19,7 +19,7 @@ import numpy as np
 import os
 
 from SpirouDRS import spirouBACK
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -164,9 +164,9 @@ def main(night_name=None, files=None):
     # set key for calibDB
     keydb = 'ORDER_PROFILE_{0}'.format(p['FIBER'])
     # copy dark fits file to the calibDB folder
-    spirouCDB.PutFile(p, rawfits)
+    spirouDB.PutCalibFile(p, rawfits)
     # update the master calib DB file with new key
-    spirouCDB.UpdateMaster(p, keydb, rawfitsname, hdr)
+    spirouDB.UpdateCalibMaster(p, keydb, rawfitsname, hdr)
 
     # ######################################################################
     # Localization of orders on central column
@@ -473,9 +473,9 @@ def main(night_name=None, files=None):
     if p['QC'] == 1:
         keydb = 'LOC_' + p['FIBER']
         # copy localisation file to the calibDB folder
-        spirouCDB.PutFile(p, locofits)
+        spirouDB.PutCalibFile(p, locofits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, locofitsname, hdr)
+        spirouDB.UpdateCalibMaster(p, keydb, locofitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

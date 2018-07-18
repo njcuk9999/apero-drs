@@ -67,34 +67,22 @@ cal_validate_spirou.main(night_name=night_name, files=files)
 \label{chapter:using_the_drs:working_example:overview}
 % ----------------------------------------------
 
-For this example all files are from:
-\begin{cmdbox}
-spirou@10.102.14.81:/data/RawImages/H2RG-AT4/AT4-04/2017-07-10_15-36-18/ramps/
-\end{cmdbox} 
+For this example all files are from 2018-04-09.
 
-\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicitly in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} (\textcolor{blue}{/drs/data/raw} in our case).
-
-\noindent and we will also need the current WAVE file from here:
-\begin{cmdbox}
-spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
-\end{cmdbox}
-
-\noindent which needs to be placed in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} directory (\textcolor{blue}{/drs/data/calibDB} in our case).
+\noindent following our example data architecture (from Section \ref{ch:install:setup} and shown explicitly in Section \ref{ch:data_architecture:folder_layout}) all files should be places in the \definevariable{text:drs_data_raw}{DRS\_DATA\_RAW} (\textcolor{blue}{/drs/data/raw} in our case) and placed into a night directory: `20180409'.
 
 \noindent Starting with RAMP files and ending with extracted orders and calculated drifts we need to run six codes:
 \begin{enumerate}
 \item \calDARK \hfill (See Section \ref{ch:the_recipes:cal_DARK_spirou})
+\item \calbadpix \hfill (See Section \ref{ch:the_recipes:cal_BADPIX_spirou})
 \item \callocRAW ($\times$2) \hfill (See Section \ref{ch:the_recipes:cal_loc_RAW_spirou})
 \item \calSLIT \hfill (See Section \ref{ch:the_recipes:cal_SLIT_spirou})
 \item \calFFraw ($\times$2) \hfill (See Section \ref{ch:the_recipes:cal_FF_RAW_spirou})
-\item (add spirou\_wave\_ini3.fits to calibDB) 
-\item \calextractRAWAB and \calextractRAWC (many times) \hfill (See Section \ref{ch:the_recipes:cal_extract_RAW_spirou})
-\item \calDRIFTRAW \hfill (See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou})
+\item \calextractRAW \hfill (See Section \ref{ch:the_recipes:cal_extract_RAW_spirou})
+\item \calDRIFTE \hfill (See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou})
+\item \calDRIFTPEAK \hfill (See Section \ref{ch:the_recipes:cal_DRIFT_RAW_spirou})
+\item \calCCF \hfill (See Section \ref{ch:the_recipes:cal_CCF_E2DS_spirou})
 \end{enumerate}
-
-
-
-
 
 % ----------------------------------------------
 \subsection{Run through from command line/python shell (Linux and macOS)}
@@ -105,86 +93,61 @@ As long as all codes are executable (see Section \ref{ch:install:installunix:exe
 
 \begin{enumerate}
 
+\item run the pre-processing on all files:
+\begin{cmdbox}
+cal_preprocess_spirou 20180409 "*.fits"
+\end{cmdbox}
+\begin{note}
+This adds the `\_pp' suffix on the end of all pre-processed files.
+\end{note}
+
 \item run the dark extraction on the `dark\_dark' file:
 \begin{cmdbox}
-cal_DARK_spirou.py 20170710 dark_dark02d406.fits
+cal_DARK_spirou.py 20180409 dark_dark_001_pp.fits
+\end{cmdbox}
+
+\item run the bad pixel identification on the `flat\_flat' and `dark\_dark' files:
+\begin{cmdbox}
+cal_BADPIX_spirou.py 20180409 flat_flat_001_pp.fits dark_dark_001_pp.fits
 \end{cmdbox}
 
 \item run the order localisation on the `dark\_flat' files:
 \begin{cmdbox}
-cal_loc_RAW_spirou.py 20170710 dark_flat02f10.fits dark_flat03f10.fits dark_flat04f10.fits dark_flat05f10.fits dark_flat06f10.fits
+cal_loc_RAW_spirou.py 20180409 dark_flat_001_pp.fits
 \end{cmdbox}
 
 \item run the order localisation on the `flat\_dark' files:
 \begin{cmdbox}
-cal_loc_RAW_spirou.py 20170710 flat_dark02f10.fits flat_dark03f10.fits flat_dark04f10.fits flat_dark05f10.fits flat_dark06f10.fits
+cal_loc_RAW_spirou.py 20180409 flat_dark_001_pp.fits
 \end{cmdbox}
 
 \item run the slit calibration on the `fp\_fp' files.
 \begin{cmdbox}
-cal_SLIT_spirou.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+cal_SLIT_spirou.py 20180409 fp_fp_001_pp.fits
 \end{cmdbox}
 
-\item run the flat field creation on the `dark\_flat' files:
-
-\begin{note}
-if using same files as above AND \lstinline[style=pythoninline]|calib_db_match="older"| you will get an error message when running the file (the tilt file is newer than input data) to solve this change \lstinline[style=pythoninline]|calib_db_match="closest"|.
-\end{note}
-
+\item run the flat field creation on the `flat\_flat' files:
 \begin{cmdbox}
-cal_FF_RAW_spirou.py 20170710 dark_flat02f10.fits dark_flat03f10.fits dark_flat04f10.fits dark_flat05f10.fits dark_flat06f10.fits
+cal_FF_RAW_spirou.py 20180409 flat_flat_001_pp.fits
 \end{cmdbox}
 
-
-\item Currently we do not create a new wavelength calibration file for this run. 
-
-\ifdevguide
-\begin{todo}
-The next section will be redundant once we generate the wave files as part of the DRS. So the next section will need to be updated.
-\end{todo}
-\fi
-
-\noindent Therefore we need one (as stated in the above section). We use the ones from here:
-
+\item run the extraction on the `fp\_fp' and `hcone' files:
 \begin{cmdbox}
-spirou@10.102.14.81:/data/reduced/DATA-CALIB/spirou_wave_ini3.fits
-spirou@10.102.14.81:/data/.../AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 
-spirou@10.102.14.81:/data/.../AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits
-\end{cmdbox}
-
-\noindent then place it in the \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB} folder. You will also need to edit the `\masterCALIBDBfile' file located in \definevariable{text:drs_calib_db}{DRS\_CALIB\_DB}. 
-
-\noindent Add the folloing line to `\masterCALIBDBfile'
-\begin{textbox}[title={In calibration database file}]
-@WAVE_AB AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 2014-08-11-03:42:12.000000 1407728532
-WAVE_A 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
-WAVE_B 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
-WAVE_C AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits@
-\end{textbox}
-
-\noindent and the `master\_calib\_SPIROU.txt' should look like this:
-\begin{textbox}[title={In calibration database file}]
-@WAVE_AB AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_AB.fits 2014-08-11-03:42:12.000000 1407728532
-WAVE_A 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
-WAVE_B 20170710 spirou_wave_ini3.fits 2000-01-01-00:00:00.00 946684800
-WAVE_C AT4-04/2017-10-11_21-32-17 2017-10-11_21-32-17_hcone_hcone02c406_wave_C.fits@
-DARK 20170710 dark_dark02d406.fits 07/10/17/16:37:48 1499704668.0
-ORDER_PROFIL_C 20170710 dark_flat02f10_order_profil_C.fits 07/10/17/17:03:50 1499706230.0
-LOC_C 20170710 dark_flat02f10_loco_C.fits 07/10/17/17:03:50 1499706230.0
-ORDER_PROFIL_AB 20170710 flat_dark02f10_order_profil_AB.fits 07/10/17/17:07:08 1499706428.0
-LOC_AB 20170710 flat_dark02f10_loco_AB.fits 07/10/17/17:07:08 1499706428.0
-TILT 20170710 fp_fp02a203_tilt.fits 07/10/17/17:07:08 1499706428.0
-\end{textbox}
-
-\item run the extraction files on the `hcone\_dark', `dark\_hcone', `hcone\_hcone', `dark\_dark\_AHC1', `hctwo\_dark', `dark\_hctwo', `hctwo-hctwo', `dark\_dark\_AHC2' and `fp\_fp'  files. For example for the `fp\_fp' files:
-\begin{cmdbox}
-cal_extract_RAW_spirouAB.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
-cal_extract_RAW_spirouC.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+cal_extract_RAW_spirou.py 20180409 fp_fp_001_pp.fits
+cal_extract_RAW_spirou.py 20180409 fp_fp_002_pp.fits
+cal_extract_RAW_spirou.py 20180409 fp_fp_003_pp.fits
+cal_extract_RAW_spirou.py 20180409 hcone_hcone_001_pp.fits
 \end{cmdbox}
 
 \item run the drift calculation on the `fp\_fp' files:
 \begin{cmdbox}
-@cal_DRIFT_RAW_spirou.py 20170710 @fp_fp02a203.fits fp_fp03a203.fits fp_fp04a203.fits
+cal_DRIFT_E2DS_spirou.py 20180409 fp_fp_001_pp_e2ds_AB.fits
+cal_DRIFTPEAK_E2DS_spirou.py 20180409 fp_fp_001_pp_e2ds_AB.fits
+\end{cmdbox}
+
+\item run the CCF calculation on an extracted file:
+\begin{cmdbox}
+cal_CCF_E2DS_spirou 20180409 hcone_hcone_001_pp_e2ds_C.fits UrNe.mas 0 10 0.1
 \end{cmdbox}
 
 \end{enumerate}
@@ -196,7 +159,7 @@ cal_extract_RAW_spirouC.py 20170710 fp_fp02a203.fits fp_fp03a203.fits fp_fp04a20
 \label{chapter:using_the_drs:working_example:run_python}
 % ----------------------------------------------
 
-The process is in the same order as Section \ref{chapter:using_the_drs:working_example:run_cmd}, including adding the `WAVE' lines to the calibDB folder).
+The process is in the same order as Section \ref{chapter:using_the_drs:working_example:run_cmd}.
 
 \begin{pythonbox}
 import cal_DARK_spirou, cal_loc_RAW_spirou
@@ -204,46 +167,44 @@ import cal_SLIT_spirou, cal_FF_RAW_spirou
 import cal_extract_RAW_spirou, cal_DRIFT_RAW_spirou
 import matplotlib.pyplot as plt
 # define constants
-NIGHT_NAME = '20170710'
-# cal_dark_spirou
-files = ['dark_dark02d406.fits']          # set up files
-cal_DARK_spirou.main(NIGHT_NAME, files)   # run cal_dark_spirou
-plt.close('all')                          # close graphs
-# cal_loc_RAW_spirou - flat_dark
-files = ['flat_dark02f10.fits', 'flat_dark03f10.fits', 'flat_dark04f10.fits',
-         'flat_dark05f10.fits','flat_dark06f10.fits']
+NIGHT_NAME = '20180409'
+# cal dark
+files = ['dark_dark_001_pp.fits']
+cal_DARK_spirou.main(NIGHT_NAME, files)
+# cal badpix
+flatfile = 'flat_flat_001_pp.fits'
+darkfile = 'dark_dark_001_pp.fits'
+cal_BADPIX_spirou.main(NIGHT_NAME, flatfile, darkfile)
+# cal loc
+files = ['dark_flat_001_pp.fits']
 cal_loc_RAW_spirou.main(NIGHT_NAME, files)
-plt.close('all')
-# cal_loc_RAW_spirou - dark_flat
-files = ['dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits', 
-         'dark_flat05f10.fits', 'dark_flat06f10.fits']
+# cal loc
+files = ['flat_dark_001_pp.fits']
 cal_loc_RAW_spirou.main(NIGHT_NAME, files)
-plt.close('all')
-# cal_SLIT_spirou
-files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
+# cal slit
+files = ['fp_fp_001_pp.fits']
 cal_SLIT_spirou.main(NIGHT_NAME, files)
-plt.close('all')
-# cal_FF_RAW_spirou - flat_dark
-files = ['flat_dark02f10.fits', 'flat_dark03f10.fits','flat_dark04f10.fits',
-         'flat_dark05f10.fits', 'flat_dark06f10.fits']
+# cal ff
+files = ['flat_flat_001_pp.fits']
 cal_FF_RAW_spirou.main(NIGHT_NAME, files)
-plt.close('all')
-# cal_FF_RAW_spirou - dark_flat
-files = ['dark_flat02f10.fits', 'dark_flat03f10.fits', 'dark_flat04f10.fits', 
-         'dark_flat05f10.fits', 'dark_flat06f10.fits']
-cal_FF_RAW_spirou.main(NIGHT_NAME, files)
-plt.close('all')
-# cal_extract_RAW_spirou - fp_fp AB
-files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
-cal_extract_RAW_spirou.main(NIGHT_NAME, files, 'AB')
-plt.close('all')
-# cal_extract_RAW_spirou - fp_fp C
-files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
-cal_extract_RAW_spirou.main(NIGHT_NAME, files, 'C')
-plt.close('all')
-# test cal_DRIFT_RAW_spirou
-files = ['fp_fp02a203.fits', 'fp_fp03a203.fits', 'fp_fp04a203.fits']
-cal_DRIFT_RAW_spirou.main(NIGHT_NAME, files)
+# cal extract
+files = ['fp_fp_001_pp.fits']
+cal_extract_RAW_spirou.main(NIGHT_NAME, files)
+files = ['fp_fp_002_pp.fits']
+cal_extract_RAW_spirou.main(NIGHT_NAME, files)
+files = ['fp_fp_003_pp.fits']
+cal_extract_RAW_spirou.main(NIGHT_NAME, files)
+files = ['hcone_hcone_001_pp.fits']
+cal_extract_RAW_spirou.main(NIGHT_NAME, files)
+# cal drift
+reffile = ['fp_fp_001_pp_e2ds_AB.fits']
+cal_DRIFT_E2DS_spirou.main(NIGHT_NAME, reffile)
+cal_DRIFTPEAK_E2DS_spirou(NIGHT_NAME, reffile)
+# cal ccf
+reffile = 'hcone_hcone_001_pp_e2ds_C.fits'
+mask = 'UrNe.mas'
+cal_CCF_E2DS_spirou.main(NIGHT_NAME, reffile, mask, 0, 10, 0.1)
+# close all the plots
 plt.close('all')
 
 \end{pythonbox}
