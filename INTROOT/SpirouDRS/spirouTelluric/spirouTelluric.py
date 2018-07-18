@@ -10,7 +10,10 @@ Version 0.0.1
 """
 from __future__ import division
 import numpy as np
+import os
+from astropy import constants
 from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -33,7 +36,8 @@ WLOG = spirouCore.wlog
 ParamDict = spirouConfig.ParamDict
 # Get sigma FWHM
 SIG_FWHM = spirouCore.spirouMath.fwhm()
-
+# speed of light
+CONSTANT_C = constants.c.value
 
 # =============================================================================
 # Define functions
@@ -86,10 +90,8 @@ def get_molecular_tell_lines(p, loc):
     tapas, thdr, tcmt, _, _ = tdata
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
-    # TODO: Get tapas_file_name from SpirouConstants
-    # TODO: where do we get wave file from now constants are from E2DS file???
-    # Currently have to set to fitsfilename (the input name)
-    wave_file = p['FITSFILENAME']
+    # TODO: Make this the date and not the wave file name??
+    wave_file = loc['WAVE_FILE']
     tapas_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
     # if we already have a file for this wavelength just open it
     try:
@@ -98,6 +100,8 @@ def get_molecular_tell_lines(p, loc):
         # log loading
         wmsg = 'Loading Tapas convolve file: {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(tapas_file_name))
+        # add name to loc
+        loc['TAPAS_FNAME'], loc['TAPAS_ABSNAME'] = None, None
     # if we don't have a tapas file for this wavelength soltuion calculate it
     except Exception:
         # loop around each molecule in the absorbers list
@@ -113,7 +117,7 @@ def get_molecular_tell_lines(p, loc):
             # interpolate with Univariate Spline
             tapas_spline = IUVSpline(lam, trans)
             # log the mean transmission level
-            wmsg = 'Mean Trans level: {0}'.format(np.mean(trans))
+            wmsg = '\tMean Trans level: {0:.3f}'.format(np.mean(trans))
             WLOG('', p['LOG_OPT'], wmsg)
             # convolve all tapas absorption to the SPIRou approximate resolution
             for iord in range(49):
@@ -131,9 +135,14 @@ def get_molecular_tell_lines(p, loc):
         tapas_all_species[tapas_all_species < 0] = 0
         # save the file
         np.save(tapas_file_name, tapas_all_species)
+        # add name to loc
+        loc['TAPAS_ABSNAME'] = tapas_file_name
+        loc['TAPAS_FNAME'] = os.path.basename(tapas_file_name)
     # finally add all species to loc
     loc['TAPAS_ALL_SPECIES'] = tapas_all_species
-    loc.set_source('TAPAS_ALL_SPECIES', func_name)
+    # add sources
+    skeys = ['TAPAS_ALL_SPECIES', 'TAPAS_FNAME']
+    loc.set_sources(skeys, func_name)
     # return loc
     return loc
 
@@ -164,23 +173,43 @@ def calculate_absorption_pca(p, loc, x, mask):
     # get eigen values
     eig_u, eig_s, eig_vt = np.linalg.svd(x[:, mask], full_matrices=False)
 
-    # create pc image
-    pc = np.zeros(np.product(loc['DATA'].shape), npc)
+    # if we are adding the derivatives to the pc need extra components
+    if p['ADD_DERIV_PC']:
+        # the npc+1 term will be the derivative of the first PC
+        # the npc+2 term will be the broadning factor the first PC
+        pc = np.zeros([np.product(loc['DATA'].shape), npc + 2])
+    else:
+        # create pc image
+        pc = np.zeros([np.product(loc['DATA'].shape), npc])
 
     # fill pc image
     for it in range(npc):
         for jt in range(x.shape[0]):
             pc[:, it] += eig_u[jt, it] * x[jt, :]
 
-    # normalise the pc image
-    for it in range(npc):
-        pc[:, it] = pc[:, it] / np.sum(pc[mask, it] **2)
+    # if we are adding the derivatives add them now
+    if p['ADD_DERIV_PC']:
+        # first extra is the first derivative
+        pc[:, npc] = np.gradient(pc[:, 0])
+        # second extra is the second derivative
+        pc[:, npc + 1] = np.gradient(np.gradient(pc[:, 0]))
+        # number of components is two longer now
+        npc += 2
+
+    # if we are fitting the derivative change the fit parameter
+    if p['FIT_DERIV_PC']:
+        fit_pc = np.gradient(pc, axis=0)
+    # else we are fitting the principle components themselves
+    else:
+        fit_pc = np.array(pc)
 
     # save pc image to loc
     loc['PC'] = pc
     loc['NPC'] = npc
-    loc.set_sources(['PC', 'NPC'], func_name)
+    loc['FIT_PC'] = fit_pc
+    loc.set_sources(['PC', 'NPC', 'FIT_PC'], func_name)
     # return loc
+    return loc
 
 
 def get_berv_value(p, hdr, filename=None):
@@ -212,7 +241,7 @@ def interp_at_shifted_wavelengths(p, loc, thdr):
     # Get the Barycentric correction from header
     dv, _, _ = get_berv_value(p, thdr)
     # set up storage for template
-    template2 = np.zeros_like(loc['DATA'])
+    template2 = np.zeros(np.product(loc['DATA'].shape))
     ydim, xdim = loc['DATA'].shape
     # loop around orders
     for order_num in range(ydim):
@@ -246,6 +275,7 @@ def calc_recon_abso(p, loc):
     # get data from loc
     sp = loc['sp']
     tapas_all_species = loc['TAPAS_ALL_SPECIES']
+    amps_abso_total = loc['AMPS_ABSOL_TOTAL']
     # get data dimensions
     ydim, xdim = loc['DATA'].shape
     # redefine storage for recon absorption
@@ -254,6 +284,7 @@ def calc_recon_abso(p, loc):
     sp2 = sp.ravel()
     wave2 = loc['WAVE_IT'].ravel()
     # get the normalisation factor
+    # TODO: Not used??
     norm = np.nanmedian(sp2)
     # define the good pixels as those above minimum transmission
     keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
@@ -283,7 +314,7 @@ def calc_recon_abso(p, loc):
                 recongood = recon_abso[start:end]
                 # convolve spectrum
                 ckwargs = dict(v=loc['KER2'], mode='same')
-                sp2b = np.convolve(spgood / recon_abso, **ckwargs)
+                sp2b = np.convolve(spgood / recongood, **ckwargs)
                 # convolve mask for weights
                 ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
                 # wave weighted convolved spectrum into template2
@@ -292,8 +323,9 @@ def calc_recon_abso(p, loc):
         else:
             template2 = loc['TEMPLATE2']
         # --------------------------------------------------------------
-        # get dd
-        dd = (sp2 / template2) / recon_abso
+        # get residual spectrum
+        with warnings.catch_warnings(record=True) as w:
+            resspec = (sp2 / template2) / recon_abso
         # --------------------------------------------------------------
         if loc['FLAG_TEMPLATE']:
             # construct convolution kernel
@@ -307,45 +339,60 @@ def calc_recon_abso(p, loc):
                 # produce a mask of good transmission
                 order_tapas = tapas_all_species[0, start:end]
                 mask = order_tapas > p['TRANSMISSION_CUT']
+                fmask = np.array(mask, dtype=float)
                 # get good transmission spectrum
-                ddgood = dd[start:end] * np.array(mask, dtype=float)
-                recongood = recon_abso[start:end]
+                with warnings.catch_warnings(record=True) as w:
+                    resspecgood = resspec[start:end] * fmask
+                    recongood = recon_abso[start:end]
                 # convolve spectrum
                 ckwargs = dict(v=loc['KER2'], mode='same')
-                sp2b = np.convolve(ddgood / recongood, **ckwargs)
+                with warnings.catch_warnings(record=True) as w:
+                    sp2b = np.convolve(resspecgood / recongood, **ckwargs)
                 # convolve mask for weights
                 ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
                 # wave weighted convolved spectrum into dd
-                dd[start:end] = dd[start:end] / (sp2b / ww)
+                with warnings.catch_warnings(record=True) as w:
+                    resspec[start:end] = resspec[start:end] / (sp2b / ww)
         # --------------------------------------------------------------
         # Log dd and subtract median
         # log dd
-        log_dd = np.log(dd)
+        with warnings.catch_warnings(record=True) as w:
+            log_resspec = np.log(resspec)
         # --------------------------------------------------------------
         # subtract off the median from each order
         for order_num in range(ydim):
             # get start and end points
             start = order_num * xdim
             end = order_num * xdim + xdim
+            # skip if whole order is NaNs
+            if np.sum(np.isfinite(log_resspec[start:end])) == 0:
+                continue
             # get median
-            log_dd_med = np.nanmedian(log_dd[start:end])
+            log_resspec_med = np.nanmedian(log_resspec[start:end])
             # subtract of median
-            log_dd[start:end] = log_dd[start:end] - log_dd_med
+            log_resspec[start:end] = log_resspec[start:end] - log_resspec_med
+        # --------------------------------------------------------------
+        # set up fit
+        if p['FIT_DERIV_PC']:
+            fit_dd = np.gradient(log_resspec)
+        else:
+            fit_dd = np.array(log_resspec)
         # --------------------------------------------------------------
         # identify good pixels to keep
-        keep &= np.isfinite(log_dd)
-        keep &= np.sum(np.isfinite(loc['PC']), axis=1) == loc['NPC']
+        keep &= np.isfinite(fit_dd)
+        keep &= np.sum(np.isfinite(loc['FIT_PC']), axis=1) == loc['NPC']
         # log number of kept pixels
         wmsg = 'Number to keep total = {0}'.format(np.sum(keep))
         WLOG('', p['LOG_OPT'], wmsg)
         # --------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
-        largs = log_dd[keep], loc['pc'][keep, :]
+        largs = [fit_dd[keep], loc['FIT_PC'][keep, :]]
         amps, recon = lin_mini(*largs)
         # --------------------------------------------------------------
         # set up storage for absorption array 2
-        abso2 = np.zeros(len(dd))
+        abso2 = np.zeros(len(resspec))
         for ipc in range(len(amps)):
+            amps_abso_total[ipc] += amps[ipc]
             abso2 += loc['PC'][:, ipc] * amps[ipc]
         recon_abso *= np.exp(abso2)
 
@@ -353,8 +400,10 @@ def calc_recon_abso(p, loc):
     loc['SP2'] = sp2
     loc['TEMPLATE2'] = template2
     loc['RECON_ABSO'] = recon_abso
+    loc['AMPS_ABSOL_TOTAL'] = amps_abso_total
     # set the source
-    loc.set_sources(['SP2', 'TEMPLATE2', 'RECON_ABSO'], func_name)
+    skeys = ['SP2', 'TEMPLATE2', 'RECON_ABSO','AMPS_ABSOL_TOTAL']
+    loc.set_sources(skeys, func_name)
     # return loc
     return loc
 
@@ -369,33 +418,26 @@ def calc_molecular_absorption(p, loc):
 
     # log data
     log_recon_abso = np.log(recon_abso)
-    log_tapas_abso = np.log(tapas_all_species[1:, :])
+    with warnings.catch_warnings(record=True) as w:
+        log_tapas_abso = np.log(tapas_all_species[1:, :])
 
     # get good pixels
     keep = np.min(log_tapas_abso, axis=0) > limit
-    keep &= log_recon_abso > limit
+    with warnings.catch_warnings(record=True) as w:
+        keep &= log_recon_abso > limit
     keep &= np.isfinite(recon_abso)
 
     # get keep arrays
     klog_recon_abso = log_recon_abso[keep]
-    klog_tapas_abso = log_tapas_abso[keep]
+    klog_tapas_abso = log_tapas_abso[:, keep]
 
     # work out amplitudes and recon
     amps, recon = lin_mini(klog_recon_abso, klog_tapas_abso)
 
-    # set up empty log recon array
-    log_recon = np.zeros(loc['DATA'].shape)
-    # loop around amps and add
-    for it in range(len(amps)):
-        log_recon += log_tapas_abso[it, :] * amps[it]
-
-    # get reconstructed tapas
-    recon_tapas  = np.exp(log_recon)
-
     # load amplitudes into loc
-    for it, molecule in p['TELLU_ABSORBERS'][1:]:
+    for it, molecule in enumerate(p['TELLU_ABSORBERS'][1:]):
         # get molecule keyword store and key
-        molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'], molecule.upper())
+        molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'][0], molecule.upper())
         # load into loc
         loc[molkey] = amps[it]
     # return loc
@@ -445,7 +487,7 @@ def lin_mini(vector, sample):
                 M[j, i] = M[i, j]
             v[i] = np.sum(vector * sample[:, i])
         amps = np.matmul(np.linalg.inv(M), v)
-        recon = np.zeros(sz_sample[1])
+        recon = np.zeros(sz_sample[0])
         for i in range(sz_sample[1]):
             recon += amps[i] * sample[:, i]
         return amps, recon
