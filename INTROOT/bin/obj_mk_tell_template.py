@@ -92,6 +92,11 @@ def main(night_name=None, files=None):
     loc.set_source('WAVE', main_name)
 
     # ----------------------------------------------------------------------
+    # Get and Normalise the blaze
+    # ----------------------------------------------------------------------
+    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+
+    # ----------------------------------------------------------------------
     # Get database files
     # ----------------------------------------------------------------------
     # get current telluric maps from telluDB
@@ -125,6 +130,8 @@ def main(night_name=None, files=None):
         image = image.reshape(loc['DATA'].shape)
         # Load the data for this file
         tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
+        # Correct for the blaze
+        tdata = tdata * loc['NBLAZE']
         # Get the Barycentric correction from header
         dv, _, _ = spirouTelluric.GetBERV(p, thdr)
 
@@ -175,7 +182,7 @@ def main(night_name=None, files=None):
     # Write Cube median (the template) to file
     # ----------------------------------------------------------------------
     # TODO: move file definition to spirouConfig
-    reduced_dir = p['DRS_DATA_REDUC']
+    reduced_dir = p['ARG_FILE_DIR']
     outfilename = 'Template_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
     outfile = os.path.join(reduced_dir, outfilename)
 
@@ -189,6 +196,8 @@ def main(night_name=None, files=None):
     # Update the telluric database with the template
     # ----------------------------------------------------------------------
     spirouDB.UpdateDatabaseTellTemp(p, outfilename, loc['DATAHDR'])
+    # put file in telluDB
+    spirouDB.PutTelluFile(p, outfile)
 
     # ----------------------------------------------------------------------
     # Save cubes to file
