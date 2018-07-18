@@ -12,6 +12,7 @@ Created on 2017-10-30 at 17:08
 from SpirouDRS import spirouConfig
 from . import spirouCDB
 from . import spirouTDB
+from . import spirouDB
 
 # =============================================================================
 # Define variables
@@ -43,6 +44,8 @@ GetCalibFile = spirouCDB.get_file_name
 PutCalibFile = spirouCDB.put_file
 
 UpdateCalibMaster = spirouCDB.update_datebase
+
+GetTimes  = spirouDB.get_times_from_header
 
 GetDatabaseTellMole = spirouTDB.get_database_tell_mole
 
