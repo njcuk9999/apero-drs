@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 
-# CODE DESCRIPTION HERE
+obj_fit_tellu [night_directory] [files]
+
+Uses the telluric database entries to correct an input spectrum (or indiviudally
+for a set of files)
+saved into reduced folder with _tellu.fits suffix added
 
 Created on 2018-07-13 05:18
 @author: ncook
@@ -11,7 +15,8 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
+from collections import OrderedDict
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -43,14 +48,21 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+#def main(night_name=None, files=None):
+if __name__ == '__main__':
+
+    import sys
+    sys.argv = 'obj_fit_tellu.py tellu_e2ds 2279005o_HR8489_pp_e2dsff_AB.fits'.split()
+    night_name, files = None, None
+
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p)
+    p = spirouStartup.LoadArguments(p, night_name, files,
+                                    mainfitsdir='reduced')
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set up function name
     main_name = __NAME__ + '.main()'
 
@@ -75,7 +87,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Load transmission files
     # ----------------------------------------------------------------------
-    trans_files = spirouDB.GetDatabaseTellMap(p)
+    transdata = spirouDB.GetDatabaseTellMap(p)
+    trans_files = transdata[0]
 
     # ----------------------------------------------------------------------
     # Start plotting
@@ -128,11 +141,12 @@ def main(night_name=None, files=None):
     # loop around outputfiles and add them to abso
     for it, filename in enumerate(trans_files):
         # push data into array
-        data_it, _, _, _, _ = spirouImage.ReadImage(p, filename)
+        data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
         abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
 
     # log the absorption cube
-    log_abso = np.log(abso)
+    with warnings.catch_warnings(record=True) as w:
+        log_abso = np.log(abso)
 
     # ----------------------------------------------------------------------
     # Locate valid pixels for PCA
@@ -144,7 +158,8 @@ def main(night_name=None, files=None):
     wmsg = 'Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}'
     WLOG('', p['LOG_OPT'], wmsg.format(fraction))
     # log fraction of valid pixels > 1 - (1/e)
-    keep &= np.min(log_abso, axis=0) > -1
+    with warnings.catch_warnings(record=True) as w:
+        keep &= np.min(log_abso, axis=0) > -1
     fraction = np.sum(keep)/len(keep)
     wmsg = 'Fraction of valid pixels with transmission > 1 - (1/e) = {0:.3f}'
     WLOG('', p['LOG_OPT'], wmsg.format(fraction))
@@ -162,7 +177,12 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Loop around telluric files
     # ----------------------------------------------------------------------
-    for filename in p['ARG_FILE_NAMES']:
+    for basefilename in p['ARG_FILE_NAMES']:
+
+        # ------------------------------------------------------------------
+        # Construct absolute file path
+        # ------------------------------------------------------------------
+        filename = os.path.join(p['ARG_FILE_DIR'], basefilename)
         # ------------------------------------------------------------------
         # Construct output file names
         # ------------------------------------------------------------------
@@ -174,11 +194,12 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Skip if output file already exists
         # ------------------------------------------------------------------
-        if os.path.exists(outfile1):
-            # log that file was skipped
-            wmsg = 'File "{0}" exist, skipping.'
-            WLOG('', p['LOG_OPT'], wmsg.format(outfilename1))
-            continue
+        # TODO: Do we really want to skip?
+        # if os.path.exists(outfile1):
+        #     # log that file was skipped
+        #     wmsg = 'File "{0}" exist, skipping.'
+        #     WLOG('', p['LOG_OPT'], wmsg.format(outfilename1))
+        #     continue
 
         # ------------------------------------------------------------------
         # Read filename
@@ -188,11 +209,21 @@ def main(night_name=None, files=None):
         # normalise with blaze function
         loc['SP'] = tdata / loc['NBLAZE']
         loc.set_source('SP', main_name)
+
+        # ------------------------------------------------------------------
+        # Set storage
+        # ------------------------------------------------------------------
+        loc['RECON_ABSO'] = np.ones(np.product(loc['DATA'].shape))
+        loc['AMPS_ABSOL_TOTAL'] = np.zeros(loc['NPC'])
+        loc.set_sources(['RECON_ABSO', 'AMPS_ABSOL_TOTAL'], main_name)
+
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
         loc['WAVE_IT'] = spirouImage.GetWaveSolution(p, tdata, thdr)
         loc.set_source('WAVE_IT', main_name)
+        # load wave keys
+        loc = spirouImage.GetWaveKeys(p, loc, thdr)
 
         # ------------------------------------------------------------------
         # Interpolate at shifted wavelengths (if we have a template)
@@ -202,12 +233,8 @@ def main(night_name=None, files=None):
 
             # debug plot
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-                # start interactive plot
-                sPlt.start_interactive_session()
                 # plot the transmission map plot
                 sPlt.tellu_fit_tellu_spline_plot(p, loc)
-                # end interactive session
-                sPlt.end_interactive_session()
 
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption
@@ -215,17 +242,32 @@ def main(night_name=None, files=None):
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
         if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
-            # start interactive plot
-            sPlt.start_interactive_session()
             # plot the recon abso plot
             sPlt.tellu_fit_recon_abso_plot(p, loc)
-            # end interactive session
-            sPlt.end_interactive_session()
 
         # ------------------------------------------------------------------
         # Get molecular absorption
         # ------------------------------------------------------------------
         loc = spirouTelluric.CalcMolecularAbsorption(p, loc)
+
+        # ------------------------------------------------------------------
+        # Get components amplitudes for header
+        # ------------------------------------------------------------------
+        hdict = OrderedDict()
+        npc = loc['NPC']
+        if p['ADD_DERIV_PC']:
+            values = loc['AMPS_ABSOL_TOTAL'][:npc-2]
+            hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
+                                             values=values, dim1name='amp')
+            hdict = spirouImage.AddKey(hdict, p['KW_TELLU_DV_TELL1'],
+                                       value=loc['AMPS_ABSOL_TOTAL'][npc - 2])
+            hdict = spirouImage.AddKey(hdict, p['KW_TELLU_DV_TELL2'],
+                                       value=loc['AMPS_ABSOL_TOTAL'][npc - 1])
+        else:
+            values = loc['AMPS_ABSOL_TOTAL'][:npc]
+            hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
+                                             values=values, dim1name='PC')
+
 
         # ------------------------------------------------------------------
         # Write corrected spectrum to E2DS
@@ -234,7 +276,7 @@ def main(night_name=None, files=None):
         sp_out = loc['SP2'] / loc['RECON_ABSO']
         sp_out = sp_out.reshape(loc['DATA'].shape)
         # copy original keys
-        hdict = spirouImage.CopyOriginalKeys(thdr, tcdr)
+        hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         # write sp_out to file
         spirouImage.WriteImage(outfile1, sp_out, hdict)
 
@@ -252,9 +294,9 @@ def main(night_name=None, files=None):
             # save to storage
             recon_abso2[order_num, :] = loc['RECON_ABSO'][start:end]
         # add molecular absorption to file
-        for it, molecule in p['TELLU_ABSORBERS'][1:]:
+        for it, molecule in enumerate(p['TELLU_ABSORBERS'][1:]):
             # get molecule keyword store and key
-            molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'], molecule.upper())
+            molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'][0], molecule.upper())
             molkws = [molkey, 0, 'Absorption in {0}'.format(molecule.upper())]
             # load into hdict
             hdict = spirouImage.AddKey(hdict, molkws, value=loc[molkey])
@@ -275,17 +317,17 @@ def main(night_name=None, files=None):
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
-    return dict(locals())
+    # return dict(locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == "__main__":
-    # run main with no arguments (get from command line - sys.argv)
-    ll = main()
-    # exit message if in debug mode
-    spirouStartup.Exit(ll)
+# if __name__ == "__main__":
+#     # run main with no arguments (get from command line - sys.argv)
+#     ll = main()
+#     # exit message if in debug mode
+#     spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
