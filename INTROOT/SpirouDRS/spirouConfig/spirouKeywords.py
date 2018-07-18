@@ -52,13 +52,14 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_BBAD',
             'kw_BBFLAT',
             'kw_BERV',
-            'kw_BJD',
             'kw_BERV_MAX',
             'kw_BHOT',
+            'kw_BJD',
             'kw_BNDARK',
             'kw_BNFLAT',
             'kw_BNILUM',
             'kw_BTOT',
+            'kw_BUNIT',
             'kw_CCAS',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
@@ -72,14 +73,13 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CCF_MAXCPP',
             'kw_CCF_RV',
             'kw_CCF_RVC',
+            'kw_CDELT1',
             'kw_CDEN',
             'kw_CMMTSEQ',
             'kw_CREF',
             'kw_CRPIX1',
             'kw_CRVAL1',
-            'kw_CDELT1',
             'kw_CTYPE1',
-            'kw_BUNIT',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -125,19 +125,25 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRA',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
-            'kw_POL_STOKES',
-            'kw_POL_NEXP',
-            'kw_POL_METHOD',
             'kw_POL_EXPTIME',
+            'kw_POL_METHOD',
+            'kw_POL_NEXP',
+            'kw_POL_STOKES',
             'kw_RDNOISE',
             'kw_TELLU_ABSO',
+            'kw_TELLU_AMP_PC',
+            'kw_TELLU_DV_TELL1',
+            'kw_TELLU_DV_TELL2',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
             'kw_UTC_OBS',
+            'kw_WAVE_FILE',
             'kw_WAVE_LL_DEG',
             'kw_WAVE_ORD_N',
             'kw_WAVE_PARAM',
+            'kw_WAVE_TIME1',
+            'kw_WAVE_TIME2',
             'kw_drs_QC',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
@@ -392,6 +398,10 @@ kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
+kw_WAVE_FILE = ['WAVEFILE', 0, 'Wave file used']
+kw_WAVE_TIME1 = ['WAVETIME1', 0, 'Wave file date+time human']
+kw_WAVE_TIME2 = ['WAVETIME2', 0, 'Wave file date+time unix']
+
 kw_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
 kw_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
 kw_CDELT1 = ['CDELT1', 0, 'Coordinate at reference pixel [nm]']
@@ -465,6 +475,13 @@ kw_TH_NAXIS2 = ['NAXIS2', None, '']
 # -----------------------------------------------------------------------------
 # Telluric absorption prefix (i.e. ABSO_H20)                     [OBJ_FIT_TELLU]
 kw_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
+
+# Telluric principle component amplitudes (for use with 1D list)
+kw_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
+
+# Telluric principle component derivatives
+kw_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
+kw_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
 
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
