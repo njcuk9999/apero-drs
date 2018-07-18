@@ -20,6 +20,7 @@ import os
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
@@ -214,9 +215,16 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         wdata = spirouImage.ReadWaveFile(p, hdr, return_header=True)
         loc['WAVE'], loc['WAVEHDR'] = wdata
-        loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+        wavefile = spirouImage.ReadWaveFile(p, hdr, return_filename=True)
+        loc['WAVEFILE'] = os.path.basename(loc['WAVE_FILE'])
+        skeys = ['WAVE', 'WAVE_FILE']
+        loc.set_sources(skeys, __NAME__ + '.main + .spirouImage.ReadWaveFile()')
         # get wave params from wave header
         loc['WAVEPARAMS'] = spirouImage.ReadWaveParams(p, loc['WAVEHDR'])
+        loc.set_source('WAVEPARAMS', '.main() + spirouImage.ReaveWaveParams()')
+
+        # get dates
+        loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
 
         # ----------------------------------------------------------------------
         # Read Flat file
@@ -225,7 +233,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
         # get all values in flat that are zero to 1
         loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
-
 
         # ------------------------------------------------------------------
         # Read Blaze file
@@ -389,6 +396,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add localization file keys to header
         root = p['KW_ROOT_DRS_LOC'][0]
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
+        # add wave solution date and filename
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_FILE'],
+                                   value=loc['WAVE_FILE'])
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+                                   value=loc['WAVE_ACQTIMES'][0])
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+                                   value=loc['WAVE_ACQTIMES'][1])
         # add wave solution number of orders
         hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
                                    value=loc['WAVEPARAMS'].shape[0])
