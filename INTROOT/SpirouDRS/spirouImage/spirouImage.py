@@ -1584,6 +1584,30 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
         return p
 
 
+def get_wave_keys(p, loc, hdr):
+    func_name = __NAME__ + '.get_wave_keys()'
+    # check for header key
+    if p['KW_WAVE_FILE'][0] in hdr:
+        wkwargs = dict(p=p, hdr=hdr, return_value=True)
+        loc['WAVEFILE'] = get_param(**wkwargs, keyword=p['KW_WAVE_FILE'][0])
+        loc['WAVETIME1'] = get_param(**wkwargs, keyword=p['KW_WAVE_TIME1'][0])
+        loc['WAVETIME2'] = get_param(**wkwargs,  keyword=p['KW_WAVE_TIME2'][0])
+    # TODO: Remove section later
+    else:
+        # log warning
+        wmsg = 'Warning key="{0}" not in HEADER file'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
+        # set wave file to fitsfilename
+        loc['WAVEFILE'] = p['FITSFILENAME']
+        loc['WAVETIME1'] = 'Unknown'
+        loc['WAVETIME2'] = -9999
+
+    # set sources
+    loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
+    # return loc
+    return loc
+
+
 # TODO insert paremeter dictionnary
 # TODO: FIX PROBLEMS: Write doc string
 def e2dstos1d(wave,e2dsffb,bin):
