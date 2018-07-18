@@ -104,6 +104,8 @@ GetTypeFromHeader = spirouFITS.get_type_from_header
 
 GetWaveSolution = spirouFITS.get_wave_solution
 
+GetWaveKeys = spirouImage.get_wave_keys
+
 IdentifyUnProFile = spirouFile.identify_unprocessed_file
 
 InterpolateBadRegions = spirouImage.interp_bad_regions
