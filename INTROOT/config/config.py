@@ -44,6 +44,9 @@ DRS_DATA_REDUC = '/home/data/CFHT/reduced'
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = '/home/data/CFHT/calibDB'
 
+#   Define the directory that the calibration files should be saved to/read from
+DRS_TELLU_DB = '/drs/spirou/data/telluDB'
+
 #   Define the directory that the log messages are stored in
 DRS_DATA_MSG = '/home/data/CFHT/msg'
 

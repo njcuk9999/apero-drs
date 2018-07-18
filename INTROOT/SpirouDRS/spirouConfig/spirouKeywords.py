@@ -48,6 +48,7 @@ p = spirouConfig.check_params(p)
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_UNIX',
+            'kw_AIRMASS',
             'kw_BBAD',
             'kw_BBFLAT',
             'kw_BERV',
@@ -74,6 +75,11 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CDEN',
             'kw_CMMTSEQ',
             'kw_CREF',
+            'kw_CRPIX1',
+            'kw_CRVAL1',
+            'kw_CDELT1',
+            'kw_CTYPE1',
+            'kw_BUNIT',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -122,7 +128,9 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_STOKES',
             'kw_POL_NEXP',
             'kw_POL_METHOD',
+            'kw_POL_EXPTIME',
             'kw_RDNOISE',
+            'kw_TELLU_ABSO',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
@@ -258,6 +266,9 @@ kw_CDEN = ['SBCDEN_P', None, '']
 # define polarisation HEADER key
 kw_CMMTSEQ = ['CMMTSEQ', None, '']
 
+# define the airmass HEADER key
+kw_AIRMASS = ['AIRMASS', None, '']
+
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
@@ -371,15 +382,21 @@ kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 # -----------------------------------------------------------------------------
 # Define cal_EXTRACT variables
 # -----------------------------------------------------------------------------
-
+# TODO: Comment this section
 # localization file used
 kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
 kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
 
-kw_E2DS_FUNC = ['EXTFUNC', '', 'Extrction function']
+kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
+
+kw_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
+kw_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
+kw_CDELT1 = ['CDELT1', 0, 'Coordinate at reference pixel [nm]']
+kw_CTYPE1 = ['CTYPE1', 'nm', 'Units of coordinate']
+kw_BUNIT = ['BUNIT', '', 'Units of data values']
 
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
@@ -408,7 +425,7 @@ kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
 # -----------------------------------------------------------------------------
-
+# TODO: Comment this section
 kw_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
 kw_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
 kw_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
@@ -427,33 +444,41 @@ kw_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
-# the number of orders used in the TH line list                      [WAVE_AB]
+# the number of orders used in the TH line list                        [WAVE_AB]
 kw_WAVE_ORD_N = ['TH_ORD_N', None, 'nb orders in total']
 
-# the number of fit coefficients from the TH line list fit           [WAVE_AB]
+# the number of fit coefficients from the TH line list fit             [WAVE_AB]
 kw_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
 
-# the prefix to use to get the TH line list fit coefficients         [WAVE_AB]
+# the prefix to use to get the TH line list fit coefficients           [WAVE_AB]
 kw_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
 
-# the x-axis dimension size for the TH line list file                [WAVE_AB]
+# the x-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS1 = ['NAXIS1', None, '']
 
-# the y-axis dimension size for the TH line list file                [WAVE_AB]
+# the y-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS2 = ['NAXIS2', None, '']
 
 
 # -----------------------------------------------------------------------------
+# Define telluric variables
+# -----------------------------------------------------------------------------
+# Telluric absorption prefix (i.e. ABSO_H20)                     [OBJ_FIT_TELLU]
+kw_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
+
+# -----------------------------------------------------------------------------
 # Define polarimetry variables
 # -----------------------------------------------------------------------------
-kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, or V']
+# TODO: Comment this section
+kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
-
+kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
 # -----------------------------------------------------------------------------
+# TODO: Comment this section
 kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
 kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
 kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
