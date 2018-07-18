@@ -86,10 +86,7 @@ def end_interactive_session(interactive=False):
 
     :return None:
     """
-    if not interactive:
-        plt.show()
-        plt.close()
-    elif not INTERACTIVE_PLOTS:
+    if not interactive and not INTERACTIVE_PLOTS:
         plt.show()
         plt.close()
 
@@ -1820,7 +1817,7 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
 def tellu_pca_comp_plot(p, loc):
 
     # get constants from p
-    npc = p['TELLU_NUMBER_OF_PRINCIPLE_COMP']
+    npc = loc['NPC']
     # get data from loc
     wave = loc['WAVE'].ravel()
     pc = loc['PC']
@@ -1832,7 +1829,18 @@ def tellu_pca_comp_plot(p, loc):
     frame = plt.subplot(111)
     # plot principle components
     for it in range(npc):
-        frame.plot(wave, pc[:, it], label='pc {0}'.format(it + 1))
+        # define the label for the component
+        if p['ADD_DERIV_PC']:
+            if it == npc - 2:
+                label = 'd[pc1]'
+            elif it == npc - 1:
+                label = 'd[pc2]'
+            else:
+                label = 'pc {0}'.format(it + 1)
+        else:
+            label = 'pc {0}'.format(it + 1)
+        # plot the component with correct label
+        frame.plot(wave, pc[:, it], label=label)
     # add legend
     frame.legend(loc=0)
     # turn off interactive plotting
@@ -1856,9 +1864,9 @@ def tellu_fit_tellu_spline_plot(p, loc):
     ssp = sp[selected_order, :]
     # get template2 at selected order
     start, end = selected_order * xdim, selected_order * xdim + xdim
-    stemp = template2[start: end]
+    stemp = np.array(template2[start: end])
     # recovered absorption
-    srecov = sp/stemp
+    srecov = ssp/stemp
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1882,13 +1890,14 @@ def tellu_fit_recon_abso_plot(p, loc):
     # get constants from p
     selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
     # get data dimensions
-    ydim, xdim = loc['DATA']
+    ydim, xdim = loc['DATA'].shape
+    # get selected order wave lengths
+    swave = loc['WAVE_IT'][selected_order, :]
     # get the data from loc for selected order
     start, end = selected_order * xdim, selected_order * xdim + xdim
-    swave = loc['WAVE_IT'][start:end]
-    ssp2 = loc['SP2'][start:end]
-    stemp2 = loc['TEMPLATE2'][start:end]
-    srecon_abso = loc['RECON_ABSO'][start:end]
+    ssp2 = np.array(loc['SP2'][start:end])
+    stemp2 = np.array(loc['TEMPLATE2'][start:end])
+    srecon_abso = np.array(loc['RECON_ABSO'][start:end])
     # set up fig
     plt.figure()
     # clear the current figure
