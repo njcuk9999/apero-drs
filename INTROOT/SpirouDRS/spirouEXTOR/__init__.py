@@ -22,8 +22,8 @@ __author__ = Constants.AUTHORS()
 __date__ = Constants.LATEST_EDIT()
 __release__ = Constants.RELEASE()
 # define imports using asterisk
-__all__ = ['Extraction', 'ExtractABOrderOffset',
-           'GetExtMethod', 'GetValidOrders']
+__all__ = ['Extraction', 'ExtractABOrderOffset', 'GetExtMethod',
+           'GetValidOrders']
 
 # =============================================================================
 # Function aliases

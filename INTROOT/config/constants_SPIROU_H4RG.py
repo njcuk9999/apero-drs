@@ -125,6 +125,12 @@ ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
 #   cal_preprocess parameters
 # -----------------------------------------------------------------------------
 
+# define output type. Currently excepted values are:                  - [cal_pp]
+#    mode=0:    adds only the processed_suffix
+#    mode=1:    adds the processed_suffix and an identifying suffix
+#               (i.e. flat_dark, dark_dark etc)
+pp_mode = 0
+
 # force pre-processed files only (Should be 1 or True to check and       - [all]
 #     force DRS to accept pre-processed files only - i.e. rotated and
 #     corrected) - if 0 or False DRS will except any file
@@ -309,10 +315,13 @@ ic_slit_order_plot = 20 * 2
 # -----------------------------------------------------------------------------
 
 #    Do background measurement (True = 1, False = 0)                  - [cal_ff]
-ic_do_bkgr_subtraction = 0
+ic_do_bkgr_subtraction = 1
+
+#    Do background percentile to compute minium value (%)                  - [cal_ff]
+ic_bkgr_percent = 3
 
 #    Half-size of window for background measurements                  - [cal_ff]
-ic_bkgr_window = 100
+ic_bkgr_window = 50
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
 ic_tilt_nbo = 49  #36
@@ -338,7 +347,7 @@ ic_extfblaz = 50
 ic_blaze_fitn = 10    # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
-ic_ff_order_plot = 27
+ic_ff_order_plot = 4
 
 #   Plot all order fits (True = 1, False = 0)                         - [cal_ff]
 #        (takes slightly longer than just one example order)
@@ -411,15 +420,25 @@ ic_cosmic_sigcut = 0.25  # 0.25
 #        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_thresh = 5
 
+#    Define the spectral bin for S1D spectra (nm)                - [cal_extract]
+ic_bin_s1d = 0.005
+
+#    Define the first order for the S1D spectra                  - [cal_extract]
+ic_start_order_1d = 1
+
+#    Define the last order for the S1D spectra                   - [cal_extract]
+ic_end_order_1d = 48
+
+
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
 # -----------------------------------------------------------------------------
 #   The value of the noise for drift calculation                   - [cal_drift]
 #      snr = flux/sqrt(flux + noise^2)
-ic_drift_noise = 100.0
+ic_drift_noise = 8.0  # 100
 
 #  Option for the background correction [0/1]                      - [cal_drift]
-ic_drift_back_corr = 1
+ic_drift_back_corr = 0
 
 #   The maximum flux for a good (unsaturated) pixel                - [cal_drift]
 ic_drift_maxflux = 1.e9
@@ -495,13 +514,13 @@ drift_peak_inter_peak_spacing = 5
 #    Define the expected width of FP peaks - used to          - [cal_drift-peak]
 #        "normalise" peaks (which are then subsequently removed
 #        if > drift_peak_norm_width_cut
-drift_peak_exp_width = 0.8
+drift_peak_exp_width = 0.9  # 0.8
 
 #    Define the "normalised" width of FP peaks that is too    - [cal_drift-peak]
 #        large normalised width = FP FWHM - drift_peak_exp_width
 #        cut is essentially:
 #           FP FWHM < (drift_peak_exp_width + drift_peak_norm_width_cut)
-drift_peak_norm_width_cut = 0.2
+drift_peak_norm_width_cut = 0.25   # 0.2
 
 #    Define whether to fit a gaussain (slow) or adjust a      - [cal_drift-peak]
 #        barycenter to get the drift
@@ -586,9 +605,10 @@ ccf_fit_type = 0
 
 #  Define the number of orders (from zero to ccf_num_orders_max)     - [cal_CCF]
 #      to use to calculate the CCF and RV
-ccf_num_orders_max = 25
+ccf_num_orders_max = 48
 
-#  Define the mode to work out the Earth Velocity calculation        - [cal_CCF]
+#  Define the mode to work out the Earth Velocity       - [cal_extract, cal_CCF]
+#     correction calculation
 #      Options are:
 #           - "off" - berv is set to zero
 #           - "old" - berv is calculated with FORTRAN newbervmain.f
@@ -598,7 +618,7 @@ ccf_num_orders_max = 25
 #           - "new" - berv is calculated using barycorrpy  but needs to be
 #                     installed (i.e. pip install barycorrpy)
 #                     CURRENTLY NOT WORKING!!!
-ccf_bervmode = "new"
+bervmode = "new"
 
 
 # -----------------------------------------------------------------------------
@@ -759,27 +779,6 @@ ic_hc_n_ord_final_2 = 46
 #          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
 hc_find_lines_mode = 0
 
-#  Define the CCF mask for the wave solution CCF            - [cal_HC, cal_wave]
-#       calculation
-ic_wave_ccf_mask = {'UNe': 'test_mask_UNe_firstguess_R50000.mas', 'TH':'test_mask_TH_R50000.mas'}
-
-#  Define the weight of the wave CCF mask                   - [cal_HC, cal_wave]
-#     (if 1 force all weights equal)
-ic_wave_ccf_w_mask_min = 1.0
-
-#  Define the wave CCF width of the template line           - [cal_HC, cal_wave]
-#     (if 0 use natural)
-ic_wave_ccf_mask_width = 0.0
-
-#  Define the wave CCF half width                           - [cal_HC, cal_wave]
-ic_wave_ccf_half_width = 10.0
-
-#  Define the wave CCF step                                 - [cal_HC, cal_wave]
-ic_wave_ccf_step = 0.1
-
-#  Define the type of fit for the wave CCF fit              - [cal_HC, cal_wave]
-wave_ccf_fit_type = 1
-
 #  Define first order FP solution is calculated from                - [cal_wave]
 ic_fp_n_ord_start = 0
 
@@ -830,7 +829,71 @@ ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
-#   polarimtery parameters
+#  Telluric parameters
+# -----------------------------------------------------------------------------
+tellu_fiber = 'AB'
+
+tellu_suffix = 'e2dsff'
+
+tellu_blaze_percentile = 95
+
+# Define level above which the blaze is high enough to          - [obj_mk_tellu]
+#     accurately measure telluric
+tellu_cut_blaze_norm = 0.2
+
+# Define mean line width expressed in pix
+fwhm_pixel_lsf = 2.1
+
+# Define list of absorbers in the tapas fits table
+tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
+
+# Define min transmission in tapas models to consider an        - [obj_mk_tellu]
+#     element part of continuum
+transmission_cut = 0.98
+
+# Define the number of iterations to find the SED of hot        - [obj_mk_tellu]
+# stars + sigma clipping
+n_iter_sed_hotstar = 5
+
+# Define the smoothing parameter for the interpolation of       - [obj_mk_tellu]
+#     the hot star continuum. Needs to be reasonably matched
+#     to the true width
+tellu_vsini = 250.0
+
+# Define the median sampling expressed in km/s / pix
+tellu_med_sampling = 2.2
+
+#TODO: Need comments
+tellu_sigma_dev = 5
+tellu_bad_threshold = 1.2
+tellu_nan_threshold = 0.2
+tellu_abso_maps = False
+tellu_abso_low_thres = 0.01
+tellu_abso_high_thres = 1.05
+tellu_abso_sig_n_iter = 5
+tellu_abso_sig_thres = -1
+tellu_abso_dv_order = 33
+tellu_abso_dv_size = 5
+tellu_abso_dv_good_thres = 0.2
+
+tellu_template_keep_limit = 0.5
+tellu_template_med_low = 2048 - 128
+tellu_template_med_high = 2048 + 128
+
+tellu_number_of_principle_comp = 5
+tellu_fit_keep_frac = 20.0
+tellu_plot_order = 35
+tellu_fit_min_transmission = 0.2
+tellu_lambda_min = 1000.0
+tellu_lambda_max = 1000.0
+tellu_fit_vsini = 15.0
+tellu_fit_niter = 4
+tellu_fit_vsini2 = 30.0
+tellu_fit_recon_plt_order = 33
+tellu_fit_log_limit = -0.5
+
+# -----------------------------------------------------------------------------
+#   polarimetry parameters
 # -----------------------------------------------------------------------------
 #  Define all possible stokes parameters                          - [pol_spirou]
 ic_polar_stokes_params = ['V', 'Q', 'U']
@@ -845,10 +908,13 @@ ic_polar_fibers = ['A', 'B']
 ic_polar_method = 'Ratio'
 
 #  Define the polarimetry continuum bin size (for plotting)       - [pol_spirou]
-ic_polar_cont_binsize = 4000
+ic_polar_cont_binsize = 1000
 
 #  Define the polarimetry continuum overlap size (for plotting)   - [pol_spirou]
 ic_polar_cont_overlap = 0
+
+#  Define the telluric mask for calculation of continnum          - [pol_spirou]
+ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]]
 
 
 # -----------------------------------------------------------------------------
@@ -905,7 +971,7 @@ qc_max_signal = 50000
 #       (at x cut points)
 qc_hc_rms_littrow_max = 0.1    #0.3
 
-#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #        cal_wave (at x cut points)
 qc_hc_dev_littrow_max = 0.4  # 0.9
 
@@ -913,7 +979,7 @@ qc_hc_dev_littrow_max = 0.4  # 0.9
 #       (at x cut points)
 qc_wave_rms_littrow_max = 0.1
 
-#   Maximum littrow devilation from wave solution for       - [cal_HC, cal_wave]
+#   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #       cal_wave (at x cut points)
 qc_wave_dev_littrow_max = 0.3
 
@@ -927,7 +993,7 @@ qc_wave_idrift_rv_max = 150.0
 
 
 # -----------------------------------------------------------------------------
-#  Calib DB settings
+#  Calibration DB settings
 # -----------------------------------------------------------------------------
 
 #   Define calibd DB master filename                                     - [all]
@@ -948,6 +1014,32 @@ calib_max_wait = 3600
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 calib_db_match = 'closest'
+
+
+# -----------------------------------------------------------------------------
+#  Telluric DB settings
+# -----------------------------------------------------------------------------
+
+#   Define tellu DB master filename                                     - [all]
+#      (formally ic_tellu_db_master_file)
+ic_telluDB_filename = 'master_tellu_SPIROU.txt'
+
+#   the maximum wait time for telluric database file to be            - [all]
+#       in use (locked) after which an error is raised (in seconds)
+tellu_max_wait = 3600
+
+#   Define the match type for telluDB files                              - [all]
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         telluDB file will be used
+tellu_db_match = 'closest'
+
+
 
 # -----------------------------------------------------------------------------
 #  End of constants file

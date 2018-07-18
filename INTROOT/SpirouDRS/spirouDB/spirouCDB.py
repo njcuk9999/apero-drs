@@ -26,7 +26,7 @@ from SpirouDRS.spirouCore import spirouMath
 # Define variables
 # =============================================================================
 # Define the name of this module
-__NAME__ = 'spirouCDB.py'
+__NAME__ = 'spirouDB.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -41,7 +41,9 @@ ConfigError = spirouConfig.ConfigError
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-
+# TODO: update using generic database functions
+# TODO:    located in spirouDB
+# TODO:   (similar to spirouTDB)
 # =============================================================================
 # User functions
 # =============================================================================
@@ -89,6 +91,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         emsg = ('Key {0} not defined in ParamDict (or SpirouKeywords.py)'
                 ' - function = {1}')
         WLOG('error', p['LOG_OPT'], emsg.format(kwacqkey, funcname))
+        acqtime_key = None
     else:
         acqtime_key = p[kwacqkey][0]
 
@@ -192,7 +195,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     # if we don't have header get it (using 'fitsfilename')
     if header is None:
         # deal with no filename
-        if filename is None and header is None:
+        if filename is None:
             if os.path.exists(p['ARG_FILE_NAMES'][0]):
                 rfile = p['ARG_FILE_NAMES'][0]
             else:
@@ -575,7 +578,7 @@ def get_file_name(p, key, hdr=None, filename=None, required=True):
     """
     Get the filename for "key" in the calibration database (for use when
     the calibration database is not needed for more than one use and does
-    not exist already (i.e. called via spirouCDB.GetDatabase() )
+    not exist already (i.e. called via spirouDB.GetCalibDatabase() )
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:

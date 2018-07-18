@@ -26,6 +26,7 @@ import cal_DARK_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
 import cal_exposure_meter
+import cal_wave_mapper
 import cal_extract_RAW_spirou
 import cal_extract_RAW_spirouAB
 import cal_extract_RAW_spirouC
@@ -65,6 +66,7 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_DRIFT_E2DS_spirou',
                  'cal_DRIFTPEAK_E2DS_spirou',
                  'cal_exposure_meter',
+                 'cal_wave_mapper',
                  'cal_extract_RAW_spirou',
                  'cal_extract_RAW_spirouAB',
                  'cal_extract_RAW_spirouC',
@@ -100,6 +102,7 @@ def get_versions():
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
     vv[cal_exposure_meter.__NAME__] = cal_exposure_meter.__version__
+    vv[cal_wave_mapper.__NAME__] = cal_wave_mapper.__version__
     vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
     vv[cal_extract_RAW_spirouAB.__NAME__] = cal_extract_RAW_spirouAB.__version__
     vv[cal_extract_RAW_spirouC.__NAME__] = cal_extract_RAW_spirouC.__version__
@@ -741,6 +744,52 @@ def unit_test_cal_exposure_meter(rname, inputs, outputs=None):
             outs.append(Constants.EM_SPE_FILE(outputs['p']))
             outs.append(Constants.EM_WAVE_FILE(outputs['p']))
             outs.append(Constants.EM_MASK_FILE(outputs['p']))
+        # return outs
+        return outs, name
+
+
+def unit_test_cal_wave_mapper(rname, inputs, outputs=None):
+    """
+    unit_test_cal_wave_mapper
+
+    input = night_name files
+    output = WAVE_MAP_SPE_FILE, WAVE_MAP_SPE0_FILE, EM_WAVE_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'cal_wave_mapper'
+    arg_names = ['night_name', 'reffile', 'e2dsprefix']
+    arg_types = [str, str, str]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        # deal with multiple output files defined by EM_OUTPUT_TYPE
+        if outputs['p']['EM_OUTPUT_TYPE'] != 'all':
+            outtypes = [str(outputs['p']['EM_OUTPUT_TYPE'])]
+        else:
+            outtypes = ["drs", "raw", "preprocess"]
+        outs = []
+        for outtype in outtypes:
+            outputs['p']['EM_OUTPUT_TYPE'] = outtype
+            outs.append(Constants.WAVE_MAP_SPE_FILE(outputs['p']))
+            outs.append(Constants.WAVE_MAP_SPE0_FILE(outputs['p']))
+            outs.append(Constants.EM_WAVE_FILE(outputs['p']))
         # return outs
         return outs, name
 

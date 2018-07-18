@@ -83,6 +83,10 @@ def main(night_name=None, ufiles=None):
     wmsg = '{0} files found'
     WLOG('', p['LOG_OPT'], wmsg.format(len(ufiles)))
 
+    # storage for output files
+    p['OUTPUTS'] = []
+    p.set_source('OUTPUTS', __NAME__ + '.main()')
+
     # loop around files
     for ufile in ufiles:
         # ------------------------------------------------------------------
@@ -161,6 +165,11 @@ def main(night_name=None, ufiles=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # write to file
         spirouImage.WriteImage(outfits, image, hdict)
+
+        # ------------------------------------------------------------------
+        # append to output storage in p
+        # ------------------------------------------------------------------
+        p['OUTPUTS'].append(outfitsname)
 
     # ----------------------------------------------------------------------
     # End Message

@@ -337,7 +337,7 @@ Here we check that the maximum number of points rejected in centre fit is below 
 \label{ch:the_recipes:gen_layout:writing_calibdb}
 % -------------------------------------------------------
 
-The calibration database is automatically opened at the start of the recipes (see Section \ref{ch:the_recipes:gen_layout:setup}). Two commands are used to interface with the calibration database. The first \spirouCDB.PutFile() adds the file to the calibration database folder. The second (\spirouCDB.UpdateMaster) updates the \masterCALIBDBfile with the correct key (set using the `keys' keyword, e.g. `DARK' or `LOC\_AB').
+The calibration database is automatically opened at the start of the recipes (see Section \ref{ch:the_recipes:gen_layout:setup}). Two commands are used to interface with the calibration database. The first \spirouCDB.PutCalibFile() adds the file to the calibration database folder. The second (\spirouCDB.UpdateCalibMaster) updates the \masterCALIBDBfile with the correct key (set using the `keys' keyword, e.g. `DARK' or `LOC\_AB').
 
 
 \vspace{0.5cm}
@@ -350,9 +350,9 @@ The calibration database is automatically opened at the start of the recipes (se
 if p['QC'] == 1:
     keydb = 'LOC_' + p['fiber']
     # copy localisation file to the calibDB folder
-    spirouCDB.PutFile(p, locofits)
+    spirouDB.PutCalibFile(p, locofits)
     # update the master calib DB file with new key
-    spirouCDB.UpdateMaster(p, keydb, locofitsname, hdr)
+    spirouDB.UpdateCalibMaster(p, keydb, locofitsname, hdr)
 \end{pythonbox}
 \begin{note}
 Here we add, for example, key `LOC\_AB' or `LOC\_C' to the calibration database. The file is first put in the \definevariable{text:drs_calib_db}{calibration database folder} and then the key, file name and date/time are added to the \masterCALIBDBfile. The date/time that is used is that of the \definevariable{text:fitsfilename}{fitsfilename}.

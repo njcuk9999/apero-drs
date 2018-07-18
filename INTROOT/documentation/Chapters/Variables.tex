@@ -563,6 +563,18 @@ These variables are defined for each type of fiber and thus are defined as a pyt
 
 \begin{itemize}
 
+% PP_MODE
+\item \namedlabel{text:pp_mode} \ParameterEntry{Preprocessing Mode}
+{Defines the preprocessing output type. Currently expected values are:
+\begin{itemize}
+	\item 0: Adds only the \definevariable{text:processed_suffix}{PROCESSED\_SUFFIX}
+	\item 1: Adds the \definevariable{text:processed_suffix}{PROCESSED\_SUFFIX} and an identifying suffix (i.e. \path{flat_dark}, \path{dark_dark} etc.)
+\end{itemize}
+}
+{PP\_MODE}{0}
+{\calpreprocess}{\constantsfile}{\spirouFile.\path{id_mode}}{Public}
+
+
 % IC_FORCE_PREPROCESS
 \item \namedlabel{text:ic_force_preprocess} \ParameterEntry{Force Pre-processing}
 {Defines whether the DRS should force pre-processed files only. If True (or 1) only files that are pre-processed will be allowed to be used in the DRS (an error will be generated on un-preprocessed files). If False (or 0) any file will be accepted (but un-preprocessed files will be assumed to be raw and hence rotated, as in pre-processing).}
@@ -1561,7 +1573,307 @@ then the whole image (E2DS file) is rejected. Value must be a float larger than 
 
 \begin{itemize}
 
-\item Items needed
+% IC_LAMPS
+\item \namedlabel{text:ic_lamps} \ParameterEntry{Lamp types}
+{Define the lamp types. These must be present in \definevariable{text:ic_ll_line_file_all}{IC\_LL\_LINE\_FILE\_ALL} and \definevariable{text:ic_cat_type_all}{IC\_CAT\_TYPE\_ALL} to be used. Each dictionary entry must be a list of strings (to look for in the header).}
+{IC\_LAMPS}{\lstinline[style=pythoninline]| dict(UNe=['hcone', 'hc1'], TH=['hctwo', 'hc2']) |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{decide_on_lamp_type}}{Public}
+
+% IC_LL_LINE_FILE_ALL
+\item \namedlabel{text:ic_ll_line_file_all} \ParameterEntry{Catalogue line list files}
+{Define the lamp types. These must be present in \definevariable{text:ic_lamps}{IC\_LAMPS} and \definevariable{text:ic_cat_type_all}{IC\_CAT\_TYPE\_ALL} to be used.}
+{IC\_LL\_LINE\_FILE\_ALL}{\lstinline[style=pythoninline]| dict(UNe='catalogue_UNe.dat', TH='catalogue_ThAr.dat') |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{get_lamp_parameters}}{Public}
+
+% IC_CAT_TYPE_ALL
+\item \namedlabel{text:ic_cat_type_all} \ParameterEntry{Type of line list catalogue}
+{Define the lamp types. These must be present in \definevariable{text:ic_lamps}{IC\_LAMPS} and \definevariable{text:ic_ll_line_file_all}{IC\_LL\_LINE\_FILE\_ALL} to be used.}
+{IC\_CAT\_TYPE\_ALL}{\lstinline[style=pythoninline]| dict(UNe='fullcat', TH='thcat') |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{get_lamp_parameters}}{Public}
+
+% IC_RESOL
+\item \namedlabel{text:ic_resol} \ParameterEntry{Resolution of the detector}
+{Define the resolution of the detector}
+{IC\_RESOL}{65000}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_FREE_SPAN
+\item \namedlabel{text:ic_ll_free_span} \ParameterEntry{Wavelength free-span}
+{Define the wavelength free span parameter in find lines. Must be a list of line widths (in pixels). Ordered from largest to smallest.}
+{IC\_LL\_FREE\_SPAN}{\lstinline[style=pythoninline]| [6.0, 3.5] |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_SP_MIN
+\item \namedlabel{text:ic_ll_sp_min} \ParameterEntry{Minimum wavelength - find lines}
+{Define the minimum wavelength of the detector to use in find lines (in nm).}
+{IC\_LL\_SP\_MIN}{900}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_LL_SP_MAX
+\item \namedlabel{text:ic_ll_sp_max} \ParameterEntry{Maximum wavelength - find lines}
+{Define the maximum wavelength of the detector to use in find lines (in nm).}
+{IC\_LL\_SP\_MAX}{2400}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_HC_NOISE
+\item \namedlabel{text:ic_hc_noise} \ParameterEntry{Readout noise - find lines}
+{Define the read out noise to use in find lines}
+{IC\_HC\_NOISE}{60}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_MAX_SIGLL_CAL_LINES
+\item \namedlabel{text:ic_max_sigll_cal_lines} \ParameterEntry{Maximum sig-fit of guess lines}
+{Define the maximum sigma fit of the guessed lines (FWHM/2.35 of the lines). Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_SIGLL\_CAL\_LINES}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_MAX_ERRW_ONFIT
+\item \namedlabel{text:ic_max_errw_onfit} \ParameterEntry{Maximum error on guess lines}
+{Define the maximum error on the guess of the lines. Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_ERRW\_ONFIT}{1}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_MAX_AMPL_LINE
+\item \namedlabel{text:ic_max_ampl_line} \ParameterEntry{Maximum amplitude on guess lines}
+{Define the maximum amplitude on the guess of the lines. Used to filter out bad lines after a guess on the lines.}
+{IC\_MAX\_AMPL\_LINE}{1.0e8}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{detect_bad_lines}}{Public}
+
+% IC_HC_N_ORD_START
+\item \namedlabel{text:ic_hc_n_ord_start} \ParameterEntry{Wave solution first order}
+{Defines the first order to at which the wave solution is calculated.}
+{IC\_HC\_N\_ORD\_START}{13}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{calculate_littrow_sol}}{Public}
+
+% IC_HC_N_ORD_FINAL
+\item \namedlabel{text:ic_hc_n_ord_final} \ParameterEntry{Wave solution last order}
+{Defines the last order to at which the wave solution is calculated.}
+{IC\_HC\_N\_ORD\_START}{40}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{calculate_littrow_sol}, \spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_HC_T_ORDER_START
+\item \namedlabel{text:ic_hc_t_order_start} \ParameterEntry{First echelle order number}
+{Defines the first echelle order number extracted.}
+{IC\_HC\_T\_ORDER\_START}{79}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{first_guess_at_wave_solution}, \spirouTHORCA.\path{detect_bad_lines}, \spirouTHORCA.\path{extrapolate_littrow_sol}, \spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}, \spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_ERRX_MIN
+\item \namedlabel{text:ic_errx_min} \ParameterEntry{Minimum x error in 1D fit}
+{Define the maximum weight given to a line via defining the minimum instrumental error, such that:
+\begin{equation}
+\text{max\_weight} = 1.0 / (\text{IC\_ERRX\_MIN})^2
+\end{equation}
+}
+{IC\_ERRX\_MIN}{0.01}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_LL_DEGR_FIT
+\item \namedlabel{text:ic_ll_degr_fit} \ParameterEntry{Wavelength solution poly-fit degree}
+{Define the wavelength fit polynomial order}
+{IC\_LL\_DEGR\_FIT}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}, \spirouTHORCA.\path{invert_1ds_ll_solution}}{Public}
+
+% IC_MAX_LLFIT_RMS
+\item \namedlabel{text:ic_max_llfit_rms} \ParameterEntry{Maximum RMS for wave solution sigma-clip fit}
+{Define the maximum RMS for the wavelength sigma-clip fitting process}
+{IC\_MAX\_LLFIT\_RMS}{3.0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{fit_1d_ll_solution}}{Public}
+
+% IC_LITTROW_FIT_DEG_1
+\item \namedlabel{text:ic_littrow_fit_deg_1} \ParameterEntry{Littrow poly-fit degree 1}
+{Define the polynomial fit degree for the Littrow fit (iteration 1)}
+{IC\_LITTROW\_FIT\_DEG\_1}{5}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=1}{Public}
+
+% IC_LITTROW_FIT_DEG_2
+\item \namedlabel{text:ic_littrow_fit_deg_2} \ParameterEntry{Littrow poly-fit degree 2}
+{Define the polynomial fit degree for the Littrow fit (iteration 2)}
+{IC\_LITTROW\_FIT\_DEG\_2}{7}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=2}{Public}
+
+% IC_LITTROW_CUT_STEP_1
+\item \namedlabel{text:ic_littrow_cut_step_1} \ParameterEntry{Littrow cut steps}
+{Define the x-pixel interval between positions to measure the Littrow at (iteration 1)
+i.e.:
+\begin{equation}
+xcutpoints = [1 * step, 2 * step, 3 * step, ..., (N-1) * step]
+\end{equation}
+where `step' = IC\_LITTROW\_CUT\_STEP\_1 and `N' = length of x-dimension divided by `step'.}
+{IC\_LITTROW\_CUT\_STEP\_1}{250}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=1}{Public}
+
+% IC_LITTROW_CUT_STEP_2
+\item \namedlabel{text:ic_littrow_cut_step_2} \ParameterEntry{Littrow cut steps}
+{Define the x-pixel interval between positions to measure the Littrow at (iteration 2)
+i.e.:
+\begin{equation}
+xcutpoints = [1 * step, 2 * step, 3 * step, ..., (N-1) * step]
+\end{equation}
+where `step' = IC\_LITTROW\_CUT\_STEP\_2 and `N' = length of x-dimension divided by `step'.}
+{IC\_LITTROW\_CUT\_STEP\_2}{500}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol} with iteration=2}{Public}
+
+% IC_LITTROW_ORDER_INIT
+\item \namedlabel{text:ic_littrow_order_init} \ParameterEntry{Littrow fit - first order}
+{Defines the first order to start the LIttrow fit from}
+{IC\_LITTROW\_ORDER\_INIT}{0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol}, \spirouTHORCA.\path{extrapolate_littrow_sol}}{Public}
+
+% IC_LITTROW_REMOVE_ORDERS
+\item \namedlabel{text:ic_littrow_remove_orders} \ParameterEntry{Littrow fit - remove orders}
+{Define the orders to ignore to ignore in the Littrow fit. Must be a valid python list of integers where each integer is a number between zero and the maximum number of orders.}
+{IC\_LITTROW\_REMOVE\_ORDERS}{\lstinline[style=pythoninline]| [] |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{calculate_littrow_sol}}{Public}
+
+% IC_LITTROW_ORDER_FIT_DEG
+\item \namedlabel{text:ic_ll_degr_fit} \ParameterEntry{Littrow-Wavelength solution poly-fit degree}
+{Define the wavelength fit polynomial order}
+{IC\_LITTROW\_ORDER\_FIT\_DEG}{4}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{extrapolate_littrow_sol}}{Public}
+\DevNote{Same as IC\_LL\_DEGR\_FIT?}
+
+% IC_LL_FREE_SPAN_2
+\item \namedlabel{text:ic_ll_free_span_2} \ParameterEntry{Wavelength free-span 2}
+{Define the wavelength free span parameter in find lines used after Littrow fit. Must be a list of line widths (in pixels). Ordered from largest to smallest.}
+{IC\_LL\_FREE\_SPAN\_2}{\lstinline[style=pythoninline]| [4.25, 3.0] |}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{find_lines}}{Public}
+
+% IC_HC_N_ORD_START_2
+\item \namedlabel{text:ic_hc_n_ord_start_2} \ParameterEntry{Wave solution first order 2}
+{Defines the first order to at which the wave solution is calculated used after Littrow fit.}
+{IC\_HC\_N\_ORD\_START\_2}{0}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{join_orders}, \spirouWAVE.\path{insert_fp_lines}}{Public}
+
+% IC_HC_N_ORD_FINAL_2
+\item \namedlabel{text:ic_hc_n_ord_final_2} \ParameterEntry{Wave solution last order 2}
+{Defines the last order to at which the wave solution is calculated used after Littrow fit.}
+{IC\_HC\_N\_ORD\_START\_2}{46}
+{\calHC, \calWAVE}{\constantsfile}{\spirouTHORCA.\path{second_guess_at_wave_solution}, \spirouTHORCA.\path{join_orders}, \spirouWAVE.\path{insert_fp_lines}}{Public}
+
+% HC_FIND_LINES_MODE
+\item \namedlabel{text:hc_find_lines_mode} 
+\begin{minipage}[t]{\textwidth}\ParameterEntry{Find lines mode}
+{Defines the mode to find lines. Currently allowed modes are:
+\begin{itemize}
+	\item 0: Fortran \path{fitgaus.f} routine
+	\item 1: Python fit using \path{scipy.optimize.curve_fit}
+	\item 2: Python fit using \path{lmfit.models} (Model, GaussianModel)
+	\item 3: Python conversion of Fortran `fitgaus' - direct translation
+	\item 4: Python conversion of Fortran `fitgaus' - gaussj improvement MH
+	\item 5: Python conversion of Fortran `fitgaus' - gaussj improvement NJC
+\end{itemize}
+where value must be an integer between 0 and 5.
+}
+{HC\_FIND\_LINES\_MODE}{0}
+{\calHC, \calWAVE}{\constantsfile}{\calHC.\progMAIN, \calWAVE.\progMAIN, but used in \spirouTHORCA.\path{fitgaus_wrapper} via \spirouTHORCA.\path{fit_emi_line} via \spirouTHORCA.\path{find_lines}}{Public}
+
+\ifdevguide
+\begin{note}
+If mode = 0 fitgaus.f needs to be compiled with:
+\begin{cmdbox}
+f2py -c -m fitgaus --noopt --quiet fitgaus.f
+\end{cmdbox}
+While located in the \path{.../INTROOT/SpirouDRS/fortan} directory.
+\end{note}
+
+\begin{note}
+If mode = 2 lmfit must be installed with
+\begin{cmdbox}
+pip install lmfit
+\end{cmdbox}
+\end{note}
+\fi
+\end{minipage}
+
+
+% IC_FP_N_ORD_START
+\item \namedlabel{text:ic_fp_n_ord_start} \ParameterEntry{FP solution - first order}
+{Defines the first order to start the FP solution fitting at.}
+{IC\_FP\_N\_ORD\_START}{0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{insert_fp_lines}}{Public}
+
+% IC_FP_N_ORD_FINAL
+\item \namedlabel{text:ic_fp_n_ord_final} \ParameterEntry{FP solution - last order}
+{Defines the last order to stop the FP solution fitting at.}
+{IC\_FP\_N\_ORD\_FINAL}{24}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{insert_fp_lines}, \spirouPlot.\path{wave_plot_final_fp_order}}{Public}
+
+% IC_FP_SIZE
+\item \namedlabel{text:ic_fp_size} \ParameterEntry{FP solution - region size}
+{Region size (in pixels) that each FP peak is fitted to}
+{IC\_FP\_SIZE}{3}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
+
+% IC_FP_THRESHOLD
+\item \namedlabel{text:ic_fp_threshold} \ParameterEntry{FP solution - position threshold}
+{Defines the threshold used in detecting the positions of the FP peaks.}
+{IC\_FP\_THRESHOLD}{0.2}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
+
+% IC_FP_DOPD0
+\item \namedlabel{text:ic_fp_dopd0} \ParameterEntry{FP solution - cavity width}
+{Defines the initial value of the FP effective cavity width (in nm). For SPIRou this is: 
+\begin{equation}
+2 \times d = 24.5 mm = 24.5\times10^{6} nm
+\end{equation}
+}
+{IC\_FP\_DOPD0}{2.45e7}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}, \spirouWAVE.\path{find_fp_lines}, \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
+
+% IC_FP_FIT_DEGREE
+\item \namedlabel{text:ic_fp_fit_degree} \ParameterEntry{FP solution - poly-fit degree}
+{Defines the polynomial fit degree between FP line numbers and the measured cavity width for each line.}
+{IC\_FP\_FIT\_DEGREE}{9}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{fp_wavelength_sol}}{Public}
+
+% IC_FP_LARGE_JUMP
+\item \namedlabel{text:ic_fp_large_jump} \ParameterEntry{FP solution - large jump size}
+{Defines the ``jump'' value (in pixels) that is considered too large between the current and previous FP peaks.}
+{IC\_FP\_LARGE\_JUMP}{0.7}
+{\calWAVE}{\constantsfile}{ \spirouWAVE.\path{correct_for_large_fp_jumps}}{Public}
+
+% IC_WAVE_IDRIFT_PLOT_ORDER
+\item \namedlabel{text:ic_wave_idrift_plot_order} \ParameterEntry{Instrumental drift plot order}
+{Defines the plot order for the comparison between the reference spectrum and this iterations spectrum during the instrumental drift calculation. Must be an integer between zero and the maximum number of orders.}
+{IC\_WAVE\_IDRIFT\_PLOT\_ORDER}{14}
+{\calWAVE}{\constantsfile}{\spirouPlot.\path{wave_plot_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_NOISE
+\item \namedlabel{text:ic_wave_idrift_noise} \ParameterEntry{Instrumental drift noise}
+{Defines the noise to use in the instrumental drift calculation}
+{IC\_WAVE\_IDRIFT\_NOISE}{50.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_MAXFLUX
+\item \namedlabel{text:ic_wave_idrift_maxflux} \ParameterEntry{Instrumental drift maximum flux}
+{Defines the maximum flux for a good (unsaturated) pixel to use in the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_MAXFLUX}{350000}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_BOXSIZE
+\item \namedlabel{text:ic_wave_idrift_boxsize} \ParameterEntry{Instrumental drift saturation box size}
+{Defines the size around a saturated pixel to flag as unusable in the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_BOXSIZE}{12}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_CUT_E2DS
+\item \namedlabel{text:ic_wave_idrift_cut_e2ds} \ParameterEntry{Instrumental drift cosmic sigma}
+{Defines the number of standard deviations to cut at in the cosmic re-normalization calculation during the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_CUT\_E2DS}{4.5}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_MAX_ERR
+\item \namedlabel{text:ic_wave_idrift_max_err} \ParameterEntry{Instrumental drift maximum uncertainty}
+{Defines the maximum uncertainty allowed on the RV for a given order. Used during the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_MAX\_ERR}{3.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% IC_WAVE_IDRIFT_RV_CUT
+\item \namedlabel{text:ic_wave_idrift_rv_cut} \ParameterEntry{Instrumental drift RV cut}
+{Defines the RV cut above which the RV from orders are not used. Used during the instrumental drift calculation.}
+{IC\_WAVE\_IDRIFT\_RV\_CUT}{20.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
 
 \end{itemize}
 
@@ -1641,12 +1953,12 @@ then the whole image (E2DS file) is rejected. Value must be a float larger than 
 
 
 % CCF_BERVMODE
-\item \namedlabel{text:} \ParameterEntry{Earth velocity calculation mode}
+\item \namedlabel{text:ccf_bervmode} \ParameterEntry{Earth velocity calculation mode}
 {Deine the mode to work out the Earth velocity correction calculation. Options are:
 \begin{itemize}
 	\item "off" - berv is set to zero
 	\item "old" - berv is calculated with FORTRAN newbervmain.f
-	\item "new" - berv is calculated using barycrrpy
+	\item "new" - berv is calculated using barycorrpy
 \end{itemize}
 }
 {CCF\_BERVMODE}{"new"}
@@ -1659,7 +1971,7 @@ If mode = "old" newbervmain.f needs to be compiled with:
 \begin{cmdbox}
 f2py -c -m newbervmain --noopt --quiet newbervmain.f
 \end{cmdbox}
-While located in the \path{.../INTROOT/SpirouDRS/fortan} directory.
+While located in the \path{\ldots/INTROOT/SpirouDRS/fortan} directory.
 \end{note}
 
 \begin{note}
@@ -1672,6 +1984,58 @@ pip install barycorrpy
 \fi
 
 \end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\clearpage
+\newpage
+\section{Polarimetry variables}
+\label{ch:variables:polarimetry}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+
+% IC_POLAR_STOKES_PARAMS
+\item \namedlabel{text:ic_polar_stokes_params} \ParameterEntry{Stokes parameters}
+{Define all possible stokes parameters}
+{IC\_POLAR\_STOKES\_PARAMS}{\lstinline[style=pythoninline]| ['V', 'Q', 'U']|}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{load_data}}{Public}
+
+% IC_POLAR_FIBERS
+\item \namedlabel{text:ic_polar_fibers} \ParameterEntry{Polar fibers}
+{Define all possible fibers used for polarimetry}
+{IC\_POLAR\_FIBERS}{\lstinline[style=pythoninline]| ['A', 'B']|}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{load_data}}{Public}
+
+% IC_POLAR_METHOD
+\item \namedlabel{text:ic_polar_method} \ParameterEntry{Polar method}
+{Define the polarimetry method. Currently must be either: ``Ratio'' or ``Difference''.}
+{IC\_POLAR\_METHOD}{'Ratio'}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_polarimetry_wrapper}}{Public}
+
+% IC_POLAR_CONT_BINSIZE
+\item \namedlabel{text:ic_polar_cont_binsize} \ParameterEntry{Polar continuum bin size}
+{Define the polarimetry continuum bin size (for plotting)}
+{IC\_POLAR\_CONT\_BINSIZE}{1000}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+% IC_POLAR_CONT_OVERLAP
+\item \namedlabel{text:ic_polar_cont_overlap} \ParameterEntry{Polar continuum overlap size}
+{Define the polarimetry continuum overlap size (for plotting)}
+{IC\_POLAR\_CONT\_OVERLAP}{0}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+% IC_POLAR_CONT_TELLMASK
+\item \namedlabel{text:ic_polar_cont_tellmask} \ParameterEntry{Polar tell mask}
+{Define the telluric mask for calculation of the continuum.}
+{IC\_POLAR\_CONT\_TELLMASK}
+{\lstinline[style=pythoninline]| [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]] |}
+{\polspirou}{\constantsfile}{\spirouPOLAR.\path{calculate_continuum}}{Public}
+
+\end{itemize}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1894,6 +2258,43 @@ Value must be a float greater than zero.
 {qc\_max\_signal}{65500}
 {\calextractRAW}{\constantsfile}{\calextractRAW.\progMAIN}{Public}
 \DevNote{Currently this does not stop the file from passing the quality control criteria, it either should fail or should be removed.}
+
+
+% QC_HC_RMS_LITTROW_MAX
+\item \namedlabel{text:qc_hc_rms_littrow_max} \ParameterEntry{Maximum Littrow RMS (HC)}
+{Defines the maximum Littrow RMS value for \calHC.}
+{QC\_HC\_RMS\_LITTROW\_MAX}{0.1}
+{\calHC}{\constantsfile}{\calHC.\progMAIN}{Public}
+
+% QC_HC_DEV_LITTROW_MAX
+\item \namedlabel{text:qc_hc_dev_littrow_max} \ParameterEntry{Maximum Littrow Deviation (HC)}
+{Defines the maximum Littrow deviation from the wave solution for \calHC.}
+{QC\_HC\_DEV\_LITTROW\_MAX}{0.4}
+{\calHC}{\constantsfile}{\calHC.\progMAIN}{Public}
+
+% QC_WAVE_RMS_LITTROW_MAX
+\item \namedlabel{text:qc_wave_rms_littrow_max} \ParameterEntry{Maximum Littrow RMS (WAVE)}
+{Defines the maximum Littrow RMS value for \calWAVE}
+{QC\_WAVE\_RMS\_LITTROW\_MAX}{0.1}
+{\calWAVE}{\constantsfile}{\calWAVE.\progMAIN}{Public}
+
+% QC_WAVE_DEV_LITTROW_MAX
+\item \namedlabel{text:qc_wave_dev_littrow_max} \ParameterEntry{Maximum Littrow Deviation (WAVE)}
+{Defines the maximum Littrow deviation from the wave solution for \calWAVE.}
+{QC\_WAVE\_DEV\_LITTROW\_MAX}{0.3}
+{\calWAVE}{\constantsfile}{\calWAVE.\progMAIN}{Public}
+
+% QC_WAVE_IDRIFT_NBORDEROUT
+\item \namedlabel{text:qc_wave_idrift_nborderout} \ParameterEntry{Instrumental drift, maximum No. order removed}
+{Defines the maximum number of orders allowed to be removed from the RV calculation in order to pass the quality control, for the instrumental drift calculation.}
+{QC\_WAVE\_IDRIFT\_NBORDEROUT}{15}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
+
+% QC_WAVE_IDRIFT_RV_MAX
+\item \namedlabel{text:qc_wave_idrift_rv_max} \ParameterEntry{Instrumental drift, maximum allowed RV}
+{Defines the maximum allowed RV drift (in m/s) allowed for the instrumental drift calculation.}
+{QC\_WAVE\_IDRIFT\_RV\_MAX}{150.0}
+{\calWAVE}{\constantsfile}{\spirouWAVE.\path{calculate_instrument_drift}}{Public}
 
 
 \end{itemize}

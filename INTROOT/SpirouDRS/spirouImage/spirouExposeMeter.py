@@ -16,7 +16,7 @@ import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from . import spirouFITS
 from . import spirouImage
 
@@ -67,8 +67,8 @@ def get_telluric(p, loc, hdr):
 
     func_name = __NAME__ + '.get_telluric()'
     # load the telluric model
-    txfile = spirouCDB.GetFile(p, 'EM_TELL_X', hdr, required=True)
-    tyfile = spirouCDB.GetFile(p, 'EM_TELL_Y', hdr, required=True)
+    txfile = spirouDB.GetCalibFile(p, 'EM_TELL_X', hdr, required=True)
+    tyfile = spirouDB.GetCalibFile(p, 'EM_TELL_Y', hdr, required=True)
     # add to p
     p['TELLWAVE'] = txfile
     p['TELLSPE'] = tyfile
@@ -84,7 +84,7 @@ def get_telluric(p, loc, hdr):
     return p, loc
 
 
-def order_profile(loc):
+def order_profile(p, loc):
     """
     Create a 2D image of the order profile. Each order's pixels are labelled
     with the order_number, pixels not in orders are given a value of -1
@@ -116,43 +116,107 @@ def order_profile(loc):
     func_name = __NAME__ + '.order_profile()'
     # get data from loc
     image = loc['IMAGE']
-    acc, ass = loc['ACC'], loc['ASS']
+    allacc, allass = loc['ALL_ACC'], loc['ALL_ASS']
     # construct a "NaN" image (for wavelengths)
     ishape = image.shape
     # Define empty order image
     orderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
     suborderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
+    fiberimage = np.repeat(['00'], np.product(ishape)).reshape(ishape)
     # get the indices locations
     yimage, ximage = np.indices(image.shape)
     # loop around number of orders (AB)
     for order_no in range(loc['NBO']):
-        # loop around A and B
-        for fno in [0, 1]:
-            # get fiber iteration number
-            fin = 2*order_no + fno
-            # get central positions
-            cfit = np.polyval(acc[fin][::-1], ximage)
-            # get width positions
-            wfit = np.polyval(ass[fin][::-1], ximage)
-            # define the lower and upper bounds of this order
-            upper = cfit + wfit/2
-            lower = cfit - wfit/2
-            # define the mask of the pixels in this order
-            mask = (yimage < upper) & (yimage > lower)
-            # create the order image
-            orderimage[mask] = order_no
-            suborderimage[mask] = fin
+        # loop around fibers
+        for fiber in allacc.keys():
+            # get localisation parameters for this fiber
+            acc, ass = allacc[fiber], allass[fiber]
+            # deal with AB fiber
+            if fiber == 'AB':
+                for fno in [0, 1]:
+                    # get fiber iteration number
+                    fin = 2*order_no + fno
+                    # get central positions
+                    cfit = np.polyval(acc[fin][::-1], ximage)
+                    # get width positions
+                    wfit = np.polyval(ass[fin][::-1], ximage)
+                    # define the lower and upper bounds of this order
+                    upper = cfit + wfit/2
+                    lower = cfit - wfit/2
+                    # define the mask of the pixels in this order
+                    mask = (yimage < upper) & (yimage > lower)
+                    # create the order image
+                    orderimage[mask] = order_no
+                    suborderimage[mask] = fin
+                    fiberimage[mask] = fiber
+            # else if fiber is A
+            elif fiber == 'A':
+                # get fiber iteration number
+                fin = 2 * order_no
+                # get central positions
+                cfit = np.polyval(acc[fin][::-1], ximage)
+                # get width positions
+                wfit = np.polyval(ass[fin][::-1], ximage)
+                # define the lower and upper bounds of this order
+                upper = cfit + wfit / 2
+                lower = cfit - wfit / 2
+                # define the mask of the pixels in this order
+                mask = (yimage < upper) & (yimage > lower)
+                # create the order image
+                orderimage[mask] = order_no
+                suborderimage[mask] = fin
+                fiberimage[mask] = fiber
+            # else if fiber is B
+            elif fiber == 'B':
+                # get fiber iteration number
+                fin = 2 * order_no + 1
+                # get central positions
+                cfit = np.polyval(acc[fin][::-1], ximage)
+                # get width positions
+                wfit = np.polyval(ass[fin][::-1], ximage)
+                # define the lower and upper bounds of this order
+                upper = cfit + wfit / 2
+                lower = cfit - wfit / 2
+                # define the mask of the pixels in this order
+                mask = (yimage < upper) & (yimage > lower)
+                # create the order image
+                orderimage[mask] = order_no
+                suborderimage[mask] = fin
+                fiberimage[mask] = fiber
+            # else if fiber is C
+            elif fiber == 'C':
+                # get fiber iteration number
+                fin = order_no
+                # get central positions
+                cfit = np.polyval(acc[fin][::-1], ximage)
+                # get width positions
+                wfit = np.polyval(ass[fin][::-1], ximage)
+                # define the lower and upper bounds of this order
+                upper = cfit + wfit / 2
+                lower = cfit - wfit / 2
+                # define the mask of the pixels in this order
+                mask = (yimage < upper) & (yimage > lower)
+                # create the order image
+                orderimage[mask] = order_no
+                suborderimage[mask] = fin
+                fiberimage[mask] = fiber
+            #else break
+            else:
+                emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
+                emsg2 = '\tfunction={0}'.format(func_name)
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # add to loc
     loc['ORDERIMAGE'] = orderimage
     loc['SUBORDERIMAGE'] = suborderimage
+    loc['FIBERIMAGE'] = fiberimage
     # add source
-    loc.set_sources(['orderimage', 'suborderimage'], func_name)
+    loc.set_sources(['orderimage', 'suborderimage','fiberimage'], func_name)
     # return loc
     return loc
 
 
-def create_wavelength_image(loc):
+def create_wavelength_image(p, loc):
     """
     Using each orders location coefficents, tilt and wavelength coefficients
     Make a 2D map the size of the image of each pixels wavelength value
@@ -189,9 +253,11 @@ def create_wavelength_image(loc):
     # get data from loc
     image = loc['IMAGE']
     wave = loc['WAVE']
-    acc = loc['ACC']
+    allacc, allass = loc['ALL_ACC'], loc['ALL_ASS']
     tilt = loc['TILT']
+    orderimage = loc['ORDERIMAGE']
     suborderimage = loc['SUBORDERIMAGE']
+    fiberimage = loc['FIBERIMAGE']
     # construct a "NaN" image (for wavelengths)
     ishape = image.shape
     # construct
@@ -210,32 +276,122 @@ def create_wavelength_image(loc):
         awave2 = np.polyder(awave0, 2)
         # get third derivative of wavelength coefficients
         awave3 = np.polyder(awave0, 3)
-        # loop around A and B
-        for fno in [0, 1]:
-            # get fiber iteration number
-            fin = 2*order_no + fno
-            # get central polynomial coefficients
-            centpoly = acc[fin][::-1]
-            # find those pixels in this suborder
-            mask = suborderimage == fin
-            # get x0s and y0s
-            x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
-            # calculate centers
-            xcenters = np.array(x0s)
-            ycenters = np.polyval(centpoly, xcenters)
-            # get deltax and delta y
-            deltay = y0s - ycenters
-            deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
 
-            # construct lambda from x
-            lambda0 = np.polyval(awave0, x0s)
-            lambda1 = np.polyval(awave1, x0s) * deltax
-            lambda2 = np.polyval(awave2, x0s) * deltax**2
-            lambda3 = np.polyval(awave3, x0s) * deltax**3
-            # sum of lambdas
-            lambda_total = lambda0 + lambda1 + lambda2 + lambda3
-            # add to array
-            waveimage[y0s, x0s] = lambda_total
+        # loop around fibers
+        for fiber in allacc.keys():
+            # get localisation parameters for this fiber
+            acc = allacc[fiber]
+            # deal with AB fiber
+            if fiber == 'AB':
+                # loop around A and B
+                for fno in [0, 1]:
+                    # get fiber iteration number
+                    fin = 2 * order_no + fno
+                    # get central polynomial coefficients
+                    centpoly = acc[fin][::-1]
+                    # find those pixels in this suborder
+                    mask = suborderimage == fin
+                    # get x0s and y0s
+                    x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
+                    # calculate centers
+                    xcenters = np.array(x0s)
+                    ycenters = np.polyval(centpoly, xcenters)
+                    # get deltax and delta y
+                    deltay = y0s - ycenters
+                    deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+
+                    # construct lambda from x
+                    lambda0 = np.polyval(awave0, x0s)
+                    lambda1 = np.polyval(awave1, x0s) * deltax
+                    lambda2 = np.polyval(awave2, x0s) * deltax ** 2
+                    lambda3 = np.polyval(awave3, x0s) * deltax ** 3
+                    # sum of lambdas
+                    lambda_total = lambda0 + lambda1 + lambda2 + lambda3
+                    # add to array
+                    waveimage[y0s, x0s] = lambda_total
+            # else if fiber is A
+            elif fiber == 'A':
+                # get fiber iteration number
+                fin = 2 * order_no
+                # get central polynomial coefficients
+                centpoly = acc[fin][::-1]
+                # find those pixels in this suborder
+                mask = (orderimage == fin) & (fiberimage == fiber)
+                # get x0s and y0s
+                x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
+                # calculate centers
+                xcenters = np.array(x0s)
+                ycenters = np.polyval(centpoly, xcenters)
+                # get deltax and delta y
+                deltay = y0s - ycenters
+                deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+
+                # construct lambda from x
+                lambda0 = np.polyval(awave0, x0s)
+                lambda1 = np.polyval(awave1, x0s) * deltax
+                lambda2 = np.polyval(awave2, x0s) * deltax ** 2
+                lambda3 = np.polyval(awave3, x0s) * deltax ** 3
+                # sum of lambdas
+                lambda_total = lambda0 + lambda1 + lambda2 + lambda3
+                # add to array
+                waveimage[y0s, x0s] = lambda_total
+            # else if fiber is B
+            elif fiber == 'B':
+                # get fiber iteration number
+                fin = 2 * order_no + 1
+                # get central polynomial coefficients
+                centpoly = acc[fin][::-1]
+                # find those pixels in this suborder
+                mask = (orderimage == fin) & (fiberimage == fiber)
+                # get x0s and y0s
+                x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
+                # calculate centers
+                xcenters = np.array(x0s)
+                ycenters = np.polyval(centpoly, xcenters)
+                # get deltax and delta y
+                deltay = y0s - ycenters
+                deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+
+                # construct lambda from x
+                lambda0 = np.polyval(awave0, x0s)
+                lambda1 = np.polyval(awave1, x0s) * deltax
+                lambda2 = np.polyval(awave2, x0s) * deltax ** 2
+                lambda3 = np.polyval(awave3, x0s) * deltax ** 3
+                # sum of lambdas
+                lambda_total = lambda0 + lambda1 + lambda2 + lambda3
+                # add to array
+                waveimage[y0s, x0s] = lambda_total
+            # else if fiber is C
+            elif fiber == 'C':
+                # get fiber iteration number
+                fin = order_no
+                # get central polynomial coefficients
+                centpoly = acc[fin][::-1]
+                # find those pixels in this suborder
+                mask = (orderimage == fin) & (fiberimage == fiber)
+                # get x0s and y0s
+                x0s, y0s = np.array(ximage[mask]), np.array(yimage[mask])
+                # calculate centers
+                xcenters = np.array(x0s)
+                ycenters = np.polyval(centpoly, xcenters)
+                # get deltax and delta y
+                deltay = y0s - ycenters
+                deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+
+                # construct lambda from x
+                lambda0 = np.polyval(awave0, x0s)
+                lambda1 = np.polyval(awave1, x0s) * deltax
+                lambda2 = np.polyval(awave2, x0s) * deltax ** 2
+                lambda3 = np.polyval(awave3, x0s) * deltax ** 3
+                # sum of lambdas
+                lambda_total = lambda0 + lambda1 + lambda2 + lambda3
+                # add to array
+                waveimage[y0s, x0s] = lambda_total
+            #else break
+            else:
+                emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
+                emsg2 = '\tfunction={0}'.format(func_name)
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # add to loc
     loc['WAVEIMAGE'] = waveimage
@@ -316,6 +472,99 @@ def create_image_from_waveimage(loc, x, y):
     # add to loc
     loc['SPE'] = newimage
     loc.set_source('SPE', func_name)
+    # return loc
+    return loc
+
+
+def create_image_from_e2ds(p, loc):
+    """
+    Takes a spectrum "y" at wavelengths "x" and uses these to interpolate
+    wavelength positions in loc['WAVEIMAGE'] to map the spectrum onto
+    the waveimage
+
+    :param loc: parameter dictionary, ParamDict containing data
+            Must contain at least:
+                waveimage: numpy array (2D), the wavelength of each pixel
+                           shape is same as input image and must be the same
+                           shape as spe
+    :param x: numpy array (1D), the wavelength values to map onto the image
+    :param y: numpy array (1D), the spectrum values to map onto the image
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                spe: numpy array (2D), the spectrum of each pixel, shape is
+                           same as input image and must be the same shape
+                           as waveimage
+    """
+    func_name = __NAME__ + '.create_image_from_waveimage()'
+    # get data from loc
+    waveimage = loc['WAVEIMAGE']
+    orderimage = loc['ORDERIMAGE']
+    fiberimage = loc['FIBERIMAGE']
+    e2dsimages = loc['E2DSFILES']
+    wave = loc['ALLWAVE']
+    allacc, allass = loc['ALL_ACC'], loc['ALL_ASS']
+
+    # create new spectrum
+    newimage = np.zeros_like(waveimage) * np.nan
+
+    # loop around orders
+    for order_num in range(loc['NBO']):
+
+        # log progress
+        wmsg = 'Extrapolating order {0}'.format(order_num)
+        WLOG('', p['LOG_OPT'], wmsg)
+
+        # loop around fibers
+        for fiber in allacc.keys():
+            # get x data for this order and thus fiber
+            x = wave[fiber][order_num]
+            # get y data for this order and this fiber
+            y = e2dsimages[fiber][order_num]
+
+            # set up interpolation (catch warnings)
+            with warnings.catch_warnings(record=True) as _:
+                wave_interp = interp1d(x, y)
+
+            # loop around each row in image, interpolate wavevalues
+            for row in range(len(waveimage)):
+                # get row values
+                rvalues = waveimage[row]
+                # TODO change mask out zeros to NaNs
+                # mask out zeros (NaNs in future)
+                invalidpixels = (rvalues == 0)
+                invalidpixels &= ~np.isfinite(rvalues)
+                # don't try to interpolate those pixels outside range of "x"
+                with warnings.catch_warnings(record=True) as _:
+                    invalidpixels |= rvalues < np.min(x)
+                    invalidpixels |= rvalues > np.max(x)
+                # valid pixel definition
+                validpixels = ~invalidpixels
+                # check that we have some valid pixels
+                if np.sum(validpixels) == 0:
+                    continue
+
+                # add order mask to valid pixels
+                validpixels &= (orderimage[row] == order_num)
+                # check that we have some valid pixels
+                if np.sum(validpixels) == 0:
+                    continue
+
+                # add fiber type mask
+                validpixels &= (fiberimage[row] == fiber)
+                # check that we have some valid pixels
+                if np.sum(validpixels) == 0:
+                    continue
+
+                # interpolate wavelengths in waveimage to get newimage
+                #     (catch warnings)
+                with warnings.catch_warnings(record=True) as _:
+                    ivalues = wave_interp(rvalues[validpixels])
+                    newimage[row][validpixels] = ivalues
+    # add to loc
+    loc['SPE'] = newimage
+    loc['SPE0'] = np.where(np.isfinite(newimage), newimage, 0.0)
+    loc.set_sources(['SPE', 'SPE0'], func_name)
     # return loc
     return loc
 
