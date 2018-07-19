@@ -338,12 +338,14 @@ def main(debug_mode=0):
 
     # log and ask user to confirm
     messages = ['\nFirst time installation?', '\nAdd required files to DRS?\n']
-    inputmessage = '\n\tSetup calibration database? [Y]es or [N]o\t'
+    inputmessage = '\n\tSetup databases? [Y]es or [N]o\t'
     uinput = drs_reset.custom_confirmation(messages, inputmessage)
     # add calibDB files
     if uinput:
         drs_reset.reset_calibdb(cparams, log=True)
         wlog('', __NAME__, 'Calibration database setup correctly.')
+        drs_reset.reset_telludb(cparams, log=True)
+        wlog('', __NAME__, 'Telluric database setup correctly.')
     else:
         wlog('', __NAME__, 'Assuming files setup correctly.')
 
