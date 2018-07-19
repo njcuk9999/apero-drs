@@ -48,12 +48,12 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-#def main(night_name=None, files=None):
-if __name__ == '__main__':
-
-    import sys
-    sys.argv = 'obj_fit_tellu.py tellu_e2ds 2279005o_HR8489_pp_e2dsff_AB.fits'.split()
-    night_name, files = None, None
+def main(night_name=None, files=None):
+# if __name__ == '__main__':
+#
+#     import sys
+#     sys.argv = 'obj_fit_tellu.py tellu_e2ds 2279005o_HR8489_pp_e2dsff_AB.fits'.split()
+#     night_name, files = None, None
 
     # ----------------------------------------------------------------------
     # Set up
@@ -66,17 +66,32 @@ if __name__ == '__main__':
     # set up function name
     main_name = __NAME__ + '.main()'
 
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # Load first file
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     loc = ParamDict()
     rd = spirouImage.ReadImage(p, p['FITSFILENAME'])
     loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['XDIM'], loc['YDIM'] = rd
     loc.set_sources(['DATA', 'DATAHDR', 'DATACDR', 'XDIM', 'YDIM'], main_name)
 
-    # ------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # Get object name, airmass and berv
+    # ----------------------------------------------------------------------
+    # Get object name
+    wks = dict(p=p, hdr=loc['DATAHDR'], return_value=True)
+    loc['OBJNAME'] = spirouImage.ReadParam(**wks, keyword='KW_OBJNAME',
+                                           dtype=str)
+    # Get the airmass
+    loc['AIRMASS'] = spirouImage.ReadParam(**wks, keyword='KW_AIRMASS')
+    # Get the Barycentric correction from header
+    loc['BERV'], _, _ = spirouTelluric.GetBERV(p, loc['DATAHDR'])
+    # set sources
+    source = main_name + '+ spirouImage.ReadParams()'
+    loc.set_sources(['OBJNAME', 'AIRMASS', 'BERV'], source)
+    # ----------------------------------------------------------------------
     # Read wavelength solution
-    # ------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
 
     # ----------------------------------------------------------------------
@@ -103,7 +118,8 @@ if __name__ == '__main__':
     # TODO: Is this per object? If so how do we select? Based on OBJNAME?
     # TODO: Currently just selects the most recent
     # read filename from telluDB
-    template_file = spirouDB.GetDatabaseTellTemp(p, required=False)
+    template_file = spirouDB.GetDatabaseTellTemp(p, loc['OBJNAME'],
+                                                 required=False)
     # if we don't have a template flag it
     if template_file is None:
         loc['FLAG_TEMPLATE'] = False
@@ -126,7 +142,8 @@ if __name__ == '__main__':
     # TODO: This is per wave solution but wave solution in e2ds file header
     # TODO:  If so how do we select?
     # TODO: Currently just selects the most recent
-    tapas_file_name = spirouDB.GetDatabaseTellConv(p)
+    tapas_file_names = spirouDB.GetDatabaseTellConv(p)
+    tapas_file_name = tapas_file_names[-1]
     # load atmospheric transmission
     loc['TAPAS_ALL_SPECIES'] = np.load(tapas_file_name)
     loc.set_source('TAPAS_ALL_SPECIES', main_name)
@@ -300,8 +317,23 @@ if __name__ == '__main__':
             molkws = [molkey, 0, 'Absorption in {0}'.format(molecule.upper())]
             # load into hdict
             hdict = spirouImage.AddKey(hdict, molkws, value=loc[molkey])
+            # add water col
+            if molecule == 'h2o':
+                loc['WATERCOL'] = loc[molkey]
+                # set source
+                loc.set_source('WATERCOL', main_name)
         # write recon_abso to file
         spirouImage.WriteImage(outfile2, recon_abso2, hdict)
+
+        # ------------------------------------------------------------------
+        # Update the Telluric database
+        # ------------------------------------------------------------------
+        # add to telluric database
+        oparams = dict(objname=loc['OBJNAME'], berv=loc['BERV'],
+                       airmass=loc['AIRMASS'], watercol=loc['WATERCOL'])
+        spirouDB.UpdateDatavaseTellObj(p, outfilename1, **oparams)
+        # copy file to database
+        spirouDB.PutTelluFile(p, outfile1)
 
     # ----------------------------------------------------------------------
     # End plotting
@@ -317,17 +349,17 @@ if __name__ == '__main__':
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
-    # return dict(locals())
+    return dict(locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# if __name__ == "__main__":
-#     # run main with no arguments (get from command line - sys.argv)
-#     ll = main()
-#     # exit message if in debug mode
-#     spirouStartup.Exit(ll)
+if __name__ == "__main__":
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
+    # exit message if in debug mode
+    spirouStartup.Exit(ll)
 
 # =============================================================================
 # End of code
