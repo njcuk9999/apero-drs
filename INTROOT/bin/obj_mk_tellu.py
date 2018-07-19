@@ -72,6 +72,8 @@ def main(night_name=None, files=None):
     loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
     # set source
     loc.set_source('WAVE', main_name)
+    # get the wave keys
+    loc = spirouImage.GetWaveKeys(p, loc, loc['DATAHDR'])
 
     # ------------------------------------------------------------------
     # Get and Normalise the blaze
@@ -135,6 +137,15 @@ def main(night_name=None, files=None):
             wmsg = 'Processing file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
 
+        # Get object name and airmass
+        wks = dict(p=p, hdr=shdr, return_value=True)
+        loc['OBJNAME'] = spirouImage.ReadParam(**wks, keyword='KW_OBJNAME',
+                                               dtype=str)
+        loc['AIRMASS'] = spirouImage.ReadParam(**wks, keyword='KW_AIRMASS')
+        # set source
+        source = main_name + '+ spirouImage.ReadParams()'
+        loc.set_sources(['OBJNAME', 'AIRMASS'], source)
+
         # ------------------------------------------------------------------
         # loop around the orders
         # ------------------------------------------------------------------
@@ -193,7 +204,6 @@ def main(night_name=None, files=None):
                 sPlt.plt.show()
                 sPlt.plt.close()
 
-
             # set all values below a threshold to NaN
             sed[ww < p['TELLU_NAN_THRESHOLD']] = np.nan
             # save the spectrum (normalised by the SED) to the tranmission map
@@ -204,6 +214,35 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         spirouImage.WriteImage(outfile, transmission_map, hdict)
+
+        # ------------------------------------------------------------------
+        # Generate the absorption map
+        # ------------------------------------------------------------------
+        # set up storage for the absorption
+        abso = np.array(transmission_map)
+        # set values less than low threshold to low threshold
+        # set values higher than high threshold to 1
+        low, high = p['TELLU_ABSO_LOW_THRES'], p['TELLU_ABSO_HIGH_THRES']
+        with warnings.catch_warnings(record=True) as w:
+            abso[abso < low] = low
+            abso[abso > high] = 1.0
+        # write to loc
+        loc['RECON_ABSO'] = abso.reshape(np.product(loc['DATA'].shape))
+        loc.set_source('RECON_ABSO', main_name)
+
+        # ------------------------------------------------------------------
+        # Get molecular absorption
+        # ------------------------------------------------------------------
+        loc = spirouTelluric.CalcMolecularAbsorption(p, loc)
+        # add molecular absorption to file
+        for it, molecule in enumerate(p['TELLU_ABSORBERS'][1:]):
+            # get molecule keyword store and key
+            molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'][0], molecule.upper())
+            # add water col
+            if molecule == 'h2o':
+                loc['WATERCOL'] = loc[molkey]
+                # set source
+                loc.set_source('WATERCOL', main_name)
 
         # ----------------------------------------------------------------------
         # Quality control
@@ -228,12 +267,9 @@ def main(night_name=None, files=None):
         if p['QC']:
             # copy tellu file to the telluDB folder
             spirouDB.PutTelluFile(p, outfile)
-            # TODO: work out these values (placeholders currently)
-            airmass = loc['DATAHDR'][p['KW_AIRMASS'][0]]
-            watercol = -9999.0
-            # TODO: Can't figured out where to get watercol from
-            # TODO: Airmass from header? Which key?
-            name = loc['DATAHDR'][p['KW_OBJNAME'][0]]
+            airmass = loc['AIRMASS']
+            watercol = loc['WATERCOL']
+            name = loc['OBJNAME']
             # update the master tellu DB file with transmission map
             targs = [p, outfilename, name, airmass, watercol]
             spirouDB.UpdateDatabaseTellMap(*targs)
@@ -242,6 +278,7 @@ def main(night_name=None, files=None):
     # Optional Absorption maps
     # ----------------------------------------------------------------------
     if p['TELLU_ABSO_MAPS']:
+
         # ------------------------------------------------------------------
         # Generate the absorption map
         # ------------------------------------------------------------------
