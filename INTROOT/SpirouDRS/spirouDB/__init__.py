@@ -57,6 +57,8 @@ GetDatabaseTellMap = spirouTDB.get_database_tell_map
 
 GetDatabaseTellTemp = spirouTDB.get_database_tell_template
 
+GetDatabaseTellObj = spirouTDB.get_database_tell_obj
+
 PutTelluFile = spirouTDB.put_file
 
 UpdateDatabaseTellMol = spirouTDB.update_database_tell_mole
@@ -68,6 +70,8 @@ UpdateDatabaseSky = spirouTDB.update_database_sky
 UpdateDatabaseTellMap = spirouTDB.update_database_tell_map
 
 UpdateDatabaseTellTemp = spirouTDB.update_database_tell_temp
+
+UpdateDatavaseTellObj = spirouTDB.update_database_tell_obj
 
 # =============================================================================
 # End of code
