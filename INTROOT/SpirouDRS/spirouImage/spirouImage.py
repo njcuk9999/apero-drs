@@ -1522,8 +1522,8 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
             WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
-        emsg1 = ('Cannot convert keyword "{0}" to type "{1}"'
-                 '').format(keyword, dtype)
+        emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
+                 '').format(keyword, rawvalue, dtype)
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         value = None
