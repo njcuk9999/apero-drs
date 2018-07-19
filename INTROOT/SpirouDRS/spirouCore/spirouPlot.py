@@ -1905,7 +1905,8 @@ def tellu_fit_recon_abso_plot(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot spectra for selected order
-    frame.plot(swave, ssp2/np.nanmedian(ssp2), color='g', label='Cleaned SP')
+    frame.plot(swave, ssp2/np.nanmedian(ssp2)/srecon_abso, color='g',
+               label='Cleaned SP')
     frame.plot(swave, stemp2/np.nanmedian(stemp2), color='c', label='Template')
     frame.plot(swave, srecon_abso, color='r', label='recon abso')
     # add legend
