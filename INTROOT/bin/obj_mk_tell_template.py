@@ -73,16 +73,18 @@ def main(night_name=None, files=None):
     # read first file and assign values
     rdata = spirouImage.ReadImage(p, p['FITSFILENAME'])
     loc['DATA'], loc['DATAHDR'], loc['DATACDR'] = rdata[:3]
-    # TODO: Question: Is this per star? If so should the original file be
-    # TODO: Question:   a user input --> No input file would require objname
-    # TODO: Question:   from somewhere else?
-    # TODO: Add constants to constant file
-    if p['KW_OBJNAME'][0] in loc['DATAHDR']:
-        p['TELLU_TEMPLATE_OBJ'] = loc['DATAHDR'][p['KW_OBJNAME'][0]]
-    else:
-        emsg = 'HEADER key = {0} not in file = {1}'
-        eargs = [p['KW_OBJNAME'][0], p['FITSFILENAME']]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+
+    # Get object name and airmass
+    wks = dict(p=p, hdr=loc['DATAHDR'], return_value=True)
+    loc['OBJNAME'] = spirouImage.ReadParam(**wks, keyword='KW_OBJNAME',
+                                           dtype=str)
+    loc.set_source('OBJNAME', main_name)
+
+    loc['AIRMASS'] = spirouImage.ReadParam(**wks, keyword='KW_AIRMASS')
+    # set source
+    source = main_name + '+ spirouImage.ReadParams()'
+    loc.set_sources(['OBJNAME', 'AIRMASS'], source)
+
 
     # ------------------------------------------------------------------
     # Get the wave solution
@@ -100,13 +102,24 @@ def main(night_name=None, files=None):
     # Get database files
     # ----------------------------------------------------------------------
     # get current telluric maps from telluDB
-    tellu_db_data = spirouDB.GetDatabaseTellMap(p)
+    tellu_db_data = spirouDB.GetDatabaseTellObj(p, required=False)
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
-    # filter by object name (only keep TELLU_TEMPLATE_OBJ objects
+    # filter by object name (only keep OBJNAME objects
     tell_files = []
     for it in range(len(tellu_db_files)):
-        if p['TELLU_TEMPLATE_OBJ'] in tellu_db_names[it]:
+        if loc['OBJNAME'] in tellu_db_names[it]:
             tell_files.append(tellu_db_files[it])
+
+
+    # log if we have no files
+    if len(tell_files) == 0:
+        wmsg = 'No "TELL_OBJ" files found for object ="{0}" skipping'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(loc['OBJNAME']))
+        # End Message
+        wmsg = 'Recipe {0} has been successfully completed'
+        WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+        # return a copy of locally defined variables in the memory
+        return dict(locals())
 
 
     # ----------------------------------------------------------------------
@@ -183,7 +196,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # TODO: move file definition to spirouConfig
     reduced_dir = p['ARG_FILE_DIR']
-    outfilename = 'Template_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
+    outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
     outfile = os.path.join(reduced_dir, outfilename)
 
     # hdict is first file keys
@@ -195,7 +208,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
     # ----------------------------------------------------------------------
-    spirouDB.UpdateDatabaseTellTemp(p, outfilename, loc['DATAHDR'])
+    objname = loc['OBJNAME']
+    spirouDB.UpdateDatabaseTellTemp(p, outfilename, objname, loc['DATAHDR'])
     # put file in telluDB
     spirouDB.PutTelluFile(p, outfile)
 
@@ -203,9 +217,9 @@ def main(night_name=None, files=None):
     # Save cubes to file
     # ----------------------------------------------------------------------
     reduced_dir = p['DRS_DATA_REDUC']
-    outfilename1 = 'BigCube_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
+    outfilename1 = 'BigCube_{0}.fits'.format(loc['OBJNAME'])
     outfile1 = os.path.join(reduced_dir, outfilename)
-    outfilename2 = 'BigCube0_{0}.fits'.format(p['TELLU_TEMPLATE_OBJ'])
+    outfilename2 = 'BigCube0_{0}.fits'.format(loc['OBJNAME'])
     outfile2 = os.path.join(reduced_dir, outfilename)
 
     spirouImage.WriteImageMulti(outfile1, big_cube, hdict)
