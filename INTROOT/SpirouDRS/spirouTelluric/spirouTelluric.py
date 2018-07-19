@@ -88,22 +88,35 @@ def get_molecular_tell_lines(p, loc):
     tapas_file = spirouDB.GetDatabaseTellMole(p)
     tdata = spirouImage.ReadImage(p, tapas_file, kind='FLAT')
     tapas, thdr, tcmt, _, _ = tdata
+
+    # load all current telluric convolve files
+    convole_files = spirouDB.GetDatabaseTellConv(p, required=False)
+
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
     # TODO: Make this the date and not the wave file name??
-    wave_file = loc['WAVE_FILE']
+    wave_file = loc['WAVEFILE']
     tapas_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
-    # if we already have a file for this wavelength just open it
-    try:
-        # load with numpy
-        tapas_all_species = np.load(tapas_file_name)
-        # log loading
-        wmsg = 'Loading Tapas convolve file: {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(tapas_file_name))
-        # add name to loc
-        loc['TAPAS_FNAME'], loc['TAPAS_ABSNAME'] = None, None
-    # if we don't have a tapas file for this wavelength soltuion calculate it
-    except Exception:
+
+    # find tapas file in files
+    if tapas_file not in convole_files:
+        generate = True
+    else:
+        # if we already have a file for this wavelength just open it
+        try:
+            # load with numpy
+            tapas_all_species = np.load(tapas_file_name)
+            # log loading
+            wmsg = 'Loading Tapas convolve file: {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(tapas_file_name))
+            # add name to loc
+            loc['TAPAS_FNAME'], loc['TAPAS_ABSNAME'] = None, None
+            generate = False
+        # if we don't have a tapas file for this wavelength soltuion calculate it
+        except Exception:
+            generate = True
+    # if we don't have tapas_all_species generate
+    if generate:
         # loop around each molecule in the absorbers list
         #    (must be in
         for n_species, molecule in enumerate(p['TELLU_ABSORBERS']):
@@ -300,7 +313,7 @@ def calc_recon_abso(p, loc):
         # if we don't have a template construct one
         if not loc['FLAG_TEMPLATE']:
             # define template2 to fill
-            template2 = np.zeros(np.product(loc['DATA']))
+            template2 = np.zeros(np.product(loc['DATA'].shape))
             # loop around orders
             for order_num in range(ydim):
                 # get start and end points
@@ -318,7 +331,8 @@ def calc_recon_abso(p, loc):
                 # convolve mask for weights
                 ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
                 # wave weighted convolved spectrum into template2
-                template2[start, end] = sp2b / ww
+                with warnings.catch_warnings(record=True) as w:
+                    template2[start:end] = sp2b / ww
         # else we have template so load it
         else:
             template2 = loc['TEMPLATE2']
