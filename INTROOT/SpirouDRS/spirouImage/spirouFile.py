@@ -699,6 +699,7 @@ def find_match(control, code, obstype, ccas, cref):
     obs_types = control['obstype']
     ccas_types = control['ccas']
     cref_types = control['cref']
+    dprtype = control['dprtype']
     # loop around each file to identify file
     match_number = None
     match = True
@@ -711,8 +712,12 @@ def find_match(control, code, obstype, ccas, cref):
         c1 = obs_types[c_it] == 'None'
         c2 = ccas_types[c_it] == 'None'
         c3 = cref_types[c_it] == 'None'
+        c4 = dprtype[c_it] == 'None'
         # if all three types are None skip
         if c0 and c1 and c2 and c3:
+            continue
+        # if dprtype is None skip (this is not an identification)
+        if c4:
             continue
         # set match
         match = True
