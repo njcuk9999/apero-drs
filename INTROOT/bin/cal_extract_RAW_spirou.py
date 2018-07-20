@@ -216,8 +216,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         wdata = spirouImage.ReadWaveFile(p, hdr, return_header=True)
         loc['WAVE'], loc['WAVEHDR'] = wdata
         wavefile = spirouImage.ReadWaveFile(p, hdr, return_filename=True)
-        loc['WAVEFILE'] = os.path.basename(loc['WAVE_FILE'])
-        skeys = ['WAVE', 'WAVE_FILE']
+        loc['WAVEFILE'] = os.path.basename(wavefile)
+        skeys = ['WAVE', 'WAVEFILE']
         loc.set_sources(skeys, __NAME__ + '.main + .spirouImage.ReadWaveFile()')
         # get wave params from wave header
         loc['WAVEPARAMS'] = spirouImage.ReadWaveParams(p, loc['WAVEHDR'])
@@ -398,7 +398,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
         # add wave solution date and filename
         hdict = spirouImage.AddKey(hdict, p['KW_WAVE_FILE'],
-                                   value=loc['WAVE_FILE'])
+                                   value=loc['WAVEFILE'])
         hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
                                    value=loc['WAVE_ACQTIMES'][0])
         hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
