@@ -129,7 +129,7 @@ def main(night_name=None, reffile=None):
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='julian')
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
@@ -279,8 +279,8 @@ def main(night_name=None, reffile=None):
         # apply flat
         loc['SPE'] = loc['SPE']/loc['FLAT']
         # get acqtime
-        bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
-                                        return_value=1)
+        bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', return_value=1,
+                                        kind='julian')
         # ----------------------------------------------------------------------
         # Background correction
         # ----------------------------------------------------------------------
@@ -342,9 +342,15 @@ def main(night_name=None, reffile=None):
         else:
             if p['DRS_PLOT']:
                 # start interactive session if needed
-                sPlt.start_interactive_session()
+                sPlt.plt.ioff()
                 # plot comparison between spe and ref
-                sPlt.drift_plot_correlation_comp(p, loc, correlation_coeffs)
+                sPlt.drift_plot_correlation_comp(p, loc, correlation_coeffs,
+                                                 i_it)
+                # show and close plot
+                sPlt.plt.show()
+                sPlt.plt.close()
+                # turn interactive plotting back on
+                sPlt.plt.ion()
             # log that we cannot use this extraction
             wmsg1 = 'The correlation of some orders compared to the template is'
             wmsg2 = '   < {0}, something went wrong in the extract.'
