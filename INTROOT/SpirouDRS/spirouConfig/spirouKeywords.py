@@ -47,7 +47,7 @@ p = spirouConfig.check_params(p)
 # ---------------------------------------------------------------
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['kw_ACQTIME_KEY',
-            'kw_ACQTIME_KEY_UNIX',
+            'kw_ACQTIME_KEY_JUL',
             'kw_AIRMASS',
             'kw_BBAD',
             'kw_BBFLAT',
@@ -220,9 +220,9 @@ else:
 #   in unix time format (time since 1970-01-01-00-00-00)
 # TODO: This switch will be obsolete after H2RG testing is over
 if p['IC_IMAGE_TYPE'] == 'H4RG':
-    kw_ACQTIME_KEY_UNIX = ['MJDATE', None, '']
+    kw_ACQTIME_KEY_JUL = ['MJDATE', None, '']
 else:
-    kw_ACQTIME_KEY_UNIX = ['ACQTIME', None, '']
+    kw_ACQTIME_KEY_JUL= ['ACQTIME', None, '']
 
 # define the observation date HEADER key
 kw_DATE_OBS = ['DATE-OBS', None, '']
