@@ -639,7 +639,7 @@ def get_wave_solution(p, image=None, hdr=None):
         xpixels = np.arange(image.shape[1])
         # load the wave solution for each order
         for order_num in range(dim1):
-            wave[order_num] = np.polyval(wave_params[::-1], xpixels)
+            wave[order_num] = np.polyval(wave_params[order_num][::-1], xpixels)
     # else we use the calibDB (using the header) to get the wave solution
     else:
         wave = read_wave_file(p, hdr)
