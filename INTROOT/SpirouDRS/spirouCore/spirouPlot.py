@@ -1297,7 +1297,7 @@ def drift_peak_plot_dtime_against_drift(p, loc):
         plt.close()
 
 
-def drift_plot_correlation_comp(p, loc, cc):
+def drift_plot_correlation_comp(p, loc, cc, iteration):
     """
     Plot correlation comparison plot (comparing value good and bad orders that
     pass and fail the Pearson R tests
@@ -1423,13 +1423,13 @@ def drift_plot_correlation_comp(p, loc, cc):
     frame2.set_xticklabels([])
     # -------------------------------------------------------------------------
     # set title
-    title = ('Pearson R test - example passed order vs failed order\n'
-             'PearsonR cut: {0}\n'
-             'Best result (Order {1}): {2}\n'
-             'Good result (Order {3}): {4}\n'
-             'Failed result (Order {5}): {6}')
-    targs = [prcut, best_order, cc[best_order],  good_order, cc[good_order],
-             bad_order, cc[bad_order]]
+    title = ('Pearson R test File {0} - example passed order vs failed order\n'
+             'PearsonR cut: {1}\n'
+             'Best result (Order {2}): {3}\n'
+             'Good result (Order {4}): {5}\n'
+             'Failed result (Order {6}): {7}')
+    targs = [iteration + 1, prcut, best_order, cc[best_order],  good_order,
+             cc[good_order], bad_order, cc[bad_order]]
     plt.suptitle(title.format(*targs))
 
     # -------------------------------------------------------------------------
