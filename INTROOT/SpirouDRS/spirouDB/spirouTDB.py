@@ -88,16 +88,16 @@ def get_database_tell_mole(p):
     return filenames[sort][-1]
 
 
-# TODO: Figure out how we use this with no wave file
-# TODO: Currently just returns most recent
-def get_database_tell_conv(p):
+def get_database_tell_conv(p, required=True):
     func_name = __NAME__ + '.get_database_tell_conv()'
     # define key
     key = 'TELL_CONV'
     # get the telluric database (all lines)
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
-    if key not in t_database:
+    if not required and key not in t_database:
+        return [],[], [], []
+    elif key not in t_database:
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
@@ -129,7 +129,7 @@ def get_database_tell_conv(p):
     sort = np.argsort(unixtimes)
 
     # only returning most recent filename
-    return filenames[sort][-1]
+    return filenames[sort]
 
 
 def get_database_sky(p):
@@ -182,7 +182,7 @@ def get_database_tell_map(p, required=True):
     # check for key in database
     if not required and key not in t_database:
         return [],[], [], []
-    if key not in t_database:
+    elif key not in t_database:
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
@@ -220,9 +220,7 @@ def get_database_tell_map(p, required=True):
     return filenames[sort], objnames[sort], airmasses[sort], watercols[sort]
 
 
-
-# TODO: Might require OBJNAME to select file (not most recent)
-def get_database_tell_template(p, required=True):
+def get_database_tell_template(p, object_name, required=True):
     func_name = __NAME__ + '.get_database_tell_template()'
     # define key
     key = 'TELL_TEMP'
@@ -246,7 +244,59 @@ def get_database_tell_template(p, required=True):
     filenames, humantimes, unixtimes = [], [], []
     for value in values:
         # get this iterations value from value
-        _, filename, humantime, unixtime = value
+        _, filename, humantime, unixtime, objname = value
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        # check object name matches
+        if objname != object_name:
+            continue
+        # add to array
+        filenames = np.append(filenames, absfilename)
+        humantimes = np.append(humantimes, humantime)
+        unixtimes = np.append(unixtimes, float(unixtime))
+
+    # if we have no files return None
+    if len(filenames) == 0:
+        return None
+
+    # for tell_mole we only want to use the most recent key (if more than one)
+    # sort by unixtime
+    sort = np.argsort(unixtimes)
+
+    # only returning most recent filename
+    return filenames[sort][-1]
+
+
+def get_database_tell_obj(p, required=True):
+    func_name = __NAME__ + '.get_database_tell_map()'
+    # define key
+    key = 'TELL_OBJ'
+    # get the telluric database (all lines)
+    t_database = spirouDB.get_database(p, dbkind='Telluric')
+    # check for key in database
+    if not required and key not in t_database:
+        return [],[], [], []
+    if key not in t_database:
+        # generate error message
+        emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        return 0
+
+    # filter database by key
+    values = t_database[key]
+
+    # extract parameters from database values
+    filenames, humantimes, unixtimes, objnames = [], [], [], []
+    bervs, airmasses, watercols = [], [], []
+    for value in values:
+        # get this iterations value from value
+        _, filename, humant, unixt, objname, berv, airmass, watercol = value
         # get absfilename
         absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
         # check filename exists
@@ -256,15 +306,20 @@ def get_database_tell_template(p, required=True):
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
-        humantimes = np.append(humantimes, humantime)
-        unixtimes = np.append(unixtimes, float(unixtime))
+        humantimes = np.append(humantimes, humant)
+        unixtimes = np.append(unixtimes, float(unixt))
+        objnames = np.append(objnames, objname)
+        bervs = np.append(bervs, berv)
+        airmasses = np.append(airmasses, float(airmass))
+        watercols = np.append(watercols, float(watercol))
 
-    # for tell_mole we only want to use the most recent key (if more than one)
     # sort by unixtime
     sort = np.argsort(unixtimes)
 
-    # only returning most recent filename
-    return filenames[sort][-1]
+    # return sorted filenames, objnames, bervs, airmasses and watercols
+    rdata = [filenames[sort], objnames[sort], bervs[sort]]
+    rdata += [airmasses[sort], watercols[sort]]
+    return rdata
 
 
 # TODO: Move to spirouDB?
@@ -346,15 +401,14 @@ def update_database_sky(p, filename, hdr=None):
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
 
 
-def update_database_tell_map(p, filename, objname, airmass, watercol,
-                             hdr=None):
+def update_database_tell_map(p, filename, objname, airmass, watercol, hdr=None):
     # define key
     key = 'TELL_MAP'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
     args = [key, filename, h_time, u_time, objname, airmass, watercol]
-    line = '\n{0} {1} {2} {3} {4} {5} {6}'.format(*args)
+    line = '\n{0} {1} {2} {3} {4} {5:.3f} {6:.3f}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
@@ -362,20 +416,37 @@ def update_database_tell_map(p, filename, objname, airmass, watercol,
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
 
 
-def update_database_tell_temp(p, filename, hdr=None):
+def update_database_tell_temp(p, filename, object_name, hdr=None):
 
     # define key for telluric convolve file
     key = 'TELL_TEMP'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
-    args = [key, filename, h_time, u_time]
-    line = '\n{0} {1} {2} {3}'.format(*args)
+    args = [key, filename, h_time, u_time, object_name]
+    line = '\n{0} {1} {2} {3} {4}'.format(*args)
     # push into list
     keys = [key]
     lines = [line]
     # update database
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
+
+
+def update_database_tell_obj(p, filename, objname, berv, airmass, watercol,
+                             hdr=None):
+    # define key
+    key = 'TELL_OBJ'
+    # get h_time and u_time
+    h_time, u_time = spirouDB.get_times_from_header(p, hdr)
+    # set up line
+    args = [key, filename, h_time, u_time, objname, berv, airmass, watercol]
+    line = '\n{0} {1} {2} {3} {4} {5:.3f} {6:.3f} {7:.3f}'.format(*args)
+    # push into list
+    keys = [key]
+    lines = [line]
+    # update database
+    spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
+
 
 
 # =============================================================================

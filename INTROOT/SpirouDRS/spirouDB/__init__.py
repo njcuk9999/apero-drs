@@ -12,6 +12,7 @@ Created on 2017-10-30 at 17:08
 from SpirouDRS import spirouConfig
 from . import spirouCDB
 from . import spirouTDB
+from . import spirouDB
 
 # =============================================================================
 # Define variables
@@ -44,6 +45,8 @@ PutCalibFile = spirouCDB.put_file
 
 UpdateCalibMaster = spirouCDB.update_datebase
 
+GetTimes  = spirouDB.get_times_from_header
+
 GetDatabaseTellMole = spirouTDB.get_database_tell_mole
 
 GetDatabaseTellConv = spirouTDB.get_database_tell_conv
@@ -53,6 +56,8 @@ GetDatabaseSky = spirouTDB.get_database_sky
 GetDatabaseTellMap = spirouTDB.get_database_tell_map
 
 GetDatabaseTellTemp = spirouTDB.get_database_tell_template
+
+GetDatabaseTellObj = spirouTDB.get_database_tell_obj
 
 PutTelluFile = spirouTDB.put_file
 
@@ -65,6 +70,8 @@ UpdateDatabaseSky = spirouTDB.update_database_sky
 UpdateDatabaseTellMap = spirouTDB.update_database_tell_map
 
 UpdateDatabaseTellTemp = spirouTDB.update_database_tell_temp
+
+UpdateDatavaseTellObj = spirouTDB.update_database_tell_obj
 
 # =============================================================================
 # End of code

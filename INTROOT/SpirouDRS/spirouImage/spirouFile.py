@@ -12,7 +12,6 @@ Created on 2018-04-19 at 16:16
 import numpy as np
 import os
 import glob
-import string
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -36,7 +35,6 @@ ConfigError = spirouConfig.ConfigError
 # Get Logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
-BADCHARS = [' '] + list(string.punctuation)
 
 # =============================================================================
 # Define classes
@@ -660,7 +658,7 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
             # try setting dstring to OBSTYPE
             if p['kw_OBJNAME'][0] in hdr:
                 # get the name of the object
-                name = get_good_object_name(p, hdr)
+                name = spirouFITS.get_good_object_name(p, hdr)
                 # need to replace do
                 # if name not in filename add if
                 if name not in filename:
@@ -681,24 +679,13 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         return filename, hdr, cdr
 
 
-def get_good_object_name(p, hdr):
-    # get raw name
-    rawname = hdr[p['kw_OBJNAME'][0]]
-    # remove spaces from start and end
-    name = rawname.strip()
-    # replace bad characters in between with '_'
-    for badchar in BADCHARS:
-        name = name.replace(badchar, '_')
-    # return cleaned up name
-    return name
-
-
 def find_match(control, code, obstype, ccas, cref):
     # get obs, ccas and cref types
     codes = control['ocode']
     obs_types = control['obstype']
     ccas_types = control['ccas']
     cref_types = control['cref']
+    dprtype = control['dprtype']
     # loop around each file to identify file
     match_number = None
     match = True
@@ -711,8 +698,12 @@ def find_match(control, code, obstype, ccas, cref):
         c1 = obs_types[c_it] == 'None'
         c2 = ccas_types[c_it] == 'None'
         c3 = cref_types[c_it] == 'None'
+        c4 = dprtype[c_it] == 'None'
         # if all three types are None skip
         if c0 and c1 and c2 and c3:
+            continue
+        # if dprtype is None skip (this is not an identification)
+        if c4:
             continue
         # set match
         match = True
