@@ -79,11 +79,9 @@ def main(night_name=None, files=None):
     # Get object name, airmass and berv
     # ----------------------------------------------------------------------
     # Get object name
-    wks = dict(p=p, hdr=loc['DATAHDR'], return_value=True)
-    loc['OBJNAME'] = spirouImage.ReadParam(**wks, keyword='KW_OBJNAME',
-                                           dtype=str)
+    loc['OBJNAME'] = spirouImage.GetObjName(p, loc['DATAHDR'])
     # Get the airmass
-    loc['AIRMASS'] = spirouImage.ReadParam(**wks, keyword='KW_AIRMASS')
+    loc['AIRMASS'] = spirouImage.GetAirmass(p, loc['DATAHDR'])
     # Get the Barycentric correction from header
     loc['BERV'], _, _ = spirouTelluric.GetBERV(p, loc['DATAHDR'])
     # set sources

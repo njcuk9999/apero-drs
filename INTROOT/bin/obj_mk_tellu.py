@@ -138,10 +138,8 @@ def main(night_name=None, files=None):
             WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
 
         # Get object name and airmass
-        wks = dict(p=p, hdr=shdr, return_value=True)
-        loc['OBJNAME'] = spirouImage.ReadParam(**wks, keyword='KW_OBJNAME',
-                                               dtype=str)
-        loc['AIRMASS'] = spirouImage.ReadParam(**wks, keyword='KW_AIRMASS')
+        loc['OBJNAME'] = spirouImage.GetObjName(p, shdr)
+        loc['AIRMASS'] = spirouImage.GetAirmass(p, shdr)
         # set source
         source = main_name + '+ spirouImage.ReadParams()'
         loc.set_sources(['OBJNAME', 'AIRMASS'], source)

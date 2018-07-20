@@ -75,12 +75,9 @@ def main(night_name=None, files=None):
     loc['DATA'], loc['DATAHDR'], loc['DATACDR'] = rdata[:3]
 
     # Get object name and airmass
-    wks = dict(p=p, hdr=loc['DATAHDR'], return_value=True)
-    loc['OBJNAME'] = spirouImage.ReadParam(**wks, keyword='KW_OBJNAME',
-                                           dtype=str)
+    loc['OBJNAME'] = spirouImage.GetObjName(p, loc['DATAHDR'])
     loc.set_source('OBJNAME', main_name)
-
-    loc['AIRMASS'] = spirouImage.ReadParam(**wks, keyword='KW_AIRMASS')
+    loc['AIRMASS'] = spirouImage.GetAirmass(p, loc['DATAHDR'])
     # set source
     source = main_name + '+ spirouImage.ReadParams()'
     loc.set_sources(['OBJNAME', 'AIRMASS'], source)
@@ -120,7 +117,10 @@ def main(night_name=None, files=None):
         WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
         # return a copy of locally defined variables in the memory
         return dict(locals())
-
+    else:
+        # log how many found
+        wmsg = '{0} "TELL_OBJ" filesfround for object ="{1}"'
+        WLOG('', p['LOG_OPT'], wmsg.format(len(tell_files), loc['OBJNAME']))
 
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
@@ -194,10 +194,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Write Cube median (the template) to file
     # ----------------------------------------------------------------------
-    # TODO: move file definition to spirouConfig
-    reduced_dir = p['ARG_FILE_DIR']
-    outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
-    outfile = os.path.join(reduced_dir, outfilename)
+    # construct filename
+    outfile = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
+    outfilename = os.path.basename(outfile)
 
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
