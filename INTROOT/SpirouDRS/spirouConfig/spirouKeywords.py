@@ -399,8 +399,8 @@ kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
 kw_WAVE_FILE = ['WAVEFILE', 0, 'Wave file used']
-kw_WAVE_TIME1 = ['WAVETIME1', 0, 'Wave file date+time human']
-kw_WAVE_TIME2 = ['WAVETIME2', 0, 'Wave file date+time unix']
+kw_WAVE_TIME1 = ['WAVET1', 0, 'Wave file date+time human']
+kw_WAVE_TIME2 = ['WAVET2', 0, 'Wave file date+time unix']
 
 kw_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
 kw_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
