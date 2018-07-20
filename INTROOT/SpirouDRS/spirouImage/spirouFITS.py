@@ -9,12 +9,13 @@ Created on 2017-10-12 at 15:32
 
 @author: cook
 
-Import rules: Not spirouLOCOR
+Import rules: Not spirouLOCOR Not from any spirouImage modules
 """
 from __future__ import division
 import numpy as np
 from astropy import version as av
 from astropy.io import fits
+import string
 import os
 import warnings
 from collections import OrderedDict
@@ -48,6 +49,8 @@ ParamDict = spirouConfig.ParamDict
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
+# object name bad characters
+BADCHARS = [' '] + list(string.punctuation)
 
 
 # =============================================================================
@@ -343,6 +346,7 @@ def writeimage(filename, image, hdict=None, dtype=None):
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
     # add warnings to the warning logger and log if we have them
     spirouCore.spirouLog.warninglogger(w)
 
@@ -457,6 +461,10 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             if hdicts[it] is not None:
                 for key in list(hdicts[it].keys()):
                     hdu[it].header[key] = hdicts[it][key]
+
+    # close hdu we are finished
+    if hdu is not None:
+        hdu.close()
     # write to file
     with warnings.catch_warnings(record=True) as w:
         try:
@@ -645,6 +653,22 @@ def get_wave_solution(p, image=None, hdr=None):
         wave = read_wave_file(p, hdr)
     # return wave solution
     return wave
+
+
+def get_good_object_name(p, hdr=None, rawname=None):
+    # get raw name
+    if (rawname is None) or (hdr is not None):
+        rawname = hdr[p['kw_OBJNAME'][0]]
+    else:
+        rawname = str(rawname)
+    # remove spaces from start and end
+    name = rawname.strip()
+    # replace bad characters in between with '_'
+    for badchar in BADCHARS:
+        name = name.replace(badchar, '_')
+    # return cleaned up name
+    return name
+
 
 
 def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
@@ -1513,7 +1537,6 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         # try to open the data and close the hdu
         try:
             data = hdu[openext].data
-            hdu.close()
         except Exception as e:
             emsg1 = 'Could not open data for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
@@ -1534,6 +1557,11 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
                 header = None
         else:
             header = hdu[0]
+
+    # close the HDU we are finished with it
+    if hdu is not None:
+        hdu.close()
+
     # return based on whether header and shape are required
     if getheader and getshape:
         if len(data.shape) == 2:

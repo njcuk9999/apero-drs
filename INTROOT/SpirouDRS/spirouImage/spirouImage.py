@@ -1557,8 +1557,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
                 spirouFITS.ReadImage
     :param name: string, the name in parameter dictionary to give to value
                  if return_value is False (i.e. p[name] = value)
-    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
-                 for time since 1970-01-01
+    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'julian'
     :param return_value: bool, if False value is returned in p as p[name]
                          if True value is returned
 
@@ -1608,6 +1607,23 @@ def get_wave_keys(p, loc, hdr):
     loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
     # return loc
     return loc
+
+
+def get_obj_name(p, hdr):
+    # get parameter
+    raw_obj_name = get_param(p, hdr, keyword='KW_OBJNAME', dtype=str,
+                             return_value=True)
+    # filter out bad characters
+    obj_name = spirouFITS.get_good_object_name(p, rawname=raw_obj_name)
+    # return object name
+    return obj_name
+
+
+def get_airmass(p, hdr):
+    # get parameter
+    raw_airmass = get_param(p, hdr, keyword='KW_AIRMASS', return_value=True)
+    # return airmass
+    return float(raw_airmass)
 
 
 # TODO insert paremeter dictionnary

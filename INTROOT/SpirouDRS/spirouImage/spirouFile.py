@@ -12,7 +12,6 @@ Created on 2018-04-19 at 16:16
 import numpy as np
 import os
 import glob
-import string
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -36,7 +35,6 @@ ConfigError = spirouConfig.ConfigError
 # Get Logging function
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
-BADCHARS = [' '] + list(string.punctuation)
 
 # =============================================================================
 # Define classes
@@ -660,7 +658,7 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
             # try setting dstring to OBSTYPE
             if p['kw_OBJNAME'][0] in hdr:
                 # get the name of the object
-                name = get_good_object_name(p, hdr)
+                name = spirouFITS.get_good_object_name(p, hdr)
                 # need to replace do
                 # if name not in filename add if
                 if name not in filename:
@@ -679,18 +677,6 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
                  ''.format(code, obstype, ccas, cref))
         WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
         return filename, hdr, cdr
-
-
-def get_good_object_name(p, hdr):
-    # get raw name
-    rawname = hdr[p['kw_OBJNAME'][0]]
-    # remove spaces from start and end
-    name = rawname.strip()
-    # replace bad characters in between with '_'
-    for badchar in BADCHARS:
-        name = name.replace(badchar, '_')
-    # return cleaned up name
-    return name
 
 
 def find_match(control, code, obstype, ccas, cref):
