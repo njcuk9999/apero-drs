@@ -176,9 +176,16 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     # deal with kinds
     if kind == 'human':
         kwakey = 'kw_ACQTIME_KEY'
+        dtype = str
+    elif kind == 'julian':
+        kwakey = 'kw_ACQTIME_KEY_JUL'
+        dtype = float
     else:
-        WLOG('error', p['LOG_OPT'], 'Kind not supported')
+        emsg1 = 'Acquisition "kind" not supported'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         kwakey = None
+        dtype = None
 
     # key acqtime_key from parameter dictionary
     if kwakey not in p and kind == 'human':
@@ -221,7 +228,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
                                      ' for function {2}'.format(*eargs)))
     # else get acqtime from header key
     else:
-        acqtime = header[acqtime_key]
+        acqtime = dtype(header[acqtime_key])
 
     return acqtime
 
