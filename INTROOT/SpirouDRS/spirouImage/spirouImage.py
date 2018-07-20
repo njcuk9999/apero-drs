@@ -1591,7 +1591,8 @@ def get_wave_keys(p, loc, hdr):
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
         loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', dtype=str,
                                     **wkwargs)
-        loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', **wkwargs)
+        loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
+                                     **wkwargs)
         loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
     # TODO: Remove section later
     else:
