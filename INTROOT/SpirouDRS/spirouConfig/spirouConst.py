@@ -1305,6 +1305,13 @@ def TELLU_FIT_RECON_FilE(p, filename):
     outfile2 = os.path.join(p['ARG_FILE_DIR'], outfilename2)
     return outfile2
 
+# noinspection PyPep8Naming
+def TELLU_TEMPLATE_FILE(p, loc):
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    return outfile
+
 
 # noinspection PyPep8Naming
 def DEG_POL_FILE(p, loc):
