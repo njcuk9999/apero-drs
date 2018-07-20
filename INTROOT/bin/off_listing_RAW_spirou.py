@@ -17,7 +17,7 @@ import os, string
 from astropy.io import fits
 
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -81,6 +81,8 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # Loop around all files and extract required header keys
     # ----------------------------------------------------------------------
+    # log progress
+    WLOG('', p['LOG_OPT'], 'Analysing {0} files'.format(len(files)))
     # loop around files and extract properties
     for filename in files:
         # skip any non-fits file files
@@ -89,8 +91,6 @@ def main(night_name=None):
         # skip non-preprocessed files
         if p['PROCESSED_SUFFIX'] not in filename:
             continue
-        # log progress
-        WLOG('', p['LOG_OPT'], 'Analysing file: {0}'.format(filename))
         # construct absolute path for file
         fitsfilename = os.path.join(p['ARG_FILE_DIR'], filename)
         # read file header
@@ -152,11 +152,7 @@ def main(night_name=None):
         WLOG('', '', '')
         WLOG('', '', 'Listing table:')
         WLOG('', '', '')
-        tablestring = table.__str__()
-        tablestrings = tablestring.split('\n')
-        WLOG('', '', '=' * len(tablestrings[0]))
-        WLOG('', '', tablestrings)
-        WLOG('', '', '=' * len(tablestrings[0]))
+        spirouImage.PrintTable(table)
 
     # ----------------------------------------------------------------------
     # End Message

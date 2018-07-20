@@ -19,7 +19,7 @@ import os
 import sys
 import code
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -184,7 +184,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # -------------------------------------------------------------------------
     # deal with arg_night_name defined in call
     if night_name is not None:
-        cparams['ARG_NIGHT_NAME'] = night_name
+        cparams['ARG_NIGHT_NAME'] = str(night_name)
     # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
@@ -541,9 +541,9 @@ def load_calibdb(p, calibdb=True):
             WLOG('error', p['LOG_OPT'],
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
         # then make sure files are copied
-        spirouCDB.CopyCDBfiles(p)
+        spirouDB.CopyCDBfiles(p)
         # then load the calibdb into p
-        calib_db, p = spirouCDB.GetDatabase(p)
+        calib_db, p = spirouDB.GetCalibDatabase(p)
         p['CALIBDB'] = calib_db
         p.set_source('CALIBDB', __NAME__ + '/run_startup()')
     else:
@@ -630,6 +630,10 @@ def exit_script(ll, has_plots=True):
             except Exception:
                 pass
         if not find_interactive():
+            # add some imports to locals
+            ll['np'], ll['plt'], ll['WLOG'] = np, spirouCore.sPlt.plt, WLOG
+            ll['os'], ll['sys'], ll['ParamDict'] = os, sys, ParamDict
+            # run code
             code.interact(local=ll)
     # if "No" and not interactive quit python/ipython
     elif not find_interactive():
@@ -1889,7 +1893,7 @@ def display_ee():
               '']
 
     for line in logo:
-        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC)
+        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
 
 
 def display_initial_parameterisation(p):

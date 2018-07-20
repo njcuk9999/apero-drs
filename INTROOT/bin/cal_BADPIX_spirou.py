@@ -17,7 +17,7 @@ from __future__ import division
 import numpy as np
 import os
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -197,9 +197,9 @@ def main(night_name=None, flatfile=None, darkfile=None):
     if p['QC']:
         keydb = 'BADPIX'
         # copy dark fits file to the calibDB folder
-        spirouCDB.PutFile(p, badpixelfits)
+        spirouDB.PutCalibFile(p, badpixelfits)
         # update the master calib DB file with new key
-        spirouCDB.UpdateMaster(p, keydb, badpixelfitsname, fhdr)
+        spirouDB.UpdateCalibMaster(p, keydb, badpixelfitsname, fhdr)
 
     # ----------------------------------------------------------------------
     # End Message

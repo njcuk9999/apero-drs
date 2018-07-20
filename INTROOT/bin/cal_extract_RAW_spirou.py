@@ -16,7 +16,6 @@ Up-to-date with cal_extract_RAW_spirouALL AT-4 V47
 from __future__ import division
 import numpy as np
 import os
-import time
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -185,6 +184,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     else:
         background = np.zeros_like(data2)
 
+
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -193,6 +193,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # get tilts
     loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+
+    #-----------------------------------------------------------------------
+    #  Earth Velocity calculation
+    #-----------------------------------------------------------------------
+    if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
     # ----------------------------------------------------------------------
     # Fiber loop
@@ -206,8 +212,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
+        wdata = spirouImage.ReadWaveFile(p, hdr, return_header=True)
+        loc['WAVE'], loc['WAVEHDR'] = wdata
         loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+        # get wave params from wave header
+        loc['WAVEPARAMS'] = spirouImage.ReadWaveParams(p, loc['WAVEHDR'])
 
         # ----------------------------------------------------------------------
         # Read Flat file
@@ -216,6 +225,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
         # get all values in flat that are zero to 1
         loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+
+
+        # ------------------------------------------------------------------
+        # Read Blaze file
+        # ------------------------------------------------------------------
+        loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+        blazesource = __NAME__ + '/main() + /spirouImage.ReadBlazeFile'
+        loc.set_source('BLAZE', blazesource)
 
         # ------------------------------------------------------------------
         # Get localisation coefficients
@@ -347,6 +364,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfffitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        # add barycentric keys to header
+        hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'],
+                                   value=loc['BERV_MAX'])
         # construct loco filename
         locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
@@ -367,9 +389,52 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add localization file keys to header
         root = p['KW_ROOT_DRS_LOC'][0]
         hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
+        # add wave solution number of orders
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                                   value=loc['WAVEPARAMS'].shape[0])
+        # add wave solution degree of fit
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                                   value=loc['WAVEPARAMS'].shape[1] - 1)
+        # add wave solution coefficients
+        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                         values=loc['WAVEPARAMS'])
         # Save E2DS file
         spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
         spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
+
+        # ------------------------------------------------------------------
+        # 1-dimension spectral S1D
+        #------------------------------------------------------------------
+        # normalise E2DSFF with the blaze function
+        e2dsffb = loc['E2DSFF'] / loc['BLAZE']
+        # only want certain orders
+        s1dwave = loc['WAVE'][p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
+        s1de2dsffb = e2dsffb[p['IC_START_ORDER_1D']:p['IC_END_ORDER_1D']]
+        # get arguments for E2DS to S1D
+        e2dsargs = [s1dwave, s1de2dsffb, p['IC_BIN_S1D']]
+        # get 1D spectrum
+        xs1d, ys1d = spirouImage.E2DStoS1D(*e2dsargs)
+        # Plot the 1D spectrum
+        if p['DRS_PLOT']:
+            sPlt.ext_1d_spectrum_plot(p, xs1d, ys1d)
+
+        # construct file name
+        s1dfile = spirouConfig.Constants.EXTRACT_S1D_FILE(p)
+        s1dfilename = os.path.basename(s1dfile)
+
+        # add header keys
+        # TODO: Do we want any of the E2DS keys??
+        hdict = dict()
+        hdict = spirouImage.AddKey(hdict, p['KW_CRPIX1'], value=1.0)
+        hdict = spirouImage.AddKey(hdict, p['KW_CRVAL1'], value=xs1d[0])
+        hdict = spirouImage.AddKey(hdict, p['KW_CDELT1'], value=p['IC_BIN_S1D'])
+        hdict = spirouImage.AddKey(hdict, p['KW_CTYPE1'], value='nm')
+        hdict = spirouImage.AddKey(hdict, p['KW_BUNIT'], value='Ralative Flux')
+        # log writing to file
+        wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
+        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfilename))
+        # Write to file
+        spirouImage.WriteImage(s1dfile, ys1d, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
