@@ -148,10 +148,10 @@ def get_molecular_tell_lines(p, loc):
         tapas_all_species[tapas_all_species > 1] = 1
         tapas_all_species[tapas_all_species < 0] = 0
         # save the file
-        np.save(tapas_file_name, tapas_all_species)
+        np.save(convolve_file, tapas_all_species)
         # add name to loc
-        loc['TAPAS_ABSNAME'] = tapas_file_name
-        loc['TAPAS_FNAME'] = os.path.basename(tapas_file_name)
+        loc['TAPAS_ABSNAME'] = convolve_file_name
+        loc['TAPAS_FNAME'] = os.path.basename(convolve_file_name)
     # finally add all species to loc
     loc['TAPAS_ALL_SPECIES'] = tapas_all_species
     # add sources
