@@ -95,20 +95,21 @@ def get_molecular_tell_lines(p, loc):
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
     # TODO: Make this the date and not the wave file name??
-    wave_file = loc['WAVEFILE']
-    tapas_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
+    wave_file = os.path.basename(loc['WAVEFILE'])
+    convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
+    convolve_file = os.path.join(p['DRS_TELLU_DB'], convolve_file_name)
 
     # find tapas file in files
-    if tapas_file not in convole_files:
+    if convolve_file not in convole_files:
         generate = True
     else:
         # if we already have a file for this wavelength just open it
         try:
             # load with numpy
-            tapas_all_species = np.load(tapas_file_name)
+            tapas_all_species = np.load(convolve_file)
             # log loading
             wmsg = 'Loading Tapas convolve file: {0}'
-            WLOG('', p['LOG_OPT'], wmsg.format(tapas_file_name))
+            WLOG('', p['LOG_OPT'], wmsg.format(convolve_file_name))
             # add name to loc
             loc['TAPAS_FNAME'], loc['TAPAS_ABSNAME'] = None, None
             generate = False
@@ -196,9 +197,10 @@ def calculate_absorption_pca(p, loc, x, mask):
         pc = np.zeros([np.product(loc['DATA'].shape), npc])
 
     # fill pc image
-    for it in range(npc):
-        for jt in range(x.shape[0]):
-            pc[:, it] += eig_u[jt, it] * x[jt, :]
+    with warnings.catch_warnings(record=True) as w:
+        for it in range(npc):
+            for jt in range(x.shape[0]):
+                pc[:, it] += eig_u[jt, it] * x[jt, :]
 
     # if we are adding the derivatives add them now
     if p['ADD_DERIV_PC']:
@@ -405,10 +407,11 @@ def calc_recon_abso(p, loc):
         # --------------------------------------------------------------
         # set up storage for absorption array 2
         abso2 = np.zeros(len(resspec))
-        for ipc in range(len(amps)):
-            amps_abso_total[ipc] += amps[ipc]
-            abso2 += loc['PC'][:, ipc] * amps[ipc]
-        recon_abso *= np.exp(abso2)
+        with warnings.catch_warnings(record=True) as w:
+            for ipc in range(len(amps)):
+                amps_abso_total[ipc] += amps[ipc]
+                abso2 += loc['PC'][:, ipc] * amps[ipc]
+            recon_abso *= np.exp(abso2)
 
     # save outputs to loc
     loc['SP2'] = sp2
