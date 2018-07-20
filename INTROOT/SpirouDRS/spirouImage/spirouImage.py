@@ -1589,9 +1589,9 @@ def get_wave_keys(p, loc, hdr):
     # check for header key
     if p['KW_WAVE_FILE'][0] in hdr:
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
-        loc['WAVEFILE'] = get_param(keyword=p['KW_WAVE_FILE'][0], **wkwargs)
-        loc['WAVETIME1'] = get_param(keyword=p['KW_WAVE_TIME1'][0], **wkwargs)
-        loc['WAVETIME2'] = get_param( keyword=p['KW_WAVE_TIME2'][0], **wkwargs)
+        loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', **wkwargs)
+        loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', **wkwargs)
+        loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
     # TODO: Remove section later
     else:
         # log warning
