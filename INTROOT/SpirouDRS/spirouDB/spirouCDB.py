@@ -161,14 +161,10 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
                 kw_ACQTIME_KEY: list, the keyword store for acquisition time
                                 (string timestamp)
                             [name, value, comment] = [string, object, string]
-                kw_ACQTIME_KEY_UNIX: list, the keyword store fore acquisition
-                                     time (float unixtime)
-                            [name, value, comment] = [string, object, string]
     :param header: dictionary or None, the header dictionary created by
                    spirouFITS.ReadImage, if header is None code tries to get
                    header from p['ARG_FILE_NAMES'][0]
-    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
-                 for time since 1970-01-01
+    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss'
     :param filename: string or None, location of the file if header is None
 
     :return acqtime: string, the human or unix time from header file
@@ -180,8 +176,16 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     # deal with kinds
     if kind == 'human':
         kwakey = 'kw_ACQTIME_KEY'
+        dtype = str
+    elif kind == 'julian':
+        kwakey = 'kw_ACQTIME_KEY_JUL'
+        dtype = float
     else:
-        kwakey = 'kw_ACQTIME_KEY_UNIX'
+        emsg1 = 'Acquisition "kind" not supported'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        kwakey = None
+        dtype = None
 
     # key acqtime_key from parameter dictionary
     if kwakey not in p and kind == 'human':
@@ -224,7 +228,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
                                      ' for function {2}'.format(*eargs)))
     # else get acqtime from header key
     else:
-        acqtime = header[acqtime_key]
+        acqtime = dtype(header[acqtime_key])
 
     return acqtime
 
