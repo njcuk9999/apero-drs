@@ -110,7 +110,7 @@ def main(night_name=None, reffile=None):
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='julian')
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
@@ -233,8 +233,8 @@ def main(night_name=None, reffile=None):
         rout = spirouImage.ReadData(p, filename=fpfile, log=False)
         loc['SPE'], hdri, cdri, nxi, nyi = rout
         # get acqtime
-        bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', kind='unix',
-                                        return_value=1)
+        bjdspe = spirouImage.GetAcqTime(p, hdri, name='acqtime', return_value=1,
+                                        kind='julian')
         # test whether we want to subtract background
         if p['IC_DRIFT_BACK_CORR']:
             # Loop around the orders
