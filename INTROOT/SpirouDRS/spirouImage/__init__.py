@@ -100,6 +100,10 @@ GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
 
+GetObjName = spirouImage.get_obj_name
+
+GetAirmass = spirouImage.get_airmass
+
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
 GetWaveSolution = spirouFITS.get_wave_solution
