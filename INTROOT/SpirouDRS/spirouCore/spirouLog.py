@@ -14,6 +14,7 @@ Import rules: Only from spirouConfig and spirouCore
 Version 0.0.1
 """
 from __future__ import division
+import numpy as np
 import os
 import sys
 
@@ -41,7 +42,8 @@ EXIT_LEVELS = spirouConfig.Constants.EXIT_LEVELS()
 WARN = spirouConfig.Constants.LOG_CAUGHT_WARNINGS()
 # Get the Config error
 ConfigError = spirouConfig.ConfigError
-
+# Set CHAR length
+CHAR_LEN = spirouConfig.Constants.CHARACTER_LOG_LENGTH()
 
 # =============================================================================
 # Define classes
@@ -71,7 +73,7 @@ class logger():
 
 
     def __call__(self, key='', option='', message='', printonly=False,
-                 logonly=False):
+                 logonly=False, wrap=True):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -140,14 +142,27 @@ class logger():
             dsec = int((unix_time - int(unix_time)) * 10)
             # Get the key code (default is a whitespace)
             code = TRIG_KEY.get(key, ' ')
-            # construct the log and log error
-            cmdargs = [human_time, dsec, code, option, mess]
-            cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-            # add to logger storage
-            self.logger_storage(key, human_time, mess, printonly)
-            # print to stdout
-            if not logonly:
-                printlog(cmd, key)
+
+            # check if line is over 80 chars
+            if (len(mess) > CHAR_LEN) and wrap:
+                # get new messages (wrapped at CHAR_LEN)
+                new_messages = textwrap(mess, CHAR_LEN)
+                for new_message in new_messages:
+                    cmdargs = [human_time, dsec, code, option, new_message]
+                    cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                    # add to logger storage
+                    self.logger_storage(key, human_time, new_message, printonly)
+                    # print to stdout
+                    if not logonly:
+                        printlog(cmd, key)
+            else:
+                cmdargs = [human_time, dsec, code, option, mess]
+                cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                # add to logger storage
+                self.logger_storage(key, human_time, mess, printonly)
+                # print to stdout
+                if not logonly:
+                    printlog(cmd, key)
             # get logfilepath
             try:
                 logfilepath, warning = get_logfilepath(unix_time)
@@ -174,7 +189,7 @@ class logger():
             key = 'error'
             if error[0] not in used:
                 self.logger_storage(key, error[2], error[0])
-                printlogandcmd(*error)
+                printlogandcmd(*error, wrap=wrap)
                 used.append(error[0])
 
         # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
@@ -237,7 +252,7 @@ wlog = logger()
 # =============================================================================
 # Define functions
 # =============================================================================
-def printlogandcmd(message, key, human_time, dsec, option):
+def printlogandcmd(message, key, human_time, dsec, option, wrap):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -264,9 +279,19 @@ def printlogandcmd(message, key, human_time, dsec, option):
         key = 'error'
     for mess in message:
         code = TRIG_KEY.get(key, ' ')
-        cmdargs = [human_time, dsec, code, option, mess]
-        cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-        printlog(cmd, key)
+
+        # check if line is over 80 chars
+        if (len(mess) > CHAR_LEN) and wrap:
+            # get new messages (wrapped at CHAR_LEN)
+            new_messages = textwrap(mess, CHAR_LEN)
+            for new_message in new_messages:
+                cmdargs = [human_time, dsec, code, option, new_message]
+                cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                printlog(cmd, key)
+        else:
+            cmdargs = [human_time, dsec, code, option, mess]
+            cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+            printlog(cmd, key)
 
 
 def debug_start():
@@ -343,6 +368,7 @@ def warninglogger(w, funcname=None):
     :return:
     """
     # deal with warnings
+    displayed_warnings = []
     if WARN and (len(w) > 0):
         for wi in w:
             # if we have a function name then use it else just report the
@@ -351,9 +377,16 @@ def warninglogger(w, funcname=None):
                 wargs = [wi.lineno, '', wi.message]
             else:
                 wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
+
             # log message
             wmsg = 'python warning Line {0} {1} warning reads: {2}'
-            wlog('warning', '', wmsg.format(*wargs))
+            wmsg = wmsg.format(*wargs)
+            # if we have already display this warning don't again
+            if wmsg in displayed_warnings:
+                continue
+            else:
+                wlog('warning', '', wmsg)
+                displayed_warnings.append(wmsg)
 
 
 def get_logfilepath(utime):
@@ -487,6 +520,33 @@ def printlog(message, key='all'):
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
+
+
+def textwrap(input_string, length):
+    # Modified version of this: https://stackoverflow.com/a/16430754
+    new_string = []
+    for s in input_string.split("\n"):
+        if s == "":
+            new_string.append('')
+        w = 0
+        l = []
+        for d in s.split():
+            if w + len(d) + 1 <= length:
+                l.append(d)
+                w += len(d) + 1
+            else:
+                new_string.append(" ".join(l))
+                l = [d]
+                w = len(d)
+        if (len(l)):
+            new_string.append(" ".join(l))
+
+    # add a tab to all but first line
+    new_string2 = [new_string[0]]
+    for it in range(1, len(new_string)):
+        new_string2.append('\t' + new_string[it])
+
+    return new_string2
 
 
 def printcolour(key='all', func_name=None):

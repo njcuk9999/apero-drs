@@ -4,8 +4,8 @@
 \clearpage
 \newpage
 \noindent\begin{minipage}{\textwidth}
-\section{The spirouCDB module}
-\label{ch:the_module:spirouCDB}
+\section{The spirouDB module}
+\label{ch:the_module:spirouDB}
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -15,9 +15,9 @@
 Defined in \spirouCDB\path{.copy_files}
 
 \begin{pythonbox}
-from SpirouDRS import spirouCDB
-spirouCDB.CopyCDBfiles(p, header=None)
-spirouCDB.spirouCDB.copy_files(p, header=None)
+from SpirouDRS import spirouDB
+spirouDB.CopyCDBfiles(p, header=None)
+spirouDB.spirouDB.copy_files(p, header=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -48,9 +48,9 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 Defined in \spirouCDB\path{.get_acquisition_time}
 
 \begin{pythonbox}
-from SpirouDRS import spirouCDB
-spirouCDB.GetAcqTime(p, header=None, kind='human', filename=None)
-spirouCDB.spirouCDB.get_acquisition_time(p, header=None, kind='human', filename=None)
+from SpirouDRS import spirouDB
+spirouDB.GetAcqTime(p, header=None, kind='human', filename=None)
+spirouDB.spirouDB.get_acquisition_time(p, header=None, kind='human', filename=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -82,14 +82,14 @@ use the parameter dictionary "p" to open the header in 'arg_file_names[0]'
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
-\subsection{GetDatabase}
+\subsection{GetCalibDatabase}
 
 Defined in \spirouCDB\path{.get_database}
 
 \begin{pythonbox}
-from SpirouDRS import spirouCDB
-spirouCDB.GetDatabase(p, max_time=None, update=False)
-spirouCDB.spirouCDB.get_database(p, max_time=None, update=False)
+from SpirouDRS import spirouDB
+spirouDB.GetCalibDatabase(p, max_time=None, update=False)
+spirouDB.spirouDB.get_database(p, max_time=None, update=False)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -121,20 +121,20 @@ If update is False then will first search for and use 'calibDB' in p
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
-\subsection{GetFile}
+\subsection{GetCalibFile}
 
 Defined in \spirouCDB\path{.get_file_name}
 
 \begin{pythonbox}
-from SpirouDRS import spirouCDB
-spirouCDB.GetFile(p, key, hdr=None, filename=None)
-spirouCDB.spirouCDB.get_file_name(p, key, hdr=None, filename=None)
+from SpirouDRS import spirouDB
+spirouDB.GetCalibFile(p, key, hdr=None, filename=None)
+spirouDB.spirouDB.get_file_name(p, key, hdr=None, filename=None)
 \end{pythonbox}
 
 \begin{pythondocstring}
 Get the filename for "key" in the calibration database (for use when
 the calibration database is not needed for more than one use and does
-not exist already (i.e. called via spirouCDB.GetDatabase() )
+not exist already (i.e. called via spirouDB.GetCalibDatabase() )
 
 :param p: parameter dictionary, ParamDict containing constants
     Must contain at least:
@@ -160,14 +160,14 @@ not exist already (i.e. called via spirouCDB.GetDatabase() )
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
-\subsection{PutFile}
+\subsection{PutCalibFile}
 
 Defined in \spirouCDB\path{.put_file}
 
 \begin{pythonbox}
-from SpirouDRS import spirouCDB
-spirouCDB.PutFile(p, inputfile)
-spirouCDB.spirouCDB.put_file(p, inputfile)
+from SpirouDRS import spirouDB
+spirouDB.PutCalibFile(p, inputfile)
+spirouDB.spirouDB.put_file(p, inputfile)
 \end{pythonbox}
 
 \begin{pythondocstring}
@@ -186,14 +186,14 @@ Copies the "inputfile" to the calibration database folder
 
 %----------------------------------------------------------------------------------------
 \noindent\begin{minipage}{\textwidth}
-\subsection{UpdateMaster}
+\subsection{UpdateCalibMaster}
 
 Defined in \spirouCDB\path{.update_datebase}
 
 \begin{pythonbox}
-from SpirouDRS import spirouCDB
-spirouCDB.UpdateMaster(p, keys, filenames, hdrs, timekey=None)
-spirouCDB.spirouCDB.update_datebase(p, keys, filenames, hdrs, timekey=None)
+from SpirouDRS import spirouDB
+spirouDB.UpdateCalibMaster(p, keys, filenames, hdrs, timekey=None)
+spirouDB.spirouDB.update_datebase(p, keys, filenames, hdrs, timekey=None)
 \end{pythonbox}
 
 \begin{pythondocstring}

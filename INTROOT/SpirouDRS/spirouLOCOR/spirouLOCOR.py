@@ -12,7 +12,7 @@ from __future__ import division
 import numpy as np
 import os
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -101,9 +101,9 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
-        acqtime = spirouCDB.GetAcqTime(p, hdr)
+        acqtime = spirouDB.GetAcqTime(p, hdr)
         # get calibDB
-        c_database, p = spirouCDB.GetDatabase(p, acqtime)
+        c_database, p = spirouDB.GetCalibDatabase(p, acqtime)
     else:
         c_database = p['CALIBDB']
         acqtime = p['MAX_TIME_HUMAN']
@@ -297,7 +297,7 @@ def find_order_centers(pp, image, loc, order_num):
                 if pp['IC_IMAGE_TYPE'] == "H2RG":
                     center = float(rowcenter)
                 else:
-                    center = float(rowcenter)-1 # to force the order curvature
+                    center = float(rowcenter)-1  # to force the order curvature
         # add these positions to storage
         loc['CTRO'][order_num, col] = center
         loc['SIGO'][order_num, col] = width

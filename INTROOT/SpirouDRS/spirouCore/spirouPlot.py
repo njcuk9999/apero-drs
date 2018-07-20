@@ -86,7 +86,10 @@ def end_interactive_session(interactive=False):
 
     :return None:
     """
-    if not interactive and not INTERACTIVE_PLOTS:
+    if not interactive:
+        plt.show()
+        plt.close()
+    elif not INTERACTIVE_PLOTS:
         plt.show()
         plt.close()
 
@@ -1047,6 +1050,26 @@ def ext_spectral_order_plot(p, loc):
         plt.close()
 
 
+def ext_1d_spectrum_plot(p, x, y):
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(x, y)
+    # set title
+    targs = [p['IC_START_ORDER_1D'], p['IC_END_ORDER_1D']]
+    title = 'Spectrum (1D) Order {0} to {1}'.format(*targs)
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 # =============================================================================
 # drift plotting function
 # =============================================================================
@@ -1758,6 +1781,126 @@ def wave_fp_wavelength_residuals(loc):
     frame.set(xlabel='Initial wavelength [nm]',
               ylabel='New - Initial wavelength [nm]',
               title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+# =============================================================================
+# wave solution plotting function
+# =============================================================================
+def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
+
+    # get data from loc
+    wave = loc['WAVE'][order_num, :]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot trans_map and spectra
+    frame.plot(wave, sp[order_num, :], 'r.')
+    frame.plot(wave[fmask], sp[order_num][fmask], 'b.')
+    frame.plot(wave, sed, 'r-')
+    frame.plot(wave, trans, 'c-')
+    frame.plot(wave, sp[order_num, :] / sed[:], 'g-')
+    frame.plot(wave, np.ones_like(sed), 'r-')
+    frame.plot(wave, ww, 'k-')
+    frame.set_title(outfile)
+    # set limit
+    frame.set(ylim=[0.75, 1.15])
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_pca_comp_plot(p, loc):
+
+    # get constants from p
+    npc = p['TELLU_NUMBER_OF_PRINCIPLE_COMP']
+    # get data from loc
+    wave = loc['WAVE'].ravel()
+    pc = loc['PC']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot principle components
+    for it in range(npc):
+        frame.plot(wave, pc[:, it], label='pc {0}'.format(it + 1))
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_fit_tellu_spline_plot(p, loc):
+    # get constants from p
+    selected_order = p['TELLU_PLOT_ORDER']
+    # get data from loc
+    data = loc['DATA']
+    ydim, xdim = data.shape
+    wave = loc['WAVE_IT']
+    sp = loc['SP']
+    template2 = loc['TEMPLATE2']
+    # get selected order wave lengths
+    swave = wave[selected_order, :]
+    # get selected order for sp
+    ssp = sp[selected_order, :]
+    # get template2 at selected order
+    start, end = selected_order * xdim, selected_order * xdim + xdim
+    stemp = template2[start: end]
+    # recovered absorption
+    srecov = sp/stemp
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectra for selected order
+    frame.plot(swave, ssp/np.nanmedian(ssp), label='Observed SP')
+    frame.plot(swave, stemp/np.nanmedian(stemp), label='Template SP')
+    frame.plot(swave, srecov/np.nanmedian(srecov), label='Recov abso SP')
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_fit_recon_abso_plot(p, loc):
+
+    # get constants from p
+    selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
+    # get data dimensions
+    ydim, xdim = loc['DATA']
+    # get the data from loc for selected order
+    start, end = selected_order * xdim, selected_order * xdim + xdim
+    swave = loc['WAVE_IT'][start:end]
+    ssp2 = loc['SP2'][start:end]
+    stemp2 = loc['TEMPLATE2'][start:end]
+    srecon_abso = loc['RECON_ABSO'][start:end]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectra for selected order
+    frame.plot(swave, ssp2/np.nanmedian(ssp2), color='g', label='Cleaned SP')
+    frame.plot(swave, stemp2/np.nanmedian(stemp2), color='c', label='Template')
+    frame.plot(swave, srecon_abso, color='r', label='recon abso')
+    # add legend
+    frame.legend(loc=0)
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()
