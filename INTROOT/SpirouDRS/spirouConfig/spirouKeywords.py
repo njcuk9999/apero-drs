@@ -129,6 +129,18 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_METHOD',
             'kw_POL_NEXP',
             'kw_POL_STOKES',
+            'kw_POL_FILENAM1',
+            'kw_POL_FILENAM2',
+            'kw_POL_FILENAM3',
+            'kw_POL_FILENAM4',
+            'kw_POL_MJDATE1',
+            'kw_POL_MJDATE2',
+            'kw_POL_MJDATE3',
+            'kw_POL_MJDATE4',
+            'kw_POL_MJDEND1',
+            'kw_POL_MJDEND2',
+            'kw_POL_MJDEND3',
+            'kw_POL_MJDEND4',
             'kw_RDNOISE',
             'kw_TELLU_ABSO',
             'kw_TELLU_AMP_PC',
@@ -491,6 +503,18 @@ kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
 kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
+kw_POL_FILENAM1 = ['FILENAM1', '', 'Base filename of exposure 1']
+kw_POL_FILENAM2 = ['FILENAM2', '', 'Base filename of exposure 2']
+kw_POL_FILENAM3 = ['FILENAM3', '', 'Base filename of exposure 3']
+kw_POL_FILENAM4 = ['FILENAM4', '', 'Base filename of exposure 4']
+kw_POL_MJDATE1 = ['MJDATE1', '', 'MJD of exposure 1']
+kw_POL_MJDATE2 = ['MJDATE2', '', 'MJD of exposure 2']
+kw_POL_MJDATE3 = ['MJDATE3', '', 'MJD of exposure 3']
+kw_POL_MJDATE4 = ['MJDATE4', '', 'MJD of exposure 4']
+kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND of exposure 1']
+kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND of exposure 2']
+kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND of exposure 3']
+kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND of exposure 4']
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
