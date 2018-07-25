@@ -189,7 +189,7 @@ dark_cutlimit = 5.0
 
 #   Size of the order_profile smoothed box                           - [cal_loc]
 #     (from pixel - size to pixel + size)
-loc_box_size = 5   # 10
+loc_box_size = 5  #5   # 10
 
 #   row number of image to start processing at                       - [cal_loc]
 ic_offset = 0  # 40
@@ -214,7 +214,7 @@ ic_widthmin = 10  # 5
 #   Define the noise multiplier threshold in order to accept an      - [cal_loc]
 #       order center as usable
 #       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
-ic_noise_mult_thres =  10  #10 # 100.0
+ic_noise_mult_thres = 50 #30  #10 # 100.0
 
 #   Define the polynomial fit parameters for interpolating over the  - [cal_loc]
 #      bad regions (holes) before localization is done
@@ -250,11 +250,11 @@ bad_region_bad_value = 0.25
 ic_locnbpix = 45  # 45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
-ic_min_amplitude = 10 # 50
+ic_min_amplitude = 10 # 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.18
+ic_locseuil = 0.17   # 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
 ic_satseuil = 1000   # 64536
@@ -933,7 +933,7 @@ ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,20
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                                   - [cal_dark]
-qc_max_darklevel = 0.07
+qc_max_darklevel = 0.1  #0.07
 
 #   Max fraction of dead pixels                                     - [cal_dark]
 qc_max_dead = 1.0
