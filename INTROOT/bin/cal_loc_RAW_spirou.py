@@ -130,6 +130,24 @@ def main(night_name=None, files=None):
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
+
+    # ----------------------------------------------------------------------
+    # Background computation
+    # ----------------------------------------------------------------------
+    if p['IC_DO_BKGR_SUBTRACTION']:
+        # log that we are doing background measurement
+        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
+        # get the bkgr measurement
+        bdata = spirouBACK.MeasureBackgroundFF(p, data2)
+        background, gridx, gridy, minlevel = bdata
+    else:
+        background = np.zeros_like(data2)
+
+    # data2=data2-background
+    # correct data2 with background (where positive)
+    data2=np.where(data2>0,data2-background,0)
+
+
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
