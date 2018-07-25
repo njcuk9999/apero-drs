@@ -151,15 +151,36 @@ def main(night_name=None, files=None):
     # add keys from original header of base file
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
     # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
     # add number of exposures parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_NEXP'], value=loc['NEXPOSURES'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
     # add the polarimetry method parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_METHOD'], value=loc['METHOD'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
     # add total exposure time parameter keyword to header
     tot_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
     hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
-
+    
+    # loop over files in polar sequence to add keywords to header of products
+    for filename in polardict.keys():
+        # get this entry
+        entry = polardict[filename]
+        # get expnum, fiber, and header
+        expnum, fiber, hdr = entry['exposure'], entry['fiber'], entry['hdr']
+        # Add only times from fiber A
+        if fiber == 'A':
+            # add exposure file name
+            fileexp_keyname = 'kw_POL_FILENAM{0}'
+            hdict = spirouImage.AddKey(hdict, p[fileexp_keyname.format(expnum)],
+                                       value=hdr['FILENAME'])
+            # add MJDATE for each exposure
+            mjdexp_keyname = 'kw_POL_MJDATE{0}'
+            hdict = spirouImage.AddKey(hdict, p[mjdexp_keyname.format(expnum)],
+                                       value=hdr['MJDATE'])
+            # add MJDEND for each exposure
+            mjdendexp_keyname = 'kw_POL_MJDEND{0}'
+            hdict = spirouImage.AddKey(hdict, p[mjdendexp_keyname.format(expnum)],
+                                       value=hdr['MJDEND'])
+    
     # save POL data to file
     spirouImage.WriteImageMulti(degpolfits, [loc['POL'], loc['POLERR']], hdict)
     # save NULL1 data to file
