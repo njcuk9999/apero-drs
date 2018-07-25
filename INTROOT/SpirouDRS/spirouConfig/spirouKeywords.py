@@ -47,17 +47,19 @@ p = spirouConfig.check_params(p)
 # ---------------------------------------------------------------
 # MUST UPDATE THIS IF VARIABLES ADDED
 USE_KEYS = ['kw_ACQTIME_KEY',
-            'kw_ACQTIME_KEY_UNIX',
+            'kw_ACQTIME_KEY_JUL',
+            'kw_AIRMASS',
             'kw_BBAD',
             'kw_BBFLAT',
             'kw_BERV',
-            'kw_BJD',
             'kw_BERV_MAX',
             'kw_BHOT',
+            'kw_BJD',
             'kw_BNDARK',
             'kw_BNFLAT',
             'kw_BNILUM',
             'kw_BTOT',
+            'kw_BUNIT',
             'kw_CCAS',
             'kw_CCD_CONAD',
             'kw_CCD_SIGDET',
@@ -71,9 +73,13 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CCF_MAXCPP',
             'kw_CCF_RV',
             'kw_CCF_RVC',
+            'kw_CDELT1',
             'kw_CDEN',
             'kw_CMMTSEQ',
             'kw_CREF',
+            'kw_CRPIX1',
+            'kw_CRVAL1',
+            'kw_CTYPE1',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -119,18 +125,25 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRA',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
-            'kw_POL_STOKES',
-            'kw_POL_NEXP',
-            'kw_POL_METHOD',
             'kw_POL_EXPTIME',
+            'kw_POL_METHOD',
+            'kw_POL_NEXP',
+            'kw_POL_STOKES',
             'kw_RDNOISE',
+            'kw_TELLU_ABSO',
+            'kw_TELLU_AMP_PC',
+            'kw_TELLU_DV_TELL1',
+            'kw_TELLU_DV_TELL2',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
             'kw_UTC_OBS',
+            'kw_WAVE_FILE',
             'kw_WAVE_LL_DEG',
             'kw_WAVE_ORD_N',
             'kw_WAVE_PARAM',
+            'kw_WAVE_TIME1',
+            'kw_WAVE_TIME2',
             'kw_drs_QC',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
@@ -207,9 +220,9 @@ else:
 #   in unix time format (time since 1970-01-01-00-00-00)
 # TODO: This switch will be obsolete after H2RG testing is over
 if p['IC_IMAGE_TYPE'] == 'H4RG':
-    kw_ACQTIME_KEY_UNIX = ['MJDATE', None, '']
+    kw_ACQTIME_KEY_JUL = ['MJDATE', None, '']
 else:
-    kw_ACQTIME_KEY_UNIX = ['ACQTIME', None, '']
+    kw_ACQTIME_KEY_JUL= ['ACQTIME', None, '']
 
 # define the observation date HEADER key
 kw_DATE_OBS = ['DATE-OBS', None, '']
@@ -258,6 +271,9 @@ kw_CDEN = ['SBCDEN_P', None, '']
 
 # define polarisation HEADER key
 kw_CMMTSEQ = ['CMMTSEQ', None, '']
+
+# define the airmass HEADER key
+kw_AIRMASS = ['AIRMASS', None, '']
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -372,7 +388,7 @@ kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 # -----------------------------------------------------------------------------
 # Define cal_EXTRACT variables
 # -----------------------------------------------------------------------------
-
+# TODO: Comment this section
 # localization file used
 kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
@@ -381,6 +397,16 @@ kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
 kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
+
+kw_WAVE_FILE = ['WAVEFILE', 0, 'Wave file used']
+kw_WAVE_TIME1 = ['WAVET1', 0, 'Wave file date+time human']
+kw_WAVE_TIME2 = ['WAVET2', 0, 'Wave file date+time unix']
+
+kw_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
+kw_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
+kw_CDELT1 = ['CDELT1', 0, 'Coordinate at reference pixel [nm]']
+kw_CTYPE1 = ['CTYPE1', 'nm', 'Units of coordinate']
+kw_BUNIT = ['BUNIT', '', 'Units of data values']
 
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
@@ -409,7 +435,7 @@ kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
 # -----------------------------------------------------------------------------
-
+# TODO: Comment this section
 kw_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
 kw_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
 kw_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
@@ -428,25 +454,39 @@ kw_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
-# the number of orders used in the TH line list                      [WAVE_AB]
+# the number of orders used in the TH line list                        [WAVE_AB]
 kw_WAVE_ORD_N = ['TH_ORD_N', None, 'nb orders in total']
 
-# the number of fit coefficients from the TH line list fit           [WAVE_AB]
+# the number of fit coefficients from the TH line list fit             [WAVE_AB]
 kw_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
 
-# the prefix to use to get the TH line list fit coefficients         [WAVE_AB]
+# the prefix to use to get the TH line list fit coefficients           [WAVE_AB]
 kw_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
 
-# the x-axis dimension size for the TH line list file                [WAVE_AB]
+# the x-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS1 = ['NAXIS1', None, '']
 
-# the y-axis dimension size for the TH line list file                [WAVE_AB]
+# the y-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS2 = ['NAXIS2', None, '']
 
 
 # -----------------------------------------------------------------------------
+# Define telluric variables
+# -----------------------------------------------------------------------------
+# Telluric absorption prefix (i.e. ABSO_H20)                     [OBJ_FIT_TELLU]
+kw_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
+
+# Telluric principle component amplitudes (for use with 1D list)
+kw_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
+
+# Telluric principle component derivatives
+kw_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
+kw_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
+
+# -----------------------------------------------------------------------------
 # Define polarimetry variables
 # -----------------------------------------------------------------------------
+# TODO: Comment this section
 kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
@@ -455,6 +495,7 @@ kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
 # -----------------------------------------------------------------------------
+# TODO: Comment this section
 kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
 kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
 kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']

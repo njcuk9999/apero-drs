@@ -9,19 +9,20 @@ Created on 2017-10-12 at 15:32
 
 @author: cook
 
-Import rules: Not spirouLOCOR
+Import rules: Not spirouLOCOR Not from any spirouImage modules
 """
 from __future__ import division
 import numpy as np
 from astropy import version as av
 from astropy.io import fits
+import string
 import os
 import warnings
 from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
@@ -48,6 +49,8 @@ ParamDict = spirouConfig.ParamDict
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
+# object name bad characters
+BADCHARS = [' '] + list(string.punctuation)
 
 
 # =============================================================================
@@ -360,6 +363,7 @@ def writeimage(filename, image, hdict=None, dtype=None):
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
     # add warnings to the warning logger and log if we have them
     spirouCore.spirouLog.warninglogger(w)
 
@@ -474,6 +478,10 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             if hdicts[it] is not None:
                 for key in list(hdicts[it].keys()):
                     hdu[it].header[key] = hdicts[it][key]
+
+    # close hdu we are finished
+    if hdu is not None:
+        hdu.close()
     # write to file
     with warnings.catch_warnings(record=True) as w:
         try:
@@ -483,6 +491,7 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
 
 
 def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
@@ -521,12 +530,15 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
         key = 'TILT'
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename
     if return_filename:
         return read_file
+    # log tilt file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
@@ -578,12 +590,15 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         key = 'WAVE_' + p['FIBER']
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename only
     if return_filename:
         return read_file
+    # log wave file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -593,6 +608,84 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
     else:
         # return the wave file
         return wave
+
+
+def read_wave_params(p, hdr):
+    func_name = __NAME__ + '.read_wave_params()'
+    # get constants from p
+    key = p['KW_WAVE_PARAM'][0]
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # get dim1 value
+    if dim1key in hdr:
+        dim1 = hdr[dim1key]
+    else:
+        emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim1)'
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(dim1key), emsg2])
+        dim1 = None
+    # get dim2 value
+    if dim2key in hdr:
+        dim2 = hdr[dim2key] + 1
+    else:
+        emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim2)'
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(dim2key), emsg2])
+        dim2 = None
+    # get wave params from header
+    wave_params = read_key_2d_list(p, hdr, key, dim1, dim2)
+    # return 2d list
+    return wave_params
+
+
+def get_wave_solution(p, image=None, hdr=None):
+    func_name = __NAME__ + '.get_wave_solution()'
+    # get constants from p
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # if we have no header use calibDB to get wave solution
+    if hdr is None:
+        wave = read_wave_file(p)
+    # check for wave params
+    elif (dim1key in hdr) and (dim2key in hdr) and (image is not None):
+        # get the wave parmaeters from the header
+        wave_params = read_wave_params(p, hdr)
+        # get the dimensions
+        dim1 = hdr[dim1key]
+        # check that dim1 is the correct number of orders
+        if dim1 != image.shape[0]:
+            emsg1 = ('Number of orders in HEADER ({0}={1}) not compatible with '
+                    'number of orders in image ({2}')
+            eargs = [dim1key, dim1, image.shape[0]]
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        # define empty wave solution
+        wave = np.zeros_like(image)
+        xpixels = np.arange(image.shape[1])
+        # load the wave solution for each order
+        for order_num in range(dim1):
+            wave[order_num] = np.polyval(wave_params[order_num][::-1], xpixels)
+    # else we use the calibDB (using the header) to get the wave solution
+    else:
+        wave = read_wave_file(p, hdr)
+    # return wave solution
+    return wave
+
+
+def get_good_object_name(p, hdr=None, rawname=None):
+    # get raw name
+    if (rawname is None) or (hdr is not None):
+        rawname = hdr[p['kw_OBJNAME'][0]]
+    else:
+        rawname = str(rawname)
+    # remove spaces from start and end
+    name = rawname.strip()
+    # replace bad characters in between with '_'
+    for badchar in BADCHARS:
+        name = name.replace(badchar, '_')
+    # return cleaned up name
+    return name
+
 
 
 def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
@@ -636,7 +729,7 @@ def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
         key = 'HCREF_' + p['FIBER']
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
     # deal with returning filename only
@@ -688,9 +781,12 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # log flat file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
@@ -733,9 +829,12 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get filename
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # log blaze file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
@@ -792,9 +891,12 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
         key = None
     # construct read filename from calibDB or from "filename"
     if filename is None:
-        read_file = spirouCDB.GetFile(p, key, hdr, required=required)
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
     else:
         read_file = filename
+    # log order profile file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
@@ -1371,7 +1473,7 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 # set the value
                 values[i_it][j_it] = float(hdict[keyname])
             except KeyError:
-                emsg1 = ('Cannot find key with nbo={1} nbc={2} in "hdict"'
+                emsg1 = ('Cannot find key with dim1={1} dim2={2} in "hdict"'
                          '').format(keyname, dim1, dim2)
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
@@ -1452,7 +1554,6 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         # try to open the data and close the hdu
         try:
             data = hdu[openext].data
-            hdu.close()
         except Exception as e:
             emsg1 = 'Could not open data for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
@@ -1473,6 +1574,11 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
                 header = None
         else:
             header = hdu[0]
+
+    # close the HDU we are finished with it
+    if hdu is not None:
+        hdu.close()
+
     # return based on whether header and shape are required
     if getheader and getshape:
         if len(data.shape) == 2:

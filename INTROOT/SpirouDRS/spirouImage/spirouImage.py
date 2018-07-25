@@ -19,7 +19,7 @@ from scipy.ndimage import filters, median_filter
 from scipy.interpolate import InterpolatedUnivariateSpline as InterpUSpline
 from scipy.interpolate import griddata
 
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
@@ -829,9 +829,9 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
-        acqtime = spirouCDB.GetAcqTime(p, header)
+        acqtime = spirouDB.GetAcqTime(p, header)
         # get calibDB
-        cdb, p = spirouCDB.GetDatabase(p, acqtime)
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
     else:
         try:
             cdb = p['CALIBDB']
@@ -891,9 +891,9 @@ def get_badpixel_map(p, header=None):
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
-        acqtime = spirouCDB.GetAcqTime(p, header)
+        acqtime = spirouDB.GetAcqTime(p, header)
         # get calibDB
-        cdb, p = spirouCDB.GetDatabase(p, acqtime)
+        cdb, p = spirouDB.GetCalibDatabase(p, acqtime)
     else:
         try:
             cdb = p['CALIBDB']
@@ -1263,10 +1263,8 @@ def get_tilt(pp, lloc, image):
     lloc.set_source('TILT', __NAME__ + '/get_tilt()')
     # Over sample the data and interpolate new extraction values
     pixels = np.arange(image.shape[1])
-#    pixels = np.arange(1000)
     os_fac = pp['IC_TILT_COI']
     os_pixels = np.arange(image.shape[1] * os_fac) / os_fac
-#    os_pixels = np.arange(1000 * os_fac) / os_fac
     # loop around each order
     for order_num in range(0, nbo, 2):
         # extract this AB order
@@ -1283,7 +1281,6 @@ def get_tilt(pp, lloc, image):
         #   and the middle pixel + 10 * p['COI']
         coi = int(os_fac)
         pos = int(image.shape[1] * coi / 2)
-#        pos = int(1000 * coi / 2)
         delta = np.argmax(cori[pos:pos + 10 * coi]) / coi
         # get the angle of the tilt
         angle = np.rad2deg(-1 * np.arctan(delta / (2 * lloc['OFFSET'])))
@@ -1525,8 +1522,8 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
             WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
-        emsg1 = ('Cannot convert keyword "{0}" to type "{1}"'
-                 '').format(keyword, dtype)
+        emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
+                 '').format(keyword, rawvalue, dtype)
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         value = None
@@ -1560,8 +1557,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
                 spirouFITS.ReadImage
     :param name: string, the name in parameter dictionary to give to value
                  if return_value is False (i.e. p[name] = value)
-    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
-                 for time since 1970-01-01
+    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'julian'
     :param return_value: bool, if False value is returned in p as p[name]
                          if True value is returned
 
@@ -1574,7 +1570,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
     if name is None:
         name = 'acqtime'
     # get header keyword
-    value = spirouCDB.GetAcqTime(p, hdr, kind=kind)
+    value = spirouDB.GetAcqTime(p, hdr, kind=kind)
     # deal with return value
     if return_value:
         return value
@@ -1587,8 +1583,51 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
         return p
 
 
-# TODO insert paremeter dictionnary
+def get_wave_keys(p, loc, hdr):
+    func_name = __NAME__ + '.get_wave_keys()'
+    # check for header key
+    if p['KW_WAVE_FILE'][0] in hdr:
+        wkwargs = dict(p=p, hdr=hdr, return_value=True)
+        loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', dtype=str,
+                                    **wkwargs)
+        loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
+                                     **wkwargs)
+        loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
+    # TODO: Remove section later
+    else:
+        # log warning
+        wmsg = 'Warning key="{0}" not in HEADER file'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
+        # set wave file to fitsfilename
+        loc['WAVEFILE'] = p['FITSFILENAME']
+        loc['WAVETIME1'] = 'Unknown'
+        loc['WAVETIME2'] = -9999
 
+    # set sources
+    loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
+    # return loc
+    return loc
+
+
+def get_obj_name(p, hdr):
+    # get parameter
+    raw_obj_name = get_param(p, hdr, keyword='KW_OBJNAME', dtype=str,
+                             return_value=True)
+    # filter out bad characters
+    obj_name = spirouFITS.get_good_object_name(p, rawname=raw_obj_name)
+    # return object name
+    return obj_name
+
+
+def get_airmass(p, hdr):
+    # get parameter
+    raw_airmass = get_param(p, hdr, keyword='KW_AIRMASS', return_value=True)
+    # return airmass
+    return float(raw_airmass)
+
+
+# TODO insert paremeter dictionnary
+# TODO: FIX PROBLEMS: Write doc string
 def e2dstos1d(wave,e2dsffb,bin):
     """
     Convert E2DS (2-dimension) spectra to 1-dimension spectra
@@ -1599,18 +1638,20 @@ def e2dstos1d(wave,e2dsffb,bin):
     :param e2dsffb : e2ds falt-fielded and blaze corrected
     :param bin : S1d sampling in nm
     """
-
+    # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
     for o in range(len(e2dsffb)):
 
         x = wave[o] * 1.
         y = e2dsffb[o] * 1.
 
+        # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Integral Calculation yy by summation
         dx = np.concatenate((np.array([x[1] - x[0]]), (x[2:] - x[0:-2]) / 2., np.array([x[-1] - x[-2]])))
         stepmax = np.max(dx)
         yy = np.concatenate((np.array([0.]), np.cumsum(y * dx)))
         xx = np.concatenate((x - dx / 2., np.array([x[-1] + dx[-1] / 2.])))
 
+        # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Computation of the new coordinates
         if o == 0:
             l1 = 1. * (int(np.compress(y > 0., x)[0] * (1. / bin)) + 1) / (1. / bin) + bin
@@ -1619,19 +1660,23 @@ def e2dstos1d(wave,e2dsffb,bin):
             l1 = 1. * (int(x[0] * (1. / bin)) + 1) / (1. / bin) + bin
             l2 = 1. * (int(x[-1] * (1. / bin))) / (1. / bin) - bin
 
+        # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Interpolation by cubic spline
         xxi = np.arange(l1, l2 + bin, bin) - bin / 2.
         yyi = griddata(xx, yy, xxi, method='cubic')
 
+        # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Computation of the derivation
         xi = xxi[0:-1] + bin / 2.
         yi = (yyi[1:] - yyi[0:-1]) / bin
 
+        # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Merging of orders
         if o == 0:
             xs1d = xi * 1.
             ys1d = yi * 1.
 
+        # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         lim1 = xs1d[-1]
         lim2 = xi[0]
         if lim1 < lim2:

@@ -131,15 +131,15 @@ def main(night_name=None, files=None):
 
     # get heights
     heights = []
-#    for line in range(len(ll_line_cat)):
     for line in range(len(ll_line_fit)):
-            heights.append(200000 + np.max([np.min(e2ds), ampl_line_fit[line]]))
+        heights.append(200000 + np.max([np.min(e2ds), ampl_line_fit[line]]))
     # plot ll_line_fit
     plt.vlines(ll_line_fit, 0, heights, colors='magenta',
                linestyles='dashdot')
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Flux e-')
+    plt.title(p['REFFILENAME'])
 
     # end interactive session
     sPlt.end_interactive_session()
