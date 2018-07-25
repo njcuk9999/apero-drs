@@ -158,16 +158,16 @@ def main(debug_mode=0):
         EXIT(1)
 
     # -------------------------------------------------------------------------
-    # spirouCDB
+    # spirouDB
     # -------------------------------------------------------------------------
     try:
         # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouCDB
+        from SpirouDRS import spirouDB
         if debug_mode:
-            debug_message(spirouCDB.__NAME__)
-            debug_message(spirouCDB.spirouCDB.__NAME__, True)
+            debug_message(spirouDB.__NAME__)
+            debug_message(spirouDB.spirouCDB.__NAME__, True)
     except ImportError as e:
-        print('Fatal error cannot import spirouCDB from SpirouDRS')
+        print('Fatal error cannot import spirouDB from SpirouDRS')
         print('Error was: {0}'.format(e))   
         EXIT(1)
     except Exception as e:
@@ -338,12 +338,14 @@ def main(debug_mode=0):
 
     # log and ask user to confirm
     messages = ['\nFirst time installation?', '\nAdd required files to DRS?\n']
-    inputmessage = '\n\tSetup calibration database? [Y]es or [N]o\t'
+    inputmessage = '\n\tSetup databases? [Y]es or [N]o\t'
     uinput = drs_reset.custom_confirmation(messages, inputmessage)
     # add calibDB files
     if uinput:
         drs_reset.reset_calibdb(cparams, log=True)
         wlog('', __NAME__, 'Calibration database setup correctly.')
+        drs_reset.reset_telludb(cparams, log=True)
+        wlog('', __NAME__, 'Telluric database setup correctly.')
     else:
         wlog('', __NAME__, 'Assuming files setup correctly.')
 

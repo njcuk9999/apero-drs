@@ -1047,6 +1047,26 @@ def ext_spectral_order_plot(p, loc):
         plt.close()
 
 
+def ext_1d_spectrum_plot(p, x, y):
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot fits
+    frame.plot(x, y)
+    # set title
+    targs = [p['IC_START_ORDER_1D'], p['IC_END_ORDER_1D']]
+    title = 'Spectrum (1D) Order {0} to {1}'.format(*targs)
+    # set labels
+    frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 # =============================================================================
 # drift plotting function
 # =============================================================================
@@ -1277,7 +1297,7 @@ def drift_peak_plot_dtime_against_drift(p, loc):
         plt.close()
 
 
-def drift_plot_correlation_comp(p, loc, cc):
+def drift_plot_correlation_comp(p, loc, cc, iteration):
     """
     Plot correlation comparison plot (comparing value good and bad orders that
     pass and fail the Pearson R tests
@@ -1403,13 +1423,13 @@ def drift_plot_correlation_comp(p, loc, cc):
     frame2.set_xticklabels([])
     # -------------------------------------------------------------------------
     # set title
-    title = ('Pearson R test - example passed order vs failed order\n'
-             'PearsonR cut: {0}\n'
-             'Best result (Order {1}): {2}\n'
-             'Good result (Order {3}): {4}\n'
-             'Failed result (Order {5}): {6}')
-    targs = [prcut, best_order, cc[best_order],  good_order, cc[good_order],
-             bad_order, cc[bad_order]]
+    title = ('Pearson R test File {0} - example passed order vs failed order\n'
+             'PearsonR cut: {1}\n'
+             'Best result (Order {2}): {3}\n'
+             'Good result (Order {4}): {5}\n'
+             'Failed result (Order {6}): {7}')
+    targs = [iteration + 1, prcut, best_order, cc[best_order],  good_order,
+             cc[good_order], bad_order, cc[bad_order]]
     plt.suptitle(title.format(*targs))
 
     # -------------------------------------------------------------------------
@@ -1758,6 +1778,139 @@ def wave_fp_wavelength_residuals(loc):
     frame.set(xlabel='Initial wavelength [nm]',
               ylabel='New - Initial wavelength [nm]',
               title=title)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+# =============================================================================
+# wave solution plotting function
+# =============================================================================
+def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
+
+    # get data from loc
+    wave = loc['WAVE'][order_num, :]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot trans_map and spectra
+    frame.plot(wave, sp[order_num, :], 'r.')
+    frame.plot(wave[fmask], sp[order_num][fmask], 'b.')
+    frame.plot(wave, sed, 'r-')
+    frame.plot(wave, trans, 'c-')
+    frame.plot(wave, sp[order_num, :] / sed[:], 'g-')
+    frame.plot(wave, np.ones_like(sed), 'r-')
+    frame.plot(wave, ww, 'k-')
+    frame.set_title(outfile)
+    # set limit
+    frame.set(ylim=[0.75, 1.15])
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_pca_comp_plot(p, loc):
+
+    # get constants from p
+    npc = loc['NPC']
+    # get data from loc
+    wave = loc['WAVE'].ravel()
+    pc = loc['PC']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot principle components
+    for it in range(npc):
+        # define the label for the component
+        if p['ADD_DERIV_PC']:
+            if it == npc - 2:
+                label = 'd[pc1]'
+            elif it == npc - 1:
+                label = 'd[pc2]'
+            else:
+                label = 'pc {0}'.format(it + 1)
+        else:
+            label = 'pc {0}'.format(it + 1)
+        # plot the component with correct label
+        frame.plot(wave, pc[:, it], label=label)
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_fit_tellu_spline_plot(p, loc):
+    # get constants from p
+    selected_order = p['TELLU_PLOT_ORDER']
+    # get data from loc
+    data = loc['DATA']
+    ydim, xdim = data.shape
+    wave = loc['WAVE_IT']
+    sp = loc['SP']
+    template2 = loc['TEMPLATE2']
+    # get selected order wave lengths
+    swave = wave[selected_order, :]
+    # get selected order for sp
+    ssp = sp[selected_order, :]
+    # get template2 at selected order
+    start, end = selected_order * xdim, selected_order * xdim + xdim
+    stemp = np.array(template2[start: end])
+    # recovered absorption
+    srecov = ssp/stemp
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectra for selected order
+    frame.plot(swave, ssp/np.nanmedian(ssp), label='Observed SP')
+    frame.plot(swave, stemp/np.nanmedian(stemp), label='Template SP')
+    frame.plot(swave, srecov/np.nanmedian(srecov), label='Recov abso SP')
+    # add legend
+    frame.legend(loc=0)
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
+def tellu_fit_recon_abso_plot(p, loc):
+
+    # get constants from p
+    selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
+    # get data dimensions
+    ydim, xdim = loc['DATA'].shape
+    # get selected order wave lengths
+    swave = loc['WAVE_IT'][selected_order, :]
+    # get the data from loc for selected order
+    start, end = selected_order * xdim, selected_order * xdim + xdim
+    ssp2 = np.array(loc['SP2'][start:end])
+    stemp2 = np.array(loc['TEMPLATE2'][start:end])
+    srecon_abso = np.array(loc['RECON_ABSO'][start:end])
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectra for selected order
+    frame.plot(swave, ssp2/np.nanmedian(ssp2)/srecon_abso, color='g',
+               label='Cleaned SP')
+    frame.plot(swave, stemp2/np.nanmedian(stemp2), color='c', label='Template')
+    frame.plot(swave, srecon_abso, color='r', label='recon abso')
+    # add legend
+    frame.legend(loc=0)
     # turn off interactive plotting
     if not plt.isinteractive():
         plt.show()

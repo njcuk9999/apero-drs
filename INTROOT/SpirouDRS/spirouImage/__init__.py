@@ -9,6 +9,7 @@ Created on 2017-10-30 at 17:09
 
 """
 from SpirouDRS import spirouConfig
+from . import spirouBERV
 from . import spirouFile
 from . import spirouFITS
 from . import spirouImage
@@ -27,18 +28,19 @@ __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
-           'CorrectForDark', 'CorrectForBadPix', 'FitTilt', 'FlipImage',
-           'FiberParams', 'GetAllSimilarFiles', 'GetSigdet', 'GetExpTime',
-           'GetBadPixMap', 'GetGain', 'GetAcqTime', 'GetKey', 'GetKeys',
-           'GetTilt', 'GetTypeFromHeader', 'IdentifyUnProFile',
-           'InterpolateBadRegions', 'LocateBadPixels', 'LocateFullBadPixels',
-           'MakeTable', 'MeasureDark', 'MergeTable', 'NormMedianFlat',
-           'PPCorrectTopBottom', 'PPMedianFilterDarkAmps',
+           'CorrectForDark', 'CorrectForBadPix', 'E2DStoS1D',
+           'FitTilt', 'FlipImage', 'FiberParams', 'GetAllSimilarFiles',
+           'GetSigdet', 'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
+           'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
+           'IdentifyUnProFile', 'InterpolateBadRegions', 'LocateBadPixels',
+           'LocateFullBadPixels', 'MakeTable', 'MeasureDark', 'MergeTable',
+           'NormMedianFlat', 'PPCorrectTopBottom', 'PPMedianFilterDarkAmps',
            'PPMedianOneOverfNoise', 'ReadParam', 'ReadData', 'ReadImage',
            'ReadTable', 'ReadImageAndCombine', 'ReadFlatFile', 'ReadHeader',
            'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
            'ReadWaveFile', 'ReadBlazeFile', 'ReadOrderProfile',
-           'ResizeImage', 'WriteImage', 'WriteTable']
+           'ResizeImage', 'WriteImage', 'WriteTable',
+           'GetEarthVelocityCorrection', 'EarthVelocityCorrection']
 
 
 # =============================================================================
@@ -66,6 +68,10 @@ CorrectForDark = spirouImage.correct_for_dark
 
 CorrectForBadPix = spirouImage.correct_for_badpix
 
+E2DStoS1D = spirouImage.e2dstos1d
+
+EarthVelocityCorrection = spirouBERV.earth_velocity_correction
+
 FitTilt = spirouImage.fit_tilt
 
 FixNonPreProcess = spirouImage.fix_non_preprocessed
@@ -80,6 +86,8 @@ GetSigdet = spirouImage.get_sigdet
 
 GetExpTime = spirouImage.get_exptime
 
+GetEarthVelocityCorrection = spirouBERV.get_earth_velocity_correction
+
 GetBadPixMap = spirouImage.get_badpixel_map
 
 GetGain = spirouImage.get_gain
@@ -92,7 +100,15 @@ GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
 
+GetObjName = spirouImage.get_obj_name
+
+GetAirmass = spirouImage.get_airmass
+
 GetTypeFromHeader = spirouFITS.get_type_from_header
+
+GetWaveSolution = spirouFITS.get_wave_solution
+
+GetWaveKeys = spirouImage.get_wave_keys
 
 IdentifyUnProFile = spirouFile.identify_unprocessed_file
 
@@ -115,6 +131,8 @@ PPCorrectTopBottom = spirouImage.ref_top_bottom
 PPMedianFilterDarkAmps = spirouImage.median_filter_dark_amp
 
 PPMedianOneOverfNoise = spirouImage.median_one_over_f_noise
+
+PrintTable = spirouTable.print_full_table
 
 ReadParam = spirouImage.get_param
 
@@ -140,6 +158,8 @@ ReadLineList = spirouImage.read_line_list
 
 ReadWaveFile = spirouFITS.read_wave_file
 
+ReadWaveParams = spirouFITS.read_wave_params
+
 ReadHcrefFile = spirouFITS.read_hcref_file
 
 ReadBlazeFile = spirouFITS.read_blaze_file
@@ -156,9 +176,6 @@ WriteImageMulti = spirouFITS.write_image_multi
 
 WriteTable = spirouTable.write_table
 
-e2dstos1d = spirouImage.e2dstos1d
-
-write_s1d = spirouFITS.write_s1d
 
 # =============================================================================
 # End of code

@@ -19,7 +19,7 @@ import os
 
 
 from SpirouDRS import spirouBACK
-from SpirouDRS import spirouCDB
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
@@ -163,11 +163,13 @@ def main(night_name=None, files=None):
         # log that we are doing background measurement
         WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        background, gridx, gridy, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
+        bdata = spirouBACK.MeasureBackgroundFF(p, data2)
+        background, gridx, gridy, minlevel = bdata
     else:
         background = np.zeros_like(data2)
 
-#    data2=data2-background
+    # data2=data2-background
+    # correct data2 with background (where positive)
     data2=np.where(data2>0,data2-background,0)
 
     # ----------------------------------------------------------------------
@@ -184,7 +186,6 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['FIB_TYPE']:
-#    for fiber in ['AB']:
         # set fiber in p
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()')
@@ -407,15 +408,15 @@ def main(night_name=None, files=None):
             # copy flatfits to calibdb
             keydb = 'FLAT_' + p['FIBER']
             # copy localisation file to the calibDB folder
-            spirouCDB.PutFile(p, flatfits)
+            spirouDB.PutCalibFile(p, flatfits)
             # update the master calib DB file with new key
-            spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
+            spirouDB.UpdateCalibMaster(p, keydb, flatfitsname, hdr)
             # copy blazefits to calibdb
             keydb = 'BLAZE_' + p['FIBER']
             # copy localisation file to the calibDB folder
-            spirouCDB.PutFile(p, blazefits)
+            spirouDB.PutCalibFile(p, blazefits)
             # update the master calib DB file with new key
-            spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
+            spirouDB.UpdateCalibMaster(p, keydb, blazefitsname, hdr)
 
             # TODO: Remove H2RG requirement
             # hack to allow A and B flat and blaze files
@@ -423,9 +424,9 @@ def main(night_name=None, files=None):
                 if p['FIBER'] == 'AB':
                     for fib in ['A', 'B']:
                         keydb = 'FLAT_' + fib
-                        spirouCDB.UpdateMaster(p, keydb, flatfitsname, hdr)
+                        spirouDB.UpdateCalibMaster(p, keydb, flatfitsname, hdr)
                         keydb = 'BLAZE_' + fib
-                        spirouCDB.UpdateMaster(p, keydb, blazefitsname, hdr)
+                        spirouDB.UpdateCalibMaster(p, keydb, blazefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

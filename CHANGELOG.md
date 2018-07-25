@@ -3559,3 +3559,283 @@
 	- recipe to get/update change log (moved to spirouTools - final location) (rev.366f9e2d)
 	- recipe to get/update change log (rev.466217d8)
 	- output: the change log (backup) (rev.e3ae78d8)
+
+
+
+================================================================================
+* Thu Jul 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.060
+
+================================================================================
+	- fix and test of find_lines (rev.77ca6c26)
+
+
+
+================================================================================
+* Mon Jul 09 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.061
+
+================================================================================
+	- removed berv calculation from RV module (rev.ee54c282)
+	- added print_full_table function (rev.66483781)
+	- updated aliases and __all_ (rev.2e3c7544)
+	- updated aliases and __all_ (rev.9317b4eb)
+	- updated aliases and __all_ (rev.069848f0)
+	- moved earth barycentric correction here (rev.9bdb58a9)
+	- test fitting versus interpolation (rev.599d8d24)
+	- updated test to only show "good" orders (rev.0ccbeca8)
+	- fixed a comment and updated the berv variable (rev.eea3d51e)
+	- fixed logging all analysed files and printing to screen (rev.d62ecea9)
+	- fixed off_listing printing only a few rows (now prints all) (rev.cc825d1b)
+	- moved berv calculation to extraction (rev.9516e55d)
+	- moved berv calculation to extraction (rev.efd05451)
+
+
+
+================================================================================
+* Tue Jul 10 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.062
+
+================================================================================
+	- added filename functions (WAVE_MAP_SPE_FILE and WAVE_MAP_SPE0_FILE) (rev.200b94f3)
+	- added filenames in spirouConfig (rev.6dc52656)
+	- define todos (rev.b3ae08b8)
+	- fix bug: night_name should only be a string (could be a int) (rev.183ffaa3)
+	- update to accept multiple fibers AB and C or A B and C or any combination (rev.49a86896)
+	- change the files tested (rev.a1c28522)
+	- fix to a bug ll_line_cat --> ll_line_fit (rev.64e31772)
+	- e2ds back projection - first commit (rev.a4a29ab8)
+	- fix for choice of fiber(s) (rev.98751d51)
+
+
+
+================================================================================
+* Wed Jul 11 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.063
+
+================================================================================
+	- add master_tellu_spirou file (rev.b802cfeb)
+	- add cal_wave_mapper to recipe control file (rev.4b824404)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.56a984f1)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.1bedc55f)
+	- add reset tellu to drs_reset functions (rev.9caad51a)
+	- adde dcal_wave_mapper to recipe list (and unit recipe) (rev.39c8a9bc)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.1b6acf69)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.45ddf813)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.55e5a2a6)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.b23a500d)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) + added printing of tilt/wave/blaze/flat file used (rev.b76dee65)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.cea44b5f)
+	- fixed bug: hdr['KW_X'] --> hdr[p['KW_X'][0]] (rev.2a2cd8a4)
+	- add telluDB constants (rev.131d1767)
+	- add telluDB (for now a copy of spirouCDB - but will change) (rev.0392d8af)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.3e706ac6)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.548af301)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.811ff6a3)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.db9c88c5)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.bec2f117)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.f620fd40)
+	- update cal_wave_mapper (as main function with returns to local) (rev.bafcb677)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.ebddd8f0)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.fce4d026)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.53b1c68d)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.9a7b7b50)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.a9157257)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.5d911a40)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.3b2fe5bc)
+	- rename calibDB module: spirouCDB --> spirouDB (to add telluric database) (rev.c7053fea)
+
+
+
+================================================================================
+* Thu Jul 12 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.064
+
+================================================================================
+	- first commit - added obj_mk_tellu functions (rev.11cb25f1)
+	- added spirouTelluric aliases (rev.0cb7a927)
+	- added wave param aliases (rev.a7f365a3)
+	- added read andget wave param functions (rev.cb14c7b1)
+	- added plot for obj_mk_tellu (rev.4d0208e5)
+	- added file name definitions for obj_mk_tellu (rev.b65b6122)
+	- added obj_mk_tellu to recipe control (rev.971d3a40)
+	- added obj_mk_tellu constants (rev.dcafd2bc)
+	- integrated obj_mmk_tellu into spirou drs (rea/write/constants etc) (rev.563d5bcb)
+	- added saving of wave parameters to header of E2DS (rev.0b92cca0)
+	- remove (rev.0cc6033d)
+	- copy of etiennes raw mk_tellu code (rev.e5c8b722)
+	- added imports to python local namespace (for embeded run after code finish) (rev.8dd15555)
+	- blank files for telluric functions (rev.e8f545ba)
+	- first commit of the spirou visu GUI (rev.18f5e438)
+	- first commit of obj_mk_tellu - processing the telluric files and adding them to telluDB (rev.239dca54)
+
+
+
+================================================================================
+* Fri Jul 13 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.065
+
+================================================================================
+	- add functions: calculate_absorption_pca, get_berv_value (rev.7b7973a7)
+	- add telluric aliases (rev.192a0f5c)
+	- add functions get_database_tell_template, update_database_tell_temp (rev.92d37d3d)
+	- continue to integrate functions (rev.7762dbb6)
+	- correct duplication of header is None (rev.3c9c3d86)
+	- added telluric alias (rev.5d5421f7)
+	- added telluric pca plot (rev.904eeba1)
+	- corrected bad function call to GetNormalizedBlaze and duplicated call to loc=ParamDict() (rev.fe70d350)
+	- moved getting berv to spirouTelluric (rev.9a0d59b0)
+	- first attempt at integrating code (unfinished) (rev.34f85593)
+	- add keys defined in functions (rev.79397ed7)
+	- add new TDB aliases (rev.c9112a46)
+	- correct access to telluric database and update telluric database (rev.a5942e55)
+	- first commit - direct integration of mk_template.py from Etienne (rev.7d06e7c9)
+	- first commit - blank (rev.a54039a4)
+	- updated where we get the telluric molecular file (now from database) (rev.ab0066d6)
+	- added getting of absolute path for telluric files (rev.b3c5c11e)
+	- added switch between telluricand calibration databases (rev.fbeaa5c3)
+	- added aliases from TDB (rev.8c4c6988)
+	- added get and update functions (wrapping generic functions in spirouDB) (rev.0a538911)
+	- added todo's to make general (rev.9e262156)
+	- first commit - generic functions for database management (rev.52ba975f)
+
+
+
+================================================================================
+* Sun Jul 15 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.066
+
+================================================================================
+	- add new mask from Xavier (rev.44edfbf3)
+	- changed encoding (copy/paste/revert) -- ignore (rev.dcdae94d)
+	- fixed log to not wrap this text - ONLY (rev.1feca27b)
+	- changed name of sub-module (rev.1fc00efc)
+	- fixed cyclic imports (new sub-module - spirouBERV) (rev.afe9a5a1)
+	- Fixed cyclic imports (rev.c651c28f)
+	- added character_log_length pseudo constant (rev.379f773d)
+	- added maximum log length (wraps to new row with a tab) wraps words but still problem with long filenames (rev.6ae91108)
+	- fixed typo in Merge from @FrancoisBouchy (rev.8326be0e)
+	- fixed cyclic importing and typos in keyword assignment (rev.8a94f556)
+	- Fixed cyclic importing (rev.d8a59f6f)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.e64b267a)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.a294ced9)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.7f888956)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.bbb63b34)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.79422a76)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.431a3097)
+	- Bring S1D (cal_extract) in-line with rest of DRS (Fixing merges from @FrancoisBouchy) (rev.680d20bf)
+	- Added spirouTelluric to modules list (rev.96a45ba6)
+	- fix pep8 issues (in-line comment should have at least two spaces between code and comment (rev.d9d67042)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.67cf7d9e)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.a9dde403)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.92c9e64d)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.07e45462)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.6812fdb2)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.1f699ee2)
+	- Merge @FrancoisBouchy changes - still need fixing (PEP8 and integration) (rev.8b5f5734)
+	- Fix needed commented code (commented for testing) --> uncommented now (rev.1b3eb3fd)
+	- updated construct_convolution_kernal2 function (rev.d76ebeef)
+	- added teullric aliases (rev.c70f99bf)
+	- added tellu_fit_tellu_spline_plot function (rev.ea195472)
+	- update ConstructConvKernel2 function (rev.c840a850)
+	- continued to merge Etiennes code (rev.5e0792a8)
+
+
+
+================================================================================
+* Mon Jul 16 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.67
+
+================================================================================
+	- telluric integration: bug fixes (after move of functions) (rev.e14337ef)
+	- updated call to plot (rev.0e42ee0a)
+	- moved debug plot back to main code (rev.632d5eec)
+	- updating integration of tellu files: added functions - interp_at_shifted_wavelengths, calc_recon_abso, calc_molecular_absorption and lin_mini (rev.eca587ea)
+	- updating integration of tellu files: added new function aliases (rev.a5e68450)
+	- updating integration of tellu files: added plot function "tellu_fit_recon_abso_plot" (rev.b47ec6b3)
+	- updating integration of tellu files: Added abso output keyword (rev.b719cd11)
+	- updating integration of tellu files; Added filename pseudo constants (rev.1e33b4a1)
+	- updating integration of tellu files: added constants (need commenting!) (rev.b1f12bfa)
+	- updating integration of tellu files (rev.426ff830)
+	- updating integration of tellu files (rev.f4ef1297)
+
+
+
+================================================================================
+* Tue Jul 17 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.68
+
+================================================================================
+	- copy (same) (rev.ea4f78ac)
+	- update tellu recipes: fix bug with file name (rev.50acc4f5)
+	- update tellu recipes: drs telluDB reset now resets telluDB not calibDB (fix typos) (rev.e796a80b)
+	- update tellu recipes: fix after test run FWHM is function not object (rev.05659100)
+	- update tellu recipes: fix after test run - telluDB get database values are already split on spaces (rev.5c1ada01)
+	- update tellu recipes: fix after test run - fix bug (needed ```enumerate(lines)```) (rev.7c832174)
+	- update tellu recipes: fix after test run - add alias to update_datebase_tell_temp (rev.9655cb6f)
+	- possible bug fix: tried to separate out interactive options in end_interactive_session function (rev.a839f26d)
+	- possible bug fix: tried to reduce repetition of displayed warnings (rev.e301be46)
+	- update tellu recipes: added AIRMASS header key (rev.77c67374)
+	- bug fix: fix file name ````'_s1d_{0}.fits'``` --> ```'_s1d_{0}.fits'.format(p['FIBER'])``` (rev.706e4a4b)
+	- update tellu recipes: add required line in master telluDB (rev.0a14e56d)
+	- update tellu recipes: add obj_mk_tell_template to recipe control (rev.7c9895ad)
+	- update tellu recipes: move obj_mk_tell_template constantsto here and correct some bugs after test run (rev.98bbfe8a)
+	- update tellu recipes: fix after test run (rev.4c405049)
+	- update tellu recipes: fix after test run (rev.f8387526)
+
+
+================================================================================
+* Wed Jul 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.069
+
+================================================================================
+	- integrate telluric recipes with test runs: updated after test runs (rev.2a56529a)
+	- integrate telluric recipes with test runs: added get_wave_keys function (rev.764ad44b)
+	- integrate telluric recipes with test runs: updated aliases (rev.d2635ec2)
+	- integrate telluric recipes with test runs: test run only (rev.3c1a6ad2)
+	- integrate telluric recipes with test runs: updated plots (corrected) (rev.dccf1ff3)
+	- integrate telluric recipes with test runs: resorted use_keys + added wave and telluric keys (rev.2884a947)
+	- updated filename (TELLU_FIT_OUT_FILE) (rev.0537a839)
+	- integrate telluric recipes with test runs: added constants from Etienne and corrected bug in tell_lambda_max (rev.1cea1808)
+	- integrate telluric recipes with test runs: update after running fit_tellu (rev.8525785d)
+	- integrate telluric recipes with test runs: update after running fit_tellu (rev.c904711e)
+	- integrate telluric recipes with test runs: test run only (rev.7cbe7b40)
+	- modified cal_extract to save wavefile name and wave file dates (for telluric) (rev.0a52c288)
+
+
+
+================================================================================
+* Thu Jul 19 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.070
+
+================================================================================
+	- add telluric database reset to cal_validate (rev.bcf3dc94)
+	- tellu recipes - bug fix for plot (rev.324d79be)
+	- fix bug with timestamp (telluDB only) (rev.bebe2a37)
+	- integrate telluric recipes with test runs: compressed + binned tapas_all_sp file (rev.1ba578dc)
+	- integrate telluric recipes with test runs: updated after test runs (rev.9ce2af04)
+	- integrate telluric recipes with test runs: updated error message in get_param (rev.489dd801)
+	- cal_preprocess - DPRTYPE = None  rows of recipe_control should not be used to ID files (rev.0232ed48)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.df28b8a9)
+	- integrate telluric recipes with test runs: updated aliases (rev.a61e6c8a)
+	- integrate telluric recipes with test runs: updated TELL_MOLE file (.gz) (rev.85e317b1)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.a687ff10)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.9b6c82db)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.89ac9788)
+
+
+
+================================================================================
+* Fri Jul 20 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.071
+
+================================================================================
+	- update test run (rev.283ce6f9)
+	- misc functions (rev.c80005f5)
+	- Fixed call to earth velocity correction function (rev.107d3dca)
+	- move get_good_object_name function (rev.3101c114)
+	- add aliases for getting obj name and airmass (rev.8d873247)
+	- fix acquisition time naming (rev.e5fda006)
+	- added file iteration to plot (rev.7e4f1585)
+	- fix acquitision time naming (julian not unix) (rev.75d685df)
+	- add tellu template file definition (rev.ae4bab60)
+	- remove extra recipe control key (rev.c3b3248a)
+	- move objname and airmass to functions (rev.a2ecbe8f)
+	- fix naming conversion time is julian not unix (rev.90525073)
+	- correct filename bug (rev.ad763020)
+	- fixed bug with convolve file not being read correctly (rev.d1276a09)
+	- fxied bug with get_param (rev.5936a8ec)
+	- fxied bug with get_param (rev.bb945613)
+	- fxied bug with get_param (rev.547d5b94)
+	- fix bug in get_wave_solution (rev.fe98481a)
+	- fixed but with header key too long (9 > 8) (rev.0092c861)
+	- fix bug in assigned WAVEFILE (rev.f2fedbf0)
+	- fix bug in get_param call (rev.66c7b9d1)

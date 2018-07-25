@@ -10,3 +10,12 @@ comparison = False
 run008 = ['cal_HC_E2DS_spirou', 'AT5/20180409', 'hcone_hcone_001_pp_e2dsff_AB.fits']
 run009a = ['cal_WAVE_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2dsff_AB.fits', 'hcone_hcone_001_pp_e2dsff_AB.fits', ]
 # run009b = ['cal_WAVE_NEW_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2dsff_AB.fits', 'hcone_hcone_001_pp_e2dsff_AB.fits']
+run010a = ['cal_DRIFT_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2ds_AB.fits']
+run010b = ['cal_DRIFTPEAK_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2ds_AB.fits']
+run011 = ['cal_CCF_E2DS_spirou', 'AT5/20180409', 'hcone_hcone_001_pp_e2ds_C.fits', 'UrNe.mas', 0, 10, 0.1]
+run012 = ['cal_exposure_meter', 'AT5/20180409', 'flat_dark_001_pp.fits']
+run013 = ['off_listing_RAW_spirou', 'AT5/20180409']
+run014 = ['visu_RAW_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
+run015 = ['visu_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2ds_AB.fits']
+run016 = ['pol_spirou', 'TEST/20180528', '2279383o_pp_e2dsff_A.fits', '2279384o_pp_e2dsff_B.fits', '2279386o_pp_e2dsff_A.fits', '2279383o_pp_e2dsff_B.fits', '2279385o_pp_e2dsff_A.fits', '2279386o_pp_e2dsff_B.fits', '2279384o_pp_e2dsff_A.fits', '2279385o_pp_e2dsff_B.fits']
+

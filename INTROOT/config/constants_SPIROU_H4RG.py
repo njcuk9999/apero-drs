@@ -420,8 +420,14 @@ ic_cosmic_sigcut = 0.25  # 0.25
 #        ONLY USED IF EXTRACT_TYPE = '3d'
 ic_cosmic_thresh = 5
 
-#    Define the spectral bin for S1D spectra (nm)   - [cal_extract]
+#    Define the spectral bin for S1D spectra (nm)                - [cal_extract]
 ic_bin_s1d = 0.005
+
+#    Define the first order for the S1D spectra                  - [cal_extract]
+ic_start_order_1d = 1
+
+#    Define the last order for the S1D spectra                   - [cal_extract]
+ic_end_order_1d = 48
 
 
 # -----------------------------------------------------------------------------
@@ -514,7 +520,7 @@ drift_peak_exp_width = 0.9  # 0.8
 #        large normalised width = FP FWHM - drift_peak_exp_width
 #        cut is essentially:
 #           FP FWHM < (drift_peak_exp_width + drift_peak_norm_width_cut)
-drift_peak_norm_width_cut = 0.25   #0.2
+drift_peak_norm_width_cut = 0.25   # 0.2
 
 #    Define whether to fit a gaussain (slow) or adjust a      - [cal_drift-peak]
 #        barycenter to get the drift
@@ -601,7 +607,8 @@ ccf_fit_type = 0
 #      to use to calculate the CCF and RV
 ccf_num_orders_max = 48
 
-#  Define the mode to work out the Earth Velocity calculation        - [cal_CCF]
+#  Define the mode to work out the Earth Velocity       - [cal_extract, cal_CCF]
+#     correction calculation
 #      Options are:
 #           - "off" - berv is set to zero
 #           - "old" - berv is calculated with FORTRAN newbervmain.f
@@ -611,7 +618,7 @@ ccf_num_orders_max = 48
 #           - "new" - berv is calculated using barycorrpy  but needs to be
 #                     installed (i.e. pip install barycorrpy)
 #                     CURRENTLY NOT WORKING!!!
-ccf_bervmode = "new"
+bervmode = "new"
 
 
 # -----------------------------------------------------------------------------
@@ -822,6 +829,81 @@ ic_wave_idrift_rv_cut = 20.0
 
 
 # -----------------------------------------------------------------------------
+#  Telluric parameters
+# -----------------------------------------------------------------------------
+tellu_fiber = 'AB'
+
+tellu_suffix = 'e2dsff'
+
+tellu_blaze_percentile = 95
+
+# Define level above which the blaze is high enough to          - [obj_mk_tellu]
+#     accurately measure telluric
+tellu_cut_blaze_norm = 0.2
+
+# Define mean line width expressed in pix
+fwhm_pixel_lsf = 2.1
+
+# Define list of absorbers in the tapas fits table
+tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
+
+# Define whether to fit the derivatives instead of the          - [obj_mk_tellu]
+#     principal components
+fit_deriv_pc = True
+
+# Define whether to add the first derivative and broadening     - [obj_mk_tellu]
+#     factor to the principal components this allows a variable
+#     resolution and velocity offset of the PCs this is performed
+#     in the pixel space and NOT the velocity space as this is
+#     should be due to an instrument shift
+add_deriv_pc = True
+
+# Define min transmission in tapas models to consider an        - [obj_mk_tellu]
+#     element part of continuum
+transmission_cut = 0.98
+
+# Define the number of iterations to find the SED of hot        - [obj_mk_tellu]
+# stars + sigma clipping
+n_iter_sed_hotstar = 5
+
+# Define the smoothing parameter for the interpolation of       - [obj_mk_tellu]
+#     the hot star continuum. Needs to be reasonably matched
+#     to the true width
+tellu_vsini = 250.0
+
+# Define the median sampling expressed in km/s / pix
+tellu_med_sampling = 2.2
+
+#TODO: Need comments
+tellu_sigma_dev = 5
+tellu_bad_threshold = 1.2
+tellu_nan_threshold = 0.2
+tellu_abso_maps = False
+tellu_abso_low_thres = 0.01
+tellu_abso_high_thres = 1.05
+tellu_abso_sig_n_iter = 5
+tellu_abso_sig_thres = -1
+tellu_abso_dv_order = 33
+tellu_abso_dv_size = 5
+tellu_abso_dv_good_thres = 0.2
+
+tellu_template_keep_limit = 0.5
+tellu_template_med_low = 2048 - 128
+tellu_template_med_high = 2048 + 128
+
+tellu_number_of_principle_comp = 5
+tellu_fit_keep_frac = 20.0
+tellu_plot_order = 35
+tellu_fit_min_transmission = 0.2
+tellu_lambda_min = 1000.0
+tellu_lambda_max = 2100.0
+tellu_fit_vsini = 15.0
+tellu_fit_niter = 4
+tellu_fit_vsini2 = 30.0
+tellu_fit_recon_plt_order = 33
+tellu_fit_log_limit = -0.5
+
+# -----------------------------------------------------------------------------
 #   polarimetry parameters
 # -----------------------------------------------------------------------------
 #  Define all possible stokes parameters                          - [pol_spirou]
@@ -922,7 +1004,7 @@ qc_wave_idrift_rv_max = 150.0
 
 
 # -----------------------------------------------------------------------------
-#  Calib DB settings
+#  Calibration DB settings
 # -----------------------------------------------------------------------------
 
 #   Define calibd DB master filename                                     - [all]
@@ -943,6 +1025,32 @@ calib_max_wait = 3600
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 calib_db_match = 'closest'
+
+
+# -----------------------------------------------------------------------------
+#  Telluric DB settings
+# -----------------------------------------------------------------------------
+
+#   Define tellu DB master filename                                     - [all]
+#      (formally ic_tellu_db_master_file)
+ic_telluDB_filename = 'master_tellu_SPIROU.txt'
+
+#   the maximum wait time for telluric database file to be            - [all]
+#       in use (locked) after which an error is raised (in seconds)
+tellu_max_wait = 3600
+
+#   Define the match type for telluDB files                              - [all]
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         telluDB file will be used
+tellu_db_match = 'closest'
+
+
 
 # -----------------------------------------------------------------------------
 #  End of constants file
