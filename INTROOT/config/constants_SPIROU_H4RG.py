@@ -55,10 +55,10 @@ ic_altit_obs = 4.204
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 500
-ic_ccdx_blue_high = 3500
-ic_ccdy_blue_low = 2000
-ic_ccdy_blue_high = 3500
+ic_ccdx_blue_low = 100 #500
+ic_ccdx_blue_high = 4000 #3500
+ic_ccdy_blue_low = 3300 #2000
+ic_ccdy_blue_high = 3720 #3500
 
 #   Resize red window                                               - [cal_dark]
 ic_ccdx_red_low = 100
@@ -308,7 +308,7 @@ ic_facdec =  0.9 # 1.6
 ic_tilt_fit = 4
 
 #   Order to plot on slit image plot                                - [cal_slit]
-ic_slit_order_plot = 20 * 2
+ic_slit_order_plot = 2 * 2
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
@@ -342,6 +342,9 @@ ic_ff_sigdet = -1
 #    Half size blaze smoothing window                                 - [cal_ff]
 ic_extfblaz = 50
 
+# Minimum relative e2ds flux for the blaze computation                       - [cal_ff]
+ic_fracminblaze = 16.
+
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
 ic_blaze_fitn = 10    # 10
@@ -355,7 +358,7 @@ ic_ff_plot_all_orders = 0
 
 #   Define the orders not to plot on the RMS plot                     - [cal_ff]
 #      should be a list of integers
-ff_rms_plot_skip_orders = [22, 23, 24, 25, 48]
+ff_rms_plot_skip_orders = [0, 22, 23, 24, 25, 48]
 
 
 # -----------------------------------------------------------------------------
@@ -408,7 +411,7 @@ ic_ext_tilt_bord = 2
 ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
-ic_ext_order_plot = 25
+ic_ext_order_plot = 7
 
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
@@ -464,7 +467,7 @@ ic_drift_cut_e2ds = 4.5
 #   Define the number of orders to use (starting from 0 to max)    - [cal_drift]
 #       used to get median drift  median(order0 --> order max)
 #       (not used in drift_e2ds)
-ic_drift_n_order_max = 28
+ic_drift_n_order_max = 49  #28   Not Used ?!?
 
 #   Define the starting order to use (starting from           - [cal_drift-peak]
 #       0 to max) used to get median drift  median(order min --> order max)
@@ -933,7 +936,7 @@ ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,20
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                                   - [cal_dark]
-qc_max_darklevel = 0.1  #0.07
+qc_max_darklevel = 0.07  #0.07
 
 #   Max fraction of dead pixels                                     - [cal_dark]
 qc_max_dead = 1.0
@@ -959,7 +962,7 @@ qc_loc_rmsmax_center = 100
 qc_loc_rmsmax_fwhm = 500
 
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
-qc_ff_rms = 0.14
+qc_ff_rms = 0.05  #0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
 qc_loc_flumax = 50000
