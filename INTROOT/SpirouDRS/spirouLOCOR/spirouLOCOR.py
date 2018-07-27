@@ -273,8 +273,9 @@ def find_order_centers(pp, image, loc, order_num):
             break
         # make sure we are not in the image_gap
         # Question: Not sure what this is for
-        if col <= (800 - order_num*30):
-            break
+        #if col <= (800 - order_num*30):
+        if col <= (750 - rowcenter*0.7):
+                break
         if (rowtop < image_gap) and (rowbottom > image_gap):
             break
         # get the pixel values between row bottom and row top for
