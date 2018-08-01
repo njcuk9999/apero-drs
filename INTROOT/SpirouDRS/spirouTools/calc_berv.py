@@ -144,7 +144,7 @@ def main(night_name=None, e2dsfiles=None):
         # get gain
         p = spirouImage.GetGain(p, hdr, name='gain')
         # get acquisition time
-        p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+        p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='julian')
 
         # ----------------------------------------------------------------------
         # Read star parameters
@@ -163,8 +163,8 @@ def main(night_name=None, e2dsfiles=None):
         #  Earth Velocity calculation
         #-----------------------------------------------------------------------
         if p['IC_IMAGE_TYPE'] == 'H4RG':
-            loc = spirouRV.EarthVelocityCorrection(p, loc,
-                                                   method=p['CCF_BERVMODE'])
+            loc = spirouImage.EarthVelocityCorrection(p, loc,
+                                                      method=p['CCF_BERVMODE'])
         else:
             loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0,0.0
             loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')

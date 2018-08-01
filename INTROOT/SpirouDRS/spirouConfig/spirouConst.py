@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.68'
+__version__ =  '0.2.071'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-07-17'
+__date__ =  '2018-07-20'
 
 
 # =============================================================================
@@ -1291,7 +1291,7 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
 # noinspection PyPep8Naming
 def TELLU_FIT_OUT_FILE(p, filename):
     oldext = '.fits'
-    newext = '_tellu.fits'
+    newext = '_tellu_corrected.fits'
     outfilename1 = os.path.basename(filename).replace(oldext, newext)
     outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
     return outfile1
@@ -1304,6 +1304,13 @@ def TELLU_FIT_RECON_FilE(p, filename):
     outfilename2 = os.path.basename(filename).replace(oldext, newext)
     outfile2 = os.path.join(p['ARG_FILE_DIR'], outfilename2)
     return outfile2
+
+# noinspection PyPep8Naming
+def TELLU_TEMPLATE_FILE(p, loc):
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    return outfile
 
 
 # noinspection PyPep8Naming

@@ -3773,3 +3773,69 @@
 	- update tellu recipes: move obj_mk_tell_template constantsto here and correct some bugs after test run (rev.98bbfe8a)
 	- update tellu recipes: fix after test run (rev.4c405049)
 	- update tellu recipes: fix after test run (rev.f8387526)
+
+
+================================================================================
+* Wed Jul 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.069
+
+================================================================================
+	- integrate telluric recipes with test runs: updated after test runs (rev.2a56529a)
+	- integrate telluric recipes with test runs: added get_wave_keys function (rev.764ad44b)
+	- integrate telluric recipes with test runs: updated aliases (rev.d2635ec2)
+	- integrate telluric recipes with test runs: test run only (rev.3c1a6ad2)
+	- integrate telluric recipes with test runs: updated plots (corrected) (rev.dccf1ff3)
+	- integrate telluric recipes with test runs: resorted use_keys + added wave and telluric keys (rev.2884a947)
+	- updated filename (TELLU_FIT_OUT_FILE) (rev.0537a839)
+	- integrate telluric recipes with test runs: added constants from Etienne and corrected bug in tell_lambda_max (rev.1cea1808)
+	- integrate telluric recipes with test runs: update after running fit_tellu (rev.8525785d)
+	- integrate telluric recipes with test runs: update after running fit_tellu (rev.c904711e)
+	- integrate telluric recipes with test runs: test run only (rev.7cbe7b40)
+	- modified cal_extract to save wavefile name and wave file dates (for telluric) (rev.0a52c288)
+
+
+
+================================================================================
+* Thu Jul 19 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.070
+
+================================================================================
+	- add telluric database reset to cal_validate (rev.bcf3dc94)
+	- tellu recipes - bug fix for plot (rev.324d79be)
+	- fix bug with timestamp (telluDB only) (rev.bebe2a37)
+	- integrate telluric recipes with test runs: compressed + binned tapas_all_sp file (rev.1ba578dc)
+	- integrate telluric recipes with test runs: updated after test runs (rev.9ce2af04)
+	- integrate telluric recipes with test runs: updated error message in get_param (rev.489dd801)
+	- cal_preprocess - DPRTYPE = None  rows of recipe_control should not be used to ID files (rev.0232ed48)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.df28b8a9)
+	- integrate telluric recipes with test runs: updated aliases (rev.a61e6c8a)
+	- integrate telluric recipes with test runs: updated TELL_MOLE file (.gz) (rev.85e317b1)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.a687ff10)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.9b6c82db)
+	- integrate telluric recipes with test runs: fixes afer test runs (rev.89ac9788)
+
+
+
+================================================================================
+* Fri Jul 20 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.071
+
+================================================================================
+	- update test run (rev.283ce6f9)
+	- misc functions (rev.c80005f5)
+	- Fixed call to earth velocity correction function (rev.107d3dca)
+	- move get_good_object_name function (rev.3101c114)
+	- add aliases for getting obj name and airmass (rev.8d873247)
+	- fix acquisition time naming (rev.e5fda006)
+	- added file iteration to plot (rev.7e4f1585)
+	- fix acquitision time naming (julian not unix) (rev.75d685df)
+	- add tellu template file definition (rev.ae4bab60)
+	- remove extra recipe control key (rev.c3b3248a)
+	- move objname and airmass to functions (rev.a2ecbe8f)
+	- fix naming conversion time is julian not unix (rev.90525073)
+	- correct filename bug (rev.ad763020)
+	- fixed bug with convolve file not being read correctly (rev.d1276a09)
+	- fxied bug with get_param (rev.5936a8ec)
+	- fxied bug with get_param (rev.bb945613)
+	- fxied bug with get_param (rev.547d5b94)
+	- fix bug in get_wave_solution (rev.fe98481a)
+	- fixed but with header key too long (9 > 8) (rev.0092c861)
+	- fix bug in assigned WAVEFILE (rev.f2fedbf0)
+	- fix bug in get_param call (rev.66c7b9d1)

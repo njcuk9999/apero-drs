@@ -847,6 +847,17 @@ fwhm_pixel_lsf = 2.1
 # Define list of absorbers in the tapas fits table
 tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
 
+# Define whether to fit the derivatives instead of the          - [obj_mk_tellu]
+#     principal components
+fit_deriv_pc = True
+
+# Define whether to add the first derivative and broadening     - [obj_mk_tellu]
+#     factor to the principal components this allows a variable
+#     resolution and velocity offset of the PCs this is performed
+#     in the pixel space and NOT the velocity space as this is
+#     should be due to an instrument shift
+add_deriv_pc = True
+
 # Define min transmission in tapas models to consider an        - [obj_mk_tellu]
 #     element part of continuum
 transmission_cut = 0.98
@@ -885,7 +896,7 @@ tellu_fit_keep_frac = 20.0
 tellu_plot_order = 35
 tellu_fit_min_transmission = 0.2
 tellu_lambda_min = 1000.0
-tellu_lambda_max = 1000.0
+tellu_lambda_max = 2100.0
 tellu_fit_vsini = 15.0
 tellu_fit_niter = 4
 tellu_fit_vsini2 = 30.0

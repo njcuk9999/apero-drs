@@ -1,3 +1,3 @@
 # Telluric molecular transmission from TAPAS
-TELL_MOLE tapas_all_sp.fits 2018-07-17_09-25-00 1532510700.0
+TELL_MOLE tapas_all_sp.fits.gz 2018-07-17_09-25-00 1532510700.0
 # DRS Files
