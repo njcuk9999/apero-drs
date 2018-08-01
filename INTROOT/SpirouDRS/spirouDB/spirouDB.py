@@ -169,12 +169,7 @@ def get_times_from_header(p, header=None, filename=None):
             headerfile = 'UNKNOWN'
 
     # try getting unix time
-    if p['KW_ACQTIME_KEY_UNIX'][0] in header:
-        unix_time = header[p['KW_ACQTIME_KEY_UNIX'][0]]
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
-        human_time = spirouMath.unixtime2stringtime(unix_time, header_fmt)
-    # else try getting human time
-    elif p['KW_ACQTIME_KEY'][0] in header:
+    if p['KW_ACQTIME_KEY'][0] in header:
         human_time = header[p['KW_ACQTIME_KEY'][0]]
         header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
         unix_time = spirouMath.stringtime2unixtime(human_time, header_fmt)

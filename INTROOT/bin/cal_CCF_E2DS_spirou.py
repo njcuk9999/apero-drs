@@ -133,7 +133,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get gain
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
-    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='unix')
+    p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='julian')
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
