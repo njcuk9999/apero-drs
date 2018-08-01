@@ -1522,8 +1522,8 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
             WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
-        emsg1 = ('Cannot convert keyword "{0}" to type "{1}"'
-                 '').format(keyword, dtype)
+        emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
+                 '').format(keyword, rawvalue, dtype)
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         value = None
@@ -1557,8 +1557,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
                 spirouFITS.ReadImage
     :param name: string, the name in parameter dictionary to give to value
                  if return_value is False (i.e. p[name] = value)
-    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'unix'
-                 for time since 1970-01-01
+    :param kind: string, 'human' for 'YYYY-mm-dd-HH-MM-SS.ss' or 'julian'
     :param return_value: bool, if False value is returned in p as p[name]
                          if True value is returned
 
@@ -1582,6 +1581,49 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
         p.set_source(name, hdr['@@@hname'])
         # return p
         return p
+
+
+def get_wave_keys(p, loc, hdr):
+    func_name = __NAME__ + '.get_wave_keys()'
+    # check for header key
+    if p['KW_WAVE_FILE'][0] in hdr:
+        wkwargs = dict(p=p, hdr=hdr, return_value=True)
+        loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', dtype=str,
+                                    **wkwargs)
+        loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
+                                     **wkwargs)
+        loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
+    # TODO: Remove section later
+    else:
+        # log warning
+        wmsg = 'Warning key="{0}" not in HEADER file'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
+        # set wave file to fitsfilename
+        loc['WAVEFILE'] = p['FITSFILENAME']
+        loc['WAVETIME1'] = 'Unknown'
+        loc['WAVETIME2'] = -9999
+
+    # set sources
+    loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
+    # return loc
+    return loc
+
+
+def get_obj_name(p, hdr):
+    # get parameter
+    raw_obj_name = get_param(p, hdr, keyword='KW_OBJNAME', dtype=str,
+                             return_value=True)
+    # filter out bad characters
+    obj_name = spirouFITS.get_good_object_name(p, rawname=raw_obj_name)
+    # return object name
+    return obj_name
+
+
+def get_airmass(p, hdr):
+    # get parameter
+    raw_airmass = get_param(p, hdr, keyword='KW_AIRMASS', return_value=True)
+    # return airmass
+    return float(raw_airmass)
 
 
 # TODO insert paremeter dictionnary
