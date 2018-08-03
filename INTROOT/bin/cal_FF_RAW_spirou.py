@@ -186,6 +186,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['FIB_TYPE']:
+#    for fiber in ['A']:
         # set fiber in p
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()')
@@ -271,12 +272,15 @@ def main(night_name=None, files=None):
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             noise = p['SIGDET'] * np.sqrt(range1 + range2)
             # get window size
-            blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
-            blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
+            blaze_win1 = int(data2.shape[1]/2) - p['IC_EXTFBLAZ']
+            blaze_win2 = int(data2.shape[1]/2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
             flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2*p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
             snr = flux / np.sqrt(flux + noise**2)
+            # remove edge of orders at low S/N
+            e2ds = np.where(e2ds < flux / p['IC_FRACMINBLAZE'], 0., e2ds)
+#            e2ds = np.where(e2ds < p['IC_MINBLAZE'], 0., e2ds)
             # calcualte the blaze function
             blaze = spirouFLAT.MeasureBlazeForOrder(p, e2ds)
             # calculate the flat

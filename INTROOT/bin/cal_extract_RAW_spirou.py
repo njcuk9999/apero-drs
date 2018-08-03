@@ -16,6 +16,7 @@ Up-to-date with cal_extract_RAW_spirouALL AT-4 V47
 from __future__ import division
 import numpy as np
 import os
+import time
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -151,7 +152,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
     #  Put to zero all the negative pixels
     # TODO: Check if it makes sens to do that
-    # data2 = np.where(data2<0, np.zeros_like(data2), data2)
+#    data2 = np.where(data2<0, 1.e-7, data2)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -185,6 +186,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     else:
         background = np.zeros_like(data2)
 
+    data2=np.where(data2>0,data2-background,0)
+
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -198,6 +201,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     #-----------------------------------------------------------------------
     #  Earth Velocity calculation
     #-----------------------------------------------------------------------
+
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
@@ -206,6 +210,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # loop around fiber types
     for fiber in p['FIB_TYPE']:
+#    for fiber in 'C':
         # set fiber
         p['FIBER'] = fiber
         p.set_source('FIBER', __NAME__ + '/main()()')
@@ -323,8 +328,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wargs = [p['FIBER'], order_num, snr, cpt]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # add calculations to storage
-            loc['E2DS'][order_num] = e2ds
-            loc['E2DSFF'][order_num] = e2ds/loc['FLAT'][order_num]
+#            loc['E2DS'][order_num] = e2ds
+            loc['E2DS'][order_num] = np.where(loc['BLAZE'][order_num]>1,e2ds,0.)
+            loc['E2DSFF'][order_num] = loc['E2DS'][order_num] / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
