@@ -545,7 +545,7 @@ def slit_sorder_plot(pp, loc, image):
     offsetarray = np.zeros(len(loc['ASS'][order]))
     offsetarray[0] = offset
     # plot image
-    frame.imshow(image, origin='lower', clim=(1., 30000.))
+    frame.imshow(image, origin='lower', clim=(0., np.mean(image)))
     # calculate selected order fit
     xfit = np.arange(image.shape[1])
     yfit1 = np.polyval((loc['ACC'][order] + offsetarray)[::-1], xfit)
@@ -1277,13 +1277,13 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot mask1
-    frame.plot(deltatime[mask1], meanvr[mask1],
-               marker='x', label='All orders', color='b')
+    frame.plot(deltatime[mask1], meanvr[mask1], linestyle='none',
+               marker='o', label='All orders', color='b')
     # plot mask2
-    frame.plot(deltatime[mask2], meanvrleft[mask2],
+    frame.plot(deltatime[mask2], meanvrleft[mask2], linestyle='none',
                marker='x', label='half-left', color='g')
     # plot mask3
-    frame.plot(deltatime[mask3], meanvrright[mask3],
+    frame.plot(deltatime[mask3], meanvrright[mask3], linestyle='none',
                marker='x', label='half-right', color='r')
     # set title labels limits
     title = 'Mean drift against time from reference'
