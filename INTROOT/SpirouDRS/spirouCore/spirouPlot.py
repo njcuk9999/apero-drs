@@ -1617,6 +1617,9 @@ def wave_littrow_extrap_plot(loc, iteration=0):
 def wave_littrow_check_plot(p, loc, iteration=0):
     # get data from loc
     x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
+    # set up colors
+    import matplotlib.cm as cm
+    colors = cm.rainbow(np.linspace(0, 1, len(x_cut_points)))
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1629,7 +1632,7 @@ def wave_littrow_check_plot(p, loc, iteration=0):
         xx = loc['LITTROW_XX_{0}'.format(iteration)][it]
         yy = loc['LITTROW_YY_{0}'.format(iteration)][it]
         # plot graph
-        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]))
+        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]), color=colors[it])
     # set axis labels and title
     targs = [iteration, p['FIBER']]
     title = 'Wavelength Solution Littrow Check {0} fiber {1}'.format(*targs)
@@ -1736,8 +1739,8 @@ def wave_local_width_offset_plot(loc):
     frame = plt.subplot(111)
     # plot fits
     frame.scatter(fp_m, fp_dopd, label='Measured')
-    frame.plot(np.sort(fp_m), np.polyval(fp_dopd_coeff[::-1], fp_m),
-               label='fit')
+    frame.plot(np.sort(fp_m), np.polyval(fp_dopd_coeff[::-1], np.sort(fp_m)),
+               label='fit', color='red')
     # set title labels limits
     title = 'FP cavity width offset'
     frame.set(xlabel='FP peak number',
