@@ -88,16 +88,20 @@ def main(night_name=None, files=None):
     wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE(p)
     WLOG('', p['LOG_OPT'], wavelltbl)
     # read fitted lines
-    ll_line_fit, ampl_line_fit = np.genfromtxt(wavelltbl, skip_header=4,
-                                               skip_footer=2, unpack=True,
-                                               usecols=(1, 3))
+    ll_ord, ll_line_fit, ampl_line_fit = np.genfromtxt(wavelltbl,
+                                                skip_header=4, skip_footer=2,
+                                                unpack=True, usecols=(0, 1, 3))
 
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
 
-
-
+    # define line colours
+    col = ['magenta', 'purple']
+    # get order parity
+    ll_ord_par = np.mod(ll_ord, 2)
+    print(ll_ord_par)
+    col2 = [col[int(x)] for x in ll_ord_par]
 
     # start interactive plot
     sPlt.start_interactive_session()
@@ -120,7 +124,7 @@ def main(night_name=None, files=None):
     for line in range(len(ll_line_fit)):
         heights.append(200000 + np.max([np.min(e2ds), ampl_line_fit[line]]))
     # plot ll_line_fit
-    plt.vlines(ll_line_fit, 0, heights, colors='magenta',
+    plt.vlines(ll_line_fit, 0, heights, colors=col2,
                linestyles='dashdot')
 
     plt.xlabel('Wavelength [nm]')
@@ -128,7 +132,7 @@ def main(night_name=None, files=None):
     plt.title(p['REFFILENAME'])
 
     # end interactive session
-    sPlt.end_interactive_session()
+#    sPlt.end_interactive_session()
 
     # old code:
     # plt.ion()

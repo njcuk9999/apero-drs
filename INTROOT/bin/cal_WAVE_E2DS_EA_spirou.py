@@ -38,6 +38,7 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
+plt.ion()
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
 
@@ -381,7 +382,7 @@ window = 6
 # others are just there to confuse the reader
 ew = []
 xgau = []
-peak = []
+peak1 = []
 dx = []
 ord = []
 zp = []
@@ -439,9 +440,10 @@ for iord in range(49):
         #
         # we keep (or not) the peak
         imax = np.argmax(segment) - window
-        #
-        keep &= (np.abs(imax) < window // 3)
-
+        # this is asymmetrical and allows catching peaks twice
+        # keep &= (np.abs(imax) < window // 3)
+        # fix (?)
+        keep &= (-window // 3 < imax < window // 3 - 1)
         if keep:
             # fit a gaussian with a slope
             popt_left, g2 = gaussfit(xpix, segment, 5)
@@ -479,15 +481,20 @@ for iord in range(49):
                 slope = np.append(slope, slope0)
                 ew = np.append(ew, ew0)
                 xgau = np.append(xgau, xgau0)
-                peak = np.append(peak, peak0)
+                peak1 = np.append(peak1, peak0)
                 ord = np.append(ord, iord)
                 gauss_rms_dev = np.append(gauss_rms_dev, gauss_rms_dev0)
                 wave_hdr_sol = np.append(wave_hdr_sol, wave0)
 
                 if doplot_per_order:
-                    plt.plot(wave[iord, xpix], g2)
+                    plt.plot(wave[iord, xpix], g2, '--')
     if doplot_per_order:
         plt.show()
+
+# print total found lines
+wargs = [len(wave_hdr_sol)]
+wmsg = '{0} gaussian peaks found in HC spectrum'
+WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
 
 # reading the UNe catalog
@@ -504,6 +511,8 @@ dv = np.zeros(len(wave_hdr_sol)) + np.nan
 
 # wavelength given in the catalog for the matched line
 wave_catalog = np.zeros(len(wave_hdr_sol)) + np.nan
+# save the amplitudes
+amp_catalog = np.zeros(len(wave_hdr_sol)) + np.nan
 i = -1
 for wave0 in wave_hdr_sol:
     i += 1
@@ -514,12 +523,14 @@ for wave0 in wave_hdr_sol:
     if np.abs(ddv) < 30000:
         dv[i] = ddv
         wave_catalog[i] = wave_UNe[idmin]
+        amp_catalog[i] = amp_UNe[idmin]
 
 # define 100-nm bins
 # TODO why not from 900?
 xbins = np.array(range(1000, 2200, 100))
 
 # plot found lines - wavelength vs velocity offset from catalogue
+plt.figure()
 plt.clf()
 plt.plot(wave_catalog, dv, 'g.', label='all lines')
 plt.xlabel('wavelength')
@@ -538,11 +549,21 @@ for ite in range(2):
         # calculate median dv for lines in bin with finite dv
         meddv[i] = np.nanmedian(dv[g])
         # print bin and total number of lines in 100-nm bin
-        wargs = [xbin, xbin+100, np.sum(g)]
-        wmsg = 'In wavelength bin {0}-{1}, {2} lines w/finite velocity offset from cat.'
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        if ite==0:
+            wargs = [xbin, xbin+100, np.sum(g)]
+            wmsg = 'In wavelength bin {0}-{1}, {2} lines matched to catalogue'
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        elif ite==1:
+            wargs = [xbin, xbin+100, np.sum(g)]
+            wmsg = 'In wavelength bin {0}-{1}, {2} lines with dv<5 kept'
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
         i += 1
+    # print total number of lines for ite=0
+    if ite == 0:
+        wargs = [np.sum(np.isfinite(dv))]
+        wmsg = 'Total {0} lines matched to catalogue'
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # 3rd degree polynomial fit to the center of bins vs median dv per bin
     fit = np.polyfit(xbins + 50, meddv, 3)
@@ -553,6 +574,11 @@ for ite in range(2):
     err = np.abs(dv - dv_pred) / np.nanmedian(np.abs(dv - dv_pred))
     # if difference >5, set dv to nan
     dv[err > 5] = np.nan
+    # print total number of lines for ite=1
+    if ite == 1:
+        wargs = [np.sum(np.isfinite(dv))]
+        wmsg = 'Total {0} lines with dv<5 kept'
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
 if doplot_sanity:
     # plot the predicted velocity offset from the catalogue
@@ -563,11 +589,13 @@ if doplot_sanity:
     plt.show()
 
 # for each order, we fit a 4th order polynomial between pix and wavelength
-fit_per_order = np.zeros([5, 49])
+fit_degree = 5
+fit_per_order = np.zeros([fit_degree+1, 49])
 
 wmsg = 'Sigma-clipping of found lines'
 WLOG('info', p['LOG_OPT'], wmsg.format())
 
+plt.figure()    # open new figure
 # loop through orders
 for iord in range(49):
     # keep relevant lines
@@ -601,7 +629,7 @@ for iord in range(49):
             nsigmax = np.abs(dd[argmax])
 
             # print info
-            np.set_printoptions(precision=3)
+            # np.set_printoptions(precision=3)
             wargs = [fit, nsigmax]
             wmsg = 'vel. offset vs pix coeffs: {0}, sigma={1:.2f}'
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
@@ -619,7 +647,7 @@ for iord in range(49):
             plt.ylabel('pixel position')
 
         # the pix VS wavelength is fitted with a 4th order polynomial
-        fit_per_order[:, iord] = np.polyfit(xgau[gg], wave_catalog[gg], 4)
+        fit_per_order[:, iord] = np.polyfit(xgau[gg], wave_catalog[gg], fit_degree)
 
 if doplot_sanity:
     plt.show()
@@ -629,14 +657,22 @@ xpix = np.array(range(4088))
 for i in range(49):
     wave_map2[i, :] = np.polyval(fit_per_order[:, i], xpix)
 
+# store the wavelength map in loc
+loc['LL_OUT_1'] = wave_map2
+loc.set_source('LL_OUT_1', __NAME__ + '/main()')
+
 # ===============================================================================================
 # bit of code that smooths the coefficient VS nth order relations
 # DOES NOT WORK (yet...)
 # ===============================================================================================
 # x index in the smoothing of the nth-order VS coefficient
 
-if True:
+# set/unset smoothing
+poly_smooth= 0
 
+if poly_smooth==True:
+
+    plt.figure()
     plt.clf()
     wmsg = 'Forcing continuity of the polynomial fit coefficients'
     WLOG('info', p['LOG_OPT'], wmsg.format())
@@ -652,9 +688,9 @@ if True:
 
     # keeping track of the best estimates for the polynomial
     # coefficients
-    new_wavelength_solution_polyfit = np.zeros([5, 49])
+    new_wavelength_solution_polyfit = np.zeros([fit_degree+1, 49])
 
-    for nth_poly_order in range(5):
+    for nth_poly_order in range(fit_degree+1):
 
         tmp = fit_per_order[nth_poly_order, :]
 
@@ -734,7 +770,12 @@ if True:
         plt.plot()
         plt.clf()
 
+# store the smoothed wavelength map in loc
+loc['LL_OUT_2'] = wave_map2
+loc.set_source('LL_OUT_2', __NAME__ + '/main()')
+
 # ===============================================================================================
+# Determine the LSF and calculate the resolution
 # ===============================================================================================
 
 hc_ini = np.array(hcdata)
@@ -747,6 +788,9 @@ WLOG('info', p['LOG_OPT'], wmsg.format())
 i_plot = 0
 # determining the LSF
 bin_ord = 10
+
+plt.figure()
+
 for iord in range(0, 49, bin_ord):
     for xpos in range(0, 4):
         plt.subplot(5, 4, i_plot + 1)
@@ -827,7 +871,193 @@ wargs = [np.mean(resolution_map), np.median(resolution_map), np.std(resolution_m
 wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
 WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
-#print('mean resolution : ', np.mean(resolution_map))
-#print('median resolution : ', np.median(resolution_map))
-#print('stddev resolution : ', np.std(resolution_map))
+# ----------------------------------------------------------------------
+# Set up all_lines storage list for both wavelength solutions
+# ----------------------------------------------------------------------
 
+# initialise up all_lines storage
+all_lines_1 = []
+all_lines_2 = []
+
+#initialise storage for residuals
+res_1 = []
+res_2 = []
+
+n_ord_start = 0
+n_ord_final = 47
+
+# first wavelength solution (no smoothing)
+# loop through orders
+for iord in range(n_ord_start,n_ord_final):
+    # keep relevant lines
+    # -> right order
+    # -> finite dv
+    gg = (ord == iord) & (np.isfinite(dv))
+    nlines = np.sum(gg)
+    # put lines into ALL_LINES structure
+    # reminder:
+    # gparams[0] = output wavelengths
+    # gparams[1] = output sigma(gauss fit width)
+    # gparams[2] = output amplitude(gauss fit)
+    # gparams[3] = difference in input / output wavelength
+    # gparams[4] = input amplitudes
+    # gparams[5] = output pixel positions
+    # gparams[6] = output pixel sigma width (gauss fit width in pixels)
+    # gparams[7] = output weights for the pixel position
+
+    # dummy array for weights
+    test = np.ones(np.shape(xgau[gg]),'d')
+    # get the final wavelength value for each peak in order
+    output_wave_1 = np.polyval(fit_per_order[:, iord], xgau[gg])
+    # get the initial solution wavelength value for each peak in the order
+    input_wave= np.polyval((poly_wave_sol[iord, :])[::-1], xgau[gg])
+    # convert the pixel equivalent width to wavelength units
+    xgau_ew_ini = xgau[gg] - ew[gg]/2
+    xgau_ew_fin = xgau[gg] + ew[gg]/2
+    ew_ll_ini = np.polyval(fit_per_order[:, iord], xgau_ew_ini)
+    ew_ll_fin = np.polyval(fit_per_order[:, iord], xgau_ew_fin)
+    ew_ll = ew_ll_fin - ew_ll_ini
+    # put all lines in the order into array
+    gau_params = np.column_stack((output_wave_1,ew_ll, peak1[gg], input_wave-output_wave_1,
+                                  amp_catalog[gg], xgau[gg], ew[gg], test))
+    # append the array for the order into a list
+    all_lines_1.append(gau_params)
+    res_1 = np.concatenate((res_1,2.997e5*(input_wave - output_wave_1)/output_wave_1))
+
+# add to loc
+loc['ALL_LINES_1'] = all_lines_1
+loc.set_source('ALL_LINES_1', __NAME__ + '/main()')
+
+# second wavelength solution (smoothed)
+if poly_smooth==True:
+    # loop through orders
+    for iord in range(49):
+        # keep relevant lines
+        # -> right order
+        # -> finite dv
+        gg = (ord == iord) & (np.isfinite(dv))
+        nlines = np.sum(gg)
+        # put lines into ALL_LINES structure
+        # reminder:
+        # gparams[0] = output wavelengths
+        # gparams[1] = output sigma(gauss fit width)
+        # gparams[2] = output amplitude(gauss fit)
+        # gparams[3] = difference in input / output wavelength
+        # gparams[4] = input amplitudes
+        # gparams[5] = output pixel positions
+        # gparams[6] = output pixel sigma width (gauss fit width in pixels)
+        # gparams[7] = output weights for the pixel position
+
+        # dummy array for weights
+        test = np.ones(np.shape(xgau[gg]),'d')
+        # get the final wavelength value for each peak in order
+        output_wave_2 = np.polyval(new_wavelength_solution_polyfit[:, iord], xgau[gg])
+        # get the initial solution wavelength value for each peak in the order
+        input_wave= np.polyval((poly_wave_sol[iord, :])[::-1], xgau[gg])
+        # convert the pixel equivalent width to wavelength units
+        xgau_ew_ini = xgau[gg] - ew[gg]/2
+        xgau_ew_fin = xgau[gg] + ew[gg]/2
+        ew_ll_ini = np.polyval(new_wavelength_solution_polyfit[:, iord], xgau_ew_ini)
+        ew_ll_fin = np.polyval(new_wavelength_solution_polyfit[:, iord], xgau_ew_fin)
+        ew_ll = ew_ll_fin - ew_ll_ini
+        # put all lines in the order into array
+        gau_params = np.column_stack((output_wave_2,ew_ll, peak1[gg], input_wave-output_wave_2,
+                                      amp_catalog[gg], xgau[gg], ew[gg], test))
+        # append the array for the order into a list
+        all_lines_2.append(gau_params)
+        res_2 = np.concatenate((res_2, 2.997e5*(input_wave - output_wave_2)/output_wave_2))
+
+    # add to loc
+    loc['ALL_LINES_2'] = all_lines_2
+    loc.set_source('ALL_LINES_2', __NAME__ + '/main()')
+
+# ------------------------------------------------------------------
+# Littrow test
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+#First solution - need to skip last two orders
+# ------------------------------------------------------------------
+
+# set up echelle orders
+o_orders = np.arange(n_ord_start, n_ord_final)
+echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+loc['ECHELLE_ORDERS'] = echelle_order
+loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+
+ckwargs = dict(ll=loc['LL_OUT_1'][n_ord_start:n_ord_final,:], iteration=1, log=True)
+loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
+
+# Plot wave solution littrow check
+
+if p['DRS_PLOT']:
+    # plot littrow x pixels against fitted wavelength solution
+    sPlt.wave_littrow_check_plot(p, loc, iteration=1)
+
+# ------------------------------------------------------------------
+# Smoothed solution
+# ------------------------------------------------------------------
+
+if poly_smooth == True:
+    # set up echelle orders
+    n_ord_start = 0
+    n_ord_final = 49
+    o_orders = np.arange(n_ord_start, n_ord_final)
+    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+    loc['ECHELLE_ORDERS'] = echelle_order
+    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+
+    ckwargs = dict(ll=loc['LL_OUT_2'], iteration=2, log=True)
+    loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
+
+    # Plot wave solution littrow check
+
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+
+# ------------------------------------------------------------------
+# Calculate uncertainties
+# ------------------------------------------------------------------
+
+# First solution (without smoothing)
+
+mean1 = np.mean(res_1)
+var1 = np.var(res_1)
+
+wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+wargs2 = [mean1*1000., np.sqrt(var1)*1000., len(res_1), 1000.*np.sqrt(var1/len(res_1))]
+wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+             'value:{3:.2f}[m/s])'.format(*wargs2))
+WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+
+# Second solution (with smoothing)
+
+if poly_smooth == True:
+    mean2 = np.mean(res_2)
+    var2 = np.var(res_2)
+
+    wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
+    wargs2 = [mean2*1000., np.sqrt(var2)*1000., len(res_2), 1000.*np.sqrt(var2/len(res_2))]
+    wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
+                 'value:{3:.2f}[m/s])'.format(*wargs2))
+    WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+
+# ------------------------------------------------------------------
+# Plot single order, wavelength-calibrated, with found lines
+# ------------------------------------------------------------------
+
+# set order to plot
+plot_order = 7
+# get the correct order to plot for all_lines (which is sized n_ord_final-n_ord_start)
+plot_order_line = plot_order - n_ord_start
+plt.figure()
+# plot order and flux
+plt.plot(wave_map2[plot_order], hcdata[plot_order])
+# plot found lines
+for i in range(len(all_lines_1[plot_order_line])):
+    # plot lines to their corresponding amplitude
+    plt.vlines(all_lines_1[plot_order_line][i][0], 0, all_lines_1[plot_order_line][i][2], 'm')
+    # plot lines to the top of the figure
+    plt.vlines(all_lines_1[plot_order_line][i][0], 0, np.max(hcdata[plot_order]), 'gray',
+               linestyles='dotted')

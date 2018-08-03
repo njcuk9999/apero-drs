@@ -730,14 +730,14 @@ ic_errx_min = 0.01  # 0.03
 
 #  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
 # default = 5
-ic_ll_degr_fit = 4  # 4
+ic_ll_degr_fit = 5   #4  # 4
 
 #  Define the max rms for the wavelength sigma-clip fit     - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg_1 = 5  # 4
+ic_Littrow_fit_deg_1 = 7 #5  # 4
 ic_Littrow_fit_deg_2 = 7  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
@@ -754,7 +754,7 @@ ic_Littrow_remove_orders = []
 #  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
 #      (fit along the orders)
 #TODO needs to be the same as ic_ll_degr_fit
-ic_Littrow_order_fit_deg = 4  # 4
+ic_Littrow_order_fit_deg = 5  # 4
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #    lines search (used AFTER littrow fit) default = 3
@@ -783,21 +783,21 @@ ic_hc_n_ord_final_2 = 46
 hc_find_lines_mode = 0
 
 #  Define first order FP solution is calculated from                - [cal_wave]
-ic_fp_n_ord_start = 0
+ic_fp_n_ord_start =  8   #9
 
 #  Defines last order FP solution is calculated to                  - [cal_wave]
-ic_fp_n_ord_final = 24
+ic_fp_n_ord_final =  40   #45
 
 #  Define the size of region where each line is fitted               -[cal_wave]
 ic_fp_size = 3
 
 #  Define the threshold to use in detecting the positions            -[cal_wave]
 #      of FP peaks
-ic_fp_threshold = 0.2
+ic_fp_threshold = 0.3  #0.2
 
 #  Define the initial value of FP effective cavity width            - [cal_wave]
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
-ic_fp_dopd0 = 2.45e7
+ic_fp_dopd0 = 2.44999e7  #2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
 #      the measured cavity width for each line
