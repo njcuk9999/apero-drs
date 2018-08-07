@@ -247,10 +247,15 @@ def gaussfit(xpix, ypix, nn):
 # Set up
 # ----------------------------------------------------------------------
 
-# test files
+# test files TC2
 night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
 fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
 hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
+
+# test files TC3
+night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
+fpfile = '2294108a_pp_e2dsff_AB.fits'
+hcfiles = ['2294115c_pp_e2dsff_AB.fits']
 
 # get parameters from config files/run time args/load paths + calibdb
 p = spirouStartup.Begin(recipe=__NAME__)
@@ -343,6 +348,11 @@ p['KW_CCD_SIGDET'][1] = p['SIGDET']
 p['KW_CCD_CONAD'][1] = p['GAIN']
 # get lamp parameters
 p = spirouTHORCA.GetLampParams(p, hchdr)
+# get number of orders
+# we always get fibre A number because AB is doubled in constants file
+nbo = p['QC_LOC_NBO_FPALL']['A']
+# get number of pixels in x from hcdata size
+nbpix = np.shape(hcdata)[1]
 
 # wavelength file; we will use the polynomial terms in its header,
 # NOT the pixel values that would need to be interpolated
@@ -366,9 +376,16 @@ doplot_sanity=True
 # =============================================================================
 
 # generate initial wavelength map
-wave_map = np.zeros([49, 4088])
-xpix = np.array(range(4088))
-for iord in range(49):
+# set the possibility for a pixel shift
+pixel_shift = 7
+# print a warning if pixel_shift is not 0
+if pixel_shift != 0:
+    wmsg = 'Pixel shift is not 0, check that this is desired'
+    WLOG('warning', p['LOG_OPT'], wmsg.format())
+
+wave_map = np.zeros([nbo, nbpix])
+xpix = np.array(range(nbpix)) + pixel_shift
+for iord in range(nbo):
     wave_map[iord, :] = np.polyval((poly_wave_sol[iord, :])[::-1], xpix)
 
 # number of sigma above local RMS for a line to be flagged as such
@@ -411,7 +428,7 @@ wave_hdr_sol = []
 wmsg = 'Searching for gaussian peaks on the HC spectrum'
 WLOG('info', p['LOG_OPT'], wmsg.format())
 
-for iord in range(49):
+for iord in range(nbo):
     # keep track of pixels where we look for peaks
 
     if doplot_per_order:
@@ -422,7 +439,7 @@ for iord in range(49):
     WLOG('', p['LOG_OPT'], wmsg.format(iord))
 
     # scanning through each order, 1/3rd of w at a time
-    for indmax in range(window * 2, 4088 - window * 2 - 1, window // 3):
+    for indmax in range(window * 2, nbpix - window * 2 - 1, window // 3):
         xpix = np.asarray(range(indmax - window, indmax + window))
         segment = np.array(hcdata[iord, indmax - window:indmax + window])
         rms = np.median(np.abs(segment[1:] - segment[:-1]))
@@ -590,14 +607,14 @@ if doplot_sanity:
 
 # for each order, we fit a 4th order polynomial between pix and wavelength
 fit_degree = 5
-fit_per_order = np.zeros([fit_degree+1, 49])
+fit_per_order = np.zeros([fit_degree+1, nbo])
 
 wmsg = 'Sigma-clipping of found lines'
 WLOG('info', p['LOG_OPT'], wmsg.format())
 
 plt.figure()    # open new figure
 # loop through orders
-for iord in range(49):
+for iord in range(nbo):
     # keep relevant lines
     # -> right order
     # -> finite dv
@@ -652,9 +669,9 @@ for iord in range(49):
 if doplot_sanity:
     plt.show()
 
-wave_map2 = np.zeros([49, 4088])
-xpix = np.array(range(4088))
-for i in range(49):
+wave_map2 = np.zeros([nbo, nbpix])
+xpix = np.array(range(nbpix))
+for i in range(nbo):
     wave_map2[i, :] = np.polyval(fit_per_order[:, i], xpix)
 
 # store the wavelength map in loc
@@ -684,11 +701,11 @@ if poly_smooth==True:
     # terms in the wavelength solutions.
     order_fit_continuity = [2, 2, 4, 8, 12]
 
-    nth_order = np.array(range(49))
+    nth_order = np.array(range(nbo))
 
     # keeping track of the best estimates for the polynomial
     # coefficients
-    new_wavelength_solution_polyfit = np.zeros([fit_degree+1, 49])
+    new_wavelength_solution_polyfit = np.zeros([fit_degree+1, nbo])
 
     for nth_poly_order in range(fit_degree+1):
 
@@ -696,7 +713,7 @@ if poly_smooth==True:
 
         nsigmax = 999
 
-        keep = np.ones([49], dtype=bool)
+        keep = np.ones([nbo], dtype=bool)
 
         ite = 0
         # sigma clipping on linear fit to remove few large outliers
@@ -760,9 +777,9 @@ if poly_smooth==True:
 
         new_wavelength_solution_polyfit[nth_poly_order, :] = np.polyval(fit, nth_order)
 
-    wave_map3 = np.zeros([49, 4088])
-    xpix = np.array(range(4088))
-    for iord in range(49):
+    wave_map3 = np.zeros([nbo, nbpix])
+    xpix = np.array(range(nbpix))
+    for iord in range(nbo):
         wave_map3[iord, :] = np.polyval(new_wavelength_solution_polyfit[:, iord], xpix)
 
     nsigmax = 999
@@ -791,7 +808,7 @@ bin_ord = 10
 
 plt.figure()
 
-for iord in range(0, 49, bin_ord):
+for iord in range(0, nbo, bin_ord):
     for xpos in range(0, 4):
         plt.subplot(5, 4, i_plot + 1)
         gg = (gauss_rms_dev < 0.05)
@@ -931,7 +948,7 @@ loc.set_source('ALL_LINES_1', __NAME__ + '/main()')
 # second wavelength solution (smoothed)
 if poly_smooth==True:
     # loop through orders
-    for iord in range(49):
+    for iord in range(nbo):
         # keep relevant lines
         # -> right order
         # -> finite dv
