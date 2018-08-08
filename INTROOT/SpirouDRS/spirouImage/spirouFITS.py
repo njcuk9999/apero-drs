@@ -347,6 +347,8 @@ def writeimage(filename, image, hdict=None, dtype=None):
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
+    # ignore truncated comment warning since spirou images have some poorly formatted header cards
+    w = [warning for warning in w if str(warning.message) != 'Card is too long, comment will be truncated.']
     # add warnings to the warning logger and log if we have them
     spirouCore.spirouLog.warninglogger(w)
 
