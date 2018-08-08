@@ -347,10 +347,11 @@ def fp_wavelength_sol(p, loc, mode='new'):
     loc['ALL_LINES_2'] = all_lines_2
     loc['FP_DOPD_OFFSET_COEFF'] = coeffs
     loc['FP_DOPD_OFFSET_FIT'] = cfit
+    loc['FP_ORD_REC'] = order_rec_all
     # set sources
     sources = ['FP_LL_POS', 'FP_XX_POS', 'FP_M', 'FP_DOPD_OFFSET',
                'FP_AMPL', 'FP_LL_POS_NEW', 'ALL_LINES_2',
-               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT']
+               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT', 'FP_ORD_REC']
     loc.set_sources(sources, func_name)
     # return loc
     return loc
@@ -391,7 +392,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
         #    x value should be close to initial measured position
         if abs(gparams[5] - pos[it]) > 1.:
             # refit in smaller region around poorly fitted line
-            size2 = 1
+            size2 = 2
             # redo the gaussian fit
             fll_it = FP_ll_init[order_num, xpos - size2:xpos + size2]
             fdata_it = fp_data[order_num, xpos - size2:xpos + size2]
@@ -411,7 +412,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
         # determine the line number
         if it == 0:
             # line number for first line of the order (by FP equation)
-            floc['m_fp'][it] = int(dopd0 / gparams[0] + 0.5)
+            floc['m_fp'][it] = int(dopd0 / gparams[0])   # + 0.5)
         else:
             # successive line numbers (assuming no gap)
             floc['m_fp'][it] = floc['m_fp'][it - 1] - 1
@@ -480,7 +481,7 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                                         0.0, xxpos_all[it], 0.0, ampl_all[it]])
                     FP_line = FP_line.reshape((1, 8))
                     # append FP line data to all_lines
-                    torder = order_num - n_init
+                    torder = order_num
                     tvalues = [all_lines_2[torder], FP_line]
                     all_lines_2[torder] = np.concatenate(tvalues)
     # return all lines 2

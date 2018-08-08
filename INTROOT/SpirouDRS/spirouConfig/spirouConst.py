@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.071'
+__version__ =  '0.2.075'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-07-20'
+__date__ =  '2018-08-08'
 
 
 # =============================================================================
@@ -1210,11 +1210,70 @@ def WAVE_TBL_FILE(p):
     wavetblfile = os.path.join(reducedfolder, wavetblfb)
     return wavetblfile
 
+# noinspection PyPep8Naming
+def WAVE_FILE_FP(p):
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_fp_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    return wavefile
+
+# noinspection PyPep8Naming
+def WAVE_TBL_FILE_FP(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavetblfb = 'cal_WAVE_result.tbl'
+    wavetblfile = os.path.join(reducedfolder, wavetblfb)
+    return wavetblfile
+
 
 # noinspection PyPep8Naming
 def WAVE_LINE_FILE(p):
     reducedfolder = p['REDUCED_DIR']
     wavellext = '_hc_lines_{0}.tbl'.format(p['FIBER'])
+    wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
+    wavellfile = os.path.join(reducedfolder, wavellfn)
+    return wavellfile
+
+# noinspection PyPep8Naming
+def WAVE_FILE_EA(p):
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    return wavefile
+
+# noinspection PyPep8Naming
+def WAVE_TBL_FILE_EA(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavetblfb = 'cal_WAVE_EA_result.tbl'
+    wavetblfile = os.path.join(reducedfolder, wavetblfb)
+    return wavetblfile
+
+
+# noinspection PyPep8Naming
+def WAVE_LINE_FILE_EA(p):
+    reducedfolder = p['REDUCED_DIR']
+    wavellext = '_hc_lines_ea_{0}.tbl'.format(p['FIBER'])
     wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile

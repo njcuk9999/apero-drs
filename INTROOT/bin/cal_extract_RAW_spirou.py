@@ -184,6 +184,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
     else:
         background = np.zeros_like(data2)
+    # apply background correction to data (and set to zero where negative)
+    data2 = np.where(data2 > 0, data2 - background, 0)
 
 
     # ----------------------------------------------------------------------
@@ -323,8 +325,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wargs = [p['FIBER'], order_num, snr, cpt]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # add calculations to storage
+            e2ds = np.where(loc['BLAZE'][order_num] > 1, e2ds, 0.)
             loc['E2DS'][order_num] = e2ds
-            loc['E2DSFF'][order_num] = e2ds/loc['FLAT'][order_num]
+            loc['E2DSFF'][order_num] = e2ds / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)

@@ -19,6 +19,7 @@ from __future__ import division
 import numpy as np
 import os
 
+from SpirouDRS import spirouBACK
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -124,6 +125,22 @@ def main(night_name=None, files=None):
     # TODO: Remove H2RG compatibility
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+
+    # ----------------------------------------------------------------------
+    # Background computation
+    # ----------------------------------------------------------------------
+    if p['IC_DO_BKGR_SUBTRACTION']:
+        # log that we are doing background measurement
+        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
+        # get the bkgr measurement
+        bdata = spirouBACK.MeasureBackgroundFF(p, data2)
+        background, gridx, gridy, minlevel = bdata
+    else:
+        background = np.zeros_like(data2)
+
+    # data2=data2-background
+    # correct data2 with background (where positive)
+    data2 = np.where(data2 > 0, data2 - background, 0)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
