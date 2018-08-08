@@ -83,7 +83,11 @@ def measure_background_flatfield(p, image):
             # get the (2*size)th minimum pixel
 #            minlevel[i_it, j_it] = np.median(np.sort(np.compress(subframe>0,subframe))[2 * size])
             mask=subframe>0
-            minlevel[i_it, j_it] = np.max([np.percentile(subframe[mask],percent),0])
+            maskedsubframe = subframe[mask]
+            if len(maskedsubframe) > 0:
+                minlevel[i_it, j_it] = np.max([np.percentile(maskedsubframe,percent),0])
+            else:
+                minlevel[i_it, j_it] = 0
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
     gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size, size:image.shape[1]:2 * size]
