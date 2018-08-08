@@ -55,10 +55,10 @@ ic_altit_obs = 4.204
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 500
-ic_ccdx_blue_high = 3500
-ic_ccdy_blue_low = 2000
-ic_ccdy_blue_high = 3500
+ic_ccdx_blue_low = 100 #500
+ic_ccdx_blue_high = 4000 #3500
+ic_ccdy_blue_low = 3300 #2000
+ic_ccdy_blue_high = 3720 #3500
 
 #   Resize red window                                               - [cal_dark]
 ic_ccdx_red_low = 100
@@ -189,7 +189,7 @@ dark_cutlimit = 5.0
 
 #   Size of the order_profile smoothed box                           - [cal_loc]
 #     (from pixel - size to pixel + size)
-loc_box_size = 5   # 10
+loc_box_size = 5  #5   # 10
 
 #   row number of image to start processing at                       - [cal_loc]
 ic_offset = 0  # 40
@@ -214,7 +214,7 @@ ic_widthmin = 10  # 5
 #   Define the noise multiplier threshold in order to accept an      - [cal_loc]
 #       order center as usable
 #       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
-ic_noise_mult_thres =  10  #10 # 100.0
+ic_noise_mult_thres = 50 #30  #10 # 100.0
 
 #   Define the polynomial fit parameters for interpolating over the  - [cal_loc]
 #      bad regions (holes) before localization is done
@@ -250,11 +250,11 @@ bad_region_bad_value = 0.25
 ic_locnbpix = 45  # 45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
-ic_min_amplitude = 10 # 50
+ic_min_amplitude = 10 # 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.18
+ic_locseuil = 0.17   # 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
 ic_satseuil = 1000   # 64536
@@ -308,7 +308,7 @@ ic_facdec =  0.9 # 1.6
 ic_tilt_fit = 4
 
 #   Order to plot on slit image plot                                - [cal_slit]
-ic_slit_order_plot = 20 * 2
+ic_slit_order_plot = 2 * 2
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
@@ -342,6 +342,9 @@ ic_ff_sigdet = -1
 #    Half size blaze smoothing window                                 - [cal_ff]
 ic_extfblaz = 50
 
+# Minimum relative e2ds flux for the blaze computation                - [cal_ff]
+ic_fracminblaze = 16.
+
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
 ic_blaze_fitn = 10    # 10
@@ -355,7 +358,7 @@ ic_ff_plot_all_orders = 0
 
 #   Define the orders not to plot on the RMS plot                     - [cal_ff]
 #      should be a list of integers
-ff_rms_plot_skip_orders = [22, 23, 24, 25, 48]
+ff_rms_plot_skip_orders = [0, 22, 23, 24, 25, 48]
 
 
 # -----------------------------------------------------------------------------
@@ -408,7 +411,7 @@ ic_ext_tilt_bord = 2
 ic_ext_sigdet = -1   # 100
 
 #    Define order to plot                                        - [cal_extract]
-ic_ext_order_plot = 25
+ic_ext_order_plot = 7
 
 #    Define the percentage of flux above which we use    - [cal_ff, cal_extract]
 #        to cut
@@ -464,7 +467,7 @@ ic_drift_cut_e2ds = 4.5
 #   Define the number of orders to use (starting from 0 to max)    - [cal_drift]
 #       used to get median drift  median(order0 --> order max)
 #       (not used in drift_e2ds)
-ic_drift_n_order_max = 28
+ic_drift_n_order_max = 49  # 28
 
 #   Define the starting order to use (starting from           - [cal_drift-peak]
 #       0 to max) used to get median drift  median(order min --> order max)
@@ -727,14 +730,14 @@ ic_errx_min = 0.01  # 0.03
 
 #  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
 # default = 5
-ic_ll_degr_fit = 4  # 4
+ic_ll_degr_fit = 5   #4  # 4
 
 #  Define the max rms for the wavelength sigma-clip fit     - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg_1 = 5  # 4
+ic_Littrow_fit_deg_1 = 7  # 5  # 4
 ic_Littrow_fit_deg_2 = 7  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
@@ -751,7 +754,7 @@ ic_Littrow_remove_orders = []
 #  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
 #      (fit along the orders)
 #TODO needs to be the same as ic_ll_degr_fit
-ic_Littrow_order_fit_deg = 4  # 4
+ic_Littrow_order_fit_deg = 5  # 4
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #    lines search (used AFTER littrow fit) default = 3
@@ -780,21 +783,21 @@ ic_hc_n_ord_final_2 = 46
 hc_find_lines_mode = 0
 
 #  Define first order FP solution is calculated from                - [cal_wave]
-ic_fp_n_ord_start = 0
+ic_fp_n_ord_start =  8   # 9
 
 #  Defines last order FP solution is calculated to                  - [cal_wave]
-ic_fp_n_ord_final = 24
+ic_fp_n_ord_final =  40   # 45
 
 #  Define the size of region where each line is fitted               -[cal_wave]
 ic_fp_size = 3
 
 #  Define the threshold to use in detecting the positions            -[cal_wave]
 #      of FP peaks
-ic_fp_threshold = 0.2
+ic_fp_threshold = 0.3  # 0.2
 
 #  Define the initial value of FP effective cavity width            - [cal_wave]
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
-ic_fp_dopd0 = 2.45e7
+ic_fp_dopd0 = 2.44999e7  # 2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
 #      the measured cavity width for each line
@@ -933,7 +936,7 @@ ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,20
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                                   - [cal_dark]
-qc_max_darklevel = 0.07
+qc_max_darklevel = 0.07  # 0.07
 
 #   Max fraction of dead pixels                                     - [cal_dark]
 qc_max_dead = 1.0
@@ -959,7 +962,7 @@ qc_loc_rmsmax_center = 100
 qc_loc_rmsmax_fwhm = 500
 
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
-qc_ff_rms = 0.14
+qc_ff_rms = 0.05  # 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
 qc_loc_flumax = 50000
