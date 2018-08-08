@@ -273,6 +273,9 @@ def find_order_centers(pp, image, loc, order_num):
             break
         # make sure we are not in the image_gap
         # Question: Not sure what this is for
+        #if col <= (800 - order_num*30):
+        if col <= (750 - rowcenter*0.7):
+                break
         if (rowtop < image_gap) and (rowbottom > image_gap):
             break
         # get the pixel values between row bottom and row top for
@@ -297,7 +300,10 @@ def find_order_centers(pp, image, loc, order_num):
                 if pp['IC_IMAGE_TYPE'] == "H2RG":
                     center = float(rowcenter)
                 else:
-                    center = float(rowcenter)-1  # to force the order curvature
+                    center = float(rowcenter)-2  # to force the order curvature
+        else:
+            width = 0
+            center = float(rowcenter) - 2  # to force the order curvature
         # add these positions to storage
         loc['CTRO'][order_num, col] = center
         loc['SIGO'][order_num, col] = width
