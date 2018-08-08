@@ -49,6 +49,7 @@ def get_earth_velocity_correction(p, loc, hdr):
     # ----------------------------------------------------------------------
     # TODO: remove H2RG dependency
     if p['IC_IMAGE_TYPE'] == 'H4RG':
+        p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_OBJRA', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_OBJDEC', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_OBJEQUIN')
@@ -58,10 +59,11 @@ def get_earth_velocity_correction(p, loc, hdr):
         p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
 
     #-----------------------------------------------------------------------
-    #  Earth Velocity calculation
+    #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)
     #-----------------------------------------------------------------------
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
+    # if p['IC_IMAGE_TYPE'] == 'H4RG':
+    if p['IC_IMAGE_TYPE'] == 'H4RG' and p['OBSTYPE']=='OBJECT' :
+            loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
         loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0,0.0
         loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
