@@ -20,6 +20,7 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
+from SpirouDRS import spirouDB
 
 # =============================================================================
 # Define variables
@@ -247,14 +248,18 @@ def gaussfit(xpix, ypix, nn):
 # ----------------------------------------------------------------------
 
 # test files TC2
-night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
-fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
-hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
+#night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
+#fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
+#hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
 
 # test files TC3
-#night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
-#fpfile = '2294108a_pp_e2dsff_AB.fits'
-#hcfiles = ['2294115c_pp_e2dsff_AB.fits']
+night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
+fpfile = '2294108a_pp_e2dsff_AB.fits'
+hcfiles = ['2294115c_pp_e2dsff_AB.fits']
+
+night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
+fpfile = '2294223a_pp_e2dsff_AB.fits'
+hcfiles = ['2294230c_pp_e2dsff_AB.fits']
 
 # get parameters from config files/run time args/load paths + calibdb
 p = spirouStartup.Begin(recipe=__NAME__)
@@ -375,7 +380,7 @@ doplot_sanity = True
 
 # generate initial wavelength map
 # set the possibility for a pixel shift
-pixel_shift_inter = 0   #6.26637214e+00
+pixel_shift_inter =    0 #6.26637214e+00
 pixel_shift_slope = 0   #4.22131253e-04
 # print a warning if pixel_shift is not 0
 if pixel_shift_slope != 0 or pixel_shift_inter != 0:
@@ -791,6 +796,8 @@ if poly_smooth:
     loc['LL_OUT_2'] = wave_map3
     loc.set_source('LL_OUT_2', __NAME__ + '/main()')
 
+# TODO incorporate cross-order wavelength checking
+
 # ===============================================================================================
 # Determine the LSF and calculate the resolution
 # ===============================================================================================
@@ -1011,9 +1018,7 @@ else:
 # Littrow test
 # ------------------------------------------------------------------
 
-# ------------------------------------------------------------------
 # First solution - need to skip last two orders
-# ------------------------------------------------------------------
 
 # set up echelle orders
 o_orders = np.arange(n_ord_start, n_ord_final)
@@ -1031,9 +1036,7 @@ if p['DRS_PLOT']:
     # plot littrow x pixels against fitted wavelength solution
     sPlt.wave_littrow_check_plot(p, loc, iteration=1)
 
-# ------------------------------------------------------------------
 # Smoothed solution
-# ------------------------------------------------------------------
 
 if poly_smooth:
     # set up echelle orders
@@ -1052,6 +1055,41 @@ if poly_smooth:
     if p['DRS_PLOT']:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+
+# ------------------------------------------------------------------
+# extrapolate Littrow solution
+# ------------------------------------------------------------------
+ekwargs = dict(ll=loc['LL_OUT_1'], iteration=1)
+loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+
+# ------------------------------------------------------------------
+# Join 0-46 and 47-48 solutions
+# ------------------------------------------------------------------
+
+# the littrow extrapolation (for orders > n_ord_final_2)
+litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final:]
+litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final:]
+
+# the wavelength solution for n_ord_start - n_ord_final
+# taking from loc allows avoiding an if smooth check
+ll_out = loc['LL_FINAL'][n_ord_start:n_ord_final]
+param_out = loc['LL_PARAM_FINAL'][n_ord_start:n_ord_final]
+
+# create stack
+ll_stack, param_stack = [], []
+# wavelength solution for n_ord_start - n_ord_final
+if len(ll_out) > 0:
+    ll_stack.append(ll_out)
+    param_stack.append(param_out)
+# add extrapolation from littrow to orders > n_ord_final
+if len(litt_extrap_sol_red) > 0:
+    ll_stack.append(litt_extrap_sol_red)
+    param_stack.append(litt_extrap_sol_param_red)
+
+# convert stacks to arrays and add to storage
+loc['LL_FINAL'] = np.vstack(ll_stack)
+loc['LL_PARAM_FINAL'] = np.vstack(param_stack)
+loc.set_sources(['LL_FINAL', 'LL_PARAM_FINAL'], __NAME__ + '/main()')
 
 # ------------------------------------------------------------------
 # Calculate uncertainties
@@ -1220,7 +1258,7 @@ spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
 final_mean = 1000 * loc['X_MEAN_1']
 final_var = 1000 * loc['X_VAR_1']
 num_lines = loc['X_ITER_1']
-err = 1000 * np.sqrt(final_var/num_lines)
+err = 1000 * np.sqrt(loc['X_VAR_1']/num_lines)
 sig_littrow = 1000 * np.array(loc['LITTROW_SIG_'+str(lit_it)])
 # construct filename
 wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
@@ -1282,21 +1320,21 @@ table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
 # write table
 spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
 
-# # ------------------------------------------------------------------
-# # Move to calibDB and update calibDB
-# # ------------------------------------------------------------------
-# if p['QC']:
-#     # set the wave key
-#     keydb = 'WAVE_{0}'.format(p['FIBER'])
-#     # copy wave file to calibDB folder
-#     spirouDB.PutCalibFile(p, wavefits)
-#     # update the master calib DB file with new key
-#     spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
-#
-#     # set the hcref key
-#     keydb = 'HCREF_{0}'.format(p['FIBER'])
-#     # copy wave file to calibDB folder
-#     spirouDB.PutCalibFile(p, e2dscopy_filename)
-#     # update the master calib DB file with new key
-#     e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
-#     spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+# ------------------------------------------------------------------
+# Move to calibDB and update calibDB
+# ------------------------------------------------------------------
+if p['QC']:
+    # set the wave key
+    keydb = 'WAVE_{0}'.format(p['FIBER'])
+    # copy wave file to calibDB folder
+    spirouDB.PutCalibFile(p, wavefits)
+    # update the master calib DB file with new key
+    spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
+
+    # set the hcref key
+    keydb = 'HCREF_{0}'.format(p['FIBER'])
+    # copy wave file to calibDB folder
+    spirouDB.PutCalibFile(p, e2dscopy_filename)
+    # update the master calib DB file with new key
+    e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
+    spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
