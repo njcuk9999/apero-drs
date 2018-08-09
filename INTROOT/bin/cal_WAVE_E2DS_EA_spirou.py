@@ -1129,7 +1129,7 @@ if ~np.isfinite(loc['X_MEAN_1']):
 # if smoothing done need to use Littrow 2, otherwise 1
 if poly_smooth:
     lit_it = 2
-else: 
+else:
     lit_it = 1
 # for x_it in range(len(loc['X_CUT_POINTS_lit_it'])):
 # checks every other value

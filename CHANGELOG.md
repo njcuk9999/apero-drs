@@ -3839,3 +3839,27 @@
 	- fixed but with header key too long (9 > 8) (rev.0092c861)
 	- fix bug in assigned WAVEFILE (rev.f2fedbf0)
 	- fix bug in get_param call (rev.66c7b9d1)
+
+
+
+================================================================================
+* Wed Aug 08 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.075
+
+================================================================================
+	- correctioned some constants and added value to loc (rev.6f0ce414)
+	- added definitions from FP files and EA wave files (rev.b38c9099)
+	- updated cal_WAVE_E2DS files to check for (rev.1e93422f)
+	- part2 test and updated/corrected some constants (rev.f76330ab)
+	- added background subtraction (rev.26f2c5cb)
+	- title to the plots + action TODO to find the right FIBER type (rev.e389f0f9)
+	- Refinement of the cut of the left edge of blue orders for localisation - merge from @FrancoisBouchy (rev.9132e301)
+	- Use only the part of E2DS > 0 to build the S1D spectra (rev.b10a0ce5)
+	- Read the OBSTYPE before computing BERV - OBSTYPE should be OBJECT to derive the BERV (i.e. not for calibrations) - merge from @FrancoisBouchy (rev.8d991bd9)
+	- some cosmetic / improvement for plot display - merged from @FrancoisBouchy (rev.ab287bbd)
+	- updated constants + new definition for the blue window on DARK - uc_fracminblaze = 16, new param to restrict the wings of spectral orders with flux lower than flux_at_blaze / 16, spectral order 0 is not taken into account (rev.ad89c21c)
+	- correction of center of the blaze window - put to zero edge of the spectra hwere flux is too low (less than flux_at_blaze/ IC_FRACMINBLAZE) - merged from @FrancoisBouchy (rev.3931475f)
+	- put to zero part of spectra where the blaze is not defined (rev.97dc2b42)
+	- add the background subtraction - from @FrancoisBouchy (rev.74d66d09)
+	- @melissa-hobson correct call to GetLampParams (rev.e0da9f78)
+	- added fiber position identification from fiber type (rev.e868a1e7)
+	- first version cal_WAVE developed by @eartigau, adapted to DRS format by @melissa-hobson (rev.d52734f1)

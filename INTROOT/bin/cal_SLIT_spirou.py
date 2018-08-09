@@ -140,9 +140,7 @@ def main(night_name=None, files=None):
 
     # data2=data2-background
     # correct data2 with background (where positive)
-    data2=np.where(data2>0,data2-background,0)
-
-
+    data2 = np.where(data2 > 0, data2 - background, 0)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels

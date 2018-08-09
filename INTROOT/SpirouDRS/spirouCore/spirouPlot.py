@@ -1632,7 +1632,8 @@ def wave_littrow_check_plot(p, loc, iteration=0):
         xx = loc['LITTROW_XX_{0}'.format(iteration)][it]
         yy = loc['LITTROW_YY_{0}'.format(iteration)][it]
         # plot graph
-        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]), color=colors[it])
+        frame.plot(xx, yy, label='x = {0}'.format(x_cut_points[it]),
+                   color=colors[it])
     # set axis labels and title
     targs = [iteration, p['FIBER']]
     title = 'Wavelength Solution Littrow Check {0} fiber {1}'.format(*targs)

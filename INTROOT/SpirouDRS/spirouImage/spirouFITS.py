@@ -110,8 +110,8 @@ def readimage(p, filename=None, log=True, kind=None):
     if log:
         WLOG('', log_opt, '{0} {1} x {2} loaded'.format(kind, nx, ny))
     # convert header to python dictionary
-    header = dict(zip(imageheader.keys(), imageheader.values()))
-    comments = dict(zip(imageheader.keys(), imageheader.comments))
+    header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
+    comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
     if filename is None:
         header['@@@hname'] = p['ARG_FILE_NAMES'][0] + ' Header File'
@@ -165,8 +165,8 @@ def readdata(p, filename, log=True, return_header=True, return_shape=True):
     if return_header:
         image, imageheader, nx, ny = rdata
         # convert header to python dictionary
-        header = dict(zip(imageheader.keys(), imageheader.values()))
-        comments = dict(zip(imageheader.keys(), imageheader.comments))
+        header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
+        comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
         # # add some keys to the header-
         header['@@@hname'] = filename + ' Header File'
         header['@@@fname'] = filename
@@ -277,8 +277,8 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     p.append_source('FITSFILENAME', __NAME__)
 
     # convert header to python dictionary
-    header = dict(zip(imageheader.keys(), imageheader.values()))
-    comments = dict(zip(imageheader.keys(), imageheader.comments))
+    header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
+    comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
     # # add some keys to the header-
     header['@@@hname'] = filename + ' Header File'
     header['@@@fname'] = p['FITSFILENAME']
@@ -364,8 +364,15 @@ def writeimage(filename, image, hdict=None, dtype=None):
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
+    # ignore truncated comment warning since spirou images have some poorly 
+    #   formatted header cards
+    # TODO: This should not be suppressed but dealt with properly!
+    w1 = []
+    for warning in w:
+        if 'Card is too long, comment will be truncated.' != str(warning.message):
+            w1.append(warning)
     # add warnings to the warning logger and log if we have them
-    spirouCore.spirouLog.warninglogger(w)
+    spirouCore.spirouLog.warninglogger(w1)
 
 
 def write_image_multi(filename, image_list, hdict=None, dtype=None,
@@ -1111,7 +1118,7 @@ def add_new_key(hdict=None, keywordstore=None, value=None):
     func_name = __NAME__ + '.add_ney_key()'
     # deal with no hdict
     if hdict is None:
-        hdict = dict()
+        hdict = OrderedDict()
     # deal with no keywordstore
     if keywordstore is None:
         emsg1 = '"keywordstore" must be defined.'
@@ -1153,7 +1160,7 @@ def add_new_keys(hdict=None, keywordstores=None, values=None):
     func_name = __NAME__ + '.add_new_keys()'
     # deal with no hdict
     if hdict is None:
-        hdict = dict()
+        hdict = OrderedDict()
 
     if keywordstores is None:
         emsg1 = '"keywordstores" must be defined as a list of keyword stores'
@@ -1355,7 +1362,7 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
         # get the hdict
         hdict, _ = read_raw_header(fitsfilename, headerext=0)
     else:
-        if type(hdict) not in [dict, ParamDict]:
+        if type(hdict) not in [dict, OrderedDict, ParamDict]:
             emsg1 = ('"hdict" must be None or a valid python dictionary or '
                      'Parameter Dictionary')
             emsg2 = '    function = {0}'.format(func_name)
@@ -1401,8 +1408,8 @@ def read_header(p=None, filepath=None, ext=0, return_comments=False):
         WLOG('error', log_opt, [emsg1, emsg2])
         header = None
     # load in to dictionary
-    hdict = dict(zip(header.keys(), header.values()))
-    cdict = dict(zip(header.keys(), header.comments))
+    hdict = OrderedDict(zip(header.keys(), header.values()))
+    cdict = OrderedDict(zip(header.keys(), header.comments))
     # return hdict
     if return_comments:
         return hdict, cdict
@@ -1688,8 +1695,8 @@ def read_raw_header(filename, headerext=0):
     else:
         header = hdu[0]
     # convert header to python dictionary
-    hdr = dict(zip(header.keys(), header.values()))
-    cmt = dict(zip(header.keys(), header.comments))
+    hdr = OrderedDict(zip(header.keys(), header.values()))
+    cmt = OrderedDict(zip(header.keys(), header.comments))
 
     # return header dictionaries
     return hdr, cmt

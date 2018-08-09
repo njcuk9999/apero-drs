@@ -61,7 +61,7 @@ def get_earth_velocity_correction(p, loc, hdr):
     #-----------------------------------------------------------------------
     #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)
     #-----------------------------------------------------------------------
-#    if p['IC_IMAGE_TYPE'] == 'H4RG':
+    # if p['IC_IMAGE_TYPE'] == 'H4RG':
     if p['IC_IMAGE_TYPE'] == 'H4RG' and p['OBSTYPE']=='OBJECT' :
             loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
