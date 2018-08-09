@@ -1653,12 +1653,13 @@ def e2dstos1d(wave,e2dsffb,bin):
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Computation of the new coordinates
-     #   if o == 0:
-        l1 = 1. * (int(np.compress(y > 0., x)[0] * (1. / bin)) + 1) / (1. / bin) + bin
-        l2 = 1. * (int(np.compress(y > 0., x)[-1] * (1. / bin))) / (1. / bin) - bin
-     #   else:
-     #       l1 = 1. * (int(x[0] * (1. / bin)) + 1) / (1. / bin) + bin
-     #       l2 = 1. * (int(x[-1] * (1. / bin))) / (1. / bin) - bin
+        #   if o == 0:
+        xx = x[y > 0]
+        l1 = 1. * (int(xx[0] * (1. / bin)) + 1) / (1. / bin) + bin
+        l2 = 1. * (int(xx[-1] * (1. / bin))) / (1. / bin) - bin
+        #   else:
+        #       l1 = 1. * (int(x[0] * (1. / bin)) + 1) / (1. / bin) + bin
+        #       l2 = 1. * (int(x[-1] * (1. / bin))) / (1. / bin) - bin
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Interpolation by cubic spline

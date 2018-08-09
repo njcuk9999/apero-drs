@@ -342,7 +342,7 @@ ic_ff_sigdet = -1
 #    Half size blaze smoothing window                                 - [cal_ff]
 ic_extfblaz = 50
 
-# Minimum relative e2ds flux for the blaze computation                       - [cal_ff]
+# Minimum relative e2ds flux for the blaze computation                - [cal_ff]
 ic_fracminblaze = 16.
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
@@ -467,7 +467,7 @@ ic_drift_cut_e2ds = 4.5
 #   Define the number of orders to use (starting from 0 to max)    - [cal_drift]
 #       used to get median drift  median(order0 --> order max)
 #       (not used in drift_e2ds)
-ic_drift_n_order_max = 49  #28   Not Used ?!?
+ic_drift_n_order_max = 49  # 28
 
 #   Define the starting order to use (starting from           - [cal_drift-peak]
 #       0 to max) used to get median drift  median(order min --> order max)
@@ -737,7 +737,7 @@ ic_max_llfit_rms = 3.0
 
 #  Define the fit polynomial order for the Littrow fit      - [cal_HC, cal_wave]
 #      (fit across the orders)
-ic_Littrow_fit_deg_1 = 7 #5  # 4
+ic_Littrow_fit_deg_1 = 7  # 5  # 4
 ic_Littrow_fit_deg_2 = 7  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
@@ -783,21 +783,21 @@ ic_hc_n_ord_final_2 = 46
 hc_find_lines_mode = 0
 
 #  Define first order FP solution is calculated from                - [cal_wave]
-ic_fp_n_ord_start =  8   #9
+ic_fp_n_ord_start =  8   # 9
 
 #  Defines last order FP solution is calculated to                  - [cal_wave]
-ic_fp_n_ord_final =  40   #45
+ic_fp_n_ord_final =  40   # 45
 
 #  Define the size of region where each line is fitted               -[cal_wave]
 ic_fp_size = 3
 
 #  Define the threshold to use in detecting the positions            -[cal_wave]
 #      of FP peaks
-ic_fp_threshold = 0.3  #0.2
+ic_fp_threshold = 0.3  # 0.2
 
 #  Define the initial value of FP effective cavity width            - [cal_wave]
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
-ic_fp_dopd0 = 2.44999e7  #2.45e7
+ic_fp_dopd0 = 2.44999e7  # 2.45e7
 
 #  Define the polynomial fit degree between FP line numbers and     - [cal_wave]
 #      the measured cavity width for each line
@@ -936,7 +936,7 @@ ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,20
 # -----------------------------------------------------------------------------
 
 #   Max dark median level [ADU/s]                                   - [cal_dark]
-qc_max_darklevel = 0.07  #0.07
+qc_max_darklevel = 0.07  # 0.07
 
 #   Max fraction of dead pixels                                     - [cal_dark]
 qc_max_dead = 1.0
@@ -962,7 +962,7 @@ qc_loc_rmsmax_center = 100
 qc_loc_rmsmax_fwhm = 500
 
 #   Maximum allowed RMS of flat field                                 - [cal_ff]
-qc_ff_rms = 0.05  #0.14
+qc_ff_rms = 0.05  # 0.14
 
 #   Saturation level reached warning                                  - [cal_ff]
 qc_loc_flumax = 50000

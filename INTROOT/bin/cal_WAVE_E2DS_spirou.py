@@ -16,12 +16,10 @@ from __future__ import division
 import numpy as np
 import os
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 

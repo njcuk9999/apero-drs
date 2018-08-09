@@ -351,7 +351,7 @@ def fp_wavelength_sol(p, loc, mode='new'):
     # set sources
     sources = ['FP_LL_POS', 'FP_XX_POS', 'FP_M', 'FP_DOPD_OFFSET',
                'FP_AMPL', 'FP_LL_POS_NEW', 'ALL_LINES_2',
-               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT']
+               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT', 'FP_ORD_REC']
     loc.set_sources(sources, func_name)
     # return loc
     return loc
@@ -412,7 +412,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
         # determine the line number
         if it == 0:
             # line number for first line of the order (by FP equation)
-            floc['m_fp'][it] = int(dopd0 / gparams[0])# + 0.5)
+            floc['m_fp'][it] = int(dopd0 / gparams[0])   # + 0.5)
         else:
             # successive line numbers (assuming no gap)
             floc['m_fp'][it] = floc['m_fp'][it - 1] - 1
