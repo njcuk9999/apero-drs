@@ -14,6 +14,7 @@ from scipy.optimize import curve_fit
 
 import numpy as np
 import os
+import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -21,6 +22,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS import spirouDB
+from SpirouDRS import spirouRV
 
 # =============================================================================
 # Define variables
@@ -257,9 +259,9 @@ night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
 fpfile = '2294108a_pp_e2dsff_AB.fits'
 hcfiles = ['2294115c_pp_e2dsff_AB.fits']
 
-night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
-fpfile = '2294223a_pp_e2dsff_AB.fits'
-hcfiles = ['2294230c_pp_e2dsff_AB.fits']
+#night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
+#fpfile = '2294223a_pp_e2dsff_AB.fits'
+#hcfiles = ['2294230c_pp_e2dsff_AB_hc.fits']
 
 # get parameters from config files/run time args/load paths + calibdb
 p = spirouStartup.Begin(recipe=__NAME__)
@@ -333,6 +335,13 @@ sources = ['HCDATA', 'HCHDR', 'HCCDR']
 loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
 sources = ['FPDATA', 'FPHDR', 'FPCDR']
 loc.set_sources(sources, 'spirouImage.ReadImage()')
+
+# ----------------------------------------------------------------------
+# Read blaze
+# ----------------------------------------------------------------------
+# get tilts
+loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hchdr)
+loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
 
 # ----------------------------------------------------------------------
 # Get basic image properties for reference file
@@ -1090,6 +1099,148 @@ if len(litt_extrap_sol_red) > 0:
 loc['LL_FINAL'] = np.vstack(ll_stack)
 loc['LL_PARAM_FINAL'] = np.vstack(param_stack)
 loc.set_sources(['LL_FINAL', 'LL_PARAM_FINAL'], __NAME__ + '/main()')
+
+# ------------------------------------------------------------------
+# Incorporate FP into solution
+# ------------------------------------------------------------------
+
+use_fp = True
+
+if use_fp:
+    # ------------------------------------------------------------------
+    # Find FP lines
+    # ------------------------------------------------------------------
+
+    # pipe inputs to loc with correct names
+    # set fpfile as ref file
+    loc['SPEREF'] = fpdata
+    # rename initial solution to keep track of it in loc
+    loc['WAVE_INIT'] = loc['WAVE']
+    # set wavelength solution as the one from the HC lines
+    loc['WAVE'] = loc['LL_FINAL']
+    # set lamp as FP
+    loc['LAMP'] = 'fp'
+
+    wmsg = 'Identification of lines in reference file: {0}'
+    WLOG('', p['LOG_OPT'], wmsg.format(fpfile))
+    # get the position of FP peaks from reference file
+    loc = spirouRV.CreateDriftFile(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Removal of suspiciously wide FP lines
+    # ----------------------------------------------------------------------
+    loc = spirouRV.RemoveWidePeaks(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Derives the FP line wavelengths from the first solution
+    #     Follows the Bauer et al 2015 procedure
+    # ----------------------------------------------------------------------
+
+    # set start and end orders
+    n_ord_start_fp = 10
+    n_ord_final_fp = 20
+
+    # get parameters from p
+    dopd0 = p['IC_FP_DOPD0']
+    fit_deg = p['IC_FP_FIT_DEGREE']
+
+    # set up storage
+    llpos_all, xxpos_all, ampl_all = [], [], []
+    m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
+
+    # get m, d for each line
+    for order_num in range(n_ord_start_fp, n_ord_final_fp):
+        # define storage
+        floc = dict()
+        # select the lines in the order
+        gg = loc['ORDPEAK'] == order_num
+        # store the initial wavelengths of the lines
+        floc['llpos'] = np.polyval(loc['LL_PARAM_FINAL'][order_num][::-1],loc['XPEAK'][gg])
+        # store the pixel positions of the lines
+        floc['xxpos'] = loc['XPEAK'][gg]
+        #store the amplitudes of the lines
+        floc['ampl'] = loc['AMPPEAK'][gg]
+        # store the values of the blaze at the pixel positions of the lines
+        floc['weight_bl'] = np.zeros_like(floc['llpos'])
+        for it in range(1,len(floc['llpos'])):
+            floc['weight_bl'][it]= loc['BLAZE'][order_num, int(np.round(floc['xxpos'][it]))]
+        #store the order numbers
+        floc['order_rec'] = loc['ORDPEAK'][gg]
+        # set up storage for line numbers
+        mpeak = np.zeros_like(floc['llpos'])
+        # line number for the first line of the order (by FP equation)
+        mpeak[0] = int(dopd0 / floc['llpos'][0])
+        # successive line numbers (assuming no gap)
+        for it in range(1,len(floc['llpos'])):
+            mpeak[it] = mpeak[it - 1] - 1
+        # determination of observed effective cavity width
+        dopd_t = mpeak * floc['llpos']
+        # store m and d
+        floc['m_fp'] = mpeak
+        floc['dopd_t'] = dopd_t
+        if order_num != n_ord_start_fp:
+            # correct for large jumps
+            floc = spirouTHORCA.spirouWAVE.correct_for_large_fp_jumps(p, order_num, floc,
+                                                   dopd_all)
+        # add to storage
+        llpos_all += list(floc['llpos'])
+        xxpos_all += list(floc['xxpos'])
+        ampl_all += list(floc['ampl'])
+        m_fp_all += list(floc['m_fp'])
+        weight_bl_all += list(floc['weight_bl'])
+        order_rec_all += list(floc['order_rec'])
+        # difference in cavity width converted to microns
+        dopd_all += list((floc['dopd_t'] - dopd0) * 1.e-3)
+
+    # convert to numpy arrays
+    llpos_all = np.array(llpos_all)
+    xxpos_all = np.array(xxpos_all)
+    ampl_all = np.array(ampl_all)
+    m_fp_all = np.array(m_fp_all)
+    weight_bl_all = np.array(weight_bl_all)
+    order_rec_all = np.array(order_rec_all)
+    dopd_all = np.array(dopd_all)
+
+    # fit a polynomial to line number v measured difference in cavity
+    #     width, weighted by blaze
+    with warnings.catch_warnings(record=True) as w:
+        coeffs = np.polyfit(m_fp_all, dopd_all, fit_degree, w=weight_bl_all)[::-1]
+    spirouCore.WarnLog(w, funcname=__NAME__)
+    # get the values of the fitted cavity width difference
+    cfit = np.polyval(coeffs[::-1], m_fp_all)
+    # update line wavelengths using the new cavity width fit
+    newll = (dopd0 + cfit * 1000.) / m_fp_all
+    # insert fp lines into all_lines2 (at the correct positions)
+    #all_lines_2 = spiroTHORCA.spirouWAVE.insert_fp_lines(p, newll, llpos_all, all_lines_2,
+    #                              order_rec_all, xxpos_all, ampl_all)
+
+    # add to loc
+    loc['FP_LL_POS'] = llpos_all
+    loc['FP_XX_POS'] = xxpos_all
+    loc['FP_M'] = m_fp_all
+    loc['FP_DOPD_OFFSET'] = dopd_all
+    loc['FP_AMPL'] = ampl_all
+    loc['FP_LL_POS_NEW'] = newll
+    loc['ALL_LINES_2'] = all_lines_2
+    loc['FP_DOPD_OFFSET_COEFF'] = coeffs
+    loc['FP_DOPD_OFFSET_FIT'] = cfit
+    loc['FP_ORD_REC'] = order_rec_all
+    # set sources
+    sources = ['FP_LL_POS', 'FP_XX_POS', 'FP_M', 'FP_DOPD_OFFSET',
+               'FP_AMPL', 'FP_LL_POS_NEW', 'ALL_LINES_2',
+               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT', 'FP_ORD_REC']
+    loc.set_sources(sources, __NAME__)
+
+    # ------------------------------------------------------------------
+    # FP solution plots
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # Plot the FP extracted spectrum against wavelength solution
+        sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
+        # Plot the measured FP cavity width offset against line number
+        sPlt.wave_local_width_offset_plot(loc)
+        # Plot the FP line wavelength residuals
+        sPlt.wave_fp_wavelength_residuals(loc)
 
 # ------------------------------------------------------------------
 # Calculate uncertainties
