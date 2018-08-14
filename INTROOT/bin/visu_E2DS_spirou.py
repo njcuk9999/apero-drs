@@ -69,7 +69,8 @@ def main(night_name=None, reffile=None):
     p['REFFILENAME'] = spirouStartup.GetFile(p, **gfkwargs)
     p.set_source('REFFILENAME', __NAME__ + '/main()')
     # get the fiber type
-    p['FIBER']='AB'
+    #TODO get the fiber type
+    p['FIBER']='C'
     e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
     wave = spirouImage.ReadWaveFile(p)
     blaze = spirouImage.ReadBlazeFile(p)
@@ -86,6 +87,7 @@ def main(night_name=None, reffile=None):
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Flux e-')
+    plt.title('Extracted spectra')
 
     plt.figure()
 
@@ -94,6 +96,7 @@ def main(night_name=None, reffile=None):
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Relative Flux e-')
+    plt.title('Blaze corrected Extracted spectra')
 
     # ----------------------------------------------------------------------
     # End Message
