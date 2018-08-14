@@ -29,7 +29,7 @@ from SpirouDRS import spirouTelluric
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'obj_mk_tellu.py'
+__NAME__ = 'obj_fit_tellu.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
