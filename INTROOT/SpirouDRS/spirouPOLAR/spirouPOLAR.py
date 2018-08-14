@@ -11,8 +11,6 @@ Created on 2018-06-12 at 9:31
 from __future__ import division
 import numpy as np
 import os
-from scipy.interpolate import UnivariateSpline
-from scipy import stats
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -39,8 +37,6 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 ParamDict = spirouConfig.ParamDict
 # get the config error
 ConfigError = spirouConfig.ConfigError
-# Get plotting functions
-sPlt = spirouCore.sPlt
 
 
 # =============================================================================
@@ -322,6 +318,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
         
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
+            WAVE: numpy array (2D), e2ds wavelength data
             POL: numpy array (2D), e2ds degree of polarization data
             POLERR: numpy array (2D), e2ds errors of degree of polarization
             NULL1: numpy array (2D), e2ds 1st null polarization
@@ -394,9 +391,9 @@ def calculate_continuum(p, loc, in_wavelength=True):
 
     # ---------------------------------------------------------------------
     # calculate continuum polarization
-    contpol, xbin, ybin = continuum(loc['FLAT_X'], loc['FLAT_POL'],
+    contpol, xbin, ybin = spirouCore.Continuum(loc['FLAT_X'], loc['FLAT_POL'],
                                     binsize=pol_binsize, overlap=pol_overlap,
-                                    telluric_bands=p['IC_POLAR_CONT_TELLMASK'])
+                                    excl_bands=p['IC_POLAR_CONT_TELLMASK'])
     # ---------------------------------------------------------------------
     # save continuum data to loc
     loc['CONT_POL'] = contpol
@@ -856,133 +853,13 @@ def polarimetry_ratio_method(p, loc):
     # return loc
     return loc
 
-
-def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
-              mode="median", use_linear_fit=False, telluric_bands=None):
-    """
-    Function to calculate continuum
-    :param x,y: numpy array (1D), input data (x and y must be of the same size)
-    :param binsize: int, number of points in each bin
-    :param overlap: int, number of points to overlap with adjacent bins
-    :param sigmaclip: int, number of times sigma to cut-off points
-    :param window: int, number of bins to use in local fit
-    :param mode: string, set combine mode, where mode accepts "median", "mean",
-                 "max"
-    :param use_linear_fit: bool, whether to use the linar fit
-    :param telluric_bands: list of float pairs, list of IR telluric bands, i.e,
-                           a list of wavelength ranges ([wl0,wlf]) for telluric 
-                           absorption
-    
-    :return continuum, xbin, ybin
-        continuum: numpy array (1D) of the same size as input arrays containing
-                   the continuum data already interpolated to the same points
-                   as input data.
-        xbin,ybin: numpy arrays (1D) containing the bins used to interpolate 
-                   data for obtaining the continuum
-    """
-
-    # set number of bins given the input array length and the bin size
-    nbins = int(np.floor(len(x) / binsize))
-
-    # initialize arrays to store binned data
-    xbin, ybin = [], []
-                       
-    for i in range(nbins):
-        # get first and last index within the bin
-        idx0 = i * binsize - overlap
-        idxf = (i + 1) * binsize + overlap
-        # if it reaches the edges then it reset the indexes
-        if idx0 < 0:
-            idx0 = 0
-        if idxf >= len(x):
-            idxf = len(x) - 1
-        # get data within the bin
-        xbin_tmp = np.array(x[idx0:idxf])
-        ybin_tmp = np.array(y[idx0:idxf])
-
-        # create mask of telluric bands
-        telluric_mask = np.full(np.shape(xbin_tmp), False, dtype=bool)
-        for band in telluric_bands :
-            telluric_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
-
-        # mask data within telluric bands
-        xtmp = xbin_tmp[~telluric_mask]
-        ytmp = ybin_tmp[~telluric_mask]
-        
-        # create mask to get rid of NaNs
-        nanmask = np.logical_not(np.isnan(ytmp))
-        if len(xtmp[nanmask]) > 2 :
-            # calculate mean x within the bin
-            xmean = np.mean(xtmp[nanmask])
-            # calculate median y within the bin
-            medy = np.median(ytmp[nanmask])
-
-            # calculate median deviation
-            medydev = np.median(np.absolute(ytmp[nanmask] - medy))
-            # create mask to filter data outside n*sigma range
-            filtermask = (ytmp[nanmask] > medy) & (ytmp[nanmask] < medy +
-                                                   sigmaclip * medydev)
-            if len(ytmp[nanmask][filtermask]) > 2:
-                # save mean x wihthin bin
-                xbin.append(xmean)
-                if mode == 'max':
-                    # save maximum y of filtered data
-                    ybin.append(np.max(ytmp[nanmask][filtermask]))
-                elif mode == 'median':
-                    # save median y of filtered data
-                    ybin.append(np.median(ytmp[nanmask][filtermask]))
-                elif mode == 'mean':
-                    # save mean y of filtered data
-                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
-                else:
-                    emsg = 'Can not recognize selected mode="{0}"...exiting'
-                    WLOG('error', DPROG, emsg.format(mode))
-
-    # Option to use a linearfit within a given window
-    if use_linear_fit:
-        # initialize arrays to store new bin data
-        newxbin, newybin = [], []
-        # append first point to avoid crazy behaviours in the edge
-        newxbin.append(x[0])
-        newybin.append(ybin[0])
-
-        # loop around bins to obtain a linear fit within a given window size
-        for i in range(len(xbin)):
-            # set first and last index to select bins within window
-            idx0 = i - window
-            idxf = i + 1 + window
-            # make sure it doesnt go over the edges
-            if idx0 < 0: idx0 = 0
-            if idxf > nbins: idxf = nbins - 1
-
-            # perform linear fit to these data
-            slope, intercept, r_value, p_value, std_err = \
-                stats.linregress(xbin[idx0:idxf], ybin[idx0:idxf])
-
-            # save data obtained from the fit
-            newxbin.append(xbin[i])
-            newybin.append(intercept + slope * xbin[i])
-
-        xbin, ybin = newxbin, newybin
-
-    # interpolate points applying an Spline to the bin data
-    sfit = UnivariateSpline(xbin, ybin)
-    sfit.set_smoothing_factor(0.5)
-    
-    # Resample interpolation to the original grid
-    continuum = sfit(x)
-    # return continuum and x and y bins
-    return continuum, xbin, ybin
-
-
 # =============================================================================
 # Start of code
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    print("SPIRou Polar Module")
 
 # =============================================================================
 # End of code

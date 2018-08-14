@@ -2049,6 +2049,63 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
         plt.show()
         plt.close()
 
+
+def polar_lsd_plot(loc) :
+    
+    # get data from loc
+    vels = loc['LSD_VELOCITIES']
+    Z = loc['LSD_STOKESI']
+    Zgauss = loc['LSD_STOKESI_MODEL']
+    Zp = loc['LSD_STOKESVQU']
+    Znp = loc['LSD_NULL']
+    stokes = loc['STOKES']
+    
+    # ---------------------------------------------------------------------
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    
+    # ---------------------------------------------------------------------
+    frame = plt.subplot(3, 1, 1)
+    plt.plot(vels, Z, '-')
+    plt.plot(vels, Zgauss, '-')
+    title = 'LSD Analysis'
+    ylabel = 'Stokes I profile'
+    xlabel = ''
+    # set title and labels
+    frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    # ---------------------------------------------------------------------
+    
+    # ---------------------------------------------------------------------
+    frame = plt.subplot(3, 1, 2)
+    title = ''
+    plt.plot(vels, Zp, '-')
+    ylabel = 'Stokes {0} profile'.format(stokes)
+    xlabel = ''
+    # set title and labels
+    frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    # ---------------------------------------------------------------------
+
+    # ---------------------------------------------------------------------
+    frame = plt.subplot(3, 1, 3)
+    plt.plot(vels, Znp, '-')
+    xlabel = 'velocity (km/s)'
+    ylabel = 'Null profile'
+    # set title and labels
+    frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
+    # ---------------------------------------------------------------------
+
+    # plot legend
+    frame.legend(loc=0)
+    # ---------------------------------------------------------------------
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+
+
 # =============================================================================
 # test functions (remove later)
 # =============================================================================

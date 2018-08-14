@@ -11,6 +11,7 @@ Created on 2018-06-12 at 9:29
 
 from SpirouDRS import spirouConfig
 from . import spirouPOLAR
+from . import spirouLSD
 
 # =============================================================================
 # Define variables
@@ -24,7 +25,8 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['LoadPolarData', 'SortPolarFiles', 'CalculatePolarimetry',
-           'CalculateContinuum', 'CalculateStokesI']
+           'CalculateContinuum', 'CalculateStokesI', 'LSDAnalysis',
+           'OutputLSDimage',]
 
 # =============================================================================
 # Function aliases
@@ -38,6 +40,10 @@ CalculatePolarimetry = spirouPOLAR.calculate_polarimetry_wrapper
 CalculateContinuum = spirouPOLAR.calculate_continuum
 
 CalculateStokesI = spirouPOLAR.calculate_stokes_I
+
+LSDAnalysis = spirouLSD.lsd_analysis_wrapper
+
+OutputLSDimage = spirouLSD.output_lsd_image
 
 # =============================================================================
 # End of code

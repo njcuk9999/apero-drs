@@ -141,6 +141,15 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_MJDEND2',
             'kw_POL_MJDEND3',
             'kw_POL_MJDEND4',
+            'kw_POL_LSD_MASK',
+            'kw_POL_LSD_V0',
+            'kw_POL_LSD_VF',
+            'kw_POL_LSD_NP',
+            'kw_POL_LSD_COL1',
+            'kw_POL_LSD_COL2',
+            'kw_POL_LSD_COL3',
+            'kw_POL_LSD_COL4',
+            'kw_POL_LSD_COL5',
             'kw_RDNOISE',
             'kw_TELLU_ABSO',
             'kw_TELLU_AMP_PC',
@@ -515,6 +524,15 @@ kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND of exposure 1']
 kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND of exposure 2']
 kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND of exposure 3']
 kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND of exposure 4']
+kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
+kw_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
+kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
+kw_POL_LSD_NP = ['LSDNP', '', 'Number of points for LSD profile']
+kw_POL_LSD_COL1 = ['LSDCOL1', '', 'Velocities (km/s)']
+kw_POL_LSD_COL2 = ['LSDCOL2', '', 'Stokes I LSD profile']
+kw_POL_LSD_COL3 = ['LSDCOL3', '', 'Gaussian fit to Stokes I LSD profile']
+kw_POL_LSD_COL4 = ['LSDCOL4', '', 'Stokes V, U, or Q LSD profile']
+kw_POL_LSD_COL5 = ['LSDCOL5', '', 'Null polarization LSD profile']
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables

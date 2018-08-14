@@ -116,6 +116,12 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
     
+    # ------------------------------------------------------------------
+    # LSD Analysis
+    # ------------------------------------------------------------------
+    if p['IC_POLAR_LSD_ANALYSIS'] :
+        loc = spirouPOLAR.LSDAnalysis(p, loc)
+    
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
@@ -128,6 +134,9 @@ def main(night_name=None, files=None):
         sPlt.polar_result_plot(loc)
         # plot total flux (Stokes I)
         sPlt.polar_stokesI_plot(loc)
+        if p['IC_POLAR_LSD_ANALYSIS'] :
+            # plot LSD analysis
+            sPlt.polar_lsd_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
     
@@ -143,6 +152,7 @@ def main(night_name=None, files=None):
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
     nullpol2fits = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
     nullpol2fitsname = os.path.split(nullpol2fits)[-1]
+
     # log that we are saving POL spectrum
     wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
     wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname, nullpol2fitsname]
@@ -194,6 +204,14 @@ def main(night_name=None, files=None):
     spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'], loc['STOKESIERR']],
                                 hdict)
 
+    # ------------------------------------------------------------------
+    if p['IC_POLAR_LSD_ANALYSIS'] :
+        #  save LSD analysis data to file
+        lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
+        
+        # log that we are saving LSD analysis data
+        wmsg = 'Saving LSD analysis data to {0}'.format(lsdfitsfitsname)
+        WLOG('info', p['LOG_OPT'], wmsg)
 
     # ----------------------------------------------------------------------
     # End Message
