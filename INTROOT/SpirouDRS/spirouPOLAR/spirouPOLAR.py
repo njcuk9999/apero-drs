@@ -173,14 +173,14 @@ def load_data(p, polardict, loc):
         # get this entry
         entry = polardict[filename]
         # condition 1: stokes parameter undefined
-        cond1 = entry['stokes'] == 'UNDEF'
+        cond1 = entry['stokes'].upper() == 'UNDEF'
         # condition 2: stokes parameter in defined parameters
-        cond2 = entry['stokes'] in stokesparams
+        cond2 = entry['stokes'].upper() in stokesparams
         # condition 3: stokes parameter not already detected
-        cond3 = entry['stokes'] not in stokes_detected
+        cond3 = entry['stokes'].upper() not in stokes_detected
         # if (cond1 or cond2) and cond3 append to detected list
         if (cond1 or cond2) and cond3:
-            stokes_detected.append(entry['stokes'])
+            stokes_detected.append(entry['stokes'].upper())
     # TODO: This needs fixing will cause error
     # if more than one stokes parameter is identified then exit program
     if len(stokes_detected) == 0:

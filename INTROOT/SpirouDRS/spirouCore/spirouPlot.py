@@ -2101,8 +2101,6 @@ def polar_lsd_plot(loc) :
     frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
     # ---------------------------------------------------------------------
 
-    # plot legend
-    frame.legend(loc=0)
     # ---------------------------------------------------------------------
     # turn off interactive plotting
     if not plt.isinteractive():

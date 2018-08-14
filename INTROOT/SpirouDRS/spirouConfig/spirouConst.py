@@ -1456,7 +1456,7 @@ def LSD_POL_FILE(p, loc):
     # get new extention
     new_ext = '_lsd_pol.fits'
     # get new filename
-    filename = basefilename.replace('_A.fits', new_ext)
+    filename = basefilename.replace('_e2ds_A.fits', new_ext)
     # construct absolute path
     lsd_pol_filename = os.path.join(reducedfolder, filename)
     # return absolute path
