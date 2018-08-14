@@ -377,16 +377,19 @@ def lsd_analysis(p, loc):
     
     # create line pattern matrix for flux LSD
     M, Mp = line_pattern_matrix(loc['LSD_WAVE'],loc['LSD_LINES_WLC'],
-                                loc['LSD_LINES_DEPTH'],loc['LSD_LINES_POL_WEIGHT'],
+                                loc['LSD_LINES_DEPTH'],
+                                loc['LSD_LINES_POL_WEIGHT'],
                                 loc['LSD_VELOCITIES'])
     
     # calculate flux LSD profile
-    loc['LSD_STOKESI'] = calculate_lsd_profile(loc['LSD_WAVE'], loc['LSD_STOKESI'],
-                              loc['LSD_STOKESIERR'],loc['LSD_VELOCITIES'], M,
-                              normalize=True)
+    loc['LSD_STOKESI'] = calculate_lsd_profile(loc['LSD_WAVE'],
+                                               loc['LSD_STOKESI'],
+                                               loc['LSD_STOKESIERR'],
+                                               loc['LSD_VELOCITIES'], M,
+                                               normalize=True)
 
     # fit gaussian to the measured flux LSD profile
-    loc['LSD_STOKESI_MODEL'], RV, resolution = fit_gaussian_to_lsd_profile(loc['LSD_VELOCITIES'],loc['LSD_STOKESI'])
+    loc['LSD_STOKESI_MODEL'], loc['LSD_FIT_RV'], loc['LSD_FIT_RESOL'] = fit_gaussian_to_lsd_profile(loc['LSD_VELOCITIES'],loc['LSD_STOKESI'])
     
     # calculate polarimetry LSD profile
     loc['LSD_STOKESVQU'] = calculate_lsd_profile(loc['LSD_WAVE'], loc['LSD_POL'],
@@ -557,9 +560,15 @@ def fit_gaussian_to_lsd_profile(vels, Z) :
     # invert fit profile
     Zgauss = 1.0 - Zgauss
 
-    resolution = c/popt[2]
+    # calculate full width at half maximum (fwhm)
+    fwhm = 2.35482 * popt[2]
+    # calculate resolving power
+    resolvingPower = c/fwhm
+    
+    # set radial velocity directly from fitted v_0
     RV = popt[1]
-    return Zgauss, RV, resolution
+    
+    return Zgauss, RV, resolvingPower
 
 
 def get_order_ranges():
@@ -610,6 +619,7 @@ def output_lsd_image(p, loc, hdict) :
     loc['LSDDATA'] = np.append(loc['LSDDATA'],loc['LSD_NULL'])
 
     # add LSD parameters keywords to header
+    # add input parameters for LSD analysis
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MASK'],
                                value=p['IC_POLAR_LSD_CCFLINES'])
@@ -619,6 +629,14 @@ def output_lsd_image(p, loc, hdict) :
                                value=p['IC_POLAR_LSD_VF'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NP'],
                                value=p['IC_POLAR_LSD_NP'])
+                               
+    # add fitted values from gaussian fit to Stokes I LSD
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_FIT_RV'],
+                               value=loc['LSD_FIT_RV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_FIT_RESOL'],
+                               value=loc['LSD_FIT_RESOL'])
+                               
+    # add information about the meaning of data columns
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL1'],
                                value=p['IC_POLAR_LSD_DATAINFO'][0])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL2'],

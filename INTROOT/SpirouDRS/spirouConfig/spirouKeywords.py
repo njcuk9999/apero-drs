@@ -145,6 +145,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_LSD_V0',
             'kw_POL_LSD_VF',
             'kw_POL_LSD_NP',
+            'kw_POL_LSD_FIT_RV',
+            'kw_POL_LSD_FIT_RESOL',
             'kw_POL_LSD_COL1',
             'kw_POL_LSD_COL2',
             'kw_POL_LSD_COL3',
@@ -528,6 +530,8 @@ kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
 kw_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
 kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
 kw_POL_LSD_NP = ['LSDNP', '', 'Number of points for LSD profile']
+kw_POL_LSD_FIT_RV = ['LSDFITRV', '', 'Radial velocity (km/s) from gaussian fit']
+kw_POL_LSD_FIT_RESOL = ['LSDRESOL', '', 'Resolving power from gaussian fit']
 kw_POL_LSD_COL1 = ['LSDCOL1', '', 'Velocities (km/s)']
 kw_POL_LSD_COL2 = ['LSDCOL2', '', 'Stokes I LSD profile']
 kw_POL_LSD_COL3 = ['LSDCOL3', '', 'Gaussian fit to Stokes I LSD profile']
