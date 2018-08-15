@@ -287,6 +287,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     return p, image, header, comments
 
 
+# TODO: Remove - should not be in use!!!
 def write_s1d(fitsfilename, xs1d, ys1d, xstep):
     "Create the FITS file and write data S1D."
 
