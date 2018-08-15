@@ -23,6 +23,8 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 
+from SpirouDRS import spirouCDB
+
 import cal_HC_E2DS_spirou
 
 # =============================================================================

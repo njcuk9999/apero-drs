@@ -123,11 +123,11 @@ def get_loc_coefficients(p, hdr=None, loc=None):
                  '').format(loc_file, acqtime)
         emsg3 = '    Unable to complete the recipe, FATAL'
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
-    # else log that we are reading localization parameters
-    wmsg = 'Reading localization parameters of Fiber {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER']))
     # construct the localization file name
     loco_file = os.path.join(reduced_dir, c_database[loc_file][1])
+    # log that we are reading localization parameters
+    wmsg = 'Reading localization parameters of Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], c_database[loc_file][1]))
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header
