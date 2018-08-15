@@ -4057,3 +4057,16 @@
 	- Update spirouFITS.py (rev.812a2125)
 	- Delete vcs.xml (rev.4294be5e)
 	- Update spirouConst.py (rev.9d522dd4)
+
+
+================================================================================
+* Wed Aug 15 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.093
+
+================================================================================
+	- update telluric unit test (rev.5841b207)
+	- add obj_mk_tellu and obj_fit_tellu to the unit tests (rev.605b48e0)
+	- turn off the LSD analysis (until problem fixed) (rev.93f6fba6)
+	- added a telluric test (based on Neil's files) (rev.ffbeae28)
+	- Fix to issue #398: The first time running obj_mk_tellu fails with an I/O problem - convolve_file was being saved to the wrong location (and hence put_file was failing to copy it to telluDB) (rev.62b3ca06)
+	- updated descriptions (from Etienne) (rev.4e8dc33e)
+	- updated date, changelog and version (rev.2ee7f3fd)
