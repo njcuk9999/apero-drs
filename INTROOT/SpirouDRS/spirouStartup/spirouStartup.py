@@ -591,9 +591,6 @@ def exit_script(ll, has_plots=True):
     # make sure we have log_opt
     if 'log_opt' not in p:
         p['LOG_OPT'] = sys.argv[0]
-    # if DRS_PLOT is 0 just return 0
-    if not p['DRS_PLOT']:
-        return 0
     # if DRS_INTERACTIVE is False just return 0
     if not p['DRS_INTERACTIVE']:
         print('Interactive mode off')

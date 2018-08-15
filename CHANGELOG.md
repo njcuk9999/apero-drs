@@ -3843,7 +3843,7 @@
 
 
 ================================================================================
-* Wed Aug 08 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.075
+* Wed Aug 08 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.072
 
 ================================================================================
 	- correctioned some constants and added value to loc (rev.6f0ce414)
@@ -3863,3 +3863,210 @@
 	- @melissa-hobson correct call to GetLampParams (rev.e0da9f78)
 	- added fiber position identification from fiber type (rev.e868a1e7)
 	- first version cal_WAVE developed by @eartigau, adapted to DRS format by @melissa-hobson (rev.d52734f1)
+
+
+
+================================================================================
+* Tue Jun 26 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.073
+
+================================================================================
+	- cal_HC_E2DS_spirou.py: added fiber position identification from fiber type (rev.417a2fff)
+
+
+
+================================================================================
+* Thu Jun 28 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.075
+
+================================================================================
+	- visu_WAVE_spirou.py: correct call to GetLampParams (rev.07c55f21)
+
+
+
+================================================================================
+* Wed Jul 04 2018 Eder <edermartioli@gmail.com> - 0.2.074
+
+================================================================================
+	- Removed duplicated function calculate_stokes_I in spirouPOLAR.py (rev.720f9328)
+
+
+
+================================================================================
+* Wed Jul 11 2018 Eder <edermartioli@gmail.com> - 0.2.075
+
+================================================================================
+	- Removed small comment -- nothing really (rev.525778d8)
+
+
+
+================================================================================
+* Fri Jul 13 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.2.076
+
+================================================================================
+	- New correlation Mask made by XD (rev.1aecdfd1)
+	- Background correction and set negative values to zero (rev.c823decf)
+	- Background correction and negative values set to zero (rev.2948af8c)
+	- Typo correction to read the fitted lines (rev.01a09df4)
+	- New constant parameters for background correction and e2dstos1d (rev.b6b07a87)
+	- Adaptation of function to measure the global background in the image (rev.682f7a69)
+	- Add the two new functions e2dstos1d and write_s1d (rev.ee2f17ce)
+	- New function to write S1D spectra with the same format than HARPS (rev.e73b826d)
+	- New function to build S1D spectra (rev.122582d1)
+
+
+
+================================================================================
+* Wed Jul 25 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.2.077
+
+================================================================================
+	- Improvement for the localisation (rev.50378c7d)
+	- Adaptation parameters for localisation (rev.da1b0044)
+	- Add the background subtraction (rev.492cbeae)
+
+
+
+================================================================================
+* Wed Jul 25 2018 Eder <edermartioli@gmail.com> - 0.2.078
+
+================================================================================
+	- Inserted filename, MJD, and MJDEND keywords from expsoures in polar sequence to the header of polarimetry products (rev.a67e6b16)
+
+
+
+================================================================================
+* Fri Jul 27 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.2.079
+
+================================================================================
+	- Title to the plots + Action TODO to find the right FIBER type (rev.f87574b4)
+	- Refinement of the Cut of the left edge of blue orders for localisation (rev.9ae887b1)
+	- Use only the part of E2DS > 0 to build the S1D spectra (rev.407d081b)
+	- Read the OBSTYPE Before computing BERV (rev.9882d8f0)
+	- Some cosmetic / improvemtn for plot display (rev.3d7a6029)
+	- New definition for the blue window on DARK (rev.d551df04)
+	- Add the background correction (rev.be4541f6)
+	- Correction of center of the blaze window (rev.31314183)
+	- Put to zero part of spectra where the blaze is not define (rev.885045bf)
+
+
+
+================================================================================
+* Wed Aug 01 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.080
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: first version of cal_WAVE developed by @eartigau, adapted to DRS format (rev.69ddc1a1)
+
+
+
+================================================================================
+* Fri Aug 03 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.081
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: (rev.47dfe48f)
+
+
+
+================================================================================
+* Tue Aug 07 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.082
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: added posibility to set a pixel shift (rev.6e7b4d41)
+
+
+
+================================================================================
+* Wed Aug 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.083
+
+================================================================================
+	- Update spirouFITS.py (rev.9c1e44d0)
+
+
+
+================================================================================
+* Wed Aug 08 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.084
+
+================================================================================
+	- added fiber position identification from fiber type (rev.e868a1e7)
+
+
+
+================================================================================
+* Wed Aug 08 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.085
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: (rev.a74cb795)
+
+
+
+================================================================================
+* Wed Aug 08 2018 Chris Usher <usher@cfht.hawaii.edu> - 0.2.086
+
+================================================================================
+	- Suppress warnings about truncating FITS comments. (rev.2e8ec30e)
+	- Prevent measure_background_flatfield from throwing error. (rev.21c6ad6d)
+	- Fixed scrambled FITS headers. (rev.cbc40ef7)
+
+
+
+================================================================================
+* Thu Aug 09 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.087
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: incorporated extrapolation of Littrow solution for last two orders; added save to calibDB of good solutions (rev.e1695894)
+
+
+
+================================================================================
+* Mon Aug 13 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.088
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: began incorporation of FP lines (work in progress) (rev.e20dd388)
+
+
+
+================================================================================
+* Tue Aug 14 2018 Eder <edermartioli@gmail.com> - 0.2.089
+
+================================================================================
+	- Implemented Least Squares Deconvolution (LSD) Analysis to polar module (rev.eb039258)
+	- Implemented Least Squares Deconvolution (LSD) Analysis to polar module (rev.ca3f6ba4)
+
+
+
+================================================================================
+* Tue Aug 14 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.090
+
+================================================================================
+	- obj_fit_tellu.py: re-add blaze, set NaNs to zero in final e2ds (UNTESTED), as per #389, #390 (rev.f46b1016)
+	- spirouLOCOR.py now prints name of localization file (Discussed in #387) (rev.a653edb7)
+	- spirouStartup.py: removed lines that caused exit if DRS_PLOT was not set even when DRS_INTERACTIVE was set. Fixes #395 (rev.75a66a00)
+
+
+
+================================================================================
+* Tue Aug 14 2018 Chris Usher <usher@cfht.hawaii.edu> - 0.2.091
+
+================================================================================
+	- Fixed __NAME__ of obj_fit_tellu (rev.8031edd6)
+
+
+
+================================================================================
+* Wed Aug 15 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.092
+
+================================================================================
+	- Update config.py (rev.0f642023)
+	- Update spirouFITS.py (rev.812a2125)
+	- Delete vcs.xml (rev.4294be5e)
+	- Update spirouConst.py (rev.9d522dd4)
+
+
+================================================================================
+* Wed Aug 15 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.093
+
+================================================================================
+	- update telluric unit test (rev.5841b207)
+	- add obj_mk_tellu and obj_fit_tellu to the unit tests (rev.605b48e0)
+	- turn off the LSD analysis (until problem fixed) (rev.93f6fba6)
+	- added a telluric test (based on Neil's files) (rev.ffbeae28)
+	- Fix to issue #398: The first time running obj_mk_tellu fails with an I/O problem - convolve_file was being saved to the wrong location (and hence put_file was failing to copy it to telluDB) (rev.62b3ca06)
+	- updated descriptions (from Etienne) (rev.4e8dc33e)
+	- updated date, changelog and version (rev.2ee7f3fd)
