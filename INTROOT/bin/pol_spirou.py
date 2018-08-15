@@ -116,6 +116,12 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
     
+    # ------------------------------------------------------------------
+    # LSD Analysis
+    # ------------------------------------------------------------------
+    if p['IC_POLAR_LSD_ANALYSIS'] :
+        loc = spirouPOLAR.LSDAnalysis(p, loc)
+    
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
@@ -128,6 +134,9 @@ def main(night_name=None, files=None):
         sPlt.polar_result_plot(loc)
         # plot total flux (Stokes I)
         sPlt.polar_stokesI_plot(loc)
+        if p['IC_POLAR_LSD_ANALYSIS'] :
+            # plot LSD analysis
+            sPlt.polar_lsd_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
     
@@ -143,6 +152,7 @@ def main(night_name=None, files=None):
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
     nullpol2fits = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
     nullpol2fitsname = os.path.split(nullpol2fits)[-1]
+
     # log that we are saving POL spectrum
     wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
     wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname, nullpol2fitsname]
@@ -151,15 +161,36 @@ def main(night_name=None, files=None):
     # add keys from original header of base file
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
     # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
     # add number of exposures parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_NEXP'], value=loc['NEXPOSURES'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
     # add the polarimetry method parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_METHOD'], value=loc['METHOD'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
     # add total exposure time parameter keyword to header
     tot_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
     hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
-
+    
+    # loop over files in polar sequence to add keywords to header of products
+    for filename in polardict.keys():
+        # get this entry
+        entry = polardict[filename]
+        # get expnum, fiber, and header
+        expnum, fiber, hdr = entry['exposure'], entry['fiber'], entry['hdr']
+        # Add only times from fiber A
+        if fiber == 'A':
+            # add exposure file name
+            fileexp_keyname = 'kw_POL_FILENAM{0}'
+            hdict = spirouImage.AddKey(hdict, p[fileexp_keyname.format(expnum)],
+                                       value=hdr['FILENAME'])
+            # add MJDATE for each exposure
+            mjdexp_keyname = 'kw_POL_MJDATE{0}'
+            hdict = spirouImage.AddKey(hdict, p[mjdexp_keyname.format(expnum)],
+                                       value=hdr['MJDATE'])
+            # add MJDEND for each exposure
+            mjdendexp_keyname = 'kw_POL_MJDEND{0}'
+            hdict = spirouImage.AddKey(hdict, p[mjdendexp_keyname.format(expnum)],
+                                       value=hdr['MJDEND'])
+    
     # save POL data to file
     spirouImage.WriteImageMulti(degpolfits, [loc['POL'], loc['POLERR']], hdict)
     # save NULL1 data to file
@@ -173,6 +204,14 @@ def main(night_name=None, files=None):
     spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'], loc['STOKESIERR']],
                                 hdict)
 
+    # ------------------------------------------------------------------
+    if p['IC_POLAR_LSD_ANALYSIS'] :
+        #  save LSD analysis data to file
+        lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
+        
+        # log that we are saving LSD analysis data
+        wmsg = 'Saving LSD analysis data to {0}'.format(lsdfitsfitsname)
+        WLOG('info', p['LOG_OPT'], wmsg)
 
     # ----------------------------------------------------------------------
     # End Message
