@@ -38,6 +38,8 @@ import cal_WAVE_E2DS_spirou
 import cal_WAVE_NEW_E2DS_spirou
 import cal_preprocess_spirou
 import off_listing_RAW_spirou
+import obj_mk_tellu
+import obj_fit_tellu
 import visu_RAW_spirou
 import visu_E2DS_spirou
 import pol_spirou
@@ -78,6 +80,8 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_WAVE_NEW_E2DS_spirou',
                  'cal_preprocess_spirou',
                  'off_listing_RAW_spirou',
+                 'obj_mk_tellu',
+                 'obj_fit_tellu',
                  'visu_RAW_spirou',
                  'visu_E2DS_spirou',
                  'pol_spirou']
@@ -114,6 +118,8 @@ def get_versions():
     vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou.__version__
     vv[cal_preprocess_spirou.__NAME__] = cal_preprocess_spirou.__version__
     vv[off_listing_RAW_spirou.__NAME__] = off_listing_RAW_spirou.__version__
+    vv[obj_mk_tellu.__NAME__] = obj_mk_tellu.__version__
+    vv[obj_fit_tellu.__NAME__] = obj_fit_tellu.__version__
     vv[visu_RAW_spirou.__NAME__] = visu_RAW_spirou.__version__
     vv[visu_E2DS_spirou.__NAME__] = visu_E2DS_spirou.__version__
     vv[pol_spirou.__NAME__] = pol_spirou.__version__
@@ -861,6 +867,78 @@ def unit_test_off_listing_raw_spirou(rname, inputs, outputs=None):
     # else define the outputs
     else:
         outs = [Constants.OFF_LISTING_FILE(outputs['p'])]
+        # return outs
+        return outs, name
+
+
+def unit_test_obj_mk_tellu(rname, inputs, outputs=None):
+    """
+    unit_test_cal_exposure_meter
+
+    input = night_name files
+    output = EM_SPE_FILE, EM_WAVE_FILE, EM_MASK_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'obj_mk_tellu'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        outs = []
+        # return outs
+        return outs, name
+
+
+def unit_test_obj_fit_tellu(rname, inputs, outputs=None):
+    """
+    unit_test_cal_exposure_meter
+
+    input = night_name files
+    output = EM_SPE_FILE, EM_WAVE_FILE, EM_MASK_FILE
+                based on EM_OUTPUT_TYPE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+    :param outputs: dictionary or None, output of code - locals() if not None
+                    returns output filenames
+
+    if outputs is None:
+        :return args: dict, the parameters to pass to the run
+    else:
+        :return outs: list of strings, the output filenames
+    """
+    # define name and arguments
+    name = 'obj_fit_tellu'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get the inputs (if outputs is None)
+    if outputs is None:
+        # get arguments
+        args = get_args(name, rname, inputs, arg_names, arg_types)
+        return args, name
+    # else define the outputs
+    else:
+        outs = []
         # return outs
         return outs, name
 

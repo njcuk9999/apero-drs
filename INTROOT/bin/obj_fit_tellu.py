@@ -4,9 +4,24 @@
 
 obj_fit_tellu [night_directory] [files]
 
-Uses the telluric database entries to correct an input spectrum (or indiviudally
-for a set of files)
-saved into reduced folder with _tellu.fits suffix added
+Using all transmission files, we fit the absorption of a given science
+observation. To reduce the number of degrees of freedom, we perform a PCA and
+keep only the N (currently we suggest N=5)  principal components in absorbance.
+As telluric absorption may shift in velocity from one observation to another,
+we have the option of including the derivative of the absorbance in the
+reconstruction. The method also measures a proxy of optical depth per molecule
+(H2O, O2, O3, CO2, CH4, N2O) that can be used for data quality assessment.
+
+Usage:
+  obj_fit_tellu night_name object.fits
+
+Outputs:
+  telluDB: TELL_OBJ file - The object corrected for tellurics
+	   file also saved in the reduced folder
+	   input file + '_tellu_corrected.fits'
+
+  recon_abso file - The reconstructed absorption file saved in the reduced folder
+	   input file + '_tellu_recon.fits'
 
 Created on 2018-07-13 05:18
 @author: ncook
@@ -290,6 +305,10 @@ def main(night_name=None, files=None):
         # reform the E2DS
         sp_out = loc['SP2'] / loc['RECON_ABSO']
         sp_out = sp_out.reshape(loc['DATA'].shape)
+        # multiply by blaze
+        sp_out = sp_out * loc['NBLAZE']
+        # set NaNs to zero
+        sp_out[np.isnan(sp_out)] = 0
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         # write sp_out to file
