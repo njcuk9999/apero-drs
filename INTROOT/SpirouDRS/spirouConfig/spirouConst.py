@@ -200,11 +200,10 @@ def CCF_MASK_DIR():
 # noinspection PyPep8Naming
 def LSD_MASK_DIR():
     """
-        Define the LSD mask dir relative path
+    Define the LSD mask dir relative path
         
-        :return reldir: str, the relative path
-        """
-    
+    :return reldir: str, the relative path
+    """
     lsd_mask_dir = './data/lsd_masks'
     return lsd_mask_dir
 
@@ -216,7 +215,6 @@ def BADPIX_DIR():
 
     :return reldir: str, the relative path
     """
-
     badpix_dir = './data/badpix'
     return badpix_dir
 
