@@ -97,7 +97,7 @@ def get_molecular_tell_lines(p, loc):
     # TODO: Make this the date and not the wave file name??
     wave_file = os.path.basename(loc['WAVEFILE'])
     convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
-    convolve_file = os.path.join(p['DRS_TELLU_DB'], convolve_file_name)
+    convolve_file = os.path.join(p['ARG_FILE_DIR'], convolve_file_name)
 
     # find tapas file in files
     if convolve_file not in convole_files:
@@ -150,8 +150,8 @@ def get_molecular_tell_lines(p, loc):
         # save the file
         np.save(convolve_file, tapas_all_species)
         # add name to loc
-        loc['TAPAS_ABSNAME'] = convolve_file_name
-        loc['TAPAS_FNAME'] = os.path.basename(convolve_file_name)
+        loc['TAPAS_ABSNAME'] = convolve_file
+        loc['TAPAS_FNAME'] = os.path.basename(convolve_file)
     # finally add all species to loc
     loc['TAPAS_ALL_SPECIES'] = tapas_all_species
     # add sources
