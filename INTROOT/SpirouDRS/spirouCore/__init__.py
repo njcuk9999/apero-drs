@@ -26,7 +26,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['wlog', 'WarnLog',
            'GaussFunction', 'Getll', 'Getdll',
-           'GetTimeNowUnix', 'GetTimeNowString',
+           'GetTimeNowUnix', 'GetTimeNowString', 'Continuum',
            'Unix2stringTime', 'String2unixTime',
            'sPlt']
 
@@ -47,6 +47,8 @@ Getdll = spirouMath.get_dll_from_coefficients
 GetTimeNowUnix = spirouMath.get_time_now_unix
 
 GetTimeNowString = spirouMath.get_time_now_string
+
+Continuum = spirouMath.continuum
 
 PrintLog = spirouLog.printlog
 

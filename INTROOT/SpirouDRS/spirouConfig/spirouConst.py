@@ -198,13 +198,23 @@ def CCF_MASK_DIR():
 
 
 # noinspection PyPep8Naming
+def LSD_MASK_DIR():
+    """
+    Define the LSD mask dir relative path
+        
+    :return reldir: str, the relative path
+    """
+    lsd_mask_dir = './data/lsd_masks'
+    return lsd_mask_dir
+
+
+# noinspection PyPep8Naming
 def BADPIX_DIR():
     """
     Define the badpix dir relative path
 
     :return reldir: str, the relative path
     """
-
     badpix_dir = './data/badpix'
     return badpix_dir
 
@@ -1434,6 +1444,21 @@ def NULL_POL2_FILE(p, loc):
     null_pol2_filename = os.path.join(reducedfolder, filename)
     # return absolute path
     return null_pol2_filename
+
+# noinspection PyPep8Naming
+def LSD_POL_FILE(p, loc):
+    # get reduced dir
+    reducedfolder = p['REDUCED_DIR']
+    # get base filename
+    basefilename = loc['BASENAME']
+    # get new extention
+    new_ext = '_lsd_pol.fits'
+    # get new filename
+    filename = basefilename.replace('_e2ds_A.fits', new_ext)
+    # construct absolute path
+    lsd_pol_filename = os.path.join(reducedfolder, filename)
+    # return absolute path
+    return lsd_pol_filename
 
 
 def OFF_LISTING_FILE(p):
