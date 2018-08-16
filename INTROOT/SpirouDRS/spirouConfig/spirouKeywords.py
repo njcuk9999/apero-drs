@@ -171,6 +171,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
+            'kw_ppversion',
             'kw_version']
 
 
@@ -304,6 +305,9 @@ kw_AIRMASS = ['AIRMASS', None, '']
 # DRS version
 kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
+
+kw_ppversion = ['PPVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+                'DRS Pre-Processing version']
 
 # root keys (for use below and in finding keys later)
 kw_root_drs_loc = ['LO', None, '']
