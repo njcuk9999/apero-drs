@@ -123,6 +123,12 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['NUMBER_ORDERS'] = nbo
     loc.set_sources(['E2DS', 'number_orders'], __NAME__ + '/main()')
 
+    # check for NaN values in the e2ds array
+    if np.isnan(np.sum(e2ds)):
+        WLOG('warning', p['LOG_OPT'], 'NaN values found in e2ds, converting to zeroes')
+        # set NaNs to zero
+        e2ds[np.isnan(e2ds)] = 0
+
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
     # ----------------------------------------------------------------------
