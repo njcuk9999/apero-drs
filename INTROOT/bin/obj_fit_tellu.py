@@ -4,9 +4,24 @@
 
 obj_fit_tellu [night_directory] [files]
 
-Uses the telluric database entries to correct an input spectrum (or indiviudally
-for a set of files)
-saved into reduced folder with _tellu.fits suffix added
+Using all transmission files, we fit the absorption of a given science
+observation. To reduce the number of degrees of freedom, we perform a PCA and
+keep only the N (currently we suggest N=5)  principal components in absorbance.
+As telluric absorption may shift in velocity from one observation to another,
+we have the option of including the derivative of the absorbance in the
+reconstruction. The method also measures a proxy of optical depth per molecule
+(H2O, O2, O3, CO2, CH4, N2O) that can be used for data quality assessment.
+
+Usage:
+  obj_fit_tellu night_name object.fits
+
+Outputs:
+  telluDB: TELL_OBJ file - The object corrected for tellurics
+	   file also saved in the reduced folder
+	   input file + '_tellu_corrected.fits'
+
+  recon_abso file - The reconstructed absorption file saved in the reduced folder
+	   input file + '_tellu_recon.fits'
 
 Created on 2018-07-13 05:18
 @author: ncook
@@ -29,7 +44,7 @@ from SpirouDRS import spirouTelluric
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'obj_mk_tellu.py'
+__NAME__ = 'obj_fit_tellu.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()

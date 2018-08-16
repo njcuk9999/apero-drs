@@ -94,6 +94,7 @@ if __name__ == "__main__":
     # spirouPOLAR
     print('\n\t' + spirouPOLAR.__NAME__)
     print('\t\t--' + spirouPOLAR.spirouPOLAR.__NAME__)
+    print('\t\t--' + spirouPOLAR.spirouLSD.__NAME__)
     # spirouRV
     print('\n\t' + spirouRV.__NAME__)
     print('\t\t--' + spirouRV.spirouRV.__NAME__)

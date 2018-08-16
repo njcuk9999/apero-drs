@@ -18,12 +18,11 @@ import os
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
-
-from SpirouDRS import spirouCDB
 
 import cal_HC_E2DS_spirou
 
@@ -447,17 +446,17 @@ def part2test(p, loc):
         # set the wave key
 #        keydb = 'WAVE_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder
-#        spirouCDB.PutFile(p, wavefits)
+#        spirouDB.PutFile(p, wavefits)
         # update the master calib DB file with new key
-#        spirouCDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
+#        spirouDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
 
         # set the hcref key
 #        keydb = 'HCREF_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder
-#        spirouCDB.PutFile(p, e2dscopy_filename)
+#        spirouDB.PutFile(p, e2dscopy_filename)
         # update the master calib DB file with new key
 #        e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
-#        spirouCDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+#        spirouDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # return p and loc
     return p, loc
