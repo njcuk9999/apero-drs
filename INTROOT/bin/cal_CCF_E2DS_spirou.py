@@ -314,6 +314,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     data = np.vstack([loc['CCF'], loc['AVERAGE_CCF']])
     # add keys
     hdict = dict()
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CTYPE'], value='km/s')
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CRVAL'], value=loc['RV_CCF'][0])
     # the rv step
