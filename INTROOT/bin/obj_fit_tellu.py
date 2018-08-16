@@ -284,6 +284,10 @@ def main(night_name=None, files=None):
         # Get components amplitudes for header
         # ------------------------------------------------------------------
         hdict = OrderedDict()
+
+        # add version number
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+
         npc = loc['NPC']
         if p['ADD_DERIV_PC']:
             values = loc['AMPS_ABSOL_TOTAL'][:npc-2]
