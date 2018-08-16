@@ -358,6 +358,8 @@ def part2(p, loc):
     # write solution to fitsfilename header
     # copy original keys
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # set the version
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
