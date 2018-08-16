@@ -386,6 +386,8 @@ def main(night_name=None, reffile=None):
     WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # set the version
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # save drift values
     spirouImage.WriteImage(driftfits, loc['DRIFT'], hdict)
 
