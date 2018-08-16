@@ -143,6 +143,8 @@ class logger():
             # Get the key code (default is a whitespace)
             code = TRIG_KEY.get(key, ' ')
 
+            # storage for cmds
+            cmds = []
             # check if line is over 80 chars
             if (len(mess) > CHAR_LEN) and wrap:
                 # get new messages (wrapped at CHAR_LEN)
@@ -150,6 +152,8 @@ class logger():
                 for new_message in new_messages:
                     cmdargs = [human_time, dsec, code, option, new_message]
                     cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                    # append separate commands for log writing
+                    cmds.append(cmd)
                     # add to logger storage
                     self.logger_storage(key, human_time, new_message, printonly)
                     # print to stdout
@@ -158,6 +162,8 @@ class logger():
             else:
                 cmdargs = [human_time, dsec, code, option, mess]
                 cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                # append separate commands for log writing
+                cmds.append(cmd)
                 # add to logger storage
                 self.logger_storage(key, human_time, mess, printonly)
                 # print to stdout
@@ -168,11 +174,12 @@ class logger():
                 logfilepath, warning = get_logfilepath(unix_time)
                 # write to log file
                 if not printonly:
-                    writelog(cmd, key, logfilepath)
+                    for cmd in cmds:
+                        writelog(cmd, key, logfilepath)
             except ConfigError as e:
                 if not logonly:
-                    errors.append(
-                        [e.message, e.level, human_time, dsec, option])
+                    errors.append([e.message, e.level, human_time, dsec,
+                                   option])
                 warning = False
             # if warning is True then we used TDATA and should report that
             if warning and self.pout['TDATA_WARNING']:
