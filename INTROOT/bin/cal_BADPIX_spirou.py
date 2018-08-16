@@ -179,6 +179,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
     hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
     hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])
