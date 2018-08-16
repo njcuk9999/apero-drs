@@ -15,6 +15,7 @@ Created on 2018-06-08 at 16:00
 # -*- coding: utf-8 -*-
 from __future__ import division
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouConfig
@@ -527,6 +528,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # write solution to fitsfilename header
     # copy original keys
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
