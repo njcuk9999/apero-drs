@@ -307,8 +307,6 @@ def main(night_name=None, files=None):
         sp_out = sp_out.reshape(loc['DATA'].shape)
         # multiply by blaze
         sp_out = sp_out * loc['NBLAZE']
-        # set NaNs to zero
-        sp_out[np.isnan(sp_out)] = 0
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         # write sp_out to file
