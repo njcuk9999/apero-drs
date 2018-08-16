@@ -160,6 +160,8 @@ def main(night_name=None, files=None):
 
     # add keys from original header of base file
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
     # add number of exposures parameter keyword to header
