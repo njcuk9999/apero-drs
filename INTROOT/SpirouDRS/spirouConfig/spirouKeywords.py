@@ -306,7 +306,7 @@ kw_AIRMASS = ['AIRMASS', None, '']
 kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
-kw_ppversion = ['PPVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+kw_ppversion = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
                 'DRS Pre-Processing version']
 
 # root keys (for use below and in finding keys later)
