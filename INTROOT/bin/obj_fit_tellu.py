@@ -166,6 +166,16 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # get number of files
     nfiles = len(trans_files)
+    npc = p['TELLU_NUMBER_OF_PRINCIPLE_COMP']
+    # check that we have enough files (greater than number of principle
+    #    components)
+    if nfiles <= npc:
+        emsg1 = 'Not enough "TELL_MAP" files in telluDB to run PCA analysis'
+        emsg2 = '\tNumber of files = {0}, number of PCA components = {1}'
+        emsg3 = '\tNumber of files > number of PCA components'
+        emsg4 = '\tAdd more files or reduce number of PCA components'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(nfiles, npc),
+                                     emsg3, emsg4])
     # set up storage for the absorption
     abso = np.zeros([nfiles, np.product(loc['DATA'].shape)])
     # loop around outputfiles and add them to abso
@@ -173,6 +183,8 @@ def main(night_name=None, files=None):
         # push data into array
         data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
         abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
+
+
 
     # log the absorption cube
     with warnings.catch_warnings(record=True) as w:
