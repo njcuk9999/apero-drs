@@ -3,9 +3,31 @@
 """
 obj_mk_tellu [night_directory] [files]
 
-Creates the transmission maps for a file (or individually for a set of files)
-(saved into telluDB under "TELL_MAP" keys)
+Creates a flattened transmission spectrum from a hot star observation.
+The continuum is set to 1 and regions with too many tellurics for continuum
+estimates are set to NaN and should not used for RV. Overall, the domain with
+a valid transmission mask corresponds to the YJHK photometric bandpasses.
+The transmission maps have the same shape as e2ds files. Ultimately, we will
+want to retrieve a transmission profile for the entire nIR domain for generic
+science that may be done in the deep water bands. The useful domain for RV
+measurements will (most likely) be limited to the domain without very strong
+absorption, so the output transmission files meet our pRV requirements in
+terms of wavelength coverage. Extension of the transmission maps to the
+domain between photometric bandpasses is seen as a low priority item.
 
+Usage:
+  obj_mk_tellu night_name telluric_file_name.fits
+
+
+Outputs:
+  telluDB: TELL_MAP file - telluric transmission map for input file
+	   file also saved in the reduced folder
+	   input file + '_trans.fits'
+
+  telluDB: TELL_CONV file - convolved molecular file (for specific wavelength solution)
+                            if it doesn't already exist
+	   file also saved in the reduced folder
+	   wavelength solution + '_tapas_convolved.npy'
 
 Created on 2018-07-12 07:49
 @author: ncook
