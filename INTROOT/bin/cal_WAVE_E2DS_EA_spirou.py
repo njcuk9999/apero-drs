@@ -1375,6 +1375,8 @@ WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 # write solution to fitsfilename header
 # copy original keys
 hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+# add version number
+hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
 # add quality control
 hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
 # add number of orders
