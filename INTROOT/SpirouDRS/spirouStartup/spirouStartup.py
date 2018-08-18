@@ -423,7 +423,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
     return p
 
 
-def single_file_setup(p, filename, log=True, skipcheck=False):
+def single_file_setup(p, filename, log=True, skipcheck=False, pos=None):
     """
     Check "filename" is valid for recipe p["RECIPE"] and get the correct path,
     logs the output if log is True, and skips the check if skipcheck is True
@@ -451,7 +451,7 @@ def single_file_setup(p, filename, log=True, skipcheck=False):
     recipe = p['RECIPE']
     # check file based on recipe name
     p, path = spirouImage.CheckFile(p, filename, recipe, skipcheck,
-                                    return_path=True)
+                                    return_path=True, pos=pos)
     # get location of file
     location = get_file(p, path, filename)
     # log processing image type
