@@ -935,8 +935,7 @@ ic_polar_cont_overlap = 0
 ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]]
 
 #  Perform LSD analysis (True = 1, False = 0)                     - [pol_spirou]
-# TODO: Set to 1 when fixed
-ic_polar_lsd_analysis = 0
+ic_polar_lsd_analysis = 1
 
 #  Define initial velocity (km/s) for output LSD profile          - [pol_spirou]
 ic_polar_lsd_v0 = -200.
