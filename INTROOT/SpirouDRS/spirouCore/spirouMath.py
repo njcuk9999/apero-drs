@@ -232,7 +232,7 @@ def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params, nx, n
                 (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
     """
     # create x values
-    xfit = np.arange(nx) + pixel_shift_inter + pixel_shift_slope*np.arange(nx)
+    xfit = np.arange(nx) + pixel_shift_inter + (pixel_shift_slope * np.arange(nx))
     # create empty line list storage
     ll = np.zeros((nbo, nx))
     # loop around orders
