@@ -762,11 +762,11 @@ ic_ll_free_span_2 = [4.25, 3.0]  # 2.6
 
 #  Defines order from which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_start (used AFTER littrow fit)
-ic_hc_n_ord_start_2 = 5  #0
+ic_hc_n_ord_start_2 = 0 # 5  #0
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
-ic_hc_n_ord_final_2 = 40    #46
+ic_hc_n_ord_final_2 = 46 # 40    #46
 
 
 #  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
