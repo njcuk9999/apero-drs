@@ -4070,3 +4070,48 @@
 	- Fix to issue #398: The first time running obj_mk_tellu fails with an I/O problem - convolve_file was being saved to the wrong location (and hence put_file was failing to copy it to telluDB) (rev.62b3ca06)
 	- updated descriptions (from Etienne) (rev.4e8dc33e)
 	- updated date, changelog and version (rev.2ee7f3fd)
+
+
+
+================================================================================
+* Thu Aug 16 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.094
+
+================================================================================
+	- Issue #392: added per-processed version keyword (rev.5c3fdd5c)
+	- Issue #392: added version to outputs (rev.655a2c2a)
+	- Issue #392: added version to outputs (rev.4e48b229)
+	- Issue #392: added version to outputs (rev.15bef5f4)
+	- Issue #392: added version to outputs (rev.0e2e3939)
+	- Issue #392: added version to outputs (rev.6b5e6be0)
+	- Issue #392: added version to outputs (rev.6a3d7c72)
+	- Issue #392: added version to outputs (rev.5d988c97)
+	- Issue #392: added version to outputs (rev.83a8ad5e)
+	- Issue #392: added version to outputs (rev.64322b80)
+	- Issue #392: added version to outputs (rev.fd072135)
+	- Issue #392: added version to outputs (rev.d0028096)
+	- Issue #392: added version to outputs (rev.5e4c8156)
+	- Issue #392: added version to outputs (rev.758ce865)
+	- Issue #392: added version to outputs (rev.36441ecc)
+	- Issue #392: added version to outputs (rev.0f1c1687)
+	- Issue #392: added version to outputs (rev.cef09e6c)
+	- Issue #392: added version to outputs (rev.bd011a12)
+	- Entries prepared ready to fix issues #394 and #406 (rev.8dc95a91)
+	- Issue #407: fix bug where split lines not all printed to log file (only to screen) (rev.e226a31e)
+
+
+
+================================================================================
+* Fri Aug 17 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.095
+
+================================================================================
+	- Issue #401 - Added check that number of TELLU_MAP files > number of PCA components (rev.ee52b3c7)
+	- Issue #392 change "PPVERSION" to "PVERSION" - header key too long (rev.380cbf35)
+	- Issue #405 - add message when reset userinput is not "yes" (rev.241dfdbb)
+
+
+
+================================================================================
+* Sat Aug 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.096
+
+================================================================================
+	- Issue #382 - added a position to check for FLATFILE and DARKFILE (must agree with ```recipe_control.txt```) (rev.9fe2d6d4)
