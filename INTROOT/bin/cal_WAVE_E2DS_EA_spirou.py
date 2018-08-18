@@ -389,8 +389,8 @@ doplot_sanity = True
 
 # generate initial wavelength map
 # set the possibility for a pixel shift
-pixel_shift_inter =    0 #6.26637214e+00
-pixel_shift_slope = 0   #4.22131253e-04
+pixel_shift_inter = p['PIXEL_SHIFT_INTER']
+pixel_shift_slope = p['PIXEL_SHIFT_SLOPE']
 # print a warning if pixel_shift is not 0
 if pixel_shift_slope != 0 or pixel_shift_inter != 0:
     wmsg = 'Pixel shift is not 0, check that this is desired'

@@ -4115,3 +4115,38 @@
 
 ================================================================================
 	- Issue #382 - added a position to check for FLATFILE and DARKFILE (must agree with ```recipe_control.txt```) (rev.9fe2d6d4)
+
+
+
+================================================================================
+* Thu Aug 16 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.097
+
+================================================================================
+	- NaN-to-zero change moved from obj_fit_tellu to cal_CCF (rev.7e046736)
+	- Pixel shift incorporated to all wavelength solutions (rev.330b3b0b)
+
+
+
+================================================================================
+* Fri Aug 17 2018 Eder <edermartioli@gmail.com> - 0.2.098
+
+================================================================================
+	- Fixed memory issue by avoiding direct use of an nxn S^2 matrix (rev.9217deff)
+
+
+
+================================================================================
+* Sat Aug 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.099
+
+================================================================================
+	- fix to file name (allow e2ds and e2dsff by only replaceing "_A.fits" (rev.c4e3a0ce)
+	- allow LSD process (now it is fixed) (rev.67e486d6)
+	- update date, version, changelog (rev.2a05927a)
+
+
+
+================================================================================
+* Sat Aug 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.100
+
+================================================================================
+	- Update spirouMath.py (rev.f759846c)
