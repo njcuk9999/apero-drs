@@ -406,7 +406,7 @@ def line_pattern_matrix(wl, wlc, depth, weight, vels) :
     Function to calculate the line pattern matrix M given in Eq (4) of paper
     Donati et al. (1997), MNRAS 291, 658-682
     
-    :param wl: numpy array (1D), input wavelength data (size n = spectrum)
+    :param wl: numpy array (1D), input wavelength data (size n = spectrum size)
     :param wlc: numpy array (1D), central wavelengths (size = number of lines)
     :param depth: numpy array (1D), line depths (size = number of lines)
     :param weight: numpy array (1D), line polar weights (size = number of lines)
@@ -478,16 +478,15 @@ def calculate_lsd_profile(wl, flux, fluxerr, vels, M, normalize=False) :
     # set number of spectral points
     n = len(wl)
 
-    # calculate transpose of M
+    # First calculate transpose of M
     MT = np.matrix.transpose(M)
 
-    # calculate co-variance matrix => square diagonal matrix
-    S2 = np.zeros((n, n))
-    for i in range(n) :
-        S2[i][i] = 1.0 / (fluxerr[i]*fluxerr[i])
-
-    # calculate dot product between MT . S^2
-    MTxS2 = MT.dot(S2)
+    # Initialize matrix for dot product between MT . S^2
+    MTxS2 = np.zeros_like(MT)
+    
+    # Then calculate dot product between MT . S^2, where S^2=covariance matrix
+    for j in range(np.shape(MT)[0]) :
+        MTxS2[j] = MT[j] / fluxerr**2
 
     # calculate autocorrelation, i.e., MT . S^2 . M
     MTxS2xM = MTxS2.dot(M)
@@ -495,14 +494,11 @@ def calculate_lsd_profile(wl, flux, fluxerr, vels, M, normalize=False) :
     # calculate the inverse of autocorrelation using numpy pinv method
     MTxS2xM_inv = np.linalg.pinv(MTxS2xM)
 
-    # save result into variable AutoCorrTerm
-    AutoCorrTerm = MTxS2xM_inv
-
     # calculate cross correlation term, i.e. MT . S^2 . Y
     XCorrTerm = MTxS2.dot(flux)
 
     # calculate velocity profile
-    Z = AutoCorrTerm.dot(XCorrTerm)
+    Z = MTxS2xM_inv.dot(XCorrTerm)
     # recover last point
     Z[-1] = np.median(Z[-6:-2])
 
@@ -535,11 +531,11 @@ def fit_gaussian_to_lsd_profile(vels, Z) :
     # set speed of light in km/s
     c = constants.c / 1000.
     
-    # obtain velocity at minimum
+    # obtain velocity at minimum, amplitude, and sigma for initial guess
     rvel = vels[np.argmin(Z)]
     amplitude = 1.0 - np.min(Z)
-    resolution = 50000.
-    sig = c/resolution
+    resolvingPower = 50000.
+    sig = c/(resolvingPower*2.3548)
     
     # set gaussian function
     gaussian = lambda x,a,x0,sigma : a*np.exp(-(x-x0)**2/(2.*sigma**2))
@@ -562,7 +558,7 @@ def fit_gaussian_to_lsd_profile(vels, Z) :
 
     # calculate full width at half maximum (fwhm)
     fwhm = 2.35482 * popt[2]
-    # calculate resolving power
+    # calculate resolving power from mesasured fwhm
     resolvingPower = c/fwhm
     
     # set radial velocity directly from fitted v_0
