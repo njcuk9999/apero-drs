@@ -762,11 +762,11 @@ ic_ll_free_span_2 = [4.25, 3.0]  # 2.6
 
 #  Defines order from which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_start (used AFTER littrow fit)
-ic_hc_n_ord_start_2 = 0
+ic_hc_n_ord_start_2 = 5  #0
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
-ic_hc_n_ord_final_2 = 46
+ic_hc_n_ord_final_2 = 40    #46
 
 
 #  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
@@ -829,6 +829,10 @@ ic_wave_idrift_max_err = 3.0
 #  Define the RV cut above which the RV from orders are not used    - [cal_wave]
 #      (for instrumental drift calculation)
 ic_wave_idrift_rv_cut = 20.0
+
+# Define intercept and slope for a pixel shift              - [cal_HC, cal_wave]
+pixel_shift_inter = 6.26637214e+00
+pixel_shift_slope = 4.22131253e-04
 
 
 # -----------------------------------------------------------------------------
