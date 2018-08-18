@@ -4146,7 +4146,16 @@
 
 
 ================================================================================
-* Sat Aug 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.100
+* Sat Aug 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.101
 
 ================================================================================
 	- Update spirouMath.py (rev.f759846c)
+
+
+
+================================================================================
+* Sat Aug 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.102
+
+================================================================================
+	- Issue #411: reset cal_wave changes from Melissa (not working with unit_test 20180409all.run (rev.80268e99)
+	- update version (rev.2331213e)
