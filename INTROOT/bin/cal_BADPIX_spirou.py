@@ -77,8 +77,10 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Construct the darkfile and flatfile
     # ----------------------------------------------------------------------
-    p, flatfilename = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'])
-    p, darkfilename = spirouStartup.SingleFileSetup(p, filename=p['DARKFILE'])
+    p, flatfilename = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'],
+                                                    pos=0)
+    p, darkfilename = spirouStartup.SingleFileSetup(p, filename=p['DARKFILE'],
+                                                    pos=1)
 
     # ----------------------------------------------------------------------
     # Read the darkfile and flatfile
@@ -179,6 +181,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
     hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
     hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])
