@@ -200,6 +200,8 @@ def main(night_name=None, files=None):
 
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # write to file
     spirouImage.WriteImage(outfile, big_cube_med, hdict)
 

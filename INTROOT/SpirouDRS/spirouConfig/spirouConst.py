@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.093'
+__version__ =  '0.2.102'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-08-15'
+__date__ =  '2018-08-18'
 
 
 # =============================================================================
@@ -1454,7 +1454,7 @@ def LSD_POL_FILE(p, loc):
     # get new extention
     new_ext = '_lsd_pol.fits'
     # get new filename
-    filename = basefilename.replace('_e2ds_A.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     lsd_pol_filename = os.path.join(reducedfolder, filename)
     # return absolute path
