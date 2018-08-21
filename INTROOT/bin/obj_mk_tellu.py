@@ -233,6 +233,9 @@ def main(night_name=None, files=None):
         # Save transmission map to file
         # ------------------------------------------------------------------
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+        # add version number
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        # write to file
         spirouImage.WriteImage(outfile, transmission_map, hdict)
 
         # ------------------------------------------------------------------
@@ -322,6 +325,9 @@ def main(night_name=None, files=None):
         abso_e2ds = abso.reshape(nfiles, loc['YDIM'], loc['XDIM'])
         # write thie map to file
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
+        # add version number
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        # write to file
         abso_map_file = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
         spirouImage.WriteImage(abso_map_file, abso_e2ds, hdict)
 

@@ -163,6 +163,10 @@ def main(night_name=None, ufiles=None):
         WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+
+        # set the version
+        hdict = spirouImage.AddKey(hdict, p['KW_PPVERSION'])
+
         # write to file
         spirouImage.WriteImage(outfits, image, hdict)
 

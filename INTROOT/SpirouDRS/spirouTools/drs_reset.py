@@ -245,6 +245,9 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__, quiet=log)
+    # set log_opt
+    p['LOG_OPT'] = __NAME__.split('.py')[0]
+    p.set_source('LOG_OPT', __NAME__ + '.main()')
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
@@ -253,18 +256,26 @@ def main(return_locals=False, warn=True, log=True, called=False):
         reset1 = reset_confirmation('Reduced', called=called)
     if reset1:
         reset_reduced_folders(p, log)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting reduced folders.')
     if warn:
         reset2 = reset_confirmation('CalibDB', called=called)
     if reset2:
         reset_calibdb(p, log)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting CalibDB files.')
     if warn:
         reset3 = reset_confirmation('TelluDB', called=called)
     if reset3:
         reset_telludb(p, log)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting TelluDB files.')
     if warn:
         reset4 = reset_confirmation('Log', called=called)
     if reset4:
         reset_log(p)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting Log files.')
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------

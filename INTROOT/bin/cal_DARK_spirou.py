@@ -241,6 +241,7 @@ def main(night_name=None, files=None):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_DEAD'],
                                value=p['DADEAD_FULL'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_MED'],

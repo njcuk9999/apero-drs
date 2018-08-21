@@ -374,6 +374,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfffitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+        # set the version
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         # add barycentric keys to header
         hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
         hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
@@ -442,6 +444,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # add header keys
         # TODO: Do we want any of the E2DS keys??
         hdict = dict()
+        # set the version
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+
         hdict = spirouImage.AddKey(hdict, p['KW_CRPIX1'], value=1.0)
         hdict = spirouImage.AddKey(hdict, p['KW_CRVAL1'], value=xs1d[0])
         hdict = spirouImage.AddKey(hdict, p['KW_CDELT1'], value=p['IC_BIN_S1D'])
