@@ -461,15 +461,22 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
     # insert FP lines into all_lines at the correct orders
     # define wavelength difference limit for keeping a line
     fp_cut = np.std(newll - llpos_all)
+    # define correct starting order number
+    start_order = min(n_init, n_init_HC)
+    # define starting point for prepended zeroes
+    insert_count = 0
     for order_num in range(n_init, n_fin):
         if order_num < n_init_HC:
             # prepend zeros to all_lines if FP solution is fitted for
             #     bluer orders than HC was
-            all_lines_2.insert(0, np.zeros((1, 8), dtype=float))
-        elif order_num > n_fin_HC:
+            all_lines_2.insert(insert_count, np.zeros((1, 8), dtype=float))
+            # add 1 to insertion counter for next order
+            insert_count += 1
+        elif order_num >= n_fin_HC:
             # append zeros to all_lines if FP solution is fitted for
             #     redder orders than HC was
             all_lines_2.append(np.zeros((1, 8), dtype=float))
+        print(np.shape(all_lines_2))
         for it in range(len(order_rec_all)):
             # find lines corresponding to order number
             if order_rec_all[it] == order_num:
@@ -481,8 +488,9 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                                         0.0, xxpos_all[it], 0.0, ampl_all[it]])
                     FP_line = FP_line.reshape((1, 8))
                     # append FP line data to all_lines
-                    torder = order_num
+                    torder = order_num - start_order
                     tvalues = [all_lines_2[torder], FP_line]
                     all_lines_2[torder] = np.concatenate(tvalues)
     # return all lines 2
+    print(all_lines_2)
     return all_lines_2
