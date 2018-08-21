@@ -1126,6 +1126,53 @@ if use_fp:
     # get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
 
+    # ------------------------------------------------------------------
+    # check for and remove double-fitted lines
+    # ------------------------------------------------------------------
+
+    # set up storage for good lines
+    ordpeak_k, xpeak_k, ewpeak_k, vrpeak_k, llpeak_k, amppeak_k = \
+        [], [], [], [], [], []
+
+    # get minimum spacing between FP peaks
+    peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
+
+    for order_num in range(np.shape(loc['SPEREF'])[0]):
+        # set up mask for the order
+        gg = loc['ORDPEAK'] == order_num
+        # get the xvalues
+        xpeak = loc['XPEAK'][gg]
+        # get the amplitudes
+        amppeak = loc['AMPPEAK'][gg]
+        # get the points where two peaks are spaced by < peak_spacing
+        ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
+        # get the indices of the second of the two peaks
+        ind2 = ind + 1
+        # define mask with the same size as xpeak
+        xmask = np.ones(len(xpeak), dtype=bool)
+        # mask the peak with the lower amplitude of the two
+        for i in range(len(ind)):
+            if amppeak[ind[i]] < amppeak[ind2[i]]:
+                xmask[ind[i]] = False
+            else:
+                xmask[ind2[i]] = False
+        # save good lines
+        ordpeak_k += list(loc['ORDPEAK'][gg][xmask])
+        xpeak_k += list(loc['XPEAK'][gg][xmask])
+        ewpeak_k += list(loc['EWPEAK'][gg][xmask])
+        vrpeak_k += list(loc['VRPEAK'][gg][xmask])
+        llpeak_k += list(loc['LLPEAK'][gg][xmask])
+        amppeak_k += list(loc['AMPPEAK'][gg][xmask])
+
+        # replace values in loc
+    loc['ORDPEAK'] = np.array(ordpeak_k)
+    loc['XPEAK'] = np.array(xpeak_k)
+    loc['EWPEAK'] = np.array(ewpeak_k)
+    loc['VRPEAK'] = np.array(vrpeak_k)
+    loc['LLPEAK'] = np.array(llpeak_k)
+    loc['AMPPEAK'] = np.array(amppeak_k)
+
+
     # ----------------------------------------------------------------------
     # Removal of suspiciously wide FP lines
     # ----------------------------------------------------------------------
@@ -1137,51 +1184,140 @@ if use_fp:
     # ----------------------------------------------------------------------
 
     # set start and end orders
-    n_ord_start_fp = 10
-    n_ord_final_fp = 20
+    n_ord_start_fp = 0
+    n_ord_final_fp = 47
 
     # get parameters from p
     dopd0 = p['IC_FP_DOPD0']
     fit_deg = p['IC_FP_FIT_DEGREE']
+    fp_large_jump = p['IC_FP_LARGE_JUMP']
 
     # set up storage
     llpos_all, xxpos_all, ampl_all = [], [], []
     m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
 
-    # get m, d for each line
-    for order_num in range(n_ord_start_fp, n_ord_final_fp):
+
+    # loop through the orders from red to blue
+    for order_num in range(n_ord_final_fp, n_ord_start_fp, -1):
         # define storage
         floc = dict()
         # select the lines in the order
         gg = loc['ORDPEAK'] == order_num
         # store the initial wavelengths of the lines
-        floc['llpos'] = np.polyval(loc['LL_PARAM_FINAL'][order_num][::-1],loc['XPEAK'][gg])
+        floc['llpos'] = np.polyval(loc['LL_PARAM_FINAL'][order_num][::-1], loc['XPEAK'][gg])
         # store the pixel positions of the lines
         floc['xxpos'] = loc['XPEAK'][gg]
-        #store the amplitudes of the lines
+        # get the median pixel difference between succesive lines (to check for gaps)
+        xxpos_diff_med = np.median(floc['xxpos'][1:]-floc['xxpos'][:-1])
+        # store the amplitudes of the lines
         floc['ampl'] = loc['AMPPEAK'][gg]
         # store the values of the blaze at the pixel positions of the lines
         floc['weight_bl'] = np.zeros_like(floc['llpos'])
-        for it in range(1,len(floc['llpos'])):
-            floc['weight_bl'][it]= loc['BLAZE'][order_num, int(np.round(floc['xxpos'][it]))]
-        #store the order numbers
+        for it in range(1, len(floc['llpos'])):
+            floc['weight_bl'][it] = loc['BLAZE'][order_num, int(np.round(floc['xxpos'][it]))]
+        # store the order numbers
         floc['order_rec'] = loc['ORDPEAK'][gg]
         # set up storage for line numbers
         mpeak = np.zeros_like(floc['llpos'])
-        # line number for the first line of the order (by FP equation)
-        mpeak[0] = int(dopd0 / floc['llpos'][0])
+        # line number for the last (reddest) line of the order (by FP equation)
+        mpeak[-1] = int(dopd0 / floc['llpos'][-1])
         # successive line numbers (assuming no gap)
-        for it in range(1,len(floc['llpos'])):
-            mpeak[it] = mpeak[it - 1] - 1
+        for it in range(len(floc['llpos'])-2, -1, -1):
+            # check for gap
+            if floc['xxpos'][it+1]-floc['xxpos'][it] < xxpos_diff_med + 0.5*xxpos_diff_med:
+                # no gap: add 1
+                mpeak[it] = mpeak[it + 1] + 1
+            # if there is a gap
+            else:
+                # estimate the number of peaks missed
+                m_offset = int(np.round((floc['xxpos'][it+1]-floc['xxpos'][it])
+                                        / xxpos_diff_med))
+                mpeak[it] = mpeak[it + 1] + m_offset
+                # verify there's no dopd jump, fix if present
+                dopd_1 = (mpeak[it] * floc['llpos'][it] - dopd0) * 1.e-3
+                dopd_2 = (mpeak[it + 1] * floc['llpos'][it + 1] - dopd0) * 1.e-3
+                if dopd_1 - dopd_2 > fp_large_jump:
+                    mpeak[it] = mpeak[it] - 1
+                    print('jump at ' + str(mpeak[it]))
+                elif dopd_1 - dopd_2 < -fp_large_jump:
+                    mpeak[it] = mpeak[it] + 1
+                    print('jump at ' + str(mpeak[it]))
         # determination of observed effective cavity width
         dopd_t = mpeak * floc['llpos']
         # store m and d
         floc['m_fp'] = mpeak
         floc['dopd_t'] = dopd_t
-        if order_num != n_ord_start_fp:
-            # correct for large jumps
-            floc = spirouTHORCA.spirouWAVE.correct_for_large_fp_jumps(p, order_num, floc,
-                                                   dopd_all)
+        # for orders other than the reddest, attempt to cross-match
+        if order_num != n_ord_final_fp:
+            # define mask for previous order
+            #order_rec_aux = np.array(order_rec_all)
+            #gg_prev = order_rec_aux == order_num+1
+
+            #ll_prev = llpos_all[gg_prev]
+            #m_prev = m_fp_all[gg_prev]
+            # check for overlap
+            if floc['llpos'][-1] > ll_prev[0]:
+                print(floc['llpos'][-1])
+                # find closest peak in overlap and get its m value
+                ind = np.abs(ll_prev - floc['llpos'][-1]).argmin()
+                m_match = m_prev[ind]
+                print(ll_prev[ind])
+                print(ind)
+                print(m_prev[ind])
+                # save previous mpeak calculated
+                m_init = mpeak[-1]
+                # TODO does not help, remove
+                # # verify there's no dopd jump, fix if present
+                #
+                #dopd_1 = (dopd_t[-1] - dopd0) * 1.e-3
+                #dopd_2 = (d_prev[ind] - dopd0) * 1.e-3
+                #if dopd_1 - dopd_2 > fp_large_jump:
+                #    m_match = m_match - 1
+                #    print(' jump 1')
+                #elif dopd_1 - dopd_2 < -fp_large_jump:
+                #    m_match = m_match + 1
+                #    print(' jump 2')
+                # replace with cross-matched value
+                mpeak[-1] = m_match
+                # print note for dev if different
+                if p['DRS_DEBUG'] and m_match != m_init:
+                    wargs = [order_num, m_match - m_init]
+                    wmsg = 'M difference for order {0}: {1}'
+                    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                # recalculate m
+                for it in range(len(floc['llpos'])-2, -1, -1):
+                    #check for gap
+                    if floc['xxpos'][it + 1] - floc['xxpos'][it] < \
+                            xxpos_diff_med + 0.3 * xxpos_diff_med:
+                        # no gap: add 1
+                        mpeak[it] = mpeak[it + 1] + 1
+                    # if there is a gap
+                    else:
+                        # estimate the number of peaks missed
+                        m_offset = int(np.round((floc['xxpos'][it + 1] - floc['xxpos'][it])
+                                                / xxpos_diff_med))
+                        mpeak[it] = mpeak[it + 1] + m_offset
+                        # verify there's no dopd jump, fix if present
+                        dopd_1 = (mpeak[it]*floc['llpos'][it] - dopd0)*1.e-3
+                        dopd_2 = (mpeak[it+1]*floc['llpos'][it+1] - dopd0)*1.e-3
+                        if dopd_1 - dopd_2 > fp_large_jump:
+                            mpeak[it] = mpeak[it] - 1
+                            print('jump at '+str(mpeak[it]))
+                        elif dopd_1 - dopd_2 < -fp_large_jump:
+                            mpeak[it] = mpeak[it] + 1
+                            print('jump at '+str(mpeak[it]))
+                # recalculate observed effective cavity width
+                dopd_t = mpeak * floc['llpos']
+                # store m and d
+                floc['m_fp'] = mpeak
+                floc['dopd_t'] = dopd_t
+
+                # correct for large jumps
+                #floc = correct_for_large_fp_jumps(p, order_num, floc,
+                #                                       dopd_all)
+
+            else:
+                print('no overlap for order '+str(order_num))
         # add to storage
         llpos_all += list(floc['llpos'])
         xxpos_all += list(floc['xxpos'])
@@ -1191,6 +1327,10 @@ if use_fp:
         order_rec_all += list(floc['order_rec'])
         # difference in cavity width converted to microns
         dopd_all += list((floc['dopd_t'] - dopd0) * 1.e-3)
+        # save numpy arrays of current order to be previous in next loop
+        ll_prev = np.array(floc['llpos'])
+        m_prev = np.array(floc['m_fp'])
+        d_prev = np.array(floc['dopd_t'])
 
     # convert to numpy arrays
     llpos_all = np.array(llpos_all)
@@ -1204,7 +1344,7 @@ if use_fp:
     # fit a polynomial to line number v measured difference in cavity
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
-        coeffs = np.polyfit(m_fp_all, dopd_all, fit_degree, w=weight_bl_all)[::-1]
+        coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
     spirouCore.WarnLog(w, funcname=__NAME__)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
@@ -1283,7 +1423,7 @@ plt.plot(wave_map2[plot_order], hcdata[plot_order], label='HC spectrum - order '
                                                             + str(plot_order))
 # plot found lines
 # first line separate for labelling purposes
-plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][i][2],
+plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][0][2],
            'm', label='fitted lines')
 # plot lines to the top of the figure
 plt.vlines(all_lines_1[plot_order_line][0][0], 0, np.max(hcdata[plot_order]), 'gray',
