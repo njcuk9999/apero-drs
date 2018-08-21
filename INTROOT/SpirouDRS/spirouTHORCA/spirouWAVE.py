@@ -476,7 +476,6 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
             # append zeros to all_lines if FP solution is fitted for
             #     redder orders than HC was
             all_lines_2.append(np.zeros((1, 8), dtype=float))
-        print(np.shape(all_lines_2))
         for it in range(len(order_rec_all)):
             # find lines corresponding to order number
             if order_rec_all[it] == order_num:
@@ -492,5 +491,4 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                     tvalues = [all_lines_2[torder], FP_line]
                     all_lines_2[torder] = np.concatenate(tvalues)
     # return all lines 2
-    print(all_lines_2)
     return all_lines_2
