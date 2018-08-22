@@ -357,6 +357,204 @@ def fp_wavelength_sol(p, loc, mode='new'):
     return loc
 
 
+def fp_wavelength_sol_new(p, loc):
+    """
+    Derives the FP line wavelengths from the first solution
+    Follows the Bauer et al 2015 procedure
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_FP_N_ORD_START: int, defines first order FP solution is
+                               calculated from
+
+            IC_FP_N_ORD_FINAL: int, defines last order FP solution is
+                               calculated to
+
+            IC_HC_N_ORD_START_2: int, defines first order HC solution was
+                                 calculated from
+
+            IC_HC_N_ORD_FINAL_2: int, defines last order HC solution was
+                                 calculated to
+
+            DRIFT_PEAK_INTER_PEAK_SPACING: int, defines minimum line separation
+
+            IC_FP_DOPD0: float, initial value of FP effective cavity width
+
+            IC_FP_FIT_DEGREE: int, degree of polynomial fit
+
+            log_opt: string, log option, normally the program name
+
+    :param loc: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            FPDATA: the FP e2ds data
+            WAVE: the initial wavelength solution
+            LL_OUT_2: the wavelength solution derived from the HC
+                                  and Littrow-constrained
+            LL_PARAM_2: the parameters of the wavelength solution
+            ALL_LINES_2: list of numpy arrays, length = number of orders
+                       each numpy array contains gaussian parameters
+                       for each found line in that order
+            BLAZE: numpy array (2D), the blaze data
+
+    :return loc: parameter dictionary, the updated parameter dictionary
+            Adds/updates the following:
+                FP_LL_POS: numpy array, the initial wavelengths of the FP lines
+                FP_XX_POS: numpy array, the pixel positions of the FP lines
+                FP_M: numpy array, the FP line numbers
+                FP_DOPD_T: numpy array, the measured cavity width for each line
+                FP_AMPL: numpy array, the FP line amplitudes
+                FP_LL_POS_NEW: numpy array, the corrected wavelengths of the
+                               FP lines
+                ALL_LINES_2: list of numpy arrays, length = number of orders
+                             each numpy array contains gaussian parameters
+                             for each found line in that order
+
+    """
+    func_name = __NAME__ + '.fp_wavelength_sol_new()'
+    # get parameters from p
+    dopd0 = p['IC_FP_DOPD0']
+    fit_deg = p['IC_FP_FIT_DEGREE']
+    fp_large_jump = p['IC_FP_LARGE_JUMP']
+    n_ord_start_fp = p['IC_FP_N_ORD_START']
+    n_ord_final_fp = p['IC_FP_N_ORD_FINAL']
+
+    # find FP lines
+    loc = find_fp_lines_new(p, loc)
+
+    # set up storage
+    llpos_all, xxpos_all, ampl_all = [], [], []
+    m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
+
+    # loop through the orders from red to blue
+    for order_num in range(n_ord_final_fp, n_ord_start_fp - 1, -1):
+        # define storage
+        floc = dict()
+        # select the lines in the order
+        gg = loc['ORDPEAK'] == order_num
+        # store the initial wavelengths of the lines
+        floc['llpos'] = np.polyval(loc['LL_PARAM_2'][order_num][::-1], loc['XPEAK'][gg])
+        # store the pixel positions of the lines
+        floc['xxpos'] = loc['XPEAK'][gg]
+        # get the median pixel difference between successive lines (to check for gaps)
+        xxpos_diff_med = np.median(floc['xxpos'][1:]-floc['xxpos'][:-1])
+        # store the amplitudes of the lines
+        floc['ampl'] = loc['AMPPEAK'][gg]
+        # store the values of the blaze at the pixel positions of the lines
+        floc['weight_bl'] = np.zeros_like(floc['llpos'])
+        # get and normalize blaze for the order
+        nblaze = loc['BLAZE'][order_num] / np.nanmax(loc['BLAZE'][order_num])
+        for it in range(1, len(floc['llpos'])):
+            floc['weight_bl'][it] = nblaze[int(np.round(floc['xxpos'][it]))]
+        # store the order numbers
+        floc['order_rec'] = loc['ORDPEAK'][gg]
+        # set up storage for line numbers
+        mpeak = np.zeros_like(floc['llpos'])
+        # line number for the last (reddest) line of the order (by FP equation)
+        mpeak[-1] = int(dopd0 / floc['llpos'][-1])
+        # calculate successive line numbers
+        for it in range(len(floc['llpos'])-2, -1, -1):
+            # check for gap in x positions
+            if floc['xxpos'][it+1]-floc['xxpos'][it] < xxpos_diff_med + 0.5*xxpos_diff_med:
+                # no gap: add 1 to line number of previous line
+                mpeak[it] = mpeak[it + 1] + 1
+            # if there is a gap, fix it
+            else:
+                # estimate the number of peaks missed
+                m_offset = int(np.round((floc['xxpos'][it+1]-floc['xxpos'][it])
+                                        / xxpos_diff_med))
+                # add to m of previous peak
+                mpeak[it] = mpeak[it + 1] + m_offset
+                # verify there's no dopd jump, fix if present
+                dopd_1 = (mpeak[it] * floc['llpos'][it] - dopd0) * 1.e-3
+                dopd_2 = (mpeak[it + 1] * floc['llpos'][it + 1] - dopd0) * 1.e-3
+                if dopd_1 - dopd_2 > fp_large_jump:
+                    mpeak[it] = mpeak[it] - 1
+                elif dopd_1 - dopd_2 < -fp_large_jump:
+                    mpeak[it] = mpeak[it] + 1
+        # determination of observed effective cavity width
+        dopd_t = mpeak * floc['llpos']
+        # store m and d
+        floc['m_fp'] = mpeak
+        floc['dopd_t'] = dopd_t
+        # for orders other than the reddest, attempt to cross-match
+        if order_num != n_ord_final_fp:
+            # check for overlap
+            if floc['llpos'][-1] > ll_prev[0]:
+                # find closest peak in overlap and get its m value
+                ind = np.abs(ll_prev - floc['llpos'][-1]).argmin()
+                m_match = m_prev[ind]
+                # save previous mpeak calculated
+                m_init = mpeak[-1]
+                # recalculate m if there's an offset from cross_match
+                m_offset_c = m_match - m_init
+                if m_offset_c != 0:
+                    mpeak = mpeak + m_offset_c
+                    # print note for dev if different
+                    if p['DRS_DEBUG']:
+                        wargs = [order_num, m_match - m_init]
+                        wmsg = 'M difference for order {0}: {1}'
+                        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                    # recalculate observed effective cavity width
+                    dopd_t = mpeak * floc['llpos']
+                    # store new m and d
+                    floc['m_fp'] = mpeak
+                    floc['dopd_t'] = dopd_t
+            else:
+                print('no overlap for order ' + str(order_num))
+        # add to storage
+        llpos_all += list(floc['llpos'])
+        xxpos_all += list(floc['xxpos'])
+        ampl_all += list(floc['ampl'])
+        m_fp_all += list(floc['m_fp'])
+        weight_bl_all += list(floc['weight_bl'])
+        order_rec_all += list(floc['order_rec'])
+        # difference in cavity width converted to microns
+        dopd_all += list((floc['dopd_t'] - dopd0) * 1.e-3)
+        # save numpy arrays of current order to be previous in next loop
+        ll_prev = np.array(floc['llpos'])
+        m_prev = np.array(floc['m_fp'])
+
+    # convert to numpy arrays
+    llpos_all = np.array(llpos_all)
+    xxpos_all = np.array(xxpos_all)
+    ampl_all = np.array(ampl_all)
+    m_fp_all = np.array(m_fp_all)
+    weight_bl_all = np.array(weight_bl_all)
+    order_rec_all = np.array(order_rec_all)
+    dopd_all = np.array(dopd_all)
+
+    # fit a polynomial to line number v measured difference in cavity
+    #     width, weighted by blaze
+    with warnings.catch_warnings(record=True) as w:
+        coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
+    spirouCore.WarnLog(w, funcname= func_name)
+    # get the values of the fitted cavity width difference
+    cfit = np.polyval(coeffs[::-1], m_fp_all)
+    # update line wavelengths using the new cavity width fit
+    newll = (dopd0 + cfit * 1000.) / m_fp_all
+    # insert fp lines into all_lines2 (at the correct positions)
+    all_lines_2 = insert_fp_lines(p, newll, llpos_all, loc['ALL_LINES_2'],
+                                  order_rec_all, xxpos_all, ampl_all)
+
+    # add to loc
+    loc['FP_LL_POS'] = llpos_all
+    loc['FP_XX_POS'] = xxpos_all
+    loc['FP_M'] = m_fp_all
+    loc['FP_DOPD_OFFSET'] = dopd_all
+    loc['FP_AMPL'] = ampl_all
+    loc['FP_LL_POS_NEW'] = newll
+    loc['ALL_LINES_2'] = all_lines_2
+    loc['FP_DOPD_OFFSET_COEFF'] = coeffs
+    loc['FP_DOPD_OFFSET_FIT'] = cfit
+    loc['FP_ORD_REC'] = order_rec_all
+    # set sources
+    sources = ['FP_LL_POS', 'FP_XX_POS', 'FP_M', 'FP_DOPD_OFFSET',
+               'FP_AMPL', 'FP_LL_POS_NEW', 'ALL_LINES_2',
+               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT', 'FP_ORD_REC']
+    loc.set_sources(sources, func_name)
+
+    return loc
+
 # =============================================================================
 # Worker functions
 # =============================================================================
@@ -492,3 +690,70 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                     all_lines_2[torder] = np.concatenate(tvalues)
     # return all lines 2
     return all_lines_2
+
+
+def find_fp_lines_new(p, loc):
+    # get parameters from p
+    # minimum spacing between FP peaks
+    peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
+    # get redefined variables
+    loc = find_fp_lines_new_setup(loc)
+    # use spirouRV to get the position of FP peaks from reference file
+    loc = spirouRV.CreateDriftFile(p, loc)
+    # check for and remove double-fitted lines
+    # set up storage for good lines
+    ordpeak_k, xpeak_k, ewpeak_k, vrpeak_k, llpeak_k, amppeak_k = \
+        [], [], [], [], [], []
+    # loop through the orders
+    for order_num in range(np.shape(loc['SPEREF'])[0]):
+        # set up mask for the order
+        gg = loc['ORDPEAK'] == order_num
+        # get the xvalues
+        xpeak = loc['XPEAK'][gg]
+        # get the amplitudes
+        amppeak = loc['AMPPEAK'][gg]
+        # get the points where two peaks are spaced by < peak_spacing
+        ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
+        # get the indices of the second peak of each pair
+        ind2 = ind + 1
+        # initialize mask with the same size as xpeak
+        xmask = np.ones(len(xpeak), dtype=bool)
+        # mask the peak with the lower amplitude of the two
+        for i in range(len(ind)):
+            if amppeak[ind[i]] < amppeak[ind2[i]]:
+                xmask[ind[i]] = False
+            else:
+                xmask[ind2[i]] = False
+        # save good lines
+        ordpeak_k += list(loc['ORDPEAK'][gg][xmask])
+        xpeak_k += list(loc['XPEAK'][gg][xmask])
+        ewpeak_k += list(loc['EWPEAK'][gg][xmask])
+        vrpeak_k += list(loc['VRPEAK'][gg][xmask])
+        llpeak_k += list(loc['LLPEAK'][gg][xmask])
+        amppeak_k += list(loc['AMPPEAK'][gg][xmask])
+
+    # replace FP peak arrays in loc
+    loc['ORDPEAK'] = np.array(ordpeak_k)
+    loc['XPEAK'] = np.array(xpeak_k)
+    loc['EWPEAK'] = np.array(ewpeak_k)
+    loc['VRPEAK'] = np.array(vrpeak_k)
+    loc['LLPEAK'] = np.array(llpeak_k)
+    loc['AMPPEAK'] = np.array(amppeak_k)
+
+    loc = spirouRV.RemoveWidePeaks(p, loc)
+
+    return loc
+
+
+def find_fp_lines_new_setup(loc):
+    # auxiliary function to set up variables for find_fp_lines_new
+
+    # pipe inputs to loc with correct names
+    # set fpfile as ref file
+    loc['SPEREF'] = loc['FPDATA']
+    # set wavelength solution as the one from the HC lines
+    loc['WAVE'] = loc['LL_OUT_2']
+    # set lamp as FP
+    loc['LAMP'] = 'fp'
+
+    return loc
