@@ -80,6 +80,7 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set up function name
     main_name = __NAME__ + '.main()'
+
     # ------------------------------------------------------------------
     # Load first file
     # ------------------------------------------------------------------
@@ -131,6 +132,18 @@ def main(night_name=None, files=None):
     loc['OUTPUTFILES'] = []
     # loop around the files
     for basefilename in p['ARG_FILE_NAMES']:
+
+        # ------------------------------------------------------------------
+        # Check that basefile is not in blacklist
+        # ------------------------------------------------------------------
+        blacklist_check = spirouTelluric.CheckBlackList(basefilename)
+        if blacklist_check:
+            # log black list file found
+            wmsg = 'File {0} is blacklisted. Skipping'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(basefilename))
+            # skip this file
+            continue
+
         # ------------------------------------------------------------------
         # Get absolute path of filename
         # ------------------------------------------------------------------
