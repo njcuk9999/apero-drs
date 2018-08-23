@@ -151,6 +151,17 @@ def RECIPE_CONTROL_FILE():
     return recipe_control_file, recipe_control_format
 
 
+# noinspection PyPep8Naming
+def TELLU_DATABASE_BLACKLIST_FILE():
+    """
+    Defines the telluric database blacklist filename
+
+    :return blacklistfile: string, the telluric blacklist file
+    """
+    blacklistfile = 'tellu_blacklist.txt'
+    return blacklistfile
+
+
 # =============================================================================
 # Define Directories
 # =============================================================================
