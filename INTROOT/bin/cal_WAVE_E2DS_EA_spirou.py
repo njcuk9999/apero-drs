@@ -374,7 +374,7 @@ wdata = spirouImage.ReadWaveFile(p, hchdr, return_header=True)
 wave, wave_hdr = wdata
 loc['WAVE_INIT'] = wave
 loc['WAVEHDR'] = wave_hdr
-loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+loc.set_source('WAVE_INIT', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
 # get wave params from wave header
 poly_wave_sol = spirouImage.ReadWaveParams(p, wave_hdr)
@@ -1077,6 +1077,9 @@ if len(litt_extrap_sol_red) > 0:
 loc['LL_OUT_2'] = np.vstack(ll_stack)
 loc['LL_PARAM_2'] = np.vstack(param_stack)
 loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
+
+# rename for compatibility
+loc['LITTROW_EXTRAP_SOL_1'] = np.vstack(ll_stack)
 
 # temp copy for storage
 loc['LL_FINAL'] = np.vstack(ll_stack)
