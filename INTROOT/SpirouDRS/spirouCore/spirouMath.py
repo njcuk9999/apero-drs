@@ -40,6 +40,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 DATE_FMT = spirouConfig.Constants.DATE_FMT_DEFAULT()
 TIME_FMT = spirouConfig.Constants.TIME_FORMAT_DEFAULT()
 
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================
