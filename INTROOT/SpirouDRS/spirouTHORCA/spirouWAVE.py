@@ -752,7 +752,7 @@ def find_fp_lines_new_setup(loc):
     # set fpfile as ref file
     loc['SPEREF'] = loc['FPDATA']
     # set wavelength solution as the one from the HC lines
-    loc['WAVE'] = loc['LL_OUT_2']
+    loc['WAVE'] = loc['LITTROW_EXTRAP_SOL_1']
     # set lamp as FP
     loc['LAMP'] = 'fp'
 
