@@ -4159,3 +4159,13 @@
 ================================================================================
 	- Issue #411: reset cal_wave changes from Melissa (not working with unit_test 20180409all.run (rev.80268e99)
 	- update version (rev.2331213e)
+
+
+
+================================================================================
+* Thu Aug 23 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.103
+
+================================================================================
+	- Re-write of median_one_over_f_noise function (Issue #420) (rev.d51982c9)
+	- New alias for function re-write (Issue #420) (rev.a93af1fc)
+	- Using new function (re-write) from issue #420 (rev.0233a30f)

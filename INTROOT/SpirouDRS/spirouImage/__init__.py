@@ -132,6 +132,8 @@ PPMedianFilterDarkAmps = spirouImage.median_filter_dark_amp
 
 PPMedianOneOverfNoise = spirouImage.median_one_over_f_noise
 
+PPMedianOneOverfNoise2 = spirouImage.median_one_over_f_noise2
+
 PrintTable = spirouTable.print_full_table
 
 ReadParam = spirouImage.get_param
