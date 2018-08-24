@@ -462,26 +462,24 @@ def calc_molecular_absorption(p, loc):
     return loc
 
 
-def check_blacklist(filename):
+def check_blacklist(objname):
     """
     Check whether file is blacklisted
 
-    :param filename: str, the blacklisted filename
+    :param objname: str, the blacklisted object name (to check against list of
+                    blacklisted object names)
 
     :return:
     """
-    # make sure file is a base file
-    filename = os.path.basename(filename)
-
     # get blacklisted files
-    blfiles = get_blacklist()
+    blacklisted_objects = get_blacklist()
 
     # set check to False
     check = False
-    # loop around blacklisted files
-    for blfile in blfiles:
-        # if blfile string in filename, file is blacklisted
-        if blfile in filename:
+    # loop around blacklisted objects
+    for blacklisted_object in blacklisted_objects:
+        # if objname in blacklisted_objects objname is black listed
+        if blacklisted_object.upper() == objname.upper():
             check = True
     # return check
     return check
