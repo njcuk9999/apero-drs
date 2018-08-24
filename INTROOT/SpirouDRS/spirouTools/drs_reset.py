@@ -128,6 +128,10 @@ def reset_calibdb(p, log=True):
     relfolder = spirouConfig.Constants.RESET_CALIBDB_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # check that absfolder exists
+    if not os.path.exists(absfolder):
+        emsg = 'Error {0} directory does not exist'
+        WLOG('error', DPROG, emsg.format(absfolder))
     # -------------------------------------------------------------------------
     # define needed files:
     files = os.listdir(absfolder)
@@ -163,6 +167,7 @@ def reset_telludb(p, log=True):
 
     # remove files currently in telluDB
     tellu_dir = p['DRS_TELLU_DB']
+
     # loop around files and folders in tellu_dir
     remove_all(tellu_dir, log)
 
@@ -173,6 +178,10 @@ def reset_telludb(p, log=True):
     relfolder = spirouConfig.Constants.RESET_TELLUDB_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # check that absfolder exists
+    if not os.path.exists(absfolder):
+        emsg = 'Error {0} directory does not exist'
+        WLOG('error', DPROG, emsg.format(absfolder))
     # -------------------------------------------------------------------------
     # define needed files:
     files = os.listdir(absfolder)
@@ -209,6 +218,29 @@ def reset_log(p):
 
 
 def remove_all(path, log=True):
+
+    # Check that directory exists
+    if not os.path.exists(path):
+        # get the warning and error colours
+        e1, e2 = printc('error')
+        eargs = [e1, path, e2]
+        # display error and ask to create directory
+        print('{0}\nError {0} directory does not exist. Should we create it?{2}'
+              ''.format(*eargs))
+        # user input
+        if sys.version_info.major < 3:
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('{0}\tCreate directory {1}?\t{2}'.format(*eargs))
+        else:
+            uinput = input('{0}\tCreate directory {1}?\t{2}'.format(*eargs))
+        # check user input
+        if 'Y' in uinput.upper():
+            # make directories
+            os.makedirs(path)
+        else:
+            emsg = 'Error {0} directory does not exist'
+            WLOG('error', DPROG, emsg.format(path))
+
     # loop around files and folders in calib_dir
     files = glob.glob(path + '/*')
     # loop around all files (adding all files from sub directories
