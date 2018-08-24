@@ -1416,7 +1416,7 @@ def STOKESI_POL_FILE(p, loc):
     # get base filename
     basefilename = loc['BASENAME']
     # get new extention
-    new_ext = '_StokesI.fits'
+    new_ext = '_AB_StokesI.fits'
     # get new filename
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
