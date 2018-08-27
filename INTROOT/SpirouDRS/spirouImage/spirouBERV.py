@@ -175,8 +175,16 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         try:
             # file at: http://maia.usno.navy.mil/ser7/finals2000A.all
             from astropy.utils import iers
-            iers_a_file = spirouConfig.Constants.ASTROPY_IERS_DIR()
-            iers.IERS.iers_table = iers.IERS_A.open(iers_a_file)
+            # get package name and relative path
+            package = spirouConfig.Constants.PACKAGE()
+            iers_dir = spirouConfig.Constants.ASTROPY_IERS_DIR()
+            # get absolute folder path from package and relfolder
+            absfolder = spirouConfig.GetAbsFolderPath(package, iers_dir)
+            # get file name
+            file_a = os.path.basename(iers.iers.IERS_A_FILE)
+            path_a = os.path.join(absfolder, file_a)
+            # set table
+            iers.IERS.iers_table = iers.IERS_A.open(path_a)
             import barycorrpy
         except:
             emsg1 = 'For method="new" must have barcorrpy installed '
