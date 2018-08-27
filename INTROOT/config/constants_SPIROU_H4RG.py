@@ -831,9 +831,10 @@ ic_wave_idrift_max_err = 3.0
 ic_wave_idrift_rv_cut = 20.0
 
 # Define intercept and slope for a pixel shift              - [cal_HC, cal_wave]
-pixel_shift_inter = 6.26637214e+00
-pixel_shift_slope = 4.22131253e-04
-
+# pixel_shift_inter = 6.26637214e+00
+# pixel_shift_slope = 4.22131253e-04
+pixel_shift_inter = 0.0
+pixel_shift_slope = 0.0
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters
