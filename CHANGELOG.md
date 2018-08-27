@@ -4169,3 +4169,48 @@
 	- Re-write of median_one_over_f_noise function (Issue #420) (rev.d51982c9)
 	- New alias for function re-write (Issue #420) (rev.a93af1fc)
 	- Using new function (re-write) from issue #420 (rev.0233a30f)
+
+
+
+================================================================================
+* Thu Aug 23 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.104
+
+================================================================================
+	- add check_blacklist and get_blacklist functions (Issue #419) (rev.6a96b33e)
+	- Add alias to check black list function (Issue #419) (rev.b8177d68)
+	- Add alias to raw text file function (Issue #419) (rev.d0a9b1d6)
+	- Add blacklist filename (Issue #419) (rev.2ffb4fa0)
+	- Add code to read raw text file (Issue #419) (rev.38709cc4)
+	- Add code to check for blacklisted file (Issue #419) (rev.be00d692)
+	- Add blacklist file (Issue #419) (rev.2b243a4d)
+	- Issue #389 - NaN values vauses error to be raised (Needs to be fixed properly) (rev.d7541d1e)
+
+
+
+================================================================================
+* Fri Aug 24 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.105
+
+================================================================================
+	- Fix for Issue #406 - cal_CCF does not accept StokesI or e2dsff - fixed (rev.cd4b2c7c)
+	- Fix for issue #406 - CCF recipe does not accept Stokes I spectra --> replace '_A.fits' with '_AB_StokesI.fits' (rev.b07359df)
+	- Fix for Issue #406 -CCF recipe does not accept stokes I spectra --> replace '_A.fits' with '_AB_StokesI.fits' (rev.7c2a9116)
+	- Fix for Issue #423 - cal_reset fails if folder does not exist (rev.1c57c390)
+	- changed blacklist functino to look at objnames (Issue #419) (rev.78b6b335)
+	- Changed blacklist file to object names (Issue #419) (rev.8a4c7982)
+	- Moved blacklist check to after we have the OBJNAME (Issue #419) (rev.6d341eca)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.106
+
+================================================================================
+	- Set pixel_shift_inter and pixel_shift_slope back to zero (Issue #411) (rev.b4bb88c3)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.107
+
+================================================================================
+	- updated date, version and changelog (rev.2502f9c5)

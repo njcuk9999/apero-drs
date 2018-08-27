@@ -39,6 +39,7 @@ SIG_FWHM = spirouCore.spirouMath.fwhm()
 # speed of light
 CONSTANT_C = constants.c.value
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -459,6 +460,43 @@ def calc_molecular_absorption(p, loc):
         loc[molkey] = amps[it]
     # return loc
     return loc
+
+
+def check_blacklist(objname):
+    """
+    Check whether file is blacklisted
+
+    :param objname: str, the blacklisted object name (to check against list of
+                    blacklisted object names)
+
+    :return:
+    """
+    # get blacklisted files
+    blacklisted_objects = get_blacklist()
+
+    # set check to False
+    check = False
+    # loop around blacklisted objects
+    for blacklisted_object in blacklisted_objects:
+        # if objname in blacklisted_objects objname is black listed
+        if blacklisted_object.upper() == objname.upper():
+            check = True
+    # return check
+    return check
+
+
+def get_blacklist():
+    # get SpirouDRS data folder
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.DATA_CONSTANT_DIR()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # construct the path for the control file
+    blacklistfilename = spirouConfig.Constants.TELLU_DATABASE_BLACKLIST_FILE()
+    blacklistfile = os.path.join(datadir, blacklistfilename)
+    # load control file
+    blacklist = spirouConfig.GetTxt(blacklistfile, comments='#', delimiter=' ')
+    # return control
+    return blacklist
 
 
 # TODO: Needs better commenting
