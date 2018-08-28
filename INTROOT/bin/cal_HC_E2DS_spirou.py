@@ -424,13 +424,13 @@ def part2(p, loc):
     # construct column values (flatten over orders)
     for it in range(len(loc['X_DETAILS_2'])):
         for jt in range(len(loc['X_DETAILS_2'][it][0])):
-             row = [float(it), loc['X_DETAILS_2'][it][0][jt],
-                    loc['LL_DETAILS_2'][it][0][jt],
-                    loc['X_DETAILS_2'][it][3][jt],
-                    loc['X_DETAILS_2'][it][1][jt],
-                    loc['X_DETAILS_2'][it][2][jt],
-                    loc['SCALE_2'][it][jt]]
-             columnvalues.append(row)
+            row = [float(it), loc['X_DETAILS_2'][it][0][jt],
+                   loc['LL_DETAILS_2'][it][0][jt],
+                   loc['X_DETAILS_2'][it][3][jt],
+                   loc['X_DETAILS_2'][it][1][jt],
+                   loc['X_DETAILS_2'][it][2][jt],
+                   loc['SCALE_2'][it][jt]]
+            columnvalues.append(row)
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
