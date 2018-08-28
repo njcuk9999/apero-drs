@@ -74,10 +74,11 @@ def make_table(columns, values, formats=None, units=None):
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
-
             emsg1 = emsg.format(lcol, 'formats', len(formats))
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2])
+    else:
+        formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
