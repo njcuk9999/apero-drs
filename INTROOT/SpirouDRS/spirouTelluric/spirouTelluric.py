@@ -19,6 +19,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore import spirouMath
+
 
 # =============================================================================
 # Define variables
