@@ -142,7 +142,7 @@ def main(night_name=None, ufiles=None):
             # correct for the 1/f noise
             wmsg = 'Correcting for the 1/f noise'
             WLOG('', p['LOG_OPT'], wmsg)
-            image = spirouImage.PPMedianOneOverfNoise(p, image)
+            image = spirouImage.PPMedianOneOverfNoise2(p, image)
 
         # ------------------------------------------------------------------
         # rotate image

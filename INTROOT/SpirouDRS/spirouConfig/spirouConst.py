@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.102'
+__version__ =  '0.2.107'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-08-18'
+__date__ =  '2018-08-27'
 
 
 # =============================================================================
@@ -149,6 +149,17 @@ def RECIPE_CONTROL_FILE():
     recipe_control_file = 'recipe_control.txt'
     recipe_control_format = 'csv'
     return recipe_control_file, recipe_control_format
+
+
+# noinspection PyPep8Naming
+def TELLU_DATABASE_BLACKLIST_FILE():
+    """
+    Defines the telluric database blacklist filename
+
+    :return blacklistfile: string, the telluric blacklist file
+    """
+    blacklistfile = 'tellu_blacklist.txt'
+    return blacklistfile
 
 
 # =============================================================================
@@ -1405,7 +1416,7 @@ def STOKESI_POL_FILE(p, loc):
     # get base filename
     basefilename = loc['BASENAME']
     # get new extention
-    new_ext = '_StokesI.fits'
+    new_ext = '_AB_StokesI.fits'
     # get new filename
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path

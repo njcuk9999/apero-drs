@@ -80,6 +80,7 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set up function name
     main_name = __NAME__ + '.main()'
+
     # ------------------------------------------------------------------
     # Load first file
     # ------------------------------------------------------------------
@@ -131,6 +132,7 @@ def main(night_name=None, files=None):
     loc['OUTPUTFILES'] = []
     # loop around the files
     for basefilename in p['ARG_FILE_NAMES']:
+
         # ------------------------------------------------------------------
         # Get absolute path of filename
         # ------------------------------------------------------------------
@@ -165,6 +167,18 @@ def main(night_name=None, files=None):
         # set source
         source = main_name + '+ spirouImage.ReadParams()'
         loc.set_sources(['OBJNAME', 'AIRMASS'], source)
+
+        # ------------------------------------------------------------------
+        # Check that basefile is not in blacklist
+        # ------------------------------------------------------------------
+        blacklist_check = spirouTelluric.CheckBlackList(loc['OBJNAME'])
+        if blacklist_check:
+            # log black list file found
+            wmsg = 'File {0} is blacklisted (OBJNAME={1}). Skipping'
+            wargs = [basefilename, loc['OBJNAME']]
+            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            # skip this file
+            continue
 
         # ------------------------------------------------------------------
         # loop around the orders
