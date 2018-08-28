@@ -1317,6 +1317,24 @@ def WAVE_E2DS_COPY(p):
 
 
 # noinspection PyPep8Naming
+def HC_INIT_LINELIST(p):
+    # get the directory
+    reduced_dir = p['ARG_FILE_DIR']
+    # get the first input filename
+    old_filename = p['ARG_FILE_NAMES'][0]
+    # get the new ext
+    new_ext = '_linelist.dat'
+    # get the old ext
+    old_ext = '.fits'
+    # construct new filename
+    new_filename = old_filename.replace(old_ext, new_ext)
+    # construct absolute path
+    abspath = os.path.join(reduced_dir, new_filename)
+    # return absolute path
+    return abspath
+
+
+# noinspection PyPep8Naming
 def TELLU_TRANS_MAP_FILE(p, filename):
 
     # get path
