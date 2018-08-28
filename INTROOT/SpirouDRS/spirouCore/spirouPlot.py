@@ -13,6 +13,8 @@ from __future__ import division
 import numpy as np
 import time
 import matplotlib
+from astropy import constants as cc
+from astropy import units as uu
 
 from SpirouDRS import spirouConfig
 from . import spirouLog
@@ -51,6 +53,54 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouLog.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
+# Speed of light
+from __future__ import division
+import numpy as np
+import time
+import matplotlib
+from astropy import constants as cc
+from astropy import units as uu
+
+from SpirouDRS import spirouConfig
+from . import spirouLog
+
+# TODO: Is there a better fix for this?
+# fix for MacOSX plots freezing
+gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
+for gui in gui_env:
+    try:
+        matplotlib.use(gui, warn=False, force=True)
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle
+        break
+    except:
+        continue
+if matplotlib.get_backend() == 'MacOSX':
+    matplotlib_emsg = ['OSX Error: Matplotlib MacOSX backend not supported and '
+                       'Qt5Agg not available']
+else:
+    matplotlib_emsg = []
+
+
+# =============================================================================
+# Define variables
+# =============================================================================
+# Define the name of this module
+__NAME__ = 'spirouPlot.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
+# Get the parameter dictionary class
+ParamDict = spirouConfig.ParamDict
+# Get Logging function
+WLOG = spirouLog.wlog
+# get the default log_opt
+DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
+# Speed of light
+speed_of_light_ms = cc.c.to(uu.m/uu.s).value
+speed_of_light = cc.c.to(uu.km/uu.s).value
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
 # check for matplotlib import errors
@@ -71,10 +121,14 @@ def start_interactive_session(interactive=False):
     :return None:
     """
     if interactive is True:
-        plt.ion()
+        # plt.ion()
+        matplotlib.interactive(True)
+        pass
     # start interactive plot
     elif INTERACTIVE_PLOTS:
-        plt.ion()
+        # plt.ion()
+        matplotlib.interactive(True)
+        pass
 
 
 def end_interactive_session(interactive=False):
@@ -89,6 +143,15 @@ def end_interactive_session(interactive=False):
     if not interactive and not INTERACTIVE_PLOTS:
         plt.show()
         plt.close()
+
+
+def end_plotting():
+    # turn off interactive plotting
+    if not plt.isinteractive():
+        plt.show()
+        plt.close()
+    else:
+        pass
 
 
 def define_figure(num=1):
@@ -177,6 +240,8 @@ def darkplot_image_and_regions(pp, image):
     plt.title('Dark image with red and blue regions')
 
     # TODO: needs axis labels and titles
+    # end plotting function properly
+    end_plotting()
 
 
 def darkplot_datacut(imagecut):
@@ -204,6 +269,8 @@ def darkplot_datacut(imagecut):
     plt.title('Dark cut mask')
 
     # TODO: needs axis labels and title
+    # end plotting function properly
+    end_plotting()
 
 
 def darkplot_histograms(pp):
@@ -255,6 +322,8 @@ def darkplot_histograms(pp):
     frame.legend()
 
     # TODO: Needs axis labels and title
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -272,6 +341,8 @@ def locplot_order(frame, x, y, label):
     :return None:
     """
     frame.plot(x, y, label=label, linewidth=1.5, color='red')
+    # end plotting function properly
+    end_plotting()
 
 
 def locplot_y_miny_maxy(y, miny=None, maxy=None):
@@ -303,10 +374,8 @@ def locplot_y_miny_maxy(y, miny=None, maxy=None):
         frame.plot(rownumber, maxy, marker='_')
     # set title
     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def locplot_im_sat_threshold(image, threshold):
@@ -369,10 +438,8 @@ def locplot_order_number_against_rms(pp, loc, rnum):
                      '').format(pp['FIBER']))
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
@@ -404,10 +471,11 @@ def debug_locplot_min_ycc_loc_threshold(pp, cvalues):
     frame.set(title='Central CUT', xlabel='pixels', ylabel='ADU')
     # turn off interactive plotting
     if not plt.isinteractive():
-        plt.show()
-        plt.close()
+        pass
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
+    # end plotting function properly
+    end_plotting()
 
 
 def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
@@ -453,10 +521,11 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
 
     # turn off interactive plotting
     if not plt.isinteractive():
-        plt.show()
-        plt.close()
+        pass
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
+    # end plotting function properly
+    end_plotting()
 
 
 def debug_locplot_fit_residual(pp, loc, rnum, kind):
@@ -498,10 +567,11 @@ def debug_locplot_fit_residual(pp, loc, rnum, kind):
     # TODO: Need axis labels
     # turn off interactive plotting
     if not plt.isinteractive():
-        plt.show()
-        plt.close()
+        pass
     else:
         time.sleep(pp['IC_DISPLAY_TIMEOUT'] * 3)
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -558,10 +628,8 @@ def slit_sorder_plot(pp, loc, image):
 
     # TODO: Need axis labels and title
 
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def slit_tilt_angle_and_fit_plot(pp, loc):
@@ -594,10 +662,8 @@ def slit_tilt_angle_and_fit_plot(pp, loc):
               ylabel='Slit angle [deg]')
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -664,10 +730,8 @@ def ff_sorder_fit_edges(p, loc, image):
               title=title.format(selected_order, fiber))
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ff_aorder_fit_edges(p, loc, image):
@@ -745,9 +809,8 @@ def ff_aorder_fit_edges(p, loc, image):
     # Add legend
     frame.legend(loc=0)
     # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ff_sorder_tiltadj_e2ds_blaze(p, loc):
@@ -793,10 +856,8 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     frame.set(title=title.format(selected_order, fiber))
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ff_sorder_flat(p, loc):
@@ -837,10 +898,8 @@ def ff_sorder_flat(p, loc):
 
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ff_rms_plot(p, loc):
@@ -863,6 +922,8 @@ def ff_rms_plot(p, loc):
     wmsg = 'Mean S/N= {0:.1f} - Mean RMS = {1:.5f}'
     wargs = [np.mean(loc['SNR']), np.mean(rmsc)]
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -925,10 +986,8 @@ def ext_sorder_fit(p, loc, image, cut=20000):
               title=title.format(selected_order, fiber))
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ext_aorder_fit(p, loc, image, cut=20000):
@@ -997,10 +1056,8 @@ def ext_aorder_fit(p, loc, image, cut=20000):
               title=title.format(selected_order, fiber))
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ext_spectral_order_plot(p, loc):
@@ -1041,10 +1098,8 @@ def ext_spectral_order_plot(p, loc):
 
     frame.set(xlabel=xlabel, ylabel='flux',
               title=title.format(selected_order, fiber))
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def ext_1d_spectrum_plot(p, x, y):
@@ -1061,10 +1116,8 @@ def ext_1d_spectrum_plot(p, x, y):
     title = 'Spectrum (1D) Order {0} to {1}'.format(*targs)
     # set labels
     frame.set(xlabel='Wavelength [nm]', ylabel='flux', title=title)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -1116,10 +1169,8 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     title = 'spectral order {0} fiber {1}'
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber))
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
@@ -1158,10 +1209,8 @@ def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
     title = 'Photon noise uncertainty versus spectral order'
     frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
               title=title)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def drift_plot_dtime_against_mdrift(p, loc, kind=None):
@@ -1231,10 +1280,8 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     frame.set(xlabel='$\Delta$ time [hours]',
               ylabel='{0} drift [m/s]'.format(mstr),
               title=title.format(mstr))
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def drift_peak_plot_dtime_against_drift(p, loc):
@@ -1291,10 +1338,8 @@ def drift_peak_plot_dtime_against_drift(p, loc):
               title=title)
     # add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def drift_plot_correlation_comp(p, loc, cc, iteration):
@@ -1433,10 +1478,8 @@ def drift_plot_correlation_comp(p, loc, cc, iteration):
     plt.suptitle(title.format(*targs))
 
     # -------------------------------------------------------------------------
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def create_separated_scaled_image(image, axis=0):
@@ -1527,10 +1570,8 @@ def drift_peak_plot_llpeak_amps(p, loc):
     # set title labels limits
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title='$log_{10}$(Max Amplitudes)')
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -1568,10 +1609,8 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     frame.set(xlabel='Rv [km/s]', ylabel='CCF', title=title)
     # set legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
     # pause
     if pause:
         time.sleep(1.0)
@@ -1608,10 +1647,8 @@ def wave_littrow_extrap_plot(loc, iteration=0):
                       marker='o', s=10, color=colours[order_num])
     # set axis labels
     frame.set(xlabel='Pixel number', ylabel='Wavelength [nm]')
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def wave_littrow_check_plot(p, loc, iteration=0):
@@ -1641,10 +1678,8 @@ def wave_littrow_check_plot(p, loc, iteration=0):
               title=title)
     # add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def wave_plot_instrument_drift(p, x, spe, speref):
@@ -1666,10 +1701,8 @@ def wave_plot_instrument_drift(p, x, spe, speref):
     title = 'Comparison between data and reference order={0} fiber={1}'
     frame.set(xlabel='Wavelength [Angstrom]', ylabel='e-',
               title=title.format(selected_order, fiber))
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def wave_plot_final_fp_order(p, loc, iteration=0):
@@ -1709,10 +1742,8 @@ def wave_plot_final_fp_order(p, loc, iteration=0):
     title = 'spectral order {0} fiber {1} (iteration = {2})'
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
               title=title.format(selected_order, fiber, iteration))
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def wave_local_width_offset_plot(loc):
@@ -1749,10 +1780,8 @@ def wave_local_width_offset_plot(loc):
               title=title)
     # Add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def wave_fp_wavelength_residuals(loc):
@@ -1782,14 +1811,121 @@ def wave_fp_wavelength_residuals(loc):
     frame.set(xlabel='Initial wavelength [nm]',
               ylabel='New - Initial wavelength [nm]',
               title=title)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
-# wave solution plotting function
+# wave solution plotting function (EA)
+# =============================================================================
+def wave_ea_plot_per_order_hcguess(p, loc, order_num):
+
+    # get data from loc
+    wave = loc['INITIAL_WAVE_MAP']
+    hc_sp = loc['HCDATA']
+    # get data from loc
+    xpix_ini = loc['XPIX_INI']
+    g2_ini = loc['G2_INI']
+
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot spectrum for order
+    frame.plot(wave[order_num, :], hc_sp[order_num, :], color='k')
+    # over plot all fits
+    for line_it in range(len(xpix_ini)):
+        xpix = xpix_ini[line_it]
+        g2 = g2_ini[line_it]
+        plt.plot(wave[order_num, xpix], g2)
+
+    # set title and labels
+    frame.set(title='Per-order spectrum, Order={0}'.format(order_num),
+              xlabel='Wavelength [nm]',
+              ylabel='Normalized flux')
+
+    # show, close and turn interactive on
+    plt.show()
+    plt.close()
+
+
+
+def wave_ea_plot_wave_cat_all_and_brightest(p, wave_c, dv, bmask, iteration):
+    # get constants from p
+    n_iterations = p['HC_NITER_FIT_TRIPLET']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot all lines
+    frame.scatter(wave_c[~bmask], dv[~bmask], color='g', s=5,
+                  label='All lines')
+    # plot brightest lines
+    frame.scatter(wave_c[bmask], dv[bmask], color='r', s=5,
+                  label='Brightest per order')
+    # plot legend
+    frame.legend(loc=0)
+    # plot title and labels
+    title = 'Delta-v error for matched lines (Iteration {0} of {1})'
+    frame.set(title=title.format(iteration + 1, n_iterations),
+              xlabel='Wavelength [nm]',
+              ylabel='dv [km/s]')
+    # end plotting function properly
+    end_plotting()
+
+
+def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
+                           xgau, ew, iteration):
+    # get constants from p
+    n_iterations = p['HC_NITER_FIT_TRIPLET']
+    # get all orders
+    all_orders = np.unique(orders)
+    # calculate dv values
+    dv = ((wave_catalog/recon0) - 1) * speed_of_light
+    # get colours
+    colours = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    # repeat colours to match all_orders
+    colours = np.tile(colours, len(all_orders))
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame1 = plt.subplot(221)
+    frame2 = plt.subplot(222)
+    frame3 = plt.subplot(223)
+    frame4 = plt.subplot(224)
+    # loop around orders
+    for order_num in all_orders:
+        # identify this orders good values
+        good = orders == order_num
+        # get colour for this order
+        colour = colours[order_num]
+        # plot frame1
+        frame1.scatter(wave_catalog[good], dv[good], s=5, color=colour)
+        # plot frame2
+        frame2.scatter(1.0/gauss_rms_dev[good], dv[good], s=5, color=colour)
+        # plot frame3
+        frame3.scatter(xgau[good] % 1, dv[good], s=5, color=colour)
+        # plot frame4
+        frame4.scatter(ew[good], dv[good], s=5, color=colour)
+    # set up labels
+    frame1.set(xlabel='Wavelength [nm]', ylabel='dv [km/s]')
+    frame2.set(xlabel='Line SNR estimate', ylabel='dv [km/s]')
+    frame3.set(xlabel='Modulo pixel position', ylabel='dv [km/s]')
+    frame4.set(xlabel='e-width of fitted line', ylabel='dv [km/s]')
+    # add title
+    plt.suptitle('Iteration {0} of {1}'.format(iteration + 1, n_iterations))
+    # end plotting function properly
+    end_plotting()
+
+
+# =============================================================================
+# telluric plotting function
 # =============================================================================
 def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
 
@@ -1812,10 +1948,8 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
     frame.set_title(outfile)
     # set limit
     frame.set(ylim=[0.75, 1.15])
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def tellu_pca_comp_plot(p, loc):
@@ -1847,10 +1981,8 @@ def tellu_pca_comp_plot(p, loc):
         frame.plot(wave, pc[:, it], label=label)
     # add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def tellu_fit_tellu_spline_plot(p, loc):
@@ -1883,10 +2015,8 @@ def tellu_fit_tellu_spline_plot(p, loc):
     frame.plot(swave, srecov/np.nanmedian(srecov), label='Recov abso SP')
     # add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def tellu_fit_recon_abso_plot(p, loc):
@@ -1915,10 +2045,8 @@ def tellu_fit_recon_abso_plot(p, loc):
     frame.plot(swave, srecon_abso, color='r', label='recon abso')
     # add legend
     frame.legend(loc=0)
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -1965,10 +2093,8 @@ def polar_continuum_plot(loc, in_wavelengths=True):
     # plot legend
     frame.legend(loc=0)
     # ---------------------------------------------------------------------
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def polar_result_plot(loc, in_wavelengths=True):
@@ -2008,10 +2134,8 @@ def polar_result_plot(loc, in_wavelengths=True):
     # plot legend
     frame.legend(loc=0)
     # ---------------------------------------------------------------------
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def polar_stokesI_plot(loc, in_wavelengths=True):
@@ -2047,11 +2171,8 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
     # ---------------------------------------------------------------------
     # plot legend
     frame.legend(loc=0)
-    # ---------------------------------------------------------------------
-    # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 def polar_lsd_plot(loc) :
@@ -2103,9 +2224,8 @@ def polar_lsd_plot(loc) :
 
     # ---------------------------------------------------------------------
     # turn off interactive plotting
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
