@@ -691,6 +691,51 @@ def median_one_over_f_noise(p, image):
     return image
 
 
+def median_one_over_f_noise2(p, image):
+    """
+    Use the dark amplifiers to create a map of the 1/f (residual) noise and
+    apply it to the image
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                               detector
+                NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                                 amplifiers on the detector
+    :param image: numpy array (2D), the image
+
+    :return image: numpy array (2D), the corrected image
+    """
+    # get the image size
+    dim1, dim2 = image.shape
+    # get constants from p
+    total_amps = p['TOTAL_AMP_NUM']
+    n_dark_amp = p['NUMBER_DARK_AMP']
+    # width of an amplifier
+    amp_width = dim1 // total_amps
+    # set up a residual low frequency array
+    residual_low_f = np.zeros(dim1)
+    # loop around the dark amplifiers
+    for amp in range(n_dark_amp):
+        # define the start and end points of this amplifier
+        start = amp * amp_width
+        end = amp * amp_width + amp_width
+        # median this amplifier across the x axis
+        residual_low_f_tmp = np.nanmedian(image[:, start:end], axis=1)
+        # if this is the first amplifier just set it equal to the median
+        if amp == 0:
+            residual_low_f = np.array(residual_low_f_tmp)
+        # else only set values if they are less than the previous amplifier(s)
+        else:
+            smaller = residual_low_f_tmp < residual_low_f
+            residual_low_f[smaller] = residual_low_f_tmp[smaller]
+    # subtract the 1/f noise from the image
+    for pixel in range(dim2):
+        image[:, pixel] -= residual_low_f
+    # return the corrected image
+    return image
+
+
 # =============================================================================
 # Define Image correction functions
 # =============================================================================
