@@ -61,6 +61,8 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
                 log_opt: string, log option, normally the program name
                 kw_TH_COEFF_PREFIX: list, the keyword store for the prefix to
                                     use to get the TH line list fit coefficients
+                PIXEL_SHIFT_INTER: float, the intercept of a linear pixel shift
+                PIXEL_SHIFT_SLOPE: float, the slope of a linear pixel shift
 
     :param hdr: dictionary or None, the HEADER dictionary with the acquisition
                 time in to use in the calibration database to get the filename
@@ -124,7 +126,8 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
         WLOG('warning', p['LOG_OPT'], wmsg.format())
 
     # get the line list
-    ll = spirouMath.get_ll_from_coefficients(param_ll, xsize, nbo)
+    ll = spirouMath.get_ll_from_coefficients(pixel_shift_inter,pixel_shift_slope,
+                                             param_ll, xsize, nbo)
 
     # return ll and param_ll
     return ll, param_ll
@@ -526,7 +529,8 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     pixel_shift_inter = 0
     pixel_shift_slope = 0
     # get new line list
-    ll_out = spirouMath.get_ll_from_coefficients(inv_params, xdim, num_orders)
+    ll_out = spirouMath.get_ll_from_coefficients(pixel_shift_inter,pixel_shift_slope,
+                                                 inv_params, xdim, num_orders)
     # get the first derivative of the line list
     dll_out = spirouMath.get_dll_from_coefficients(inv_params, xdim, num_orders)
     # find the central pixel value
