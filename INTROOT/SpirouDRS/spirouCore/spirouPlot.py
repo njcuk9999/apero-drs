@@ -54,51 +54,6 @@ WLOG = spirouLog.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Speed of light
-from __future__ import division
-import numpy as np
-import time
-import matplotlib
-from astropy import constants as cc
-from astropy import units as uu
-
-from SpirouDRS import spirouConfig
-from . import spirouLog
-
-# TODO: Is there a better fix for this?
-# fix for MacOSX plots freezing
-gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
-for gui in gui_env:
-    try:
-        matplotlib.use(gui, warn=False, force=True)
-        import matplotlib.pyplot as plt
-        from matplotlib.patches import Rectangle
-        break
-    except:
-        continue
-if matplotlib.get_backend() == 'MacOSX':
-    matplotlib_emsg = ['OSX Error: Matplotlib MacOSX backend not supported and '
-                       'Qt5Agg not available']
-else:
-    matplotlib_emsg = []
-
-
-# =============================================================================
-# Define variables
-# =============================================================================
-# Define the name of this module
-__NAME__ = 'spirouPlot.py'
-# Get version and author
-__version__ = spirouConfig.Constants.VERSION()
-__author__ = spirouConfig.Constants.AUTHORS()
-__date__ = spirouConfig.Constants.LATEST_EDIT()
-__release__ = spirouConfig.Constants.RELEASE()
-# Get the parameter dictionary class
-ParamDict = spirouConfig.ParamDict
-# Get Logging function
-WLOG = spirouLog.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
-# Speed of light
 speed_of_light_ms = cc.c.to(uu.m/uu.s).value
 speed_of_light = cc.c.to(uu.km/uu.s).value
 # -----------------------------------------------------------------------------
