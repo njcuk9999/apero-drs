@@ -31,12 +31,17 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
-# detector type (from switching between H2RG and H4RG)
+#   detector type (from switching between H2RG and H4RG)
 ic_image_type = "H4RG"
 
-#    Interval between plots (for certain interactive graphs)         - [cal_loc]
+#   Interval between plots (for certain interactive graphs)          - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
+
+#   The number of night name directories to display when there is        - [all]
+#       no night name argument
+drs_night_name_display_limit = 10
+
 
 # -----------------------------------------------------------------------------
 #  CFHT variables
