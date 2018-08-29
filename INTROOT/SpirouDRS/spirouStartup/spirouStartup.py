@@ -389,7 +389,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
             emsgs.append(' ')
             # get available night_names
             nightnames = get_night_dirs(p)
-            emsgs.append('Available [FOLDER]s are as follows:')
+            emsgs.append('Some available [FOLDER]s are as follows:')
             # loop around night names and add to message
             for nightname in nightnames:
                 emsgs.append('\t {0}'.format(nightname))
@@ -1504,10 +1504,15 @@ def get_fiber_type1(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
 
 def get_night_dirs(p):
     night_dirs = []
+    limit = p['DRS_NIGHT_NAME_DISPLAY_LIMIT']
     for root, dirs, files in os.walk(p['ARG_FILE_DIR']):
         # skip dirs that are empty (or full of directories)
         if len(files) == 0:
             continue
+        # do not display all
+        if len(night_dirs) > limit:
+            night_dirs.append('...')
+            return night_dirs
         # find the relative root of directories compared to ARG_FILE_DIR
         common = os.path.commonpath([p['ARG_FILE_DIR'], root]) + '/'
         relroot = root.split(common)[-1]

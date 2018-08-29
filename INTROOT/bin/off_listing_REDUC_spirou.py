@@ -58,7 +58,7 @@ def main(night_name=None):
         emsgs = ['Must define night name. Input should be:']
         emsgs.append('\t >> {0} [NIGHT_NAME]'.format(__NAME__))
         emsgs.append(' ')
-        emsgs.append('Available NIGHT_NAMES are as follows:')
+        emsgs.append('Some available NIGHT_NAMES are as follows:')
         # loop around night names and add to message
         for nightname in nightnames:
             emsgs.append('\t {0}'.format(nightname))
