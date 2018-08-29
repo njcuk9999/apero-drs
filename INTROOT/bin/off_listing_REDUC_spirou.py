@@ -52,9 +52,19 @@ def main(night_name=None):
 
     # check that we have a night_name
     if p['ARG_NIGHT_NAME'] == '':
-        emsg1 = 'Must define night name. Input should be:'
-        emsg2 = '\t >> {0} [NIGHT_NAME]'.format(__NAME__)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        # get available night_names
+        nightnames = spirouStartup.GetNightDirs(p)
+
+        emsgs = ['Must define night name. Input should be:']
+        emsgs.append('\t >> {0} [NIGHT_NAME]'.format(__NAME__))
+        emsgs.append(' ')
+        emsgs.append('Available NIGHT_NAMES are as follows:')
+        # loop around night names and add to message
+        for nightname in nightnames:
+            emsgs.append('\t {0}'.format(nightname))
+        # log message
+        WLOG('error', p['LOG_OPT'], emsgs)
+
 
     # ----------------------------------------------------------------------
     # Get all files in raw night_name directory
