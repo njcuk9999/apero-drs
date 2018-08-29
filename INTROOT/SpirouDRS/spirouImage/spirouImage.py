@@ -1521,7 +1521,8 @@ def get_sigdet(p, hdr, name=None, return_value=False):
     return get_param(p, hdr, 'kw_rdnoise', name, return_value)
 
 
-def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
+def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
+              required=True):
     """
     Get parameter from header "hdr" using "keyword" (keyword store constant)
 
@@ -1554,7 +1555,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
     if name is None:
         name = key
     # get raw value
-    rawvalue = spirouFITS.keylookup(p, hdr, key)
+    rawvalue = spirouFITS.keylookup(p, hdr, key, required=required)
     # get type casted value
     try:
         if dtype is None:
@@ -1568,11 +1569,14 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
             WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
-        emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
-                 '').format(keyword, rawvalue, dtype)
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-        value = None
+        if not required:
+            value = None
+        else:
+            emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
+                     '').format(keyword, rawvalue, dtype)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            value = None
 
     # deal with return value
     if return_value:
@@ -1642,7 +1646,7 @@ def get_wave_keys(p, loc, hdr):
     # else we have got the wave info from the calibDB
     else:
         # log warning
-        wmsg = 'Warning key="{0}" not in HEADER file'
+        wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
         WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
         # get parameters from the calibDB
         key = 'WAVE_' + p['FIBER']

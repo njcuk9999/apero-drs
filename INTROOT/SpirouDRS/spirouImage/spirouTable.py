@@ -263,9 +263,9 @@ def read_table(filename, fmt, colnames=None, **kwargs):
 
 def print_full_table(table):
     tablestrings = table.pformat(max_lines=len(table)*10)
-    WLOG('', '', '=' * len(tablestrings[0]))
-    WLOG('', '', tablestrings)
-    WLOG('', '', '=' * len(tablestrings[0]))
+    WLOG('', '', '=' * len(tablestrings[0]), wrap=False)
+    WLOG('', '', tablestrings, wrap=False)
+    WLOG('', '', '=' * len(tablestrings[0]), wrap=False)
 
 
 # =============================================================================
