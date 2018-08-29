@@ -23,6 +23,7 @@ from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
+from SpirouDRS.spirouCore import spirouMath
 from . import spirouFITS
 from . import spirouTable
 
@@ -1638,16 +1639,20 @@ def get_wave_keys(p, loc, hdr):
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
         loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
-    # TODO: Remove section later
+    # else we have got the wave info from the calibDB
     else:
         # log warning
         wmsg = 'Warning key="{0}" not in HEADER file'
         WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
-        # set wave file to fitsfilename
-        loc['WAVEFILE'] = p['FITSFILENAME']
-        loc['WAVETIME1'] = 'Unknown'
-        loc['WAVETIME2'] = -9999
-
+        # get parameters from the calibDB
+        key = 'WAVE_' + p['FIBER']
+        calib_time_human = spirouDB.GetAcqTime(p, hdr)
+        fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
+        # set the parameters in wave
+        loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
+        loc['WAVETIME1'] = calib_time_human
+        loc['WAVETIME2'] = calib_time_unix
     # set sources
     loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
     # return loc
