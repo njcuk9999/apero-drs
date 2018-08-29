@@ -878,7 +878,7 @@ def fit_gaussian_triplets(p , loc):
             # get number of good_bright
             num_gb = np.sum(good_bright)
             bestn = 0
-            best_coeffs = np.zeros(triplet_deg)
+            best_coeffs = np.zeros(triplet_deg + 1)
             # get the indices of the triplets of bright lines
             indices = itertools.combinations(range(num_gb), 3)
             # loop around triplets
@@ -900,7 +900,7 @@ def fit_gaussian_triplets(p , loc):
                 nkeep = np.sum(np.abs(ev) < cut_fit_threshold)
                 # if number of lines to keep largest seen --> store
                 if nkeep > bestn:
-                    bestn = int(nkeep)
+                    bestn = nkeep
                     best_coeffs = np.array(coeffs)
             # Log the total number of valid lines found
             wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
@@ -971,7 +971,7 @@ def fit_gaussian_triplets(p , loc):
             # loop around orders
             for expo_order in range(order_fit_continuity[expo_xpix]):
                 part1 = orders ** expo_order
-                part2 = xgau ** expo_xpix
+                part2 = np.array(xgau) ** expo_xpix
                 lin_mod_slice[:, ii] = part1 * part2
                 # iterate
                 ii += 1
