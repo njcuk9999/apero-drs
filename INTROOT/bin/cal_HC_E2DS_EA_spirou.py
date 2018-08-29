@@ -44,7 +44,11 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+
+if __name__ == '__main__':
+    import sys
+    sys.argv = 'cal_HC_E2DS_EA_spirou.py AT5/20180409 hcone_hcone_001_pp_e2ds_AB.fits'.split()
+    night_name, files = None, None
     """
     cal_HC_E2DS.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -108,7 +112,7 @@ def main(night_name=None, files=None):
     # The fit degree between triplets
     p['HC_TFIT_DEG'] = 2
     # Cut threshold for the triplet line fit [in km/s]
-    p['HC_TFIT_CUT_THRES'] = 0.3
+    p['HC_TFIT_CUT_THRES'] = 1.0
     # Minimum number of lines required per order
     p['HC_TFIT_MIN_NUM_LINES'] = 10
     # Minimum total number of lines required
@@ -271,6 +275,8 @@ def main(night_name=None, files=None):
     # End Message
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p)
+
+def main(night_name=None, files=None):
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
