@@ -148,7 +148,7 @@ def main(night_name=None):
         # construct astropy table from column names, values and formats
         table = spirouImage.MakeTable(columns, values, formats)
         # save table to file
-        # spirouImage.WriteTable(table, outfile, fmt='ascii.rst')
+        spirouImage.WriteTable(table, outfile, fmt='ascii.rst')
 
         # log saving of file
         wmsg = 'Listing of directory on file {0}'
