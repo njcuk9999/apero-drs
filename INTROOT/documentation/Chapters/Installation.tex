@@ -172,8 +172,8 @@ The next step is to modify your PATH and PYTHONPATH environmental variables (to 
 	\item In bash open the `.bashrc' or `.bash\_profile' text file in your home ($\sim$) directory (or create it if it doesn't exist)
 
 	\begin{bashbox}[title={e.g. in $\sim$/.bashrc or $\sim$/.bash\_profile}]
-	@export@ <PATH>="(*\InstallDIR*)/INTROOT/bin/":{(*\$*)PATH}
-	@export@ <PYTHONPATH>="(*\InstallDIR*)/INTROOT/":"(*\InstallDIR*)/INTROOT/bin/":{(*\$*)PYTHONPATH}
+	@export@ <PATH>="(*\InstallDIR*)/INTROOT/bin/":(*\$*)PATH
+	@export@ <PYTHONPATH>="(*\InstallDIR*)/INTROOT/":"(*\InstallDIR*)/INTROOT/bin/":(*\$*)PYTHONPATH
 	@export@ <DRS_UCONFIG>="(*\userDIR*)"
 	\end{bashbox}
 
