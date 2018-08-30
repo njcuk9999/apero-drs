@@ -684,10 +684,10 @@ def get_time_now_unix(zone='UTC'):
     """
     if zone == 'UTC':
         dt = datetime.utcnow()
-        return timegm(dt.timetuple()) + dt.microsecond/1e3
+        timegm(dt.timetuple()) + dt.microsecond/1e6
     else:
         dt = datetime.now()
-        return mktime(dt.timetuple()) + dt.microsecond/1e3
+        return mktime(dt.timetuple()) + dt.microsecond/1e6
 
 
 def get_time_now_string(fmt=TIME_FMT, zone='UTC'):
