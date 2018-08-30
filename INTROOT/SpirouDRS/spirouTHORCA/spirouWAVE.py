@@ -693,7 +693,7 @@ def find_hc_gauss_peaks(p, loc):
             if keep:
                 # fit a gaussian with a slope
                 gargs = [xpix, segment, gfitmode]
-                popt_left, g2 = spirouMath.gauss_fit_slope(*gargs)
+                popt_left, g2 = spirouMath.gauss_fit_nn(*gargs)
                 # residual of the fit normalized by peak value similar to
                 #    an 1/SNR value
                 gauss_rms_dev0 = np.std(segment - g2) / popt_left[0]
@@ -794,20 +794,26 @@ def fit_gaussian_triplets(p , loc):
     # get dimensions
     nbo, nbpix = loc['NBO'], loc['NBPIX']
 
+
     # ------------------------------------------------------------------
     # triplet loop
     # TODO: Move loop out of function
+    # set up storage
+    wave_catalog = []
+    wave_map2 = np.zeros((nbo, nbpix))
+    sig = np.nan
+
     for sol_iteration in range(n_iterations):
         # log progress
         # TODO Move log progress out of function
         wmsg = 'Fit Triplet {0} of {1}'
         WLOG('info', p['LOG_OPT'], wmsg.format(sol_iteration + 1, n_iterations))
-        # Re-get coefficients
-        xgau = loc['XGAU_INI']
-        orders = loc['ORD_INI']
-        gauss_rms_dev = loc['GAUSS_RMS_DEV_INI']
-        ew = loc['EW_INI']
-        peak = loc['PEAK_INI']
+        # get coefficients
+        xgau = np.array(loc['XGAU_INI'])
+        orders = np.array(loc['ORD_INI'])
+        gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+        ew = np.array(loc['EW_INI'])
+        peak = np.array(loc['PEAK_INI'])
         # --------------------------------------------------------------
         # find the brightest lines for each order, only those lines will
         #     be used to derive the first estimates of the per-order fit
@@ -1051,12 +1057,12 @@ def fit_gaussian_triplets(p , loc):
         # loop around the orders
         for order_num in range(nbo):
             ii = 0
-            for expo_order in range(len(order_fit_continuity)):
+            for expo_xpix in range(len(order_fit_continuity)):
                 for expo_order in range(order_fit_continuity[expo_xpix]):
                     # calculate new coefficient
                     new_coeff = (order_num ** expo_order) * amps0[ii]
                     # add to poly wave solution
-                    poly_wave_sol[order_num, expo_order] += new_coeff
+                    poly_wave_sol[order_num, expo_xpix] += new_coeff
                     # iterate
                     ii += 1
             # add to wave_map2
@@ -1067,7 +1073,136 @@ def fit_gaussian_triplets(p , loc):
     loc['WAVE_CATALOG'] = wave_catalog
     loc['SIG'] = sig
     loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
+    loc['POLY_WAVE_SOL'] = poly_wave_sol
     loc['WAVE_MAP2'] = wave_map2
+
+    # return loc
+    return loc
+
+
+def generate_resolution_map(p, loc):
+    func_name = __NAME__ + '.generate_resolution_map()'
+    # get constants from p
+    resmap_size = p['HC_RESMAP_SIZE']
+    wsize = p['HC_FITTING_BOX_SIZE']
+    max_dev_threshold = p['HC_RES_MAXDEV_THRES']
+    # get data from loc
+    hc_sp = loc['HCDATA']
+    xgau = np.array(loc['XGAU_INI'])
+    orders = np.array(loc['ORD_INI'])
+    gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+    wave_catalog = loc['WAVE_CATALOG']
+    wave_map2 = loc['WAVE_MAP2']
+    # get dimensions
+    nbo, nbpix = loc['NBO'], loc['NBPIX']
+    # storage of resolution map
+    resolution_map = np.zeros(resmap_size)
+    map_dvs = []
+    map_lines = []
+    map_params = []
+
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+
+    # determine the line spread function
+
+    # loop around the order bins
+    for order_num in range(0, nbo, bin_order):
+        # storage of map parameters
+        order_dvs = []
+        order_lines = []
+        order_params = []
+        # loop around the x position
+        for xpos in range(0, nbpix, bin_x):
+            mask = gauss_rms_dev < 0.05
+            mask &= (orders // bin_order) == (order_num // bin_order)
+            mask &= (xgau // bin_x) == (xpos // bin_x)
+            mask &= np.isfinite(wave_catalog)
+
+            # get the x centers for this bin
+            b_xgau = xgau[mask]
+            b_orders = orders[mask]
+            b_wave_catalog = wave_catalog[mask]
+
+            # set up storage for lines and dvs
+            all_lines = np.zeros((np.sum(mask), 2 * wsize + 1))
+            all_dvs = np.zeros((np.sum(mask), 2 * wsize + 1))
+
+            # set up base
+            base = np.zeros(2 * wsize + 1, dtype=bool)
+            base[0:3] = True
+            base[2 * wsize - 2: 2 * wsize + 1] = True
+
+            # loop around all good lines
+            for it in range(np.sum(mask)):
+                # get limits
+                border = int(b_orders[it])
+                start = int(b_xgau[it] + 0.5) - wsize
+                end = int(b_xgau[it] + 0.5) + wsize + 1
+                # get line
+                line = hc_sp[border, start:end]
+                # normalise line by median of the base
+                line -= np.median(line[base])
+                # calculate velocity
+                ratio = wave_map2[border, start:end] / b_wave_catalog[it]
+                dv = -speed_of_light * (ratio - 1)
+                # store line and dv
+                all_lines[it, :] = line
+                all_dvs[it, :] = dv
+            # flatten all lines and dvs
+            all_dvs = all_dvs.ravel()
+            all_lines = all_lines.ravel()
+            # define storage for keep mask
+            keep = np.ones(len(all_dvs), dtype=bool)
+            # set an initial maximum deviation
+            maxdev = np.inf
+            # set up the fix parameters and initial guess parameters
+            popt = np.zeros(5)
+            init_guess = [0.3, 0.0, 1.0, 0.0, 0.0]
+            # loop around until criteria met
+            while maxdev > max_dev_threshold:
+                # fit with a guassian with a slope
+                fargs = dict(x=all_dvs[keep], y=all_lines[keep],
+                             guess=init_guess)
+                popt, pcov = spirouMath.fit_gaussian_with_slope(*fargs)
+                # calculate residuals for full line list
+                res = all_lines - spirouMath.gauss_fit_s(all_dvs, *popt)
+                # calculate RMS of residuals
+                rms = res / np.median(np.abs(res))
+                # calculate max deviation
+                maxdev = np.max(np.abs(rms[keep]))
+                # re-calculate the keep mask
+                keep[np.abs(rms) > max_dev_threshold] = False
+            # calculate resolution
+            resolution = popt[2] * spirouMath.fwhm()
+            # store order criteria
+            order_dvs.append(all_dvs[keep])
+            order_lines.append(all_lines[keep])
+            order_params.append(popt)
+        # store criteria
+        map_dvs.append(order_dvs)
+        map_lines.append(order_lines)
+        map_params.append(order_params)
+        # push resolution into resolution map
+        resolution1 = speed_of_light / resolution
+        resolution_map[order_num // bin_order, xpos // bin_x] = resolution1
+        # log resolution output
+
+        wmsg = ('\tOrder {0}: nlines={1} xpos={2} resolution={3:.5f} km/s '
+                'R={4:.5f}')
+        wargs = [order_num, np.sum(mask), xpos // bin_x, resolution,
+                 resolution1]
+        WLOG('info', p['LOG_OPT'], wmsg)
+
+    # push to loc
+    loc['RES_MAP_DVS'] = map_dvs
+    loc['RES_MAP_LINES'] = map_lines
+    loc['RES_MAP_PARAMS'] = map_params
+    loc['RES_MAP'] = resolution_map
+    # set source
+    sources = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
+    loc.set_sources(sources, func_name)
 
     # return loc
     return loc
