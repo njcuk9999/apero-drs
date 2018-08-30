@@ -131,6 +131,11 @@ if __name__ == '__main__':
     # quality control criteria if sigma greater than this many sigma fails
     p['QC_HC_WAVE_SIGMA_MAX'] = 8
 
+    # resolution and line profile map size (y-axis by x-axis)
+    p['HC_RESMAP_SIZE'] = (5, 4)
+    # The maximum allowed deviation in the RMS line spread function
+    p['HC_RES_MAXDEV_THRES'] = 8
+
     # TODO: Add to constants file
 
 
@@ -258,6 +263,10 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
     # Generate Resolution map and line profiles
     # ----------------------------------------------------------------------
+    # log progress
+    wmsg = 'Generating resolution map and '
+
+    loc = spirouWAVE.generate_resolution_map(p, loc)
 
     # ----------------------------------------------------------------------
     # Save wave map to file
