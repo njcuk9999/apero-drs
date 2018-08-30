@@ -191,6 +191,17 @@ def fitgaussian_lmfit(x, y, weights, return_fit=True,
         return np.array(pfit)
 
 
+def fit_gaussian_with_slope(x, y, guess, return_fit=False):
+
+    with warnings.catch_warnings(record=True) as _:
+        popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
+
+    if return_fit:
+        return popt, pcov, gauss_fit_s(x, *popt)
+    else:
+        return popt, pcov
+
+
 def gauss_function(x, a, x0, sigma, dc):
     """
     A standard 1D gaussian function (for fitting against)]=
@@ -277,7 +288,7 @@ def gaussian_function_nn(x, a):
     return fout, pder
 
 
-def gauss_fit_slope(xpix, ypix, nn):
+def gauss_fit_nn(xpix, ypix, nn):
     """
     fits a Gaussian function to xpix and ypix without prior knowledge of
     parameters
@@ -362,6 +373,13 @@ def gauss_fit_slope(xpix, ypix, nn):
         n_it += 1
     # return a0 and gfit
     return a0, gfit
+
+
+def gauss_fit_s(x, a, x0, sigma, zp, slope):
+    sig = np.abs(sigma)
+    gauss = a * np.exp(-(x - x0) ** 2 / (2 * sig **2)) + zp
+    correction = (x - np.mean(x)) * slope
+    return gauss + correction
 
 
 def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params,
@@ -666,10 +684,10 @@ def get_time_now_unix(zone='UTC'):
     """
     if zone == 'UTC':
         dt = datetime.utcnow()
-        return timegm(dt.timetuple())
+        return timegm(dt.timetuple()) + dt.microsecond/1e3
     else:
         dt = datetime.now()
-        return mktime(dt.timetuple())
+        return mktime(dt.timetuple()) + dt.microsecond/1e3
 
 
 def get_time_now_string(fmt=TIME_FMT, zone='UTC'):
