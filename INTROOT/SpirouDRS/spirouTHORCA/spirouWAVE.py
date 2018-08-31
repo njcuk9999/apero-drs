@@ -387,10 +387,9 @@ def fp_wavelength_sol_new(p, loc):
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
             FPDATA: the FP e2ds data
-            WAVE: the initial wavelength solution
-            LL_OUT_2: the wavelength solution derived from the HC
+            LITTROW_EXTRAP_SOL_1: the wavelength solution derived from the HC
                                   and Littrow-constrained
-            LL_PARAM_2: the parameters of the wavelength solution
+            LL_PARAM_1: the parameters of the wavelength solution
             ALL_LINES_2: list of numpy arrays, length = number of orders
                        each numpy array contains gaussian parameters
                        for each found line in that order
@@ -420,7 +419,7 @@ def fp_wavelength_sol_new(p, loc):
 
     # find FP lines
     loc = find_fp_lines_new(p, loc)
-
+    all_lines_2 = loc['ALL_LINES_2']
     # set up storage
     llpos_all, xxpos_all, ampl_all = [], [], []
     m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
@@ -432,7 +431,8 @@ def fp_wavelength_sol_new(p, loc):
         # select the lines in the order
         gg = loc['ORDPEAK'] == order_num
         # store the initial wavelengths of the lines
-        floc['llpos'] = np.polyval(loc['LL_PARAM_2'][order_num][::-1], loc['XPEAK'][gg])
+        floc['llpos'] = np.polyval(loc['LITTROW_EXTRAP_PARAM_1'][order_num][::-1],
+                                   loc['XPEAK'][gg])
         # store the pixel positions of the lines
         floc['xxpos'] = loc['XPEAK'][gg]
         # get the median pixel difference between successive lines (to check for gaps)
@@ -482,6 +482,24 @@ def fp_wavelength_sol_new(p, loc):
             if floc['llpos'][-1] > ll_prev[0]:
                 # find closest peak in overlap and get its m value
                 ind = np.abs(ll_prev - floc['llpos'][-1]).argmin()
+                # the peak matching the reddest may not always be found!!
+                # define maximum permitted difference
+                llpos_diff_med = np.median(floc['llpos'][1:]-floc['llpos'][:-1])
+                print(llpos_diff_med)
+                print(abs(ll_prev[ind] - floc['llpos'][-1]))
+                # check if the difference is over the limit
+                if abs(ll_prev[ind] - floc['llpos'][-1]) > 1.5*llpos_diff_med:
+                    print('overlap line not matched')
+                    ll_diff = ll_prev[ind] - floc['llpos'][-1]
+                    ind2 = -2
+                    # loop over next reddest peak until they match
+                    while ll_diff > 1.5*llpos_diff_med:
+                        # check there is still overlap
+                        if floc['llpos'][ind2] > ll_prev[0]:
+                            ind = np.abs(ll_prev - floc['llpos'][ind2]).argmin()
+                            ll_diff = ll_prev[ind] - floc['llpos'][ind2]
+                            ind2 -= 1
+                        else: break
                 m_match = m_prev[ind]
                 # save previous mpeak calculated
                 m_init = mpeak[-1]
@@ -533,7 +551,7 @@ def fp_wavelength_sol_new(p, loc):
     # update line wavelengths using the new cavity width fit
     newll = (dopd0 + cfit * 1000.) / m_fp_all
     # insert fp lines into all_lines2 (at the correct positions)
-    all_lines_2 = insert_fp_lines(p, newll, llpos_all, loc['ALL_LINES_2'],
+    all_lines_2 = insert_fp_lines(p, newll, llpos_all, all_lines_2,
                                   order_rec_all, xxpos_all, ampl_all)
 
     # add to loc
@@ -700,7 +718,12 @@ def find_fp_lines_new(p, loc):
     loc = find_fp_lines_new_setup(loc)
     # use spirouRV to get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
+    # remove wide/spurious peaks
+    loc = spirouRV.RemoveWidePeaks(p, loc)
     # check for and remove double-fitted lines
+    # save old position
+    loc['XPEAK_OLD'] = np.copy(loc['XPEAK'])
+    loc['ORDPEAK_OLD'] = np.copy(loc['ORDPEAK'])
     # set up storage for good lines
     ordpeak_k, xpeak_k, ewpeak_k, vrpeak_k, llpeak_k, amppeak_k = \
         [], [], [], [], [], []
@@ -739,8 +762,6 @@ def find_fp_lines_new(p, loc):
     loc['VRPEAK'] = np.array(vrpeak_k)
     loc['LLPEAK'] = np.array(llpeak_k)
     loc['AMPPEAK'] = np.array(amppeak_k)
-
-    loc = spirouRV.RemoveWidePeaks(p, loc)
 
     return loc
 
