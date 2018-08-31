@@ -242,6 +242,14 @@ def BARYCORRPY_DIR():
     return barycorrpy_dir
 
 
+# noinspectrion PyPep8Naming
+def ASTROPY_IERS_DIR():
+    astropy_iers_dir = './data/barycorrpy/'
+    # File must be downloaded from:
+    #     http://maia.usno.navy.mil/ser7/finals2000A.all
+    return astropy_iers_dir
+
+
 # noinspection PyPep8Naming
 def RESET_CALIBDB_DIR():
     """
