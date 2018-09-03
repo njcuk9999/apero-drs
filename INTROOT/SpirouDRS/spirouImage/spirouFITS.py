@@ -632,11 +632,13 @@ def get_wave_solution(p, image=None, hdr=None):
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
     dim2key = p['KW_WAVE_LL_DEG'][0]
-    # if we have no header use calibDB to get wave solution
-    if hdr is None:
-        wave = read_wave_file(p)
-    # check for wave params
-    elif (dim1key in hdr) and (dim2key in hdr) and (image is not None):
+    # conditions to use header instead of calibDB
+    cond1 = (dim1key in hdr) and (dim2key in hdr)
+    cond2 = image is not None
+    cond3 = not p['CALIB_DB_FORCE_WAVESOL']
+
+    # if we have header use header to get wave solution
+    if cond1 and cond2 and cond3:
         # get the wave parmaeters from the header
         wave_params = read_wave_params(p, hdr)
         # get the dimensions

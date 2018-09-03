@@ -836,6 +836,9 @@ ic_wave_idrift_rv_cut = 20.0
 pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
 
+# force reading the wave solution from calibDB
+calib_db_force_wavesol = True
+
 # -----------------------------------------------------------------------------
 #  Telluric parameters
 # -----------------------------------------------------------------------------
