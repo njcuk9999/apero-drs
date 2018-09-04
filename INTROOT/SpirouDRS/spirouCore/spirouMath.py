@@ -191,6 +191,17 @@ def fitgaussian_lmfit(x, y, weights, return_fit=True,
         return np.array(pfit)
 
 
+def fit_gaussian_with_slope(x, y, guess, return_fit=False):
+
+    with warnings.catch_warnings(record=True) as _:
+        popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
+
+    if return_fit:
+        return popt, pcov, gauss_fit_s(x, *popt)
+    else:
+        return popt, pcov
+
+
 def gauss_function(x, a, x0, sigma, dc):
     """
     A standard 1D gaussian function (for fitting against)]=
@@ -206,11 +217,180 @@ def gauss_function(x, a, x0, sigma, dc):
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
 
 
-def get_ll_from_coefficients(params, nx, nbo):
+def gaussian_function_nn(x, a):
+    """
+    Generate a Gaussian and return its derivaties
+
+    translated from IDL'S gaussfit function
+    parts of the comments from the IDL version of the code:
+
+    # NAME:
+    #   GAUSS_FUNCT
+    #
+    # PURPOSE:
+    #   EVALUATE THE SUM OF A GAUSSIAN AND A 2ND ORDER POLYNOMIAL
+    #   AND OPTIONALLY RETURN THE VALUE OF IT'S PARTIAL DERIVATIVES.
+    #   NORMALLY, THIS FUNCTION IS USED BY CURVEFIT TO FIT THE
+    #   SUM OF A LINE AND A VARYING BACKGROUND TO ACTUAL DATA.
+    #
+    # CATEGORY:
+    #   E2 - CURVE AND SURFACE FITTING.
+    # CALLING SEQUENCE:
+    #   FUNCT,X,A,F,PDER
+    # INPUTS:
+    #   X = VALUES OF INDEPENDENT VARIABLE.
+    #   A = PARAMETERS OF EQUATION DESCRIBED BELOW.
+    # OUTPUTS:
+    #   F = VALUE OF FUNCTION AT EACH X(I).
+    #   PDER = matrix with the partial derivatives for function fitting
+    #
+    # PROCEDURE:
+    #   F = A(0)*EXP(-Z^2/2) + A(3) + A(4)*X + A(5)*X^2
+    #   Z = (X-A(1))/A(2)
+    #   Elements beyond A(2) are optional.
+
+
+    :param x: numpy array (1D), values of the independent variable
+    :param a: list, parameters of equation described above (in F and Z)
+
+    :return fout: numpy array (1D), the gaussian fit
+    :return pder: numpy array (1D), the gaussian fit derivatives
+    """
+    # get the dimensions
+    n, nx = len(a), len(x)
+    # work out gaussian
+    z = (x - a[1]) / a[2]
+    ez = np.exp(-z **2 / 2.0)
+    # deal with options
+    if n == 3:
+        fout = a[0] * ez
+    elif n == 4:
+        fout = (a[0] * ez) + a[3]
+    elif n == 5:
+        fout = (a[0] * ez) + a[3] + (a[4] * x)
+    elif n == 5:
+        fout = (a[0] * ez) + a[3] + (a[4] * x) + (a[5] * x ** 2)
+    else:
+        emsg = 'Dimensions of "a" not supposed. len(a) must be 3, 4, 5 or 6'
+        raise ValueError(emsg)
+    # work out derivatives
+    pder = np.zeros([nx, n])
+    pder[:, 0] = ez   # compute partials
+    pder[:, 1] = a[0] * ez * z / a[2]
+    pder[:, 2] = pder[:, 1] * z
+    if n > 3:
+        pder[:, 3] = 1.0
+    if n > 4:
+        pder[:, 4] = x
+    if n > 5:
+        pder[:, 5] = x ** 2
+    # return fout and pder
+    return fout, pder
+
+
+def gauss_fit_nn(xpix, ypix, nn):
+    """
+    fits a Gaussian function to xpix and ypix without prior knowledge of
+    parameters
+
+    The gaussians are expected to have their peaks within the min/max range
+    of xpix and are expected to be reasonably close to Nyquist-sampled
+    nn must be an INT in the range between 3 and 6
+
+    :param xpix: numpy array (1D), the x position values (dependent values)
+    :param ypix: numpy array (1D), the y position values (fit values)
+    :param nn: int, fit mode:
+
+        nn=3 -> the Gaussian has a floor of 0, the output will have 3 elements
+        nn=4 -> the Gaussian has a floor that is non-zero
+        nn=5 -> the Gaussian has a slope
+        nn=6 -> the Guassian has a 2nd order polynomial floor
+
+    :return stats: list, depending on nn
+
+        nn=3 -> [amplitude , center of peak, amplitude of peak]
+        nn=4 -> [amplitude , center of peak, amplitude of peak, dc level]
+        nn=5 -> [amplitude , center of peak, amplitude of peak, dc level,
+                 slope]
+        nn=6 -> [amplitude , center of peak, amplitude of peak, dc level,
+                 slope, 2nd order term]
+
+    :return gfit: numpy array (1D), the fitted gaussian
+    """
+    func_name = __NAME__ + '.gauss_fit_slope()'
+    # we guess that the Gaussian is close to Nyquist and has a
+    # 2 PIX FWHM and therefore 2/2.54 e-width
+    ew_guess = 2 * np.nanmedian(np.gradient(xpix)) / fwhm()
+
+    if nn == 3:
+        # only amp, cen and ew
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess]
+    elif nn == 4:
+        # only amp, cen, ew, dc offset
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix)]
+    elif nn == 5:
+        # only amp, cen, ew, dc offset, slope
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix), 0]
+    elif nn == 6:
+        # only amp, cen, ew, dc offset, slope, curvature
+        a0 = [np.nanmax(ypix) - np.nanmin(ypix),
+              xpix[np.nanargmax(ypix)], ew_guess, np.nanmin(ypix), 0, 0]
+    else:
+        emsg = 'nn must be 3, 4, 5 or 6 only. ({0})'
+        raise ValueError(emsg.format(func_name))
+    # copy the ypix (rediual from previous)
+    residu_prev = np.array(ypix)
+    # fit a gaussian (with nn options)
+    gfit, pder = gaussian_function_nn(xpix, a0)
+    # set the RMS and number of iterations
+    rms = 99
+    n_it = 0
+    # loops for 20 iterations MAX or an RMS with an RMS change in residual
+    #     smaller than 1e-6 of peak
+    while (rms > 1e-6) & (n_it <= 20):
+        # calculate fit
+        gfit, pder = gaussian_function_nn(xpix, a0)
+        # work out residuals
+        residu = ypix - gfit
+        # work out amplitudes and residual fit
+        amps, fit = linear_minimization(residu, pder)
+
+        # add to the amplitudes
+        a0 += amps
+        # recalculate rms
+        rdiff = np.nanmax(ypix) - np.nanmin(ypix)
+        # check for nans
+        if np.sum(np.isfinite(residu)) == 0:
+            rms = np.nan
+        else:
+            rms = np.nanstd(residu - residu_prev) / rdiff
+        # set the previous residual to the new one
+        residu_prev = np.array(residu)
+        # add to iteration
+        n_it += 1
+    # return a0 and gfit
+    return a0, gfit
+
+
+def gauss_fit_s(x, a, x0, sigma, zp, slope):
+    sig = np.abs(sigma)
+    gauss = a * np.exp(-(x - x0) ** 2 / (2 * sig ** 2)) + zp
+    correction = (x - np.mean(x)) * slope
+    return gauss + correction
+
+
+def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params,
+                             nx, nbo):
     """
     Use the coefficient matrix "params" to construct fit values for each order
     (dimension 0 of coefficient matrix) for values of x from 0 to nx
     (interger steps)
+
+    :param pixel_shift_inter: float, the intercept of a linear pixel shift
+    :param pixel_shift_slope: float, the slope of a linear pixel shift
 
     :param params: numpy array (2D), the coefficient matrix
                    size = (number of orders x number of fit coefficients)
@@ -230,7 +410,7 @@ def get_ll_from_coefficients(params, nx, nbo):
                 (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
     """
     # create x values
-    xfit = np.arange(nx)
+    xfit = np.arange(nx) + pixel_shift_inter + (pixel_shift_slope * np.arange(nx))
     # create empty line list storage
     ll = np.zeros((nbo, nx))
     # loop around orders
@@ -298,6 +478,73 @@ def get_dll_from_coefficients(params, nx, nbo):
         ll[order_num, :] = yfit
     # return line list
     return ll
+
+
+# TODO: Required commenting and cleaning up
+def linear_minimization(vector, sample):
+
+    func_name = __NAME__ + '.linear_minimization()'
+
+    vector = np.array(vector)
+    sample = np.array(sample)
+    sz_sample = sample.shape
+    sz_vector = vector.shape
+
+    if sz_vector[0] == sz_sample[0]:
+        case = 2
+    elif sz_vector[0] == sz_sample[1]:
+        case = 1
+    else:
+        emsg = ('Neither vector[0]==sample[0] nor vector[0]==sample[1] '
+                '(function = {0})')
+        raise ValueError(emsg.format(func_name))
+
+    # vector of N elements
+    # sample: matrix N * M each M column is adjusted in amplitude to minimize
+    # the chi2 according to the input vector
+    # output: vector of length M gives the amplitude of each column
+
+    if case == 1:
+        # set up storage
+        M = np.zeros([sz_sample[0], sz_sample[0]])
+        v = np.zeros(sz_sample[0])
+        for i in range(sz_sample[0]):
+            for j in range(i, sz_sample[0]):
+                M[i, j] = np.nansum(sample[i, :] * sample[j, :])
+                M[j, i] = M[i, j]
+            v[i] = np.nansum(vector * sample[i, :])
+
+        if np.linalg.det(M) == 0:
+            amps = np.zeros(sz_sample[0]) + np.nan
+            recon = np.zeros_like(v)
+            return amps, recon
+
+        amps = np.matmul(np.linalg.inv(M), v)
+        recon = np.zeros(sz_sample[1])
+        for i in range(sz_sample[0]):
+            recon += amps[i] * sample[i, :]
+        return amps, recon
+
+    if case == 2:
+        # set up storage
+        M = np.zeros([sz_sample[1], sz_sample[1]])
+        v = np.zeros(sz_sample[1])
+        for i in range(sz_sample[1]):
+            for j in range(i, sz_sample[1]):
+                M[i, j] = np.nansum(sample[:, i] * sample[:, j])
+                M[j, i] = M[i, j]
+            v[i] = np.nansum(vector * sample[:, i])
+
+        if np.linalg.det(M) == 0:
+            amps = np.zeros(sz_sample[1]) + np.nan
+            recon = np.zeros_like(v)
+            return amps, recon
+
+        amps = np.matmul(np.linalg.inv(M), v)
+        recon = np.zeros(sz_sample[0])
+        for i in range(sz_sample[1]):
+            recon += amps[i] * sample[:, i]
+        return amps, recon
 
 
 # =============================================================================
@@ -437,10 +684,10 @@ def get_time_now_unix(zone='UTC'):
     """
     if zone == 'UTC':
         dt = datetime.utcnow()
-        return timegm(dt.timetuple())
+        timegm(dt.timetuple()) + dt.microsecond/1e6
     else:
         dt = datetime.now()
-        return mktime(dt.timetuple())
+        return mktime(dt.timetuple()) + dt.microsecond/1e6
 
 
 def get_time_now_string(fmt=TIME_FMT, zone='UTC'):

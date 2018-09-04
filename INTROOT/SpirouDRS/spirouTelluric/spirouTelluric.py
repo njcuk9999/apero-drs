@@ -19,6 +19,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore import spirouMath
+
 
 # =============================================================================
 # Define variables
@@ -501,51 +503,7 @@ def get_blacklist():
 
 # TODO: Needs better commenting
 def lin_mini(vector, sample):
-
-    vector = np.array(vector)
-    sample = np.array(sample)
-    sz_sample = sample.shape
-    sz_vector = vector.shape
-
-    if sz_vector[0] == sz_sample[0]:
-        case = 2
-    if sz_vector[0]== sz_sample[1]:
-        case = 1
-
-    # vector of N elements
-    # sample: matrix N * M each M column is adjusted in amplitude to minimize
-    # the chi2 according to the input vector
-    # output: vector of length M gives the amplitude of each column
-
-    if case == 1:
-        # set up storage
-        M = np.zeros([sz_sample[0], sz_sample[0]])
-        v = np.zeros(sz_sample[0])
-        for i in range(sz_sample[0]):
-            for j in range(i, sz_sample[0]):
-                M[i, j] = np.sum(sample[i, :] * sample[j, :])
-                M[j, i] = M[i, j]
-            v[i] = np.sum(vector * sample[i, :])
-        amps = np.matmul(np.linalg.inv(M), v)
-        recon = np.zeros(sz_sample[1])
-        for i in range(sz_sample[0]):
-            recon += amps[i] * sample[i, :]
-        return amps, recon
-
-    if case == 2:
-        # set up storage
-        M = np.zeros([sz_sample[1], sz_sample[1]])
-        v = np.zeros(sz_sample[1])
-        for i in range(sz_sample[1]):
-            for j in range(i, sz_sample[1]):
-                M[i, j] = np.sum(sample[:, i] * sample[:, j])
-                M[j, i] = M[i, j]
-            v[i] = np.sum(vector * sample[:, i])
-        amps = np.matmul(np.linalg.inv(M), v)
-        recon = np.zeros(sz_sample[0])
-        for i in range(sz_sample[1]):
-            recon += amps[i] * sample[:, i]
-        return amps, recon
+    return spirouMath.linear_minimization(vector, sample)
 
 
 # =============================================================================
