@@ -360,6 +360,8 @@ p['KW_CCD_SIGDET'][1] = p['SIGDET']
 p['KW_CCD_CONAD'][1] = p['GAIN']
 # get lamp parameters
 p = spirouTHORCA.GetLampParams(p, hchdr)
+
+
 # get number of orders
 # we always get fibre A number because AB is doubled in constants file
 nbo = p['QC_LOC_NBO_FPALL']['A']
@@ -900,6 +902,9 @@ plt.show()
 wargs = [np.mean(resolution_map), np.median(resolution_map), np.std(resolution_map)]
 wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
 WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+
+
+# TODO: --> Below is not etienne's code!
 
 # ----------------------------------------------------------------------
 # Set up all_lines storage list for both wavelength solutions
