@@ -55,6 +55,7 @@ GetDatabaseSky = spirouTDB.get_database_sky
 
 GetDatabaseTellMap = spirouTDB.get_database_tell_map
 
+# TODO: rename variable
 GetDatabaseTellTemp = spirouTDB.get_database_tell_template
 
 GetDatabaseTellObj = spirouTDB.get_database_tell_obj
