@@ -135,6 +135,12 @@ if __name__ == '__main__':
     p['HC_RESMAP_SIZE'] = (5, 4)
     # The maximum allowed deviation in the RMS line spread function
     p['HC_RES_MAXDEV_THRES'] = 8
+    # The line profile dv plot range (+range and -range) in km/s
+    p['HC_RESMAP_DV_SPAN'] = [-15, 15]
+    # the line profile x limits
+    p['HC_RESMAP_PLOT_XLIM'] = [-8, 8]
+    # the line profile y limits
+    p['HC_RESMAP_PLOT_YLIM'] = [-0.05, 0.7]
 
     # TODO: Add to constants file
 
@@ -232,6 +238,17 @@ if __name__ == '__main__':
     loc = spirouWAVE.fit_gaussian_triplets(p, loc)
 
     # ----------------------------------------------------------------------
+    # Generate Resolution map and line profiles
+    # ----------------------------------------------------------------------
+    # log progress
+    wmsg = 'Generating resolution map and '
+    # generate resolution map
+    loc = spirouWAVE.generate_resolution_map(p, loc)
+    # map line profile map
+    if p['DRS_PLOT']:
+        sPlt.wave_ea_plot_line_profiles(p, loc)
+
+    # ----------------------------------------------------------------------
     # End plotting session
     # ----------------------------------------------------------------------
     # end interactive session
@@ -261,29 +278,76 @@ if __name__ == '__main__':
         p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
-    # Generate Resolution map and line profiles
-    # ----------------------------------------------------------------------
-    # log progress
-    wmsg = 'Generating resolution map and '
-
-    loc = spirouWAVE.generate_resolution_map(p, loc)
-
-    # ----------------------------------------------------------------------
     # Save wave map to file
     # ----------------------------------------------------------------------
+    # get wave filename
+    wavefits = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefitsname = os.path.split(wavefits)[-1]
+    WLOG('', p['LOG_OPT'], wavefits)
+
+    # log progress
+    wargs = [p['FIBER'], wavefitsname]
+    wmsg = 'Write wavelength solution for Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # write solution to fitsfilename header
+    # copy original keys
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # set the version
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    # add quality control
+    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    # add number of orders
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                               value=loc['WAVEPARAMS'].shape[0])
+    # add degree of fit
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                               value=loc['WAVEPARAMS'].shape[1]-1)
+    # add wave solution
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                     values=loc['WAVEPARAMS'])
+
+    # write the wave "spectrum"
+    spirouImage.WriteImage(wavefits, loc['WAVE_MAP2'], hdict)
+
+    # get filename for E2DS calibDB copy of FITSFILENAME
+    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)
+
+    wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
+    wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
+    # make a copy of the E2DS file for the calibBD
+    spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
 
     # ----------------------------------------------------------------------
     # Update calibDB
     # ----------------------------------------------------------------------
+    if p['QC']:
+        # set the wave key
+        keydb = 'WAVE_EA_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouDB.PutCalibFile(p, wavefits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
+
+        # set the hcref key
+        keydb = 'HCREF_EA_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouDB.PutCalibFile(p, e2dscopy_filename)
+        # update the master calib DB file with new key
+        e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
+        spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # ----------------------------------------------------------------------
     # Update header of current file
     # ----------------------------------------------------------------------
+    # TODO
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p)
+
 
 def main(night_name=None, files=None):
     # return a copy of locally defined variables in the memory
