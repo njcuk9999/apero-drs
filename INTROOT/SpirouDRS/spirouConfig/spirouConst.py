@@ -521,7 +521,7 @@ def REDUCED_DIR(p):
 
 
 # =============================================================================
-# Define Filename functions
+# Define Input Filename functions
 # =============================================================================
 # noinspection PyPep8Naming
 def ARG_FILE_NAMES(p):
@@ -592,6 +592,9 @@ def FITSFILENAME(p):
     return fitsfilename
 
 
+# =============================================================================
+# Define Output Filename functions
+# =============================================================================
 # noinspection PyPep8Naming
 def DARK_FILE(p):
     """
@@ -1225,6 +1228,25 @@ def WAVE_FILE(p):
     else:
         old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
     waveext = '_wave_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    return wavefile
+
+
+# noinspection PyPep8Naming
+def WAVE_FILE_EA(p):
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
