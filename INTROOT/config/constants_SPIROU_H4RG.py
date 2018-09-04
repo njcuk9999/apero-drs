@@ -31,12 +31,17 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
-# detector type (from switching between H2RG and H4RG)
+#   detector type (from switching between H2RG and H4RG)
 ic_image_type = "H4RG"
 
-#    Interval between plots (for certain interactive graphs)         - [cal_loc]
+#   Interval between plots (for certain interactive graphs)          - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
+
+#   The number of night name directories to display when there is        - [all]
+#       no night name argument
+drs_night_name_display_limit = 10
+
 
 # -----------------------------------------------------------------------------
 #  CFHT variables
@@ -835,6 +840,9 @@ ic_wave_idrift_rv_cut = 20.0
 # pixel_shift_slope = 4.22131253e-04
 pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
+
+# force reading the wave solution from calibDB
+calib_db_force_wavesol = True
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters

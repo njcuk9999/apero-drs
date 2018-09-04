@@ -139,7 +139,7 @@ class logger():
             unix_time = spirouMath.get_time_now_unix(zone=zone)
             human_time = spirouMath.get_time_now_string(fmt=tfmt, zone=zone)
             # Get the first decimal part of the unix time
-            dsec = int((unix_time - int(unix_time)) * 10)
+            dsec = int((unix_time - int(unix_time)) * 100)
             # Get the key code (default is a whitespace)
             code = TRIG_KEY.get(key, ' ')
 
@@ -151,7 +151,7 @@ class logger():
                 new_messages = textwrap(mess, CHAR_LEN)
                 for new_message in new_messages:
                     cmdargs = [human_time, dsec, code, option, new_message]
-                    cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                    cmd = '{0}.{1:02d} - {2} |{3}|{4}'.format(*cmdargs)
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
@@ -161,7 +161,7 @@ class logger():
                         printlog(cmd, key)
             else:
                 cmdargs = [human_time, dsec, code, option, mess]
-                cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
+                cmd = '{0}.{1:02d} - {2} |{3}|{4}'.format(*cmdargs)
                 # append separate commands for log writing
                 cmds.append(cmd)
                 # add to logger storage
