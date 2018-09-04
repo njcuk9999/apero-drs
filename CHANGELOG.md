@@ -4324,3 +4324,59 @@
 
 ================================================================================
 	- Added new wavelength solution and deleted files in data_example (not needed - run cal_reset or cal_validate) (rev.005f5fa5)
+
+
+
+================================================================================
+* Mon Aug 27 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.118
+
+================================================================================
+	- Issue #399 - copied in extra files (FILE_B and read me files) required by iers (but not currently linked to) (rev.8e7646fc)
+	- Issue #399 - modification to iers to make offline (hopefully) given testing offline (rev.2be0b826)
+	- Issue #399 - fix astropy_iers_dir to be the actual directory (rev.c9234bf6)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.119
+
+================================================================================
+	- Added location to save astropy iers file (Issue #389) (rev.ba9cae58)
+	- Possible fix for Issue #389: from @cusher - ```import astropy.utils.iers``` and set ```iers_table``` (rev.4bcc0a0d)
+
+
+
+================================================================================
+* Fri Aug 31 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.120
+
+================================================================================
+	- update date and version (rev.02ceb0f9)
+	- script to manually add file to calibDB (from file in reduced folder) (rev.14dee133)
+	- update change log/version and date (rev.4b37a9e0)
+	- update master calibDB for reset (rev.473f0fa7)
+	- reset cal_CCF set NaNs to zeros (Issue #389) (rev.ced3a142)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.121
+
+================================================================================
+	- Add placeholder marker for the new cal_HC_E2DS_EA_spirou work (rev.07ead653)
+	- modify generate_resolution_map --> fixes for integrating etiennes hcpeak functions (rev.f6a26ecc)
+	- Enter todo to rename variable (rev.5134a486)
+	- add plot for cal_HC_E2DS_EA_spirou (wave_ea_plot_line_profiles) and worker function (remove_first_last_ticks) (rev.7f67abf9)
+	- Modify the gauss_fit_s function (cal_HC_EA_E2DS usuage) (rev.139910d5)
+	- Separate input and output filename pseudo constant functions, added EA versions of cal_HC output filename definitions (rev.472a6e8e)
+	- update leapsec log (rev.e8b051da)
+	- Update to cal_HC_E2DS_EA_spirou - finish work on integrating Etienne's work (rev.fb6e1c6c)
+	- Fix for S1D spectra - there may be occasions when we cannot convert to S1D - print a warning if this is the case (rev.400d6d0d)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.122
+
+================================================================================
+	- Move cal_HC_E2DS_EA constants to here (rev.875829dc)
+	- Prep cal_HC_E2DS_EA for recipe run (add main function, move constants etc) (rev.0a8b9970)

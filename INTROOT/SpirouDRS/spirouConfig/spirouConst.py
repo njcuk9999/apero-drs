@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.117'
+__version__ =  '0.2.122'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-08-31'
+__date__ =  '2018-09-04'
 
 
 # =============================================================================
@@ -610,10 +610,14 @@ def DARK_FILE(p):
 
     :return darkfits: string, the dark file location and filename
     """
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     darkfitsname = calibprefix + p['ARG_FILE_NAMES'][0]
     darkfits = os.path.join(reducedfolder, darkfitsname)
+    # define tag
+    tag = 'DARK'
+    # return filename and tag
     return darkfits
 
 

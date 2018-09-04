@@ -44,11 +44,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-
-if __name__ == '__main__':
-    import sys
-    sys.argv = 'cal_HC_E2DS_EA_spirou.py AT5/20180409 hcone_hcone_001_pp_e2ds_AB.fits'.split()
-    night_name, files = None, None
+def main(night_name=None, files=None):
     """
     cal_HC_E2DS.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -77,72 +73,6 @@ if __name__ == '__main__':
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
-
-    # TODO: Add to constants file
-    # ===============================
-    # Add to constant file
-    # ===============================
-    # whether to do plot per order (very slow + interactive)
-    p['HC_EA_PLOT_PER_ORDER'] = False
-    # width of the box for fitting HC lines. Lines will be fitted
-    #     from -W to +W, so a 2*W+1 window
-    p['HC_FITTING_BOX_SIZE'] = 6
-    # number of sigma above local RMS for a line to be flagged as such
-    p['HC_FITTING_BOX_SIGMA'] = 2.0
-    # the fit degree for the gaussian fit
-    p['HC_FITTING_BOX_GFIT_TYPE'] = 5
-    # the RMS of line-fitted line must be before 0 and 0.2 of the peak value
-    #     must be SNR>5 (or 1/SNR<0.2)
-    p['HC_FITTINGBOX_RMS_DEVMIN'] = 0
-    p['HC_FITTINGBOX_RMS_DEVMAX'] = 0.2
-    # the e-width of the line expressed in pixels.
-    p['HC_FITTINGBOX_EW_MIN'] = 0.7
-    p['HC_FITTINGBOX_EW_MAX'] = 1.1
-    # number of bright lines kept per order
-    #     avoid >25 as it takes super long
-    #     avoid <12 as some orders are ill-defined and we need >10 valid
-    #         lines anyway
-    #     20 is a good number, and I see now reason to change it
-    p['HC_NMAX_BRIGHT'] = 20
-    # Number of times to run the fit triplet algorithm
-    p['HC_NITER_FIT_TRIPLET'] = 3
-    # Maximum distance between catalog line and init guess line to accept line
-    #    in m/s
-    p['HC_MAX_DV_CAT_GUESS'] = 60000
-    # The fit degree between triplets
-    p['HC_TFIT_DEG'] = 2
-    # Cut threshold for the triplet line fit [in km/s]
-    p['HC_TFIT_CUT_THRES'] = 1.0
-    # Minimum number of lines required per order
-    p['HC_TFIT_MIN_NUM_LINES'] = 10
-    # Minimum total number of lines required
-    p['HC_TFIT_MIN_TOT_LINES'] = 200
-
-    # this sets the order of the polynomial used to ensure continuity in the xpix vs wave solutions
-    # by setting the first term = 12, we force that the zeroth element of the xpix of the wavelegnth
-    # grid is fitted with a 12th order polynomial as a function of order number
-    p['HC_TFIT_ORDER_FIT_CONTINUITY'] = [12, 9, 6, 2, 2]
-
-    # Number of times to loop through the sigma clip
-    p['HC_TFIT_SIGCLIP_NUM'] = 20
-    # Sigma clip threshold
-    p['HC_TFIT_SIGCLIP_THRES'] = 3.5
-
-    # quality control criteria if sigma greater than this many sigma fails
-    p['QC_HC_WAVE_SIGMA_MAX'] = 8
-
-    # resolution and line profile map size (y-axis by x-axis)
-    p['HC_RESMAP_SIZE'] = (5, 4)
-    # The maximum allowed deviation in the RMS line spread function
-    p['HC_RES_MAXDEV_THRES'] = 8
-    # The line profile dv plot range (+range and -range) in km/s
-    p['HC_RESMAP_DV_SPAN'] = [-15, 15]
-    # the line profile x limits
-    p['HC_RESMAP_PLOT_XLIM'] = [-8, 8]
-    # the line profile y limits
-    p['HC_RESMAP_PLOT_YLIM'] = [-0.05, 0.7]
-
-    # TODO: Add to constants file
 
 
     # ----------------------------------------------------------------------
@@ -349,7 +279,7 @@ if __name__ == '__main__':
     p = spirouStartup.End(p)
 
 
-def main(night_name=None, files=None):
+
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
