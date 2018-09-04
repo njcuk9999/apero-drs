@@ -18,6 +18,7 @@ from astropy import units as uu
 
 from SpirouDRS import spirouConfig
 from . import spirouLog
+from . import spirouMath
 
 # TODO: Is there a better fix for this?
 # fix for MacOSX plots freezing
@@ -1879,6 +1880,82 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
     end_plotting()
 
 
+def wave_ea_plot_line_profiles(p, loc):
+
+    # get constants from p
+    resmap_size = p['HC_RESMAP_SIZE']
+    fit_span = p['HC_RESMAP_DV_SPAN']
+    xlim, ylim = p['HC_RESMAP_PLOT_XLIM'], p['HC_RESMAP_PLOT_YLIM']
+    # get constants from loc
+    map_dvs = loc['RES_MAP_DVS']
+    map_lines = loc['RES_MAP_LINES']
+    map_params = loc['RES_MAP_PARAMS']
+    resolution_map = loc['RES_MAP']
+    # get dimensions
+    nbo, nbpix = loc['NBO'], loc['NBPIX']
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+
+    # set up fig
+    fig, frames = plt.subplots(nrows=resmap_size[0], ncols=resmap_size[1])
+
+    order_range = np.arange(0, nbo, bin_order)
+    x_range = np.arange(0, nbpix // bin_x)
+    # loop around the order bins
+    for order_num in order_range:
+        # loop around the x position
+        for xpos in x_range:
+            # get the correct frame
+            frame = frames[order_num // bin_order, xpos]
+            # get the correct data
+            all_dvs = map_dvs[order_num  // bin_order][xpos]
+            all_lines = map_lines[order_num  // bin_order][xpos]
+            params = map_params[order_num  // bin_order][xpos]
+            resolution = resolution_map[order_num  // bin_order][xpos]
+            # get fit data
+            xfit = np.linspace(fit_span[0], fit_span[1], 100)
+            yfit = spirouMath.gauss_fit_s(xfit, *params)
+            # plot data
+            frame.scatter(all_dvs, all_lines, color='g', s=5, marker='x')
+            frame.plot(xfit, yfit, color='k', ls='--')
+
+            # set frame limits
+            frame.set(xlim=xlim, ylim=ylim)
+
+            # add label in legend (for sticky position
+            largs = [order_num, order_num + bin_order - 1, xpos, resolution]
+            handle = Rectangle((0, 0), 1, 1, fc="w", fill=False,
+                                edgecolor='none', linewidth=0)
+            label = 'Orders {0}-{1} region={2} R={3:.0f}'.format(*largs)
+            frame.legend([handle], [label], loc=9)
+
+            # remove white space and some axis ticks
+            if order_num == 0:
+                frame = remove_first_last_ticks(frame, axis='x')
+                frame.xaxis.tick_top()
+                frame.xaxis.set_label_position('top')
+                frame.set_xlabel('dv [km/s]')
+            elif order_num == np.max(order_range):
+                frame = remove_first_last_ticks(frame, axis='x')
+                frame.set_xlabel('dv [km/s]')
+            else:
+                frame.set_xticklabels([])
+            if xpos == 0:
+                frame = remove_first_last_ticks(frame, axis='y')
+                frame.set_ylabel('Amp')
+            elif xpos == np.max(x_range):
+                frame = remove_first_last_ticks(frame, axis='y')
+                frame.yaxis.tick_right()
+                frame.yaxis.set_label_position('right')
+                frame.set_ylabel('Amp')
+            else:
+                frame.set_yticklabels([])
+
+    plt.subplots_adjust(hspace=0, wspace=0)
+    plt.suptitle('Line Profiles for resolution grid')
+
+
 # =============================================================================
 # telluric plotting function
 # =============================================================================
@@ -2240,6 +2317,29 @@ def __test_smoothed_boxmean_image(image, image1, image2, size,
     if not plt.isinteractive():
         plt.show()
         plt.close()
+
+# =============================================================================
+# worker functions
+# =============================================================================
+def remove_first_last_ticks(frame, axis='x'):
+
+    if axis == 'x' or axis == 'both':
+        xticks = frame.get_xticks()
+        xticklabels = xticks.astype(str)
+        xticklabels[0], xticklabels[-1] = '', ''
+        frame.set_xticks(xticks)
+        frame.set_xticklabels(xticklabels)
+    if axis == 'y' or axis == 'both':
+        yticks = frame.get_xticks()
+        yticklabels = yticks.astype(str)
+        yticklabels[0], yticklabels[-1] = '', ''
+        frame.set_xticks(yticks)
+        frame.set_xticklabels(yticklabels)
+    return frame
+
+
+
+
 
 # =============================================================================
 # End of code
