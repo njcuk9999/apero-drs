@@ -4371,3 +4371,12 @@
 	- update leapsec log (rev.e8b051da)
 	- Update to cal_HC_E2DS_EA_spirou - finish work on integrating Etienne's work (rev.fb6e1c6c)
 	- Fix for S1D spectra - there may be occasions when we cannot convert to S1D - print a warning if this is the case (rev.400d6d0d)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.122
+
+================================================================================
+	- Move cal_HC_E2DS_EA constants to here (rev.875829dc)
+	- Prep cal_HC_E2DS_EA for recipe run (add main function, move constants etc) (rev.0a8b9970)
