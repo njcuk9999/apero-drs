@@ -1076,6 +1076,10 @@ def fit_gaussian_triplets(p , loc):
     loc['POLY_WAVE_SOL'] = poly_wave_sol
     loc['WAVE_MAP2'] = wave_map2
 
+    loc['XGAU_T'] = xgau
+    loc['ORD_T'] = orders
+    loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+
     # return loc
     return loc
 
@@ -1087,12 +1091,12 @@ def generate_resolution_map(p, loc):
     wsize = p['HC_FITTING_BOX_SIZE']
     max_dev_threshold = p['HC_RES_MAXDEV_THRES']
     # get data from loc
-    hc_sp = loc['HCDATA']
-    xgau = np.array(loc['XGAU_INI'])
-    orders = np.array(loc['ORD_INI'])
-    gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
-    wave_catalog = loc['WAVE_CATALOG']
-    wave_map2 = loc['WAVE_MAP2']
+    hc_sp = np.array(loc['HCDATA'])
+    xgau = np.array(loc['XGAU_T'])
+    orders = np.array(loc['ORD_T'])
+    gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_T'])
+    wave_catalog = np.array(loc['WAVE_CATALOG'])
+    wave_map2 = np.array(loc['WAVE_MAP2'])
     # get dimensions
     nbo, nbpix = loc['NBO'], loc['NBPIX']
     # storage of resolution map
@@ -1114,10 +1118,10 @@ def generate_resolution_map(p, loc):
         order_lines = []
         order_params = []
         # loop around the x position
-        for xpos in range(0, nbpix, bin_x):
+        for xpos in range(0, nbpix // bin_x):
             mask = gauss_rms_dev < 0.05
             mask &= (orders // bin_order) == (order_num // bin_order)
-            mask &= (xgau // bin_x) == (xpos // bin_x)
+            mask &= (xgau // bin_x) == xpos
             mask &= np.isfinite(wave_catalog)
 
             # get the x centers for this bin
@@ -1141,9 +1145,10 @@ def generate_resolution_map(p, loc):
                 start = int(b_xgau[it] + 0.5) - wsize
                 end = int(b_xgau[it] + 0.5) + wsize + 1
                 # get line
-                line = hc_sp[border, start:end]
-                # normalise line by median of the base
+                line = np.array(hc_sp)[border, start:end]
+                # subtract median base and normalise line
                 line -= np.median(line[base])
+                line /= np.sum(line)
                 # calculate velocity
                 ratio = wave_map2[border, start:end] / b_wave_catalog[it]
                 dv = -speed_of_light * (ratio - 1)
@@ -1161,11 +1166,12 @@ def generate_resolution_map(p, loc):
             popt = np.zeros(5)
             init_guess = [0.3, 0.0, 1.0, 0.0, 0.0]
             # loop around until criteria met
+            n_it = 0
             while maxdev > max_dev_threshold:
                 # fit with a guassian with a slope
                 fargs = dict(x=all_dvs[keep], y=all_lines[keep],
                              guess=init_guess)
-                popt, pcov = spirouMath.fit_gaussian_with_slope(*fargs)
+                popt, pcov = spirouMath.fit_gaussian_with_slope(**fargs)
                 # calculate residuals for full line list
                 res = all_lines - spirouMath.gauss_fit_s(all_dvs, *popt)
                 # calculate RMS of residuals
@@ -1174,26 +1180,27 @@ def generate_resolution_map(p, loc):
                 maxdev = np.max(np.abs(rms[keep]))
                 # re-calculate the keep mask
                 keep[np.abs(rms) > max_dev_threshold] = False
+
+                n_it += 1
             # calculate resolution
             resolution = popt[2] * spirouMath.fwhm()
             # store order criteria
             order_dvs.append(all_dvs[keep])
             order_lines.append(all_lines[keep])
             order_params.append(popt)
+            # push resolution into resolution map
+            resolution1 = speed_of_light / resolution
+            resolution_map[order_num // bin_order, xpos] = resolution1
+            # log resolution output
+            wmsg = ('\tOrder {0}: nlines={1} xpos={2} resolution={3:.5f} km/s '
+                    'R={4:.5f}')
+            wargs = [order_num, np.sum(mask), xpos, resolution,
+                     resolution1]
+            WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
         # store criteria
         map_dvs.append(order_dvs)
         map_lines.append(order_lines)
         map_params.append(order_params)
-        # push resolution into resolution map
-        resolution1 = speed_of_light / resolution
-        resolution_map[order_num // bin_order, xpos // bin_x] = resolution1
-        # log resolution output
-
-        wmsg = ('\tOrder {0}: nlines={1} xpos={2} resolution={3:.5f} km/s '
-                'R={4:.5f}')
-        wargs = [order_num, np.sum(mask), xpos // bin_x, resolution,
-                 resolution1]
-        WLOG('info', p['LOG_OPT'], wmsg)
 
     # push to loc
     loc['RES_MAP_DVS'] = map_dvs
@@ -1203,6 +1210,13 @@ def generate_resolution_map(p, loc):
     # set source
     sources = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
     loc.set_sources(sources, func_name)
+
+    # print stats
+    wmsg1 = 'Mean resolution: {0:.3f}'.format(np.mean(resolution_map))
+    wmsg2 = 'Median resolution: {0:.3f}'.format(np.median(resolution_map))
+    wmsg3 = 'StdDev resolution: {0:.3f}'.format(np.std(resolution_map))
+
+    WLOG('info', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
 
     # return loc
     return loc
