@@ -358,24 +358,34 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
         p['PREPROCESSED'] = True
     # set preprocess source
     p.set_source('PREPROCESSED', func_name)
+
+    # TODO: Remove commented code
     # ---------------------------------------------------------------------
-    # step 1: check filename
-    cond, control = check_id_filename(p, control, recipe, basefilename)
-    # ---------------------------------------------------------------------
-    # step 2: if not filename check header key DPRTYPE
-    if not cond:
-        control = check_id_header(p, control, recipe, filename, hdr)
+    # # step 1: check filename
+    # cond, control = check_id_filename(p, control, recipe, basefilename)
+    # # ---------------------------------------------------------------------
+    # # step 2: if not filename check header key DPRTYPE
+    # if not cond:
+    #     control = check_id_header(p, control, recipe, filename, hdr)
+
+
+
+    # Identify file from header
+    control = identify_from_header(p, control, recipe, filename, hdr)
     # ---------------------------------------------------------------------
     # check position if defined
     if pos is not None:
         basefilename = os.path.basename(filename)
         if control['number'] != (pos + 1):
             emsg1 = 'Recipe argument valid but in wrong position'
-            emsg2 = '\tArgument "{0}" should not be in ARG{1}'
-            emsg3 = '\t{0} [NIGHT NAME] [ARG1] [ARG2] [ARG3] [...]'
-            eargs = [basefilename, pos + 1]
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs),
-                                         emsg3.format(recipe)])
+            eargs2 = [basefilename, pos + 1, control['number']]
+            emsg2 = ('\tArgument "{0}" should not be in ARG{1}. '
+                     'Should be ARG{2}'.format(*eargs2))
+            eargs3 = [control['dprtype'], control['ocode']]
+            emsg3 = '\tDPRTYPE="{0}" OCODE="{1}"'.format(*eargs3)
+            emsg4 = '\t{0} [NIGHT NAME] [ARG1] [ARG2] [ARG3] [...]'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3,
+                                         emsg4.format(recipe)])
 
     # ---------------------------------------------------------------------
     # now we should have 1 row in control --> get properties for this file
@@ -661,7 +671,7 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
             wmsg = '\tID via HEADER   OCODE={0} OBSTYPE={1} CCAS={2} CREF={3}'
             WLOG('', p['LOG_OPT'], wmsg.format(code, obstype, ccas, cref))
         # add key to header
-        hdr[p['KW_DPRTYPE'][0]] = dprtype
+        hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
         cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
         # update filename (if required)
         newfilename = str(filename)
@@ -740,6 +750,199 @@ def find_match(control, code, obstype, ccas, cref):
     return match, match_number
 
 
+def identify_from_header(p, control, recipe, filename, hdr=None):
+    func_name = __NAME__ + '.identify_from_header()'
+    # get base filename (no path)
+    bfilename = os.path.basename(filename)
+    # -----------------------------------------------------------------------
+    # get header
+    # -----------------------------------------------------------------------
+    # make sure we have header
+    hdr, _ = get_header_file(p, filename, hdr)
+    # -----------------------------------------------------------------------
+    # get control values
+    # -----------------------------------------------------------------------
+    kinds = np.unique(control['kind'])
+    dprtypes = np.array(control['dprtype'])
+    ocodes = np.array(control['ocode'])
+
+    # -----------------------------------------------------------------------
+    # get KW_DPRTYPE value
+    # -----------------------------------------------------------------------
+    # check if we are looking for a RAW file
+    if kinds[0].upper() == 'RAW':
+        # check for KW_DPRTYPE in header
+        if p['KW_DPRTYPE'][0] in hdr:
+            dprtype = hdr[p['KW_DPRTYPE'][0]].strip()
+        # if we don't have it, obtain it
+        else:
+            _, hdr, _ = identify_unprocessed_file(p, filename, hdr=None,
+                                                  cdr=None)
+            dprtype = hdr[p['KW_DPRTYPE'][0]].strip()
+    # else check that we are looking for a REDUC file
+    elif kinds[0].upper() == 'REDUC':
+        # check for KW_EXT_TYPE in header
+        if p['kw_EXT_TYPE'][0] in hdr:
+            dprtype = hdr[p['kw_EXT_TYPE'][0]].strip()
+        # if it doesn't exist set this to None
+        else:
+            emsg1 = ('File {0} must be the output of the extraction process'
+                     ''.format(bfilename))
+            emsg2 = ('\tCould not find header key "{0}"'
+                     ''.format(p['kw_EXT_TYPE'][0]))
+            emsg3 = ('\tPlease re-run extraction OR use a valid extraction '
+                     'output')
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # else crash
+    else:
+        emsg1 = 'Error in recipe control file. Kind must be "RAW" or "REDUC"'
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        dprtype = None
+    # -----------------------------------------------------------------------
+    # get KW_OUTPUT value
+    # -----------------------------------------------------------------------
+    # check for kw_OUTPUT
+    if p['kw_OUTPUT'][0] in hdr:
+        output = hdr[p['kw_OUTPUT'][0]]
+    else:
+        output = None
+
+    # -----------------------------------------------------------------------
+    # Identify based on output and dprtype
+    # -----------------------------------------------------------------------
+    # if None in dprtypes and we expect a RAW file: do not check
+    if ('None' in dprtypes)  and (kinds[0].upper() == 'RAW'):
+        # get the first row in control where dprtype == 'None'
+        row = np.where(dprtypes == 'None')[0][0]
+        # filter control by this row
+        control = control[row]
+        # print warning
+        wmsg = 'DPRTYPE not checked for recipe="{0}"'.format(recipe)
+        WLOG('warning', p['LOG_OPT'], wmsg)
+    # -----------------------------------------------------------------------
+    # if output is None and dprtype exists: we have a raw file
+    elif (output is None) and (dprtype in dprtypes):
+        # get the first row in control where dprtype is valid
+        row = np.where(dprtypes == dprtype)[0][0]
+        # filter control by this row
+        control = control[row]
+        # log identification
+        wmsg = 'Input identification: {0} (TYPE={1})'.format('RAW', dprtype)
+        WLOG('', p['LOG_OPT'], wmsg)
+
+    # -----------------------------------------------------------------------
+    # if output is None and we expect a RAW file: we have the wrong file
+    elif (output is None) and (kinds[0].upper() == 'RAW'):
+        emsg1 = 'File "{0}" identified as "{1}"'.format(bfilename, dprtype)
+        emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
+        emsg3 = '\tError was: WRONG DPRTYPE'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # -----------------------------------------------------------------------
+    # if output is None and we expect a REDUC file: we are missing the
+    #     header key
+    elif (output is None) and (kinds[0].upper() == 'REDUC'):
+        emsg1 = 'File "{0}" identified as "{1}"'.format(bfilename, dprtype)
+        emsg2 = ('\tHeader key "{0}" missing! Please re-run extraction'
+                 '').format(p['kw_OUTPUT'][0])
+        emsg3 = '\tError was: OUTPUT HEADER KEY MISSING'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+    # -----------------------------------------------------------------------
+    # if we have an output and expect a REDUCE file: then we have a reduc file
+    elif (output is not None) and (kinds[0].upper() == 'REDUC'):
+        # ++++++++++++++++++++++++++
+        # Cond1: Check output
+        # ++++++++++++++++++++++++++
+        # if we have a None in ocodes: skip ocode check
+        if 'None' in ocodes:
+            cond1 = np.ones(len(ocodes), dtype=bool)
+            # print warning
+            wargs = [p['kw_OUTPUT'][0], recipe]
+            wmsg = 'ID ({0}) not checked for recipe="{0}"'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        # else if we have the output in ocodes use this
+        elif output in ocodes:
+            # condition 1:
+            cond1 = output == ocodes
+        # else we have not found the right code
+        else:
+            emsg1 = 'File "{0}" output="{1}"'.format(bfilename, output)
+            emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
+            emsg3 = '\tError was: WRONG ID ({0})'.format(output)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            cond1 = False
+        # ++++++++++++++++++++++++++
+        # Cond2: Check DPRTYPE
+        # ++++++++++++++++++++++++++
+        # if we have a None in dprtypes: skip dprtype check
+        if 'None' in dprtypes:
+            cond2 = np.ones(len(dprtypes), dtype=bool)
+            # print warning
+            wargs = [p['kw_EXT_TYPE'][0], recipe]
+            wmsg = 'TYPE ({0}) not checked for recipe="{1}"'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+
+        # if we didn't find a dprtype due to missing header key skip
+        elif (dprtype is None) or (dprtype == 'None'):
+            cond2 = np.ones(len(dprtypes), dtype=bool)
+            # print warning
+            wargs = [p['kw_EXT_TYPE'][0], recipe]
+            wmsg = 'TYPE ({0}) not checked for recipe="{1}"'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        elif dprtype in dprtypes:
+            # condition 2:
+            cond2 = dprtype == dprtypes
+        else:
+            emsg1 = 'File "{0}" TYPE="{1}"'.format(bfilename, dprtype)
+            emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
+            emsg3 = '\tError was: WRONG TYPE ({0})'.format(p['kw_EXT_TYPE'][0])
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            cond2 = False
+        # ++++++++++++++++++++++++++
+        # Check we still have rows
+        # ++++++++++++++++++++++++++
+        if np.sum(cond1 & cond2) == 0:
+            emsg1 = 'File "{0}" ID="{1}"'.format(bfilename, dprtype)
+            emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
+            emsg3 = '\tError was: NONE FOUND ({0})'.format(output)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+
+        # ++++++++++++++++++++++++++
+        # Filter by cond1 and cond2
+        # ++++++++++++++++++++++++++
+        # filter by row
+        row = np.where(cond1 & cond2)[0][0]
+        # filter control by this row
+        control = control[row]
+
+        # log identification
+        wmsg = 'Input identification: {0} (ID={1}, TYPE={2})'
+        WLOG('', p['LOG_OPT'], wmsg.format('REDUC', output, dprtype))
+    # -----------------------------------------------------------------------
+    # else we have hit an unexpected error
+    else:
+        emsg1 = 'File "{0}" identified as "{1}"'.format(bfilename, dprtype)
+        emsg2 = '\tOutput type = {0}'.format(output)
+        emsg3 = '\tUnknown error occurred'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+
+    return control
+
+
+def strip_string_list(string_list):
+    new_list = []
+    # make sure list is list
+    if type(string_list) in [str, int, float, complex, bool]:
+        string_list = [string_list]
+
+    # strip elements in list
+    for list_item in string_list:
+        new_list.append(list_item.strip())
+    # return new list
+    return new_list
+
+
+# TODO: Not used
 def fallback_id_mode(p, control, filename, hdr, cdr):
     # get base filename (no path)
     basefilename = os.path.basename(filename)
@@ -762,7 +965,7 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
                 wmsg = '\tID via filename   file={0}'
                 WLOG('', p['LOG_OPT'], wmsg.format(basefilename))
             # update header key 'DPRTYPE
-            hdr[p['KW_DPRTYPE'][0]] = dprtype
+            hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
             cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
             # return original filename and header
             return filename, hdr, cdr
@@ -772,6 +975,7 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
     return filename, hdr, cdr
 
 
+# TODO: Not used
 def check_id_filename(p, control, recipe, filename):
     func_name = __NAME__ + '.check_id_filename()'
     # set un-found initial parameters
@@ -815,6 +1019,7 @@ def check_id_filename(p, control, recipe, filename):
         return found, control[found_row]
 
 
+# TODO: Not used?
 def check_id_header(p, control, recipe, filename, hdr=None):
     # get base filename (no path)
     basefilename = os.path.basename(filename)
@@ -863,7 +1068,7 @@ def check_id_header(p, control, recipe, filename, hdr=None):
     return control
 
 
-
+# TODO: Not used?
 def check_reduced_filename(p, filename, recipe, control):
     # get variables from control
     dstring = control['dstring']
@@ -906,6 +1111,7 @@ def check_reduced_filename(p, filename, recipe, control):
     return found, dprtype
 
 
+# TODO: Not used?
 def check_raw_filename(p, filename, recipe, control):
     # get variables from control
     dstring = control['dstring']
