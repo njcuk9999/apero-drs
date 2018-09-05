@@ -88,7 +88,14 @@ def main(night_name=None, ufiles=None):
     p.set_source('OUTPUTS', __NAME__ + '.main()')
 
     # loop around files
-    for ufile in ufiles:
+    for u_it, ufile in enumerate(ufiles):
+        # log the file process
+        wmsg = 'Processing file {0} ({1} of {2})'
+        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+        bfilename = os.path.basename(ufile)
+        WLOG('', p['LOG_OPT'], wmsg.format(bfilename, u_it+1, len(ufiles)))
+        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+
         # ------------------------------------------------------------------
         # Check that we can process file
         # ------------------------------------------------------------------
@@ -105,10 +112,6 @@ def main(night_name=None, ufiles=None):
             wmsg = 'File {0} not a fits file... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-
-        # log the file process
-        wmsg = 'Processing file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(ufile))
 
         # ------------------------------------------------------------------
         # Read image file
