@@ -844,7 +844,6 @@ pixel_shift_slope = 0.0
 # force reading the wave solution from calibDB
 calib_db_force_wavesol = True
 
-
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
