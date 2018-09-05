@@ -333,7 +333,7 @@ def main(night_name=None, files=None):
         # Store Blaze in file
         # ----------------------------------------------------------------------
         # construct filename
-        blazefits = spirouConfig.Constants.FF_BLAZE_FILE(p)
+        blazefits, tag1 = spirouConfig.Constants.FF_BLAZE_FILE(p)
         blazefitsname = os.path.split(blazefits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving blaze spectrum for fiber: {0} in {1}'
@@ -342,6 +342,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # define new keys to add
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
         # write 1D list of the SNR
@@ -354,12 +355,13 @@ def main(night_name=None, files=None):
         # Store Flat-field in file
         # ----------------------------------------------------------------------
         # construct filename
-        flatfits = spirouConfig.Constants.FF_FLAT_FILE(p)
+        flatfits, tag2 = spirouConfig.Constants.FF_FLAT_FILE(p)
         flatfitsname = os.path.split(flatfits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey1DList(hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)

@@ -298,32 +298,35 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
         # ----------------------------------------------------------------------
         # save E2DS nan filled
         # construct spectrum filename
-        specfitsfile = spirouConfig.Constants.WAVE_MAP_SPE_FILE(p)
+        specfitsfile, tag1 = spirouConfig.Constants.WAVE_MAP_SPE_FILE(p)
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
         # write to file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
         # ----------------------------------------------------------------------
         # save E2DS 0 filled
-        specfitsfile = spirouConfig.Constants.WAVE_MAP_SPE0_FILE(p)
+        specfitsfile, tag2 = spirouConfig.Constants.WAVE_MAP_SPE0_FILE(p)
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
         # write to file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         spirouImage.WriteImage(specfitsfile, out_spe_0, hdict=hdict)
         # ----------------------------------------------------------------------
         # save wave map
         if p['EM_SAVE_WAVE_MAP']:
             # construct waveimage filename
-            wavefitsfile = spirouConfig.Constants.EM_WAVE_FILE(p)
+            wavefitsfile, tag3 = spirouConfig.Constants.EM_WAVE_FILE(p)
             wavefilename = os.path.split(wavefitsfile)[-1]
             # log progress
             wmsg = 'Writing wave image to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
             # write to file
+            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
             spirouImage.WriteImage(wavefitsfile, out_wave, hdict=hdict)
 
     # ----------------------------------------------------------------------
