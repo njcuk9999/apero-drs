@@ -195,13 +195,14 @@ def main(night_name=None, files=None):
     # Write Cube median (the template) to file
     # ----------------------------------------------------------------------
     # construct filename
-    outfile = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
+    outfile, tag = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
     outfilename = os.path.basename(outfile)
 
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     # write to file
     spirouImage.WriteImage(outfile, big_cube_med, hdict)
 

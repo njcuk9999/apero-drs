@@ -518,7 +518,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
 
     # get wave filename - TODO define this
-    wavefits = spirouConfig.Constants.WAVE_FILE(p)
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE(p)
     wavefitsname = os.path.split(wavefits)[-1]
 
     # log progress
@@ -530,6 +530,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
@@ -547,8 +548,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     spirouImage.WriteImage(wavefits, loc['LL_FINAL'], hdict)
 
     # get filename for E2DS calibDB copy of FITSFILENAME
-    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)
+    e2dscopy_filename, tag2 = spirouConfig.Constants.WAVE_E2DS_COPY(p)
     # make a copy of the E2DS file for the calibBD
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
 
     # ----------------------------------------------------------------------
