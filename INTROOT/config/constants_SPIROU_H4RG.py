@@ -31,12 +31,17 @@
 #  General variables
 # -----------------------------------------------------------------------------
 
-# detector type (from switching between H2RG and H4RG)
+#   detector type (from switching between H2RG and H4RG)
 ic_image_type = "H4RG"
 
-#    Interval between plots (for certain interactive graphs)         - [cal_loc]
+#   Interval between plots (for certain interactive graphs)          - [cal_loc]
 #       formally ic_disptimeout
 ic_display_timeout = 0.5
+
+#   The number of night name directories to display when there is        - [all]
+#       no night name argument
+drs_night_name_display_limit = 10
+
 
 # -----------------------------------------------------------------------------
 #  CFHT variables
@@ -838,6 +843,70 @@ pixel_shift_slope = 0.0
 
 # force reading the wave solution from calibDB
 calib_db_force_wavesol = True
+
+# -----------------------------------------------------------------------------
+#   cal_hc/cal_wave parameters
+# -----------------------------------------------------------------------------
+# whether to do plot per order (very slow + interactive)              - [cal_HC]
+HC_EA_PLOT_PER_ORDER = False
+# width of the box for fitting HC lines. Lines will be fitted         - [cal_HC]
+#     from -W to +W, so a 2*W+1 window
+HC_FITTING_BOX_SIZE = 6
+# number of sigma above local RMS for a line to be flagged as such    - [cal_HC]
+HC_FITTING_BOX_SIGMA = 2.0
+# the fit degree for the gaussian fit
+HC_FITTING_BOX_GFIT_TYPE = 5
+# the RMS of line-fitted line must be before 0 and 0.2 of the         - [cal_HC]
+#     peak value must be SNR>5 (or 1/SNR<0.2)
+HC_FITTINGBOX_RMS_DEVMIN = 0
+HC_FITTINGBOX_RMS_DEVMAX = 0.2
+# the e-width of the line expressed in pixels.                        - [cal_HC]
+HC_FITTINGBOX_EW_MIN = 0.7
+HC_FITTINGBOX_EW_MAX = 1.1
+# number of bright lines kept per order                               - [cal_HC]
+#     avoid >25 as it takes super long
+#     avoid <12 as some orders are ill-defined and we need >10 valid
+#         lines anyway
+#     20 is a good number, and I see now reason to change it
+HC_NMAX_BRIGHT = 20
+# Number of times to run the fit triplet algorithm                    - [cal_HC]
+HC_NITER_FIT_TRIPLET = 3
+# Maximum distance between catalog line and init guess line           - [cal_HC]
+#    to accept line in m/s
+HC_MAX_DV_CAT_GUESS = 60000
+# The fit degree between triplets                                     - [cal_HC]
+HC_TFIT_DEG = 2
+# Cut threshold for the triplet line fit [in km/s]                    - [cal_HC]
+HC_TFIT_CUT_THRES = 1.0
+# Minimum number of lines required per order                          - [cal_HC]
+HC_TFIT_MIN_NUM_LINES = 10
+# Minimum total number of lines required                              - [cal_HC]
+HC_TFIT_MIN_TOT_LINES = 200
+
+# this sets the order of the polynomial used to ensure continuity     - [cal_HC]
+#     in the  xpix vs wave solutions by setting the first term = 12,
+#     we force that the zeroth element of the xpix of the wavelegnth
+#     grid is fitted with a 12th order polynomial as a function of
+#     order number
+HC_TFIT_ORDER_FIT_CONTINUITY = [12, 9, 6, 2, 2]
+# Number of times to loop through the sigma clip                      - [cal_HC]
+HC_TFIT_SIGCLIP_NUM = 20
+# Sigma clip threshold
+HC_TFIT_SIGCLIP_THRES = 3.5
+# quality control criteria if sigma greater than this                 - [cal_HC]
+# many sigma fails
+QC_HC_WAVE_SIGMA_MAX = 8
+# resolution and line profile map size (y-axis by x-axis)             - [cal_HC]
+HC_RESMAP_SIZE = [5, 4]
+# The maximum allowed deviation in the RMS line spread function       - [cal_HC]
+HC_RES_MAXDEV_THRES = 8
+# The line profile dv plot range (+range and -range) in km/s          - [cal_HC]
+HC_RESMAP_DV_SPAN = [-15, 15]
+# the line profile x limits                                           - [cal_HC]
+HC_RESMAP_PLOT_XLIM = [-8, 8]
+# the line profile y limits                                           - [cal_HC]
+HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
+
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters
