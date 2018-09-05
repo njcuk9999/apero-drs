@@ -1,12 +1,28 @@
+Skip to content
+ 
+Search or jump to…
+
+Pull requests
+Issues
+Marketplace
+Explore
+ @melissa-hobson
+Sign out
+ Unwatch 5
+ Star 1  Fork 0 njcuk9999/spirou_py3 Private
+ Code  Issues 19  Pull requests 2  Projects 12  Wiki  Insights
+Branch: master Find file Copy path spirou_py3/INTROOT/bin/cal_WAVE_E2DS_EA_spirou.py
+07ead65  17 hours ago
+@njcuk9999 njcuk9999 Add placeholder marker for the new cal_HC_E2DS_EA_spirou work
+2 contributors @melissa-hobson @njcuk9999
+RawBlameHistory    
+Executable File  1376 lines (1149 sloc)  49.4 KB
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 cal_HC_E2DS_spirou.py [night_directory] [fitsfilename]
-
 Wavelength calibration
-
 Created on 2018-07-20
-
 @author: artigau, hobson
 """
 
@@ -1373,3 +1389,16 @@ if p['QC']:
     # update the master calib DB file with new key
     e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
     spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+© 2018 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
+Press h to open a hovercard with more details.
