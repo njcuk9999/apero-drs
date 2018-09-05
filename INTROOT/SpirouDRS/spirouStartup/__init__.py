@@ -47,6 +47,8 @@ GetFile = spirouStartup.get_file
 
 GetFiles = spirouStartup.get_files
 
+GetNightDirs = spirouStartup.get_night_dirs
+
 InitialFileSetup = spirouStartup.initial_file_setup
 
 LoadArguments = spirouStartup.load_arguments
