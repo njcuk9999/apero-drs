@@ -379,7 +379,7 @@ def main(night_name=None, reffile=None):
     # Save drift values to file
     # ------------------------------------------------------------------
     # construct filename
-    driftfits = spirouConfig.Constants.DRIFTPEAK_E2DS_FITS_FILE(p)
+    driftfits, tag = spirouConfig.Constants.DRIFTPEAK_E2DS_FITS_FILE(p)
     driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
@@ -388,6 +388,7 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     # save drift values
     spirouImage.WriteImage(driftfits, loc['DRIFT'], hdict)
 
