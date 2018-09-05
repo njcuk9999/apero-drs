@@ -170,14 +170,27 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # get barycorrpy folder
         data_folder = os.path.join(absfolder, '')
         # ---------------------------------------------------------------------
-        # need import
+        # need to import barycorrpy which required online files (astropy iers)
+        #  therefore provide a way to set offline version first
         try:
+            # file at: http://maia.usno.navy.mil/ser7/finals2000A.all
+            from astropy.utils import iers
+            # get package name and relative path
+            package = spirouConfig.Constants.PACKAGE()
+            iers_dir = spirouConfig.Constants.ASTROPY_IERS_DIR()
+            # get absolute folder path from package and relfolder
+            absfolder = spirouConfig.GetAbsFolderPath(package, iers_dir)
+            # get file name
+            file_a = os.path.basename(iers.iers.IERS_A_FILE)
+            path_a = os.path.join(absfolder, file_a)
+            # set table
+            iers.IERS.iers_table = iers.IERS_A.open(path_a)
             import barycorrpy
         except:
             emsg1 = 'For method="new" must have barcorrpy installed '
             emsg2 = '\ti.e. ">>> pip install barycorrpy'
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-            import barycorrpy
+            barycorrpy = None
 
         # TODO: zmeas needs to be set to the CCF shift result --> NO
         # TODO: Need parallax and rv? --> NO

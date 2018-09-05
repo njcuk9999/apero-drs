@@ -6,7 +6,6 @@ cal_HC_E2DS_spirou.py [night_directory] [fitsfilename]
 Wavelength calibration
 
 Created on 2018-07-20
-
 @author: artigau, hobson
 """
 
@@ -903,9 +902,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
-    # ----------------------------------------------------------------------
-    # Set up all_lines storage list for both wavelength solutions
-    # ----------------------------------------------------------------------
+
+# TODO: --> Below is not etienne's code!
+
+# ----------------------------------------------------------------------
+# Set up all_lines storage list for both wavelength solutions
+# ----------------------------------------------------------------------
 
     # initialise up all_lines storage
     all_lines_1 = []

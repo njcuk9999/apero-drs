@@ -48,7 +48,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name)
+    p = spirouStartup.LoadArguments(p, night_name, mainfitsdir='reduced')
 
     # check that we have a night_name
     if p['ARG_NIGHT_NAME'] == '':
@@ -64,6 +64,7 @@ def main(night_name=None):
             emsgs.append('\t {0}'.format(nightname))
         # log message
         WLOG('error', p['LOG_OPT'], emsgs)
+
 
     # ----------------------------------------------------------------------
     # Get all files in raw night_name directory
@@ -97,57 +98,53 @@ def main(night_name=None):
         # skip any non-fits file files
         if '.fits' not in filename:
             continue
-        # skip non-preprocessed files
-        if p['PROCESSED_SUFFIX'] not in filename:
-            continue
         # construct absolute path for file
         fitsfilename = os.path.join(p['ARG_FILE_DIR'], filename)
         # read file header
         hdr = spirouImage.ReadHeader(p, filepath=fitsfilename)
         # extract properties from header
-        fkwargs = dict(return_value=True, dtype=float)
-        gkwargs = dict(return_value=True, dtype=str)
-        exptime = spirouImage.ReadParam(p, hdr, 'kw_EXPTIME', **fkwargs)
-        cas = spirouImage.ReadParam(p, hdr, 'kw_CCAS', **gkwargs)
-        ref =  spirouImage.ReadParam(p, hdr, 'kw_CREF', **gkwargs)
+        fkwargs = dict(return_value=True, dtype=float, required=False)
+        gkwargs = dict(return_value=True, dtype=str, required=False)
         date = spirouImage.ReadParam(p, hdr, 'kw_DATE_OBS', **gkwargs)
         utc = spirouImage.ReadParam(p, hdr, 'kw_UTC_OBS', **gkwargs)
         obstype = spirouImage.ReadParam(p, hdr, 'kw_OBSTYPE', **gkwargs)
         objname = spirouImage.ReadParam(p, hdr, 'kw_OBJNAME', **gkwargs)
-        dens = spirouImage.ReadParam(p, hdr, 'kw_CDEN', **fkwargs)
+        # deal with None
+        if date is None:
+            data = ''
+        if utc is None:
+            utc = ''
+        if obstype is None:
+            obstype = ''
+        if objname is None:
+            objname = ''
         # add to loc
         loc['FILES'].append(filename)
-        loc['EXPTIME_ALL'].append(exptime)
-        loc['CAS_ALL'].append(cas)
-        loc['REF_ALL'].append(ref)
         loc['DATE_ALL'].append(date)
         loc['UTC_ALL'].append(utc)
         loc['OBSTYPE_ALL'].append(obstype)
         loc['OBJNAME_ALL'].append(objname)
-        loc['DENS_ALL'].append(dens)
     # Make sure we have some files
-    if len(loc['EXPTIME_ALL']) == 0:
+    if len(loc['FILES']) == 0:
         wmsg = 'No pre-processed (*{0}) files present.'
         WLOG('warning', p['LOG_OPT'], wmsg.format(p['PROCESSED_SUFFIX']))
 
     # ----------------------------------------------------------------------
     # archive to table
     # ----------------------------------------------------------------------
-    if len(loc['EXPTIME_ALL']) != 0:
+    if len(loc['FILES']) != 0:
         # construct table filename
         outfile = spirouConfig.Constants.OFF_LISTING_FILE(p)
         # log progress
         WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
         # define column names
-        columns = ['file', 'type', 'date', 'utc', 'exptime', 'cas', 'ref',
-                   'dens', 'objname']
+        columns = ['file', 'type', 'date', 'utc', 'objname']
         # define the format for each column
-        formats = [None, None, None, None, '{:.1f}', None, None, '{:.2f}', None]
+        formats = [None, None, None, None, None]
 
         # get the values for each column
         values = [loc['FILES'], loc['OBSTYPE_ALL'], loc['DATE_ALL'],
-                  loc['UTC_ALL'], loc['EXPTIME_ALL'], loc['CAS_ALL'],
-                  loc['REF_ALL'], loc['DENS_ALL'], loc['OBJNAME_ALL']]
+                  loc['UTC_ALL'], loc['OBJNAME_ALL']]
         # construct astropy table from column names, values and formats
         table = spirouImage.MakeTable(columns, values, formats)
         # save table to file
