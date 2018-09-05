@@ -622,7 +622,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.show()
 
     # for each order, we fit a 4th order polynomial between pix and wavelength
-    fit_degree = 5
+    fit_degree = p['IC_LL_DEGR_FIT']
     fit_per_order = np.zeros([nbo, fit_degree+1])
 
     wmsg = 'Sigma-clipping of found lines'
@@ -1067,6 +1067,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     ll_out = loc['LL_OUT_2'][n_ord_start:n_ord_final]
     param_out = loc['LL_PARAM_2'][n_ord_start:n_ord_final]
 
+    print(np.shape(litt_extrap_sol_param_red))
+    print(np.shape(param_out))
+
     # create stack
     ll_stack, param_stack = [], []
     # wavelength solution for n_ord_start - n_ord_final
@@ -1081,8 +1084,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # convert stacks to arrays and add to storage
     loc['LL_OUT_2'] = np.vstack(ll_stack)
     loc['LL_PARAM_2'] = np.vstack(param_stack)
-    print('I am actually working')
-    print(np.shape(loc['LL_PARAM_2']))
     loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
 
     # rename for compatibility
@@ -1424,8 +1425,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 # =============================================================================
 if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
-    ll = main()
+    locloc = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(locloc)
 
 #

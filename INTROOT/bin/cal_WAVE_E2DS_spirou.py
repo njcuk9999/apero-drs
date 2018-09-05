@@ -202,7 +202,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wmsg = 'Calculating FP wave solution'
         WLOG('', p['LOG_OPT'], wmsg)
         # calculate FP wave solution
-        spirouTHORCA.FPWaveSolution(p, loc, mode=find_lines_mode)
+        #spirouTHORCA.FPWaveSolution(p, loc, mode=find_lines_mode)
+        spirouTHORCA.FPWaveSolutionNew(p, loc)
 
         # ------------------------------------------------------------------
         # FP solution plots
