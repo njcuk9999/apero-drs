@@ -603,7 +603,7 @@ def output_lsd_image(p, loc, hdict) :
     """
         
     # construct file names
-    lsdfits = spirouConfig.Constants.LSD_POL_FILE(p, loc)
+    lsdfits, tag = spirouConfig.Constants.LSD_POL_FILE(p, loc)
     lsdfitsfitsname = os.path.split(lsdfits)[-1]
 
     # save all data into a single array for output FITS
@@ -643,6 +643,8 @@ def output_lsd_image(p, loc, hdict) :
                                value=p['IC_POLAR_LSD_DATAINFO'][3])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL5'],
                                value=p['IC_POLAR_LSD_DATAINFO'][4])
+
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
 
     # Store LSD analysis data in file
     spirouImage.WriteImage(lsdfits, loc['LSDDATA'], hdict)
