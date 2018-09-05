@@ -308,7 +308,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # archive ccf to fits file
     # ----------------------------------------------------------------------
     # construct folder and filename
-    corfile = spirouConfig.Constants.CCF_FITS_FILE(p)
+    corfile, tag = spirouConfig.Constants.CCF_FITS_FILE(p)
     corfilename = os.path.split(corfile)[-1]
     # log that we are archiving the CCF on file
     WLOG('', p['LOG_OPT'], 'Archiving CCF on file {0}'.format(corfilename))
@@ -322,6 +322,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # add keys
     hdict = dict()
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CTYPE'], value='km/s')
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CRVAL'], value=loc['RV_CCF'][0])
     # the rv step
