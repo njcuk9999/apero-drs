@@ -290,7 +290,8 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
         # add values to p for skipped
         p['DPRTYPE'] = 'None'
         p['PREPROCESSED'] = True
-        p.set_sources(['DPRTYPE', 'PREPROCESSED'], func_name)
+        p['DRS_TYPE'] = 'None'
+        p.set_sources(['DPRTYPE', 'PREPROCESSED', 'DRS_TYPE'], func_name)
         # deal with return
         if return_path:
            return p, p['ARG_FILE_DIR']
@@ -358,18 +359,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
         p['PREPROCESSED'] = True
     # set preprocess source
     p.set_source('PREPROCESSED', func_name)
-
-    # TODO: Remove commented code
     # ---------------------------------------------------------------------
-    # # step 1: check filename
-    # cond, control = check_id_filename(p, control, recipe, basefilename)
-    # # ---------------------------------------------------------------------
-    # # step 2: if not filename check header key DPRTYPE
-    # if not cond:
-    #     control = check_id_header(p, control, recipe, filename, hdr)
-
-
-
     # Identify file from header
     control = identify_from_header(p, control, recipe, filename, hdr)
     # ---------------------------------------------------------------------
@@ -591,6 +581,8 @@ def get_properties_from_control(p, control):
     # ----------------------------------------------------------------------
     # Get DPRTYPE
     p['DPRTYPE'] = control['dprtype']
+    # Get DRS_TYPE (RAW or REDUCED)
+    p['DRS_TYPE'] = control['kind']
     # ----------------------------------------------------------------------
     # Get FIBER and fiber parameters
     if control['fiber'] != 'None':
