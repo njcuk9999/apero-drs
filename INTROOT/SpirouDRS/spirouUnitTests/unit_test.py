@@ -53,10 +53,6 @@ UNIT_TEST_PATH = os.path.join(UNIT_PATH, 'Runs')
 # =============================================================================
 def main(runname=None, quiet=False):
 
-    # reset the DRS
-    if not quiet:
-        spirouTools.DRS_Reset(log=False, called=True)
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -99,6 +95,11 @@ def main(runname=None, quiet=False):
 
     # get the parameters in the run file
     rparams = spirouConfig.GetConfigParams(p, None, filename=rfile)
+
+    # reset the DRS
+    if not quiet:
+        spirouTools.DRS_Reset(log=False, called=True)
+
 
     # ----------------------------------------------------------------------
     # Set the type from run parameters
