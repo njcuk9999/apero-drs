@@ -63,7 +63,7 @@ MultiFileSetup = spirouStartup.multi_file_setup
 
 SingleFileSetup = spirouStartup.single_file_setup
 
-
+SortSaveOutputs = spirouStartup.sort_and_save_outputs
 
 # =============================================================================
 # End of code
