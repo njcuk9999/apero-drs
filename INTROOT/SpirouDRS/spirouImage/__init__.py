@@ -120,6 +120,8 @@ LocateFullBadPixels = spirouImage.locate_bad_pixels_full
 
 MakeTable = spirouTable.make_table
 
+MakeFitsTable = spirouTable.make_fits_table
+
 MeasureDark = spirouImage.measure_dark
 
 MergeTable = spirouTable.merge_table
@@ -143,6 +145,8 @@ ReadData = spirouFITS.readdata
 ReadImage = spirouFITS.readimage
 
 ReadTable = spirouTable.read_table
+
+ReadFitsTable = spirouTable.read_fits_table
 
 ReadImageAndCombine = spirouFITS.readimage_and_combine
 
@@ -178,6 +182,7 @@ WriteImageMulti = spirouFITS.write_image_multi
 
 WriteTable = spirouTable.write_table
 
+WriteFitsTable = spirouTable.write_fits_table
 
 # =============================================================================
 # End of code
