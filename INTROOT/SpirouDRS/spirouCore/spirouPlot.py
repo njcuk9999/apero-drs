@@ -1776,12 +1776,21 @@ def wave_fp_wavelength_residuals(loc):
 # =============================================================================
 def wave_ea_plot_per_order_hcguess(p, loc, order_num):
 
+    plt.ioff()
+
     # get data from loc
     wave = loc['INITIAL_WAVE_MAP']
     hc_sp = loc['HCDATA']
     # get data from loc
-    xpix_ini = loc['XPIX_INI']
-    g2_ini = loc['G2_INI']
+    xpix_ini = np.array(loc['XPIX_INI'])
+    g2_ini = np.array(loc['G2_INI'])
+    ord_ini = np.array(loc['ORD_INI'])
+
+    # set up mask for the order
+    gg = ord_ini == order_num
+    # keep only lines for the order
+    xpix_ini = xpix_ini[gg]
+    g2_ini = g2_ini[gg]
 
     # set up fig
     plt.figure()
@@ -1805,6 +1814,7 @@ def wave_ea_plot_per_order_hcguess(p, loc, order_num):
     # show, close and turn interactive on
     plt.show()
     plt.close()
+    
 
 
 
