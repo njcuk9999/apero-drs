@@ -277,6 +277,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
     control = get_control_file()
     # get some needed paths
     rawpath = spirouConfig.Constants.RAW_DIR(p)
+    tmppath = spirouConfig.Constants.TMP_DIR(p)
     reducedpath = spirouConfig.Constants.REDUCED_DIR(p)
     # get returns
     return_path = kwargs.get('return_path', False)
@@ -311,10 +312,11 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
     if not os.path.exists(filename):
         # get attempts at file name
         rawfile = os.path.join(rawpath, filename)
+        tmpfile = os.path.join(tmppath, filename)
         reducedfile = os.path.join(reducedpath, filename)
-        # if rawfile exists we can narrow down the options
-        if os.path.exists(rawfile):
-            filename = rawfile
+        # if tmpfile exists we can narrow down the options
+        if os.path.exists(tmpfile):
+            filename = tmpfile
             # narrow down control options
             control = control[control['kind'] == 'RAW']
             kind = 'raw'
@@ -324,6 +326,13 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             # narrow down control options
             control = control[control['kind'] == 'REDUC']
             kind = 'reduced'
+        # if raw file exists we should make an error
+        elif os.path.exists(rawfile):
+            emsg1 = 'File {0} was found only in the RAW folder'.format(filename)
+            emsg2 = ('\tFile is not pre-processed. Please run '
+                     'cal_preprocess_spirou.py')
+            emsg3 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
         # if neither exist we have a problem
         else:
             emsg1 = 'File {0} does not exist'.format(filename)
@@ -385,7 +394,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
     if return_path:
         # based on kind
         if control['kind'].upper() == 'RAW':
-            path = rawpath
+            path = tmppath
         elif control['kind'].upper() == 'REDUC':
             path = reducedpath
         else:
