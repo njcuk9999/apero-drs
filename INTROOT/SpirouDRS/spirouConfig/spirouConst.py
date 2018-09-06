@@ -499,6 +499,24 @@ def RAW_DIR(p):
     return raw_dir
 
 
+def TMP_DIR(p):
+    """
+    Defines the temp data directory (for storage of the pre-processing files)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+
+    :return raw_dir: string, the raw data directory
+    """
+    tmp_dir = os.path.join(p['DRS_DATA_WORKING'], p['ARG_NIGHT_NAME'])
+    return tmp_dir
+
+
 # noinspection PyPep8Naming
 def REDUCED_DIR(p):
     """
