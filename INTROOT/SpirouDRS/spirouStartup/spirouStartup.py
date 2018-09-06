@@ -243,8 +243,12 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # if reduced directory does not exist create it
     if not os.path.isdir(cparams['DRS_DATA_REDUC']):
         os.makedirs(cparams['DRS_DATA_REDUC'])
-    if not os.path.isdir(cparams['reduced_dir']):
-        os.makedirs(cparams['reduced_dir'])
+    if not os.path.isdir(cparams['REDUCED_DIR']):
+        os.makedirs(cparams['REDUCED_DIR'])
+    if not os.path.isdir(cparams['DRS_DATA_WORKING']):
+        os.makedirs(cparams['DRS_DATA_WORKING'])
+    if not os.path.isdir(cparams['TMP_DIR']):
+        os.makedirs(cparams['TMP_DIR'])
     # -------------------------------------------------------------------------
     # return parameter dictionary
     return cparams
@@ -596,7 +600,7 @@ def index_pp(p):
     # get index filename
     filename = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
     # get night name
-    path = p['ARG_FILE_DIR']
+    path = p['TMP_DIR']
     # get absolute path
     abspath = os.path.join(path, filename)
     # get the outputs
@@ -609,6 +613,7 @@ def index_pp(p):
     # ------------------------------------------------------------------------
     # sort and save
     sort_and_save_outputs(istore, abspath)
+
 
 def index_outputs(p):
     # get index filename
@@ -848,6 +853,9 @@ def run_time_args(p, mainfitsdir):
     # set reduced path
     p['REDUCED_DIR'] = spirouConfig.Constants.REDUCED_DIR(p)
     p.set_source('REDUCED_DIR', cname + '/REDUCED_DIR()')
+    # set temp path
+    p['TMP_DIR'] = spirouConfig.Constants.TMP_DIR(p)
+    p.set_source('TMP_DIR', cname + '/TMP_DIR()')
     # set raw path
     p['RAW_DIR'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('RAW_DIR', cname + '/RAW_DIR()')
@@ -921,6 +929,9 @@ def run_time_custom_args(p, customargs, mainfitsdir):
     # set reduced path
     p['REDUCED_DIR'] = spirouConfig.Constants.REDUCED_DIR(p)
     p.set_source('reduced_dir', source + ' & {0}/REDUCED_DIR()')
+    # set temp path
+    p['TMP_DIR'] = spirouConfig.Constants.TMP_DIR(p)
+    p.set_source('TMP_DIR', source + '/TMP_DIR()')
     # set raw path
     p['RAW_DIR'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
@@ -1058,9 +1069,10 @@ def set_arg_file_dir(p, mfd=None):
         p['ARG_NIGHT_NAME'] = p['ARG_NIGHT_NAME'][:-1]
 
     # define the raw/reduced/calib folder from cparams
-    raw = spirouConfig.Constants.RAW_DIR(p)
-    red = spirouConfig.Constants.REDUCED_DIR(p)
-    calib = p['DRS_CALIB_DB']
+    raw_dir = spirouConfig.Constants.RAW_DIR(p)
+    tmp_dir = spirouConfig.Constants.TMP_DIR(p)
+    red_dir = spirouConfig.Constants.REDUCED_DIR(p)
+    calib_dir = p['DRS_CALIB_DB']
     # deal with main fits file (see if it exists)
     if mfd is not None:
         cond = os.path.exists(mfd)
@@ -1071,13 +1083,16 @@ def set_arg_file_dir(p, mfd=None):
         p['ARG_FILE_DIR'] = mfd
         location = 'mainfitsfile definition'
     elif mfd == 'reduced':
-        p['ARG_FILE_DIR'] = red
+        p['ARG_FILE_DIR'] = red_dir
         location = 'spirouConfig.Constants.REDUCED_DIR()'
     elif mfd == 'calibdb':
-        p['ARG_FILE_DIR'] = calib
+        p['ARG_FILE_DIR'] = calib_dir
         location = 'DRS_CALIB_DB'
+    elif mfd == 'raw':
+        p['ARG_FILE_DIR'] = raw_dir
+        location = 'spirouConfig.Constants.RAW_DIR()'
     else:
-        p['ARG_FILE_DIR'] = raw
+        p['ARG_FILE_DIR'] = tmp_dir
         location = 'spirouConfig.Constants.RAW_DIR()'
     # set ARG_FILE_DIR source
     p.set_source('ARG_FILE_DIR', location)
