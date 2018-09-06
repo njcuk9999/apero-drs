@@ -1722,16 +1722,79 @@ def LSD_POL_FILE(p, loc):
     return lsd_pol_filename, tag
 
 
-def OFF_LISTING_FILE(p):
+# noinspection PyPep8Naming
+def OFF_LISTING_RAW_FILE(p):
     # get constants from p
     msg_dir = p['DRS_DATA_MSG']
     night_name = p['ARG_NIGHT_NAME']
     # get base filename
-    basefilename = 'listing_{0}.txt'.format(os.path.split(night_name)[-1])
+    basefilename = 'listing_raw_{0}.txt'.format(os.path.split(night_name)[-1])
     # get absolute path
     abspath = os.path.join(msg_dir, basefilename)
     # return absolute path and tag
     return abspath
+
+
+# noinspection PyPep8Naming
+def OFF_LISTING_REDUC_FILE(p):
+    # get constants from p
+    msg_dir = p['DRS_DATA_MSG']
+    night_name = p['ARG_NIGHT_NAME']
+    # get base filename
+    basefilename = 'listing_reduc_{0}.txt'.format(os.path.split(night_name)[-1])
+    # get absolute path
+    abspath = os.path.join(msg_dir, basefilename)
+    # return absolute path and tag
+    return abspath
+
+
+# =============================================================================
+# Define output file function
+# =============================================================================
+# noinspection PyPep8Naming
+def INDEX_OUTPUT_FILENAME():
+    filename = 'index.fits'
+    return filename
+
+
+# noinspection PyPep8Naming
+def OUTPUT_FILE_HEADER_KEYS(p):
+    # Get required header keys from spirouKeywords.py (via p)
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OBSTYPE'][0],
+                   p['KW_EXPTIME'][0],
+                   p['KW_CCAS'][0],
+                   p['KW_CREF'][0],
+                   p['KW_CDEN'][0],
+                   p['KW_OUTPUT'][0],
+                   p['KW_EXT_TYPE'][0]]
+    # return output_keys
+    return output_keys
+
+
+# noinspection PyPep8Naming
+def RAW_OUTPUT_COLUMNS(p):
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OBSTYPE'][0],
+                   p['KW_EXPTIME'][0],
+                   p['KW_CCAS'][0],
+                   p['KW_CREF'][0],
+                   p['KW_CDEN'][0]]
+    return output_keys
+
+
+# noinspection PyPep8Naming
+def REDUC_OUTPUT_COLUMNS(p):
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OUTPUT'][0],
+                   p['KW_EXT_TYPE'][0]]
+    return output_keys
 
 
 # =============================================================================
