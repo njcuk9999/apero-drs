@@ -1,4 +1,4 @@
-Update:
+Update Notes - Version 0.3.001
 
 
 1) Moved where pre-processed files are saved (now saved in the TMP folder instead of RAW) - Defined in config.py by "DRS_DATA_WORKING"
