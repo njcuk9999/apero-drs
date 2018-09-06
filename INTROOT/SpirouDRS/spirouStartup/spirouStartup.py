@@ -18,6 +18,7 @@ import numpy as np
 import os
 import sys
 import code
+from collections import OrderedDict
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -106,6 +107,12 @@ def run_begin(recipe, quiet=False):
     # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
     if not cparams['DRS_INTERACTIVE']:
         cparams['DRS_PLOT'] = 0
+
+    # set up array to store inputs/outputs
+    cparams['INPUTS'] = OrderedDict()
+    cparams['OUTPUTS'] = OrderedDict()
+    source = recipe + '.main() + ' + func_name
+    cparams.set_sources(['INPUTS', 'OUTPUTS'], source)
 
     # return parameters
     return cparams
@@ -565,8 +572,15 @@ def load_calibdb(p, calibdb=True):
     return p
 
 
-def main_end_script(p):
+def main_end_script(p, outputs='reduced'):
     func_name = __NAME__ + '.main_end_script()'
+
+    if outputs == 'pp':
+        # index outputs to pp dir
+        index_pp(p)
+    elif outputs == 'reduced':
+        # index outputs to reduced dir
+        index_outputs(p)
     # log end message
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
@@ -576,6 +590,96 @@ def main_end_script(p):
     WLOG.clean_log()
     # return p
     return p
+
+
+def index_pp(p):
+    # get index filename
+    filename = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
+    # get night name
+    path = p['ARG_FILE_DIR']
+    # get absolute path
+    abspath = os.path.join(path, filename)
+    # get the outputs
+    outputs = p['OUTPUTS']
+    # get the index columns
+    icolumns = spirouConfig.Constants.RAW_OUTPUT_COLUMNS(p)
+    # ------------------------------------------------------------------------
+    # index files
+    istore = indexing(p, filename, outputs, icolumns, abspath)
+    # ------------------------------------------------------------------------
+    # sort and save
+    sort_and_save_outputs(istore, abspath)
+
+def index_outputs(p):
+    # get index filename
+    filename = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
+    # get night name
+    path = p['REDUCED_DIR']
+    # get absolute path
+    abspath = os.path.join(path, filename)
+    # get the outputs
+    outputs = p['OUTPUTS']
+    # get the index columns
+    icolumns = spirouConfig.Constants.REDUC_OUTPUT_COLUMNS(p)
+    # ------------------------------------------------------------------------
+    # index files
+    istore = indexing(p, filename, outputs, icolumns, abspath)
+    # ------------------------------------------------------------------------
+    # sort and save
+    sort_and_save_outputs(istore, abspath)
+
+
+def indexing(p, filename, outputs, icolumns, abspath):
+    # ------------------------------------------------------------------------
+    # log indexing
+    wmsg = 'Indexing outputs onto {0}'
+    WLOG('', p['LOG_OPT'], wmsg.format(abspath))
+    # construct a dictionary from outputs and icolumns
+    istore = OrderedDict()
+    # looop around outputs
+    for output in outputs:
+        # get filename
+        if 'FILENAME' not in istore:
+            istore['FILENAME'] = [output]
+        else:
+            istore['FILENAME'].append(output)
+        # loop around index columns and add outputs to istore
+        for icol in icolumns:
+            if icol not in istore:
+                istore[icol] = [outputs[output][icol]]
+            else:
+                istore[icol].append(outputs[output][icol])
+    # ------------------------------------------------------------------------
+    # deal with file existing (add existing rows)
+    if os.path.exists(abspath):
+        # get the current index fits file
+        idict = spirouImage.ReadFitsTable(abspath, return_dict=True)
+        # loop around rows in idict
+        for row in range(len(idict['FILENAME'])):
+            # skip if we already have this file
+            if idict['FILENAME'][row] in istore['FILENAME']:
+                continue
+            # else add filename
+            istore['FILENAME'].append(idict['FILENAME'][row])
+            # loop around columns
+            for icol in icolumns:
+                # add to the istore
+                istore[icol].append(idict[icol][row])
+    # ------------------------------------------------------------------------
+    return istore
+
+
+def sort_and_save_outputs(istore, abspath):
+    # ------------------------------------------------------------------------
+    # sort the istore by column name and add to table
+    sortmask = np.argsort(istore['FILENAME'])
+    # loop around columns and apply sort
+    for icol in istore:
+        istore[icol] = np.array(istore[icol])[sortmask]
+    # ------------------------------------------------------------------------
+    # Make fits table and write fits table
+    itable = spirouImage.MakeFitsTable(istore)
+    spirouImage.WriteFitsTable(itable, abspath)
 
 
 def exit_script(ll, has_plots=True):
