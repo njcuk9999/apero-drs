@@ -67,7 +67,8 @@ def main(night_name=None, ufiles=None):
     else:
         customargs = dict(ufiles=ufiles)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsdir='raw')
 
     # ----------------------------------------------------------------------
     # Process files (including wildcards)
@@ -167,8 +168,9 @@ def main(night_name=None, ufiles=None):
         # Save rotated image
         # ------------------------------------------------------------------
         # construct rotated file name
-        outfits = ufile.replace('.fits', p['PROCESSED_SUFFIX'])
-        outfitsname = os.path.split(outfits)[-1]
+        outfitsname = bfilename.replace('.fits', p['PROCESSED_SUFFIX'])
+        save_dir = spirouConfig.Constants.TMP_DIR(p)
+        outfits = os.path.join(save_dir, outfitsname)
         # log that we are saving rotated image
         WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
