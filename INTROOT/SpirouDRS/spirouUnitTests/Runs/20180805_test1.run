@@ -18,13 +18,13 @@ run005 = ['cal_SLIT_spirou', '18BQ01-Aug05', '2295525a_pp.fits']
 run006 = ['cal_FF_RAW_spirou', '18BQ01-Aug05', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
 
 # Extract the FPs
-run007a = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295520f_pp.fits']
-run007b = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295521f_pp.fits']
-run007c = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295522f_pp.fits']
-run007d = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295523f_pp.fits']
-run007e = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295524f_pp.fits']
+run007a = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295525f_pp.fits']
+run007b = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295526f_pp.fits']
+run007c = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295527f_pp.fits']
+run007d = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295528f_pp.fits']
+run007e = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295529f_pp.fits']
 
-# Extract the star
+# Extract the science
 run007f = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295545o_pp.fits']
 run007g = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295546o_pp.fits']
 run007h = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295547o_pp.fits']
@@ -32,11 +32,13 @@ run007i = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295548o_pp.fits']
 run007j = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295549o_pp.fits']
 run007k = ['cal_extract_RAW_spirou', '18BQ01-Aug05', '2295550o_pp.fits']
 
+# Run drift analysis
+run010a = ['cal_DRIFT_E2DS_spirou', '18BQ01-Aug05', '2295525a_pp_e2ds_AB.fits']
+run010b = ['cal_DRIFTPEAK_E2DS_spirou', '18BQ01-Aug05', '2295525a_pp_e2ds_AB.fits']
 
-#run008 = ['cal_HC_E2DS_spirou', '18BQ01-Aug05', 'hcone_hcone_001_pp_e2dsff_AB.fits']
-#run009 = ['cal_WAVE_E2DS_spirou', '18BQ01-Aug05', '', '']
-#run010a = ['cal_DRIFT_E2DS_spirou', '18BQ01-Aug05', '']
-#run010b = ['cal_DRIFTPEAK_E2DS_spirou', '18BQ01-Aug05', '']
+#run008 = ['cal_HC_E2DS_spirou', '18BQ01-Aug05', '']
+#run009 = ['cal_WAVE_E2DS_spirou', '18BQ01-Aug05', '2295525a_pp_e2ds_AB.fits', '']
+
 #run011 = ['cal_CCF_E2DS_spirou', '18BQ01-Aug05', '????', 'UrNe.mas', 0, 10, 0.1]
 run012 = ['cal_exposure_meter', '18BQ01-Aug05', '2295519f_pp.fits']
 run013 = ['off_listing_RAW_spirou', '18BQ01-Aug05']
