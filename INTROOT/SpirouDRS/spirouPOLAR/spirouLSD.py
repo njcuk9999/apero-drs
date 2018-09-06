@@ -647,7 +647,7 @@ def output_lsd_image(p, loc, hdict) :
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
 
     # Store LSD analysis data in file
-    spirouImage.WriteImage(lsdfits, loc['LSDDATA'], hdict)
+    p = spirouImage.WriteImage(p, lsdfits, loc['LSDDATA'], hdict)
 
     return lsdfits, lsdfitsfitsname
 
