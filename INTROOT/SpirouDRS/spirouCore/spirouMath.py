@@ -618,7 +618,8 @@ def stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC'):
     except Exception as e:
         emsg1 = 'Error in converting time (function = {0})'.format(func_name)
         emsg2 = '{0} reads: {1}'.format(type(e), e)
-        raise MathException(emsg1 + '\n\t\t' + emsg2)
+        emsg3 = ' Input was "{0}"'.format(string)
+        raise MathException(emsg1 + '\n\t\t' + emsg2 + '\n\t\t' + emsg3)
     # return time stamp
     return timestamp + datetime_obj.microsecond/1e6
 
