@@ -175,7 +175,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # write to file
-    spirouImage.WriteImage(rawfits, order_profile, hdict)
+    p = spirouImage.WriteImage(p, rawfits, order_profile, hdict)
 
     # ----------------------------------------------------------------------
     # Move order_profile to calibDB and update calibDB
@@ -422,7 +422,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])
-    spirouImage.WriteImage(locofits, center_fits, hdict)
+    p = spirouImage.WriteImage(p, locofits, center_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and record of image of sigma
@@ -468,7 +468,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # write image and add header keys (via hdict)
     width_fits = spirouLOCOR.CalcLocoFits(loc['ASS'], data2.shape[1])
-    spirouImage.WriteImage(locofits2, width_fits, hdict)
+    p = spirouImage.WriteImage(p, locofits2, width_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and Record of image of localization
@@ -488,7 +488,7 @@ def main(night_name=None, files=None):
         hdict = dict()
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
-        spirouImage.WriteImage(locofits3, data4, hdict)
+        p = spirouImage.WriteImage(p, locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------
     # Update the calibration database

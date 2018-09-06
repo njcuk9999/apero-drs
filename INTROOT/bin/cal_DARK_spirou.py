@@ -261,7 +261,7 @@ def main(night_name=None, files=None):
         cutmask = np.zeros_like(data0)
     data0c = np.where(cutmask, np.zeros_like(data0), data0)
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(darkfits, data0c, hdict)
+    p = spirouImage.WriteImage(p, darkfits, data0c, hdict)
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
@@ -281,7 +281,8 @@ def main(night_name=None, files=None):
                       'Threshold of dark level retain [ADU/s]')
     # write to file
     datacutmask = np.array(datacutmask, dtype=float)
-    spirouImage.WriteImage(badpixelfits, datacutmask, hdict, dtype='float64')
+    p = spirouImage.WriteImage(p, badpixelfits, datacutmask, hdict,
+                               dtype='float64')
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB

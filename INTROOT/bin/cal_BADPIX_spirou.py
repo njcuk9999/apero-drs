@@ -193,7 +193,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
 
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)
-    spirouImage.WriteImage(badpixelfits, badpixelmap, hdict)
+    p, spirouImage.WriteImage(p, badpixelfits, badpixelmap, hdict)
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB

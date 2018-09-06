@@ -193,13 +193,14 @@ def main(night_name=None, files=None):
     
     # save POL data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
-    spirouImage.WriteImageMulti(degpolfits, [loc['POL'], loc['POLERR']], hdict)
+    p = spirouImage.WriteImageMulti(p, degpolfits, [loc['POL'], loc['POLERR']],
+                                    hdict)
     # save NULL1 data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
-    spirouImage.WriteImage(nullpol1fits, loc['NULL1'], hdict)
+    p = spirouImage.WriteImage(p, nullpol1fits, loc['NULL1'], hdict)
     # save NULL2 data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
-    spirouImage.WriteImage(nullpol2fits, loc['NULL2'], hdict)
+    p = spirouImage.WriteImage(p, nullpol2fits, loc['NULL2'], hdict)
 
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value="I")

@@ -429,11 +429,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Save E2DS file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
-        spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
+        p = spirouImage.WriteImage(p, e2dsfits, loc['E2DS'], hdict)
         # Save E2DSFF file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
-        spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
+        p = spirouImage.WriteImage(p, e2dsfffits, loc['E2DSFF'], hdict)
 
         # ------------------------------------------------------------------
         # 1-dimension spectral S1D
@@ -479,7 +479,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
             WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfilename))
             # Write to file
-            spirouImage.WriteImage(s1dfile, ys1d, hdict)
+            p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control

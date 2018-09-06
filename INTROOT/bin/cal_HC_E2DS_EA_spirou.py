@@ -238,7 +238,7 @@ def main(night_name=None, files=None):
                                      values=loc['WAVEPARAMS'])
 
     # write the wave "spectrum"
-    spirouImage.WriteImage(wavefits, loc['WAVE_MAP2'], hdict)
+    p = spirouImage.WriteImage(p, wavefits, loc['WAVE_MAP2'], hdict)
 
     # get filename for E2DS calibDB copy of FITSFILENAME
     e2dscopy_filename, tag2 = spirouConfig.Constants.WAVE_E2DS_COPY(p)
@@ -249,7 +249,7 @@ def main(night_name=None, files=None):
 
     # make a copy of the E2DS file for the calibBD
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-    spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
+    p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
 
     # ----------------------------------------------------------------------
     # Update calibDB

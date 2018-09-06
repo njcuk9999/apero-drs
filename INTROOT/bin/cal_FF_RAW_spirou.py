@@ -349,7 +349,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey1DList(hdict, p['KW_EXTRA_SN'],
                                          values=loc['SNR'])
         # write center fits and add header keys (via hdict)
-        spirouImage.WriteImage(blazefits, loc['BLAZE'], hdict)
+        p = spirouImage.WriteImage(p, blazefits, loc['BLAZE'], hdict)
 
         # ----------------------------------------------------------------------
         # Store Flat-field in file
@@ -365,7 +365,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey1DList(hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)
-        spirouImage.WriteImage(flatfits, loc['FLAT'], hdict)
+        p = spirouImage.WriteImage(p, flatfits, loc['FLAT'], hdict)
 
         # ------------------------------------------------------------------
         # Quality control

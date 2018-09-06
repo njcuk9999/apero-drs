@@ -305,7 +305,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
         WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
         # write to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
-        spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
+        p = spirouImage.WriteImage(p, specfitsfile, out_spe, hdict=hdict)
         # ----------------------------------------------------------------------
         # save E2DS 0 filled
         specfitsfile, tag2 = spirouConfig.Constants.WAVE_MAP_SPE0_FILE(p)
@@ -315,7 +315,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
         WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
         # write to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-        spirouImage.WriteImage(specfitsfile, out_spe_0, hdict=hdict)
+        p = spirouImage.WriteImage(p, specfitsfile, out_spe_0, hdict=hdict)
         # ----------------------------------------------------------------------
         # save wave map
         if p['EM_SAVE_WAVE_MAP']:
@@ -327,7 +327,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
             WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
             # write to file
             hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
-            spirouImage.WriteImage(wavefitsfile, out_wave, hdict=hdict)
+            p = spirouImage.WriteImage(p, wavefitsfile, out_wave, hdict=hdict)
 
     # ----------------------------------------------------------------------
     # End Message
