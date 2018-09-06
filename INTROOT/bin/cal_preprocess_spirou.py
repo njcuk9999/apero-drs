@@ -84,8 +84,8 @@ def main(night_name=None, ufiles=None):
     WLOG('', p['LOG_OPT'], wmsg.format(len(ufiles)))
 
     # storage for output files
-    p['OUTPUTS'] = []
-    p.set_source('OUTPUTS', __NAME__ + '.main()')
+    p['OUTPUT_NAMES'] = []
+    p.set_source('OUTPUT_NAMES', __NAME__ + '.main()')
 
     # loop around files
     for u_it, ufile in enumerate(ufiles):
@@ -104,12 +104,19 @@ def main(night_name=None, ufiles=None):
             wmsg = 'File {0} does not exist... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-        elif p['PROCESSED_SUFFIX'] in ufile:
+        # skip processed files
+        elif p['PROCESSED_SUFFIX'] in bfilename:
             wmsg = 'File {0} has been processed... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-        elif '.fits' not in ufile:
+        # skip non-fits files
+        elif '.fits' not in bfilename:
             wmsg = 'File {0} not a fits file... skipping'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
+            continue
+        # skip index file
+        elif bfilename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
+            wmsg = 'Skipping index fits file'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
 
@@ -170,18 +177,22 @@ def main(night_name=None, ufiles=None):
         # set the version
         hdict = spirouImage.AddKey(hdict, p['KW_PPVERSION'])
 
+        # set the DRS type (for file indexing)
+        p['DRS_TYPE'] = 'RAW'
+        p.set_source('DRS_TYPE', __NAME__ + '.main()')
+
         # write to file
-        spirouImage.WriteImage(outfits, image, hdict)
+        p = spirouImage.WriteImage(p, outfits, image, hdict)
 
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------
-        p['OUTPUTS'].append(outfitsname)
+        p['OUTPUT_NAMES'].append(outfitsname)
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs='pp')
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
