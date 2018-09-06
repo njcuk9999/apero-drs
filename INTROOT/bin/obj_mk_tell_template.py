@@ -204,7 +204,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     # write to file
-    spirouImage.WriteImage(outfile, big_cube_med, hdict)
+    p = spirouImage.WriteImage(p, outfile, big_cube_med, hdict)
 
 
     # ----------------------------------------------------------------------

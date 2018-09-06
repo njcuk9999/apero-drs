@@ -327,7 +327,7 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         # write sp_out to file
-        spirouImage.WriteImage(outfile1, sp_out, hdict)
+        p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
 
         # ------------------------------------------------------------------
         # Write reconstructed absorption to E2DS
@@ -356,7 +356,7 @@ def main(night_name=None, files=None):
                 loc.set_source('WATERCOL', main_name)
         # write recon_abso to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-        spirouImage.WriteImage(outfile2, recon_abso2, hdict)
+        p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)
 
         # ------------------------------------------------------------------
         # Update the Telluric database

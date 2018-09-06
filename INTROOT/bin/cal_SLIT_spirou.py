@@ -228,7 +228,7 @@ def main(night_name=None, files=None):
     # add tilt parameters as 1d list
     hdict = spirouImage.AddKey1DList(hdict, p['KW_TILT'], values=loc['TILT'])
     # write tilt file to file
-    spirouImage.WriteImage(tiltfits, tiltima, hdict)
+    p = spirouImage.WriteImage(p, tiltfits, tiltima, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control

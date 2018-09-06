@@ -1275,7 +1275,7 @@ hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
 # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
 
 # write the wave "spectrum"
-spirouImage.WriteImage(wavefits, loc['LL_FINAL'], hdict)
+p = spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
 
 # get filename for E2DS calibDB copy of FITSFILENAME
 e2dscopy_filename, tag2 = spirouConfig.Constants.WAVE_E2DS_COPY(p)
@@ -1286,7 +1286,7 @@ WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
 # make a copy of the E2DS file for the calibBD
 hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
+p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
 
 # ------------------------------------------------------------------
 # Save to result table

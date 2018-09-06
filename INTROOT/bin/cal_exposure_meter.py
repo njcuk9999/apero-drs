@@ -321,7 +321,8 @@ def main(night_name=None, reffile=None):
             wmsg = 'Writing spectrum to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
             # write to file
-            spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
+            p = spirouImage.WriteImage(p, specfitsfile, out_spe, hdict=hdict)
+
         # ----------------------------------------------------------------------
         # save wave map
         if p['EM_SAVE_WAVE_MAP']:
@@ -335,7 +336,8 @@ def main(night_name=None, reffile=None):
             wmsg = 'Writing wave image to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
             # write to file
-            spirouImage.WriteImage(wavefitsfile, out_wave, hdict=hdict)
+            p = spirouImage.WriteImage(p, wavefitsfile, out_wave, hdict=hdict)
+
         # ----------------------------------------------------------------------
         # save mask file
         if p['EM_SAVE_MASK_MAP']:
@@ -351,7 +353,8 @@ def main(night_name=None, reffile=None):
             # convert boolean mask to integers
             writablemask = np.array(out_mask, dtype=float)
             # write to file
-            spirouImage.WriteImage(maskfitsfile, writablemask, hdict=hdict)
+            p = spirouImage.WriteImage(p, maskfitsfile, writablemask,
+                                       hdict=hdict)
 
     # ----------------------------------------------------------------------
     # End Message

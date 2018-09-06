@@ -345,7 +345,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'], value=loc['BERV_MAX'])
 
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(corfile, data, hdict)
+    p = spirouImage.WriteImage(p, corfile, data, hdict)
 
     # ----------------------------------------------------------------------
     # End Message
