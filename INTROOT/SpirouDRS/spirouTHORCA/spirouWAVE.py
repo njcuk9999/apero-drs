@@ -766,6 +766,8 @@ def find_hc_gauss_peaks(p, loc):
     WLOG('', p['LOG_OPT'], wmsg.format(os.path.basename(ini_table_name)))
     spirouImage.WriteTable(ini_table, ini_table_name, fmt='ascii.rst')
 
+    sPlt.wave_ea_plot_allorder_hcguess(p, loc)
+
     # return loc
     return loc
 
@@ -818,6 +820,7 @@ def fit_gaussian_triplets(p , loc):
     # TODO: Move loop out of function
     # set up storage
     wave_catalog = []
+    amp_catalog = []
     wave_map2 = np.zeros((nbo, nbpix))
     sig = np.nan
 
@@ -832,6 +835,8 @@ def fit_gaussian_triplets(p , loc):
         gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
         ew = np.array(loc['EW_INI'])
         peak = np.array(loc['PEAK_INI'])
+        # get peak again for saving (to make sure nothing goes wrong in selection)
+        peak2 = np.array(loc['PEAK_INI'])
         # --------------------------------------------------------------
         # find the brightest lines for each order, only those lines will
         #     be used to derive the first estimates of the per-order fit
@@ -839,7 +844,7 @@ def fit_gaussian_triplets(p , loc):
         brightest_lines = np.zeros(len(xgau), dtype=bool)
         # loop around order
         for order_num in set(orders):
-            # find all order_nums that below to this order
+            # find all order_nums that belong to this order
             good = orders == order_num
             # get the peaks for this order
             order_peaks = peak[good]
@@ -859,7 +864,7 @@ def fit_gaussian_triplets(p , loc):
         ini_wave_sol = np.zeros_like(xgau)
         # get wave solution for these xgau values
         for order_num in set(orders):
-            # find all order_nums that below to this order
+            # find all order_nums that belong to this order
             good = orders == order_num
             # get the xgau for this order
             xgau_order = xgau[good]
@@ -876,6 +881,8 @@ def fit_gaussian_triplets(p , loc):
         dv = np.repeat(np.nan, len(ini_wave_sol))
         # wavelength given in the catalog for the matched line
         wave_catalog = np.zeros(len(ini_wave_sol))
+        # amplitude given in the catolog for the matched lines
+        amp_catalog = np.zeros(len(ini_wave_sol))
         # loop around all lines in ini_wave_sol
         for w_it, wave0 in enumerate(ini_wave_sol):
             # find closest catalog line to the line considered
@@ -885,12 +892,13 @@ def fit_gaussian_triplets(p , loc):
             # check that distance is below threshold
             if np.abs(distv) < cat_guess_dist:
                 wave_catalog[w_it] = wave_ll[id_match]
+                amp_catalog[w_it] = amp_ll[id_match]
                 dv[w_it] = distv
         # ------------------------------------------------------------------
         # Find best trio of lines
         # ------------------------------------------------------------------
         for order_num in set(orders):
-            # find this orders line
+            # find this order's lines
             good = orders == order_num
             # find all usable lines in this order
             good_all = good & (np.isfinite(wave_catalog))
@@ -933,7 +941,7 @@ def fit_gaussian_triplets(p , loc):
             # if we have the minimum number of lines check that we satisfy
             #   the cut_fit_threshold for all good lines and reject outliers
             if bestn >= minimum_number_of_lines:
-                # extrpolate out best fit coefficients over all lines in
+                # extrapolate out best fit coefficients over all lines in
                 #    this order
                 fit_best = np.polyval(best_coeffs, xgau[good])
                 # work out the error in velocity
@@ -967,11 +975,13 @@ def fit_gaussian_triplets(p , loc):
         good = np.isfinite(wave_catalog)
         # apply mask
         wave_catalog = wave_catalog[good]
+        amp_catalog = amp_catalog[good]
         xgau = xgau[good]
         orders = orders[good]
         dv = dv[good]
         ew = ew[good]
         gauss_rms_dev = gauss_rms_dev[good]
+        peak2 = peak2[good]
 
         # ------------------------------------------------------------------
         # Quality check on the total number of lines found
@@ -1046,11 +1056,13 @@ def fit_gaussian_triplets(p , loc):
                 recon0 = recon0[sig_mask]
                 lin_mod_slice = lin_mod_slice[sig_mask]
                 wave_catalog = wave_catalog[sig_mask]
+                amp_catalog = amp_catalog[sig_mask]
                 xgau = xgau[sig_mask]
                 orders = orders[sig_mask]
                 dv = dv[sig_mask]
                 ew = ew[sig_mask]
                 gauss_rms_dev = gauss_rms_dev[sig_mask]
+                peak2 = peak2[sig_mask]
             # Log stats
             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
             wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
@@ -1089,6 +1101,7 @@ def fit_gaussian_triplets(p , loc):
 
     # save parameters to loc
     loc['WAVE_CATALOG'] = wave_catalog
+    loc['AMP_CATALOG'] = amp_catalog
     loc['SIG'] = sig
     loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
     loc['POLY_WAVE_SOL'] = poly_wave_sol
@@ -1097,6 +1110,9 @@ def fit_gaussian_triplets(p , loc):
     loc['XGAU_T'] = xgau
     loc['ORD_T'] = orders
     loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+    loc['DV_T'] = dv
+    loc['EW_T'] = ew
+    loc['PEAK_T'] = peak2
 
     # return loc
     return loc
@@ -1210,9 +1226,9 @@ def generate_resolution_map(p, loc):
             resolution1 = speed_of_light / resolution
             resolution_map[order_num // bin_order, xpos] = resolution1
             # log resolution output
-            wmsg = ('\tOrder {0}: nlines={1} xpos={2} resolution={3:.5f} km/s '
-                    'R={4:.5f}')
-            wargs = [order_num, np.sum(mask), xpos, resolution,
+            wmsg = ('\tOrders {0} - {1}: nlines={2} xpos={3} resolution={4:.5f} km/s '
+                    'R={5:.5f}')
+            wargs = [order_num, order_num + bin_order, np.sum(mask), xpos, resolution,
                      resolution1]
             WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
         # store criteria
