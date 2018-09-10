@@ -11,6 +11,7 @@ Created on 2018-04-05 at 14:37
 """
 from __future__ import division
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -116,7 +117,7 @@ def list_files(path, kind=None, prefix=None, suffix=None, substring=None,
         wmsg = 'All {0} files in {1} are:'
     WLOG('', DPROG, wmsg.format(kind, path))
     # create storage
-    store = dict()
+    store = OrderedDict()
     # loop around files
     for root, dirs, files in os.walk(path + '/'):
         # get dir name
