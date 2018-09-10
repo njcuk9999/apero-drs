@@ -195,7 +195,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     wmsg = 'Loading telluric model and locating "good" tranmission'
     WLOG('', p['LOG_OPT'], wmsg)
     # load telluric and get mask (add to loc)
-    p, loc = spirouExM.get_telluric(p, loc, hdr)
+    loc = spirouExM.get_telluric(p, loc, hdr)
 
     # ------------------------------------------------------------------
     # Make 2D map of orders
@@ -224,12 +224,8 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     hdict = OrderedDict()
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    # add name of the TAPAS x data
-    hfile = os.path.split(p['TELLWAVE'])[-1]
-    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLX'], value=hfile)
     # add name of the TAPAS y data
-    hfile = os.path.split(p['TELLSPE'])[-1]
-    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=hfile)
+    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used
     hfile = os.path.split(loc['LOCO_CTR_FILE'])[-1]
     hdict = spirouImage.AddKey(hdict, p['kw_EM_LOCFILE'], value=hfile)
@@ -347,7 +343,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
