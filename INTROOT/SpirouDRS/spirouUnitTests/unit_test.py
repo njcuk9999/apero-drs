@@ -8,8 +8,8 @@ Created on 2018-05-01 11:31:14
 @author: cook
 """
 from __future__ import division
-import sys
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -23,10 +23,6 @@ except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitTests
 except ValueError:
     import spirouUnitTests
-
-if sys.version_info.major == 2:
-    # noinspection PyPep8Naming,PyShadowingBuiltins
-    from collections import OrderedDict as dict
 
 
 # =============================================================================
@@ -100,18 +96,6 @@ def main(runname=None, quiet=False):
     if not quiet:
         spirouTools.DRS_Reset(log=False, called=True)
 
-
-    # ----------------------------------------------------------------------
-    # Set the type from run parameters
-    # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    spirouUnitTests.check_type(p, rparams)
-
-    # ----------------------------------------------------------------------
-    # Check whether we need to compare files
-    # ----------------------------------------------------------------------
-    compare = spirouUnitTests.set_comp(p, rparams)
-
     # ----------------------------------------------------------------------
     # Get runs
     # ----------------------------------------------------------------------
@@ -121,9 +105,9 @@ def main(runname=None, quiet=False):
     # Get runs
     # ----------------------------------------------------------------------
     # storage for times
-    times = dict()
+    times = OrderedDict()
     # storage for outputs
-    newoutputs, oldoutputs = dict(), dict()
+    newoutputs, oldoutputs = OrderedDict(), OrderedDict()
     # storage for errors
     errors = []
     # log the start of the unit tests
@@ -132,7 +116,7 @@ def main(runname=None, quiet=False):
     for runn in list(runs.keys()):
         # do run
         rargs = [p, runn, runs[runn], times, newoutputs, oldoutputs,
-                 errors, compare]
+                 errors]
         out = spirouUnitTests.manage_run(*rargs)
         times, newoutputs, oldoutputs, errors = out
 
