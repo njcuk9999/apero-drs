@@ -267,13 +267,8 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     if framemath is not None or framemath is not 'none':
         p, image, imageheader = math_controller(p, image, imageheader,
                                                 filenames, framemath)
-    # currently we overwrite fitsfilename with last framefilename
-    # TODO: Do we want to overwrite header/fitsfilename with last entry?
-    # TODO: Remove H2RG dependency
-    if len(filenames) > 0 and p['IC_IMAGE_TYPE'] == 'H2RG':
-        p['FITSFILENAME'] = filenames[-1]
-    else:
-        p['FITSFILENAME'] = filename
+    # set fits file name to the first file
+    p['FITSFILENAME'] = filename
     p.append_source('FITSFILENAME', __NAME__)
 
     # convert header to python dictionary
@@ -507,7 +502,7 @@ def write_output_dict(p, filename, hdict):
     # deal with output dictionary (of required keys)
     bfilename = os.path.basename(filename)
     output_file_header_keys = spirouConfig.Constants.OUTPUT_FILE_HEADER_KEYS(p)
-    p['OUTPUTS'][bfilename] = dict()
+    p['OUTPUTS'][bfilename] = OrderedDict()
     # loop around the keys and find them in hdict (or add null character if
     #     not found)
     for key in output_file_header_keys:
@@ -1794,11 +1789,6 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
             WLOG('', log_opt, 'Reading File: ' + framefilename)
             # get tmp data and tmp header
             dtmp, htmp = read_raw_data(framefilename, True, False)
-            # override header
-            # TODO: Remove H2RG compatibility
-            # Question: for H4RG - fitsfilename is first or last file?
-            if p['IC_IMAGE_TYPE'] == 'H2RG':
-                header = htmp
             # finally add/subtract/multiple/divide data
             if op in ['+', 'mean']:
                 data += dtmp
