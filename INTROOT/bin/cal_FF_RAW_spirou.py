@@ -75,10 +75,8 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
 
     # run specific start up
-    # TODO: remove H2RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p['FIB_TYPE'] = p['FIBER_TYPES']
-        p.set_source('FIB_TYPE', __NAME__ + '__main__()')
+    p['FIB_TYPE'] = p['FIBER_TYPES']
+    p.set_source('FIB_TYPE', __NAME__ + '__main__()')
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -127,13 +125,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
-
-    #  Put to zero all the negative pixels
-    # TODO: Check if it makes sens to do that
-#    data2 = np.where(data2<0, np.zeros_like(data2), data2)
+    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -191,12 +183,10 @@ def main(night_name=None, files=None):
         p.set_source('FIBER', __NAME__ + '/main()')
 
         # get fiber parameters
-        # TODO: remove H2RG dependency
-        if p['IC_IMAGE_TYPE'] == 'H4RG':
-            params2add = spirouImage.FiberParams(p, p['FIBER'])
-            for param in params2add:
-                p[param] = params2add[param]
-                p.set_source(param, __NAME__ + '.main()')
+        params2add = spirouImage.FiberParams(p, p['FIBER'])
+        for param in params2add:
+            p[param] = params2add[param]
+            p.set_source(param, __NAME__ + '.main()')
 
         # ------------------------------------------------------------------
         # Get localisation coefficients
@@ -283,11 +273,7 @@ def main(night_name=None, files=None):
             # calcualte the blaze function
             blaze = spirouFLAT.MeasureBlazeForOrder(p, e2ds)
             # calculate the flat
-            # TODO: Remove H2RG compatibility
-            if p['IC_IMAGE_TYPE'] == 'H2RG':
-                flat = e2ds / blaze
-            else:
-                flat = np.where(blaze > 1, e2ds / blaze, 1)
+            flat = e2ds / blaze
             # calculate the rms
             rms = np.std(flat)
             # log the SNR RMS
@@ -422,16 +408,6 @@ def main(night_name=None, files=None):
             spirouDB.PutCalibFile(p, blazefits)
             # update the master calib DB file with new key
             spirouDB.UpdateCalibMaster(p, keydb, blazefitsname, hdr)
-
-            # TODO: Remove H2RG requirement
-            # hack to allow A and B flat and blaze files
-            if p['IC_IMAGE_TYPE'] == 'H2RG':
-                if p['FIBER'] == 'AB':
-                    for fib in ['A', 'B']:
-                        keydb = 'FLAT_' + fib
-                        spirouDB.UpdateCalibMaster(p, keydb, flatfitsname, hdr)
-                        keydb = 'BLAZE_' + fib
-                        spirouDB.UpdateCalibMaster(p, keydb, blazefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message
