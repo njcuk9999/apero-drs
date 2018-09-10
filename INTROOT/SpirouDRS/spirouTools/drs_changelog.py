@@ -15,6 +15,7 @@ import sys
 import os
 import shutil
 from datetime import datetime
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -138,8 +139,8 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
     # set the tmp filename
     tmpfilename2 = 'tmp_' + tmpfilename
     # set up storage
-    entry_storage = dict()
-    date_storage = dict()
+    entry_storage = OrderedDict()
+    date_storage = OrderedDict()
     # for each reference get the date
     for it, reference in enumerate(references):
         # print progress

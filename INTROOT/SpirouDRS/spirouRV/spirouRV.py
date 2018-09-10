@@ -44,10 +44,6 @@ CONSTANT_C = constants.c.value
 # get gaussian function
 gauss_function = spirouCore.GaussFunction
 
-# switch between new and old
-# TODO: Should be new
-OLDCODEEXACT = False
-
 
 # =============================================================================
 # Define main functions
@@ -296,24 +292,12 @@ def create_drift_file(p, loc):
         # For numerical sanity all values less than zero set to zero
         tmp[tmp < 0] = 0
         # set border pixels to zero to avoid fit starting off the edge of image
-        # TODO: Change to constant border
-        if not OLDCODEEXACT:
-            tmp[0: border+1] = 0
-            tmp[-(border+1):] = 0
-        else:
-            # first few pixels are forced to zero to avoid defining a
-            # gaussian that starts before 0
-            tmp[0:3] = 0
-            # same thing at the end of each order
-            tmp[speref.shape[1] - 5: speref.shape[1] - 1] = 0
+        tmp[0: border+1] = 0
+        tmp[-(border+1):] = 0
+
         # normalize by the 98th percentile - avoids super-spurois pixels but
         #   keeps the top of the blaze around 1
-        # TODO: Change to np.percentile
-        # if not OLDCODEEXACT:
-        #     norm = np.percentile(tmp, 98)
-        # else:
-        #     tmp2 = np.sort(tmp)
-        #     norm = tmp2[int(len(tmp2)*0.98)]
+        # norm = np.percentile(tmp, 98)
         # tmp /= norm
 
         # peak value depends on type of lamp
@@ -342,14 +326,10 @@ def create_drift_file(p, loc):
                     w_all += list(w)
             except ValueError:
                 WLOG('warning', p['LOG_OPT'], 'ydata or xdata contains NaNS')
-                # TODO: fix this
-                if not OLDCODEEXACT:
-                    gg = [np.nan, np.nan, np.nan, np.nan]
+                gg = [np.nan, np.nan, np.nan, np.nan]
             except RuntimeError:
                 # WLOG('warning', p['log_opt'], 'Least-squares fails')
-                # TODO: fix this
-                if not OLDCODEEXACT:
-                    gg = [np.nan, np.nan, np.nan, np.nan]
+                gg = [np.nan, np.nan, np.nan, np.nan]
 
             # little sanity check to be sure that the peak is not the same as
             #    we got before and that there is something fishy with the
@@ -367,11 +347,7 @@ def create_drift_file(p, loc):
 
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
-            # TODO: fix this
-            if not OLDCODEEXACT:
-                cond = np.abs(maxpos - gg[1]) < 1
-            else:
-                cond = True
+            cond = np.abs(maxpos - gg[1]) < 1
 
             if cond:
                 # work out the radial velocity of the peak
@@ -1633,85 +1609,9 @@ def fit_ccf(rv, ccf, fit_type):
     # get gaussian fit
     result, fit = spirouMath.fitgaussian(x, y, weights=w, guess=a)
 
-    # TODO: remove this!
-    # test_fit_ccf(x, y, w, a, result)
-
     ccf_fit = (fit + 1 - fit_type)*max_ccf
     # return the best guess and the gaussian fit
     return result, ccf_fit
-
-
-# TODO: Remove fitgaus.f and fitgaus.so and this function
-def test_fit_ccf(x, y, w, aguess, result):
-    """
-    Test the CCF fit against the old CCF fitgaus routine (from FORTRAN)
-    This function requires fisgaus to be compiled on a specific machine so
-    is not for use other than testing (unless one compiles fitgaus first
-    using f2py)
-
-    :param x: numpy array (1D), the rv data
-    :param y: numpy array (1D), the CCF data to fit
-    :param w: numpy array (1D), the weights
-    :param aguess: numpy array (1D), the guess at the gaussian fit parameters
-                   [a, x0, sigma, dc]
-    :param result: numpy array (1D), the resulting gaussian fit parameters
-                   from the scipy.curve_fit gaussian fit
-                   [a, x0, sigma, dc]
-
-        where
-                a: float, the amplitude
-                x0: float, the mean of the gaussian
-                sigma: float, the standard deviation (FWHM) of the gaussian
-                dc: float, the constant level below the gaussian
-
-    :return None:
-    """
-    # imports ONLY for this test function
-    plt = sPlt.plt
-    # noinspection PyUnresolvedReferences
-    from SpirouDRS.fortran import fitgaus
-    import time
-    # path for plot file (manually set)
-    path = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
-    filename = path + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
-    # turn off interactive plot
-    if plt.isinteractive():
-        on = True
-        plt.close('all')
-        plt.interactive('off')
-    else:
-        on = False
-    # set guess and result times
-    anew = result
-    aold = aguess
-    siga = np.zeros(4)
-    fitold = np.zeros(len(x))
-    # use FORTRAN fit gaussian routine
-    fitgaus.fitgaus(x, y, w, aold, siga, fitold)
-    # close all plots
-    plt.close('all')
-    # set up figure
-    fig = plt.figure()
-    fig.set_size_inches(16, 10)
-    # plot
-    plt.plot(x, y, color='k', label='data')
-    plt.plot(x, gauss_function(x, *anew), color='b', label='scipy.curve_fit')
-    plt.plot(x, gauss_function(x, *aold), color='r', label='fortran')
-    # title
-    p1 = 'NEW fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*anew)
-    p2 = 'OLD fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*aold)
-    title = 'Comparison of old and new\n{0}\n{1}\n'.format(p1, p2)
-    plt.title(title)
-    # axis labels
-    plt.xlabel('RV')
-    plt.ylabel('CCF')
-    # save figure
-    plt.savefig(filename + '.png', bbox_inches='tight')
-    plt.savefig(filename + '.pdf', bbox_inches='tight')
-    plt.close()
-    # turn back on interactive plotting if it was on before
-    if on:
-        plt.interactive('on')
 
 
 # =============================================================================

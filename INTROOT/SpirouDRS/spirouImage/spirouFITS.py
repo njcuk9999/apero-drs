@@ -267,13 +267,8 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     if framemath is not None or framemath is not 'none':
         p, image, imageheader = math_controller(p, image, imageheader,
                                                 filenames, framemath)
-    # currently we overwrite fitsfilename with last framefilename
-    # TODO: Do we want to overwrite header/fitsfilename with last entry?
-    # TODO: Remove H2RG dependency
-    if len(filenames) > 0 and p['IC_IMAGE_TYPE'] == 'H2RG':
-        p['FITSFILENAME'] = filenames[-1]
-    else:
-        p['FITSFILENAME'] = filename
+    # set fits file name to the first file
+    p['FITSFILENAME'] = filename
     p.append_source('FITSFILENAME', __NAME__)
 
     # convert header to python dictionary
@@ -286,10 +281,14 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     # return data, header, data.shape[0], data.shape[1]
     return p, image, header, comments
 
-def writeimage(filename, image, hdict=None, dtype=None):
+def writeimage(p, filename, image, hdict=None, dtype=None):
     """
     Writes an image and its header to file
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                output: dict, the output filename as key and the
+                        output file headers as the values
     :param filename: string, filename to save the fits file to
     :param image: numpy array (2D), the image
     :param hdict: dictionary or None, header dictionary to write to fits file
@@ -351,17 +350,27 @@ def writeimage(filename, image, hdict=None, dtype=None):
     # TODO: This should not be suppressed but dealt with properly!
     w1 = []
     for warning in w:
-        if 'Card is too long, comment will be truncated.' != str(warning.message):
+        wmsg = 'Card is too long, comment will be truncated.'
+        if wmsg != str(warning.message):
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
     spirouCore.spirouLog.warninglogger(w1)
+    # deal with output dictionary (of required keys)
+    p = write_output_dict(p, filename, hdict)
+    # return p
+    return p
 
 
-def write_image_multi(filename, image_list, hdict=None, dtype=None,
+
+def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
                       hdicts=None, dtypes=None):
     """
     Writes a set of images (image_list") and its header to file
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                output: dict, the output filename as key and the
+                        output file headers as the values
     :param filename: string, filename to save the fits file to
     :param image_list: list of "numy arrys", the list of images to save each
                        image must be a numpy array (2D)
@@ -402,6 +411,7 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
+    # ------------------------------------------------------------------------
     # check if image_list is a list
     if type(image_list) not in [np.ndarray, list]:
         emsg1 = '"image_list" must be a list of images (currently type={0})'
@@ -440,6 +450,7 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             WLOG('error', DPROG, [emsg1, emsg2])
         else:
             hdicts = hdict
+    # ------------------------------------------------------------------------
     # create the multi HDU list
     try:
         # add the first image to the primary hdu
@@ -481,7 +492,28 @@ def write_image_multi(filename, image_list, hdict=None, dtype=None,
             emsg3 = '    function = {0}'.format(func_name)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
+    # deal with output dictionary (of required keys)
+    p = write_output_dict(p, filename, hdicts[0])
+    # return p
+    return p
 
+
+def write_output_dict(p, filename, hdict):
+    # deal with output dictionary (of required keys)
+    bfilename = os.path.basename(filename)
+    output_file_header_keys = spirouConfig.Constants.OUTPUT_FILE_HEADER_KEYS(p)
+    p['OUTPUTS'][bfilename] = OrderedDict()
+    # loop around the keys and find them in hdict (or add null character if
+    #     not found)
+    for key in output_file_header_keys:
+        if key in hdict:
+            p['OUTPUTS'][bfilename][key] = str(hdict[key][0])
+        else:
+            p['OUTPUTS'][bfilename][key] = '--'
+    # add DRS_TYPE
+    p['OUTPUTS'][bfilename]['DRS_TYPE'] = p['DRS_TYPE']
+    # return p
+    return p
 
 def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
                    required=True):
@@ -1757,11 +1789,6 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
             WLOG('', log_opt, 'Reading File: ' + framefilename)
             # get tmp data and tmp header
             dtmp, htmp = read_raw_data(framefilename, True, False)
-            # override header
-            # TODO: Remove H2RG compatibility
-            # Question: for H4RG - fitsfilename is first or last file?
-            if p['IC_IMAGE_TYPE'] == 'H2RG':
-                header = htmp
             # finally add/subtract/multiple/divide data
             if op in ['+', 'mean']:
                 data += dtmp

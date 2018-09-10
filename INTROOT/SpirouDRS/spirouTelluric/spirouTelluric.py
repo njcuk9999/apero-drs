@@ -89,7 +89,7 @@ def get_molecular_tell_lines(p, loc):
     # representative atmospheric transmission
     # tapas = pyfits.getdata('tapas_model.fits')
     tapas_file = spirouDB.GetDatabaseTellMole(p)
-    tdata = spirouImage.ReadImage(p, tapas_file, kind='FLAT')
+    tdata = spirouImage.ReadImage(p, tapas_file, kind='TAPAS')
     tapas, thdr, tcmt, _, _ = tdata
 
     # load all current telluric convolve files
@@ -301,9 +301,6 @@ def calc_recon_abso(p, loc):
     # flatten spectrum and wavelengths
     sp2 = sp.ravel()
     wave2 = loc['WAVE_IT'].ravel()
-    # get the normalisation factor
-    # TODO: Not used??
-    norm = np.nanmedian(sp2)
     # define the good pixels as those above minimum transmission
     keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
     # also require wavelength constraints

@@ -295,12 +295,8 @@ def find_order_centers(pp, image, loc, order_num):
             center = center + rowtop
             # if the width is zero set the position back to the original
             # position
-            # TODO: remove H2RG compatibility
             if width == 0:
-                if pp['IC_IMAGE_TYPE'] == "H2RG":
-                    center = float(rowcenter)
-                else:
-                    center = float(rowcenter)-2  # to force the order curvature
+                center = float(rowcenter)-2  # to force the order curvature
         else:
             width = 0
             center = float(rowcenter) - 2  # to force the order curvature
@@ -805,17 +801,6 @@ def smoothed_boxmean_image2(image, size, weighted=True):
         newimage[row] = s_weighted_image/s_weights
     # return new image
     return newimage
-
-
-# TODO: remove later
-def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
-    # get the new images
-    image1 = smoothed_boxmean_image1(image, size)
-    image2 = smoothed_boxmean_image2(image, size)
-
-    # plot graph in sPlt
-    sPlt.__test_smoothed_boxmean_image(image, image1, image2, size,
-                                       row=row, column=column)
 
 
 def image_localization_superposition(image, coeffs):

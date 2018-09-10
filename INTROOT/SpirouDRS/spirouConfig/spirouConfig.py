@@ -11,7 +11,7 @@ Import rules: Only from spirouConfig
 """
 from __future__ import division
 import os
-import sys
+from collections import OrderedDict
 
 from . import spirouConst as Constants
 from . import spirouConfigFile
@@ -712,7 +712,6 @@ def get_user_config(p):
     return p, warn_msgs
 
 
-
 def load_config_from_file(p, key, required=False, logthis=False):
     """
     Load a secondary level confiruation file filename = "key", this requires
@@ -760,10 +759,10 @@ def load_config_from_file(p, key, required=False, logthis=False):
     if os.path.exists(uconfig) and  p['USER_CONFIG']:
         newparams2 = get_config_params(p, key, uconfig, logthis=logthis)
     else:
-        newparams2 = dict()
+        newparams2 = OrderedDict()
 
     # combine giving precedence to user config file
-    newparams, newparamssource = dict(), dict()
+    newparams, newparamssource = OrderedDict(), OrderedDict()
     # loop around default parameters and add to new params
     for newkey in list(newparams1.keys()):
         newparams[newkey] = newparams1[newkey]
@@ -802,6 +801,7 @@ def get_config_params(p, key, filename, logthis=True):
                               level='warning')
     # return new parameters
     return newparams
+
 
 def extract_dict_params(pp, suffix, fiber, merge=False):
     """
@@ -917,6 +917,8 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
         return pp
     else:
         return fparam
+
+
 
 
 # =============================================================================

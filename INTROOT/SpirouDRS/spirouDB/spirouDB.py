@@ -10,11 +10,10 @@ Version 0.0.1
 """
 from __future__ import division
 import numpy as np
-import filecmp
 from astropy.io import fits
 import os
-import shutil
 import time
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -83,7 +82,7 @@ def get_database(p, update=False, dbkind=None):
     lines = read_master_file(p, lock, lock_file, dbkind)
 
     # store into dictionary of keys
-    t_database = dict()
+    t_database = OrderedDict()
     # loop around lines in file
     for l_it, line in enumerate(lines):
         # ignore blank lines or lines starting with '#'

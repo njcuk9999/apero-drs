@@ -122,9 +122,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -215,7 +213,7 @@ def main(night_name=None, files=None):
     tiltima = np.ones((int(loc['NUMBER_ORDERS']/2), data2.shape[1]))
     tiltima *= loc['TILT'][:, None]
     # construct file name and path
-    tiltfits = spirouConfig.Constants.SLIT_TILT_FILE(p)
+    tiltfits, tag = spirouConfig.Constants.SLIT_TILT_FILE(p)
     tiltfitsname = os.path.split(tiltfits)[-1]
     # Log that we are saving tilt file
     wmsg = 'Saving tilt  information in file: {0}'
@@ -224,10 +222,11 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     # add tilt parameters as 1d list
     hdict = spirouImage.AddKey1DList(hdict, p['KW_TILT'], values=loc['TILT'])
     # write tilt file to file
-    spirouImage.WriteImage(tiltfits, tiltima, hdict)
+    p = spirouImage.WriteImage(p, tiltfits, tiltima, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control

@@ -172,7 +172,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Save bad pixel mask
     # ----------------------------------------------------------------------
     # construct bad pixel file name
-    badpixelfits = spirouConfig.Constants.BADPIX_FILE(p)
+    badpixelfits, tag = spirouConfig.Constants.BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
     WLOG('', p['LOG_OPT'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
@@ -182,6 +182,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
     hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
     hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])
@@ -192,7 +193,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
 
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)
-    spirouImage.WriteImage(badpixelfits, badpixelmap, hdict)
+    p, spirouImage.WriteImage(p, badpixelfits, badpixelmap, hdict)
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
