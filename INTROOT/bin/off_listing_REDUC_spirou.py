@@ -80,11 +80,13 @@ def main(night_name=None):
     if os.path.exists(index_path):
         rawloc = spirouImage.ReadFitsTable(index_path)
         loc['FILENAME'] = list(rawloc['FILENAME'])
+        loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
         for col in columns:
             loc[col] = list(rawloc[col])
     # else we have to create this file
     else:
         loc['FILENAME'] = []
+        loc['LAST_MODIFIED'] = []
         # loop around columns and add blank list to each
         for col in columns:
             loc[col] = []
@@ -119,6 +121,7 @@ def main(night_name=None):
         hdr = spirouImage.ReadHeader(p, filepath=fitsfilename)
         # add filename
         loc['FILENAME'].append(filename)
+        loc['LAST_MODIFIED'].append(os.path.getmtime(fitsfilename))
         # loop around columns and look for key in header
         for col in columns:
             # get value from header
@@ -143,7 +146,7 @@ def main(night_name=None):
         # log progress
         WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
         # get column names
-        colnames = ['FILENAME', 'UNIX'] + list(columns)
+        colnames = ['FILENAME', 'LAST_MODIFIED'] + list(columns)
         # define the format for each column
         formats = [None] * len(colnames)
         # get the values for each column
