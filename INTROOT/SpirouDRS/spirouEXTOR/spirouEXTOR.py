@@ -10,6 +10,7 @@ Created on 2017-11-07 at 13:46
 """
 from __future__ import division
 import numpy as np
+from collections import OrderedDict
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
@@ -892,7 +893,7 @@ def work_out_ww(ww0, ww1, tiltshift, r1):
     uww0 = np.unique(ww0)
     uww1 = np.unique(ww1)
     # add dictionary for unique values in ww0 and ww1
-    wwall = dict()
+    wwall = OrderedDict()
     # loop around unique values in ww0
     for ww0i in uww0:
         # loop around unique values in ww1
