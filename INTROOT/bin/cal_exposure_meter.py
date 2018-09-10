@@ -174,7 +174,7 @@ def main(night_name=None, reffile=None):
     wmsg = 'Loading telluric model and locating "good" tranmission'
     WLOG('', p['LOG_OPT'], wmsg)
     # load telluric and get mask (add to loc)
-    p, loc = spirouExM.get_telluric(p, loc, hdr)
+    loc = spirouExM.get_telluric(p, loc, hdr)
 
     # ------------------------------------------------------------------
     # Make 2D map of orders
