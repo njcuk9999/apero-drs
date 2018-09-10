@@ -154,13 +154,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
-
-    #  Put to zero all the negative pixels
-    # TODO: Check if it makes sens to do that
-    # data2 = np.where(data2<0, np.zeros_like(data2), data2)
+    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -394,17 +388,15 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         locofile, _ = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
 
-        # TODO: Remove H2RG dependency
-        if p['IC_IMAGE_TYPE'] == 'H4RG':
-            # copy extraction method and function to header
-            #     (for reproducibility)
-            hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'],
-                                       value=extmethod)
-            hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'],
-                                       value=extfunc)
-            # write 1D list of the SNR
-            hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
-                                             values=loc['SNR'])
+        # copy extraction method and function to header
+        #     (for reproducibility)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'],
+                                   value=extmethod)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'],
+                                   value=extfunc)
+        # write 1D list of the SNR
+        hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
+                                         values=loc['SNR'])
         # add localization file name to header
         hdict = spirouImage.AddKey(hdict, p['KW_LOCO_FILE'], value=locofilename)
         # add localization file keys to header
