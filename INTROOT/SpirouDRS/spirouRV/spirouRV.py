@@ -325,7 +325,6 @@ def create_drift_file(p, loc):
         xprev, ipeak = -99, 0
         nreject = 0
         # loop for peaks that are above a value of limit
-        w_all = []
         while maxtmp > limit:
             # find the position of the maximum
             maxpos = np.argmax(tmp)
@@ -339,7 +338,7 @@ def create_drift_file(p, loc):
                 #    gg = [mean, amplitude, sigma, dc]
                 with warnings.catch_warnings(record=True) as w:
                     gg, pcov = curve_fit(gf, index, tmp[index], p0=p0)
-                    w_all += list(w)
+                spirouCore.spirouLog.warninglogger(w)
             except ValueError:
                 WLOG('warning', p['LOG_OPT'], 'ydata or xdata contains NaNS')
                 # TODO: fix this
@@ -397,8 +396,6 @@ def create_drift_file(p, loc):
             xprev = gg[1]
             # iterator
             ipeak += 1
-        # display warning messages
-        spirouCore.spirouLog.warninglogger(w_all)
         # log how many FPs were found and how many rejected
         wmsg = 'Order {0} : {1} peaks found, {2} peaks rejected'
         WLOG('', p['LOG_OPT'], wmsg.format(order_num, ipeak, nreject))

@@ -249,7 +249,7 @@ def main(night_name=None, files=None):
         # read image
         tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # normalise with blaze function
-        loc['SP'] = tdata #/ loc['NBLAZE']
+        loc['SP'] = tdata / loc['NBLAZE']
         loc.set_source('SP', main_name)
 
         # ------------------------------------------------------------------
@@ -322,7 +322,7 @@ def main(night_name=None, files=None):
         sp_out = loc['SP2'] / loc['RECON_ABSO']
         sp_out = sp_out.reshape(loc['DATA'].shape)
         # multiply by blaze
-        #sp_out = sp_out * loc['NBLAZE']
+        sp_out = sp_out * loc['NBLAZE']
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         # write sp_out to file

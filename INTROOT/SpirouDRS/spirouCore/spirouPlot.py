@@ -1776,21 +1776,12 @@ def wave_fp_wavelength_residuals(loc):
 # =============================================================================
 def wave_ea_plot_per_order_hcguess(p, loc, order_num):
 
-    plt.ioff()
-
     # get data from loc
     wave = loc['INITIAL_WAVE_MAP']
     hc_sp = loc['HCDATA']
     # get data from loc
-    xpix_ini = np.array(loc['XPIX_INI'])
-    g2_ini = np.array(loc['G2_INI'])
-    ord_ini = np.array(loc['ORD_INI'])
-
-    # set up mask for the order
-    gg = ord_ini == order_num
-    # keep only lines for the order
-    xpix_ini = xpix_ini[gg]
-    g2_ini = g2_ini[gg]
+    xpix_ini = loc['XPIX_INI']
+    g2_ini = loc['G2_INI']
 
     # set up fig
     plt.figure()
@@ -1815,59 +1806,6 @@ def wave_ea_plot_per_order_hcguess(p, loc, order_num):
     plt.show()
     plt.close()
 
-
-def wave_ea_plot_allorder_hcguess(p, loc):
-
-#    plt.ioff()
-
-    # get data from loc
-    wave = loc['INITIAL_WAVE_MAP']
-    hc_sp = loc['HCDATA']
-    # get data from loc
-    xpix_ini = np.array(loc['XPIX_INI'])
-    g2_ini = np.array(loc['G2_INI'])
-    ord_ini = np.array(loc['ORD_INI'])
-    nbo = loc['NBO']
-
-    # set up fig
-    plt.figure()
-    # clear the current figure
-    plt.clf()
-    # set up axis
-    frame = plt.subplot(111)
-
-    #define spectral order colours
-    col1 = ['black', 'grey']
-    col2 = ['green', 'purple']
-
-# loop through the orders
-    for order_num in range(nbo):
-        # set up mask for the order
-        gg = ord_ini == order_num
-        # keep only lines for the order
-        xpix_p = xpix_ini[gg]
-        xpix_p = xpix_p #+ 4088*order_num
-        g2_p = g2_ini[gg]
-
-        # get colours from order parity
-        col1_1 = col1[np.mod(order_num, 2)]
-        col2_1 = col2[np.mod(order_num, 2)]
-
-        # plot spectrum for order
-        frame.plot(wave[order_num, :], hc_sp[order_num, :], color=col1_1)
-        # over plot all fits
-        for line_it in range(len(xpix_p)):
-            xpix = xpix_p[line_it]
-            g2 = g2_p[line_it]
-            plt.plot(wave[order_num, xpix], g2, color = col2_1)
-
-    # set title and labels
-    frame.set(title='Fitted gaussians on spectrum',
-                  xlabel='Wavelength [nm]',
-                  ylabel='Normalized flux')
-
-    # end plotting function properly
-    end_plotting()
 
 
 def wave_ea_plot_wave_cat_all_and_brightest(p, wave_c, dv, bmask, iteration):

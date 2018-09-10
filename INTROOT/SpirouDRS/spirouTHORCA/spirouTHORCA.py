@@ -1487,9 +1487,6 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
     if np.sum(~np.isfinite(slln)) != 0:
         coeffs[2] = 0
         slln = 0
-    # test for more than one zero value in data
-    elif np.count_nonzero(lsdata) < len(lsdata)-1:
-        coeffs[2] = 0
     # if no NaNs work out weights and fit
     else:
         if not np.max(lsdata) == 0:
