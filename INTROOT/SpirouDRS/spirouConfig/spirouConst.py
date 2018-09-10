@@ -1807,7 +1807,9 @@ def RAW_OUTPUT_COLUMNS(p):
 
 # noinspection PyPep8Naming
 def REDUC_OUTPUT_COLUMNS(p):
-    output_keys = [p['KW_OBJNAME'][0],
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0]]
     return output_keys
