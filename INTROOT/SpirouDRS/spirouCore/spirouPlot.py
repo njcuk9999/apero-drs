@@ -160,11 +160,7 @@ def darkplot_image_and_regions(pp, image):
     # set up axis
     frame = plt.subplot(111)
     # plot the image
-    # TODO: Remove H2RG dependency
-    if pp['IC_IMAGE_TYPE'] == 'H2RG':
-        clim = (1., 10 * pp['MED_FULL'])
-    else:
-        clim = (0., 10 * pp['MED_FULL'])
+    clim = (0., 10 * pp['MED_FULL'])
     im = frame.imshow(image, origin='lower', clim=clim, cmap='jet')
     # plot the colorbar
     cbar = plt.colorbar(im, ax=frame)
@@ -2261,64 +2257,6 @@ def polar_lsd_plot(loc) :
 
 
 # =============================================================================
-# test functions (remove later)
-# =============================================================================
-# TODO: remove later
-def __test_smoothed_boxmean_image(image, image1, image2, size,
-                                  row=1000, column=1000):
-    """
-    This is a test code for comparison between smoothed_boxmean_image1 "manual"
-    and smoothed_boxmean_image2 "convovle"
-
-    :param image: numpy array (2D), the image
-    :param size: int, the number of pixels to mask before and after pixel
-                 (for every row)
-                 i.e. box runs from  "pixel-size" to "pixel+size" unless
-                 near an edge
-    :param column: int, the column number to plot for
-    :return None:
-    """
-
-    # set up the plot
-    fsize = (4, 6)
-    plt.figure()
-    frames = [plt.subplot2grid(fsize, (0, 0), colspan=2, rowspan=2),
-              plt.subplot2grid(fsize, (0, 2), colspan=2, rowspan=2),
-              plt.subplot2grid(fsize, (0, 4), colspan=2, rowspan=2),
-              plt.subplot2grid(fsize, (2, 0), colspan=3, rowspan=1),
-              plt.subplot2grid(fsize, (2, 3), colspan=3, rowspan=1),
-              plt.subplot2grid(fsize, (3, 0), colspan=3, rowspan=1),
-              plt.subplot2grid(fsize, (3, 3), colspan=3, rowspan=1)]
-    # plot the images and image diff
-    frames[0].imshow(image1)
-    frames[0].set_title('Image Old method')
-    frames[1].imshow(image2)
-    frames[1].set_title('Image New method')
-    frames[2].imshow(image1 - image2)
-    frames[2].set_title('Image1 - Image2')
-    # plot the column plot
-    frames[3].plot(image[:, column], label='Original')
-    frames[3].plot(image1[:, column], label='Old method')
-    frames[3].plot(image2[:, column], label='New method')
-    frames[3].legend()
-    frames[3].set_title('Column {0}'.format(column))
-    frames[4].plot(image1[:, column] - image2[:, column])
-    frames[4].set_title('Column {0}  Image1 - Image2'.format(column))
-    # plot the row plot
-    frames[5].plot(image[row, :], label='Original')
-    frames[5].plot(image1[row, :], label='Old method')
-    frames[5].plot(image2[row, :], label='New method')
-    frames[5].legend()
-    frames[5].set_title('Row {0}'.format(row))
-    frames[6].plot(image1[row, :] - image2[row, :])
-    frames[6].set_title('Row {0}  Image1 - Image2'.format(row))
-    plt.subplots_adjust(hspace=0.5)
-
-    if not plt.isinteractive():
-        plt.show()
-        plt.close()
-
-# =============================================================================
 # worker functions
 # =============================================================================
 def remove_first_last_ticks(frame, axis='x'):
@@ -2336,9 +2274,6 @@ def remove_first_last_ticks(frame, axis='x'):
         frame.set_xticks(yticks)
         frame.set_xticklabels(yticklabels)
     return frame
-
-
-
 
 
 # =============================================================================
