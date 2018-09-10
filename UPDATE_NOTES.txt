@@ -48,4 +48,8 @@ Update Notes - Version 0.3.001
     - currently in testing phase
     - "cal_HC_E2DS_EA_spirou" and "cal_WAVE_E2DS_WAVE_spirou"
 
+8) Removed all H2RG compatibility
 
+9) Made all calls to dict() --> OrderedDict() (for python 2/cfht compatibility)
+
+10) Pep 8 clean up of all recipes
