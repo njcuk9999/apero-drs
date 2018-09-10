@@ -122,9 +122,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Background computation
