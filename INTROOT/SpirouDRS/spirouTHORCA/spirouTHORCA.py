@@ -637,9 +637,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wargs = ["IC_LITTROW_ORDER_INIT", p['IC_LITTROW_ORDER_INIT'],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
-        # TODO: Remove H2RG dependency
-        wmsg2 = ('    Please check constants_SPIROU_{0}.py file'
-                 ''.format(p['IC_IMAGE_TYPE']))
+        wmsg2 = '    Please check constants file'
         wmsg3 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
     # test if n_order_init is in remove_orders
@@ -647,9 +645,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wargs = ["IC_HC_N_ORD_FINAL", p['IC_HC_N_ORD_FINAL'],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
-        # TODO: Remove H2RG dependency
-        wmsg2 = ('    Please check constants_SPIROU_{0}.py file'
-                 ''.format(p['IC_IMAGE_TYPE']))
+        wmsg2 = '    Please check constants file'
         wmsg3 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
     # check that all remove orders exist
@@ -1852,7 +1848,6 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # global statistics
         # ---------------------------------------------------------------------
         # work out conversion factor
-        # TODO: speed of light proper!
         convert = speed_of_light / (dxdl * details[-1][0])
         # get res1
         res1 = details[-1][1] - details[-1][2]

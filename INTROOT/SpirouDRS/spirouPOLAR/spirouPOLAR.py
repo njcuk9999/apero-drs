@@ -11,11 +11,11 @@ Created on 2018-06-12 at 9:31
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouRV
 
 
 # =============================================================================
@@ -104,7 +104,7 @@ def sort_polar_files(p, polardict):
         # ------------------------------------------------------------------
         # Question: Why add some basename and skip some stokes/fiber/data etc
         # store data for this file
-        polardict[filename] = dict()
+        polardict[filename] = OrderedDict()
         # set source
         polardict.set_source(filename, func_name)
         # add filename
@@ -181,7 +181,6 @@ def load_data(p, polardict, loc):
         # if (cond1 or cond2) and cond3 append to detected list
         if (cond1 or cond2) and cond3:
             stokes_detected.append(entry['stokes'].upper())
-    # TODO: This needs fixing will cause error
     # if more than one stokes parameter is identified then exit program
     if len(stokes_detected) == 0:
         stokes_detected.append('UNDEF')
@@ -201,7 +200,7 @@ def load_data(p, polardict, loc):
 
     # detect all input combinations of fiber type and exposure number
     four_exposures_detected, two_exposures_detected = [], []
-    loc['DATA'] = dict()
+    loc['DATA'] = OrderedDict()
     # set the source of data (for param dict)
     loc.set_source('DATA', func_name)
     # loop around the filenames in polardict

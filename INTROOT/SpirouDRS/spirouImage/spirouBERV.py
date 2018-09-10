@@ -47,16 +47,14 @@ def get_earth_velocity_correction(p, loc, hdr):
     # ----------------------------------------------------------------------
     # Read star parameters
     # ----------------------------------------------------------------------
-    # TODO: remove H2RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_OBJRA', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_OBJDEC', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_OBJEQUIN')
-        p = spirouImage.get_param(p, hdr, 'KW_OBJRAPM')
-        p = spirouImage.get_param(p, hdr, 'KW_OBJDECPM')
-        p = spirouImage.get_param(p, hdr, 'KW_DATE_OBS', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBJRA', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBJDEC', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBJEQUIN')
+    p = spirouImage.get_param(p, hdr, 'KW_OBJRAPM')
+    p = spirouImage.get_param(p, hdr, 'KW_OBJDECPM')
+    p = spirouImage.get_param(p, hdr, 'KW_DATE_OBS', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
 
     #-----------------------------------------------------------------------
     #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)

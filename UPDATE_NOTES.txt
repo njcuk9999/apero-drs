@@ -1,0 +1,71 @@
+Update Notes - Version 0.3.001
+
+
+1) Moved where pre-processed files are saved (now saved in the TMP folder
+   instead of RAW) - Defined in config.py by "DRS_DATA_WORKING"
+
+      [REQUIRES RE-PRE-PROCESSING TO WORK]*
+
+2) Pre-processing now creates an index.fits (FITS table) with listing of key
+   parameters used by off_listing (for speed up)
+
+   - parameters are [FILENAME, DATE-OBS, UTC-OBS, OBSTYPE, EXPTIME, SCCCAS_P,
+                     SBCREF_P, SBCDEN_P]
+
+      [REQUIRES RE-PRE-PROCESSING TO WORK]*
+
+3) All recipes now return outputs with some additional header keys.
+
+    These are:
+        - DRSOUTID (kw_OUTPUT)   - stores a description of the output
+        - DRS_EOUT (kw_EXT_TYPE)  - stores a description of the extraction
+                                    input (DPRTYPE)
+
+   These are used to check inputs of recipes that use DRS outputs
+   (e.g. cal_drift, cal_ccf, pol_spirou etc)
+
+   Note the current values of the header keys are temporary suggestions and
+   are easily changeable (See .../SpirouDRS/data/output_keys.py)
+
+      [REQUIRES RE-REDUCING PRODUCTS TO WORK]
+
+4) All recipes now index their outputs in an addition "index.fits" FITS table
+   used by off_listing for display files and the drift recipes
+
+
+      [REQUIRES RE-REDUCING PRODUCTS TO WORK]
+
+5) drift codes now use "index.fits" to look for FP_FP or HCONE_HCONE files
+   Note that without this file drift recipes take a long time to read all
+   files (and if you have hundreds of files would take a significant amount
+   of time) the index.fits means this process is almost instantaneous
+
+
+6) New wavelength solution (By Melissa) is now on the calibration database
+
+      [REQUIRES RESET OF CALIB DATABASE TO WORK]**
+
+
+7) New cal_HC and cal_WAVE (By Etienne - implemented by myself and Melissa)
+
+    - currently in testing phase
+    - "cal_HC_E2DS_EA_spirou" and "cal_WAVE_E2DS_WAVE_spirou"
+
+8) Removed all H2RG compatibility
+
+9) Made all calls to dict() --> OrderedDict() (for python 2/cfht compatibility)
+
+10) Pep 8 clean up of all recipes
+
+
+* Can by-pass re-running cal_pre-process by copying all pre-processed files
+  from "RAW" folder to "TMP" folder and running off_listing_RAW.py on each
+  "NIGHT_NAME" individually
+
+** Can by-pass reset of calibration database by adding the following lines to
+   the calibration database:
+
+    WAVE_AB None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
+    WAVE_A None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
+    WAVE_B None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
+    WAVE_C None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0

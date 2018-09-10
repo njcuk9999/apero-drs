@@ -8,7 +8,8 @@
 #                     i.e. cal_loc_RAW_spirou can take flat_dark OR dark_flat
 #     ocode         = odometer code (will be checked for in pre-processing to set 
 #                     unique_string and dprtype) if None not checked in pre-processing
-#     obstype       = OBSTYPE HEADER key (will be checked for in pre-processing 
+#                     In case of reduced file will check for header key kw_OUTPUT
+#     obstype       = OBSTYPE HEADER key (will be checked for in pre-processing
 #                     to set unique_string and dprtype) if None not checked for in
 #                     pre-processing
 #     ccas          = AB fiber type code, if None not checked for in pre-processing
@@ -28,134 +29,155 @@
 #     order         = ideal order to run the DRS (minus numbers mean do not run)
 #     det           = detector type validity (1=both, 2=H2RG only, 4=H4RG only) 
 # 
-
+# ===============================================================================================
 Recipe, number, ocode, obstype, ccas, cref, fiber, dprtype, dstring, kind, desc, order, det
+# ===============================================================================================
+#
+# ---- Dark and Bad pixel recipes
 #
 cal_DARK_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
 cal_BADPIX_spirou, 1, f, FLAT, pos_wl, pos_wl, None, FLAT_FLAT, flat_flat, RAW, BAD-PIXEL, 2, 1
 cal_BADPIX_spirou, 2, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, BAD-PIXEL, 2, 1
+#
+# ---- Localisation recipes
+#
 cal_loc_RAW_spirou, 1, f, FLAT, pos_wl, pos_pk, AB, FLAT_DARK, flat_dark, RAW, LOCALIZATION, 3, 1
 cal_loc_RAW_spirou, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, LOCALIZATION, 3, 1
+#
+# ---- Tilt recipes
+#
 cal_SLIT_spirou, 1, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SLIT, 4, 1
+#
+# ---- Flat fielding recipes
+#
 cal_FF_RAW_spirou, 1, f, FLAT, pos_wl, pos_wl, None, FLAT_FLAT, flat_flat, RAW, FLAT-FIELD, 5, 4
 cal_FF_RAW_spirou, 1, f, FLAT, pos_wl, pos_pk, AB, FLAT_DARK, flat_dark, RAW, FLAT-FIELD, 5, 2
 cal_FF_RAW_spirou, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, FLAT-FIELD, 5, 2
-cal_HC_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, hcone_hcone, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_A, None, None, None, A, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_B, None, None, None, B, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_C, None, None, None, C, None, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, HCONE_HCONE, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_A, None, None, None, A, HCONE_HCONE, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_B, None, None, None, B, HCONE_HCONE, hc, REDUC, HC, -6, 1
-cal_HC_E2DS_spirou, 1, e2dsff_C, None, None, None, C, HCONE_HCONE, hc, REDUC, HC, -6, 1
-cal_WAVE_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2ds_A, None, None, None, A, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2ds_B, None, None, None, B, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2ds_C, None, None, None, C, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2ds_AB, None, None, None, AB, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2ds_A, None, None, None, A, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2ds_B, None, None, None, B, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2ds_C, None, None, None, C, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2dsff_A, None, None, None, A, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2dsff_B, None, None, None, B, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 1, e2dsff_C, None, None, None, C, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2dsff_AB, None, None, None, AB, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2dsff_A, None, None, None, A, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2dsff_B, None, None, None, B, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_E2DS_spirou, 2, e2dsff_C, None, None, None, C, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2ds_A, None, None, None, A, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2ds_B, None, None, None, B, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2ds_C, None, None, None, C, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2ds_AB, None, None, None, AB, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2ds_A, None, None, None, A, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2ds_B, None, None, None, B, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2ds_C, None, None, None, C, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_A, None, None, None, A, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_B, None, None, None, B, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_C, None, None, None, C, HCONE_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, HCONE_FP, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_A, None, None, None, A, HCONE_FP, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_B, None, None, None, B, HCONE_FP, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_C, None, None, None, C, HCONE_FP, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, FP_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_A, None, None, None, A, FP_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_B, None, None, None, B, FP_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 1, e2dsff_C, None, None, None, C, FP_HCONE, hc, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2dsff_AB, None, None, None, AB, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2dsff_A, None, None, None, A, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2dsff_B, None, None, None, B, FP_FP, fp, REDUC, WAVE, -7, 1
-cal_WAVE_NEW_E2DS_spirou, 2, e2dsff_C, None, None, None, C, FP_FP, fp, REDUC, WAVE, -7, 1
+#
+# ---- Extraction recipes
+#
 cal_extract_RAW_spirou, 1, o, None, None, None, None, None, None, RAW, EXTRACT, 8, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, fp, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, fp, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, fp, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, fp, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, hc, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, hc, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, hc, REDUC, DRIFT, 9, 1
-cal_DRIFT_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, hc, REDUC, DRIFT, 9, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, fp, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, fp, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, fp, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, fp, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, hc, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, hc, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, hc, REDUC, DRIFTPEAK, 10, 1
-cal_DRIFTPEAK_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, hc, REDUC, DRIFTPEAK, 10, 1
-cal_CCF_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2dsff_A, None, None, None, A, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2dsff_B, None, None, None, B, None, None, REDUC, CCF, 11, 1
-cal_CCF_E2DS_spirou, 1, e2dsff_C, None, None, None, C, None, None, REDUC, CCF, 11, 1
-obj_fit_tellu, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2ds_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2ds_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2ds_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2dsff_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2dsff_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, e2dsff_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
-obj_mk_tellu, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2ds_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2ds_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2ds_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2dsff_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2dsff_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tellu, 1, e2dsff_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2ds_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2ds_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2ds_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2dsff_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2dsff_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, e2dsff_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+#
+# ---- Wave solution recipes
+#
+cal_HC_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_FF_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_FF_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_FF_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_HC_E2DS_spirou, 1, EXT_E2DS_FF_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, HC, -6, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_AB, None, None, None, AB, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_A, None, None, None, A, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_B, None, None, None, B, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_C, None, None, None, C, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_FF_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_FF_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_FF_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 1, EXT_E2DS_FF_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_FF_AB, None, None, None, AB, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_FF_A, None, None, None, A, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_FF_B, None, None, None, B, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_E2DS_spirou, 2, EXT_E2DS_FF_C, None, None, None, C, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_AB, None, None, None, AB, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_A, None, None, None, A, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_B, None, None, None, B, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_C, None, None, None, C, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_FF_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_FF_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_FF_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 1, EXT_E2DS_FF_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_FF_AB, None, None, None, AB, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_FF_A, None, None, None, A, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_FF_B, None, None, None, B, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+cal_WAVE_NEW_E2DS_spirou, 2, EXT_E2DS_FF_C, None, None, None, C, FP_FP, FP_FP, REDUC, WAVE, -7, 1
+#
+# ---- Drift recipes
+#
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, FP_FP, FP_FP, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, FP_FP, FP_FP, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, FP_FP, FP_FP, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, FP_FP, FP_FP, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFT, 9, 1
+cal_DRIFT_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFT, 9, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, FP_FP, FP_FP, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, FP_FP, FP_FP, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, FP_FP, FP_FP, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, FP_FP, FP_FP, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFTPEAK, 10, 1
+cal_DRIFTPEAK_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, HCONE_HCONE, HCONE_HCONE, REDUC, DRIFTPEAK, 10, 1
+#
+# ---- CCF recipes
+#
+cal_CCF_E2DS_spirou, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, TELLU_CORRECTED_AB, None, None, None, AB, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, TELLU_CORRECTED_A, None, None, None, A, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, TELLU_CORRECTED_B, None, None, None, B, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, TELLU_CORRECTED_C, None, None, None, C, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, POL_DEG, None, None, None, AB, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, POL_STOKES_I, None, None, None, AB, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, POL_LSD, None, None, None, AB, None, None, REDUC, CCF, 11, 1
+#
+# ---- Telluric recipes
+#
+obj_fit_tellu, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tellu, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_tell_template, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+#
+# ---- Polarimetry recipe
+#
+pol_spirou, 1, EXT_E2DS_AB, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_A, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_B, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_C, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_FF_AB, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_FF_A, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_FF_B, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, EXT_E2DS_FF_C, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+#
+# ---- Other recipes
+#
 cal_exposure_meter, 1, o, None, None, None, None, None, None, RAW, EXTRACT, -12, 1
 cal_wave_mapper, 1, o, None, None, None, None, None, None, RAW, EXTRACT, -13, 1
-pol_spirou, 1, e2ds, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
-visu_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, VISUE2DS -6, 1
-visu_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, None, REDUC, VISUE2DS, -6, 1
-visu_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, None, REDUC, VISUE2DS, -6, 1
-visu_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, None, REDUC, MVISUE2DS, -6, 1
-visu_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, VISUE2DS, -6, 1
-visu_E2DS_spirou, 1, e2dsff_A, None, None, None, A, None, None, REDUC, VISUE2DS, -6, 1
-visu_E2DS_spirou, 1, e2dsff_B, None, None, None, B, None, None, REDUC, VISUE2DS, -6, 1
-visu_E2DS_spirou, 1, e2dsff_C, None, None, None, C, None, None, REDUC, VISUE2DS, -6, 1
-
-
 #
-# Add extra DRS files which aren't currently used in recipes
+# ---- Add extra DRS files which aren't currently used in recipes but should be identified
 #
 None, 1, o, OBJECT, pos_pk, pos_pk, None, OBJ_OBJ, None, RAW, EXTRACT, -1
 None, 1, o, OBJECT, pos_pk, pos_fp, None, OBJ_FP, None, RAW, EXTRACT, -1
@@ -165,10 +187,7 @@ None, 1, c, COMPARISON, pos_pk, pos_hc1, C, DARK_HCONE, dark_hcone, RAW, UNKNOWN
 None, 1, c, COMPARISON, pos_hc2, pos_hc2, None, HCTWO_HCTWO, hctwo_hctwo, RAW, UNKNOWN, -1
 None, 1, c, COMPARISON, pos_hc2, pos_pk, AB, HCTWO_DARK, hctwo_dark, RAW, UNKNOWN, -1
 None, 1, c, COMPARISON, pos_pk, pos_hc2, C, DARK_HCTWO, dark_hctwo, RAW, UNKNOWN, -1
-
-
-# cal_CCF_E2DS_spirou, 1, e2ds_StokesI, None, None, None, AB, None, REDUC, CCF, 11, 1
-# None, 1, c, COMPARISON, pos_hc1, pos_fp, C, HCONE_FP, hcone_fp, RAW, UNKNOWN, -1
-# None, 1, c, COMPARISON, pos_hc2, pos_fp, C, HCTWO_FP, hctwo_fp, RAW, UNKNOWN, -1
-# None, 1, c, COMPARISON, pos_fp, pos_hc1, AB, FP_HCONE, fp_hcone, RAW, UNKNOWN, -1
-# None, 1, c, COMPARISON, pos_fp, pos_hc2, AB, FP_HCTWO, fp_hctwo, RAW, UNKNOWN, -1
+None, 1, c, COMPARISON, pos_hc1, pos_fp, C, HCONE_FP, hcone_fp, RAW, UNKNOWN, -1
+None, 1, c, COMPARISON, pos_hc2, pos_fp, C, HCTWO_FP, hctwo_fp, RAW, UNKNOWN, -1
+None, 1, c, COMPARISON, pos_fp, pos_hc1, AB, FP_HCONE, fp_hcone, RAW, UNKNOWN, -1
+None, 1, c, COMPARISON, pos_fp, pos_hc2, AB, FP_HCTWO, fp_hctwo, RAW, UNKNOWN, -1

@@ -16,6 +16,7 @@ Created on 2018-05-01 at 13:06
 from __future__ import division
 import numpy as np
 import sys
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -101,7 +102,7 @@ def get_versions():
     # aliases
     cdriftpeak = cal_DRIFTPEAK_E2DS_spirou
     # get versions
-    vv = dict()
+    vv = OrderedDict()
     vv[cal_BADPIX_spirou.__NAME__] = cal_BADPIX_spirou.__version__
     vv[cal_CCF_E2DS_spirou.__NAME__] = cal_CCF_E2DS_spirou.__version__
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
@@ -128,7 +129,7 @@ def get_versions():
     vv[pol_spirou.__NAME__] = pol_spirou.__version__
 
 
-def wrapper(p, rname, inputs=None, outputs=None):
+def wrapper(p, rname, inputs=None):
     # get name of run (should be first element in run list
     name = inputs[0]
     if name not in VALID_RECIPES:
@@ -136,10 +137,10 @@ def wrapper(p, rname, inputs=None, outputs=None):
         emsg2 = "    run = {0}".format(rname)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # deal with no input or outputs
-    if inputs is None and outputs is None:
+    if inputs is None:
         WLOG('error', p['LOG_OPT'], 'Must define inputs')
     # if we don't have outputs then we require inputs only
-    strarg = 'rname, inputs, outputs'
+    strarg = 'rname, inputs'
     # link to the recipe function
     recipe_function = 'unit_test_{0}({1})'.format(name.lower(), strarg)
     # return the evaulated unit test function
@@ -162,7 +163,7 @@ def run_main(p, name, args):
     return ll
 
 
-def unit_test_cal_badpix_spirou(rname, inputs, outputs=None):
+def unit_test_cal_badpix_spirou(rname, inputs):
 
     """
     cal_BADPIX_spirou
@@ -173,32 +174,21 @@ def unit_test_cal_badpix_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_BADPIX_spirou'
     arg_names = ['night_name', 'flatfile', 'darkfile']
     arg_types = [str, str, str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.BADPIX_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_dark_spirou(rname, inputs, outputs=None):
+
+def unit_test_cal_dark_spirou(rname, inputs):
 
     """
     cal_DARK_spirou
@@ -209,32 +199,20 @@ def unit_test_cal_dark_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_DARK_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.DARK_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_loc_raw_spirou(rname, inputs, outputs=None):
+def unit_test_cal_loc_raw_spirou(rname, inputs):
 
     """
     unit_test_cal_loc_raw_spirou
@@ -246,35 +224,20 @@ def unit_test_cal_loc_raw_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_loc_RAW_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.LOC_ORDER_PROFILE_FILE(outputs['p']),
-                Constants.LOC_LOCO_FILE(outputs['p']),
-                Constants.LOC_LOCO_FILE2(outputs['p']),
-                Constants.LOC_LOCO_FILE3(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_slit_spirou(rname, inputs, outputs=None):
+def unit_test_cal_slit_spirou(rname, inputs):
     """
     unit_test_cal_slit_spirou
 
@@ -284,32 +247,21 @@ def unit_test_cal_slit_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_SLIT_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.SLIT_TILT_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_ff_raw_spirou(rname, inputs, outputs=None):
+def unit_test_cal_ff_raw_spirou(rname, inputs):
     """
     unit_test_cal_ff_raw_spirou
 
@@ -319,35 +271,20 @@ def unit_test_cal_ff_raw_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_FF_RAW_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        for fiber in outputs['p']['fib_type']:
-            outs.append(Constants.FF_BLAZE_FILE(outputs['p'], fiber))
-            outs.append(Constants.FF_FLAT_FILE(outputs['p'], fiber))
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
+def unit_test_cal_extract_raw_spirou(rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -357,34 +294,20 @@ def unit_test_cal_extract_raw_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_extract_RAW_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        for fiber in outputs['p']['fib_type']:
-            outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_extract_raw_spirouab(rname, inputs, outputs=None):
+def unit_test_cal_extract_raw_spirouab(rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -394,35 +317,21 @@ def unit_test_cal_extract_raw_spirouab(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_extract_RAW_spirouAB'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args =  get_args(name, rname, inputs, arg_names, arg_types)
-        # return args
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        for fiber in outputs['p']['fib_type']:
-            outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-        # return outs
-        return outs, name
+    # get arguments
+    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    # return args
+    return args, name
 
 
-def unit_test_cal_extract_raw_spirouc(rname, inputs, outputs=None):
+def unit_test_cal_extract_raw_spirouc(rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -432,32 +341,18 @@ def unit_test_cal_extract_raw_spirouc(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_extract_RAW_spirouC'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args =  get_args(name, rname, inputs, arg_names, arg_types)
-        # return args
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        for fiber in outputs['p']['fib_type']:
-            outs.append(Constants.EXTRACT_E2DS_FILE(outputs['p'], fiber))
-        # return outs
-        return outs, name
+    # get arguments
+    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    # return args
+    return args, name
 
 
 # def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
@@ -495,7 +390,7 @@ def unit_test_cal_extract_raw_spirouc(rname, inputs, outputs=None):
 #         return outs, name
 
 
-def unit_test_cal_drift_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_cal_drift_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_drift_e2ds_spirou
 
@@ -505,33 +400,20 @@ def unit_test_cal_drift_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_DRIFT_E2DS_spirou'
     arg_names = ['night_name', 'reffile']
     arg_types = [str, str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.DRIFT_E2DS_FITS_FILE(outputs['p']),
-                Constants.DRIFT_E2DS_TBL_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -541,33 +423,20 @@ def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_DRIFTPEAK_E2DS_spirou'
     arg_names = ['night_name', 'reffile']
     arg_types = [str, str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.DRIFTPEAK_E2DS_FITS_FILE(outputs['p']),
-                Constants.DRIFTPEAK_E2DS_TBL_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_ccf_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_cal_ccf_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_ccf_e2ds_spirou
 
@@ -577,33 +446,20 @@ def unit_test_cal_ccf_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_CCF_E2DS_spirou'
     arg_names = ['night_name', 'e2dsfile', 'mask', 'rv', 'width', 'step']
     arg_types = [str, str, str, float, int, float]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.CCF_FITS_FILE(outputs['p']),
-                Constants.CCF_TABLE_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_hc_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_cal_hc_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -613,33 +469,21 @@ def unit_test_cal_hc_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_HC_E2DS_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args =  get_args(name, rname, inputs, arg_names, arg_types)
-        # return args
-        return args, name
-    # else define the outputs
-    else:
-        outs = [spirouConfig.Constants.WAVE_LINE_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    # return args
+    return args, name
 
 
-def unit_test_cal_wave_new_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_cal_wave_new_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -649,33 +493,21 @@ def unit_test_cal_wave_new_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_WAVE_E2DS_spirou'
     arg_names = ['night_name', 'fpfile', 'hcfiles']
     arg_types = [str, str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args =  get_args(name, rname, inputs, arg_names, arg_types)
-        # return args
-        return args, name
-    # else define the outputs
-    else:
-        outs = [spirouConfig.Constants.WAVE_LINE_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    # return args
+    return args, name
 
 
-def unit_test_cal_wave_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_cal_wave_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -685,33 +517,22 @@ def unit_test_cal_wave_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
+
     """
     # define name and arguments
     name = 'cal_WAVE_E2DS_spirou'
     arg_names = ['night_name', 'fpfile', 'hcfiles']
     arg_types = [str, str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args =  get_args(name, rname, inputs, arg_names, arg_types)
-        # return args
-        return args, name
-    # else define the outputs
-    else:
-        outs = [spirouConfig.Constants.WAVE_LINE_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    # return args
+    return args, name
 
 
-def unit_test_cal_exposure_meter(rname, inputs, outputs=None):
+def unit_test_cal_exposure_meter(rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -722,42 +543,20 @@ def unit_test_cal_exposure_meter(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_exposure_meter'
     arg_names = ['night_name', 'reffile']
     arg_types = [str, str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        # deal with multiple output files defined by EM_OUTPUT_TYPE
-        if outputs['p']['EM_OUTPUT_TYPE'] != 'all':
-            outtypes = [str(outputs['p']['EM_OUTPUT_TYPE'])]
-        else:
-            outtypes = ["drs", "raw", "preprocess"]
-        outs = []
-        for outtype in outtypes:
-            outputs['p']['EM_OUTPUT_TYPE'] = outtype
-            outs.append(Constants.EM_SPE_FILE(outputs['p']))
-            outs.append(Constants.EM_WAVE_FILE(outputs['p']))
-            outs.append(Constants.EM_MASK_FILE(outputs['p']))
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_wave_mapper(rname, inputs, outputs=None):
+def unit_test_cal_wave_mapper(rname, inputs):
     """
     unit_test_cal_wave_mapper
 
@@ -768,42 +567,20 @@ def unit_test_cal_wave_mapper(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_wave_mapper'
     arg_names = ['night_name', 'reffile', 'e2dsprefix']
     arg_types = [str, str, str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        # deal with multiple output files defined by EM_OUTPUT_TYPE
-        if outputs['p']['EM_OUTPUT_TYPE'] != 'all':
-            outtypes = [str(outputs['p']['EM_OUTPUT_TYPE'])]
-        else:
-            outtypes = ["drs", "raw", "preprocess"]
-        outs = []
-        for outtype in outtypes:
-            outputs['p']['EM_OUTPUT_TYPE'] = outtype
-            outs.append(Constants.WAVE_MAP_SPE_FILE(outputs['p']))
-            outs.append(Constants.WAVE_MAP_SPE0_FILE(outputs['p']))
-            outs.append(Constants.EM_WAVE_FILE(outputs['p']))
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_cal_preprocess_spirou(rname, inputs, outputs=None):
+def unit_test_cal_preprocess_spirou(rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -813,32 +590,20 @@ def unit_test_cal_preprocess_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'cal_preprocess_spirou'
     arg_names = ['night_name', 'ufiles']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_off_listing_raw_spirou(rname, inputs, outputs=None):
+def unit_test_off_listing_raw_spirou(rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -849,32 +614,20 @@ def unit_test_off_listing_raw_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'off_listing_RAW_spirou'
     arg_names = ['night_name']
     arg_types = [str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.OFF_LISTING_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_off_listing_reduc_spirou(rname, inputs, outputs=None):
+def unit_test_off_listing_reduc_spirou(rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -885,32 +638,21 @@ def unit_test_off_listing_reduc_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
+
     """
     # define name and arguments
     name = 'off_listing_REDUC_spirou'
     arg_names = ['night_name']
     arg_types = [str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = [Constants.OFF_LISTING_FILE(outputs['p'])]
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_obj_mk_tellu(rname, inputs, outputs=None):
+def unit_test_obj_mk_tellu(rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -921,32 +663,20 @@ def unit_test_obj_mk_tellu(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'obj_mk_tellu'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_obj_fit_tellu(rname, inputs, outputs=None):
+def unit_test_obj_fit_tellu(rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -957,29 +687,17 @@ def unit_test_obj_fit_tellu(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'obj_fit_tellu'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
 def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
@@ -1005,19 +723,12 @@ def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_visu_e2ds_spirou(rname, inputs, outputs=None):
+def unit_test_visu_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -1027,32 +738,20 @@ def unit_test_visu_e2ds_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return args: dict, the parameters to pass to the run
     """
     # define name and arguments
     name = 'visu_E2DS_spirou'
     arg_names = ['night_name', 'reffile']
     arg_types = [str, str]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        outs = []
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
-def unit_test_pol_spirou(rname, inputs, outputs=None):
+def unit_test_pol_spirou(rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -1062,33 +761,18 @@ def unit_test_pol_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    return args: dict, the parameters to pass to the run
+
     """
     # define name and arguments
     name = 'pol_spirou'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
-    # get the inputs (if outputs is None)
-    if outputs is None:
-        # get arguments
-        args = get_args(name, rname, inputs, arg_names, arg_types)
-        return args, name
-    # else define the outputs
-    else:
-        oargs = [outputs['p'], outputs['loc']]
-        outs = [spirouConfig.Constants.DEG_POL_FILE(*oargs)]
-        outs.append(spirouConfig.Constants.STOKESI_POL_FILE(*oargs))
-        outs.append(spirouConfig.Constants.NULL_POL1_FILE(*oargs))
-        outs.append(spirouConfig.Constants.NULL_POL2_FILE(*oargs))
-        # return outs
-        return outs, name
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
 
 
 def get_args(name, rname, iargs, arg_names, arg_types):
@@ -1100,7 +784,7 @@ def get_args(name, rname, iargs, arg_names, arg_types):
         emsg2 = '   expected (at least) {0} got {1}'.format(*eargs)
         WLOG('error', DPROG, [emsg1.format(rname, name), emsg2])
     # set up storage
-    args = dict()
+    args = OrderedDict()
     # set up counter
     pos = 0
     # loop around

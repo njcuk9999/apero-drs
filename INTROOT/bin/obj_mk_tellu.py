@@ -147,7 +147,7 @@ def main(night_name=None, files=None):
         sp = sp / loc['BLAZE']
 
         # get output transmission filename
-        outfile = spirouConfig.Constants.TELLU_TRANS_MAP_FILE(p, filename)
+        outfile, tag1 = spirouConfig.Constants.TELLU_TRANS_MAP_FILE(p, filename)
         outfilename = os.path.basename(outfile)
         loc['OUTPUTFILES'].append(outfile)
 
@@ -249,8 +249,9 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         # write to file
-        spirouImage.WriteImage(outfile, transmission_map, hdict)
+        p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
 
         # ------------------------------------------------------------------
         # Generate the absorption map
@@ -337,13 +338,15 @@ def main(night_name=None, files=None):
         abso[loc['NBLAZE'] < p['TELLU_CUT_BLAZE_NORM']] = np.nan
         # reshape data (back to E2DS)
         abso_e2ds = abso.reshape(nfiles, loc['YDIM'], loc['XDIM'])
+        # get file name
+        abso_map_file, tag2 = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
         # write thie map to file
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         # write to file
-        abso_map_file = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
-        spirouImage.WriteImage(abso_map_file, abso_e2ds, hdict)
+        p = spirouImage.WriteImage(p, abso_map_file, abso_e2ds, hdict)
 
         # ------------------------------------------------------------------
         # Generate the median and normalized absorption maps
@@ -382,12 +385,14 @@ def main(night_name=None, files=None):
         abso_map_n = abso_med_out.reshape(loc['DATA'].shape)
 
         # save the median absorption map to file
-        abso_med_file = spirouConfig.Constants.TELLU_ABSO_MEDIAN_FILE(p)
-        spirouImage.WriteImage(abso_med_file, abso_med_out, hdict)
+        abso_med_file, tag3 = spirouConfig.Constants.TELLU_ABSO_MEDIAN_FILE(p)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+        p = spirouImage.WriteImage(p, abso_med_file, abso_med_out, hdict)
 
         # save the normalized absorption map to file
-        abso_map_n_file = spirouConfig.Constants.TELLU_ABSO_NORM_MAP_FILE(p)
-        spirouImage.WriteImage(abso_map_n_file, abso_map_n, hdict)
+        abso_map_file, tag4 = spirouConfig.Constants.TELLU_ABSO_NORM_MAP_FILE(p)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        p = spirouImage.WriteImage(p, abso_map_file, abso_map_n, hdict)
 
         # ------------------------------------------------------------------
         # calculate dv statistic

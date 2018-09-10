@@ -18,10 +18,10 @@ Up-to-date with cal_CCF_E2DS_spirou AT-4 V47
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouEXTOR
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
@@ -308,7 +308,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # archive ccf to fits file
     # ----------------------------------------------------------------------
     # construct folder and filename
-    corfile = spirouConfig.Constants.CCF_FITS_FILE(p)
+    corfile, tag = spirouConfig.Constants.CCF_FITS_FILE(p)
     corfilename = os.path.split(corfile)[-1]
     # log that we are archiving the CCF on file
     WLOG('', p['LOG_OPT'], 'Archiving CCF on file {0}'.format(corfilename))
@@ -320,8 +320,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # add the average ccf to the end of ccf
     data = np.vstack([loc['CCF'], loc['AVERAGE_CCF']])
     # add keys
-    hdict = dict()
+    hdict = OrderedDict()
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CTYPE'], value='km/s')
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CRVAL'], value=loc['RV_CCF'][0])
     # the rv step
@@ -344,7 +345,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'], value=loc['BERV_MAX'])
 
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(corfile, data, hdict)
+    p = spirouImage.WriteImage(p, corfile, data, hdict)
 
     # ----------------------------------------------------------------------
     # End Message

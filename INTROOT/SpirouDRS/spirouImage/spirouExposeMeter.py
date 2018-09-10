@@ -12,6 +12,7 @@ Created on 2018-05-18 at 14:16
 
 import numpy as np
 from scipy.interpolate import interp1d
+import os
 import warnings
 
 from SpirouDRS import spirouConfig
@@ -41,14 +42,7 @@ WLOG = spirouCore.wlog
 def get_telluric(p, loc, hdr):
     """
     Reads the telluric file "tellwave" (wavelength data) and "tellspe"
-    (telluric absorption data) from files defined in "p" and finds "good" areas
-    of the telluric model, i.e.
-
-        p['EM_MIN_LAMBDA'] > wavelength > p['EM_MAX_LAMBDA']
-
-        and
-
-        telluric transmission > p['EM_TELL_THRESHOLD']
+    (telluric absorption data) from files defined in "p"
 
     :param p: parameter dictionary, ParamDict containing constants
 
@@ -60,28 +54,24 @@ def get_telluric(p, loc, hdr):
                         telluric model
                 tell_y: numpy array (1D), the transmission 1 = 100% transmission
                         for the telluric model (shape = same as tell_x)
-                tell_mask: numpy array (1D), array of booleans, True if
-                           telluric model at this wavelength is deemed "good"
-                           and False if deemed "bad"
     """
 
     func_name = __NAME__ + '.get_telluric()'
     # load the telluric model
-    txfile = spirouDB.GetCalibFile(p, 'EM_TELL_X', hdr, required=True)
-    tyfile = spirouDB.GetCalibFile(p, 'EM_TELL_Y', hdr, required=True)
-    # add to p
-    p['TELLWAVE'] = txfile
-    p['TELLSPE'] = tyfile
-    p.set_sources(['tellwave', 'tellspe'], func_name)
+
+    tapas_file = spirouDB.GetDatabaseTellMole(p)
+    tdata = spirouFITS.readimage(p, tapas_file, kind='TAPAS')
+    tapas, thdr, tcmt, _, _ = tdata
+
     # add model and mask to loc
-    rout = spirouFITS.readimage(p, filename=txfile, log=False)
-    loc['TELL_X'] = rout[0]
-    rout = spirouFITS.readimage(p, filename=tyfile, log=False)
-    loc['TELL_Y'] = rout[0]
+    loc['TELL_X'] = tapas['wavelength']
+    loc['TELL_Y'] = tapas['trans_combined']
+    # save filename
+    loc['TELLSPE'] = os.path.basename(tapas_file)
     # set source
     loc.set_sources(['tell_x', 'tell_y'], func_name)
     # return p and loc
-    return p, loc
+    return loc
 
 
 def order_profile(p, loc):

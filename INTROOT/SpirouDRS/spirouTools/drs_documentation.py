@@ -12,6 +12,7 @@ Created on 2018-04-23 at 14:55
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -166,7 +167,7 @@ def find_all_missing_modules():
 
     ll = list_modules(return_values=True)
 
-    missing = dict()
+    missing = OrderedDict()
 
     for mod in ll:
         try:

@@ -15,7 +15,7 @@ from __future__ import division
 import numpy as np
 import os, string
 from astropy.io import fits
-
+from collections import OrderedDict
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -65,6 +65,31 @@ def main(night_name=None):
         # log message
         WLOG('error', p['LOG_OPT'], emsgs)
 
+    # ----------------------------------------------------------------------
+    # Check if we have an index file
+    # ----------------------------------------------------------------------
+    # get expected index file name and location
+    index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
+    path = p['ARG_FILE_DIR']
+    index_path = os.path.join(path, index_file)
+    # get expected columns
+    columns = spirouConfig.Constants.REDUC_OUTPUT_COLUMNS(p)
+    # create storage
+    loc = OrderedDict()
+    # if file exists then we have some indexed files
+    if os.path.exists(index_path):
+        rawloc = spirouImage.ReadFitsTable(index_path)
+        loc['FILENAME'] = list(rawloc['FILENAME'])
+        loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
+        for col in columns:
+            loc[col] = list(rawloc[col])
+    # else we have to create this file
+    else:
+        loc['FILENAME'] = []
+        loc['LAST_MODIFIED'] = []
+        # loop around columns and add blank list to each
+        for col in columns:
+            loc[col] = []
 
     # ----------------------------------------------------------------------
     # Get all files in raw night_name directory
@@ -73,20 +98,6 @@ def main(night_name=None):
     files = os.listdir(p['ARG_FILE_DIR'])
     # sort file by name
     files = np.sort(files)
-
-    # ----------------------------------------------------------------------
-    # Define storage for file header keys
-    # ----------------------------------------------------------------------
-    loc = ParamDict()
-    loc['FILES'] = []
-    loc['EXPTIME_ALL'] = []
-    loc['CAS_ALL'] = []
-    loc['REF_ALL'] = []
-    loc['DATE_ALL'] = []
-    loc['UTC_ALL'] = []
-    loc['OBSTYPE_ALL'] = []
-    loc['OBJNAME_ALL'] = []
-    loc['DENS_ALL'] = []
 
     # ----------------------------------------------------------------------
     # Loop around all files and extract required header keys
@@ -98,55 +109,52 @@ def main(night_name=None):
         # skip any non-fits file files
         if '.fits' not in filename:
             continue
+        # skip the index file
+        if filename == os.path.basename(index_file):
+            continue
+        # if already in loc['FILENAME'] then skip
+        if filename in loc['FILENAME']:
+            continue
         # construct absolute path for file
         fitsfilename = os.path.join(p['ARG_FILE_DIR'], filename)
         # read file header
         hdr = spirouImage.ReadHeader(p, filepath=fitsfilename)
-        # extract properties from header
-        fkwargs = dict(return_value=True, dtype=float, required=False)
-        gkwargs = dict(return_value=True, dtype=str, required=False)
-        date = spirouImage.ReadParam(p, hdr, 'kw_DATE_OBS', **gkwargs)
-        utc = spirouImage.ReadParam(p, hdr, 'kw_UTC_OBS', **gkwargs)
-        obstype = spirouImage.ReadParam(p, hdr, 'kw_OBSTYPE', **gkwargs)
-        objname = spirouImage.ReadParam(p, hdr, 'kw_OBJNAME', **gkwargs)
-        # deal with None
-        if date is None:
-            data = ''
-        if utc is None:
-            utc = ''
-        if obstype is None:
-            obstype = ''
-        if objname is None:
-            objname = ''
-        # add to loc
-        loc['FILES'].append(filename)
-        loc['DATE_ALL'].append(date)
-        loc['UTC_ALL'].append(utc)
-        loc['OBSTYPE_ALL'].append(obstype)
-        loc['OBJNAME_ALL'].append(objname)
+        # add filename
+        loc['FILENAME'].append(filename)
+        loc['LAST_MODIFIED'].append(os.path.getmtime(fitsfilename))
+        # loop around columns and look for key in header
+        for col in columns:
+            # get value from header
+            if col in hdr:
+                value = str(hdr[col])
+            else:
+                value = '--'
+            # push into loc
+            loc[col].append(value)
+
     # Make sure we have some files
-    if len(loc['FILES']) == 0:
+    if len(loc['FILENAME']) == 0:
         wmsg = 'No pre-processed (*{0}) files present.'
         WLOG('warning', p['LOG_OPT'], wmsg.format(p['PROCESSED_SUFFIX']))
 
     # ----------------------------------------------------------------------
     # archive to table
     # ----------------------------------------------------------------------
-    if len(loc['FILES']) != 0:
+    if len(loc['FILENAME']) != 0:
         # construct table filename
-        outfile = spirouConfig.Constants.OFF_LISTING_FILE(p)
+        outfile = spirouConfig.Constants.OFF_LISTING_REDUC_FILE(p)
         # log progress
         WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
-        # define column names
-        columns = ['file', 'type', 'date', 'utc', 'objname']
+        # get column names
+        colnames = ['FILENAME', 'LAST_MODIFIED'] + list(columns)
         # define the format for each column
-        formats = [None, None, None, None, None]
-
+        formats = [None] * len(colnames)
         # get the values for each column
-        values = [loc['FILES'], loc['OBSTYPE_ALL'], loc['DATE_ALL'],
-                  loc['UTC_ALL'], loc['OBJNAME_ALL']]
+        values = []
+        for col in colnames:
+            values.append(loc[col])
         # construct astropy table from column names, values and formats
-        table = spirouImage.MakeTable(columns, values, formats)
+        table = spirouImage.MakeTable(colnames, values, formats)
         # save table to file
         spirouImage.WriteTable(table, outfile, fmt='ascii.rst')
 
@@ -161,9 +169,14 @@ def main(night_name=None):
         spirouImage.PrintTable(table)
 
     # ----------------------------------------------------------------------
+    # Update Index
+    # ----------------------------------------------------------------------
+    spirouStartup.SortSaveOutputs(loc, index_path)
+
+    # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
