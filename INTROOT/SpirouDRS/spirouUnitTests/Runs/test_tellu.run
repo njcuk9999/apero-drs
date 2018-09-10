@@ -1,9 +1,3 @@
-# define detector type (default = H4RG)
-type = H4RG
-
-# define whether we run the comparison with old drs (default = False)
-comparison = False
-
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
