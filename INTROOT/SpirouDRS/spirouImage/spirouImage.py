@@ -266,7 +266,7 @@ def convert_to_adu(image, p=None, exptime=None):
     return newimage
 
 
-def get_all_similar_files(p, directory, prefix=None, suffix=None):
+def get_all_similar_files_old(p, directory, prefix=None, suffix=None):
     """
     Get all similar files in a directory with matching prefix and suffix defined
     either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
@@ -313,6 +313,104 @@ def get_all_similar_files(p, directory, prefix=None, suffix=None):
     filelist = np.sort(filelist)
     # return file list
     return list(filelist)
+
+
+def get_all_similar_files(p, hdr):
+    """
+    Get all similar files in a directory with matching prefix and suffix defined
+    either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                log_opt: string, log option, normally the program name
+
+    :param hdr: dict, header of the reference file
+
+    :return filelist: list of strings, the full paths of all files that are in
+                      "directory" with the matching prefix and suffix defined
+                      either by "prefix" and "suffix" or by
+                      p["ARG_FILE_NAMES"][0]
+    """
+    func_name = __NAME__ + '.get_all_similar_files()'
+
+    # get the keys for this file
+    if p['KW_OUTPUT'][0] in hdr:
+        output = hdr[p['KW_OUTPUT'][0]]
+    else:
+        emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        output = None
+
+    if p['KW_EXT_TYPE'][0] in hdr:
+        ext_type = hdr[p['KW_EXT_TYPE'][0]]
+    else:
+        emsg1 = 'Key "{0}" missing from header'.format(p['KW_EXT_TYPE'][0])
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        ext_type = None
+
+    # get expected index file name and location
+    index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
+    path = p['REDUCED_DIR']
+    index_path = os.path.join(path, index_file)
+    # if file exists then we have some indexed files
+    if os.path.exists(index_path):
+        itable = spirouTable.read_fits_table(index_path)
+    else:
+        emsg = 'No index file. Please run off_listing_REDUC_spirou.py'
+        WLOG('error', p['LOG_OPT'], emsg)
+        itable = None
+
+    # mask by those with correct output and ext_type and not be itself
+    mask1 = itable[p['KW_OUTPUT'][0]] == output
+    mask2 = itable[p['KW_EXT_TYPE'][0]] == ext_type
+    mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
+    mask = mask1 & mask2 & mask3
+
+    # check that we have rows left
+    if np.sum(mask) == 0:
+        emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
+        eargs = [p['KW_OUTPUT'][0], output, p['KW_EXT_TYPE'][0], ext_type]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # if we do get date and sort by it
+    else:
+        # apply mask
+        itable = itable[mask]
+        # get the absolute filenames
+        abs_filenames = []
+        for row in range(len(itable)):
+            # get filename (and make sure it is just a filename)
+            filename = os.path.basename(itable['FILENAME'][row])
+            # join to path
+            abs_filename = os.path.join(p['ARG_FILE_DIR'], filename)
+            # append to list
+            abs_filenames.append(abs_filename)
+        # add to itable
+        itable['ABSFILENAMES'] = abs_filenames
+        # get unix_time for each row
+        unix_times = []
+        for row in range(len(itable)):
+            # get string date and time (part1 and part2)
+            part1 = itable[p['kw_DATE_OBS'][0]][row].strip()
+            part2 = itable[p['kw_UTC_OBS'][0]][row].strip()
+            # merge into string
+            stringtime = '{0}-{1}'.format(part1, part2)
+            # convert to unix time
+            unix_time = spirouMath.stringtime2unixtime(stringtime)
+            # append to list
+            unix_times.append(unix_time)
+        # sort by unix time
+        sortmask = np.argsort(unix_times)
+        # apply sort mask
+        itable = itable[sortmask]
+        # get file list
+        filelist = itable['ABSFILENAMES']
+        # return file list
+        return list(filelist)
 
 
 def interp_bad_regions(p, image):

@@ -358,6 +358,25 @@ def evaluate_value(value):
         return str(value)
 
 
+def get_tags(package, relfolder, filename):
+    # get the directory
+    directory = get_relative_folder(package, relfolder)
+    # get the abs path
+    abspath = os.path.join(directory, filename)
+    # get keys and values from filename
+    keys, values = gettxt(abspath)
+    # strip all whitespace from variables
+    nkeys, nvalues = [], []
+    for it in range(len(keys)):
+        key, value = str(keys[it]), str(values[it])
+        nkeys.append(key.strip())
+        nvalues.append(value.strip())
+    # make into dictionary
+    tags = dict(zip(nkeys, nvalues))
+    # return tags
+    return tags
+
+
 # =============================================================================
 # End of code
 # =============================================================================
