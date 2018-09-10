@@ -2,7 +2,8 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 # Extract the FPs
-run010a = ['cal_DRIFT_E2DS_spirou', '18BQ01-Aug05', '2295525a_pp_e2ds_AB.fits']
-run010b = ['cal_DRIFTPEAK_E2DS_spirou', '18BQ01-Aug05', '2295525a_pp_e2ds_AB.fits']
-
-
+run013a = ['off_listing_RAW_spirou', 'AT5/20180409']
+run013b = ['off_listing_REDUC_spirou', 'AT5/20180409']
+run014 = ['visu_RAW_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
+run015 = ['visu_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2ds_AB.fits']
+# run016 = ['pol_spirou', 'TEST/20180528', '2279383o_pp_e2dsff_A.fits', '2279384o_pp_e2dsff_B.fits', '2279386o_pp_e2dsff_A.fits', '2279383o_pp_e2dsff_B.fits', '2279385o_pp_e2dsff_A.fits', '2279386o_pp_e2dsff_B.fits', '2279384o_pp_e2dsff_A.fits', '2279385o_pp_e2dsff_B.fits']
