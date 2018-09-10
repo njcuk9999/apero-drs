@@ -22,7 +22,7 @@ __author__ = spirouConfig.Constants.AUTHORS()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['Begin', 'DisplayTitle', 'DisplaySysInfo', 'Exit',
-           'GetCustomFromRuntime', 'GetFile', 'GetFiles',
+           'GetCustomFromRuntime', 'GetFile',
            'InitialFileSetup', 'LoadArguments', 'LoadMinimum',
            'LoadOtherConfig', 'LoadCalibDB', 'MultiFileSetup',
            'SingleFileSetup']
@@ -44,8 +44,6 @@ Exit = spirouStartup.exit_script
 GetCustomFromRuntime = spirouStartup.get_custom_from_run_time_args
 
 GetFile = spirouStartup.get_file
-
-GetFiles = spirouStartup.get_files
 
 GetNightDirs = spirouStartup.get_night_dirs
 
