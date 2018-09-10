@@ -129,8 +129,7 @@ def log_timings(p, times):
     WLOG('', p['LOG_OPT'], '')
 
 
-def manage_run(p, runname, run_i, timing, new_out, old_out,
-               errors):
+def manage_run(p, runname, run_i, timing):
     # get name of run (should be first element in run list
     name = run_i[0]
     runtitle = '{0}:{1}'.format(runname, name)
@@ -150,10 +149,8 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     sPlt.closeall()
     # add to timer
     timing['{0}:{1}'.format(runname, name)] = endtime - starttime
-    # get outputs
-    ll['outputs'], _ = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
-    # return the timing and the new and old outputs
-    return timing, new_out, old_out, errors
+    # return the timing
+    return timing
 
 
 # =============================================================================
