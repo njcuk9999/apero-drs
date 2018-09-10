@@ -222,10 +222,6 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     elif not quiet:
         display_custom_args(cparams, customargs)
     # -------------------------------------------------------------------------
-    # load special config file
-    # TODO: is this needed as special_config_SPIROU does not exist
-    logthis = not quiet
-    cparams = load_other_config_file(cparams, 'SPECIAL_NAME', logthis=logthis)
     # load ICDP config file
     logthis = not quiet
     cparams = load_other_config_file(cparams, 'ICDP_NAME', required=True,
@@ -252,98 +248,6 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # -------------------------------------------------------------------------
     # return parameter dictionary
     return cparams
-
-
-# TODO: Remove - unused
-def initial_file_setup1(p, kind=None, prefixes=None, add_to_p=None,
-                       contains=None, calibdb=False):
-    """
-    Run start up code (based on program and parameters defined in p before)
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                fitsfilename: string, the full path of for the main raw fits
-                              file for a recipe
-                              i.e. /data/raw/20170710/filename.fits
-                arg_file_names: list, list of files taken from the command line
-                                (or call to recipe function) must have at least
-                                one string filename in the list
-                program: string, the recipe/way the script was called
-                         i.e. from sys.argv[0]
-                reduced_dir: string, the reduced data directory
-                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
-                DRS_DATA_REDUC: string, the directory that the reduced data
-                                should be saved to/read from
-                DRS_CALIB_DB: string, the directory that the calibration
-                              files should be saved to/read from
-
-    :param kind: string, description of program we are running (i.e. dark)
-
-    :param prefixes: list of strings, prefixes to look for in file name
-    :param prefixes: list of strings, prefixes to look for in file name
-                     will exit code if none of the prefixes are found
-                     (prefix = None if no prefixes are needed to be found)
-
-    :param add_to_p: dictionary structure:
-
-            add_to_p[prefix1] = dict(key1=value1, key2=value2)
-            add_to_p[prefix2] = dict(key3=value3, key4=value4)
-
-            where prefix1 and prefix2 are the strings in "prefixes"
-
-            This will add the sub dictionarys to the main parameter dictionary
-            based on which prefix is found
-
-            i.e. if prefix1 is found key "value3" and "value4" above are added
-            (with "key3" and "key4") to the parameter dictionary p
-
-    :param contains: string or None: if not None then input files must contain
-                     this sub string else error is raised
-
-    :param calibdb: bool, if True calibDB folder and files are required and
-                    program will log and exit if they are not found
-                    if False, program will create calibDB folder
-
-    :return p: parameter dictionary, the updated parameter dictionary
-            Adds the following:
-                calibDB: dictionary, the calibration database dictionary
-                prefixes from add_to_p (see spirouStartup.deal_with_prefixes)
-    """
-
-    log_opt = p['LOG_OPT']
-    fits_fn = p['FITSFILENAME']
-    # -------------------------------------------------------------------------
-    # check that fitsfilename exists
-    if fits_fn is None:
-        wmsg1 = 'Argument Error: No fits file defined at run time argument'
-        wmsg2 = '    format must be:'
-        emsg = '    >>> {0}.py [FOLDER] [FILES]'
-        WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(p['PROGRAM'])])
-    if not os.path.exists(fits_fn):
-        WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
-    # -------------------------------------------------------------------------
-    # if we have prefixes defined then check that fitsfilename has them
-    # if add_to_params is defined then add params to p accordingly
-    p = deal_with_prefixes(p, kind, prefixes, add_to_p)
-    # -------------------------------------------------------------------------
-    # deal with contains being defined
-    if contains is not None:
-        # loop around all files in arg_file_names and make sure  "contains"
-        #   sub string is in there
-        for arg_file_name in p['ARG_FILE_NAMES']:
-            if contains not in arg_file_name:
-                if kind is None:
-                    emsg = 'Wrong type of image should contain "{1}"'
-                else:
-                    emsg = 'Wrong type of image for {0} should contain "{1}"'
-                WLOG('error', p['LOG_OPT'], emsg.format(kind, contains))
-    # -------------------------------------------------------------------------
-    # Calib DB setup
-    p = load_calibdb(p, calibdb)
-    # -------------------------------------------------------------------------
-    # return the parameter dictionary
-    return p
 
 
 def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
@@ -646,8 +550,11 @@ def indexing(p, filename, outputs, icolumns, abspath):
         # get filename
         if 'FILENAME' not in istore:
             istore['FILENAME'] = [output]
+            istore['UNIX'] = [os.path.getmtime(abspath)]
         else:
             istore['FILENAME'].append(output)
+            istore['UNIX'].append(os.path.getmtime(abspath))
+
         # loop around index columns and add outputs to istore
         for icol in icolumns:
             if icol not in istore:
@@ -700,7 +607,7 @@ def exit_script(ll, has_plots=True):
     if 'p' in ll:
         p = ll['p']
     else:
-        p = dict()
+        p = OrderedDict()
     # make sure we have DRS_PLOT
     if 'DRS_PLOT' not in p:
         p['DRS_PLOT'] = 0
@@ -1309,7 +1216,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
         first_arg_pos = 1
 
     # set up the dictionary
-    customdict = dict()
+    customdict = OrderedDict()
     for pos in positions:
         # deal with not having enough arguments
         try:
@@ -1428,87 +1335,6 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
     return customdict
 
 
-# TODO: Remove - unused
-def get_files(p, path, names, prefixes=None, kind=None):
-    """
-    Get a set of full file path and check the path and file exist
-    (wrapper around get_files)
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                program: string, the recipe/way the script was called
-                         i.e. from sys.argv[0]
-
-    :param path: string, either the directory to the folder (if name is None) or
-                 the full path to the files
-    :param names: list of strings, the names of the files
-    :param prefixes: string, list of strings or None, if not None this
-                     substring must be in the filenames
-    :param kind: string or None, the type of files (for logging)
-
-    :return locations: list of strings, the full file paths of the files
-    """
-    # define storage for locations
-    locations = []
-    # loop around names of files
-    for name in names:
-        locations.append(get_file1(p, path, name, prefixes, kind))
-    # if all conditions passed return full path
-    return locations
-
-
-# TODO: Remove - unused
-def get_file1(p, path, name=None, prefixes=None, kind=None):
-    """
-    Get full file path and check the path and file exist
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                program: string, the recipe/way the script was called
-                         i.e. from sys.argv[0]
-
-    :param path: string, either the directory to the folder (if name is None) or
-                 the full path to the file
-    :param name: string or None, the name of the file, if None name is assumed
-                 to be in path
-    :param prefixes: string, list of strings or None, if not None this
-                     substring must be in the filename
-    :param kind: string or None, the type of file (for logging)
-
-    :return location: string, the full file path of the file
-    """
-    # if path is None and name is None
-    if path is None:
-        WLOG('error', p['LOG_OPT'], 'No file defined')
-    # if name and path are not None
-    if name is None:
-        name = os.path.split(path)[-1]
-        path = path.split(name)[0]
-    # join path and name
-    location = os.path.join(path, name)
-    # test if path exists
-    if not os.path.exists(path):
-        emsg = 'Directory: {0} does not exist'
-        WLOG('error', p['LOG_OPT'], emsg.format(path))
-    # test if path + file exits
-    if not os.path.exists(location):
-        emsg = 'File : {0} does not exist at location {1}'
-        WLOG('error', p['LOG_OPT'], emsg.format(name, path))
-    # if we have prefixes defined then check that fitsfilename has them
-    # if add_to_params is defined then add params to p accordingly
-    _ = deal_with_prefixes(kind=kind, prefixes=prefixes, filename=name)
-    # deal with no kind
-    if kind is None:
-        kind = 'UNKNOWN'
-    # log that we are processing this image
-    wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(kind, p['PROGRAM']))
-    # if all conditions passed return full path
-    return location
-
-
 def get_file(p, path, filename):
     """
     Get full file path and check the path and file exist
@@ -1548,77 +1374,6 @@ def get_file(p, path, filename):
         WLOG('error', p['LOG_OPT'], emsg.format(filename, path))
     # if all conditions passed return full path
     return location
-
-
-# TODO: Remove - unused
-def get_fiber_type1(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
-    """
-    Get fiber types and search for a valid fiber type in filename from the given
-    suffix. "filename" and "suffix" are case insensitive.
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                FIBER_TYPES: list of strings, the types of fiber available
-                             (i.e. ['AB', 'A', 'B', 'C'])
-                log_opt: string, log option, normally the program name
-
-    :param filename: string, the filename to search for fiber types in
-
-    :param fibertypes: list of strings, the fiber types to search for
-
-    :param suffix: string, the suffix to search for in the filename,
-                   MUST include {FIBER} i.e. valid exampe suffices are:
-
-                        e2ds_{FIBER}.fits
-                        file1_extraction_{FIBER}_process.fits
-                        _{FIBER}_e2ds.fits
-
-                   for use with string.format(dict(FIBER=fiber))
-
-    :return fiber: string, the fiber found (exits via WLOG if no fiber found)
-    """
-    func_name = __NAME__ + '.get_fiber_type()'
-    # deal with no fiber types
-    if fibertypes is None:
-        fibertypes = p['FIBER_TYPES']
-    # check that we have a correct suffix
-    if '{FIBER}' not in suffix.upper():
-        emsg1 = 'Suffix must contain "{FIBER}" in the string to identify fiber'
-        emsg2 = '    Currently suffix = {0}'.format(suffix)
-        emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_opt'], [emsg1, emsg2, emsg3])
-    # set fiber to None
-    correct_fiber = None
-    test_suffices = []
-    # loop around each fiber type
-    for fiber in fibertypes:
-
-        test_fiber = dict(FIBER=fiber)
-        # make suffix
-        test_suffix = suffix.format(**test_fiber)
-        # test suffix
-        if test_suffix.upper() in filename.upper():
-            correct_fiber = fiber
-    # if we have reached this type then we have no recognized fiber
-    if correct_fiber is None:
-        emsgs = ['Suffix not found in file {0}'.format(filename)]
-        emsgs.append('Must be one of the following:')
-        # check we have fibertype
-        if len(test_suffices) == 0:
-            emsgs.append('\t NONE DEFINED - check "FIBER_TYPES"')
-        # append test_suffices to error message
-        for test_suffix in test_suffices:
-            emsgs.append('\t{0}'.format(test_suffix))
-        emsgs.append('    function = {0}'.format(func_name))
-        # log error messages
-        WLOG('error', p['LOG_OPT'], emsgs)
-    # else log that we have found fiber type
-    else:
-        wmsg = 'Fiber type identified as "{0}"'
-        WLOG('', p['LOG_OPT'], wmsg.format(correct_fiber))
-    # finally return correct_fiber
-    return correct_fiber
-
 
 
 def get_night_dirs(p):
@@ -1967,9 +1722,6 @@ def load_minimum(p, customargs=None):
     p['RAW_DIR'] = spirouConfig.Constants.RAW_DIR(p)
     p.set_source('RAW_DIR', source + ' & {0}/RAW_DIR()')
     # -------------------------------------------------------------------------
-    # load special config file
-    # TODO: is this needed as special_config_SPIROU does not exist
-    p = load_other_config_file(p, 'SPECIAL_NAME')
     # load ICDP config file
     p = load_other_config_file(p, 'ICDP_NAME', required=True)
     # -------------------------------------------------------------------------
