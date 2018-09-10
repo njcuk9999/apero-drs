@@ -1310,7 +1310,7 @@ def WAVE_FILE_EA(p):
         old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
     else:
         old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
-    waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_ea_fitdeg_4_fp46_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
