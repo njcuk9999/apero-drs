@@ -89,7 +89,7 @@ def get_molecular_tell_lines(p, loc):
     # representative atmospheric transmission
     # tapas = pyfits.getdata('tapas_model.fits')
     tapas_file = spirouDB.GetDatabaseTellMole(p)
-    tdata = spirouImage.ReadImage(p, tapas_file, kind='FLAT')
+    tdata = spirouImage.ReadImage(p, tapas_file, kind='TAPAS')
     tapas, thdr, tcmt, _, _ = tdata
 
     # load all current telluric convolve files
