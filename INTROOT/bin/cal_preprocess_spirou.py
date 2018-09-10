@@ -136,24 +136,19 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
-        # TODO: Eventually remove H2RG fix
-        # do not correct for H2RG
-        if p['IC_IMAGE_TYPE'] == 'H2RG':
-            pass
-        else:
-            # correct for the top and bottom reference pixels
-            WLOG('', p['LOG_OPT'], 'Correcting for top and bottom pixels')
-            image = spirouImage.PPCorrectTopBottom(p, image)
+        # correct for the top and bottom reference pixels
+        WLOG('', p['LOG_OPT'], 'Correcting for top and bottom pixels')
+        image = spirouImage.PPCorrectTopBottom(p, image)
 
-            # correct by a median filter from the dark amplifiers
-            wmsg = 'Correcting by the median filter from dark amplifiers'
-            WLOG('', p['LOG_OPT'], wmsg)
-            image = spirouImage.PPMedianFilterDarkAmps(p, image)
+        # correct by a median filter from the dark amplifiers
+        wmsg = 'Correcting by the median filter from dark amplifiers'
+        WLOG('', p['LOG_OPT'], wmsg)
+        image = spirouImage.PPMedianFilterDarkAmps(p, image)
 
-            # correct for the 1/f noise
-            wmsg = 'Correcting for the 1/f noise'
-            WLOG('', p['LOG_OPT'], wmsg)
-            image = spirouImage.PPMedianOneOverfNoise2(p, image)
+        # correct for the 1/f noise
+        wmsg = 'Correcting for the 1/f noise'
+        WLOG('', p['LOG_OPT'], wmsg)
+        image = spirouImage.PPMedianOneOverfNoise2(p, image)
 
         # ------------------------------------------------------------------
         # rotate image
