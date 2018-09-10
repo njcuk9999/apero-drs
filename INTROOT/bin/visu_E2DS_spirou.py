@@ -65,12 +65,10 @@ def main(night_name=None, reffile=None):
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    gfkwargs = dict(path=p['REDUCED_DIR'], filename=p['REFFILE'])
-    p['REFFILENAME'] = spirouStartup.GetFile(p, **gfkwargs)
-    p.set_source('REFFILENAME', __NAME__ + '/main()')
+    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
     # get the fiber type
-    #TODO get the fiber type
-    p['FIBER']='C'
+    fiber1 = str(p['FIBER'])
+
     e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
     wave = spirouImage.ReadWaveFile(p)
     blaze = spirouImage.ReadBlazeFile(p)
@@ -101,7 +99,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

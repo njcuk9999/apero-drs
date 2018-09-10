@@ -120,6 +120,15 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # now change the value of sigdet if require
     if p['IC_EXT_SIGDET'] > 0:
         p['SIGDET'] = float(p['IC_EXT_SIGDET'])
+    # get DPRTYPE from header (Will have it if valid)
+    p = spirouImage.ReadParam(p, hdr, 'KW_DPRTYPE', required=False, dtype=str)
+    # check the DPRTYPE is not None
+    if (p['DPRTYPE'] == 'None') or (['DPRTYPE'] is None):
+        emsg = 'Error: {0} is not set in header for file {1}'
+        eargs = [p['KW_DPRTYPE'][0], p['FITSFILENAME']]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    else:
+        p['DPRTYPE'] = p['DPRTYPE'].strip()
 
     # ----------------------------------------------------------------------
     # Correction of DARK
@@ -363,9 +372,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # get extraction method and function
         extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
         # construct filename
-        e2dsfits = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
+        e2dsfits, tag1 = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
         e2dsfitsname = os.path.split(e2dsfits)[-1]
-        e2dsfffits = spirouConfig.Constants.EXTRACT_E2DSFF_FILE(p)
+        e2dsfffits, tag2 = spirouConfig.Constants.EXTRACT_E2DSFF_FILE(p)
         e2dsfffitsname = os.path.split(e2dsfffits)[-1]
         # log that we are saving E2DS spectrum
         wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
@@ -382,7 +391,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
         # construct loco filename
-        locofile = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
+        locofile, _ = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.split(locofile)[-1]
 
         # TODO: Remove H2RG dependency
@@ -418,8 +427,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                          values=loc['WAVEPARAMS'])
         # Save E2DS file
-        spirouImage.WriteImage(e2dsfits, loc['E2DS'], hdict)
-        spirouImage.WriteImage(e2dsfffits, loc['E2DSFF'], hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        p = spirouImage.WriteImage(p, e2dsfits, loc['E2DS'], hdict)
+        # Save E2DSFF file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        p = spirouImage.WriteImage(p, e2dsfffits, loc['E2DSFF'], hdict)
 
         # ------------------------------------------------------------------
         # 1-dimension spectral S1D
@@ -445,27 +459,27 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
         # construct file name
         if (xs1d is not None) and (ys1d is not None):
-            s1dfile = spirouConfig.Constants.EXTRACT_S1D_FILE(p)
+            s1dfile, tag3 = spirouConfig.Constants.EXTRACT_S1D_FILE(p)
             s1dfilename = os.path.basename(s1dfile)
 
             # add header keys
-            # TODO: Do we want any of the E2DS keys??
-            hdict = dict()
             # set the version
             hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-
+            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+            hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'],
+                                       value=p['DPRTYPE'])
             hdict = spirouImage.AddKey(hdict, p['KW_CRPIX1'], value=1.0)
             hdict = spirouImage.AddKey(hdict, p['KW_CRVAL1'], value=xs1d[0])
             hdict = spirouImage.AddKey(hdict, p['KW_CDELT1'],
                                        value=p['IC_BIN_S1D'])
             hdict = spirouImage.AddKey(hdict, p['KW_CTYPE1'], value='nm')
             hdict = spirouImage.AddKey(hdict, p['KW_BUNIT'],
-                                       value='Ralative Flux')
+                                       value='Relative Flux')
             # log writing to file
             wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
             WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfilename))
             # Write to file
-            spirouImage.WriteImage(s1dfile, ys1d, hdict)
+            p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
 
     # ----------------------------------------------------------------------
     # Quality control

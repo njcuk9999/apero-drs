@@ -67,7 +67,8 @@ def main(night_name=None, ufiles=None):
     else:
         customargs = dict(ufiles=ufiles)
     # get parameters from configuration files and run time arguments
-    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs)
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsdir='raw')
 
     # ----------------------------------------------------------------------
     # Process files (including wildcards)
@@ -84,11 +85,18 @@ def main(night_name=None, ufiles=None):
     WLOG('', p['LOG_OPT'], wmsg.format(len(ufiles)))
 
     # storage for output files
-    p['OUTPUTS'] = []
-    p.set_source('OUTPUTS', __NAME__ + '.main()')
+    p['OUTPUT_NAMES'] = []
+    p.set_source('OUTPUT_NAMES', __NAME__ + '.main()')
 
     # loop around files
-    for ufile in ufiles:
+    for u_it, ufile in enumerate(ufiles):
+        # log the file process
+        wmsg = 'Processing file {0} ({1} of {2})'
+        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+        bfilename = os.path.basename(ufile)
+        WLOG('', p['LOG_OPT'], wmsg.format(bfilename, u_it+1, len(ufiles)))
+        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+
         # ------------------------------------------------------------------
         # Check that we can process file
         # ------------------------------------------------------------------
@@ -97,18 +105,21 @@ def main(night_name=None, ufiles=None):
             wmsg = 'File {0} does not exist... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-        elif p['PROCESSED_SUFFIX'] in ufile:
+        # skip processed files
+        elif p['PROCESSED_SUFFIX'] in bfilename:
             wmsg = 'File {0} has been processed... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-        elif '.fits' not in ufile:
+        # skip non-fits files
+        elif '.fits' not in bfilename:
             wmsg = 'File {0} not a fits file... skipping'
             WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
             continue
-
-        # log the file process
-        wmsg = 'Processing file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(ufile))
+        # skip index file
+        elif bfilename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
+            wmsg = 'Skipping index fits file'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
+            continue
 
         # ------------------------------------------------------------------
         # Read image file
@@ -157,8 +168,9 @@ def main(night_name=None, ufiles=None):
         # Save rotated image
         # ------------------------------------------------------------------
         # construct rotated file name
-        outfits = ufile.replace('.fits', p['PROCESSED_SUFFIX'])
-        outfitsname = os.path.split(outfits)[-1]
+        outfitsname = bfilename.replace('.fits', p['PROCESSED_SUFFIX'])
+        save_dir = spirouConfig.Constants.TMP_DIR(p)
+        outfits = os.path.join(save_dir, outfitsname)
         # log that we are saving rotated image
         WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
@@ -167,18 +179,22 @@ def main(night_name=None, ufiles=None):
         # set the version
         hdict = spirouImage.AddKey(hdict, p['KW_PPVERSION'])
 
+        # set the DRS type (for file indexing)
+        p['DRS_TYPE'] = 'RAW'
+        p.set_source('DRS_TYPE', __NAME__ + '.main()')
+
         # write to file
-        spirouImage.WriteImage(outfits, image, hdict)
+        p = spirouImage.WriteImage(p, outfits, image, hdict)
 
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------
-        p['OUTPUTS'].append(outfitsname)
+        p['OUTPUT_NAMES'].append(outfitsname)
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs='pp')
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

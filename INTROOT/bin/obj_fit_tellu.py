@@ -228,9 +228,9 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Construct output file names
         # ------------------------------------------------------------------
-        outfile1 = spirouConfig.Constants.TELLU_FIT_OUT_FILE(p, filename)
+        outfile1, tag1 = spirouConfig.Constants.TELLU_FIT_OUT_FILE(p, filename)
         outfilename1 = os.path.basename(outfile1)
-        outfile2 = spirouConfig.Constants.TELLU_FIT_RECON_FilE(p, filename)
+        outfile2, tag2 = spirouConfig.Constants.TELLU_FIT_RECON_FILE(p, filename)
         outfilename2 = os.path.basename(outfile2)
 
         # ------------------------------------------------------------------
@@ -249,7 +249,7 @@ def main(night_name=None, files=None):
         # read image
         tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # normalise with blaze function
-        loc['SP'] = tdata / loc['NBLAZE']
+        loc['SP'] = tdata #/ loc['NBLAZE']
         loc.set_source('SP', main_name)
 
         # ------------------------------------------------------------------
@@ -322,11 +322,12 @@ def main(night_name=None, files=None):
         sp_out = loc['SP2'] / loc['RECON_ABSO']
         sp_out = sp_out.reshape(loc['DATA'].shape)
         # multiply by blaze
-        sp_out = sp_out * loc['NBLAZE']
+        #sp_out = sp_out * loc['NBLAZE']
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         # write sp_out to file
-        spirouImage.WriteImage(outfile1, sp_out, hdict)
+        p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
 
         # ------------------------------------------------------------------
         # Write reconstructed absorption to E2DS
@@ -354,7 +355,8 @@ def main(night_name=None, files=None):
                 # set source
                 loc.set_source('WATERCOL', main_name)
         # write recon_abso to file
-        spirouImage.WriteImage(outfile2, recon_abso2, hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)
 
         # ------------------------------------------------------------------
         # Update the Telluric database
