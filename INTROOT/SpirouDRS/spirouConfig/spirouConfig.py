@@ -11,7 +11,7 @@ Import rules: Only from spirouConfig
 """
 from __future__ import division
 import os
-import sys
+from collections import OrderedDict
 
 from . import spirouConst as Constants
 from . import spirouConfigFile
@@ -759,10 +759,10 @@ def load_config_from_file(p, key, required=False, logthis=False):
     if os.path.exists(uconfig) and  p['USER_CONFIG']:
         newparams2 = get_config_params(p, key, uconfig, logthis=logthis)
     else:
-        newparams2 = dict()
+        newparams2 = OrderedDict()
 
     # combine giving precedence to user config file
-    newparams, newparamssource = dict(), dict()
+    newparams, newparamssource = OrderedDict(), OrderedDict()
     # loop around default parameters and add to new params
     for newkey in list(newparams1.keys()):
         newparams[newkey] = newparams1[newkey]
