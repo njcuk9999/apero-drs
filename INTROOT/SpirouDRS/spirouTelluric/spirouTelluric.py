@@ -301,9 +301,6 @@ def calc_recon_abso(p, loc):
     # flatten spectrum and wavelengths
     sp2 = sp.ravel()
     wave2 = loc['WAVE_IT'].ravel()
-    # get the normalisation factor
-    # TODO: Not used??
-    norm = np.nanmedian(sp2)
     # define the good pixels as those above minimum transmission
     keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
     # also require wavelength constraints
