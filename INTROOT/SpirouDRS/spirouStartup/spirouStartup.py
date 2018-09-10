@@ -513,7 +513,7 @@ def index_pp(p):
     icolumns = spirouConfig.Constants.RAW_OUTPUT_COLUMNS(p)
     # ------------------------------------------------------------------------
     # index files
-    istore = indexing(p, filename, outputs, icolumns, abspath)
+    istore = indexing(p, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
     sort_and_save_outputs(istore, abspath)
@@ -532,28 +532,32 @@ def index_outputs(p):
     icolumns = spirouConfig.Constants.REDUC_OUTPUT_COLUMNS(p)
     # ------------------------------------------------------------------------
     # index files
-    istore = indexing(p, filename, outputs, icolumns, abspath)
+    istore = indexing(p, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
     sort_and_save_outputs(istore, abspath)
 
 
-def indexing(p, filename, outputs, icolumns, abspath):
+def indexing(p, outputs, icolumns, abspath):
     # ------------------------------------------------------------------------
     # log indexing
     wmsg = 'Indexing outputs onto {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(abspath))
     # construct a dictionary from outputs and icolumns
     istore = OrderedDict()
+    # get output path
+    opath = os.path.dirname(abspath)
     # looop around outputs
     for output in outputs:
+        # get absfilename
+        absoutput = os.path.join(opath, output)
         # get filename
         if 'FILENAME' not in istore:
             istore['FILENAME'] = [output]
-            istore['UNIX'] = [os.path.getmtime(abspath)]
+            istore['LAST_MODIFIED'] = [os.path.getmtime(absoutput)]
         else:
             istore['FILENAME'].append(output)
-            istore['UNIX'].append(os.path.getmtime(abspath))
+            istore['LAST_MODIFIED'].append(os.path.getmtime(absoutput))
 
         # loop around index columns and add outputs to istore
         for icol in icolumns:
@@ -573,6 +577,7 @@ def indexing(p, filename, outputs, icolumns, abspath):
                 continue
             # else add filename
             istore['FILENAME'].append(idict['FILENAME'][row])
+            istore['LAST_MODIFIED'].append(idict['LAST_MODIFIED'][row])
             # loop around columns
             for icol in icolumns:
                 # add to the istore
