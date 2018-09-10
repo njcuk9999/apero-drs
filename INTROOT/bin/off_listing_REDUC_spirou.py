@@ -143,7 +143,7 @@ def main(night_name=None):
         # log progress
         WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
         # get column names
-        colnames = ['FILENAME'] + list(columns)
+        colnames = ['FILENAME', 'UNIX'] + list(columns)
         # define the format for each column
         formats = [None] * len(colnames)
         # get the values for each column
