@@ -869,7 +869,7 @@ def unit_test_off_listing_raw_spirou(rname, inputs, outputs=None):
         return args, name
     # else define the outputs
     else:
-        outs = [Constants.OFF_LISTING_FILE(outputs['p'])]
+        outs = [Constants.OFF_LISTING_RAW_FILE(outputs['p'])]
         # return outs
         return outs, name
 
@@ -905,7 +905,7 @@ def unit_test_off_listing_reduc_spirou(rname, inputs, outputs=None):
         return args, name
     # else define the outputs
     else:
-        outs = [Constants.OFF_LISTING_FILE(outputs['p'])]
+        outs = [Constants.OFF_LISTING_REDUC_FILE(outputs['p'])]
         # return outs
         return outs, name
 

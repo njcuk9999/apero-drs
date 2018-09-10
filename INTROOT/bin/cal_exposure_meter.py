@@ -312,37 +312,49 @@ def main(night_name=None, reffile=None):
         # save telluric spectrum
         if p['EM_SAVE_TELL_SPEC']:
             # construct spectrum filename
-            specfitsfile = spirouConfig.Constants.EM_SPE_FILE(p)
+            specfitsfile, tag = spirouConfig.Constants.EM_SPE_FILE(p)
             specfilename = os.path.split(specfitsfile)[-1]
+            # set the version
+            hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
             # log progress
             wmsg = 'Writing spectrum to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
             # write to file
-            spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
+            p = spirouImage.WriteImage(p, specfitsfile, out_spe, hdict=hdict)
+
         # ----------------------------------------------------------------------
         # save wave map
         if p['EM_SAVE_WAVE_MAP']:
             # construct waveimage filename
-            wavefitsfile = spirouConfig.Constants.EM_WAVE_FILE(p)
+            wavefitsfile, tag = spirouConfig.Constants.EM_WAVE_FILE(p)
             wavefilename = os.path.split(wavefitsfile)[-1]
+            # set the version
+            hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
             # log progress
             wmsg = 'Writing wave image to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
             # write to file
-            spirouImage.WriteImage(wavefitsfile, out_wave, hdict=hdict)
+            p = spirouImage.WriteImage(p, wavefitsfile, out_wave, hdict=hdict)
+
         # ----------------------------------------------------------------------
         # save mask file
         if p['EM_SAVE_MASK_MAP']:
             # construct tell mask 2D filename
-            maskfitsfile = spirouConfig.Constants.EM_MASK_FILE(p)
+            maskfitsfile, tag = spirouConfig.Constants.EM_MASK_FILE(p)
             maskfilename = os.path.split(maskfitsfile)[-1]
+            # set the version
+            hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
             # log progress
             wmsg = 'Writing telluric mask to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(maskfilename))
             # convert boolean mask to integers
             writablemask = np.array(out_mask, dtype=float)
             # write to file
-            spirouImage.WriteImage(maskfitsfile, writablemask, hdict=hdict)
+            p = spirouImage.WriteImage(p, maskfitsfile, writablemask,
+                                       hdict=hdict)
 
     # ----------------------------------------------------------------------
     # End Message

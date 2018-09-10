@@ -712,7 +712,6 @@ def get_user_config(p):
     return p, warn_msgs
 
 
-
 def load_config_from_file(p, key, required=False, logthis=False):
     """
     Load a secondary level confiruation file filename = "key", this requires
@@ -802,6 +801,7 @@ def get_config_params(p, key, filename, logthis=True):
                               level='warning')
     # return new parameters
     return newparams
+
 
 def extract_dict_params(pp, suffix, fiber, merge=False):
     """
@@ -917,6 +917,8 @@ def extract_dict_params(pp, suffix, fiber, merge=False):
         return pp
     else:
         return fparam
+
+
 
 
 # =============================================================================

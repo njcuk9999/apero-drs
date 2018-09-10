@@ -165,15 +165,17 @@ def main(night_name=None, files=None):
     # Write image order_profile to file
     # ----------------------------------------------------------------------
     # Construct folder and filename
-    rawfits = spirouConfig.Constants.LOC_ORDER_PROFILE_FILE(p)
+    rawfits, tag1 = spirouConfig.Constants.LOC_ORDER_PROFILE_FILE(p)
     rawfitsname = os.path.split(rawfits)[-1]
     # log saving order profile
     wmsg = 'Saving processed raw frame in {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(rawfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # write to file
-    spirouImage.WriteImage(rawfits, order_profile, hdict)
+    p = spirouImage.WriteImage(p, rawfits, order_profile, hdict)
 
     # ----------------------------------------------------------------------
     # Move order_profile to calibDB and update calibDB
@@ -377,7 +379,7 @@ def main(night_name=None, files=None):
     # Save and record of image of localization with order center and keywords
     # ----------------------------------------------------------------------
     # construct filename
-    locofits = spirouConfig.Constants.LOC_LOCO_FILE(p)
+    locofits, tag2 = spirouConfig.Constants.LOC_LOCO_FILE(p)
     locofitsname = os.path.split(locofits)[-1]
     # log that we are saving localization file
     WLOG('', p['LOG_OPT'], ('Saving localization information '
@@ -386,6 +388,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCO_BCKGRD'],
@@ -419,13 +422,13 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])
-    spirouImage.WriteImage(locofits, center_fits, hdict)
+    p = spirouImage.WriteImage(p, locofits, center_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and record of image of sigma
     # ----------------------------------------------------------------------
     # construct filename
-    locofits2 = spirouConfig.Constants.LOC_LOCO_FILE2(p)
+    locofits2, tag3 = spirouConfig.Constants.LOC_LOCO_FILE2(p)
     locofits2name = os.path.split(locofits2)[-1]
 
     # log that we are saving localization file
@@ -435,6 +438,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCO_NBO'],
@@ -464,14 +468,14 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # write image and add header keys (via hdict)
     width_fits = spirouLOCOR.CalcLocoFits(loc['ASS'], data2.shape[1])
-    spirouImage.WriteImage(locofits2, width_fits, hdict)
+    p = spirouImage.WriteImage(p, locofits2, width_fits, hdict)
 
     # ----------------------------------------------------------------------
     # Save and Record of image of localization
     # ----------------------------------------------------------------------
     if p['IC_LOCOPT1']:
         # construct filename
-        locofits3 = spirouConfig.Constants.LOC_LOCO_FILE3(p)
+        locofits3, tag4 = spirouConfig.Constants.LOC_LOCO_FILE3(p)
         locofits3name = os.path.split(locofits3)[-1]
         # log that we are saving localization file
         wmsg1 = 'Saving localization image with superposition of orders in '
@@ -482,7 +486,9 @@ def main(night_name=None, files=None):
         # save this image to file
         # Question: Why no keys added to header?
         hdict = dict()
-        spirouImage.WriteImage(locofits3, data4, hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        p = spirouImage.WriteImage(p, locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------
     # Update the calibration database
