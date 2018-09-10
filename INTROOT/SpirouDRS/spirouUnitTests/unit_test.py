@@ -106,26 +106,13 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     # storage for times
     times = OrderedDict()
-    # storage for outputs
-    newoutputs, oldoutputs = OrderedDict(), OrderedDict()
-    # storage for errors
-    errors = []
     # log the start of the unit tests
     spirouUnitTests.unit_log_title(p)
     # loop around runs and process each
     for runn in list(runs.keys()):
         # do run
-        rargs = [p, runn, runs[runn], times, newoutputs, oldoutputs,
-                 errors]
-        out = spirouUnitTests.manage_run(*rargs)
-        times, newoutputs, oldoutputs, errors = out
-
-    # ----------------------------------------------------------------------
-    # Analyse results + save to table
-    # ----------------------------------------------------------------------
-    if compare:
-        WLOG('', p['LOG_OPT'], 'Constructing comparison table')
-        spirouUnitTests.comparison_table(p, errors)
+        rargs = [p, runn, runs[runn], times]
+        times = spirouUnitTests.manage_run(*rargs)
 
     # ----------------------------------------------------------------------
     # Print timings
