@@ -445,10 +445,6 @@ def interp_bad_regions(p, image):
 
     :return image3: numpy array (2D), the corrected image
     """
-    # TODO: Eventually remove H2RG fix
-    # do not interp for H2RG
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return image
     # get the image size
     dim1, dim2 = image.shape
     # get parameters from p
@@ -578,12 +574,8 @@ def fix_non_preprocessed(p, image, filename=None):
                 p['PREPROCESSED'] = True
             else:
                 p['PREPROCESSED'] = False
-    # get conditions for rotation
-    # TODO: remove H4RG dependency
-    cond1 = p['IC_IMAGE_TYPE'] == 'H4RG'
-    cond2 = not p['PREPROCESSED']
-    # if conditions met rotate
-    if cond1 and cond2:
+    # if not pre-processedrotate
+    if not p['PREPROCESSED']:
         # log warning
         wmsg = 'Warning: Using non-preprocessed file!'
         WLOG('warning', p['LOG_OPT'], wmsg)
