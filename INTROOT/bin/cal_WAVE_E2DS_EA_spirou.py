@@ -10,8 +10,10 @@ Created on 2018-07-20
 """
 
 from __future__ import division
+from scipy.optimize import curve_fit
 import numpy as np
 import os
+import warnings
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
