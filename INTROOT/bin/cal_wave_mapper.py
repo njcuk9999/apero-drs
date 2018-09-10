@@ -12,6 +12,7 @@ Created on 2018-02-15 at 14:05
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -149,10 +150,10 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # Get localisation coefficients
     # ------------------------------------------------------------------
     # storage for fiber parameters
-    loc['ALL_ACC'] = dict()
-    loc['ALL_ASS'] = dict()
-    loc['E2DSFILES'] = dict()
-    loc['ALLWAVE'] = dict()
+    loc['ALL_ACC'] = OrderedDict()
+    loc['ALL_ASS'] = OrderedDict()
+    loc['E2DSFILES'] = OrderedDict()
+    loc['ALLWAVE'] = OrderedDict()
     loc.set_sources(['ALL_ACC', 'ALL_ASS', 'E2DSFILES', 'ALLWAVE'],
                     __NAME__ + '.main()')
     # get this fibers parameters
@@ -220,7 +221,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # ------------------------------------------------------------------
     # Construct parameters for header
     # ------------------------------------------------------------------
-    hdict = dict()
+    hdict = OrderedDict()
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add name of the TAPAS x data
