@@ -15,6 +15,7 @@ from astropy import units as uu
 import os
 import warnings
 import itertools
+from collections import OrderedDict
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -1267,7 +1268,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
     FP_ll_init = loc['LITTROW_EXTRAP_SOL_1']
     blaze = loc['BLAZE']
     # define storage
-    floc = dict()
+    floc = OrderedDict()
     floc['llpos'] = np.zeros_like(pos)
     floc['xxpos'] = np.zeros_like(pos)
     floc['m_fp'] = np.zeros_like(pos)
