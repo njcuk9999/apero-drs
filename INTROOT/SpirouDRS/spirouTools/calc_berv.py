@@ -18,6 +18,7 @@ Up-to-date with cal_CCF_E2DS_spirou AT-4 V47
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -149,15 +150,13 @@ def main(night_name=None, e2dsfiles=None):
         # ----------------------------------------------------------------------
         # Read star parameters
         # ----------------------------------------------------------------------
-        # TODO: remove H2RG dependency
-        if p['IC_IMAGE_TYPE'] == 'H4RG':
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
-            p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
-            p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
 
         #-----------------------------------------------------------------------
         #  Earth Velocity calculation
@@ -174,7 +173,7 @@ def main(night_name=None, e2dsfiles=None):
         # ----------------------------------------------------------------------
         outfilename = str(e2dsfile)
         # add keys
-        hdict = dict()
+        hdict = OrderedDict()
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr, hdict=hdict)
 
         # add berv values
