@@ -12,6 +12,7 @@ Created on 2017-11-27 at 13:08
 import numpy as np
 import os
 import pkg_resources
+from collections import OrderedDict
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
@@ -62,13 +63,13 @@ def get_python_files(path):
 def get_import_statements(files):
     importslist = []
 
-    statsdict = dict()
+    statsdict = OrderedDict()
     statsdict['total lines'] = 0
     statsdict['total empty lines'] = 0
     statsdict['total lines of comments'] = 0
     statsdict['total lines of code'] = 0
 
-    infodict = dict()
+    infodict = OrderedDict()
     infodict['imports'] = []
     infodict['filename'] = []
     # loop around the files
