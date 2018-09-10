@@ -126,9 +126,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
 
     # ----------------------------------------------------------------------
@@ -150,11 +148,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
-    # TODO: remove H2RG dependencies
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        bkwargs = dict(mode='manual', method='old')
-    else:
-        bkwargs = dict(mode='manual', method='new')
+    bkwargs = dict(mode='manual', method='new')
     order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
                                                  **bkwargs)
     # data 2 is now set to the order profile
@@ -484,8 +478,6 @@ def main(night_name=None, files=None):
         # superpose zeros over the fit in the image
         data4 = spirouLOCOR.ImageLocSuperimp(data2o, loc['ACC'][0:rorder_num])
         # save this image to file
-        # Question: Why no keys added to header?
-        hdict = dict()
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
         p = spirouImage.WriteImage(p, locofits3, data4, hdict)
