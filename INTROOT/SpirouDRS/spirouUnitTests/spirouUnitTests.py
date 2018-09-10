@@ -23,13 +23,10 @@ from SpirouDRS import spirouStartup
 # TODO: This is a stupid fix for python 2 - should be done better
 try:
     from . import spirouUnitRecipes
-    from . import unit_test_comp_functions as utc
 except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-    from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
 except ValueError:
     import spirouUnitRecipes
-    import unit_test_comp_functions as utc
 
 
 # =============================================================================
@@ -157,15 +154,6 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     ll['outputs'], _ = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
     # return the timing and the new and old outputs
     return timing, new_out, old_out, errors
-
-
-def comparison_table(p, errors):
-    # set the file path for the comparison results (plots and table)
-    filepath = utc.get_folder_name(RESULTSPATH)
-    # construct table
-    utc.construct_error_table(errors, THRESHOLD, filepath, runname=p['runname'])
-    # log
-    WLOG('', p['LOG_OPT'], 'Comparison saved to file.')
 
 
 # =============================================================================
