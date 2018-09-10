@@ -1807,9 +1807,7 @@ def RAW_OUTPUT_COLUMNS(p):
 
 # noinspection PyPep8Naming
 def REDUC_OUTPUT_COLUMNS(p):
-    output_keys = [p['KW_DATE_OBS'][0],
-                   p['KW_UTC_OBS'][0],
-                   p['KW_OBJNAME'][0],
+    output_keys = [p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0]]
     return output_keys
@@ -1974,11 +1972,8 @@ def DATE_FMT_HEADER(p):
     :return date_fmt_calibdb: string, the string timestamp format for use in
                               reading FITS file HEADERS
     """
-    # TODO: This switch will be obsolete after H2RG testing is over
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        date_fmt_header = '%Y-%m-%dT%H:%M:%S'
-    else:
-        date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
+    date_fmt_header = '%Y-%m-%dT%H:%M:%S'
+
     return date_fmt_header
 
 
