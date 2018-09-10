@@ -15,6 +15,7 @@ from astropy import units as uu
 import os
 import warnings
 import itertools
+from collections import OrderedDict
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -436,11 +437,12 @@ def fp_wavelength_sol_new(p, loc):
     # loop through the orders from red to blue
     for order_num in range(n_ord_final_fp, n_ord_start_fp - 1, -1):
         # define storage
-        floc = dict()
+        floc = OrderedDict()
         # select the lines in the order
         gg = loc['ORDPEAK'] == order_num
         # store the initial wavelengths of the lines
-        floc['llpos'] = np.polyval(loc['LL_PARAM_2'][order_num][::-1], loc['XPEAK'][gg])
+        floc['llpos'] = np.polyval(loc['LL_PARAM_2'][order_num][::-1],
+                                   loc['XPEAK'][gg])
         # store the pixel positions of the lines
         floc['xxpos'] = loc['XPEAK'][gg]
         # get the median pixel difference between successive lines (to check for gaps)
@@ -1233,7 +1235,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
     FP_ll_init = loc['LITTROW_EXTRAP_SOL_1']
     blaze = loc['BLAZE']
     # define storage
-    floc = dict()
+    floc = OrderedDict()
     floc['llpos'] = np.zeros_like(pos)
     floc['xxpos'] = np.zeros_like(pos)
     floc['m_fp'] = np.zeros_like(pos)
