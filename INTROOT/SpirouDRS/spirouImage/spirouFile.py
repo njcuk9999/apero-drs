@@ -859,7 +859,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             cond1 = np.ones(len(ocodes), dtype=bool)
             # print warning
             wargs = [p['kw_OUTPUT'][0], recipe]
-            wmsg = 'ID ({0}) not checked for recipe="{0}"'
+            wmsg = 'ID ({0}) not checked for recipe="{1}"'
             WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
         # else if we have the output in ocodes use this
         elif output in ocodes:
