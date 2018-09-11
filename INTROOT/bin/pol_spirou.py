@@ -173,6 +173,7 @@ def main(night_name=None, files=None):
     tot_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
     hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
     
+    meanbjd = 0.0
     # loop over files in polar sequence to add keywords to header of products
     for filename in polardict.keys():
         # get this entry
@@ -190,7 +191,15 @@ def main(night_name=None, files=None):
             # add MJDEND for each exposure
             mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
             hdict = spirouImage.AddKey(hdict, mjdendexp, value=hdr['MJDEND'])
-    
+            # add BJD for each exposure
+            bjdexp = p['kw_POL_BJD{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, bjdexp, value=hdr['BJD'])
+            meanbjd += hdr['BJD']
+
+    # add mean BJD
+    meanbjd = meanbjd / loc['NEXPOSURES']
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_MEANBJD'], value=meanbjd)
+
     # save POL data to file
     spirouImage.WriteImageMulti(degpolfits, [loc['POL'], loc['POLERR']], hdict)
     # save NULL1 data to file
