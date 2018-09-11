@@ -64,7 +64,20 @@ Finished Changes:
 
 9) Made all calls to dict() --> OrderedDict() (for python 2/cfht compatibility)
 
-10) Pep 8 clean up of all recipes
+10) New unit_tests (requires files - coming soon?)
+       - Test 1: Calibration test
+       - Test 2: Telluric test
+       - Test 3: Polarimetry test (Missing)
+    You will find these tests in .../INTROOT/SpirouDRS/spirouUnitTests/runs
+    to run them use:
+
+    .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Cal_Test.run
+    .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Tellu_Test.run
+
+    Requires raw directories:
+        "TEST1", "TEST2", "TEST3" with files from August in each
+
+11) Pep 8 clean up of all recipes
 
 
 * Can by-pass re-running cal_pre-process by copying all pre-processed files
