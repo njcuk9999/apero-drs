@@ -4375,7 +4375,15 @@
 
 
 ================================================================================
-* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.122
+* Mon Sep 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.122
+
+================================================================================
+	- manually incorporated possibility to read wavelength solution from calibDB (from dev2) (rev.f41f623a)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.123
 
 ================================================================================
 	- Move cal_HC_E2DS_EA constants to here (rev.875829dc)
@@ -4384,7 +4392,7 @@
 
 
 ================================================================================
-* Wed Sep 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.123
+* Wed Sep 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.124
 
 ================================================================================
 	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data), and added the obtaining of DPRTYPE to add  EXT_TYPE key to header (extraction output id key --> giving DPRTYPE for extracted files) (rev.0798e09e)
@@ -4404,6 +4412,40 @@
 	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.42c99315)
 	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.d3f40be7)
 	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.5ed02b84)
+
+
+
+================================================================================
+* Wed Sep 05 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.125
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou: updated HC section from cal_HC_E2DS_EA_spirou.py (rev.adf2cc99)
+	- visu_E2DS_spirou, recipe_control: fiber is now obtained from file (Fixes #437) (rev.4cccc671)
+	- visu_E2DS_spirou, recipe_control: fiber is now obtained from file (rev.39990d51)
+
+
+
+================================================================================
+* Wed Sep 05 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.126
+
+================================================================================
+	- commit local changes (rev.b9c64dfd)
+
+
+
+================================================================================
+* Wed Sep 05 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.127
+
+================================================================================
+	- spirouRV (for cal_DRIFTPEAK_E2DS_spirou) - Fix repetition of warning messages in while loop (rev.ba0d49a7)
+
+
+
+================================================================================
+* Thu Sep 06 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.128
+
+================================================================================
+	- spirouPlot: updated wave_ea_plot_per_order_hcguess: (rev.984c8d02)
 
 
 
@@ -4443,7 +4485,15 @@
 
 
 ================================================================================
-* Mon Sep 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.001
+* Fri Sep 07 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.002
+
+================================================================================
+	- Added an all_order plot of fitted gaussians (as discussed in #442) (rev.fe689cf0)
+	- fit_emi_line: added check to not fit on lines with more than one zero-value (fix for #393) (rev.d706131c)
+
+
+================================================================================
+* Mon Sep 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.003
 
 ================================================================================
 	- update notes - update (rev.70b7a9e0)
@@ -4485,3 +4535,32 @@
 	- cal_exposure_meter: replace dict() --> OrderedDict() (rev.134560d1)
 	- cal_DARK_spirou.py: remove H2RG dependency (rev.0576328c)
 	- cal_CCF_E2DS_spirou.py: replace dict() --> OrderedDict() (rev.531707eb)
+	- spirouWAVE - re-add dict() --> OrderedDict() (rev.98c31995)
+	- config - merge fix - do NOT upload own config! (rev.64cdc181)
+	- cal_WAVE_E2DS_EA - extra imports (rev.fa0dc831)
+	- cal_exposure_meter.py: fix bad call to get_telluric (p, loc --> loc) (rev.60784433)
+	- updated changelog/date/version/update notes (rev.14394d2d)
+	- update unit tests (rev.473572e7)
+	- spirouUnitTests: fix outputs of manage_run (post H2RG removal) (rev.338020dd)
+	- spirouTelluric.py: fix kind when reading TAPAS file (was FLAT now TAPAS) (rev.8a4fa81a)
+	- spirouStartup.py: fix indexing of files (add "LAST_MODIFIED" column) (rev.720b6071)
+	- spirouStartup.__init__.py: fix aliases (rev.b6a4685f)
+	- spirouTable - increase width of table (now 9999) (rev.63094fe8)
+	- spirouExoposeMeter.py: update where TAPAS file is taken from (now from telluDB) (rev.301921a6)
+	- spirouConst.py: update reduced output columns (need date and utc for drift) (rev.a9caa917)
+	- update master_calib_SPIROU.txt for reset - now we don't need H2RG or TAPAS input (rev.a10af728)
+	- off_listing_RAW/REDUC_spirou - fix bug in adding unix time - now called "last_modified" (to be more specific) (rev.a62d29fe)
+	- cal_FF_RAW_spirou: fix bug in H2RG removal (rev.562e3668)
+	- cal_DARK_spirou.py: remove H2RG dependency (rev.0576328c)
+
+
+
+================================================================================
+* Tue Sep 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.004
+
+================================================================================
+	- recipe_control.txt --> add cases (for fiber) for visu_E2DS_spirou (rev.f6da5cd7)
+	- spirouFile.py - fix bad error output {0} --> {1} (rev.d6d27e7d)
+	- cal_test.run: fix errors (typos ...f --> ...a) (rev.86b0b5f3)
+	- update recipe control for visu_RAW and visu_E2DS recipes (rev.45121f60)
+	- update notes with not done/finished (rev.0c33cb19)
