@@ -12,7 +12,6 @@ from __future__ import division
 import numpy as np
 from scipy import constants
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
 
 import os
 
@@ -389,7 +388,8 @@ def lsd_analysis(p, loc):
                                                normalize=True)
 
     # fit gaussian to the measured flux LSD profile
-    loc['LSD_STOKESI_MODEL'], loc['LSD_FIT_RV'], loc['LSD_FIT_RESOL'] = fit_gaussian_to_lsd_profile(loc['LSD_VELOCITIES'],loc['LSD_STOKESI'])
+    loc['LSD_STOKESI_MODEL'], loc['LSD_FIT_RV'], loc['LSD_FIT_RESOL'] = \
+    fit_gaussian_to_lsd_profile(loc['LSD_VELOCITIES'],loc['LSD_STOKESI'])
     
     # calculate polarimetry LSD profile
     loc['LSD_STOKESVQU'] = calculate_lsd_profile(loc['LSD_WAVE'], loc['LSD_POL'],
@@ -520,12 +520,12 @@ def fit_gaussian_to_lsd_profile(vels, Z) :
         :param vels: numpy array (1D), input velocity data
         :param Z: numpy array (1D), input LSD profile data
         
-        :return Zgauss, outRV, outresolution:
-            Zgauss:     numpy array (1D), gaussian fit to LSD profile (same size
-                        as input vels and Z
-            RV:         float, velocity of minimum obtained from gaussian fit
-            resolution: float, spectral resolution obtained from sigma of 
-                        gaussian fit
+        :return Zgauss, RV, resolvingPower:
+            Zgauss: numpy array (1D), gaussian fit to LSD profile (same size
+                    as input vels and Z)
+            RV: float, velocity of minimum obtained from gaussian fit
+            resolvingPower: float, spectral resolving power calculated from 
+                            sigma of gaussian fit
         """
 
     # set speed of light in km/s
@@ -564,6 +564,7 @@ def fit_gaussian_to_lsd_profile(vels, Z) :
     # set radial velocity directly from fitted v_0
     RV = popt[1]
     
+    # output fit gaussian profile, RV and resolving power
     return Zgauss, RV, resolvingPower
 
 
