@@ -960,6 +960,8 @@ def ext_aorder_fit(p, loc, image, cut=20000):
 
     :param image: numpy array (2D), the image to plot the fit on
 
+    :param cut: int, the upper cut to apply to the image
+
     :return None:
     """
     range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
@@ -1313,6 +1315,8 @@ def drift_plot_correlation_comp(p, loc, cc, iteration):
 
     :param cc: numpy array (1D), the correlation coefficients from the
                Pearson R test
+
+    :param iteration: int, the iteration number
 
     :return None:
     """
@@ -1673,6 +1677,8 @@ def wave_plot_final_fp_order(p, loc, iteration=0):
             LITTROW_EXTRAP_SOL_{0}: the wavelength solution derived from the
                                     HC and Littrow-constrained where {0} is the
                                     iteration number
+
+    :param iteration: int, the iteration number
 
     :return None:
     """

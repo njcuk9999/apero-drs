@@ -39,13 +39,12 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_telluric(p, loc, hdr):
+def get_telluric(p, loc):
     """
     Reads the telluric file "tellwave" (wavelength data) and "tellspe"
     (telluric absorption data) from files defined in "p"
 
     :param p: parameter dictionary, ParamDict containing constants
-
     :param loc: parameter dictionary, ParamDict containing data
 
     :return loc: parameter dictionary, the updated parameter dictionary
@@ -78,6 +77,10 @@ def order_profile(p, loc):
     """
     Create a 2D image of the order profile. Each order's pixels are labelled
     with the order_number, pixels not in orders are given a value of -1
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -190,7 +193,7 @@ def order_profile(p, loc):
                 orderimage[mask] = order_no
                 suborderimage[mask] = fin
                 fiberimage[mask] = fiber
-            #else break
+            # else break
             else:
                 emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
                 emsg2 = '\tfunction={0}'.format(func_name)
@@ -201,7 +204,7 @@ def order_profile(p, loc):
     loc['SUBORDERIMAGE'] = suborderimage
     loc['FIBERIMAGE'] = fiberimage
     # add source
-    loc.set_sources(['orderimage', 'suborderimage','fiberimage'], func_name)
+    loc.set_sources(['orderimage', 'suborderimage', 'fiberimage'], func_name)
     # return loc
     return loc
 
@@ -211,6 +214,10 @@ def create_wavelength_image(p, loc):
     Using each orders location coefficents, tilt and wavelength coefficients
     Make a 2D map the size of the image of each pixels wavelength value
     (or NaN if not a valid position for a wavelength)
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -377,7 +384,7 @@ def create_wavelength_image(p, loc):
                 lambda_total = lambda0 + lambda1 + lambda2 + lambda3
                 # add to array
                 waveimage[y0s, x0s] = lambda_total
-            #else break
+            # else break
             else:
                 emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
                 emsg2 = '\tfunction={0}'.format(func_name)
@@ -472,13 +479,14 @@ def create_image_from_e2ds(p, loc):
     wavelength positions in loc['WAVEIMAGE'] to map the spectrum onto
     the waveimage
 
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 waveimage: numpy array (2D), the wavelength of each pixel
                            shape is same as input image and must be the same
                            shape as spe
-    :param x: numpy array (1D), the wavelength values to map onto the image
-    :param y: numpy array (1D), the spectrum values to map onto the image
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:

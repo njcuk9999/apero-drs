@@ -142,7 +142,8 @@ def main(night_name=None, reffile=None):
         bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
         # Loop around the orders
         for order_num in range(loc['NUMBER_ORDERS']):
-            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num],
+                                                  bsize)
             loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
 
     # ------------------------------------------------------------------

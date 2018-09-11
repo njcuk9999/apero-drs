@@ -46,10 +46,6 @@ ListReducedFiles = drs_tools.list_reduced_files
 
 ListCalibFiles = drs_tools.list_calib_files
 
-
-
-
-
 # =============================================================================
 # End of code
 # =============================================================================

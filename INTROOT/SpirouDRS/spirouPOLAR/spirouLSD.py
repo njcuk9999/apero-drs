@@ -596,7 +596,10 @@ def output_lsd_image(p, loc, hdict) :
     :param loc: parameter dictionary, ParamDict to store data
         Must contain at least:
             loc['LSDDATA']: numpy array (2D), LSD analysis data
-        
+    :param hdict: dictionary, header dictionary of keywordstores
+                  each key is the HEADER key and each value is a list of
+                  two values: [HEADER value, HEADER comment]
+
     :return lsdfits, lsdfitsfitsname:
         lsdfits:         string, output full path
         lsdfitsfitsname: string, output filename

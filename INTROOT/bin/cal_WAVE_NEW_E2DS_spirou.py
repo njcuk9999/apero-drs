@@ -239,12 +239,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Plot initial and new wavelengths for an order - TODO move to spirouPLOT
     # ----------------------------------------------------------------------
 
-    #set plot order
+    # set plot order
     plot_order = 5
     # get wave solution filename
     wave_file = spirouImage.ReadWaveFile(p, loc['HCHDR'], return_filename=True)
     # get initial wavelength solution
-    ll_init, param_ll_init = spirouTHORCA.GetE2DSll(p, loc['HCHDR'], filename=wave_file)
+    ll_init, param_ll_init = spirouTHORCA.GetE2DSll(p, loc['HCHDR'],
+                                                    filename=wave_file)
     # define polynomial fit
     c_aux = np.poly1d(param_ll_init[plot_order][::-1])  # reverse order
     # create mask to select FP lines from plot_order only
@@ -260,7 +261,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.plot(FP_ll_plot_orig, FP_ll_plot - FP_ll_plot_orig, 'o')
     plt.xlabel('initial FP wavelength [nm]')
     plt.ylabel('initial - new FP wavelengths [nm]')
-    plt.title('FP wavelengths - order '+str(plot_order))
+    plt.title('FP wavelengths - order ' + str(plot_order))
 
     # ----------------------------------------------------------------------
     # Assign absolute FP numbers for reddest order
@@ -280,7 +281,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     m_ord_prev = m_aux
 
     # ----------------------------------------------------------------------
-    # Plot FP lines, reference HC line for reddest order - TODO move to spirouPLOT
+    # Plot FP lines, reference HC line for reddest order -
+    # TODO move to spirouPLOT
     # ----------------------------------------------------------------------
     # find indexes for reddest order values
     ind = np.where(np.asarray(FP_order) == n_fin - 1)
@@ -362,18 +364,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # loop over FP lines in the order
             for k in range(len(FP_ll_ord) - 1):
                 # find surrounding FP lines for the HC line
-                if FP_ll_ord[k - 1] < all_lines[ord_num][j][0] <=FP_ll_ord[k]:
-                    #derive d for the HC line
+                if FP_ll_ord[k - 1] < all_lines[ord_num][j][0] <= FP_ll_ord[k]:
+                    # derive d for the HC line
                     t1 = all_lines[ord_num][j][0] * m_ord[k] * (m_ord[k] + 1)
                     t2 = FP_x_ord[k] - FP_x_ord[k - 1]
                     t3 = m_ord[k] * FP_x_ord[k] - \
-                         (m_ord[k] + 1) * FP_x_ord[k - 1]\
+                         (m_ord[k] + 1) * FP_x_ord[k - 1] \
                          + all_lines[ord_num][j][5]
-                    d.append(0.5*t1*(t2/t3))
+                    d.append(0.5 * t1 * (t2 / t3))
                     # save 1/line number of closest FP line
-                    one_m_d.append(1./m_ord[k])
+                    one_m_d.append(1. / m_ord[k])
                     # save 1/ weighted average of line numbers - not used
-                    one_m_d_w.append(1./
+                    one_m_d_w.append(1. /
                                      ((all_lines[ord_num][j][5] - FP_x_ord[k]) /
                                       (FP_x_ord[k - 1] - FP_x_ord[k])
                                       + m_ord[k]))
@@ -382,7 +384,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     # save HC line wavelength
                     HC_ll_test.append(all_lines[ord_num][j][0])
 
-    #log line number span
+    # log line number span
     wargs = [m_d[0], m_d[-1]]
     wmsg = 'Mode number span: {0} - {1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
@@ -427,9 +429,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # plot values
     plt.plot(one_m_d, d, 'o')
     # plot initial cavity width value
-    plt.hlines(dopd0/2., min(one_m_d), max(one_m_d), label='original d')
+    plt.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
     # plot reference peak of reddest order
-    plt.plot(1./m_init, dopd0/2., 'D')
+    plt.plot(1. / m_init, dopd0 / 2., 'D')
     # plot fit
     plt.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
     plt.xlabel('1/m')
@@ -446,7 +448,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # loop over peak numbers
     for i in range(len(m)):
         # calculate wavelength from fit to 1/m vs d
-        FP_ll_new.append(2*fit_1m_d_func(1./m[i])/m[i])
+        FP_ll_new.append(2 * fit_1m_d_func(1. / m[i]) / m[i])
 
     # plot by order - TODO move to spirouPLOT?
 
@@ -491,7 +493,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get new FP line wavelengths for the order
         FP_ll_new_ord = np.asarray(FP_ll_new)[ind_ord]
         # fit a polynomial to the new FP ll vs the pixel positions
-        param = np.polyfit(FP_x_ord, FP_ll_new_ord,ic_FP_fit_deg)
+        param = np.polyfit(FP_x_ord, FP_ll_new_ord, ic_FP_fit_deg)
         # saves the fit parameters IN DRS ORDER
         param_FP_fit[ord_num] = param[::-1]
         aux_param = np.poly1d(param)
@@ -538,7 +540,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
-                               value=loc['LL_PARAM_FINAL'].shape[1]-1)
+                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])

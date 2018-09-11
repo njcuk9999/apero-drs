@@ -15,7 +15,6 @@ from collections import OrderedDict
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -225,17 +224,16 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
     # else error
     # -------------------------------------------------------------------------
     else:
-        emsgs = []
-        emsgs.append('mode = {0} is not valid')
-        emsgs.append('   Mode must be either:')
-        emsgs.append('       0 - Simple extraction')
-        emsgs.append('       1 - weighted extraction')
-        emsgs.append('       2 - tilt extraction')
-        emsgs.append('       3a - tilt weight extraction (old 1)')
-        emsgs.append('       3b - tilt weight extraction 2 (old)')
-        emsgs.append('       3c - tilt weight extraction 2')
-        emsgs.append('       3d - tilt weight extraction 2 (cosmic correction)')
-        emsgs.append('   Please check constants_SPIROU file.')
+        emsgs = ['mode = {0} is not valid',
+                 '   Mode must be either:',
+                 '       0 - Simple extraction',
+                 '       1 - weighted extraction',
+                 '       2 - tilt extraction',
+                 '       3a - tilt weight extraction (old 1)',
+                 '       3b - tilt weight extraction 2 (old)',
+                 '       3c - tilt weight extraction 2',
+                 '       3d - tilt weight extraction 2 (cosmic correction)',
+                 '   Please check constants_SPIROU file.']
         WLOG('error', p['LOG_OPT'], emsgs)
 
 
@@ -325,6 +323,10 @@ def extract_AB_order(pp, loc, image, rnum):
 def get_extraction_method(p, mode):
     """
     Get the extraction method key and function
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
 
     :param mode: string, the mode
 
@@ -672,12 +674,13 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
             if np.sum(fx) > 0:
-               fx = fx / np.sum(fx)
+                fx = fx / np.sum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
             # weight values less than 0 to 1e-9
             raw_weights = np.where(sx > 0, 1, 1e-9)
-            # weights are then modified by the gain and sigdet added in quadrature
+            # weights are then modified by the gain and sigdet added
+            #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
@@ -715,6 +718,8 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
                    multiplied by 1
     :param tiltborder: int, the number of pixels to set as the border (needed
                        to allow for tilt to not go off edge of image)
+    :param cosmic_sigcut: float, the sigma cut for cosmic rays
+    :param cosmic_threshold: int, the number of allowed cosmic rays per corr
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -760,7 +765,7 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
             # Renormalise the rotated order profile
             if np.sum(fx) > 0:
-               fx = fx / np.sum(fx)
+                fx = fx / np.sum(fx)
             else:
                 fx = np.ones(fx.shape, dtype=float)
             # weight values less than 0 to 1e-9
@@ -792,8 +797,8 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     :param weights: numpy array (1D), the weight array for the "ic"th
                     order pixels
     :param cpt: int, the number of cosmic rays found
-    :param cosmic_sigcut: float, the
-    :param cosmic_threshold:
+    :param cosmic_sigcut: float, the sigma cut for cosmic rays
+    :param cosmic_threshold: int, the number of allowed cosmic rays per corr
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -809,7 +814,7 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     #       critical pixel values > sigcut * extraction
     #    or
     #       the loop exceeds "cosmic_threshold"
-    cond1 = np.max(crit) > np.max((sigcut * spe[ic],1000.))
+    cond1 = np.max(crit) > np.max((sigcut * spe[ic], 1000.))
     cond2 = nbloop < cosmic_threshold
     while cond1 and cond2:
         # TODO: Remove old print statement
@@ -870,7 +875,6 @@ def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
     # print('Nb cosmics detected : ', cpt)
     # # multiple spe by gain to convert to e-
     # print('Nb cosmic detected  {0}'.format(cpt))
-
 
 
 def work_out_ww(ww0, ww1, tiltshift, r1):
@@ -1505,7 +1509,6 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 
     return spe[::-1], nbcos
 
-
 # =============================================================================
 # Archive functions (old and unused)
 # =============================================================================
@@ -1862,7 +1865,6 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 #     return cent, cpt
 
 
-
 # def extract_wrapper(image, pos, sig, **kwargs):
 #     """
 #     Extraction wrapper - takes in image, pos, sig and kwargs and decides
@@ -1886,8 +1888,9 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 #                          if 3 Horne extraction with cosmic elimination
 #                             (not currently available)
 #
-#         nbsig:          float,  distance away from center to extract out to +/-
-#                         defaults to p['NBSIG'] from constants_SPIROU.py
+#         nbsig:          float,  distance away from center to extract out
+#                         to +/- defaults to p['NBSIG'] from
+#                         constants_SPIROU.py
 #
 #         gain:           float, gain of the image
 #                         defaults to p['GAIN'] from fitsfilename HEADER
@@ -1897,13 +1900,13 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 #
 #         range1:         float, Half-zone extraction width left side
 #                         (formally plage1)
-#                         defaults to p['IC_EXT_RANGE1'] from fiber parameters in
-#                         constatns_SPIROU.txt
+#                         defaults to p['IC_EXT_RANGE1'] from fiber parameters
+#                         in constants_SPIROU.txt
 #
 #         range2:         float, Half-zone extraction width left side
 #                         (formally plage2)
-#                         defaults to p['IC_EXT_RANGE2'] from fiber parameters in
-#                         constatns_SPIROU.txt
+#                         defaults to p['IC_EXT_RANGE2'] from fiber parameters
+#                         in constants_SPIROU.txt
 #
 #         tilt:           numpy array (1D), the tilt for this order, if defined
 #                         uses tilt, if not defined does not
@@ -1911,8 +1914,8 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 #         use_weight:    bool, if True use weighted extraction, if False or not
 #                         defined does not use weighted extraction
 #
-#         order_profile:  numpy array (2D), the image with fit superposed on top,
-#                         required for tilt and or weighted fit
+#         order_profile:  numpy array (2D), the image with fit superposed on
+#                         top, required for tilt and or weighted fit
 #
 #         mode:           if use_weight and tilt is not None then
 #                         if mode = 'old'  will use old code (use this if
@@ -2026,7 +2029,8 @@ def extract_const_range_wrong(image, pos, nbsig, gain):
 #         check_for_none(sigdet, 'sig_det')
 #         # run extract and return
 #         WLOG('error', '', 'Extraction type invalid')
-#         # ekwargs = dict(image=image, pos=pos, r1=range1, r2=range2, gain=gain)
+#         # ekwargs = dict(image=image, pos=pos, r1=range1, r2=range2,
+#                          gain=gain)
 #         # return extract(**ekwargs)
 #     # ----------------------------------------------------------------------
 #     # No Extract

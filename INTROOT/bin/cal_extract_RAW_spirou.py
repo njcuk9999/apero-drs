@@ -49,8 +49,8 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 def main(night_name=None, files=None, fiber_type=None, **kwargs):
     """
-    cal_DRIFT_E2DS_spirou.py main function, if night_name and files are None uses
-    arguments from run time i.e.:
+    cal_DRIFT_E2DS_spirou.py main function, if night_name and files are
+    None uses arguments from run time i.e.:
         cal_DRIFT_E2DS_spirou.py [night_directory] [files]
 
     :param night_name: string or None, the folder within data raw directory
@@ -190,7 +190,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # apply background correction to data (and set to zero where negative)
     data2 = np.where(data2 > 0, data2 - background, 0)
 
-
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -200,9 +199,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
 
-    #-----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     #  Earth Velocity calculation
-    #-----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
@@ -429,7 +428,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
         # ------------------------------------------------------------------
         # 1-dimension spectral S1D
-        #------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # normalise E2DSFF with the blaze function
         e2dsffb = loc['E2DSFF'] / loc['BLAZE']
         # only want certain orders

@@ -267,6 +267,9 @@ def fp_wavelength_sol(p, loc, mode='new'):
                        for each found line in that order
             BLAZE: numpy array (2D), the blaze data
 
+    :param mode: string, either 'old' or 'new' - passed to find_fp_lines to
+                 decide which way lines are found
+
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 FP_LL_POS: numpy array, the initial wavelengths of the FP lines

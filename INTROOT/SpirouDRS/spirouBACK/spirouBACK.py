@@ -16,7 +16,6 @@ from scipy.interpolate import griddata
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -33,6 +32,8 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -70,8 +71,8 @@ def measure_background_flatfield(p, image):
     size = p['IC_BKGR_WINDOW']
     percent = p['IC_BKGR_PERCENT']
     # create the box centers
-    xc = np.arange(size, image.shape[0], 2*size)
-    yc = np.arange(size, image.shape[1], 2*size)
+    xc = np.arange(size, image.shape[0], 2 * size)
+    yc = np.arange(size, image.shape[1], 2 * size)
     # min level box
     minlevel = np.zeros((len(xc), len(yc)))
     # loop around all boxes with centers xc and yc
@@ -79,22 +80,25 @@ def measure_background_flatfield(p, image):
         for j_it in range(len(yc)):
             xci, yci = xc[i_it], yc[j_it]
             # get the pixels for this box
-            subframe = image[xci-size:xci+size, yci-size:yci+size].ravel()
+            subframe = image[xci - size:xci + size,
+                       yci - size:yci + size].ravel()
             # get the (2*size)th minimum pixel
-#            minlevel[i_it, j_it] = np.median(np.sort(np.compress(subframe>0,subframe))[2 * size])
-            mask=subframe>0
+            mask = subframe > 0
             maskedsubframe = subframe[mask]
             if len(maskedsubframe) > 0:
-                minlevel[i_it, j_it] = np.max([np.percentile(maskedsubframe,percent),0])
+                minlevel[i_it, j_it] = np.max(
+                    [np.percentile(maskedsubframe, percent), 0])
             else:
                 minlevel[i_it, j_it] = 0
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
-    gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size, size:image.shape[1]:2 * size]
+    gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size,
+                     size:image.shape[1]:2 * size]
     gridx2, gridy2 = np.indices(image.shape)
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
-    minlevel2 = np.zeros((minlevel.shape[0] + 2, minlevel.shape[1] + 2), dtype=float)
+    minlevel2 = np.zeros((minlevel.shape[0] + 2, minlevel.shape[1] + 2),
+                         dtype=float)
     minlevel2[1:-1, 1:-1] = minlevel
     minlevel2[0, 1:-1] = minlevel[0]
     minlevel2[-1, 1:-1] = minlevel[-1]
@@ -123,8 +127,8 @@ def measure_background_flatfield(p, image):
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
     points = np.array([gridx1c.ravel(), gridy1c.ravel()]).T
-    background = griddata(points, minlevel2.ravel(), (gridx2, gridy2), method='linear')
-    # background = np.where(np.isnan(background),np.max([0.,np.min(minlevel2)]),background)
+    background = griddata(points, minlevel2.ravel(), (gridx2, gridy2),
+                          method='linear')
 
     # return background, xc, yc and minlevel
     return background, gridx1c, gridy1c, minlevel2
@@ -171,10 +175,10 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     #   zero by miny and normalise by (maxy - miny)
     #   Set all values below ic_min_amplitude to zero
     max_amp = pp['IC_MIN_AMPLITUDE']
-    ycc = np.where(diff_maxmin > max_amp, (y - miny)/diff_maxmin, 0)
+    ycc = np.where(diff_maxmin > max_amp, (y - miny) / diff_maxmin, 0)
     # get the normalised minimum values for those rows above threshold
     #   i.e. good background measurements
-    normed_miny = miny/diff_maxmin
+    normed_miny = miny / diff_maxmin
     goodback = np.compress(ycc > pp['IC_LOCSEUIL'], normed_miny)
     # measure the mean good background as a percentage
     # (goodback and ycc are between 0 and 1)
@@ -266,18 +270,17 @@ def measure_box_min_max(y, size):
     # loop around each pixel from "size" to length - "size" (non-edge pixels)
     # and get the minimum and maximum of each box
     for it in range(size, ny - size):
-        min_image[it] = np.min(y[it-size:it+size])
-        max_image[it] = np.max(y[it-size:it+size])
+        min_image[it] = np.min(y[it - size:it + size])
+        max_image[it] = np.max(y[it - size:it + size])
 
     # deal with leading edge --> set to value at size
     min_image[0:size] = min_image[size]
     max_image[0:size] = max_image[size]
     # deal with trailing edge --> set to value at (image.shape[0]-size-1)
-    min_image[ny-size:] = min_image[ny-size-1]
-    max_image[ny-size:] = max_image[ny-size-1]
+    min_image[ny - size:] = min_image[ny - size - 1]
+    max_image[ny - size:] = max_image[ny - size - 1]
     # return arrays for minimum and maximum (box smoothed)
     return min_image, max_image
-
 
 # =============================================================================
 # End of code
