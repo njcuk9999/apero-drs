@@ -141,6 +141,11 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_MJDEND2',
             'kw_POL_MJDEND3',
             'kw_POL_MJDEND4',
+            'kw_POL_BJD1',
+            'kw_POL_BJD2',
+            'kw_POL_BJD3',
+            'kw_POL_BJD4',
+            'kw_POL_MEANBJD',
             'kw_POL_LSD_MASK',
             'kw_POL_LSD_V0',
             'kw_POL_LSD_VF',
@@ -530,6 +535,11 @@ kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND of exposure 1']
 kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND of exposure 2']
 kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND of exposure 3']
 kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND of exposure 4']
+kw_POL_BJD1 = ['BJD1', '', 'BJD of exposure 1']
+kw_POL_BJD2 = ['BJD2', '', 'BJD of exposure 2']
+kw_POL_BJD3 = ['BJD3', '', 'BJD of exposure 3']
+kw_POL_BJD4 = ['BJD4', '', 'BJD of exposure 4']
+kw_POL_MEANBJD = ['MEANBJD', '', 'Mean BJD for polar sequence']
 kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
 kw_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
 kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
