@@ -13,6 +13,7 @@ from __future__ import division
 import numpy as np
 import sys
 import os
+import shutil
 from datetime import datetime
 
 from SpirouDRS import spirouConfig
@@ -255,6 +256,9 @@ def update_version_file(filename, version):
     f = open(filename, 'r')
     lines = f.readlines()
     f.close()
+    # make backup
+    shutil.copy(filename, filename + '.backup')
+
     os.remove(filename)
     # edit first line
     lines[0] = 'DRS_VERSION = {0}\n'.format(version)
@@ -262,6 +266,8 @@ def update_version_file(filename, version):
     f = open(filename, 'w')
     f.writelines(lines)
     f.close()
+    # remove backup
+    os.remove(filename + '.backup')
 
 
 def update_py_version(filename, version):
@@ -307,9 +313,12 @@ def update_py_version(filename, version):
                 uinput2 = input('\t>> ')
             if 'Y' in uinput2.upper():
                 cond = False
-        else:
+        elif 'N' in uinput.upper():
             cond = False
             uinput1 = None
+        else:
+            print('\nError: Enter either [Y]es or [N]o\n')
+            cond = True
 
     if uinput1 is not None:
         # update version
@@ -334,12 +343,12 @@ def update_py_version(filename, version):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
+    # backup filename
+    shutil.copy(FILENAME, FILENAME + '.backup')
     # get values from config file
     p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # get the version
     version = p['DRS_VERSION']
-    # update version text file
-    update_version_file(VERSIONFILE, version)
     # increment version in config files
     version = update_py_version(CONSTFILE, version)
     # check full log file for previous entries
@@ -353,7 +362,10 @@ if __name__ == "__main__":
     update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
     # get lines group them and save to full file
     process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
-
+    # update version text file
+    update_version_file(VERSIONFILE, version)
+    # remove backup
+    os.remove(FILENAME + '.backup')
 
 # =============================================================================
 # End of code

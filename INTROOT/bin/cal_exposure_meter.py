@@ -218,6 +218,8 @@ def main(night_name=None, reffile=None):
     # Construct parameters for header
     # ------------------------------------------------------------------
     hdict = dict()
+    # set the version
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add name of the TAPAS x data
     hfile = os.path.split(p['TELLWAVE'])[-1]
     hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLX'], value=hfile)

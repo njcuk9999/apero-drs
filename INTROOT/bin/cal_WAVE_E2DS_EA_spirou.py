@@ -250,14 +250,14 @@ def gaussfit(xpix, ypix, nn):
 # ----------------------------------------------------------------------
 
 # test files TC2
-#night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
-#fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
-#hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
+night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
+fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
+hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
 
 # test files TC3
-night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
-fpfile = '2294108a_pp_e2dsff_AB.fits'
-hcfiles = ['2294115c_pp_e2dsff_AB.fits']
+#night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
+#fpfile = '2294108a_pp_e2dsff_AB.fits'
+#hcfiles = ['2294115c_pp_e2dsff_AB.fits']
 
 #night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
 #fpfile = '2294223a_pp_e2dsff_AB.fits'
@@ -360,6 +360,8 @@ p['KW_CCD_SIGDET'][1] = p['SIGDET']
 p['KW_CCD_CONAD'][1] = p['GAIN']
 # get lamp parameters
 p = spirouTHORCA.GetLampParams(p, hchdr)
+
+
 # get number of orders
 # we always get fibre A number because AB is doubled in constants file
 nbo = p['QC_LOC_NBO_FPALL']['A']
@@ -372,9 +374,9 @@ nbpix = np.shape(hcdata)[1]
 # getting header info with wavelength polynomials
 wdata = spirouImage.ReadWaveFile(p, hchdr, return_header=True)
 wave, wave_hdr = wdata
-loc['WAVE'] = wave
+loc['WAVE_INIT'] = wave
 loc['WAVEHDR'] = wave_hdr
-loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+loc.set_source('WAVE_INIT', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
 # get wave params from wave header
 poly_wave_sol = spirouImage.ReadWaveParams(p, wave_hdr)
@@ -389,8 +391,8 @@ doplot_sanity = True
 
 # generate initial wavelength map
 # set the possibility for a pixel shift
-pixel_shift_inter =    0 #6.26637214e+00
-pixel_shift_slope = 0   #4.22131253e-04
+pixel_shift_inter = p['PIXEL_SHIFT_INTER']
+pixel_shift_slope = p['PIXEL_SHIFT_SLOPE']
 # print a warning if pixel_shift is not 0
 if pixel_shift_slope != 0 or pixel_shift_inter != 0:
     wmsg = 'Pixel shift is not 0, check that this is desired'
@@ -901,6 +903,9 @@ wargs = [np.mean(resolution_map), np.median(resolution_map), np.std(resolution_m
 wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
 WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
+
+# TODO: --> Below is not etienne's code!
+
 # ----------------------------------------------------------------------
 # Set up all_lines storage list for both wavelength solutions
 # ----------------------------------------------------------------------
@@ -914,8 +919,8 @@ res_1 = []
 res_2 = []
 ord_save = []
 
-n_ord_start = 0
-n_ord_final = 47
+n_ord_start = p['IC_HC_N_ORD_START_2']
+n_ord_final = p['IC_HC_N_ORD_FINAL_2']
 
 # first wavelength solution (no smoothing)
 # loop through orders
@@ -1005,70 +1010,48 @@ if poly_smooth:
         all_lines_2.append(gau_params)
         res_2 = np.concatenate((res_2, 2.997e5*(input_wave - output_wave_2)/output_wave_2))
 
-    # add to loc
+# For compatibility w/already defined functions, I need to save here all_lines_2
+if poly_smooth:
     loc['ALL_LINES_2'] = all_lines_2
     loc['LL_PARAM_2'] = np.fliplr(np.transpose(new_wavelength_solution_polyfit))
     loc.set_sources(['ALL_LINES_2', 'LL_PARAM_2'], __NAME__ + '/main()')
-
-# Save final line list, wave map, fit parameters to loc (depending if smoothing or not)
-if poly_smooth:
-    loc['ALL_LINES_FINAL'] = loc['ALL_LINES_2']
-    loc['LL_PARAM_FINAL'] = loc['LL_PARAM_2']
-    loc['LL_FINAL'] = loc['LL_OUT_2']
-    loc.set_sources(['ALL_LINES_FINAL', 'LL_PARAM_FINAL'], __NAME__ + '/main()')
 else:
-    loc['ALL_LINES_FINAL'] = loc['ALL_LINES_1']
-    loc['LL_PARAM_FINAL'] = loc['LL_PARAM_1']
-    loc['LL_FINAL'] = loc['LL_OUT_1']
-    loc.set_sources(['ALL_LINES_FINAL', 'LL_PARAM_FINAL'], __NAME__ + '/main()')
+    all_lines_2 = np.copy(all_lines_1)
+    loc['ALL_LINES_2'] = all_lines_2
+    loc['LL_PARAM_2'] = np.fliplr(fit_per_order)
+    loc['LL_OUT_2'] = loc['LL_OUT_1']
+    loc.set_sources(['ALL_LINES_2', 'LL_PARAM_2'], __NAME__ + '/main()')
 
 
 # ------------------------------------------------------------------
 # Littrow test
 # ------------------------------------------------------------------
 
-# First solution - need to skip last two orders
+# set up start and end orders depending on if smoothing was used
+if poly_smooth:
+    # set up echelle orders
+    n_ord_start = 0
+    n_ord_final = 49
 
-# set up echelle orders
+#calculate echelle orders
 o_orders = np.arange(n_ord_start, n_ord_final)
 echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
 loc['ECHELLE_ORDERS'] = echelle_order
 loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
-# do Littrow check
-ckwargs = dict(ll=loc['LL_OUT_1'][n_ord_start:n_ord_final, :], iteration=1, log=True)
+# Do Littrow check
+ckwargs = dict(ll=loc['LL_OUT_2'][n_ord_start:n_ord_final, :], iteration=2, log=True)
 loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
 # Plot wave solution littrow check
-
 if p['DRS_PLOT']:
     # plot littrow x pixels against fitted wavelength solution
-    sPlt.wave_littrow_check_plot(p, loc, iteration=1)
-
-# Smoothed solution
-
-if poly_smooth:
-    # set up echelle orders
-    n_ord_start = 0
-    n_ord_final = 49
-    o_orders = np.arange(n_ord_start, n_ord_final)
-    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
-    loc['ECHELLE_ORDERS'] = echelle_order
-    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
-
-    ckwargs = dict(ll=loc['LL_OUT_2'], iteration=2, log=True)
-    loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
-
-    # Plot wave solution littrow check
-
-    if p['DRS_PLOT']:
-        # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+    sPlt.wave_littrow_check_plot(p, loc, iteration=2)
 
 # ------------------------------------------------------------------
 # extrapolate Littrow solution
 # ------------------------------------------------------------------
-ekwargs = dict(ll=loc['LL_OUT_1'], iteration=1)
+ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
 loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
 
 # ------------------------------------------------------------------
@@ -1076,13 +1059,13 @@ loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
 # ------------------------------------------------------------------
 
 # the littrow extrapolation (for orders > n_ord_final_2)
-litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final:]
-litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final:]
+litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_2'][n_ord_final:]
+litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_2'][n_ord_final:]
 
 # the wavelength solution for n_ord_start - n_ord_final
 # taking from loc allows avoiding an if smooth check
-ll_out = loc['LL_FINAL'][n_ord_start:n_ord_final]
-param_out = loc['LL_PARAM_FINAL'][n_ord_start:n_ord_final]
+ll_out = loc['LL_OUT_2'][n_ord_start:n_ord_final]
+param_out = loc['LL_PARAM_2'][n_ord_start:n_ord_final]
 
 # create stack
 ll_stack, param_stack = [], []
@@ -1096,8 +1079,18 @@ if len(litt_extrap_sol_red) > 0:
     param_stack.append(litt_extrap_sol_param_red)
 
 # convert stacks to arrays and add to storage
+loc['LL_OUT_2'] = np.vstack(ll_stack)
+loc['LL_PARAM_2'] = np.vstack(param_stack)
+loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
+
+# rename for compatibility
+loc['LITTROW_EXTRAP_SOL_1'] = np.vstack(ll_stack)
+
+# temp copy for storage
 loc['LL_FINAL'] = np.vstack(ll_stack)
 loc['LL_PARAM_FINAL'] = np.vstack(param_stack)
+all_lines_final = np.copy(all_lines_2)
+loc['ALL_LINES_FINAL'] = all_lines_final
 loc.set_sources(['LL_FINAL', 'LL_PARAM_FINAL'], __NAME__ + '/main()')
 
 # ------------------------------------------------------------------
@@ -1110,133 +1103,22 @@ if use_fp:
     # ------------------------------------------------------------------
     # Find FP lines
     # ------------------------------------------------------------------
-
-    # pipe inputs to loc with correct names
-    # set fpfile as ref file
-    loc['SPEREF'] = fpdata
-    # rename initial solution to keep track of it in loc
-    loc['WAVE_INIT'] = loc['WAVE']
-    # set wavelength solution as the one from the HC lines
-    loc['WAVE'] = loc['LL_FINAL']
-    # set lamp as FP
-    loc['LAMP'] = 'fp'
-
+    # print message to screen
     wmsg = 'Identification of lines in reference file: {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(fpfile))
-    # get the position of FP peaks from reference file
-    loc = spirouRV.CreateDriftFile(p, loc)
 
-    # ----------------------------------------------------------------------
-    # Removal of suspiciously wide FP lines
-    # ----------------------------------------------------------------------
-    loc = spirouRV.RemoveWidePeaks(p, loc)
+    # ------------------------------------------------------------------
+    # Get the FP solution
+    # ------------------------------------------------------------------
 
-    # ----------------------------------------------------------------------
-    # Derives the FP line wavelengths from the first solution
-    #     Follows the Bauer et al 2015 procedure
-    # ----------------------------------------------------------------------
-
-    # set start and end orders
-    n_ord_start_fp = 10
-    n_ord_final_fp = 20
-
-    # get parameters from p
-    dopd0 = p['IC_FP_DOPD0']
-    fit_deg = p['IC_FP_FIT_DEGREE']
-
-    # set up storage
-    llpos_all, xxpos_all, ampl_all = [], [], []
-    m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
-
-    # get m, d for each line
-    for order_num in range(n_ord_start_fp, n_ord_final_fp):
-        # define storage
-        floc = dict()
-        # select the lines in the order
-        gg = loc['ORDPEAK'] == order_num
-        # store the initial wavelengths of the lines
-        floc['llpos'] = np.polyval(loc['LL_PARAM_FINAL'][order_num][::-1],loc['XPEAK'][gg])
-        # store the pixel positions of the lines
-        floc['xxpos'] = loc['XPEAK'][gg]
-        #store the amplitudes of the lines
-        floc['ampl'] = loc['AMPPEAK'][gg]
-        # store the values of the blaze at the pixel positions of the lines
-        floc['weight_bl'] = np.zeros_like(floc['llpos'])
-        for it in range(1,len(floc['llpos'])):
-            floc['weight_bl'][it]= loc['BLAZE'][order_num, int(np.round(floc['xxpos'][it]))]
-        #store the order numbers
-        floc['order_rec'] = loc['ORDPEAK'][gg]
-        # set up storage for line numbers
-        mpeak = np.zeros_like(floc['llpos'])
-        # line number for the first line of the order (by FP equation)
-        mpeak[0] = int(dopd0 / floc['llpos'][0])
-        # successive line numbers (assuming no gap)
-        for it in range(1,len(floc['llpos'])):
-            mpeak[it] = mpeak[it - 1] - 1
-        # determination of observed effective cavity width
-        dopd_t = mpeak * floc['llpos']
-        # store m and d
-        floc['m_fp'] = mpeak
-        floc['dopd_t'] = dopd_t
-        if order_num != n_ord_start_fp:
-            # correct for large jumps
-            floc = spirouTHORCA.spirouWAVE.correct_for_large_fp_jumps(p, order_num, floc,
-                                                   dopd_all)
-        # add to storage
-        llpos_all += list(floc['llpos'])
-        xxpos_all += list(floc['xxpos'])
-        ampl_all += list(floc['ampl'])
-        m_fp_all += list(floc['m_fp'])
-        weight_bl_all += list(floc['weight_bl'])
-        order_rec_all += list(floc['order_rec'])
-        # difference in cavity width converted to microns
-        dopd_all += list((floc['dopd_t'] - dopd0) * 1.e-3)
-
-    # convert to numpy arrays
-    llpos_all = np.array(llpos_all)
-    xxpos_all = np.array(xxpos_all)
-    ampl_all = np.array(ampl_all)
-    m_fp_all = np.array(m_fp_all)
-    weight_bl_all = np.array(weight_bl_all)
-    order_rec_all = np.array(order_rec_all)
-    dopd_all = np.array(dopd_all)
-
-    # fit a polynomial to line number v measured difference in cavity
-    #     width, weighted by blaze
-    with warnings.catch_warnings(record=True) as w:
-        coeffs = np.polyfit(m_fp_all, dopd_all, fit_degree, w=weight_bl_all)[::-1]
-    spirouCore.WarnLog(w, funcname=__NAME__)
-    # get the values of the fitted cavity width difference
-    cfit = np.polyval(coeffs[::-1], m_fp_all)
-    # update line wavelengths using the new cavity width fit
-    newll = (dopd0 + cfit * 1000.) / m_fp_all
-    # insert fp lines into all_lines2 (at the correct positions)
-    #all_lines_2 = spiroTHORCA.spirouWAVE.insert_fp_lines(p, newll, llpos_all, all_lines_2,
-    #                              order_rec_all, xxpos_all, ampl_all)
-
-    # add to loc
-    loc['FP_LL_POS'] = llpos_all
-    loc['FP_XX_POS'] = xxpos_all
-    loc['FP_M'] = m_fp_all
-    loc['FP_DOPD_OFFSET'] = dopd_all
-    loc['FP_AMPL'] = ampl_all
-    loc['FP_LL_POS_NEW'] = newll
-    loc['ALL_LINES_2'] = all_lines_2
-    loc['FP_DOPD_OFFSET_COEFF'] = coeffs
-    loc['FP_DOPD_OFFSET_FIT'] = cfit
-    loc['FP_ORD_REC'] = order_rec_all
-    # set sources
-    sources = ['FP_LL_POS', 'FP_XX_POS', 'FP_M', 'FP_DOPD_OFFSET',
-               'FP_AMPL', 'FP_LL_POS_NEW', 'ALL_LINES_2',
-               'FP_DOPD_OFFSET_COEFF', 'FP_DOPD_OFFSET_FIT', 'FP_ORD_REC']
-    loc.set_sources(sources, __NAME__)
+    loc = spirouTHORCA.FPWaveSolutionNew(p, loc)
 
     # ------------------------------------------------------------------
     # FP solution plots
     # ------------------------------------------------------------------
     if p['DRS_PLOT']:
         # Plot the FP extracted spectrum against wavelength solution
-        sPlt.wave_plot_final_fp_order(p, loc, iteration=1)
+        sPlt.wave_plot_final_fp_order(p, loc, iteration=2)
         # Plot the measured FP cavity width offset against line number
         sPlt.wave_local_width_offset_plot(loc)
         # Plot the FP line wavelength residuals
@@ -1283,7 +1165,7 @@ plt.plot(wave_map2[plot_order], hcdata[plot_order], label='HC spectrum - order '
                                                             + str(plot_order))
 # plot found lines
 # first line separate for labelling purposes
-plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][i][2],
+plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][0][2],
            'm', label='fitted lines')
 # plot lines to the top of the figure
 plt.vlines(all_lines_1[plot_order_line][0][0], 0, np.max(hcdata[plot_order]), 'gray',
@@ -1319,7 +1201,7 @@ if ~np.isfinite(loc['X_MEAN_1']):
 if poly_smooth:
     lit_it = 2
 else:
-    lit_it = 1
+    lit_it = 2
 # for x_it in range(len(loc['X_CUT_POINTS_lit_it'])):
 # checks every other value
 for x_it in range(1, len(loc['X_CUT_POINTS_'+str(lit_it)]), 2):
@@ -1375,6 +1257,8 @@ WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 # write solution to fitsfilename header
 # copy original keys
 hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+# add version number
+hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
 # add quality control
 hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
 # add number of orders
@@ -1423,9 +1307,9 @@ columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
                  '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
 columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
                 [p['FIBER']], [final_mean], [final_var],
-                [num_lines], [err], [sig_littrow[1]],
-                [sig_littrow[3]], [sig_littrow[5]], [sig_littrow[7]],
-                [sig_littrow[9]], [sig_littrow[11]], [sig_littrow[13]]]
+                [num_lines], [err], [sig_littrow[0]],
+                [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
+                [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
 # make table
 table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
                               formats=columnformats)

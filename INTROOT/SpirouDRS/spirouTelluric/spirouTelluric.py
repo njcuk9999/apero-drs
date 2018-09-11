@@ -19,6 +19,8 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
+from SpirouDRS.spirouCore import spirouMath
+
 
 # =============================================================================
 # Define variables
@@ -38,6 +40,7 @@ ParamDict = spirouConfig.ParamDict
 SIG_FWHM = spirouCore.spirouMath.fwhm()
 # speed of light
 CONSTANT_C = constants.c.value
+
 
 # =============================================================================
 # Define functions
@@ -461,53 +464,46 @@ def calc_molecular_absorption(p, loc):
     return loc
 
 
+def check_blacklist(objname):
+    """
+    Check whether file is blacklisted
+
+    :param objname: str, the blacklisted object name (to check against list of
+                    blacklisted object names)
+
+    :return:
+    """
+    # get blacklisted files
+    blacklisted_objects = get_blacklist()
+
+    # set check to False
+    check = False
+    # loop around blacklisted objects
+    for blacklisted_object in blacklisted_objects:
+        # if objname in blacklisted_objects objname is black listed
+        if blacklisted_object.upper() == objname.upper():
+            check = True
+    # return check
+    return check
+
+
+def get_blacklist():
+    # get SpirouDRS data folder
+    package = spirouConfig.Constants.PACKAGE()
+    relfolder = spirouConfig.Constants.DATA_CONSTANT_DIR()
+    datadir = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # construct the path for the control file
+    blacklistfilename = spirouConfig.Constants.TELLU_DATABASE_BLACKLIST_FILE()
+    blacklistfile = os.path.join(datadir, blacklistfilename)
+    # load control file
+    blacklist = spirouConfig.GetTxt(blacklistfile, comments='#', delimiter=' ')
+    # return control
+    return blacklist
+
+
 # TODO: Needs better commenting
 def lin_mini(vector, sample):
-
-    vector = np.array(vector)
-    sample = np.array(sample)
-    sz_sample = sample.shape
-    sz_vector = vector.shape
-
-    if sz_vector[0] == sz_sample[0]:
-        case = 2
-    if sz_vector[0]== sz_sample[1]:
-        case = 1
-
-    # vector of N elements
-    # sample: matrix N * M each M column is adjusted in amplitude to minimize
-    # the chi2 according to the input vector
-    # output: vector of length M gives the amplitude of each column
-
-    if case == 1:
-        # set up storage
-        M = np.zeros([sz_sample[0], sz_sample[0]])
-        v = np.zeros(sz_sample[0])
-        for i in range(sz_sample[0]):
-            for j in range(i, sz_sample[0]):
-                M[i, j] = np.sum(sample[i, :] * sample[j, :])
-                M[j, i] = M[i, j]
-            v[i] = np.sum(vector * sample[i, :])
-        amps = np.matmul(np.linalg.inv(M), v)
-        recon = np.zeros(sz_sample[1])
-        for i in range(sz_sample[0]):
-            recon += amps[i] * sample[i, :]
-        return amps, recon
-
-    if case == 2:
-        # set up storage
-        M = np.zeros([sz_sample[1], sz_sample[1]])
-        v = np.zeros(sz_sample[1])
-        for i in range(sz_sample[1]):
-            for j in range(i, sz_sample[1]):
-                M[i, j] = np.sum(sample[:, i] * sample[:, j])
-                M[j, i] = M[i, j]
-            v[i] = np.sum(vector * sample[:, i])
-        amps = np.matmul(np.linalg.inv(M), v)
-        recon = np.zeros(sz_sample[0])
-        for i in range(sz_sample[1]):
-            recon += amps[i] * sample[:, i]
-        return amps, recon
+    return spirouMath.linear_minimization(vector, sample)
 
 
 # =============================================================================

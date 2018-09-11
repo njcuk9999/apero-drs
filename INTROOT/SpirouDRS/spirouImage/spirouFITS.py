@@ -286,25 +286,6 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     # return data, header, data.shape[0], data.shape[1]
     return p, image, header, comments
 
-
-# TODO: Remove - should not be in use!!!
-def write_s1d(fitsfilename, xs1d, ys1d, xstep):
-    "Create the FITS file and write data S1D."
-
-    if os.path.exists(fitsfilename):  # Si fichier existant
-        os.remove(fitsfilename)  # alors detruit
-
-    hdu = fits.PrimaryHDU(ys1d)
-
-    hdu.header['CRPIX1'] = (1., 'Reference pixel')
-    hdu.header['CRVAL1'] = (xs1d[0], 'Coordinate at reference pixel [nm]')
-    hdu.header['CDELT1'] = (xstep, 'Coordinate increment par pixel [nm]')
-    hdu.header['CTYPE1'] = ('nm', 'Units of coordinate')
-    hdu.header['BUNIT'] = ('Relative Flux', 'Units of data values')
-
-    hdu.writeto(fitsfilename, overwrite=True)
-
-
 def writeimage(filename, image, hdict=None, dtype=None):
     """
     Writes an image and its header to file
@@ -651,11 +632,13 @@ def get_wave_solution(p, image=None, hdr=None):
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
     dim2key = p['KW_WAVE_LL_DEG'][0]
-    # if we have no header use calibDB to get wave solution
-    if hdr is None:
-        wave = read_wave_file(p)
-    # check for wave params
-    elif (dim1key in hdr) and (dim2key in hdr) and (image is not None):
+    # conditions to use header instead of calibDB
+    cond1 = (dim1key in hdr) and (dim2key in hdr)
+    cond2 = image is not None
+    cond3 = not p['CALIB_DB_FORCE_WAVESOL']
+
+    # if we have header use header to get wave solution
+    if cond1 and cond2 and cond3:
         # get the wave parmaeters from the header
         wave_params = read_wave_params(p, hdr)
         # get the dimensions
@@ -914,7 +897,8 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
 # =============================================================================
 # Define header User functions
 # =============================================================================
-def keylookup(p, d=None, key=None, has_default=False, default=None):
+def keylookup(p, d=None, key=None, has_default=False, default=None,
+              required=True):
     """
     Looks for a key in dictionary "p" or "d", if has_default is True sets
     value of key to 'default' if not found else logs an error
@@ -951,9 +935,12 @@ def keylookup(p, d=None, key=None, has_default=False, default=None):
         try:
             value = d[key]
         except KeyError:
-            emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            if not required:
+                return None
+            else:
+                emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
+                emsg2 = '    function = {0}'.format(func_name)
+                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     return value
 

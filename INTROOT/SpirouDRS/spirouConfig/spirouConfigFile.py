@@ -136,12 +136,7 @@ def gettxt(filename):
     #   (like mac smart quotes)
     validate_text_file(filename)
     # read raw config file as strings
-    with warnings.catch_warnings(record=True) as w:
-        try:
-            raw = np.genfromtxt(filename, comments="#", delimiter='=',
-                                dtype=str).astype(str)
-        except Exception:
-            raw = read_lines(filename, comments='#', delimiter='=')
+    raw = get_raw_txt(filename, comments='#', delimiter='=')
     # check that we have lines in config file
     if len(raw) == 0:
         return [], []
@@ -173,6 +168,17 @@ def gettxt(filename):
             values.append(evaluate_value(value))
     # return keys and values
     return keys, values
+
+
+def get_raw_txt(filename, comments, delimiter):
+    with warnings.catch_warnings(record=True) as w:
+        try:
+            raw = np.genfromtxt(filename, comments=comments,
+                                delimiter=delimiter, dtype=str).astype(str)
+        except Exception:
+            raw = read_lines(filename, comments=comments, delimiter=delimiter)
+    # return the raw lines
+    return raw
 
 
 def validate_text_file(filename, comments='#'):

@@ -119,7 +119,7 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # LSD Analysis
     # ------------------------------------------------------------------
-    if p['IC_POLAR_LSD_ANALYSIS'] :
+    if p['IC_POLAR_LSD_ANALYSIS']:
         loc = spirouPOLAR.LSDAnalysis(p, loc)
     
     # ----------------------------------------------------------------------
@@ -134,7 +134,7 @@ def main(night_name=None, files=None):
         sPlt.polar_result_plot(loc)
         # plot total flux (Stokes I)
         sPlt.polar_stokesI_plot(loc)
-        if p['IC_POLAR_LSD_ANALYSIS'] :
+        if p['IC_POLAR_LSD_ANALYSIS']:
             # plot LSD analysis
             sPlt.polar_lsd_plot(loc)
         # end interactive session
@@ -148,18 +148,21 @@ def main(night_name=None, files=None):
     degpolfitsname = os.path.split(degpolfits)[-1]
     stokesIfits = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
     stokesIfitsname = os.path.split(stokesIfits)[-1]
-    nullpol1fits= spirouConfig.Constants.NULL_POL1_FILE(p, loc)
+    nullpol1fits = spirouConfig.Constants.NULL_POL1_FILE(p, loc)
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
     nullpol2fits = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
     nullpol2fitsname = os.path.split(nullpol2fits)[-1]
 
     # log that we are saving POL spectrum
     wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
-    wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname, nullpol2fitsname]
+    wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname,
+             nullpol2fitsname]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
     # add keys from original header of base file
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
     # add number of exposures parameter keyword to header
@@ -179,17 +182,14 @@ def main(night_name=None, files=None):
         # Add only times from fiber A
         if fiber == 'A':
             # add exposure file name
-            fileexp_keyname = 'kw_POL_FILENAM{0}'
-            hdict = spirouImage.AddKey(hdict, p[fileexp_keyname.format(expnum)],
-                                       value=hdr['FILENAME'])
+            fileexp = p['kw_POL_FILENAM{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, fileexp, value=hdr['FILENAME'])
             # add MJDATE for each exposure
-            mjdexp_keyname = 'kw_POL_MJDATE{0}'
-            hdict = spirouImage.AddKey(hdict, p[mjdexp_keyname.format(expnum)],
-                                       value=hdr['MJDATE'])
+            mjdexp = p['kw_POL_MJDATE{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, mjdexp, value=hdr['MJDATE'])
             # add MJDEND for each exposure
-            mjdendexp_keyname = 'kw_POL_MJDEND{0}'
-            hdict = spirouImage.AddKey(hdict, p[mjdendexp_keyname.format(expnum)],
-                                       value=hdr['MJDEND'])
+            mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, mjdendexp, value=hdr['MJDEND'])
     
     # save POL data to file
     spirouImage.WriteImageMulti(degpolfits, [loc['POL'], loc['POLERR']], hdict)
@@ -201,11 +201,11 @@ def main(night_name=None, files=None):
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value="I")
     # save STOKESI data to file
-    spirouImage.WriteImageMulti(stokesIfits, [loc['STOKESI'], loc['STOKESIERR']],
-                                hdict)
+    multi_image = [loc['STOKESI'], loc['STOKESIERR']]
+    spirouImage.WriteImageMulti(stokesIfits, multi_image, hdict)
 
     # ------------------------------------------------------------------
-    if p['IC_POLAR_LSD_ANALYSIS'] :
+    if p['IC_POLAR_LSD_ANALYSIS']:
         #  save LSD analysis data to file
         lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
         

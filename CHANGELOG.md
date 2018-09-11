@@ -4070,3 +4070,313 @@
 	- Fix to issue #398: The first time running obj_mk_tellu fails with an I/O problem - convolve_file was being saved to the wrong location (and hence put_file was failing to copy it to telluDB) (rev.62b3ca06)
 	- updated descriptions (from Etienne) (rev.4e8dc33e)
 	- updated date, changelog and version (rev.2ee7f3fd)
+
+
+
+================================================================================
+* Thu Aug 16 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.094
+
+================================================================================
+	- Issue #392: added per-processed version keyword (rev.5c3fdd5c)
+	- Issue #392: added version to outputs (rev.655a2c2a)
+	- Issue #392: added version to outputs (rev.4e48b229)
+	- Issue #392: added version to outputs (rev.15bef5f4)
+	- Issue #392: added version to outputs (rev.0e2e3939)
+	- Issue #392: added version to outputs (rev.6b5e6be0)
+	- Issue #392: added version to outputs (rev.6a3d7c72)
+	- Issue #392: added version to outputs (rev.5d988c97)
+	- Issue #392: added version to outputs (rev.83a8ad5e)
+	- Issue #392: added version to outputs (rev.64322b80)
+	- Issue #392: added version to outputs (rev.fd072135)
+	- Issue #392: added version to outputs (rev.d0028096)
+	- Issue #392: added version to outputs (rev.5e4c8156)
+	- Issue #392: added version to outputs (rev.758ce865)
+	- Issue #392: added version to outputs (rev.36441ecc)
+	- Issue #392: added version to outputs (rev.0f1c1687)
+	- Issue #392: added version to outputs (rev.cef09e6c)
+	- Issue #392: added version to outputs (rev.bd011a12)
+	- Entries prepared ready to fix issues #394 and #406 (rev.8dc95a91)
+	- Issue #407: fix bug where split lines not all printed to log file (only to screen) (rev.e226a31e)
+
+
+
+================================================================================
+* Fri Aug 17 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.095
+
+================================================================================
+	- Issue #401 - Added check that number of TELLU_MAP files > number of PCA components (rev.ee52b3c7)
+	- Issue #392 change "PPVERSION" to "PVERSION" - header key too long (rev.380cbf35)
+	- Issue #405 - add message when reset userinput is not "yes" (rev.241dfdbb)
+
+
+
+================================================================================
+* Sat Aug 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.096
+
+================================================================================
+	- Issue #382 - added a position to check for FLATFILE and DARKFILE (must agree with ```recipe_control.txt```) (rev.9fe2d6d4)
+
+
+
+================================================================================
+* Thu Aug 16 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.097
+
+================================================================================
+	- NaN-to-zero change moved from obj_fit_tellu to cal_CCF (rev.7e046736)
+	- Pixel shift incorporated to all wavelength solutions (rev.330b3b0b)
+
+
+
+================================================================================
+* Fri Aug 17 2018 Eder <edermartioli@gmail.com> - 0.2.098
+
+================================================================================
+	- Fixed memory issue by avoiding direct use of an nxn S^2 matrix (rev.9217deff)
+
+
+
+================================================================================
+* Sat Aug 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.099
+
+================================================================================
+	- fix to file name (allow e2ds and e2dsff by only replaceing "_A.fits" (rev.c4e3a0ce)
+	- allow LSD process (now it is fixed) (rev.67e486d6)
+	- update date, version, changelog (rev.2a05927a)
+
+
+
+================================================================================
+* Sat Aug 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.101
+
+================================================================================
+	- Update spirouMath.py (rev.f759846c)
+
+
+
+================================================================================
+* Sat Aug 18 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.102
+
+================================================================================
+	- Issue #411: reset cal_wave changes from Melissa (not working with unit_test 20180409all.run (rev.80268e99)
+	- update version (rev.2331213e)
+
+
+
+================================================================================
+* Thu Aug 23 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.103
+
+================================================================================
+	- Re-write of median_one_over_f_noise function (Issue #420) (rev.d51982c9)
+	- New alias for function re-write (Issue #420) (rev.a93af1fc)
+	- Using new function (re-write) from issue #420 (rev.0233a30f)
+
+
+
+================================================================================
+* Thu Aug 23 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.104
+
+================================================================================
+	- add check_blacklist and get_blacklist functions (Issue #419) (rev.6a96b33e)
+	- Add alias to check black list function (Issue #419) (rev.b8177d68)
+	- Add alias to raw text file function (Issue #419) (rev.d0a9b1d6)
+	- Add blacklist filename (Issue #419) (rev.2ffb4fa0)
+	- Add code to read raw text file (Issue #419) (rev.38709cc4)
+	- Add code to check for blacklisted file (Issue #419) (rev.be00d692)
+	- Add blacklist file (Issue #419) (rev.2b243a4d)
+	- Issue #389 - NaN values vauses error to be raised (Needs to be fixed properly) (rev.d7541d1e)
+
+
+
+================================================================================
+* Fri Aug 24 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.105
+
+================================================================================
+	- Fix for Issue #406 - cal_CCF does not accept StokesI or e2dsff - fixed (rev.cd4b2c7c)
+	- Fix for issue #406 - CCF recipe does not accept Stokes I spectra --> replace '_A.fits' with '_AB_StokesI.fits' (rev.b07359df)
+	- Fix for Issue #406 -CCF recipe does not accept stokes I spectra --> replace '_A.fits' with '_AB_StokesI.fits' (rev.7c2a9116)
+	- Fix for Issue #423 - cal_reset fails if folder does not exist (rev.1c57c390)
+	- changed blacklist functino to look at objnames (Issue #419) (rev.78b6b335)
+	- Changed blacklist file to object names (Issue #419) (rev.8a4c7982)
+	- Moved blacklist check to after we have the OBJNAME (Issue #419) (rev.6d341eca)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.106
+
+================================================================================
+	- Set pixel_shift_inter and pixel_shift_slope back to zero (Issue #411) (rev.b4bb88c3)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.107
+
+================================================================================
+	- updated date, version and changelog (rev.2502f9c5)
+
+
+
+================================================================================
+* Tue Aug 21 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.108
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: - check to remove double-fitted or spurious FP peaks - incorporation of FP lines (now working with no jumps) (rev.7bd5cce2)
+	- spirouMATH.py, spirouTHORCA.py: redo pixel shift implementation (rev.9f0b3e3e)
+	- Removed test prints (rev.a3bb973f)
+
+
+
+================================================================================
+* Wed Aug 22 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.109
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py: moved FP solution to spirouWAVE. (rev.279d8c06)
+
+
+
+================================================================================
+* Thu Aug 23 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.110
+
+================================================================================
+	- Update cal_HC_E2DS_spirou.py (rev.90c9ed8c)
+	- Update spirouMath.py (rev.38026113)
+
+
+
+================================================================================
+* Thu Aug 23 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.111
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py update (rev.0a1d4be0)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.112
+
+================================================================================
+	- updated date, version and changelog (rev.18bafb75)
+
+
+
+================================================================================
+* Tue Aug 28 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.113
+
+================================================================================
+	- First commit - Etienne's cal_HC - added functions for cal_hc_ea (rev.2e44e6b9)
+	- First commit - Etienne's cal_HC - added call to spirouMath (rev.732d1b8b)
+	- First commit - Etienne's cal_HC - moved lin_mini to spirouMath (rev.b50d180a)
+	- First commit - Etienne's cal_HC - ReadTable/WriteTable/MakeTable correction when no formats (rev.0598daa4)
+	- First commit - Etienne's cal_HC - wave_ea_plots (rev.2370e0bc)
+	- First commit - Etienne's cal_HC - gauss functions and lin_mini (rev.2f122173)
+	- First commit - Etienne's cal_HC - filename definition (rev.db5d5cf4)
+	- First commit - Etienne's cal_HC (rev.52ee42a6)
+	- Set pixel_shift_inter and pixel_shift_slope back to zero (Issue #411) (rev.3b795323)
+
+
+
+================================================================================
+* Wed Aug 29 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.114
+
+================================================================================
+	- added fixes to triplet fitting function (rev.9e737919)
+	- added alias for the get_night_dirs function (GetNightDirs) (rev.722fa23b)
+	- Fixed number of night_name dirs displayed on error (rev.b41baaba)
+	- added night_name display limit (for when NIGHT_NAME is not an argument) (rev.b178a36b)
+	- fix to bad copy and paste in spirouPlot (rev.d799bbb6)
+	- Improvements to having no FOLDER name - now displays all available folders (rev.429799e8)
+	- Improvements to off_listing - having no night_name argument now displays all available night_names (rev.59d78610)
+	- Improvements to off_listing - having no night_name argument now displays all available night_names (rev.43bb3fc5)
+	- Added off_listing_REDUC_spirou to allow listing of reduced folders (rev.60e30805)
+	- Issue #428 - force calibDB wave solution - modify get_wave_keys (rev.605de20b)
+	- Issue #428 - force calibDB wave solution - modify get_wave_solution (rev.c476923a)
+	- Issue #428 - force calibDB wave solution - add constant switch (rev.6096c40d)
+	- cal_HC_E2DS_EA - Set up for local running (rev.73e1f5cc)
+
+
+
+================================================================================
+* Wed Aug 29 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.115
+
+================================================================================
+	- TC3 initial wavelength solution (rev.3baddd60)
+
+
+
+================================================================================
+* Thu Aug 30 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.116
+
+================================================================================
+	- add off_listing_REDUC_spirou to recipes available for testing (rev.ebf2bcaa)
+	- write a test for 18BQ01-Aug05 test files (20180805_test1.run) - Issue #400 (rev.e94c7f02)
+	- fix micro seconds = 1e-6 not 1e-3 (rev.ec63483e)
+	- fix bug with PATH in bashrc file (rev.7e8ad072)
+	- add the resolution map (work-in-progress) (rev.34db4ee9)
+	- fix bugs with cal_HC_E2DS_EA (rev.4e62fdf9)
+	- fix bug with timestamp in logging (rev.bba7a275)
+	- add writing of file for off_listing (rev.4e3b9566)
+
+
+
+================================================================================
+* Fri Aug 31 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.117
+
+================================================================================
+	- Added new wavelength solution and deleted files in data_example (not needed - run cal_reset or cal_validate) (rev.005f5fa5)
+
+
+
+================================================================================
+* Mon Aug 27 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.118
+
+================================================================================
+	- Issue #399 - copied in extra files (FILE_B and read me files) required by iers (but not currently linked to) (rev.8e7646fc)
+	- Issue #399 - modification to iers to make offline (hopefully) given testing offline (rev.2be0b826)
+	- Issue #399 - fix astropy_iers_dir to be the actual directory (rev.c9234bf6)
+
+
+
+================================================================================
+* Mon Aug 27 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.119
+
+================================================================================
+	- Added location to save astropy iers file (Issue #389) (rev.ba9cae58)
+	- Possible fix for Issue #389: from @cusher - ```import astropy.utils.iers``` and set ```iers_table``` (rev.4bcc0a0d)
+
+
+
+================================================================================
+* Fri Aug 31 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.120
+
+================================================================================
+	- update date and version (rev.02ceb0f9)
+	- script to manually add file to calibDB (from file in reduced folder) (rev.14dee133)
+	- update change log/version and date (rev.4b37a9e0)
+	- update master calibDB for reset (rev.473f0fa7)
+	- reset cal_CCF set NaNs to zeros (Issue #389) (rev.ced3a142)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.121
+
+================================================================================
+	- Add placeholder marker for the new cal_HC_E2DS_EA_spirou work (rev.07ead653)
+	- modify generate_resolution_map --> fixes for integrating etiennes hcpeak functions (rev.f6a26ecc)
+	- Enter todo to rename variable (rev.5134a486)
+	- add plot for cal_HC_E2DS_EA_spirou (wave_ea_plot_line_profiles) and worker function (remove_first_last_ticks) (rev.7f67abf9)
+	- Modify the gauss_fit_s function (cal_HC_EA_E2DS usuage) (rev.139910d5)
+	- Separate input and output filename pseudo constant functions, added EA versions of cal_HC output filename definitions (rev.472a6e8e)
+	- update leapsec log (rev.e8b051da)
+	- Update to cal_HC_E2DS_EA_spirou - finish work on integrating Etienne's work (rev.fb6e1c6c)
+	- Fix for S1D spectra - there may be occasions when we cannot convert to S1D - print a warning if this is the case (rev.400d6d0d)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.122
+
+================================================================================
+	- Move cal_HC_E2DS_EA constants to here (rev.875829dc)
+	- Prep cal_HC_E2DS_EA for recipe run (add main function, move constants etc) (rev.0a8b9970)

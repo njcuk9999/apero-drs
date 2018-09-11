@@ -101,6 +101,10 @@ cal_CCF_E2DS_spirou, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, CCF, 1
 cal_CCF_E2DS_spirou, 1, e2ds_A, None, None, None, A, None, None, REDUC, CCF, 11, 1
 cal_CCF_E2DS_spirou, 1, e2ds_B, None, None, None, B, None, None, REDUC, CCF, 11, 1
 cal_CCF_E2DS_spirou, 1, e2ds_C, None, None, None, C, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, e2dsff_AB, None, None, None, AB, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, e2dsff_A, None, None, None, A, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, e2dsff_B, None, None, None, B, None, None, REDUC, CCF, 11, 1
+cal_CCF_E2DS_spirou, 1, e2dsff_C, None, None, None, C, None, None, REDUC, CCF, 11, 1
 obj_fit_tellu, 1, e2ds_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, e2ds_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, e2ds_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
@@ -139,3 +143,10 @@ None, 1, c, COMPARISON, pos_pk, pos_hc1, C, DARK_HCONE, dark_hcone, RAW, UNKNOWN
 None, 1, c, COMPARISON, pos_hc2, pos_hc2, None, HCTWO_HCTWO, hctwo_hctwo, RAW, UNKNOWN, -1
 None, 1, c, COMPARISON, pos_hc2, pos_pk, AB, HCTWO_DARK, hctwo_dark, RAW, UNKNOWN, -1
 None, 1, c, COMPARISON, pos_pk, pos_hc2, C, DARK_HCTWO, dark_hctwo, RAW, UNKNOWN, -1
+
+
+# cal_CCF_E2DS_spirou, 1, e2ds_StokesI, None, None, None, AB, None, REDUC, CCF, 11, 1
+# None, 1, c, COMPARISON, pos_hc1, pos_fp, C, HCONE_FP, hcone_fp, RAW, UNKNOWN, -1
+# None, 1, c, COMPARISON, pos_hc2, pos_fp, C, HCTWO_FP, hctwo_fp, RAW, UNKNOWN, -1
+# None, 1, c, COMPARISON, pos_fp, pos_hc1, AB, FP_HCONE, fp_hcone, RAW, UNKNOWN, -1
+# None, 1, c, COMPARISON, pos_fp, pos_hc2, AB, FP_HCTWO, fp_hctwo, RAW, UNKNOWN, -1

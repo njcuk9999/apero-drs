@@ -27,6 +27,8 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Define functions
 # =============================================================================
 
+CheckBlackList = spirouTelluric.check_blacklist
+
 ConstructConvKernel1 = spirouTelluric.construct_convolution_kernal1
 
 ConstructConvKernel2 = spirouTelluric.construct_convolution_kernal2

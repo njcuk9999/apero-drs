@@ -26,7 +26,8 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['CalcInstrumentDrift', 'CalcLittrowSolution',
            'DetectBadLines', 'ExtrapolateLittrowSolution',
            'FirstGuessSolution', 'Fit1DSolution', 'FPWaveSolution',
-           'GetE2DSll', 'GetLampParams', 'JoinOrders', 'SecondGuessSolution']
+           'GetE2DSll', 'GetLampParams', 'JoinOrders', 'SecondGuessSolution',
+           'FPWaveSolutionNew', 'FindFPLinesNew']
 
 
 # =============================================================================
@@ -54,6 +55,9 @@ JoinOrders = spirouTHORCA.join_orders
 
 SecondGuessSolution = spirouTHORCA.second_guess_at_wave_solution
 
+FPWaveSolutionNew = spirouWAVE.fp_wavelength_sol_new
+
+FindFPLinesNew = spirouWAVE.find_fp_lines_new
 
 # =============================================================================
 # End of code

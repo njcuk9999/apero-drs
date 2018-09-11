@@ -237,7 +237,8 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
 # =============================================================================
 # Define ID functions (main recipes)
 # =============================================================================
-def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, **kwargs):
+def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
+                  **kwargs):
     """
     Checks the "filename" against the "recipe" (using recipe control)
 
@@ -257,6 +258,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, **kwargs):
     :param recipe: string, the recipe name to check
     :param hdr: dictionary or None, if defined must be a HEADER dictionary if
                 none loaded from filename
+    :param pos: int or None, if not None defines the position of the file
     :param kwargs: keyword arguments. Current allowed keys are:
                     - return_path: bool, if True returns the path as well as p
 
@@ -341,7 +343,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, **kwargs):
     # check recipe input type (raw or reduced)
     kinds = np.unique(control['kind'])
     # ---------------------------------------------------------------------
-    # Need to check preprocessing
+    # Need to check pre-processing
     # ---------------------------------------------------------------------
     # if we only have raw file possibilities check for pre-processing
     if len(kinds) == 1 and kinds[0] == 'RAW':
@@ -363,6 +365,18 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, **kwargs):
     # step 2: if not filename check header key DPRTYPE
     if not cond:
         control = check_id_header(p, control, recipe, filename, hdr)
+    # ---------------------------------------------------------------------
+    # check position if defined
+    if pos is not None:
+        basefilename = os.path.basename(filename)
+        if control['number'] != (pos + 1):
+            emsg1 = 'Recipe argument valid but in wrong position'
+            emsg2 = '\tArgument "{0}" should not be in ARG{1}'
+            emsg3 = '\t{0} [NIGHT NAME] [ARG1] [ARG2] [ARG3] [...]'
+            eargs = [basefilename, pos + 1]
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs),
+                                         emsg3.format(recipe)])
+
     # ---------------------------------------------------------------------
     # now we should have 1 row in control --> get properties for this file
     p = get_properties_from_control(p, control)
