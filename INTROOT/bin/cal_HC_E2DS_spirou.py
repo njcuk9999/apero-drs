@@ -102,19 +102,6 @@ def main(night_name=None, files=None):
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
-    # get relevant (cass/ref) fiber position (for lamp identification)
-    gkwargs = dict(return_value=True, dtype=str)
-    if p['FIB_TYP']==['C']:
-        p['FIB_POS'] = spirouImage.ReadParam(p, loc['HCHDR'], 'kw_CREF',
-                                             **gkwargs)
-    elif p['FIB_TYP'] in (['AB'], ['A'], ['B']):
-        p['FIB_POS'] = spirouImage.ReadParam(p, loc['HCHDR'], 'kw_CCAS',
-                                             **gkwargs)
-    else:
-        emsg1 = ('Fiber position cannot be identified for fiber={0}'
-                 .format(p['FIB_TYP']))
-        emsg2 = '    function={0}'.format(__NAME__)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get lamp parameters
     p = spirouTHORCA.GetLampParams(p, loc['HCHDR'])
 
@@ -257,7 +244,13 @@ def part2(p, loc):
             'lines: (second pass)')
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # fit lines
-    start, end = p['IC_HC_N_ORD_START_2'], p['IC_HC_N_ORD_FINAL_2']
+    start = min(p['IC_HC_N_ORD_START_2'], p['IC_FP_N_ORD_START'])
+    end = max(p['IC_HC_N_ORD_FINAL_2'], p['IC_FP_N_ORD_FINAL'])
+    # redefine echelle orders
+    orderrange = np.arange(start, end)
+    loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
+    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+    # select the orders to fit
     ll = loc['LITTROW_EXTRAP_SOL_1'][start: end]
     loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
 
@@ -350,6 +343,7 @@ def part2(p, loc):
     # get wave filename
     wavefits = spirouConfig.Constants.WAVE_FILE(p)
     wavefitsname = os.path.split(wavefits)[-1]
+    WLOG('', p['LOG_OPT'], wavefits)
 
     # log progress
     wargs = [p['FIBER'], wavefitsname]
@@ -358,6 +352,8 @@ def part2(p, loc):
     # write solution to fitsfilename header
     # copy original keys
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # set the version
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders

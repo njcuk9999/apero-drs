@@ -24,10 +24,10 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Get version and author
-__version__ =  '0.2.093'
+__version__ =  '0.2.122'
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 __release__ = 'alpha pre-release'
-__date__ =  '2018-08-15'
+__date__ =  '2018-09-04'
 
 
 # =============================================================================
@@ -151,6 +151,17 @@ def RECIPE_CONTROL_FILE():
     return recipe_control_file, recipe_control_format
 
 
+# noinspection PyPep8Naming
+def TELLU_DATABASE_BLACKLIST_FILE():
+    """
+    Defines the telluric database blacklist filename
+
+    :return blacklistfile: string, the telluric blacklist file
+    """
+    blacklistfile = 'tellu_blacklist.txt'
+    return blacklistfile
+
+
 # =============================================================================
 # Define Directories
 # =============================================================================
@@ -229,6 +240,14 @@ def BARYCORRPY_DIR():
 
     barycorrpy_dir = './data/barycorrpy'
     return barycorrpy_dir
+
+
+# noinspectrion PyPep8Naming
+def ASTROPY_IERS_DIR():
+    astropy_iers_dir = './data/barycorrpy/'
+    # File must be downloaded from:
+    #     http://maia.usno.navy.mil/ser7/finals2000A.all
+    return astropy_iers_dir
 
 
 # noinspection PyPep8Naming
@@ -502,7 +521,7 @@ def REDUCED_DIR(p):
 
 
 # =============================================================================
-# Define Filename functions
+# Define Input Filename functions
 # =============================================================================
 # noinspection PyPep8Naming
 def ARG_FILE_NAMES(p):
@@ -573,6 +592,9 @@ def FITSFILENAME(p):
     return fitsfilename
 
 
+# =============================================================================
+# Define Output Filename functions
+# =============================================================================
 # noinspection PyPep8Naming
 def DARK_FILE(p):
     """
@@ -588,10 +610,14 @@ def DARK_FILE(p):
 
     :return darkfits: string, the dark file location and filename
     """
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     darkfitsname = calibprefix + p['ARG_FILE_NAMES'][0]
     darkfits = os.path.join(reducedfolder, darkfitsname)
+    # define tag
+    tag = 'DARK'
+    # return filename and tag
     return darkfits
 
 
@@ -1214,6 +1240,25 @@ def WAVE_FILE(p):
 
 
 # noinspection PyPep8Naming
+def WAVE_FILE_EA(p):
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    return wavefile
+
+
+# noinspection PyPep8Naming
 def WAVE_TBL_FILE(p):
     reducedfolder = p['REDUCED_DIR']
     wavetblfb = 'cal_HC_result.tbl'
@@ -1303,6 +1348,24 @@ def WAVE_E2DS_COPY(p):
     e2dscopy = os.path.join(path, filename)
     # return absolute path
     return e2dscopy
+
+
+# noinspection PyPep8Naming
+def HC_INIT_LINELIST(p):
+    # get the directory
+    reduced_dir = p['ARG_FILE_DIR']
+    # get the first input filename
+    old_filename = p['ARG_FILE_NAMES'][0]
+    # get the new ext
+    new_ext = '_linelist.dat'
+    # get the old ext
+    old_ext = '.fits'
+    # construct new filename
+    new_filename = old_filename.replace(old_ext, new_ext)
+    # construct absolute path
+    abspath = os.path.join(reduced_dir, new_filename)
+    # return absolute path
+    return abspath
 
 
 # noinspection PyPep8Naming
@@ -1405,7 +1468,7 @@ def STOKESI_POL_FILE(p, loc):
     # get base filename
     basefilename = loc['BASENAME']
     # get new extention
-    new_ext = '_StokesI.fits'
+    new_ext = '_AB_StokesI.fits'
     # get new filename
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
@@ -1454,7 +1517,7 @@ def LSD_POL_FILE(p, loc):
     # get new extention
     new_ext = '_lsd_pol.fits'
     # get new filename
-    filename = basefilename.replace('_e2ds_A.fits', new_ext)
+    filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     lsd_pol_filename = os.path.join(reducedfolder, filename)
     # return absolute path

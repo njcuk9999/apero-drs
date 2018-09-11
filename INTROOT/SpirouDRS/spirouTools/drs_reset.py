@@ -128,6 +128,10 @@ def reset_calibdb(p, log=True):
     relfolder = spirouConfig.Constants.RESET_CALIBDB_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # check that absfolder exists
+    if not os.path.exists(absfolder):
+        emsg = 'Error {0} directory does not exist'
+        WLOG('error', DPROG, emsg.format(absfolder))
     # -------------------------------------------------------------------------
     # define needed files:
     files = os.listdir(absfolder)
@@ -163,6 +167,7 @@ def reset_telludb(p, log=True):
 
     # remove files currently in telluDB
     tellu_dir = p['DRS_TELLU_DB']
+
     # loop around files and folders in tellu_dir
     remove_all(tellu_dir, log)
 
@@ -173,6 +178,10 @@ def reset_telludb(p, log=True):
     relfolder = spirouConfig.Constants.RESET_TELLUDB_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
+    # check that absfolder exists
+    if not os.path.exists(absfolder):
+        emsg = 'Error {0} directory does not exist'
+        WLOG('error', DPROG, emsg.format(absfolder))
     # -------------------------------------------------------------------------
     # define needed files:
     files = os.listdir(absfolder)
@@ -209,6 +218,29 @@ def reset_log(p):
 
 
 def remove_all(path, log=True):
+
+    # Check that directory exists
+    if not os.path.exists(path):
+        # get the warning and error colours
+        e1, e2 = printc('error')
+        eargs = [e1, path, e2]
+        # display error and ask to create directory
+        print('{0}\nError {0} directory does not exist. Should we create it?{2}'
+              ''.format(*eargs))
+        # user input
+        if sys.version_info.major < 3:
+            # noinspection PyUnresolvedReferences
+            uinput = raw_input('{0}\tCreate directory {1}?\t{2}'.format(*eargs))
+        else:
+            uinput = input('{0}\tCreate directory {1}?\t{2}'.format(*eargs))
+        # check user input
+        if 'Y' in uinput.upper():
+            # make directories
+            os.makedirs(path)
+        else:
+            emsg = 'Error {0} directory does not exist'
+            WLOG('error', DPROG, emsg.format(path))
+
     # loop around files and folders in calib_dir
     files = glob.glob(path + '/*')
     # loop around all files (adding all files from sub directories
@@ -245,6 +277,9 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__, quiet=log)
+    # set log_opt
+    p['LOG_OPT'] = __NAME__.split('.py')[0]
+    p.set_source('LOG_OPT', __NAME__ + '.main()')
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
@@ -253,18 +288,26 @@ def main(return_locals=False, warn=True, log=True, called=False):
         reset1 = reset_confirmation('Reduced', called=called)
     if reset1:
         reset_reduced_folders(p, log)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting reduced folders.')
     if warn:
         reset2 = reset_confirmation('CalibDB', called=called)
     if reset2:
         reset_calibdb(p, log)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting CalibDB files.')
     if warn:
         reset3 = reset_confirmation('TelluDB', called=called)
     if reset3:
         reset_telludb(p, log)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting TelluDB files.')
     if warn:
         reset4 = reset_confirmation('Log', called=called)
     if reset4:
         reset_log(p)
+    else:
+        WLOG('', p['LOG_OPT'], 'Not resetting Log files.')
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------

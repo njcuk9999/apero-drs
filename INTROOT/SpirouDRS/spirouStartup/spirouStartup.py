@@ -181,6 +181,7 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
 
     :return p: dictionary, parameter dictionary
     """
+    func_name = __NAME__ + '.load_arguments()'
     # -------------------------------------------------------------------------
     # deal with arg_night_name defined in call
     if night_name is not None:
@@ -381,10 +382,19 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
     if not no_night_name:
         # check ARG_NIGHT_NAME is not None
         if p['ARG_NIGHT_NAME'] == '':
-            wmsg1 = 'Argument Error: No FOLDER defined at run time argument'
-            wmsg2 = '    format must be:'
-            emsg = '    >>> {0} [FOLDER] [Other Arguments]'
-            WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(recipe)])
+            emsgs = ['Argument Error: No FOLDER defined at run time argument']
+            emsgs.append('    format must be:')
+            emsgs.append('    >>> {0} [FOLDER] [Other Arguments]'
+                         ''.format(recipe))
+            emsgs.append(' ')
+            # get available night_names
+            nightnames = get_night_dirs(p)
+            emsgs.append('Some available [FOLDER]s are as follows:')
+            # loop around night names and add to message
+            for nightname in nightnames:
+                emsgs.append('\t {0}'.format(nightname))
+            # log error message
+            WLOG('error', log_opt, emsgs)
     if not no_files:
         fits_fn = p['FITSFILENAME']
         # -------------------------------------------------------------------------
@@ -423,7 +433,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
     return p
 
 
-def single_file_setup(p, filename, log=True, skipcheck=False):
+def single_file_setup(p, filename, log=True, skipcheck=False, pos=None):
     """
     Check "filename" is valid for recipe p["RECIPE"] and get the correct path,
     logs the output if log is True, and skips the check if skipcheck is True
@@ -451,7 +461,7 @@ def single_file_setup(p, filename, log=True, skipcheck=False):
     recipe = p['RECIPE']
     # check file based on recipe name
     p, path = spirouImage.CheckFile(p, filename, recipe, skipcheck,
-                                    return_path=True)
+                                    return_path=True, pos=pos)
     # get location of file
     location = get_file(p, path, filename)
     # log processing image type
@@ -977,10 +987,10 @@ def set_arg_file_dir(p, mfd=None):
         # if arg path does exist it is the [FOLDER] or NIGHT_NAME which
         #   is wrong
         if os.path.exists(arg_fp):
-            emsg1 = ('Fatal error cannot find '
-                     'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']))
-            emsg2 = '    in directory {0} ({1})'.format(arg_fp, location)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            emsgs = ['Fatal error cannot find '
+                     'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME'])]
+            emsgs.append('    in directory {0} ({1})'.format(arg_fp, location))
+            WLOG('error', DPROG, emsgs)
         # else it is the directory which is wrong (cal_validate was not run)
         else:
             emsg1 = ('Fatal error cannot find directory NIGHT_NAME="{0}"'
@@ -1489,6 +1499,27 @@ def get_fiber_type1(p, filename, fibertypes=None, suffix='e2ds_{FIBER}.fits'):
         WLOG('', p['LOG_OPT'], wmsg.format(correct_fiber))
     # finally return correct_fiber
     return correct_fiber
+
+
+
+def get_night_dirs(p):
+    night_dirs = []
+    limit = p['DRS_NIGHT_NAME_DISPLAY_LIMIT']
+    for root, dirs, files in os.walk(p['ARG_FILE_DIR']):
+        # skip dirs that are empty (or full of directories)
+        if len(files) == 0:
+            continue
+        # do not display all
+        if len(night_dirs) > limit:
+            night_dirs.append('...')
+            return night_dirs
+        # find the relative root of directories compared to ARG_FILE_DIR
+        common = os.path.commonpath([p['ARG_FILE_DIR'], root]) + '/'
+        relroot = root.split(common)[-1]
+        # append relative roots
+        night_dirs.append(relroot)
+    # return night_dirs
+    return night_dirs
 
 
 def find_interactive():

@@ -23,6 +23,7 @@ from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
+from SpirouDRS.spirouCore import spirouMath
 from . import spirouFITS
 from . import spirouTable
 
@@ -687,6 +688,51 @@ def median_one_over_f_noise(p, image):
     # subtract the 1/f noise from the image
     for pixel in range(dim2):
         image[:, pixel] -= noise1f
+    # return the corrected image
+    return image
+
+
+def median_one_over_f_noise2(p, image):
+    """
+    Use the dark amplifiers to create a map of the 1/f (residual) noise and
+    apply it to the image
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                TOTAL_AMP_NUM: int, the total number of amplifiers on the
+                               detector
+                NUMBER_DARK_AMP: int, the number of unilluminated (dark)
+                                 amplifiers on the detector
+    :param image: numpy array (2D), the image
+
+    :return image: numpy array (2D), the corrected image
+    """
+    # get the image size
+    dim1, dim2 = image.shape
+    # get constants from p
+    total_amps = p['TOTAL_AMP_NUM']
+    n_dark_amp = p['NUMBER_DARK_AMP']
+    # width of an amplifier
+    amp_width = dim1 // total_amps
+    # set up a residual low frequency array
+    residual_low_f = np.zeros(dim1)
+    # loop around the dark amplifiers
+    for amp in range(n_dark_amp):
+        # define the start and end points of this amplifier
+        start = amp * amp_width
+        end = amp * amp_width + amp_width
+        # median this amplifier across the x axis
+        residual_low_f_tmp = np.nanmedian(image[:, start:end], axis=1)
+        # if this is the first amplifier just set it equal to the median
+        if amp == 0:
+            residual_low_f = np.array(residual_low_f_tmp)
+        # else only set values if they are less than the previous amplifier(s)
+        else:
+            smaller = residual_low_f_tmp < residual_low_f
+            residual_low_f[smaller] = residual_low_f_tmp[smaller]
+    # subtract the 1/f noise from the image
+    for pixel in range(dim2):
+        image[:, pixel] -= residual_low_f
     # return the corrected image
     return image
 
@@ -1475,7 +1521,8 @@ def get_sigdet(p, hdr, name=None, return_value=False):
     return get_param(p, hdr, 'kw_rdnoise', name, return_value)
 
 
-def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
+def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
+              required=True):
     """
     Get parameter from header "hdr" using "keyword" (keyword store constant)
 
@@ -1508,7 +1555,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
     if name is None:
         name = key
     # get raw value
-    rawvalue = spirouFITS.keylookup(p, hdr, key)
+    rawvalue = spirouFITS.keylookup(p, hdr, key, required=required)
     # get type casted value
     try:
         if dtype is None:
@@ -1522,11 +1569,14 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None):
             WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
-        emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
-                 '').format(keyword, rawvalue, dtype)
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-        value = None
+        if not required:
+            value = None
+        else:
+            emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
+                     '').format(keyword, rawvalue, dtype)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            value = None
 
     # deal with return value
     if return_value:
@@ -1593,16 +1643,20 @@ def get_wave_keys(p, loc, hdr):
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
         loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
-    # TODO: Remove section later
+    # else we have got the wave info from the calibDB
     else:
         # log warning
-        wmsg = 'Warning key="{0}" not in HEADER file'
+        wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
         WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
-        # set wave file to fitsfilename
-        loc['WAVEFILE'] = p['FITSFILENAME']
-        loc['WAVETIME1'] = 'Unknown'
-        loc['WAVETIME2'] = -9999
-
+        # get parameters from the calibDB
+        key = 'WAVE_' + p['FIBER']
+        calib_time_human = spirouDB.GetAcqTime(p, hdr)
+        fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
+        # set the parameters in wave
+        loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
+        loc['WAVETIME1'] = calib_time_human
+        loc['WAVETIME2'] = calib_time_unix
     # set sources
     loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
     # return loc
