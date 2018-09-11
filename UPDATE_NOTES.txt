@@ -1,5 +1,14 @@
 Update Notes - Version 0.3.001
 
+Not done/not finished:
+
+- cal_CCF working with NaNs (telluric / polarimetry files) [Francois?]
+- cal_WAVE_E2DS_EA_spirou and cal_HC_E2DS_EA_spirou - still finalising changes [Neil/Melissa/Etienne]
+- differences between DRIFT and DRIFTPEAK [Francois?]
+- test for corrupt files [Neil]
+
+
+Finished Changes:
 
 1) Moved where pre-processed files are saved (now saved in the TMP folder
    instead of RAW) - Defined in config.py by "DRS_DATA_WORKING"
