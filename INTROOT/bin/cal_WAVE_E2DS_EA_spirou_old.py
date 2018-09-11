@@ -13,7 +13,6 @@ from scipy.optimize import curve_fit
 
 import numpy as np
 import os
-import warnings
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -41,6 +40,7 @@ plt = sPlt.plt
 plt.ion()
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
+
 
 # =============================================================================
 # Auxiliary functions - to be moved elsewhere later
@@ -211,13 +211,16 @@ def gaussfit(xpix, ypix, nn):
         a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess]
     if nn == 4:
         # only amp, cen, ew, dc offset
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess, np.min(ypix)]
+        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess,
+              np.min(ypix)]
     if nn == 5:
         # only amp, cen, ew, dc offset, slope
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess, np.min(ypix), 0]
+        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess,
+              np.min(ypix), 0]
     if nn == 6:
         # only amp, cen, ew, dc offset, slope, curvature
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess, np.min(ypix), 0, 0]
+        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess,
+              np.min(ypix), 0, 0]
 
     residu_prev = np.array(ypix)
 
@@ -240,29 +243,29 @@ def gaussfit(xpix, ypix, nn):
 
     return a0, gfit
 
+
 # =============================================================================
 # End auxiliary functions
 # =============================================================================
 
 def main(night_name=None, fpfile=None, hcfiles=None):
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
 
     # test files TC2
-    #night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
-    #fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
-    #hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
+    # night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
+    # fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
+    # hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
 
     # test files TC3
-    #night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
-    #fpfile = '2294108a_pp_e2dsff_AB.fits'
-    #hcfiles = ['2294115c_pp_e2dsff_AB.fits']
+    # night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
+    # fpfile = '2294108a_pp_e2dsff_AB.fits'
+    # hcfiles = ['2294115c_pp_e2dsff_AB.fits']
 
-    #night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
-    #fpfile = '2294223a_pp_e2dsff_AB.fits'
-    #hcfiles = ['2294230c_pp_e2dsff_AB.fits']
+    # night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
+    # fpfile = '2294223a_pp_e2dsff_AB.fits'
+    # hcfiles = ['2294230c_pp_e2dsff_AB.fits']
 
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
@@ -308,14 +311,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
 
-
     # =============================================================================
     # Defining a Gaussian with a DC level and slope underneath
     # =============================================================================
     def gauss_function(x, a, x0, sig, zp, slope):
         sig = np.abs(sig)
-        return a * np.exp(-(x - x0) ** 2 / (2 * sig ** 2)) + zp + (x - np.mean(x)) * slope
-
+        return a * np.exp(-(x - x0) ** 2 / (2 * sig ** 2)) + zp + (
+                    x - np.mean(x)) * slope
 
     # =============================================================================
     # input parameters
@@ -371,16 +373,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # NOT the pixel values that would need to be interpolated
 
     # getting header info with wavelength polynomials
-    wdata = spirouImage.ReadWaveFile(p, hchdr,return_header=True)
+    wdata = spirouImage.ReadWaveFile(p, hchdr, return_header=True)
     wave, wave_hdr = wdata
     loc['WAVE_INIT'] = wave
     loc['WAVEHDR'] = wave_hdr
-    loc.set_source('WAVE_INIT', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc.set_source('WAVE_INIT',
+                   __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # get wave params from wave header
     poly_wave_sol = spirouImage.ReadWaveParams(p, wave_hdr)
     loc['WAVEPARAMS'] = poly_wave_sol
-    loc.set_source('WAVEPARAMS', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc.set_source('WAVEPARAMS',
+                   __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # control plotting
     doplot_per_order = False
@@ -398,7 +402,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         WLOG('warning', p['LOG_OPT'], wmsg.format())
 
     wave_map = np.zeros([nbo, nbpix])
-    xpix = np.arange(nbpix) + pixel_shift_inter + pixel_shift_slope*np.arange(nbpix)
+    xpix = np.arange(nbpix) + pixel_shift_inter + pixel_shift_slope * np.arange(
+        nbpix)
     for iord in range(nbo):
         wave_map[iord, :] = np.polyval((poly_wave_sol[iord, :])[::-1], xpix)
 
@@ -500,7 +505,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 ew_min = 0.7
                 ew_max = 1.1
                 wave0 = np.polyval((poly_wave_sol[iord, :])[::-1],
-                                   xgau0+pixel_shift_inter+pixel_shift_slope*xgau0)
+                                   xgau0 + pixel_shift_inter + pixel_shift_slope * xgau0)
 
                 keep_peak &= gauss_rms_dev0 > gauss_rms_dev_min
                 keep_peak &= gauss_rms_dev0 < gauss_rms_dev_max
@@ -527,7 +532,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wargs = [len(wave_hdr_sol)]
     wmsg = '{0} gaussian peaks found in HC spectrum'
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
-
 
     # reading the UNe catalog
     wave_UNe, amp_UNe = spirouImage.ReadLineList(p)
@@ -582,11 +586,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             meddv[i] = np.nanmedian(dv[g])
             # print bin and total number of lines in 100-nm bin
             if ite == 0:
-                wargs = [xbin, xbin+100, np.sum(g)]
+                wargs = [xbin, xbin + 100, np.sum(g)]
                 wmsg = 'In wavelength bin {0}-{1}, {2} lines matched to catalogue'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             elif ite == 1:
-                wargs = [xbin, xbin+100, np.sum(g)]
+                wargs = [xbin, xbin + 100, np.sum(g)]
                 wmsg = 'In wavelength bin {0}-{1}, {2} lines with dv<5 kept'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
@@ -622,12 +626,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # for each order, we fit a 4th order polynomial between pix and wavelength
     fit_degree = p['IC_LL_DEGR_FIT']
-    fit_per_order = np.zeros([nbo, fit_degree+1])
+    fit_per_order = np.zeros([nbo, fit_degree + 1])
 
     wmsg = 'Sigma-clipping of found lines'
     WLOG('info', p['LOG_OPT'], wmsg.format())
 
-    plt.figure()    # open new figure
+    plt.figure()  # open new figure
     # loop through orders
     for iord in range(nbo):
         # keep relevant lines
@@ -679,7 +683,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 plt.ylabel('pixel position')
 
             # the pix VS wavelength is fitted with a 4th order polynomial
-            fit_per_order[iord, :] = np.polyfit(xgau[gg], wave_catalog[gg], fit_degree)
+            fit_per_order[iord, :] = np.polyfit(xgau[gg], wave_catalog[gg],
+                                                fit_degree)
 
     if doplot_sanity:
         plt.show()
@@ -720,9 +725,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
         # keeping track of the best estimates for the polynomial
         # coefficients
-        new_wavelength_solution_polyfit = np.zeros([fit_degree+1, nbo])
+        new_wavelength_solution_polyfit = np.zeros([fit_degree + 1, nbo])
 
-        for nth_poly_order in range(fit_degree+1):
+        for nth_poly_order in range(fit_degree + 1):
 
             tmp = fit_per_order[:, nth_poly_order]
 
@@ -755,7 +760,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # sigma-clipping of the order VS polynomial coefficients.
             # using higher-order polynomial
             while nsigmax > 3:
-                fit = np.polyfit(nth_order[keep], tmp[keep], order_fit_continuity[nth_poly_order])
+                fit = np.polyfit(nth_order[keep], tmp[keep],
+                                 order_fit_continuity[nth_poly_order])
                 err = tmp - np.polyval(fit, nth_order)
 
                 idmax = np.argmax(np.abs(err * keep / np.std(err[keep])))
@@ -789,13 +795,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 plt.xlabel('$\lambda$ (nm)')
                 plt.plot(nth_order[keep], err[keep], 'c.')
 
-
-            new_wavelength_solution_polyfit[nth_poly_order, :] = np.polyval(fit, nth_order)
+            new_wavelength_solution_polyfit[nth_poly_order, :] = np.polyval(fit,
+                                                                            nth_order)
 
         wave_map3 = np.zeros([nbo, nbpix])
         xpix = np.array(range(nbpix))
         for iord in range(nbo):
-            wave_map3[iord, :] = np.polyval(new_wavelength_solution_polyfit[:, iord], xpix)
+            wave_map3[iord, :] = np.polyval(
+                new_wavelength_solution_polyfit[:, iord], xpix)
 
         nsigmax = 999
         if doplot_sanity:
@@ -844,12 +851,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             base[0:3] = True
             base[2 * window - 2:2 * window + 1] = True
             for i in range(np.sum(gg)):
-                all_lines[i, :] = hc_ini[int(orders[i]), int(xcens[i] + .5) - window:int(xcens[i] + .5) + window + 1]
+                all_lines[i, :] = hc_ini[int(orders[i]),
+                                  int(xcens[i] + .5) - window:int(
+                                      xcens[i] + .5) + window + 1]
                 all_lines[i, :] -= np.nanmedian(all_lines[i, base])
                 all_lines[i, :] /= np.nansum(all_lines[i, :])
 
                 v = -2.997e5 * (wave_map2[int(orders[i]), int(xcens[i] + .5) -
-                                                          window:int(xcens[i] + .5) + window + 1]
+                                                          window:int(
+                    xcens[i] + .5) + window + 1]
                                 / wave_line[i] - 1)
                 all_dvs[i, :] = v
 
@@ -862,10 +872,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             maxdev_threshold = 8
 
             while maxdev > maxdev_threshold:
-                popt_left, pcov = curve_fit(gauss_function, all_dvs[keep], all_lines[keep],
+                popt_left, pcov = curve_fit(gauss_function, all_dvs[keep],
+                                            all_lines[keep],
                                             p0=[.3, 0, 1, 0, 0])
-                res = all_lines - gauss_function(all_dvs, popt_left[0], popt_left[1],
-                                                 popt_left[2], popt_left[3], popt_left[4])
+                res = all_lines - gauss_function(all_dvs, popt_left[0],
+                                                 popt_left[1],
+                                                 popt_left[2], popt_left[3],
+                                                 popt_left[4])
 
                 rms = res / np.median(np.abs(res))
                 maxdev = np.max(np.abs(rms[keep]))
@@ -879,16 +892,19 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                    popt_left[3], popt_left[4])
 
             plt.plot(xx, gplot, 'k--')
-            wargs = [np.sum(gg), iord, iord+9, xpos, resolution, 2.997e5 / resolution]
+            wargs = [np.sum(gg), iord, iord + 9, xpos, resolution,
+                     2.997e5 / resolution]
             wmsg = 'nlines={0}, orders={1}-{2}, x region={3}, resolution={4:.2f} km/s, R={5:.2f}'
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
-    #        print('nlines : ', np.sum(gg), 'iord=', iord, ' xpos=', xpos,
-    #              ' resolution = ', resolution, ' km/s', 'R = ',
-    #              2.997e5 / resolution)
+            #        print('nlines : ', np.sum(gg), 'iord=', iord, ' xpos=', xpos,
+            #              ' resolution = ', resolution, ' km/s', 'R = ',
+            #              2.997e5 / resolution)
             plt.xlim([-8, 8])
             plt.ylim([-0.05, .7])
-            plt.title('orders ' + str(iord) + '-' + str(iord + 9) + ' region=' + str(xpos))
+            plt.title(
+                'orders ' + str(iord) + '-' + str(iord + 9) + ' region=' + str(
+                    xpos))
             plt.xlabel('dv (km/s)')
 
             i_plot += 1
@@ -898,16 +914,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.tight_layout()
     plt.show()
 
-    wargs = [np.mean(resolution_map), np.median(resolution_map), np.std(resolution_map)]
+    wargs = [np.mean(resolution_map), np.median(resolution_map),
+             np.std(resolution_map)]
     wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
+    # TODO: --> Below is not etienne's code!
 
-# TODO: --> Below is not etienne's code!
-
-# ----------------------------------------------------------------------
-# Set up all_lines storage list for both wavelength solutions
-# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # Set up all_lines storage list for both wavelength solutions
+    # ----------------------------------------------------------------------
 
     # initialise up all_lines storage
     all_lines_1 = []
@@ -946,22 +962,24 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         output_wave_1 = np.polyval(fit_per_order[iord, :], xgau[gg])
         # get the initial solution wavelength value for each peak in the order
         # allow pixel shifting
-        xgau_shift = xgau[gg] + pixel_shift_inter + pixel_shift_slope*xgau[gg]
+        xgau_shift = xgau[gg] + pixel_shift_inter + pixel_shift_slope * xgau[gg]
         input_wave = np.polyval((poly_wave_sol[iord, :])[::-1], xgau_shift)
         # convert the pixel equivalent width to wavelength units
-        xgau_ew_ini = xgau[gg] - ew[gg]/2
-        xgau_ew_fin = xgau[gg] + ew[gg]/2
+        xgau_ew_ini = xgau[gg] - ew[gg] / 2
+        xgau_ew_fin = xgau[gg] + ew[gg] / 2
         ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
         ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
         ew_ll = ew_ll_fin - ew_ll_ini
         # put all lines in the order into array
-        gau_params = np.column_stack((output_wave_1, ew_ll, peak1[gg], input_wave-output_wave_1,
-                                      amp_catalog[gg], xgau[gg], ew[gg], test))
+        gau_params = np.column_stack(
+            (output_wave_1, ew_ll, peak1[gg], input_wave - output_wave_1,
+             amp_catalog[gg], xgau[gg], ew[gg], test))
         # append the array for the order into a list
         all_lines_1.append(gau_params)
         # save dv in km/s and auxiliary order number
-        res_1 = np.concatenate((res_1,2.997e5*(input_wave - output_wave_1)/output_wave_1))
-        ord_save = np.concatenate((ord_save, test*iord))
+        res_1 = np.concatenate(
+            (res_1, 2.997e5 * (input_wave - output_wave_1) / output_wave_1))
+        ord_save = np.concatenate((ord_save, test * iord))
 
     # add to loc
     loc['ALL_LINES_1'] = all_lines_1
@@ -991,28 +1009,35 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # dummy array for weights
             test = np.ones(np.shape(xgau[gg]), 'd')
             # get the final wavelength value for each peak in order
-            output_wave_2 = np.polyval(new_wavelength_solution_polyfit[:, iord], xgau[gg])
+            output_wave_2 = np.polyval(new_wavelength_solution_polyfit[:, iord],
+                                       xgau[gg])
             # get the initial solution wavelength value for each peak in the order
             # allow pixel shifting
-            xgau_shift = xgau[gg] + pixel_shift_inter + pixel_shift_slope * xgau[gg]
+            xgau_shift = xgau[gg] + pixel_shift_inter + pixel_shift_slope * \
+                         xgau[gg]
             input_wave = np.polyval((poly_wave_sol[iord, :])[::-1], xgau_shift)
             # convert the pixel equivalent width to wavelength units
-            xgau_ew_ini = xgau[gg] - ew[gg]/2
-            xgau_ew_fin = xgau[gg] + ew[gg]/2
-            ew_ll_ini = np.polyval(new_wavelength_solution_polyfit[:, iord], xgau_ew_ini)
-            ew_ll_fin = np.polyval(new_wavelength_solution_polyfit[:, iord], xgau_ew_fin)
+            xgau_ew_ini = xgau[gg] - ew[gg] / 2
+            xgau_ew_fin = xgau[gg] + ew[gg] / 2
+            ew_ll_ini = np.polyval(new_wavelength_solution_polyfit[:, iord],
+                                   xgau_ew_ini)
+            ew_ll_fin = np.polyval(new_wavelength_solution_polyfit[:, iord],
+                                   xgau_ew_fin)
             ew_ll = ew_ll_fin - ew_ll_ini
             # put all lines in the order into array
-            gau_params = np.column_stack((output_wave_2, ew_ll, peak1[gg], input_wave-output_wave_2,
-                                          amp_catalog[gg], xgau[gg], ew[gg], test))
+            gau_params = np.column_stack(
+                (output_wave_2, ew_ll, peak1[gg], input_wave - output_wave_2,
+                 amp_catalog[gg], xgau[gg], ew[gg], test))
             # append the array for the order into a list
             all_lines_2.append(gau_params)
-            res_2 = np.concatenate((res_2, 2.997e5*(input_wave - output_wave_2)/output_wave_2))
+            res_2 = np.concatenate(
+                (res_2, 2.997e5 * (input_wave - output_wave_2) / output_wave_2))
 
     # For compatibility w/already defined functions, I need to save here all_lines_2
     if poly_smooth:
         loc['ALL_LINES_2'] = all_lines_2
-        loc['LL_PARAM_2'] = np.fliplr(np.transpose(new_wavelength_solution_polyfit))
+        loc['LL_PARAM_2'] = np.fliplr(
+            np.transpose(new_wavelength_solution_polyfit))
         loc.set_sources(['ALL_LINES_2', 'LL_PARAM_2'], __NAME__ + '/main()')
     else:
         all_lines_2 = list(all_lines_1)
@@ -1020,7 +1045,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         loc['LL_PARAM_2'] = np.fliplr(fit_per_order)
         loc['LL_OUT_2'] = loc['LL_OUT_1']
         loc.set_sources(['ALL_LINES_2', 'LL_PARAM_2'], __NAME__ + '/main()')
-
 
     # ------------------------------------------------------------------
     # Littrow test
@@ -1042,7 +1066,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['IC_LITTROW_FIT_DEG_2'] = 6
 
     # Do Littrow check
-    ckwargs = dict(ll=loc['LL_OUT_2'][n_ord_start:n_ord_final, :], iteration=2, log=True)
+    ckwargs = dict(ll=loc['LL_OUT_2'][n_ord_start:n_ord_final, :], iteration=2,
+                   log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
@@ -1138,15 +1163,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     end = max(p['IC_HC_N_ORD_FINAL_2'], p['IC_FP_N_ORD_FINAL'])
 
     # recalculate echelle orders for Fit1DSolution
-    o_orders = np.arange(start,end)
+    o_orders = np.arange(start, end)
     echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
     loc['ECHELLE_ORDERS'] = echelle_order
     loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
-
     # select the orders to fit
     ll = loc['LITTROW_EXTRAP_SOL_1'][start:end]
-    loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
+    loc = spirouTHORCA.Fit1DSolution(p, loc, ll, iteration=2)
 
     # ------------------------------------------------------------------
     # Calculate uncertainties
@@ -1185,7 +1209,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # reset Littrow fit degree
     p['IC_LITTROW_FIT_DEG_2'] = 8
 
-
     # Do Littrow check
     ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
@@ -1194,7 +1217,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     if p['DRS_PLOT']:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
-
 
     # ------------------------------------------------------------------
     # Plot single order, wavelength-calibrated, with found lines
@@ -1206,22 +1228,27 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plot_order_line = plot_order - n_ord_start
     plt.figure()
     # plot order and flux
-    plt.plot(wave_map2[plot_order], hcdata[plot_order], label='HC spectrum - order '
-                                                                + str(plot_order))
+    plt.plot(wave_map2[plot_order], hcdata[plot_order],
+             label='HC spectrum - order '
+                   + str(plot_order))
     # plot found lines
     # first line separate for labelling purposes
-    plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][0][2],
+    plt.vlines(all_lines_1[plot_order_line][0][0], 0,
+               all_lines_1[plot_order_line][0][2],
                'm', label='fitted lines')
     # plot lines to the top of the figure
-    plt.vlines(all_lines_1[plot_order_line][0][0], 0, np.max(hcdata[plot_order]), 'gray',
+    plt.vlines(all_lines_1[plot_order_line][0][0], 0,
+               np.max(hcdata[plot_order]), 'gray',
                linestyles='dotted')
     # rest of lines
     for i in range(1, len(all_lines_1[plot_order_line])):
         # plot lines to their corresponding amplitude
-        plt.vlines(all_lines_1[plot_order_line][i][0], 0, all_lines_1[plot_order_line][i][2],
+        plt.vlines(all_lines_1[plot_order_line][i][0], 0,
+                   all_lines_1[plot_order_line][i][2],
                    'm')
         # plot lines to the top of the figure
-        plt.vlines(all_lines_1[plot_order_line][i][0], 0, np.max(hcdata[plot_order]), 'gray',
+        plt.vlines(all_lines_1[plot_order_line][i][0], 0,
+                   np.max(hcdata[plot_order]), 'gray',
                    linestyles='dotted')
     plt.legend()
     plt.xlabel('Wavelength')
@@ -1249,14 +1276,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         lit_it = 2
     # for x_it in range(len(loc['X_CUT_POINTS_lit_it'])):
     # checks every other value
-    for x_it in range(1, len(loc['X_CUT_POINTS_'+str(lit_it)]), 4):
+    for x_it in range(1, len(loc['X_CUT_POINTS_' + str(lit_it)]), 4):
         # get x cut point
-        x_cut_point = loc['X_CUT_POINTS_'+str(lit_it)][x_it]
+        x_cut_point = loc['X_CUT_POINTS_' + str(lit_it)][x_it]
         # get the sigma for this cut point
-        sig_littrow = loc['LITTROW_SIG_'+str(lit_it)][x_it]
+        sig_littrow = loc['LITTROW_SIG_' + str(lit_it)][x_it]
         # get the abs min and max dev littrow values
-        min_littrow = abs(loc['LITTROW_MINDEV_'+str(lit_it)][x_it])
-        max_littrow = abs(loc['LITTROW_MAXDEV_'+str(lit_it)][x_it])
+        min_littrow = abs(loc['LITTROW_MINDEV_' + str(lit_it)][x_it])
+        max_littrow = abs(loc['LITTROW_MAXDEV_' + str(lit_it)][x_it])
         # check if sig littrow is above maximum
         rms_littrow_max = p['QC_RMS_LITTROW_MAX']
         dev_littrow_max = p['QC_DEV_LITTROW_MAX']
@@ -1311,7 +1338,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
-                               value=loc['LL_PARAM_FINAL'].shape[1]-1)
+                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
@@ -1337,16 +1364,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))        #loc['X_ITER_2']
-    err = 1000 * np.sqrt(loc['X_VAR_2']/num_lines)
-    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_'+str(lit_it)])
+    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
+    err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
+    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
     # construct filename
     wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
     wavetblname = os.path.split(wavetbl)[-1]
     # construct and write table
     columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
-                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
+                   'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
                      '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
                      '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
@@ -1381,13 +1408,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     for it in range(n_ord_start, n_ord_final):
         gg = (ord_save == it)
         for jt in range(len(loc['ALL_LINES_FINAL'][it])):
-             row = [float(it), loc['ALL_LINES_FINAL'][it][jt][0],
-                    res_1[gg][jt],
-                    loc['ALL_LINES_FINAL'][it][jt][7],
-                    loc['ALL_LINES_FINAL'][it][jt][5],
-                    loc['ALL_LINES_FINAL'][it][jt][5],
-                    res_1[gg][jt]]
-             columnvalues.append(row)
+            row = [float(it), loc['ALL_LINES_FINAL'][it][jt][0],
+                   res_1[gg][jt],
+                   loc['ALL_LINES_FINAL'][it][jt][7],
+                   loc['ALL_LINES_FINAL'][it][jt][5],
+                   loc['ALL_LINES_FINAL'][it][jt][5],
+                   res_1[gg][jt]]
+            columnvalues.append(row)
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
@@ -1421,6 +1448,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # return p and loc
     return dict(locals())
+
 
 # =============================================================================
 # Start of code

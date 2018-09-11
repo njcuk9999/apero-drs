@@ -98,7 +98,7 @@ class Paths():
     def add_root(self, check=False):
         # deal with user inputted roots
         # if root is blank do nothing
-        if self.root == None:
+        if self.root is None:
             pass
         # if root is a string
         elif type(self.root) == str:
@@ -119,7 +119,7 @@ class Paths():
     def replace_root(self, root=None, check=False):
         # deal with user inputted roots
         # if root is blank do nothing
-        if root == None:
+        if root is None:
             pass
         # if root is a string
         elif type(root) == str:
@@ -256,6 +256,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
 
     :param filename: string, the filename to check
     :param recipe: string, the recipe name to check
+    :param skipcheck: bool, if True does not check file
     :param hdr: dictionary or None, if defined must be a HEADER dictionary if
                 none loaded from filename
     :param pos: int or None, if not None defines the position of the file
@@ -520,9 +521,9 @@ def check_preprocess(p, filename=None):
             emsgs = ['File not processed. Suffix="{0}" not '
                      'found.'.format(suffix),
                      '\tRun "cal_preprocess_spirou" or turn off '
-                     '"IC_FORCE_PREPROCESS"']
-            emsgs.append('\t\tfile = {0}'.format(filename))
-            emsgs.append('\t\tfunction = {0}'.format(func_name))
+                     '"IC_FORCE_PREPROCESS"',
+                     '\t\tfile = {0}'.format(filename),
+                     '\t\tfunction = {0}'.format(func_name)]
             WLOG('error', p['LOG_OPT'], emsgs)
 
 

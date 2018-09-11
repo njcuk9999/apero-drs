@@ -37,9 +37,10 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+# # test files
+# night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
+# e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
 
-night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
-e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
 
 # =============================================================================
 # Define main program function
@@ -121,7 +122,6 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     wmsg = 'Image format changed to {0}x{1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*image2.shape))
 
-
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -143,8 +143,6 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # get tilts
     loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
-
-
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -195,7 +193,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     wmsg = 'Loading telluric model and locating "good" tranmission'
     WLOG('', p['LOG_OPT'], wmsg)
     # load telluric and get mask (add to loc)
-    loc = spirouExM.get_telluric(p, loc, hdr)
+    loc = spirouExM.get_telluric(p, loc)
 
     # ------------------------------------------------------------------
     # Make 2D map of orders

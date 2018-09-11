@@ -126,7 +126,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # check for NaN values in the e2ds array
     if np.isnan(np.sum(e2ds)):
         # WLOG('error', p['LOG_OPT'], 'NaN values found in e2ds')
-        WLOG('warning', p['LOG_OPT'], 'NaN values found in e2ds, converting to zeroes')
+        WLOG('warning', p['LOG_OPT'],
+             'NaN values found in e2ds, converting to zeroes')
         # set NaNs to zero
         e2ds[np.isnan(e2ds)] = 0
 
@@ -146,9 +147,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
 
-    #-----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     #  Earth Velocity calculation
-    #-----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 

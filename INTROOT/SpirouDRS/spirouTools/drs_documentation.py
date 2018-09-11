@@ -195,6 +195,8 @@ def find_missing_module_functions(module_name, return_values=False):
 
     :param module_name: string, the name of the module in the DRS to check
 
+    :param return_values: bool, if True returns the missing functions
+
     :return None:
     """
     # setup
@@ -240,7 +242,6 @@ def find_missing_module_functions(module_name, return_values=False):
 
     if return_values:
         return missing_funcs
-
 
 
 def find_missing_variables():

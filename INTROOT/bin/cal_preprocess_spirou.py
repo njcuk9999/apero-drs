@@ -39,8 +39,8 @@ PathException = spirouFile.PathException
 # =============================================================================
 def main(night_name=None, ufiles=None):
     """
-    cal_preprocess_spirou.py main function, if night_name and files are None uses
-    arguments from run time i.e.:
+    cal_preprocess_spirou.py main function, if night_name and files are
+    None uses arguments from run time i.e.:
         cal_preprocess_spirou.py [night_directory] [fitsfilename]
 
     :param night_name: string or None, the folder within data raw directory

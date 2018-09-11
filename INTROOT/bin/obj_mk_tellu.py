@@ -24,8 +24,8 @@ Outputs:
 	   file also saved in the reduced folder
 	   input file + '_trans.fits'
 
-  telluDB: TELL_CONV file - convolved molecular file (for specific wavelength solution)
-                            if it doesn't already exist
+  telluDB: TELL_CONV file - convolved molecular file (for specific
+                            wavelength solution) if it doesn't already exist
 	   file also saved in the reduced folder
 	   wavelength solution + '_tapas_convolved.npy'
 
@@ -65,11 +65,11 @@ sPlt = spirouCore.sPlt
 
 FORCE_PLOT_ON = False
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None):
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -209,7 +209,7 @@ def main(night_name=None, files=None):
                 # multiple by the float mask
                 sp2 *= fmask
                 # convolve with the second kernel
-                sp2b = np.convolve(sp2/sed, loc['KER2'], mode='same')
+                sp2b = np.convolve(sp2 / sed, loc['KER2'], mode='same')
                 # convolve with mask to get weights
                 ww = np.convolve(fmask, loc['KER2'], mode='same')
                 # normalise the spectrum by the weights
@@ -372,7 +372,7 @@ def main(night_name=None, files=None):
                 # apply the mask of good pixels to work out ratio
                 part1 = np.sum(rowvalue[goodpix] * abso_med[goodpix])
                 part2 = np.sum(abso_med[goodpix] ** 2)
-                ratio = part1/part2
+                ratio = part1 / part2
                 # store normalised absol back on to log_abso
                 log_abso[jt, :] = log_abso[jt, :] / ratio
 
@@ -408,7 +408,7 @@ def main(night_name=None, files=None):
         # get the median for selected order
         abso_med2 = np.exp(abso_med[start:end])
         # get the dv pixels to extract
-        dvpixels = np.arange(-np.floor(size/2), np.ceil(size/2), 1)
+        dvpixels = np.arange(-np.floor(size / 2), np.ceil(size / 2), 1)
         # loop around files
         for it, filename in enumerate(p['OUTPUTFILES']):
             # storage for the extracted abso ratios for this file
@@ -425,7 +425,7 @@ def main(night_name=None, files=None):
                 # get the ratio
                 part1 = np.sum(rowvalue[goodpix] * abso_med2[goodpix])
                 part2 = np.sum(abso_med2[goodpix] ** 2)
-                cc[jt] = part1/part2
+                cc[jt] = part1 / part2
             # fit the ratio across the points
             cfit = np.polyfit(dvpixels, cc, fitdeg)
             # work out the dv pix

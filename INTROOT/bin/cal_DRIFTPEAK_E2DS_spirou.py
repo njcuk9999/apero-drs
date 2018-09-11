@@ -148,7 +148,6 @@ def main(night_name=None, reffile=None):
     loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
-
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------

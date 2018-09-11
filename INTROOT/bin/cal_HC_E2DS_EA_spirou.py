@@ -74,7 +74,6 @@ def main(night_name=None, files=None):
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
 
-
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -279,9 +278,6 @@ def main(night_name=None, files=None):
     # End Message
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p)
-
-
-
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

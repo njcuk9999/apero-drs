@@ -724,11 +724,13 @@ def get_time_now_string(fmt=TIME_FMT, zone='UTC'):
     unix_time = get_time_now_unix(zone)
     return unixtime2stringtime(unix_time, fmt=fmt, zone=zone)
 
+
 def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
-              mode="median", use_linear_fit=False, excl_bands=[]):
+              mode="median", use_linear_fit=False, excl_bands=None):
     """
     Function to detect and calculate continuum spectrum
-    :param x,y: numpy array (1D), input data (x and y must be of the same size)
+    :param x: numpy array (1D), input x data
+    :param y: numpy array (1D), input y data (x and y must be of the same size)
     :param binsize: int, number of points in each bin
     :param overlap: int, number of points to overlap with adjacent bins
     :param sigmaclip: int, number of times sigma to cut-off points
@@ -746,6 +748,9 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         xbin,ybin: numpy arrays (1D) containing the bins used to interpolate 
                    data for obtaining the continuum
     """
+    # deal with no excl_bands
+    if excl_bands is None:
+        excl_bands = []
 
     # set number of bins given the input array length and the bin size
     nbins = int(np.floor(len(x) / binsize))

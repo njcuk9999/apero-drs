@@ -41,6 +41,7 @@ ConfigError = spirouConfig.ConfigError
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+
 # TODO: update using generic database functions
 # TODO:    located in spirouDB
 # TODO:   (similar to spirouTDB)

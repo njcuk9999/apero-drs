@@ -273,6 +273,8 @@ def printlogandcmd(message, key, human_time, dsec, option, wrap):
     :param human_time: string, the human time for the printed output
     :param dsec: float, the "tenth of a second" output
     :param option: string, the option of the output
+    :param wrap: bool, if True wraps tet to CHAR_LEN (defined in
+                 spirouConfig.Constants.CHARACTER_LOG_LENGTH())
 
     :return None:
     """
@@ -661,16 +663,19 @@ def writelog(message, key, logfilepath):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     dprog = spirouConfig.Constants.DEFAULT_LOG_OPT()
+
+    # Get Logging function
+    WLOG = wlog
     # Title test
-    logger('', '', ' *****************************************')
-    logger('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
-    logger('', '', ' *****************************************')
+    WLOG('', '', ' *****************************************')
+    WLOG('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
+    WLOG('', '', ' *****************************************')
     # info log
-    logger("info", dprog, "This is an info test")
+    WLOG("info", dprog, "This is an info test")
     # warning log
-    logger("warning", dprog, "This is a warning test")
+    WLOG("warning", dprog, "This is a warning test")
     # error log
-    logger("error", dprog, "This is an error test")
+    WLOG("error", dprog, "This is an error test")
 
 # =============================================================================
 # End of code

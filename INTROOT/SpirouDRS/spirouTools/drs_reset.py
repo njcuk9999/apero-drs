@@ -253,9 +253,12 @@ def remove_all(path, log=True):
 def remove(path, list_of_files, log=True):
     """
     Remove a file or add files to list_of_files
-    :param path:
+    :param path: string, the path to remove (file or directory)
     :param list_of_files: list of strings, list of files
-    :return:
+    :param log: bool, if True logs the removal of files
+
+    :return list_of_files: returns the list of files removes (if it was a
+            directory this adds the files to the list)
     """
     # check if directory
     if os.path.isdir(path):

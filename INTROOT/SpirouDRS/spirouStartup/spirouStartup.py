@@ -297,11 +297,10 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
     if not no_night_name:
         # check ARG_NIGHT_NAME is not None
         if p['ARG_NIGHT_NAME'] == '':
-            emsgs = ['Argument Error: No FOLDER defined at run time argument']
-            emsgs.append('    format must be:')
-            emsgs.append('    >>> {0} [FOLDER] [Other Arguments]'
-                         ''.format(recipe))
-            emsgs.append(' ')
+            emsgs = ['Argument Error: No FOLDER defined at run time argument',
+                     '    format must be:',
+                     '    >>> {0} [FOLDER] [Other Arguments]'
+                     ''.format(recipe), ' ']
             # get available night_names
             nightnames = get_night_dirs(p)
             emsgs.append('Some available [FOLDER]s are as follows:')
@@ -361,6 +360,7 @@ def single_file_setup(p, filename, log=True, skipcheck=False, pos=None):
     :param filename: string, the filename to check
     :param log: bool, whether to log "Now Processing" message
     :param skipcheck: bool, whether to skip the check
+    :param pos: int or None, if not None defines the position of the file
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -605,6 +605,9 @@ def exit_script(ll, has_plots=True):
     active)
 
     :param ll: dict, the local variables
+    :param has_plots: bool, if True looks for and deal with having plots (i.e. asks
+                the user to close or closest automatically), if False no
+                plot windows are assumed to be open
 
     :return None:
     """
@@ -1019,8 +1022,8 @@ def set_arg_file_dir(p, mfd=None):
         #   is wrong
         if os.path.exists(arg_fp):
             emsgs = ['Fatal error cannot find '
-                     'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME'])]
-            emsgs.append('    in directory {0} ({1})'.format(arg_fp, location))
+                     'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']),
+                     '    in directory {0} ({1})'.format(arg_fp, location)]
             WLOG('error', DPROG, emsgs)
         # else it is the directory which is wrong (cal_validate was not run)
         else:
@@ -1212,6 +1215,8 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
     :param require_night_name: bool, if False night name is not required in
                                the arguments
 
+    :param recipe: string, the program name that called this function
+
     :return customdict: dictionary containing the run time arguments converts
                         to "types", keys are equal to "names"
     """
@@ -1352,11 +1357,8 @@ def get_file(p, path, filename):
 
     :param path: string, either the directory to the folder (if name is None) or
                  the full path to the file
-    :param name: string or None, the name of the file, if None name is assumed
-                 to be in path
-    :param prefixes: string, list of strings or None, if not None this
-                     substring must be in the filename
-    :param kind: string or None, the type of file (for logging)
+    :param filename: string or None, if None uses the path, defines the
+                     filename to ge tthe file of
 
     :return location: string, the full file path of the file
     """
@@ -1365,8 +1367,8 @@ def get_file(p, path, filename):
         WLOG('error', p['LOG_OPT'], 'No file defined')
     # if name and path are not None
     if filename is None:
-        filename = os.path.split(path)[-1]
-        path = path.split(filename)[0]
+        filename = os.path.basename(path)
+        path = os.path.dirname(path)
     # join path and name
     location = os.path.join(path, filename)
     # test if path exists
@@ -1529,6 +1531,8 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
 
     :param require_night_name: bool, if False night name is not required in
                                the arguments
+
+    :param recipe: string, the program that called this function
 
     :return values: dictionary, if run time arguments are correct python type
                     the name-value pairs are returned
@@ -1978,6 +1982,9 @@ def display_system_info(logonly=True, return_message=False):
 
     :param logonly: bool, if True will only display in the log (not to screen)
                     default=True, if False prints to both log and screen
+
+    :param return_message: bool, if True returns the message to the call, if
+                           False logs the message using WLOG
 
     :return None:
     """

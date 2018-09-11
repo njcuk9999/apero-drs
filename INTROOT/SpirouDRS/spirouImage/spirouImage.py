@@ -545,7 +545,7 @@ def fix_non_preprocessed(p, image, filename=None):
     If a raw file is not preprocessed, then fix it (i.e. rotate it) so
     it conforms to DRS standards
 
-    :param pp: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
             PROCESSED_SUFFIX: string, the processed suffix
             PREPROCESSED: bool, flag whether file is detected as
@@ -1017,6 +1017,12 @@ def get_badpixel_map(p, header=None):
                 log_opt: string, log option, normally the program name
                 DRS_CALIB_DB: string, the directory that the calibration
                               files should be saved to/read from
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, the program name for logging
+        May contain:
+            calibDB: dictionary, the calibration database
 
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
@@ -1633,6 +1639,8 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
                          parameter to "p" parameter dictionary (and sets source)
     :param dtype: type or None, if not None then tries to convert raw
                   parameter to type=dtype
+    :param required: bool, if True raises error if keyword not found, if False
+                     returns a value of None if keyword not found
 
     :return value: if return_value is True value of parameter is returned
     :return p: if return_value is False, updated parameter dictionary p with

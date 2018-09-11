@@ -42,7 +42,6 @@ ic_display_timeout = 0.5
 #       no night name argument
 drs_night_name_display_limit = 10
 
-
 # -----------------------------------------------------------------------------
 #  CFHT variables
 # -----------------------------------------------------------------------------
@@ -54,16 +53,15 @@ ic_latit_obs = 19.825252
 #  Defines the CFHT altitude (km)                                    - [cal_CCF]
 ic_altit_obs = 4.204
 
-
 # -----------------------------------------------------------------------------
 #  image variables
 # -----------------------------------------------------------------------------
 
 #   Resize blue window                                              - [cal_dark]
-ic_ccdx_blue_low = 100 #500
-ic_ccdx_blue_high = 4000 #3500
-ic_ccdy_blue_low = 3300 #2000
-ic_ccdy_blue_high = 3720 #3500
+ic_ccdx_blue_low = 100  # 500
+ic_ccdx_blue_high = 4000  # 3500
+ic_ccdy_blue_low = 3300  # 2000
+ic_ccdy_blue_high = 3720  # 3500
 
 #   Resize red window                                               - [cal_dark]
 ic_ccdx_red_low = 100
@@ -74,8 +72,8 @@ ic_ccdy_red_high = 1200
 #   Resize image                                                     - [cal_loc]
 ic_ccdx_low = 4
 ic_ccdx_high = 4092
-ic_ccdy_low = 250 # 100 #4
-ic_ccdy_high = 3350 #3450
+ic_ccdy_low = 250  # 100 #4
+ic_ccdy_high = 3350  # 3450
 
 #    Define the types of fiber to look for            - [cal_extract, cal_drift]
 #       (earlier in list takes priority)
@@ -125,7 +123,6 @@ orderp_file_fpall = {'AB': 'AB', 'A': 'AB', 'B': 'AB', 'C': 'C'}
 #       (formally ic_extnbsig)
 ic_ext_d_range_fpall = {'AB': 14.0, 'A': 14.0, 'B': 14.0, 'C': 7.0}
 
-
 # -----------------------------------------------------------------------------
 #   cal_preprocess parameters
 # -----------------------------------------------------------------------------
@@ -167,7 +164,6 @@ dark_med_binnum = 32
 #       (in degrees counter-clockwise direction)
 raw_to_pp_rotation = -90
 
-
 # -----------------------------------------------------------------------------
 #   cal_dark parameters
 # -----------------------------------------------------------------------------
@@ -194,7 +190,7 @@ dark_cutlimit = 5.0
 
 #   Size of the order_profile smoothed box                           - [cal_loc]
 #     (from pixel - size to pixel + size)
-loc_box_size = 5  #5   # 10
+loc_box_size = 5  # 5   # 10
 
 #   row number of image to start processing at                       - [cal_loc]
 ic_offset = 0  # 40
@@ -204,7 +200,7 @@ ic_offset = 0  # 40
 ic_cent_col = 2500
 
 #   Definition of the extraction window size (half size)             - [cal_loc]
-ic_ext_window = 15  #20 #40 #12
+ic_ext_window = 15  # 20 #40 #12
 
 #   Definition of the gap index in the selected area                 - [cal_loc]
 #       (formally ic_ccdgap)
@@ -219,11 +215,11 @@ ic_widthmin = 10  # 5
 #   Define the noise multiplier threshold in order to accept an      - [cal_loc]
 #       order center as usable
 #       max(pixel value) - min(pixel value) > ic_noise_mult_thres * sigdet
-ic_noise_mult_thres = 50 #30  #10 # 100.0
+ic_noise_mult_thres = 50  # 30  #10 # 100.0
 
 #   Define the polynomial fit parameters for interpolating over the  - [cal_loc]
 #      bad regions (holes) before localization is done
-bad_region_fit = [3.19884964e-05,  -1.08289228e-01,   2.16643659e+03]
+bad_region_fit = [3.19884964e-05, -1.08289228e-01, 2.16643659e+03]
 
 #   Define the median_filter box size used in interpolating over the - [cal_loc]
 #      bad regions (holes) before localization is done
@@ -255,14 +251,14 @@ bad_region_bad_value = 0.25
 ic_locnbpix = 45  # 45
 
 #   Minimum amplitude to accept (in e-)                              - [cal_loc]
-ic_min_amplitude = 10 # 10 # 50
+ic_min_amplitude = 10  # 10 # 50
 
 #   Normalised amplitude threshold to accept pixels                  - [cal_loc]
 #       for background calculation
-ic_locseuil = 0.17   # 0.18
+ic_locseuil = 0.17  # 0.18
 
 #   Saturation threshold on order profile plot                       - [cal_loc]
-ic_satseuil = 1000   # 64536
+ic_satseuil = 1000  # 64536
 
 #   Order of polynomial to fit for positions                         - [cal_loc]
 ic_locdfitc = 4  # 5
@@ -307,7 +303,7 @@ ic_locopt1 = 1
 ic_tilt_coi = 10
 
 #   Offset multiplicative factor (for width)                        - [cal_slit]
-ic_facdec =  0.9 # 1.6
+ic_facdec = 0.9  # 1.6
 
 #   Order of polynomial to fit for tilt                             - [cal_slit]
 ic_tilt_fit = 4
@@ -322,14 +318,14 @@ ic_slit_order_plot = 2 * 2
 #    Do background measurement (True = 1, False = 0)                  - [cal_ff]
 ic_do_bkgr_subtraction = 1
 
-#    Do background percentile to compute minium value (%)                  - [cal_ff]
+#    Do background percentile to compute minium value (%)             - [cal_ff]
 ic_bkgr_percent = 3
 
 #    Half-size of window for background measurements                  - [cal_ff]
 ic_bkgr_window = 50
 
 #    Number of orders in tilt file (formally nbo)                     - [cal_ff]
-ic_tilt_nbo = 49  #36
+ic_tilt_nbo = 49  # 36
 
 #    Start order of the extraction in cal_ff                          - [cal_ff]
 #       if None starts from 0
@@ -352,7 +348,7 @@ ic_fracminblaze = 16.
 
 #    The blaze polynomial fit degree                                  - [cal_ff]
 # (formally harded coded = 5)
-ic_blaze_fitn = 10    # 10
+ic_blaze_fitn = 10  # 10
 
 #   Order to plot on ff image plot (formally ic_order_plot)           - [cal_ff]
 ic_ff_order_plot = 4
@@ -364,7 +360,6 @@ ic_ff_plot_all_orders = 0
 #   Define the orders not to plot on the RMS plot                     - [cal_ff]
 #      should be a list of integers
 ff_rms_plot_skip_orders = [0, 22, 23, 24, 25, 48]
-
 
 # -----------------------------------------------------------------------------
 #   cal_extract parameters
@@ -379,7 +374,7 @@ ext_start_order = None
 ext_end_order = None
 
 # distance away from center to extract out to +/-                   - [cal_slit]
-ic_extnbsig = 1 #2.5
+ic_extnbsig = 1  # 2.5
 
 #   Select extraction type                                       - [cal_extract]
 #        Should be one of the following:
@@ -403,7 +398,7 @@ ic_extnbsig = 1 #2.5
 #
 #                 3d - tilt weight extraction 2 (cosmic correction)
 #                         (function = spirouEXTOR.extract_tilt_weight2cosm)
-ic_extract_type = '3d'  #'3d'
+ic_extract_type = '3d'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
 ic_ff_extract_type = '3c'
 
@@ -413,7 +408,7 @@ ic_ext_tilt_bord = 2
 
 #   Set a custom noise level for extract (formally sigdet)       - [cal_extract]
 #       set to -1 to use sigdet from file header
-ic_ext_sigdet = -1   # 100
+ic_ext_sigdet = -1  # 100
 
 #    Define order to plot                                        - [cal_extract]
 ic_ext_order_plot = 7
@@ -436,7 +431,6 @@ ic_start_order_1d = 1
 
 #    Define the last order for the S1D spectra                   - [cal_extract]
 ic_end_order_1d = 48
-
 
 # -----------------------------------------------------------------------------
 #   cal_drift parameters
@@ -528,7 +522,7 @@ drift_peak_exp_width = 0.9  # 0.8
 #        large normalised width = FP FWHM - drift_peak_exp_width
 #        cut is essentially:
 #           FP FWHM < (drift_peak_exp_width + drift_peak_norm_width_cut)
-drift_peak_norm_width_cut = 0.25   # 0.2
+drift_peak_norm_width_cut = 0.25  # 0.2
 
 #    Define whether to fit a gaussain (slow) or adjust a      - [cal_drift-peak]
 #        barycenter to get the drift
@@ -546,7 +540,6 @@ drift_peak_plot_line_log_amp = False
 
 #    Define which peak to plot in the linelist vs amp plot    - [cal_drift-peak]
 drift_peak_selected_order = 30
-
 
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters
@@ -566,7 +559,7 @@ badpix_flat_cut_ratio = 0.5
 
 #   Define the maximum flux in ADU/s to be considered too         - [cal_badpix]
 #       hot to be used (formally max_hotpix)
-badpix_max_hotpix = 5 #  = dark_cutlimit !!!
+badpix_max_hotpix = 5  # = dark_cutlimit !!!
 
 #   Percentile to normalise to when normalising and median        - [cal_badpix]
 #      filtering image [percentage]
@@ -579,7 +572,6 @@ badpix_full_flat = 'detector_flat_full.fits'
 #   Defines the threshold on the full detector flat file to       - [cal_badpix]
 #      deem pixels as good
 badpix_full_threshold = 0.3
-
 
 # -----------------------------------------------------------------------------
 #  cal_CCF_E2DS_spirou
@@ -628,7 +620,6 @@ ccf_num_orders_max = 48
 #                     CURRENTLY NOT WORKING!!!
 bervmode = "new"
 
-
 # -----------------------------------------------------------------------------
 #   cal_exposure_meter parameters
 # -----------------------------------------------------------------------------
@@ -668,7 +659,6 @@ em_save_tell_spec = True
 #  Define whether to save the exposure meter mask                     - [cal_em]
 em_save_mask_map = True
 
-
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
@@ -678,14 +668,14 @@ em_save_mask_map = True
 #                  - ic_ll_line_file
 #                  - ic_cat_type
 #      values must be a list of strings to look for in filenames
-ic_lamps = {'UNe':['hcone', 'hc1'], 'TH':['hctwo', 'hc2']}
+ic_lamps = {'UNe': ['hcone', 'hc1'], 'TH': ['hctwo', 'hc2']}
 
 #  Define the catalogue line list to use for each           - [cal_HC, cal_wave]
 #       lamp type (dictionary)
-ic_ll_line_file_all = {'UNe':'catalogue_UNe.dat', 'TH':'catalogue_ThAr.dat'}
+ic_ll_line_file_all = {'UNe': 'catalogue_UNe.dat', 'TH': 'catalogue_ThAr.dat'}
 
 #  Define the type of catalogue to use for each lamp type   - [cal_HC, cal_wave]
-ic_cat_type_all = {'UNe': 'fullcat', 'TH':'thcat'}
+ic_cat_type_all = {'UNe': 'fullcat', 'TH': 'thcat'}
 
 #  Define the Resolution of detector                        - [cal_HC, cal_wave]
 ic_resol = 65000
@@ -705,15 +695,15 @@ ic_ll_sp_max = 2400
 
 #  Define the read out noise to use in find lines           - [cal_HC, cal_wave]
 # default = 16.8
-ic_hc_noise = 60   # 30
+ic_hc_noise = 60  # 30
 
 # Maximum sig-fit of the guessed lines                      - [cal_HC, cal_wave]
 #     fwhm/2.35 of th lines)
-ic_max_sigll_cal_lines = 4   #5.2
+ic_max_sigll_cal_lines = 4  # 5.2
 
 # Maximum error on first guess lines                        - [cal_HC, cal_wave]
 # default = 1
-ic_max_errw_onfit = 1   # 1
+ic_max_errw_onfit = 1  # 1
 
 # Maximum amplitude of the guessed lines                    - [cal_HC, cal_wave]
 # default = 2.0e5
@@ -735,7 +725,7 @@ ic_errx_min = 0.01  # 0.03
 
 #  Define the wavelength fit polynomial order               - [cal_HC, cal_wave]
 # default = 5
-ic_ll_degr_fit = 4   #5   #4  # 4
+ic_ll_degr_fit = 4  # 5   #4  # 4
 
 #  Define the max rms for the wavelength sigma-clip fit     - [cal_HC, cal_wave]
 ic_max_llfit_rms = 3.0
@@ -747,7 +737,7 @@ ic_Littrow_fit_deg_2 = 8  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
 ic_Littrow_cut_step_1 = 250
-ic_Littrow_cut_step_2 = 250    #500
+ic_Littrow_cut_step_2 = 250  # 500
 
 #  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
 #  (ends at ic_hc_n_ord_final)
@@ -758,21 +748,20 @@ ic_Littrow_remove_orders = []
 
 #  Define the order fit for the Littrow solution            - [cal_HC, cal_wave]
 #      (fit along the orders)
-#TODO needs to be the same as ic_ll_degr_fit
-ic_Littrow_order_fit_deg = 4 #5  # 4
+# TODO needs to be the same as ic_ll_degr_fit
+ic_Littrow_order_fit_deg = 4  # 5  # 4
 
 #  Define wavelength free span parameter in find            - [cal_HC, cal_wave]
 #    lines search (used AFTER littrow fit) default = 3
 ic_ll_free_span_2 = [4.25, 3.0]  # 2.6
 
-#  Defines order from which the solution is calculated        - [cal_HC, cal_wave]
+#  Defines order from which the solution is calculated      - [cal_HC, cal_wave]
 #      previously called n_ord_start (used AFTER littrow fit)
-ic_hc_n_ord_start_2 = 0 # 5  #0
+ic_hc_n_ord_start_2 = 0  # 5  #0
 
 #  Defines order to which the solution is calculated        - [cal_HC, cal_wave]
 #      previously called n_ord_final (used AFTER littrow fit)
-ic_hc_n_ord_final_2 = 46 # 40    #46
-
+ic_hc_n_ord_final_2 = 46  # 40    #46
 
 #  Defines the mode to "find_lines"                         - [cal_HC, cal_wave]
 #      Currently allowed modes are:
@@ -788,10 +777,10 @@ ic_hc_n_ord_final_2 = 46 # 40    #46
 hc_find_lines_mode = 0
 
 #  Define first order FP solution is calculated from                - [cal_wave]
-ic_fp_n_ord_start =  0   #0   # 9
+ic_fp_n_ord_start = 0  # 0   # 9
 
 #  Defines last order FP solution is calculated to                  - [cal_wave]
-ic_fp_n_ord_final = 46    #47   # 45
+ic_fp_n_ord_final = 46  # 47   # 45
 
 #  Define the size of region where each line is fitted               -[cal_wave]
 ic_fp_size = 3
@@ -907,7 +896,6 @@ HC_RESMAP_PLOT_XLIM = [-8, 8]
 # the line profile y limits                                           - [cal_HC]
 HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
 
-
 # -----------------------------------------------------------------------------
 #  Telluric parameters
 # -----------------------------------------------------------------------------
@@ -925,7 +913,7 @@ tellu_cut_blaze_norm = 0.2
 fwhm_pixel_lsf = 2.1
 
 # Define list of absorbers in the tapas fits table
-tellu_absorbers = ['combined','h2o','o3','n2o','o2','co2','ch4']
+tellu_absorbers = ['combined', 'h2o', 'o3', 'n2o', 'o2', 'co2', 'ch4']
 
 # Define whether to fit the derivatives instead of the          - [obj_mk_tellu]
 #     principal components
@@ -954,7 +942,7 @@ tellu_vsini = 250.0
 # Define the median sampling expressed in km/s / pix
 tellu_med_sampling = 2.2
 
-#TODO: Need comments
+# TODO: Need comments
 tellu_sigma_dev = 5
 tellu_bad_threshold = 1.2
 tellu_nan_threshold = 0.2
@@ -1005,7 +993,8 @@ ic_polar_cont_binsize = 1000
 ic_polar_cont_overlap = 0
 
 #  Define the telluric mask for calculation of continnum          - [pol_spirou]
-ic_polar_cont_tellmask = [[930,967],[1109,1167],[1326,1491],[1782,1979],[1997,2027],[2047,2076]]
+ic_polar_cont_tellmask = [[930, 967], [1109, 1167], [1326, 1491], [1782, 1979],
+                          [1997, 2027], [2047, 2076]]
 
 #  Perform LSD analysis (True = 1, False = 0)                     - [pol_spirou]
 ic_polar_lsd_analysis = 1
@@ -1023,7 +1012,8 @@ ic_polar_lsd_np = 201
 ic_polar_lsd_ccflines = 'marcs_t3000g50_all'
 
 #  Define mask for selecting lines to be used in the LSD analysis - [pol_spirou]
-ic_polar_lsd_wlranges = [[983.,1116.],[1163.,1260.],[1280.,1331.],[1490.,1790.],[1975.,1995.],[2030.,2047.5]]
+ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.],
+                         [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
 
 #  Define number of points for output LSD profile                 - [pol_spirou]
 ic_polar_lsd_min_linedepth = 0.1
@@ -1032,7 +1022,8 @@ ic_polar_lsd_min_linedepth = 0.1
 ic_polar_lsd_normalize = 1
 
 # Definitions of output LSD data 
-ic_polar_lsd_datainfo = ['LSD_VELOCITIES','LSD_STOKESI','LSD_STOKESI_MODEL','LSD_STOKESVQU','LSD_NULL']
+ic_polar_lsd_datainfo = ['LSD_VELOCITIES', 'LSD_STOKESI', 'LSD_STOKESI_MODEL',
+                         'LSD_STOKESVQU', 'LSD_NULL']
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
@@ -1086,7 +1077,7 @@ qc_max_signal = 50000
 
 #   Maximum littrow RMS value for cal_hc                    - [cal_HC, cal_wave]
 #       (at x cut points)
-qc_hc_rms_littrow_max = 0.15    #0.3
+qc_hc_rms_littrow_max = 0.15  # 0.3
 
 #   Maximum littrow Deviation from wave solution for       - [cal_HC, cal_wave]
 #        cal_wave (at x cut points)
@@ -1107,7 +1098,6 @@ qc_wave_idrift_nborderout = 15
 #   Define the maximum allowed drift (in m/s) in the                 -[cal_wave]
 #       instrumental drift calculation
 qc_wave_idrift_rv_max = 150.0
-
 
 # -----------------------------------------------------------------------------
 #  Calibration DB settings
@@ -1132,7 +1122,6 @@ calib_max_wait = 3600
 #         calibDB file will be used
 calib_db_match = 'closest'
 
-
 # -----------------------------------------------------------------------------
 #  Telluric DB settings
 # -----------------------------------------------------------------------------
@@ -1155,8 +1144,6 @@ tellu_max_wait = 3600
 #    if two files match with keys and time the key lower in the
 #         telluDB file will be used
 tellu_db_match = 'closest'
-
-
 
 # -----------------------------------------------------------------------------
 #  End of constants file

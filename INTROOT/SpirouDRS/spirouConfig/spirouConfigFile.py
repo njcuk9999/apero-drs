@@ -31,6 +31,7 @@ __date__ = 'Unknown'
 VALID_CHARS = list(string.ascii_letters) + list(string.digits)
 VALID_CHARS += list(string.punctuation) + list(string.whitespace)
 
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================

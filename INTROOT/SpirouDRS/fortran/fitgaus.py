@@ -3,7 +3,8 @@
 """
 fitgaus.py
 
-Fit gaussian to a line. Non-linear 4-parameter gaussian fit by the Levenberg-Marquardt method.
+Fit gaussian to a line. Non-linear 4-parameter gaussian fit by the
+Levenberg-Marquardt method.
 
 
 Created on 2018-06-02 at 11:40
@@ -17,7 +18,7 @@ Python copy of the fitgaus.f routine by F Bouchy
 
 import numpy as np
 
-__NAME__ = 'spirouTHORCA.py' #temp
+__NAME__ = 'spirouTHORCA.py'  # temp
 
 
 def fitgaus(x, y, wei, ndata, m, a):
@@ -39,44 +40,51 @@ def fitgaus(x, y, wei, ndata, m, a):
     func_name = __NAME__ + '.fitgaus()'
 
     # get the inverse of the weights
-    sig = 1/wei
+    sig = 1 / wei
 
     # First iteration
     alamda = -1.
     # define dummy alpha and beta matrix, ochisq for first call
-    alpha = np.zeros((4,4))
+    alpha = np.zeros((4, 4))
     beta = np.zeros((4))
     ochisq = 0
-    a, covar, alpha, chisq, alamda, beta, ochisq = mrqmin(x, y, sig, ndata, a, m, alpha, alamda, beta, ochisq)
+    a, covar, alpha, chisq, alamda, beta, ochisq = mrqmin(x, y, sig, ndata, a,
+                                                          m, alpha, alamda,
+                                                          beta, ochisq)
 
     alamda0 = 1.e-8
     cpt = 0
 
     # Iterate to convergence
     while ((alamda > alamda0) and (cpt < 100)):
-        cpt = cpt+1
-    #    print(cpt) # test
-        a, covar, alpha, chisq, alamda, beta, ochisq = mrqmin(x, y, sig, ndata, a, m, alpha, alamda, beta, ochisq)
+        cpt = cpt + 1
+        #    print(cpt) # test
+        a, covar, alpha, chisq, alamda, beta, ochisq = mrqmin(x, y, sig, ndata,
+                                                              a, m, alpha,
+                                                              alamda, beta,
+                                                              ochisq)
 
-     # Last iteration to calculate errors
+    # Last iteration to calculate errors
     alamda = 0.
-    # === all this does is expand the covar matrix via covsrt to account for fixed parameters
+    # === all this does is expand the covar matrix via covsrt to account for
+    # fixed parameters
     # === as we don't have any it's ignored
-    #a, covar, alpha, chisq, alamda = mrqmin(x, y, sig, ndata, a, m, alpha, alamda)
+    # a, covar, alpha, chisq, alamda = mrqmin(x, y, sig, ndata, a, m,
+    #                                         alpha, alamda)
     # define degrees of freedom
     if ndata > 4:
-        nfree = ndata-4
+        nfree = ndata - 4
     else:
         nfree = ndata
     # calculate errors - TODO see if this can be vectorized
     # define dummy siga array
     siga = np.zeros((m))
     for j in range(m):
-        siga[j] = np.sqrt(covar[j,j])*np.sqrt(chisq/nfree)
+        siga[j] = np.sqrt(covar[j, j]) * np.sqrt(chisq / nfree)
     # evaluate the gaussian fit
-    arg = (x-a[1])/a[2]
-    ex = np.exp(-(arg**2)/2.)
-    fit = a[0]*ex+a[3]
+    arg = (x - a[1]) / a[2]
+    ex = np.exp(-(arg ** 2) / 2.)
+    fit = a[0] * ex + a[3]
 
     return a, siga, fit
 
@@ -93,16 +101,16 @@ def funcs(x, a):
     """
     func_name = __NAME__ + '.funcs()'
     # auxiliary variables (tbc)
-    arg = (x-a[1])/a[2]
-    ex = np.exp(-(arg**2)/2.)
+    arg = (x - a[1]) / a[2]
+    ex = np.exp(-(arg ** 2) / 2.)
     # calculate modified y values
-    y = a[0]*ex+a[3]
+    y = a[0] * ex + a[3]
     # define dyda array
     dyda = np.zeros((4))
     # calculate dyda
     dyda[0] = ex
-    dyda[1] = a[0]*ex*arg/a[2]
-    dyda[2] = a[0]*ex*arg**2/a[2]
+    dyda[1] = a[0] * ex * arg / a[2]
+    dyda[2] = a[0] * ex * arg ** 2 / a[2]
     dyda[3] = 1.
     return y, dyda
 
@@ -132,7 +140,7 @@ def mrqmin(x, y, sig, ndata, a, ma, alpha, alamda, beta, ochisq):
 
     func_name = __NAME__ + '.mrqmin()'
     # set ma
-    ma=4
+    ma = 4
     # call mrqcof
     if alamda < 0:
         alamda = 0.001
@@ -142,7 +150,7 @@ def mrqmin(x, y, sig, ndata, a, ma, alpha, alamda, beta, ochisq):
     # define the covariance matrix
     covar = np.copy(alpha)
     # multiply the diagonal of the covariance matrix by 1+alamda
-    np.fill_diagonal(covar, covar.diagonal()*(1+alamda))
+    np.fill_diagonal(covar, covar.diagonal() * (1 + alamda))
     # define da
     da = np.copy(beta)
     # call gaussj
@@ -152,24 +160,24 @@ def mrqmin(x, y, sig, ndata, a, ma, alpha, alamda, beta, ochisq):
     # (applies only if you have fixed parameters which we don't)
     # check value of alamda -
     # if alamda == 0:
-        # call covsrt
+    # call covsrt
     #   dummy2 = covsrt(covar, ma)
     # -----
 
     # redefine atry, the new fit parameters
-    atry = a+da
+    atry = a + da
     # run mrqcof again on updated a values
     covar, da, chisq = mrqcof(x, y, sig, ndata, atry, ma)
     # if new chisq is an improvement, update values
     if chisq < ochisq:
-        alamda = 0.1*alamda
+        alamda = 0.1 * alamda
         ochisq = chisq
         alpha = np.copy(covar)
         beta = np.copy(da)
         a = np.copy(atry)
     # if new chisq is not an improvement, increase value of alamda
     else:
-        alamda = 10.*alamda
+        alamda = 10. * alamda
         chisq = ochisq
 
     return a, covar, alpha, chisq, alamda, beta, ochisq
@@ -184,17 +192,17 @@ def covsrt(covar, ma):
     :return:
     """
 
-    k=ma-1
-    for j in range(ma-1, -1, -1):
+    k = ma - 1
+    for j in range(ma - 1, -1, -1):
         for i in range(ma):
-            swap = covar[i,k]
-            covar[i,k] = covar[i,j]
-            covar[i,j] = swap
+            swap = covar[i, k]
+            covar[i, k] = covar[i, j]
+            covar[i, j] = swap
         for i in range(ma):
-            swap = covar[k,i]
-            covar[k,i] = covar[j,i]
-            covar[j,i]=swap
-        k=k-1
+            swap = covar[k, i]
+            covar[k, i] = covar[j, i]
+            covar[j, i] = swap
+        k = k - 1
 
 
 def gaussj(a, n, b, m=1, mp=1):
@@ -235,28 +243,31 @@ def gaussj(a, n, b, m=1, mp=1):
         irow = irow[-1]
         icol = icol[-1]
         # update ipiv
-        ipiv[icol] = ipiv[icol]+1
+        ipiv[icol] = ipiv[icol] + 1
         # move pivot element to the diagonal
         a[irow, :], a[icol, :] = a[icol, :], a[irow, :].copy()
         b[irow], b[icol] = b[icol], b[irow]
         indxr[i] = irow
         indxc[i] = icol
-        pivinv = 1./a[icol, icol]
+        pivinv = 1. / a[icol, icol]
         a[icol, icol] = 1.
         # divide pivot row by pivot element
-        a[icol, :] = a[icol, :]*pivinv
-        b[icol] = b[icol]*pivinv
+        a[icol, :] = a[icol, :] * pivinv
+        b[icol] = b[icol] * pivinv
         # reduce the rows (except for pivot row)
         for ll in range(n):
             if ll != icol:
                 dum = a[ll, icol]
                 a[ll, icol] = 0.
-                a[ll, :] = a[ll,: ]-a[icol, :]*dum
-                b[ll] = b[ll]-b[icol]*dum
+                a[ll, :] = a[ll, :] - a[icol, :] * dum
+                b[ll] = b[ll] - b[icol] * dum
     # unscramble the solution by permuting in reverse order
-    for l in range(n-1,-1,-1):
+    for l in range(n - 1, -1, -1):
         if indxr[l] != indxc[l]:
-            a[:, int(indxr[l])], a[:, int(indxc[l])] = a[:, int(indxc[l])], a[:, int(indxr[l])].copy()
+            ii = int(indxr[l])
+            jj = int(indxc[l])
+            a[:, ii], a[:, jj] = a[:, jj].copy(), a[:, ii].copy()
+
     return a, b
 
 
@@ -276,36 +287,38 @@ def gausstest(a, n, b):
                             big = abs(a[j, k])
                             irow = j
                             icol = k
-       # update ipiv
-        ipiv[icol] = ipiv[icol]+1
+        # update ipiv
+        ipiv[icol] = ipiv[icol] + 1
         # move pivot element to the diagonal
         a[irow, :], a[icol, :] = a[icol, :], a[irow, :].copy()
         b[irow], b[icol] = b[icol], b[irow]
         indxr[i] = irow
         indxc[i] = icol
-        pivinv = 1./a[icol, icol]
+        pivinv = 1. / a[icol, icol]
         a[icol, icol] = 1.
         # divide pivot row by pivot element
-        a[icol, :] = a[icol, :]*pivinv
-        b[icol] = b[icol]*pivinv
+        a[icol, :] = a[icol, :] * pivinv
+        b[icol] = b[icol] * pivinv
         # reduce the rows (except for pivot row)
         for ll in range(n):
             if ll != icol:
                 dum = a[ll, icol]
                 a[ll, icol] = 0.
-                a[ll, :] = a[ll,: ]-a[icol, :]*dum
-                b[ll] = b[ll]-b[icol]*dum
+                a[ll, :] = a[ll, :] - a[icol, :] * dum
+                b[ll] = b[ll] - b[icol] * dum
     # unscramble the solution by permuting in reverse order
-    for l in range(n-1,-1,-1):
+    for l in range(n - 1, -1, -1):
         if indxr[l] != indxc[l]:
-            a[:, int(indxr[l])], a[:, int(indxc[l])] = a[:, int(indxc[l])], a[:, int(indxr[l])].copy()
+            ii = int(indxr[l])
+            jj = int(indxc[l])
+            a[:, ii], a[:, jj] = a[:, jj].copy(), a[:, ii].copy()
     return a, b
 
 
 def mrqcof(x, y, sig, ndata, a, ma=4):
     """
-    "Used by mrqin to evaluate the linearized fitting matrix alpha, and vector beta,
-    and calculate chisq"
+    "Used by mrqin to evaluate the linearized fitting matrix alpha,
+    and vector beta, and calculate chisq"
 
     Inputs:
         x: array, x data
@@ -324,29 +337,30 @@ def mrqcof(x, y, sig, ndata, a, ma=4):
     func_name = __NAME__ + '.mrqcof()'
 
     # define alpha as a 4x4 zeroes matrix
-    alpha = np.zeros((4,4))
+    alpha = np.zeros((4, 4))
     # define beta as a 1x4 zeroes array
     beta = np.zeros((4))
     # set chisq to 0
     chisq = 0
     # TODO loop over data length may be arrayable
     for i in range(ndata):
-        # call funcs - is called for each x in data, this is arrayed, returns new y and dyda
+        # call funcs - is called for each x in data, this is arrayed,
+        # returns new y and dyda
         ymod, dyda = funcs(x[i], a)
         # calculate inverse of weight squared
-        sig2i = 1/(sig[i]**2)
+        sig2i = 1 / (sig[i] ** 2)
         dy = y[i] - ymod
         wt = dyda * sig2i
         # do the matrix product of wt and dyda, add it to alpha
-        alpha = alpha+np.matrix(wt).getT()*np.matrix(dyda)
+        alpha = alpha + np.matrix(wt).getT() * np.matrix(dyda)
         # calculate the new value of beta
-        beta = beta+dy*wt
+        beta = beta + dy * wt
         # calculate new chisq value
-        chisq = chisq+np.sum(dy*dy*sig2i)
+        chisq = chisq + np.sum(dy * dy * sig2i)
     # TODO loops may be possible to eliminate?
-    for j in range(1,4):
-        for k in range(0,j):
-            alpha[k,j] = alpha[j,k]
+    for j in range(1, 4):
+        for k in range(0, j):
+            alpha[k, j] = alpha[j, k]
 
     return alpha, beta, chisq
 
@@ -386,7 +400,7 @@ def gaussj_fortran(a, n, b, m=1, mp=1):
                             big = abs(a[j, k])
                             irow = j
                             icol = k
-        ipiv[icol] = ipiv[icol]+1
+        ipiv[icol] = ipiv[icol] + 1
         # move pivot element to the diagonal
         if irow != icol:
             for l in range(n):
@@ -398,21 +412,21 @@ def gaussj_fortran(a, n, b, m=1, mp=1):
             b[icol] = dum
         indxr[i] = irow
         indxc[i] = icol
-        pivinv = 1./a[icol, icol]
+        pivinv = 1. / a[icol, icol]
         a[icol, icol] = 1.
         for l in range(n):
-            a[icol, l] = a[icol, l]*pivinv
-        b[icol] = b[icol]*pivinv
+            a[icol, l] = a[icol, l] * pivinv
+        b[icol] = b[icol] * pivinv
         # reduce all rows except the pivot one
         for ll in range(n):
             if ll != icol:
                 dum = a[ll, icol]
                 a[ll, icol] = 0.
                 for l in range(n):
-                    a[ll, l] = a[ll, l]-a[icol,l]*dum
-                b[ll] = b[ll]-b[icol]*dum
+                    a[ll, l] = a[ll, l] - a[icol, l] * dum
+                b[ll] = b[ll] - b[icol] * dum
     # unscramble the solution by permuting in reverse order
-    for l in range(n-1,-1,-1):
+    for l in range(n - 1, -1, -1):
         if indxr[l] != indxc[l]:
             for k in range(n):
                 dum = a[k, int(indxr[l])]

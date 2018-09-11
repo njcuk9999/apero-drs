@@ -162,7 +162,7 @@ def main(night_name=None, files=None):
 
     # data2=data2-background
     # correct data2 with background (where positive)
-    data2=np.where(data2>0,data2-background,0)
+    data2 = np.where(data2 > 0, data2 - background, 0)
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -213,12 +213,12 @@ def main(night_name=None, files=None):
             # set the number of order to half of the original
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS']/2.0)
         # if fiber is B take the even orders
-        elif fiber=='B':
+        elif fiber == 'B':
             loc['ACC'] = loc['ACC'][:-1:2]
             loc['ASS'] = loc['ASS'][:-1:2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
         # if fiber is A take the even orders
-        elif fiber =='A':
+        elif fiber == 'A':
             loc['ACC'] = loc['ACC'][1::2]
             loc['ASS'] = loc['ASS'][:-1:2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
@@ -369,7 +369,7 @@ def main(night_name=None, files=None):
 
         # get mask for removing certain orders in the RMS calculation
         remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
-        mask=np.in1d(np.arange(len(loc['RMS'])), remove_orders)
+        mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
         # apply mask and calculate the maximum RMS
         max_rms = np.max(loc['RMS'][~mask])
         # apply the quality control based on the new RMS

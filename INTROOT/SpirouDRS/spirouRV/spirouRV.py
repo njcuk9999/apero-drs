@@ -990,6 +990,8 @@ def coravelation(p, loc, log=False):
                         shape = (number of orders x number of columns in image
                                                       (x-axis dimension) )
 
+    :param log: bool, if True logs to stdout/file if False is silent
+
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 rv_ccf: numpy array (1D), the radial velocities for the CCF

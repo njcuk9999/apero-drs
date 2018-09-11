@@ -13,11 +13,9 @@ Last modified: 2016-06-15
 """
 from __future__ import division
 import numpy as np
-import os, string
-from astropy.io import fits
+import os
 from collections import OrderedDict
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -55,10 +53,9 @@ def main(night_name=None):
         # get available night_names
         nightnames = spirouStartup.GetNightDirs(p)
 
-        emsgs = ['Must define night name. Input should be:']
-        emsgs.append('\t >> {0} [NIGHT_NAME]'.format(__NAME__))
-        emsgs.append(' ')
-        emsgs.append('Some available NIGHT_NAMES are as follows:')
+        emsgs = ['Must define night name. Input should be:',
+                 '\t >> {0} [NIGHT_NAME]'.format(__NAME__), ' ',
+                 'Some available NIGHT_NAMES are as follows:']
         # loop around night names and add to message
         for nightname in nightnames:
             emsgs.append('\t {0}'.format(nightname))

@@ -23,11 +23,15 @@ from . import spirouConfigFile
 # =============================================================================
 # Name of program
 __NAME__ = 'spirouConst.py'
-# Get version and author
-__version__ =  '0.3.004'
+# Define version
+__version__ = '0.3.004'
+# Define Authors
+# noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
+# Define release type
 __release__ = 'alpha pre-release'
-__date__ =  '2018-09-11'
+# Define date of last edit
+__date__ = '2018-09-11'
 
 
 # =============================================================================
@@ -955,6 +959,7 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     # return filename and tag
     return e2dsfits, tag
 
+
 # noinspection PyPep8Naming
 def EXTRACT_E2DSFF_FILE(p, fiber=None):
     """
@@ -1066,6 +1071,9 @@ def DRIFT_RAW_FILE(p, fiber=None):
                                 (or call to recipe function) must have at least
                                 one string filename in the list
 
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
+
     :return driftfits: string, the drift_raw fits file name and location
     """
     func_name = 'DRIFT_RAW_FILE'
@@ -1094,6 +1102,8 @@ def DRIFT_E2DS_FITS_FILE(p, fiber=None):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift_e2ds peak drift fits file location
                        and filename
@@ -1124,6 +1134,8 @@ def DRIFT_E2DS_TBL_FILE(p, fiber=None):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift_e2ds peak drift table file location
                        and filename
@@ -1152,6 +1164,8 @@ def DRIFTPEAK_E2DS_FITS_FILE(p, fiber=None):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift peak drift fits file location and
                        filename
@@ -1182,6 +1196,8 @@ def DRIFTPEAK_E2DS_TBL_FILE(p, fiber=None):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift peak drift table file location and
                        filename
@@ -1926,7 +1942,6 @@ def TELLU_PREFIX(p):
     return calib_prefix
 
 
-
 # =============================================================================
 # Define formatting functions
 # =============================================================================
@@ -2247,12 +2262,14 @@ def WRITE_LEVEL():
     return write_level
 
 
+# noinspection PyPep8Naming
 def LOG_STORAGE_KEYS():
     # The storage key to use for each key
     storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
                     warning='LOGGER_WARNING', info='LOGGER_INFO',
                     graph='LOGGER_ALL')
     return storekey
+
 
 # noinspection PyPep8Naming
 def LOG_CAUGHT_WARNINGS():

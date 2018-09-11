@@ -40,6 +40,7 @@ FILENAME = 'fp_fp02a203_e2ds_AB.fits'
 FILENAME = 'hcone_hcone03c61_e2ds_AB.fits'
 FILENAME = 'hcone_hcone06c61_e2ds_C.fits'
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -125,7 +126,6 @@ def scale_image(image, scale=None):
         return image, ''
     # copy image
     newimage = image.copy()
-
 
     # deal with scaling
     if scale == 'log':

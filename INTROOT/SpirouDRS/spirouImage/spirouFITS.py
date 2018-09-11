@@ -946,6 +946,8 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
                         not found
     :param default: object, value of the key if not found and
                     has_default is True
+    :param required: bool, if True key is required and causes error is missing
+                     if False and key not found value is None
 
     :return value: object, value of p[key] or default (if has_default=True)
     """

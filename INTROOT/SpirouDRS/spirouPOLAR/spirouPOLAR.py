@@ -53,9 +53,16 @@ def sort_polar_files(p, polardict):
             ARG_FILE_NAMES: list, list of input filenames
             KW_CMMTSEQ: string, FITS keyword where to find polarimetry
                         information
-    
+
+    :param polardict: dictionary, ParamDict containing information on the
+                      input data
+
     :return polardict: dictionary, ParamDict containing information on the
                        input data
+                       adds an entry for each filename, each entry is a
+                       dictionary containing:
+                       - basename, hdr, cdr, exposure, stokes, fiber, data
+                       for each file
     """
 
     func_name = __NAME__ + '.sort_polar_files()'
