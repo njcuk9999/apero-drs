@@ -23,10 +23,10 @@ run009 = ['cal_WAVE_E2DS_spirou', 'TEST1', '2295525a_pp_e2ds_AB.fits', '20180817
 
 # Extract the FPs/HCs
 run007a = ['cal_extract_RAW_spirou', 'TEST1', '2295525a_pp.fits']
-run010b = ['cal_extract_RAW_spirou', 'TEST1', '2295526f_pp.fits']
-run010c = ['cal_extract_RAW_spirou', 'TEST1', '2295527f_pp.fits']
-run010d = ['cal_extract_RAW_spirou', 'TEST1', '2295528f_pp.fits']
-run010e = ['cal_extract_RAW_spirou', 'TEST1', '2295529f_pp.fits']
+run010b = ['cal_extract_RAW_spirou', 'TEST1', '2295526a_pp.fits']
+run010c = ['cal_extract_RAW_spirou', 'TEST1', '2295527a_pp.fits']
+run010d = ['cal_extract_RAW_spirou', 'TEST1', '2295528a_pp.fits']
+run010e = ['cal_extract_RAW_spirou', 'TEST1', '2295529a_pp.fits']
 run010f = ['cal_extract_RAW_spirou', 'TEST1', '20180817_hc1_hc1_seq_001c_pp.fits']
 run010g = ['cal_extract_RAW_spirou', 'TEST1', '20180817_hc1_hc1_seq_002c_pp.fits']
 run010h = ['cal_extract_RAW_spirou', 'TEST1', '20180817_hc1_hc1_seq_003c_pp.fits']
