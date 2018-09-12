@@ -559,7 +559,7 @@ badpix_flat_cut_ratio = 0.5
 
 #   Define the maximum flux in ADU/s to be considered too         - [cal_badpix]
 #       hot to be used (formally max_hotpix)
-badpix_max_hotpix = 5  # = dark_cutlimit !!!
+badpix_max_hotpix = 5  # same as dark_cutlimit !!!
 
 #   Percentile to normalise to when normalising and median        - [cal_badpix]
 #      filtering image [percentage]
@@ -993,8 +993,7 @@ ic_polar_cont_binsize = 1000
 ic_polar_cont_overlap = 0
 
 #  Define the telluric mask for calculation of continnum          - [pol_spirou]
-ic_polar_cont_tellmask = [[930, 967], [1109, 1167], [1326, 1491], [1782, 1979],
-                          [1997, 2027], [2047, 2076]]
+ic_polar_cont_tellmask = [[930, 967], [1109, 1167], [1326, 1491], [1782, 1979], [1997, 2027], [2047, 2076]]
 
 #  Perform LSD analysis (True = 1, False = 0)                     - [pol_spirou]
 ic_polar_lsd_analysis = 1
@@ -1012,8 +1011,7 @@ ic_polar_lsd_np = 201
 ic_polar_lsd_ccflines = 'marcs_t3000g50_all'
 
 #  Define mask for selecting lines to be used in the LSD analysis - [pol_spirou]
-ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.],
-                         [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
+ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.], [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
 
 #  Define number of points for output LSD profile                 - [pol_spirou]
 ic_polar_lsd_min_linedepth = 0.1
@@ -1022,8 +1020,7 @@ ic_polar_lsd_min_linedepth = 0.1
 ic_polar_lsd_normalize = 1
 
 # Definitions of output LSD data 
-ic_polar_lsd_datainfo = ['LSD_VELOCITIES', 'LSD_STOKESI', 'LSD_STOKESI_MODEL',
-                         'LSD_STOKESVQU', 'LSD_NULL']
+ic_polar_lsd_datainfo = ['LSD_VELOCITIES', 'LSD_STOKESI', 'LSD_STOKESI_MODEL', 'LSD_STOKESVQU', 'LSD_NULL']
 
 # -----------------------------------------------------------------------------
 #  Quality control settings
