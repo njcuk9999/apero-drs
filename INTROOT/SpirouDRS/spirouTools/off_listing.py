@@ -71,14 +71,14 @@ def main(directory=None):
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         rawloc = spirouImage.ReadFitsTable(index_path)
-        loc['FILENAME'] = rawloc['FILENAME']
+        loc['FILENAME'] = list(rawloc['FILENAME'])
         loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
         for col in columns:
             if col not in rawloc.keys():
                 WLOG('', p['LOG_OPT'], '\t- Skipping column {0}'.format(col))
-                loc[col] = np.repeat([''], len(loc['FILENAME']))
+                loc[col] = list(np.repeat([''], len(loc['FILENAME'])))
             else:
-                loc[col] = rawloc[col]
+                loc[col] = list(rawloc[col])
     # else we have to create this file
     else:
         loc['FILENAME'] = []
@@ -166,6 +166,22 @@ def main(directory=None):
         spirouImage.PrintTable(table)
 
     # ----------------------------------------------------------------------
+    # Update Index
+    # ----------------------------------------------------------------------
+    # ask whether to update index
+    question = 'Update/Write index.fits? [Y]es or [N]o'
+    cond = spirouStartup.spirouStartup.spirou_input_yes_no(p, question)
+    # if cond is True can update
+    if cond:
+        # log writing index file
+        wmsg = 'Writing index to file {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(index_path))
+        # update index
+        spirouStartup.SortSaveOutputs(loc, index_path)
+    else:
+        WLOG('warning', p['LOG_OPT'], 'Skipped writing to index file')
+
+    # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     p = spirouStartup.End(p, outputs=None)
@@ -188,3 +204,4 @@ if __name__ == "__main__":
 
 
 
+# off_listing.py: save a listing to index.fits (if prompted to)
