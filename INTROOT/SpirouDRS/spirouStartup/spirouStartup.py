@@ -119,7 +119,8 @@ def run_begin(recipe, quiet=False):
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
-                   mainfitsfile=None, mainfitsdir=None, quiet=False):
+                   mainfitsfile=None, mainfitsdir=None, quiet=False,
+                   require_night_name=True):
     """
     Deal with loading run time arguments:
 
@@ -193,23 +194,30 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
     # deal with arg_night_name defined in call
     if night_name is not None:
         cparams['ARG_NIGHT_NAME'] = str(night_name)
+        cparams.set_source('ARG_NIGHT_NAME', func_name)
+    elif not require_night_name:
+        cparams['ARG_NIGHT_NAME'] = ''
+        cparams.set_source('ARG_NIGHT_NAME', func_name)
     # -------------------------------------------------------------------------
     # deal with run time arguments
     if customargs is None:
-        cparams = run_time_args(cparams, mainfitsdir)
+        cparams = run_time_args(cparams, mainfitsdir, require_night_name)
     else:
-        cparams = run_time_custom_args(cparams, customargs, mainfitsdir)
+        cparams = run_time_custom_args(cparams, customargs, mainfitsdir,
+                                       require_night_name)
     # -------------------------------------------------------------------------
     # deal with files being defined in call
     if files is not None:
         cparams = get_call_arg_files_fitsfilename(cparams, files,
-                                                  mfd=mainfitsdir)
+                                                  mfd=mainfitsdir,
+                                                  rnn=require_night_name)
     # if files not defined we have custom arguments and hence need to define
     #    arg_file_names and fitsfilename manually
     elif mainfitsfile is not None and customargs is not None:
         cparams = get_custom_arg_files_fitsfilename(cparams, customargs,
                                                     mainfitsfile,
-                                                    mfd=mainfitsdir)
+                                                    mfd=mainfitsdir,
+                                                    rnn=require_night_name)
     # -------------------------------------------------------------------------
     # check key parameters
     cparams = check_key_fparams(cparams)
@@ -710,7 +718,7 @@ def check_key_fparams(p):
     return p
 
 
-def run_time_args(p, mainfitsdir):
+def run_time_args(p, mainfitsdir, require_night_name=True):
     """
     Get sys.argv arguments (run time arguments and use them to fill parameter
     dictionary
@@ -726,6 +734,8 @@ def run_time_args(p, mainfitsdir):
                             'reduced' - the DRS_DATA_REDUC folder
                             'calibdb' - the DRS_CALIB_DB folder
                             or the full path to the file
+
+    :param require_night_name: bool, if False do not require night_name
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -776,7 +786,8 @@ def run_time_args(p, mainfitsdir):
     p.set_source('RAW_DIR', cname + '/RAW_DIR()')
 
     # deal with setting main fits directory (sets ARG_FILE_DIR)
-    p = set_arg_file_dir(p, mfd=mainfitsdir)
+    p = set_arg_file_dir(p, mfd=mainfitsdir,
+                         require_night_name=require_night_name)
 
     # get fitsfilename
     p['FITSFILENAME'] = spirouConfig.Constants.FITSFILENAME(p)
@@ -794,7 +805,7 @@ def run_time_args(p, mainfitsdir):
     return p
 
 
-def run_time_custom_args(p, customargs, mainfitsdir):
+def run_time_custom_args(p, customargs, mainfitsdir, require_night_name=True):
     """
     Get the custom arguments and add them (with some default arguments)
     to the constants parameter dictionary
@@ -812,6 +823,8 @@ def run_time_custom_args(p, customargs, mainfitsdir):
                             'reduced' - the DRS_DATA_REDUC folder
                             'calibdb' - the DRS_CALIB_DB folder
                             or the full path to the file
+
+    :param require_night_name: bool, if False do not require night_name
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -851,7 +864,8 @@ def run_time_custom_args(p, customargs, mainfitsdir):
     p.set_source('raw_dir', source + ' & {0}/RAW_DIR()')
 
     # deal with setting main fits directory (sets ARG_FILE_DIR)
-    p = set_arg_file_dir(p, mfd=mainfitsdir)
+    p = set_arg_file_dir(p, mfd=mainfitsdir,
+                         require_night_name=require_night_name)
 
     # loop around defined run time arguments
     for key in list(customargs.keys()):
@@ -862,7 +876,8 @@ def run_time_custom_args(p, customargs, mainfitsdir):
     return p
 
 
-def get_call_arg_files_fitsfilename(p, files, mfd=None):
+def get_call_arg_files_fitsfilename(p, files, mfd=None,
+                                    rnn=True):
     """
     We need to deal with there being no run time arguments and having
     files defined from "files". In the case that there are no run time
@@ -889,6 +904,8 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
                 'calibdb' - the DRS_CALIB_DB folder
                 or the full path to the file
 
+    :param rnn: bool, if False do not require night_name
+
     :return cparams: parameter dictionary, the updated parameter dictionary
             Adds the following:
                 arg_file_names: list, list of files taken from the command line
@@ -906,7 +923,7 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # get chosen arg_file_dir
-    p = set_arg_file_dir(p, mfd)
+    p = set_arg_file_dir(p, mfd, rnn)
 
     # check files type
     # need to check whether files is a list
@@ -950,7 +967,7 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None):
     return p
 
 
-def set_arg_file_dir(p, mfd=None):
+def set_arg_file_dir(p, mfd=None, require_night_name=True):
     """
 
     :param p: parameter dictionary, ParamDict containing constants
@@ -971,6 +988,8 @@ def set_arg_file_dir(p, mfd=None):
                 'reduced' - the DRS_DATA_REDUC folder
                 'calibdb' - the DRS_CALIB_DB folder
                 or the full path to the file
+
+    :param require_night_name: bool, if False do not require night_name
 
     :return p: parameter dictionary, the updated parameter dictionary
             Adds the following:
@@ -1024,6 +1043,8 @@ def set_arg_file_dir(p, mfd=None):
                      'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']),
                      '    in directory {0} ({1})'.format(arg_fp, location)]
             WLOG('error', DPROG, emsgs)
+        elif not require_night_name:
+            p['ARG_FILE_DIR'] = ''
         # else it is the directory which is wrong (cal_validate was not run)
         else:
             emsg1 = ('Fatal error cannot find directory NIGHT_NAME="{0}"'
@@ -1577,7 +1598,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     return customdict
 
 
-def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
+def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None, rnn=True):
     """
     Deal with having to set arg_file_names and fitsfilenames manually
     uses "mff" the main fits filename and "mdf" the main fits file directory
@@ -1618,6 +1639,9 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
                     'reduced' - the DRS_DATA_REDUC folder
                     'calibdb' - the DRS_CALIB_DB folder
                     or the full path to the file
+
+    :param rnn: bool, if False do not require night name
+
     :return p: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 arg_file_names: list, list of files taken from the command line
@@ -1630,7 +1654,7 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None):
     # define function name
     func_name = __NAME__ + '.get_custom_arg_files_fitsfilename()'
     # define the chosen arg_file_dir
-    p = set_arg_file_dir(p, mfd=mfd)
+    p = set_arg_file_dir(p, mfd=mfd, require_night_name=rnn)
     # mainfitsfile must be a key in customargs
     if mff in customargs:
         # the value of mainfitsfile must be a string or list of strings
