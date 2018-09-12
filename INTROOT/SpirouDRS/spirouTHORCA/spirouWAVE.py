@@ -485,21 +485,22 @@ def fp_wavelength_sol_new(p, loc):
         floc['m_fp'] = mpeak
         floc['dopd_t'] = dopd_t
         # for orders other than the reddest, attempt to cross-match
+        cm_ind = -2
         if order_num != n_ord_final_fp:
             # check for overlap
-            if floc['llpos'][-1] > ll_prev[0]:
+            if floc['llpos'][cm_ind] > ll_prev[0]:
                 # find closest peak in overlap and get its m value
-                ind = np.abs(ll_prev - floc['llpos'][-1]).argmin()
+                ind = np.abs(ll_prev - floc['llpos'][cm_ind]).argmin()
                 # the peak matching the reddest may not always be found!!
                 # define maximum permitted difference
                 llpos_diff_med = np.median(floc['llpos'][1:]-floc['llpos'][:-1])
                 print(llpos_diff_med)
-                print(abs(ll_prev[ind] - floc['llpos'][-1]))
+                print(abs(ll_prev[ind] - floc['llpos'][cm_ind]))
                 # check if the difference is over the limit
-                if abs(ll_prev[ind] - floc['llpos'][-1]) > 1.5*llpos_diff_med:
+                if abs(ll_prev[ind] - floc['llpos'][cm_ind]) > 1.5*llpos_diff_med:
                     print('overlap line not matched')
-                    ll_diff = ll_prev[ind] - floc['llpos'][-1]
-                    ind2 = -2
+                    ll_diff = ll_prev[ind] - floc['llpos'][cm_ind]
+                    ind2 = cm_ind -1
                     # loop over next reddest peak until they match
                     while ll_diff > 1.5*llpos_diff_med:
                         # check there is still overlap
@@ -510,7 +511,7 @@ def fp_wavelength_sol_new(p, loc):
                         else: break
                 m_match = m_prev[ind]
                 # save previous mpeak calculated
-                m_init = mpeak[-1]
+                m_init = mpeak[cm_ind]
                 # recalculate m if there's an offset from cross_match
                 m_offset_c = m_match - m_init
                 if m_offset_c != 0:
@@ -901,7 +902,8 @@ def fit_gaussian_triplets(p , loc):
             # find this order's lines
             good = orders == order_num
             # find all usable lines in this order
-            good_all = good & (np.isfinite(wave_catalog))
+#            good_all = good & (np.isfinite(wave_catalog))
+            good_all = good & (np.isfinite(dv))
             # find all bright usable lines in this order
             good_bright = good_all & brightest_lines
             # get the positions of lines
@@ -1403,48 +1405,6 @@ def find_fp_lines_new(p, loc):
     loc = spirouRV.CreateDriftFile(p, loc)
     # remove wide/spurious peaks
     loc = spirouRV.RemoveWidePeaks(p, loc)
-    # check for and remove double-fitted lines
-    # save old position
-    loc['XPEAK_OLD'] = np.copy(loc['XPEAK'])
-    loc['ORDPEAK_OLD'] = np.copy(loc['ORDPEAK'])
-    # set up storage for good lines
-    ordpeak_k, xpeak_k, ewpeak_k, vrpeak_k, llpeak_k, amppeak_k = \
-        [], [], [], [], [], []
-    # loop through the orders
-    for order_num in range(np.shape(loc['SPEREF'])[0]):
-        # set up mask for the order
-        gg = loc['ORDPEAK'] == order_num
-        # get the xvalues
-        xpeak = loc['XPEAK'][gg]
-        # get the amplitudes
-        amppeak = loc['AMPPEAK'][gg]
-        # get the points where two peaks are spaced by < peak_spacing
-        ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
-        # get the indices of the second peak of each pair
-        ind2 = ind + 1
-        # initialize mask with the same size as xpeak
-        xmask = np.ones(len(xpeak), dtype=bool)
-        # mask the peak with the lower amplitude of the two
-        for i in range(len(ind)):
-            if amppeak[ind[i]] < amppeak[ind2[i]]:
-                xmask[ind[i]] = False
-            else:
-                xmask[ind2[i]] = False
-        # save good lines
-        ordpeak_k += list(loc['ORDPEAK'][gg][xmask])
-        xpeak_k += list(loc['XPEAK'][gg][xmask])
-        ewpeak_k += list(loc['EWPEAK'][gg][xmask])
-        vrpeak_k += list(loc['VRPEAK'][gg][xmask])
-        llpeak_k += list(loc['LLPEAK'][gg][xmask])
-        amppeak_k += list(loc['AMPPEAK'][gg][xmask])
-
-    # replace FP peak arrays in loc
-    loc['ORDPEAK'] = np.array(ordpeak_k)
-    loc['XPEAK'] = np.array(xpeak_k)
-    loc['EWPEAK'] = np.array(ewpeak_k)
-    loc['VRPEAK'] = np.array(vrpeak_k)
-    loc['LLPEAK'] = np.array(llpeak_k)
-    loc['AMPPEAK'] = np.array(amppeak_k)
 
     return loc
 
