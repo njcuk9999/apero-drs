@@ -15,9 +15,7 @@ Up-to-date with cal_BADPIX_spirou AT-4 V47
 """
 from __future__ import division
 import numpy as np
-import os
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -89,13 +87,13 @@ def main(night_name=None, files=None):
     # convert NaN to zeros
     data2 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
-#    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
-#                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
-#                   getshape=False)
-#    data2 = spirouImage.ResizeImage(data0, **bkwargs)
+    #    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+    #                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+    #                   getshape=False)
+    #    data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
-#    WLOG('', p['log_opt'], ('Image format changed to '
-#                            '{0}x{1}').format(*data2.shape[::-1]))
+    #    WLOG('', p['log_opt'], ('Image format changed to '
+    #                            '{0}x{1}').format(*data2.shape[::-1]))
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -110,7 +108,7 @@ def main(night_name=None, files=None):
     satseuil = 64536.
     col = 2100
     seuil = 10000
-    slice = 5
+    slice0 = 5
 
     plt.ion()
     plt.clf()
@@ -122,12 +120,13 @@ def main(night_name=None, files=None):
     plt.figure()
     plt.clf()
 
-    centpart = data2[:, col - slice:col + slice]
-#    centpart = data2[col - slice:col + slice,:]
-#    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
-#    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
+    centpart = data2[:, col - slice0:col + slice0]
+    #    centpart = data2[col - slice:col + slice,:]
+    #    weights = np.where((centpart < satseuil) & (centpart > 0), 1, 0.0001)
+    #    y = np.average(centpart, axis=1, weights=weights)  ## weighted average
     y = np.median(centpart, axis=1)
-    # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))   ## weighted average
+    # y=average(centpart,axis=1,weights=where((centpart>0),1,0.0001))
+    # ## weighted average
     plt.plot(np.arange(ny), y)
 
     # ----------------------------------------------------------------------
@@ -150,31 +149,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-
-
-
-
-
-#data2 = where(np.isnan(data), 0., data)  # conversion des Not.A.Number par 0.
-
-#fdata = array(data2.flat)
-#fdata.sort()
-#imax = sum(where(fdata > satseuil, 1, 0))
-#imin = sum(where(fdata == 0, 1, 0))
-
-
-# output=plt.hist(fdata,65.535)
-
-# histo=np.histogram(fdata,bins=100,range=(1,20000))
-
-#mean = Numeric.mean(fdata)
-#rms = Numeric.std(fdata)
-
-#WLOG('', log_opt, 'Exptime= %.1f sec - Saturation limit= %.1f e-' % (exptime, 64536 * gain))
-
-#WLOG('', log_opt, 'Full image : MEAN= %.1f e- / RMS= %.1f e- / Frac>Saturation= %.1f %% / Frac bad pixels= %.1f %%' \
-#     % (mean, rms, imax * 100. / (nx * ny), imin * 100. / (nx * ny)))
-
-#WLOG('info', log_opt, 'Recipe ' + process_running + ' has been succesfully completed')

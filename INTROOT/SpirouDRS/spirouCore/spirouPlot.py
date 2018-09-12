@@ -28,6 +28,7 @@ for gui in gui_env:
         matplotlib.use(gui, warn=False, force=True)
         import matplotlib.pyplot as plt
         from matplotlib.patches import Rectangle
+
         break
     except:
         continue
@@ -36,7 +37,6 @@ if matplotlib.get_backend() == 'MacOSX':
                        'Qt5Agg not available']
 else:
     matplotlib_emsg = []
-
 
 # =============================================================================
 # Define variables
@@ -55,8 +55,10 @@ WLOG = spirouLog.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Speed of light
-speed_of_light_ms = cc.c.to(uu.m/uu.s).value
-speed_of_light = cc.c.to(uu.km/uu.s).value
+# noinspection PyPep8
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyPep8
+speed_of_light = cc.c.to(uu.km / uu.s).value
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
 # check for matplotlib import errors
@@ -170,11 +172,11 @@ def darkplot_image_and_regions(pp, image):
     bylow, byhigh = pp['IC_CCDY_BLUE_LOW'], pp['IC_CCDY_BLUE_HIGH']
     # adjust for backwards limits
     if bxlow > bxhigh:
-        bxlow, bxhigh = bxhigh-1, bxlow-1
+        bxlow, bxhigh = bxhigh - 1, bxlow - 1
     if bylow > byhigh:
-        bylow, byhigh = byhigh-1, bylow-1
+        bylow, byhigh = byhigh - 1, bylow - 1
     # plot blue rectangle
-    brec = Rectangle((bxlow, bylow), bxhigh-bxlow, byhigh-bylow,
+    brec = Rectangle((bxlow, bylow), bxhigh - bxlow, byhigh - bylow,
                      edgecolor='w', facecolor='None')
     frame.add_patch(brec)
     # get the red region
@@ -182,11 +184,11 @@ def darkplot_image_and_regions(pp, image):
     rylow, ryhigh = pp['IC_CCDY_RED_LOW'], pp['IC_CCDY_RED_HIGH']
     # adjust for backwards limits
     if rxlow > rxhigh:
-        rxlow, rxhigh = rxhigh-1, rxlow-1
+        rxlow, rxhigh = rxhigh - 1, rxlow - 1
     if rylow > ryhigh:
-        rylow, ryhigh = ryhigh-1, rylow-1
+        rylow, ryhigh = ryhigh - 1, rylow - 1
     # plot blue rectangle
-    rrec = Rectangle((rxlow, rylow), rxhigh-rxlow, ryhigh-rylow,
+    rrec = Rectangle((rxlow, rylow), rxhigh - rxlow, ryhigh - rylow,
                      edgecolor='r', facecolor='None')
     frame.add_patch(rrec)
     plt.title('Dark image with red and blue regions')
@@ -256,17 +258,17 @@ def darkplot_histograms(pp):
     histo_r, edge_r = pp['HISTO_RED']
     # plot the main histogram
     xf = np.repeat(edge_f, 2)
-#    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
+    #    yf = [0] + list(np.repeat(histo_f*100/np.max(histo_f), 2)) + [0]
     yf = [0] + list(np.repeat(histo_f, 2)) + [0]
     frame.plot(xf, yf, color='green', label='Whole det')
     # plot the blue histogram
     xb = np.repeat(edge_b, 2)
-#    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
+    #    yb = [0] + list(np.repeat(histo_b*100/np.max(histo_b), 2)) + [0]
     yb = [0] + list(np.repeat(histo_b, 2)) + [0]
     frame.plot(xb, yb, color='blue', label='Blue part')
     # plot the red histogram
     xr = np.repeat(edge_r, 2)
-#    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
+    #    yr = [0] + list(np.repeat(histo_r*100/np.max(histo_r), 2)) + [0]
     yr = [0] + list(np.repeat(histo_r, 2)) + [0]
     frame.plot(xr, yr, color='red', label='Red part')
     frame.set_xlabel('ADU/s')
@@ -584,11 +586,9 @@ def slit_sorder_plot(pp, loc, image):
     end_plotting()
 
 
-def slit_tilt_angle_and_fit_plot(pp, loc):
+def slit_tilt_angle_and_fit_plot(loc):
     """
     Plot the slit tilt angle and its fit
-
-    :param pp: parameter dictionary, ParamDict containing constants
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -725,7 +725,7 @@ def ff_aorder_fit_edges(p, loc, image):
     frame.imshow(image, origin='lower', clim=(1., 20000), cmap='gray')
 
     # loop around the order numbers
-    for order_num in range(len(loc['ACC'])//p['NBFIB']):
+    for order_num in range(len(loc['ACC']) // p['NBFIB']):
         acc = loc['ACC'][order_num]
 
         # work out offsets for this order
@@ -798,11 +798,11 @@ def ff_sorder_tiltadj_e2ds_blaze(p, loc):
     # get xrange
     x = np.arange(len(e2ds))
     # plot e2ds for selected order
-#    frame.plot(x, e2ds, label='E2DS')
-    frame.plot(x[e2ds>0], e2ds[e2ds>0], label='E2DS')
+    #    frame.plot(x, e2ds, label='E2DS')
+    frame.plot(x[e2ds > 0], e2ds[e2ds > 0], label='E2DS')
     # plot blaze function
-#    frame.plot(x, blaze, label='Blaze')
-    frame.plot(x[blaze>1], blaze[blaze>1], label='Blaze')
+    #    frame.plot(x, blaze, label='Blaze')
+    frame.plot(x[blaze > 1], blaze[blaze > 1], label='Blaze')
     # set title labels limits
     title = 'E2DS + BLAZE spectral order {0} fiber {1}'
     frame.set(title=title.format(selected_order, fiber))
@@ -855,7 +855,6 @@ def ff_sorder_flat(p, loc):
 
 
 def ff_rms_plot(p, loc):
-
     # get constants from p
     remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
     # set up fig
@@ -977,7 +976,7 @@ def ext_aorder_fit(p, loc, image, cut=20000):
     # plot image
     frame.imshow(image, origin='lower', clim=(1., cut), cmap='gray')
     # loop around the order numbers
-    for order_num in range(len(loc['ACC'])//p['NBFIB']):
+    for order_num in range(len(loc['ACC']) // p['NBFIB']):
         acc = loc['ACC'][order_num]
         # work out offsets for this order
         offsetarraylow = np.zeros(len(acc))
@@ -1038,7 +1037,7 @@ def ext_spectral_order_plot(p, loc):
     extraction = loc['E2DS'][selected_order]
     # select wavelength solution
     wave = loc['WAVE'][selected_order]
-    xlabel = 'Wavelength [nm]'  #[$\AA$]
+    xlabel = 'Wavelength [nm]'  # [$\AA$]
     # set up fig
     plt.figure()
     # clear the current figure
@@ -1127,11 +1126,9 @@ def drift_plot_selected_wave_ref(p, loc, x=None, y=None):
     end_plotting()
 
 
-def drift_plot_photon_uncertainty(p, loc, x=None, y=None):
+def drift_plot_photon_uncertainty(loc, x=None, y=None):
     """
     Plot the photo noise uncertainty against spectral order number
-
-    :param p: parameter dictionary, ParamDict containing constants
 
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least: (if x and y are None)
@@ -1238,11 +1235,9 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     end_plotting()
 
 
-def drift_peak_plot_dtime_against_drift(p, loc):
+def drift_peak_plot_dtime_against_drift(loc):
     """
     Plot mean drift against time from reference
-
-    :param p: parameter dictionary, ParamDict containing constants
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -1296,7 +1291,7 @@ def drift_peak_plot_dtime_against_drift(p, loc):
     end_plotting()
 
 
-def drift_plot_correlation_comp(p, loc, cc, iteration):
+def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     """
     Plot correlation comparison plot (comparing value good and bad orders that
     pass and fail the Pearson R tests
@@ -1348,11 +1343,11 @@ def drift_plot_correlation_comp(p, loc, cc, iteration):
     mask = cc > prcut
     # select bad order
     bad_orders = np.arange(nbo)[~mask]
-    bad_order = np.argmin(cc)
+    bad_order = np.argmin(ccoeff)
     # select worse good order
-    good_order = np.argmin(cc[mask])
+    good_order = np.argmin(ccoeff[mask])
     # select best order
-    best_order = np.argmax(cc[mask])
+    best_order = np.argmax(ccoeff[mask])
 
     # -------------------------------------------------------------------------
     # plot good order
@@ -1429,8 +1424,8 @@ def drift_plot_correlation_comp(p, loc, cc, iteration):
              'Best result (Order {2}): {3}\n'
              'Good result (Order {4}): {5}\n'
              'Failed result (Order {6}): {7}')
-    targs = [iteration + 1, prcut, best_order, cc[best_order],  good_order,
-             cc[good_order], bad_order, cc[bad_order]]
+    targs = [iteration + 1, prcut, best_order, ccoeff[best_order], good_order,
+             ccoeff[good_order], bad_order, ccoeff[bad_order]]
     plt.suptitle(title.format(*targs))
 
     # -------------------------------------------------------------------------
@@ -1458,16 +1453,16 @@ def create_separated_scaled_image(image, axis=0):
     else:
         dim1, dim2 = 1, 0
     # get a scale for the pixels
-    scale = int(np.ceil(image.shape[dim2]/(image.shape[dim1])))
+    scale = int(np.ceil(image.shape[dim2] / (image.shape[dim1])))
     # get a new image
-    newimage = np.zeros((image.shape[dim1]*scale, image.shape[dim2]))
+    newimage = np.zeros((image.shape[dim1] * scale, image.shape[dim2]))
     newimage -= np.max(image)
     # add the old pixels, repeated
 
     for pixel in range(image.shape[dim1]):
 
-        start = pixel*scale
-        end = scale*(pixel + 1)
+        start = pixel * scale
+        end = scale * (pixel + 1)
 
         if axis == 0:
             repeat = np.tile(image[pixel, :], scale)
@@ -1550,7 +1545,7 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     :return None:
     """
     if fig is None:
-        fig = plt.figure()
+        plt.figure()
     # clear the current figure
     plt.clf()
     # set up axis
@@ -1576,7 +1571,6 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
 # wave solution plotting function
 # =============================================================================
 def wave_littrow_extrap_plot(loc, iteration=0):
-
     # get the dimensions of the data
     ydim, xdim = loc['HCDATA'].shape
     # define the x axis data
@@ -1776,8 +1770,7 @@ def wave_fp_wavelength_residuals(loc):
 # =============================================================================
 # wave solution plotting function (EA)
 # =============================================================================
-def wave_ea_plot_per_order_hcguess(p, loc, order_num):
-
+def wave_ea_plot_per_order_hcguess(loc, order_num):
     plt.ioff()
 
     # get data from loc
@@ -1818,9 +1811,8 @@ def wave_ea_plot_per_order_hcguess(p, loc, order_num):
     plt.close()
 
 
-def wave_ea_plot_allorder_hcguess(p, loc):
-
-#    plt.ioff()
+def wave_ea_plot_allorder_hcguess(loc):
+    #    plt.ioff()
 
     # get data from loc
     wave = loc['INITIAL_WAVE_MAP']
@@ -1838,17 +1830,17 @@ def wave_ea_plot_allorder_hcguess(p, loc):
     # set up axis
     frame = plt.subplot(111)
 
-    #define spectral order colours
+    # define spectral order colours
     col1 = ['black', 'grey']
     col2 = ['green', 'purple']
 
-# loop through the orders
+    # loop through the orders
     for order_num in range(nbo):
         # set up mask for the order
         gg = ord_ini == order_num
         # keep only lines for the order
         xpix_p = xpix_ini[gg]
-        xpix_p = xpix_p #+ 4088*order_num
+        xpix_p = xpix_p  # + 4088*order_num
         g2_p = g2_ini[gg]
 
         # get colours from order parity
@@ -1861,12 +1853,12 @@ def wave_ea_plot_allorder_hcguess(p, loc):
         for line_it in range(len(xpix_p)):
             xpix = xpix_p[line_it]
             g2 = g2_p[line_it]
-            plt.plot(wave[order_num, xpix], g2, color = col2_1)
+            plt.plot(wave[order_num, xpix], g2, color=col2_1)
 
     # set title and labels
     frame.set(title='Fitted gaussians on spectrum',
-                  xlabel='Wavelength [nm]',
-                  ylabel='Normalized flux')
+              xlabel='Wavelength [nm]',
+              ylabel='Normalized flux')
 
     # end plotting function properly
     end_plotting()
@@ -1905,7 +1897,7 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
     # get all orders
     all_orders = np.unique(orders)
     # calculate dv values
-    dv = ((wave_catalog/recon0) - 1) * speed_of_light
+    dv = ((wave_catalog / recon0) - 1) * speed_of_light
     # get colours
     colours = plt.rcParams['axes.prop_cycle'].by_key()['color']
     # repeat colours to match all_orders
@@ -1928,7 +1920,7 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
         # plot frame1
         frame1.scatter(wave_catalog[good], dv[good], s=5, color=colour)
         # plot frame2
-        frame2.scatter(1.0/gauss_rms_dev[good], dv[good], s=5, color=colour)
+        frame2.scatter(1.0 / gauss_rms_dev[good], dv[good], s=5, color=colour)
         # plot frame3
         frame3.scatter(xgau[good] % 1, dv[good], s=5, color=colour)
         # plot frame4
@@ -1945,7 +1937,6 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
 
 
 def wave_ea_plot_line_profiles(p, loc):
-
     # get constants from p
     resmap_size = p['HC_RESMAP_SIZE']
     fit_span = p['HC_RESMAP_DV_SPAN']
@@ -1973,10 +1964,10 @@ def wave_ea_plot_line_profiles(p, loc):
             # get the correct frame
             frame = frames[order_num // bin_order, xpos]
             # get the correct data
-            all_dvs = map_dvs[order_num  // bin_order][xpos]
-            all_lines = map_lines[order_num  // bin_order][xpos]
-            params = map_params[order_num  // bin_order][xpos]
-            resolution = resolution_map[order_num  // bin_order][xpos]
+            all_dvs = map_dvs[order_num // bin_order][xpos]
+            all_lines = map_lines[order_num // bin_order][xpos]
+            params = map_params[order_num // bin_order][xpos]
+            resolution = resolution_map[order_num // bin_order][xpos]
             # get fit data
             xfit = np.linspace(fit_span[0], fit_span[1], 100)
             yfit = spirouMath.gauss_fit_s(xfit, *params)
@@ -1990,7 +1981,7 @@ def wave_ea_plot_line_profiles(p, loc):
             # add label in legend (for sticky position
             largs = [order_num, order_num + bin_order - 1, xpos, resolution]
             handle = Rectangle((0, 0), 1, 1, fc="w", fill=False,
-                                edgecolor='none', linewidth=0)
+                               edgecolor='none', linewidth=0)
             label = 'Orders {0}-{1} region={2} R={3:.0f}'.format(*largs)
             frame.legend([handle], [label], loc=9)
 
@@ -2024,7 +2015,6 @@ def wave_ea_plot_line_profiles(p, loc):
 # telluric plotting function
 # =============================================================================
 def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
-
     # get data from loc
     wave = loc['WAVE'][order_num, :]
     # set up fig
@@ -2049,7 +2039,6 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
 
 
 def tellu_pca_comp_plot(p, loc):
-
     # get constants from p
     npc = loc['NPC']
     # get data from loc
@@ -2098,7 +2087,7 @@ def tellu_fit_tellu_spline_plot(p, loc):
     start, end = selected_order * xdim, selected_order * xdim + xdim
     stemp = np.array(template2[start: end])
     # recovered absorption
-    srecov = ssp/stemp
+    srecov = ssp / stemp
     # set up fig
     plt.figure()
     # clear the current figure
@@ -2106,9 +2095,9 @@ def tellu_fit_tellu_spline_plot(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot spectra for selected order
-    frame.plot(swave, ssp/np.nanmedian(ssp), label='Observed SP')
-    frame.plot(swave, stemp/np.nanmedian(stemp), label='Template SP')
-    frame.plot(swave, srecov/np.nanmedian(srecov), label='Recov abso SP')
+    frame.plot(swave, ssp / np.nanmedian(ssp), label='Observed SP')
+    frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
+    frame.plot(swave, srecov / np.nanmedian(srecov), label='Recov abso SP')
     # add legend
     frame.legend(loc=0)
     # end plotting function properly
@@ -2116,7 +2105,6 @@ def tellu_fit_tellu_spline_plot(p, loc):
 
 
 def tellu_fit_recon_abso_plot(p, loc):
-
     # get constants from p
     selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
     # get data dimensions
@@ -2135,9 +2123,10 @@ def tellu_fit_recon_abso_plot(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot spectra for selected order
-    frame.plot(swave, ssp2/np.nanmedian(ssp2)/srecon_abso, color='g',
+    frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
                label='Cleaned SP')
-    frame.plot(swave, stemp2/np.nanmedian(stemp2), color='c', label='Template')
+    frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
+               label='Template')
     frame.plot(swave, srecon_abso, color='r', label='recon abso')
     # add legend
     frame.legend(loc=0)
@@ -2149,7 +2138,6 @@ def tellu_fit_recon_abso_plot(p, loc):
 # Polarimetry plotting functions
 # =============================================================================
 def polar_continuum_plot(loc, in_wavelengths=True):
-
     # get data from loc
     wl, pol = loc['FLAT_X'], loc['FLAT_POL']
     contpol = loc['CONT_POL']
@@ -2195,8 +2183,8 @@ def polar_continuum_plot(loc, in_wavelengths=True):
 
 def polar_result_plot(loc, in_wavelengths=True):
     # get data from loc
-    wl, pol = loc['FLAT_X'], 100.0*loc['FLAT_POL']
-    null1, null2 = 100.0*loc['FLAT_NULL1'], 100.0*loc['FLAT_NULL2']
+    wl, pol = loc['FLAT_X'], 100.0 * loc['FLAT_POL']
+    null1, null2 = 100.0 * loc['FLAT_NULL1'], 100.0 * loc['FLAT_NULL2']
     stokes = loc['STOKES']
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
     # ---------------------------------------------------------------------
@@ -2259,7 +2247,7 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
     titleargs = [stokes, method, nexp]
     # ---------------------------------------------------------------------
     # plot polarimetry data
-    plt.errorbar(wl, stokesI, yerr=stokesIerr, fmt='-', label='Stokes I', 
+    plt.errorbar(wl, stokesI, yerr=stokesIerr, fmt='-', label='Stokes I',
                  alpha=0.5)
     # ---------------------------------------------------------------------
     # set title and labels
@@ -2271,8 +2259,7 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
     end_plotting()
 
 
-def polar_lsd_plot(loc) :
-    
+def polar_lsd_plot(loc):
     # get data from loc
     vels = loc['LSD_VELOCITIES']
     Z = loc['LSD_STOKESI']
@@ -2280,14 +2267,14 @@ def polar_lsd_plot(loc) :
     Zp = loc['LSD_STOKESVQU']
     Znp = loc['LSD_NULL']
     stokes = loc['STOKES']
-    
+
     # ---------------------------------------------------------------------
     # set up fig
     plt.figure()
     # clear the current figure
     plt.clf()
     # set up axis
-    
+
     # ---------------------------------------------------------------------
     frame = plt.subplot(3, 1, 1)
     plt.plot(vels, Z, '-')
@@ -2298,7 +2285,7 @@ def polar_lsd_plot(loc) :
     # set title and labels
     frame.set(title=title, xlabel=xlabel, ylabel=ylabel)
     # ---------------------------------------------------------------------
-    
+
     # ---------------------------------------------------------------------
     frame = plt.subplot(3, 1, 2)
     title = ''
@@ -2328,7 +2315,6 @@ def polar_lsd_plot(loc) :
 # worker functions
 # =============================================================================
 def remove_first_last_ticks(frame, axis='x'):
-
     if axis == 'x' or axis == 'both':
         xticks = frame.get_xticks()
         xticklabels = xticks.astype(str)
@@ -2342,7 +2328,6 @@ def remove_first_last_ticks(frame, axis='x'):
         frame.set_xticks(yticks)
         frame.set_xticklabels(yticklabels)
     return frame
-
 
 # =============================================================================
 # End of code

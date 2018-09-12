@@ -36,6 +36,7 @@ ConfigError = spirouConfig.ConfigError
 WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
 
+
 # =============================================================================
 # Define classes
 # =============================================================================
@@ -44,7 +45,7 @@ class PathException(Exception):
     pass
 
 
-class Paths():
+class Paths:
     def __init__(self, *args, **kwargs):
         """
         Set up a path object (to be used for file operations)
@@ -68,7 +69,6 @@ class Paths():
 
         # update wildcards
         self.update_wildcards()
-
 
     def __load_args(self, args):
         # arguments are expected to be either a list of strings, a list or
@@ -225,7 +225,7 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
     # if step 2 succeed ID file
     if cond2:
         newfn, hdr, cdr = id_mode(p, control, filename, hdr, cdr, code,
-                             obstype, ccas, cref)
+                                  obstype, ccas, cref)
     # else we don't have the file key and header fallback on checking filename
     else:
         newfn, hdr, cdr = fallback_id_mode(p, control, filename, hdr, cdr)
@@ -296,9 +296,9 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
         p.set_sources(['DPRTYPE', 'PREPROCESSED', 'DRS_TYPE'], func_name)
         # deal with return
         if return_path:
-           return p, p['ARG_FILE_DIR']
+            return p, p['ARG_FILE_DIR']
         else:
-           return p
+            return p
     elif recipe not in control['Recipe']:
         emsg1 = 'No recipe named {0}'.format(recipe)
         emsg2 = '    function = {0}'.format(func_name)
@@ -341,6 +341,8 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             emsg3 = '\tfunction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
             kind = 'None'
+    else:
+        kind = 'None'
     # make sure filename has no path
     basefilename = os.path.basename(filename)
 
@@ -795,6 +797,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             emsg3 = ('\tPlease re-run extraction OR use a valid extraction '
                      'output')
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            dprtype = None
     # else crash
     else:
         emsg1 = 'Error in recipe control file. Kind must be "RAW" or "REDUC"'
@@ -814,7 +817,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
     # Identify based on output and dprtype
     # -----------------------------------------------------------------------
     # if None in dprtypes and we expect a RAW file: do not check
-    if ('None' in dprtypes)  and (kinds[0].upper() == 'RAW'):
+    if ('None' in dprtypes) and (kinds[0].upper() == 'RAW'):
         # get the first row in control where dprtype == 'None'
         row = np.where(dprtypes == 'None')[0][0]
         # filter control by this row
@@ -1034,18 +1037,18 @@ def check_id_header(p, control, recipe, filename, hdr=None):
     else:
         _, hdr, _ = identify_unprocessed_file(p, filename, hdr=None, cdr=None)
         dprtype = hdr[p['KW_DPRTYPE'][0]]
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # Only should be looking at the raw file for header info
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # we should not be here with anything but raw files
     kinds = np.unique(control['kind'])
-    if (len(kinds) != 1) and  (kinds[0].upper() != 'RAW'):
+    if (len(kinds) != 1) and (kinds[0].upper() != 'RAW'):
         emsg1 = 'File "{0}" not identified (not a raw file)'
         emsg2 = 'Only raw files valid for recipe "{0}"'.format(recipe)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # use dprtype to select a single control setting
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # if DPRTYPE is None then let all files through
     if 'None' in control['dprtype'] and kinds[0].upper() == 'RAW':
         # get the first row in control where dprtype == 'None'

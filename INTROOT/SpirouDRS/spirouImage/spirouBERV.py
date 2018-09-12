@@ -133,6 +133,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
     if method == 'old':
         # need to import
         try:
+            # noinspection PyPep8
             from SpirouDRS.fortran import newbervmain
         except:
             emsg1 = ('For method="old" must compile fortran routine '

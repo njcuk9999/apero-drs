@@ -749,7 +749,7 @@ def load_config_from_file(p, key, required=False, logthis=False):
 
     # deal with default config file first
     if os.path.exists(dconfig):
-        newparams1 = get_config_params(p, key, dconfig, logthis=logthis)
+        newparams1 = get_config_params(p, dconfig)
     else:
         if required:
             # log error
@@ -759,7 +759,7 @@ def load_config_from_file(p, key, required=False, logthis=False):
         return p, log_messages
     # deal with user config file (if set)
     if os.path.exists(uconfig) and p['USER_CONFIG']:
-        newparams2 = get_config_params(p, key, uconfig, logthis=logthis)
+        newparams2 = get_config_params(p, uconfig)
     else:
         newparams2 = OrderedDict()
 
@@ -791,7 +791,7 @@ def load_config_from_file(p, key, required=False, logthis=False):
     return p, log_messages
 
 
-def get_config_params(p, key, filename, logthis=True):
+def get_config_params(p, filename):
     # read config file into new dictionary
     newparams, _ = read_config_file(filename)
     # merge with param file

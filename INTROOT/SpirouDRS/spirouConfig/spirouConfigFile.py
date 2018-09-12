@@ -172,7 +172,7 @@ def gettxt(filename):
 
 
 def get_raw_txt(filename, comments, delimiter):
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         try:
             raw = np.genfromtxt(filename, comments=comments,
                                 delimiter=delimiter, dtype=str).astype(str)

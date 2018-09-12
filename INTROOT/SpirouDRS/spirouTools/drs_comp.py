@@ -129,10 +129,10 @@ def scale_image(image, scale=None):
 
     # deal with scaling
     if scale == 'log':
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             return np.log10(newimage), '(scale = {0})'.format(scale)
     elif scale == 'sqrt':
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             return np.sqrt(newimage), '(scale = {0})'.format(scale)
     elif type(scale) == tuple:
         # get min and max points

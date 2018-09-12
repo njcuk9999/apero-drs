@@ -281,6 +281,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     # return data, header, data.shape[0], data.shape[1]
     return p, image, header, comments
 
+
 def writeimage(p, filename, image, hdict=None, dtype=None):
     """
     Writes an image and its header to file
@@ -361,7 +362,6 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
     return p
 
 
-
 def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
                       hdicts=None, dtypes=None):
     """
@@ -422,7 +422,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         # handle multiple dtypes
         if dtypes is not None:
             if len(dtypes) != len(image_list):
-                emsg1 = ('dtypes must be the same length as image_list')
+                emsg1 = 'dtypes must be the same length as image_list'
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG('error', DPROG, [emsg1, emsg2])
         elif type(dtype) not in [np.ndarray, list]:
@@ -437,7 +437,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         # handle multiple hdicts
         if hdicts is not None:
             if len(hdicts) != len(image_list):
-                emsg1 = ('dtypes must be the same length as image_list')
+                emsg1 = 'dtypes must be the same length as image_list'
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG('error', DPROG, [emsg1, emsg2])
 
@@ -457,7 +457,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         hdu1 = fits.PrimaryHDU(image_list[0])
         # add all others afterwards
         hdus = [hdu1]
-        for image in image_list[1: ]:
+        for image in image_list[1:]:
             hdus.append(fits.ImageHDU(image))
         # add to HDU list
         hdu = fits.HDUList(hdus)
@@ -483,7 +483,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     if hdu is not None:
         hdu.close()
     # write to file
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         try:
             hdu.writeto(filename, overwrite=True)
         except Exception as e:
@@ -514,6 +514,7 @@ def write_output_dict(p, filename, hdict):
     p['OUTPUTS'][bfilename]['DRS_TYPE'] = p['DRS_TYPE']
     # return p
     return p
+
 
 def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
                    required=True):
@@ -678,7 +679,7 @@ def get_wave_solution(p, image=None, hdr=None):
         # check that dim1 is the correct number of orders
         if dim1 != image.shape[0]:
             emsg1 = ('Number of orders in HEADER ({0}={1}) not compatible with '
-                    'number of orders in image ({2}')
+                     'number of orders in image ({2}')
             eargs = [dim1key, dim1, image.shape[0]]
             emsg2 = '    function = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
@@ -708,7 +709,6 @@ def get_good_object_name(p, hdr=None, rawname=None):
         name = name.replace(badchar, '_')
     # return cleaned up name
     return name
-
 
 
 def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,

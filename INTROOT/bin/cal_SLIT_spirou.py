@@ -195,7 +195,7 @@ def main(night_name=None, files=None):
         # plot image with selected order shown
         sPlt.slit_sorder_plot(p, loc, data2)
         # plot slit tilt angle and fit
-        sPlt.slit_tilt_angle_and_fit_plot(p, loc)
+        sPlt.slit_tilt_angle_and_fit_plot(loc)
         # end interactive section
         sPlt.end_interactive_session()
 

@@ -90,7 +90,7 @@ def main(runname=None, quiet=False):
         WLOG('error', p['LOG_OPT'], emsgs)
 
     # get the parameters in the run file
-    rparams = spirouConfig.GetConfigParams(p, None, filename=rfile)
+    rparams = spirouConfig.GetConfigParams(p, filename=rfile)
 
     # reset the DRS
     if not quiet:

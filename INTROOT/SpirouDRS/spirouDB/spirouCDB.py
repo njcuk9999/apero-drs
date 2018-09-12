@@ -272,7 +272,7 @@ def get_database(p, max_time=None, update=False):
     # check that max_time is a valid unix time (i.e. a float)
     try:
         # get the header format for dates
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         # get the unix time from header time (assume max_time is in GMT/UTC)
         max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:

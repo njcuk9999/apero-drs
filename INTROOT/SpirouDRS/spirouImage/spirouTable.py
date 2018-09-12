@@ -15,7 +15,6 @@ import os
 from astropy.table import Table, vstack
 from astropy.table import TableMergeError
 from astropy.io.registry import get_formats
-from astropy.io import ascii
 from collections import OrderedDict
 
 from SpirouDRS import spirouConfig

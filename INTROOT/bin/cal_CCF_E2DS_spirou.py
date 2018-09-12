@@ -221,7 +221,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         sPlt.drift_plot_selected_wave_ref(p, loc, x=loc['WAVE_LL'],
                                           y=loc['E2DS'])
         # plot photon noise uncertainty
-        sPlt.drift_plot_photon_uncertainty(p, loc)
+        sPlt.drift_plot_photon_uncertainty(loc)
 
     # ----------------------------------------------------------------------
     # Get template RV (from ccf_mask)

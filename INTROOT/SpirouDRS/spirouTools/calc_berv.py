@@ -16,14 +16,12 @@ Last modified: 2017-12-18 at 15:48
 Up-to-date with cal_CCF_E2DS_spirou AT-4 V47
 """
 from __future__ import division
-import numpy as np
 import os
 from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 from SpirouDRS.spirouImage import spirouFile
 

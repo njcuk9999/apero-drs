@@ -17,12 +17,12 @@ Usage:
 
 Outputs:
   telluDB: TELL_OBJ file - The object corrected for tellurics
-	   file also saved in the reduced folder
-	   input file + '_tellu_corrected.fits'
+        file also saved in the reduced folder
+        input file + '_tellu_corrected.fits'
 
-  recon_abso file - The reconstructed absorption file saved in the reduced
+    recon_abso file - The reconstructed absorption file saved in the reduced
                     folder
-	   input file + '_tellu_recon.fits'
+        input file + '_tellu_recon.fits'
 
 Created on 2018-07-13 05:18
 @author: ncook
@@ -65,7 +65,6 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None):
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------

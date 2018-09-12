@@ -172,7 +172,7 @@ def get_times_from_header(p, header=None, filename=None):
     # try getting unix time
     if p['KW_ACQTIME_KEY'][0] in header:
         human_time = header[p['KW_ACQTIME_KEY'][0]]
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         unix_time = spirouMath.stringtime2unixtime(human_time, header_fmt)
     # else raise error
     else:
@@ -305,6 +305,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
         emsg1 = 'Invalid Database kind ({0})'.format(dbkind)
         emsg2 = '\tfunction = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        masterfile = None
     # try to
     try:
         f = open(masterfile, 'a')

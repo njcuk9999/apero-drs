@@ -452,7 +452,7 @@ def interp_bad_regions(p, image):
     med_size = p['BAD_REGION_MED_SIZE']
     threshold = p['BAD_REGION_THRESHOLD']
     kernel_size = p['BAD_REGION_KERNEL_SIZE']
-    med_size2  = p['BAD_REGION_MED_SIZE2']
+    med_size2 = p['BAD_REGION_MED_SIZE2']
     goodvalue = p['BAD_REGION_GOOD_VALUE']
     badvalue = p['BAD_REGION_BAD_VALUE']
     # set nan pixels to zero
@@ -520,13 +520,13 @@ def interp_bad_regions(p, image):
     # calculate the ratio between original image and interpolated image
     ratio = image/image2
     # set all ratios greater than 1 to the inverse (reflect around 1)
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         rmask = ratio > 1
         ratio[rmask] = 1.0/ratio[rmask]
     # create a weight image
     weights = np.zeros_like(image, dtype=float)
     # decide which pixels are good and which pixels are bad
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         goodmask = ratio > goodvalue
         badmask = ratio < badvalue
         betweenmask = (~badmask) & (~goodmask)
@@ -1355,7 +1355,7 @@ def locate_bad_pixels_full(p, image):
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
-    #mask = np.rot90(mdata, -1) < threshold
+    # mask = np.rot90(mdata, -1) < threshold
     mask = np.abs(np.rot90(mdata, -1)-1) > threshold
 
     # -------------------------------------------------------------------------
@@ -1740,7 +1740,7 @@ def get_wave_keys(p, loc, hdr):
                                     **wkwargs)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
-        loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
+        loc['WAVETIME2'] = get_param(keyword='KW_WAVE_TIME2', **wkwargs)
     # else we have got the wave info from the calibDB
     else:
         # log warning
@@ -1749,7 +1749,7 @@ def get_wave_keys(p, loc, hdr):
         # get parameters from the calibDB
         key = 'WAVE_' + p['FIBER']
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
-        fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
         # set the parameters in wave
         loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
@@ -1780,7 +1780,7 @@ def get_airmass(p, hdr):
 
 # TODO insert paremeter dictionnary
 # TODO: FIX PROBLEMS: Write doc string
-def e2dstos1d(wave,e2dsffb,bin):
+def e2dstos1d(wave, e2dsffb, bin):
     """
     Convert E2DS (2-dimension) spectra to 1-dimension spectra
     with merged spectral orders and regular sampling
@@ -1798,10 +1798,13 @@ def e2dstos1d(wave,e2dsffb,bin):
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Integral Calculation yy by summation
-        dx = np.concatenate((np.array([x[1] - x[0]]), (x[2:] - x[0:-2]) / 2., np.array([x[-1] - x[-2]])))
-        stepmax = np.max(dx)
+        parts = [np.array([x[1] - x[0]]),
+                 (x[2:] - x[0:-2]) / 2.,
+                 np.array([x[-1] - x[-2]])]
+        dx = np.concatenate(parts)
+        # stepmax = np.max(dx)
         yy = np.concatenate((np.array([0.]), np.cumsum(y * dx)))
-        xx = np.concatenate((x - dx / 2., np.array([x[-1] + dx[-1] / 2.])))
+        # xx = np.concatenate((x - dx / 2., np.array([x[-1] + dx[-1] / 2.])))
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Computation of the new coordinates

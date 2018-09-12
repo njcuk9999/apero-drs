@@ -248,7 +248,7 @@ else:
 if p['IC_IMAGE_TYPE'] == 'H4RG':
     kw_ACQTIME_KEY_JUL = ['MJDATE', None, '']
 else:
-    kw_ACQTIME_KEY_JUL= ['ACQTIME', None, '']
+    kw_ACQTIME_KEY_JUL = ['ACQTIME', None, '']
 
 # define the observation date HEADER key
 kw_DATE_OBS = ['DATE-OBS', None, '']
@@ -569,7 +569,6 @@ kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
 # -----------------------------------------------------------------------------
 kw_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
 kw_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
-
 
 
 # =============================================================================

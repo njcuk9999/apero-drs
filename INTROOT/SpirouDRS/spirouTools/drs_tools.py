@@ -154,9 +154,9 @@ def list_files(path, kind=None, prefix=None, suffix=None, substring=None,
     # else print
     else:
         # print directories and files
-        for dir in list(store.keys()):
-            print('\t\t{0}'.format(dir))
-            for f in store[dir]:
+        for dir_it in list(store.keys()):
+            print('\t\t{0}'.format(dir_it))
+            for f in store[dir_it]:
                 print('\t\t\t{0}'.format(f))
 
 

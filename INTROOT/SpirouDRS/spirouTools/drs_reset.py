@@ -286,7 +286,7 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset1, reset2, reset3 = True, True, True
+    reset1, reset2, reset3, reset4 = True, True, True, True
     if warn:
         reset1 = reset_confirmation('Reduced', called=called)
     if reset1:

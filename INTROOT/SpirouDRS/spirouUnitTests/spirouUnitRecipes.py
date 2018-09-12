@@ -187,7 +187,6 @@ def unit_test_cal_badpix_spirou(rname, inputs):
     return args, name
 
 
-
 def unit_test_cal_dark_spirou(rname, inputs):
 
     """
@@ -326,7 +325,7 @@ def unit_test_cal_extract_raw_spirouab(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
@@ -350,7 +349,7 @@ def unit_test_cal_extract_raw_spirouc(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
@@ -478,7 +477,7 @@ def unit_test_cal_hc_e2ds_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
@@ -502,7 +501,7 @@ def unit_test_cal_wave_new_e2ds_spirou(rname, inputs):
     arg_types = [str, str, list]
 
     # get arguments
-    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
@@ -527,7 +526,7 @@ def unit_test_cal_wave_e2ds_spirou(rname, inputs):
     arg_types = [str, str, list]
 
     # get arguments
-    args =  get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 

@@ -59,7 +59,7 @@ DATESTR = '__date__ = '
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path, kind='rpm', version=None, since=None, until=None):
+def update(filename, path, kind='rpm', version0=None, since0=None, until=None):
     # get default run
     cargs = [path, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -68,11 +68,11 @@ def update(filename, path, kind='rpm', version=None, since=None, until=None):
     else:
         command += ' -O {0} -D None -n DRS'.format(kind)
     # add version if needed
-    if version is not None:
-        command += ' -c {0}'.format(version)
+    if version0 is not None:
+        command += ' -c {0}'.format(version0)
     # add since if needed
-    if since is not None:
-        command += ' -s {0}'.format(since)
+    if since0 is not None:
+        command += ' -s {0}'.format(since0)
     # add until if needed
     if until is not None:
         command += ' -u {0}'.format(until)
@@ -83,7 +83,7 @@ def update(filename, path, kind='rpm', version=None, since=None, until=None):
         WLOG('error', __NAME__.split('.py')[0], 'Error with gcg (see above)')
 
 
-def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
+def process_lines(fullfilename, tmpfilename, path, kind='rpm', version0=None):
 
     # read log
     f = open(tmpfilename, 'r')
@@ -149,7 +149,7 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
         WLOG('', __NAME__, 'Processing commit {0} of {1}'.format(*wargs))
         # get entry
         update(tmpfilename2, path, since=reference[0], until=reference[1],
-               kind=kind, version=version)
+               kind=kind, version=version0)
         # check we have tmpfile
         if not os.path.exists(tmpfilename2):
             continue
@@ -253,7 +253,7 @@ def get_last_entry(filename):
         return last_commit
 
 
-def update_version_file(filename, version):
+def update_version_file(filename, version0):
     # read file and delete
     f = open(filename, 'r')
     lines = f.readlines()
@@ -263,7 +263,7 @@ def update_version_file(filename, version):
 
     os.remove(filename)
     # edit first line
-    lines[0] = 'DRS_VERSION = {0}\n'.format(version)
+    lines[0] = 'DRS_VERSION = {0}\n'.format(version0)
     # write file and save
     f = open(filename, 'w')
     f.writelines(lines)
@@ -272,7 +272,7 @@ def update_version_file(filename, version):
     os.remove(filename + '.backup')
 
 
-def update_py_version(filename, version):
+def update_py_version(filename, version0):
     # read const file
     f = open(filename, 'r')
     lines = f.readlines()
@@ -289,7 +289,7 @@ def update_py_version(filename, version):
     uinput1 = None
     while cond:
         # ask to update version
-        print('Current version is "{0}"'.format(version))
+        print('Current version is "{0}"'.format(version0))
         print('New version [Y]es or [N]o?')
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
@@ -334,9 +334,9 @@ def update_py_version(filename, version):
         f.writelines(lines)
         f.close()
         # update version number
-        version = uinput1
+        version0 = uinput1
     # return version
-    return version
+    return version0
 
 
 # =============================================================================

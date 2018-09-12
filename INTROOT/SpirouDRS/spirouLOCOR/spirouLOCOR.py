@@ -256,7 +256,7 @@ def find_order_centers(pp, image, loc, order_num):
     # For the first iteration this uses "posc" for all other iterations
     # uses the central position found at the nearest column to it
     # must also correct for conversion to int by adding 0.5
-    center, width = 0, 0
+    # center, width = 0, 0
     for col in columns:
         # for pixels>central pixel we need to get row center from last
         # iteration (or posc) this is to the LEFT
@@ -273,7 +273,7 @@ def find_order_centers(pp, image, loc, order_num):
             break
         # make sure we are not in the image_gap
         # Question: Not sure what this is for
-        #if col <= (800 - order_num*30):
+        # if col <= (800 - order_num*30):
         if col <= (750 - rowcenter*0.7):
                 break
         if (rowtop < image_gap) and (rowbottom > image_gap):

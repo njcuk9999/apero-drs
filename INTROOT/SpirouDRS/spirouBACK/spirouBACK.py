@@ -81,7 +81,7 @@ def measure_background_flatfield(p, image):
             xci, yci = xc[i_it], yc[j_it]
             # get the pixels for this box
             subframe = image[xci - size:xci + size,
-                       yci - size:yci + size].ravel()
+                             yci - size:yci + size].ravel()
             # get the (2*size)th minimum pixel
             mask = subframe > 0
             maskedsubframe = subframe[mask]
@@ -93,7 +93,7 @@ def measure_background_flatfield(p, image):
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!
     gridx1, gridy1 = np.mgrid[size:image.shape[0]:2 * size,
-                     size:image.shape[1]:2 * size]
+                              size:image.shape[1]:2 * size]
     gridx2, gridy2 = np.indices(image.shape)
 
     # TODO: FIX PROBLEMS: SECTION NEEDS COMMENTING!!!

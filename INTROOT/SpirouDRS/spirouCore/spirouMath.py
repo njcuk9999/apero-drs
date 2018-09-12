@@ -115,7 +115,7 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     # if we don't have weights set them to be all equally weighted
     if weights is None:
         weights = np.ones(len(x))
-    weights = 1.0/weights
+    weights = 1.0 / weights
     # if we aren't provided a guess, make one
     if guess is None:
         guess = [np.max(y), np.mean(y), np.std(y), 0]
@@ -126,7 +126,7 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     if return_fit and return_uncertainties:
         # calculate the fit parameters
         yfit = gauss_function(x, *pfit)
-        #work out the normalisation constant
+        # work out the normalisation constant
         chis, _ = chisquare(y, f_exp=yfit)
         norm = chis / (len(y) - len(guess))
         # calculate the fit uncertainties based on pcov
@@ -143,7 +143,7 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     elif return_uncertainties:
         # calculate the fit parameters
         yfit = gauss_function(x, *pfit)
-        #work out the normalisation constant
+        # work out the normalisation constant
         chis, _ = chisquare(y, f_exp=yfit)
         norm = chis / (len(y) - len(guess))
         # calculate the fit uncertainties based on pcov
@@ -158,8 +158,11 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
 
 def fitgaussian_lmfit(x, y, weights, return_fit=True,
                       return_uncertainties=False):
-
-    from lmfit.models import Model, GaussianModel
+    try:
+        # noinspection PyPep8
+        from lmfit.models import Model, GaussianModel
+    except ImportError:
+        print(' Need module lmfit to use fitgauss_lmfit')
     # calculate guess
     mod = GaussianModel()
     params = mod.guess(y, x=x)
@@ -182,7 +185,7 @@ def fitgaussian_lmfit(x, y, weights, return_fit=True,
             out.params['dc'].stderr]
     # return
     if return_fit and return_uncertainties:
-         return np.array(pfit), np.array(siga), out.best_fit
+        return np.array(pfit), np.array(siga), out.best_fit
     elif return_uncertainties:
         return np.array(pfit), np.array(siga)
     elif return_fit:
@@ -192,7 +195,6 @@ def fitgaussian_lmfit(x, y, weights, return_fit=True,
 
 
 def fit_gaussian_with_slope(x, y, guess, return_fit=False):
-
     with warnings.catch_warnings(record=True) as _:
         popt, pcov = curve_fit(gauss_fit_s, x, y, p0=guess)
 
@@ -260,7 +262,7 @@ def gaussian_function_nn(x, a):
     n, nx = len(a), len(x)
     # work out gaussian
     z = (x - a[1]) / a[2]
-    ez = np.exp(-z **2 / 2.0)
+    ez = np.exp(-z ** 2 / 2.0)
     # deal with options
     if n == 3:
         fout = a[0] * ez
@@ -275,7 +277,7 @@ def gaussian_function_nn(x, a):
         raise ValueError(emsg)
     # work out derivatives
     pder = np.zeros([nx, n])
-    pder[:, 0] = ez   # compute partials
+    pder[:, 0] = ez  # compute partials
     pder[:, 1] = a[0] * ez * z / a[2]
     pder[:, 2] = pder[:, 1] * z
     if n > 3:
@@ -410,7 +412,8 @@ def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params,
                 (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
     """
     # create x values
-    xfit = np.arange(nx) + pixel_shift_inter + (pixel_shift_slope * np.arange(nx))
+    xfit = np.arange(nx) + pixel_shift_inter + (
+                pixel_shift_slope * np.arange(nx))
     # create empty line list storage
     ll = np.zeros((nbo, nx))
     # loop around orders
@@ -471,8 +474,8 @@ def get_dll_from_coefficients(params, nx, nbo):
         # Question: differently
         yfiti = []
         # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
-        for it in range(len(coeffs)-1):
-            yfiti.append((it + 1) * coeffs[it + 1] * xfit**it)
+        for it in range(len(coeffs) - 1):
+            yfiti.append((it + 1) * coeffs[it + 1] * xfit ** it)
         yfit = np.sum(yfiti, axis=0)
         # add to line list storage
         ll[order_num, :] = yfit
@@ -482,7 +485,6 @@ def get_dll_from_coefficients(params, nx, nbo):
 
 # TODO: Required commenting and cleaning up
 def linear_minimization(vector, sample):
-
     func_name = __NAME__ + '.linear_minimization()'
 
     vector = np.array(vector)
@@ -621,7 +623,7 @@ def stringtime2unixtime(string, fmt=DATE_FMT, zone='UTC'):
         emsg3 = ' Input was "{0}"'.format(string)
         raise MathException(emsg1 + '\n\t\t' + emsg2 + '\n\t\t' + emsg3)
     # return time stamp
-    return timestamp + datetime_obj.microsecond/1e6
+    return timestamp + datetime_obj.microsecond / 1e6
 
 
 def unixtime2stringtime(ts, fmt=DATE_FMT, zone='UTC'):
@@ -685,10 +687,10 @@ def get_time_now_unix(zone='UTC'):
     """
     if zone == 'UTC':
         dt = datetime.utcnow()
-        timegm(dt.timetuple()) + dt.microsecond/1e6
+        timegm(dt.timetuple()) + dt.microsecond / 1e6
     else:
         dt = datetime.now()
-        return mktime(dt.timetuple()) + dt.microsecond/1e6
+        return mktime(dt.timetuple()) + dt.microsecond / 1e6
 
 
 def get_time_now_string(fmt=TIME_FMT, zone='UTC'):
@@ -757,7 +759,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
 
     # initialize arrays to store binned data
     xbin, ybin = [], []
-                       
+
     for i in range(nbins):
         # get first and last index within the bin
         idx0 = i * binsize - overlap
@@ -773,16 +775,16 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
 
         # create mask of exclusion bands
         excl_mask = np.full(np.shape(xbin_tmp), False, dtype=bool)
-        for band in excl_bands :
+        for band in excl_bands:
             excl_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
 
         # mask data within exclusion bands
         xtmp = xbin_tmp[~excl_mask]
         ytmp = ybin_tmp[~excl_mask]
-        
+
         # create mask to get rid of NaNs
         nanmask = np.logical_not(np.isnan(ytmp))
-        if len(xtmp[nanmask]) > 2 :
+        if len(xtmp[nanmask]) > 2:
             # calculate mean x within the bin
             xmean = np.mean(xtmp[nanmask])
             # calculate median y within the bin
@@ -807,7 +809,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                     ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
                     emsg = 'Can not recognize selected mode="{0}"...exiting'
-                    WLOG('error', DPROG, emsg.format(mode))
+                    print(emsg.format(mode))
 
     # Option to use a linearfit within a given window
     if use_linear_fit:
@@ -823,8 +825,10 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
             idx0 = i - window
             idxf = i + 1 + window
             # make sure it doesnt go over the edges
-            if idx0 < 0: idx0 = 0
-            if idxf > nbins: idxf = nbins - 1
+            if idx0 < 0:
+                idx0 = 0
+            if idxf > nbins:
+                idxf = nbins - 1
 
             # perform linear fit to these data
             slope, intercept, r_value, p_value, std_err = \
@@ -839,12 +843,11 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     # interpolate points applying an Spline to the bin data
     sfit = UnivariateSpline(xbin, ybin)
     sfit.set_smoothing_factor(0.5)
-    
-    # Resample interpolation to the original grid
-    continuum = sfit(x)
-    # return continuum and x and y bins
-    return continuum, xbin, ybin
 
+    # Resample interpolation to the original grid
+    continuum_val = sfit(x)
+    # return continuum and x and y bins
+    return continuum_val, xbin, ybin
 
 # =============================================================================
 # End of code
