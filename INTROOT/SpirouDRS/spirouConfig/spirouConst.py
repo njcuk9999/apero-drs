@@ -1820,6 +1820,18 @@ def REDUC_OUTPUT_COLUMNS(p):
     return output_keys
 
 
+# noinspection PyPep8Naming
+def GEN_OUTPUT_COLUMNS(p):
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OBSTYPE'][0],
+                   p['KW_EXPTIME'][0],
+                   p['KW_OUTPUT'][0],
+                   p['KW_EXT_TYPE'][0]]
+    return output_keys
+
+
 # =============================================================================
 # Define database functions
 # =============================================================================
