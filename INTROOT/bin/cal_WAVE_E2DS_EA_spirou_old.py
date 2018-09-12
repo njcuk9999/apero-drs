@@ -45,10 +45,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Auxiliary functions - to be moved elsewhere later
 # =============================================================================
-
-
 def lin_mini(vector, sample):
-    import numpy as np
 
     sz_sample = np.shape(sample)
     sz_vector = np.shape(vector)
@@ -69,7 +66,6 @@ def lin_mini(vector, sample):
     vector = np.asarray(vector)
     sample = np.asarray(sample)
     sz_sample = np.shape(sample)
-    sz_vector = np.shape(vector)
 
     if cas == 1:
         #
@@ -86,7 +82,7 @@ def lin_mini(vector, sample):
         if np.linalg.det(M) == 0:
             amps = np.zeros(sz_sample[0]) + np.nan
             recon = np.zeros_like(v)
-            return (amps, recon)
+            return amps, recon
 
         amps = np.matmul(np.linalg.inv(M), v)
         #
@@ -95,7 +91,7 @@ def lin_mini(vector, sample):
         for i in range(sz_sample[0]):
             recon += amps[i] * sample[i, :]
         #
-        return (amps, recon)
+        return amps, recon
 
     if cas == 2:
         # print('cas = 2')
@@ -112,7 +108,7 @@ def lin_mini(vector, sample):
         if np.linalg.det(M) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
             recon = np.zeros_like(v)
-            return (amps, recon)
+            return amps, recon
 
         amps = np.matmul(np.linalg.inv(M), v)
 
@@ -121,7 +117,7 @@ def lin_mini(vector, sample):
         for i in range(sz_sample[1]):
             recon += amps[i] * sample[:, i]
 
-        return (amps, recon)
+        return amps, recon
 
 
 def GAUSS_FUNCT(x, a):
@@ -171,7 +167,7 @@ def GAUSS_FUNCT(x, a):
     if n == 5:
         F = a[0] * EZ + a[3] + a[4] * x
     if n == 6:
-        F = a[0] * EZ + a[3] + a[4] * X + a[5] * X ^ 2
+        F = a[0] * EZ + a[3] + a[4] * x + a[5] * x ^ 2
     #
     PDER = np.zeros([nx, n])
     PDER[:, 0] = EZ  # COMPUTE PARTIALS
@@ -245,6 +241,15 @@ def gaussfit(xpix, ypix, nn):
 
 
 # =============================================================================
+# Defining a Gaussian with a DC level and slope underneath
+# =============================================================================
+def gauss_function(x, a, x0, sig, zp, slope):
+    sig = np.abs(sig)
+    return (a * np.exp(-(x - x0) ** 2 / (2 * sig ** 2)) +
+            zp + (x - np.mean(x)) * slope)
+
+
+# =============================================================================
 # End auxiliary functions
 # =============================================================================
 
@@ -310,14 +315,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
-
-    # =============================================================================
-    # Defining a Gaussian with a DC level and slope underneath
-    # =============================================================================
-    def gauss_function(x, a, x0, sig, zp, slope):
-        sig = np.abs(sig)
-        return a * np.exp(-(x - x0) ** 2 / (2 * sig ** 2)) + zp + (
-                    x - np.mean(x)) * slope
 
     # =============================================================================
     # input parameters

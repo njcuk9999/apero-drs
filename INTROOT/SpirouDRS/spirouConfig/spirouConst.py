@@ -246,7 +246,7 @@ def BARYCORRPY_DIR():
     return barycorrpy_dir
 
 
-# noinspectrion PyPep8Naming
+# noinspection PyPep8Naming
 def ASTROPY_IERS_DIR():
     astropy_iers_dir = './data/barycorrpy/'
     # File must be downloaded from:
@@ -442,19 +442,7 @@ def LOG_OPT(p):
     #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
 
     try:
-        arg_file_names = p['ARG_FILE_NAMES']
         program = p['PROGRAM']
-        #
-        # if len(arg_file_names) == 0:
-        #     log_opt = program
-        # elif len(arg_file_names) == 1:
-        #     index = arg_file_names[0].find('.')
-        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
-        #     log_opt = '{0}:{1}'.format(*lo_arg)
-        # else:
-        #     index = arg_file_names[0].find('.')
-        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
-        #     log_opt = '{0}:{1}+[...]'.format(*lo_arg)
         log_opt = program
     except Exception:
         log_opt = DEFAULT_LOG_OPT()
@@ -503,6 +491,7 @@ def RAW_DIR(p):
     return raw_dir
 
 
+# noinspection PyPep8Naming
 def TMP_DIR(p):
     """
     Defines the temp data directory (for storage of the pre-processing files)
@@ -1965,7 +1954,7 @@ def CONFIG_KEY_ERROR(key, location=None):
 
 
 # noinspection PyPep8Naming
-def DATE_FMT_HEADER(p):
+def DATE_FMT_HEADER():
     """
     The date format for string timestamp for reading times from FITS
     file HEADERS

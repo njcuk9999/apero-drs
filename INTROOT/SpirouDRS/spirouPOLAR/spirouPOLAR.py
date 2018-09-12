@@ -17,7 +17,6 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -89,13 +88,13 @@ def sort_polar_files(p, polardict):
         basename = os.path.basename(filename)
         # ------------------------------------------------------------------
         # try to get polarisation header key
-        if p['KW_CMMTSEQ'][0] in hdr and hdr[p['KW_CMMTSEQ'][0]] != "" :
+        if p['KW_CMMTSEQ'][0] in hdr and hdr[p['KW_CMMTSEQ'][0]] != "":
             cmmtseq = hdr[p['KW_CMMTSEQ'][0]].split(" ")
             stokes, exposure = cmmtseq[0], int(cmmtseq[2][0])
             expstatus = True
         else:
             wmsg = 'File {0} has empty key="{1}", setting Stokes={2}'
-            wargs = [filename,  p['KW_CMMTSEQ'][0], stokes]
+            wargs = [filename, p['KW_CMMTSEQ'][0], stokes]
 
             # Question: stokes here will be set to the last file value?
             WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
@@ -104,7 +103,7 @@ def sort_polar_files(p, polardict):
         # deal with fiber type
         fout = deal_with_fiber(p, filename, expstatus, exposure)
         fiber, expstatus, exposure, skip = fout
-        
+
         # deal with skip
         if skip:
             continue
@@ -167,7 +166,7 @@ def load_data(p, polardict, loc):
             STOKES: string, stokes parameter detected in sequence
             NEXPOSURES: int, number of exposures in polar sequence
     """
-    
+
     func_name = __NAME__ + '.load_data()'
     # get constants from p
     stokesparams = p['IC_POLAR_STOKES_PARAMS']
@@ -364,7 +363,7 @@ def calculate_continuum(p, loc, in_wavelength=True):
     ydim, xdim = loc['POL'].shape
     # ---------------------------------------------------------------------
     # flatten data (across orders)
-    wl, pol, polerr, stokesI, stokesIerr  = [], [], [], [], []
+    wl, pol, polerr, stokesI, stokesIerr = [], [], [], [], []
     null1, null2 = [], []
     # loop around order data
     for order_num in range(ydim):
@@ -392,14 +391,16 @@ def calculate_continuum(p, loc, in_wavelength=True):
     loc['FLAT_NULL2'] = null2[sortmask]
     # update source
     sources = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
-               'FLAT_STOKESIERR','FLAT_NULL1', 'FLAT_NULL2']
+               'FLAT_STOKESIERR', 'FLAT_NULL1', 'FLAT_NULL2']
     loc.set_sources(sources, func_name)
 
     # ---------------------------------------------------------------------
     # calculate continuum polarization
     contpol, xbin, ybin = spirouCore.Continuum(loc['FLAT_X'], loc['FLAT_POL'],
-                                    binsize=pol_binsize, overlap=pol_overlap,
-                                    excl_bands=p['IC_POLAR_CONT_TELLMASK'])
+                                               binsize=pol_binsize,
+                                               overlap=pol_overlap,
+                                               excl_bands=p[
+                                                   'IC_POLAR_CONT_TELLMASK'])
     # ---------------------------------------------------------------------
     # save continuum data to loc
     loc['CONT_POL'] = contpol
@@ -450,23 +451,23 @@ def calculate_stokes_I(p, loc):
     loc['STOKESIERR'] = np.zeros(data_shape)
     # set source
     loc.set_sources(['STOKESI', 'STOKESIERR'], func_name)
-    
+
     flux, var = [], []
     for i in range(1, int(nexp) + 1):
         # Calculate sum of fluxes from fibers A and B
         fluxAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
         # Save A+B flux for each exposure
         flux.append(fluxAB)
-        
+
         # Calculate the variances for fiber A+B, assuming Poisson noise
         # only. In fact the errors should be obtained from extraction, i.e.
         # from the error extension in the e2ds files.
         varAB = data['A_{0}'.format(i)] + data['B_{0}'.format(i)]
         # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
         var.append(varAB)
-    
+
     # Sum fluxes and variances from different exposures
-    for i in range(len(flux)) :
+    for i in range(len(flux)):
         loc['STOKESI'] += flux[i]
         loc['STOKESIERR'] += var[i]
 
@@ -597,12 +598,11 @@ def polarimetry_diff_method(p, loc):
         #          Bagnulo et al. 2009), n being the pair of exposures
         # ---------------------------------------------------------------------
         nomin = 2.0 * data['A_{0}'.format(i)] * data['B_{0}'.format(i)]
-        denom = (data['A_{0}'.format(i)] + data['B_{0}'.format(i)]) ** (2.0)
+        denom = (data['A_{0}'.format(i)] + data['B_{0}'.format(i)]) ** 2.0
         factor1 = (nomin / denom) ** 2.0
         AvarPart = Avar / (data['A_{0}'.format(i)] ** 2.0)
         BvarPart = Bvar / (data['B_{0}'.format(i)] ** 2.0)
         gvar.append(factor1 * (AvarPart + BvarPart))
-
 
     # if we have 4 exposures
     if nexp == 4:
@@ -638,8 +638,7 @@ def polarimetry_diff_method(p, loc):
         #          (Eq #A3 on page 1013 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         sumOfgvar = gvar[0] + gvar[1] + gvar[2] + gvar[3]
-        loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0) )
-
+        loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0))
 
     # else if we have 2 exposures
     elif nexp == 2:
@@ -660,7 +659,7 @@ def polarimetry_diff_method(p, loc):
         #          (Eq #A3 on page 1013 of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
         sumOfgvar = gvar[0] + gvar[1]
-        loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0) )
+        loc['POLERR'] = np.sqrt(sumOfgvar / (nexp ** 2.0))
 
     # else we have insufficient data (should not get here)
     else:
@@ -729,11 +728,11 @@ def polarimetry_ratio_method(p, loc):
     loc.set_sources(['POL', 'NULL1', 'NULL2'], func_name)
 
     flux_ratio, var_term = [], []
-    
+
     # Ignore numpy warnings to avoid warning message: "RuntimeWarning: invalid
     # value encountered in power ..."
     np.warnings.filterwarnings('ignore')
-    
+
     for i in range(1, int(nexp) + 1):
         # ---------------------------------------------------------------------
         # STEP 1 - calculate ratio of beams for each exposure
@@ -807,8 +806,8 @@ def polarimetry_ratio_method(p, loc):
         # STEP 10 - calculate the polarimetry error (Eq #A10 on page 1014
         #           of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
-        numerPart1 = ( R1 * R2 ) ** (1.0/2.0)
-        denomPart1 = (( R1 * R2 ) ** (1.0/4.0) + 1.0) ** 4.0
+        numerPart1 = (R1 * R2) ** (1.0 / 2.0)
+        denomPart1 = ((R1 * R2) ** (1.0 / 4.0) + 1.0) ** 4.0
         Part1 = numerPart1 / (denomPart1 * 4.0)
         sumvar = var_term[0] + var_term[1] + var_term[2] + var_term[3]
         loc['POLERR'] = np.sqrt(Part1 * sumvar)
@@ -838,7 +837,7 @@ def polarimetry_ratio_method(p, loc):
         # STEP 6 - calculate the polarimetry error (Eq #A10 on page 1014
         #           of Bagnulo et al. 2009)
         # -----------------------------------------------------------------
-        numerPart1 = R1
+        # numerPart1 = R1
         denomPart1 = ((R1 ** 0.5) + 1.0) ** 4.0
         Part1 = R1 / denomPart1
         sumvar = var_term[0] + var_term[1]
@@ -858,6 +857,7 @@ def polarimetry_ratio_method(p, loc):
     WLOG('info', p['LOG_OPT'], wmsg.format(name))
     # return loc
     return loc
+
 
 # =============================================================================
 # Start of code

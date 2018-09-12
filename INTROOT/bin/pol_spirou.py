@@ -212,7 +212,7 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     if p['IC_POLAR_LSD_ANALYSIS']:
         #  save LSD analysis data to file
-        lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
+        p, lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
         
         # log that we are saving LSD analysis data
         wmsg = 'Saving LSD analysis data to {0}'.format(lsdfitsfitsname)

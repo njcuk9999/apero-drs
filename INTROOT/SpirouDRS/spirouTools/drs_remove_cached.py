@@ -9,7 +9,6 @@ Created on 2017-11-27 at 13:08
 
 @author: cook
 """
-import numpy as np
 import os
 import pkg_resources
 

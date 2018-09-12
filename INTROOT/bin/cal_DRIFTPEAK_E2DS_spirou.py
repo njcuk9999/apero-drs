@@ -364,7 +364,7 @@ def main(night_name=None, reffile=None):
         # start interactive session if needed
         sPlt.start_interactive_session()
         # plot delta time against median drift
-        sPlt.drift_peak_plot_dtime_against_drift(p, loc)
+        sPlt.drift_peak_plot_dtime_against_drift(loc)
 
     # ------------------------------------------------------------------
     # Save drift values to file

@@ -171,7 +171,7 @@ def main(night_name=None, reffile=None):
         # plot FP spectral order
         sPlt.drift_plot_selected_wave_ref(p, loc)
         # plot photon noise uncertainty
-        sPlt.drift_plot_photon_uncertainty(p, loc)
+        sPlt.drift_plot_photon_uncertainty(loc)
 
     # ------------------------------------------------------------------
     # Get all other files that match kw_OUTPUT and kw_EXT_TYPE from

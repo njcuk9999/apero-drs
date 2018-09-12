@@ -17,6 +17,7 @@ from __future__ import division
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -331,8 +332,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             m_ord_prev = m_ord
         # if no overlap - TODO do something about it!
         else:
-            print
-            'no overlap'
+            print('no overlap')
 
     # ----------------------------------------------------------------------
     # Derive d for each HC line

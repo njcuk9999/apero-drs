@@ -605,9 +605,9 @@ def exit_script(ll, has_plots=True):
     active)
 
     :param ll: dict, the local variables
-    :param has_plots: bool, if True looks for and deal with having plots (i.e. asks
-                the user to close or closest automatically), if False no
-                plot windows are assumed to be open
+    :param has_plots: bool, if True looks for and deal with having plots
+                      (i.e. asks the user to close or closest automatically),
+                      if False no plot windows are assumed to be open
 
     :return None:
     """
@@ -643,7 +643,7 @@ def exit_script(ll, has_plots=True):
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
-        uinput = raw_input('')      # note python 3 wont find this!
+        uinput = raw_input('')  # note python 3 wont find this!
     else:
         uinput = input('')
 
@@ -679,7 +679,7 @@ def exit_script(ll, has_plots=True):
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
             # noinspection PyUnresolvedReferences
-            uinput = raw_input('')      # note python 3 wont find this!
+            uinput = raw_input('')  # note python 3 wont find this!
         else:
             uinput = input('')
         # if yes close all plots
@@ -789,7 +789,6 @@ def run_time_args(p, mainfitsdir):
     # Get number of frames
     p['NBFRAMES'] = spirouConfig.Constants.NBFRAMES(p)
     p.set_source('NBFRAMES', cname + '/NBFRAMES()')
-
 
     # return updated parameter dictionary
     return p
@@ -1064,7 +1063,7 @@ def load_other_config_file(p, key, logthis=True, required=False):
                                                     logthis=logthis)
     except spirouConfig.ConfigError as e:
         WLOG(e.level, p['LOG_OPT'], e.message)
-        lmsgs = []
+        pp, lmsgs = ParamDict(), []
 
     # log messages caught in loading config file
     if len(lmsgs) > 0:
@@ -1309,7 +1308,8 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
                      user can easily understand for each variable
 
     :return dict: dictionary containing the run time arguments converts to
-                  "types", keys are equal to "names"dirname = os.path.dirname(abs_path)
+                  "types", keys are equal to
+                  "names"dirname = os.path.dirname(abs_path)
                   dict[names[max(positions)] is updated to be a list of
                   type types[max(positions)]
     """
@@ -1435,7 +1435,7 @@ def find_ipython():
     """
     try:
         # noinspection PyStatementEffect
-        __IPYTHON__             # Note python wont define this, ipython will
+        __IPYTHON__  # Note python wont define this, ipython will
         return True
     except NameError:
         return False
@@ -1553,7 +1553,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
             WLOG('', recipe, emsg)
     # deal with no types (set to strings)
     if types is None:
-        types = [str]*len(positions)
+        types = [str] * len(positions)
     # deal with no names (set to Arg0, Arg1, Arg2 etc)
     if names is None:
         names = ['Arg{0}'.format(pos) for pos in positions]
@@ -1561,10 +1561,10 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         lognames = names
     # deal with no required (set all to be required)
     if required is None:
-        required = [True]*len(positions)
+        required = [True] * len(positions)
     # deal with no calls priority (set priority for calls to False)
     if cprior is None:
-        cprior = [False]*len(positions)
+        cprior = [False] * len(positions)
     # loop around positions test the type and add the value to dictionary
     customdict = get_arguments(positions, types, names, required, calls,
                                cprior, lognames, require_night_name,
@@ -1782,23 +1782,23 @@ def display_title(title):
 
 
 def display_ee():
-
     bcolors = spirouConfig.Constants.BColors
 
+    # noinspection PyPep8
     logo = ['',
-    '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
-    '    `ohmmmmmmmmmdy: +mmmmmmmmmmmmmy- `ydmmmh: sdddmmmmmmddho-                               ',
-    '   `ymmmmmdmmmmmmmd./mmmmmmhhhmmmmmm-/mmmmmmo ymmmmmmmmmmmmmmo                              ',
-    '   /mmmmm:.-:+ydmm/ :mmmmmy``.smmmmmo.ydmdho` ommmmmhsshmmmmmm.      ```                    ',
-    '   ommmmmhs+/-..::  .mmmmmmoshmmmmmd- `.-::-  +mmmmm:  `hmmmmm`  `-/+ooo+:.   .:::.   .:/// ',
-    '   .dmmmmmmmmmdyo.   mmmmmmmmmmmddo. oyyyhm/  :mmmmmy+osmmmmms  `osssssssss+` /sss-   :ssss ',
-    '    .ohdmmmmmmmmmmo  dmmmmmdo+/:.`   ymmmmm/  .mmmmmmmmmmmmms`  +sss+..-ossso`+sss-   :ssss ',
-    '   --.`.:/+sdmmmmmm: ymmmmmh         ymmmmm/   mmmmmmmmmddy-    ssss`   :ssss.osss.   :ssss ',
-    '  +mmmhs/-.-smmmmmm- ommmmmm`        hmmmmm/   dmmmmm/sysss+.  `ssss-  `+ssss`osss`   :ssss ',
-    ' -mmmmmmmmmmmmmmmms  /mmmmmm.        hmmmmm/   ymmmmm``+sssss/` /sssso+sssss- +sss:` .ossso ',
-    ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
-    '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
-              '']
+            '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
+            '    `ohmmmmmmmmmdy: +mmmmmmmmmmmmmy- `ydmmmh: sdddmmmmmmddho-                               ',
+            '   `ymmmmmdmmmmmmmd./mmmmmmhhhmmmmmm-/mmmmmmo ymmmmmmmmmmmmmmo                              ',
+            '   /mmmmm:.-:+ydmm/ :mmmmmy``.smmmmmo.ydmdho` ommmmmhsshmmmmmm.      ```                    ',
+            '   ommmmmhs+/-..::  .mmmmmmoshmmmmmd- `.-::-  +mmmmm:  `hmmmmm`  `-/+ooo+:.   .:::.   .:/// ',
+            '   .dmmmmmmmmmdyo.   mmmmmmmmmmmddo. oyyyhm/  :mmmmmy+osmmmmms  `osssssssss+` /sss-   :ssss ',
+            '    .ohdmmmmmmmmmmo  dmmmmmdo+/:.`   ymmmmm/  .mmmmmmmmmmmmms`  +sss+..-ossso`+sss-   :ssss ',
+            '   --.`.:/+sdmmmmmm: ymmmmmh         ymmmmm/   mmmmmmmmmddy-    ssss`   :ssss.osss.   :ssss ',
+            '  +mmmhs/-.-smmmmmm- ommmmmm`        hmmmmm/   dmmmmm/sysss+.  `ssss-  `+ssss`osss`   :ssss ',
+            ' -mmmmmmmmmmmmmmmms  /mmmmmm.        hmmmmm/   ymmmmm``+sssss/` /sssso+sssss- +sss:` .ossso ',
+            ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
+            '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
+            '']
 
     for line in logo:
         WLOG('', '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
@@ -2002,7 +2002,6 @@ def display_system_info(logonly=True, return_message=False):
     else:
         # return messages for logger
         WLOG('', '', messages, logonly=logonly)
-
 
 # =============================================================================
 # End of code

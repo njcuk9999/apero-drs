@@ -21,13 +21,13 @@ Usage:
 
 Outputs:
   telluDB: TELL_MAP file - telluric transmission map for input file
-	   file also saved in the reduced folder
-	   input file + '_trans.fits'
+        file also saved in the reduced folder
+        input file + '_trans.fits'
 
   telluDB: TELL_CONV file - convolved molecular file (for specific
                             wavelength solution) if it doesn't already exist
-	   file also saved in the reduced folder
-	   wavelength solution + '_tapas_convolved.npy'
+        file also saved in the reduced folder
+        wavelength solution + '_tapas_convolved.npy'
 
 Created on 2018-07-12 07:49
 @author: ncook
@@ -203,6 +203,7 @@ def main(night_name=None, files=None):
             # set up an SED to fill
             sed = np.ones(loc['XDIM'])
             # sigma clip until limit
+            ww = None
             for it in range(p['N_ITER_SED_HOTSTAR']):
                 # copy the spectrum
                 sp2 = np.array(sp[order_num, :])
