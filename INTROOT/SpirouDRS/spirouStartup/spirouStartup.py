@@ -696,6 +696,35 @@ def exit_script(ll, has_plots=True):
             spirouCore.sPlt.closeall()
 
 
+def spirou_input_yes_no(p, question):
+
+    # if DRS_INTERACTIVE is False just return 0
+    if not p['DRS_INTERACTIVE']:
+        print('Interactive mode off')
+        return False
+    # find whether user is in ipython or python
+    if find_ipython():
+        kind = 'ipython'
+    else:
+        kind = 'python'
+    # log message
+    wmsg = question
+    WLOG('', '', '')
+    WLOG('', '', HEADER, printonly=True)
+    WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
+    WLOG('', '', HEADER, printonly=True)
+    # deal with python 2 / python 3 input method
+    if sys.version_info.major < 3:
+        # noinspection PyUnresolvedReferences
+        uinput = raw_input('')  # note python 3 wont find this!
+    else:
+        uinput = input('')
+    # if yes or YES or Y or y return True else return False
+    if 'Y' in uinput.upper():
+        return True
+    else:
+        return False
+
 # =============================================================================
 # Define general functions
 # =============================================================================
