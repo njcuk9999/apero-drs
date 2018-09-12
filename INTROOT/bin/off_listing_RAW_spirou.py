@@ -76,7 +76,7 @@ def main(night_name=None):
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         rawloc = spirouImage.ReadFitsTable(index_path)
-        loc['FILENAME'] = rawloc['FILENAME']
+        loc['FILENAME'] = list(rawloc['FILENAME'])
         loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
         for col in columns:
             loc[col] = rawloc[col]
