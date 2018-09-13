@@ -21,13 +21,13 @@ Usage:
 
 Outputs:
   telluDB: TELL_MAP file - telluric transmission map for input file
-	   file also saved in the reduced folder
-	   input file + '_trans.fits'
+        file also saved in the reduced folder
+        input file + '_trans.fits'
 
-  telluDB: TELL_CONV file - convolved molecular file (for specific wavelength solution)
-                            if it doesn't already exist
-	   file also saved in the reduced folder
-	   wavelength solution + '_tapas_convolved.npy'
+  telluDB: TELL_CONV file - convolved molecular file (for specific
+                            wavelength solution) if it doesn't already exist
+        file also saved in the reduced folder
+        wavelength solution + '_tapas_convolved.npy'
 
 Created on 2018-07-12 07:49
 @author: ncook
@@ -65,11 +65,11 @@ sPlt = spirouCore.sPlt
 
 FORCE_PLOT_ON = False
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None):
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -147,7 +147,7 @@ def main(night_name=None, files=None):
         sp = sp / loc['BLAZE']
 
         # get output transmission filename
-        outfile = spirouConfig.Constants.TELLU_TRANS_MAP_FILE(p, filename)
+        outfile, tag1 = spirouConfig.Constants.TELLU_TRANS_MAP_FILE(p, filename)
         outfilename = os.path.basename(outfile)
         loc['OUTPUTFILES'].append(outfile)
 
@@ -203,13 +203,14 @@ def main(night_name=None, files=None):
             # set up an SED to fill
             sed = np.ones(loc['XDIM'])
             # sigma clip until limit
+            ww = None
             for it in range(p['N_ITER_SED_HOTSTAR']):
                 # copy the spectrum
                 sp2 = np.array(sp[order_num, :])
                 # multiple by the float mask
                 sp2 *= fmask
                 # convolve with the second kernel
-                sp2b = np.convolve(sp2/sed, loc['KER2'], mode='same')
+                sp2b = np.convolve(sp2 / sed, loc['KER2'], mode='same')
                 # convolve with mask to get weights
                 ww = np.convolve(fmask, loc['KER2'], mode='same')
                 # normalise the spectrum by the weights
@@ -249,8 +250,9 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         # write to file
-        spirouImage.WriteImage(outfile, transmission_map, hdict)
+        p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
 
         # ------------------------------------------------------------------
         # Generate the absorption map
@@ -337,13 +339,15 @@ def main(night_name=None, files=None):
         abso[loc['NBLAZE'] < p['TELLU_CUT_BLAZE_NORM']] = np.nan
         # reshape data (back to E2DS)
         abso_e2ds = abso.reshape(nfiles, loc['YDIM'], loc['XDIM'])
+        # get file name
+        abso_map_file, tag2 = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
         # write thie map to file
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         # write to file
-        abso_map_file = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
-        spirouImage.WriteImage(abso_map_file, abso_e2ds, hdict)
+        p = spirouImage.WriteImage(p, abso_map_file, abso_e2ds, hdict)
 
         # ------------------------------------------------------------------
         # Generate the median and normalized absorption maps
@@ -369,7 +373,7 @@ def main(night_name=None, files=None):
                 # apply the mask of good pixels to work out ratio
                 part1 = np.sum(rowvalue[goodpix] * abso_med[goodpix])
                 part2 = np.sum(abso_med[goodpix] ** 2)
-                ratio = part1/part2
+                ratio = part1 / part2
                 # store normalised absol back on to log_abso
                 log_abso[jt, :] = log_abso[jt, :] / ratio
 
@@ -382,12 +386,14 @@ def main(night_name=None, files=None):
         abso_map_n = abso_med_out.reshape(loc['DATA'].shape)
 
         # save the median absorption map to file
-        abso_med_file = spirouConfig.Constants.TELLU_ABSO_MEDIAN_FILE(p)
-        spirouImage.WriteImage(abso_med_file, abso_med_out, hdict)
+        abso_med_file, tag3 = spirouConfig.Constants.TELLU_ABSO_MEDIAN_FILE(p)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+        p = spirouImage.WriteImage(p, abso_med_file, abso_med_out, hdict)
 
         # save the normalized absorption map to file
-        abso_map_n_file = spirouConfig.Constants.TELLU_ABSO_NORM_MAP_FILE(p)
-        spirouImage.WriteImage(abso_map_n_file, abso_map_n, hdict)
+        abso_map_file, tag4 = spirouConfig.Constants.TELLU_ABSO_NORM_MAP_FILE(p)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        p = spirouImage.WriteImage(p, abso_map_file, abso_map_n, hdict)
 
         # ------------------------------------------------------------------
         # calculate dv statistic
@@ -403,7 +409,7 @@ def main(night_name=None, files=None):
         # get the median for selected order
         abso_med2 = np.exp(abso_med[start:end])
         # get the dv pixels to extract
-        dvpixels = np.arange(-np.floor(size/2), np.ceil(size/2), 1)
+        dvpixels = np.arange(-np.floor(size / 2), np.ceil(size / 2), 1)
         # loop around files
         for it, filename in enumerate(p['OUTPUTFILES']):
             # storage for the extracted abso ratios for this file
@@ -420,7 +426,7 @@ def main(night_name=None, files=None):
                 # get the ratio
                 part1 = np.sum(rowvalue[goodpix] * abso_med2[goodpix])
                 part2 = np.sum(abso_med2[goodpix] ** 2)
-                cc[jt] = part1/part2
+                cc[jt] = part1 / part2
             # fit the ratio across the points
             cfit = np.polyfit(dvpixels, cc, fitdeg)
             # work out the dv pix
@@ -433,8 +439,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

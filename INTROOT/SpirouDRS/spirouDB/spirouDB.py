@@ -10,11 +10,10 @@ Version 0.0.1
 """
 from __future__ import division
 import numpy as np
-import filecmp
 from astropy.io import fits
 import os
-import shutil
 import time
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -55,6 +54,8 @@ def get_database(p, update=False, dbkind=None):
                 log_opt: string, log option, normally the program name
     :param update: bool, if False looks for "telluDB' in p, and if found does
                    not load new database
+    :param dbkind: string or None: if None set to "Database" else is the name
+                   of the type of database (i.e. Telluric or Calibration)
 
     :return t_database: dictionary, the telluDB database in form:
                     c_database[key] = pos + line.split()
@@ -83,7 +84,7 @@ def get_database(p, update=False, dbkind=None):
     lines = read_master_file(p, lock, lock_file, dbkind)
 
     # store into dictionary of keys
-    t_database = dict()
+    t_database = OrderedDict()
     # loop around lines in file
     for l_it, line in enumerate(lines):
         # ignore blank lines or lines starting with '#'
@@ -171,7 +172,7 @@ def get_times_from_header(p, header=None, filename=None):
     # try getting unix time
     if p['KW_ACQTIME_KEY'][0] in header:
         human_time = header[p['KW_ACQTIME_KEY'][0]]
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         unix_time = spirouMath.stringtime2unixtime(human_time, header_fmt)
     # else raise error
     else:
@@ -179,7 +180,7 @@ def get_times_from_header(p, header=None, filename=None):
                  headerfile, func_name]
         WLOG('error', p['LOG_OPT'], ('Keys {0} or {1} not in HEADER file of {1}'
                                      ' for function {2}'.format(*eargs)))
-        human_time, unix_time= None, None
+        human_time, unix_time = None, None
     # return human time and unix time
     return human_time, unix_time
 
@@ -198,6 +199,9 @@ def update_datebase(p, keys, lines, dbkind=None):
         Must contain at least:
                 log_opt: string, log option, normally the program name
     :param keys: list of strings, keys to add to the telluDB
+    :param lines: list of strings, lines to add to the telluDB
+    :param dbkind: string or None: if None set to "Database" else is the name
+                   of the type of database (i.e. Telluric or Calibration)
 
     :return None:
     """
@@ -239,6 +243,9 @@ def get_check_lock_file(p, dbkind):
                 TELLU_MAX_WAIT: float, the maximum wait time (in seconds)
                                 for telluric database file to be in
                                 use (locked) after which an error is raised
+    :param dbkind: string or None: if None set to "Database" else is the name
+                   of the type of database (i.e. Telluric or Calibration)
+
 
     :return lock: file, the opened lock_file (using open(lockfile, 'w'))
     :return lockfile: string, the opened lock file name
@@ -282,6 +289,10 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
     :param lock: file, the lock file (for closing if error occurs)
     :param lock_file: string, the lock file name (for deleting once an error
                       occurs)
+    :param dbkind: string or None: if None set to "Database" else is the name
+                   of the type of database (i.e. Telluric or Calibration)
+
+
     :return:
     """
     func_name = __NAME__ + '.write_files_to_master()'
@@ -294,6 +305,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
         emsg1 = 'Invalid Database kind ({0})'.format(dbkind)
         emsg2 = '\tfunction = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        masterfile = None
     # try to
     try:
         f = open(masterfile, 'a')
@@ -326,6 +338,9 @@ def read_master_file(p, lock, lock_file, dbkind):
                 log_opt: string, log option, normally the program name
     :param lock: file, the lock file
     :param lock_file: string, the lock file location and filename
+    :param dbkind: string or None: if None set to "Database" else is the name
+                   of the type of database (i.e. Telluric or Calibration)
+
 
     :return lines: list of strings, the lines in telluric database
                    master file (defined at:

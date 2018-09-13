@@ -11,7 +11,7 @@ Import rules: Only from spirouConfig
 """
 from __future__ import division
 import os
-import sys
+from collections import OrderedDict
 
 from . import spirouConst as Constants
 from . import spirouConfigFile
@@ -42,6 +42,7 @@ class ConfigError(ConfigException):
     """
     Custom Config Error for passing to the log
     """
+
     def __init__(self, message=None, level=None):
         """
         Constructor for ConfigError sets message to self.message and level to
@@ -121,6 +122,7 @@ class CaseInsensitiveDict(dict):
     """
     Custom dictionary with string keys that are case insensitive
     """
+
     def __init__(self, *arg, **kw):
         super(CaseInsensitiveDict, self).__init__(*arg, **kw)
         self.__capitalise_keys__()
@@ -229,6 +231,7 @@ class ParamDict(CaseInsensitiveDict):
     Custom dictionary to retain source of a parameter (added via setSource,
     retreived via getSource). String keys are case insensitive.
     """
+
     def __init__(self, *arg, **kw):
         """
         Constructor for parameter dictionary, calls dict.__init__
@@ -567,7 +570,8 @@ def read_config_file(config_file=None):
                         PACKAGE/CONFIGFOLDER and CONFIG_FILE to get config
                         file name
     :return params: parameter dictionary with key value pairs fron config file
-    :return warning_messages: list, a list of warning messages to pipe to the logger
+    :return warning_messages: list, a list of warning messages to pipe to the
+                              logger
     """
     ckwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
                    configfile=CONFIG_FILE, config_file=config_file)
@@ -609,7 +613,6 @@ def get_user_config(p):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
-    :param d_config_file: string, the default config file name and path
 
     :return p: parameter dictionary, ParamDict containing constants
         Updated with all keys from user config file (if set and found)
@@ -683,7 +686,6 @@ def get_user_config(p):
         warn_msgs.append('    Using primary config.py only')
         return p, warn_msgs
 
-
     # construct new path
     configfile = os.path.join(configfolder, CONFIG_FILE)
     # check config file exists here
@@ -710,7 +712,6 @@ def get_user_config(p):
 
     # return parameters
     return p, warn_msgs
-
 
 
 def load_config_from_file(p, key, required=False, logthis=False):
@@ -748,7 +749,7 @@ def load_config_from_file(p, key, required=False, logthis=False):
 
     # deal with default config file first
     if os.path.exists(dconfig):
-        newparams1 = get_config_params(p, key, dconfig, logthis=logthis)
+        newparams1 = get_config_params(p, dconfig)
     else:
         if required:
             # log error
@@ -757,13 +758,13 @@ def load_config_from_file(p, key, required=False, logthis=False):
             raise ConfigError([emsg1, emsg2], level='error')
         return p, log_messages
     # deal with user config file (if set)
-    if os.path.exists(uconfig) and  p['USER_CONFIG']:
-        newparams2 = get_config_params(p, key, uconfig, logthis=logthis)
+    if os.path.exists(uconfig) and p['USER_CONFIG']:
+        newparams2 = get_config_params(p, uconfig)
     else:
-        newparams2 = dict()
+        newparams2 = OrderedDict()
 
     # combine giving precedence to user config file
-    newparams, newparamssource = dict(), dict()
+    newparams, newparamssource = OrderedDict(), OrderedDict()
     # loop around default parameters and add to new params
     for newkey in list(newparams1.keys()):
         newparams[newkey] = newparams1[newkey]
@@ -783,14 +784,14 @@ def load_config_from_file(p, key, required=False, logthis=False):
     if logthis:
         log_messages.append('{0} loaded from:'.format(key))
         log_messages.append('     {0}'.format(dconfig))
-        if os.path.exists(uconfig) and  p['USER_CONFIG']:
+        if os.path.exists(uconfig) and p['USER_CONFIG']:
             log_messages.append('     {0}'.format(uconfig))
 
     # return p
     return p, log_messages
 
 
-def get_config_params(p, key, filename, logthis=True):
+def get_config_params(p, filename):
     # read config file into new dictionary
     newparams, _ = read_config_file(filename)
     # merge with param file
@@ -802,6 +803,7 @@ def get_config_params(p, key, filename, logthis=True):
                               level='warning')
     # return new parameters
     return newparams
+
 
 def extract_dict_params(pp, suffix, fiber, merge=False):
     """
@@ -1135,8 +1137,6 @@ def check_for_rel_paths(path):
         path = os.path.join(home, path[6:])
     # finally return path
     return path
-
-
 
 # =============================================================================
 # End of code

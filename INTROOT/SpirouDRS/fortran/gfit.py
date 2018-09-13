@@ -3,7 +3,8 @@
 """
 fitgaus.py
 
-Fit gaussian to a line. Non-linear 4-parameter gaussian fit by the Levenberg-Marquardt method.
+Fit gaussian to a line. Non-linear 4-parameter gaussian fit by the
+Levenberg-Marquardt method.
 
 
 Created on 2018-06-02 at 11:40
@@ -252,8 +253,8 @@ def gausstest(a, n, b):
 
 def mrqcof(x, y, sig, ndata, a, ma=4):
     """
-    "Used by mrqin to evaluate the linearized fitting matrix alpha, and vector beta,
-    and calculate chisq"
+    "Used by mrqin to evaluate the linearized fitting matrix alpha,
+    and vector beta, and calculate chisq"
 
     Inputs:
         x: array, x data
@@ -279,7 +280,8 @@ def mrqcof(x, y, sig, ndata, a, ma=4):
     chisq = 0
     # TODO loop over data length may be arrayable
     for i in range(ndata):
-        # call funcs - is called for each x in data, this is arrayed, returns new y and dyda
+        # call funcs - is called for each x in data, this is arrayed,
+        # returns new y and dyda
         ymod, dyda = gfuncs(x[i], a)
         # calculate inverse of weight squared
         sig2i = 1 / (sig[i] ** 2)
@@ -299,9 +301,7 @@ def mrqcof(x, y, sig, ndata, a, ma=4):
     return alpha, beta, chisq
 
 
-
 def swap(v1, v2):
-
     # get the type of v1
     kind = type(v1)
     # copy v1 into tmp holder
@@ -312,7 +312,6 @@ def swap(v1, v2):
     v2 = kind(tmp)
     # return v1 and v2 swapped
     return v1, v2
-
 
 
 # =============================================================================
