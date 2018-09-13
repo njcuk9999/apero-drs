@@ -122,7 +122,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
             # get the header time
             header_time = hdr[acqtime_key]
             # get the header format for dates
-            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
             # get the calib DB format for dates
             calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
             # get the unix time from header time (header time assumes GMT/UTC)
