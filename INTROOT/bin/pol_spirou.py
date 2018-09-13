@@ -39,14 +39,6 @@ ParamDict = spirouConfig.ParamDict
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-# TODO: Remove test
-# import sys
-# sys.argv = [__NAME__, 'TEST/20180528', '2279383o_pp_e2dsff_A.fits',
-#             '2279384o_pp_e2dsff_B.fits', '2279386o_pp_e2dsff_A.fits',
-#             '2279383o_pp_e2dsff_B.fits', '2279385o_pp_e2dsff_A.fits',
-#             '2279386o_pp_e2dsff_B.fits', '2279384o_pp_e2dsff_A.fits',
-#             '2279385o_pp_e2dsff_B.fits']
-
 
 # =============================================================================
 # Define functions
@@ -207,7 +199,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     # save STOKESI data to file
     multi_image = [loc['STOKESI'], loc['STOKESIERR']]
-    spirouImage.WriteImageMulti(stokesIfits, multi_image, hdict)
+    p = spirouImage.WriteImageMulti(p, stokesIfits, multi_image, hdict)
 
     # ------------------------------------------------------------------
     if p['IC_POLAR_LSD_ANALYSIS']:
