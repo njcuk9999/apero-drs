@@ -64,18 +64,54 @@ Finished Changes:
 
 9) Made all calls to dict() --> OrderedDict() (for python 2/cfht compatibility)
 
-10) New unit_tests (requires files - coming soon?)
-       - Test 1: Calibration test
-       - Test 2: Telluric test
-       - Test 3: Polarimetry test (Missing)
+10) New unit_tests
+       - Test 1: Calibration test (Cal_Test.run)
+            Tests all calibration recipes
+            Tests wave solution, drift and CCF recipes
+            Tests other minor recipes
+
+       - Test 2: Telluric test (Tellu_Test.run)
+            Currently requires Test 1 to be run (in Calib DB)
+            Extracts all telluric stars using CalibDB
+            Tests telluric recipes
+
+       - Test 3: Polarimetry test (Pol_Test.run)
+            Tests all calibration recipes (on data from 2018-05-26)
+            Extracts polar sequences from 2018-05-26
+            Tests pol_spirou recipe
+
     You will find these tests in .../INTROOT/SpirouDRS/spirouUnitTests/runs
     to run them use:
 
     .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Cal_Test.run
     .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Tellu_Test.run
+    .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Pol_Test.run
 
-    Requires raw directories:
-        "TEST1", "TEST2", "TEST3" with files from August in each
+    Requires following files and directory structure in the raw folder:
+
+        TEST1/20180805:
+            20180817_hc1_hc1_seq_001c.fits  2295515f.fits  2295523f.fits  2295546o.fits
+            20180817_hc1_hc1_seq_002c.fits  2295516f.fits  2295524f.fits  2295547o.fits
+            20180817_hc1_hc1_seq_003c.fits  2295517f.fits  2295525a.fits  2295548o.fits
+            2295510f.fits                   2295518f.fits  2295526a.fits  2295549o.fits
+            2295511f.fits                   2295519f.fits  2295527a.fits  2295550o.fits
+            2295512f.fits                   2295520f.fits  2295528a.fits  dark_dark_P5_003d.fits
+            2295513f.fits                   2295521f.fits  2295529a.fits
+            2295514f.fits                   2295522f.fits  2295545o.fits
+
+        TEST2/20180823:
+            2278951o.fits  2279005o.fits  2279007o.fits  2279009o.fits  2279017o.fits  2279019o.fits
+            2278952o.fits  2279006o.fits  2279008o.fits  2279010o.fits  2279018o.fits  2279020o.fits
+
+        TEST2/20180824:
+            2279104o.fits
+
+        TEST2/20180825:
+            2279197o.fits
+
+        TEST3/20180526:
+            2279303d.fits  2279312f.fits  2279327a.fits  2279383o.fits  2279385o.fits
+            2279307f.fits  2279321f.fits  2279330c.fits  2279384o.fits  2279386o.fits
 
 11) Pep 8 clean up of all recipes
 
