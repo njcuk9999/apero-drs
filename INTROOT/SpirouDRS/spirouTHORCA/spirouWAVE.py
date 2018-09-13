@@ -501,11 +501,11 @@ def fp_wavelength_sol_new(p, loc):
                 # define maximum permitted difference
                 llpos_diff_med = np.median(
                     floc['llpos'][1:] - floc['llpos'][:-1])
-                print(llpos_diff_med)
-                print(abs(ll_prev[ind] - floc['llpos'][-1]))
+                # print(llpos_diff_med)
+                # print(abs(ll_prev[ind] - floc['llpos'][-1]))
                 # check if the difference is over the limit
                 if abs(ll_prev[ind] - floc['llpos'][-1]) > 1.5 * llpos_diff_med:
-                    print('overlap line not matched')
+                    # print('overlap line not matched')
                     ll_diff = ll_prev[ind] - floc['llpos'][-1]
                     ind2 = -2
                     # loop over next reddest peak until they match
@@ -534,8 +534,8 @@ def fp_wavelength_sol_new(p, loc):
                     # store new m and d
                     floc['m_fp'] = mpeak
                     floc['dopd_t'] = dopd_t
-            else:
-                print('no overlap for order ' + str(order_num))
+            # else:
+            #     print('no overlap for order ' + str(order_num))
         # add to storage
         llpos_all += list(floc['llpos'])
         xxpos_all += list(floc['xxpos'])
