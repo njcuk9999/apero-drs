@@ -897,7 +897,7 @@ def fit_gaussian_triplets(p, loc):
         #    line centers
         dv = np.repeat(np.nan, len(ini_wave_sol))
         # wavelength given in the catalog for the matched line
-        wave_catalog = np.zeros(len(ini_wave_sol))
+        wave_catalog = np.repeat(np.nan, len(ini_wave_sol))
         # amplitude given in the catolog for the matched lines
         amp_catalog = np.zeros(len(ini_wave_sol))
         # loop around all lines in ini_wave_sol
