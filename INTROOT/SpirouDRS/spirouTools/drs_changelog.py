@@ -59,7 +59,7 @@ DATESTR = '__date__ = '
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path, kind='rpm', version0=None, since0=None, until=None):
+def update(filename, path, kind='rpm', version=None, since=None, until=None):
     # get default run
     cargs = [path, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -68,11 +68,11 @@ def update(filename, path, kind='rpm', version0=None, since0=None, until=None):
     else:
         command += ' -O {0} -D None -n DRS'.format(kind)
     # add version if needed
-    if version0 is not None:
-        command += ' -c {0}'.format(version0)
+    if version is not None:
+        command += ' -c {0}'.format(version)
     # add since if needed
-    if since0 is not None:
-        command += ' -s {0}'.format(since0)
+    if since is not None:
+        command += ' -s {0}'.format(since)
     # add until if needed
     if until is not None:
         command += ' -u {0}'.format(until)
@@ -83,7 +83,7 @@ def update(filename, path, kind='rpm', version0=None, since0=None, until=None):
         WLOG('error', __NAME__.split('.py')[0], 'Error with gcg (see above)')
 
 
-def process_lines(fullfilename, tmpfilename, path, kind='rpm', version0=None):
+def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
 
     # read log
     f = open(tmpfilename, 'r')
@@ -149,7 +149,7 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version0=None):
         WLOG('', __NAME__, 'Processing commit {0} of {1}'.format(*wargs))
         # get entry
         update(tmpfilename2, path, since=reference[0], until=reference[1],
-               kind=kind, version=version0)
+               kind=kind, version=version)
         # check we have tmpfile
         if not os.path.exists(tmpfilename2):
             continue
@@ -253,7 +253,7 @@ def get_last_entry(filename):
         return last_commit
 
 
-def update_version_file(filename, version0):
+def update_version_file(filename, version):
     # read file and delete
     f = open(filename, 'r')
     lines = f.readlines()
@@ -263,7 +263,7 @@ def update_version_file(filename, version0):
 
     os.remove(filename)
     # edit first line
-    lines[0] = 'DRS_VERSION = {0}\n'.format(version0)
+    lines[0] = 'DRS_VERSION = {0}\n'.format(version)
     # write file and save
     f = open(filename, 'w')
     f.writelines(lines)
@@ -272,7 +272,7 @@ def update_version_file(filename, version0):
     os.remove(filename + '.backup')
 
 
-def update_py_version(filename, version0):
+def update_py_version(filename, version):
     # read const file
     f = open(filename, 'r')
     lines = f.readlines()
@@ -289,7 +289,7 @@ def update_py_version(filename, version0):
     uinput1 = None
     while cond:
         # ask to update version
-        print('Current version is "{0}"'.format(version0))
+        print('Current version is "{0}"'.format(version))
         print('New version [Y]es or [N]o?')
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
@@ -334,9 +334,9 @@ def update_py_version(filename, version0):
         f.writelines(lines)
         f.close()
         # update version number
-        version0 = uinput1
+        version = uinput1
     # return version
-    return version0
+    return version
 
 
 # =============================================================================
@@ -350,22 +350,22 @@ if __name__ == "__main__":
     # get values from config file
     p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # get the version
-    version = p['DRS_VERSION']
+    version0 = p['DRS_VERSION']
     # increment version in config files
-    version = update_py_version(CONSTFILE, version)
+    version0 = update_py_version(CONSTFILE, version0)
     # check full log file for previous entries
-    since = get_last_entry(FILENAME)
+    since0 = get_last_entry(FILENAME)
     # log if not None
-    if since is not None:
+    if since0 is not None:
         wmsg = 'Found previous entries: starting from Commit {0}'
-        WLOG('', __NAME__, wmsg.format(since))
+        WLOG('', __NAME__, wmsg.format(since0))
     # get full log
     WLOG('', __NAME__, 'Getting full commit log')
-    update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
+    update(TMPFILENAME, PATH, kind='rpm', version=version0, since=since0)
     # get lines group them and save to full file
-    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
+    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version0)
     # update version text file
-    update_version_file(VERSIONFILE, version)
+    update_version_file(VERSIONFILE, version0)
     # remove backup
     os.remove(FILENAME + '.backup')
 
