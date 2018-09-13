@@ -4564,3 +4564,47 @@
 	- cal_test.run: fix errors (typos ...f --> ...a) (rev.86b0b5f3)
 	- update recipe control for visu_RAW and visu_E2DS recipes (rev.45121f60)
 	- update notes with not done/finished (rev.0c33cb19)
+
+
+
+================================================================================
+* Tue Sep 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.005
+
+================================================================================
+	- pep8 updates (rev.01bce8f9)
+	- update_notes.txt: update with new unit tests (rev.f6db5001)
+	- unit tests: update unit test --> add "Tellu_Test.run" and modify "Cal_Test.run", remove test_tellu.run (rev.e462e025)
+	- recipe_control.txt --> add telluric and polarisation cases for visu_E2DS_spirou (rev.bfc3c646)
+	- obj_fit_tellu, obj_mk_tell_template, obj_mk_tellu: fix writing outputs to file (rev.520b8c88)
+
+
+
+================================================================================
+* Wed Sep 12 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.006
+
+================================================================================
+	- off_listing.py: fix bug and add to index (if prompted by user) (rev.ab90fab1)
+	- spirouStartup.py: added Y/N question function (rev.d020f80f)
+	- off_listing.py: fix to bug in code (rawloc --> list) (rev.3118329d)
+	- off_listing.py: generic off listing that takes any directory as only input (no night name) and read's index.fits / _pp fits file headers to get off listing for that directory (rev.9a1b57cb)
+	- spirouStartup.py: fix for not requiring night name in load_arguments (rev.24148aa4)
+	- spirouConst.py: Added general off listing columns (rev.618a444b)
+	- made spirouTools executable (rev.dd5fa2ee)
+	- fix bad pep8 updates (rev.647fde11)
+	- pep8 updates (rev.5e28150a)
+
+
+
+================================================================================
+* Thu Sep 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.007
+
+================================================================================
+	- drs_changelog.py: undo pep8 name change (and redo properly) (rev.0a9b6b48)
+	- update_notes.txt: add unit tests to update (files and some explanation) (rev.11fb9f05)
+	- pol_spirou.py: fix error with new input/output to WriteImageMulti (rev.8ca56903)
+	- spirouWAVE.py: hide testing "print" statements (rev.c07d7fb7)
+	- unit_tests: update unit test + add polarisation test (rev.a821b2d8)
+	- spirouCDB.py: fix bad call to DATE_FMT_HEADER (p not required) (rev.522ff10c)
+	- cal_reset.py: exit script has_plots=False (rev.b55de667)
+	- spirouWAVE.py: fix issue with pep8 update (ll_prev defined in wrong place) (rev.7f39d0aa)
+	- spirouWAVE.py (Issue #452): wave_catalog is now initialised as a NaN array (instead of an array of zeros) (rev.074f79fa)
