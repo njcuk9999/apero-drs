@@ -266,7 +266,7 @@ def convert_to_adu(image, p=None, exptime=None):
     return newimage
 
 
-def get_all_similar_files(p, directory, prefix=None, suffix=None):
+def get_all_similar_files_old(p, directory, prefix=None, suffix=None):
     """
     Get all similar files in a directory with matching prefix and suffix defined
     either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
@@ -315,6 +315,104 @@ def get_all_similar_files(p, directory, prefix=None, suffix=None):
     return list(filelist)
 
 
+def get_all_similar_files(p, hdr):
+    """
+    Get all similar files in a directory with matching prefix and suffix defined
+    either by "prefix" and "suffix" or by p["ARG_FILE_NAMES"][0]
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+                log_opt: string, log option, normally the program name
+
+    :param hdr: dict, header of the reference file
+
+    :return filelist: list of strings, the full paths of all files that are in
+                      "directory" with the matching prefix and suffix defined
+                      either by "prefix" and "suffix" or by
+                      p["ARG_FILE_NAMES"][0]
+    """
+    func_name = __NAME__ + '.get_all_similar_files()'
+
+    # get the keys for this file
+    if p['KW_OUTPUT'][0] in hdr:
+        output = hdr[p['KW_OUTPUT'][0]]
+    else:
+        emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        output = None
+
+    if p['KW_EXT_TYPE'][0] in hdr:
+        ext_type = hdr[p['KW_EXT_TYPE'][0]]
+    else:
+        emsg1 = 'Key "{0}" missing from header'.format(p['KW_EXT_TYPE'][0])
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        ext_type = None
+
+    # get expected index file name and location
+    index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
+    path = p['REDUCED_DIR']
+    index_path = os.path.join(path, index_file)
+    # if file exists then we have some indexed files
+    if os.path.exists(index_path):
+        itable = spirouTable.read_fits_table(index_path)
+    else:
+        emsg = 'No index file. Please run off_listing_REDUC_spirou.py'
+        WLOG('error', p['LOG_OPT'], emsg)
+        itable = None
+
+    # mask by those with correct output and ext_type and not be itself
+    mask1 = itable[p['KW_OUTPUT'][0]] == output
+    mask2 = itable[p['KW_EXT_TYPE'][0]] == ext_type
+    mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
+    mask = mask1 & mask2 & mask3
+
+    # check that we have rows left
+    if np.sum(mask) == 0:
+        emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
+        eargs = [p['KW_OUTPUT'][0], output, p['KW_EXT_TYPE'][0], ext_type]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    # if we do get date and sort by it
+    else:
+        # apply mask
+        itable = itable[mask]
+        # get the absolute filenames
+        abs_filenames = []
+        for row in range(len(itable)):
+            # get filename (and make sure it is just a filename)
+            filename = os.path.basename(itable['FILENAME'][row])
+            # join to path
+            abs_filename = os.path.join(p['ARG_FILE_DIR'], filename)
+            # append to list
+            abs_filenames.append(abs_filename)
+        # add to itable
+        itable['ABSFILENAMES'] = abs_filenames
+        # get unix_time for each row
+        unix_times = []
+        for row in range(len(itable)):
+            # get string date and time (part1 and part2)
+            part1 = itable[p['kw_DATE_OBS'][0]][row].strip()
+            part2 = itable[p['kw_UTC_OBS'][0]][row].strip()
+            # merge into string
+            stringtime = '{0}-{1}'.format(part1, part2)
+            # convert to unix time
+            unix_time = spirouMath.stringtime2unixtime(stringtime)
+            # append to list
+            unix_times.append(unix_time)
+        # sort by unix time
+        sortmask = np.argsort(unix_times)
+        # apply sort mask
+        itable = itable[sortmask]
+        # get file list
+        filelist = itable['ABSFILENAMES']
+        # return file list
+        return list(filelist)
+
+
 def interp_bad_regions(p, image):
     """
     Interpolate over the bad regions to fill in holes on image (only to be used
@@ -347,10 +445,6 @@ def interp_bad_regions(p, image):
 
     :return image3: numpy array (2D), the corrected image
     """
-    # TODO: Eventually remove H2RG fix
-    # do not interp for H2RG
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return image
     # get the image size
     dim1, dim2 = image.shape
     # get parameters from p
@@ -358,7 +452,7 @@ def interp_bad_regions(p, image):
     med_size = p['BAD_REGION_MED_SIZE']
     threshold = p['BAD_REGION_THRESHOLD']
     kernel_size = p['BAD_REGION_KERNEL_SIZE']
-    med_size2  = p['BAD_REGION_MED_SIZE2']
+    med_size2 = p['BAD_REGION_MED_SIZE2']
     goodvalue = p['BAD_REGION_GOOD_VALUE']
     badvalue = p['BAD_REGION_BAD_VALUE']
     # set nan pixels to zero
@@ -426,13 +520,13 @@ def interp_bad_regions(p, image):
     # calculate the ratio between original image and interpolated image
     ratio = image/image2
     # set all ratios greater than 1 to the inverse (reflect around 1)
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         rmask = ratio > 1
         ratio[rmask] = 1.0/ratio[rmask]
     # create a weight image
     weights = np.zeros_like(image, dtype=float)
     # decide which pixels are good and which pixels are bad
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         goodmask = ratio > goodvalue
         badmask = ratio < badvalue
         betweenmask = (~badmask) & (~goodmask)
@@ -451,7 +545,7 @@ def fix_non_preprocessed(p, image, filename=None):
     If a raw file is not preprocessed, then fix it (i.e. rotate it) so
     it conforms to DRS standards
 
-    :param pp: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
             PROCESSED_SUFFIX: string, the processed suffix
             PREPROCESSED: bool, flag whether file is detected as
@@ -480,12 +574,8 @@ def fix_non_preprocessed(p, image, filename=None):
                 p['PREPROCESSED'] = True
             else:
                 p['PREPROCESSED'] = False
-    # get conditions for rotation
-    # TODO: remove H4RG dependency
-    cond1 = p['IC_IMAGE_TYPE'] == 'H4RG'
-    cond2 = not p['PREPROCESSED']
-    # if conditions met rotate
-    if cond1 and cond2:
+    # if not pre-processedrotate
+    if not p['PREPROCESSED']:
         # log warning
         wmsg = 'Warning: Using non-preprocessed file!'
         WLOG('warning', p['LOG_OPT'], wmsg)
@@ -928,6 +1018,12 @@ def get_badpixel_map(p, header=None):
                 DRS_CALIB_DB: string, the directory that the calibration
                               files should be saved to/read from
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            LOG_OPT: string, the program name for logging
+        May contain:
+            calibDB: dictionary, the calibration database
+
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
 
@@ -1259,7 +1355,7 @@ def locate_bad_pixels_full(p, image):
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
     # apply threshold
-    #mask = np.rot90(mdata, -1) < threshold
+    # mask = np.rot90(mdata, -1) < threshold
     mask = np.abs(np.rot90(mdata, -1)-1) > threshold
 
     # -------------------------------------------------------------------------
@@ -1543,6 +1639,8 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
                          parameter to "p" parameter dictionary (and sets source)
     :param dtype: type or None, if not None then tries to convert raw
                   parameter to type=dtype
+    :param required: bool, if True raises error if keyword not found, if False
+                     returns a value of None if keyword not found
 
     :return value: if return_value is True value of parameter is returned
     :return p: if return_value is False, updated parameter dictionary p with
@@ -1642,7 +1740,7 @@ def get_wave_keys(p, loc, hdr):
                                     **wkwargs)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
-        loc['WAVETIME2'] = get_param( keyword='KW_WAVE_TIME2', **wkwargs)
+        loc['WAVETIME2'] = get_param(keyword='KW_WAVE_TIME2', **wkwargs)
     # else we have got the wave info from the calibDB
     else:
         # log warning
@@ -1651,7 +1749,7 @@ def get_wave_keys(p, loc, hdr):
         # get parameters from the calibDB
         key = 'WAVE_' + p['FIBER']
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
-        fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
         # set the parameters in wave
         loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
@@ -1682,7 +1780,7 @@ def get_airmass(p, hdr):
 
 # TODO insert paremeter dictionnary
 # TODO: FIX PROBLEMS: Write doc string
-def e2dstos1d(wave,e2dsffb,bin):
+def e2dstos1d(wave, e2dsffb, bin):
     """
     Convert E2DS (2-dimension) spectra to 1-dimension spectra
     with merged spectral orders and regular sampling
@@ -1700,10 +1798,13 @@ def e2dstos1d(wave,e2dsffb,bin):
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Integral Calculation yy by summation
-        dx = np.concatenate((np.array([x[1] - x[0]]), (x[2:] - x[0:-2]) / 2., np.array([x[-1] - x[-2]])))
-        stepmax = np.max(dx)
+        parts = [np.array([x[1] - x[0]]),
+                 (x[2:] - x[0:-2]) / 2.,
+                 np.array([x[-1] - x[-2]])]
+        dx = np.concatenate(parts)
+        # stepmax = np.max(dx)
         yy = np.concatenate((np.array([0.]), np.cumsum(y * dx)))
-        xx = np.concatenate((x - dx / 2., np.array([x[-1] + dx[-1] / 2.])))
+        # xx = np.concatenate((x - dx / 2., np.array([x[-1] + dx[-1] / 2.])))
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Computation of the new coordinates

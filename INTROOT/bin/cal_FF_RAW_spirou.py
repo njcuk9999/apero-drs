@@ -75,10 +75,8 @@ def main(night_name=None, files=None):
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
 
     # run specific start up
-    # TODO: remove H2RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p['FIB_TYPE'] = p['FIBER_TYPES']
-        p.set_source('FIB_TYPE', __NAME__ + '__main__()')
+    p['FIB_TYPE'] = p['FIBER_TYPES']
+    p.set_source('FIB_TYPE', __NAME__ + '__main__()')
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -127,13 +125,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
-
-    #  Put to zero all the negative pixels
-    # TODO: Check if it makes sens to do that
-#    data2 = np.where(data2<0, np.zeros_like(data2), data2)
+    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -170,7 +162,7 @@ def main(night_name=None, files=None):
 
     # data2=data2-background
     # correct data2 with background (where positive)
-    data2=np.where(data2>0,data2-background,0)
+    data2 = np.where(data2 > 0, data2 - background, 0)
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -191,12 +183,10 @@ def main(night_name=None, files=None):
         p.set_source('FIBER', __NAME__ + '/main()')
 
         # get fiber parameters
-        # TODO: remove H2RG dependency
-        if p['IC_IMAGE_TYPE'] == 'H4RG':
-            params2add = spirouImage.FiberParams(p, p['FIBER'])
-            for param in params2add:
-                p[param] = params2add[param]
-                p.set_source(param, __NAME__ + '.main()')
+        params2add = spirouImage.FiberParams(p, p['FIBER'])
+        for param in params2add:
+            p[param] = params2add[param]
+            p.set_source(param, __NAME__ + '.main()')
 
         # ------------------------------------------------------------------
         # Get localisation coefficients
@@ -223,12 +213,12 @@ def main(night_name=None, files=None):
             # set the number of order to half of the original
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS']/2.0)
         # if fiber is B take the even orders
-        elif fiber=='B':
+        elif fiber == 'B':
             loc['ACC'] = loc['ACC'][:-1:2]
             loc['ASS'] = loc['ASS'][:-1:2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
         # if fiber is A take the even orders
-        elif fiber =='A':
+        elif fiber == 'A':
             loc['ACC'] = loc['ACC'][1::2]
             loc['ASS'] = loc['ASS'][:-1:2]
             loc['NUMBER_ORDERS'] = int(loc['NUMBER_ORDERS'] / 2.0)
@@ -283,11 +273,7 @@ def main(night_name=None, files=None):
             # calcualte the blaze function
             blaze = spirouFLAT.MeasureBlazeForOrder(p, e2ds)
             # calculate the flat
-            # TODO: Remove H2RG compatibility
-            if p['IC_IMAGE_TYPE'] == 'H2RG':
-                flat = e2ds / blaze
-            else:
-                flat = np.where(blaze > 1, e2ds / blaze, 1)
+            flat = np.where(blaze > 1, e2ds / blaze, 1)
             # calculate the rms
             rms = np.std(flat)
             # log the SNR RMS
@@ -333,7 +319,7 @@ def main(night_name=None, files=None):
         # Store Blaze in file
         # ----------------------------------------------------------------------
         # construct filename
-        blazefits = spirouConfig.Constants.FF_BLAZE_FILE(p)
+        blazefits, tag1 = spirouConfig.Constants.FF_BLAZE_FILE(p)
         blazefitsname = os.path.split(blazefits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving blaze spectrum for fiber: {0} in {1}'
@@ -342,28 +328,30 @@ def main(night_name=None, files=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # define new keys to add
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
         # write 1D list of the SNR
         hdict = spirouImage.AddKey1DList(hdict, p['KW_EXTRA_SN'],
                                          values=loc['SNR'])
         # write center fits and add header keys (via hdict)
-        spirouImage.WriteImage(blazefits, loc['BLAZE'], hdict)
+        p = spirouImage.WriteImage(p, blazefits, loc['BLAZE'], hdict)
 
         # ----------------------------------------------------------------------
         # Store Flat-field in file
         # ----------------------------------------------------------------------
         # construct filename
-        flatfits = spirouConfig.Constants.FF_FLAT_FILE(p)
+        flatfits, tag2 = spirouConfig.Constants.FF_FLAT_FILE(p)
         flatfitsname = os.path.split(flatfits)[-1]
         # log that we are saving blaze file
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey1DList(hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])
         # write center fits and add header keys (via same hdict as blaze)
-        spirouImage.WriteImage(flatfits, loc['FLAT'], hdict)
+        p = spirouImage.WriteImage(p, flatfits, loc['FLAT'], hdict)
 
         # ------------------------------------------------------------------
         # Quality control
@@ -381,7 +369,7 @@ def main(night_name=None, files=None):
 
         # get mask for removing certain orders in the RMS calculation
         remove_orders = np.array(p['FF_RMS_PLOT_SKIP_ORDERS'])
-        mask=np.in1d(np.arange(len(loc['RMS'])), remove_orders)
+        mask = np.in1d(np.arange(len(loc['RMS'])), remove_orders)
         # apply mask and calculate the maximum RMS
         max_rms = np.max(loc['RMS'][~mask])
         # apply the quality control based on the new RMS
@@ -420,16 +408,6 @@ def main(night_name=None, files=None):
             spirouDB.PutCalibFile(p, blazefits)
             # update the master calib DB file with new key
             spirouDB.UpdateCalibMaster(p, keydb, blazefitsname, hdr)
-
-            # TODO: Remove H2RG requirement
-            # hack to allow A and B flat and blaze files
-            if p['IC_IMAGE_TYPE'] == 'H2RG':
-                if p['FIBER'] == 'AB':
-                    for fib in ['A', 'B']:
-                        keydb = 'FLAT_' + fib
-                        spirouDB.UpdateCalibMaster(p, keydb, flatfitsname, hdr)
-                        keydb = 'BLAZE_' + fib
-                        spirouDB.UpdateCalibMaster(p, keydb, blazefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

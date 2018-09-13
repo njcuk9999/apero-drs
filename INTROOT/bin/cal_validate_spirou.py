@@ -63,6 +63,7 @@ def main(debug_mode=0):
     # -------------------------------------------------------------------------
     print(' \n0) Checking dependencies...')
     # loop around modules
+    passed = False
     for module in list(MODULES.keys()):
         # get required version
         reqversion = MODULES[module]

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import division
-import numpy as np
-import os
-import warnings
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig

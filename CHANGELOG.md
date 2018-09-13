@@ -4375,8 +4375,236 @@
 
 
 ================================================================================
-* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.122
+* Mon Sep 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.122
+
+================================================================================
+	- manually incorporated possibility to read wavelength solution from calibDB (from dev2) (rev.f41f623a)
+
+
+
+================================================================================
+* Tue Sep 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.123
 
 ================================================================================
 	- Move cal_HC_E2DS_EA constants to here (rev.875829dc)
 	- Prep cal_HC_E2DS_EA for recipe run (add main function, move constants etc) (rev.0a8b9970)
+
+
+
+================================================================================
+* Wed Sep 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.2.124
+
+================================================================================
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data), and added the obtaining of DPRTYPE to add  EXT_TYPE key to header (extraction output id key --> giving DPRTYPE for extracted files) (rev.0798e09e)
+	- added a new log output to split up files to help see progress (rev.3ecfd669)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.207bda22)
+	- Issue #429 - re-worked file identification only using header keys (no filename identification) (rev.876cd652)
+	- Issue #429 - added kw_OUTPUT and kw_EXT_TYPE definitions for saving output header id and extraction output header id (rev.90a75498)
+	- Issue #429 - added TAGFOLDER and TAGFILE functions and modified all fits-file definition functions to accept tags (rev.c7ae77f9)
+	- Issue #429 - added get_tags function (rev.a2614ee2)
+	- pep8 fixes (rev.87096f51)
+	- Issue #429 - re-work recipe_control.txt to take into account added output keys (and check keys on start up) (rev.b14d93f0)
+	- Issue #429 - definition of output header keys (based on output filename in spirouConst.py) (rev.ec6dae31)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.0e23fed3)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.e2f75088)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.d01d9bfd)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.94c9bffc)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.42c99315)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.d3f40be7)
+	- Issue #429 - add output header key to identify output files (KW_OUTPUT) - defined in output_keys.py (SpirouDRS/data) (rev.5ed02b84)
+
+
+
+================================================================================
+* Wed Sep 05 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.125
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou: updated HC section from cal_HC_E2DS_EA_spirou.py (rev.adf2cc99)
+	- visu_E2DS_spirou, recipe_control: fiber is now obtained from file (Fixes #437) (rev.4cccc671)
+	- visu_E2DS_spirou, recipe_control: fiber is now obtained from file (rev.39990d51)
+
+
+
+================================================================================
+* Wed Sep 05 2018 Melissa Hobson <melissa.hobson@lam.fr> - 0.2.126
+
+================================================================================
+	- commit local changes (rev.b9c64dfd)
+
+
+
+================================================================================
+* Wed Sep 05 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.2.127
+
+================================================================================
+	- spirouRV (for cal_DRIFTPEAK_E2DS_spirou) - Fix repetition of warning messages in while loop (rev.ba0d49a7)
+
+
+
+================================================================================
+* Thu Sep 06 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.2.128
+
+================================================================================
+	- spirouPlot: updated wave_ea_plot_per_order_hcguess: (rev.984c8d02)
+
+
+
+================================================================================
+* Thu Sep 06 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.000
+
+================================================================================
+	- Issue #418 spirouStartup.py - Make directory for NIGHT_NAME in TMP_DIR, index.fits saves to TMP_DIR, files are now checked for RAW in TMP_DIR (rev.315673f2)
+	- Issue #418 spirouFile.py: obtaining tmppath and tmpfile to check for raw files (instead of rawpath which now throws error when used) (rev.553944ca)
+	- Issue #418 spirouConfig: added TMP_DIR definition (as DRS_DATA_WORKING dir) (rev.a910b075)
+	- Issue #418 cal_preprocess_spirou.py: made pp target raw folder but save to tmp dir (rev.50ff74b3)
+	- updated notes (rev.18dd2a60)
+	- updated the update notes (rev.423f5dee)
+	- Added Update Notes (rev.c90c3858)
+	- Update 20180805_test1.run to extract FP sequences and run DRIFT recipes (with extracted FPs) (rev.ac13ac1d)
+	- update 20180409 test to include off_listing_RAW/REDUC and not include pol_spirou (do not have the raw files needed) (rev.a7a33fbf)
+	- unit_test.py: Move Reset after set up (so errors reported before reset questions) (rev.b0c409e4)
+	- Issue #429: spirouUnitRecipes.py: modify the outputs of off_listing recipes (distinguish between RAW and REDUCED listing) (rev.1d83c547)
+	- Issue #429: calc_berv - modify input/output of WriteImage (for handling p['OUTPUTS']) (rev.4a876bc4)
+	- Issue #429: spirouStartup.py modify "main_end_script" to index outputs or pre-processing - via functions "index_pp", "index_outputs", "indexing" and "sort_and_save_outputs" (rev.d492811e)
+	- Issue #429: spirouStartup.__init__.py: alias sort_and_save_outputs to SortSaveOutputs (rev.a695104b)
+	- Issue #429: spirouLSD - modify WriteImage to accept new input/output for writing p['OUTPUTS'] (rev.77f4eaed)
+	- Issue #429: spirouTable: Add ways of making, reading and writing fits table (via astropy.table.Table) - functions added = make_fits_table, read_fits_table, write_fits_table (rev.570bc798)
+	- Issue #429: spirouImage.py: replace "get_all_similar_files" function to look at header keys instead of file name (for cal_DRIFT recipes) (rev.160fb38e)
+	- spirouFITS: modify write_image and write_image_multi to deal with writing output dict to p (via new function "write_output_dict") (rev.8e7c7d43)
+	- spirouFile: add DRS_TYPE to identify RAW and REDUCED recipes (and pass to output processing later) (rev.bfa1ee45)
+	- spirouImage.__init__: add aliases for make_fits_table, read_fits_table and write_fits_table (rev.3d4578dc)
+	- spirouMath: reformat exception on timestamp (to print the input --> helps with debugging) (rev.13daa695)
+	- spirouConst: add OFF_LISTING_RAW_FILE, OFF_LISTING_REDUC_FILE, INDEX_OUTPUT_FILENAME, OUTPUT_FILE_HEADER_KEYS, RAW_OUTPUT_COLUMNS, REDUC_OUTPUT_COLUMNS functions (rev.a702c193)
+	- modify unresize.py with the output to WriteImage (outputs management) (rev.189b375b)
+	- update cal_drift_raw for outputs (but not file list) (rev.44bc7f79)
+	- Re-work off_listing recipes to look at the index files first (Much faster) - and to update the index files (rev.88466d31)
+	- modify cal_preprocess_spirou to sort out outputs and to skip index file (rev.d8813d94)
+	- Issue #429 - Re-work "listfiles" to get files from the headers (and index files) + deal with outputs (rev.23e86409)
+	- Issue #429 - ReWork "WriteImage" to save to p['OUTPUTS'] and deal with spirouStartup.End dealing with outputs (rev.0d5eff99)
+
+
+
+================================================================================
+* Fri Sep 07 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.002
+
+================================================================================
+	- Added an all_order plot of fitted gaussians (as discussed in #442) (rev.fe689cf0)
+	- fit_emi_line: added check to not fit on lines with more than one zero-value (fix for #393) (rev.d706131c)
+
+
+================================================================================
+* Mon Sep 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.003
+
+================================================================================
+	- update notes - update (rev.70b7a9e0)
+	- unit test .run files - update after removing H2RG dependency (rev.069c1aaf)
+	- spirouUnitTests.py: remove H2RG dependency (comparison not needed) (rev.95e9801f)
+	- unit_test.py: replace dict() --> OrderedDict() + remove H2RG dependency (rev.ffda5073)
+	- spirouUnitTests.py: replace dict() --> OrderedDict() + remove H2RG dependency (rev.3065faf1)
+	- spirouUnitRecipes.py: remove H2RG dependency (no comparison needed) + replace dict() --> OrderedDict() (rev.b705aa15)
+	- spirouUnitTests.__init__.py: remove H2RG dependency (remove check_type and set_comp) (rev.36998d02)
+	- drs_tools: replace dict() --> OrderedDict() (rev.4963227e)
+	- drs_documentation: replace dict() --> OrderedDict() (rev.c8fb784b)
+	- drs_dependencies: replace dict() --> OrderedDict() (rev.b64a7d7f)
+	- drs_changelog: replace dict() --> OrderedDict() (rev.641919b0)
+	- calc_berv: replace dict() --> OrderedDict() and remove H2RG dependency (rev.63856e66)
+	- spirouWAVE: replace dict() --> OrderedDict() (rev.e5d5d4b5)
+	- spirouTHORCA.py: remove H2RG dependency (rev.a379b36f)
+	- spirouTelluric.py: remove unused line (norm) (rev.8d40ccfa)
+	- spirouStartup.py: remove H2RG dependency and add "UNIX" file column (rev.e24955c0)
+	- spirouRV.py: remove H2RG dependency (rev.0f6d35dd)
+	- spirouPOLAR.py: replace dict() --> OrderedDict() (rev.1800cd1d)
+	- spirouLOCOR.py: remove H2RG dependency (rev.b555b029)
+	- spirouImage.py: remove H2RG dependency (rev.8e36d194)
+	- spirouFITS.py: remove H2RG dependency + replace dict() --> OrderedDict() (rev.b0e08d49)
+	- spirouBERV.py: remove H2RG dependency (rev.e7501ba1)
+	- spirouEXTOR: replace dict() --> OrderedDict() (rev.f1e00449)
+	- spirouDB: replace dict() --> OrderedDict() (rev.8e78baa9)
+	- spirouPlot.py: remove H2RG dependency (rev.729cd045)
+	- spirouConst.py: update reduced output columns (remove obs date and utc from reduced products) (rev.0e9dfd4b)
+	- spirouConfig.py: replace dict() --> OrderedDict() (rev.d962af8f)
+	- main_drs_trigger: remove H2RG dependency (rev.6bbd39d2)
+	- constants_SPIROU_H2RG: remove H2RG dependency (Delete file) (rev.0b42567d)
+	- off_listing_REDUC_spirou - add column for last modified (unix time) (rev.a3c968f9)
+	- cal_wave_mapper: replace dict() --> OrderedDict() (rev.5878a511)
+	- cal_SLIT_spirou: remove H2RG dependency (rev.73c77f0f)
+	- cal_preprocess_spirou: remove H2RG dependency (rev.97771e10)
+	- cal_loc_RAW_spirou: remove H2RG dependency (rev.8adcf001)
+	- cal_FF_RAW_spirou: remove H2RG dependency (rev.7c4fe45d)
+	- cal_extract_RAW_spirou: remove H2RG dependency (rev.4e79daf1)
+	- cal_exposure_meter: replace dict() --> OrderedDict() (rev.134560d1)
+	- cal_DARK_spirou.py: remove H2RG dependency (rev.0576328c)
+	- cal_CCF_E2DS_spirou.py: replace dict() --> OrderedDict() (rev.531707eb)
+	- spirouWAVE - re-add dict() --> OrderedDict() (rev.98c31995)
+	- config - merge fix - do NOT upload own config! (rev.64cdc181)
+	- cal_WAVE_E2DS_EA - extra imports (rev.fa0dc831)
+	- cal_exposure_meter.py: fix bad call to get_telluric (p, loc --> loc) (rev.60784433)
+	- updated changelog/date/version/update notes (rev.14394d2d)
+	- update unit tests (rev.473572e7)
+	- spirouUnitTests: fix outputs of manage_run (post H2RG removal) (rev.338020dd)
+	- spirouTelluric.py: fix kind when reading TAPAS file (was FLAT now TAPAS) (rev.8a4fa81a)
+	- spirouStartup.py: fix indexing of files (add "LAST_MODIFIED" column) (rev.720b6071)
+	- spirouStartup.__init__.py: fix aliases (rev.b6a4685f)
+	- spirouTable - increase width of table (now 9999) (rev.63094fe8)
+	- spirouExoposeMeter.py: update where TAPAS file is taken from (now from telluDB) (rev.301921a6)
+	- spirouConst.py: update reduced output columns (need date and utc for drift) (rev.a9caa917)
+	- update master_calib_SPIROU.txt for reset - now we don't need H2RG or TAPAS input (rev.a10af728)
+	- off_listing_RAW/REDUC_spirou - fix bug in adding unix time - now called "last_modified" (to be more specific) (rev.a62d29fe)
+	- cal_FF_RAW_spirou: fix bug in H2RG removal (rev.562e3668)
+	- cal_DARK_spirou.py: remove H2RG dependency (rev.0576328c)
+
+
+
+================================================================================
+* Tue Sep 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.004
+
+================================================================================
+	- recipe_control.txt --> add cases (for fiber) for visu_E2DS_spirou (rev.f6da5cd7)
+	- spirouFile.py - fix bad error output {0} --> {1} (rev.d6d27e7d)
+	- cal_test.run: fix errors (typos ...f --> ...a) (rev.86b0b5f3)
+	- update recipe control for visu_RAW and visu_E2DS recipes (rev.45121f60)
+	- update notes with not done/finished (rev.0c33cb19)
+
+
+
+================================================================================
+* Tue Sep 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.005
+
+================================================================================
+	- pep8 updates (rev.01bce8f9)
+	- update_notes.txt: update with new unit tests (rev.f6db5001)
+	- unit tests: update unit test --> add "Tellu_Test.run" and modify "Cal_Test.run", remove test_tellu.run (rev.e462e025)
+	- recipe_control.txt --> add telluric and polarisation cases for visu_E2DS_spirou (rev.bfc3c646)
+	- obj_fit_tellu, obj_mk_tell_template, obj_mk_tellu: fix writing outputs to file (rev.520b8c88)
+
+
+
+================================================================================
+* Wed Sep 12 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.006
+
+================================================================================
+	- off_listing.py: fix bug and add to index (if prompted by user) (rev.ab90fab1)
+	- spirouStartup.py: added Y/N question function (rev.d020f80f)
+	- off_listing.py: fix to bug in code (rawloc --> list) (rev.3118329d)
+	- off_listing.py: generic off listing that takes any directory as only input (no night name) and read's index.fits / _pp fits file headers to get off listing for that directory (rev.9a1b57cb)
+	- spirouStartup.py: fix for not requiring night name in load_arguments (rev.24148aa4)
+	- spirouConst.py: Added general off listing columns (rev.618a444b)
+	- made spirouTools executable (rev.dd5fa2ee)
+	- fix bad pep8 updates (rev.647fde11)
+	- pep8 updates (rev.5e28150a)
+
+
+
+================================================================================
+* Thu Sep 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.007
+
+================================================================================
+	- drs_changelog.py: undo pep8 name change (and redo properly) (rev.0a9b6b48)
+	- update_notes.txt: add unit tests to update (files and some explanation) (rev.11fb9f05)
+	- pol_spirou.py: fix error with new input/output to WriteImageMulti (rev.8ca56903)
+	- spirouWAVE.py: hide testing "print" statements (rev.c07d7fb7)
+	- unit_tests: update unit test + add polarisation test (rev.a821b2d8)
+	- spirouCDB.py: fix bad call to DATE_FMT_HEADER (p not required) (rev.522ff10c)
+	- cal_reset.py: exit script has_plots=False (rev.b55de667)
+	- spirouWAVE.py: fix issue with pep8 update (ll_prev defined in wrong place) (rev.7f39d0aa)
+	- spirouWAVE.py (Issue #452): wave_catalog is now initialised as a NaN array (instead of an array of zeros) (rev.074f79fa)

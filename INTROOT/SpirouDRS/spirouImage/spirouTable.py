@@ -15,7 +15,7 @@ import os
 from astropy.table import Table, vstack
 from astropy.table import TableMergeError
 from astropy.io.registry import get_formats
-from astropy.io import ascii
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -39,7 +39,7 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 
 
 # =============================================================================
-# Define usable functions
+# Define usable table functions
 # =============================================================================
 def make_table(columns, values, formats=None, units=None):
     """
@@ -262,10 +262,77 @@ def read_table(filename, fmt, colnames=None, **kwargs):
 
 
 def print_full_table(table):
-    tablestrings = table.pformat(max_lines=len(table)*10)
+    tablestrings = table.pformat(max_lines=len(table)*10,
+                                 max_width=9999)
     WLOG('', '', '=' * len(tablestrings[0]), wrap=False)
     WLOG('', '', tablestrings, wrap=False)
     WLOG('', '', '=' * len(tablestrings[0]), wrap=False)
+
+
+# =============================================================================
+# Define usable table functions
+# =============================================================================
+def make_fits_table(dictionary=None):
+    # if dictionary is None return empty astropy table
+    if dictionary is None:
+        return Table()
+    # else construct from dictionary
+    else:
+        # construct astropy table
+        astropy_table = Table()
+        # loop through dictionary and add keys as columns
+        for key in dictionary:
+            astropy_table[key] = dictionary[key]
+        # return filled astropy table
+        return astropy_table
+
+
+def read_fits_table(filename, return_dict=False):
+    func_name = __NAME__ + '.read_fits_table()'
+    # check that filename exists
+    if not os.path.exists(filename):
+        emsg1 = 'File {0} does not exist'
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2])
+    # read data
+    try:
+        astropy_table = Table.read(filename)
+    except Exception as e:
+        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
+        emsg2 = '\tError was: {0}'.format(e)
+        emsg3 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        astropy_table = None
+    # return dict if return_dict is True
+    if return_dict:
+        # set up dictionary for storage
+        astropy_dict = OrderedDict()
+        # copy the columns (numpy arrays) as the values to column name keys
+        for col in astropy_table.colnames:
+            astropy_dict[col] = np.array(astropy_table[col])
+        # return dict
+        return astropy_dict
+    # return the astropy table
+    return astropy_table
+
+
+def write_fits_table(astropy_table, output_filename):
+    func_name = __NAME__ + '.write_fits_table()'
+    # get directory name
+    dir_name = os.path.dirname(output_filename)
+    # check directory exists
+    if not os.path.exists(dir_name):
+        emsg1 = 'Errors directory {0} does not exist'.format(dir_name)
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2])
+    # write data
+    try:
+        astropy_table.write(output_filename, format='fits', overwrite=True)
+    except Exception as e:
+        emsg1 = 'Error cannot write {0} as a fits table'.format(output_filename)
+        emsg2 = '\tError was: {0}'.format(e)
+        emsg3 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
 
 # =============================================================================

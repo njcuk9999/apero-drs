@@ -17,11 +17,12 @@ Usage:
 
 Outputs:
   telluDB: TELL_OBJ file - The object corrected for tellurics
-	   file also saved in the reduced folder
-	   input file + '_tellu_corrected.fits'
+        file also saved in the reduced folder
+        input file + '_tellu_corrected.fits'
 
-  recon_abso file - The reconstructed absorption file saved in the reduced folder
-	   input file + '_tellu_recon.fits'
+    recon_abso file - The reconstructed absorption file saved in the reduced
+                    folder
+        input file + '_tellu_recon.fits'
 
 Created on 2018-07-13 05:18
 @author: ncook
@@ -64,12 +65,6 @@ sPlt = spirouCore.sPlt
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None):
-# if __name__ == '__main__':
-#
-#     import sys
-#     sys.argv = 'obj_fit_tellu.py tellu_e2ds 2279005o_HR8489_pp_e2dsff_AB.fits'.split()
-#     night_name, files = None, None
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -88,7 +83,6 @@ def main(night_name=None, files=None):
     rd = spirouImage.ReadImage(p, p['FITSFILENAME'])
     loc['DATA'], loc['DATAHDR'], loc['DATACDR'], loc['XDIM'], loc['YDIM'] = rd
     loc.set_sources(['DATA', 'DATAHDR', 'DATACDR', 'XDIM', 'YDIM'], main_name)
-
 
     # ----------------------------------------------------------------------
     # Get object name, airmass and berv
@@ -184,8 +178,6 @@ def main(night_name=None, files=None):
         data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
         abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
 
-
-
     # log the absorption cube
     with warnings.catch_warnings(record=True) as w:
         log_abso = np.log(abso)
@@ -196,13 +188,13 @@ def main(night_name=None, files=None):
     # determining the pixels relevant for PCA construction
     keep = np.isfinite(np.sum(abso, axis=0))
     # log fraction of valid (non NaN) pixels
-    fraction = np.sum(keep)/len(keep)
+    fraction = np.sum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}'
     WLOG('', p['LOG_OPT'], wmsg.format(fraction))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as w:
         keep &= np.min(log_abso, axis=0) > -1
-    fraction = np.sum(keep)/len(keep)
+    fraction = np.sum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels with transmission > 1 - (1/e) = {0:.3f}'
     WLOG('', p['LOG_OPT'], wmsg.format(fraction))
 
@@ -228,9 +220,10 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Construct output file names
         # ------------------------------------------------------------------
-        outfile1 = spirouConfig.Constants.TELLU_FIT_OUT_FILE(p, filename)
+        outfile1, tag1 = spirouConfig.Constants.TELLU_FIT_OUT_FILE(p, filename)
         outfilename1 = os.path.basename(outfile1)
-        outfile2 = spirouConfig.Constants.TELLU_FIT_RECON_FilE(p, filename)
+        outfile2, tag2 = spirouConfig.Constants.TELLU_FIT_RECON_FILE(p,
+                                                                     filename)
         outfilename2 = os.path.basename(outfile2)
 
         # ------------------------------------------------------------------
@@ -249,7 +242,7 @@ def main(night_name=None, files=None):
         # read image
         tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # normalise with blaze function
-        loc['SP'] = tdata / loc['NBLAZE']
+        loc['SP'] = tdata  # / loc['NBLAZE']
         loc.set_source('SP', main_name)
 
         # ------------------------------------------------------------------
@@ -302,7 +295,7 @@ def main(night_name=None, files=None):
 
         npc = loc['NPC']
         if p['ADD_DERIV_PC']:
-            values = loc['AMPS_ABSOL_TOTAL'][:npc-2]
+            values = loc['AMPS_ABSOL_TOTAL'][:npc - 2]
             hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
                                              values=values, dim1name='amp')
             hdict = spirouImage.AddKey(hdict, p['KW_TELLU_DV_TELL1'],
@@ -314,7 +307,6 @@ def main(night_name=None, files=None):
             hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
                                              values=values, dim1name='PC')
 
-
         # ------------------------------------------------------------------
         # Write corrected spectrum to E2DS
         # ------------------------------------------------------------------
@@ -322,11 +314,12 @@ def main(night_name=None, files=None):
         sp_out = loc['SP2'] / loc['RECON_ABSO']
         sp_out = sp_out.reshape(loc['DATA'].shape)
         # multiply by blaze
-        sp_out = sp_out * loc['NBLAZE']
+        # sp_out = sp_out * loc['NBLAZE']
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
         # write sp_out to file
-        spirouImage.WriteImage(outfile1, sp_out, hdict)
+        p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
 
         # ------------------------------------------------------------------
         # Write reconstructed absorption to E2DS
@@ -354,7 +347,8 @@ def main(night_name=None, files=None):
                 # set source
                 loc.set_source('WATERCOL', main_name)
         # write recon_abso to file
-        spirouImage.WriteImage(outfile2, recon_abso2, hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)
 
         # ------------------------------------------------------------------
         # Update the Telluric database
@@ -377,8 +371,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

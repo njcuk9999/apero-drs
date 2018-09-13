@@ -12,15 +12,11 @@ Import rules: Only from spirouConfig and spirouCore
 """
 from __future__ import division
 import numpy as np
-import filecmp
-from astropy.io import fits
 import os
 import shutil
-import time
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS.spirouCore import spirouMath
 from . import spirouDB
 
 # =============================================================================
@@ -96,7 +92,7 @@ def get_database_tell_conv(p, required=True):
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
     if not required and key not in t_database:
-        return [],[], [], []
+        return [], [], [], []
     elif key not in t_database:
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
@@ -181,7 +177,7 @@ def get_database_tell_map(p, required=True):
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
     if not required and key not in t_database:
-        return [],[], [], []
+        return [], [], [], []
     elif key not in t_database:
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
@@ -280,7 +276,7 @@ def get_database_tell_obj(p, required=True):
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
     if not required and key not in t_database:
-        return [],[], [], []
+        return [], [], [], []
     if key not in t_database:
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
@@ -354,7 +350,6 @@ def put_file(p, inputfile):
 
 
 def update_database_tell_mole(p, filename, hdr=None):
-
     # define key for telluric convolve file
     key = 'TELL_MOLE'
     # get h_time and u_time
@@ -370,7 +365,6 @@ def update_database_tell_mole(p, filename, hdr=None):
 
 
 def update_database_tell_conv(p, filename, hdr=None):
-
     # define key for telluric convolve file
     key = 'TELL_CONV'
     # get h_time and u_time
@@ -386,7 +380,6 @@ def update_database_tell_conv(p, filename, hdr=None):
 
 
 def update_database_sky(p, filename, hdr=None):
-
     # define key for sky
     key = 'SKY'
     # get h_time and u_time
@@ -417,7 +410,6 @@ def update_database_tell_map(p, filename, objname, airmass, watercol, hdr=None):
 
 
 def update_database_tell_temp(p, filename, object_name, hdr=None):
-
     # define key for telluric convolve file
     key = 'TELL_TEMP'
     # get h_time and u_time
@@ -446,8 +438,6 @@ def update_database_tell_obj(p, filename, objname, berv, airmass, watercol,
     lines = [line]
     # update database
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
-
-
 
 # =============================================================================
 # End of code

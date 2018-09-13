@@ -26,7 +26,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['LoadPolarData', 'SortPolarFiles', 'CalculatePolarimetry',
            'CalculateContinuum', 'CalculateStokesI', 'LSDAnalysis',
-           'OutputLSDimage',]
+           'OutputLSDimage']
 
 # =============================================================================
 # Function aliases

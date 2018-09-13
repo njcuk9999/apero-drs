@@ -14,7 +14,6 @@ Import rules: Only from spirouConfig and spirouCore
 Version 0.0.1
 """
 from __future__ import division
-import numpy as np
 import os
 import sys
 
@@ -45,11 +44,11 @@ ConfigError = spirouConfig.ConfigError
 # Set CHAR length
 CHAR_LEN = spirouConfig.Constants.CHARACTER_LOG_LENGTH()
 
+
 # =============================================================================
 # Define classes
 # =============================================================================
-class logger():
-
+class logger:
     def __init__(self, paramdict=None):
         """
         Construct logger (storage param dict here)
@@ -70,7 +69,6 @@ class logger():
         self.pout['LOGGER_FULL'] = []
         # add tdata_warning key
         self.pout['TDATA_WARNING'] = 1
-
 
     def __call__(self, key='', option='', message='', printonly=False,
                  logonly=False, wrap=True):
@@ -273,6 +271,8 @@ def printlogandcmd(message, key, human_time, dsec, option, wrap):
     :param human_time: string, the human time for the printed output
     :param dsec: float, the "tenth of a second" output
     :param option: string, the option of the output
+    :param wrap: bool, if True wraps tet to CHAR_LEN (defined in
+                 spirouConfig.Constants.CHARACTER_LOG_LENGTH())
 
     :return None:
     """
@@ -333,14 +333,14 @@ def debug_start():
                            + nocol)
         if 'Y' in uinput.upper():
             print(cc + '\n\t ==== DEBUGGER ====\n'
-                  '\n\t - type "list" to list code'
-                  '\n\t - type "up" to go up a level'
-                  '\n\t - type "interact" to go to an interactive shell'
-                  '\n\t - type "print(variable)" to print variable'
-                  '\n\t - type "print(dir())" to list available variables'
-                  '\n\t - type "continue" to exit'
-                  '\n\t - type "help" to see all commands'
-                  '\n\n\t ==================\n\n' + nocol)
+                       '\n\t - type "list" to list code'
+                       '\n\t - type "up" to go up a level'
+                       '\n\t - type "interact" to go to an interactive shell'
+                       '\n\t - type "print(variable)" to print variable'
+                       '\n\t - type "print(dir())" to list available variables'
+                       '\n\t - type "continue" to exit'
+                       '\n\t - type "help" to see all commands'
+                       '\n\n\t ==================\n\n' + nocol)
 
             import pdb
             pdb.set_trace()
@@ -535,18 +535,18 @@ def textwrap(input_string, length):
     for s in input_string.split("\n"):
         if s == "":
             new_string.append('')
-        w = 0
-        l = []
-        for d in s.split():
-            if w + len(d) + 1 <= length:
-                l.append(d)
-                w += len(d) + 1
+        wlen = 0
+        line = []
+        for dor in s.split():
+            if wlen + len(dor) + 1 <= length:
+                line.append(dor)
+                wlen += len(dor) + 1
             else:
-                new_string.append(" ".join(l))
-                l = [d]
-                w = len(d)
-        if (len(l)):
-            new_string.append(" ".join(l))
+                new_string.append(" ".join(line))
+                line = [dor]
+                wlen = len(dor)
+        if len(line):
+            new_string.append(" ".join(line))
 
     # add a tab to all but first line
     new_string2 = [new_string[0]]
@@ -598,7 +598,6 @@ def printcolour(key='all', func_name=None):
         colour1, colour2 = None, None
     # return colour1 and colour2
     return colour1, colour2
-
 
 
 def writelog(message, key, logfilepath):
@@ -661,16 +660,19 @@ def writelog(message, key, logfilepath):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     dprog = spirouConfig.Constants.DEFAULT_LOG_OPT()
+
+    # Get Logging function
+    WLOG = wlog
     # Title test
-    logger('', '', ' *****************************************')
-    logger('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
-    logger('', '', ' *****************************************')
+    WLOG('', '', ' *****************************************')
+    WLOG('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
+    WLOG('', '', ' *****************************************')
     # info log
-    logger("info", dprog, "This is an info test")
+    WLOG("info", dprog, "This is an info test")
     # warning log
-    logger("warning", dprog, "This is a warning test")
+    WLOG("warning", dprog, "This is a warning test")
     # error log
-    logger("error", dprog, "This is an error test")
+    WLOG("error", dprog, "This is an error test")
 
 # =============================================================================
 # End of code

@@ -187,19 +187,11 @@ def main(night_name=None, files=None):
     # set passed variable and fail message list
     passed, fail_msg = True, []
     # check that med < qc_max_darklevel
-    # TODO: remove H4RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        if p['MED_FULL'] > p['QC_MAX_DARKLEVEL']:
-            # add failed message to fail message list
-            fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
-            fail_msg.append(fmsg.format(p['MED_FULL'], p['QC_MAX_DARKLEVEL']))
-            passed = False
-    else:
-        if p['MED_BLUE'] > p['QC_MAX_DARKLEVEL']:
-            # add failed message to fail message list
-            fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
-            fail_msg.append(fmsg.format(p['MED_BLUE'], p['QC_MAX_DARKLEVEL']))
-            passed = False
+    if p['MED_FULL'] > p['QC_MAX_DARKLEVEL']:
+        # add failed message to fail message list
+        fmsg = 'Unexpected Median Dark level  ({0:5.2f} > {1:5.2f} ADU/s)'
+        fail_msg.append(fmsg.format(p['MED_FULL'], p['QC_MAX_DARKLEVEL']))
+        passed = False
 
     # check that fraction of dead pixels < qc_max_dead
     if p['DADEADALL'] > p['QC_MAX_DEAD']:
@@ -234,7 +226,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
 
     # construct folder and filename
-    darkfits = spirouConfig.Constants.DARK_FILE(p)
+    darkfits, tag = spirouConfig.Constants.DARK_FILE(p)
     darkfitsname = os.path.split(darkfits)[-1]
     # log saving dark frame
     WLOG('', p['LOG_OPT'], 'Saving Dark frame in ' + darkfitsname)
@@ -242,18 +234,15 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_DEAD'],
-                               value=p['DADEAD_FULL'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_MED'],
-                               value=p['MED_FULL'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARK_DEAD'], value=p['DADEAD_FULL'])
+    hdict = spirouImage.AddKey(hdict, p['KW_DARK_MED'], value=p['MED_FULL'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_B_DEAD'],
                                value=p['DADEAD_BLUE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_B_MED'],
-                               value=p['MED_BLUE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_DARK_B_MED'], value=p['MED_BLUE'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_R_DEAD'],
                                value=p['DADEAD_RED'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_R_MED'],
-                               value=p['MED_RED'])
+    hdict = spirouImage.AddKey(hdict, p['KW_DARK_R_MED'], value=p['MED_RED'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
     # Set to zero dark value > dark_cutlimit
@@ -264,25 +253,28 @@ def main(night_name=None, files=None):
         cutmask = np.zeros_like(data0)
     data0c = np.where(cutmask, np.zeros_like(data0), data0)
     # write image and add header keys (via hdict)
-    spirouImage.WriteImage(darkfits, data0c, hdict)
+    p = spirouImage.WriteImage(p, darkfits, data0c, hdict)
 
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
     # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
     # construct bad pixel file name
-    badpixelfits = spirouConfig.Constants.DARK_BADPIX_FILE(p)
+    badpixelfits, tag = spirouConfig.Constants.DARK_BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
     WLOG('', p['LOG_OPT'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file
     datacutmask = np.array(datacutmask, dtype=float)
-    spirouImage.WriteImage(badpixelfits, datacutmask, hdict, dtype='float64')
+    p = spirouImage.WriteImage(p, badpixelfits, datacutmask, hdict,
+                               dtype='float64')
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB

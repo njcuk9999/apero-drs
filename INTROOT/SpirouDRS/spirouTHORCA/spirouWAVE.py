@@ -15,6 +15,7 @@ from astropy import units as uu
 import os
 import warnings
 import itertools
+from collections import OrderedDict
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -25,7 +26,6 @@ from SpirouDRS import spirouRV
 from SpirouDRS.spirouCore import spirouMath
 
 from . import spirouTHORCA
-
 
 # =============================================================================
 # Define variables
@@ -44,8 +44,10 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # Speed of light
-speed_of_light_ms = cc.c.to(uu.m/uu.s).value
-speed_of_light = cc.c.to(uu.km/uu.s).value
+# noinspection PyPep8
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyPep8
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -88,8 +90,6 @@ def calculate_instrument_drift(p, loc):
                 DRIFT_NBORDKILL: int, the number of orders removed
                 DRIFT_NOISE: flat, the weighted mean uncertainty on the RV
     """
-
-
 
     func_name = __NAME__ + '.calculate_instrument_drift()'
     # get used constants from p
@@ -185,7 +185,7 @@ def calculate_instrument_drift(p, loc):
     norm = np.sqrt(dvrmsref ** 2 + dvrmsdata ** 2)
     cond = (residual / norm) > p['IC_WAVE_IDRIFT_RV_CUT']
     # recalculate the weighted mean radial velocity
-    meanrv2 = -1.0 * np.sum(rv[cond]/ wref[cond]) / np.sum(wref[cond])
+    meanrv2 = -1.0 * np.sum(rv[cond] / wref[cond]) / np.sum(wref[cond])
     # keep the number of orders used
     nborderout = np.sum(cond)
     # ------------------------------------------------------------------
@@ -265,6 +265,9 @@ def fp_wavelength_sol(p, loc, mode='new'):
                        each numpy array contains gaussian parameters
                        for each found line in that order
             BLAZE: numpy array (2D), the blaze data
+
+    :param mode: string, either 'old' or 'new' - passed to find_fp_lines to
+                 decide which way lines are found
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
@@ -395,10 +398,9 @@ def fp_wavelength_sol_new(p, loc):
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
             FPDATA: the FP e2ds data
-            WAVE: the initial wavelength solution
-            LL_OUT_2: the wavelength solution derived from the HC
+            LITTROW_EXTRAP_SOL_1: the wavelength solution derived from the HC
                                   and Littrow-constrained
-            LL_PARAM_2: the parameters of the wavelength solution
+            LL_PARAM_1: the parameters of the wavelength solution
             ALL_LINES_2: list of numpy arrays, length = number of orders
                        each numpy array contains gaussian parameters
                        for each found line in that order
@@ -428,11 +430,11 @@ def fp_wavelength_sol_new(p, loc):
 
     # find FP lines
     loc = find_fp_lines_new(p, loc)
-
+    all_lines_2 = loc['ALL_LINES_2']
     # set up storage
     llpos_all, xxpos_all, ampl_all = [], [], []
     m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
-
+    ll_prev, m_prev = np.array([]), np.array([])
     # loop through the orders from red to blue
     for order_num in range(n_ord_final_fp, n_ord_start_fp - 1, -1):
         # define storage
@@ -440,11 +442,14 @@ def fp_wavelength_sol_new(p, loc):
         # select the lines in the order
         gg = loc['ORDPEAK'] == order_num
         # store the initial wavelengths of the lines
-        floc['llpos'] = np.polyval(loc['LL_PARAM_2'][order_num][::-1], loc['XPEAK'][gg])
+        floc['llpos'] = np.polyval(
+            loc['LITTROW_EXTRAP_PARAM_1'][order_num][::-1],
+            loc['XPEAK'][gg])
         # store the pixel positions of the lines
         floc['xxpos'] = loc['XPEAK'][gg]
-        # get the median pixel difference between successive lines (to check for gaps)
-        xxpos_diff_med = np.median(floc['xxpos'][1:]-floc['xxpos'][:-1])
+        # get the median pixel difference between successive lines
+        #    (to check for gaps)
+        xxpos_diff_med = np.median(floc['xxpos'][1:] - floc['xxpos'][:-1])
         # store the amplitudes of the lines
         floc['ampl'] = loc['AMPPEAK'][gg]
         # store the values of the blaze at the pixel positions of the lines
@@ -460,16 +465,18 @@ def fp_wavelength_sol_new(p, loc):
         # line number for the last (reddest) line of the order (by FP equation)
         mpeak[-1] = int(dopd0 / floc['llpos'][-1])
         # calculate successive line numbers
-        for it in range(len(floc['llpos'])-2, -1, -1):
+        for it in range(len(floc['llpos']) - 2, -1, -1):
             # check for gap in x positions
-            if floc['xxpos'][it+1]-floc['xxpos'][it] < xxpos_diff_med + 0.5*xxpos_diff_med:
+            flocdiff = floc['xxpos'][it + 1] - floc['xxpos'][it]
+            if flocdiff < (xxpos_diff_med + 0.5 * xxpos_diff_med):
                 # no gap: add 1 to line number of previous line
                 mpeak[it] = mpeak[it + 1] + 1
             # if there is a gap, fix it
             else:
                 # estimate the number of peaks missed
-                m_offset = int(np.round((floc['xxpos'][it+1]-floc['xxpos'][it])
-                                        / xxpos_diff_med))
+                m_offset = int(
+                    np.round((floc['xxpos'][it + 1] - floc['xxpos'][it])
+                             / xxpos_diff_med))
                 # add to m of previous peak
                 mpeak[it] = mpeak[it + 1] + m_offset
                 # verify there's no dopd jump, fix if present
@@ -490,6 +497,26 @@ def fp_wavelength_sol_new(p, loc):
             if floc['llpos'][-1] > ll_prev[0]:
                 # find closest peak in overlap and get its m value
                 ind = np.abs(ll_prev - floc['llpos'][-1]).argmin()
+                # the peak matching the reddest may not always be found!!
+                # define maximum permitted difference
+                llpos_diff_med = np.median(
+                    floc['llpos'][1:] - floc['llpos'][:-1])
+                # print(llpos_diff_med)
+                # print(abs(ll_prev[ind] - floc['llpos'][-1]))
+                # check if the difference is over the limit
+                if abs(ll_prev[ind] - floc['llpos'][-1]) > 1.5 * llpos_diff_med:
+                    # print('overlap line not matched')
+                    ll_diff = ll_prev[ind] - floc['llpos'][-1]
+                    ind2 = -2
+                    # loop over next reddest peak until they match
+                    while ll_diff > 1.5 * llpos_diff_med:
+                        # check there is still overlap
+                        if floc['llpos'][ind2] > ll_prev[0]:
+                            ind = np.abs(ll_prev - floc['llpos'][ind2]).argmin()
+                            ll_diff = ll_prev[ind] - floc['llpos'][ind2]
+                            ind2 -= 1
+                        else:
+                            break
                 m_match = m_prev[ind]
                 # save previous mpeak calculated
                 m_init = mpeak[-1]
@@ -507,8 +534,8 @@ def fp_wavelength_sol_new(p, loc):
                     # store new m and d
                     floc['m_fp'] = mpeak
                     floc['dopd_t'] = dopd_t
-            else:
-                print('no overlap for order ' + str(order_num))
+            # else:
+            #     print('no overlap for order ' + str(order_num))
         # add to storage
         llpos_all += list(floc['llpos'])
         xxpos_all += list(floc['xxpos'])
@@ -535,13 +562,13 @@ def fp_wavelength_sol_new(p, loc):
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
         coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
-    spirouCore.WarnLog(w, funcname= func_name)
+    spirouCore.WarnLog(w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
     # update line wavelengths using the new cavity width fit
     newll = (dopd0 + cfit * 1000.) / m_fp_all
     # insert fp lines into all_lines2 (at the correct positions)
-    all_lines_2 = insert_fp_lines(p, newll, llpos_all, loc['ALL_LINES_2'],
+    all_lines_2 = insert_fp_lines(p, newll, llpos_all, all_lines_2,
                                   order_rec_all, xxpos_all, ampl_all)
 
     # add to loc
@@ -678,7 +705,7 @@ def find_hc_gauss_peaks(p, loc):
             # peak not zero
             keep &= peak != 0
             # peak at least a few sigma from RMS
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as _:
                 keep &= (peak / rms > sigma_peak)
             # -----------------------------------------------------------------
             # position of peak within segement - it needs to be close enough
@@ -734,7 +761,7 @@ def find_hc_gauss_peaks(p, loc):
 
         # debug plot
         if p['HC_EA_PLOT_PER_ORDER']:
-            sPlt.wave_ea_plot_per_order_hcguess(p, loc, order_num)
+            sPlt.wave_ea_plot_per_order_hcguess(loc, order_num)
     # ------------------------------------------------------------------
     # write to table
     columnnames, columnvalues, columnfmts = litems, [], []
@@ -748,11 +775,13 @@ def find_hc_gauss_peaks(p, loc):
     WLOG('', p['LOG_OPT'], wmsg.format(os.path.basename(ini_table_name)))
     spirouImage.WriteTable(ini_table, ini_table_name, fmt='ascii.rst')
 
+    sPlt.wave_ea_plot_allorder_hcguess(loc)
+
     # return loc
     return loc
 
 
-def fit_gaussian_triplets(p , loc):
+def fit_gaussian_triplets(p, loc):
     """
     Fits the Gaussian peaks with sigma clipping
 
@@ -794,14 +823,21 @@ def fit_gaussian_triplets(p , loc):
     # get dimensions
     nbo, nbpix = loc['NBO'], loc['NBPIX']
 
-
     # ------------------------------------------------------------------
     # triplet loop
     # TODO: Move loop out of function
     # set up storage
     wave_catalog = []
+    amp_catalog = []
     wave_map2 = np.zeros((nbo, nbpix))
     sig = np.nan
+    # get coefficients
+    xgau = np.array(loc['XGAU_INI'])
+    orders = np.array(loc['ORD_INI'])
+    gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+    ew = np.array(loc['EW_INI'])
+    peak2 = np.array(loc['PEAK_INI'])
+    dv = np.array([])
 
     for sol_iteration in range(n_iterations):
         # log progress
@@ -814,6 +850,9 @@ def fit_gaussian_triplets(p , loc):
         gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
         ew = np.array(loc['EW_INI'])
         peak = np.array(loc['PEAK_INI'])
+        # get peak again for saving (to make sure nothing goes wrong
+        #     in selection)
+        peak2 = np.array(loc['PEAK_INI'])
         # --------------------------------------------------------------
         # find the brightest lines for each order, only those lines will
         #     be used to derive the first estimates of the per-order fit
@@ -821,7 +860,7 @@ def fit_gaussian_triplets(p , loc):
         brightest_lines = np.zeros(len(xgau), dtype=bool)
         # loop around order
         for order_num in set(orders):
-            # find all order_nums that below to this order
+            # find all order_nums that belong to this order
             good = orders == order_num
             # get the peaks for this order
             order_peaks = peak[good]
@@ -841,7 +880,7 @@ def fit_gaussian_triplets(p , loc):
         ini_wave_sol = np.zeros_like(xgau)
         # get wave solution for these xgau values
         for order_num in set(orders):
-            # find all order_nums that below to this order
+            # find all order_nums that belong to this order
             good = orders == order_num
             # get the xgau for this order
             xgau_order = xgau[good]
@@ -857,7 +896,9 @@ def fit_gaussian_triplets(p , loc):
         #    line centers
         dv = np.repeat(np.nan, len(ini_wave_sol))
         # wavelength given in the catalog for the matched line
-        wave_catalog = np.zeros(len(ini_wave_sol))
+        wave_catalog = np.repeat(np.nan, len(ini_wave_sol))
+        # amplitude given in the catolog for the matched lines
+        amp_catalog = np.zeros(len(ini_wave_sol))
         # loop around all lines in ini_wave_sol
         for w_it, wave0 in enumerate(ini_wave_sol):
             # find closest catalog line to the line considered
@@ -867,12 +908,13 @@ def fit_gaussian_triplets(p , loc):
             # check that distance is below threshold
             if np.abs(distv) < cat_guess_dist:
                 wave_catalog[w_it] = wave_ll[id_match]
+                amp_catalog[w_it] = amp_ll[id_match]
                 dv[w_it] = distv
         # ------------------------------------------------------------------
         # Find best trio of lines
         # ------------------------------------------------------------------
         for order_num in set(orders):
-            # find this orders line
+            # find this order's lines
             good = orders == order_num
             # find all usable lines in this order
             good_all = good & (np.isfinite(wave_catalog))
@@ -915,7 +957,7 @@ def fit_gaussian_triplets(p , loc):
             # if we have the minimum number of lines check that we satisfy
             #   the cut_fit_threshold for all good lines and reject outliers
             if bestn >= minimum_number_of_lines:
-                # extrpolate out best fit coefficients over all lines in
+                # extrapolate out best fit coefficients over all lines in
                 #    this order
                 fit_best = np.polyval(best_coeffs, xgau[good])
                 # work out the error in velocity
@@ -949,11 +991,13 @@ def fit_gaussian_triplets(p , loc):
         good = np.isfinite(wave_catalog)
         # apply mask
         wave_catalog = wave_catalog[good]
+        amp_catalog = amp_catalog[good]
         xgau = xgau[good]
         orders = orders[good]
         dv = dv[good]
         ew = ew[good]
         gauss_rms_dev = gauss_rms_dev[good]
+        peak2 = peak2[good]
 
         # ------------------------------------------------------------------
         # Quality check on the total number of lines found
@@ -1005,7 +1049,7 @@ def fit_gaussian_triplets(p , loc):
                 res = (wave_catalog - recon0)
                 # work out the sum of residuals
                 sum_r = np.sum(res * lin_mod_slice[:, a_it])
-                sum_l2 = np.sum(lin_mod_slice[:, a_it] **2)
+                sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
                 # normalise by sum squared
                 ampsx = sum_r / sum_l2
                 # add this contribution on
@@ -1028,11 +1072,13 @@ def fit_gaussian_triplets(p , loc):
                 recon0 = recon0[sig_mask]
                 lin_mod_slice = lin_mod_slice[sig_mask]
                 wave_catalog = wave_catalog[sig_mask]
+                amp_catalog = amp_catalog[sig_mask]
                 xgau = xgau[sig_mask]
                 orders = orders[sig_mask]
                 dv = dv[sig_mask]
                 ew = ew[sig_mask]
                 gauss_rms_dev = gauss_rms_dev[sig_mask]
+                peak2 = peak2[sig_mask]
             # Log stats
             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
             wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
@@ -1071,6 +1117,7 @@ def fit_gaussian_triplets(p , loc):
 
     # save parameters to loc
     loc['WAVE_CATALOG'] = wave_catalog
+    loc['AMP_CATALOG'] = amp_catalog
     loc['SIG'] = sig
     loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
     loc['POLY_WAVE_SOL'] = poly_wave_sol
@@ -1079,6 +1126,9 @@ def fit_gaussian_triplets(p , loc):
     loc['XGAU_T'] = xgau
     loc['ORD_T'] = orders
     loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+    loc['DV_T'] = dv
+    loc['EW_T'] = ew
+    loc['PEAK_T'] = peak2
 
     # return loc
     return loc
@@ -1192,9 +1242,10 @@ def generate_resolution_map(p, loc):
             resolution1 = speed_of_light / resolution
             resolution_map[order_num // bin_order, xpos] = resolution1
             # log resolution output
-            wmsg = ('\tOrder {0}: nlines={1} xpos={2} resolution={3:.5f} km/s '
-                    'R={4:.5f}')
-            wargs = [order_num, np.sum(mask), xpos, resolution,
+            wmsg = ('\tOrders {0} - {1}: nlines={2} xpos={3} '
+                    'resolution={4:.5f} km/s R={5:.5f}')
+            wargs = [order_num, order_num + bin_order, np.sum(mask), xpos,
+                     resolution,
                      resolution1]
             WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
         # store criteria
@@ -1233,7 +1284,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
     FP_ll_init = loc['LITTROW_EXTRAP_SOL_1']
     blaze = loc['BLAZE']
     # define storage
-    floc = dict()
+    floc = OrderedDict()
     floc['llpos'] = np.zeros_like(pos)
     floc['xxpos'] = np.zeros_like(pos)
     floc['m_fp'] = np.zeros_like(pos)
@@ -1277,7 +1328,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
         # determine the line number
         if it == 0:
             # line number for first line of the order (by FP equation)
-            floc['m_fp'][it] = int(dopd0 / gparams[0])   # + 0.5)
+            floc['m_fp'][it] = int(dopd0 / gparams[0])  # + 0.5)
         else:
             # successive line numbers (assuming no gap)
             floc['m_fp'][it] = floc['m_fp'][it - 1] - 1
@@ -1367,7 +1418,12 @@ def find_fp_lines_new(p, loc):
     loc = find_fp_lines_new_setup(loc)
     # use spirouRV to get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
+    # remove wide/spurious peaks
+    loc = spirouRV.RemoveWidePeaks(p, loc)
     # check for and remove double-fitted lines
+    # save old position
+    loc['XPEAK_OLD'] = np.copy(loc['XPEAK'])
+    loc['ORDPEAK_OLD'] = np.copy(loc['ORDPEAK'])
     # set up storage for good lines
     ordpeak_k, xpeak_k, ewpeak_k, vrpeak_k, llpeak_k, amppeak_k = \
         [], [], [], [], [], []
@@ -1406,8 +1462,6 @@ def find_fp_lines_new(p, loc):
     loc['VRPEAK'] = np.array(vrpeak_k)
     loc['LLPEAK'] = np.array(llpeak_k)
     loc['AMPPEAK'] = np.array(amppeak_k)
-
-    loc = spirouRV.RemoveWidePeaks(p, loc)
 
     return loc
 
