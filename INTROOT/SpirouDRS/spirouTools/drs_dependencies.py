@@ -24,6 +24,8 @@ from SpirouDRS import spirouConfig
 # define DRS path
 DRSPATH = pkg_resources.resource_filename('SpirouDRS', '')
 PATH = os.path.dirname(DRSPATH)
+if PATH == '':
+    PATH = DRSPATH
 # Get Logging function
 WLOG = spirouCore.wlog
 # get print log
@@ -223,7 +225,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main(return_locals=True)
     # exit message
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
