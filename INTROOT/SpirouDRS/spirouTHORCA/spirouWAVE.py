@@ -434,7 +434,7 @@ def fp_wavelength_sol_new(p, loc):
     # set up storage
     llpos_all, xxpos_all, ampl_all = [], [], []
     m_fp_all, weight_bl_all, order_rec_all, dopd_all = [], [], [], []
-
+    ll_prev, m_prev = np.array([]), np.array([])
     # loop through the orders from red to blue
     for order_num in range(n_ord_final_fp, n_ord_start_fp - 1, -1):
         # define storage
@@ -491,7 +491,6 @@ def fp_wavelength_sol_new(p, loc):
         # store m and d
         floc['m_fp'] = mpeak
         floc['dopd_t'] = dopd_t
-        ll_prev, m_prev = np.array([]), np.array([])
         # for orders other than the reddest, attempt to cross-match
         if order_num != n_ord_final_fp:
             # check for overlap
