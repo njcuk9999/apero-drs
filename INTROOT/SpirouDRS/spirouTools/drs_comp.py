@@ -40,6 +40,7 @@ FILENAME = 'fp_fp02a203_e2ds_AB.fits'
 FILENAME = 'hcone_hcone03c61_e2ds_AB.fits'
 FILENAME = 'hcone_hcone06c61_e2ds_C.fits'
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -126,13 +127,12 @@ def scale_image(image, scale=None):
     # copy image
     newimage = image.copy()
 
-
     # deal with scaling
     if scale == 'log':
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             return np.log10(newimage), '(scale = {0})'.format(scale)
     elif scale == 'sqrt':
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             return np.sqrt(newimage), '(scale = {0})'.format(scale)
     elif type(scale) == tuple:
         # get min and max points

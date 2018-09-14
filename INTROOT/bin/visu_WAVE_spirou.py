@@ -89,8 +89,10 @@ def main(night_name=None, files=None):
     WLOG('', p['LOG_OPT'], wavelltbl)
     # read fitted lines
     ll_ord, ll_line_fit, ampl_line_fit = np.genfromtxt(wavelltbl,
-                                                skip_header=4, skip_footer=2,
-                                                unpack=True, usecols=(0, 1, 3))
+                                                       skip_header=4,
+                                                       skip_footer=2,
+                                                       unpack=True,
+                                                       usecols=(0, 1, 3))
 
     # ----------------------------------------------------------------------
     # Plots
@@ -132,7 +134,7 @@ def main(night_name=None, files=None):
     plt.title(p['REFFILENAME'])
 
     # end interactive session
-#    sPlt.end_interactive_session()
+    #    sPlt.end_interactive_session()
 
     # old code:
     # plt.ion()
@@ -157,8 +159,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

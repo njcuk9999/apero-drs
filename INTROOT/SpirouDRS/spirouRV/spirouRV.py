@@ -44,10 +44,6 @@ CONSTANT_C = constants.c.value
 # get gaussian function
 gauss_function = spirouCore.GaussFunction
 
-# switch between new and old
-# TODO: Should be new
-OLDCODEEXACT = False
-
 
 # =============================================================================
 # Define main functions
@@ -296,24 +292,12 @@ def create_drift_file(p, loc):
         # For numerical sanity all values less than zero set to zero
         tmp[tmp < 0] = 0
         # set border pixels to zero to avoid fit starting off the edge of image
-        # TODO: Change to constant border
-        if not OLDCODEEXACT:
-            tmp[0: border+1] = 0
-            tmp[-(border+1):] = 0
-        else:
-            # first few pixels are forced to zero to avoid defining a
-            # gaussian that starts before 0
-            tmp[0:3] = 0
-            # same thing at the end of each order
-            tmp[speref.shape[1] - 5: speref.shape[1] - 1] = 0
+        tmp[0: border + 1] = 0
+        tmp[-(border + 1):] = 0
+
         # normalize by the 98th percentile - avoids super-spurois pixels but
         #   keeps the top of the blaze around 1
-        # TODO: Change to np.percentile
-        # if not OLDCODEEXACT:
-        #     norm = np.percentile(tmp, 98)
-        # else:
-        #     tmp2 = np.sort(tmp)
-        #     norm = tmp2[int(len(tmp2)*0.98)]
+        # norm = np.percentile(tmp, 98)
         # tmp /= norm
 
         # peak value depends on type of lamp
@@ -342,14 +326,10 @@ def create_drift_file(p, loc):
                     w_all += list(w)
             except ValueError:
                 WLOG('warning', p['LOG_OPT'], 'ydata or xdata contains NaNS')
-                # TODO: fix this
-                if not OLDCODEEXACT:
-                    gg = [np.nan, np.nan, np.nan, np.nan]
+                gg = [np.nan, np.nan, np.nan, np.nan]
             except RuntimeError:
                 # WLOG('warning', p['log_opt'], 'Least-squares fails')
-                # TODO: fix this
-                if not OLDCODEEXACT:
-                    gg = [np.nan, np.nan, np.nan, np.nan]
+                gg = [np.nan, np.nan, np.nan, np.nan]
 
             # little sanity check to be sure that the peak is not the same as
             #    we got before and that there is something fishy with the
@@ -367,11 +347,7 @@ def create_drift_file(p, loc):
 
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
-            # TODO: fix this
-            if not OLDCODEEXACT:
-                cond = np.abs(maxpos - gg[1]) < 1
-            else:
-                cond = True
+            cond = np.abs(maxpos - gg[1]) < 1
 
             if cond:
                 # work out the radial velocity of the peak
@@ -379,7 +355,7 @@ def create_drift_file(p, loc):
                 lamafter = wave[order_num, maxpos + 1]
                 deltalam = lamafter - lambefore
                 # get the radial velocity
-                rv = CONSTANT_C * deltalam/(2.0 * wave[order_num, maxpos])
+                rv = CONSTANT_C * deltalam / (2.0 * wave[order_num, maxpos])
 
                 # add to storage
                 ordpeak.append(order_num)
@@ -678,12 +654,12 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
             # get the index from -size to +size in pixels from position of peak
             #   this allows one to have sufficient baseline on either side to
             #   adjust the DC level properly
-            index = np.array(range(-size, size+1)) + int(xpeak0[peak] + 0.5)
+            index = np.array(range(-size, size + 1)) + int(xpeak0[peak] + 0.5)
 
             # get the sp values at this index and normalize them
             tmp = np.array(sp[ordpeak[peak], index])
             tmp = tmp - np.min(tmp)
-            tmp = tmp/np.max(tmp)
+            tmp = tmp / np.max(tmp)
 
             # sanity check that peak is within 0.5 pix of the barycenter
             v = np.sum(index * tmp) / np.sum(tmp)
@@ -715,7 +691,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
             # get sp at indices
             tmp = sp[ordpeak[peak], index]
             # get position
-            xpeaks[peak] = np.sum(index * tmp)/np.sum(tmp)
+            xpeaks[peak] = np.sum(index * tmp) / np.sum(tmp)
     # finally return the xpeaks
     return xpeaks
 
@@ -814,8 +790,8 @@ def drift_per_order(loc, fileno):
         numdv = len(dv_order)
         # get the drift for this order
         drift = np.median(dv_order)
-        driftleft = np.median(dv_order[:int(numdv/2.0)])
-        driftright = np.median(dv_order[-int(numdv/2.0):])
+        driftleft = np.median(dv_order[:int(numdv / 2.0)])
+        driftright = np.median(dv_order[-int(numdv / 2.0):])
         # get the error in the drift
         errdrift = np.std(dv_order) / np.sqrt(numdv)
 
@@ -878,11 +854,11 @@ def drift_all_orders(loc, fileno, nomin, nomax):
 
     # work out weighted mean drift
     with warnings.catch_warnings(record=True) as w:
-        sumerr = np.sum(1.0/errdrift)
-        meanvr = np.sum(drift/errdrift) / sumerr
-        meanvrleft = np.sum(driftleft/errdrift) / sumerr
-        meanvrright = np.sum(driftright/errdrift) / sumerr
-        merrdrift = 1.0 / np.sqrt(np.sum(1.0/errdrift**2))
+        sumerr = np.sum(1.0 / errdrift)
+        meanvr = np.sum(drift / errdrift) / sumerr
+        meanvrleft = np.sum(driftleft / errdrift) / sumerr
+        meanvrright = np.sum(driftright / errdrift) / sumerr
+        merrdrift = 1.0 / np.sqrt(np.sum(1.0 / errdrift ** 2))
     # log warnings
     spirouCore.WarnLog(w, funcname=func_name)
 
@@ -957,7 +933,7 @@ def get_ccf_mask(p, loc, filename=None):
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
     # calculate the difference in mask_e and mask_s
     ll_mask_d = np.array(ccfmask['ll_mask_e']) - np.array(ccfmask['ll_mask_s'])
-    ll_mask_ctr = np.array(ccfmask['ll_mask_s']) + ll_mask_d*0.5
+    ll_mask_ctr = np.array(ccfmask['ll_mask_s']) + ll_mask_d * 0.5
     # if mask_width > 0 ll_mask_d is multiplied by mask_width/c
     if mask_width > 0:
         ll_mask_d = mask_width * np.array(ccfmask['ll_mask_s']) / c
@@ -1065,6 +1041,8 @@ def coravelation(p, loc, log=False):
                         shape = (number of orders x number of columns in image
                                                       (x-axis dimension) )
 
+    :param log: bool, if True logs to stdout/file if False is silent
+
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 rv_ccf: numpy array (1D), the radial velocities for the CCF
@@ -1132,9 +1110,9 @@ def coravelation(p, loc, log=False):
                                                    len(coeff_ll))
     # -------------------------------------------------------------------------
     # define some constants for loop
-    constant1 = (1 + 1.55e-8) * (1 + berv_max/c)
-    constant2 = (1 + 1.55e-8) * (1 - berv_max/c)
-    rvshift = 1 + rv_ccf/c
+    constant1 = (1 + 1.55e-8) * (1 + berv_max / c)
+    constant2 = (1 + 1.55e-8) * (1 - berv_max / c)
+    rvshift = 1 + rv_ccf / c
     # -------------------------------------------------------------------------
     # storage for loop
     orders = []
@@ -1281,10 +1259,10 @@ def calculate_ccf(mask_ll, mask_d, mask_w, sp_ll, sp_flux, sp_dll, blaze,
     c = CONSTANT_C / 1000.0
 
     # constants
-    sp_ll_dll = sp_ll + sp_dll*0.5
+    sp_ll_dll = sp_ll + sp_dll * 0.5
     mask_ll_d1 = mask_ll - 0.5 * mask_d
     mask_ll_d2 = mask_ll + 0.5 * mask_d
-    rv_corr = 1 + rv_ccf/c
+    rv_corr = 1 + rv_ccf / c
     # get the line centers
     line_ctr = mask_ll * (1 + rv_ccf[int(len(rv_ccf) / 2)] / c)
     index_line_ctr = np.searchsorted(sp_ll_dll, line_ctr) + 1
@@ -1399,57 +1377,57 @@ def raw_correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
             llrange += (pix_s * dll[start] * weight)
             # ccf noise calculation
             noise1 = pix_s * np.abs(flux[start])
-            noise2 = pix_s * det_noise**2
-            ccf_noise += ((noise1 + noise2) * weight**2)
+            noise2 = pix_s * det_noise ** 2
+            ccf_noise += ((noise1 + noise2) * weight ** 2)
         # if start+1 == end
         elif (start + 1) == end:
             # pix value = start + 0.5 * derivative - Mask_blue/derivative
             pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
             # pix value = (end - (start + derivative)) /derivative
-            pix_e = (ll_e[ft] - ll[start] - dll[start]*0.5) / dll[end]
+            pix_e = (ll_e[ft] - ll[start] - dll[start] * 0.5) / dll[end]
             # output ccf calculation
             out1 = pix_s * flux[start] / blaze[start]
             out2 = pix_e * flux[end] / blaze[end]
             out_ccf += ((out1 + out2) * weight * blaze[center])
             # pixel calculation
             pix += ((pix_s + pix_e) * weight)
-            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            llrange += ((pix_s * dll[start] + pix_e * dll[end]) * weight)
             # ccf noise calculation
             noise1 = pix_s * np.abs(flux[start])
             noise2 = pix_e * np.abs(flux[end])
-            noise3 = (pix_s + pix_e) * det_noise**2
-            ccf_noise += (noise1 + noise2 + noise3) * weight**2
+            noise3 = (pix_s + pix_e) * det_noise ** 2
+            ccf_noise += (noise1 + noise2 + noise3) * weight ** 2
         # else
         else:
             # pix value = start + 0.5 * derivative - Mask_blue/derivative
             pix_s = (ll[start] + (dll[start] * 0.5) - ll_s[ft]) / dll[start]
             # pix value = (end - (start + derivative)) /derivative
-            pix_e = (ll_e[ft] - ll[end - 1] - dll[end - 1]*0.5) / dll[end]
+            pix_e = (ll_e[ft] - ll[end - 1] - dll[end - 1] * 0.5) / dll[end]
             # output ccf calculation
-            out1 = pix_s * flux[start]/blaze[start]
-            out2 = pix_e * flux[end]/blaze[end]
+            out1 = pix_s * flux[start] / blaze[start]
+            out2 = pix_e * flux[end] / blaze[end]
             out_ccf += ((out1 + out2) * weight * blaze[center])
             # pixel calculation
             pix += ((pix_s + pix_e) * weight)
-            llrange += ((pix_s*dll[start] + pix_e*dll[end]) * weight)
+            llrange += ((pix_s * dll[start] + pix_e * dll[end]) * weight)
             # ccf noise calculation
             noise1 = pix_s * np.abs(flux[start])
             noise2 = pix_e * np.abs(flux[end])
-            noise3 = (pix_s + pix_e) * det_noise**2
-            ccf_noise += (noise1 + noise2 + noise3) * weight**2
+            noise3 = (pix_s + pix_e) * det_noise ** 2
+            ccf_noise += (noise1 + noise2 + noise3) * weight ** 2
             # loop around start + 1 to end - 1 + 1 (+1 for python loop)
             for i in range(start + 1, end - 1 + 1):
                 # adjust from fortran indexing to python indexing
                 j = i - 1
                 # output ccf calculation
-                out_ccf += (flux[j]/blaze[j]) * blaze[center] * weight
+                out_ccf += (flux[j] / blaze[j]) * blaze[center] * weight
                 # pixel calculation
                 pix += weight
                 llrange += (dll[j] * weight)
                 # ccf noise calculation
                 noise1 = np.abs(flux[j])
-                noise2 = det_noise**2
-                ccf_noise += (noise1 + noise2) * weight**2
+                noise2 = det_noise ** 2
+                ccf_noise += (noise1 + noise2) * weight ** 2
 
     # sqrt the noise
     ccf_noise = np.sqrt(ccf_noise)
@@ -1544,12 +1522,12 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
         pix_s[cond1] = (ll_e[cond1] - ll_s[cond1]) / dll_start
         out[cond1] = pix_s[cond1] * flux_start / blaze_start
         noise[cond1] = pix_s[cond1] * np.abs(flux_start)
-        noise[cond1] += pix_s[cond1] * det_noise**2
+        noise[cond1] += pix_s[cond1] * det_noise ** 2
         # calculate sums
         out_ccf += np.sum(out[cond1] * weight * blaze_cent)
         pix += np.sum(pix_s[cond1] * weight)
         llrange += np.sum(pix_s[cond1] * dll_start * weight)
-        ccf_noise += np.sum(noise[cond1] * weight**2)
+        ccf_noise += np.sum(noise[cond1] * weight ** 2)
     # -------------------------------------------------------------------------
     # condition   start + 1 = end
     # -------------------------------------------------------------------------
@@ -1574,13 +1552,13 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
         out[cond2] += pix_e[cond2] * flux_end / blaze_end
         noise[cond2] = pix_s[cond2] * np.abs(flux_start)
         noise[cond2] += pix_e[cond2] * np.abs(flux_end)
-        noise[cond2] += (pix_s[cond2] + pix_e[cond2]) * det_noise**2
+        noise[cond2] += (pix_s[cond2] + pix_e[cond2]) * det_noise ** 2
         llrangetmp = (pix_s[cond2] * dll_start + pix_e[cond2] * dll_end)
         # calculate sums
         out_ccf += np.sum(out[cond2] * weight * blaze_cent)
         pix += np.sum((pix_s[cond2] + pix_e[cond2]) * weight)
         llrange += np.sum(llrangetmp * weight)
-        ccf_noise += np.sum(noise[cond2] * weight**2)
+        ccf_noise += np.sum(noise[cond2] * weight ** 2)
     # -------------------------------------------------------------------------
     # condition   not (cond1 or cond2)
     # -------------------------------------------------------------------------
@@ -1603,33 +1581,33 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
         # define intermediates
         pix_s[cond3] = (ll_start + (dll_start * 0.5) - ll_s[cond3]) / dll_start
         pix_e[cond3] = (ll_e[cond3] - ll_end1 - (0.8 * dll_end1)) / dll_end
-        out[cond3] = pix_s[cond3] * flux_start/blaze_start
-        out[cond3] += pix_e[cond3] * flux_end/blaze_end
+        out[cond3] = pix_s[cond3] * flux_start / blaze_start
+        out[cond3] += pix_e[cond3] * flux_end / blaze_end
         noise[cond3] = pix_s[cond3] * np.abs(flux_start)
         noise[cond3] += pix_e[cond3] * np.abs(flux_end)
-        noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise**2
+        noise[cond3] += (pix_s[cond3] + pix_e[cond3]) * det_noise ** 2
         llrangetmp = (pix_s[cond3] * dll_start + pix_e[cond3] * dll_end)
         # calculate sums
         out_ccf += np.sum(out[cond3] * weight * blaze_cent)
         pix += np.sum((pix_s[cond3] + pix_e[cond3]) * weight)
         llrange += np.sum(llrangetmp * weight)
-        ccf_noise += np.sum(noise[cond3] * weight**2)
+        ccf_noise += np.sum(noise[cond3] * weight ** 2)
         # calculate fractional contributions
         out_ccf_i = 0.0
         llrange_i = 0.0
         ccf_noise_i = 0.0
         for i in range(len(i_start)):
             start, end = i_start[cond3][i], i_end[cond3][i]
-            out_ccf_i += np.sum(flux[start:end-1]/blaze[start:end-1])
-            llrange_i += np.sum(dll[start:end-1])
+            out_ccf_i += np.sum(flux[start:end - 1] / blaze[start:end - 1])
+            llrange_i += np.sum(dll[start:end - 1])
             # ccf noise calculation
-            noisetmp = np.abs(flux[start:end-1] + det_noise**2)
+            noisetmp = np.abs(flux[start:end - 1] + det_noise ** 2)
             ccf_noise_i += np.sum(noisetmp)
         # add fractional contributions to totals
         out_ccf += (np.sum(out_ccf_i * weight * blaze_cent))
         pix += (np.sum(weight) * len(i_start))
         llrange += (np.sum(llrange_i * weight))
-        ccf_noise += (np.sum(ccf_noise_i * weight **2))
+        ccf_noise += (np.sum(ccf_noise_i * weight ** 2))
     # sqrt the noise
     ccf_noise = np.sqrt(ccf_noise)
     # return parameters
@@ -1669,14 +1647,14 @@ def fit_ccf(rv, ccf, fit_type):
     # if fit_type == 0 then we have absorption lines
     if fit_type == 0:
         if np.max(ccf) != 0:
-            a = np.array([-diff/max_ccf, rv[argmin], 4*rvdiff, 0])
+            a = np.array([-diff / max_ccf, rv[argmin], 4 * rvdiff, 0])
         else:
             a = np.zeros(4)
     # else (fit_type == 1) then we have emission lines
     else:
-        a = np.array([diff/max_ccf, rv[argmax], 4*rvdiff, 1])
+        a = np.array([diff / max_ccf, rv[argmax], 4 * rvdiff, 1])
     # normalise y
-    y = ccf/max_ccf - 1 + fit_type
+    y = ccf / max_ccf - 1 + fit_type
     # x is just the RVs
     x = rv
     # uniform weights
@@ -1684,86 +1662,9 @@ def fit_ccf(rv, ccf, fit_type):
     # get gaussian fit
     result, fit = spirouMath.fitgaussian(x, y, weights=w, guess=a)
 
-    # TODO: remove this!
-    # test_fit_ccf(x, y, w, a, result)
-
-    ccf_fit = (fit + 1 - fit_type)*max_ccf
+    ccf_fit = (fit + 1 - fit_type) * max_ccf
     # return the best guess and the gaussian fit
     return result, ccf_fit
-
-
-# TODO: Remove fitgaus.f and fitgaus.so and this function
-def test_fit_ccf(x, y, w, aguess, result):
-    """
-    Test the CCF fit against the old CCF fitgaus routine (from FORTRAN)
-    This function requires fisgaus to be compiled on a specific machine so
-    is not for use other than testing (unless one compiles fitgaus first
-    using f2py)
-
-    :param x: numpy array (1D), the rv data
-    :param y: numpy array (1D), the CCF data to fit
-    :param w: numpy array (1D), the weights
-    :param aguess: numpy array (1D), the guess at the gaussian fit parameters
-                   [a, x0, sigma, dc]
-    :param result: numpy array (1D), the resulting gaussian fit parameters
-                   from the scipy.curve_fit gaussian fit
-                   [a, x0, sigma, dc]
-
-        where
-                a: float, the amplitude
-                x0: float, the mean of the gaussian
-                sigma: float, the standard deviation (FWHM) of the gaussian
-                dc: float, the constant level below the gaussian
-
-    :return None:
-    """
-    # imports ONLY for this test function
-    plt = sPlt.plt
-    # noinspection PyUnresolvedReferences
-    from SpirouDRS.fortran import fitgaus
-    import time
-    # path for plot file (manually set)
-    path = '/scratch/Projects/spirou_py3/unit_test_graphs/cal_ccf_fit_diff/'
-    filename = path + 'CCF_OLD_VS_NEW_{0}'.format(time.time())
-    # turn off interactive plot
-    if plt.isinteractive():
-        on = True
-        plt.close('all')
-        plt.interactive('off')
-    else:
-        on = False
-    # set guess and result times
-    anew = result
-    aold = aguess
-    siga = np.zeros(4)
-    fitold = np.zeros(len(x))
-    # use FORTRAN fit gaussian routine
-    fitgaus.fitgaus(x, y, w, aold, siga, fitold)
-    # close all plots
-    plt.close('all')
-    # set up figure
-    fig = plt.figure()
-    fig.set_size_inches(16, 10)
-    # plot
-    plt.plot(x, y, color='k', label='data')
-    plt.plot(x, gauss_function(x, *anew), color='b', label='scipy.curve_fit')
-    plt.plot(x, gauss_function(x, *aold), color='r', label='fortran')
-    # title
-    p1 = 'NEW fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*anew)
-    p2 = 'OLD fit a={0}, x0={1}, sigma={2}, dc={3}'.format(*aold)
-    title = 'Comparison of old and new\n{0}\n{1}\n'.format(p1, p2)
-    plt.title(title)
-    # axis labels
-    plt.xlabel('RV')
-    plt.ylabel('CCF')
-    # save figure
-    plt.savefig(filename + '.png', bbox_inches='tight')
-    plt.savefig(filename + '.pdf', bbox_inches='tight')
-    plt.close()
-    # turn back on interactive plotting if it was on before
-    if on:
-        plt.interactive('on')
-
 
 # =============================================================================
 # End of code

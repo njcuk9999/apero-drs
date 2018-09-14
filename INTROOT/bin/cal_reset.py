@@ -53,7 +53,7 @@ def main():
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code

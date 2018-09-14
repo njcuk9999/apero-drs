@@ -15,9 +15,7 @@ Last modified: 2018-06-01
 """
 from __future__ import division
 import numpy as np
-import os
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -81,7 +79,7 @@ def main(night_name=None, reffile=None):
     plt.figure()
 
     for i in np.arange(nx):
-      plt.plot(wave[i], e2ds[i])
+        plt.plot(wave[i], e2ds[i])
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Flux e-')
@@ -90,7 +88,7 @@ def main(night_name=None, reffile=None):
     plt.figure()
 
     for i in np.arange(nx):
-        plt.plot(wave[i], e2ds[i]/blaze[i])
+        plt.plot(wave[i], e2ds[i] / blaze[i])
 
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('Relative Flux e-')
@@ -99,7 +97,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p)
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
@@ -116,9 +114,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-
-
-
-

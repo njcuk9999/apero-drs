@@ -256,7 +256,7 @@ def find_order_centers(pp, image, loc, order_num):
     # For the first iteration this uses "posc" for all other iterations
     # uses the central position found at the nearest column to it
     # must also correct for conversion to int by adding 0.5
-    center, width = 0, 0
+    # center, width = 0, 0
     for col in columns:
         # for pixels>central pixel we need to get row center from last
         # iteration (or posc) this is to the LEFT
@@ -273,7 +273,7 @@ def find_order_centers(pp, image, loc, order_num):
             break
         # make sure we are not in the image_gap
         # Question: Not sure what this is for
-        #if col <= (800 - order_num*30):
+        # if col <= (800 - order_num*30):
         if col <= (750 - rowcenter*0.7):
                 break
         if (rowtop < image_gap) and (rowbottom > image_gap):
@@ -295,12 +295,8 @@ def find_order_centers(pp, image, loc, order_num):
             center = center + rowtop
             # if the width is zero set the position back to the original
             # position
-            # TODO: remove H2RG compatibility
             if width == 0:
-                if pp['IC_IMAGE_TYPE'] == "H2RG":
-                    center = float(rowcenter)
-                else:
-                    center = float(rowcenter)-2  # to force the order curvature
+                center = float(rowcenter)-2  # to force the order curvature
         else:
             width = 0
             center = float(rowcenter) - 2  # to force the order curvature
@@ -805,17 +801,6 @@ def smoothed_boxmean_image2(image, size, weighted=True):
         newimage[row] = s_weighted_image/s_weights
     # return new image
     return newimage
-
-
-# TODO: remove later
-def __test_smoothed_boxmean_image(image, size, row=1000, column=1000):
-    # get the new images
-    image1 = smoothed_boxmean_image1(image, size)
-    image2 = smoothed_boxmean_image2(image, size)
-
-    # plot graph in sPlt
-    sPlt.__test_smoothed_boxmean_image(image, image1, image2, size,
-                                       row=row, column=column)
 
 
 def image_localization_superposition(image, coeffs):

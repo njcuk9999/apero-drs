@@ -12,8 +12,8 @@ Created on 2018-05-01 at 12:32
 from __future__ import division
 import numpy as np
 import sys
-import os
 import time
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -23,13 +23,10 @@ from SpirouDRS import spirouStartup
 # TODO: This is a stupid fix for python 2 - should be done better
 try:
     from . import spirouUnitRecipes
-    from . import unit_test_comp_functions as utc
 except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-    from SpirouDRS.spirouUnitTests import unit_test_comp_functions as utc
 except ValueError:
     import spirouUnitRecipes
-    import unit_test_comp_functions as utc
 
 
 # =============================================================================
@@ -68,42 +65,9 @@ VALID = spirouUnitRecipes.VALID_RECIPES
 # =============================================================================
 # Define functions
 # =============================================================================
-def check_type(p, rparams):
-
-    # TODO: remove H2RG compatibility
-    if p['IC_IMAGE_TYPE'] == rparams['TYPE']:
-        wmsg = 'Detector type compatible'
-        WLOG('', p['LOG_OPT'], wmsg)
-    else:
-        emsg1 = 'type={0} incompatible with current run'.format(rparams['TYPE'])
-        emsg2 = ('    Please check "config.py" and link it to the correct'
-                 ' constants_SPIROU.py')
-        emsg3 = '(i.e. constants_SPIROU_{0}.py)'.format(rparams['TYPE'])
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
-
-
-def set_comp(p, rparams):
-    # check that "comparison" defined in run file
-    if 'COMPARISON' not in rparams:
-        emsg1 = '"comparison" not defined in run file {0}'.format(p['RFILE'])
-        emsg2 = '    "comparison" must be set'
-        emsg3 = '    "comparison" must be either "True" or "False"'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
-    # set the comparison from parameter
-    try:
-        comp = bool(rparams['COMPARISON'])
-    except:
-        emsg1 = '"comparison" must be either "True" or "False"'
-        emsg2 = '    "comparison" = {0}'.format(rparams['COMPARISON'])
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-        comp = False
-    # return comp
-    return comp
-
-
 def get_runs(p, rparams, rfile):
     # set up storage
-    runs = dict()
+    runs = OrderedDict()
     # loop around the rparams and add keys with "RUN_KEY"
     for key in list(rparams.keys()):
         if key.upper().startswith(RUN_KEY.upper()):
@@ -132,11 +96,7 @@ def get_runs(p, rparams, rfile):
     unsorted = np.array(list(runs.keys()))
     sorted = np.sort(unsorted)
     # add an OrderedDict
-    if sys.version_info.major < 3:
-        from collections import OrderedDict
-        sorted_runs = OrderedDict()
-    else:
-        sorted_runs = dict()
+    sorted_runs = OrderedDict()
     # add runs to new dictionary in the correct order
     for run_i in sorted:
         sorted_runs[run_i] = runs[run_i]
@@ -169,8 +129,7 @@ def log_timings(p, times):
     WLOG('', p['LOG_OPT'], '')
 
 
-def manage_run(p, runname, run_i, timing, new_out, old_out,
-               errors, compare=False):
+def manage_run(p, runname, run_i, timing):
     # get name of run (should be first element in run list
     name = run_i[0]
     runtitle = '{0}:{1}'.format(runname, name)
@@ -190,26 +149,8 @@ def manage_run(p, runname, run_i, timing, new_out, old_out,
     sPlt.closeall()
     # add to timer
     timing['{0}:{1}'.format(runname, name)] = endtime - starttime
-    # get outputs
-    ll['outputs'], _ = spirouUnitRecipes.wrapper(p, runname, run_i, ll)
-    # comparison (if required)
-    if compare:
-        # set the file path for the comparison results (plots and table)
-        filepath = utc.get_folder_name(RESULTSPATH)
-        # run the comparison function
-        cargs = [name, ll, new_out, old_out, errors, OLDPATH, filepath]
-        new_out, old_out, errors = utc.compare(*cargs)
-    # return the timing and the new and old outputs
-    return timing, new_out, old_out, errors
-
-
-def comparison_table(p, errors):
-    # set the file path for the comparison results (plots and table)
-    filepath = utc.get_folder_name(RESULTSPATH)
-    # construct table
-    utc.construct_error_table(errors, THRESHOLD, filepath, runname=p['runname'])
-    # log
-    WLOG('', p['LOG_OPT'], 'Comparison saved to file.')
+    # return the timing
+    return timing
 
 
 # =============================================================================

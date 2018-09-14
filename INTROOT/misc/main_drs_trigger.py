@@ -258,11 +258,7 @@ def get_recipes(p, raw_only=True):
         control = control[mask]
 
     # only want recipes valid for our detector
-    # TODO: Remove H2RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        mask = (control['det'] == 1) | (control['det'] == 2)
-    else:
-        mask = (control['det'] == 1) | (control['det'] == 4)
+    mask = (control['det'] == 1) | (control['det'] == 4)
     control = control[mask]
 
     # get recipe names
