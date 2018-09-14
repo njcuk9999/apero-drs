@@ -12,6 +12,7 @@ Created on 2017-11-27 at 13:08
 import numpy as np
 import os
 import pkg_resources
+from collections import OrderedDict
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
@@ -23,6 +24,8 @@ from SpirouDRS import spirouConfig
 # define DRS path
 DRSPATH = pkg_resources.resource_filename('SpirouDRS', '')
 PATH = os.path.dirname(DRSPATH)
+if PATH == '':
+    PATH = DRSPATH
 # Get Logging function
 WLOG = spirouCore.wlog
 # get print log
@@ -62,13 +65,13 @@ def get_python_files(path):
 def get_import_statements(files):
     importslist = []
 
-    statsdict = dict()
+    statsdict = OrderedDict()
     statsdict['total lines'] = 0
     statsdict['total empty lines'] = 0
     statsdict['total lines of comments'] = 0
     statsdict['total lines of code'] = 0
 
-    infodict = dict()
+    infodict = OrderedDict()
     infodict['imports'] = []
     infodict['filename'] = []
     # loop around the files
@@ -222,7 +225,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main(return_locals=True)
     # exit message
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code

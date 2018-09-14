@@ -15,6 +15,7 @@ import sys
 import os
 import shutil
 from datetime import datetime
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -53,6 +54,7 @@ CONSTFILE = os.path.join(CONSTPATH, 'spirouConst.py')
 
 VERSIONSTR = '__version__ = '
 DATESTR = '__date__ = '
+
 
 # =============================================================================
 # Define functions
@@ -138,8 +140,8 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
     # set the tmp filename
     tmpfilename2 = 'tmp_' + tmpfilename
     # set up storage
-    entry_storage = dict()
-    date_storage = dict()
+    entry_storage = OrderedDict()
+    date_storage = OrderedDict()
     # for each reference get the date
     for it, reference in enumerate(references):
         # print progress
@@ -348,22 +350,22 @@ if __name__ == "__main__":
     # get values from config file
     p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # get the version
-    version = p['DRS_VERSION']
+    version0 = p['DRS_VERSION']
     # increment version in config files
-    version = update_py_version(CONSTFILE, version)
+    version0 = update_py_version(CONSTFILE, version0)
     # check full log file for previous entries
-    since = get_last_entry(FILENAME)
+    since0 = get_last_entry(FILENAME)
     # log if not None
-    if since is not None:
+    if since0 is not None:
         wmsg = 'Found previous entries: starting from Commit {0}'
-        WLOG('', __NAME__, wmsg.format(since))
+        WLOG('', __NAME__, wmsg.format(since0))
     # get full log
     WLOG('', __NAME__, 'Getting full commit log')
-    update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
+    update(TMPFILENAME, PATH, kind='rpm', version=version0, since=since0)
     # get lines group them and save to full file
-    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
+    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version0)
     # update version text file
-    update_version_file(VERSIONFILE, version)
+    update_version_file(VERSIONFILE, version0)
     # remove backup
     os.remove(FILENAME + '.backup')
 

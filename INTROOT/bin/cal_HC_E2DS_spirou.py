@@ -341,7 +341,7 @@ def part2(p, loc):
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
     # get wave filename
-    wavefits = spirouConfig.Constants.WAVE_FILE(p)
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE(p)
     wavefitsname = os.path.split(wavefits)[-1]
     WLOG('', p['LOG_OPT'], wavefits)
 
@@ -354,6 +354,7 @@ def part2(p, loc):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
@@ -369,17 +370,18 @@ def part2(p, loc):
     # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
 
     # write the wave "spectrum"
-    spirouImage.WriteImage(wavefits, loc['LL_FINAL'], hdict)
+    p = spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
 
     # get filename for E2DS calibDB copy of FITSFILENAME
-    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)
+    e2dscopy_filename, tag2 = spirouConfig.Constants.WAVE_E2DS_COPY(p)
 
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
-    spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
 
     # ------------------------------------------------------------------
     # Save to result table

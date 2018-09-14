@@ -12,6 +12,7 @@ Created on 2018-05-18 at 14:16
 
 import numpy as np
 from scipy.interpolate import interp1d
+import os
 import warnings
 
 from SpirouDRS import spirouConfig
@@ -38,20 +39,12 @@ WLOG = spirouCore.wlog
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_telluric(p, loc, hdr):
+def get_telluric(p, loc):
     """
     Reads the telluric file "tellwave" (wavelength data) and "tellspe"
-    (telluric absorption data) from files defined in "p" and finds "good" areas
-    of the telluric model, i.e.
-
-        p['EM_MIN_LAMBDA'] > wavelength > p['EM_MAX_LAMBDA']
-
-        and
-
-        telluric transmission > p['EM_TELL_THRESHOLD']
+    (telluric absorption data) from files defined in "p"
 
     :param p: parameter dictionary, ParamDict containing constants
-
     :param loc: parameter dictionary, ParamDict containing data
 
     :return loc: parameter dictionary, the updated parameter dictionary
@@ -60,34 +53,34 @@ def get_telluric(p, loc, hdr):
                         telluric model
                 tell_y: numpy array (1D), the transmission 1 = 100% transmission
                         for the telluric model (shape = same as tell_x)
-                tell_mask: numpy array (1D), array of booleans, True if
-                           telluric model at this wavelength is deemed "good"
-                           and False if deemed "bad"
     """
 
     func_name = __NAME__ + '.get_telluric()'
     # load the telluric model
-    txfile = spirouDB.GetCalibFile(p, 'EM_TELL_X', hdr, required=True)
-    tyfile = spirouDB.GetCalibFile(p, 'EM_TELL_Y', hdr, required=True)
-    # add to p
-    p['TELLWAVE'] = txfile
-    p['TELLSPE'] = tyfile
-    p.set_sources(['tellwave', 'tellspe'], func_name)
+
+    tapas_file = spirouDB.GetDatabaseTellMole(p)
+    tdata = spirouFITS.readimage(p, tapas_file, kind='TAPAS')
+    tapas, thdr, tcmt, _, _ = tdata
+
     # add model and mask to loc
-    rout = spirouFITS.readimage(p, filename=txfile, log=False)
-    loc['TELL_X'] = rout[0]
-    rout = spirouFITS.readimage(p, filename=tyfile, log=False)
-    loc['TELL_Y'] = rout[0]
+    loc['TELL_X'] = tapas['wavelength']
+    loc['TELL_Y'] = tapas['trans_combined']
+    # save filename
+    loc['TELLSPE'] = os.path.basename(tapas_file)
     # set source
     loc.set_sources(['tell_x', 'tell_y'], func_name)
     # return p and loc
-    return p, loc
+    return loc
 
 
 def order_profile(p, loc):
     """
     Create a 2D image of the order profile. Each order's pixels are labelled
     with the order_number, pixels not in orders are given a value of -1
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -200,7 +193,7 @@ def order_profile(p, loc):
                 orderimage[mask] = order_no
                 suborderimage[mask] = fin
                 fiberimage[mask] = fiber
-            #else break
+            # else break
             else:
                 emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
                 emsg2 = '\tfunction={0}'.format(func_name)
@@ -211,7 +204,7 @@ def order_profile(p, loc):
     loc['SUBORDERIMAGE'] = suborderimage
     loc['FIBERIMAGE'] = fiberimage
     # add source
-    loc.set_sources(['orderimage', 'suborderimage','fiberimage'], func_name)
+    loc.set_sources(['orderimage', 'suborderimage', 'fiberimage'], func_name)
     # return loc
     return loc
 
@@ -221,6 +214,10 @@ def create_wavelength_image(p, loc):
     Using each orders location coefficents, tilt and wavelength coefficients
     Make a 2D map the size of the image of each pixels wavelength value
     (or NaN if not a valid position for a wavelength)
+
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
 
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
@@ -387,7 +384,7 @@ def create_wavelength_image(p, loc):
                 lambda_total = lambda0 + lambda1 + lambda2 + lambda3
                 # add to array
                 waveimage[y0s, x0s] = lambda_total
-            #else break
+            # else break
             else:
                 emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
                 emsg2 = '\tfunction={0}'.format(func_name)
@@ -482,13 +479,14 @@ def create_image_from_e2ds(p, loc):
     wavelength positions in loc['WAVEIMAGE'] to map the spectrum onto
     the waveimage
 
+    :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+                LOG_OPT: string, the program name for logging
     :param loc: parameter dictionary, ParamDict containing data
             Must contain at least:
                 waveimage: numpy array (2D), the wavelength of each pixel
                            shape is same as input image and must be the same
                            shape as spe
-    :param x: numpy array (1D), the wavelength values to map onto the image
-    :param y: numpy array (1D), the spectrum values to map onto the image
 
     :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:

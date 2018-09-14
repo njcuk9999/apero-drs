@@ -1,4 +1,4 @@
-DRS_VERSION = 0.2.122
+DRS_VERSION = 0.3.007
 
 ###############################################################################
 #
@@ -30,6 +30,8 @@ PythonVersion = 3.6.4
     code
     filecmp
     glob
+    importlib
+    itertools
     os
     pdb
     pkg_resources
@@ -63,6 +65,8 @@ PythonVersion = 2.7.14
     code
     filecmp
     glob
+    importlib
+    itertools
     os
     pdb
     pkg_resources

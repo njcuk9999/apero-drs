@@ -8,8 +8,8 @@ Created on 2018-05-01 11:31:14
 @author: cook
 """
 from __future__ import division
-import sys
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -23,10 +23,6 @@ except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitTests
 except ValueError:
     import spirouUnitTests
-
-if sys.version_info.major == 2:
-    # noinspection PyPep8Naming,PyShadowingBuiltins
-    from collections import OrderedDict as dict
 
 
 # =============================================================================
@@ -52,10 +48,6 @@ UNIT_TEST_PATH = os.path.join(UNIT_PATH, 'Runs')
 # Define main function
 # =============================================================================
 def main(runname=None, quiet=False):
-
-    # reset the DRS
-    if not quiet:
-        spirouTools.DRS_Reset(log=False, called=True)
 
     # ----------------------------------------------------------------------
     # Set up
@@ -98,18 +90,11 @@ def main(runname=None, quiet=False):
         WLOG('error', p['LOG_OPT'], emsgs)
 
     # get the parameters in the run file
-    rparams = spirouConfig.GetConfigParams(p, None, filename=rfile)
+    rparams = spirouConfig.GetConfigParams(p, filename=rfile)
 
-    # ----------------------------------------------------------------------
-    # Set the type from run parameters
-    # ----------------------------------------------------------------------
-    # TODO: Remove H2RG compatibility
-    spirouUnitTests.check_type(p, rparams)
-
-    # ----------------------------------------------------------------------
-    # Check whether we need to compare files
-    # ----------------------------------------------------------------------
-    compare = spirouUnitTests.set_comp(p, rparams)
+    # reset the DRS
+    if not quiet:
+        spirouTools.DRS_Reset(log=False, called=True)
 
     # ----------------------------------------------------------------------
     # Get runs
@@ -120,27 +105,14 @@ def main(runname=None, quiet=False):
     # Get runs
     # ----------------------------------------------------------------------
     # storage for times
-    times = dict()
-    # storage for outputs
-    newoutputs, oldoutputs = dict(), dict()
-    # storage for errors
-    errors = []
+    times = OrderedDict()
     # log the start of the unit tests
     spirouUnitTests.unit_log_title(p)
     # loop around runs and process each
     for runn in list(runs.keys()):
         # do run
-        rargs = [p, runn, runs[runn], times, newoutputs, oldoutputs,
-                 errors, compare]
-        out = spirouUnitTests.manage_run(*rargs)
-        times, newoutputs, oldoutputs, errors = out
-
-    # ----------------------------------------------------------------------
-    # Analyse results + save to table
-    # ----------------------------------------------------------------------
-    if compare:
-        WLOG('', p['LOG_OPT'], 'Constructing comparison table')
-        spirouUnitTests.comparison_table(p, errors)
+        rargs = [p, runn, runs[runn], times]
+        times = spirouUnitTests.manage_run(*rargs)
 
     # ----------------------------------------------------------------------
     # Print timings

@@ -10,8 +10,10 @@ Created on 2018-07-20
 """
 
 from __future__ import division
+from scipy.optimize import curve_fit
 import numpy as np
 import os
+import warnings
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -20,7 +22,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
-
 
 # =============================================================================
 # Define variables
@@ -41,6 +42,7 @@ plt.ion()
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -58,7 +60,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     :param fpfile: string, or None, the FP file to use for
                   arg_file_names and fitsfilename
                   (if None assumes arg_file_names was set from run time)
-    :param fhciles: string, list or None, the list of HC files to use for
+    :param hcfiles: string, list or None, the list of HC files to use for
                   arg_file_names and fitsfilename
                   (if None assumes arg_file_names was set from run time)
 
@@ -70,18 +72,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
 
     # test files TC2
-    #night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
-    #fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
-    #hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
+    # night_name = 'AT5/AT5-12/2018-05-29_17-41-44/'
+    # fpfile = '2279844a_fp_fp_pp_e2dsff_AB.fits'
+    # hcfiles = ['2279845c_hc_pp_e2dsff_AB.fits']
 
     # test files TC3
-    #night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
-    #fpfile = '2294108a_pp_e2dsff_AB.fits'
-    #hcfiles = ['2294115c_pp_e2dsff_AB.fits']
+    # night_name = 'TC3/AT5/AT5-12/2018-07-24_16-17-57/'
+    # fpfile = '2294108a_pp_e2dsff_AB.fits'
+    # hcfiles = ['2294115c_pp_e2dsff_AB.fits']
 
-    #night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
-    #fpfile = '2294223a_pp_e2dsff_AB.fits'
-    #hcfiles = ['2294230c_pp_e2dsff_AB.fits']
+    # night_name = 'TC3/AT5/AT5-12/2018-07-25_16-49-50/'
+    # fpfile = '2294223a_pp_e2dsff_AB.fits'
+    # hcfiles = ['2294230c_pp_e2dsff_AB.fits']
 
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
@@ -187,16 +189,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # NOT the pixel values that would need to be interpolated
 
     # getting header info with wavelength polynomials
-    wdata = spirouImage.ReadWaveFile(p, hchdr,return_header=True)
+    wdata = spirouImage.ReadWaveFile(p, hchdr, return_header=True)
     wave, wave_hdr = wdata
     loc['WAVE_INIT'] = wave
     loc['WAVEHDR'] = wave_hdr
-    loc.set_source('WAVE_INIT', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc.set_source('WAVE_INIT',
+                   __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # get wave params from wave header
     poly_wave_sol = spirouImage.ReadWaveParams(p, wave_hdr)
     loc['WAVEPARAMS'] = poly_wave_sol
-    loc.set_source('WAVEPARAMS', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    loc.set_source('WAVEPARAMS',
+                   __NAME__ + '/main() + /spirouImage.ReadWaveFile')
 
     # ----------------------------------------------------------------------
     # Read UNe solution
@@ -268,9 +272,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
-
-
-# TODO: --> Below is not etienne's code!
+    # TODO: --> Below is not etienne's code!
 
 # ----------------------------------------------------------------------
 # Set up all_lines storage
@@ -705,6 +707,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # return p and loc
     return dict(locals())
+
 
 # =============================================================================
 # Start of code

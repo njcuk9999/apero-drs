@@ -90,7 +90,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # write to file
-    spirouImage.WriteImage(outfits, newimage, hdict)
+    p = spirouImage.WriteImage(p, outfits, newimage, hdict)
 
     # ----------------------------------------------------------------------
     # End Message

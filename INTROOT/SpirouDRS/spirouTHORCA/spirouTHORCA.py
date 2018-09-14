@@ -43,6 +43,7 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
 # Speed of light
+# noinspection PyPep8
 speed_of_light = cc.c.to(uu.km/uu.s).value
 
 
@@ -126,7 +127,8 @@ def get_e2ds_ll(p, hdr=None, filename=None, key=None):
         WLOG('warning', p['LOG_OPT'], wmsg.format())
 
     # get the line list
-    ll = spirouMath.get_ll_from_coefficients(pixel_shift_inter,pixel_shift_slope,
+    ll = spirouMath.get_ll_from_coefficients(pixel_shift_inter,
+                                             pixel_shift_slope,
                                              param_ll, xsize, nbo)
 
     # return ll and param_ll
@@ -350,7 +352,6 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
     t_ord_start = p['IC_HC_T_ORDER_START']
     torder = loc['ECHELLE_ORDERS']
 
-
     # deal with key
     if key is None:
         key = 'ALL_LINES_{0}'.format(iteration)
@@ -361,7 +362,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         WLOG('error', p['LOG_OPT'], emsg.format(key))
         key = None
 
-    #good lines count
+    # good lines count
     good_lines_total = 0
     # loop around each order
     for order_num in range(len(loc[key])):
@@ -383,7 +384,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # Criteria 2
         # ---------------------------------------------------------------------
         # calculate the sig-fit for the lines
-        #TODO remove lines with sigll < 1 pixel ?
+        # TODO remove lines with sigll < 1 pixel ?
         sigll = lines[:, 1]/lines[:, 0] * speed_of_light
         # create mask
         badsig = sigll >= max_error_sigll
@@ -406,14 +407,15 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # combine masks
         badlines = badfit | badsig | badampl
         # count number
+        # noinspection PyPep8
         num_bad, num_total = np.sum(badlines), badlines.size
         good_lines_total += num_total - num_bad
         # log only if we have bad
         if np.sum(badlines) > 0:
-#            wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
-#                     num_badfit]
-#            wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
-#                    '[beyond (sig/ampl/err) limits]')
+            # wargs = [order_num, num_bad, num_total, num_badsig, num_badampl,
+            #          num_badfit]
+            # wmsg = ('In Order {0} reject {1}/{2} ({3}/{4}/{5}) lines '
+            #         '[beyond (sig/ampl/err) limits]')
             wargs = [torder[order_num], t_ord_start - torder[order_num],
                      num_total - num_bad, num_badsig, num_badampl,
                      num_badfit]
@@ -433,8 +435,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         loc[key][order_num] = lines
     # print total of good lines
     wargs = [good_lines_total]
-    wmsg = ('Total good lines: {0}')
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+    WLOG('', p['LOG_OPT'] + p['FIBER'], 'Total good lines: {0}'.format(*wargs))
 
     # return loc
     return loc
@@ -529,7 +530,8 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     pixel_shift_inter = 0
     pixel_shift_slope = 0
     # get new line list
-    ll_out = spirouMath.get_ll_from_coefficients(pixel_shift_inter,pixel_shift_slope,
+    ll_out = spirouMath.get_ll_from_coefficients(pixel_shift_inter,
+                                                 pixel_shift_slope,
                                                  inv_params, xdim, num_orders)
     # get the first derivative of the line list
     dll_out = spirouMath.get_dll_from_coefficients(inv_params, xdim, num_orders)
@@ -637,9 +639,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wargs = ["IC_LITTROW_ORDER_INIT", p['IC_LITTROW_ORDER_INIT'],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
-        # TODO: Remove H2RG dependency
-        wmsg2 = ('    Please check constants_SPIROU_{0}.py file'
-                 ''.format(p['IC_IMAGE_TYPE']))
+        wmsg2 = '    Please check constants file'
         wmsg3 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
     # test if n_order_init is in remove_orders
@@ -647,16 +647,14 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wargs = ["IC_HC_N_ORD_FINAL", p['IC_HC_N_ORD_FINAL'],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
-        # TODO: Remove H2RG dependency
-        wmsg2 = ('    Please check constants_SPIROU_{0}.py file'
-                 ''.format(p['IC_IMAGE_TYPE']))
+        wmsg2 = '    Please check constants file'
         wmsg3 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
     # check that all remove orders exist
     for remove_order in remove_orders:
         if remove_order not in np.arange(n_order_final):
             wargs1 = [remove_order, 'IC_LITTROW_REMOVE_ORDERS', n_order_init,
-                       n_order_final]
+                      n_order_final]
             wmsg1 = (' Invalid order number={0} in {1} must be between'
                      '{2} and {3}'.format(*wargs1))
             wmsg2 = '    function = {0}'.format(func_name)
@@ -686,7 +684,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     # save to storage
     loc['X_CUT_POINTS_{0}'.format(iteration)] = x_cut_points
     # get the echelle order values
-    #TODO check if mask needs resizing
+    # TODO check if mask needs resizing
     orderpos = torder[rmask]
     # get the inverse order number
     inv_orderpos = 1.0 / orderpos
@@ -915,7 +913,6 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     loc['ECHELLE_ORDERS'] = echelle_order
     loc.set_source('ECHELLE_ORDERS', func_name)
 
-
     # set the starting point as the outputs from the first guess solution
     # loop around original order num
     # ll_line_2, ampl_line_2 = [], []
@@ -936,7 +933,7 @@ def second_guess_at_wave_solution(p, loc, mode=0):
     # ll_line_2 = ll_line_2[ll_line_2_sortmask]
     # ampl_line_2 = ampl_line_2[ll_line_2_sortmask]
 
-    #use whole catalogue
+    # use whole catalogue
     ll_line_2 = loc['LL_LINE']
     ampl_line_2 = loc['AMPL_LINE']
 
@@ -1215,6 +1212,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
             # get this iterations line
             line = float(ll_line_s[ll_i])
             # loop around these two span values
+            sll, sxpos, sdata, line_weight = [], [], [], []
             for span in ll_free_span:
                 # calculate line limits
                 ll_span_min = line - span * (line/(resol * 2.355))
@@ -1244,7 +1242,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
                     # if it is zero then just use the line
                     line = float(ll_line_s[ll_i])
             # perform the gaussian fit on the line
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as _:
                 # TODO: PROBLEM WITH FIT_EMI_LINE
                 # TODO:  1 scipy.optimize.curve_fit does not give
                 # TODO:    same result as foutran fitgaus.fitgaus routine
@@ -1280,7 +1278,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
     return all_cal_line_fit
 
 
-def find_lines2(p, ll, ll_line, ampl_line, datax, torder, mode='new'):
+def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
     """
     Find the lines on the E2DS spectrum
 
@@ -1297,10 +1295,6 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder, mode='new'):
     :param ampl_line:
     :param datax:
     :param torder:
-
-    :param mode: string, if mode="new" uses python to work out gaussian fit
-                         if mode="old" uses FORTRAN (testing only) requires
-                         compiling of FORTRAN fitgaus into spirouTHORCA dir
 
     :return all_lines: list, all lines in format:
 
@@ -1391,17 +1385,17 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder, mode='new'):
             except Exception:
                 params = [0.0, 0.0, 0.0, 0.0]
                 siga = [0.0, 0.0, 0.0, 0.0]
-                fit = np.zeros_like(sll)
+                # fit = np.zeros_like(sll)
 
             # check for infinites
             if np.sum(~np.isfinite(params) | ~np.isfinite(siga)) != 0:
                 params = [0.0, 0.0, 0.0, 0.0]
                 siga = [0.0, 0.0, 0.0, 0.0]
-                fit = np.zeros_like(sll)
+                # fit = np.zeros_like(sll)
 
             # -----------------------------------------------------------------
             # get the wavelength and pixel difference
-            slldiff = sll[-1] - sll[0]
+            # slldiff = sll[-1] - sll[0]
             sxposdiff = sxpos[-1] - sxpos[0]
             # set up the gparams storage
             gparams = np.zeros(8, dtype='float')
@@ -1422,7 +1416,8 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder, mode='new'):
                 gparams[7] = 0.0
             # set the
             if gparams[7] > 0:
-                # Set the difference in the input and output central wavelength fits
+                # Set the difference in the input and output central
+                #     wavelength fits
                 gparams[3] = ll_line_s[ll_i] - params[1]
                 # Set the input amplitude
                 gparams[4] = ampl_line_s[ll_i]
@@ -1613,6 +1608,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg3 = '   i.e. use: '
             emsg4 = '      f2py -c -m fitgaus --noopt --quiet fitgaus.f'
             WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            fitgaus = None
         cfit = np.zeros_like(y)
         siga = np.zeros_like(guess)
         ag = np.array(guess)
@@ -1634,6 +1630,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg3 = '    error reads:'
             emsg4 = '        {0}'.format(e)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            gfit = None
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=0)
     elif mode == 4:
         try:
@@ -1644,6 +1641,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg3 = '    error reads:'
             emsg4 = '        {0}'.format(e)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            gfit = None
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=1)
     elif mode == 5:
         try:
@@ -1654,6 +1652,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg3 = '    error reads:'
             emsg4 = '        {0}'.format(e)
             WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            gfit = None
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=2)
     else:
         emsg1 = 'Mode not understood. Must be 0, 1, 2, 3, 4 or 5'
@@ -1665,7 +1664,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
     return ag, siga, cfit
 
 
-def fit_emi_line2(sll, sxpos, sdata, weight, mode='new'):
+def fit_emi_line2(sll, sxpos, sdata, weight):
     """
     Fit emission line
 
@@ -1673,7 +1672,6 @@ def fit_emi_line2(sll, sxpos, sdata, weight, mode='new'):
     :param sxpos:
     :param sdata:
     :param weight:
-    :param mode:
 
     :return gparams: list of length = 8:
                 gparams[0] = output wavelengths
@@ -1782,7 +1780,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # ---------------------------------------------------------------------
         # iteratively try to improve the fit
         improve = 1
-        iter, details = [], []
+        iter0, details = [], []
         wmean, var = 0, 0
         # sigma clip the largest rms until RMS < MAX_RMS
         while improve:
@@ -1797,7 +1795,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
             wmean = (np.sum(res * weight) / np.sum(weight))
             var = wsig - (wmean ** 2)
             # append stats
-            iter.append([np.array(wmean), np.array(var),
+            iter0.append([np.array(wmean), np.array(var),
                          np.array(coeffs)])
             details.append([np.array(lines),  np.array(x_fit),
                             np.array(cfit), np.array(weight)])
@@ -1830,7 +1828,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
                   ll[order_num][0], ll[order_num][-1]]
         wmsg2 = ('\tmean: {0:.4f}[mpix] rms={1:.5f} [mpix] ({2:2d} it.) '
                  '[{3} --> {4} lines] ')
-        wargs2 = [wmean * 1000, np.sqrt(var) * 1000, len(iter),
+        wargs2 = [wmean * 1000, np.sqrt(var) * 1000, len(iter0),
                   len(details[0][1]), len(details[-1][1])]
         wmsgs = [wmsg1.format(*wargs1), wmsg2.format(*wargs2)]
         WLOG('', p['LOG_OPT'] + p['FIBER'], wmsgs)
@@ -1839,20 +1837,19 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # ---------------------------------------------------------------------
         # append the last wmean, var and number of lines
         num_lines = len(details[-1][1])
-        final_iter.append([iter[-1][0], iter[-1][1], num_lines])
+        final_iter.append([iter0[-1][0], iter0[-1][1], num_lines])
         # append the last coefficients
-        final_param.append(iter[-1][2])
+        final_param.append(iter0[-1][2])
         # append the last details [lines, x_fit, cfit, weight]
         final_details.append(np.array(details[-1]))
         # append the derivative of the coefficients
-        poly = np.poly1d(iter[-1][2][::-1])
+        poly = np.poly1d(iter0[-1][2][::-1])
         dxdl = np.polyder(poly)(details[-1][0])
         final_dxdl.append(dxdl)
         # ---------------------------------------------------------------------
         # global statistics
         # ---------------------------------------------------------------------
         # work out conversion factor
-        # TODO: speed of light proper!
         convert = speed_of_light / (dxdl * details[-1][0])
         # get res1
         res1 = details[-1][1] - details[-1][2]
@@ -1861,7 +1858,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         # sum the weighted residuals in km/s
         wsumres += np.sum(res1 * convert * details[-1][3])
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(details[-1][3] * (res1 * convert) ** 2 )
+        wsumres2 += np.sum(details[-1][3] * (res1 * convert) ** 2)
         # store the conversion to km/s
         scale.append(convert)
     # convert to arrays
@@ -1902,7 +1899,7 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
     fit_degree = p['IC_LL_DEGR_FIT']
     # get data from loc
     details = loc['X_DETAILS_{0}'.format(iteration)]
-    iter = loc['X_ITER_{0}'.format(iteration)]
+    iter0 = loc['X_ITER_{0}'.format(iteration)]
     # Get the number of orders
     num_orders = ll.shape[0]
     # loop around orders
@@ -1939,12 +1936,12 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
         # sum the weighted residuals in km/s
         wsumres += np.sum(nres * wei)
         # sum the weighted squared residuals in km/s
-        wsumres2 += np.sum(wei * nres **2)
+        wsumres2 += np.sum(wei * nres ** 2)
     # calculate the final var and mean
     final_mean = (wsumres / sweight)
     final_var = (wsumres2 / sweight) - (final_mean ** 2)
     # log the invertion process
-    total_lines = np.sum(iter[:, 2])
+    total_lines = np.sum(iter0[:, 2])
     wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              1000.0 * np.sqrt(final_var / total_lines)]
     wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'

@@ -438,7 +438,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # save drift values
-    spirouImage.WriteImage(driftfits, loc['DRIFT'], hdict)
+    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
     # ----------------------------------------------------------------------
     # End Message

@@ -23,11 +23,15 @@ from . import spirouConfigFile
 # =============================================================================
 # Name of program
 __NAME__ = 'spirouConst.py'
-# Get version and author
-__version__ =  '0.2.122'
+# Define version
+__version__ =  '0.3.007'
+# Define Authors
+# noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
+# Define release type
 __release__ = 'alpha pre-release'
-__date__ =  '2018-09-04'
+# Define date of last edit
+__date__ =  '2018-09-13'
 
 
 # =============================================================================
@@ -242,7 +246,7 @@ def BARYCORRPY_DIR():
     return barycorrpy_dir
 
 
-# noinspectrion PyPep8Naming
+# noinspection PyPep8Naming
 def ASTROPY_IERS_DIR():
     astropy_iers_dir = './data/barycorrpy/'
     # File must be downloaded from:
@@ -290,6 +294,18 @@ def DATA_CONSTANT_DIR():
     return data_constant_dir
 
 
+# noinspection PyPep8Naming
+def TAGFOLDER():
+    tag_folder = './data/constants'
+    return tag_folder
+
+
+# noinspection PyPep8Naming
+def TAGFILE():
+    tag_file = 'output_keys.py'
+    return tag_file
+
+
 # =============================================================================
 # Get constants from constant file
 # =============================================================================
@@ -297,6 +313,13 @@ def DATA_CONSTANT_DIR():
 ckwargs = dict(package=PACKAGE(), configfolder=CONFIGFOLDER(),
                configfile=CONFIGFILE(), return_raw=False)
 pp = spirouConfigFile.read_config_file(**ckwargs)
+
+# =============================================================================
+# Get tags from tag file
+# =============================================================================
+ckwargs = dict(package=PACKAGE(), relfolder=TAGFOLDER(),
+               filename=TAGFILE())
+tags = spirouConfigFile.get_tags(**ckwargs)
 
 
 # =============================================================================
@@ -419,19 +442,7 @@ def LOG_OPT(p):
     #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
 
     try:
-        arg_file_names = p['ARG_FILE_NAMES']
         program = p['PROGRAM']
-        #
-        # if len(arg_file_names) == 0:
-        #     log_opt = program
-        # elif len(arg_file_names) == 1:
-        #     index = arg_file_names[0].find('.')
-        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
-        #     log_opt = '{0}:{1}'.format(*lo_arg)
-        # else:
-        #     index = arg_file_names[0].find('.')
-        #     lo_arg = [program, arg_file_names[0][index - 5: index]]
-        #     log_opt = '{0}:{1}+[...]'.format(*lo_arg)
         log_opt = program
     except Exception:
         log_opt = DEFAULT_LOG_OPT()
@@ -462,25 +473,6 @@ def PROGRAM(p=None):
 
 
 # noinspection PyPep8Naming
-def MANUAL_FILE(p):
-    """
-    Defines the path and filename of the manual file for p['PROGRAM']
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                program: string, the recipe/way the script was called
-                         i.e. from sys.argv[0]
-                DRS_MAN: string, the file path to the manual files
-
-    :return manual_file: the filename and location of the manual file for this
-                         recipe/program
-    """
-    program = p['PROGRAM'] + '.info'
-    manual_file = os.path.join(p['DRS_MAN'], program)
-    return manual_file
-
-
-# noinspection PyPep8Naming
 def RAW_DIR(p):
     """
     Defines the raw data directory
@@ -497,6 +489,25 @@ def RAW_DIR(p):
     """
     raw_dir = os.path.join(p['DRS_DATA_RAW'], p['ARG_NIGHT_NAME'])
     return raw_dir
+
+
+# noinspection PyPep8Naming
+def TMP_DIR(p):
+    """
+    Defines the temp data directory (for storage of the pre-processing files)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                DRS_DATA_RAW: string, the directory that the raw data should
+                              be saved to/read from
+                arg_night_name: string, the folder within data raw directory
+                                containing files (also reduced directory) i.e.
+                                /data/raw/20170710 would be "20170710"
+
+    :return raw_dir: string, the raw data directory
+    """
+    tmp_dir = os.path.join(p['DRS_DATA_WORKING'], p['ARG_NIGHT_NAME'])
+    return tmp_dir
 
 
 # noinspection PyPep8Naming
@@ -592,6 +603,25 @@ def FITSFILENAME(p):
     return fitsfilename
 
 
+# noinspection PyPep8Naming
+def MANUAL_FILE(p):
+    """
+    Defines the path and filename of the manual file for p['PROGRAM']
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                program: string, the recipe/way the script was called
+                         i.e. from sys.argv[0]
+                DRS_MAN: string, the file path to the manual files
+
+    :return manual_file: the filename and location of the manual file for this
+                         recipe/program
+    """
+    program = p['PROGRAM'] + '.info'
+    manual_file = os.path.join(p['DRS_MAN'], program)
+    return manual_file
+
+
 # =============================================================================
 # Define Output Filename functions
 # =============================================================================
@@ -610,15 +640,16 @@ def DARK_FILE(p):
 
     :return darkfits: string, the dark file location and filename
     """
+    func_name = 'DARK_FILE'
     # define filename
     reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     darkfitsname = calibprefix + p['ARG_FILE_NAMES'][0]
     darkfits = os.path.join(reducedfolder, darkfitsname)
-    # define tag
-    tag = 'DARK'
+    # get tag
+    tag = tags[func_name]
     # return filename and tag
-    return darkfits
+    return darkfits, tag
 
 
 # noinspection PyPep8Naming
@@ -636,9 +667,14 @@ def DARK_BADPIX_FILE(p):
 
     :return badpixfits: string the dark bad pix file location and filename
     """
-    darkfile = DARK_FILE(p)
+    func_name = 'DARK_BADPIX_FILE'
+    # define filename
+    darkfile = DARK_FILE(p)[0]
     badpixelfits = darkfile.replace('.fits', '_badpixel.fits')
-    return badpixelfits
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return badpixelfits, tag
 
 
 # noinspection PyPep8Naming
@@ -654,12 +690,17 @@ def BADPIX_FILE(p):
                           badpix file, replacing .fits with _badpixel.fits
     :return string: the badpix path and filename
     """
+    func_name = 'BADPIX_FILE'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     badpixelfn = p['FLATFILE'].replace('.fits', '_badpixel.fits')
     badpixelfitsname = calibprefix + badpixelfn
     badpixelfits = os.path.join(reducedfolder, badpixelfitsname)
-    return badpixelfits
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return badpixelfits, tag
 
 
 # noinspection PyPep8Naming
@@ -679,13 +720,18 @@ def LOC_ORDER_PROFILE_FILE(p):
     :return locofits: string, the localisation file location and filename (the
                       order profile image)
     """
+    func_name = 'LOC_ORDER_PROFILE_FILE'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     newext = '_order_profile_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     rawfn = p['ARG_FILE_NAMES'][0].replace('.fits', newext)
     rawfitsname = calibprefix + rawfn
     orderpfile = os.path.join(reducedfolder, rawfitsname)
-    return orderpfile
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return orderpfile, tag
 
 
 # noinspection PyPep8Naming
@@ -703,13 +749,18 @@ def LOC_LOCO_FILE(p):
                                 one string filename in the list
     :return locofits: string, the localisation file location and filename
     """
+    func_name = 'LOC_LOCO_FILE'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     locoext = '_loco_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     locofn = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
     locofitsname = calibprefix + locofn
     locofits = os.path.join(reducedfolder, locofitsname)
-    return locofits
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return locofits, tag
 
 
 # noinspection PyPep8Naming
@@ -728,13 +779,18 @@ def LOC_LOCO_FILE2(p):
     :return locofits: string, the localisation file location and filename (for
                       fwhm)
     """
+    func_name = 'LOC_LOCO_FILE2'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     locoext = '_fwhm-order_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     locofn2 = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
     locofits2name = calibprefix + locofn2
     locofits2 = os.path.join(reducedfolder, locofits2name)
-    return locofits2
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return locofits2, tag
 
 
 # noinspection PyPep8Naming
@@ -754,13 +810,18 @@ def LOC_LOCO_FILE3(p):
     :return locofits: string, the localisation file location and filename (for
                       order superposition)
     """
+    func_name = 'LOC_LOCO_FILE3'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     locoext = '_with-order_{0}.fits'.format(p['FIBER'])
     calibprefix = CALIB_PREFIX(p)
     locofn3 = p['ARG_FILE_NAMES'][0].replace('.fits', locoext)
     locofits3name = calibprefix + locofn3
     locofits3 = os.path.join(reducedfolder, locofits3name)
-    return locofits3
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return locofits3, tag
 
 
 # noinspection PyPep8Naming
@@ -778,12 +839,17 @@ def SLIT_TILT_FILE(p):
 
     :return tiltfits: string, slit tilt file location and filename
     """
+    func_name = 'SLIT_TILT_FILE'
+    # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
     tiltfn = p['ARG_FILE_NAMES'][0].replace('.fits', '_tilt.fits')
     tiltfitsname = calibprefix + tiltfn
     tiltfits = os.path.join(reduced_dir, tiltfitsname)
-    return tiltfits
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return tiltfits, tag
 
 
 # noinspection PyPep8Naming
@@ -802,7 +868,8 @@ def FF_BLAZE_FILE(p, fiber=None):
                   from "p" (i.e. p['FIBER'])
     :return blazefits: string, the flat fielding blaze filename and location
     """
-
+    func_name = 'FF_BLAZE_FILE'
+    # define filename
     if fiber is None:
         fiber = p['FIBER']
 
@@ -812,7 +879,10 @@ def FF_BLAZE_FILE(p, fiber=None):
     blazefn = p['ARG_FILE_NAMES'][0].replace('.fits', blazeext)
     blazefitsname = calibprefix + blazefn
     blazefits = os.path.join(reduced_dir, blazefitsname)
-    return blazefits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return blazefits, tag
 
 
 # noinspection PyPep8Naming
@@ -832,6 +902,8 @@ def FF_FLAT_FILE(p, fiber=None):
 
     :return flatfits: string, the flat field filename and location
     """
+    func_name = 'FF_FLAT_FILE'
+    # define filename
     if fiber is None:
         fiber = p['FIBER']
     reduced_dir = p['REDUCED_DIR']
@@ -840,7 +912,10 @@ def FF_FLAT_FILE(p, fiber=None):
     flatfn = p['ARG_FILE_NAMES'][0].replace('.fits', flatext)
     flatfitsname = calibprefix + flatfn
     flatfits = os.path.join(reduced_dir, flatfitsname)
-    return flatfits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return flatfits, tag
 
 
 # noinspection PyPep8Naming
@@ -860,13 +935,19 @@ def EXTRACT_E2DS_FILE(p, fiber=None):
     :return e2dsfits: string, the filename and location of the extraction
                       E2DS file
     """
+    func_name = 'EXTRACT_E2DS_FILE'
+    # define filename
     if fiber is None:
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2ds_{0}.fits'.format(fiber)
     e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
-    return e2dsfits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return e2dsfits, tag
+
 
 # noinspection PyPep8Naming
 def EXTRACT_E2DSFF_FILE(p, fiber=None):
@@ -885,13 +966,18 @@ def EXTRACT_E2DSFF_FILE(p, fiber=None):
     :return e2dsfits: string, the filename and location of the extraction
                       E2DS file
     """
+    func_name = 'EXTRACT_E2DSFF_FILE'
+    # define filename
     if fiber is None:
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2dsff_{0}.fits'.format(fiber)
     e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
-    return e2dsfits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return e2dsfits, tag
 
 
 # noinspection PyPep8Naming
@@ -916,24 +1002,51 @@ def EXTRACT_LOCO_FILE(p):
                                  selected from a specific fiber by
                                  "LOC_FILE_FPALL"
     """
+    func_name = 'EXTRACT_LOCO_FILE'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     loco_filename = p['CALIBDB']['LOC_{0}'.format(p['LOC_FILE'])][1]
     loco_file = os.path.join(reducedfolder, loco_filename)
-    return loco_file
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['LOC_FILE'])
+    # return filename and tag
+    return loco_file, tag
 
 
 # noinspection PyPep8Naming
-def EXTRACT_S1D_FILE(p):
+def EXTRACT_S1D_FILE(p, fiber=None):
+    """
+    Defines the 1D extraction file name and location
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    func_name = 'EXTRACT_S1D_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    newext = '_s1d_{0}.fits'.format(p['FIBER'])
+    newext = '_s1d_{0}.fits'.format(fiber)
     oldext = '.fits'
     filename = p['ARG_FILE_NAMES'][0].replace(oldext, newext)
     absfilepath = os.path.join(reducedfolder, filename)
-    return absfilepath
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return absfilepath, tag
+
 
 # noinspection PyPep8Naming
-def DRIFT_RAW_FILE(p):
+def DRIFT_RAW_FILE(p, fiber=None):
     """
     Defines the drift_raw fits file name and location using
     "arg_file_names"[0] and replacing ".fits" with "_drift_{fiber}.fits"
@@ -947,17 +1060,27 @@ def DRIFT_RAW_FILE(p):
                                 (or call to recipe function) must have at least
                                 one string filename in the list
 
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
+
     :return driftfits: string, the drift_raw fits file name and location
     """
+    func_name = 'DRIFT_RAW_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    drift_ext = '_drift_{0}.fits'.format(p['FIBER'])
+    drift_ext = '_drift_{0}.fits'.format(fiber)
     driftfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', drift_ext)
     driftfits = os.path.join(reducedfolder, driftfitsname)
-    return driftfits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return driftfits, tag
 
 
 # noinspection PyPep8Naming
-def DRIFT_E2DS_FITS_FILE(p):
+def DRIFT_E2DS_FITS_FILE(p, fiber=None):
     """
     Defines the drift_e2ds fits file name and location using
     "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
@@ -968,19 +1091,28 @@ def DRIFT_E2DS_FITS_FILE(p):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift_e2ds peak drift fits file location
                        and filename
     """
+    func_name = 'DRIFT_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    drift_ext = '_drift_{0}.fits'.format(p['FIBER'])
+    drift_ext = '_drift_{0}.fits'.format(fiber)
     driftfitsname = p['REFFILENAME'].replace('.fits', drift_ext)
     driftfits = os.path.join(reducedfolder, driftfitsname)
-    return driftfits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return driftfits, tag
 
 
 # noinspection PyPep8Naming
-def DRIFT_E2DS_TBL_FILE(p):
+def DRIFT_E2DS_TBL_FILE(p, fiber=None):
     """
     Defines the drift_e2ds table file name and location using
     "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
@@ -991,19 +1123,26 @@ def DRIFT_E2DS_TBL_FILE(p):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift_e2ds peak drift table file location
                        and filename
     """
+    func_name = 'DRIFT_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    drift_ext = '_drift_{0}.tbl'.format(p['FIBER'])
+    drift_ext = '_drift_{0}.tbl'.format(fiber)
     drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
     drifttbl = os.path.join(reducedfolder, drifttblname)
+    # return filename
     return drifttbl
 
 
 # noinspection PyPep8Naming
-def DRIFTPEAK_E2DS_FITS_FILE(p):
+def DRIFTPEAK_E2DS_FITS_FILE(p, fiber=None):
     """
     Defines the drift peak fits drift file name and location using "reffilename"
     and replacing ".fits" with "_driftnew_{fiber}.fits"
@@ -1014,19 +1153,28 @@ def DRIFTPEAK_E2DS_FITS_FILE(p):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift peak drift fits file location and
                        filename
     """
+    func_name = 'DRIFTPEAK_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    drift_ext = '_driftnew_{0}.fits'.format(p['FIBER'])
+    drift_ext = '_driftnew_{0}.fits'.format(fiber)
     driftfitsname = p['REFFILENAME'].replace('.fits', drift_ext)
     driftfits = os.path.join(reducedfolder, driftfitsname)
-    return driftfits
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return driftfits, tag
 
 
 # noinspection PyPep8Naming
-def DRIFTPEAK_E2DS_TBL_FILE(p):
+def DRIFTPEAK_E2DS_TBL_FILE(p, fiber=None):
     """
     Defines the drift peak drift table file name and location using
     "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
@@ -1037,14 +1185,21 @@ def DRIFTPEAK_E2DS_TBL_FILE(p):
                              (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
                 fiber: string, the fiber type
                 reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
 
     :return driftfits: string, the drift peak drift table file location and
                        filename
     """
+    func_name = 'DRIFTPEAK_E2DS_TBL_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
-    drift_ext = '_driftnew_{0}.tbl'.format(p['FIBER'])
+    drift_ext = '_driftnew_{0}.tbl'.format(fiber)
     drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
     drifttbl = os.path.join(reducedfolder, drifttblname)
+    # return filename
     return drifttbl
 
 
@@ -1061,18 +1216,23 @@ def CCF_FITS_FILE(p):
                 reffile: string, the CCF reference file
     :return corfile: string, the CCF table file location and name
     """
+    func_name = 'CCF_FITS_FILE'
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     # get new extension using ccf_mask without the extention
     newext = '_ccf_' + p['CCF_MASK'].replace('.mas', '')
     # set the new filename as the reference file without the _e2ds
     if '_e2dsff' in p['E2DSFILE']:
         corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+        key = func_name + '_FF'
+        tag = tags[key]
     else:
+        tag = tags[func_name]
         corfilename = p['E2DSFILE'].replace('_e2ds', newext)
 
     corfile = os.path.join(reducedfolder, corfilename)
     # return the new ccf file location and name
-    return corfile
+    return corfile, tag
 
 
 # noinspection PyPep8Naming
@@ -1088,8 +1248,9 @@ def CCF_TABLE_FILE(p):
                 reffile: string, the CCF reference file
     :return ccf_table_file:
     """
+    func_name = 'CCF_TABLE_FILE'
     # start with the CCF fits file name
-    corfile = CCF_FITS_FILE(p)
+    corfile = CCF_FITS_FILE(p)[0]
     # we want to save the file as a tbl file not a fits file
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
@@ -1108,6 +1269,7 @@ def EM_SPE_FILE(p):
 
     :return fitsfile: string, absolute path for the output
     """
+    func_name = 'EM_SPE_FILE'
     # get folder path
     redfolder = p['REDUCED_DIR']
     # get output type (distinguish)
@@ -1116,8 +1278,10 @@ def EM_SPE_FILE(p):
     filename = 'em_tell_spec_{0}.fits'.format(kind)
     # construct absolute path
     fitsfile = os.path.join(redfolder, filename)
-    # return absolute path
-    return fitsfile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(kind)
+    # return absolute path and tag
+    return fitsfile, tag
 
 
 # noinspection PyPep8Naming
@@ -1132,6 +1296,7 @@ def EM_WAVE_FILE(p):
 
     :return fitsfile: string, absolute path for the output
     """
+    func_name = 'EM_WAVE_FILE'
     # get folder path
     redfolder = p['REDUCED_DIR']
     # get output type (distinguish)
@@ -1140,8 +1305,10 @@ def EM_WAVE_FILE(p):
     filename = 'em_wavemap_{0}.fits'.format(kind)
     # construct absolute path
     fitsfile = os.path.join(redfolder, filename)
-    # return absolute path
-    return fitsfile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(kind)
+    # return absolute path and tag
+    return fitsfile, tag
 
 
 # noinspection PyPep8Naming
@@ -1156,6 +1323,7 @@ def EM_MASK_FILE(p):
 
     :return fitsfile: string, absolute path for the output
     """
+    func_name = 'EM_MASK_FILE'
     # get folder path
     redfolder = p['REDUCED_DIR']
     # get output type (distinguish)
@@ -1164,8 +1332,10 @@ def EM_MASK_FILE(p):
     filename = 'em_mask_map_{0}.fits'.format(kind)
     # construct absolute path
     fitsfile = os.path.join(redfolder, filename)
-    # return absolute path
-    return fitsfile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(kind)
+    # return absolute path and tag
+    return fitsfile, tag
 
 
 # noinspection PyPep8Naming
@@ -1180,6 +1350,7 @@ def WAVE_MAP_SPE_FILE(p):
 
     :return fitsfile: string, absolute path for the output
     """
+    func_name = 'WAVE_MAP_SPE_FILE'
     # get folder path
     redfolder = p['REDUCED_DIR']
     # get prefix
@@ -1190,8 +1361,10 @@ def WAVE_MAP_SPE_FILE(p):
     filename = '{0}_{1}_{2}.fits'.format(prefix, 'SPE', kind)
     # construct absolute path
     fitsfile = os.path.join(redfolder, filename)
-    # return absolute path
-    return fitsfile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(kind)
+    # return absolute path and tag
+    return fitsfile, tag
 
 
 # noinspection PyPep8Naming
@@ -1206,6 +1379,7 @@ def WAVE_MAP_SPE0_FILE(p):
 
     :return fitsfile: string, absolute path for the output
     """
+    func_name = 'WAVE_MAP_SPE0_FILE'
     # get folder path
     redfolder = p['REDUCED_DIR']
     # get prefix
@@ -1216,12 +1390,15 @@ def WAVE_MAP_SPE0_FILE(p):
     filename = '{0}_{1}_{2}.fits'.format(prefix, 'SPE0', kind)
     # construct absolute path
     fitsfile = os.path.join(redfolder, filename)
-    # return absolute path
-    return fitsfile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(kind)
+    # return absolute path and tag
+    return fitsfile, tag
 
 
 # noinspection PyPep8Naming
 def WAVE_FILE(p):
+    func_name = 'WAVE_FILE'
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
     # get filename
@@ -1236,11 +1413,15 @@ def WAVE_FILE(p):
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
     wavefile = os.path.join(reducedfolder, wavefilename)
-    return wavefile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
 
 
 # noinspection PyPep8Naming
 def WAVE_FILE_EA(p):
+    func_name = 'WAVE_FILE_EA'
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
     # get filename
@@ -1255,7 +1436,10 @@ def WAVE_FILE_EA(p):
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
     wavefile = os.path.join(reducedfolder, wavefilename)
-    return wavefile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
 
 
 # noinspection PyPep8Naming
@@ -1265,8 +1449,10 @@ def WAVE_TBL_FILE(p):
     wavetblfile = os.path.join(reducedfolder, wavetblfb)
     return wavetblfile
 
+
 # noinspection PyPep8Naming
 def WAVE_FILE_FP(p):
+    func_name = 'WAVE_FILE_FP'
     # set reduced folder name
     reducedfolder = p['REDUCED_DIR']
     # get filename
@@ -1281,7 +1467,11 @@ def WAVE_FILE_FP(p):
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
     wavefile = os.path.join(reducedfolder, wavefilename)
-    return wavefile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
 
 # noinspection PyPep8Naming
 def WAVE_TBL_FILE_FP(p):
@@ -1293,10 +1483,12 @@ def WAVE_TBL_FILE_FP(p):
 
 # noinspection PyPep8Naming
 def WAVE_LINE_FILE(p):
+    # define filename
     reducedfolder = p['REDUCED_DIR']
     wavellext = '_hc_lines_{0}.tbl'.format(p['FIBER'])
     wavellfn = p['ARG_FILE_NAMES'][0].replace('.fits', wavellext)
     wavellfile = os.path.join(reducedfolder, wavellfn)
+    # return filename
     return wavellfile
 
 # noinspection PyPep8Naming
@@ -1336,6 +1528,7 @@ def WAVE_LINE_FILE_EA(p):
 
 # noinspection PyPep8Naming
 def WAVE_E2DS_COPY(p):
+    func_name = 'WAVE_E2DS_COPY'
     # get base filename
     basefilename = os.path.basename(p['FITSFILENAME'])
     # get path
@@ -1346,8 +1539,10 @@ def WAVE_E2DS_COPY(p):
     filename = '{0}{1}'.format(calibprefix, basefilename)
     # construct absolute path
     e2dscopy = os.path.join(path, filename)
-    # return absolute path
-    return e2dscopy
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return e2dscopy, tag
 
 
 # noinspection PyPep8Naming
@@ -1364,13 +1559,13 @@ def HC_INIT_LINELIST(p):
     new_filename = old_filename.replace(old_ext, new_ext)
     # construct absolute path
     abspath = os.path.join(reduced_dir, new_filename)
-    # return absolute path
+    # return absolute path and tag
     return abspath
 
 
 # noinspection PyPep8Naming
 def TELLU_TRANS_MAP_FILE(p, filename):
-
+    func_name = 'TELLU_TRANS_MAP_FILE'
     # get path
     path = p['ARG_FILE_DIR']
     # get extension
@@ -1380,73 +1575,101 @@ def TELLU_TRANS_MAP_FILE(p, filename):
     filename = filename.replace(oldext, newext)
     # construct absolute path
     outfile = os.path.join(path, filename)
-    # return absolute path
-    return outfile
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return outfile, tag
 
 
 # noinspection PyPep8Naming
 def TELLU_ABSO_MAP_FILE(p):
+    func_name = 'TELLU_ABSO_MAP_FILE'
     # get path
     path = p['ARG_FILE_DIR']
     # get extension
     filename = 'abso_map.fits'
     # construct absolute path
     outfile = os.path.join(path, filename)
-    # return absolute path
-    return outfile
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return outfile, tag
 
 
 # noinspection PyPep8Naming
 def TELLU_ABSO_MEDIAN_FILE(p):
+    func_name = 'TELLU_ABSO_MEDIAN_FILE'
     # get path
     path = p['ARG_FILE_DIR']
     # get extension
     filename = 'abso_median.fits'
     # construct absolute path
     outfile = os.path.join(path, filename)
+    # get tag
+    tag = tags[func_name]
     # return absolute path
-    return outfile
+    return outfile, tag
 
 
 # noinspection PyPep8Naming
 def TELLU_ABSO_NORM_MAP_FILE(p):
+    func_name = 'TELLU_ABSO_NORM_MAP_FILE'
     # get path
     path = p['ARG_FILE_DIR']
     # get extension
     filename = 'abso_map_norm.fits'
     # construct absolute path
     outfile = os.path.join(path, filename)
+    # get tag
+    tag = tags[func_name]
     # return absolute path
-    return outfile
+    return outfile, tag
 
 
 # noinspection PyPep8Naming
 def TELLU_FIT_OUT_FILE(p, filename):
+    func_name = 'TELLU_FIT_OUT_FILE'
+    # define filename
     oldext = '.fits'
     newext = '_tellu_corrected.fits'
     outfilename1 = os.path.basename(filename).replace(oldext, newext)
     outfile1 = os.path.join(p['ARG_FILE_DIR'], outfilename1)
-    return outfile1
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile1, tag
 
 
 # noinspection PyPep8Naming
-def TELLU_FIT_RECON_FilE(p, filename):
+def TELLU_FIT_RECON_FILE(p, filename):
+    func_name = 'TELLU_FIT_RECON_FILE'
+    # define filename
     oldext = '.fits'
     newext = '_tellu_recon.fits'
     outfilename2 = os.path.basename(filename).replace(oldext, newext)
     outfile2 = os.path.join(p['ARG_FILE_DIR'], outfilename2)
-    return outfile2
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile2, tag
+
 
 # noinspection PyPep8Naming
 def TELLU_TEMPLATE_FILE(p, loc):
+    func_name = 'TELLU_TEMPLATE_FILE'
+    # define filename
     reduced_dir = p['ARG_FILE_DIR']
     outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
     outfile = os.path.join(reduced_dir, outfilename)
-    return outfile
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
 
 
 # noinspection PyPep8Naming
 def DEG_POL_FILE(p, loc):
+    func_name = 'DEG_POL_FILE'
     # get reduced dir
     reducedfolder = p['REDUCED_DIR']
     # get base filename
@@ -1457,12 +1680,15 @@ def DEG_POL_FILE(p, loc):
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     deg_pol_filename = os.path.join(reducedfolder, filename)
-    # return absolute path
-    return deg_pol_filename
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return deg_pol_filename, tag
 
 
 # noinspection PyPep8Naming
 def STOKESI_POL_FILE(p, loc):
+    func_name = 'STOKESI_POL_FILE'
     # get reduced dir
     reducedfolder = p['REDUCED_DIR']
     # get base filename
@@ -1473,12 +1699,15 @@ def STOKESI_POL_FILE(p, loc):
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     stokesI_filename = os.path.join(reducedfolder, filename)
-    # return absolute path
-    return stokesI_filename
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return stokesI_filename, tag
 
 
 # noinspection PyPep8Naming
 def NULL_POL1_FILE(p, loc):
+    func_name = 'NULL_POL1_FILE'
     # get reduced dir
     reducedfolder = p['REDUCED_DIR']
     # get base filename
@@ -1489,12 +1718,15 @@ def NULL_POL1_FILE(p, loc):
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     null_pol1_filename = os.path.join(reducedfolder, filename)
-    # return absolute path
-    return null_pol1_filename
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return null_pol1_filename, tag
 
 
 # noinspection PyPep8Naming
 def NULL_POL2_FILE(p, loc):
+    func_name = 'NULL_POL2_FILE'
     # get reduced dir
     reducedfolder = p['REDUCED_DIR']
     # get base filename
@@ -1505,11 +1737,15 @@ def NULL_POL2_FILE(p, loc):
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     null_pol2_filename = os.path.join(reducedfolder, filename)
-    # return absolute path
-    return null_pol2_filename
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return null_pol2_filename, tag
+
 
 # noinspection PyPep8Naming
 def LSD_POL_FILE(p, loc):
+    func_name = 'LSD_POL_FILE'
     # get reduced dir
     reducedfolder = p['REDUCED_DIR']
     # get base filename
@@ -1520,20 +1756,97 @@ def LSD_POL_FILE(p, loc):
     filename = basefilename.replace('_A.fits', new_ext)
     # construct absolute path
     lsd_pol_filename = os.path.join(reducedfolder, filename)
-    # return absolute path
-    return lsd_pol_filename
+    # get tag
+    tag = tags[func_name]
+    # return absolute path and tag
+    return lsd_pol_filename, tag
 
 
-def OFF_LISTING_FILE(p):
+# noinspection PyPep8Naming
+def OFF_LISTING_RAW_FILE(p):
     # get constants from p
     msg_dir = p['DRS_DATA_MSG']
     night_name = p['ARG_NIGHT_NAME']
     # get base filename
-    basefilename = 'listing_{0}.txt'.format(os.path.split(night_name)[-1])
+    basefilename = 'listing_raw_{0}.txt'.format(os.path.split(night_name)[-1])
     # get absolute path
     abspath = os.path.join(msg_dir, basefilename)
-    # return absolute path
+    # return absolute path and tag
     return abspath
+
+
+# noinspection PyPep8Naming
+def OFF_LISTING_REDUC_FILE(p):
+    # get constants from p
+    msg_dir = p['DRS_DATA_MSG']
+    night_name = p['ARG_NIGHT_NAME']
+    # get base filename
+    basefilename = 'listing_reduc_{0}.txt'.format(os.path.split(night_name)[-1])
+    # get absolute path
+    abspath = os.path.join(msg_dir, basefilename)
+    # return absolute path and tag
+    return abspath
+
+
+# =============================================================================
+# Define output file function
+# =============================================================================
+# noinspection PyPep8Naming
+def INDEX_OUTPUT_FILENAME():
+    filename = 'index.fits'
+    return filename
+
+
+# noinspection PyPep8Naming
+def OUTPUT_FILE_HEADER_KEYS(p):
+    # Get required header keys from spirouKeywords.py (via p)
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OBSTYPE'][0],
+                   p['KW_EXPTIME'][0],
+                   p['KW_CCAS'][0],
+                   p['KW_CREF'][0],
+                   p['KW_CDEN'][0],
+                   p['KW_OUTPUT'][0],
+                   p['KW_EXT_TYPE'][0]]
+    # return output_keys
+    return output_keys
+
+
+# noinspection PyPep8Naming
+def RAW_OUTPUT_COLUMNS(p):
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OBSTYPE'][0],
+                   p['KW_EXPTIME'][0],
+                   p['KW_CCAS'][0],
+                   p['KW_CREF'][0],
+                   p['KW_CDEN'][0]]
+    return output_keys
+
+
+# noinspection PyPep8Naming
+def REDUC_OUTPUT_COLUMNS(p):
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OUTPUT'][0],
+                   p['KW_EXT_TYPE'][0]]
+    return output_keys
+
+
+# noinspection PyPep8Naming
+def GEN_OUTPUT_COLUMNS(p):
+    output_keys = [p['KW_DATE_OBS'][0],
+                   p['KW_UTC_OBS'][0],
+                   p['KW_OBJNAME'][0],
+                   p['KW_OBSTYPE'][0],
+                   p['KW_EXPTIME'][0],
+                   p['KW_OUTPUT'][0],
+                   p['KW_EXT_TYPE'][0]]
+    return output_keys
 
 
 # =============================================================================
@@ -1647,7 +1960,6 @@ def TELLU_PREFIX(p):
     return calib_prefix
 
 
-
 # =============================================================================
 # Define formatting functions
 # =============================================================================
@@ -1671,7 +1983,7 @@ def CONFIG_KEY_ERROR(key, location=None):
 
 
 # noinspection PyPep8Naming
-def DATE_FMT_HEADER(p):
+def DATE_FMT_HEADER():
     """
     The date format for string timestamp for reading times from FITS
     file HEADERS
@@ -1695,11 +2007,8 @@ def DATE_FMT_HEADER(p):
     :return date_fmt_calibdb: string, the string timestamp format for use in
                               reading FITS file HEADERS
     """
-    # TODO: This switch will be obsolete after H2RG testing is over
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        date_fmt_header = '%Y-%m-%dT%H:%M:%S'
-    else:
-        date_fmt_header = '%Y-%m-%d-%H:%M:%S.%f'
+    date_fmt_header = '%Y-%m-%dT%H:%M:%S'
+
     return date_fmt_header
 
 
@@ -1971,12 +2280,14 @@ def WRITE_LEVEL():
     return write_level
 
 
+# noinspection PyPep8Naming
 def LOG_STORAGE_KEYS():
     # The storage key to use for each key
     storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
                     warning='LOGGER_WARNING', info='LOGGER_INFO',
                     graph='LOGGER_ALL')
     return storekey
+
 
 # noinspection PyPep8Naming
 def LOG_CAUGHT_WARNINGS():
