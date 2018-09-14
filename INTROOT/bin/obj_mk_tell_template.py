@@ -53,7 +53,6 @@ CONSTANT_C = constants.c.value
 # Define functions
 # =============================================================================
 def main(night_name=None, files=None):
-
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -82,7 +81,6 @@ def main(night_name=None, files=None):
     source = main_name + '+ spirouImage.ReadParams()'
     loc.set_sources(['OBJNAME', 'AIRMASS'], source)
 
-
     # ------------------------------------------------------------------
     # Get the wave solution
     # ------------------------------------------------------------------
@@ -106,7 +104,6 @@ def main(night_name=None, files=None):
     for it in range(len(tellu_db_files)):
         if loc['OBJNAME'] in tellu_db_names[it]:
             tell_files.append(tellu_db_files[it])
-
 
     # log if we have no files
     if len(tell_files) == 0:
@@ -190,21 +187,20 @@ def main(night_name=None, files=None):
     # make median image
     big_cube_med = np.median(big_cube, axis=2)
 
-
     # ----------------------------------------------------------------------
     # Write Cube median (the template) to file
     # ----------------------------------------------------------------------
     # construct filename
-    outfile = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
+    outfile, tag = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
     outfilename = os.path.basename(outfile)
 
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     # write to file
-    spirouImage.WriteImage(outfile, big_cube_med, hdict)
-
+    p = spirouImage.WriteImage(p, outfile, big_cube_med, hdict)
 
     # ----------------------------------------------------------------------
     # Update the telluric database with the template
@@ -229,8 +225,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
@@ -247,8 +242,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
-
-
-
-

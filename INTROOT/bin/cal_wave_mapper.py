@@ -12,6 +12,7 @@ Created on 2018-02-15 at 14:05
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -36,9 +37,10 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+# # test files
+# night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
+# e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
 
-night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
-e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
 
 # =============================================================================
 # Define main program function
@@ -120,7 +122,6 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     wmsg = 'Image format changed to {0}x{1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*image2.shape))
 
-
     # ----------------------------------------------------------------------
     # Read tilt slit angle
     # ----------------------------------------------------------------------
@@ -143,16 +144,14 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
 
-
-
     # ------------------------------------------------------------------
     # Get localisation coefficients
     # ------------------------------------------------------------------
     # storage for fiber parameters
-    loc['ALL_ACC'] = dict()
-    loc['ALL_ASS'] = dict()
-    loc['E2DSFILES'] = dict()
-    loc['ALLWAVE'] = dict()
+    loc['ALL_ACC'] = OrderedDict()
+    loc['ALL_ASS'] = OrderedDict()
+    loc['E2DSFILES'] = OrderedDict()
+    loc['ALLWAVE'] = OrderedDict()
     loc.set_sources(['ALL_ACC', 'ALL_ASS', 'E2DSFILES', 'ALLWAVE'],
                     __NAME__ + '.main()')
     # get this fibers parameters
@@ -194,7 +193,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     wmsg = 'Loading telluric model and locating "good" tranmission'
     WLOG('', p['LOG_OPT'], wmsg)
     # load telluric and get mask (add to loc)
-    p, loc = spirouExM.get_telluric(p, loc, hdr)
+    loc = spirouExM.get_telluric(p, loc)
 
     # ------------------------------------------------------------------
     # Make 2D map of orders
@@ -220,15 +219,11 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # ------------------------------------------------------------------
     # Construct parameters for header
     # ------------------------------------------------------------------
-    hdict = dict()
+    hdict = OrderedDict()
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    # add name of the TAPAS x data
-    hfile = os.path.split(p['TELLWAVE'])[-1]
-    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLX'], value=hfile)
     # add name of the TAPAS y data
-    hfile = os.path.split(p['TELLSPE'])[-1]
-    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=hfile)
+    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used
     hfile = os.path.split(loc['LOCO_CTR_FILE'])[-1]
     hdict = spirouImage.AddKey(hdict, p['kw_EM_LOCFILE'], value=hfile)
@@ -298,33 +293,36 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
         # ----------------------------------------------------------------------
         # save E2DS nan filled
         # construct spectrum filename
-        specfitsfile = spirouConfig.Constants.WAVE_MAP_SPE_FILE(p)
+        specfitsfile, tag1 = spirouConfig.Constants.WAVE_MAP_SPE_FILE(p)
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
         # write to file
-        spirouImage.WriteImage(specfitsfile, out_spe, hdict=hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        p = spirouImage.WriteImage(p, specfitsfile, out_spe, hdict=hdict)
         # ----------------------------------------------------------------------
         # save E2DS 0 filled
-        specfitsfile = spirouConfig.Constants.WAVE_MAP_SPE0_FILE(p)
+        specfitsfile, tag2 = spirouConfig.Constants.WAVE_MAP_SPE0_FILE(p)
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
         # write to file
-        spirouImage.WriteImage(specfitsfile, out_spe_0, hdict=hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        p = spirouImage.WriteImage(p, specfitsfile, out_spe_0, hdict=hdict)
         # ----------------------------------------------------------------------
         # save wave map
         if p['EM_SAVE_WAVE_MAP']:
             # construct waveimage filename
-            wavefitsfile = spirouConfig.Constants.EM_WAVE_FILE(p)
+            wavefitsfile, tag3 = spirouConfig.Constants.EM_WAVE_FILE(p)
             wavefilename = os.path.split(wavefitsfile)[-1]
             # log progress
             wmsg = 'Writing wave image to file {0}'
             WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
             # write to file
-            spirouImage.WriteImage(wavefitsfile, out_wave, hdict=hdict)
+            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+            p = spirouImage.WriteImage(p, wavefitsfile, out_wave, hdict=hdict)
 
     # ----------------------------------------------------------------------
     # End Message
@@ -343,7 +341,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message
-    spirouStartup.Exit(ll)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code

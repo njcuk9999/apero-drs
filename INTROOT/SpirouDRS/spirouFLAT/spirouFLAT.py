@@ -46,8 +46,11 @@ def measure_blaze_for_order(p, y):
 
     bad pixels are defined as less than or equal to zero
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            IC_BLAZE_FITN: int, the fit degree for the blaze polynomial
+
     :param y: numpy array (1D), the extracted pixels for this order
-    :param fitdegree: int, the polynomial degree
 
     :return blaze: numpy array (1D), size = len(y), the blaze function: for
                    good pixels this is the value of the fit, for bad pixels the
@@ -77,7 +80,7 @@ def get_flat(p=None, loc=None, hdr=None, filename=None):
     """
     Attempts to read the flat and if it fails uses a constant flat
 
-    :param p or None: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary or None, ParamDict containing constants
         If defined must contain at least:
             fitsfilename: string, the full path of for the main raw fits
                           file for a recipe
@@ -87,14 +90,14 @@ def get_flat(p=None, loc=None, hdr=None, filename=None):
     :param loc: parameter dictionary, ParamDict containing data
         Must contain at least:
             data: numpy array (2D), the image (used for shape)
-    :param hdr or None: dictionary or None, if defined is the header file used
+    :param hdr: dictionary or None, if defined is the header file used
                         to choose the date used in teh calibDB (else uses
                         FITSFILENAME to get date for calibDB)
-    :param filename or None: string, the flat file name to read, if None
+    :param filename: string or None, the flat file name to read, if None
                              uses FLAT_{FIBER} and gets the flat filename from
                              calibDB
 
-    :return lloc: parameter dictionary, the updated parameter dictionary
+    :return loc: parameter dictionary, the updated parameter dictionary
             Adds/updates the following:
                 FLAT: numpy array (2D), the flat image should be the same
                       shape as data

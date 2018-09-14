@@ -39,6 +39,7 @@ ParamDict = spirouConfig.ParamDict
 # Get sigma FWHM
 SIG_FWHM = spirouCore.spirouMath.fwhm()
 # speed of light
+# noinspection PyPep8
 CONSTANT_C = constants.c.value
 
 
@@ -89,7 +90,7 @@ def get_molecular_tell_lines(p, loc):
     # representative atmospheric transmission
     # tapas = pyfits.getdata('tapas_model.fits')
     tapas_file = spirouDB.GetDatabaseTellMole(p)
-    tdata = spirouImage.ReadImage(p, tapas_file, kind='FLAT')
+    tdata = spirouImage.ReadImage(p, tapas_file, kind='TAPAS')
     tapas, thdr, tcmt, _, _ = tdata
 
     # load all current telluric convolve files
@@ -116,7 +117,8 @@ def get_molecular_tell_lines(p, loc):
             # add name to loc
             loc['TAPAS_FNAME'], loc['TAPAS_ABSNAME'] = None, None
             generate = False
-        # if we don't have a tapas file for this wavelength soltuion calculate it
+        # if we don't have a tapas file for this wavelength soltuion
+        #     calculate it
         except Exception:
             generate = True
     # if we don't have tapas_all_species generate
@@ -200,7 +202,7 @@ def calculate_absorption_pca(p, loc, x, mask):
         pc = np.zeros([np.product(loc['DATA'].shape), npc])
 
     # fill pc image
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         for it in range(npc):
             for jt in range(x.shape[0]):
                 pc[:, it] += eig_u[jt, it] * x[jt, :]
@@ -301,9 +303,6 @@ def calc_recon_abso(p, loc):
     # flatten spectrum and wavelengths
     sp2 = sp.ravel()
     wave2 = loc['WAVE_IT'].ravel()
-    # get the normalisation factor
-    # TODO: Not used??
-    norm = np.nanmedian(sp2)
     # define the good pixels as those above minimum transmission
     keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
     # also require wavelength constraints
@@ -313,6 +312,7 @@ def calc_recon_abso(p, loc):
     loc = construct_convolution_kernal2(p, loc, p['TELLU_FIT_VSINI'])
     # ------------------------------------------------------------------
     # loop around a number of times
+    template2 = None
     for ite in range(p['TELLU_FIT_NITER']):
         # --------------------------------------------------------------
         # if we don't have a template construct one
@@ -336,14 +336,14 @@ def calc_recon_abso(p, loc):
                 # convolve mask for weights
                 ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
                 # wave weighted convolved spectrum into template2
-                with warnings.catch_warnings(record=True) as w:
+                with warnings.catch_warnings(record=True) as _:
                     template2[start:end] = sp2b / ww
         # else we have template so load it
         else:
             template2 = loc['TEMPLATE2']
         # --------------------------------------------------------------
         # get residual spectrum
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             resspec = (sp2 / template2) / recon_abso
         # --------------------------------------------------------------
         if loc['FLAG_TEMPLATE']:
@@ -360,22 +360,22 @@ def calc_recon_abso(p, loc):
                 mask = order_tapas > p['TRANSMISSION_CUT']
                 fmask = np.array(mask, dtype=float)
                 # get good transmission spectrum
-                with warnings.catch_warnings(record=True) as w:
+                with warnings.catch_warnings(record=True) as _:
                     resspecgood = resspec[start:end] * fmask
                     recongood = recon_abso[start:end]
                 # convolve spectrum
                 ckwargs = dict(v=loc['KER2'], mode='same')
-                with warnings.catch_warnings(record=True) as w:
+                with warnings.catch_warnings(record=True) as _:
                     sp2b = np.convolve(resspecgood / recongood, **ckwargs)
                 # convolve mask for weights
                 ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
                 # wave weighted convolved spectrum into dd
-                with warnings.catch_warnings(record=True) as w:
+                with warnings.catch_warnings(record=True) as _:
                     resspec[start:end] = resspec[start:end] / (sp2b / ww)
         # --------------------------------------------------------------
         # Log dd and subtract median
         # log dd
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             log_resspec = np.log(resspec)
         # --------------------------------------------------------------
         # subtract off the median from each order
@@ -410,7 +410,7 @@ def calc_recon_abso(p, loc):
         # --------------------------------------------------------------
         # set up storage for absorption array 2
         abso2 = np.zeros(len(resspec))
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as _:
             for ipc in range(len(amps)):
                 amps_abso_total[ipc] += amps[ipc]
                 abso2 += loc['PC'][:, ipc] * amps[ipc]
@@ -438,12 +438,12 @@ def calc_molecular_absorption(p, loc):
 
     # log data
     log_recon_abso = np.log(recon_abso)
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         log_tapas_abso = np.log(tapas_all_species[1:, :])
 
     # get good pixels
     keep = np.min(log_tapas_abso, axis=0) > limit
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True) as _:
         keep &= log_recon_abso > limit
     keep &= np.isfinite(recon_abso)
 
