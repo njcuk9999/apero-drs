@@ -747,7 +747,7 @@ ic_Littrow_fit_deg_2 = 8  # 4
 
 #  Define the littrow cut steps                             - [cal_HC, cal_wave]
 ic_Littrow_cut_step_1 = 250
-ic_Littrow_cut_step_2 = 250    #500
+ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
 #  (ends at ic_hc_n_ord_final)
@@ -867,7 +867,7 @@ HC_FITTINGBOX_EW_MAX = 1.1
 #     avoid >25 as it takes super long
 #     avoid <12 as some orders are ill-defined and we need >10 valid
 #         lines anyway
-#     20 is a good number, and I see now reason to change it
+#     20 is a good number, and I see no reason to change it
 HC_NMAX_BRIGHT = 20
 # Number of times to run the fit triplet algorithm                    - [cal_HC]
 HC_NITER_FIT_TRIPLET = 3
