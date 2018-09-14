@@ -202,7 +202,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wmsg = 'Calculating FP wave solution'
         WLOG('', p['LOG_OPT'], wmsg)
         # calculate FP wave solution
-        spirouTHORCA.FPWaveSolution(p, loc, mode=find_lines_mode)
+        # spirouTHORCA.FPWaveSolution(p, loc, mode=find_lines_mode)
+        spirouTHORCA.FPWaveSolutionNew(p, loc)
 
         # ------------------------------------------------------------------
         # FP solution plots
@@ -222,8 +223,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['QC_RMS_LITTROW_MAX'] = p['QC_WAVE_RMS_LITTROW_MAX']
         p['QC_DEV_LITTROW_MAX'] = p['QC_WAVE_DEV_LITTROW_MAX']
         # run part 2
-        #p, loc = part2test(p, loc)
-        p, loc = cal_HC_E2DS_spirou.part2(p,loc)
+        # p, loc = part2test(p, loc)
+        p, loc = cal_HC_E2DS_spirou.part2(p, loc)
 
     # ----------------------------------------------------------------------
     # End plotting session
@@ -238,7 +239,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
-#local copy of part2 to test more easily
+
+# local copy of part2 to test more easily
 def part2test(p, loc):
     # ------------------------------------------------------------------
     # Fit wavelength solution on identified lines (using Littrow)
@@ -339,7 +341,7 @@ def part2test(p, loc):
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
     # get wave filename
-    wavefits = spirouConfig.Constants.WAVE_FILE_FP(p)
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_FP(p)
     wavefitsname = os.path.split(wavefits)[-1]
     WLOG('', p['LOG_OPT'], wavefits)
 
@@ -352,6 +354,7 @@ def part2test(p, loc):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
@@ -367,17 +370,18 @@ def part2test(p, loc):
     # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
 
     # write the wave "spectrum"
-    spirouImage.WriteImage(wavefits, loc['LL_FINAL'], hdict)
+    p = spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
 
     # get filename for E2DS calibDB copy of FITSFILENAME
-    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)
+    e2dscopy_filename, tag2 = spirouConfig.Constants.WAVE_E2DS_COPY(p)
 
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
-    spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
 
     # ------------------------------------------------------------------
     # Save to result table
@@ -422,13 +426,13 @@ def part2test(p, loc):
     # construct column values (flatten over orders)
     for it in range(len(loc['X_DETAILS_2'])):
         for jt in range(len(loc['X_DETAILS_2'][it][0])):
-             row = [float(it), loc['X_DETAILS_2'][it][0][jt],
-                    loc['LL_DETAILS_2'][it][0][jt],
-                    loc['X_DETAILS_2'][it][3][jt],
-                    loc['X_DETAILS_2'][it][1][jt],
-                    loc['X_DETAILS_2'][it][2][jt],
-                    loc['SCALE_2'][it][jt]]
-             columnvalues.append(row)
+            row = [float(it), loc['X_DETAILS_2'][it][0][jt],
+                   loc['LL_DETAILS_2'][it][0][jt],
+                   loc['X_DETAILS_2'][it][3][jt],
+                   loc['X_DETAILS_2'][it][1][jt],
+                   loc['X_DETAILS_2'][it][2][jt],
+                   loc['SCALE_2'][it][jt]]
+            columnvalues.append(row)
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
@@ -444,24 +448,25 @@ def part2test(p, loc):
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
-#    if p['QC']:
-        # set the wave key
-#        keydb = 'WAVE_{0}'.format(p['FIBER'])
-        # copy wave file to calibDB folder
-#        spirouDB.PutFile(p, wavefits)
-        # update the master calib DB file with new key
-#        spirouDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
+    # if p['QC']:
+        # # set the wave key
+        # keydb = 'WAVE_{0}'.format(p['FIBER'])
+        # # copy wave file to calibDB folder
+        # spirouDB.PutFile(p, wavefits)
+        # # update the master calib DB file with new key
+        # spirouDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
 
-        # set the hcref key
-#        keydb = 'HCREF_{0}'.format(p['FIBER'])
-        # copy wave file to calibDB folder
-#        spirouDB.PutFile(p, e2dscopy_filename)
-        # update the master calib DB file with new key
-#        e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
-#        spirouDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+        # # set the hcref key
+        # keydb = 'HCREF_{0}'.format(p['FIBER'])
+        # # copy wave file to calibDB folder
+        # spirouDB.PutFile(p, e2dscopy_filename)
+        # # update the master calib DB file with new key
+        # e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
+        # spirouDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # return p and loc
     return p, loc
+
 
 # =============================================================================
 # Start of code

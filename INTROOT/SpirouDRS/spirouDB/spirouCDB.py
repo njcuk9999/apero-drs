@@ -41,6 +41,7 @@ ConfigError = spirouConfig.ConfigError
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+
 # TODO: update using generic database functions
 # TODO:    located in spirouDB
 # TODO:   (similar to spirouTDB)
@@ -121,7 +122,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
             # get the header time
             header_time = hdr[acqtime_key]
             # get the header format for dates
-            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+            header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
             # get the calib DB format for dates
             calibdb_fmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
             # get the unix time from header time (header time assumes GMT/UTC)
@@ -271,7 +272,7 @@ def get_database(p, max_time=None, update=False):
     # check that max_time is a valid unix time (i.e. a float)
     try:
         # get the header format for dates
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER(p)
+        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         # get the unix time from header time (assume max_time is in GMT/UTC)
         max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:

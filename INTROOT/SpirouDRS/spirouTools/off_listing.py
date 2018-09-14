@@ -25,7 +25,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'off_listing_RAW_spirou.py'
+__NAME__ = 'off_listing.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -40,37 +40,32 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None):
+def main(directory=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name, mainfitsdir='reduced')
-
-    # check that we have a night_name
-    if p['ARG_NIGHT_NAME'] == '':
-        # get available night_names
-        nightnames = spirouStartup.GetNightDirs(p)
-
-        emsgs = ['Must define night name. Input should be:',
-                 '\t >> {0} [NIGHT_NAME]'.format(__NAME__), ' ',
-                 'Some available NIGHT_NAMES are as follows:']
-        # loop around night names and add to message
-        for nightname in nightnames:
-            emsgs.append('\t {0}'.format(nightname))
-        # log message
-        WLOG('error', p['LOG_OPT'], emsgs)
+    # deal with arguments being None (i.e. get from sys.argv)
+    pos = [0]
+    fmt = [str, str]
+    names = ['directory']
+    call = [directory]
+    # now get custom arguments
+    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call,
+                                                    require_night_name=False)
+    p = spirouStartup.LoadArguments(p, customargs=customargs,
+                                    require_night_name=False)
 
     # ----------------------------------------------------------------------
     # Check if we have an index file
     # ----------------------------------------------------------------------
     # get expected index file name and location
     index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
-    path = p['ARG_FILE_DIR']
+    path = p['DIRECTORY']
     index_path = os.path.join(path, index_file)
     # get expected columns
-    columns = spirouConfig.Constants.REDUC_OUTPUT_COLUMNS(p)
+    columns = spirouConfig.Constants.GEN_OUTPUT_COLUMNS(p)
     # create storage
     loc = OrderedDict()
     # if file exists then we have some indexed files
@@ -79,7 +74,11 @@ def main(night_name=None):
         loc['FILENAME'] = list(rawloc['FILENAME'])
         loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
         for col in columns:
-            loc[col] = list(rawloc[col])
+            if col not in rawloc.keys():
+                WLOG('', p['LOG_OPT'], '\t- Skipping column {0}'.format(col))
+                loc[col] = list(np.repeat([''], len(loc['FILENAME'])))
+            else:
+                loc[col] = list(rawloc[col])
     # else we have to create this file
     else:
         loc['FILENAME'] = []
@@ -92,7 +91,7 @@ def main(night_name=None):
     # Get all files in raw night_name directory
     # ----------------------------------------------------------------------
     # get all files in DRS_DATA_RAW/ARG_NIGHT_NAME
-    files = os.listdir(p['ARG_FILE_DIR'])
+    files = os.listdir(p['DIRECTORY'])
     # sort file by name
     files = np.sort(files)
 
@@ -109,11 +108,14 @@ def main(night_name=None):
         # skip the index file
         if filename == os.path.basename(index_file):
             continue
+        # skip non-preprocessed files (without .fits)
+        if p['PROCESSED_SUFFIX'].split('.fits')[0] not in filename:
+            continue
         # if already in loc['FILENAME'] then skip
         if filename in loc['FILENAME']:
             continue
         # construct absolute path for file
-        fitsfilename = os.path.join(p['ARG_FILE_DIR'], filename)
+        fitsfilename = os.path.join(p['DIRECTORY'], filename)
         # read file header
         hdr = spirouImage.ReadHeader(p, filepath=fitsfilename)
         # add filename
@@ -139,7 +141,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     if len(loc['FILENAME']) != 0:
         # construct table filename
-        outfile = spirouConfig.Constants.OFF_LISTING_REDUC_FILE(p)
+        outfile = spirouConfig.Constants.OFF_LISTING_RAW_FILE(p)
         # log progress
         WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
         # get column names
@@ -152,8 +154,6 @@ def main(night_name=None):
             values.append(loc[col])
         # construct astropy table from column names, values and formats
         table = spirouImage.MakeTable(colnames, values, formats)
-        # save table to file
-        spirouImage.WriteTable(table, outfile, fmt='ascii.rst')
 
         # log saving of file
         wmsg = 'Listing of directory on file {0}'
@@ -168,7 +168,18 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # Update Index
     # ----------------------------------------------------------------------
-    spirouStartup.SortSaveOutputs(loc, index_path)
+    # ask whether to update index
+    question = 'Update/Write index.fits? [Y]es or [N]o'
+    cond = spirouStartup.spirouStartup.spirou_input_yes_no(p, question)
+    # if cond is True can update
+    if cond:
+        # log writing index file
+        wmsg = 'Writing index to file {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(index_path))
+        # update index
+        spirouStartup.SortSaveOutputs(loc, index_path)
+    else:
+        WLOG('warning', p['LOG_OPT'], 'Skipped writing to index file')
 
     # ----------------------------------------------------------------------
     # End Message
@@ -193,3 +204,4 @@ if __name__ == "__main__":
 
 
 
+# off_listing.py: save a listing to index.fits (if prompted to)

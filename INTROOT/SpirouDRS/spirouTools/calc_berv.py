@@ -16,13 +16,12 @@ Last modified: 2017-12-18 at 15:48
 Up-to-date with cal_CCF_E2DS_spirou AT-4 V47
 """
 from __future__ import division
-import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
-from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 from SpirouDRS.spirouImage import spirouFile
 
@@ -61,11 +60,7 @@ def main(night_name=None, e2dsfiles=None):
                                 containing files (also reduced directory) i.e.
                                 /data/raw/20170710 would be "20170710" but
                                 /data/raw/AT5/20180409 would be "AT5/20180409"
-    :param e2dsfile: string, the E2DS file to use
-    :param mask: string, the mask file to use (i.e. "UrNe.mas")
-    :param rv: float, the target RV to use
-    :param width: float, the CCF width to use
-    :param step: float, the CCF step to use
+    :param e2dsfiles: list of string, the E2DS files to use
 
     :return ll: dictionary, containing all the local variables defined in
                 main
@@ -91,7 +86,7 @@ def main(night_name=None, e2dsfiles=None):
     # ----------------------------------------------------------------------
     try:
         e2dsfiles = spirouFile.Paths(p['E2DSFILES'],
-                                  root=p['ARG_FILE_DIR']).abs_paths
+                                     root=p['ARG_FILE_DIR']).abs_paths
     except PathException as e:
         WLOG('error', p['LOG_OPT'], e)
 
@@ -149,24 +144,22 @@ def main(night_name=None, e2dsfiles=None):
         # ----------------------------------------------------------------------
         # Read star parameters
         # ----------------------------------------------------------------------
-        # TODO: remove H2RG dependency
-        if p['IC_IMAGE_TYPE'] == 'H4RG':
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
-            p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
-            p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
-            p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRA', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDEC', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJEQUIN')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJRAPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_OBJDECPM')
+        p = spirouImage.ReadParam(p, hdr, 'KW_DATE_OBS', dtype=str)
+        p = spirouImage.ReadParam(p, hdr, 'KW_UTC_OBS', dtype=str)
 
-        #-----------------------------------------------------------------------
+        # -----------------------------------------------------------------------
         #  Earth Velocity calculation
-        #-----------------------------------------------------------------------
+        # -----------------------------------------------------------------------
         if p['IC_IMAGE_TYPE'] == 'H4RG':
             loc = spirouImage.EarthVelocityCorrection(p, loc,
                                                       method=p['CCF_BERVMODE'])
         else:
-            loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0,0.0
+            loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0, 0.0
             loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
 
         # ----------------------------------------------------------------------
@@ -174,7 +167,7 @@ def main(night_name=None, e2dsfiles=None):
         # ----------------------------------------------------------------------
         outfilename = str(e2dsfile)
         # add keys
-        hdict = dict()
+        hdict = OrderedDict()
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr, hdict=hdict)
 
         # add berv values
@@ -184,7 +177,7 @@ def main(night_name=None, e2dsfiles=None):
                                    value=loc['BERV_MAX'])
 
         # write image and add header keys (via hdict)
-        spirouImage.WriteImage(outfilename, e2ds, hdict)
+        p = spirouImage.WriteImage(p, outfilename, e2ds, hdict)
 
     # ----------------------------------------------------------------------
     # End Message

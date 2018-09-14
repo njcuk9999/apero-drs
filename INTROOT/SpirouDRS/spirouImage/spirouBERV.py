@@ -37,7 +37,6 @@ WLOG = spirouCore.wlog
 # Addition non-extraction function
 # =============================================================================
 def get_earth_velocity_correction(p, loc, hdr):
-
     if p['KW_BERV'][0] in hdr:
         loc['BERV'] = hdr[p['KW_BERV'][0]]
         loc['BJD'] = hdr[p['KW_BJD'][0]]
@@ -47,25 +46,23 @@ def get_earth_velocity_correction(p, loc, hdr):
     # ----------------------------------------------------------------------
     # Read star parameters
     # ----------------------------------------------------------------------
-    # TODO: remove H2RG dependency
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_OBJRA', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_OBJDEC', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_OBJEQUIN')
-        p = spirouImage.get_param(p, hdr, 'KW_OBJRAPM')
-        p = spirouImage.get_param(p, hdr, 'KW_OBJDECPM')
-        p = spirouImage.get_param(p, hdr, 'KW_DATE_OBS', dtype=str)
-        p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBJRA', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBJDEC', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_OBJEQUIN')
+    p = spirouImage.get_param(p, hdr, 'KW_OBJRAPM')
+    p = spirouImage.get_param(p, hdr, 'KW_OBJDECPM')
+    p = spirouImage.get_param(p, hdr, 'KW_DATE_OBS', dtype=str)
+    p = spirouImage.get_param(p, hdr, 'KW_UTC_OBS', dtype=str)
 
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)
-    #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
     # if p['IC_IMAGE_TYPE'] == 'H4RG':
-    if p['IC_IMAGE_TYPE'] == 'H4RG' and p['OBSTYPE']=='OBJECT' :
-            loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
+    if p['IC_IMAGE_TYPE'] == 'H4RG' and p['OBSTYPE'] == 'OBJECT':
+        loc = earth_velocity_correction(p, loc, method=p['BERVMODE'])
     else:
-        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0,0.0
+        loc['BERV'], loc['BJD'], loc['BERV_MAX'] = 0.0, 0.0, 0.0
         loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], __NAME__ + '.main()')
 
     # return loc
@@ -78,7 +75,7 @@ def earth_velocity_correction(p, loc, method='old'):
     obs_year = int(p['DATE-OBS'][0:4])
     obs_month = int(p['DATE-OBS'][5:7])
     obs_day = int(p['DATE-OBS'][8:10])
-    #get the UTC observation time
+    # get the UTC observation time
     utc = p['UTC-OBS'].split(':')
     # convert to hours
     hourpart = float(utc[0])
@@ -103,11 +100,11 @@ def earth_velocity_correction(p, loc, method='old'):
     target_pmde = p['OBJDECPM']
     target_equinox = p['OBJEQUIN']
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     #  Earth Velocity calculation
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
-    WLOG('',p['LOG_OPT'], 'Computing Earth RV correction')
+    WLOG('', p['LOG_OPT'], 'Computing Earth RV correction')
     args = [p, target_alpha, target_delta, target_equinox, obs_year,
             obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
             p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra, target_pmde]
@@ -119,7 +116,7 @@ def earth_velocity_correction(p, loc, method='old'):
 
     # finally save berv, bjd, bervmax to p
     loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
-    loc.set_sources(['BERV','BJD', 'BERV_MAX'], func_name)
+    loc.set_sources(['BERV', 'BJD', 'BERV_MAX'], func_name)
 
     # return p
     return loc
@@ -127,7 +124,6 @@ def earth_velocity_correction(p, loc, method='old'):
 
 def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
                 obs_lat, obs_alt, pmra, pmde, method='old'):
-
     # if method is off return zeros
     if method == 'off':
         WLOG('warning', p['LOG_OPT'], 'BERV not calculated.')
@@ -137,6 +133,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
     if method == 'old':
         # need to import
         try:
+            # noinspection PyPep8
             from SpirouDRS.fortran import newbervmain
         except:
             emsg1 = ('For method="old" must compile fortran routine '
@@ -197,17 +194,17 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # TODO barycorrpy needs RA in degree, obs_long East and obs_alt in m
 
         # set up the barycorr arguments
-        bkwargs = dict(ra=ra*15., dec=dec, epoch=equinox, pmra=pmra,
+        bkwargs = dict(ra=ra * 15., dec=dec, epoch=equinox, pmra=pmra,
                        pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,
-                       longi=obs_long*-1, alt=obs_alt*1000.,
+                       longi=obs_long * -1, alt=obs_alt * 1000.,
                        leap_dir=data_folder)
 
         # get the julien UTC date for observation and obs + 1 year
-        jdutc=list(t1.jd + np.arange(0., 365., 1.5))
+        jdutc = list(t1.jd + np.arange(0., 365., 1.5))
         bresults1 = barycorrpy.get_BC_vel(JDUTC=jdutc, zmeas=0.0, **bkwargs)
         bresults2 = barycorrpy.utc_tdb.JDUTC_to_BJDTDB(t1, **bkwargs)
 
-        berv2 = bresults1[0][0]/1000.0
+        berv2 = bresults1[0][0] / 1000.0
         # bjd2 = bresults2[0].jd
         bjd2 = bresults2[0][0]
         # work ou the maximum barycentric correction
@@ -215,6 +212,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
 
         # return results
         return berv2, bjd2, bervmax2
+
 
 # =============================================================================
 # Start of code

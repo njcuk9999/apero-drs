@@ -142,7 +142,8 @@ def main(night_name=None, reffile=None):
         bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
         # Loop around the orders
         for order_num in range(loc['NUMBER_ORDERS']):
-            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num], bsize)
+            miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num],
+                                                  bsize)
             loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
 
     # ------------------------------------------------------------------
@@ -170,33 +171,19 @@ def main(night_name=None, reffile=None):
         # plot FP spectral order
         sPlt.drift_plot_selected_wave_ref(p, loc)
         # plot photon noise uncertainty
-        sPlt.drift_plot_photon_uncertainty(p, loc)
+        sPlt.drift_plot_photon_uncertainty(loc)
 
     # ------------------------------------------------------------------
-    # Get all other fp_fp*[ext]_e2ds.fits files
+    # Get all other files that match kw_OUTPUT and kw_EXT_TYPE from
+    #    ref file
     # ------------------------------------------------------------------
-    # get reduced folder
-    rfolder = p['REDUCED_DIR']
-    # Get files, remove fitsfilename, and sort
-    prefix = p['REFFILE'][0:5]
-    suffix = '_e2ds_{0}.fits'.format(p['FIBER'])
-    listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
-    # remove reference file
-    try:
-        listfiles.remove(reffilename)
-    except ValueError:
-        emsg = 'File {0} not found in {1}'
-        WLOG('error', p['LOG_OPT'], emsg.format(reffilename, rfolder))
-    # get length of files
+    # get files
+    listfiles = spirouImage.GetAllSimilarFiles(p, hdr)
+    # get the number of files
     nfiles = len(listfiles)
-    # make sure we have some files
-    if nfiles == 0:
-        emsg = 'No additional {0}*{1} files found in {2}'
-        WLOG('error', p['LOG_OPT'], emsg.format(prefix, suffix, rfolder))
-    else:
-        # else Log the number of files found
-        wmsg = 'Number of fp_fp files found on directory = {0}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
+    # Log the number of files found
+    wmsg = 'Number of fp_fp files found on directory = {0}'
+    WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -352,7 +339,7 @@ def main(night_name=None, reffile=None):
     # Save drift values to file
     # ------------------------------------------------------------------
     # construct filename
-    driftfits = spirouConfig.Constants.DRIFT_E2DS_FITS_FILE(p)
+    driftfits, tag = spirouConfig.Constants.DRIFT_E2DS_FITS_FILE(p)
     driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
@@ -361,8 +348,9 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     # save drift values
-    spirouImage.WriteImage(driftfits, loc['DRIFT'], hdict)
+    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
     # ------------------------------------------------------------------
     # print .tbl result

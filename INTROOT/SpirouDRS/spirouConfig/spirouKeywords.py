@@ -125,6 +125,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRA',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
+            'kw_OUTPUT',
+            'kw_EXT_TYPE',
             'kw_POL_EXPTIME',
             'kw_POL_METHOD',
             'kw_POL_NEXP',
@@ -251,7 +253,7 @@ else:
 if p['IC_IMAGE_TYPE'] == 'H4RG':
     kw_ACQTIME_KEY_JUL = ['MJDATE', None, '']
 else:
-    kw_ACQTIME_KEY_JUL= ['ACQTIME', None, '']
+    kw_ACQTIME_KEY_JUL = ['ACQTIME', None, '']
 
 # define the observation date HEADER key
 kw_DATE_OBS = ['DATE-OBS', None, '']
@@ -570,6 +572,13 @@ kw_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 # Define qc variables
 # -----------------------------------------------------------------------------
 kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
+
+
+# -----------------------------------------------------------------------------
+# Define output
+# -----------------------------------------------------------------------------
+kw_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
+kw_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
 
 
 # =============================================================================

@@ -39,14 +39,6 @@ ParamDict = spirouConfig.ParamDict
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-# TODO: Remove test
-# import sys
-# sys.argv = [__NAME__, 'TEST/20180528', '2279383o_pp_e2dsff_A.fits',
-#             '2279384o_pp_e2dsff_B.fits', '2279386o_pp_e2dsff_A.fits',
-#             '2279383o_pp_e2dsff_B.fits', '2279385o_pp_e2dsff_A.fits',
-#             '2279386o_pp_e2dsff_B.fits', '2279384o_pp_e2dsff_A.fits',
-#             '2279385o_pp_e2dsff_B.fits']
-
 
 # =============================================================================
 # Define functions
@@ -144,13 +136,13 @@ def main(night_name=None, files=None):
     # Store polarimetry in file(s)
     # ------------------------------------------------------------------
     # construct file names
-    degpolfits = spirouConfig.Constants.DEG_POL_FILE(p, loc)
+    degpolfits, tag1 = spirouConfig.Constants.DEG_POL_FILE(p, loc)
     degpolfitsname = os.path.split(degpolfits)[-1]
-    stokesIfits = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
+    stokesIfits, tag2 = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
     stokesIfitsname = os.path.split(stokesIfits)[-1]
-    nullpol1fits = spirouConfig.Constants.NULL_POL1_FILE(p, loc)
+    nullpol1fits, tag3 = spirouConfig.Constants.NULL_POL1_FILE(p, loc)
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
-    nullpol2fits = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
+    nullpol2fits, tag4 = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
     nullpol2fitsname = os.path.split(nullpol2fits)[-1]
 
     # log that we are saving POL spectrum
@@ -201,22 +193,27 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['kw_POL_MEANBJD'], value=meanbjd)
 
     # save POL data to file
-    spirouImage.WriteImageMulti(degpolfits, [loc['POL'], loc['POLERR']], hdict)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    p = spirouImage.WriteImageMulti(p, degpolfits, [loc['POL'], loc['POLERR']],
+                                    hdict)
     # save NULL1 data to file
-    spirouImage.WriteImage(nullpol1fits, loc['NULL1'], hdict)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+    p = spirouImage.WriteImage(p, nullpol1fits, loc['NULL1'], hdict)
     # save NULL2 data to file
-    spirouImage.WriteImage(nullpol2fits, loc['NULL2'], hdict)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+    p = spirouImage.WriteImage(p, nullpol2fits, loc['NULL2'], hdict)
 
     # add stokes parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value="I")
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     # save STOKESI data to file
     multi_image = [loc['STOKESI'], loc['STOKESIERR']]
-    spirouImage.WriteImageMulti(stokesIfits, multi_image, hdict)
+    p = spirouImage.WriteImageMulti(p, stokesIfits, multi_image, hdict)
 
     # ------------------------------------------------------------------
     if p['IC_POLAR_LSD_ANALYSIS']:
         #  save LSD analysis data to file
-        lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
+        p, lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
         
         # log that we are saving LSD analysis data
         wmsg = 'Saving LSD analysis data to {0}'.format(lsdfitsfitsname)

@@ -45,7 +45,7 @@ PutCalibFile = spirouCDB.put_file
 
 UpdateCalibMaster = spirouCDB.update_datebase
 
-GetTimes  = spirouDB.get_times_from_header
+GetTimes = spirouDB.get_times_from_header
 
 GetDatabaseTellMole = spirouTDB.get_database_tell_mole
 
