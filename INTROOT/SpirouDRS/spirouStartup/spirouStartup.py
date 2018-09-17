@@ -517,6 +517,10 @@ def index_pp(p):
     abspath = os.path.join(path, filename)
     # get the outputs
     outputs = p['OUTPUTS']
+    # check that outputs is not empty
+    if len(outputs) == 0:
+        WLOG('', p['LOG_OPT'], 'No outputs to index, skipping indexing')
+        return 0
     # get the index columns
     icolumns = spirouConfig.Constants.RAW_OUTPUT_COLUMNS(p)
     # ------------------------------------------------------------------------
@@ -536,6 +540,10 @@ def index_outputs(p):
     abspath = os.path.join(path, filename)
     # get the outputs
     outputs = p['OUTPUTS']
+    # check that outputs is not empty
+    if len(outputs) == 0:
+        WLOG('', p['LOG_OPT'], 'No outputs to index, skipping indexing')
+        return 0
     # get the index columns
     icolumns = spirouConfig.Constants.REDUC_OUTPUT_COLUMNS(p)
     # ------------------------------------------------------------------------
