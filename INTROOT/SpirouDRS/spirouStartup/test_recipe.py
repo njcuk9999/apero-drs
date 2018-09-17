@@ -31,6 +31,12 @@ __NAME__ = 'cal_DARK_spirou.py'
 # =============================================================================
 def main(**kwargs):
 
+    # TODO: New setup, including:
+    # TODO:    - loading config/constants
+    # TODO:    - setting paths based on config/constants
+    # TODO:    - making DIRS based on inputs
+    # TODO:    - showing header/paths/sys info
+    # TODO:    - checking files based on inputs (all in **kwargs)
 
     for kwarg in kwargs:
         print('{0} = {1}'.format(kwarg, kwargs[kwarg]))
