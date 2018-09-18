@@ -79,6 +79,6 @@ run11v = ['obj_mk_tellu', 'TEST2/20180804', '2295506o_pp_e2dsff_AB.fits']
 
 # Run Fit telluric recipes (on telluric stars --> Should be science target!)
 run12a = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
-run12b = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp.fits']
-run12c = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp.fits']
-run12d = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp.fits']
+run12b = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
+run12c = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
+run12d = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
