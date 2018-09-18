@@ -11,6 +11,7 @@ Created on 2018-09-14 at 18:19
 """
 import argparse
 import os
+import glob
 
 from SpirouDRS import spirouCore
 
@@ -35,83 +36,161 @@ class DRSArgumentParser(argparse.ArgumentParser):
         #self.print_help(sys.stderr)
         #self.exit(2, '%s: error: %s\n' % (self.prog, message))
 
-        emsg1 = 'There was an error reading input arguments'
-        emsg2 = ''
-        emsg3 = self.format_help()
-        emsg4 = 'Error was: {0}'.format(message)
-
-        WLOG('error', '', [emsg1, emsg2, emsg3, emsg4])
+        # get parameterse from drs_params
+        log_opt = self.drs_params['LOG_OPT']
+        # construct error message
+        emsg1 = 'Argument Error:'
+        emsg2 = '\t {0}'.format(message)
+        emsg3 = ''
+        emsg4 = self.format_help()
+        # log message
+        WLOG('error', log_opt, [emsg1, emsg2, emsg3, emsg3, emsg4])
 
     def _print_message(self, message, file=None):
-        WLOG('', '', message)
+        # get parameterse from drs_params
+        log_opt = self.drs_params['LOG_OPT']
+        # log message
+        WLOG('warning', log_opt, message)
 
 
 class CheckDirectory(argparse.Action):
-    def check_directory(self, directory, drs_params):
+    def __init__(self, *args, **kwargs):
+        self.drs_params = dict()
+        # set default values
+        self.drs_params['LOG_OPT'] = ''
+        self.drs_params['RECIPE'] = dict()
+        self.drs_params['RECIPE']['inputdir'] = 'RAW'
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
 
-        if not os.path.exists(directory):
-            emsg = 'Directory="{0}" does not exist'
-            WLOG('error', '', emsg.format(directory))
+    def check_directory(self, directory):
 
-        elif not os.path.isdir(directory):
-            emsg = '"{0}" is not a valid directory'
-            WLOG('error', '', emsg.format(directory))
+        # get parameterse from drs_params
+        input_dir_pick = self.drs_params['RECIPE']['inputdir']
+        log_opt = self.drs_params['LOG_OPT']
+        limit = self.drs_params['DRS_NIGHT_NAME_DISPLAY_LIMIT']
+        # get the input directory from recipe.inputdir keyword
+        if input_dir_pick == 'RAW':
+            input_dir = self.drs_params['DRS_DATA_RAW']
+        elif input_dir_pick == 'TMP':
+            input_dir = self.drs_params['DRS_DATA_WORKING']
+        elif input_dir_pick == 'REDUCED':
+            input_dir = self.drs_params['DRS_DATA_REDUC']
+        # if not found produce error
         else:
-            return directory
+            emsg1 = ('Recipe definition error: "inputdir" must be either'
+                    ' "RAW", "REDUCED" or "TMP".')
+            emsg2 = '\tCurrently has value="{0}"'.format(input_dir_pick)
+            WLOG('error', log_opt, [emsg1, emsg2])
+            input_dir = None
+        # step 1 check if directory is full absolute path
+        if os.path.exists(directory):
+            wmsg = 'Directory found! (Absolute path)'
+            WLOG('', log_opt, wmsg)
+            return '', directory
+        # step 2 check if directory is in input directory
+        elif os.path.exists(os.path.join(input_dir, directory)):
+            wmsg = 'Directory found! (Found in {0})'.format(input_dir)
+            WLOG('', log_opt, wmsg)
+            return input_dir, directory
+        # step 3: fail if neither step1 or step2 is True
+        else:
+            emsgs = ['Argument Error: "{0}" is not a valid DRS directory'
+                     ''.format(directory),
+                     '\tSome available [FOLDER]s are as follows:']
+            # get some available directories
+            dirlist = get_dir_list(input_dir, limit)
+            # loop around night names and add to message
+            for dir_it in dirlist:
+                emsgs.append('\t\t {0}'.format(dir_it))
+            WLOG('error', log_opt, emsgs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-
         # get drs parameters
-        drs_params = parser.drs_params
+        self.drs_params = parser.drs_params
         # check value
         if type(values) == list:
-            directory = list(map(self.check_directory, values, drs_params))
+            root, directory = self.check_directory(values[0])
         else:
-            directory = str(self.check_directory(values, drs_params))
-        # Add the attribute
+            root, directory = self.check_directory(values)
+        # Add the attributes
         setattr(namespace, self.dest, directory)
+        setattr(namespace, 'input_dir', root)
 
 
-class CheckInFile(argparse.Action):
-    def check_in_file(self, filename):
+class CheckFiles(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.drs_params = dict()
+        self.namespace = None
+        # set default values
+        self.drs_params['LOG_OPT'] = ''
+        self.drs_params['RECIPE'] = dict()
+        self.drs_params['RECIPE']['extension'] = ''
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
 
-        if not os.path.exists(filename):
-            emsg = 'File="{0}" is not valid'
-            WLOG('error', '', emsg.format(filename))
-
+    def check_file(self, filename):
+        # check if "input_dir" is in namespace
+        input_dir = getattr(self.namespace, 'input_dir', '')
+        # check if "directory" is in namespace
+        directory = getattr(self.namespace, 'directory', '')
+        # get display limit
+        limit = self.drs_params['DRS_NIGHT_NAME_DISPLAY_LIMIT']
+        # check if extension is in recipe
+        if self.drs_params['RECIPE']['extension'] != '':
+            ext = '.' + self.drs_params['RECIPE']['extension']
         else:
-            emsg = 'File="{0}" is valid'
-            WLOG('', '', emsg.format(filename))
+            ext = ''
+        # get parameterse from drs_params
+        log_opt = self.drs_params['LOG_OPT']
+        # step 1: check for wildcards and absolute path
+        cond1, newfilename = check_for_file(filename, log_opt)
+        if cond1:
+            return newfilename
+        # step 2: check if file is in input_dir
+        input_path = os.path.join(input_dir, directory, filename)
+        cond2, newfilename = check_for_file(input_path, log_opt)
+        if cond2:
+            return newfilename
+        # step 3: check if file is valid if we add ".fits"
+        filename1 = filename + ext
+        input_path1 = os.path.join(input_dir, directory, filename1)
+        cond3, newfilename = check_for_file(input_path1, log_opt)
+        if cond3:
+            return newfilename
+        # step 4: return error message
+        else:
+            path = os.path.join(input_dir, directory)
 
-        return filename
+            emsgs = ['Argument Error: File "{0}" was not found in {1}'
+                     ''.format(filename, path),
+                     '\tSome available files are as follows:']
+            # get some available directories
+            filelist = get_file_list(path, limit, ext)
+            # loop around night names and add to message
+            for file_it in filelist:
+                emsgs.append('\t\t {0}'.format(file_it))
+            WLOG('error', log_opt, emsgs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.drs_params = parser.drs_params
+        # get the namespace
+        self.namespace = namespace
+        # get the input values
         if type(values) == list:
-            files = list(map(self.check_in_file, values))
+            files = []
+            # must loop around values
+            for value in values:
+                # check file could return list or string
+                file_it = self.check_file(value)
+                # must add to files depending on whether list or string
+                if type(file_it) is list:
+                    files += file_it
+                else:
+                    files.append(file_it)
         else:
-            files = self.check_in_file(values)
-        # Add the attribute
-        setattr(namespace, self.dest, files)
-
-
-class CheckOutFile(argparse.Action):
-    def check_in_file(self, filename):
-
-        if not os.path.exists(filename):
-            emsg = 'File="{0}" is not valid'
-            WLOG('error', '', emsg.format(filename))
-
-        else:
-            emsg = 'File="{0}" is valid'
-            WLOG('', '', emsg.format(filename))
-
-        return filename
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        if type(values) == list:
-            files = list(map(self.check_in_file, values))
-        else:
-            files = self.check_in_file(values)
+            files = self.check_file(values)
         # Add the attribute
         setattr(namespace, self.dest, files)
 
@@ -264,13 +343,13 @@ def get_arg_props(argi):
     props = dict()
     # deal with dtype
     dtype = argi['dtype']
-    if dtype == 'infile':
-        props['action'] = CheckInFile
+    if dtype == 'files':
+        props['action'] = CheckFiles
         props['nargs'] = '+'
         props['type'] = str
-    elif dtype == 'outfile':
-        # props['action'] = 'check_outfile'
-        props['nargs'] = '+'
+    elif dtype == 'file':
+        props['action'] = CheckFiles
+        props['nargs'] = 1
         props['type'] = str
     elif dtype == 'directory':
         props['action'] = CheckDirectory
@@ -278,7 +357,7 @@ def get_arg_props(argi):
         props['type'] = str
     elif dtype == 'bool':
         props['action'] = CheckBool
-        props['type'] = bool
+        props['type'] = str
     elif dtype=='switch':
         props['action'] = 'store_true'
     elif type(dtype) is type:
@@ -297,6 +376,105 @@ def get_arg_props(argi):
         props['help'] = argi['helpstr']
     # return the props dictionary
     return props
+
+
+def check_for_file(path, log_opt):
+
+    # get glob list of files using glob
+    raw_files = glob.glob(path)
+
+    # if we cannot find file return
+    if len(raw_files) == 0:
+        # return False and no filename
+        return False, None
+
+    # if we find just one file
+    elif len(raw_files) == 1:
+        # get filename
+        filename = os.path.basename(raw_files[0])
+        # get directory
+        directory = os.path.dirname(raw_files[0])
+        # log message
+        wmsg = 'File "{0}" exists in directory "{1}"'
+        WLOG('', log_opt, wmsg.format(filename, directory))
+        # return True and filename
+        return True, filename
+
+    # else we have multiple files (from wild cards)
+    else:
+        # set up storage
+        files = []
+        directory = None
+        # loop around raw files
+        for raw_file in raw_files:
+            # get filename
+            filename = os.path.basename(raw_file)
+            # get directory
+            directory_it = os.path.dirname(raw_file)
+            # check that we don't have multiple directories
+            if directory is not None:
+                if directory_it != directory:
+                    emsg = ('Wildcard Error: Can only have files from one '
+                            'directory. Multiple found')
+                    WLOG('error', log_opt, emsg)
+            else:
+                directory = str(directory_it)
+            # add to list of files
+            files.append(filename)
+        # log message
+        wmsg = ['Files exists (Absolute path + wildcard):']
+        for raw_file in raw_files:
+            wmsg.append('\t' + raw_file)
+
+        return True, files
+
+
+def get_dir_list(dirroot, limit):
+    dir_list = []
+    for root, dirs, files in os.walk(dirroot):
+        # skip dirs that are empty (or full of directories)
+        if len(files) == 0:
+            continue
+        # do not display all
+        if len(dir_list) > limit:
+            dir_list.append('...')
+            return dir_list
+        # find the relative root of directories compared to ARG_FILE_DIR
+        common = os.path.commonpath([dirroot, root]) + '/'
+        relroot = root.split(common)[-1]
+        # append relative roots
+        dir_list.append(relroot)
+    # if empty list add none found
+    if len(dir_list) == 0:
+        dir_list = ['No valid directories found.']
+    # return night_dirs
+    return dir_list
+
+
+def get_file_list(path, limit, ext=None):
+    raw_file_list = os.listdir(path)
+    file_list = []
+    for raw_file in raw_file_list:
+        # skip directories
+        if os.path.isdir(raw_file):
+            continue
+        # skip bad extensions
+        if ext is not None or ext != '':
+            if not raw_file.endswith(ext):
+                continue
+        # do not display all
+        if len(file_list) > limit:
+            file_list.append('...')
+            return file_list
+        # append files to list
+        file_list.append(raw_file)
+
+    # if empty list add none found
+    if len(file_list) == 0:
+        file_list = ['No valid files found.']
+    # return night_dirs
+    return file_list
+
 
 # =============================================================================
 # End of code
