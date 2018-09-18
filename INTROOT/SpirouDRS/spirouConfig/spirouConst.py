@@ -461,7 +461,7 @@ def PROGRAM(p=None):
     # get run time parameters
     rparams = list(sys.argv)
     # get program name
-    if (p is not None):
+    if p is not None:
         if 'RECIPE' in p:
             program = p['RECIPE']
         else:
