@@ -20,9 +20,12 @@ cal_loc = drs_recipe()
 cal_pp = drs_recipe()
 cal_slit = drs_recipe()
 cal_wave = drs_recipe()
+
+test = drs_recipe()
 # push into a list
 recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2, cal_extract,
-           cal_ff, cal_hc, cal_loc, cal_pp, cal_slit, cal_wave]
+           cal_ff, cal_hc, cal_loc, cal_pp, cal_slit, cal_wave,
+           test]
 
 # =============================================================================
 # Add inputs below
@@ -73,6 +76,27 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2, cal_extract,
 # comment help files
 plothelp = 'Plot graphs: True/1, Do not plot graphs: False/0'
 
+
+# -----------------------------------------------------------------------------
+# cal_preprocess_spirou
+# -----------------------------------------------------------------------------
+test.name = 'test.py'
+test.outputdir = 'tmp'
+test.inputdir = 'raw'
+test.inputtype = 'raw'
+test.extension = 'fits'
+test.description = 'Pre-processing recipe'
+test.arg(name='directory', dtype='directory', pos=0,
+         helpstr='- The "night_name" or absolute directory path')
+test.arg(name='ufiles', dtype='files', pos=1,
+         helpstr='- The fits files to use, separated by spaces')
+test.kwarg(name='-plot', dtype='bool',
+           helpstr='- Manually turn on/off plotting (True/False/1/0)')
+test.kwarg(name='--plotoff', dtype='switch',
+           helpstr='- Force plotting to be off')
+test.kwarg(name='--ploton', dtype='switch',
+           helpstr='- Force plotting to be on')
+
 # -----------------------------------------------------------------------------
 # cal_preprocess_spirou
 # -----------------------------------------------------------------------------
@@ -99,7 +123,7 @@ cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
 cal_badpix.run_order = 1
-cal_badpix.arg(name='directory', dtype='path', pos=0)
+cal_badpix.arg(name='directory', dtype='directory', pos=0)
 cal_badpix.arg(name='flatfile', key='flat_dark', dtype='infile', pos=1)
 cal_badpix.arg(name='darkfile', key='dark_dark', dtype='infile', pos=2)
 cal_badpix.kwarg(name='-plot', dtype='bool',
