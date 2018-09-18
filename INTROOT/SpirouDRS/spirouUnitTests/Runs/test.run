@@ -2,8 +2,11 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 # Extract the FPs
-run013a = ['off_listing_RAW_spirou', 'AT5/20180409']
-run013b = ['off_listing_REDUC_spirou', 'AT5/20180409']
-run014 = ['visu_RAW_spirou', 'AT5/20180409', 'fp_fp_001_pp.fits']
-run015 = ['visu_E2DS_spirou', 'AT5/20180409', 'fp_fp_001_pp_e2ds_AB.fits']
-# run016 = ['pol_spirou', 'TEST/20180528', '2279383o_pp_e2dsff_A.fits', '2279384o_pp_e2dsff_B.fits', '2279386o_pp_e2dsff_A.fits', '2279383o_pp_e2dsff_B.fits', '2279385o_pp_e2dsff_A.fits', '2279386o_pp_e2dsff_B.fits', '2279384o_pp_e2dsff_A.fits', '2279385o_pp_e2dsff_B.fits']
+run000f = ['cal_preprocess_spirou', 'TEST2/20180805', '*.fits']
+run010w = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295545o_pp.fits']
+run010x = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295546o_pp.fits']
+run010y = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295547o_pp.fits']
+run12a = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
+run12b = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
+run12c = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
+run12d = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
