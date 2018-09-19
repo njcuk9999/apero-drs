@@ -780,7 +780,7 @@ hc_find_lines_mode = 0
 ic_fp_n_ord_start = 0  # 0   # 9
 
 #  Defines last order FP solution is calculated to                  - [cal_wave]
-ic_fp_n_ord_final = 46  # 47   # 45
+ic_fp_n_ord_final = 47  # 47   # 45
 
 #  Define the size of region where each line is fitted               -[cal_wave]
 ic_fp_size = 3

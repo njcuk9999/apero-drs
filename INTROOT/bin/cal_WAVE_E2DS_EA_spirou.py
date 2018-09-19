@@ -378,53 +378,51 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
 
     # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_extrap_plot(loc, iteration=1)
+
+    # ------------------------------------------------------------------
     # Join 0-46 and 47-48 solutions
     # ------------------------------------------------------------------
 
-    # the littrow extrapolation (for orders > n_ord_final_2)
-    litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final:]
-    litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final:]
-
-    # the wavelength solution for n_ord_start - n_ord_final
-    # taking from loc allows avoiding an if smooth check
-    ll_out = loc['LL_OUT_1'][n_ord_start:n_ord_final]
-    param_out = loc['LL_PARAM_1'][n_ord_start:n_ord_final]
-
-    print(np.shape(litt_extrap_sol_param_red))
-    print(np.shape(param_out))
-
-    # create stack
-    ll_stack, param_stack = [], []
-    # wavelength solution for n_ord_start - n_ord_final
-    if len(ll_out) > 0:
-        ll_stack.append(ll_out)
-        param_stack.append(param_out)
-    # add extrapolation from littrow to orders > n_ord_final
-    if len(litt_extrap_sol_red) > 0:
-        ll_stack.append(litt_extrap_sol_red)
-        param_stack.append(litt_extrap_sol_param_red)
-
-    # convert stacks to arrays and add to storage
-    loc['LL_OUT_2'] = np.vstack(ll_stack)
-    loc['LL_PARAM_2'] = np.vstack(param_stack)
-    loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
+    # # the littrow extrapolation (for orders > n_ord_final_2)
+    # litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final:]
+    # litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final:]
+    #
+    # # the wavelength solution for n_ord_start - n_ord_final
+    # # taking from loc allows avoiding an if smooth check
+    # ll_out = loc['LL_OUT_1'][n_ord_start:n_ord_final]
+    # param_out = loc['LL_PARAM_1'][n_ord_start:n_ord_final]
+    #
+    # print(np.shape(litt_extrap_sol_param_red))
+    # print(np.shape(param_out))
+    #
+    # # create stack
+    # ll_stack, param_stack = [], []
+    # # wavelength solution for n_ord_start - n_ord_final
+    # if len(ll_out) > 0:
+    #     ll_stack.append(ll_out)
+    #     param_stack.append(param_out)
+    # # add extrapolation from littrow to orders > n_ord_final
+    # if len(litt_extrap_sol_red) > 0:
+    #     ll_stack.append(litt_extrap_sol_red)
+    #     param_stack.append(litt_extrap_sol_param_red)
+    #
+    # # convert stacks to arrays and add to storage
+    # loc['LL_OUT_2'] = np.vstack(ll_stack)
+    # loc['LL_PARAM_2'] = np.vstack(param_stack)
+    # loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
 
 # TODO can I remove this?
-#     # rename for compatibility
+#     # rename for compatibility w FP solution functions
 #    loc['LITTROW_EXTRAP_SOL_1'] = np.vstack(ll_stack)
 #    loc['LITTROW_EXTRAP_PARAM_1'] = np.vstack(param_stack)
     loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
     loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
 
-    #
-# TODO can I remove this?
-#     # temp copy for storage
-#     loc['LL_FINAL'] = np.vstack(ll_stack)
-#     loc['LL_PARAM_FINAL'] = np.vstack(param_stack)
-#     all_lines_final = np.copy(all_lines_2)
-#     loc['ALL_LINES_FINAL'] = all_lines_final
-#     loc.set_sources(['LL_FINAL', 'LL_PARAM_FINAL'], __NAME__ + '/main()')
-#
     # ------------------------------------------------------------------
     # Incorporate FP into solution
     # ------------------------------------------------------------------
@@ -472,6 +470,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # select the orders to fit
     ll = loc['LITTROW_EXTRAP_SOL_1'][start:end]
     loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
+    # from here, LL_OUT_2 wil be 0-47
 
     # ------------------------------------------------------------------
     # Repeat Littrow test
@@ -485,6 +484,24 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     if p['DRS_PLOT']:
         # plot littrow x pixels against fitted wavelength solution
         sPlt.wave_littrow_check_plot(p, loc, iteration=2)
+
+    # ------------------------------------------------------------------
+    # extrapolate Littrow solution
+    # ------------------------------------------------------------------
+    ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+    loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+
+    # ------------------------------------------------------------------
+    # Plot littrow solution
+    # ------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # plot littrow x pixels against fitted wavelength solution
+        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+
+    # ------------------------------------------------------------------
+    # Join 0-47 and 47-49 solutions
+    # ------------------------------------------------------------------
+    loc = spirouTHORCA.JoinOrders(p, loc)
 
     # ------------------------------------------------------------------
     # Plot single order, wavelength-calibrated, with found lines
@@ -572,138 +589,139 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
-#
-#     # ------------------------------------------------------------------
-#     # archive result in e2ds spectra
-#     # ------------------------------------------------------------------
-#
-#     # get wave filename
-#     wavefits = spirouConfig.Constants.WAVE_FILE_EA(p)
-#     wavefitsname = os.path.split(wavefits)[-1]
-#
-#     # log progress
-#     wargs = [p['FIBER'], wavefits]
-#     wmsg = 'Write wavelength solution for Fiber {0} in {1}'
-#     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-#     # write solution to fitsfilename header
-#     # copy original keys
-#     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
-#     # add version number
-#     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-#     # add quality control
-#     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
-#     # add number of orders
-#     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
-#                                value=loc['LL_PARAM_FINAL'].shape[0])
-#     # add degree of fit
-#     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
-#                                value=loc['LL_PARAM_FINAL'].shape[1]-1)
-#     # add wave solution
-#     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
-#                                      values=loc['LL_PARAM_FINAL'])
-#     # write original E2DS file and add header keys (via hdict)
-#     # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
-#
-#     # write the wave "spectrum"
-#     spirouImage.WriteImage(wavefits, loc['LL_FINAL'], hdict)
-#
-#     # get filename for E2DS calibDB copy of FITSFILENAME
-#     e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)
-#
-#     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
-#     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
-#     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-#
-#     # make a copy of the E2DS file for the calibBD
-#     spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
-#
-#     # ------------------------------------------------------------------
-#     # Save to result table
-#     # ------------------------------------------------------------------
-#     # calculate stats for table
-#     final_mean = 1000 * loc['X_MEAN_2']
-#     final_var = 1000 * loc['X_VAR_2']
-#     num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))        #loc['X_ITER_2']
-#     err = 1000 * np.sqrt(loc['X_VAR_2']/num_lines)
-#     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_'+str(lit_it)])
-#     # construct filename
-#     wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
-#     wavetblname = os.path.split(wavetbl)[-1]
-#     # construct and write table
-#     columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
-#                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
-#                     'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
-#     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
-#                      '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
-#                      '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
-#     columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
-#                     [p['FIBER']], [final_mean], [final_var],
-#                     [num_lines], [err], [sig_littrow[0]],
-#                     [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
-#                     [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
-#     # make table
-#     table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
-#                                   formats=columnformats)
-#     # merge table
-#     wmsg = 'Global result summary saved in {0}'
-#     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
-#     spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
-#
-#     # ------------------------------------------------------------------
-#     # Save line list table file
-#     # ------------------------------------------------------------------
-#     # construct filename
-#
-#     # TODO proper column values
-#
-#     wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
-#     wavelltblname = os.path.split(wavelltbl)[-1]
-#     # construct and write table
-#     columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
-#     columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
-#                      '{:12.4f}', '{:12.4f}', '{:8.4f}']
-#     columnvalues = []
-#     # construct column values (flatten over orders)
-#     for it in range(n_ord_start, n_ord_final):
-#         gg = (ord_save == it)
-#         for jt in range(len(loc['ALL_LINES_FINAL'][it])):
-#              row = [float(it), loc['ALL_LINES_FINAL'][it][jt][0],
-#                     res_1[gg][jt],
-#                     loc['ALL_LINES_FINAL'][it][jt][7],
-#                     loc['ALL_LINES_FINAL'][it][jt][5],
-#                     loc['ALL_LINES_FINAL'][it][jt][5],
-#                     res_1[gg][jt]]
-#              columnvalues.append(row)
-#
-#     # log saving
-#     wmsg = 'List of lines used saved in {0}'
-#     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavelltblname))
-#
-#     # make table
-#     columnvalues = np.array(columnvalues).T
-#     table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
-#                                   formats=columnformats)
-#     # write table
-#     spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
-#
-#     # ------------------------------------------------------------------
-#     # Move to calibDB and update calibDB
-#     # ------------------------------------------------------------------
-#     if p['QC']:
-#         # set the wave key
-#         keydb = 'WAVE_{0}'.format(p['FIBER'])
-#         # copy wave file to calibDB folder
-#         spirouDB.PutCalibFile(p, wavefits)
-#         # update the master calib DB file with new key
-#         spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
-#
-#         # set the hcref key
-#         keydb = 'HCREF_{0}'.format(p['FIBER'])
-#         # copy wave file to calibDB folder
-#         spirouDB.PutCalibFile(p, e2dscopy_filename)
-#         # update the master calib DB file with new key
-#         e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
-#         spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+
+    # ------------------------------------------------------------------
+    # archive result in e2ds spectra
+    # ------------------------------------------------------------------
+
+    # get wave filename
+    wavefits = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefitsname = os.path.split(wavefits)[-1]
+
+    # log progress
+    wargs = [p['FIBER'], wavefits]
+    wmsg = 'Write wavelength solution for Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # write solution to fitsfilename header
+    # copy original keys
+    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    # add quality control
+    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    # add number of orders
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                               value=loc['LL_PARAM_FINAL'].shape[0])
+    # add degree of fit
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                               value=loc['LL_PARAM_FINAL'].shape[1]-1)
+    # add wave solution
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                     values=loc['LL_PARAM_FINAL'])
+    # write original E2DS file and add header keys (via hdict)
+    # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
+
+    # write the wave "spectrum"
+    spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
+
+    # get filename for E2DS calibDB copy of FITSFILENAME
+    e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)[0]
+    print(e2dscopy_filename)
+    wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
+    wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
+    # make a copy of the E2DS file for the calibBD
+    spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # ------------------------------------------------------------------
+    # Save to result table
+    # ------------------------------------------------------------------
+    # calculate stats for table
+    final_mean = 1000 * loc['X_MEAN_2']
+    final_var = 1000 * loc['X_VAR_2']
+    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))        #loc['X_ITER_2']
+    err = 1000 * np.sqrt(loc['X_VAR_2']/num_lines)
+    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_'+str(lit_it)])
+    # construct filename
+    wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
+    wavetblname = os.path.split(wavetbl)[-1]
+    # construct and write table
+    columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
+                   'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
+                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
+    columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
+                     '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
+                     '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
+    columnvalues = [[p['ARG_NIGHT_NAME']], [p['ARG_FILE_NAMES'][0]],
+                    [p['FIBER']], [final_mean], [final_var],
+                    [num_lines], [err], [sig_littrow[0]],
+                    [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
+                    [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
+    # make table
+    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # merge table
+    wmsg = 'Global result summary saved in {0}'
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
+    spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
+
+    # ------------------------------------------------------------------
+    # Save line list table file
+    # ------------------------------------------------------------------
+    # construct filename
+
+    # TODO proper column values
+
+    wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE_EA(p)
+    wavelltblname = os.path.split(wavelltbl)[-1]
+    # construct and write table
+    columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
+    columnformats = ['{:.0f}', '{:12.4f}', '{:13.5f}', '{:12.4f}',
+                     '{:12.4f}', '{:12.4f}', '{:8.4f}']
+
+    columnvalues = []
+    # construct column values (flatten over orders)
+    for it in range(len(loc['X_DETAILS_2'])):
+        for jt in range(len(loc['X_DETAILS_2'][it][0])):
+            row = [float(it), loc['X_DETAILS_2'][it][0][jt],
+                   loc['LL_DETAILS_2'][it][0][jt],
+                   loc['X_DETAILS_2'][it][3][jt],
+                   loc['X_DETAILS_2'][it][1][jt],
+                   loc['X_DETAILS_2'][it][2][jt],
+                   loc['SCALE_2'][it][jt]]
+            columnvalues.append(row)
+
+
+    # log saving
+    wmsg = 'List of lines used saved in {0}'
+    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavelltblname))
+
+    # make table
+    columnvalues = np.array(columnvalues).T
+    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+                                  formats=columnformats)
+    # write table
+    spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
+
+    # ------------------------------------------------------------------
+    # Move to calibDB and update calibDB
+    # ------------------------------------------------------------------
+    if p['QC']:
+        # set the wave key
+        keydb = 'WAVE_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouDB.PutCalibFile(p, wavefits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
+
+        # set the hcref key
+        keydb = 'HCREF_{0}'.format(p['FIBER'])
+        # copy wave file to calibDB folder
+        spirouDB.PutCalibFile(p, e2dscopy_filename)
+        # update the master calib DB file with new key
+        e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
+        spirouDB.UpdateCalibMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # return p and loc
     return dict(locals())
