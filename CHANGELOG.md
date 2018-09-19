@@ -4651,3 +4651,41 @@
 	- recipe_control.txt - add e2dsff files to cal_drift codes and cal_ccf (rev.b99e7904)
 	- cal_DRIFTPEAK_E2DS_spirou: fix obtaining of lamp type with hc_hc (ext_type == "HCONE_HCONE" or "HCTWO_HCTWO") (rev.0d991a01)
 	- cal_extract_RAW_spirou.py: better error message for no DPRTYPE in header (Issue #456) (rev.371922c5)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.012
+
+================================================================================
+	- unit_tests: add cal_CCF test to Tellu_Test.run (rev.5467d047)
+	- unit_tests: update unit test with new hc files (from 2018-08-05) (rev.c8d2c4ca)
+	- recipe_control.txt - remove duplicate line in cal_CCF definition (rev.67ef51d1)
+	- cal_CCF_E2DS_spirou.py - update comments and remove extra spaces (rev.172015c1)
+
+
+
+================================================================================
+* Wed Sep 19 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.013
+
+================================================================================
+	- New CCF mask provided by Xavier on 2018 Sept 19 (rev.fd8dd6be)
+	- Add E2DS_FF for cal_CCF_E2DS recipe (rev.24649509)
+	- Adaptation for telluric corrected spectra (rev.bfa08b02)
+
+
+
+================================================================================
+* Wed Sep 19 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.014
+
+================================================================================
+	- New CCF mask provided by Xavier on 2018 Sept 19 (rev.fd8dd6be)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.014
+
+================================================================================
+	- unit_tests: fix bug in run names (rev.19fe91f3)
+
