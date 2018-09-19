@@ -2024,16 +2024,22 @@ def tellu_trans_map_plot(loc, order_num, fmask, sed, trans, sp, ww, outfile):
     # set up axis
     frame = plt.subplot(111)
     # plot trans_map and spectra
-    frame.plot(wave, sp[order_num, :], 'r.')
-    frame.plot(wave[fmask], sp[order_num][fmask], 'b.')
-    frame.plot(wave, sed, 'r-')
-    frame.plot(wave, trans, 'c-')
-    frame.plot(wave, sp[order_num, :] / sed[:], 'g-')
-    frame.plot(wave, np.ones_like(sed), 'r-')
-    frame.plot(wave, ww, 'k-')
+    frame.plot(wave, sp[order_num, :], 'r.', label='Spectrum')
+    frame.plot(wave[fmask], sp[order_num][fmask], 'b.', label='Spectrum (kept)')
+    frame.plot(wave, sed, 'r-', label='Fitted SED')
+    frame.plot(wave, trans, 'c-', label='Transmission')
+    frame.plot(wave, sp[order_num, :] / sed[:], 'g-', label='Spectrum/SED')
+    frame.plot(wave, np.ones_like(sed), color='purple', ls='-')
+    frame.plot(wave, ww, 'k-', label='Weights')
     frame.set_title(outfile)
     # set limit
-    frame.set(ylim=[0.75, 1.15])
+    frame.set(ylim=[0.6, 1.4])
+    # add legend
+    frame.legend(loc=0)
+    # add labels
+    title = 'Tranmission map plot (Order {0})'
+    frame.set(title=title.format(order_num),
+              xlabel='Wavelength [nm]', ylabel='Normalised flux')
     # end plotting function properly
     end_plotting()
 
@@ -2066,6 +2072,10 @@ def tellu_pca_comp_plot(p, loc):
         frame.plot(wave, pc[:, it], label=label)
     # add legend
     frame.legend(loc=0)
+    # add labels
+    title = 'Reconstructed Spline Plot (Order = {0})'
+    frame.set(xlabel='Wavelength [nm]',
+              ylabel='Principle component power')
     # end plotting function properly
     end_plotting()
 
@@ -2100,6 +2110,10 @@ def tellu_fit_tellu_spline_plot(p, loc):
     frame.plot(swave, srecov / np.nanmedian(srecov), label='Recov abso SP')
     # add legend
     frame.legend(loc=0)
+    # add labels
+    title = 'Reconstructed Spline Plot (Order = {0})'
+    frame.set(title=title.format(selected_order),
+              xlabel='Wavelength [nm]', ylabel='Normalised flux')
     # end plotting function properly
     end_plotting()
 
@@ -2113,6 +2127,7 @@ def tellu_fit_recon_abso_plot(p, loc):
     swave = loc['WAVE_IT'][selected_order, :]
     # get the data from loc for selected order
     start, end = selected_order * xdim, selected_order * xdim + xdim
+    ssp = np.array(loc['SP'][selected_order, :])
     ssp2 = np.array(loc['SP2'][start:end])
     stemp2 = np.array(loc['TEMPLATE2'][start:end])
     srecon_abso = np.array(loc['RECON_ABSO'][start:end])
@@ -2123,6 +2138,7 @@ def tellu_fit_recon_abso_plot(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot spectra for selected order
+    frame.plot(swave, ssp / np.nanmedian(ssp), color='k', label='input SP')
     frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
                label='Cleaned SP')
     frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',
@@ -2130,6 +2146,11 @@ def tellu_fit_recon_abso_plot(p, loc):
     frame.plot(swave, srecon_abso, color='r', label='recon abso')
     # add legend
     frame.legend(loc=0)
+    # add labels
+    title = 'Reconstructed Absorption (Order = {0})'
+    frame.set(title=title.format(selected_order),
+              xlabel='Wavelength [nm]', ylabel='Normalised flux')
+
     # end plotting function properly
     end_plotting()
 
