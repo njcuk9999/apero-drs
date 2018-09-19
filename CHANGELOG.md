@@ -4608,3 +4608,46 @@
 	- cal_reset.py: exit script has_plots=False (rev.b55de667)
 	- spirouWAVE.py: fix issue with pep8 update (ll_prev defined in wrong place) (rev.7f39d0aa)
 	- spirouWAVE.py (Issue #452): wave_catalog is now initialised as a NaN array (instead of an array of zeros) (rev.074f79fa)
+
+
+
+================================================================================
+* Thu Sep 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.008
+
+================================================================================
+	- version.txt: update/check dependencies (rev.fdf8134c)
+	- drs_dependencies.py: fix for python 2 path (rev.a2177be9)
+	- update date/version/changelog (rev.67113c33)
+
+
+
+================================================================================
+* Mon Sep 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.009
+
+================================================================================
+	- test runs: update tellu_test.run (rev.aa95ba91)
+	- update cal_test.run (rev.73f72ebf)
+	- spirouStartup.py: extra check for no outputs in indexing (fixes crash) (rev.2a54412f)
+	- spirouPlot: fix telluric plots (labels, titles, limits) (rev.8a0abf11)
+	- obj_mk_tellu: save SP to loc (rev.2befaea4)
+	- obj_fit_tellu: fix bug (blaze must be normalised to fit telluric) (rev.a2402037)
+
+
+
+================================================================================
+* Tue Sep 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.010
+
+================================================================================
+	- tellu_test.run: add actual non-hot stars to telluric test (rev.963dfb27)
+	- tellu_test.run: add actual non-hot stars to telluric test (rev.74926c51)
+	- tellu_test.run: reset for full test (rev.73a66736)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.011
+
+================================================================================
+	- recipe_control.txt - add e2dsff files to cal_drift codes and cal_ccf (rev.b99e7904)
+	- cal_DRIFTPEAK_E2DS_spirou: fix obtaining of lamp type with hc_hc (ext_type == "HCONE_HCONE" or "HCTWO_HCTWO") (rev.0d991a01)
+	- cal_extract_RAW_spirou.py: better error message for no DPRTYPE in header (Issue #456) (rev.371922c5)
