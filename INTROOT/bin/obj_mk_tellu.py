@@ -145,6 +145,8 @@ def main(night_name=None, files=None):
         sp, shdr, scdr, _, _ = spirouImage.ReadImage(p, filename)
         # divide my blaze
         sp = sp / loc['BLAZE']
+        loc['SP'] = np.array(sp)
+        loc.set_source('SP', main_name)
 
         # get output transmission filename
         outfile, tag1 = spirouConfig.Constants.TELLU_TRANS_MAP_FILE(p, filename)

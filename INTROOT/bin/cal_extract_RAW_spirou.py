@@ -124,9 +124,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     p = spirouImage.ReadParam(p, hdr, 'KW_DPRTYPE', required=False, dtype=str)
     # check the DPRTYPE is not None
     if (p['DPRTYPE'] == 'None') or (['DPRTYPE'] is None):
-        emsg = 'Error: {0} is not set in header for file {1}'
+        emsg1 = 'Error: {0} is not set in header for file {1}'
         eargs = [p['KW_DPRTYPE'][0], p['FITSFILENAME']]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        emsg2 = '\tPlease run pre-processing on file.'
+        emsg3 = ('\tIf pre-processing fails or skips file, file is not '
+                 'currrently as valid DRS fits file.')
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2, emsg3])
     else:
         p['DPRTYPE'] = p['DPRTYPE'].strip()
 
