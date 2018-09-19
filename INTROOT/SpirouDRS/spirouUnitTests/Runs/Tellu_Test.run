@@ -20,11 +20,11 @@ run000f = ['cal_preprocess_spirou', 'TEST2/20180805', '*.fits']
 
 # Extract the HC's/FP's
 # run007a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-# run007b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '20180817_hc1_hc1_seq_001c_pp.fits']
+# run007b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
 
 # Run Wave solution analysis
-# run008 = ['cal_HC_E2DS_spirou', 'TEST1/20180805', '20180817_hc1_hc1_seq_001c_pp_e2ds_AB.fits']
-# run009 = ['cal_WAVE_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '20180817_hc1_hc1_seq_001c_pp_e2ds_AB.fits']
+# run008 = ['cal_HC_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
+# run009 = ['cal_WAVE_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
 
 # Extract the tellurics
 run010a = ['cal_extract_RAW_spirou', 'TEST2/20180731', '2294972o_pp.fits']
