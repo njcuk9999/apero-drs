@@ -158,9 +158,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     # get wave image
     wave_ll, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
-#    wave_ll, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr, key='WAVE_AB')
-
-#    p['FIBER']='AB'
 
     # save to storage
     loc['WAVE_LL'], loc['PARAM_LL'] = wave_ll, param_ll
@@ -170,30 +167,30 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
-    #TODO We do more not need to correct FLAT
+    #TODO We do not need to correct FLAT
     # log
-#    WLOG('', p['LOG_OPT'], 'Reading Flat-Field ')
+    # WLOG('', p['LOG_OPT'], 'Reading Flat-Field ')
 
     # get flat
-#    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
-#    loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+    # loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    # loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
-#    loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+    # loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
 
     # get blaze
-#    loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+    # loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     blaze0 = spirouImage.ReadBlazeFile(p, hdr)
 
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
     # reset flat to all ones
-#    loc['FLAT'] = np.ones((nbo, nx))
+    # loc['FLAT'] = np.ones((nbo, nx))
     # set blaze to all ones (if not bug in correlbin !!!
     #TODO Check why Blaze makes bugs in correlbin
     loc['BLAZE'] = np.ones((nbo, nx))
     # set sources
-#    loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
     loc.set_sources(['blaze'], __NAME__ + '/main()')
 
     # Modification of E2DS array  with N.A.N
@@ -201,7 +198,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         WLOG('warning', p['LOG_OPT'],
                  'NaN values found in e2ds, converting process')
     #  First basic approach Replacing N.A.N by zeros
-#        e2ds[np.isnan(e2ds)] = 0
+    #    e2ds[np.isnan(e2ds)] = 0
 
     # Second approach replacing N.A.N by the Adjusted Blaze
         e2dsb = e2ds / blaze0
@@ -213,13 +210,10 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # correct extracted image for flat
     # ----------------------------------------------------------------------
-#    loc['E2DSFF'] = e2ds/loc['FLAT']
-#    loc['E2DSFF'] = e2ds*1.
+    # loc['E2DSFF'] = e2ds/loc['FLAT']
+    # loc['E2DSFF'] = e2ds*1.
     loc['E2DSFF'] = e2ds
     loc.set_source('E2DSFF', __NAME__ + '/main()')
-
-
-
 
     # ----------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -234,16 +228,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
-#    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-#    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    # wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+    # WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
     wmsg = 'On fiber estimated RV uncertainty on spectrum is {0:.3f} m/s'
     WLOG('info', p['LOG_OPT'], wmsg.format(wmeanref))
-
-
     # TEST N.A.N
-
-#    loc['E2DSFF'][20:22,2000:3000]=np.nan
-#    e2ds[20:30,1000:3000]=np.nan
+    # loc['E2DSFF'][20:22,2000:3000]=np.nan
+    # e2ds[20:30,1000:3000]=np.nan
 
     # ----------------------------------------------------------------------
     # Reference plots
