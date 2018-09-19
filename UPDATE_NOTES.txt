@@ -1,8 +1,7 @@
-Update Notes - Version 0.3.007
+Update Notes - Version 0.3.014
 
 Not done/not finished:
 
-- cal_CCF working with NaNs (telluric / polarimetry files) [Francois?]
 - cal_WAVE_E2DS_EA_spirou and cal_HC_E2DS_EA_spirou - still finalising changes [Neil/Melissa/Etienne]
 - differences between DRIFT and DRIFTPEAK [Francois?]
 - test for corrupt files [Neil]
@@ -90,30 +89,32 @@ Finished Changes:
     Requires following files and directory structure in the raw folder:
 
         TEST1/20180805:
-            20180817_hc1_hc1_seq_001c.fits  2295515f.fits  2295523f.fits  2295546o.fits
-            20180817_hc1_hc1_seq_002c.fits  2295516f.fits  2295524f.fits  2295547o.fits
-            20180817_hc1_hc1_seq_003c.fits  2295517f.fits  2295525a.fits  2295548o.fits
-            2295510f.fits                   2295518f.fits  2295526a.fits  2295549o.fits
-            2295511f.fits                   2295519f.fits  2295527a.fits  2295550o.fits
-            2295512f.fits                   2295520f.fits  2295528a.fits  dark_dark_P5_003d.fits
-            2295513f.fits                   2295521f.fits  2295529a.fits
-            2295514f.fits                   2295522f.fits  2295545o.fits
+            2295510f.fits  2295516f.fits  2295522f.fits  2295528a.fits  2295548o.fits  2295677a.fits
+            2295511f.fits  2295517f.fits  2295523f.fits  2295529a.fits  2295549o.fits  2295680c.fits
+            2295512f.fits  2295518f.fits  2295524f.fits  2295532c.fits  2295550o.fits  dark_dark_P5_003d.fits
+            2295513f.fits  2295519f.fits  2295525a.fits  2295545o.fits  2295674a.fits
+            2295514f.fits  2295520f.fits  2295526a.fits  2295546o.fits  2295675a.fits
+            2295515f.fits  2295521f.fits  2295527a.fits  2295547o.fits  2295676a.fits
 
-        TEST2/20180823:
-            2278951o.fits  2279005o.fits  2279007o.fits  2279009o.fits  2279017o.fits  2279019o.fits
-            2278952o.fits  2279006o.fits  2279008o.fits  2279010o.fits  2279018o.fits  2279020o.fits
-
-        TEST2/20180824:
-            2279104o.fits
-
-        TEST2/20180825:
-            2279197o.fits
+        TEST2:
+            20180731/2294972o.fits  20180802/2295243o.fits  20180804/2295470o.fits  20180804/2295506o.fits
+            20180731/2294973o.fits  20180802/2295248o.fits  20180804/2295479o.fits  20180805/2295545o.fits
+            20180801/2295080o.fits  20180802/2295265o.fits  20180804/2295480o.fits  20180805/2295546o.fits
+            20180801/2295118o.fits  20180802/2295266o.fits  20180804/2295485o.fits  20180805/2295547o.fits
+            20180801/2295124o.fits  20180803/2295353o.fits  20180804/2295486o.fits
+            20180801/2295126o.fits  20180803/2295358o.fits  20180804/2295487o.fits
+            20180802/2295200o.fits  20180804/2295412o.fits  20180804/2295492o.fits
 
         TEST3/20180526:
             2279303d.fits  2279312f.fits  2279327a.fits  2279383o.fits  2279385o.fits
             2279307f.fits  2279321f.fits  2279330c.fits  2279384o.fits  2279386o.fits
 
-11) Pep 8 clean up of all recipes
+
+11) cal_CCF will now run with NaN files (replacing the NaN's with a scaled blaze function where some flux exists or
+    with zeros if whole order is empty)
+
+
+12) Pep 8 clean up of all recipes
 
 
 * Can by-pass re-running cal_pre-process by copying all pre-processed files
