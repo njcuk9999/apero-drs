@@ -95,6 +95,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, e2dsfilename = spirouStartup.SingleFileSetup(p, filename=p['E2DSFILE'])
+#    p, e2dsfilename = spirouStartup.SingleFileSetup(p, filename=p['E2DSFILE'],skipcheck=True)
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -123,13 +124,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['NUMBER_ORDERS'] = nbo
     loc.set_sources(['E2DS', 'number_orders'], __NAME__ + '/main()')
 
-    # check for NaN values in the e2ds array
-    if np.isnan(np.sum(e2ds)):
-        # WLOG('error', p['LOG_OPT'], 'NaN values found in e2ds')
-        WLOG('warning', p['LOG_OPT'],
-             'NaN values found in e2ds, converting to zeroes')
-        # set NaNs to zero
-        e2ds[np.isnan(e2ds)] = 0
+
+
+
 
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
@@ -170,29 +167,52 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
+    #TODO We do not need to correct FLAT
     # log
-    WLOG('', p['LOG_OPT'], 'Reading Flat-Field ')
+    # WLOG('', p['LOG_OPT'], 'Reading Flat-Field ')
 
     # get flat
-    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
-    loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
+    # loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    # loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
-    loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+    # loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+
+    # get blaze
+    # loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+    blaze0 = spirouImage.ReadBlazeFile(p, hdr)
 
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
     # reset flat to all ones
-    loc['FLAT'] = np.ones((nbo, nx))
-    # set blaze to all ones
+    # loc['FLAT'] = np.ones((nbo, nx))
+    # set blaze to all ones (if not bug in correlbin !!!
+    #TODO Check why Blaze makes bugs in correlbin
     loc['BLAZE'] = np.ones((nbo, nx))
     # set sources
-    loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    loc.set_sources(['blaze'], __NAME__ + '/main()')
+
+    # Modification of E2DS array  with N.A.N
+    if np.isnan(np.sum(e2ds)):
+        WLOG('warning', p['LOG_OPT'],
+                 'NaN values found in e2ds, converting process')
+    #  First basic approach Replacing N.A.N by zeros
+    #    e2ds[np.isnan(e2ds)] = 0
+
+    # Second approach replacing N.A.N by the Adjusted Blaze
+        e2dsb = e2ds / blaze0
+        for i in np.arange(len(e2ds)):
+           rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
+           if np.isnan(rap): rap = 0.
+           e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
 
     # ----------------------------------------------------------------------
     # correct extracted image for flat
     # ----------------------------------------------------------------------
-    loc['E2DSFF'] = e2ds/loc['FLAT']
+    # loc['E2DSFF'] = e2ds/loc['FLAT']
+    # loc['E2DSFF'] = e2ds*1.
+    loc['E2DSFF'] = e2ds
     loc.set_source('E2DSFF', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
@@ -208,8 +228,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
-    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    # wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+    # WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    wmsg = 'On fiber estimated RV uncertainty on spectrum is {0:.3f} m/s'
+    WLOG('info', p['LOG_OPT'], wmsg.format(wmeanref))
+    # TEST N.A.N
+    # loc['E2DSFF'][20:22,2000:3000]=np.nan
+    # e2ds[20:30,1000:3000]=np.nan
 
     # ----------------------------------------------------------------------
     # Reference plots
