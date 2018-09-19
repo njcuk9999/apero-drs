@@ -82,3 +82,6 @@ run12a = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
 run12b = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
 run12c = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
 run12d = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
+
+# Test cal_CCF
+run13 = ['cal_CCF_E2DS_spirou.py', 'TEST2/20180802', '2295266o_pp_e2dsff_AB_tellu_corrected.fits', 'tellurique_test9.mas', 0, 100, 0.5]
