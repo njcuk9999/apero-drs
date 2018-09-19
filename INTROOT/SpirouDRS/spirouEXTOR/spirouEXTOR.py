@@ -28,10 +28,13 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 
-from astropy.io import fits
 
+# TODO: Move to loc (and read in main file)
+# TODO:   - just pass to extraction wrapper in loc and call from 4a/4b
+from astropy.io import fits
 shapefile = '/scratch/Projects/spirou_py3/data_h4rg/2295305a_dxmap.fits'
 SHAPEMAP = fits.getdata(shapefile)
+# set NaNs to zero
 SHAPEMAP[~np.isfinite(SHAPEMAP)] = 0.0
 
 
