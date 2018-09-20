@@ -31,13 +31,11 @@ else:
 
 PATH = '/home/ncook/Downloads/data_h4rg/reduced/AT5/20180409'
 
-
 # -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-
 
 
 # =============================================================================
@@ -106,10 +104,10 @@ if __name__ == "__main__":
     canvas.get_tk_widget().pack(side=tkinter.BOTTOM, fill=tkinter.BOTH,
                                 expand=True)
 
-
     toolbar = NavigationToolbar2TkAgg(canvas, root)
     toolbar.update()
     canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
+
 
     # on change dropdown value
     def change_dropdown(*args):
@@ -121,6 +119,7 @@ if __name__ == "__main__":
         current_file = filename
         current_int = choices.index(tkvar.get())
 
+
     # on change dropdown value
     def change_order(*args):
         order_num = tkvar2.get()
@@ -128,6 +127,7 @@ if __name__ == "__main__":
         plot_file(filename, order_num)
         global current_order
         current_order = order_num
+
 
     def nextplot(*args):
         global current_int
@@ -139,6 +139,7 @@ if __name__ == "__main__":
         plot_file(current_file, current_order)
         tkvar.set(current_file)
 
+
     def previousplot(*args):
         global current_int
         current_int -= 1
@@ -148,6 +149,7 @@ if __name__ == "__main__":
         current_file = choices[current_int]
         plot_file(current_file, current_order)
         tkvar.set(current_file)
+
 
     def plot_file(filename, order_num):
         order_num = int(order_num)
