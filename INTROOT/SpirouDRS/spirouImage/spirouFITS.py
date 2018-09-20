@@ -570,6 +570,59 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     return tilt[:, 0]
 
 
+def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
+                   required=True):
+    """
+    Reads the shape file (from calib database or filename)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                kw_TILT: list, the keyword list for kw_TILT (defined in
+                         spirouKeywords.py)
+                IC_TILT_NBO: int, Number of orders in tilt file
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['FITSFILENAME']
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the TILT file from the calib database
+                     keyword "TILT"
+    :param key: string or None, if None key='TILT' else uses string as key
+                from calibDB (first entry) to get tilt file
+    :param return_filename: bool, if true return the filename only
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
+
+    if return_filename is False
+        :return tilt: numpy array (2D), the shape map image
+    else
+        :return read_file: string, name of shape file
+    """
+    if key is None:
+        key = 'SHAPE'
+    # get filename
+    if filename is None:
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
+    else:
+        read_file = filename
+    # deal with returning filename
+    if return_filename:
+        return read_file
+    # log tilt file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
+    # read read_file
+    rout = readimage(p, filename=read_file, log=False)
+    shapemap, hdict, _, nx, ny = rout
+    # set NaN values to zeros
+    shapemap[~np.isfinite(shapemap)] = 0.0
+    # return the shape map image
+    return shapemap
+
+
 def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
                    return_filename=False, required=True):
     """
