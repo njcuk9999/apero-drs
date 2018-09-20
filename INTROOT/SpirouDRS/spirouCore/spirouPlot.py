@@ -1308,7 +1308,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
                 spe: numpy array (2D), the comparison spectrum
                 speref: numpy array (2D), the reference spectrum
 
-    :param cc: numpy array (1D), the correlation coefficients from the
+    :param ccoeff: numpy array (1D), the correlation coefficients from the
                Pearson R test
 
     :param iteration: int, the iteration number
@@ -1340,7 +1340,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     # order selection
     # -------------------------------------------------------------------------
     # mask
-    mask = cc > prcut
+    mask = ccoeff > prcut
     # select bad order
     bad_orders = np.arange(nbo)[~mask]
     bad_order = np.argmin(ccoeff)
