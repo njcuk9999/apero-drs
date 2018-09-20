@@ -259,6 +259,20 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Read image order profile
         # ------------------------------------------------------------------
         order_profile, _, _, nx, ny = spirouImage.ReadOrderProfile(p, hdr)
+
+        # ------------------------------------------------------------------
+        # Deal with debananafication
+        # ------------------------------------------------------------------
+        if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+            # log progress
+            WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
+            # get the shape map
+            shapemap = spirouImage.ReadShapeMap(p, hdr)
+            # debananafy data and order profile
+            data2 = spirouEXTOR.DeBananafication(data2, shapemap)
+            order_profile = spirouEXTOR.DeBananafication(order_profile,
+                                                         shapemap)
+
         # ------------------------------------------------------------------
         # Average AB into one fiber for AB, A and B
         # ------------------------------------------------------------------
