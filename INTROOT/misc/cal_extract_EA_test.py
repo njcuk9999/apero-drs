@@ -13,6 +13,8 @@ from __future__ import division
 import numpy as np
 import os
 from astropy.io import fits
+from scipy.interpolate import InterpolatedUnivariateSpline
+import matplotlib.pyplot as plt
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -45,6 +47,7 @@ sPlt = spirouCore.sPlt
 night_name = 'TEST1/20180805'
 # define filename
 files = ['2295680c_pp.fits']
+files = ['2295546o_pp.fits']
 # define fiber_type
 fiber_type = None
 fiber = 'AB'
@@ -424,6 +427,26 @@ def plot_spelong(spelong):
     frame.imshow(spelong, origin='lower')
 
 
+def debanananificator(image, dx):
+    # getting the size of the image and creating the image after correction of
+    # distortion
+    image1 = np.array(image)
+    sz = np.shape(dx)
+
+    # x indices in the initial image
+    xpix = np.array(range(sz[1]))
+
+    # we shift all lines by the appropiate, pixel-dependent, dx
+    for i in range(sz[0]):
+        not0 = image[i, :] != 0
+        spline = InterpolatedUnivariateSpline(xpix[not0], image[i, not0], ext=1)
+        # only pixels where dx is finite are considered
+        g = np.isfinite(dx[i, :])
+        image1[i, g] = spline(xpix[g] + dx[i, g])
+
+    return image1
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -432,7 +455,7 @@ if __name__ == "__main__":
 
     # Get to order loop
     output1 = part1(night_name, files, fiber_type, kwargs, fiber)
-    p, loc, data2, valid_orders, order_profile, source = output1
+    p, loc, data, valid_orders, order_profile, source = output1
 
     # turn on/off using a single order
     if selected_order is not None:
@@ -443,6 +466,15 @@ if __name__ == "__main__":
     e2dslong = []
     e2ds1 = []
     e2dslong1 = []
+    f2ds = []
+    f2dslong = []
+    f2ds1 = []
+    f2dslong1 = []
+
+    # need to debanananify for EA method
+    WLOG('', p['LOG_OPT'], 'Running debanananification')
+    data1 = debanananificator(data, SHAPEMAP)
+    order_profile1 = debanananificator(order_profile, SHAPEMAP)
 
     # loop around each order
     for order_num in valid_orders:
@@ -450,9 +482,13 @@ if __name__ == "__main__":
         WLOG('', p['LOG_OPT'], 'Order {0}'.format(order_num))
 
         # Get to spirouEXTOR.extract_shape_weight_cosm
-        output = part2(p, loc, data2, order_num, order_profile)
-        image, pos, tilt, r1, r2, orderp, gain, sigdet = output[:8]
-        tiltborder, cosmic_sigcut, cosmic_threshold = output[8:]
+        output1 = part2(p, loc, data, order_num, order_profile)
+        image, pos, tilt, r1, r2, orderp, gain, sigdet = output1[:8]
+        tiltborder, cosmic_sigcut, cosmic_threshold = output1[8:]
+
+        # Get to spirouEXTOR.extract_shape_weight_cosm
+        output2 = part2(p, loc, data1, order_num, order_profile1)
+        image1, orderp1 = output2[0], output2[5]
 
         # ********************************************************************
         #
@@ -463,6 +499,8 @@ if __name__ == "__main__":
         # create storage for extration
         spe = np.zeros(dim2, dtype=float)
         spe1 = np.zeros(dim2, dtype=float)
+        fpe = np.zeros(dim2, dtype=float)
+        fpe1 = np.zeros(dim2, dtype=float)
         # create array of pixel values
         ics = np.arange(dim2)
         # get positions across the orders for each pixel value along the order
@@ -491,87 +529,110 @@ if __name__ == "__main__":
         cpt1 = 0
         spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
         spelong1 = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+        fpelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+        fpelong1 = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
 
+        # ---------------------------------------------------------------------
         # loop around each pixel along the order
         for ic in ics[tiltborder:-tiltborder]:
             if mask[ic]:
                 # get ww0i and ww1i for this iteration
                 ww00i, ww01i = ww00[ic], ww01[ic]
                 ww = wwa[(ww00i, ww01i)]
-                ww1 = get_slice_shape(i1s[ic], i2s[ic], j1s[ic], j2s[ic],
-                                      SHAPEMAP)
                 # multiple the image by the rotation matrix
                 sx = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
-                sx1 = image[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww1
                 # multiple the order_profile by the rotation matrix
                 fx = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww
-                fx1 = orderp[j1s[ic]:j2s[ic] + 1, i1s[ic]:i2s[ic] + 1] * ww1
                 # Renormalise the rotated order profile
                 if np.sum(fx) > 0:
                     fx = fx / np.sum(fx)
                 else:
                     fx = np.ones(fx.shape, dtype=float)
+                # weight values less than 0 to 1e-9
+                raw_weights = np.where(sx > 0, 1, 1e-9)
+                # weights are then modified by the gain and sigdet added in
+                #    quadrature
+                weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # set the value of this pixel to the weighted sum
+                sumA = np.sum(weights * sx * fx, axis=1)
+                sumB = np.sum(weights * fx ** 2, axis=1)
+                spelong[:, ic] = sumA / sumB
+                spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+                fpelong[:, ic] = np.sum(fx, axis=1)
+                fpe[ic] = np.sum(fx)
+
+                # Cosmic rays correction
+                spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
+                                             cosmic_sigcut, cosmic_threshold)
+        # ---------------------------------------------------------------------
+        # EA method
+        for ic in ics:
+            if mask[ic]:
+                # extract the straighted image
+                sx1 = image1[j1s[ic]:j2s[ic] + 1, ic]
+                fx1 = orderp1[j1s[ic]:j2s[ic] + 1, ic]
+                # Renormalise the rotated order profile
                 if np.sum(fx1) > 0:
                     fx1 = fx1 / np.sum(fx1)
                 else:
                     fx1 = np.ones(fx1.shape, dtype=float)
                 # weight values less than 0 to 1e-9
-                raw_weights = np.where(sx > 0, 1, 1e-9)
                 raw_weights1 = np.where(sx1 > 0, 1, 1e-9)
                 # weights are then modified by the gain and sigdet added in
                 #    quadrature
-                weights = raw_weights / ((sx * gain) + sigdet ** 2)
                 weights1 = raw_weights1 / ((sx1 * gain) + sigdet ** 2)
                 # set the value of this pixel to the weighted sum
-                sumA = np.sum(weights * sx * fx, axis=1)
-                sumB = np.sum(weights * fx ** 2, axis=1)
-                spelong[:, ic] = sumA / sumB
-
-                sumA1 = np.sum(weights1 * sx1 * fx1, axis=1)
-                sumB1 = np.sum(weights1 * fx1 ** 2, axis=1)
-                spelong1[:, ic] = sumA1 / sumB1
-
-                spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
-                spe1[ic] = np.sum(weights1 * sx1 * fx1) / np.sum(
-                                  weights1 * fx1 ** 2)
-                # Cosmic rays correction
-                spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
-                                             cosmic_sigcut, cosmic_threshold)
+                A1 = weights1 * sx1 * fx1
+                B1 = weights1 * fx1 ** 2
+                spelong1[:, ic] = A1 / B1
+                spe1[ic] = np.sum(A1) / np.sum(B1)
+                fpelong1[:, ic] = fx1
+                fpe1[ic] = np.sum(fx1)
                 # Cosmic rays correction
                 spe1, cpt1 = cosmic_correction(sx1, spe1, fx1, ic, weights1,
-                                               cpt1,
-                                               cosmic_sigcut, cosmic_threshold)
+                                               cpt1, cosmic_sigcut,
+                                               cosmic_threshold)
+        # ---------------------------------------------------------------------
         # multiple by gain
         spe *= gain
         spe1 *= gain
 
-        # plots
-        if plot:
-            plot_compare_ww(ww, wwea)
-
         # part 3
-        loc = part3(p, loc, np.array(spe), cpt, data2, order_num, source,
+        loc = part3(p, loc, np.array(spe), cpt, data, order_num, source,
                     kind=0)
-        loc = part3(p, loc, np.array(spe1), cpt1, data2, order_num, source,
+        loc = part3(p, loc, np.array(spe1), cpt1, data1, order_num, source,
                     kind=1)
         # append storage
         e2ds.append(spe)
         e2dslong.append(spelong)
         e2ds1.append(spe1)
         e2dslong1.append(spelong1)
+        f2ds.append(fpe)
+        f2dslong.append(fpelong)
+        f2ds1.append(fpe1)
+        f2dslong1.append(fpelong1)
 
     # convert e2ds to array
     e2dsarray = np.array(e2ds)
     e2dsarray1 = np.array(e2ds1)
+    f2dsarray = np.array(f2ds)
+    f2dsarray1 = np.array(f2ds1)
     # stack e2dslong
     e2dslongarray = np.vstack(e2dslong)
     e2dslongarray1 = np.vstack(e2dslong1)
+    f2dslongarray = np.vstack(f2dslong)
+    f2dslongarray1 = np.vstack(f2dslong1)
     # save arrays
     absfilename = savedir + p['ARG_FILE_NAMES'][0]
     fiberstrA = '_E2DS_{0}.fits'.format(p['FIBER'])
     fiberstrB = '_E2DSLL_{0}.fits'.format(p['FIBER'])
     fiberstrA1 = '_E2DS_1_{0}.fits'.format(p['FIBER'])
     fiberstrB1 = '_E2DSLL_1_{0}.fits'.format(p['FIBER'])
+
+    ffiberstrA = '_F2DS_{0}.fits'.format(p['FIBER'])
+    ffiberstrB = '_F2DSLL_{0}.fits'.format(p['FIBER'])
+    ffiberstrA1 = '_F2DS_1_{0}.fits'.format(p['FIBER'])
+    ffiberstrB1 = '_F2DSLL_1_{0}.fits'.format(p['FIBER'])
 
     fits.writeto(absfilename.replace('.fits', fiberstrA), e2dsarray,
                  overwrite=True)
@@ -580,6 +641,15 @@ if __name__ == "__main__":
     fits.writeto(absfilename.replace('.fits', fiberstrA1), e2dsarray1,
                  overwrite=True)
     fits.writeto(absfilename.replace('.fits', fiberstrB1), e2dslongarray1,
+                 overwrite=True)
+
+    fits.writeto(absfilename.replace('.fits', ffiberstrA), f2dsarray,
+                 overwrite=True)
+    fits.writeto(absfilename.replace('.fits', ffiberstrB), f2dslongarray,
+                 overwrite=True)
+    fits.writeto(absfilename.replace('.fits', ffiberstrA1), f2dsarray1,
+                 overwrite=True)
+    fits.writeto(absfilename.replace('.fits', ffiberstrB1), f2dslongarray1,
                  overwrite=True)
 
 # =============================================================================
