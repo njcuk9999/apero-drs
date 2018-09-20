@@ -167,6 +167,3 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
-
-# Ignore config.py
-/home/mhobson/spirou_py3/INTROOT/config/config.py
