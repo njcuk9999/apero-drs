@@ -27,6 +27,10 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
 
+from SpirouDRS import spirouEXTOR
+from SpirouDRS.spirouCore import spirouMath
+from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
+import warnings
 
 # =============================================================================
 # Define variables
@@ -84,6 +88,18 @@ def main(night_name=None, files=None):
     # width of the ABC fibers
     p['SHAPE_ABC_WIDTH'] = 53
 
+    p['SHAPE_LARGE_ANGLE_RANGE'] = [-11/30.0, 5/30.0, 1/30.0]
+    p['SHAPE_SMALL_ANGLE_RANGE'] = [-1/30.0, 2/30.0, 1/30.0]
+
+    p['SHAPE_LARGE_ANGLE_NUM'] = 20
+
+    p['SHAPE_TRACK_NPEAKS'] = 300
+
+    p['SHAPE_SIGCUT_SLOPE'] = 10
+
+    p['SHAPE_GFIT_EWMIN'] = 0.5
+    p['SHAPE_GFIT_EWMAX'] = 1.5
+    p['SHAPE_GFIT_DXMAX'] = 1.5
 
 
     # ----------------------------------------------------------------------
@@ -185,13 +201,12 @@ def main(night_name=None, files=None):
 
 def get_shape_map(p, loc):
 
-
-    from SpirouDRS import spirouEXTOR
-
     # get constants from p
     shape_it = p['SHAPE_NUM_ITERATIONS']
     width = p['SHAPE_ABC_WIDTH']
-    p_edge = p['SHAPE_PROFILE_EDGE']
+    sig_cut = p['SHAPE_SIGCUT_SLOPE']
+    ew_min, ew_max = p['SHAPE_GFIT_EWMIN'], p['SHAPE_GFIT_EWMAX']
+    dx_max = p['SHAPE_GFIT_DXMAX']
 
     # get data from loc
     data1 = np.array(loc['DATA'])
@@ -203,6 +218,9 @@ def get_shape_map(p, loc):
 
 
     master_dxmap = np.zeros_like(data1)
+
+    xpospeak_all = []
+    allslopes_all = []
 
     # loop around orders
     for order_num in range(nbo):
@@ -221,27 +239,226 @@ def get_shape_map(p, loc):
             # straighten the image with the current master_dump
             data2 = spirouEXTOR.DeBananafication(data1, master_dxmap)
             # we put NaNs on all pixels outside of the order box
-            for i in range(len(xpix)):
-                data2[0:ybottom[i], xpix[i]] = np.nan
-                data2[ytop[i]:, xpix[i]] = np.nan
-            # we do a "dump" extraction by collapsing the order
-            # along the y axis to find the highest peak
-            profile = np.nanmedian(data2, axis=0)
-            # no peaks too close to the edges
-            profile[:p_edge] = 0.0
-            profile[-p_edge:] = 0.0
-            # brightest peak, should be an FP line will be used afterward
-            # for the thresholding of peak finding. We only search for
-            # peaks that are more than 0.3*maxpeak
-            maxpeak = np.nanmax(profile)
-            # get the current maximum peak
-            current_max = float(maxpeak)
-            # set up the current shape map (NaN array)
-            dxmap = np.repeat(np.nan, width*dim1).reshape(width, dim1)
-            # set up the x position peaks
-            xpospeak = np.zeros(dim1)
-            # set up the slopes
-            allslopes
+            for ix in range(len(xpix)):
+                data2[0:ybottom[ix], xpix[ix]] = np.nan
+                data2[ytop[ix]:, xpix[ix]] = np.nan
+            # find all slopes/slices and positions of peaks
+            fargs = [p, loc, data2, order_num, banana_num, xpix,
+                     ytop, ybottom]
+            allslopes, allslices, xpospeak = find_peaks(*fargs)
+
+            # keep all valid slopes and peak positions
+            keep = np.isfinite(allslopes)
+            # no slope can be a >sigcut simga outlier
+            kvalue = np.abs(allslopes - np.nanmedian(allslopes))
+            keep &= kvalue < (sig_cut * np.nanmedian(kvalue))
+
+            # apply keep cut to xposspeak and allslopes
+            xpospeak = xpospeak[keep]
+            allslopes = allslopes[keep]
+
+            # median trace of the brightest p['SHAPE_TRACK_NPEAKS'] peaks
+            #     after de-rotation
+            bigtrace = np.nanmedian(allslices, axis=2)
+
+            # get storage for profiles
+            dx, ew = np.zeros(width), np.zeros(width)
+            # loop around with and fill
+            for it in range(width):
+                bigtrace[it, :] -= np.nanmin(bigtrace[it, :])
+                bigtrace[it, :] /= np.nanmin(bigtrace[it, :])
+
+                xvec, yvec = np.arange(6), bigtrace[it, :]
+                gcoeffs, a = spirouMath.gauss_fit_nn(xvec, yvec, 4)
+                ew[it] = gcoeffs[2] # gaussian width, must be reasonable
+                dx[it] = gcoeffs[1] # center of gaussian
+
+            # some sanity checks
+            keep1 = np.isfinite(dx)
+            keep1 &= ew < ew_max
+            keep1 &= ew > ew_min
+            keep1 &= np.abs(dx - np.nanmedian(dx) < dx_max)
+
+
+            # get dy pixel vector
+            dypix = np.arange(width)
+
+
+
+def find_peaks(p, loc, data2, order_num, banana_num, xpix, ytop, ybottom):
+
+    # get constants from p
+    width = p['SHAPE_ABC_WIDTH']
+    p_edge = p['SHAPE_PROFILE_EDGE']
+    n_peaks = p['SHAPE_TRACK_NPEAKS']
+
+    # get the dimensions
+    dim0, dim1 = loc['DATA'].shape[1]
+
+    # we do a "dump" extraction by collapsing the order
+    # along the y axis to find the highest peak
+    profile = np.nanmedian(data2, axis=0)
+    # no peaks too close to the edges
+    profile[:p_edge] = 0.0
+    profile[-p_edge:] = 0.0
+    # brightest peak, should be an FP line will be used afterward
+    # for the thresholding of peak finding. We only search for
+    # peaks that are more than 0.3*maxpeak
+    maxpeak = np.nanmax(profile)
+
+    # get the current maximum peak
+    current_max = float(maxpeak)
+    # set up the x position peaks
+    xpospeak = np.zeros(dim1)
+    # set up the slopes
+    allslopes = np.repeat([np.nan], dim1)
+    # set up the slices
+    allslices = np.zeros([width, 6, 10]) # TODO: Why 6? Why 10?
+
+    # we iteratively find the peaks and set them to NaN afterward
+    # for each FP peak, we loop through a range of slit angles
+    # to determine its amplitude as a function of angle. We
+    # assume that the angle that corresponds to the brightest
+    # peak corresponds to the rotation of the slicer
+    num_it = 0
+    while current_max > (0.3 * maxpeak):
+        # find the peak
+        peak_id = np.nanargmax(profile)
+        # set the current maximum
+        current_max = profile[peak_id]
+        # set the xpospeak
+        xpospeak[num_it] = peak_id
+
+        # a condition to avoid running off the edge of the image
+        if ybottom[peak_id] <= 1:
+            # we NaN the peak so that the code can move to the next peak
+            # TODO: Why +/- 2?
+            profile[xpix[peak_id] - 2:xpix[peak_id] + 2] = np.nan
+
+        # box centered on the peak. This box will be "sheared"
+        # until the y-collapsed profile is maximal
+        ystart, yend = ybottom[peak_id], ytop[peak_id]
+        xstart, xend = xpix[peak_id] - p_edge, xpix[peak_id] + p_edge
+        box = data2[ystart:yend, xstart:xend]
+        # calculate slopes
+        slopes = get_slopes(p, allslopes, banana_num, num_it)
+        # max peak value of the collapsed profile as a function of angle
+        medmax = np.zeros_like(slopes)
+        wbox = box.shape[1]
+        # copy the box
+        box1 = np.array(box)
+        # take one slice of the box and normalize it
+        for it in range(width):
+            tmp = box[it] - np.nanmedian(box[it])
+            tmp = tmp / np.nansum(tmp)
+            box1[it] = tmp
+        # get box 2
+        box2 = np.zeros([len(slopes), box.shape[1], box.shape[0]])
+        # get the x values for box2
+        xx = np.arange(box.shape[1])
+        # loop around the width
+        for it in range(width):
+            # calculate the spline fit for the original box
+            spline = IUVSpline(xx, box1[it, :], ext=1, k=1)
+            # loop around the slopes
+            for islope, slope in enumerate(slopes):
+                # work out the dx
+                dx = (np.arange(width) - width//2) * slope
+                # apply the y-dependent shift in x
+                box2[islope, :, it] = spline(xx + dx[it])
+        # loop around the slopes and calculate the medmax
+        for islope, slope in enumerate(slopes):
+            medmax[islope] = np.nanmax(np.nanmedian(box2[islope], axis=1))
+
+
+        # as we fit a second-order polynomial to the peak pixel, we can't
+        # have the peak value at the either end of the vector.
+        vec = np.ones_like(medmax)
+        vec[0], vec[-1] = 0.0, 0.0
+        pixmax = np.argmax(medmax)
+        # check that pixmax is zero # TODO: Why?
+        if pixmax == 0:
+            pixmax = 1
+
+        # we fit a parabolla to the max pixel and its 2 neighbours
+        with warnings.catch_warnings(record=True) as _:
+            p_start, p_end = pixmax - 1, pixmax + 2
+
+            coeffs = np.polyfit(slopes[p_start:p_end], medmax[p_start:p_end], 2)
+
+        # the deriv=0 point of the parabola is taken to be the position
+        # of the peak. This is the "best" estimate for the slope
+        factor = 0.5 * coeffs[1]/coeffs[0]
+        allslopes[num_it] = allslopes[num_it] - factor
+
+        # some output for the overeager
+        if (num_it % 10) == 0:
+            wmsg = 'Order number={0}, p ratio={1} num={2}, slope={3}'
+            wargs = [order_num, current_max/maxpeak, num_it, allslopes[num_it]]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
+        # for first "n_peaks" peaks, we keep track of the box shape at the
+        #    "best" angle
+        if num_it < n_peaks:
+            # get a new box2
+            box2 = np.zeros_like(box)
+            # get dx
+            dx = (np.arange(width) - width//2) * allslopes[num_it]
+            # get the x pixels for box
+            xx = np.arange(box.shape[1])
+            # loop around the width
+            for it in range(width):
+                # take one slice of the box and normalize it
+                tmp = box[it] - np.nanmedian(box[it])
+                tmp = tmp / np.nansum(tmp)
+                # calcualte the spline
+                spline = IUVSpline(xx, tmp, ext=1)
+                # push into the box
+                box2[it] = spline(xx + dx[it])
+            # set up the vector
+            vec = np.zeros(width)
+            vec[5:width - 5] = 1    # TODO: Why +/- 5?
+            # get the max pixel
+            maxpix = np.argmax(np.nanmedian(box2, axis=0) * vec)
+            # if maxpix > 5 add to all_slices
+            if maxpix > 5:
+                # TODO: Why  "% 10" why +/- 3?
+                allslices[:, :, num_it % 10] += box2[:, maxpix-3, maxpix +3]
+
+        # we NaN the peak so that the code can move to the next peak
+        # TODO: Why +/- 2?
+        profile[xpix[peak_id] - 2:xpix[peak_id] + 2] = np.nan
+        # add to the iterator
+        num_it += 1
+    # return
+    return allslopes, allslices, xpospeak
+
+
+def get_slopes(p, allslopes, banana_num, num_it):
+
+    large_angle_list = p['SHAPE_LARGE_ANGLE_RANGE']
+    small_angle_list = p['SHAPE_SMALL_ANGLE_RANGE']
+    large_angle_num = p['SHAPE_LARGE_ANGLE_NUM']
+
+    # if this is the first iteration, then we loop
+    # though a larger set of angles
+    if banana_num == 0:
+        # we have >"large_angle_num" measurements... lets just
+        # focus on angle values close to the median
+        if num_it > large_angle_num:
+            # get the median and RMS
+            med = np.nanmedian(allslopes)
+            rms = np.nanmedian(np.abs(allslopes - med))
+            # work out the slopes
+            slopes = (np.arange(-2, 3) * rms) + med
+        else:
+            slopes = np.arange(*large_angle_list)
+    # if not, we just look for a small update to the angle
+    else:
+        slopes = np.arange(*small_angle_list)
+
+    # return slopes
+    return slopes
 
 
 # =============================================================================
