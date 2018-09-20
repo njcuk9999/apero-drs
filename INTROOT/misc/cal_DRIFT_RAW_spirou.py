@@ -276,7 +276,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # ------------------------------------------------------------------
     # decide whether we need to skip (for large number of files)
     if len(listfiles) >= p['DRIFT_NLARGE']:
-        nfiles = int(nfiles/p['DRIFT_FILE_SKIP'])
+        nfiles = int(nfiles / p['DRIFT_FILE_SKIP'])
         skip = p['DRIFT_FILE_SKIP']
     else:
         skip = 1
@@ -368,8 +368,8 @@ def main(night_name=None, files=None, fiber='AB'):
         # calculate the mean flux ratio
         meanfratio = np.mean(cfluxr)
         # calculate the weighted mean radial velocity
-        wref = 1.0/dvrmsref
-        meanrv = np.sum(rv * wref)/np.sum(wref)
+        wref = 1.0 / dvrmsref
+        meanrv = np.sum(rv * wref) / np.sum(wref)
         err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
         # calculate the time from reference (in hours)
         deltatime = (bjdspe - bjdref) * 24
@@ -392,10 +392,10 @@ def main(night_name=None, files=None, fiber='AB'):
     if p['DRIFT_TYPE_RAW'].upper() == 'WEIGHTED MEAN':
         # mean radial velocity
         sumwref = np.sum(wref[:nomax])
-        meanrv = np.sum(loc['DRIFT'][:, :nomax] * wref[:nomax], 1)/sumwref
+        meanrv = np.sum(loc['DRIFT'][:, :nomax] * wref[:nomax], 1) / sumwref
         # error in mean radial velocity
-        errdrift2 = loc['ERRDRIFT'][:, :nomax]**2
-        meanerr = 1.0/np.sqrt(np.sum(1.0/errdrift2, 1))
+        errdrift2 = loc['ERRDRIFT'][:, :nomax] ** 2
+        meanerr = 1.0 / np.sqrt(np.sum(1.0 / errdrift2, 1))
         # add to loc
         loc['MDRIFT'] = meanrv
         loc['MERRDRIFT'] = meanerr
@@ -448,6 +448,7 @@ def main(night_name=None, files=None, fiber='AB'):
 
     # return a copy of locally defined variables in the memory
     return dict(locals())
+
 
 # =============================================================================
 # Start of code
