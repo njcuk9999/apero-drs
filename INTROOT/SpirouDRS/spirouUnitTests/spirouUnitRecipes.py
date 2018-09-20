@@ -29,8 +29,6 @@ import cal_DRIFTPEAK_E2DS_spirou
 import cal_exposure_meter
 import cal_wave_mapper
 import cal_extract_RAW_spirou
-import cal_extract_RAW_spirouAB
-import cal_extract_RAW_spirouC
 import cal_FF_RAW_spirou
 import cal_HC_E2DS_spirou
 import cal_loc_RAW_spirou
@@ -72,8 +70,6 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_exposure_meter',
                  'cal_wave_mapper',
                  'cal_extract_RAW_spirou',
-                 'cal_extract_RAW_spirouAB',
-                 'cal_extract_RAW_spirouC',
                  'cal_FF_RAW_spirou',
                  'cal_HC_E2DS_spirou',
                  'cal_loc_RAW_spirou',
@@ -306,52 +302,52 @@ def unit_test_cal_extract_raw_spirou(rname, inputs):
     return args, name
 
 
-def unit_test_cal_extract_raw_spirouab(rname, inputs):
-    """
-    unit_test_cal_extract_raw_spirou
-
-    input = night_name files
-    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
-
-    :param rname: string, identifier for this run
-    :param inputs: list of objects, raw parameters to pass to run, if outputs
-                   is None returns parameters to pass to file
-
-    :return args: dict, the parameters to pass to the run
-    """
-    # define name and arguments
-    name = 'cal_extract_RAW_spirouAB'
-    arg_names = ['night_name', 'files']
-    arg_types = [str, list]
-
-    # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
-    # return args
-    return args, name
-
-
-def unit_test_cal_extract_raw_spirouc(rname, inputs):
-    """
-    unit_test_cal_extract_raw_spirou
-
-    input = night_name files
-    output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
-
-    :param rname: string, identifier for this run
-    :param inputs: list of objects, raw parameters to pass to run, if outputs
-                   is None returns parameters to pass to file
-
-    :return args: dict, the parameters to pass to the run
-    """
-    # define name and arguments
-    name = 'cal_extract_RAW_spirouC'
-    arg_names = ['night_name', 'files']
-    arg_types = [str, list]
-
-    # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
-    # return args
-    return args, name
+# def unit_test_cal_extract_raw_spirouab(rname, inputs):
+#     """
+#     unit_test_cal_extract_raw_spirou
+#
+#     input = night_name files
+#     output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+#
+#     :param rname: string, identifier for this run
+#     :param inputs: list of objects, raw parameters to pass to run, if outputs
+#                    is None returns parameters to pass to file
+#
+#     :return args: dict, the parameters to pass to the run
+#     """
+#     # define name and arguments
+#     name = 'cal_extract_RAW_spirouAB'
+#     arg_names = ['night_name', 'files']
+#     arg_types = [str, list]
+#
+#     # get arguments
+#     args = get_args(name, rname, inputs, arg_names, arg_types)
+#     # return args
+#     return args, name
+#
+#
+# def unit_test_cal_extract_raw_spirouc(rname, inputs):
+#     """
+#     unit_test_cal_extract_raw_spirou
+#
+#     input = night_name files
+#     output = EXTRACT_E2DS_FILE, EXTRACT_E2DS_ALL_FILES
+#
+#     :param rname: string, identifier for this run
+#     :param inputs: list of objects, raw parameters to pass to run, if outputs
+#                    is None returns parameters to pass to file
+#
+#     :return args: dict, the parameters to pass to the run
+#     """
+#     # define name and arguments
+#     name = 'cal_extract_RAW_spirouC'
+#     arg_names = ['night_name', 'files']
+#     arg_types = [str, list]
+#
+#     # get arguments
+#     args = get_args(name, rname, inputs, arg_names, arg_types)
+#     # return args
+#     return args, name
 
 
 # def unit_test_cal_drift_raw_spirou(rname, inputs, outputs=None):
