@@ -625,7 +625,7 @@ def get_file_name(p, key, hdr=None, filename=None, required=True):
             rawfilename = c_database[key][1]
         else:
             emsg1 = ('Calibration database has no valid "{0}" entry '
-                     'for time<{1}').format(key, p['MAX_TIME_HUMAN'])
+                     'for time={1}').format(key, p['MAX_TIME_HUMAN'])
             emsg2 = '   function = {0}'.format(func_name)
             if required:
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
