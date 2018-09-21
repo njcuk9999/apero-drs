@@ -457,9 +457,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Create new wavelength solution
     # ------------------------------------------------------------------
-
-    start = min(p['IC_HC_N_ORD_START_2'], p['IC_FP_N_ORD_START'])
-    end = max(p['IC_HC_N_ORD_FINAL_2'], p['IC_FP_N_ORD_FINAL'])
+    # TODO: Melissa fault - fix later
+    p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
+                                   p['IC_FP_N_ORD_START'])
+    p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
+                                   p['IC_FP_N_ORD_FINAL'])
+    start = p['IC_HC_N_ORD_START_2']
+    end = p['IC_HC_N_ORD_FINAL_2']
 
     # recalculate echelle orders for Fit1DSolution
     o_orders = np.arange(start,end)
