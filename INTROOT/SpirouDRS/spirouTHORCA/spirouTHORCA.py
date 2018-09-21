@@ -993,8 +993,8 @@ def join_orders(p, loc):
 
     func_name = __NAME__ + '.join_orders()'
     # get parameters from p
-    n_ord_start_2 = min(p['IC_HC_N_ORD_START_2'], p['IC_FP_N_ORD_START'])
-    n_ord_final_2 = max(p['IC_HC_N_ORD_FINAL_2'], p['IC_FP_N_ORD_FINAL'])
+    n_ord_start_2 = p['IC_HC_N_ORD_START_2']
+    n_ord_final_2 = p['IC_HC_N_ORD_FINAL_2']
 
     # get data from loc
     # the second iteration outputs
