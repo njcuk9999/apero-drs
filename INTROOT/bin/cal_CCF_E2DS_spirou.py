@@ -346,7 +346,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # add the average ccf to the end of ccf
     data = np.vstack([loc['CCF'], loc['AVERAGE_CCF']])
     # add keys
-    hdict = OrderedDict()
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CTYPE'], value='km/s')
