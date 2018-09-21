@@ -4684,8 +4684,34 @@
 
 
 ================================================================================
-* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.014
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.015
 
 ================================================================================
 	- unit_tests: fix bug in run names (rev.19fe91f3)
 
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.016
+
+================================================================================
+	- remove user specific ignore (should not be needed) (rev.28d08b71)
+	- update .gitignore to ignore misc folder (rev.7cce836c)
+	- spirouWAVE.py - Merge changes from Dev into Melissa (rev.736690cb)
+	- spirouTHORCA.py - Merge changes from Dev into Melissa (rev.25763190)
+	- spirouRV.py - Merge changes from Dev into Melissa (rev.300036d3)
+	- spirouPlot.py - Merge changes from Dev into Melissa (Issue #460) (rev.564931d5)
+	- constants_SPIROU_H4RG.py - Merge changes from Dev into Melissa (rev.72bfa14c)
+	- cal_WAVE_E2DS_EA_spirou.py - Merge changes from Melissa (rev.cdd8fee3)
+	- cal_CCF_E2DS_spirou.py - full header added to "CCF_FITS_FILE" (rev.dbcefdc4)
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.017
+
+================================================================================
+	- spirouTHORCA.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE/cal HC (rev.bd7f4a60)
+	- cal_WAVE_E2DS_spirou.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE (rev.f1cc29c6)
+	- cal_WAVE_E2DS_EA_spirou.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE (rev.4cdb280a)
