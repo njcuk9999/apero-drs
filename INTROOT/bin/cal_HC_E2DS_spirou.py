@@ -244,8 +244,8 @@ def part2(p, loc):
             'lines: (second pass)')
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # fit lines
-    start = min(p['IC_HC_N_ORD_START_2'], p['IC_FP_N_ORD_START'])
-    end = max(p['IC_HC_N_ORD_FINAL_2'], p['IC_FP_N_ORD_FINAL'])
+    start = p['IC_HC_N_ORD_START_2']
+    end = p['IC_HC_N_ORD_FINAL_2']
     # redefine echelle orders
     orderrange = np.arange(start, end)
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
