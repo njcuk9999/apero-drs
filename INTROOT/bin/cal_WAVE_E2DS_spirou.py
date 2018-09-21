@@ -222,6 +222,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # set params for part2
         p['QC_RMS_LITTROW_MAX'] = p['QC_WAVE_RMS_LITTROW_MAX']
         p['QC_DEV_LITTROW_MAX'] = p['QC_WAVE_DEV_LITTROW_MAX']
+
+        p['IC_HC_N_ORD_START_2'] = min(p['IC_HC_N_ORD_START_2'],
+                                       p['IC_FP_N_ORD_START'])
+        p['IC_HC_N_ORD_FINAL_2'] = max(p['IC_HC_N_ORD_FINAL_2'],
+                                       p['IC_FP_N_ORD_FINAL'])
+
         # run part 2
         # p, loc = part2test(p, loc)
         p, loc = cal_HC_E2DS_spirou.part2(p, loc)
