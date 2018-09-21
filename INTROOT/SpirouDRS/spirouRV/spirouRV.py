@@ -475,6 +475,9 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
+    # minimum spacing between FP peaks
+    peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
+
     # define a mask to cut out wide peaks
     mask = np.abs(loc['EWPEAK'] - expwidth) < cutwidth
 
@@ -486,16 +489,64 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     loc['LLPEAK'] = loc['LLPEAK'][mask]
     loc['AMPPEAK'] = loc['AMPPEAK'][mask]
 
+    # check for and remove double-fitted lines
+    # save old position
+    loc['XPEAK_OLD'] = np.copy(loc['XPEAK'])
+    loc['ORDPEAK_OLD'] = np.copy(loc['ORDPEAK'])
+    # set up storage for good lines
+    ordpeak_k, xpeak_k, ewpeak_k, vrpeak_k, llpeak_k, amppeak_k = \
+        [], [], [], [], [], []
+    # loop through the orders
+    for order_num in range(np.shape(loc['SPEREF'])[0]):
+        # set up mask for the order
+        gg = loc['ORDPEAK'] == order_num
+        # get the xvalues
+        xpeak = loc['XPEAK'][gg]
+        # get the amplitudes
+        amppeak = loc['AMPPEAK'][gg]
+        # get the points where two peaks are spaced by < peak_spacing
+        ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
+        # get the indices of the second peak of each pair
+        ind2 = ind + 1
+        # initialize mask with the same size as xpeak
+        xmask = np.ones(len(xpeak), dtype=bool)
+        # mask the peak with the lower amplitude of the two
+        for i in range(len(ind)):
+            if amppeak[ind[i]] < amppeak[ind2[i]]:
+                xmask[ind[i]] = False
+            else:
+                xmask[ind2[i]] = False
+        # save good lines
+        ordpeak_k += list(loc['ORDPEAK'][gg][xmask])
+        xpeak_k += list(loc['XPEAK'][gg][xmask])
+        ewpeak_k += list(loc['EWPEAK'][gg][xmask])
+        vrpeak_k += list(loc['VRPEAK'][gg][xmask])
+        llpeak_k += list(loc['LLPEAK'][gg][xmask])
+        amppeak_k += list(loc['AMPPEAK'][gg][xmask])
+
+    # replace FP peak arrays in loc
+    loc['ORDPEAK'] = np.array(ordpeak_k)
+    loc['XPEAK'] = np.array(xpeak_k)
+    loc['EWPEAK'] = np.array(ewpeak_k)
+    loc['VRPEAK'] = np.array(vrpeak_k)
+    loc['LLPEAK'] = np.array(llpeak_k)
+    loc['AMPPEAK'] = np.array(amppeak_k)
+
     # append this function to sources
     source = __NAME__ + '/remove_wide_peaks()'
     keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
     loc.append_sources(keys, source)
 
-    # log number of lines removed
+    # log number of lines removed for width
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
     WLOG('info', p['LOG_OPT'], wmsg.format(np.sum(~mask)))
 
-    # return loc
+    print(len(loc['XPEAK_OLD']) - len(loc['XPEAK']))
+    # log number of lines removed as double-fitted
+    if len(loc['XPEAK_OLD'])>len(loc['XPEAK']):
+        wmsg = 'Nb of double-fitted lines removed  = {0}'
+        WLOG('info', p['LOG_OPT'], wmsg.format(len(loc['XPEAK_OLD']) - len(loc['XPEAK'])))
+
     return loc
 
 
