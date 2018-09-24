@@ -112,11 +112,11 @@ def main(night_name=None, reffile=None):
     # get lamp type
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
-        drift_types = p['DRIFT_ALLOWED_TYPES'].keys()
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
         found = False
         for kind in drift_types:
             if ext_type == kind:
-                loc['LAMP'] = p['DRIFT_ALLOWED_TYPES'][kind]
+                loc['LAMP'] = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
                 found = True
         if not found:
             eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
