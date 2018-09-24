@@ -504,9 +504,14 @@ drift_peak_fpbox_size = 3
 #        have to be recognised as a FP peak (before fitting a gaussian)
 # drift_peak_min_nfp_peak = 0.25
 
+# define drift peak types, the keys should be KW_EXT_TYPE header keys
+#
+drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp'}
+
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
 #        to be recognised as a valid peak (before fitting a gaussian)
-#        dictionary must have keys equal to the lamp types (hc, fp)
+#        dictionary must have keys equal to the keys in
+#        drift_peak_allowed_types
 drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 
 #    Define the minimum spacing between peaks in order to be  - [cal_drift-peak]
