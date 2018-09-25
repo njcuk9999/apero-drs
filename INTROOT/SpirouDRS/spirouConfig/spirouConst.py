@@ -2429,5 +2429,46 @@ def DEFAULT_LOG_OPT():
 
 
 # =============================================================================
+# Plot functions
+# =============================================================================
+def PLOT_FONT_SIZE():
+    """
+    Set the default font size for all graphs
+
+    Note: A good size for viewing on the screen is around 12
+
+    :return fontsize: int or string: fontsize accepted by matplotlib
+    """
+    # fontsize = 20
+    # TODO: Turn back to 12
+    fontsize = None
+    return fontsize
+
+
+def PLOT_FONT_WEIGHT():
+    # weight = 'bold'
+    weight = 'normal'
+    weight = None
+    return weight
+
+
+def PLOT_FONT_FAMILY():
+    # family = 'monospace'
+    family = None
+    return family
+
+
+def FONT_DICT():
+    font = dict()
+    if PLOT_FONT_FAMILY() is not None:
+        font['family'] = PLOT_FONT_FAMILY()
+    if PLOT_FONT_WEIGHT() is not None:
+        font['weight'] = PLOT_FONT_WEIGHT()
+    if PLOT_FONT_SIZE() is not None:
+        font['size'] = PLOT_FONT_SIZE()
+    return font
+
+
+# =============================================================================
 # End of code
 # =============================================================================
