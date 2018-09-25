@@ -2437,15 +2437,23 @@ def PLOT_FONT_SIZE():
 
     Note: A good size for viewing on the screen is around 12
 
-    :return fontsize: int or string: fontsize accepted by matplotlib
+    setting value to None will use system defaults
+
+    :return fontsize: int or string or None: fontsize accepted by matplotlib
     """
     # fontsize = 20
-    # TODO: Turn back to 12
     fontsize = None
     return fontsize
 
 
 def PLOT_FONT_WEIGHT():
+    """
+    Set the default font weight for all graphs
+
+    setting value to None will use system defaults
+
+    :return weight: string or None: font weight accepted by matplotlib
+    """
     # weight = 'bold'
     weight = 'normal'
     weight = None
@@ -2453,12 +2461,28 @@ def PLOT_FONT_WEIGHT():
 
 
 def PLOT_FONT_FAMILY():
+    """
+    Set the default font family for all graphs (i.e. monospace)
+
+    setting value to None will use system defaults
+
+    :return family: string or None: font family (style name) accepted by
+                    matplotlib
+    """
     # family = 'monospace'
     family = None
     return family
 
 
 def FONT_DICT():
+    """
+    Font manager for matplotlib fonts - added to matplotlib.rcParams as a
+    dictionary
+    :return font: rcParams dictionary (must be accepted by maplotlbi.rcParams)
+
+    see:
+      https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
+    """
     font = dict()
     if PLOT_FONT_FAMILY() is not None:
         font['family'] = PLOT_FONT_FAMILY()
