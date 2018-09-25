@@ -64,6 +64,10 @@ INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
 # check for matplotlib import errors
 if len(matplotlib_emsg) > 0:
     WLOG('error', DPROG, matplotlib_emsg)
+# -----------------------------------------------------------------------------
+# set plot parameters
+font = spirouConfig.Constants.FONT_DICT()
+matplotlib.rc('font', **font)
 
 
 # =============================================================================
@@ -1528,11 +1532,16 @@ def drift_peak_plot_llpeak_amps(p, loc):
 # =============================================================================
 # CCF plotting function
 # =============================================================================
-def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
+def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
     """
     Plot the CCF plot. RV against CCF and RV against CCF fit, for a specific
     order number "order"
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            OBJNAME: string, the object name from header
+            TARGET_RV: float, the target RV from run time/call arguments
+            CCF_MASK: float, the CCF Mask from run time/call arguments
     :param x: numpy array (1D), the RV values
     :param y: numpy array (1D), the CCF values
     :param yfit: numpy array (1D), the CCF fit values
@@ -1554,9 +1563,11 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     frame.plot(x, y, label='data', marker='x', linestyle='none', color='k')
     frame.plot(x, yfit, label='fit', color='r')
     # set title labels limits
-    title = 'CCF plot'
+    targs = [p['OBJNAME'], p['TARGET_RV'], p['CCF_MASK']]
+    title = 'CCF plot ({0}) \n Target RV={1} km/s Mask={2}'.format(*targs)
+
     if order is not None:
-        title += 'Order {0}'.format(order)
+        title += ' Order {0}'.format(order)
     frame.set(xlabel='Rv [km/s]', ylabel='CCF', title=title)
     # set legend
     frame.legend(loc=0)
@@ -1983,7 +1994,7 @@ def wave_ea_plot_line_profiles(p, loc):
             handle = Rectangle((0, 0), 1, 1, fc="w", fill=False,
                                edgecolor='none', linewidth=0)
             label = 'Orders {0}-{1} region={2} R={3:.0f}'.format(*largs)
-            frame.legend([handle], [label], loc=9)
+            frame.legend([handle], [label], loc=9, fontsize=10)
 
             # remove white space and some axis ticks
             if order_num == 0:
