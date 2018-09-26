@@ -841,6 +841,8 @@ calib_db_force_wavesol = True
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
+# Whether to force the linelist to be created (or re-created)         - [cal_HC]
+HC_EA_FORCE_CREATE_LINELIST = False
 # whether to do plot per order (very slow + interactive)              - [cal_HC]
 HC_EA_PLOT_PER_ORDER = False
 # width of the box for fitting HC lines. Lines will be fitted         - [cal_HC]
