@@ -2455,7 +2455,7 @@ def PLOT_FONT_WEIGHT():
     :return weight: string or None: font weight accepted by matplotlib
     """
     # weight = 'bold'
-    weight = 'normal'
+    # weight = 'normal'
     weight = None
     return weight
 
@@ -2472,6 +2472,14 @@ def PLOT_FONT_FAMILY():
     # family = 'monospace'
     family = None
     return family
+
+
+def PLOT_STYLE():
+
+    # style = 'seaborn'
+    # style = 'dark_background'
+    style = None
+    return style
 
 
 def FONT_DICT():
