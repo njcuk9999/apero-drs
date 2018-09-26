@@ -191,6 +191,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     else:
         background = np.zeros_like(data2)
     # apply background correction to data (and set to zero where negative)
+    # TODO: Etienne --> Francois - Cannot set negative flux to zero!
     data2 = np.where(data2 > 0, data2 - background, 0)
 
     # ----------------------------------------------------------------------
