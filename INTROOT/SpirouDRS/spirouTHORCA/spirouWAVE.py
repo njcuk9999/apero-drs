@@ -653,6 +653,11 @@ def find_hc_gauss_peaks(p, loc):
         # if we do load from file
         ini_table = spirouImage.ReadTable(ini_table_name, fmt='ascii.rst',
                                           colnames=litems)
+        # log that we're reading from file
+        wargs = [ini_table_name]
+        wmsg = 'Table of found lines already exists; reading lines from {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
         # load ini_table into loc
         for col in ini_table.colnames:
             loc[col] = np.array(ini_table[col])
