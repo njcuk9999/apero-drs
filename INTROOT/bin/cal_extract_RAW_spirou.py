@@ -221,15 +221,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        wdata = spirouImage.ReadWaveFile(p, hdr, return_header=True)
-        loc['WAVE'], loc['WAVEHDR'] = wdata
-        wavefile = spirouImage.ReadWaveFile(p, hdr, return_filename=True)
-        loc['WAVEFILE'] = os.path.basename(wavefile)
-        skeys = ['WAVE', 'WAVEFILE']
-        loc.set_sources(skeys, __NAME__ + '.main + .spirouImage.ReadWaveFile()')
-        # get wave params from wave header
-        loc['WAVEPARAMS'] = spirouImage.ReadWaveParams(p, loc['WAVEHDR'])
-        loc.set_source('WAVEPARAMS', '.main() + spirouImage.ReaveWaveParams()')
+        # set source of wave file
+        wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+        # get wave image
+        wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+                                           return_filename=True)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
+        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS'], wsource)
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
