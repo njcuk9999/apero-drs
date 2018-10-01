@@ -40,7 +40,7 @@ ParamDict = spirouConfig.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None):
+def main(night_name=None, quiet=False):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -156,14 +156,15 @@ def main(night_name=None):
         spirouImage.WriteTable(table, outfile, fmt='ascii.rst')
 
         # log saving of file
-        wmsg = 'Listing of directory on file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(outfile))
+        if not quiet:
+            wmsg = 'Listing of directory on file {0}'
+            WLOG('', p['LOG_OPT'], wmsg.format(outfile))
 
-        # print out to screen
-        WLOG('', '', '')
-        WLOG('', '', 'Listing table:')
-        WLOG('', '', '')
-        spirouImage.PrintTable(table)
+            # print out to screen
+            WLOG('', '', '')
+            WLOG('', '', 'Listing table:')
+            WLOG('', '', '')
+            spirouImage.PrintTable(table)
 
     # ----------------------------------------------------------------------
     # Update Index

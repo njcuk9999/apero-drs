@@ -570,7 +570,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     return tilt[:, 0]
 
 
-def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
+def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
                    return_filename=False, required=True):
     """
     Reads the wave file (from calib database or filename)
@@ -632,7 +632,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         return wave
 
 
-def read_wave_params(p, hdr):
+def read_waveparams(p, hdr):
     func_name = __NAME__ + '.read_wave_params()'
     # get constants from p
     key = p['KW_WAVE_PARAM'][0]
@@ -660,7 +660,7 @@ def read_wave_params(p, hdr):
     return wave_params
 
 
-def get_wave_solution(p, image=None, hdr=None):
+def get_wave_solution_old(p, image=None, hdr=None):
     func_name = __NAME__ + '.get_wave_solution()'
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
@@ -673,7 +673,7 @@ def get_wave_solution(p, image=None, hdr=None):
     # if we have header use header to get wave solution
     if cond1 and cond2 and cond3:
         # get the wave parmaeters from the header
-        wave_params = read_wave_params(p, hdr)
+        wave_params = read_waveparams(p, hdr)
         # get the dimensions
         dim1 = hdr[dim1key]
         # check that dim1 is the correct number of orders
@@ -691,9 +691,135 @@ def get_wave_solution(p, image=None, hdr=None):
             wave[order_num] = np.polyval(wave_params[order_num][::-1], xpixels)
     # else we use the calibDB (using the header) to get the wave solution
     else:
-        wave = read_wave_file(p, hdr)
+        wave = read_wavefile(p, hdr)
     # return wave solution
     return wave
+
+
+def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
+    func_name = __NAME__ + '.create_wavemap_from_waveparam()'
+    # get constants from p
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # get keys from header
+    dim1 = hdr[dim1key]
+    # raise error is image and nbpix is None
+    if image is None and nb_xpix is None:
+        emsg = ('Need to define an "image" or "nb_xpix" in order to '
+                'produce wavemap from wave parameteres')
+        WLOG('error', p['LOG_OPT'], emsg)
+    # get the required dimensions of the wavemap
+    if image is None:
+        dim1req = nb_xpix
+    else:
+        dim1req = image.shape[0]
+    # check that dim1 is the correct number of orders
+    if dim1 != dim1req:
+        emsg1 = (
+            'Number of orders in HEADER ({0}={1}) not compatible with '
+            'number of orders in image ({2}')
+        eargs = [dim1key, dim1, dim1req]
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+    # define empty wave solution
+        wavemap = np.zeros_like(image)
+    xpixels = np.arange(image.shape[1])
+    # load the wave solution for each order
+    for order_num in range(dim1):
+        wavemap[order_num] = np.polyval(waveparams[order_num][::-1], xpixels)
+    # return wavemap
+    return wavemap
+
+
+
+def get_wave_solution(p, image=None, hdr=None, filename=None,
+                      return_wavemap=False, return_filename=False,
+                      nb_xpix=None, return_header=False):
+    """
+    Gets the wave solution coefficients (and wavemap if "return_wavemap" is
+    True and filename if "return_filename" is True)
+
+    The wavelength solution will be taken from:
+        1) filename (if not None)
+        2) calibDB (if CALIB_DB_FORCE_WAVESOL is True)
+        3) header (if hdr not None)
+        4) calibDB
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+           CALIB_DB_FORCE_WAVESOL: bool, if True do not attempt to use header
+    :param image: numpy array (2D) or None, image used to get the shape of the
+                  xpixels - if wavemap is constructed from wave parameters, can
+                  be None is nb_xpix is given
+    :param hdr: dictionary or None, the header used for the wave parameter keys
+                or if keys are not present for the date/time for the calibDB
+                entry
+    :param filename: string, the filename and path of the wave solution file to
+                     use (wave parameters are taken from file header)
+    :param return_wavemap: bool, if True returns wave map (same shape as input
+                           image (in x direction) or number of orders x nb_xpix)
+    :param return_filename: bool, if True returns filename
+    :param nb_xpix: int, the number of x pixels if image is None (used to
+                    generate wave map from wave parameters
+    :param return_header: bool, if True return file header
+
+    :return waveparams:numpy array (2D), the wave coefficients for each order
+                       shape = (number of orders x number of coeffs)
+    :return wavemap: numpy array (2D), the wave map
+                       shape = (number of orders x image size)
+                       or
+                       shape = (number of orders x nb_xpix) - if image is None
+    :return wavefile: string, the filename of the wave file
+    :return header: dict, the header of the wave file (if return_header=True)
+    """
+    # get constants from p
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    namekey = p['KW_WAVE_FILE'][0]
+    # check for header keys in header
+    if hdr is None:
+        header_cond = False
+    else:
+        header_cond = (dim1key in hdr) and (dim2key in hdr) and (namekey in hdr)
+    # -------------------------------------------------------------------------
+    # deal with where to get wave solution from
+    # -------------------------------------------------------------------------
+    # if filename is given we should get it from the filename
+    if filename is not None:
+        rout = readimage(p, filename=filename, log=False)
+        wavemap, hdict, _, nx, ny = rout
+        waveparams = read_waveparams(p, hdict)
+    # if force calibDB is True
+    elif p['CALIB_DB_FORCE_WAVESOL']:
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True)
+        waveparams = read_waveparams(p, hdict)
+        filename = read_wavefile(p, hdr, return_filename=True)
+    # if we have keys in the header use them
+    elif header_cond:
+        waveparams = read_waveparams(p, hdr)
+        if return_wavemap:
+            wavemap = create_wavemap_from_waveparam(p, hdr, waveparams,
+                                                    image, nb_xpix)
+        else:
+            wavemap = None
+        filename = hdr[namekey]
+        hdict = hdr
+    # else we try to use the calibDB
+    else:
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True)
+        waveparams = read_waveparams(p, hdict)
+        filename = read_wavefile(p, hdr, return_filename=True)
+    # -------------------------------------------------------------------------
+    # deal with returns
+    # -------------------------------------------------------------------------
+    returns = [waveparams]
+    if return_wavemap:
+        returns.append(wavemap)
+    if return_filename:
+        returns.append(filename)
+    if return_header:
+        returns.append(hdict)
+    return returns
 
 
 def get_good_object_name(p, hdr=None, rawname=None):
@@ -924,6 +1050,10 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
     rout = readimage(p, filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
     return rout
+
+
+
+
 
 
 # =============================================================================

@@ -125,16 +125,14 @@ def main(night_name=None, files=None):
     # wavelength file; we will use the polynomial terms in its header,
     # NOT the pixel values that would need to be interpolated
     # getting header info with wavelength polynomials
-    wdata = spirouImage.ReadWaveFile(p, hchdr, return_header=True)
-    wave, wave_hdr = wdata
-    loc['WAVE_INIT'] = wave
-    loc['WAVEHDR'] = wave_hdr
-    loc.set_source('WAVE_INIT',
-                   __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    # get wave params from wave header
-    poly_wave_sol = spirouImage.ReadWaveParams(p, wave_hdr)
-    loc['WAVEPARAMS'] = poly_wave_sol
-    loc.set_source('WAVEPARAMS', 'spirouImage.ReadWaveFile')
+
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
+                                       return_filename=True)
+    loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
 
     # ----------------------------------------------------------------------
     # Read UNe solution

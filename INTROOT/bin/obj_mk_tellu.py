@@ -92,7 +92,9 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Get the wave solution
     # ------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
+    _, loc['WAVE'] = spirouImage.GetWaveSolution(p, image=loc['DATA'],
+                                                 hdr=loc['DATAHDR'],
+                                                 return_wavemap=True)
     # set source
     loc.set_source('WAVE', main_name)
     # get the wave keys

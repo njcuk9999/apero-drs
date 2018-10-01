@@ -514,6 +514,16 @@ drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': '
 #        drift_peak_allowed_types
 drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 
+#    Define the allowed file types for the input files
+#       fp/hc is based on the reference file these are which other
+#       files are allowed for each input type
+#        dictionary must have keys equal to the keys in
+#        drift_peak_allowed_types
+drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
+
+#    Define fibers which these can be used on
+drift_peak_output_except = {'OBJ_FP': 'C', 'OBJ_HCONE': 'C', 'OBJ_HCTWO': 'C'}
+
 #    Define the minimum spacing between peaks in order to be  - [cal_drift-peak]
 #        recognised as a valid peak (before fitting a gaussian)
 drift_peak_inter_peak_spacing = 5
@@ -841,6 +851,8 @@ calib_db_force_wavesol = True
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
+# Whether to force the linelist to be created (or re-created)         - [cal_HC]
+HC_EA_FORCE_CREATE_LINELIST = False
 # whether to do plot per order (very slow + interactive)              - [cal_HC]
 HC_EA_PLOT_PER_ORDER = False
 # width of the box for fitting HC lines. Lines will be fitted         - [cal_HC]
