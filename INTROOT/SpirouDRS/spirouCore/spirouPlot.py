@@ -72,6 +72,8 @@ matplotlib.rc('font', **font)
 PLOT_STYLE = spirouConfig.Constants.PLOT_STYLE()
 if PLOT_STYLE is not None:
     plt.style.use(PLOT_STYLE)
+else:
+    PLOT_STYLE = ''
 
 
 # =============================================================================
