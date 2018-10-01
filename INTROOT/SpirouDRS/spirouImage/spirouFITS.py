@@ -734,7 +734,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
 
 def get_wave_solution(p, image=None, hdr=None, filename=None,
                       return_wavemap=False, return_filename=False,
-                      nb_xpix=None):
+                      nb_xpix=None, return_header=False):
     """
     Gets the wave solution coefficients (and wavemap if "return_wavemap" is
     True and filename if "return_filename" is True)
@@ -761,6 +761,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     :param return_filename: bool, if True returns filename
     :param nb_xpix: int, the number of x pixels if image is None (used to
                     generate wave map from wave parameters
+    :param return_header: bool, if True return file header
 
     :return waveparams:numpy array (2D), the wave coefficients for each order
                        shape = (number of orders x number of coeffs)
@@ -769,6 +770,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
                        or
                        shape = (number of orders x nb_xpix) - if image is None
     :return wavefile: string, the filename of the wave file
+    :return header: dict, the header of the wave file (if return_header=True)
     """
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
@@ -801,6 +803,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         else:
             wavemap = None
         filename = hdr[namekey]
+        hdict = hdr
     # else we try to use the calibDB
     else:
         wavemap, hdict = read_wavefile(p, hdr, return_header=True)
@@ -809,14 +812,14 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # -------------------------------------------------------------------------
     # deal with returns
     # -------------------------------------------------------------------------
-    if return_filename and return_wavemap:
-        return waveparams, wavemap, filename
-    elif return_filename:
-        return waveparams, filename
-    elif return_wavemap:
-        return waveparams, wavemap
-    else:
-        return waveparams
+    returns = [waveparams]
+    if return_wavemap:
+        returns.append(wavemap)
+    if return_filename:
+        returns.append(filename)
+    if return_header:
+        returns.append(hdict)
+    return returns
 
 
 def get_good_object_name(p, hdr=None, rawname=None):
