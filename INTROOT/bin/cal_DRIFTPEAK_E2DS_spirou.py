@@ -112,13 +112,18 @@ def main(night_name=None, reffile=None):
     # get lamp type
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
-        if ext_type == 'FP_FP':
-            loc['LAMP'] = 'fp'
-        elif ext_type == 'HC_HC':
-            loc['LAMP'] = 'hc'
-        else:
-            emsg = 'Wrong type of image for Drift, should be "hc_hc" or "fp_fp"'
-            WLOG('error', p['LOG_OPT'], emsg)
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
+        found = False
+        for kind in drift_types:
+            if ext_type == kind:
+                loc['LAMP'] = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
+                found = True
+        if not found:
+            eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
+            emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
+                     '{1}'.format(*eargs1))
+            emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     else:
         emsg = 'Header key = "{0}" missing from file {1}'
         eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]

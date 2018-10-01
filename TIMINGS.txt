@@ -1,80 +1,109 @@
 Version 0.3.006
 
 10:31:05.65 -   |unit_test| *****************************************
-10:31:05.65 -   |unit_test| TIMING STATS (Cal_Test.run)
+10:31:05.65 -   |unit_test| TIMING STATS (Cal_Test.run) 0.3.016
 10:31:05.65 -   |unit_test| *****************************************
-10:31:05.65 -   |unit_test|
-10:31:05.65 -   |unit_test|  RUN000:cal_preprocess_spirou        Time taken = 126.115 s
-10:31:05.65 -   |unit_test|  RUN001:cal_DARK_spirou              Time taken = 4.787 s
-10:31:05.65 -   |unit_test|  RUN002:cal_BADPIX_spirou            Time taken = 7.547 s
-10:31:05.65 -   |unit_test|  RUN003A:cal_loc_RAW_spirou          Time taken = 14.474 s
-10:31:05.65 -   |unit_test|  RUN003B:cal_loc_RAW_spirou          Time taken = 14.147 s
-10:31:05.65 -   |unit_test|  RUN005:cal_SLIT_spirou              Time taken = 24.579 s
-10:31:05.65 -   |unit_test|  RUN006:cal_FF_RAW_spirou            Time taken = 39.894 s
-10:31:05.65 -   |unit_test|  RUN007A:cal_extract_RAW_spirou      Time taken = 59.342 s
-10:31:05.65 -   |unit_test|  RUN007B:cal_extract_RAW_spirou      Time taken = 88.211 s
-10:31:05.65 -   |unit_test|  RUN008:cal_HC_E2DS_spirou           Time taken = 16.781 s
-10:31:05.65 -   |unit_test|  RUN009:cal_WAVE_E2DS_spirou         Time taken = 64.465 s
-10:31:05.65 -   |unit_test|  RUN010A:cal_extract_RAW_spirou      Time taken = 55.168 s
-10:31:05.65 -   |unit_test|  RUN010B:cal_extract_RAW_spirou      Time taken = 57.578 s
-10:31:05.65 -   |unit_test|  RUN010C:cal_extract_RAW_spirou      Time taken = 60.586 s
-10:31:05.65 -   |unit_test|  RUN010D:cal_extract_RAW_spirou      Time taken = 58.140 s
-10:31:05.65 -   |unit_test|  RUN010E:cal_extract_RAW_spirou      Time taken = 69.193 s
-10:31:05.65 -   |unit_test|  RUN010F:cal_extract_RAW_spirou      Time taken = 62.747 s
-10:31:05.65 -   |unit_test|  RUN010G:cal_extract_RAW_spirou      Time taken = 97.372 s
-10:31:05.65 -   |unit_test|  RUN010H:cal_extract_RAW_spirou      Time taken = 100.724 s
-10:31:05.65 -   |unit_test|  RUN011A:cal_extract_RAW_spirou      Time taken = 62.868 s
-10:31:05.65 -   |unit_test|  RUN011B:cal_extract_RAW_spirou      Time taken = 60.526 s
-10:31:05.65 -   |unit_test|  RUN011C:cal_extract_RAW_spirou      Time taken = 64.145 s
-10:31:05.65 -   |unit_test|  RUN011D:cal_extract_RAW_spirou      Time taken = 62.375 s
-10:31:05.65 -   |unit_test|  RUN012A:cal_DRIFT_E2DS_spirou       Time taken = 1.980 s
-10:31:05.65 -   |unit_test|  RUN012B:cal_DRIFTPEAK_E2DS_spirou   Time taken = 32.714 s
-10:31:05.65 -   |unit_test|  RUN013:cal_CCF_E2DS_spirou          Time taken = 3.463 s
-10:31:05.65 -   |unit_test|  RUN014:cal_exposure_meter           Time taken = 257.554 s
-10:31:05.65 -   |unit_test|  RUN015:off_listing_RAW_spirou       Time taken = 0.271 s
-10:31:05.65 -   |unit_test|  RUN016:off_listing_REDUC_spirou     Time taken = 0.346 s
-10:31:05.65 -   |unit_test|  RUN017:visu_RAW_spirou              Time taken = 0.821 s
-10:31:05.65 -   |unit_test|  RUN018:visu_E2DS_spirou             Time taken = 1.036 s
-10:31:05.65 -   |unit_test|  Total                               Time taken = 1569.946 s
+13:07:15.40 -   |unit_test|  RUN000:cal_preprocess_spirou        Time taken = 93.829 s
+13:07:15.40 -   |unit_test|  RUN001:cal_DARK_spirou              Time taken = 3.423 s
+13:07:15.40 -   |unit_test|  RUN002:cal_BADPIX_spirou            Time taken = 5.992 s
+13:07:15.40 -   |unit_test|  RUN003A:cal_loc_RAW_spirou          Time taken = 8.344 s
+13:07:15.40 -   |unit_test|  RUN003B:cal_loc_RAW_spirou          Time taken = 8.943 s
+13:07:15.40 -   |unit_test|  RUN005:cal_SLIT_spirou              Time taken = 13.906 s
+13:07:15.40 -   |unit_test|  RUN006:cal_FF_RAW_spirou            Time taken = 43.190 s
+13:07:15.40 -   |unit_test|  RUN007A:cal_extract_RAW_spirou      Time taken = 64.349 s
+13:07:15.40 -   |unit_test|  RUN007B:cal_extract_RAW_spirou      Time taken = 66.569 s
+13:07:15.40 -   |unit_test|  RUN008:cal_HC_E2DS_spirou           Time taken = 20.007 s
+13:07:15.40 -   |unit_test|  RUN009:cal_WAVE_E2DS_spirou         Time taken = 57.879 s
+13:07:15.40 -   |unit_test|  RUN010A:cal_extract_RAW_spirou      Time taken = 61.393 s
+13:07:15.40 -   |unit_test|  RUN010B:cal_extract_RAW_spirou      Time taken = 61.005 s
+13:07:15.40 -   |unit_test|  RUN010C:cal_extract_RAW_spirou      Time taken = 60.530 s
+13:07:15.40 -   |unit_test|  RUN010D:cal_extract_RAW_spirou      Time taken = 63.239 s
+13:07:15.40 -   |unit_test|  RUN010E:cal_extract_RAW_spirou      Time taken = 68.932 s
+13:07:15.40 -   |unit_test|  RUN010F:cal_extract_RAW_spirou      Time taken = 62.935 s
+13:07:15.40 -   |unit_test|  RUN010G:cal_extract_RAW_spirou      Time taken = 59.846 s
+13:07:15.41 -   |unit_test|  RUN010H:cal_extract_RAW_spirou      Time taken = 61.964 s
+13:07:15.41 -   |unit_test|  RUN010I:cal_extract_RAW_spirou      Time taken = 62.021 s
+13:07:15.41 -   |unit_test|  RUN010J:cal_extract_RAW_spirou      Time taken = 59.805 s
+13:07:15.41 -   |unit_test|  RUN010K:cal_extract_RAW_spirou      Time taken = 61.228 s
+13:07:15.41 -   |unit_test|  RUN011A:cal_extract_RAW_spirou      Time taken = 64.189 s
+13:07:15.41 -   |unit_test|  RUN011B:cal_extract_RAW_spirou      Time taken = 64.549 s
+13:07:15.41 -   |unit_test|  RUN011C:cal_extract_RAW_spirou      Time taken = 63.974 s
+13:07:15.41 -   |unit_test|  RUN011D:cal_extract_RAW_spirou      Time taken = 63.772 s
+13:07:15.41 -   |unit_test|  RUN012A:cal_DRIFT_E2DS_spirou       Time taken = 2.119 s
+13:07:15.41 -   |unit_test|  RUN012B:cal_DRIFTPEAK_E2DS_spirou   Time taken = 36.671 s
+13:07:15.41 -   |unit_test|  RUN013:cal_CCF_E2DS_spirou          Time taken = 4.243 s
+13:07:15.41 -   |unit_test|  RUN014:cal_exposure_meter           Time taken = 138.255 s
+13:07:15.41 -   |unit_test|  RUN015:off_listing_RAW_spirou       Time taken = 0.116 s
+13:07:15.41 -   |unit_test|  RUN016:off_listing_REDUC_spirou     Time taken = 0.311 s
+13:07:15.41 -   |unit_test|  RUN017:visu_RAW_spirou              Time taken = 0.439 s
+13:07:15.41 -   |unit_test|  RUN018:visu_E2DS_spirou             Time taken = 0.927 s
+13:07:15.41 -   |unit_test|  Total                               Time taken = 1508.894 s
+
 
 10:59:07.59 -   |unit_test| *****************************************
 10:59:07.59 -   |unit_test| TIMING STATS (Tellu_Test.run)
 10:59:07.59 -   |unit_test| *****************************************
 10:59:07.59 -   |unit_test|
-10:59:07.59 -   |unit_test|  RUN000B:cal_preprocess_spirou       Time taken = 41.888 s
-10:59:07.59 -   |unit_test|  RUN000C:cal_preprocess_spirou       Time taken = 3.416 s
-10:59:07.59 -   |unit_test|  RUN000D:cal_preprocess_spirou       Time taken = 3.123 s
-10:59:07.59 -   |unit_test|  RUN010A:cal_extract_RAW_spirou      Time taken = 91.678 s
-10:59:07.59 -   |unit_test|  RUN010B:cal_extract_RAW_spirou      Time taken = 147.925 s
-10:59:07.59 -   |unit_test|  RUN010C:cal_extract_RAW_spirou      Time taken = 65.988 s
-10:59:07.59 -   |unit_test|  RUN010D:cal_extract_RAW_spirou      Time taken = 73.633 s
-10:59:07.59 -   |unit_test|  RUN010E:cal_extract_RAW_spirou      Time taken = 64.063 s
-10:59:07.59 -   |unit_test|  RUN010F:cal_extract_RAW_spirou      Time taken = 72.564 s
-10:59:07.59 -   |unit_test|  RUN010G:cal_extract_RAW_spirou      Time taken = 61.133 s
-10:59:07.59 -   |unit_test|  RUN010H:cal_extract_RAW_spirou      Time taken = 88.253 s
-10:59:07.59 -   |unit_test|  RUN010I:cal_extract_RAW_spirou      Time taken = 62.080 s
-10:59:07.59 -   |unit_test|  RUN010J:cal_extract_RAW_spirou      Time taken = 74.162 s
-10:59:07.59 -   |unit_test|  RUN010K:cal_extract_RAW_spirou      Time taken = 97.449 s
-10:59:07.59 -   |unit_test|  RUN010L:cal_extract_RAW_spirou      Time taken = 103.650 s
-10:59:07.59 -   |unit_test|  RUN010M:cal_extract_RAW_spirou      Time taken = 69.550 s
-10:59:07.59 -   |unit_test|  RUN010N:cal_extract_RAW_spirou      Time taken = 85.317 s
-10:59:07.59 -   |unit_test|  RUN11A:obj_mk_tellu                 Time taken = 4.263 s
-10:59:07.59 -   |unit_test|  RUN11B:obj_mk_tellu                 Time taken = 3.493 s
-10:59:07.59 -   |unit_test|  RUN11C:obj_mk_tellu                 Time taken = 3.593 s
-10:59:07.59 -   |unit_test|  RUN11D:obj_mk_tellu                 Time taken = 3.314 s
-10:59:07.59 -   |unit_test|  RUN11E:obj_mk_tellu                 Time taken = 3.491 s
-10:59:07.59 -   |unit_test|  RUN11F:obj_mk_tellu                 Time taken = 3.377 s
-10:59:07.59 -   |unit_test|  RUN11G:obj_mk_tellu                 Time taken = 3.520 s
-10:59:07.59 -   |unit_test|  RUN11H:obj_mk_tellu                 Time taken = 3.600 s
-10:59:07.59 -   |unit_test|  RUN11I:obj_mk_tellu                 Time taken = 3.446 s
-10:59:07.59 -   |unit_test|  RUN11J:obj_mk_tellu                 Time taken = 3.272 s
-10:59:07.59 -   |unit_test|  RUN11K:obj_mk_tellu                 Time taken = 3.186 s
-10:59:07.59 -   |unit_test|  RUN11L:obj_mk_tellu                 Time taken = 3.175 s
-10:59:07.59 -   |unit_test|  RUN11M:obj_mk_tellu                 Time taken = 3.583 s
-10:59:07.59 -   |unit_test|  RUN11N:obj_mk_tellu                 Time taken = 3.441 s
-10:59:07.59 -   |unit_test|  RUN12A:obj_fit_tellu                Time taken = 5.487 s
-10:59:07.59 -   |unit_test|  RUN12B:obj_fit_tellu                Time taken = 5.021 s
-10:59:07.59 -   |unit_test|  Total                               Time taken = 1265.132 s
+13:57:28.13 -   |unit_test|  RUN000A:cal_preprocess_spirou       Time taken = 6.857 s
+13:57:28.13 -   |unit_test|  RUN000B:cal_preprocess_spirou       Time taken = 13.921 s
+13:57:28.13 -   |unit_test|  RUN000C:cal_preprocess_spirou       Time taken = 21.825 s
+13:57:28.13 -   |unit_test|  RUN000D:cal_preprocess_spirou       Time taken = 8.682 s
+13:57:28.13 -   |unit_test|  RUN000E:cal_preprocess_spirou       Time taken = 38.453 s
+13:57:28.13 -   |unit_test|  RUN000F:cal_preprocess_spirou       Time taken = 12.791 s
+13:57:28.13 -   |unit_test|  RUN010A:cal_extract_RAW_spirou      Time taken = 84.732 s
+13:57:28.13 -   |unit_test|  RUN010B:cal_extract_RAW_spirou      Time taken = 79.768 s
+13:57:28.13 -   |unit_test|  RUN010C:cal_extract_RAW_spirou      Time taken = 64.743 s
+13:57:28.13 -   |unit_test|  RUN010D:cal_extract_RAW_spirou      Time taken = 60.606 s
+13:57:28.13 -   |unit_test|  RUN010E:cal_extract_RAW_spirou      Time taken = 63.739 s
+13:57:28.13 -   |unit_test|  RUN010F:cal_extract_RAW_spirou      Time taken = 64.317 s
+13:57:28.13 -   |unit_test|  RUN010G:cal_extract_RAW_spirou      Time taken = 67.564 s
+13:57:28.13 -   |unit_test|  RUN010H:cal_extract_RAW_spirou      Time taken = 75.385 s
+13:57:28.13 -   |unit_test|  RUN010I:cal_extract_RAW_spirou      Time taken = 67.048 s
+13:57:28.13 -   |unit_test|  RUN010J:cal_extract_RAW_spirou      Time taken = 75.696 s
+13:57:28.13 -   |unit_test|  RUN010K:cal_extract_RAW_spirou      Time taken = 65.655 s
+13:57:28.13 -   |unit_test|  RUN010L:cal_extract_RAW_spirou      Time taken = 60.474 s
+13:57:28.13 -   |unit_test|  RUN010M:cal_extract_RAW_spirou      Time taken = 58.608 s
+13:57:28.13 -   |unit_test|  RUN010N:cal_extract_RAW_spirou      Time taken = 59.506 s
+13:57:28.13 -   |unit_test|  RUN010O:cal_extract_RAW_spirou      Time taken = 59.005 s
+13:57:28.13 -   |unit_test|  RUN010P:cal_extract_RAW_spirou      Time taken = 60.001 s
+13:57:28.13 -   |unit_test|  RUN010Q:cal_extract_RAW_spirou      Time taken = 61.318 s
+13:57:28.13 -   |unit_test|  RUN010R:cal_extract_RAW_spirou      Time taken = 58.059 s
+13:57:28.13 -   |unit_test|  RUN010S:cal_extract_RAW_spirou      Time taken = 60.404 s
+13:57:28.13 -   |unit_test|  RUN010T:cal_extract_RAW_spirou      Time taken = 59.279 s
+13:57:28.13 -   |unit_test|  RUN010U:cal_extract_RAW_spirou      Time taken = 58.483 s
+13:57:28.13 -   |unit_test|  RUN010V:cal_extract_RAW_spirou      Time taken = 58.906 s
+13:57:28.13 -   |unit_test|  RUN010W:cal_extract_RAW_spirou      Time taken = 61.293 s
+13:57:28.13 -   |unit_test|  RUN010X:cal_extract_RAW_spirou      Time taken = 60.967 s
+13:57:28.13 -   |unit_test|  RUN010Y:cal_extract_RAW_spirou      Time taken = 60.489 s
+13:57:28.13 -   |unit_test|  RUN011A:obj_mk_tellu                Time taken = 3.805 s
+13:57:28.13 -   |unit_test|  RUN011B:obj_mk_tellu                Time taken = 3.052 s
+13:57:28.13 -   |unit_test|  RUN011C:obj_mk_tellu                Time taken = 3.392 s
+13:57:28.13 -   |unit_test|  RUN011D:obj_mk_tellu                Time taken = 3.049 s
+13:57:28.13 -   |unit_test|  RUN011E:obj_mk_tellu                Time taken = 3.157 s
+13:57:28.13 -   |unit_test|  RUN011F:obj_mk_tellu                Time taken = 3.488 s
+13:57:28.13 -   |unit_test|  RUN011G:obj_mk_tellu                Time taken = 3.333 s
+13:57:28.13 -   |unit_test|  RUN011H:obj_mk_tellu                Time taken = 3.580 s
+13:57:28.13 -   |unit_test|  RUN011I:obj_mk_tellu                Time taken = 3.119 s
+13:57:28.13 -   |unit_test|  RUN011J:obj_mk_tellu                Time taken = 3.874 s
+13:57:28.13 -   |unit_test|  RUN011K:obj_mk_tellu                Time taken = 3.367 s
+13:57:28.14 -   |unit_test|  RUN011L:obj_mk_tellu                Time taken = 3.414 s
+13:57:28.14 -   |unit_test|  RUN011M:obj_mk_tellu                Time taken = 3.101 s
+13:57:28.14 -   |unit_test|  RUN011N:obj_mk_tellu                Time taken = 3.407 s
+13:57:28.14 -   |unit_test|  RUN011O:obj_mk_tellu                Time taken = 3.285 s
+13:57:28.14 -   |unit_test|  RUN011P:obj_mk_tellu                Time taken = 3.120 s
+13:57:28.14 -   |unit_test|  RUN011Q:obj_mk_tellu                Time taken = 3.092 s
+13:57:28.14 -   |unit_test|  RUN011R:obj_mk_tellu                Time taken = 3.045 s
+13:57:28.14 -   |unit_test|  RUN011S:obj_mk_tellu                Time taken = 3.092 s
+13:57:28.14 -   |unit_test|  RUN011T:obj_mk_tellu                Time taken = 3.050 s
+13:57:28.14 -   |unit_test|  RUN011U:obj_mk_tellu                Time taken = 3.193 s
+13:57:28.14 -   |unit_test|  RUN011V:obj_mk_tellu                Time taken = 3.017 s
+13:57:28.14 -   |unit_test|  RUN012A:obj_fit_tellu               Time taken = 7.135 s
+13:57:28.14 -   |unit_test|  RUN012B:obj_fit_tellu               Time taken = 7.016 s
+13:57:28.14 -   |unit_test|  RUN012C:obj_fit_tellu               Time taken = 6.025 s
+13:57:28.14 -   |unit_test|  RUN012D:obj_fit_tellu               Time taken = 6.156 s
+13:57:28.14 -   |unit_test|  RUN013:cal_CCF_E2DS_spirou          Time taken = 6.209 s
+13:57:28.14 -   |unit_test|  Total                               Time taken = 1813.147 s
+
 
 11:29:26.30 -   |unit_test| *****************************************
 11:29:26.30 -   |unit_test| TIMING STATS (Pol_Test.run)

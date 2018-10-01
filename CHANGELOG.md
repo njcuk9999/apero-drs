@@ -4608,3 +4608,110 @@
 	- cal_reset.py: exit script has_plots=False (rev.b55de667)
 	- spirouWAVE.py: fix issue with pep8 update (ll_prev defined in wrong place) (rev.7f39d0aa)
 	- spirouWAVE.py (Issue #452): wave_catalog is now initialised as a NaN array (instead of an array of zeros) (rev.074f79fa)
+
+
+
+================================================================================
+* Thu Sep 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.008
+
+================================================================================
+	- version.txt: update/check dependencies (rev.fdf8134c)
+	- drs_dependencies.py: fix for python 2 path (rev.a2177be9)
+	- update date/version/changelog (rev.67113c33)
+
+
+
+================================================================================
+* Mon Sep 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.009
+
+================================================================================
+	- test runs: update tellu_test.run (rev.aa95ba91)
+	- update cal_test.run (rev.73f72ebf)
+	- spirouStartup.py: extra check for no outputs in indexing (fixes crash) (rev.2a54412f)
+	- spirouPlot: fix telluric plots (labels, titles, limits) (rev.8a0abf11)
+	- obj_mk_tellu: save SP to loc (rev.2befaea4)
+	- obj_fit_tellu: fix bug (blaze must be normalised to fit telluric) (rev.a2402037)
+
+
+
+================================================================================
+* Tue Sep 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.010
+
+================================================================================
+	- tellu_test.run: add actual non-hot stars to telluric test (rev.963dfb27)
+	- tellu_test.run: add actual non-hot stars to telluric test (rev.74926c51)
+	- tellu_test.run: reset for full test (rev.73a66736)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.011
+
+================================================================================
+	- recipe_control.txt - add e2dsff files to cal_drift codes and cal_ccf (rev.b99e7904)
+	- cal_DRIFTPEAK_E2DS_spirou: fix obtaining of lamp type with hc_hc (ext_type == "HCONE_HCONE" or "HCTWO_HCTWO") (rev.0d991a01)
+	- cal_extract_RAW_spirou.py: better error message for no DPRTYPE in header (Issue #456) (rev.371922c5)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.012
+
+================================================================================
+	- unit_tests: add cal_CCF test to Tellu_Test.run (rev.5467d047)
+	- unit_tests: update unit test with new hc files (from 2018-08-05) (rev.c8d2c4ca)
+	- recipe_control.txt - remove duplicate line in cal_CCF definition (rev.67ef51d1)
+	- cal_CCF_E2DS_spirou.py - update comments and remove extra spaces (rev.172015c1)
+
+
+
+================================================================================
+* Wed Sep 19 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.013
+
+================================================================================
+	- New CCF mask provided by Xavier on 2018 Sept 19 (rev.fd8dd6be)
+	- Add E2DS_FF for cal_CCF_E2DS recipe (rev.24649509)
+	- Adaptation for telluric corrected spectra (rev.bfa08b02)
+
+
+
+================================================================================
+* Wed Sep 19 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.014
+
+================================================================================
+	- New CCF mask provided by Xavier on 2018 Sept 19 (rev.fd8dd6be)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.015
+
+================================================================================
+	- unit_tests: fix bug in run names (rev.19fe91f3)
+
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.016
+
+================================================================================
+	- remove user specific ignore (should not be needed) (rev.28d08b71)
+	- update .gitignore to ignore misc folder (rev.7cce836c)
+	- spirouWAVE.py - Merge changes from Dev into Melissa (rev.736690cb)
+	- spirouTHORCA.py - Merge changes from Dev into Melissa (rev.25763190)
+	- spirouRV.py - Merge changes from Dev into Melissa (rev.300036d3)
+	- spirouPlot.py - Merge changes from Dev into Melissa (Issue #460) (rev.564931d5)
+	- constants_SPIROU_H4RG.py - Merge changes from Dev into Melissa (rev.72bfa14c)
+	- cal_WAVE_E2DS_EA_spirou.py - Merge changes from Melissa (rev.cdd8fee3)
+	- cal_CCF_E2DS_spirou.py - full header added to "CCF_FITS_FILE" (rev.dbcefdc4)
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.017
+
+================================================================================
+	- spirouTHORCA.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE/cal HC (rev.bd7f4a60)
+	- cal_WAVE_E2DS_spirou.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE (rev.f1cc29c6)
+	- cal_WAVE_E2DS_EA_spirou.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE (rev.4cdb280a)
