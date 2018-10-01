@@ -29,7 +29,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
            'CorrectForDark', 'CorrectForBadPix', 'E2DStoS1D',
-           'FitTilt', 'FlipImage', 'FiberParams', 'GetAllSimilarFiles',
+           'FitTilt', 'FlipImage', 'FiberParams', 'GetSimilarDriftFiles',
            'GetSigdet', 'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
            'IdentifyUnProFile', 'InterpolateBadRegions', 'LocateBadPixels',
@@ -80,7 +80,7 @@ FlipImage = spirouImage.flip_image
 
 FiberParams = spirouFile.fiber_params
 
-GetAllSimilarFiles = spirouImage.get_all_similar_files
+GetSimilarDriftFiles = spirouImage.get_all_similar_files
 
 GetSigdet = spirouImage.get_sigdet
 
