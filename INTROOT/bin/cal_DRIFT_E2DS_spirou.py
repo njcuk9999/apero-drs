@@ -178,12 +178,15 @@ def main(night_name=None, reffile=None):
     #    ref file
     # ------------------------------------------------------------------
     # get files
-    listfiles = spirouImage.GetAllSimilarFiles(p, hdr)
+    listfiles, listtypes = spirouImage.GetSimilarDriftFiles(p, hdr)
     # get the number of files
     nfiles = len(listfiles)
     # Log the number of files found
-    wmsg = 'Number of fp_fp files found on directory = {0}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
+    wmsgs = ['Number of files found on directory = {0}'.format(nfiles),
+             '\tExtensions allowed:']
+    for listtype in listtypes:
+        wmsgs.append('\t\t - {0}'.format(listtype))
+    WLOG('info', p['LOG_OPT'], wmsgs)
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
