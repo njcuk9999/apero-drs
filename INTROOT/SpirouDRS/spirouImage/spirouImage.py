@@ -339,14 +339,48 @@ def get_all_similar_files(p, hdr):
     """
     func_name = __NAME__ + '.get_all_similar_files()'
 
+    # get the allowed file types
+    allowed_file_types_all = p['DRIFT_PEAK_ALLOWED_OUTPUT']
+
     # get the keys for this file
-    if p['KW_OUTPUT'][0] in hdr:
-        output = hdr[p['KW_OUTPUT'][0]]
+    # if p['KW_OUTPUT'][0] in hdr:
+    #     output = hdr[p['KW_OUTPUT'][0]]
+    # else:
+    #     emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+    #     emsg2 = '\tfunction = {0}'.format(func_name)
+    #     WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    #     output = None
+
+    # get lamp type
+    if p['KW_EXT_TYPE'][0] in hdr:
+        ext_type = hdr[p['KW_EXT_TYPE'][0]]
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
+        found, lamp = False, 'None'
+        for kind in drift_types:
+            if ext_type == kind:
+                lamp = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
+                found = True
+        if not found:
+            eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
+            emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
+                     '{1}'.format(*eargs1))
+            emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            lamp = 'None'
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
-        emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-        output = None
+        emsg = 'Header key = "{0}" missing from file {1}'
+        eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        lamp = 'None'
+    # get file type allowed (using lamp type)
+    if lamp in allowed_file_types_all:
+        allowed_file_types = allowed_file_types_all[lamp]
+    else:
+        emsg1 = 'Reference file was identified as lamp={0}'
+        emsg2 = '\tHowever DRIFT_PEAK_ALLOWED_OUTPUT missing this key.'
+        emsg3 = '\tPlease check constants file'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        allowed_file_types = None
 
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
@@ -363,12 +397,13 @@ def get_all_similar_files(p, hdr):
 
     # if file does not exist try to index this folder
     ntries = 0
-    while (not os.path.exists(index_path)) or (ntries < 5):
+    while (not os.path.exists(index_path)) and (ntries < 5):
         wmsg = 'No index file. Running indexing (Attempt {0} of {1})'
         wargs = [ntries + 1, 5]
         WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
         off_listing_REDUC_spirou.main(night_name=p['ARG_NIGHT_NAME'],
                                       quiet=True)
+        ntries += 1
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         itable = spirouTable.read_fits_table(index_path)
@@ -379,7 +414,7 @@ def get_all_similar_files(p, hdr):
         itable = None
 
     # mask by those with correct output and ext_type and not be itself
-    mask1 = itable[p['KW_OUTPUT'][0]] == output
+    mask1 = np.in1d(itable[p['KW_OUTPUT'][0]], allowed_file_types)
     mask2 = itable[p['KW_EXT_TYPE'][0]] == ext_type
     mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
     mask = mask1 & mask2 & mask3
@@ -387,7 +422,8 @@ def get_all_similar_files(p, hdr):
     # check that we have rows left
     if np.sum(mask) == 0:
         emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
-        eargs = [p['KW_OUTPUT'][0], output, p['KW_EXT_TYPE'][0], ext_type]
+        eargs = [p['KW_OUTPUT'][0], allowed_file_types,
+                 p['KW_EXT_TYPE'][0], ext_type]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # if we do get date and sort by it
     else:
