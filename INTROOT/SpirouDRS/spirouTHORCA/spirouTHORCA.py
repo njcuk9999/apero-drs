@@ -259,14 +259,15 @@ def first_guess_at_wave_solution(p, loc, mode=0):
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
     loc.set_source('ECHELLE_ORDERS', func_name)
 
-    # get wave solution filename
-    wave_file = spirouImage.ReadWaveFile(p, loc['HCHDR'], return_filename=True)
+    # get wave solution
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True,
+                                       return_filename=True)
+    param_ll_init, ll_init, wave_file = wout
+
     # log wave file name
     wmsg = 'Reading initial wavelength solution in {0}'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wave_file))
 
-    # get E2DS line list from wave_file
-    ll_init, param_ll_init = get_e2ds_ll(p, loc['HCHDR'], filename=wave_file)
     # only perform fit on orders 0 to p['IC_HC_N_ORD_FINAL']
     loc['LL_INIT'] = ll_init[n_order_start:n_order_final]
     loc.set_source('LL_INIT', __NAME__ + func_name)
