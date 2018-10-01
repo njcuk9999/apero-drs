@@ -108,8 +108,10 @@ def calculate_instrument_drift(p, loc):
     reffilename = spirouImage.ReadHcrefFile(p, loc['HCHDR'],
                                             return_filename=True)
     speref = spirouImage.ReadHcrefFile(p, loc['HCHDR'])
-    # get the wavelengths and parameters for the reference
-    waveref, _ = spirouTHORCA.get_e2ds_ll(p, loc['HCHDR'], filename=reffilename)
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True)
+    _, waveref = wout
+
     # cut down data to correct orders
     speref = speref[:n_order_final]
     waveref = waveref[:n_order_final]
