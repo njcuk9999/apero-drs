@@ -514,6 +514,14 @@ drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': '
 #        drift_peak_allowed_types
 drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 
+#    Define the allowed file types for the input files
+#       fp/hc is based on the reference file these are which other
+#       files are allowed for each input type
+#        dictionary must have keys equal to the keys in
+#        drift_peak_allowed_types
+drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
+
+
 #    Define the minimum spacing between peaks in order to be  - [cal_drift-peak]
 #        recognised as a valid peak (before fitting a gaussian)
 drift_peak_inter_peak_spacing = 5
