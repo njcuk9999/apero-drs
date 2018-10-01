@@ -225,9 +225,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
         # get wave image
         wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                           return_filename=True)
-        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
-        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+                                           return_filename=True,
+                                           return_header=True)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WAVEHDR'] = wout
+        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR'], wsource)
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
