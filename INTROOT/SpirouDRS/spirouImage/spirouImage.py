@@ -24,6 +24,9 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
+
+import off_listing_REDUC_spirou
+
 from . import spirouFITS
 from . import spirouTable
 
@@ -357,12 +360,22 @@ def get_all_similar_files(p, hdr):
     index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
     path = p['REDUCED_DIR']
     index_path = os.path.join(path, index_file)
+
+    # if file does not exist try to index this folder
+    ntries = 0
+    while (not os.path.exists(index_path)) or (ntries < 5):
+        wmsg = 'No index file. Running indexing (Attempt {0} of {1})'
+        wargs = [ntries + 1, 5]
+        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        off_listing_REDUC_spirou.main(night_name=p['ARG_NIGHT_NAME'],
+                                      quiet=True)
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         itable = spirouTable.read_fits_table(index_path)
     else:
-        emsg = 'No index file. Please run off_listing_REDUC_spirou.py'
-        WLOG('error', p['LOG_OPT'], emsg)
+        emsg1 = 'No index file. Could not run indexing'
+        emsg2 = '\t Please run off_listing_REDUC_spirou.py'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         itable = None
 
     # mask by those with correct output and ext_type and not be itself
