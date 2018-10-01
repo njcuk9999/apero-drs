@@ -242,11 +242,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # set plot order
     plot_order = 5
-    # get wave solution filename
-    wave_file = spirouImage.ReadWaveFile(p, loc['HCHDR'], return_filename=True)
-    # get initial wavelength solution
-    ll_init, param_ll_init = spirouTHORCA.GetE2DSll(p, loc['HCHDR'],
-                                                    filename=wave_file)
+
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True,
+                                       return_filename=True)
+    param_ll_init, ll_init, wave_file = wout
+
     # define polynomial fit
     c_aux = np.poly1d(param_ll_init[plot_order][::-1])  # reverse order
     # create mask to select FP lines from plot_order only
