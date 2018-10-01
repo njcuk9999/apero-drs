@@ -166,13 +166,14 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
         # Read wavelength solution
         # ------------------------------------------------------------------
         # set source of wave file
-        wsource = __NAME__ + '/main() + /spirouImage.ReadWaveFile'
-        # get wave solution
-        loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-        loc.set_source('WAVE', wsource)
-        # get wave file
-        p['WAVE_FILE'] = spirouImage.ReadWaveFile(p, hdr, return_filename=True)
-        p.set_source('WAVE_FILE', wsource)
+        wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+        # get wave image
+        wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+                                           return_filename=True)
+        loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
+        loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+        poly_wave_sol = loc['WAVEPARAMS']
+
         # add wave to all waves
         loc['ALLWAVE'][fiber] = loc['WAVE']
         # ------------------------------------------------------------------
@@ -225,13 +226,13 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # add name of the TAPAS y data
     hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used
-    hfile = os.path.split(loc['LOCO_CTR_FILE'])[-1]
+    hfile = os.path.basename(loc['LOCO_CTR_FILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_EM_LOCFILE'], value=hfile)
     # add name of the tilt solution used
-    hfile = os.path.split(p['TILT_FILE'])[-1]
+    hfile = os.path.basename(p['TILT_FILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_EM_TILT'], value=hfile)
     # add name of the wavelength solution used
-    hfile = os.path.split(p['WAVE_FILE'])[-1]
+    hfile = os.path.basename(p['WAVEFILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_EM_WAVE'], value=hfile)
     # add the max and min wavelength threshold
     hdict = spirouImage.AddKey(hdict, p['kw_EM_MINWAVE'],
