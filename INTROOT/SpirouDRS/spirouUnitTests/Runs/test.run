@@ -1,12 +1,17 @@
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
-# Extract the FPs
-run000f = ['cal_preprocess_spirou', 'TEST2/20180805', '*.fits']
-run010w = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295545o_pp.fits']
-run010x = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295546o_pp.fits']
-run010y = ['cal_extract_RAW_spirou', 'TEST2/20180805', '2295547o_pp.fits']
-run12a = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
-run12b = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
-run12c = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
-run12d = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
+
+# Run drift analysis
+run012a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run012b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+
+# Run CCF test
+run013 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
+
+# Run Other tests
+run014 = ['cal_exposure_meter', 'TEST1/20180805', '2295519f_pp.fits']
+run015 = ['off_listing_RAW_spirou', 'TEST1/20180805']
+run016 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
+run017 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run018 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']

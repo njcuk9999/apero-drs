@@ -24,6 +24,9 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
+
+import off_listing_REDUC_spirou
+
 from . import spirouFITS
 from . import spirouTable
 
@@ -336,45 +339,101 @@ def get_all_similar_files(p, hdr):
     """
     func_name = __NAME__ + '.get_all_similar_files()'
 
+    # get the allowed file types
+    allowed_file_types_all = p['DRIFT_PEAK_ALLOWED_OUTPUT']
+
     # get the keys for this file
+    # if p['KW_OUTPUT'][0] in hdr:
+    #     output = hdr[p['KW_OUTPUT'][0]]
+    # else:
+    #     emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+    #     emsg2 = '\tfunction = {0}'.format(func_name)
+    #     WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    #     output = None
+
+    # get the output key for this file
     if p['KW_OUTPUT'][0] in hdr:
         output = hdr[p['KW_OUTPUT'][0]]
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+        emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        eargs = [p['KW_OUTPUT'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
         output = None
 
+    # get lamp type and extraction type
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
+        found, lamp = False, 'None'
+        for kind in drift_types:
+            if ext_type == kind:
+                lamp = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
+                found = True
+        if not found:
+            eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
+            emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
+                     '{1}'.format(*eargs1))
+            emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            lamp = 'None'
+            ext_type = None
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_EXT_TYPE'][0])
+        emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        lamp = 'None'
         ext_type = None
+    # get file type allowed (using lamp type)
+    if lamp in allowed_file_types_all:
+        allowed_file_types = allowed_file_types_all[lamp]
+    else:
+        emsg1 = 'Reference file was identified as lamp={0}'
+        emsg2 = '\tHowever DRIFT_PEAK_ALLOWED_OUTPUT missing this key.'
+        emsg3 = '\tPlease check constants file'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        allowed_file_types = None
 
     # get expected index file name and location
     index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
     path = p['REDUCED_DIR']
     index_path = os.path.join(path, index_file)
+
+    # if file does not exist try to index this folder
+    ntries = 0
+    while (not os.path.exists(index_path)) and (ntries < 5):
+        wmsg = 'No index file. Running indexing (Attempt {0} of {1})'
+        wargs = [ntries + 1, 5]
+        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        off_listing_REDUC_spirou.main(night_name=p['ARG_NIGHT_NAME'],
+                                      quiet=True)
+        ntries += 1
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         itable = spirouTable.read_fits_table(index_path)
     else:
-        emsg = 'No index file. Please run off_listing_REDUC_spirou.py'
-        WLOG('error', p['LOG_OPT'], emsg)
+        emsg1 = 'No index file. Could not run indexing'
+        emsg2 = '\t Please run off_listing_REDUC_spirou.py'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         itable = None
 
-    # mask by those with correct output and ext_type and not be itself
+    # check that we have the correct output type (i.e. EXT_E2DS)
     mask1 = itable[p['KW_OUTPUT'][0]] == output
-    mask2 = itable[p['KW_EXT_TYPE'][0]] == ext_type
+    # check that we have the correct extraction type (e.g. FP_FP or HCONE_HCONE)
+    mask2 = np.in1d(itable[p['KW_EXT_TYPE'][0]], allowed_file_types)
+    # check that we are not including the original filename
     mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
-    mask = mask1 & mask2 & mask3
+    # check that fiber type is correct for all
+    mask4 = check_fiber_ext_type(p, itable, allowed_file_types)
+    # combine masks
+    mask = mask1 & mask2 & mask3 & mask4
 
-    # check that we have rows left
+    # check that we have some rows left
     if np.sum(mask) == 0:
         emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
-        eargs = [p['KW_OUTPUT'][0], output, p['KW_EXT_TYPE'][0], ext_type]
+        eargs = [p['KW_OUTPUT'][0], allowed_file_types,
+                 p['KW_EXT_TYPE'][0], ext_type]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # if we do get date and sort by it
     else:
@@ -409,8 +468,10 @@ def get_all_similar_files(p, hdr):
         itable = itable[sortmask]
         # get file list
         filelist = itable['ABSFILENAMES']
+        # get file types that are left
+        filetypes = np.unique(itable[p['KW_EXT_TYPE'][0]])
         # return file list
-        return list(filelist)
+        return list(filelist), list(filetypes)
 
 
 def interp_bad_regions(p, image):
@@ -586,6 +647,22 @@ def fix_non_preprocessed(p, image, filename=None):
     # else return image
     else:
         return image
+
+
+def check_fiber_ext_type(p, itable, allowed_file_types):
+    # define mask4 as a set of Trues (i.e. we allow all by default)
+    mask4 = np.ones(len(itable), dtype=bool)
+    # loop around the different types
+    for ext_type_ex in p['DRIFT_PEAK_OUTPUT_EXCEPT']:
+        # check ext_type in allowed types
+        if ext_type_ex not in allowed_file_types:
+            continue
+        # check fiber is correct if it isn't set all of this EXT_TYPE to False
+        if p['FIBER'] != p['DRIFT_PEAK_OUTPUT_EXCEPT'][ext_type_ex]:
+            tmp = itable[p['KW_EXT_TYPE'][0]] == ext_type_ex
+            mask4[tmp] = False
+    # return mask4
+    return mask4
 
 
 # =============================================================================

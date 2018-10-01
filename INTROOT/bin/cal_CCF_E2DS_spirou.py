@@ -124,10 +124,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['NUMBER_ORDERS'] = nbo
     loc.set_sources(['E2DS', 'number_orders'], __NAME__ + '/main()')
 
-
-
-
-
     # ----------------------------------------------------------------------
     # Get basic image properties for reference file
     # ----------------------------------------------------------------------
@@ -139,6 +135,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     p = spirouImage.GetGain(p, hdr, name='gain')
     # get acquisition time
     p = spirouImage.GetAcqTime(p, hdr, name='acqtime', kind='julian')
+    # get obj name
+    p = spirouImage.ReadParam(p, hdr, 'KW_OBJNAME', name='OBJNAME', dtype=str)
+
     bjdref = p['ACQTIME']
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
@@ -155,14 +154,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # log
     WLOG('', p['LOG_OPT'], 'Reading wavelength solution ')
-
     # get wave image
-    wave_ll, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
-
+    param_ll, wave_ll = spirouImage.GetWaveSolution(p, hdr=hdr,
+                                                    return_wavemap=True)
     # save to storage
     loc['WAVE_LL'], loc['PARAM_LL'] = wave_ll, param_ll
-    source = __NAME__ + '/main() + spirouTHORCA.GetE2DSll()'
-    loc.set_sources(['wave_ll', 'param_ll'], source)
+    source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
+    loc.set_sources(['WAVE_LL', 'PARAM_LL'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
@@ -204,7 +202,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         e2dsb = e2ds / blaze0
         for i in np.arange(len(e2ds)):
            rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
-           if np.isnan(rap): rap = 0.
+           if np.isnan(rap):
+               rap = 0.0
            e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
 
     # ----------------------------------------------------------------------
@@ -305,7 +304,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     if p['DRS_PLOT']:
         # Plot rv vs ccf (and rv vs ccf_fit)
-        sPlt.ccf_rv_ccf_plot(loc['RV_CCF'], normalized_ccf, ccf_fit)
+        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
     # ----------------------------------------------------------------------
     # archive ccf to table
