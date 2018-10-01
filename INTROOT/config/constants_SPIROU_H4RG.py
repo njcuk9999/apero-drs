@@ -521,6 +521,8 @@ drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 #        drift_peak_allowed_types
 drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
 
+#    Define fibers which these can be used on
+drift_peak_output_except = {'OBJ_FP': 'C', 'OBJ_HCONE': 'C', 'OBJ_HCTWO': 'C'}
 
 #    Define the minimum spacing between peaks in order to be  - [cal_drift-peak]
 #        recognised as a valid peak (before fitting a gaussian)
