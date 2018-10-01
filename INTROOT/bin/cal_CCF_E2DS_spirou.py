@@ -154,14 +154,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # log
     WLOG('', p['LOG_OPT'], 'Reading wavelength solution ')
-
     # get wave image
-    wave_ll, param_ll = spirouTHORCA.GetE2DSll(p, hdr=hdr)
-
+    wave_ll, param_ll = spirouImage.GetWaveSolution(p, hdr=hdr,
+                                                    return_wavemap=True)
     # save to storage
     loc['WAVE_LL'], loc['PARAM_LL'] = wave_ll, param_ll
-    source = __NAME__ + '/main() + spirouTHORCA.GetE2DSll()'
-    loc.set_sources(['wave_ll', 'param_ll'], source)
+    source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
+    loc.set_sources(['WAVE_LL', 'PARAM_LL'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
