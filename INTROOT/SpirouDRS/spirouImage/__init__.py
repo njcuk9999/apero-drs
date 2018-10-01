@@ -38,7 +38,7 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'PPMedianOneOverfNoise', 'ReadParam', 'ReadData', 'ReadImage',
            'ReadTable', 'ReadImageAndCombine', 'ReadFlatFile', 'ReadHeader',
            'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
-           'ReadWaveFile', 'ReadBlazeFile', 'ReadOrderProfile',
+           'ReadBlazeFile', 'ReadOrderProfile',
            'ResizeImage', 'WriteImage', 'WriteTable',
            'GetEarthVelocityCorrection', 'EarthVelocityCorrection']
 
@@ -161,10 +161,6 @@ Read2Dkey = spirouFITS.read_key_2d_list
 ReadTiltFile = spirouFITS.read_tilt_file
 
 ReadLineList = spirouImage.read_line_list
-
-ReadWaveFile = spirouFITS.read_wave_file
-
-ReadWaveParams = spirouFITS.read_wave_params
 
 ReadHcrefFile = spirouFITS.read_hcref_file
 
