@@ -105,7 +105,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    datac = spirouImage.CorrectForDark(p, data, hdr)
+    p, datac = spirouImage.CorrectForDark(p, data, hdr)
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -125,7 +125,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -170,7 +170,7 @@ def main(night_name=None, files=None):
     # define loc storage parameter dictionary
     loc = ParamDict()
     # get tilts
-    loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+    p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     loc.set_source('TILT', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
@@ -194,7 +194,7 @@ def main(night_name=None, files=None):
         # get this fibers parameters
         p = spirouImage.FiberParams(p, fiber, merge=True)
         # get localisation fit coefficients
-        loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
         # ------------------------------------------------------------------
         # Read image order profile
         # ------------------------------------------------------------------
@@ -318,6 +318,8 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # Store Blaze in file
         # ----------------------------------------------------------------------
+        # get raw flat filename
+        raw_flat_file = os.path.basename(p['FITSFILENAME'])
         # construct filename
         blazefits, tag1 = spirouConfig.Constants.FF_BLAZE_FILE(p)
         blazefitsname = os.path.split(blazefits)[-1]
@@ -329,6 +331,14 @@ def main(night_name=None, files=None):
         # define new keys to add
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'],
+                                   value=p['BADPFILE1'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'],
+                                   value=p['BADPFILE2'])
+        hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+        hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=raw_flat_file)
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
         # write 1D list of the SNR
@@ -347,6 +357,7 @@ def main(night_name=None, files=None):
         wmsg = 'Saving FF spectrum for fiber: {0} in {1}'
         WLOG('', p['LOG_OPT'] + fiber, wmsg.format(fiber, flatfitsname))
         # write 1D list of the RMS (add to hdict from blaze)
+        hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=raw_flat_file)
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey1DList(hdict, p['KW_FLAT_RMS'],
                                          values=loc['RMS'])
