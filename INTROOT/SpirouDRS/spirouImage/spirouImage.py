@@ -421,7 +421,8 @@ def get_all_similar_files(p, hdr):
     # check that we have the correct output type (i.e. EXT_E2DS)
     mask1 = itable[p['KW_OUTPUT'][0]] == output
     # check that we have the correct extraction type (e.g. FP_FP or HCONE_HCONE)
-    mask2 = np.in1d(itable[p['KW_EXT_TYPE'][0]], allowed_file_types)
+    mask2 = np.in1d(np.array(itable[p['KW_EXT_TYPE'][0]], dtype=str),
+                    np.array(allowed_file_types))
     # check that we are not including the original filename
     mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
     # check that fiber type is correct for all
