@@ -128,7 +128,7 @@ def main(night_name=None, reffile=None):
     # Read Flat file
     # ----------------------------------------------------------------------
     # get flat
-    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    p, loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
     loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
     loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
@@ -342,6 +342,8 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Save drift values to file
     # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile = os.path.basename(p['REFFILE'])
     # construct filename
     driftfits, tag = spirouConfig.Constants.DRIFT_E2DS_FITS_FILE(p)
     driftfitsname = os.path.split(driftfits)[-1]
@@ -353,6 +355,9 @@ def main(night_name=None, reffile=None):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
     # save drift values
     p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
