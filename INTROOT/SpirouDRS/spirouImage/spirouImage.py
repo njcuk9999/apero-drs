@@ -421,7 +421,8 @@ def get_all_similar_files(p, hdr):
     # check that we have the correct output type (i.e. EXT_E2DS)
     mask1 = itable[p['KW_OUTPUT'][0]] == output
     # check that we have the correct extraction type (e.g. FP_FP or HCONE_HCONE)
-    mask2 = np.in1d(itable[p['KW_EXT_TYPE'][0]], allowed_file_types)
+    mask2 = np.in1d(np.array(itable[p['KW_EXT_TYPE'][0]], dtype=str),
+                    np.array(allowed_file_types))
     # check that we are not including the original filename
     mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
     # check that fiber type is correct for all
@@ -1058,7 +1059,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     if 'DARK' in cdb:
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
         WLOG('', p['LOG_OPT'], 'Doing Dark Correction using ' + darkfile)
-        darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
+        darkimage, dhdr, nx, ny = spirouFITS.read_raw_data(darkfile)
         corrected_image = image - (darkimage * nfiles)
     else:
         # get master config file name
@@ -1073,13 +1074,21 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         emsg1 = 'No valid DARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
-        corrected_image, darkimage = None, None
+        dhdr, corrected_image, darkimage = None, None, None
+
+
+    # get the dark filename (from header)
+    if p['KW_DARKFILE'][0] in dhdr:
+        p['DARKFILE'] = dhdr[p['KW_DARKFILE'][0]]
+    else:
+        p['DARKFILE'] = 'UNKNOWN'
+    p.set_source('DARKFILE', func_name)
 
     # finally return datac
     if return_dark:
-        return corrected_image, darkimage
+        return p, corrected_image, darkimage
     else:
-        return corrected_image
+        return p, corrected_image
 
 
 def get_badpixel_map(p, header=None):
@@ -1126,8 +1135,8 @@ def get_badpixel_map(p, header=None):
     if 'BADPIX' in cdb:
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
         WLOG('', p['LOG_OPT'], 'Doing Bad Pixel Correction using ' + badpixfile)
-        badpixmask, nx, ny = spirouFITS.read_raw_data(badpixfile, False, True)
-        return badpixmask
+        badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(badpixfile)
+        return badpixmask, bhdr
     else:
         # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
@@ -1168,13 +1177,21 @@ def correct_for_badpix(p, image, header):
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
     # get badpixmask
-    badpixmask = get_badpixel_map(p, header)
+    badpixmask, bhdr = get_badpixel_map(p, header)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
     # correct image (set bad pixels to zero)
     corrected_image = np.where(mask, np.zeros_like(image), image)
+    # get badpixel file
+    if p['KW_BADPFILE1'][0] in bhdr:
+        p['BADPFILE1'] = bhdr[p['KW_BADPFILE1'][0]]
+        p['BADPFILE2'] = bhdr[p['KW_BADPFILE2'][0]]
+    else:
+        p['BADPFILE1'] = 'UNKNOWN'
+        p['BADPFILE2'] = 'UNKNOWN'
+    p.set_sources(['BADPFILE1', 'BADPFILE2'], func_name)
     # finally return corrected_image
-    return corrected_image
+    return p, corrected_image
 
 
 def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
@@ -1813,8 +1830,6 @@ def get_wave_keys(p, loc, hdr):
     # check for header key
     if p['KW_WAVE_FILE'][0] in hdr:
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
-        loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', dtype=str,
-                                    **wkwargs)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
         loc['WAVETIME2'] = get_param(keyword='KW_WAVE_TIME2', **wkwargs)
@@ -1829,11 +1844,10 @@ def get_wave_keys(p, loc, hdr):
         fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
         # set the parameters in wave
-        loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
         loc['WAVETIME1'] = calib_time_human
         loc['WAVETIME2'] = calib_time_unix
     # set sources
-    loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
+    loc.set_sources(['WAVETIME1', 'WAVETIME2'], func_name)
     # return loc
     return loc
 
