@@ -99,9 +99,10 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
-    # wout = spirouImage.GetWaveSolution(p, image=loc['DATA'],
-    #                                              hdr=loc['DATAHDR'],
-    #                                              return_wavemap=True)
+    # used for plotting only
+    _, loc['WAVE'] = spirouImage.GetWaveSolution(p, image=loc['DATA'],
+                                                 hdr=loc['DATAHDR'],
+                                                 return_wavemap=True)
 
     # ----------------------------------------------------------------------
     # Get and Normalise the blaze
@@ -258,7 +259,8 @@ def main(night_name=None, files=None):
         # Read wavelength solution
         # ------------------------------------------------------------------
         wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
-                                           return_wavemap=True)
+                                           return_wavemap=True,
+                                           return_filename=True)
         _, loc['WAVE_IT'], loc['WAVEFILE'] = wout
         loc.set_sources(['WAVE_IT', 'WAVEFILE'], main_name)
         # load wave keys
