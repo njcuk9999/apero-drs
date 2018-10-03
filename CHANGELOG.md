@@ -4798,3 +4798,48 @@
 	- spirouFITS.py - allow header return (rev.d8471e5a)
 	- spirouPlot.py - fix bug plot_style cannot be None - now '' when empty (rev.5e3a0420)
 	- cal_CCF_E2DS_spirou.py - fix bug - swap wave and param (rev.799c3ac9)
+
+
+
+================================================================================
+* Tue Oct 02 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.023
+
+================================================================================
+	- cal_CCF_E2DS_spirou.py - fix order out GetWaveSolution outputs (Issue #464) (rev.6b81a010)
+	- Cal_Test.run - change over (cal_exposure_meter last) (rev.61d08521)
+	- spirouTelluric.py - modify functions to allow filename saved to p - for insertion into header at hdict creation (Issue  #471) (rev.23976dcf)
+	- spirouLOCOR.py - modify functions to allow filename save to p - for insertion into header at hdict creation (Issue  #471) (rev.45757bc0)
+	- spirouImage.py - modify functions to allow filename to be saved to p - to insert into header at hdict creation (Issue  #471) - fix bug with mask2 (in getting drift files function) (rev.80f7f3f3)
+	- spirouFITS.py - mmodify read functions to save the filename to p - to inject into header at hdict creation (Issue  #471) (rev.7fa9cca5)
+	- spirouFLAT - add filenames to headers (Issue  #471) (rev.c1553335)
+	- spirouKeywords.py - add the keywords for each file (that will go in the header) - Issue  #471 (rev.7e1e60d3)
+	- obj_mk_tellu.py - add filenames to headers (Issue  #471) (rev.fa5ab5d4)
+	- obj_mk_tellu_template.py - add filenames to headers (Issue  #471) (rev.b4edf263)
+	- obj_fit_tellu.py - add filenames to headers (Issue  #471) (rev.54e8205d)
+	- cal_wavE_mapper.py - add filenames to headers (Issue  #471) (rev.052e4847)
+	- cal_[WAVE_E2DS]_spirou.py - add filenames to headers (Issue  #471) (rev.d2bde2ee)
+	- cal_SLIT_spirou.py - add filenames to headers (Issue  #471) (rev.240d5927)
+	- cal_loc_RAW_spirou.py - add filenames to headers (Issue  #471) (rev.f7e450cc)
+	- cal_HC_E2DS_spirou.py - add filenames to headers (Issue  #471) (rev.bde11970)
+	- cal_HC_E2DS_EA_spirou.py - add filenames to headers (Issue  #471) (rev.143361dc)
+	- cal_FF_RAW_spirou.py - add filenames to headers (Issue  #471) (rev.81966571)
+	- cal_extract_RAW_spirou.py - add filenames to headers (Issue  #471) (rev.c07a5efd)
+	- cal_exposure_meter.py - add filenames to headers (Issue  #471) (rev.b0688686)
+	- cal_DRIFTPEAK_E2DS_spirou.py - add filenames to headers (Issue  #471) (rev.3b2a192f)
+	- cal_DRIFT_E2D.py - add filenames to headers (Issue  #471) (rev.f4bb881f)
+	- cal_DARK_spirou.py - add filenames to headers (Issue  #471) (rev.8ec40729)
+	- cal_BADPIX_spirou.py - add filenames to headers (Issue  #471) (rev.86b4d30f)
+
+
+
+================================================================================
+* Wed Oct 03 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.024
+
+================================================================================
+	- unit tests - add full telluric test for TC3 (rev.57d396c9)
+	- spirouImage.py - WAVE_FILE is now WAVEFILE (rev.9333c919)
+	- dark_test.py - test of the values supplied in the dark header file (for specific files + night_name) (rev.58b1c501)
+	- visu_E2DS_spirou.py - readblazefile now need p returned (rev.388497df)
+	- obj_fit_tellu.py - re-add loc['WAVE'] (used for plotting) + loc['WAVE_IT'] need filename returned (rev.f222a470)
+	- cal_wave_mapper.py - remove flat file (not used or obtained) from header (rev.0d020f26)
+	- cal_exposure_meter.py - remove flatfile (not used or obtained) (rev.9a883b7b)
