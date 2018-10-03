@@ -221,10 +221,9 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
     # add name of the TAPAS y data
     hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
