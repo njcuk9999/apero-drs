@@ -134,6 +134,7 @@ for ite_banana in range(nbanana):
 			ribbon[i,:]/=np.nanmedian(np.abs(ribbon[i,:]))
 
 		# range explored in slopes
+		# TODO: Question: Where does the /8.0 come from?
 		slopes = np.array(range(0,9))*(range_slopes[1]-range_slopes[0])/8.0+range_slopes[0]
 
 		print('range slope exploration : ',range_slopes_deg[0],' -> ',range_slopes_deg[1],' deg')
@@ -186,7 +187,7 @@ for ite_banana in range(nbanana):
 			res-=np.nanmedian(res[keep])
 			res/=np.nanmedian(np.abs(res[keep]))
 			sigmax=np.nanmax(np.abs(res[keep]))
-			keep &= (np.abs(res)<4)
+			keep &= (np.abs(res)<4)   # TODO: Question: is this 4 the same as above?
 		#
 		# we fit a 2nd order polynomial to the slope vx position along order
 		fit=np.polyfit(xsection[keep],dxsection[keep],2)
@@ -215,7 +216,7 @@ for ite_banana in range(nbanana):
 		profil -= scipy.ndimage.filters.median_filter(profil,51)
 
 		dx=np.zeros(wpix)+np.nan
-		ddx=np.arange(-3,4)
+		ddx=np.arange(-3,4)   # TODO: Question: why this size?
 
 		# cross-correlation peaks of median profile VS position along ribbon
 		cc=np.zeros([wpix,len(ddx)],dtype=float)
