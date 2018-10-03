@@ -49,12 +49,15 @@ p = spirouConfig.check_params(p)
 USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_JUL',
             'kw_AIRMASS',
+            'kw_BADPFILE1',
+            'kw_BADPFILE2',
             'kw_BBAD',
             'kw_BBFLAT',
             'kw_BERV',
             'kw_BERV_MAX',
             'kw_BHOT',
             'kw_BJD',
+            'kw_BLAZFILE',
             'kw_BNDARK',
             'kw_BNFLAT',
             'kw_BNILUM',
@@ -80,6 +83,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CRPIX1',
             'kw_CRVAL1',
             'kw_CTYPE1',
+            'kw_DARKFILE',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -101,9 +105,16 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_EM_TRASCUT',
             'kw_EM_WAVE',
             'kw_EXPTIME',
+            'kw_EXTFILE',
             'kw_EXTRA_SN',
+            'kw_EXT_TYPE',
+            'kw_FLATFILE',
             'kw_FLAT_RMS',
+            'kw_FPFILE',
             'kw_GAIN',
+            'kw_HCFILE',
+            'kw_INFILE',
+            'kw_LOCOFILE',
             'kw_LOCO_BCKGRD',
             'kw_LOCO_CTR_COEFF',
             'kw_LOCO_DEG_C',
@@ -126,15 +137,23 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
             'kw_OUTPUT',
-            'kw_EXT_TYPE',
             'kw_POL_EXPTIME',
-            'kw_POL_METHOD',
-            'kw_POL_NEXP',
-            'kw_POL_STOKES',
             'kw_POL_FILENAM1',
             'kw_POL_FILENAM2',
             'kw_POL_FILENAM3',
             'kw_POL_FILENAM4',
+            'kw_POL_LSD_COL1',
+            'kw_POL_LSD_COL2',
+            'kw_POL_LSD_COL3',
+            'kw_POL_LSD_COL4',
+            'kw_POL_LSD_COL5',
+            'kw_POL_LSD_FIT_RESOL',
+            'kw_POL_LSD_FIT_RV',
+            'kw_POL_LSD_MASK',
+            'kw_POL_LSD_NP',
+            'kw_POL_LSD_V0',
+            'kw_POL_LSD_VF',
+            'kw_POL_METHOD',
             'kw_POL_MJDATE1',
             'kw_POL_MJDATE2',
             'kw_POL_MJDATE3',
@@ -143,18 +162,10 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_MJDEND2',
             'kw_POL_MJDEND3',
             'kw_POL_MJDEND4',
-            'kw_POL_LSD_MASK',
-            'kw_POL_LSD_V0',
-            'kw_POL_LSD_VF',
-            'kw_POL_LSD_NP',
-            'kw_POL_LSD_FIT_RV',
-            'kw_POL_LSD_FIT_RESOL',
-            'kw_POL_LSD_COL1',
-            'kw_POL_LSD_COL2',
-            'kw_POL_LSD_COL3',
-            'kw_POL_LSD_COL4',
-            'kw_POL_LSD_COL5',
+            'kw_POL_NEXP',
+            'kw_POL_STOKES',
             'kw_RDNOISE',
+            'kw_REFFILE',
             'kw_TELLU_ABSO',
             'kw_TELLU_AMP_PC',
             'kw_TELLU_DV_TELL1',
@@ -162,18 +173,19 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
+            'kw_TILTFILE',
             'kw_UTC_OBS',
-            'kw_WAVE_FILE',
+            'kw_WAVEFILE',
             'kw_WAVE_LL_DEG',
             'kw_WAVE_ORD_N',
             'kw_WAVE_PARAM',
             'kw_WAVE_TIME1',
             'kw_WAVE_TIME2',
             'kw_drs_QC',
+            'kw_ppversion',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
-            'kw_ppversion',
             'kw_version']
 
 
@@ -427,7 +439,6 @@ kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
-kw_WAVE_FILE = ['WAVEFILE', 0, 'Wave file used']
 kw_WAVE_TIME1 = ['WAVET1', 0, 'Wave file date+time human']
 kw_WAVE_TIME2 = ['WAVET2', 0, 'Wave file date+time unix']
 
@@ -567,6 +578,20 @@ kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
 # -----------------------------------------------------------------------------
 # Define output
 # -----------------------------------------------------------------------------
+kw_DARKFILE = ['DARKFILE', '', 'DARK_DARK file used for correction']
+kw_BADPFILE1 = ['BADFILE1', '', 'FLAT_FLAT file used for BADPIX corr']
+kw_BADPFILE2 = ['BADFILE2', '', 'DARK_DARK file used for BADPIX corr']
+kw_LOCOFILE = ['LOCOFILE', '', 'DARK_FLAT/FLAT_DARK file used for localisation']
+kw_TILTFILE = ['TILTFILE', '', 'FP_FP file use for TILT']
+kw_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
+kw_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
+kw_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
+kw_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
+kw_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+kw_INFILE = ['INFILE', '', 'Input file userd to create output']
+kw_HCFILE = ['HCFILE', '', 'HC file used to create output']
+kw_FPFILE = ['FPFILE', '', 'FP file used to create output']
+
 kw_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
 kw_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
 

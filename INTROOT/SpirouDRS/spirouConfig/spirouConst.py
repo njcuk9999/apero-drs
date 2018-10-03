@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.007'
+__version__ =  '0.3.024'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-09-13'
+__date__ =  '2018-10-03'
 
 
 # =============================================================================
@@ -2426,6 +2426,79 @@ def DEFAULT_LOG_OPT():
     program = path.replace('.py', '')
     # return program
     return program
+
+
+# =============================================================================
+# Plot functions
+# =============================================================================
+def PLOT_FONT_SIZE():
+    """
+    Set the default font size for all graphs
+
+    Note: A good size for viewing on the screen is around 12
+
+    setting value to None will use system defaults
+
+    :return fontsize: int or string or None: fontsize accepted by matplotlib
+    """
+    # fontsize = 20
+    fontsize = None
+    return fontsize
+
+
+def PLOT_FONT_WEIGHT():
+    """
+    Set the default font weight for all graphs
+
+    setting value to None will use system defaults
+
+    :return weight: string or None: font weight accepted by matplotlib
+    """
+    # weight = 'bold'
+    # weight = 'normal'
+    weight = None
+    return weight
+
+
+def PLOT_FONT_FAMILY():
+    """
+    Set the default font family for all graphs (i.e. monospace)
+
+    setting value to None will use system defaults
+
+    :return family: string or None: font family (style name) accepted by
+                    matplotlib
+    """
+    # family = 'monospace'
+    family = None
+    return family
+
+
+def PLOT_STYLE():
+
+    # style = 'seaborn'
+    # style = 'dark_background'
+    style = None
+    return style
+
+
+def FONT_DICT():
+    """
+    Font manager for matplotlib fonts - added to matplotlib.rcParams as a
+    dictionary
+    :return font: rcParams dictionary (must be accepted by maplotlbi.rcParams)
+
+    see:
+      https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
+    """
+    font = dict()
+    if PLOT_FONT_FAMILY() is not None:
+        font['family'] = PLOT_FONT_FAMILY()
+    if PLOT_FONT_WEIGHT() is not None:
+        font['weight'] = PLOT_FONT_WEIGHT()
+    if PLOT_FONT_SIZE() is not None:
+        font['size'] = PLOT_FONT_SIZE()
+    return font
 
 
 # =============================================================================

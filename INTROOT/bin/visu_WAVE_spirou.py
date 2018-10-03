@@ -69,7 +69,7 @@ def main(night_name=None, files=None):
     # get the fiber type
     p['FIBER'] = 'AB'
     e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
-    wave = spirouImage.ReadWaveFile(p)
+    _, wave = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True)
     blaze = spirouImage.ReadBlazeFile(p)
 
     # ----------------------------------------------------------------------
