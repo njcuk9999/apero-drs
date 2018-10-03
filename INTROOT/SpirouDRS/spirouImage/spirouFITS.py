@@ -548,6 +548,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     else
         :return read_file: string, name of tilt file
     """
+    func_name = __NAME__ + '.read_tilt_file()'
     if key is None:
         key = 'TILT'
     # get filename
@@ -566,8 +567,15 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     image, hdict, _, nx, ny = rout
     # get the tilt keys
     tilt = read_key_2d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'], 1)
+    # get the tilt file
+    if p['KW_TILTFILE'][0] in hdict:
+        p['TILTFILE'] = hdict[p['KW_TILTFILE'][0]]
+    else:
+        p['TILTFILE'] = 'UNKNOWN'
+    p.set_source('TILTFILE', func_name)
+
     # return the first set of keys
-    return tilt[:, 0]
+    return p, tilt[:, 0]
 
 
 def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
@@ -617,7 +625,7 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
         read_file = filename
     # deal with returning filename only
     if return_filename:
-        return read_file
+        return os.path.basename(read_file)
     # log wave file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
     WLOG('', p['LOG_OPT'], wmsg)
@@ -775,7 +783,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
     dim2key = p['KW_WAVE_LL_DEG'][0]
-    namekey = p['KW_WAVE_FILE'][0]
+    namekey = p['KW_WAVEFILE'][0]
     # check for header keys in header
     if hdr is None:
         header_cond = False
@@ -939,8 +947,14 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
+    # get flat file name
+    if p['KW_FLATFILE'][0] in hdict:
+        p['FLATFILE'] = hdict[p['KW_FLATFILE'][0]]
+    else:
+        p['FLATFILE'] = 'UNKNOWN'
+    p.set_source('FLATFILE', func_name)
     # return the wave file
-    return flat
+    return p, flat
 
 
 def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
@@ -987,8 +1001,14 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
+    # get blaze file name
+    if p['KW_BLAZFILE'][0] in hdict:
+        p['BLAZFILE'] = hdict[p['KW_BLAZFILE'][0]]
+    else:
+        p['BLAZFILE'] = 'UNKNOWN'
+    p.set_source('BLAZFILE', func_name)
     # return the wave file
-    return blaze
+    return p, blaze
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None,

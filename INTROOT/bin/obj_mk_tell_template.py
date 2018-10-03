@@ -84,16 +84,16 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Get the wave solution
     # ------------------------------------------------------------------
-    _, loc['WAVE'] = spirouImage.GetWaveSolution(p, image=loc['DATA'],
-                                                 hdr=loc['DATAHDR'],
-                                                 return_wavemap=True)
-    # set source
-    loc.set_source('WAVE', main_name)
+    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
+                                       return_wavemap=True,
+                                       return_filename=True)
+    _, loc['WAVE'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
 
     # ----------------------------------------------------------------------
     # Get and Normalise the blaze
     # ----------------------------------------------------------------------
-    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+    p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
 
     # ----------------------------------------------------------------------
     # Get database files
@@ -192,6 +192,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Write Cube median (the template) to file
     # ----------------------------------------------------------------------
+    # get raw file name
+    raw_in_file = os.path.basename(p['FITSFILENAME'])
     # construct filename
     outfile, tag = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
     outfilename = os.path.basename(outfile)
@@ -201,6 +203,11 @@ def main(night_name=None, files=None):
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                               value=loc['WAVEFILE'])
     # write to file
     p = spirouImage.WriteImage(p, outfile, big_cube_med, hdict)
 

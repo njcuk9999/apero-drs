@@ -207,6 +207,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save wave map to file
     # ----------------------------------------------------------------------
+    raw_infile = os.path.basename(p['FITSFILENAME'])
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.split(wavefits)[-1]
@@ -222,6 +223,9 @@ def main(night_name=None, files=None):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
