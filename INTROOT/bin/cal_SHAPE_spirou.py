@@ -202,7 +202,7 @@ def main(night_name=None, files=None):
 def get_shape_map(p, loc):
 
     # get constants from p
-    shape_it = p['SHAPE_NUM_ITERATIONS']
+    nbanana = p['SHAPE_NUM_ITERATIONS']
     width = p['SHAPE_ABC_WIDTH']
     sig_cut = p['SHAPE_SIGCUT_SLOPE']
     ew_min, ew_max = p['SHAPE_GFIT_EWMIN'], p['SHAPE_GFIT_EWMAX']
@@ -222,6 +222,23 @@ def get_shape_map(p, loc):
     xpospeak_all = []
     allslopes_all = []
 
+    # iterating the correction, from coarser to finer
+    for banana_num in range(nbanana):
+
+        # we use the code that will be used by the extraction to ensure
+        # that slice images are as straight as can be
+
+        # if the map is not zeros, we use it as a starting point
+        if np.sum(master_dxmap != 0) != 0:
+            data2 = spirouEXTOR.DeBananafication(data1, master_dxmap)
+            flag_start_slope = False
+        else:
+            data2 = np.array(data1)
+            flag_start_slope = True
+
+
+
+
     # loop around orders
     for order_num in range(nbo):
         # create the x pixel vector (used with polynomials to find
@@ -233,9 +250,7 @@ def get_shape_map(p, loc):
         ytop = np.array(ypix + width / 2, dtype=int)
         ybottom = np.array(ypix - width / 2, dtype=int)
 
-        # loop around the number of iterations
-        for banana_num in range(shape_it):
-
+        for banana_num in range(nbanana):
             # straighten the image with the current master_dump
             data2 = spirouEXTOR.DeBananafication(data1, master_dxmap)
             # we put NaNs on all pixels outside of the order box
