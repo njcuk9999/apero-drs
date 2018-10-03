@@ -86,6 +86,7 @@ def get_loc_coefficients(p, hdr=None, loc=None):
                 ass: numpy array (2D), the fit coefficients array for
                       the widths fit
     """
+    func_name = __NAME__ + '.get_loc_coefficients()'
     # get keywords
     loco_nbo = p['KW_LOCO_NBO'][0]
     loco_deg_c, loco_deg_w = p['KW_LOCO_DEG_C'][0], p['KW_LOCO_DEG_W'][0]
@@ -151,9 +152,17 @@ def get_loc_coefficients(p, hdr=None, loc=None):
     added = ['number_orders', 'nbcoeff_ctr', 'nbcoeff_wid', 'acc', 'ass',
              'loco_ctr_coeff', 'loco_fwhm_coeff', 'loco_ctr_file',
              'loco_fwhm_file']
-    loc.set_sources(added, __NAME__ + '/get_loc_coefficients()')
+    loc.set_sources(added, func_name)
+
+    # get filename
+    if p['KW_LOCOFILE'][0] in hdict:
+        p['LOCOFILE'] = hdict[p['KW_LOCOFILE'][0]]
+    else:
+        p['LOCOFILE'] = 'UNKNOWN'
+    p.set_source('LOCOFILE', func_name)
+
     # return the loc param dict
-    return loc
+    return p, loc
 
 
 def merge_coefficients(loc, coeffs, step):
@@ -497,6 +506,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
             max_ptp_frac = max_ptp / rms  [kind='center']
                          = max(abs_res/y) * 100   [kind='fwhm']
     """
+    func_name = __NAME__ + '.sigmaclip_order_fit()'
     # deal with kind
     if kind not in ['center', 'fwhm']:
         WLOG('error', pp['LOG_OPT'], ('Error: sigma_clip "kind" must be '
@@ -554,7 +564,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
         # add residuals to loc
         loc['RES'] = res
-        loc.set_source('RES', __NAME__ + '/sigmaclip_order_fit()')
+        loc.set_source('RES', func_name)
         # debug plot
         if pp['DRS_PLOT'] and pp['DRS_DEBUG'] == 2:
             sPlt.debug_locplot_fit_residual(pp, loc, rnum, kind)

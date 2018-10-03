@@ -26,8 +26,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 
-import time
-neilstart = time.time()
 
 # =============================================================================
 # Define variables
@@ -112,13 +110,18 @@ def main(night_name=None, reffile=None):
     # get lamp type
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
-        if ext_type == 'FP_FP':
-            loc['LAMP'] = 'fp'
-        elif ext_type == 'HC_HC':
-            loc['LAMP'] = 'hc'
-        else:
-            emsg = 'Wrong type of image for Drift, should be "hc_hc" or "fp_fp"'
-            WLOG('error', p['LOG_OPT'], emsg)
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
+        found = False
+        for kind in drift_types:
+            if ext_type == kind:
+                loc['LAMP'] = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
+                found = True
+        if not found:
+            eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
+            emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
+                     '{1}'.format(*eargs1))
+            emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     else:
         emsg = 'Header key = "{0}" missing from file {1}'
         eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
@@ -145,14 +148,17 @@ def main(night_name=None, reffile=None):
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # get wave image
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    source = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+                                       return_filename=True)
+    _, loc['WAVE'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE'], source)
 
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
     # get flat
-    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    p, loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
     loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
     loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
@@ -214,12 +220,15 @@ def main(night_name=None, reffile=None):
     #    ref file
     # ------------------------------------------------------------------
     # get files
-    listfiles = spirouImage.GetAllSimilarFiles(p, hdr)
+    listfiles, listtypes = spirouImage.GetSimilarDriftFiles(p, hdr)
     # get the number of files
     nfiles = len(listfiles)
     # Log the number of files found
-    wmsg = 'Number of fp_fp files found on directory = {0}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
+    wmsgs = ['Number of files found on directory = {0}'.format(nfiles),
+             '\tExtensions allowed:']
+    for listtype in listtypes:
+        wmsgs.append('\t\t - {0}'.format(listtype))
+    WLOG('info', p['LOG_OPT'], wmsgs)
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -369,6 +378,8 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Save drift values to file
     # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile = os.path.basename(p['REFFILE'])
     # construct filename
     driftfits, tag = spirouConfig.Constants.DRIFTPEAK_E2DS_FITS_FILE(p)
     driftfitsname = os.path.split(driftfits)[-1]
@@ -380,6 +391,10 @@ def main(night_name=None, reffile=None):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
     # save drift values
     p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 

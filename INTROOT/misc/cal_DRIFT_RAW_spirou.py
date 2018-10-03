@@ -155,9 +155,12 @@ def main(night_name=None, files=None, fiber='AB'):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
     # get wave image
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('WAVE', __NAME__ + '/__main__ + /spirouImage.ReadWaveFile')
+    wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True)
+    _, loc['WAVE'] = wout
+    loc.set_source('WAVE', wsource)
 
     # ------------------------------------------------------------------
     # Read image order profile

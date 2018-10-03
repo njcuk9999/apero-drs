@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-visu_E2DS_spirou.py [night_directory] [*e2ds.fits]
+# CODE NAME HERE
 
-Recipe to display e2ds file
+# CODE DESCRIPTION HERE
 
-Created on 2017-12-06 at 14:50
+Created on 2018-10-01 at 11:21
 
-@author: fb
-
-Last modified: 2018-06-01
-
-
+@author: cook
 """
 from __future__ import division
 import numpy as np
+import os
+import warnings
 
+from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -25,7 +24,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'visu_E2DS_spirou.py'
+__NAME__ = 'edit_header.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -35,7 +34,9 @@ __release__ = spirouConfig.Constants.RELEASE()
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
-plt = sPlt.plt
+# set the value to change
+HEADER_KEY = ['DRSOUTID', '', 'DRS output identification code']
+HEADER_VALUE = 'OBJ_FP'
 
 
 # =============================================================================
@@ -47,61 +48,45 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'],
-                                                    [True], [reffile])
+    # deal with reference file being None (i.e. get from sys.argv)
+    if reffile is None:
+        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+    else:
+        customargs = dict(reffile=reffile)
+    # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile',
                                     mainfitsdir='reduced')
-
-    # load the calibDB
-    p = spirouStartup.LoadCalibDB(p)
-
-    # force plotting to 1
-    p['DRS_PLOT'] = 1
-
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    p, reffilename = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'],
+                                                   skipcheck=True)
+    p['REFFILENAME'] = reffilename
+    p.set_source('REFFILENAME', __NAME__ + '.main()')
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
     # read the image data
-    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
-    # get the fiber type
-    fiber1 = str(p['FIBER'])
-
-    e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
-    p, blaze = spirouImage.ReadBlazeFile(p)
-
-    # set source of wave file
-    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
-    # get wave image
-    _, wave = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True)
-
+    data, hdr, cdr, nbo, nx = spirouImage.ReadData(p, p['REFFILENAME'])
     # ----------------------------------------------------------------------
-    # Get basic image properties
+    # Add keys and save file
     # ----------------------------------------------------------------------
-
-    plt.ion()
-    plt.figure()
-
-    for i in np.arange(nx):
-        plt.plot(wave[i], e2ds[i])
-
-    plt.xlabel('Wavelength [nm]')
-    plt.ylabel('Flux e-')
-    plt.title('Extracted spectra')
-
-    plt.figure()
-
-    for i in np.arange(nx):
-        plt.plot(wave[i], e2ds[i] / blaze[i])
-
-    plt.xlabel('Wavelength [nm]')
-    plt.ylabel('Relative Flux e-')
-    plt.title('Blaze corrected Extracted spectra')
-
+    newfilename = p['REFFILE'].replace('.fits', '_edit.fits')
+    newpath = os.path.join(p['ARG_FILE_DIR'], newfilename)
+    # add keys from original header file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # set the version
+    hdict = spirouImage.AddKey(hdict, HEADER_KEY, value=HEADER_VALUE)
+    # log saving
+    wmsg = 'Writing file {0} to {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(newfilename, p['ARG_FILE_DIR']))
+    # save drift values
+    p = spirouImage.WriteImage(p, newpath, data, hdict)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    p = spirouStartup.End(p, outputs=None)
+    p = spirouStartup.End(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
@@ -113,7 +98,15 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    spirouStartup.Exit(ll, has_plots=True)
+    spirouStartup.Exit(ll, has_plots=False)
+
+# =============================================================================
+# End of code
+# =============================================================================
+
+
+
+
 
 # =============================================================================
 # End of code

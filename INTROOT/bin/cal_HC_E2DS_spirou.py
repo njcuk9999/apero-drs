@@ -109,7 +109,7 @@ def main(night_name=None, files=None):
     # Obtain the flat
     # ----------------------------------------------------------------------
     # get the flat
-    loc = spirouFLAT.GetFlat(p, loc, hchdr)
+    p, loc = spirouFLAT.GetFlat(p, loc, hchdr)
     # correct the data with the flat
     # TODO: Should this be used?
     # log
@@ -244,8 +244,8 @@ def part2(p, loc):
             'lines: (second pass)')
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # fit lines
-    start = min(p['IC_HC_N_ORD_START_2'], p['IC_FP_N_ORD_START'])
-    end = max(p['IC_HC_N_ORD_FINAL_2'], p['IC_FP_N_ORD_FINAL'])
+    start = p['IC_HC_N_ORD_START_2']
+    end = p['IC_HC_N_ORD_FINAL_2']
     # redefine echelle orders
     orderrange = np.arange(start, end)
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
@@ -340,6 +340,8 @@ def part2(p, loc):
     # ------------------------------------------------------------------
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile = os.path.basename(p['FITSFILENAME'])
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE(p)
     wavefitsname = os.path.split(wavefits)[-1]
@@ -355,6 +357,11 @@ def part2(p, loc):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
+
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders

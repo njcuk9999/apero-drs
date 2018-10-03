@@ -171,6 +171,9 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
+    # get raw badpixel file
+    raw_badp_file1 = os.path.basename(p['flatfile'])
+    raw_badp_file2 = os.path.basename(p['darkfile'])
     # construct bad pixel file name
     badpixelfits, tag = spirouConfig.Constants.BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
@@ -183,6 +186,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # add new keys
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=raw_badp_file1)
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=raw_badp_file2)
     hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
     hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
     hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])

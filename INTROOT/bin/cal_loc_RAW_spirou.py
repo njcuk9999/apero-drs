@@ -96,7 +96,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    datac = spirouImage.CorrectForDark(p, data, hdr)
+    p, datac = spirouImage.CorrectForDark(p, data, hdr)
 
     # ----------------------------------------------------------------------
     #  Interpolation over bad regions (to fill in the holes)
@@ -126,7 +126,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -167,6 +167,9 @@ def main(night_name=None, files=None):
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
     # write to file
     p = spirouImage.WriteImage(p, rawfits, order_profile, hdict)
 
@@ -371,6 +374,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save and record of image of localization with order center and keywords
     # ----------------------------------------------------------------------
+    raw_loco_file = os.path.basename(p['FITSFILENAME'])
     # construct filename
     locofits, tag2 = spirouConfig.Constants.LOC_LOCO_FILE(p)
     locofitsname = os.path.split(locofits)[-1]
@@ -382,6 +386,10 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=raw_loco_file)
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCO_BCKGRD'],
@@ -432,6 +440,9 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCO_NBO'],
@@ -479,6 +490,11 @@ def main(night_name=None, files=None):
         # save this image to file
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'],
+                                   value=p['BADPFILE1'])
+        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'],
+                                   value=p['BADPFILE2'])
         p = spirouImage.WriteImage(p, locofits3, data4, hdict)
 
     # ----------------------------------------------------------------------

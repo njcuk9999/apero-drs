@@ -4608,3 +4608,238 @@
 	- cal_reset.py: exit script has_plots=False (rev.b55de667)
 	- spirouWAVE.py: fix issue with pep8 update (ll_prev defined in wrong place) (rev.7f39d0aa)
 	- spirouWAVE.py (Issue #452): wave_catalog is now initialised as a NaN array (instead of an array of zeros) (rev.074f79fa)
+
+
+
+================================================================================
+* Thu Sep 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.008
+
+================================================================================
+	- version.txt: update/check dependencies (rev.fdf8134c)
+	- drs_dependencies.py: fix for python 2 path (rev.a2177be9)
+	- update date/version/changelog (rev.67113c33)
+
+
+
+================================================================================
+* Mon Sep 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.009
+
+================================================================================
+	- test runs: update tellu_test.run (rev.aa95ba91)
+	- update cal_test.run (rev.73f72ebf)
+	- spirouStartup.py: extra check for no outputs in indexing (fixes crash) (rev.2a54412f)
+	- spirouPlot: fix telluric plots (labels, titles, limits) (rev.8a0abf11)
+	- obj_mk_tellu: save SP to loc (rev.2befaea4)
+	- obj_fit_tellu: fix bug (blaze must be normalised to fit telluric) (rev.a2402037)
+
+
+
+================================================================================
+* Tue Sep 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.010
+
+================================================================================
+	- tellu_test.run: add actual non-hot stars to telluric test (rev.963dfb27)
+	- tellu_test.run: add actual non-hot stars to telluric test (rev.74926c51)
+	- tellu_test.run: reset for full test (rev.73a66736)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.011
+
+================================================================================
+	- recipe_control.txt - add e2dsff files to cal_drift codes and cal_ccf (rev.b99e7904)
+	- cal_DRIFTPEAK_E2DS_spirou: fix obtaining of lamp type with hc_hc (ext_type == "HCONE_HCONE" or "HCTWO_HCTWO") (rev.0d991a01)
+	- cal_extract_RAW_spirou.py: better error message for no DPRTYPE in header (Issue #456) (rev.371922c5)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.012
+
+================================================================================
+	- unit_tests: add cal_CCF test to Tellu_Test.run (rev.5467d047)
+	- unit_tests: update unit test with new hc files (from 2018-08-05) (rev.c8d2c4ca)
+	- recipe_control.txt - remove duplicate line in cal_CCF definition (rev.67ef51d1)
+	- cal_CCF_E2DS_spirou.py - update comments and remove extra spaces (rev.172015c1)
+
+
+
+================================================================================
+* Wed Sep 19 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.013
+
+================================================================================
+	- New CCF mask provided by Xavier on 2018 Sept 19 (rev.fd8dd6be)
+	- Add E2DS_FF for cal_CCF_E2DS recipe (rev.24649509)
+	- Adaptation for telluric corrected spectra (rev.bfa08b02)
+
+
+
+================================================================================
+* Wed Sep 19 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.014
+
+================================================================================
+	- New CCF mask provided by Xavier on 2018 Sept 19 (rev.fd8dd6be)
+
+
+
+================================================================================
+* Wed Sep 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.015
+
+================================================================================
+	- unit_tests: fix bug in run names (rev.19fe91f3)
+
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.016
+
+================================================================================
+	- remove user specific ignore (should not be needed) (rev.28d08b71)
+	- update .gitignore to ignore misc folder (rev.7cce836c)
+	- spirouWAVE.py - Merge changes from Dev into Melissa (rev.736690cb)
+	- spirouTHORCA.py - Merge changes from Dev into Melissa (rev.25763190)
+	- spirouRV.py - Merge changes from Dev into Melissa (rev.300036d3)
+	- spirouPlot.py - Merge changes from Dev into Melissa (Issue #460) (rev.564931d5)
+	- constants_SPIROU_H4RG.py - Merge changes from Dev into Melissa (rev.72bfa14c)
+	- cal_WAVE_E2DS_EA_spirou.py - Merge changes from Melissa (rev.cdd8fee3)
+	- cal_CCF_E2DS_spirou.py - full header added to "CCF_FITS_FILE" (rev.dbcefdc4)
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.017
+
+================================================================================
+	- spirouTHORCA.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE/cal HC (rev.bd7f4a60)
+	- cal_WAVE_E2DS_spirou.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE (rev.f1cc29c6)
+	- cal_WAVE_E2DS_EA_spirou.py - fix code to not have min/max of HC/FP_N_ORD START/FINAL for cal WAVE (rev.4cdb280a)
+
+
+
+================================================================================
+* Fri Sep 21 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.018
+
+================================================================================
+	- update timings (rev.967e9282)
+
+
+
+================================================================================
+* Mon Sep 24 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.019
+
+================================================================================
+	- cal_DRIFTPEAK_E2DS_spirou.py - fix typo bug with drift_peak_allowed_types (rev.a44642df)
+	- recipe_control.txt - add HCTWO_HCTWO and OBJ_FP to cal_DRIFT and cal_DRIFTPEAK recipes - Issue #464 (rev.2d68c46f)
+	- constnats_SPIROU_H4RG.py - added new constant to control with files (with header key KW_EXT_TYPE) are associated with fp and hc (for setting other constants) - Issue #464 (rev.b9989ffa)
+	- cal_extract_RAW_spirou.py - note from Etienne to Francois re: negative fluxes to zero after background correction (rev.57262b57)
+	- cal_DRIFTPEAK_E2DS_spirou.py - modified the lamp parameter to get from constants (for easier addition of different types) - Issue #464 (rev.b0d74f77)
+
+
+
+================================================================================
+* Tue Sep 25 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.020
+
+================================================================================
+	- spirouPlot.py - pass font changes for all graphs (via matplotlib.rc) (rev.22a450c1)
+	- spirouConst - add descriptions for plot font functions (rev.e3384687)
+	- spirouConst.py - add plot pseudo constants (to enable changing plot fontsize easily - for all plots) (rev.6069dad8)
+	- cal_CCF_E2DS_spirou.py - add inputs for ccf_rv_ccf_plot (modified inputs for plot title) (rev.fbac65ca)
+
+
+
+================================================================================
+* Wed Sep 26 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.021
+
+================================================================================
+	- spirouWAVE.py - adapt to allow force creating of linelist (rev.bef63e35)
+	- spirouPlot.py - adapt to be able to use different style (rev.6f0eb3bf)
+	- spirouConst.py - add plot style (for alternate plotting) (rev.66c1548b)
+	- constants_SPIROU_H4RG.py - add control to force linelist re-computation (rev.76fe208f)
+
+
+
+================================================================================
+* Mon Oct 01 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.022
+
+================================================================================
+	- spirouTHORCA.__init__.py - remove use of GetE2DSll - use GetWaveSolution (Issue #468) (rev.1e00cb3c)
+	- spirouTHORCA.py - remove use of GetE2DSll - use GetWaveSolution (Issue #468) (rev.60661273)
+	- cal_CCF_E2DS_spirou.py - remove use of GetE2DSll - use GetWaveSolution (Issue #468) (rev.cdcd738e)
+	- spirouTHORCA.py - re-work the obtaining of wave solution (Issue #468) (rev.c5baf9e8)
+	- spirouFITS.py - re work wave solution functions (Issue #468) (rev.dc01166b)
+	- spirouImage.__init__.py - remove old wave sol functions (Issue #468) (rev.f4530754)
+	- cal_DRIFT_RAW_spirou.py - work on wave solution functions (Issue #468) (rev.81684e90)
+	- pol_spirou.py - work on wave solution functions (Issue #468) (rev.aa5dca75)
+	- cal_extract_RAW_spirou.py - work on wave solution functions (Issue #468) (rev.5a580a64)
+	- visu_[ALL]_spirou.py - work on wave solution functions (Issue #468) (rev.33f64e6c)
+	- obj_[fit/mk]_tellu.py - work on wave solution functions (Issue #468) (rev.d0ddf2a4)
+	- cal_wave_mapper.py - work on wave solution functions (Issue #468) (rev.276db432)
+	- cal_HC_E2DS_EA_spirou.py - work on wave solution functions (Issue #468) (rev.82315102)
+	- cal_WAVE_[ALL].py - work on wave solution functions (Issue #468) (rev.f2749f2b)
+	- cal_exposure_meter.py - work on wave solution functions (Issue #468) (rev.f7601dbd)
+	- cal_DRIFTPEAK_E2DS_spirou.py - work on wave solution functions (Issue #468) (rev.69fe6ce8)
+	- cal_DRIFT_E2DS_spirou.py - work on wave solution functions (Issue #468) (rev.2cd1669e)
+	- spirouImage.py - modify get_all_similar_files to add check of fiber for OBJ_FP OBJ_HCONE etc (i.e. only allow on fiber C) and return filetype to show user which DRS_EXTOUT were allowed (Issue #464) (rev.3e9b8f23)
+	- spirouImage.__init__.py - update alias to better represent what we are doing get_all_similar_files --> GetSimilarDriftFiles (rev.df446d47)
+	- constants_SPIROU_H4RG.py - add constant to check which fiber is being used (for OBJ_FP and OBJ_HCONE etc should only work on fiber C)  - Issue #464 (rev.5201100d)
+	- cal_DRIFTPEAK_E2DS_spirou.py - fix code to allow FP_FP and OBB_FP (and report back on allowed types) - Issue #464 (rev.88077a89)
+	- cal_DRIFT_E2DS_spirou.py - fix code to allow FP_FP and OBB_FP (and report back on allowed types) - Issue #464 (rev.d88566aa)
+	- teset.run - update tested files (rev.10683a9d)
+	- re-add misc folder to github sync (rev.eba69830)
+	- spirouImage.py - change how get_all_similar_files works (now look for kw_OUTPUT based on "DRIFT_PEAK_ALLOWED_OUTPUT" - Issue #464 (rev.db2d5e29)
+	- constnats_SPIROU_H4RG.py - Issue #464 - add definitions for which outputs are allowed for "fp" and "hc" (rev.567a714b)
+	- add misc backup files (rev.3b94ce65)
+	- removed problematic fitgaus.py from fortran (conflicts with fitgaus.f) and removed fitgaus.f from spirouTHORCA (rev.43603b7c)
+	- spirouImage.py - Issue #464 - get_all_similar_files - modify to run indexing if no index.fits exists (rev.7d50d9e6)
+	- off_listing_REDUC_spirou.py - Issue #464 - allow off_listing to run in quiet mode (rev.c06558ef)
+	- spirouWAVE - replace get_e2ds_ll (Issue #468) (rev.7e768052)
+	- spirouFITS.py - allow header return (rev.d8471e5a)
+	- spirouPlot.py - fix bug plot_style cannot be None - now '' when empty (rev.5e3a0420)
+	- cal_CCF_E2DS_spirou.py - fix bug - swap wave and param (rev.799c3ac9)
+
+
+
+================================================================================
+* Tue Oct 02 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.023
+
+================================================================================
+	- cal_CCF_E2DS_spirou.py - fix order out GetWaveSolution outputs (Issue #464) (rev.6b81a010)
+	- Cal_Test.run - change over (cal_exposure_meter last) (rev.61d08521)
+	- spirouTelluric.py - modify functions to allow filename saved to p - for insertion into header at hdict creation (Issue  #471) (rev.23976dcf)
+	- spirouLOCOR.py - modify functions to allow filename save to p - for insertion into header at hdict creation (Issue  #471) (rev.45757bc0)
+	- spirouImage.py - modify functions to allow filename to be saved to p - to insert into header at hdict creation (Issue  #471) - fix bug with mask2 (in getting drift files function) (rev.80f7f3f3)
+	- spirouFITS.py - mmodify read functions to save the filename to p - to inject into header at hdict creation (Issue  #471) (rev.7fa9cca5)
+	- spirouFLAT - add filenames to headers (Issue  #471) (rev.c1553335)
+	- spirouKeywords.py - add the keywords for each file (that will go in the header) - Issue  #471 (rev.7e1e60d3)
+	- obj_mk_tellu.py - add filenames to headers (Issue  #471) (rev.fa5ab5d4)
+	- obj_mk_tellu_template.py - add filenames to headers (Issue  #471) (rev.b4edf263)
+	- obj_fit_tellu.py - add filenames to headers (Issue  #471) (rev.54e8205d)
+	- cal_wavE_mapper.py - add filenames to headers (Issue  #471) (rev.052e4847)
+	- cal_[WAVE_E2DS]_spirou.py - add filenames to headers (Issue  #471) (rev.d2bde2ee)
+	- cal_SLIT_spirou.py - add filenames to headers (Issue  #471) (rev.240d5927)
+	- cal_loc_RAW_spirou.py - add filenames to headers (Issue  #471) (rev.f7e450cc)
+	- cal_HC_E2DS_spirou.py - add filenames to headers (Issue  #471) (rev.bde11970)
+	- cal_HC_E2DS_EA_spirou.py - add filenames to headers (Issue  #471) (rev.143361dc)
+	- cal_FF_RAW_spirou.py - add filenames to headers (Issue  #471) (rev.81966571)
+	- cal_extract_RAW_spirou.py - add filenames to headers (Issue  #471) (rev.c07a5efd)
+	- cal_exposure_meter.py - add filenames to headers (Issue  #471) (rev.b0688686)
+	- cal_DRIFTPEAK_E2DS_spirou.py - add filenames to headers (Issue  #471) (rev.3b2a192f)
+	- cal_DRIFT_E2D.py - add filenames to headers (Issue  #471) (rev.f4bb881f)
+	- cal_DARK_spirou.py - add filenames to headers (Issue  #471) (rev.8ec40729)
+	- cal_BADPIX_spirou.py - add filenames to headers (Issue  #471) (rev.86b4d30f)
+
+
+
+================================================================================
+* Wed Oct 03 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.024
+
+================================================================================
+	- unit tests - add full telluric test for TC3 (rev.57d396c9)
+	- spirouImage.py - WAVE_FILE is now WAVEFILE (rev.9333c919)
+	- dark_test.py - test of the values supplied in the dark header file (for specific files + night_name) (rev.58b1c501)
+	- visu_E2DS_spirou.py - readblazefile now need p returned (rev.388497df)
+	- obj_fit_tellu.py - re-add loc['WAVE'] (used for plotting) + loc['WAVE_IT'] need filename returned (rev.f222a470)
+	- cal_wave_mapper.py - remove flat file (not used or obtained) from header (rev.0d020f26)
+	- cal_exposure_meter.py - remove flatfile (not used or obtained) (rev.9a883b7b)
