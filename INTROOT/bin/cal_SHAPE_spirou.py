@@ -427,7 +427,7 @@ def get_shape_map(p, loc):
                     gcoeffs, _ = spirouMath.gauss_fit_nn(xvec, yvec, 4)
                     # check that max value is good
                     if np.nanmax(ccor[iw, :]) > min_good_corr:
-                        dx[iw] = coeffs[1]
+                        dx[iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
             dx = dx - np.nanmedian(dx)
