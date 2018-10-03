@@ -128,11 +128,8 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
     # get tilts
-    loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+    p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
     loc.set_source('TILT', tsource)
-    # get tilt file
-    p['TILT_FILE'] = spirouImage.ReadTiltFile(p, hdr, return_filename=True)
-    p.set_source('TILT_FILE', tsource)
     # set number of orders from tilt length
     loc['NBO'] = len(loc['TILT'])
     loc.set_source('NBO', __NAME__ + '/main()')
@@ -141,7 +138,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # Read blaze
     # ----------------------------------------------------------------------
     # get tilts
-    loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
+    p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
 
     # ------------------------------------------------------------------
@@ -158,7 +155,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     for fiber in p['FIBER_TYPES']:
         p = spirouImage.FiberParams(p, fiber, merge=True)
         # get localisation fit coefficients
-        loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
+        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc=loc)
         # save all fibers
         loc['ALL_ACC'][fiber] = loc['ACC']
         loc['ALL_ASS'][fiber] = loc['ASS']
@@ -223,17 +220,18 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     hdict = OrderedDict()
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
     # add name of the TAPAS y data
     hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
     # add name of the localisation fits file used
     hfile = os.path.basename(loc['LOCO_CTR_FILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_EM_LOCFILE'], value=hfile)
-    # add name of the tilt solution used
-    hfile = os.path.basename(p['TILT_FILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_TILT'], value=hfile)
     # add name of the wavelength solution used
-    hfile = os.path.basename(p['WAVEFILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_WAVE'], value=hfile)
+    hdict = spirouImage.AddKey(hdict, p['kw_EM_WAVE'], value=p['WAVEFILE'])
     # add the max and min wavelength threshold
     hdict = spirouImage.AddKey(hdict, p['kw_EM_MINWAVE'],
                                value=p['EM_MIN_LAMBDA'])

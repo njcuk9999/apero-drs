@@ -49,7 +49,7 @@ CONSTANT_C = constants.c.value
 def get_normalized_blaze(p, loc, hdr):
     func_name = __NAME__ + '.get_normalized_blaze()'
     # Get the blaze
-    blaze = spirouImage.ReadBlazeFile(p, hdr)
+    p, blaze = spirouImage.ReadBlazeFile(p, hdr)
     # we mask domains that have <20% of the peak blaze of their respective order
     blaze_norm = np.array(blaze)
     for iord in range(blaze.shape[0]):
@@ -61,7 +61,7 @@ def get_normalized_blaze(p, loc, hdr):
     loc['NBLAZE'] = blaze_norm
     loc.set_sources(['BLAZE', 'NBLAZE'], func_name)
     # return loc
-    return loc
+    return p, loc
 
 
 def construct_convolution_kernal1(p, loc):

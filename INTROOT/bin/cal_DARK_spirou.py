@@ -224,7 +224,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save dark to file
     # ----------------------------------------------------------------------
-
+    # get raw dark filename
+    rawdarkfile = os.path.basename(p['FITSFILENAME'])
     # construct folder and filename
     darkfits, tag = spirouConfig.Constants.DARK_FILE(p)
     darkfitsname = os.path.split(darkfits)[-1]
@@ -235,6 +236,7 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=rawdarkfile)
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_DEAD'], value=p['DADEAD_FULL'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_MED'], value=p['MED_FULL'])
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_B_DEAD'],
@@ -269,6 +271,7 @@ def main(night_name=None, files=None):
     # define new keys to add
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=rawdarkfile)
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file

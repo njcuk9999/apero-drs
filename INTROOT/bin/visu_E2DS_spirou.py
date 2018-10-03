@@ -68,7 +68,7 @@ def main(night_name=None, reffile=None):
     fiber1 = str(p['FIBER'])
 
     e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
-    blaze = spirouImage.ReadBlazeFile(p)
+    p, blaze = spirouImage.ReadBlazeFile(p)
 
     # set source of wave file
     wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
