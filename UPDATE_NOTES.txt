@@ -5,9 +5,7 @@ Not done/not finished/to do:
 - integrate Etiennes new "shape finding" algorithm [Branch = extract_redo]
 - integrate Etiennes new "shape finding" on extraction  [Branch = extract_redo]
 - cal_WAVE_E2DS/cal_HC_E2DS versions merging
-- update input system [internal no effect to devs/users]
-- allow plot saving [internal no effect to devs/users]
-- module generification [internal no effect to devs/users]
+- integrate telluric use of different wave solutions
 
 Done:
 
