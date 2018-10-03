@@ -99,12 +99,15 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
+    # used for plotting only
+    _, loc['WAVE'] = spirouImage.GetWaveSolution(p, image=loc['DATA'],
+                                                 hdr=loc['DATAHDR'],
+                                                 return_wavemap=True)
 
     # ----------------------------------------------------------------------
     # Get and Normalise the blaze
     # ----------------------------------------------------------------------
-    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+    p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
 
     # ----------------------------------------------------------------------
     # Load transmission files
@@ -255,8 +258,11 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        loc['WAVE_IT'] = spirouImage.GetWaveSolution(p, tdata, thdr)
-        loc.set_source('WAVE_IT', main_name)
+        wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
+                                           return_wavemap=True,
+                                           return_filename=True)
+        _, loc['WAVE_IT'], loc['WAVEFILE'] = wout
+        loc.set_sources(['WAVE_IT', 'WAVEFILE'], main_name)
         # load wave keys
         loc = spirouImage.GetWaveKeys(p, loc, thdr)
 
@@ -288,11 +294,18 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Get components amplitudes for header
         # ------------------------------------------------------------------
+        # get raw file name
+        raw_in_file = os.path.basename(p['FITSFILENAME'])
+        # start header storage
         hdict = OrderedDict()
-
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-
+        # set the input files
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                                   value=loc['WAVEFILE'])
+        # set tellu keys
         npc = loc['NPC']
         if p['ADD_DERIV_PC']:
             values = loc['AMPS_ABSOL_TOTAL'][:npc - 2]
@@ -346,6 +359,7 @@ def main(night_name=None, files=None):
                 loc['WATERCOL'] = loc[molkey]
                 # set source
                 loc.set_source('WATERCOL', main_name)
+
         # write recon_abso to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)

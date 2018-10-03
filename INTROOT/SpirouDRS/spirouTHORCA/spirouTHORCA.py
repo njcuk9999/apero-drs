@@ -50,91 +50,6 @@ speed_of_light = cc.c.to(uu.km/uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_e2ds_ll(p, hdr=None, filename=None, key=None):
-    """
-    Get the line list for the e2ds file from "filename" or from calibration
-    database using hdr (aqctime) and key. Line list is constructed from
-    fit coefficents stored in keywords:
-        'kw_TH_ORD_N', 'kw_TH_LL_D', 'kw_TH_NAXIS1'
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                kw_TH_COEFF_PREFIX: list, the keyword store for the prefix to
-                                    use to get the TH line list fit coefficients
-                PIXEL_SHIFT_INTER: float, the intercept of a linear pixel shift
-                PIXEL_SHIFT_SLOPE: float, the slope of a linear pixel shift
-
-    :param hdr: dictionary or None, the HEADER dictionary with the acquisition
-                time in to use in the calibration database to get the filename
-                with key=key (or if None key='WAVE_AB')
-    :param filename: string or None, the file to get the line list from
-                     (overrides getting the filename from calibration database)
-    :param key: string or None, if defined the key in the calibration database
-                to get the file from (using the HEADER dictionary to deal with
-                calibration database time constraints for duplicated keys.
-
-    :return ll: numpy array (1D), the line list values
-    :return param_ll: numpy array (1d), the line list fit coefficients (used to
-                      generate line list - read from file defined)
-    """
-
-    if key is None:
-        # Question: Why WAVE_AB and not WAVE_{fiber} ??
-        key = 'WAVE_AB'
-    # get filename
-    if filename is None:
-        read_file = spirouDB.GetCalibFile(p, key, hdr)
-    else:
-        read_file = filename
-
-    # read read_file
-    rout = spirouImage.ReadImage(p, filename=read_file, log=False)
-    wave, whdr, _, nx, ny = rout
-
-    # extract required keyword arguments from the header
-    keys = ['KW_WAVE_ORD_N', 'KW_WAVE_LL_DEG', 'KW_TH_NAXIS1']
-    try:
-        gkv = spirouConfig.GetKeywordValues(p, whdr, keys, read_file)
-        nbo, degll, xsize = gkv
-    except spirouConfig.ConfigError as e:
-        WLOG(e.level, p['LOG_OPT'], e.msg)
-        nbo, degll, xsize = 0, 0, 0
-
-    # get the coefficients from the header
-    coeff_prefix = p['KW_WAVE_PARAM'][0]
-    param_ll = []
-    # loop around the orders
-    for order_num in range(nbo):
-        # loop around the fit degrees
-        for deg_num in range(degll + 1):
-            # get the row number
-            num = (order_num * (degll + 1)) + deg_num
-            # get the header key
-            header_key = '{0}{1}'.format(coeff_prefix, num)
-            # get the header value
-            param_ll.append(whdr[header_key])
-
-    # reshape param_ll to be size = (number of orders x degll+1
-    param_ll = np.array(param_ll).reshape((nbo, degll + 1))
-
-    # read pixel shift coefficients
-    pixel_shift_inter = p['PIXEL_SHIFT_INTER']
-    pixel_shift_slope = p['PIXEL_SHIFT_SLOPE']
-    # print a warning if pixel_shift is not 0
-    if pixel_shift_slope != 0 or pixel_shift_inter != 0:
-        wmsg = 'Pixel shift is not 0, check that this is desired'
-        WLOG('warning', p['LOG_OPT'], wmsg.format())
-
-    # get the line list
-    ll = spirouMath.get_ll_from_coefficients(pixel_shift_inter,
-                                             pixel_shift_slope,
-                                             param_ll, xsize, nbo)
-
-    # return ll and param_ll
-    return ll, param_ll
-
-
 def get_lamp_parameters(p, header, filename=None, kind=None):
     """
     Get lamp parameters from either a specified lamp type="kind" or a filename
@@ -259,14 +174,15 @@ def first_guess_at_wave_solution(p, loc, mode=0):
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
     loc.set_source('ECHELLE_ORDERS', func_name)
 
-    # get wave solution filename
-    wave_file = spirouImage.ReadWaveFile(p, loc['HCHDR'], return_filename=True)
+    # get wave solution
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True,
+                                       return_filename=True)
+    param_ll_init, ll_init, wave_file = wout
+
     # log wave file name
     wmsg = 'Reading initial wavelength solution in {0}'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wave_file))
 
-    # get E2DS line list from wave_file
-    ll_init, param_ll_init = get_e2ds_ll(p, loc['HCHDR'], filename=wave_file)
     # only perform fit on orders 0 to p['IC_HC_N_ORD_FINAL']
     loc['LL_INIT'] = ll_init[n_order_start:n_order_final]
     loc.set_source('LL_INIT', __NAME__ + func_name)
