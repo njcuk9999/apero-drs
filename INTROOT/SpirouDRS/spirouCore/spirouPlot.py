@@ -64,6 +64,16 @@ INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
 # check for matplotlib import errors
 if len(matplotlib_emsg) > 0:
     WLOG('error', DPROG, matplotlib_emsg)
+# -----------------------------------------------------------------------------
+# set plot parameters
+font = spirouConfig.Constants.FONT_DICT()
+matplotlib.rc('font', **font)
+# set plot style
+PLOT_STYLE = spirouConfig.Constants.PLOT_STYLE()
+if PLOT_STYLE is not None:
+    plt.style.use(PLOT_STYLE)
+else:
+    PLOT_STYLE = ''
 
 
 # =============================================================================
@@ -1308,7 +1318,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
                 spe: numpy array (2D), the comparison spectrum
                 speref: numpy array (2D), the reference spectrum
 
-    :param cc: numpy array (1D), the correlation coefficients from the
+    :param ccoeff: numpy array (1D), the correlation coefficients from the
                Pearson R test
 
     :param iteration: int, the iteration number
@@ -1340,7 +1350,7 @@ def drift_plot_correlation_comp(p, loc, ccoeff, iteration):
     # order selection
     # -------------------------------------------------------------------------
     # mask
-    mask = cc > prcut
+    mask = ccoeff > prcut
     # select bad order
     bad_orders = np.arange(nbo)[~mask]
     bad_order = np.argmin(ccoeff)
@@ -1528,11 +1538,16 @@ def drift_peak_plot_llpeak_amps(p, loc):
 # =============================================================================
 # CCF plotting function
 # =============================================================================
-def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
+def ccf_rv_ccf_plot(p, x, y, yfit, order=None, fig=None, pause=True):
     """
     Plot the CCF plot. RV against CCF and RV against CCF fit, for a specific
     order number "order"
 
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            OBJNAME: string, the object name from header
+            TARGET_RV: float, the target RV from run time/call arguments
+            CCF_MASK: float, the CCF Mask from run time/call arguments
     :param x: numpy array (1D), the RV values
     :param y: numpy array (1D), the CCF values
     :param yfit: numpy array (1D), the CCF fit values
@@ -1544,6 +1559,11 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
 
     :return None:
     """
+    if 'dark' in PLOT_STYLE:
+        black = 'w'
+    else:
+        black = 'k'
+
     if fig is None:
         plt.figure()
     # clear the current figure
@@ -1551,12 +1571,14 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
     # set up axis
     frame = plt.subplot(111)
     # plot fits
-    frame.plot(x, y, label='data', marker='x', linestyle='none', color='k')
+    frame.plot(x, y, label='data', marker='x', linestyle='none', color=black)
     frame.plot(x, yfit, label='fit', color='r')
     # set title labels limits
-    title = 'CCF plot'
+    targs = [p['OBJNAME'], p['TARGET_RV'], p['CCF_MASK']]
+    title = 'CCF plot ({0}) \n Target RV={1} km/s Mask={2}'.format(*targs)
+
     if order is not None:
-        title += 'Order {0}'.format(order)
+        title += ' Order {0}'.format(order)
     frame.set(xlabel='Rv [km/s]', ylabel='CCF', title=title)
     # set legend
     frame.legend(loc=0)
@@ -1571,6 +1593,12 @@ def ccf_rv_ccf_plot(x, y, yfit, order=None, fig=None, pause=True):
 # wave solution plotting function
 # =============================================================================
 def wave_littrow_extrap_plot(loc, iteration=0):
+
+    if 'dark' in PLOT_STYLE:
+        black = 'w'
+    else:
+        black = 'k'
+
     # get the dimensions of the data
     ydim, xdim = loc['HCDATA'].shape
     # define the x axis data
@@ -1586,7 +1614,7 @@ def wave_littrow_extrap_plot(loc, iteration=0):
     # set up axis
     frame = plt.subplot(111)
     # colours
-    colours = np.tile(['r', 'b', 'g', 'y', 'm', 'k', 'c'], ydim)
+    colours = np.tile(['r', 'b', 'g', 'y', 'm', black, 'c'], ydim)
     # loop around the orders and plot each line
     for order_num in range(ydim):
         # plot the solution for all x points
@@ -1773,6 +1801,11 @@ def wave_fp_wavelength_residuals(loc):
 def wave_ea_plot_per_order_hcguess(loc, order_num):
     plt.ioff()
 
+    if 'dark' in PLOT_STYLE:
+        black = 'w'
+    else:
+        black = 'k'
+
     # get data from loc
     wave = loc['INITIAL_WAVE_MAP']
     hc_sp = loc['HCDATA']
@@ -1794,7 +1827,7 @@ def wave_ea_plot_per_order_hcguess(loc, order_num):
     # set up axis
     frame = plt.subplot(111)
     # plot spectrum for order
-    frame.plot(wave[order_num, :], hc_sp[order_num, :], color='k')
+    frame.plot(wave[order_num, :], hc_sp[order_num, :], color=black)
     # over plot all fits
     for line_it in range(len(xpix_ini)):
         xpix = xpix_ini[line_it]
@@ -1814,6 +1847,11 @@ def wave_ea_plot_per_order_hcguess(loc, order_num):
 def wave_ea_plot_allorder_hcguess(loc):
     #    plt.ioff()
 
+    if 'dark' in PLOT_STYLE:
+        black = 'white'
+    else:
+        black = 'black'
+
     # get data from loc
     wave = loc['INITIAL_WAVE_MAP']
     hc_sp = loc['HCDATA']
@@ -1831,8 +1869,10 @@ def wave_ea_plot_allorder_hcguess(loc):
     frame = plt.subplot(111)
 
     # define spectral order colours
-    col1 = ['black', 'grey']
+    col1 = [black, 'grey']
+    label1 = ['Even order data', 'Odd order data']
     col2 = ['green', 'purple']
+    label2 = ['Even order fit', 'Odd order fit']
 
     # loop through the orders
     for order_num in range(nbo):
@@ -1846,14 +1886,26 @@ def wave_ea_plot_allorder_hcguess(loc):
         # get colours from order parity
         col1_1 = col1[np.mod(order_num, 2)]
         col2_1 = col2[np.mod(order_num, 2)]
+        label1_1 = label1[np.mod(order_num, 2)]
+        label2_1 = label2[np.mod(order_num, 2)]
 
         # plot spectrum for order
-        frame.plot(wave[order_num, :], hc_sp[order_num, :], color=col1_1)
+        frame.plot(wave[order_num, :], hc_sp[order_num, :], color=col1_1,
+                   label=label1_1)
         # over plot all fits
         for line_it in range(len(xpix_p)):
             xpix = xpix_p[line_it]
             g2 = g2_p[line_it]
-            plt.plot(wave[order_num, xpix], g2, color=col2_1)
+            frame.plot(wave[order_num, xpix], g2, color=col2_1,
+                       label=label2_1)
+
+    # keep only unique labels and add legend
+    handles, labels = frame.get_legend_handles_labels()
+    handles1, labels1 = [], []
+    for l_it in range(len(labels)):
+        if labels[l_it] not in labels1:
+            labels1.append(labels[l_it]), handles1.append(handles[l_it])
+    frame.legend(handles1, labels1, loc=0, fontsize=12)
 
     # set title and labels
     frame.set(title='Fitted gaussians on spectrum',
@@ -1937,6 +1989,11 @@ def wave_ea_plot_tfit_grid(p, orders, wave_catalog, recon0, gauss_rms_dev,
 
 
 def wave_ea_plot_line_profiles(p, loc):
+
+    if 'dark' in PLOT_STYLE:
+        black = 'w'
+    else:
+        black = 'k'
     # get constants from p
     resmap_size = p['HC_RESMAP_SIZE']
     fit_span = p['HC_RESMAP_DV_SPAN']
@@ -1973,7 +2030,7 @@ def wave_ea_plot_line_profiles(p, loc):
             yfit = spirouMath.gauss_fit_s(xfit, *params)
             # plot data
             frame.scatter(all_dvs, all_lines, color='g', s=5, marker='x')
-            frame.plot(xfit, yfit, color='k', ls='--')
+            frame.plot(xfit, yfit, color=black, ls='--')
 
             # set frame limits
             frame.set(xlim=xlim, ylim=ylim)
@@ -1983,7 +2040,7 @@ def wave_ea_plot_line_profiles(p, loc):
             handle = Rectangle((0, 0), 1, 1, fc="w", fill=False,
                                edgecolor='none', linewidth=0)
             label = 'Orders {0}-{1} region={2} R={3:.0f}'.format(*largs)
-            frame.legend([handle], [label], loc=9)
+            frame.legend([handle], [label], loc=9, fontsize=10)
 
             # remove white space and some axis ticks
             if order_num == 0:
@@ -2119,6 +2176,11 @@ def tellu_fit_tellu_spline_plot(p, loc):
 
 
 def tellu_fit_recon_abso_plot(p, loc):
+
+    if 'dark' in PLOT_STYLE:
+        black = 'w'
+    else:
+        black = 'k'
     # get constants from p
     selected_order = p['TELLU_FIT_RECON_PLT_ORDER']
     # get data dimensions
@@ -2138,7 +2200,7 @@ def tellu_fit_recon_abso_plot(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot spectra for selected order
-    frame.plot(swave, ssp / np.nanmedian(ssp), color='k', label='input SP')
+    frame.plot(swave, ssp / np.nanmedian(ssp), color=black, label='input SP')
     frame.plot(swave, ssp2 / np.nanmedian(ssp2) / srecon_abso, color='g',
                label='Cleaned SP')
     frame.plot(swave, stemp2 / np.nanmedian(stemp2), color='c',

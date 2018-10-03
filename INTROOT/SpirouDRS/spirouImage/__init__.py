@@ -29,7 +29,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
            'CorrectForDark', 'CorrectForBadPix', 'E2DStoS1D',
-           'FitTilt', 'FlipImage', 'FiberParams', 'GetAllSimilarFiles',
+           'FitTilt', 'FlipImage', 'FiberParams', 'GetSimilarDriftFiles',
            'GetSigdet', 'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
            'IdentifyUnProFile', 'InterpolateBadRegions', 'LocateBadPixels',
@@ -38,7 +38,7 @@ __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
            'PPMedianOneOverfNoise', 'ReadParam', 'ReadData', 'ReadImage',
            'ReadTable', 'ReadImageAndCombine', 'ReadFlatFile', 'ReadHeader',
            'ReadKey', 'Read2Dkey', 'ReadTiltFile', 'ReadLineList',
-           'ReadWaveFile', 'ReadBlazeFile', 'ReadOrderProfile',
+           'ReadBlazeFile', 'ReadOrderProfile',
            'ResizeImage', 'WriteImage', 'WriteTable',
            'GetEarthVelocityCorrection', 'EarthVelocityCorrection']
 
@@ -80,7 +80,7 @@ FlipImage = spirouImage.flip_image
 
 FiberParams = spirouFile.fiber_params
 
-GetAllSimilarFiles = spirouImage.get_all_similar_files
+GetSimilarDriftFiles = spirouImage.get_all_similar_files
 
 GetSigdet = spirouImage.get_sigdet
 
@@ -163,10 +163,6 @@ ReadTiltFile = spirouFITS.read_tilt_file
 ReadShapeMap = spirouFITS.read_shape_file
 
 ReadLineList = spirouImage.read_line_list
-
-ReadWaveFile = spirouFITS.read_wave_file
-
-ReadWaveParams = spirouFITS.read_wave_params
 
 ReadHcrefFile = spirouFITS.read_hcref_file
 

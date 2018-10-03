@@ -92,16 +92,18 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Get the wave solution
     # ------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
-    # set source
-    loc.set_source('WAVE', main_name)
+    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
+                                       return_wavemap=True,
+                                       return_filename=True)
+    _, loc['WAVE'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
     # get the wave keys
     loc = spirouImage.GetWaveKeys(p, loc, loc['DATAHDR'])
 
     # ------------------------------------------------------------------
     # Get and Normalise the blaze
     # ------------------------------------------------------------------
-    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+    p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
 
     # ------------------------------------------------------------------
     # Construct convolution kernels
@@ -249,10 +251,18 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
+        # get raw file name
+        raw_in_file = os.path.basename(p['FITSFILENAME'])
+        # copy original keys
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        # set the input files
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                                   value=loc['WAVEFILE'])
         # write to file
         p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
 
@@ -343,11 +353,19 @@ def main(night_name=None, files=None):
         abso_e2ds = abso.reshape(nfiles, loc['YDIM'], loc['XDIM'])
         # get file name
         abso_map_file, tag2 = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
-        # write thie map to file
+        # get raw file name
+        raw_in_file = os.path.basename(p['FITSFILENAME'])
+        # write the map to file
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        # set the input files
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                                   value=loc['WAVEFILE'])
+
         # write to file
         p = spirouImage.WriteImage(p, abso_map_file, abso_e2ds, hdict)
 
