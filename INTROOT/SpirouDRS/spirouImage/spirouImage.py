@@ -996,11 +996,14 @@ def measure_dark(pp, image, image_name, short_name):
     WLOG('info', pp['LOG_OPT'], wmsg.format(*wargs))
     # add required variables to pp
     source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
-    pp['histo_{0}'.format(short_name)] = histo
+
+    pp['histo_{0}'.format(short_name)] = np.array(histo)
     pp.set_source('histo_{0}'.format(short_name), source)
-    pp['med_{0}'.format(short_name)] = med
+
+    pp['med_{0}'.format(short_name)] = float(med)
     pp.set_source('med_{0}'.format(short_name), source)
-    pp['dadead_{0}'.format(short_name)] = dadead
+
+    pp['dadead_{0}'.format(short_name)] = float(dadead)
     pp.set_source('dadead_{0}'.format(short_name), source)
     # return the parameter dictionary with new values
     return pp
@@ -1828,7 +1831,7 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
 def get_wave_keys(p, loc, hdr):
     func_name = __NAME__ + '.get_wave_keys()'
     # check for header key
-    if p['KW_WAVE_FILE'][0] in hdr:
+    if p['KW_WAVEFILE'][0] in hdr:
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
@@ -1837,7 +1840,7 @@ def get_wave_keys(p, loc, hdr):
     else:
         # log warning
         wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVEFILE'][0]))
         # get parameters from the calibDB
         key = 'WAVE_' + p['FIBER']
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
