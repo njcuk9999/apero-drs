@@ -105,6 +105,8 @@ def main(night_name=None, files=None):
     # The minimum value for the cross-correlation to be deemed good
     p['SHAPE_MIN_GOOD_CORRELATION'] = 0.1
 
+    p['SHAPE_SELETED_ORDER'] = 33
+
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -129,7 +131,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    # p, datac = spirouImage.CorrectForDark(p, data, hdr)
+    p, datac = spirouImage.CorrectForDark(p, data, hdr)
     datac = data
 
     # ----------------------------------------------------------------------
@@ -151,7 +153,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    # p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -165,9 +167,10 @@ def main(night_name=None, files=None):
     else:
         background = np.zeros_like(data2)
 
-    # data2=data2-background
+    data2 = data2 - background
+
     # correct data2 with background (where positive)
-    # data2 = np.where(data2 > 0, data2 - background, 0)
+    data2 = np.where(data2 > 0, data2 - background, 0)
 
     # save data to loc
     loc = ParamDict()
@@ -200,7 +203,17 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Plotting
     # ------------------------------------------------------------------
-    # TODO: Decide which plots to take from new_bananarama.py
+    if p['DRS_PLOT']:
+        # plots setup: start interactive plot
+        sPlt.start_interactive_session()
+        # plot the shape process for each order
+        if p['DRS_DEBUG'] == 2:
+            sPlt.slit_shape_angle(p, loc, mode='all')
+        # plot the shape process for one order
+        else:
+            sPlt.slit_shape_angle(p, loc, mode='single')
+        # end interactive section
+        sPlt.end_interactive_session()
 
     # ------------------------------------------------------------------
     # Writing to file
@@ -231,11 +244,31 @@ def main(night_name=None, files=None):
     # Quality control
     # ----------------------------------------------------------------------
     # TODO: Decide on some quality control criteria?
+    # set passed variable and fail message list
+    passed, fail_msg = True, []
+    # finally log the failed messages and set QC = 1 if we pass the
+    # quality control QC = 0 if we fail quality control
+    if passed:
+        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        p['QC'] = 1
+        p.set_source('QC', __NAME__ + '/main()')
+    else:
+        for farg in fail_msg:
+            wmsg = 'QUALITY CONTROL FAILED: {0}'
+            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+        p['QC'] = 0
+        p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
-    # TODO: Move to calibDB under key = SHAPE
+    if p['QC']:
+        keydb = 'SHAPE'
+        # copy shape file to the calibDB folder
+        spirouDB.PutCalibFile(p, shapefits)
+        # update the master calib DB file with new key
+        spirouDB.UpdateCalibMaster(p, keydb, shapefitsname, hdr)
+
 
     # ----------------------------------------------------------------------
     # End Message
@@ -248,7 +281,7 @@ def main(night_name=None, files=None):
 
 # TODO: Move to SpirouDRS
 def get_shape_map(p, loc):
-
+    func_name = __NAME__ + '.get_shape_map()'
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
     width = p['SHAPE_ABC_WIDTH']
@@ -258,15 +291,19 @@ def get_shape_map(p, loc):
     sigclipmax = p['SHAPE_SIGMACLIP_MAX']
     med_filter_size = p['SHAPE_MEDIAN_FILTER_SIZE']
     min_good_corr = p['SHAPE_MIN_GOOD_CORRELATION']
-
     # get data from loc
     data1 = np.array(loc['DATA'])
     nbo = loc['NUMBER_ORDERS'] // 2
     acc = loc['ACC']
-
     # get the dimensions
     dim0, dim1 = loc['DATA'].shape
     master_dxmap = np.zeros_like(data1)
+    # define storage for plotting
+    slope_deg_arr, slope_arr, skeep_arr = [], [], []
+    xsec_arr, ccor_arr = [], []
+    ddx_arr, dx_arr = [], []
+    dypix_arr, cckeep_arr = [], []
+
     # -------------------------------------------------------------------------
     # iterating the correction, from coarser to finer
     for banana_num in range(nbanana):
@@ -286,6 +323,11 @@ def get_shape_map(p, loc):
             range_slopes_deg = large_angle_range
         # expressed in pixels, not degrees
         range_slopes = np.tan(np.deg2rad(np.array(range_slopes_deg)))
+        # set up iteration storage
+        slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
+        xsec_arr_i, ccor_arr_i = [], []
+        ddx_arr_i, dx_arr_i = [], []
+        dypix_arr_i,  cckeep_arr_i = [], []
         # ---------------------------------------------------------------------
         # loop around orders
         for order_num in range(nbo):
@@ -404,7 +446,11 @@ def get_shape_map(p, loc):
             # get slope for full range
             slope = np.polyval(coeffs, np.arange(dim1))
             # -------------------------------------------------------------
-            # TODO: plots
+            # append to storage (for plotting)
+            xsec_arr_i.append(np.array(xsection))
+            slope_deg_arr_i.append(np.rad2deg(np.arctan(dxsection)))
+            slope_arr_i.append(np.rad2deg(np.arctan(slope)))
+            skeep_arr_i.append(np.array(keep))
             # -------------------------------------------------------------
             # correct for the slope the ribbons and look for the
             yfit = np.polyval(coeffs, xpix)
@@ -467,7 +513,12 @@ def get_shape_map(p, loc):
                 keep[-1] = True
                 dx[-1] = dx[-2]
             # -------------------------------------------------------------
-            # TODO: plots
+            # append to storage for plotting
+            ccor_arr_i.append(np.array(ccor))
+            ddx_arr_i.append(np.array(ddx))
+            dx_arr_i.append(np.array(dx))
+            dypix_arr_i.append(np.array(dypix))
+            cckeep_arr_i.append(np.array(keep))
             # -------------------------------------------------------------
             # spline everything onto the master DX map
             spline = IUVSpline(dypix[keep], dx[keep], ext=0)
@@ -494,9 +545,26 @@ def get_shape_map(p, loc):
                     shifts = (ddx + dx0)[pos_y_mask]
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
+        # ---------------------------------------------------------------------
+        # append to storage
+        slope_deg_arr.append(slope_deg_arr_i), slope_arr.append(slope_arr_i)
+        skeep_arr.append(skeep_arr_i), xsec_arr.append(xsec_arr_i)
+        ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
+        dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
+        cckeep_arr.append(cckeep_arr_i)
 
-    # finally add DXMAP to loc
+    # push storage into loc
+    loc['SLOPE_DEG'], loc['SLOPE'] = slope_deg_arr, slope_arr
+    loc['S_KEEP'], loc['XSECTION'] = skeep_arr, xsec_arr
+    loc['CCOR'], loc['DDX'] = ccor_arr, ddx_arr
+    loc['DX'], loc['DYPIX'] = dx_arr, dypix_arr
+    loc['C_KEEP'] = cckeep_arr
+    # add DXMAP to loc
     loc['DXMAP'] = master_dxmap
+    # set source
+    keys = ['SLOPE_DEG', 'SLOPE', 'S_KEEP', 'XSECTION', 'CCOR', 'DDX',
+            'DX', 'DYPIX', 'C_KEEP', 'DXMAP']
+    loc.set_sources(keys, func_name)
     # return loc
     return loc
 
