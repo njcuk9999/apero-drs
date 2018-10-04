@@ -100,6 +100,8 @@ GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
 
+GetShapeMap = spirouImage.get_shape_map
+
 GetObjName = spirouImage.get_obj_name
 
 GetAirmass = spirouImage.get_airmass
