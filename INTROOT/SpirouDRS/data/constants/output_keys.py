@@ -35,6 +35,9 @@ LOC_LOCO_FILE3 = 'LOC_SUP'
 # Defines the slit tilt file tag
 SLIT_TILT_FILE = 'SLIT_TILT'
 
+# Define the shape file tag
+SLIT_SHAPE_FILE = 'SLIT_SHAPE'
+
 # Defines the flat fielding blaze file tag
 FF_BLAZE_FILE = 'FF_BLAZE'
 
