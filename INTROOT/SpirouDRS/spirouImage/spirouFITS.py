@@ -609,6 +609,7 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
     else
         :return read_file: string, name of shape file
     """
+    func_name = __NAME__ + '.read_shape_file()'
     if key is None:
         key = 'SHAPE'
     # get filename
@@ -627,8 +628,16 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
     shapemap, hdict, _, nx, ny = rout
     # set NaN values to zeros
     shapemap[~np.isfinite(shapemap)] = 0.0
+
+    # get the shape file
+    if p['KW_SHAPEFILE'][0] in hdict:
+        p['SHAPFILE'] = hdict[p['KW_SHAPEFILE'][0]]
+    else:
+        p['SHAPFILE'] = 'UNKNOWN'
+    p.set_source('SHAPFILE', func_name)
+
     # return the shape map image
-    return shapemap
+    return p, shapemap
 
 
 def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
