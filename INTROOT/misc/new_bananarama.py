@@ -1,34 +1,31 @@
-#from lin_mini import *
-#import os
 import numpy as np
 import glob
-import pyfits
+from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 from scipy.interpolate import InterpolatedUnivariateSpline
 import scipy
-from gaussfit import *
-import warnings
 from scipy.stats.stats import pearsonr
+
+from SpirouDRS import spirouImage
+from SpirouDRS import spirouStartup
+from SpirouDRS import spirouEXTOR
+from SpirouDRS.spirouCore import spirouMath
+
+import time
+
 # =============================================================================
 # Define variables
 # =============================================================================
-# Name of program
-from scipy.interpolate import griddata
 
-from SpirouDRS import *
-from SpirouDRS import spirouDB
-from SpirouDRS import spirouConfig
-from SpirouDRS import spirouCore
-from SpirouDRS import spirouImage
-from SpirouDRS import spirouStartup
-from debanananificator import *
+PLOT = True
 
 # FP file for tilt/dx determination
-slope_file = '2295305a_pp.fits'
+slope_file = '/scratch/Projects/spirou_py3/data_h4rg/tmp/TEST1/20180805/2295525a_pp.fits'
+
 
 outname = (slope_file.split('_'))[0]+'_dxmap.fits'
 
-hdr_wave = pyfits.getheader("2295305a_pp_e2dsff_AB.fits")
+hdr_wave = pyfits.getheader("/scratch/Projects/spirou_py3/data_h4rg/reduced/TEST1/20180805/20180805_2295515f_pp_loco_AB.fits")
 # width of the ABC fibres.
 wpix = 55
 
@@ -69,6 +66,7 @@ data1 = spirouImage.ResizeImage(data0, **bkwargs)
 # dxmap that will contain the dx per pixel
 # if the file does not exist, we fill the map
 # with zeros
+# TODO: Question: How do we handle this in the DRS?
 if glob.glob(outname) != []:
 	print(outname+' exists... we use its values as a starting point')
 	master_dxmap = pyfits.getdata(outname)
@@ -88,7 +86,7 @@ for ite_banana in range(nbanana):
 
 	# if the map is not zeros, we use it as a starting point
 	if np.sum(master_dxmap!=0)!=0:
-		data2 = debanananificator(data1,master_dxmap)
+		data2 = spirouEXTOR.DeBananafication(data1,master_dxmap)
 		flag_start_slope=False
 	else:
 		data2 = np.array(data1)
@@ -108,7 +106,9 @@ for ite_banana in range(nbanana):
 	range_slopes=np.tan(np.array(range_slopes_deg)/180*np.pi)
 
 	# looping through orders
+	start = time.time()
 	for iord in range(0,n_ord):
+
 		print()
 		print('Nth order : ',iord+1,'/',n_ord,' || banana iteration : ',ite_banana+1,'/',nbanana)
 
@@ -138,6 +138,8 @@ for ite_banana in range(nbanana):
 		slopes = np.array(range(0,9))*(range_slopes[1]-range_slopes[0])/8.0+range_slopes[0]
 
 		print('range slope exploration : ',range_slopes_deg[0],' -> ',range_slopes_deg[1],' deg')
+
+
 		xpix=np.arange(4088)
 
 		# the domain is sliced into a number of sections, then we find the tilt that
@@ -163,6 +165,7 @@ for ite_banana in range(nbanana):
 				# when the angle is right
 				rvcontent[islope,k]=np.nansum(np.gradient(profil[k*4088//nsections:(k+1)*4088//nsections])**2)
 			islope+=1
+
 		#
 		# we find the peak of RV content and fit a parabola to that peak
 		for k in range(nsections):
@@ -180,6 +183,8 @@ for ite_banana in range(nbanana):
 		#
 		# we sigma-clip the dx[x] values relative to a linear fit
 			keep=np.isfinite(dxsection)
+
+
 		sigmax=99
 		while sigmax>4:
 			fit=np.polyfit(xsection[keep],dxsection[keep],2)
@@ -188,21 +193,26 @@ for ite_banana in range(nbanana):
 			res/=np.nanmedian(np.abs(res[keep]))
 			sigmax=np.nanmax(np.abs(res[keep]))
 			keep &= (np.abs(res)<4)   # TODO: Question: is this 4 the same as above?
+
+
 		#
 		# we fit a 2nd order polynomial to the slope vx position along order
 		fit=np.polyfit(xsection[keep],dxsection[keep],2)
 		print('slope at pixel 2044 : ',np.arctan(np.polyval(fit,2044))*180/np.pi,' deg')
 		slope = np.polyval(fit,np.arange(4088))
+
+
 		#
 		# some plots to show that the slope is well behaved
-		plt.subplot(1,2,1)
-		slope_deg=np.arctan(dxsection[keep])*180/np.pi
-		plt.plot(xsection[keep],slope_deg,'go')
-		plt.plot(np.arange(4088),np.arctan(slope)*180/np.pi)
-		ylim=[np.nanmin(slope_deg)-.2,np.nanmax(slope_deg)+.2]
-		plt.ylim(ylim)
-		plt.xlabel('x pixel')
-		plt.ylabel('slope (deg)')
+		if PLOT:
+			plt.subplot(1,2,1)
+			slope_deg=np.arctan(dxsection[keep])*180/np.pi
+			plt.plot(xsection[keep],slope_deg,'go')
+			plt.plot(np.arange(4088),np.arctan(slope)*180/np.pi)
+			ylim=[np.nanmin(slope_deg)-.2,np.nanmax(slope_deg)+.2]
+			plt.ylim(ylim)
+			plt.xlabel('x pixel')
+			plt.ylabel('slope (deg)')
 		#
 		# correct for the slope the ribbons and look for the slicer profile
 		for i in range(wpix):
@@ -217,14 +227,13 @@ for ite_banana in range(nbanana):
 
 		dx=np.zeros(wpix)+np.nan
 		ddx=np.arange(-3,4)   # TODO: Question: why this size?
-
 		# cross-correlation peaks of median profile VS position along ribbon
 		cc=np.zeros([wpix,len(ddx)],dtype=float)
 		for i in range(wpix):
 			for j in range(len(ddx)):
 				cc[i,j] = (pearsonr(ribbon2[i,:],np.roll(profil,ddx[j])))[0]
 			# fit a gaussian to the CC peak
-			g,gg=gaussfit(ddx,cc[i,:],4)
+			g,gg=spirouMath.gauss_fit_nn(ddx,cc[i,:],4)
 
 			if np.nanmax(cc[i,:])>(0.1):
 				dx[i]=g[1]
@@ -246,14 +255,17 @@ for ite_banana in range(nbanana):
 			dx[-1]=dx[-2]
 
 		# some more graphs
-		plt.subplot(1,2,2)
-		plt.imshow(cc,aspect=.2)
-		plt.ylim([0,wpix-1])
-		plt.xlim([0,len(ddx)-1])
-		plt.plot(dx-np.min(ddx),dypix,'ro')
-		plt.plot(dx[keep]-np.min(ddx),dypix[keep],'go')
-		plt.savefig('map_ord'+str(iord)+'.pdf')
-		plt.clf()
+		if PLOT:
+			plt.subplot(1,2,2)
+			plt.imshow(cc,aspect=.2)
+			plt.ylim([0,wpix-1])
+			plt.xlim([0,len(ddx)-1])
+			plt.plot(dx-np.min(ddx),dypix,'ro')
+			plt.plot(dx[keep]-np.min(ddx),dypix[keep],'go')
+			#plt.savefig('map_ord'+str(iord)+'.pdf')
+			#plt.clf()
+			plt.show()
+			plt.close()
 
 		# spline everything onto the master DX map
 		spline=InterpolatedUnivariateSpline(dypix[keep],dx[keep],ext=0)
@@ -270,6 +282,10 @@ for ite_banana in range(nbanana):
 			g=(ypix2>=0)
 			if np.sum(g)!=0:
 				master_dxmap[ypix2[g],i]+=(ddx+dx0)[g]
+
+	end = time.time()
+
+	print('Time = {0}'.format(end - start))
 
 pyfits.writeto(outname,master_dxmap,clobber=True)
 
