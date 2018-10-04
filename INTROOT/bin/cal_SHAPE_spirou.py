@@ -35,6 +35,8 @@ from scipy.ndimage import filters
 from scipy.stats import stats
 import warnings
 
+import time
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -127,7 +129,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    p, datac = spirouImage.CorrectForDark(p, data, hdr)
+    # p, datac = spirouImage.CorrectForDark(p, data, hdr)
+    datac = data
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -148,7 +151,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    # p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -164,7 +167,7 @@ def main(night_name=None, files=None):
 
     # data2=data2-background
     # correct data2 with background (where positive)
-    data2 = np.where(data2 > 0, data2 - background, 0)
+    # data2 = np.where(data2 > 0, data2 - background, 0)
 
     # save data to loc
     loc = ParamDict()
@@ -202,9 +205,27 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Writing to file
     # ------------------------------------------------------------------
-    # TODO: Decide on file name
-    # TODO: Decide on header keys (similar to cal_slit?)
-    # TODO: Write the DXMAP to file
+    # get the raw tilt file name
+    raw_shape_file = os.path.basename(p['FITSFILENAME'])
+    # construct file name and path
+    shapefits, tag = spirouConfig.Constants.SLIT_TILT_FILE(p)
+    shapefitsname = os.path.basename(shapefits)
+    # Log that we are saving tilt file
+    wmsg = 'Saving shape information in file: {0}'
+    WLOG('', p['LOG_OPT'], wmsg.format(shapefitsname))
+    # Copy keys from fits file
+    # Copy keys from fits file
+    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
+    # write tilt file to file
+    p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -362,12 +383,11 @@ def get_shape_map(p, loc):
                 coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
                 # get the residuals
                 res = dxsection - np.polyval(coeffs, xsection)
-                reskeep = res[keep]
                 # normalise residuals
-                res = res - np.nanmedian(reskeep)
-                res = res / np.nanmedian(np.abs(reskeep))
+                res = res - np.nanmedian(res[keep])
+                res = res / np.nanmedian(np.abs(res[keep]))
                 # calculate the sigma
-                sigmax = np.nanmax(np.abs(reskeep))
+                sigmax = np.nanmax(np.abs(res[keep]))
                 # do not keep bad residuals
                 with warnings.catch_warnings(record=True) as _:
                     keep &= np.abs(res) < sigclipmax
@@ -378,7 +398,7 @@ def get_shape_map(p, loc):
             # log slope at center
             s_xpix = dim1//2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
-            wmsg = '\tSlope at pixel {0}: {1:.3f} deg'
+            wmsg = '\tSlope at pixel {0}: {1:.5f} deg'
             wargs = [s_xpix, s_ypix]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # get slope for full range
@@ -421,13 +441,14 @@ def get_shape_map(p, loc):
                     pearsonr_value = stats.pearsonr(xff, yff)[0]
                     # push into cross-correlation storage
                     ccor[iw, jw] = pearsonr_value
-                    # fit a gaussian to the cross-correlation peak
-                    xvec = ddx
-                    yvec = ccor[iw, :]
+                # fit a gaussian to the cross-correlation peak
+                xvec = ddx
+                yvec = ccor[iw, :]
+                with warnings.catch_warnings(record=True) as _:
                     gcoeffs, _ = spirouMath.gauss_fit_nn(xvec, yvec, 4)
-                    # check that max value is good
-                    if np.nanmax(ccor[iw, :]) > min_good_corr:
-                        dx[iw] = gcoeffs[1]
+                # check that max value is good
+                if np.nanmax(ccor[iw, :]) > min_good_corr:
+                    dx[iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
             dx = dx - np.nanmedian(dx)
@@ -456,8 +477,7 @@ def get_shape_map(p, loc):
                 # get the fraction missed
                 frac = ypix[ix] - np.fix(ypix[ix])
                 # get dx0 with slope factor added
-                fslope = (1 - frac) *slope[ix]
-                dx0 = np.arange(width) - width // 2 + fslope
+                dx0 = (np.arange(width) - width // 2 + (1 - frac)) * slope[ix]
                 # get the ypix at this value
                 ypix2 = int(ypix[ix]) + np.arange(-width//2, width//2)
                 # get the ddx
