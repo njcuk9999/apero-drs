@@ -267,7 +267,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # log progress
             WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
             # get the shape map
-            shapemap = spirouImage.ReadShapeMap(p, hdr)
+            p, shapemap = spirouImage.ReadShapeMap(p, hdr)
             # debananafy data and order profile
             data2 = spirouEXTOR.DeBananafication(data2, shapemap)
             order_profile = spirouEXTOR.DeBananafication(order_profile,
@@ -407,6 +407,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
         hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
         hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+        if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+            hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'],
+                                       value=p['SHAPFILE'])
         hdict = spirouImage.AddKey(hdict, p['KW_EXTFILE'], value=raw_ext_file)
         hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
