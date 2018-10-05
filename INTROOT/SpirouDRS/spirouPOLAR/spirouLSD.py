@@ -246,7 +246,7 @@ def prepare_polarimetry_data(p, loc):
     """
 
     func_name = __NAME__ + '.prepare_polarimetry_data()'
-
+    
     # get the shape of pol
     ydim, xdim = loc['POL'].shape
     # get wavelength ranges to be considered in each spectral order
@@ -303,6 +303,10 @@ def prepare_polarimetry_data(p, loc):
     loc['LSD_POLERR'] = loc['LSD_POLERR'][indices]
     loc['LSD_NULL'] = loc['LSD_NULL'][indices]
 
+    # apply barycentric RV correction to the wavelength vector
+    RVcorr = 1.0 + loc['BERVCEN'] / (constants.c / 1000.)
+    loc['LSD_WAVE'] =  loc['LSD_WAVE'] * RVcorr
+    
     # initialize temporary data vectors
     wl, flux, fluxerr, pol, polerr, null = [], [], [], [], [], []
     # loop over spectral ranges to select only spectral regions of interest
@@ -327,7 +331,7 @@ def prepare_polarimetry_data(p, loc):
     loc['LSD_POL'] = pol
     loc['LSD_POLERR'] = polerr
     loc['LSD_NULL'] = null
-
+    
     return loc
 
 
@@ -387,7 +391,7 @@ def lsd_analysis(p, loc):
                                                loc['LSD_STOKESI'],
                                                loc['LSD_STOKESIERR'],
                                                loc['LSD_VELOCITIES'], M,
-                                               normalize=True)
+                                               normalize=False)
 
     # fit gaussian to the measured flux LSD profile
     loc['LSD_STOKESI_MODEL'], loc['LSD_FIT_RV'], loc[

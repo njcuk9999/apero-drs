@@ -128,6 +128,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OUTPUT',
             'kw_EXT_TYPE',
             'kw_POL_EXPTIME',
+            'kw_POL_ELAPTIME',
             'kw_POL_METHOD',
             'kw_POL_NEXP',
             'kw_POL_STOKES',
@@ -135,6 +136,10 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_FILENAM2',
             'kw_POL_FILENAM3',
             'kw_POL_FILENAM4',
+            'kw_POL_EXPTIME1',
+            'kw_POL_EXPTIME2',
+            'kw_POL_EXPTIME3',
+            'kw_POL_EXPTIME4',
             'kw_POL_MJDATE1',
             'kw_POL_MJDATE2',
             'kw_POL_MJDATE3',
@@ -147,7 +152,13 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_BJD2',
             'kw_POL_BJD3',
             'kw_POL_BJD4',
+            'kw_POL_BERV1',
+            'kw_POL_BERV2',
+            'kw_POL_BERV3',
+            'kw_POL_BERV4',
             'kw_POL_MEANBJD',
+            'kw_POL_BJDCEN',
+            'kw_POL_BERVCEN',
             'kw_POL_LSD_MASK',
             'kw_POL_LSD_V0',
             'kw_POL_LSD_VF',
@@ -525,23 +536,34 @@ kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
 kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
+kw_POL_ELAPTIME = ['ELAPTIME', '', 'Elapsed time of observation (sec)']
 kw_POL_FILENAM1 = ['FILENAM1', '', 'Base filename of exposure 1']
 kw_POL_FILENAM2 = ['FILENAM2', '', 'Base filename of exposure 2']
 kw_POL_FILENAM3 = ['FILENAM3', '', 'Base filename of exposure 3']
 kw_POL_FILENAM4 = ['FILENAM4', '', 'Base filename of exposure 4']
-kw_POL_MJDATE1 = ['MJDATE1', '', 'MJD of exposure 1']
-kw_POL_MJDATE2 = ['MJDATE2', '', 'MJD of exposure 2']
-kw_POL_MJDATE3 = ['MJDATE3', '', 'MJD of exposure 3']
-kw_POL_MJDATE4 = ['MJDATE4', '', 'MJD of exposure 4']
-kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND of exposure 1']
-kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND of exposure 2']
-kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND of exposure 3']
-kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND of exposure 4']
-kw_POL_BJD1 = ['BJD1', '', 'BJD of exposure 1']
-kw_POL_BJD2 = ['BJD2', '', 'BJD of exposure 2']
-kw_POL_BJD3 = ['BJD3', '', 'BJD of exposure 3']
-kw_POL_BJD4 = ['BJD4', '', 'BJD of exposure 4']
+kw_POL_EXPTIME1 = ['EXPTIME1', '', 'EXPTIME of exposure 1 (sec)']
+kw_POL_EXPTIME2 = ['EXPTIME2', '', 'EXPTIME of exposure 2 (sec)']
+kw_POL_EXPTIME3 = ['EXPTIME3', '', 'EXPTIME of exposure 3 (sec)']
+kw_POL_EXPTIME4 = ['EXPTIME4', '', 'EXPTIME of exposure 4 (sec)']
+kw_POL_MJDATE1 = ['MJDATE1', '', 'MJD at start of exposure 1']
+kw_POL_MJDATE2 = ['MJDATE2', '', 'MJD at start of exposure 2']
+kw_POL_MJDATE3 = ['MJDATE3', '', 'MJD at start of exposure 3']
+kw_POL_MJDATE4 = ['MJDATE4', '', 'MJD at start of exposure 4']
+kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND at end of exposure 1']
+kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND at end of exposure 2']
+kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND at end of exposure 3']
+kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND at end of exposure 4']
+kw_POL_BJD1 = ['BJD1', '', 'BJD at start of exposure 1']
+kw_POL_BJD2 = ['BJD2', '', 'BJD at start of exposure 2']
+kw_POL_BJD3 = ['BJD3', '', 'BJD at start of exposure 3']
+kw_POL_BJD4 = ['BJD4', '', 'BJD at start of exposure 4']
+kw_POL_BERV1 = ['BERV1', '', 'BERV at start of exposure 1']
+kw_POL_BERV2 = ['BERV2', '', 'BERV at start of exposure 2']
+kw_POL_BERV3 = ['BERV3', '', 'BERV at start of exposure 3']
+kw_POL_BERV4 = ['BERV4', '', 'BERV at start of exposure 4']
 kw_POL_MEANBJD = ['MEANBJD', '', 'Mean BJD for polar sequence']
+kw_POL_BJDCEN = ['BJDCEN', '', 'BJD at center of observation']
+kw_POL_BERVCEN = ['BERVCEN', '', 'BERV at center of observation']
 kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
 kw_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
 kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
