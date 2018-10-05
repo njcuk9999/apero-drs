@@ -12,6 +12,7 @@ Created on 2018-08-28
 from __future__ import division
 import numpy as np
 import os
+from collections import OrderedDict
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -210,8 +211,8 @@ def main(night_name=None, files=None):
     raw_infile = os.path.basename(p['FITSFILENAME'])
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
-    wavefitsname = os.path.split(wavefits)[-1]
-    WLOG('', p['LOG_OPT'], wavefits)
+    wavefitsname = os.path.basename(wavefits)
+    WLOG('', p['LOG_OPT'], 'Saving wave map to {0}'.format(wavefitsname))
 
     # log progress
     wargs = [p['FIBER'], wavefitsname]
@@ -251,6 +252,27 @@ def main(night_name=None, files=None):
     # make a copy of the E2DS file for the calibBD
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # ----------------------------------------------------------------------
+    # Save resolution and line profiles to file
+    # ----------------------------------------------------------------------
+    raw_infile = os.path.basename(p['FITSFILENAME'])
+    # get wave filename
+    resfits, tag3 = spirouConfig.Constants.WAVE_RES_FILE_EA(p)
+    resfitsname = os.path.basename(resfits)
+    WLOG('', p['LOG_OPT'], 'Saving wave resmap to {0}'.format(resfitsname))
+
+    # make a copy of the E2DS file for the calibBD
+    # set the version
+    hdict = OrderedDict()
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
+
+    # get res data in correct format
+    resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)
+    # save to file
+    p = spirouImage.WriteImageMulti(p, resfits, resdata, hdicts=hdicts)
 
     # ----------------------------------------------------------------------
     # Update calibDB
