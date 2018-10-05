@@ -114,7 +114,7 @@ def get_flat(p=None, loc=None, hdr=None, filename=None):
     # get flat from file
     try:
         # read the flat
-        flat = spirouImage.ReadFlatFile(p, hdr, required=False)
+        p, flat = spirouImage.ReadFlatFile(p, hdr, required=False)
         # where the flat is zeros set it to ones
         flat = np.where(flat == 0.0, np.ones_like(loc['HCDATA']), flat)
     # if there is no flat defined in calibDB use a ones array
@@ -124,13 +124,15 @@ def get_flat(p=None, loc=None, hdr=None, filename=None):
         WLOG('warning', p['LOG_OPT'], wmsg)
         # flat set to ones
         flat = np.ones_like(loc['HCDATA'])
+        p['FLATFILE'] = 'NONE'
+        p.set_source('FLATFILE', func_name)
 
     # add flat to loc
     loc['FLAT'] = flat
     loc.set_source('FLAT', func_name)
 
     # return loc
-    return loc
+    return p, loc
 
 
 def get_valid_orders(p, loc):

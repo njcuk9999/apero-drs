@@ -109,7 +109,7 @@ def main(night_name=None, files=None):
     # Obtain the flat
     # ----------------------------------------------------------------------
     # get the flat
-    loc = spirouFLAT.GetFlat(p, loc, hchdr)
+    p, loc = spirouFLAT.GetFlat(p, loc, hchdr)
     # correct the data with the flat
     # TODO: Should this be used?
     # log
@@ -340,6 +340,8 @@ def part2(p, loc):
     # ------------------------------------------------------------------
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile = os.path.basename(p['FITSFILENAME'])
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE(p)
     wavefitsname = os.path.split(wavefits)[-1]
@@ -355,6 +357,11 @@ def part2(p, loc):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
+
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
