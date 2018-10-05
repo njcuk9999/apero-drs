@@ -1536,6 +1536,27 @@ def WAVE_LINE_FILE_EA(p):
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
 
+def WAVE_RES_FILE_EA(p):
+    func_name = 'WAVE_RES_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_waveres_ea_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
 
 # noinspection PyPep8Naming
 def WAVE_E2DS_COPY(p):
@@ -1554,6 +1575,8 @@ def WAVE_E2DS_COPY(p):
     tag = tags[func_name]
     # return absolute path and tag
     return e2dscopy, tag
+
+
 
 
 # noinspection PyPep8Naming
