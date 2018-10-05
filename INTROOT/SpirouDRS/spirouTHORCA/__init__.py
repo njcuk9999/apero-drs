@@ -49,6 +49,8 @@ FPWaveSolution = spirouWAVE.fp_wavelength_sol
 
 GetLampParams = spirouTHORCA.get_lamp_parameters
 
+GenerateResFiles = spirouWAVE.generate_res_files
+
 JoinOrders = spirouTHORCA.join_orders
 
 SecondGuessSolution = spirouTHORCA.second_guess_at_wave_solution

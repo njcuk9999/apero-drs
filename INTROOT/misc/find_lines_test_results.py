@@ -15,7 +15,6 @@ import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import os
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -32,11 +31,11 @@ LAST = 40
 FIRST = 0
 LAST = 50
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def plot_wave(y1, y2):
-
     ydim, xdim = y1.shape
 
     plt.figure()
@@ -56,7 +55,6 @@ def plot_wave(y1, y2):
 
 
 def plot_wave_residual(y1, y2):
-
     ydim, xdim = y1.shape
 
     jet = plt.get_cmap('jet')
@@ -79,6 +77,7 @@ def plot_wave_residual(y1, y2):
     plt.xlabel('Pixel number')
     plt.ylabel('$\Delta$ Wavelength [nm]')
 
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -95,7 +94,6 @@ if __name__ == "__main__":
 
     plt.show()
     plt.close()
-
 
 # =============================================================================
 # End of code

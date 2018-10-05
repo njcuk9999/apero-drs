@@ -18,7 +18,6 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -43,6 +42,7 @@ FILENAME = os.path.join(PATH, 'CHANGELOG.md')
 TMPFILENAME = 'CHANGELOG.tmp'
 TMPFILENAME2 = 'CHANGELOGLINE.tmp'
 REVKEY = '(rev.'
+
 
 # =============================================================================
 # Define functions
@@ -72,7 +72,6 @@ def update(filename, path, kind='rpm', version=None, since=None, until=None):
 
 
 def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
-
     # read log
     f = open(tmpfilename, 'r')
     # read lines
@@ -218,7 +217,6 @@ def get_date(key):
 
 
 def get_last_entry(filename):
-
     # check if we have a file
     if not os.path.exists(filename):
         return None
@@ -262,7 +260,6 @@ if __name__ == "__main__":
     update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
     # get lines group them and save to full file
     process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
-
 
 # =============================================================================
 # End of code

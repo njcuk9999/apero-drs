@@ -1,13 +1,27 @@
-Update Note Summary - Version 0.3.024 (Since 0.3.017)
+Update Note Summary - Version 0.3.027 (Since 0.3.017)
 
 Not done/not finished/to do:
 
-- integrate Etiennes new "shape finding" algorithm [Branch = extract_redo]
-- integrate Etiennes new "shape finding" on extraction  [Branch = extract_redo]
-- cal_WAVE_E2DS/cal_HC_E2DS versions merging
-- integrate telluric use of different wave solutions
+- cal_WAVE_E2DS/cal_HC_E2DS versions merging [Melissa]
+- cal_WAVE_E2DS_EA does not work with new extract (4b) Why?
+- integrate telluric use of different wave solutions [Neil + Etienne]
+- drift code compatibility [Francois]
+- add the drift to cal_CCF [Francois]
 
 Done:
+
+- Integrated Etiennes "shape finding" algorithm
+    - adds new recipe "cal_SHAPE_spirou.py" - needed to run extraction
+    - cal_SHAPE_spirou.py works like cal_SLIT_spirou.py but produces a 2D
+      "shape" (dx offset) file
+    - cal_extract_RAW_spirou updated to support extraction modes "4a" and "4b"
+      which are equivalent to extraction modes "3c" and "3d" but with the tilt
+      replaced by the dxshift (actually image is straighted before-hand in the
+      case of "4a" and "4b" then extraction is 1 pixel wide in x and folded
+      along the y direction for A/B/C
+    - NOTE: Must set "ic_extract_type = 4b" (or 4a) to work with extraction!!!
+
+- cal_HC_E2DS_EA_spirou: resolution & line profiles saved as outputs
 
 - Fix issue #464: DRIFT codes input files now allowed:
     - Fiber AB/A/B: FP_FP
@@ -17,10 +31,15 @@ Done:
     - Fiber C: HCONE_HCONE and OBJ_HCONE
     - Fiber C: HCTWO_HCTWO and OBJ_HCTWO
 
-- Fix issue #468: Wave solution functions merged - now should ONLY use
-  "GetWaveSolution" in recipes (though internal functions exist to do the
-  individual operations like get wave params from header or generate wave map
-  from wave params etc.
+- Fix issue #468: Wave solution functions merged
+    - now should ONLY use "GetWaveSolution" in recipes (though internal
+      functions exist to do the individual operations like get wave params
+      from header or generate wave map from wave params etc.
+    - Now prints where the wave solution was taken from FILE/HEADER/CALIBDB and
+      the associated filename
+    - Note that to force fiber type (when using calibDB) need to use
+      "fiber={FIBER}" otherwise fiber will be fiber = p['FIBER']
+      (i.e. WAVE_{fiber} is used in calib DB)
 
 - Fix issue #471: Filenames of all inputs added to headers of outputs
   (and passed to future outputs) i.e. new header keys are:
@@ -29,6 +48,7 @@ Done:
         - BADFILE2
         - LOCOFILE
         - TILTFILE
+        - SHAPFILE
         - BLAZFILE
         - FLATFILE
         - EXTRFILE
@@ -43,7 +63,7 @@ Done:
 - Constant added to force re-computation of line list
   (for cal_WAVE_E2DS_EA_spirou)
 
-- Re-adjusted unit tests
+- Re-adjusted unit tests + added new recipes
 
 - Improve plotting for cal_CCF plot (inputs added)
 

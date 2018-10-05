@@ -79,7 +79,7 @@ def main(night_name=None):
         loc['FILENAME'] = list(rawloc['FILENAME'])
         loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
         for col in columns:
-            loc[col] = rawloc[col]
+            loc[col] = list(rawloc[col])
     # else we have to create this file
     else:
         loc['FILENAME'] = []
