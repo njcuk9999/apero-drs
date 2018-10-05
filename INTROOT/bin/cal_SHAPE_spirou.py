@@ -77,27 +77,6 @@ def main(night_name=None, files=None):
     p['FIBER'] = 'AB'
     p.set_source('FIBER', __NAME__ + '/main()')
 
-    # TODO: Add these to constants_H4RG_spirou.py
-
-    # The number of iterations to run the shape finding out to
-    p['SHAPE_NUM_ITERATIONS'] = 3
-    # width of the ABC fibers
-    p['SHAPE_ABC_WIDTH'] = 55
-    # the range of angles (in degrees) for the first iteration (large)
-    # and subsequent iterations (small)
-    p['SHAPE_LARGE_ANGLE_RANGE'] = [-12.0, 0.0]
-    p['SHAPE_SMALL_ANGLE_RANGE'] = [-1.0, 1.0]
-    # number of sections per order to split the order into
-    p['SHAPE_NSECTIONS'] = 32
-    # max sigma clip (in sigma) on points within a section
-    p['SHAPE_SIGMACLIP_MAX'] = 4
-    # the size of the median filter to apply along the order (in pixels)
-    p['SHAPE_MEDIAN_FILTER_SIZE'] = 51
-    # The minimum value for the cross-correlation to be deemed good
-    p['SHAPE_MIN_GOOD_CORRELATION'] = 0.1
-
-    p['SHAPE_SELETED_ORDER'] = 33
-
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
