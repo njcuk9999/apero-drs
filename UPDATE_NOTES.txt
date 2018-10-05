@@ -1,12 +1,12 @@
-Update Note Summary - Version 0.3.026 (Since 0.3.017)
+Update Note Summary - Version 0.3.027 (Since 0.3.017)
 
 Not done/not finished/to do:
 
 - cal_WAVE_E2DS/cal_HC_E2DS versions merging [Melissa]
+- cal_WAVE_E2DS_EA does not work with new extract (4b) Why?
 - integrate telluric use of different wave solutions [Neil + Etienne]
 - drift code compatibility [Francois]
 - add the drift to cal_CCF [Francois]
-- cal_HC_E2DS_EA_spirou: resolution & line profiles saved as outputs [Neil]
 
 Done:
 
@@ -20,6 +20,8 @@ Done:
       case of "4a" and "4b" then extraction is 1 pixel wide in x and folded
       along the y direction for A/B/C
 
+- cal_HC_E2DS_EA_spirou: resolution & line profiles saved as outputs
+
 - Fix issue #464: DRIFT codes input files now allowed:
     - Fiber AB/A/B: FP_FP
     - Fiber AB/A/B: HCONE_HCONE
@@ -28,10 +30,15 @@ Done:
     - Fiber C: HCONE_HCONE and OBJ_HCONE
     - Fiber C: HCTWO_HCTWO and OBJ_HCTWO
 
-- Fix issue #468: Wave solution functions merged - now should ONLY use
-  "GetWaveSolution" in recipes (though internal functions exist to do the
-  individual operations like get wave params from header or generate wave map
-  from wave params etc.
+- Fix issue #468: Wave solution functions merged
+    - now should ONLY use "GetWaveSolution" in recipes (though internal
+      functions exist to do the individual operations like get wave params
+      from header or generate wave map from wave params etc.
+    - Now prints where the wave solution was taken from FILE/HEADER/CALIBDB and
+      the associated filename
+    - Note that to force fiber type (when using calibDB) need to use
+      "fiber={FIBER}" otherwise fiber will be fiber = p['FIBER']
+      (i.e. WAVE_{fiber} is used in calib DB)
 
 - Fix issue #471: Filenames of all inputs added to headers of outputs
   (and passed to future outputs) i.e. new header keys are:
@@ -40,6 +47,7 @@ Done:
         - BADFILE2
         - LOCOFILE
         - TILTFILE
+        - SHAPFILE
         - BLAZFILE
         - FLATFILE
         - EXTRFILE
@@ -54,7 +62,7 @@ Done:
 - Constant added to force re-computation of line list
   (for cal_WAVE_E2DS_EA_spirou)
 
-- Re-adjusted unit tests
+- Re-adjusted unit tests + added new recipes
 
 - Improve plotting for cal_CCF plot (inputs added)
 

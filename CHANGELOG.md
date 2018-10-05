@@ -4890,3 +4890,23 @@
 	- spirouPlot.py - corrected type in constant name (slit_shape_angle_plot) (rev.361df98b)
 	- constants_SPIROU_H4RG.py - move cal_SHAPE_spirou.py constants to constants file (rev.6bc37dc3)
 	- cal_SHAPE_spirou.py - move constants to constants file (rev.9634f6ca)
+
+
+
+================================================================================
+* Fri Oct 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.027
+
+================================================================================
+	- Timings.txt - update timings with new runs (rev.b92914b8)
+	- Cal_Test.run - comment out cal_WAVE_E2DS_EA_spirou - not working with extraction 4b? (rev.16d4abab)
+	- spirouTHORCA.__init__.py - add alias to generate_res_files (GenerateResFiles) (rev.f5c278d2)
+	- spirouWAVE.py - add generate_res_files functions to generate arrays/header dictionary in correct format for wave resolution line profile map file (rev.c964a9c5)
+	- spirouConst.py - add WAVE_RES_FILE_EA to file definitions (rev.139af4bf)
+	- cal_WAVE_E2DS_EA_spirou.py - add saving of wavelength resolution line profiles to file (rev.78b46b27)
+	- output_keys.py - added "WAVE_RES" to output keys (for wave solution res map) (rev.edecd892)
+	- cal_HC_E2DS_EA_spirou.py - added saving of resolution map and line profiles to file (rev.7e123626)
+	- spirouUnitTest.py - up date title of log timings (rev.6f8c7de4)
+	- recipe_control.txt - hide dark_fp dark_flat for now (test later) (rev.145350fb)
+	- spirouFITS.py - allow fiber-forcing in getting wave solution (otherwise when calibDB is used, uses p['FIBER']) (rev.bdfcb817)
+	- off_listing_RAW_spirou.py - correct mistake with off_listing (rawloc should be a list) (rev.02b06153)
+	- spirouFITS.py - make sure the source of the wavelength solution is reported (Issue #468) (rev.c666052c)
