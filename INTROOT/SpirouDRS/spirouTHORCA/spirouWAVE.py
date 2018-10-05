@@ -108,8 +108,10 @@ def calculate_instrument_drift(p, loc):
     reffilename = spirouImage.ReadHcrefFile(p, loc['HCHDR'],
                                             return_filename=True)
     speref = spirouImage.ReadHcrefFile(p, loc['HCHDR'])
-    # get the wavelengths and parameters for the reference
-    waveref, _ = spirouTHORCA.get_e2ds_ll(p, loc['HCHDR'], filename=reffilename)
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True)
+    _, waveref = wout
+
     # cut down data to correct orders
     speref = speref[:n_order_final]
     waveref = waveref[:n_order_final]
@@ -649,7 +651,7 @@ def find_hc_gauss_peaks(p, loc):
     # get filename
     ini_table_name = spirouConfig.Constants.HC_INIT_LINELIST(p)
     # check if we already have a cached guess for this file
-    if os.path.exists(ini_table_name):
+    if os.path.exists(ini_table_name) and not p['HC_EA_FORCE_CREATE_LINELIST']:
         # if we do load from file
         ini_table = spirouImage.ReadTable(ini_table_name, fmt='ascii.rst',
                                           colnames=litems)
@@ -659,6 +661,7 @@ def find_hc_gauss_peaks(p, loc):
 
         # set sources
         loc.set_sources(litems, func_name)
+
         # return loc
         return loc
     else:

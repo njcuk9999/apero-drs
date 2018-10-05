@@ -1,130 +1,53 @@
-Update Notes - Version 0.3.017
+Update Note Summary - Version 0.3.024 (Since 0.3.017)
 
-Not done/not finished:
+Not done/not finished/to do:
 
-- cal_WAVE_E2DS_EA_spirou and cal_HC_E2DS_EA_spirou - still finalising changes [Neil/Melissa/Etienne]
-- differences between DRIFT and DRIFTPEAK [Francois?]
-- test for corrupt files [Neil]
+- integrate Etiennes new "shape finding" algorithm [Branch = extract_redo]
+- integrate Etiennes new "shape finding" on extraction  [Branch = extract_redo]
+- cal_WAVE_E2DS/cal_HC_E2DS versions merging
+- integrate telluric use of different wave solutions
 
+Done:
 
-Finished Changes:
+- Fix issue #464: DRIFT codes input files now allowed:
+    - Fiber AB/A/B: FP_FP
+    - Fiber AB/A/B: HCONE_HCONE
+    - Fiber AB/A/B: HCTWO_HCTWO
+    - Fiber C: FP_FP and OBJ_FP
+    - Fiber C: HCONE_HCONE and OBJ_HCONE
+    - Fiber C: HCTWO_HCTWO and OBJ_HCTWO
 
-1) Moved where pre-processed files are saved (now saved in the TMP folder
-   instead of RAW) - Defined in config.py by "DRS_DATA_WORKING"
+- Fix issue #468: Wave solution functions merged - now should ONLY use
+  "GetWaveSolution" in recipes (though internal functions exist to do the
+  individual operations like get wave params from header or generate wave map
+  from wave params etc.
 
-      [REQUIRES RE-PRE-PROCESSING TO WORK]*
+- Fix issue #471: Filenames of all inputs added to headers of outputs
+  (and passed to future outputs) i.e. new header keys are:
+        - DARKFILE
+        - BADFILE1
+        - BADFILE2
+        - LOCOFILE
+        - TILTFILE
+        - BLAZFILE
+        - FLATFILE
+        - EXTRFILE
+        - REFRFILE
+        - WAVEFILE
+        - INFILE
+        - HCFILE
+        - FPFILE
+    These can of course be changes as with other header keys in
+    spirouKeywords.py (located in directory .../INTROOT/SpirouDRS/spirouConfig/)
 
-2) Pre-processing now creates an index.fits (FITS table) with listing of key
-   parameters used by off_listing (for speed up)
+- Constant added to force re-computation of line list
+  (for cal_WAVE_E2DS_EA_spirou)
 
-   - parameters are [FILENAME, DATE-OBS, UTC-OBS, OBSTYPE, EXPTIME, SCCCAS_P,
-                     SBCREF_P, SBCDEN_P]
+- Re-adjusted unit tests
 
-      [REQUIRES RE-PRE-PROCESSING TO WORK]*
+- Improve plotting for cal_CCF plot (inputs added)
 
-3) All recipes now return outputs with some additional header keys.
-
-    These are:
-        - DRSOUTID (kw_OUTPUT)   - stores a description of the output
-        - DRS_EOUT (kw_EXT_TYPE)  - stores a description of the extraction
-                                    input (DPRTYPE)
-
-   These are used to check inputs of recipes that use DRS outputs
-   (e.g. cal_drift, cal_ccf, pol_spirou etc)
-
-   Note the current values of the header keys are temporary suggestions and
-   are easily changeable (See .../SpirouDRS/data/output_keys.py)
-
-      [REQUIRES RE-REDUCING PRODUCTS TO WORK]
-
-4) All recipes now index their outputs in an addition "index.fits" FITS table
-   used by off_listing for display files and the drift recipes
-
-
-      [REQUIRES RE-REDUCING PRODUCTS TO WORK]
-
-5) drift codes now use "index.fits" to look for FP_FP or HCONE_HCONE files
-   Note that without this file drift recipes take a long time to read all
-   files (and if you have hundreds of files would take a significant amount
-   of time) the index.fits means this process is almost instantaneous
-
-
-6) New wavelength solution (By Melissa) is now on the calibration database
-
-      [REQUIRES RESET OF CALIB DATABASE TO WORK]**
+- Plotting font/style added to allow changing plot font/style/theme for all
+  plots (allows presentation style plots to easily be produced)
 
 
-7) New cal_HC and cal_WAVE (By Etienne - implemented by myself and Melissa)
-
-    - currently in testing phase
-    - "cal_HC_E2DS_EA_spirou" and "cal_WAVE_E2DS_WAVE_spirou"
-
-8) Removed all H2RG compatibility
-
-9) Made all calls to dict() --> OrderedDict() (for python 2/cfht compatibility)
-
-10) New unit_tests
-       - Test 1: Calibration test (Cal_Test.run)
-            Tests all calibration recipes
-            Tests wave solution, drift and CCF recipes
-            Tests other minor recipes
-
-       - Test 2: Telluric test (Tellu_Test.run)
-            Currently requires Test 1 to be run (in Calib DB)
-            Extracts all telluric stars using CalibDB
-            Tests telluric recipes
-
-       - Test 3: Polarimetry test (Pol_Test.run)
-            Tests all calibration recipes (on data from 2018-05-26)
-            Extracts polar sequences from 2018-05-26
-            Tests pol_spirou recipe
-
-    You will find these tests in .../INTROOT/SpirouDRS/spirouUnitTests/runs
-    to run them use:
-
-    .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Cal_Test.run
-    .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Tellu_Test.run
-    .../INTROOT/SpirouDRS/spirouUnitTests/unit_test.py Pol_Test.run
-
-    Requires following files and directory structure in the raw folder:
-
-        TEST1/20180805:
-            2295510f.fits  2295516f.fits  2295522f.fits  2295528a.fits  2295548o.fits  2295677a.fits
-            2295511f.fits  2295517f.fits  2295523f.fits  2295529a.fits  2295549o.fits  2295680c.fits
-            2295512f.fits  2295518f.fits  2295524f.fits  2295532c.fits  2295550o.fits  dark_dark_P5_003d.fits
-            2295513f.fits  2295519f.fits  2295525a.fits  2295545o.fits  2295674a.fits
-            2295514f.fits  2295520f.fits  2295526a.fits  2295546o.fits  2295675a.fits
-            2295515f.fits  2295521f.fits  2295527a.fits  2295547o.fits  2295676a.fits
-
-        TEST2:
-            20180731/2294972o.fits  20180802/2295243o.fits  20180804/2295470o.fits  20180804/2295506o.fits
-            20180731/2294973o.fits  20180802/2295248o.fits  20180804/2295479o.fits  20180805/2295545o.fits
-            20180801/2295080o.fits  20180802/2295265o.fits  20180804/2295480o.fits  20180805/2295546o.fits
-            20180801/2295118o.fits  20180802/2295266o.fits  20180804/2295485o.fits  20180805/2295547o.fits
-            20180801/2295124o.fits  20180803/2295353o.fits  20180804/2295486o.fits
-            20180801/2295126o.fits  20180803/2295358o.fits  20180804/2295487o.fits
-            20180802/2295200o.fits  20180804/2295412o.fits  20180804/2295492o.fits
-
-        TEST3/20180526:
-            2279303d.fits  2279312f.fits  2279327a.fits  2279383o.fits  2279385o.fits
-            2279307f.fits  2279321f.fits  2279330c.fits  2279384o.fits  2279386o.fits
-
-
-11) cal_CCF will now run with NaN files (replacing the NaN's with a scaled blaze function where some flux exists or
-    with zeros if whole order is empty)
-
-
-12) Pep 8 clean up of all recipes
-
-
-* Can by-pass re-running cal_pre-process by copying all pre-processed files
-  from "RAW" folder to "TMP" folder and running off_listing_RAW.py on each
-  "NIGHT_NAME" individually
-
-** Can by-pass reset of calibration database by adding the following lines to
-   the calibration database:
-
-    WAVE_AB None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
-    WAVE_A None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
-    WAVE_B None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
-    WAVE_C None 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0

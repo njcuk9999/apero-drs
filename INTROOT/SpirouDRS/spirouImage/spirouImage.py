@@ -24,6 +24,9 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
+
+import off_listing_REDUC_spirou
+
 from . import spirouFITS
 from . import spirouTable
 
@@ -336,45 +339,102 @@ def get_all_similar_files(p, hdr):
     """
     func_name = __NAME__ + '.get_all_similar_files()'
 
+    # get the allowed file types
+    allowed_file_types_all = p['DRIFT_PEAK_ALLOWED_OUTPUT']
+
     # get the keys for this file
+    # if p['KW_OUTPUT'][0] in hdr:
+    #     output = hdr[p['KW_OUTPUT'][0]]
+    # else:
+    #     emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+    #     emsg2 = '\tfunction = {0}'.format(func_name)
+    #     WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    #     output = None
+
+    # get the output key for this file
     if p['KW_OUTPUT'][0] in hdr:
         output = hdr[p['KW_OUTPUT'][0]]
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+        emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        eargs = [p['KW_OUTPUT'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
         output = None
 
+    # get lamp type and extraction type
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
+        found, lamp = False, 'None'
+        for kind in drift_types:
+            if ext_type == kind:
+                lamp = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
+                found = True
+        if not found:
+            eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
+            emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
+                     '{1}'.format(*eargs1))
+            emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            lamp = 'None'
+            ext_type = None
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_EXT_TYPE'][0])
+        emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        lamp = 'None'
         ext_type = None
+    # get file type allowed (using lamp type)
+    if lamp in allowed_file_types_all:
+        allowed_file_types = allowed_file_types_all[lamp]
+    else:
+        emsg1 = 'Reference file was identified as lamp={0}'
+        emsg2 = '\tHowever DRIFT_PEAK_ALLOWED_OUTPUT missing this key.'
+        emsg3 = '\tPlease check constants file'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        allowed_file_types = None
 
     # get expected index file name and location
     index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
     path = p['REDUCED_DIR']
     index_path = os.path.join(path, index_file)
+
+    # if file does not exist try to index this folder
+    ntries = 0
+    while (not os.path.exists(index_path)) and (ntries < 5):
+        wmsg = 'No index file. Running indexing (Attempt {0} of {1})'
+        wargs = [ntries + 1, 5]
+        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        off_listing_REDUC_spirou.main(night_name=p['ARG_NIGHT_NAME'],
+                                      quiet=True)
+        ntries += 1
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         itable = spirouTable.read_fits_table(index_path)
     else:
-        emsg = 'No index file. Please run off_listing_REDUC_spirou.py'
-        WLOG('error', p['LOG_OPT'], emsg)
+        emsg1 = 'No index file. Could not run indexing'
+        emsg2 = '\t Please run off_listing_REDUC_spirou.py'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         itable = None
 
-    # mask by those with correct output and ext_type and not be itself
+    # check that we have the correct output type (i.e. EXT_E2DS)
     mask1 = itable[p['KW_OUTPUT'][0]] == output
-    mask2 = itable[p['KW_EXT_TYPE'][0]] == ext_type
+    # check that we have the correct extraction type (e.g. FP_FP or HCONE_HCONE)
+    mask2 = np.in1d(np.array(itable[p['KW_EXT_TYPE'][0]], dtype=str),
+                    np.array(allowed_file_types))
+    # check that we are not including the original filename
     mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
-    mask = mask1 & mask2 & mask3
+    # check that fiber type is correct for all
+    mask4 = check_fiber_ext_type(p, itable, allowed_file_types)
+    # combine masks
+    mask = mask1 & mask2 & mask3 & mask4
 
-    # check that we have rows left
+    # check that we have some rows left
     if np.sum(mask) == 0:
         emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
-        eargs = [p['KW_OUTPUT'][0], output, p['KW_EXT_TYPE'][0], ext_type]
+        eargs = [p['KW_OUTPUT'][0], allowed_file_types,
+                 p['KW_EXT_TYPE'][0], ext_type]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # if we do get date and sort by it
     else:
@@ -409,8 +469,10 @@ def get_all_similar_files(p, hdr):
         itable = itable[sortmask]
         # get file list
         filelist = itable['ABSFILENAMES']
+        # get file types that are left
+        filetypes = np.unique(itable[p['KW_EXT_TYPE'][0]])
         # return file list
-        return list(filelist)
+        return list(filelist), list(filetypes)
 
 
 def interp_bad_regions(p, image):
@@ -586,6 +648,22 @@ def fix_non_preprocessed(p, image, filename=None):
     # else return image
     else:
         return image
+
+
+def check_fiber_ext_type(p, itable, allowed_file_types):
+    # define mask4 as a set of Trues (i.e. we allow all by default)
+    mask4 = np.ones(len(itable), dtype=bool)
+    # loop around the different types
+    for ext_type_ex in p['DRIFT_PEAK_OUTPUT_EXCEPT']:
+        # check ext_type in allowed types
+        if ext_type_ex not in allowed_file_types:
+            continue
+        # check fiber is correct if it isn't set all of this EXT_TYPE to False
+        if p['FIBER'] != p['DRIFT_PEAK_OUTPUT_EXCEPT'][ext_type_ex]:
+            tmp = itable[p['KW_EXT_TYPE'][0]] == ext_type_ex
+            mask4[tmp] = False
+    # return mask4
+    return mask4
 
 
 # =============================================================================
@@ -918,11 +996,14 @@ def measure_dark(pp, image, image_name, short_name):
     WLOG('info', pp['LOG_OPT'], wmsg.format(*wargs))
     # add required variables to pp
     source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
-    pp['histo_{0}'.format(short_name)] = histo
+
+    pp['histo_{0}'.format(short_name)] = np.array(histo)
     pp.set_source('histo_{0}'.format(short_name), source)
-    pp['med_{0}'.format(short_name)] = med
+
+    pp['med_{0}'.format(short_name)] = float(med)
     pp.set_source('med_{0}'.format(short_name), source)
-    pp['dadead_{0}'.format(short_name)] = dadead
+
+    pp['dadead_{0}'.format(short_name)] = float(dadead)
     pp.set_source('dadead_{0}'.format(short_name), source)
     # return the parameter dictionary with new values
     return pp
@@ -981,7 +1062,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     if 'DARK' in cdb:
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
         WLOG('', p['LOG_OPT'], 'Doing Dark Correction using ' + darkfile)
-        darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
+        darkimage, dhdr, nx, ny = spirouFITS.read_raw_data(darkfile)
         corrected_image = image - (darkimage * nfiles)
     else:
         # get master config file name
@@ -996,13 +1077,21 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         emsg1 = 'No valid DARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
-        corrected_image, darkimage = None, None
+        dhdr, corrected_image, darkimage = None, None, None
+
+
+    # get the dark filename (from header)
+    if p['KW_DARKFILE'][0] in dhdr:
+        p['DARKFILE'] = dhdr[p['KW_DARKFILE'][0]]
+    else:
+        p['DARKFILE'] = 'UNKNOWN'
+    p.set_source('DARKFILE', func_name)
 
     # finally return datac
     if return_dark:
-        return corrected_image, darkimage
+        return p, corrected_image, darkimage
     else:
-        return corrected_image
+        return p, corrected_image
 
 
 def get_badpixel_map(p, header=None):
@@ -1049,8 +1138,8 @@ def get_badpixel_map(p, header=None):
     if 'BADPIX' in cdb:
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
         WLOG('', p['LOG_OPT'], 'Doing Bad Pixel Correction using ' + badpixfile)
-        badpixmask, nx, ny = spirouFITS.read_raw_data(badpixfile, False, True)
-        return badpixmask
+        badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(badpixfile)
+        return badpixmask, bhdr
     else:
         # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
@@ -1091,13 +1180,21 @@ def correct_for_badpix(p, image, header):
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
     # get badpixmask
-    badpixmask = get_badpixel_map(p, header)
+    badpixmask, bhdr = get_badpixel_map(p, header)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
     # correct image (set bad pixels to zero)
     corrected_image = np.where(mask, np.zeros_like(image), image)
+    # get badpixel file
+    if p['KW_BADPFILE1'][0] in bhdr:
+        p['BADPFILE1'] = bhdr[p['KW_BADPFILE1'][0]]
+        p['BADPFILE2'] = bhdr[p['KW_BADPFILE2'][0]]
+    else:
+        p['BADPFILE1'] = 'UNKNOWN'
+        p['BADPFILE2'] = 'UNKNOWN'
+    p.set_sources(['BADPFILE1', 'BADPFILE2'], func_name)
     # finally return corrected_image
-    return corrected_image
+    return p, corrected_image
 
 
 def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
@@ -1734,10 +1831,8 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
 def get_wave_keys(p, loc, hdr):
     func_name = __NAME__ + '.get_wave_keys()'
     # check for header key
-    if p['KW_WAVE_FILE'][0] in hdr:
+    if p['KW_WAVEFILE'][0] in hdr:
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
-        loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', dtype=str,
-                                    **wkwargs)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
         loc['WAVETIME2'] = get_param(keyword='KW_WAVE_TIME2', **wkwargs)
@@ -1745,18 +1840,17 @@ def get_wave_keys(p, loc, hdr):
     else:
         # log warning
         wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVEFILE'][0]))
         # get parameters from the calibDB
         key = 'WAVE_' + p['FIBER']
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
         fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
         # set the parameters in wave
-        loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
         loc['WAVETIME1'] = calib_time_human
         loc['WAVETIME2'] = calib_time_unix
     # set sources
-    loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
+    loc.set_sources(['WAVETIME1', 'WAVETIME2'], func_name)
     # return loc
     return loc
 

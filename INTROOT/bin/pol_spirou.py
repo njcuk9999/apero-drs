@@ -90,9 +90,13 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
-    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HDR'], return_wavemap=True)
+    _, loc['WAVE'] = wout
+    loc.set_source('WAVE', wsource)
+
     # ----------------------------------------------------------------------
     # Polarimetry computation
     # ----------------------------------------------------------------------
