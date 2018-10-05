@@ -628,10 +628,10 @@ def slit_tilt_angle_and_fit_plot(loc):
     end_plotting()
 
 
-def slit_shape_angle(p, loc, mode='all'):
+def slit_shape_angle_plot(p, loc, mode='all'):
 
     # get constants from p
-    sorder = p['SHAPE_SELETED_ORDER']
+    sorder = p['SHAPE_SELECTED_ORDER']
     nbo = loc['NUMBER_ORDERS'] // 2
     nbanana = p['SHAPE_NUM_ITERATIONS']
     width = p['SHAPE_ABC_WIDTH']
