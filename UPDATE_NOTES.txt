@@ -1,13 +1,24 @@
-Update Note Summary - Version 0.3.024 (Since 0.3.017)
+Update Note Summary - Version 0.3.026 (Since 0.3.017)
 
 Not done/not finished/to do:
 
-- integrate Etiennes new "shape finding" algorithm [Branch = extract_redo]
-- integrate Etiennes new "shape finding" on extraction  [Branch = extract_redo]
-- cal_WAVE_E2DS/cal_HC_E2DS versions merging
-- integrate telluric use of different wave solutions
+- cal_WAVE_E2DS/cal_HC_E2DS versions merging [Melissa]
+- integrate telluric use of different wave solutions [Neil + Etienne]
+- drift code compatibility [Francois]
+- add the drift to cal_CCF [Francois]
+- cal_HC_E2DS_EA_spirou: resolution & line profiles saved as outputs [Neil]
 
 Done:
+
+- Integrated Etiennes "shape finding" algorithm
+    - adds new recipe "cal_SHAPE_spirou.py" - needed to run extraction
+    - cal_SHAPE_spirou.py works like cal_SLIT_spirou.py but produces a 2D
+      "shape" (dx offset) file
+    - cal_extract_RAW_spirou updated to support extraction modes "4a" and "4b"
+      which are equivalent to extraction modes "3c" and "3d" but with the tilt
+      replaced by the dxshift (actually image is straighted before-hand in the
+      case of "4a" and "4b" then extraction is 1 pixel wide in x and folded
+      along the y direction for A/B/C
 
 - Fix issue #464: DRIFT codes input files now allowed:
     - Fiber AB/A/B: FP_FP
