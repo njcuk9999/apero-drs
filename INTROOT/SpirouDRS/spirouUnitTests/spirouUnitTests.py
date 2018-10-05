@@ -119,7 +119,8 @@ def log_timings(p, times):
     # log the times
     WLOG('', p['LOG_OPT'], '')
     WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['LOG_OPT'], ' TIMING STATS')
+    title = ' TIMING STATS: {RUNNAME} (V{DRS_VERSION})'.format(**p)
+    WLOG('', p['LOG_OPT'], title)
     WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
     WLOG('', p['LOG_OPT'], '')
     # Now print the stats for this test:
