@@ -859,11 +859,13 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         rout = readimage(p, filename=filename, log=False)
         wavemap, hdict, _, nx, ny = rout
         waveparams = read_waveparams(p, hdict)
+        obtain = 'file'
     # if force calibDB is True
     elif p['CALIB_DB_FORCE_WAVESOL']:
         wavemap, hdict = read_wavefile(p, hdr, return_header=True)
         waveparams = read_waveparams(p, hdict)
         filename = read_wavefile(p, hdr, return_filename=True)
+        obtain = 'calibDB'
     # if we have keys in the header use them
     elif header_cond:
         waveparams = read_waveparams(p, hdr)
@@ -874,11 +876,20 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
             wavemap = None
         filename = hdr[namekey]
         hdict = hdr
+        obtain = 'header'
     # else we try to use the calibDB
     else:
         wavemap, hdict = read_wavefile(p, hdr, return_header=True)
         waveparams = read_waveparams(p, hdict)
         filename = read_wavefile(p, hdr, return_filename=True)
+        obtain = 'calibDB'
+    # -------------------------------------------------------------------------
+    # log where file came from
+    # -------------------------------------------------------------------------
+    wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
+    wmsg2 = '\tFilename = {0}'.format(os.path.basename(filename))
+    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+
     # -------------------------------------------------------------------------
     # deal with returns
     # -------------------------------------------------------------------------
