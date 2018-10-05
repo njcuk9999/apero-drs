@@ -266,7 +266,7 @@ def main(night_name=None, files=None):
     # set the version
     hdict = OrderedDict()
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
 
     # get res data in correct format
