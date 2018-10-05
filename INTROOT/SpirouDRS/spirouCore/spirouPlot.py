@@ -2160,11 +2160,13 @@ def tellu_fit_recon_abso_plot(p, loc):
 # =============================================================================
 def polar_continuum_plot(loc, in_wavelengths=True):
     # get data from loc
-    wl, pol = loc['FLAT_X'], loc['FLAT_POL']
-    contpol = loc['CONT_POL']
-    contxbin, contybin = loc['CONT_XBIN'], loc['CONT_YBIN']
+    wl, pol = loc['FLAT_X'], 100.0 * loc['FLAT_POL']
+    contpol = 100.0 * loc['CONT_POL']
+    contxbin, contybin = np.array(loc['CONT_XBIN']), np.array(loc['CONT_YBIN'])
+    contybin = 100. * contybin
     stokes = loc['STOKES']
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
+    
     # ---------------------------------------------------------------------
     # set up fig
     plt.figure()
