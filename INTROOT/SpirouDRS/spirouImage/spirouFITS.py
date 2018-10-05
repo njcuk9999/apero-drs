@@ -641,7 +641,7 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
 
 
 def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
-                   return_filename=False, required=True):
+                   return_filename=False, required=True, fiber=None):
     """
     Reads the wave file (from calib database or filename)
 
@@ -665,6 +665,8 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
     :param return_filename: bool, if true return the filename only
     :param required: bool, if True code generates log exit else raises a
                      ConfigError (to be caught)
+    :param fiber: string, if not None forces the fiber type (i.e. look for
+                  WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
 
     if return_filename is False and return header is False
 
@@ -678,7 +680,9 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
         :return read_file: string, the file name associated with the wavelength
                            solution
     """
-    if key is None:
+    if key is None and fiber is not None:
+        key = 'WAVE_' + fiber
+    elif key is None:
         key = 'WAVE_' + p['FIBER']
     # get filename
     if filename is None:
@@ -804,7 +808,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
 
 def get_wave_solution(p, image=None, hdr=None, filename=None,
                       return_wavemap=False, return_filename=False,
-                      nb_xpix=None, return_header=False):
+                      nb_xpix=None, return_header=False, fiber=None):
     """
     Gets the wave solution coefficients (and wavemap if "return_wavemap" is
     True and filename if "return_filename" is True)
@@ -832,6 +836,8 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     :param nb_xpix: int, the number of x pixels if image is None (used to
                     generate wave map from wave parameters
     :param return_header: bool, if True return file header
+    :param fiber: string, if not None forces the fiber type (i.e. look for
+                  WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
 
     :return waveparams:numpy array (2D), the wave coefficients for each order
                        shape = (number of orders x number of coeffs)
@@ -862,9 +868,9 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         obtain = 'file'
     # if force calibDB is True
     elif p['CALIB_DB_FORCE_WAVESOL']:
-        wavemap, hdict = read_wavefile(p, hdr, return_header=True)
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber)
         waveparams = read_waveparams(p, hdict)
-        filename = read_wavefile(p, hdr, return_filename=True)
+        filename = read_wavefile(p, hdr, return_filename=True, fiber=fiber)
         obtain = 'calibDB'
     # if we have keys in the header use them
     elif header_cond:
@@ -879,9 +885,9 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         obtain = 'header'
     # else we try to use the calibDB
     else:
-        wavemap, hdict = read_wavefile(p, hdr, return_header=True)
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber)
         waveparams = read_waveparams(p, hdict)
-        filename = read_wavefile(p, hdr, return_filename=True)
+        filename = read_wavefile(p, hdr, return_filename=True, fiber=fiber)
         obtain = 'calibDB'
     # -------------------------------------------------------------------------
     # log where file came from
