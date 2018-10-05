@@ -1599,13 +1599,17 @@ def get_shape_map(p, loc):
             ypix = np.polyval(acc[order_num * 2][::-1], xpix)
             # defining a ribbon that will contain the straightened order
             ribbon = np.zeros([width, dim1])
+            # get the widths
+            widths = np.arange(width) - width / 2.0
+            # get all bottoms and tops
+            bottoms = ypix - width/2 - 2
+            tops = ypix + width/2 + 2
             # splitting the original image onto the ribbon
             for ix in range(dim1):
                 # define bottom and top that encompasses all 3 fibers
-                bottom = int(ypix[ix] - width/2 - 2)
-                top = int(ypix[ix] + width/2 + 2)
+                bottom = int(bottoms[ix])
+                top = int(tops[ix])
                 sx = np.arange(bottom, top)
-                widths = np.arange(width) - width/2.0
                 # calculate spline interpolation and ribbon values
                 if bottom > 0:
                     spline = IUVSpline(sx, data2[bottom:top, ix], ext=1, k=1)
@@ -1779,15 +1783,18 @@ def get_shape_map(p, loc):
             spline = IUVSpline(dypix[keep], dx[keep], ext=0)
             # for all field positions along the order, we determine the
             #    dx+rotation values and update the master DX map
+            fracs = ypix - np.fix(ypix)
+            widths = np.arange(width)
+
             for ix in range(dim1):
                 # get the fraction missed
-                frac = ypix[ix] - np.fix(ypix[ix])
+                # frac = ypix[ix] - np.fix(ypix[ix])
                 # get dx0 with slope factor added
-                dx0 = (np.arange(width) - width // 2 + (1 - frac)) * slope[ix]
+                dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope[ix]
                 # get the ypix at this value
                 ypix2 = int(ypix[ix]) + np.arange(-width//2, width//2)
                 # get the ddx
-                ddx = spline(np.arange(width) - frac)
+                ddx = spline(widths - fracs[ix])
                 # set the zero shifts to NaNs
                 ddx[ddx == 0] = np.nan
                 # only set positive ypixels
