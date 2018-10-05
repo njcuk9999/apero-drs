@@ -1278,6 +1278,62 @@ def generate_resolution_map(p, loc):
     return loc
 
 
+def generate_res_files(p, loc, hdict):
+    # get constants from p
+    resmap_size = p['HC_RESMAP_SIZE']
+    # get data from loc
+    map_dvs = np.array(loc['RES_MAP_DVS'])
+    map_lines = np.array(loc['RES_MAP_LINES'])
+    map_params = np.array(loc['RES_MAP_PARAMS'])
+    resolution_map = np.array(loc['RES_MAP'])
+
+    # get dimensions
+    nbo, nbpix = loc['NBO'], loc['NBPIX']
+
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+    # get ranges of values
+    order_range = np.arange(0, nbo, bin_order)
+    x_range = np.arange(0, nbpix // bin_x)
+
+    # loop around the order bins
+    resdata, hdicts = [], []
+    for order_num in order_range:
+        # loop around the x position
+        for xpos in x_range:
+            # get the correct data
+            all_dvs = map_dvs[order_num // bin_order][xpos]
+            all_lines = map_lines[order_num // bin_order][xpos]
+            params = map_params[order_num // bin_order][xpos]
+            resolution = resolution_map[order_num // bin_order][xpos]
+            # get start and end order
+            start_order = order_num
+            end_order = start_order + bin_order - 1
+            # generate header keywordstores
+            kw_startorder = ['ORDSTART', '', 'First order covered in res map']
+            kw_endorder = ['ORDEND', '', 'Last order covered in res map']
+            kw_region = ['REGION', '', 'Region along x-axis in res map']
+            largs = [order_num, order_num + bin_order - 1, xpos]
+            comment = 'Resolution: order={0}-{1} r={2}'
+            kw_res = ['RESOL', '', comment.format(*largs)]
+            comment = 'Gaussian params: order={0}-{1} r={2}'
+            kw_params = ['GPARAMS', '', comment.format(*largs)]
+            # add keys to headed
+            hdict = spirouImage.AddKey(hdict, kw_startorder, value=start_order)
+            hdict = spirouImage.AddKey(hdict, kw_endorder, value=end_order)
+            hdict = spirouImage.AddKey(hdict, kw_region, value=xpos)
+            hdict = spirouImage.AddKey(hdict, kw_res, value=resolution)
+            hdict = spirouImage.AddKey1DList(hdict, kw_params,
+                                             values=params, dim1name='coeff')
+            # append this hdict to hicts
+            hdicts.append(dict(hdict))
+            # push data into correct columns
+            resdata.append(np.array(list(zip(all_dvs, all_lines))))
+    # return the data and hdicts
+    return resdata, hdicts
+
+
 # =============================================================================
 # Worker functions
 # =============================================================================
