@@ -58,15 +58,13 @@ if __name__ == "__main__":
     a3, siga3, cfit3 = gfit.fitgaus(*args, mode=2)
     time7 = time.time()
 
-
-
     # timings
     output = '{0:10s} = {1:.4e}'
-    print('=' * 50, '\nTimings\n', '='*50)
+    print('=' * 50, '\nTimings\n', '=' * 50)
     print(output.format('Fortran', time1 - time0))
-    print(output.format('Python (gaussj_fortran)', time3-time2))
-    print(output.format('Python (gaussj melissa)', time5-time4))
-    print(output.format('Python (gaussj neil)', time7-time6))
+    print(output.format('Python (gaussj_fortran)', time3 - time2))
+    print(output.format('Python (gaussj melissa)', time5 - time4))
+    print(output.format('Python (gaussj neil)', time7 - time6))
 
     # plot
     plt.close()
@@ -85,7 +83,6 @@ if __name__ == "__main__":
     frames[1].legend(loc=0)
     plt.show()
     plt.close()
-
 
 # =============================================================================
 # End of code

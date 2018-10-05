@@ -14,7 +14,6 @@ from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -60,7 +59,6 @@ if __name__ == "__main__":
     p0 = [100.0, 1.0]
     ppot, pcov = curve_fit(func, x, y, p0=p0)
     yfit3 = func(xfit, *ppot)
-
 
     yfit1 = cs(xfit)
 

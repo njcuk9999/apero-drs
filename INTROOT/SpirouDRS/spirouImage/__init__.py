@@ -100,6 +100,8 @@ GetKeys = spirouFITS.keyslookup
 
 GetTilt = spirouImage.get_tilt
 
+GetShapeMap = spirouImage.get_shape_map
+
 GetObjName = spirouImage.get_obj_name
 
 GetAirmass = spirouImage.get_airmass
@@ -159,6 +161,8 @@ ReadKey = spirouFITS.read_key
 Read2Dkey = spirouFITS.read_key_2d_list
 
 ReadTiltFile = spirouFITS.read_tilt_file
+
+ReadShapeMap = spirouFITS.read_shape_file
 
 ReadLineList = spirouImage.read_line_list
 
