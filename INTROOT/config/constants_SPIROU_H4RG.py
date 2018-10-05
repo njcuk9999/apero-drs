@@ -434,7 +434,7 @@ ic_extnbsig = 1  # 2.5
 #
 #                 4b - shape map + weight extraction (cosmic correction)
 #                          (function = spirouEXTOR.extract_shape_weight_cosm)
-ic_extract_type = '4b'  # '3d'
+ic_extract_type = '3d'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
 ic_ff_extract_type = '3c'
 
