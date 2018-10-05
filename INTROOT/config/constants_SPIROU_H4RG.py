@@ -296,7 +296,7 @@ ic_loc_delta_width = 1.85
 ic_locopt1 = 1
 
 # -----------------------------------------------------------------------------
-#   cal_slit parameters
+#   cal_slit (tilt) parameters
 # -----------------------------------------------------------------------------
 
 #   oversampling factor (for tilt finding)
@@ -310,6 +310,36 @@ ic_tilt_fit = 4
 
 #   Order to plot on slit image plot                                - [cal_slit]
 ic_slit_order_plot = 2 * 2
+
+# -----------------------------------------------------------------------------
+#   cal_slit (shape) parameters
+# -----------------------------------------------------------------------------
+# The number of iterations to run the shape finding out to         - [cal_shape]
+shape_num_iterations = 3
+
+# width of the ABC fibers                                          - [cal_shape]
+shape_abc_width = 55
+
+# the range of angles (in degrees) for the first iteration (large) - [cal_shape]
+# and subsequent iterations (small)
+shape_large_angle_range = [-12.0, 0.0]
+shape_small_angle_range = [-1.0, 1.0]
+
+# number of sections per order to split the order into             - [cal_shape]
+shape_nsections = 32
+
+# max sigma clip (in sigma) on points within a section             - [cal_shape]
+shape_sigmaclip_max = 4
+
+# the size of the median filter to apply along the order           - [cal_shape]
+#     (in pixels)
+shape_median_filter_size = 51
+
+# The minimum value for the cross-correlation to be deemed good    - [cal_shape]
+shape_min_good_correlation = 0.1
+
+#  The selected order to plot for the slit shape plot              - [cal_shape]
+shape_selected_order = 33
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
