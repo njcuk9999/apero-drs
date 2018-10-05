@@ -628,6 +628,88 @@ def slit_tilt_angle_and_fit_plot(loc):
     end_plotting()
 
 
+def slit_shape_angle_plot(p, loc, mode='all'):
+
+    # get constants from p
+    sorder = p['SHAPE_SELECTED_ORDER']
+    nbo = loc['NUMBER_ORDERS'] // 2
+    nbanana = p['SHAPE_NUM_ITERATIONS']
+    width = p['SHAPE_ABC_WIDTH']
+
+    # get data from loc
+    slope_deg_arr, slope_arr = loc['SLOPE_DEG'], loc['SLOPE']
+    s_keep_arr, xsection_arr = loc['S_KEEP'], loc['XSECTION']
+    ccor_arr, ddx_arr = loc['CCOR'], loc['DDX']
+    dx_arr, dypix_arr, c_keep_arr = loc['DX'], loc['DYPIX'], loc['C_KEEP']
+    # get the dimensions
+    dim0, dim1 = loc['DATA'].shape
+
+    # get list of orders for for loop
+    if mode == 'all':
+        orders = np.arange(nbo)
+        plt.ioff()
+    else:
+        orders = np.array([sorder])
+
+    # loop around orders
+    for order_num in orders:
+        # iterating the correction, from coarser to finer
+        for banana_num in range(nbanana):
+            # get this iterations parameters
+            slope_deg = slope_deg_arr[banana_num][order_num]
+            slope =  slope_arr[banana_num][order_num]
+            s_keep = s_keep_arr[banana_num][order_num]
+            xsection = xsection_arr[banana_num][order_num]
+            ccor = ccor_arr[banana_num][order_num]
+            ddx = ddx_arr[banana_num][order_num]
+            dx = dx_arr[banana_num][order_num]
+            dypix = dypix_arr[banana_num][order_num]
+            c_keep = c_keep_arr[banana_num][order_num]
+            # set up fig
+            plt.figure()
+            # clear the current figure
+            plt.clf()
+            # set up axis
+            frame1 = plt.subplot(121)
+            frame2 = plt.subplot(122)
+            # ----------------------------------------------------------------
+            # frame 1
+            # ----------------------------------------------------------------
+            frame1.plot(xsection[s_keep], slope_deg[s_keep], color='g',
+                        marker='o', ls='None')
+            frame1.plot(np.arange(dim1), slope)
+            # ylim = [np.nanmin(slope_deg[s_keep]) - 0.2,
+            #         np.nanmin(slope_deg[s_keep]) + 0.2]
+            frame1.set(xlabel='x pixel', ylabel='slope [deg]')
+            # ----------------------------------------------------------------
+            # frame 2
+            # ----------------------------------------------------------------
+            frame2.imshow(ccor, aspect=0.2)
+            frame2.plot(dx - np.min(ddx), dypix, color='r', marker='o',
+                        ls='None')
+            frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
+                        marker='o', ls='None')
+            frame2.set(ylim=[0.0, width - 1], xlim=[0, len(ddx) - 1])
+
+            # ----------------------------------------------------------------
+            # title
+            # ----------------------------------------------------------------
+            title = 'Iteration {0} - Order {1}'
+            plt.suptitle(title.format(banana_num, order_num))
+
+        # if mode = 'all' show the graphs each time
+        if mode == 'all':
+            plt.show()
+            plt.close()
+
+    # if mode is single end properly else if all turn back on interactive mode
+    if mode == 'single':
+        # end plotting function properly
+        end_plotting()
+    else:
+        plt.ion()
+
+
 # =============================================================================
 # ff plotting function
 # =============================================================================

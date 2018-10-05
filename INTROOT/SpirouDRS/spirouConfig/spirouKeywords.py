@@ -166,6 +166,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_STOKES',
             'kw_RDNOISE',
             'kw_REFFILE',
+            'kw_SHAPEFILE',
             'kw_TELLU_ABSO',
             'kw_TELLU_AMP_PC',
             'kw_TELLU_DV_TELL1',
@@ -582,7 +583,8 @@ kw_DARKFILE = ['DARKFILE', '', 'DARK_DARK file used for correction']
 kw_BADPFILE1 = ['BADFILE1', '', 'FLAT_FLAT file used for BADPIX corr']
 kw_BADPFILE2 = ['BADFILE2', '', 'DARK_DARK file used for BADPIX corr']
 kw_LOCOFILE = ['LOCOFILE', '', 'DARK_FLAT/FLAT_DARK file used for localisation']
-kw_TILTFILE = ['TILTFILE', '', 'FP_FP file use for TILT']
+kw_TILTFILE = ['TILTFILE', '', 'FP_FP file used for TILT']
+kw_SHAPEFILE = ['SHAPFILE', '', 'FP_FP file used for SHAPE']
 kw_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
 kw_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
 kw_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']

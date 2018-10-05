@@ -47,6 +47,7 @@ cal_loc_RAW_spirou, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, LO
 # ---- Tilt recipes
 #
 cal_SLIT_spirou, 1, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SLIT, 4, 1
+cal_SHAPE_spirou, 1, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SHAPE, 4, 1
 #
 # ---- Flat fielding recipes
 #
@@ -234,7 +235,8 @@ visu_E2DS_spirou, 1, POL_STOKES_I, None, None, None, AB, None, None, REDUC, CCF,
 visu_E2DS_spirou, 1, POL_LSD, None, None, None, AB, None, None, REDUC, CCF, -18, 1
 #
 # ---- Add extra DRS files which aren't currently used in recipes but should be identified
-#
+# None, 1, d, DARK, pos_pk, pos_fp, None, DARK_FP, dark_fp, RAW, DARK, -1
+# None, 1, d, DARK, pos_pk, pos_wl, None, DARK_FLAT, dark_flat, RAW, DARK, -1
 None, 1, o, OBJECT, pos_pk, pos_pk, None, OBJ_OBJ, None, RAW, EXTRACT, -1
 None, 1, o, OBJECT, pos_pk, pos_fp, None, OBJ_FP, None, RAW, EXTRACT, -1
 None, 1, c, COMPARISON, pos_hc1, pos_hc1, None, HCONE_HCONE, hcone_hcone, RAW, EXTRACT, -1

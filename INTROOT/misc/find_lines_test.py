@@ -15,7 +15,6 @@ import time
 
 from SpirouDRS import spirouTHORCA
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -29,8 +28,9 @@ INPUT_PARAMS = [4, 100, 25, 1]
 # Maximum noise (in units of amplitudes)
 MAX_NOISE = 1.0
 
-
 CCD_RON = 1.0
+
+
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -51,22 +51,19 @@ def gauss_function(x, a, x0, sigma, dc):
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
 
 
-
-
-
 def plot_gauss(xs, ys, colours, lines, markers, labels):
     # set up graph
     fig, frame = plt.subplots(ncols=1, nrows=1)
     # plot
     for it in range(len(xs)):
 
-        if it>0:
+        if it > 0:
             xfit = np.linspace(np.min(xs), np.max(xs), 10000)
             yfit = gauss_function(xfit, *ys[it])
         else:
             xfit = xs[it]
             yfit = ys[it]
-        frame.plot(xfit, yfit, color=colours[it],  ls=lines[it],
+        frame.plot(xfit, yfit, color=colours[it], ls=lines[it],
                    marker=markers[it], label=labels[it])
 
     frame.set(xlabel='x value', ylabel='y value')
@@ -74,7 +71,6 @@ def plot_gauss(xs, ys, colours, lines, markers, labels):
 
 
 def plot_res(xs, ys, labels):
-
     # set up graph
     fig, frame = plt.subplots(ncols=1, nrows=1)
     # storage
@@ -145,7 +141,6 @@ if __name__ == "__main__":
 
     plt.show()
     plt.close()
-
 
 # =============================================================================
 # End of code
