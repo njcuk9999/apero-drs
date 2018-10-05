@@ -216,9 +216,9 @@ def main(night_name=None, files=None):
     raw_tilt_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
     tiltfits, tag = spirouConfig.Constants.SLIT_TILT_FILE(p)
-    tiltfitsname = os.path.split(tiltfits)[-1]
+    tiltfitsname = os.path.basename(tiltfits)
     # Log that we are saving tilt file
-    wmsg = 'Saving tilt  information in file: {0}'
+    wmsg = 'Saving tilt information in file: {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(tiltfitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
