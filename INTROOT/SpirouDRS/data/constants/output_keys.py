@@ -92,6 +92,9 @@ WAVE_FILE_FP = 'WAVE_FP_SOL'
 # Defines the wave solution copy of E2DS file tag
 WAVE_E2DS_COPY = 'WAVE_E2DSCOPY'
 
+# Defines the wave resolution fits file tag
+WAVE_RES_FILE_EA = 'WAVE_RES'
+
 # Defines the telluric trans map file tag
 TELLU_TRANS_MAP_FILE = 'TELLU_TRANS'
 
