@@ -20,6 +20,8 @@ Done:
       case of "4a" and "4b" then extraction is 1 pixel wide in x and folded
       along the y direction for A/B/C
     - NOTE: Must set "ic_extract_type = 4b" (or 4a) to work with extraction!!!
+    - added "un-sum" extraction output (E2DSLL) to see what the extraction
+      is doing
 
 - cal_HC_E2DS_EA_spirou: resolution & line profiles saved as outputs
 
@@ -59,6 +61,9 @@ Done:
         - FPFILE
     These can of course be changes as with other header keys in
     spirouKeywords.py (located in directory .../INTROOT/SpirouDRS/spirouConfig/)
+
+- Fixed issue #475: pre-procesing now always adds DPRTYPE even when file not
+  identified (as pp file is still made and can still be extracted)
 
 - Constant added to force re-computation of line list
   (for cal_WAVE_E2DS_EA_spirou)

@@ -4910,3 +4910,26 @@
 	- spirouFITS.py - allow fiber-forcing in getting wave solution (otherwise when calibDB is used, uses p['FIBER']) (rev.bdfcb817)
 	- off_listing_RAW_spirou.py - correct mistake with off_listing (rawloc should be a list) (rev.02b06153)
 	- spirouFITS.py - make sure the source of the wavelength solution is reported (Issue #468) (rev.c666052c)
+
+
+
+================================================================================
+* Fri Oct 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.028
+
+================================================================================
+	- update_note.txt - update with note about setting extraction to 4b (default = 3d) (rev.78deee57)
+	- constants_SPIROU_H4RG.py - set extraction_type back to 3d for now - until 4a/4b tested (rev.260561ff)
+
+
+
+================================================================================
+* Sat Oct 06 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.029
+
+================================================================================
+	- cal_FF_RAW_spirou.py - update extraction to deal with different outputs (rev.4f03c1cd)
+	- spirouFile.py - made sure pre-procesing always adds DPRTYPE even if file not recognised (#Issue 475) (rev.d78b2b88)
+	- spirouEXTOR.py - for modes 3c, 3d, 4a, 4b add the e2dsll extraction type (rev.124af309)
+	- spirouConst.py - add file definition for e2dsll (rev.a2ed2bb5)
+	- recipe_control.txt - added and corrected dark_fp, dark_flat and obj_obj (rev.d2495ab1)
+	- output_keys.py - added output type extract_e2dsll_file (rev.36941c49)
+	- cal_extract_RAW_spirou.py - added "un-sum" extraction output (E2DSLL) to see what the extraction is doing (rev.34efe8bc)
