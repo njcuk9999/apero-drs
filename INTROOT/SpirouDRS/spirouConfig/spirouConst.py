@@ -879,7 +879,6 @@ def SLIT_SHAPE_FILE(p):
     return shapefits, tag
 
 
-
 # noinspection PyPep8Naming
 def FF_BLAZE_FILE(p, fiber=None):
     """
@@ -1000,6 +999,37 @@ def EXTRACT_E2DSFF_FILE(p, fiber=None):
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2dsff_{0}.fits'.format(fiber)
+    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+    e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return e2dsfits, tag
+
+
+# noinspection PyPep8Naming
+def EXTRACT_E2DSLL_FILE(p, fiber=None):
+    """
+    Defines the extraction E2DSLL file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    func_name = 'EXTRACT_E2DSLL_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    e2ds_ext = '_e2dsll_{0}.fits'.format(fiber)
     e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     # get tag
