@@ -740,6 +740,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     j2s = np.array(np.round(lim2s), dtype=int)
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
+    # set up long spe
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
@@ -767,11 +769,15 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
+            sumA = np.sum(weights * sx * fx, axis=1)
+            sumB = np.sum(weights * fx ** 2, axis=1)
+            spelong[:, ic] = sumA / sumB
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
+    spelong *= gain
 
-    return spe, 0
+    return spe, spelong, 0
 
 
 def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
@@ -837,6 +843,7 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # count of the detected cosmic rays
     cpt = 0
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
     for ic in ics[tiltborder:-tiltborder]:
         if mask[ic]:
@@ -858,14 +865,18 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             #    quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
+            sumA = np.sum(weights * sx * fx, axis=1)
+            sumB = np.sum(weights * fx ** 2, axis=1)
+            spelong[:, ic] = sumA / sumB
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
             # Cosmic rays correction
             spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
                                          cosmic_sigcut, cosmic_threshold)
 
     spe *= gain
+    spelong *= gain
 
-    return spe, cpt
+    return spe, spelong, cpt
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
@@ -1385,7 +1396,7 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    # spelong = np.zeros((dim2, np.max(j2s - j1s) + 1), dtype=float)
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
     for ic in ics:
         if mask[ic]:
@@ -1404,12 +1415,14 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
+            spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
             # spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
+    spelong *= gain
 
-    return spe, 0
+    return spe, spelong, 0
 
 
 def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
@@ -1464,7 +1477,7 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
-    # spelong = np.zeros((dim2, np.max(j2s - j1s) + 1), dtype=float)
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
     # loop around each pixel along the order
@@ -1486,14 +1499,15 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
-            # spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
+            spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
             # Cosmic rays correction
             spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
                                          cosmic_sigcut, cosmic_threshold)
     # multiple spe by gain to convert to e-
     spe *= gain
+    spelong *= gain
 
-    return spe, cpt
+    return spe, spelong, cpt
 
 
 def get_slice_shape(x1, x2, y1, y2, shapeimage):
