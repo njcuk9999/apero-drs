@@ -304,6 +304,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # along order)
         loc['E2DS'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['E2DSFF'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
+        loc['E2DSLL'] = []
         loc['SPE1'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE3'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
         loc['SPE4'] = np.zeros((loc['NUMBER_ORDERS'], data2.shape[1]))
@@ -326,7 +327,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             eargs = [p, loc, data2, order_num]
             ekwargs = dict(mode=p['IC_EXTRACT_TYPE'],
                            order_profile=order_profile)
-            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            #deal with different return
+            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+                e2ds, e2dsll, cpt = eout
+            else:
+                e2ds, cpt = eout
+                e2dsll = None
             # -------------------------------------------------------------
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
@@ -348,6 +355,9 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             loc['E2DS'][order_num] = e2ds
             loc['E2DSFF'][order_num] = e2ds / loc['FLAT'][order_num]
             loc['SNR'][order_num] = snr
+            # save the longfile
+            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+                loc['E2DSLL'].append(e2dsll)
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
             # Log if saturation level reached
@@ -387,6 +397,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         e2dsfitsname = os.path.split(e2dsfits)[-1]
         e2dsfffits, tag2 = spirouConfig.Constants.EXTRACT_E2DSFF_FILE(p)
         e2dsfffitsname = os.path.split(e2dsfffits)[-1]
+        e2dsllfits, tag4 = spirouConfig.Constants.EXTRACT_E2DSLL_FILE(p)
+        e2dsfllitsname = os.path.split(e2dsllfits)[-1]
         # log that we are saving E2DS spectrum
         wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
         WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfitsname))
@@ -457,6 +469,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
         p = spirouImage.WriteImage(p, e2dsfffits, loc['E2DSFF'], hdict)
+        # Save E2DSLL file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+            llstack = np.vstack(loc['E2DSLL'])
+            p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
 
         # ------------------------------------------------------------------
         # 1-dimension spectral S1D
