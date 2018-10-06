@@ -50,6 +50,9 @@ EXTRACT_E2DS_FILE = 'EXT_E2DS'
 # Defines the E2DS flat-fielded file tag
 EXTRACT_E2DSFF_FILE = 'EXT_E2DS_FF'
 
+# Defines the E2DS non-folded file tag
+EXTRACT_E2DSLL_FILE = 'EXT_E2DS_LL'
+
 # Defines the extraction localisation file tag
 EXTRACT_LOCO_FILE = 'EXT_LOCO'
 
