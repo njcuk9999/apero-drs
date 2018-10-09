@@ -36,6 +36,7 @@ Recipe, number, ocode, obstype, ccas, cref, fiber, dprtype, dstring, kind, desc,
 # ---- Dark and Bad pixel recipes
 #
 cal_DARK_spirou, 1, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
+cal_DARK_spirou, 1, o, SKY, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, DARK, 1, 1
 cal_BADPIX_spirou, 1, f, FLAT, pos_wl, pos_wl, None, FLAT_FLAT, flat_flat, RAW, BAD-PIXEL, 2, 1
 cal_BADPIX_spirou, 2, d, DARK, pos_pk, pos_pk, None, DARK_DARK, dark_dark, RAW, BAD-PIXEL, 2, 1
 #
