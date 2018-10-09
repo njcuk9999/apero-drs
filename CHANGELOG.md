@@ -4829,6 +4829,7 @@
 	- cal_DRIFT_E2D.py - add filenames to headers (Issue  #471) (rev.f4bb881f)
 	- cal_DARK_spirou.py - add filenames to headers (Issue  #471) (rev.8ec40729)
 	- cal_BADPIX_spirou.py - add filenames to headers (Issue  #471) (rev.86b4d30f)
+	- Update spirouImage.py (rev.276c1027)
 
 
 
@@ -4836,10 +4837,99 @@
 * Wed Oct 03 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.024
 
 ================================================================================
+	- cal_SHAPE_spirou.py - fix typo dx[iw] = coeffs[1] --> dx[iw] = gcoeffs[1] (rev.6496ddfc)
+	- new_bananarama.py - added TODO questions for Etienne (rev.9216b16c)
+	- cal_SHAPE_spirou.py - more changes to update with Etiennes new_bananarama code (rev.a1dafd01)
+	- Cal_Test.run - must test HC/WAVE EA recipes - added to runs (rev.0290405c)
+	- cal_HC_E2DS_EA_spirou.py - fix bug flatfile in header should be blazefile (rev.7d56f2e9)
+	- cal_SHAPE_spirou.py - updated code [unfinished/not working] (rev.428ae653)
+	- copy of etiennes shap finding code (rev.965fec59)
+	- update timings and update notes (rev.aac4dafe)
+	- test code for one target (rev.50ef5e11)
+	- update version/date/changelog/update notes (rev.48457465)
+	- unit tests - remove some extractions (not needed for minimum test) (rev.4adfd897)
 	- unit tests - add full telluric test for TC3 (rev.57d396c9)
 	- spirouImage.py - WAVE_FILE is now WAVEFILE (rev.9333c919)
 	- dark_test.py - test of the values supplied in the dark header file (for specific files + night_name) (rev.58b1c501)
 	- visu_E2DS_spirou.py - readblazefile now need p returned (rev.388497df)
 	- obj_fit_tellu.py - re-add loc['WAVE'] (used for plotting) + loc['WAVE_IT'] need filename returned (rev.f222a470)
 	- cal_wave_mapper.py - remove flat file (not used or obtained) from header (rev.0d020f26)
-	- cal_exposure_meter.py - remove flatfile (not used or obtained) (rev.9a883b7b)
+
+
+
+================================================================================
+* Thu Oct 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.025
+
+================================================================================
+	- spirouFITS.py - get shape file from header (rev.318dba86)
+	- cal_extract_RAW_spirou.py - add shape file to header (if mode 4a/4b) (rev.27a2b4f6)
+	- cal_SHAPE_spirou.py - fix type - should be SHAPE file not TILT file (rev.5bd99336)
+	- spirouImage.__init__.py - add alias to get_shape_map (GetShapeMap) (rev.77ab0fc2)
+	- spirouImage.py - move get_shape_map to spirouImage functions (And add imports as required) (rev.d188c3ff)
+	- spirouPlot.py - add slit shape plot (rev.a06c9f08)
+	- spirouKeywords.py - add kw_SHAPEFILE to output keys (rev.a80fc71c)
+	- spirouConst.py - add SLIT_SHAPE_FILE filename definition (rev.63a75301)
+	- output_keys.py - add slit_shape_file output key (rev.6ca1d0ee)
+	- new_bananarama.py - fix to work with DRS (rev.b9fa0fc4)
+	- cal_SLIT_spirou.py - replace old path function with new and correct small typo (rev.01adc940)
+	- cal_SHAPE_spirou.py - add plotting, filesaving, calibDB movement and move functions to spirouImage (finally runs) (rev.c1ac85cd)
+	- cal_SHAPE_spirou.py - added plotting, file saving and adding to calibDB (rev.826e9632)
+	- cal_SHAPE_spirou.py - fix bugs that now produce identical results to new_bananarama code (rev.9f027cb8)
+
+
+
+================================================================================
+* Fri Oct 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.026
+
+================================================================================
+	- Cal_Test.run - add cal_SHAPE_spirou.py to unit test (rev.a95ca65c)
+	- spirouUnitsRecipes.py - add cal_HC_E2DS_EA_spirou, cal_SHAPE_spirou, cal_WAVE_E2DS_EA_spirou to unit tests (rev.b1f5e578)
+	- recipe_control.txt - add cal_SHAPE_spirou (copy of cal_SLIT_spirou) (rev.ee743993)
+	- cal_SHAPE_spirou.py - change __NAME__ (after recipe control integration) (rev.31ee09e2)
+	- spirouImage.py - optimisation - moved a few things out of loop to speed up process (rev.ff25e9cb)
+	- spirouPlot.py - corrected type in constant name (slit_shape_angle_plot) (rev.361df98b)
+	- constants_SPIROU_H4RG.py - move cal_SHAPE_spirou.py constants to constants file (rev.6bc37dc3)
+	- cal_SHAPE_spirou.py - move constants to constants file (rev.9634f6ca)
+
+
+
+================================================================================
+* Fri Oct 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.027
+
+================================================================================
+	- Timings.txt - update timings with new runs (rev.b92914b8)
+	- Cal_Test.run - comment out cal_WAVE_E2DS_EA_spirou - not working with extraction 4b? (rev.16d4abab)
+	- spirouTHORCA.__init__.py - add alias to generate_res_files (GenerateResFiles) (rev.f5c278d2)
+	- spirouWAVE.py - add generate_res_files functions to generate arrays/header dictionary in correct format for wave resolution line profile map file (rev.c964a9c5)
+	- spirouConst.py - add WAVE_RES_FILE_EA to file definitions (rev.139af4bf)
+	- cal_WAVE_E2DS_EA_spirou.py - add saving of wavelength resolution line profiles to file (rev.78b46b27)
+	- output_keys.py - added "WAVE_RES" to output keys (for wave solution res map) (rev.edecd892)
+	- cal_HC_E2DS_EA_spirou.py - added saving of resolution map and line profiles to file (rev.7e123626)
+	- spirouUnitTest.py - up date title of log timings (rev.6f8c7de4)
+	- recipe_control.txt - hide dark_fp dark_flat for now (test later) (rev.145350fb)
+	- spirouFITS.py - allow fiber-forcing in getting wave solution (otherwise when calibDB is used, uses p['FIBER']) (rev.bdfcb817)
+	- off_listing_RAW_spirou.py - correct mistake with off_listing (rawloc should be a list) (rev.02b06153)
+	- spirouFITS.py - make sure the source of the wavelength solution is reported (Issue #468) (rev.c666052c)
+
+
+
+================================================================================
+* Fri Oct 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.028
+
+================================================================================
+	- update_note.txt - update with note about setting extraction to 4b (default = 3d) (rev.78deee57)
+	- constants_SPIROU_H4RG.py - set extraction_type back to 3d for now - until 4a/4b tested (rev.260561ff)
+
+
+
+================================================================================
+* Sat Oct 06 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.029
+
+================================================================================
+	- cal_FF_RAW_spirou.py - update extraction to deal with different outputs (rev.4f03c1cd)
+	- spirouFile.py - made sure pre-procesing always adds DPRTYPE even if file not recognised (#Issue 475) (rev.d78b2b88)
+	- spirouEXTOR.py - for modes 3c, 3d, 4a, 4b add the e2dsll extraction type (rev.124af309)
+	- spirouConst.py - add file definition for e2dsll (rev.a2ed2bb5)
+	- recipe_control.txt - added and corrected dark_fp, dark_flat and obj_obj (rev.d2495ab1)
+	- output_keys.py - added output type extract_e2dsll_file (rev.36941c49)
+	- cal_extract_RAW_spirou.py - added "un-sum" extraction output (E2DSLL) to see what the extraction is doing (rev.34efe8bc)

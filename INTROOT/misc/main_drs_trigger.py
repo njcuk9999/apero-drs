@@ -47,6 +47,7 @@ HISTORY_FILE_NAME = 'HISTORY.txt'
 FORCE_REDO = False
 VERSION_REDO = False
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -102,7 +103,6 @@ def main(night_name=None):
         if 'N' in uinput.upper():
             wmsg = 'Code ended by user'
             WLOG('error', p['LOG_OPT'], wmsg)
-
 
     # ----------------------------------------------------------------------
     # Run given recipes
@@ -211,7 +211,7 @@ def get_valid_files(p):
             emsgs.append('\tFiles need suffix={0} (Please run '
                          'cal_preprocessing)'.format(p['PROCESSED_SUFFIX']))
         else:
-             emsgs = ['No valid ".fits" files found in {0}'
+            emsgs = ['No valid ".fits" files found in {0}'
                      ''.format(p['ARG_FILE_DIR'])]
         WLOG('error', p['LOG_OPT'], emsgs)
     # return file list
@@ -242,7 +242,6 @@ def get_all_files(p):
 
 
 def get_recipes(p, raw_only=True):
-
     control = spirouFile.get_control_file()
     # filter out negative order numbers (should not be used/checked)
     negorder = control['order'] < 0
@@ -283,7 +282,6 @@ def get_recipes(p, raw_only=True):
 
 
 def get_requirements(p, control):
-
     # get constants from p
     image_type = p['IC_IMAGE_TYPE']
 
@@ -307,7 +305,6 @@ def get_requirements(p, control):
 
 
 def get_runs(requirements, files, nights):
-
     # store runs
     runs = dict()
     missed = []
@@ -449,6 +446,7 @@ def iteration_bar(p, nightname, name, it_number1, t_number1,
     WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
     WLOG('', '', '=' * 50)
     WLOG('', '', '')
+
 
 def check_skip(p, night_name):
     # get directory for run
@@ -611,7 +609,6 @@ if __name__ == "__main__":
     ll = main()
     # exit message
     spirouStartup.Exit(ll, has_plots=False)
-
 
 # =============================================================================
 # End of code

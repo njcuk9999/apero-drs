@@ -10,10 +10,9 @@ Created on 2018-07-20
 """
 
 from __future__ import division
-from scipy.optimize import curve_fit
 import numpy as np
 import os
-import warnings
+from collections import OrderedDict
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -596,7 +595,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     raw_infile1 = os.path.basename(p['HCFILES'][0])
     raw_infile2 = os.path.basename(p['FPFILE'])
     # get wave filename
-    wavefits, tag = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.split(wavefits)[-1]
 
     # log progress
@@ -608,7 +607,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # set the input files
     hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile1)
@@ -671,6 +670,27 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wmsg = 'Global result summary saved in {0}'
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
     spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
+
+    # ----------------------------------------------------------------------
+    # Save resolution and line profiles to file
+    # ----------------------------------------------------------------------
+    raw_infile = os.path.basename(p['FITSFILENAME'])
+    # get wave filename
+    resfits, tag3 = spirouConfig.Constants.WAVE_RES_FILE_EA(p)
+    resfitsname = os.path.basename(resfits)
+    WLOG('', p['LOG_OPT'], 'Saving wave resmap to {0}'.format(resfitsname))
+
+    # make a copy of the E2DS file for the calibBD
+    # set the version
+    hdict = OrderedDict()
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
+
+    # get res data in correct format
+    resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)
+    # save to file
+    p = spirouImage.WriteImageMulti(p, resfits, resdata, hdicts=hdicts)
 
     # ------------------------------------------------------------------
     # Save line list table file
