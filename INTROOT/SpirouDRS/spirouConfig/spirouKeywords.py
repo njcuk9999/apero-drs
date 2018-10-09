@@ -161,6 +161,14 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_LSD_NP',
             'kw_POL_LSD_V0',
             'kw_POL_LSD_VF',
+            'kw_POL_LSD_MEANPOL',
+            'kw_POL_LSD_STDDEVPOL',
+            'kw_POL_LSD_MEDIANPOL',
+            'kw_POL_LSD_MEDABSDEVPOL',
+            'kw_POL_LSD_STOKESVQU_MEAN',
+            'kw_POL_LSD_STOKESVQU_STDDEV',
+            'kw_POL_LSD_NULL_MEAN',
+            'kw_POL_LSD_NULL_STDDEV',
             'kw_POL_MJDATE1',
             'kw_POL_MJDATE2',
             'kw_POL_MJDATE3',
@@ -581,6 +589,14 @@ kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
 kw_POL_LSD_NP = ['LSDNP', '', 'Number of points for LSD profile']
 kw_POL_LSD_FIT_RV = ['LSDFITRV', '', 'Radial velocity (km/s) from gaussian fit']
 kw_POL_LSD_FIT_RESOL = ['LSDRESOL', '', 'Resolving power from gaussian fit']
+kw_POL_LSD_MEANPOL = ['LSDMEPOL', '', 'Mean polarization of data in LSD']
+kw_POL_LSD_STDDEVPOL = ['LSDSDPOL', '', 'Std dev polarization of data in LSD']
+kw_POL_LSD_MEDIANPOL = ['LSDMDPOL', '', 'Median polarization of data in LSD']
+kw_POL_LSD_MEDABSDEVPOL = ['LSDMAPOL', '', 'Med abs dev polarization of data in LSD']
+kw_POL_LSD_STOKESVQU_MEAN = ['MEPOLLSD', '', 'Mean of pol LSD profile']
+kw_POL_LSD_STOKESVQU_STDDEV = ['SDPOLLSD', '', 'Std dev of pol LSD profile']
+kw_POL_LSD_NULL_MEAN = ['MENULLSD', '', 'Mean of null LSD profile']
+kw_POL_LSD_NULL_STDDEV = ['SDNULLSD', '', 'Std dev of null LSD profile']
 kw_POL_LSD_COL1 = ['LSDCOL1', '', 'Velocities (km/s)']
 kw_POL_LSD_COL2 = ['LSDCOL2', '', 'Stokes I LSD profile']
 kw_POL_LSD_COL3 = ['LSDCOL3', '', 'Gaussian fit to Stokes I LSD profile']
