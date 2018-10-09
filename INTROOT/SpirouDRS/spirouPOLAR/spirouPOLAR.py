@@ -890,7 +890,8 @@ def polar_products_header(p, loc, polardict) :
     meanbjd, tot_exptime = 0.0, 0.0
     bjd_first, bjd_last, exptime_last = 0.0, 0.0, 0.0
     berv_first, berv_last = 0.0, 0.0
-
+    bervmaxs = []
+    
     # loop over files in polar sequence to add keywords to header of products
     for filename in polardict.keys():
         # get this entry
@@ -930,6 +931,8 @@ def polar_products_header(p, loc, polardict) :
             # add BERV for each exposure
             bervexp = p['kw_POL_BERV{0}'.format(expnum)]
             hdict = spirouImage.AddKey(hdict, bervexp, value=hdr['BERV'])
+            # append BERVMAX value of each exposure
+            bervmaxs.append(hdr['BERVMAX'])
 
     # add total exposure time parameter keyword to header
     hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
@@ -963,6 +966,11 @@ def polar_products_header(p, loc, polardict) :
     hdict = spirouImage.AddKey(hdict, p['kw_POL_BERVCEN'], value=loc['BERVCEN'])
     # update existing BERV keyword
     hdict = spirouImage.AddKey(hdict, p['kw_BERV'], value=loc['BERVCEN'])
+    
+    # calculate maximum bervmax
+    bervmax = np.max(bervmaxs)
+    # update existing BERVMAX keyword
+    hdict = spirouImage.AddKey(hdict, p['kw_BERV_MAX'], value=bervmax)
 
     # add mean BJD
     meanbjd = meanbjd / loc['NEXPOSURES']
