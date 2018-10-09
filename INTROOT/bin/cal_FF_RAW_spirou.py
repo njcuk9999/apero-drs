@@ -256,7 +256,13 @@ def main(night_name=None, files=None):
             eargs = [p, loc, data2, order_num]
             ekwargs = dict(mode=p['IC_FF_EXTRACT_TYPE'],
                            order_profile=order_profile)
-            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            #deal with different return
+            if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
+                e2ds, e2dsll, cpt = eout
+            else:
+                e2ds, cpt = eout
+                e2dsll = None
             # calculate the noise
             range1, range2 = p['IC_EXT_RANGE1'], p['IC_EXT_RANGE2']
             noise = p['SIGDET'] * np.sqrt(range1 + range2)

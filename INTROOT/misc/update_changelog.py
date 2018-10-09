@@ -48,7 +48,6 @@ TMPFILENAME = 'CHANGELOG.tmp'
 # Define functions
 # =============================================================================
 def update(filename, path, kind='rpm', version=None, since=None):
-
     # get default run
     cargs = [path, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -70,7 +69,6 @@ def update(filename, path, kind='rpm', version=None, since=None):
 
 
 def get_last_entry(filename):
-
     # check if we have a file
     if not os.path.exists(filename):
         return None
@@ -92,7 +90,6 @@ def get_last_entry(filename):
 
 
 def add_to_full(fullfilename, tmpfilename):
-
     if not os.path.exists(fullfilename):
         fulllines = ['\n\n\nEnd of Changelog.']
     else:
@@ -148,7 +145,6 @@ if __name__ == "__main__":
     # now append to full changelog (do not overwrite contents)
     WLOG('', p['RECIPE'], 'Saving change log to file {0}'.format(FILENAME))
     add_to_full(FILENAME, TMPFILENAME)
-
 
 # =============================================================================
 # End of code
