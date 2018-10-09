@@ -254,6 +254,7 @@ def prepare_polarimetry_data(p, loc):
     # initialize output data vectors
     loc['LSD_WAVE'], loc['LSD_STOKESI'], loc['LSD_STOKESIERR'] = [], [], []
     loc['LSD_POL'], loc['LSD_POLERR'], loc['LSD_NULL'] = [], [], []
+    
     # loop over each order
     for order_num in range(ydim):
         # mask NaN values
@@ -280,7 +281,7 @@ def prepare_polarimetry_data(p, loc):
 
             if p['IC_POLAR_LSD_NORMALIZE']:
                 # measure continuum
-                kwargs = dict(binsize=50, overlap=25, window=2,
+                kwargs = dict(binsize=30, overlap=15, window=2,
                               mode='median', use_linear_fit=True)
                 continuum, xbin, ybin = spirouCore.Continuum(wl, flux, **kwargs)
                 # normalize flux
@@ -331,7 +332,7 @@ def prepare_polarimetry_data(p, loc):
     loc['LSD_POL'] = pol
     loc['LSD_POLERR'] = polerr
     loc['LSD_NULL'] = null
-    
+
     return loc
 
 
@@ -409,6 +410,17 @@ def lsd_analysis(p, loc):
                                             loc['LSD_POLERR'],
                                             loc['LSD_VELOCITIES'], Mp)
 
+    # calculate statistical quantities
+    loc['LSD_POL_MEAN'] = np.mean(loc['LSD_POL'])
+    loc['LSD_POL_STDDEV'] = np.std(loc['LSD_POL'])
+    loc['LSD_POL_MEDIAN'] = np.median(loc['LSD_POL'])
+    loc['LSD_POL_MEDABSDEV'] = np.median(np.abs(loc['LSD_POL'] -
+                                                loc['LSD_POL_MEDIAN']))
+    loc['LSD_STOKESVQU_MEAN'] = np.mean(loc['LSD_STOKESVQU'])
+    loc['LSD_STOKESVQU_STDDEV'] = np.std(loc['LSD_STOKESVQU'])
+    loc['LSD_NULL_MEAN'] = np.mean(loc['LSD_NULL'])
+    loc['LSD_NULL_STDDEV'] = np.std(loc['LSD_NULL'])
+    
     return loc
 
 
@@ -658,6 +670,24 @@ def output_lsd_image(p, loc, hdict):
                                value=loc['LSD_FIT_RV'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_FIT_RESOL'],
                                value=loc['LSD_FIT_RESOL'])
+
+    # add statistical quantities from LSD analysis
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEANPOL'],
+                               value=loc['LSD_POL_MEAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STDDEVPOL'],
+                               value=loc['LSD_POL_STDDEV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEDIANPOL'],
+                               value=loc['LSD_POL_MEDIAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEDABSDEVPOL'],
+                               value=loc['LSD_POL_MEDABSDEV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STOKESVQU_MEAN'],
+                               value=loc['LSD_STOKESVQU_MEAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STOKESVQU_STDDEV'],
+                               value=loc['LSD_STOKESVQU_STDDEV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_MEAN'],
+                               value=loc['LSD_NULL_MEAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_STDDEV'],
+                               value=loc['LSD_NULL_STDDEV'])
 
     # add information about the meaning of data columns
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL1'],
