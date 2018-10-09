@@ -506,6 +506,71 @@ def lin_mini(vector, sample):
     return spirouMath.linear_minimization(vector, sample)
 
 
+def wave2wave(spectrum, wave1, wave2, reshape=False):
+    """
+    Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
+    another wavelength solution (map) "wave2"
+
+    :param spectrum: numpy array (2D),  flux in the reference frame of the
+                     file wave1
+    :param wave1: numpy array (2D), initial wavelength grid
+    :param wave2: numpy array (2D), destination wavelength grid
+    :param reshape: bool, if True try to reshape spectrum to the shape of
+                    the output wave solution
+
+    :return output_spectrum: numpy array (2D), spectrum resampled to "wave2"
+    """
+    func_name = __NAME__ + '.wave2wave()'
+    # deal with reshape
+    if reshape or (spectrum.shape != wave2.shape):
+        try:
+            spectrum = spectrum.reshape(wave2.shape)
+        except ValueError:
+            emsg = ('Spectrum (shape = {0}) cannot be reshaped to'
+                    ' shape = {1}')
+            eargs = [spectrum.shape, wave2.shape]
+            WLOG('error', func_name, emsg.format(*eargs))
+
+    # size of array, assumes wave1, wave2 and spectrum have same shape
+    sz = np.shape(spectrum)
+    # create storage for the output spectrum
+    output_spectrum = np.zeros(sz) + np.nan
+
+    # looping through the orders to shift them from one grid to the other
+    for iord in range(sz[0]):
+        # only interpolate valid pixels
+        g = np.isfinite(spectrum[iord, :])
+
+        # if no valid pixel, thn skip order
+        if np.sum(g) != 0:
+            # spline the spectrum
+            spline = IUVSpline(wave1[iord, g], spectrum[iord, g], k=5, ext=1)
+
+            # keep track of pixels affected by NaNs
+            splinemask = IUVSpline(wave1[iord, :], g, k=5, ext=1)
+
+            # spline the input onto the output
+            output_spectrum[iord, :] = spline(wave2[iord, :])
+
+            # find which pixels are not NaNs
+            mask = splinemask(wave2[iord, :])
+
+            # set to NaN pixels outside of domain
+            bad = (output_spectrum[iord, :] == 0)
+            output_spectrum[iord, bad] = np.nan
+
+            # affected by a NaN value
+            # normally we would use only pixels ==1, but we get values
+            #    that are not exactly one due to the interpolation scheme.
+            #    We just set that >99.9% of the
+            # flux comes from valid pixels
+            bad = (mask <= 0.999)
+            # mask pixels affected by nan
+            output_spectrum[iord, bad] = np.nan
+
+    # return the filled output spectrum
+    return output_spectrum
+
 # =============================================================================
 # Start of code
 # =============================================================================
