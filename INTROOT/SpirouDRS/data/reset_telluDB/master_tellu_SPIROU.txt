@@ -1,3 +1,5 @@
 # Telluric molecular transmission from TAPAS
 TELL_MOLE tapas_all_sp.fits.gz 2018-07-17_09-25-00 1532510700.0
+MASTER_WAVE 2018-07-24_16-17-57_2294115c_pp_wave_ea_AB.fits 2018-07-25-04:11:31.000000 1532491891.0
+
 # DRS Files
