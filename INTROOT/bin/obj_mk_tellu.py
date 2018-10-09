@@ -249,6 +249,23 @@ def main(night_name=None, files=None):
             transmission_map[order_num, :] = sp[order_num, :] / sed
 
         # ------------------------------------------------------------------
+        # Shift transmisson map to master wave file
+        # ------------------------------------------------------------------
+        # TODO: Add later
+        # get master wave map
+        masterwavefile = spirouDB.GetDatabaseMasterWave(p)
+        # log process
+        wmsg1 = 'Shifting transmission map on to master wavelength grid'
+        wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        # read master wave map
+        masterwave = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                                 quiet=True)
+        # shift map
+        wargs = [transmission_map, loc['WAVE'], masterwave]
+        s_transmission_map = spirouTelluric.Wave2Wave(*wargs)
+
+        # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
         # get raw file name
@@ -264,13 +281,13 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
         # write to file
-        p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
+        p = spirouImage.WriteImage(p, outfile, s_transmission_map, hdict)
 
         # ------------------------------------------------------------------
         # Generate the absorption map
         # ------------------------------------------------------------------
         # set up storage for the absorption
-        abso = np.array(transmission_map)
+        abso = np.array(s_transmission_map)
         # set values less than low threshold to low threshold
         # set values higher than high threshold to 1
         low, high = p['TELLU_ABSO_LOW_THRES'], p['TELLU_ABSO_HIGH_THRES']
