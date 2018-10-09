@@ -808,7 +808,8 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
 
 def get_wave_solution(p, image=None, hdr=None, filename=None,
                       return_wavemap=False, return_filename=False,
-                      nb_xpix=None, return_header=False, fiber=None):
+                      nb_xpix=None, return_header=False, fiber=None,
+                      quiet=False):
     """
     Gets the wave solution coefficients (and wavemap if "return_wavemap" is
     True and filename if "return_filename" is True)
@@ -838,6 +839,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     :param return_header: bool, if True return file header
     :param fiber: string, if not None forces the fiber type (i.e. look for
                   WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
+    :param quiet: bool, if True does not print or log
 
     :return waveparams:numpy array (2D), the wave coefficients for each order
                        shape = (number of orders x number of coeffs)
@@ -845,6 +847,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
                        shape = (number of orders x image size)
                        or
                        shape = (number of orders x nb_xpix) - if image is None
+
     :return wavefile: string, the filename of the wave file
     :return header: dict, the header of the wave file (if return_header=True)
     """
@@ -892,9 +895,10 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # -------------------------------------------------------------------------
     # log where file came from
     # -------------------------------------------------------------------------
-    wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
-    wmsg2 = '\tFilename = {0}'.format(os.path.basename(filename))
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    if not quiet:
+        wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
+        wmsg2 = '\tFilename = {0}'.format(os.path.basename(filename))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
 
     # -------------------------------------------------------------------------
     # deal with returns
