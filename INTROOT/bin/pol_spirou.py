@@ -146,82 +146,8 @@ def main(night_name=None, files=None):
              nullpol2fitsname]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
-    # add keys from original header of base file
-    hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
-    # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
-    # add number of exposures parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
-    # add the polarimetry method parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
-    
-    meanbjd, tot_exptime = 0.0, 0.0
-    bjd_first, bjd_last, exptime_last = 0.0, 0.0, 0.0
-    berv_first, berv_last = 0.0, 0.0
-    
-    # loop over files in polar sequence to add keywords to header of products
-    for filename in polardict.keys():
-        # get this entry
-        entry = polardict[filename]
-        # get expnum, fiber, and header
-        expnum, fiber, hdr = entry['exposure'], entry['fiber'], entry['hdr']
-        # Add only times from fiber A
-        if fiber == 'A':
-            
-            # calcualte total exposure time
-            tot_exptime += hdr['EXPTIME']
-            # get values for BJDCEN calculation
-            if expnum == 1:
-                bjd_first = hdr['BJD']
-                berv_first = hdr['BERV']
-            elif expnum == loc['NEXPOSURES']:
-                bjd_last = hdr['BJD']
-                berv_last = hdr['BERV']
-                exptime_last = hdr['EXPTIME']
-            meanbjd += hdr['BJD']
-            # add exposure file name
-            fileexp = p['kw_POL_FILENAM{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, fileexp, value=hdr['FILENAME'])
-            # add EXPTIME for each exposure
-            exptimeexp = p['kw_POL_EXPTIME{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, exptimeexp, value=hdr['EXPTIME'])
-            # add MJDATE for each exposure
-            mjdexp = p['kw_POL_MJDATE{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, mjdexp, value=hdr['MJDATE'])
-            # add MJDEND for each exposure
-            mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, mjdendexp, value=hdr['MJDEND'])
-            # add BJD for each exposure
-            bjdexp = p['kw_POL_BJD{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, bjdexp, value=hdr['BJD'])
-            # add BERV for each exposure
-            bervexp = p['kw_POL_BERV{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, bervexp, value=hdr['BERV'])
-
-    # add total exposure time parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
-    # add elapsed time parameter keyword to header
-    elapsed_time = (bjd_last - bjd_first) * 86400. + exptime_last
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_ELAPTIME'], value=elapsed_time)
-    
-    # calculate BJD at center of polarimetric sequence
-    bjdcen = bjd_first + (bjd_last - bjd_first + exptime_last/86400.)/2.0
-    # add central BJD
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_BJDCEN'], value=bjdcen)
-
-    # calculate BERV at center by linear interpolation
-    berv_slope = (berv_last - berv_first) / (bjd_last - bjd_first)
-    berv_intercept = berv_first - berv_slope * bjd_first
-    loc['BERVCEN'] = berv_intercept + berv_slope * bjdcen
-    
-    # add central BERV
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_BERVCEN'], value=loc['BERVCEN'])
-
-    # add mean BJD
-    meanbjd = meanbjd / loc['NEXPOSURES']
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_MEANBJD'], value=meanbjd)
+    # construct header keywords for output products
+    hdict, loc = spirouPOLAR.polarHeader(p, loc, polardict)
 
     # save POL data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
@@ -230,6 +156,7 @@ def main(night_name=None, files=None):
     # save NULL1 data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
     p = spirouImage.WriteImage(p, nullpol1fits, loc['NULL1'], hdict)
+    
     # save NULL2 data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
     p = spirouImage.WriteImage(p, nullpol2fits, loc['NULL2'], hdict)

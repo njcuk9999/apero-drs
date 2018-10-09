@@ -186,6 +186,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_BERV3',
             'kw_POL_BERV4',
             'kw_POL_MEANBJD',
+            'kw_POL_MJDCEN',
             'kw_POL_BJDCEN',
             'kw_POL_BERVCEN',
             'kw_RDNOISE',
@@ -582,6 +583,7 @@ kw_POL_BERV2 = ['BERV2', '', 'BERV at start of exposure 2']
 kw_POL_BERV3 = ['BERV3', '', 'BERV at start of exposure 3']
 kw_POL_BERV4 = ['BERV4', '', 'BERV at start of exposure 4']
 kw_POL_MEANBJD = ['MEANBJD', '', 'Mean BJD for polar sequence']
+kw_POL_MJDCEN = ['MJDCEN', '', 'MJD at center of observation']
 kw_POL_BJDCEN = ['BJDCEN', '', 'BJD at center of observation']
 kw_POL_BERVCEN = ['BERVCEN', '', 'BERV at center of observation']
 kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
