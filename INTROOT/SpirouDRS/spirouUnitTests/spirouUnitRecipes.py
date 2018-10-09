@@ -30,14 +30,14 @@ import cal_exposure_meter
 import cal_wave_mapper
 import cal_extract_RAW_spirou
 import cal_FF_RAW_spirou
-import cal_HC_E2DS_spirou
+# import cal_HC_E2DS_spirou
 import cal_HC_E2DS_EA_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
 import cal_SHAPE_spirou
-import cal_WAVE_E2DS_spirou
+# import cal_WAVE_E2DS_spirou
 import cal_WAVE_E2DS_EA_spirou
-import cal_WAVE_NEW_E2DS_spirou
+# import cal_WAVE_NEW_E2DS_spirou
 import cal_preprocess_spirou
 import off_listing_RAW_spirou
 import off_listing_REDUC_spirou
