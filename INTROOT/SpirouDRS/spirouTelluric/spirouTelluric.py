@@ -349,6 +349,17 @@ def calc_recon_abso(p, loc):
         # else we have template so load it
         else:
             template2 = loc['TEMPLATE2']
+            # -----------------------------------------------------------------
+            # Shift the template  to correct frame
+            # -----------------------------------------------------------------
+            # log process
+            wmsg1 = '\tShifting template on to master wavelength grid'
+            wargs = [os.path.basename(loc['MASTERWAVEFILE'])]
+            wmsg2 = '\t\tFile = {0}'.format(*wargs)
+            WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+            # shift template
+            wargs = [template2, loc['MASTERWAVE'], loc['WAVE_IT']]
+            template2 = wave2wave(*wargs, reshape=True).reshape(template2.shape)
         # --------------------------------------------------------------
         # get residual spectrum
         with warnings.catch_warnings(record=True) as _:
@@ -538,6 +549,10 @@ def wave2wave(spectrum, wave1, wave2, reshape=False):
                     ' shape = {1}')
             eargs = [spectrum.shape, wave2.shape]
             WLOG('error', func_name, emsg.format(*eargs))
+
+    # if they are the same
+    if np.sum(wave1 != wave2) == 0:
+        return spectrum
 
     # size of array, assumes wave1, wave2 and spectrum have same shape
     sz = np.shape(spectrum)
