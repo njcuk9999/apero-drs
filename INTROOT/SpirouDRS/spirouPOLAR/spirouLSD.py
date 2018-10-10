@@ -89,13 +89,15 @@ def load_lsd_spectral_lines(p, loc):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
             LOG_OPT: string, option for logging
-            IC_POLAR_LSD_CCFLINES: string, file containing spectral lines data
+            IC_POLAR_LSD_CCFLINES: list of strings, list of files containing
+                                   spectral lines data
             IC_POLAR_LSD_WLRANGES: array of float pairs for wavelength ranges
             IC_POLAR_LSD_MIN_LINEDEPTH: float, line depth threshold
     :param loc: parameter dictionary, ParamDict to store data
         
     :return loc: parameter dictionaries,
         The updated parameter dictionary adds/updates the following:
+        loc['SELECTED_FILE_CCFLINES']: string, selected filename with CCF lines
         loc['LSD_LINES_WLC']: numpy array (1D), central wavelengths
         loc['LSD_LINES_ZNUMBER']: numpy array (1D), atomic number (Z)
         loc['LSD_LINES_DEPTH']: numpy array (1D), line depths
@@ -110,10 +112,26 @@ def load_lsd_spectral_lines(p, loc):
     relfolder = spirouConfig.Constants.LSD_MASK_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
-    # strip filename
-    filename = p['IC_POLAR_LSD_CCFLINES']
+
+    # get object temperature from header
+    obj_temperature = loc['HDR']['OBJTEMP']
+    wmsg = 'Temperature of the object observed: {0} K'
+    WLOG('info', p['LOG_OPT'], wmsg.format(obj_temperature))
+    
+    # find out which CCFLINE file is most appropriate for source
+    temp_diff_min, loc['SELECTED_FILE_CCFLINES'] = 1.e10, 'marcs_t3000g50_all'
+    for i in range(len(p['IC_POLAR_LSD_CCFLINES'])) :
+        filename = p['IC_POLAR_LSD_CCFLINES'][i]
+        suffix = filename.split('marcs_t')[1]
+        temp_in_file = float(suffix[0:suffix.find('g50_all')])
+        temp_diff = np.abs(obj_temperature - temp_in_file)
+        if temp_diff < temp_diff_min :
+            temp_diff_min = temp_diff
+            # get filename corresponding to the closest temperature to object
+            loc['SELECTED_FILE_CCFLINES'] = filename
+
     # get absolute path and filename
-    abspath = os.path.join(absfolder, filename)
+    abspath = os.path.join(absfolder, loc['SELECTED_FILE_CCFLINES'])
     # if path exists use it
     if os.path.exists(abspath):
         wmsg = 'Line mask used for LSD computation: {0}'
@@ -657,7 +675,7 @@ def output_lsd_image(p, loc, hdict):
     # add input parameters for LSD analysis
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MASK'],
-                               value=p['IC_POLAR_LSD_CCFLINES'])
+                               value= loc['SELECTED_FILE_CCFLINES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_V0'],
                                value=p['IC_POLAR_LSD_V0'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_VF'],
