@@ -101,10 +101,16 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # used for plotting only
-    _, loc['WAVE'] = spirouImage.GetWaveSolution(p, image=loc['DATA'],
-                                                 hdr=loc['DATAHDR'],
-                                                 return_wavemap=True)
+    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
+                                       return_wavemap=True, fiber=wave_fiber)
+    _, loc['WAVE'] = wout
+    loc.set_source('WAVE', main_name)
 
     # ----------------------------------------------------------------------
     # Get and Normalise the blaze
@@ -228,14 +234,23 @@ def main(night_name=None, files=None):
     # Get master wavelength grid for shifting
     # ----------------------------------------------------------------------
     # get master wave map
-    masterwavefile = spirouDB.GetDatabaseMasterWave(p)
+    loc['MASTERWAVEFILE'] = spirouDB.GetDatabaseMasterWave(p)
+    loc.set_source('MASTERWAVEFILE', main_name)
     # log progress
     wmsg1 = 'Getting master wavelength grid'
-    wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
+    wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
     WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # read master wave map
-    masterwave = spirouImage.GetWaveSolution(p, filename=masterwavefile,
-                                             quiet=True)
+    mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
+                                       return_wavemap=True, quiet=True,
+                                       fiber=wave_fiber)
+    _, loc['MASTERWAVE'] = mout
+    loc.set_source('MASTERWAVE', main_name)
 
     # ----------------------------------------------------------------------
     # Loop around telluric files
@@ -283,9 +298,16 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
+        # Force A and B to AB solution
+        if p['FIBER'] in ['A', 'B']:
+            wave_fiber = 'AB'
+        else:
+            wave_fiber = p['FIBER']
+        # get wavelength solution
         wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
                                            return_wavemap=True,
-                                           return_filename=True)
+                                           return_filename=True,
+                                           fiber=wave_fiber)
         _, loc['WAVE_IT'], loc['WAVEFILE'] = wout
         loc.set_sources(['WAVE_IT', 'WAVEFILE'], main_name)
         # load wave keys

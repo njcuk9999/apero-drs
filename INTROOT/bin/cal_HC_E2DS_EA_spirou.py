@@ -129,9 +129,14 @@ def main(night_name=None, files=None):
 
     # set source of wave file
     wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
-                                       return_filename=True)
+                                       return_filename=True, fiber=wave_fiber)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
 
@@ -279,14 +284,14 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     if p['QC']:
         # set the wave key
-        keydb = 'WAVE_EA_{0}'.format(p['FIBER'])
+        keydb = 'WAVE_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder
         spirouDB.PutCalibFile(p, wavefits)
         # update the master calib DB file with new key
         spirouDB.UpdateCalibMaster(p, keydb, wavefitsname, loc['HCHDR'])
 
         # set the hcref key
-        keydb = 'HCREF_EA_{0}'.format(p['FIBER'])
+        keydb = 'HCREF_{0}'.format(p['FIBER'])
         # copy wave file to calibDB folder
         spirouDB.PutCalibFile(p, e2dscopy_filename)
         # update the master calib DB file with new key
