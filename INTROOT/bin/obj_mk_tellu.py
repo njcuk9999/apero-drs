@@ -258,6 +258,11 @@ def main(night_name=None, files=None):
         wmsg1 = 'Shifting transmission map on to master wavelength grid'
         wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
         WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        # Force A and B to AB solution
+        if p['FIBER'] in ['A', 'B']:
+            wave_fiber = 'AB'
+        else:
+            wave_fiber = p['FIBER']
         # read master wave map
         masterwave = spirouImage.GetWaveSolution(p, filename=masterwavefile,
                                                  quiet=True)
