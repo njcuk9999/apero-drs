@@ -641,7 +641,8 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
 
 
 def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
-                   return_filename=False, required=True, fiber=None):
+                  return_filename=False, required=True, fiber=None,
+                  quiet=False):
     """
     Reads the wave file (from calib database or filename)
 
@@ -667,6 +668,7 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
                      ConfigError (to be caught)
     :param fiber: string, if not None forces the fiber type (i.e. look for
                   WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
+    :param quiet: bool, if True logs progress
 
     if return_filename is False and return header is False
 
@@ -693,8 +695,9 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
     if return_filename:
         return os.path.basename(read_file)
     # log wave file used
-    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    if not quiet:
+        wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+        WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -796,7 +799,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
     # define empty wave solution
-        wavemap = np.zeros_like(image)
+    wavemap = np.zeros_like(image)
     xpixels = np.arange(image.shape[1])
     # load the wave solution for each order
     for order_num in range(dim1):
@@ -871,7 +874,8 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         obtain = 'file'
     # if force calibDB is True
     elif p['CALIB_DB_FORCE_WAVESOL']:
-        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber)
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber,
+                                       quiet=True)
         waveparams = read_waveparams(p, hdict)
         filename = read_wavefile(p, hdr, return_filename=True, fiber=fiber)
         obtain = 'calibDB'
