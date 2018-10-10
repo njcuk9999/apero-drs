@@ -30,7 +30,7 @@ from SpirouDRS import spirouTelluric
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'obj_mk_tell_template.py'
+__NAME__ = 'obj_mk_obj_template.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -81,21 +81,6 @@ def main(night_name=None, files=None):
     source = main_name + '+ spirouImage.ReadParams()'
     loc.set_sources(['OBJNAME', 'AIRMASS'], source)
 
-    # ------------------------------------------------------------------
-    # Get the wave solution
-    # ------------------------------------------------------------------
-    # Force A and B to AB solution
-    if p['FIBER'] in ['A', 'B']:
-        wave_fiber = 'AB'
-    else:
-        wave_fiber = p['FIBER']
-    # get wave solution
-    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
-                                       return_wavemap=True, fiber=wave_fiber,
-                                       return_filename=True)
-    _, loc['WAVE'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
-
     # ----------------------------------------------------------------------
     # Get and Normalise the blaze
     # ----------------------------------------------------------------------
@@ -124,7 +109,7 @@ def main(night_name=None, files=None):
         return dict(locals())
     else:
         # log how many found
-        wmsg = '{0} "TELL_OBJ" filesfround for object ="{1}"'
+        wmsg = 'N={0} "TELL_OBJ" files found for object ="{1}"'
         WLOG('', p['LOG_OPT'], wmsg.format(len(tell_files), loc['OBJNAME']))
 
     # ----------------------------------------------------------------------
@@ -142,12 +127,15 @@ def main(night_name=None, files=None):
         wave_fiber = 'AB'
     else:
         wave_fiber = p['FIBER']
+        # get master wave map
+        loc['MASTERWAVEFILE'] = spirouDB.GetDatabaseMasterWave(p)
     # read master wave map
     mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
                                        return_wavemap=True, quiet=True,
                                        fiber=wave_fiber)
-    _, loc['MASTERWAVE'] = mout
-    loc.set_source('MASTERWAVE', main_name)
+    loc['MASTERWAVEPARAMS'], loc['MASTERWAVE'] = mout
+    keys = ['MASTERWAVEPARAMS', 'MASTERWAVE', 'MASTERWAVEFILE']
+    loc.set_sources(keys, main_name)
 
     # ----------------------------------------------------------------------
     # Loop around files
@@ -155,37 +143,57 @@ def main(night_name=None, files=None):
     for it, filename in enumerate(tell_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
+        # ------------------------------------------------------------------
         # create image for storage
         image = np.repeat([np.nan], np.product(loc['DATA'].shape))
         image = image.reshape(loc['DATA'].shape)
+        # ------------------------------------------------------------------
         # Load the data for this file
         tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # Correct for the blaze
         tdata = tdata * loc['NBLAZE']
+
+        # ------------------------------------------------------------------
+        # Get the wave solution for this file
+        # ------------------------------------------------------------------
+        # Force A and B to AB solution
+        if p['FIBER'] in ['A', 'B']:
+            wave_fiber = 'AB'
+        else:
+            wave_fiber = p['FIBER']
+        # get wave solution
+        wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
+                                           return_wavemap=True,
+                                           fiber=wave_fiber,
+                                           return_filename=True)
+        _, loc['WAVE'], loc['WAVEFILE'] = wout
+        loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
+        # ------------------------------------------------------------------
         # Get the Barycentric correction from header
         dv, _, _ = spirouTelluric.GetBERV(p, thdr)
-
+        # ------------------------------------------------------------------
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
-        wargs = [it + 1, len(tell_files), basefilename]
-
+        wargs = [it + 1, len(tell_files), basefilename, dv]
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        # ------------------------------------------------------------------
         # shift to correct berv
         # TODO: Should be realivistic
         dvshift = (1 - dv / CONSTANT_C)
 
         image = spirouTelluric.Wave2Wave(tdata, loc['WAVE'] * dvshift,
                                          loc['MASTERWAVE'])
-
+        # ------------------------------------------------------------------
         # loop around orders
         for order_num in range(loc['DATA'].shape[0]):
             # normalise the tdata
             tdata[order_num, :] /= np.nanmedian(tdata[order_num, :])
             image[order_num, :] /= np.nanmedian(image[order_num, :])
-
+        # ------------------------------------------------------------------
         # add to cube storage
         big_cube[:, :, it] = image
         big_cube0[:, :, it] = tdata
-
+    # ----------------------------------------------------------------------
     # make median image
     big_cube_med = np.median(big_cube, axis=2)
 
@@ -195,7 +203,7 @@ def main(night_name=None, files=None):
     # get raw file name
     raw_in_file = os.path.basename(p['FITSFILENAME'])
     # construct filename
-    outfile, tag = spirouConfig.Constants.TELLU_TEMPLATE_FILE(p, loc)
+    outfile, tag = spirouConfig.Constants.OBJTELLU_TEMPLATE_FILE(p, loc)
     outfilename = os.path.basename(outfile)
 
     # hdict is first file keys
@@ -207,7 +215,10 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
     hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
-                               value=loc['WAVEFILE'])
+                               value=loc['MASTERWAVEFILE'])
+    # add wave solution coefficients
+    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                     values=loc['MASTERWAVEPARAMS'])
     # write to file
     p = spirouImage.WriteImage(p, outfile, big_cube_med, hdict)
 
@@ -222,14 +233,21 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save cubes to file
     # ----------------------------------------------------------------------
-    reduced_dir = p['DRS_DATA_REDUC']
-    outfilename1 = 'BigCube_{0}.fits'.format(loc['OBJNAME'])
-    outfile1 = os.path.join(reduced_dir, outfilename)
-    outfilename2 = 'BigCube0_{0}.fits'.format(loc['OBJNAME'])
-    outfile2 = os.path.join(reduced_dir, outfilename)
-
-    spirouImage.WriteImageMulti(outfile1, big_cube, hdict)
-    spirouImage.WriteImageMulti(outfile2, big_cube0, hdict)
+    # construct file names
+    outfile1, tag1 = spirouConfig.Constants.OBJTELLU_TEMPLATE_CUBE_FILE1(p, loc)
+    outfile2, tag2 = spirouConfig.Constants.OBJTELLU_TEMPLATE_CUBE_FILE2(p, loc)
+    # log big cube 1
+    wmsg1 = 'Saving bigcube to file {0}'.format(os.path.basename(outfile1))
+    # save big cube 1
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    big_cube_s = np.swapaxes(big_cube, 1, 2)
+    p = spirouImage.WriteImageMulti(p, outfile1, big_cube_s, hdict)
+    # log big cube 0
+    wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
+    # save big cube 0
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
+    p = spirouImage.WriteImageMulti(p, outfile2, big_cube_s0, hdict)
 
     # ----------------------------------------------------------------------
     # End Message
