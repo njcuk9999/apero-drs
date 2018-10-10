@@ -1719,11 +1719,37 @@ def TELLU_FIT_RECON_FILE(p, filename):
 
 
 # noinspection PyPep8Naming
-def TELLU_TEMPLATE_FILE(p, loc):
-    func_name = 'TELLU_TEMPLATE_FILE'
+def OBJTELLU_TEMPLATE_FILE(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_FILE'
     # define filename
     reduced_dir = p['ARG_FILE_DIR']
     outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
+
+
+# noinspection PyPep8Naming
+def OBJTELLU_TEMPLATE_CUBE_FILE1(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_CUBE_FILE1'
+    # define filename
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'BigCube_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
+
+
+# noinspection PyPep8Naming
+def OBJTELLU_TEMPLATE_CUBE_FILE2(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_CUBE_FILE2'
+    # define filename
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'BigCube0_{0}.fits'.format(loc['OBJNAME'])
     outfile = os.path.join(reduced_dir, outfilename)
     # get tag
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
