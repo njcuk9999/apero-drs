@@ -196,14 +196,14 @@ obj_mk_tellu, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, MKTELL
 obj_mk_tellu, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
 obj_mk_tellu, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
 obj_mk_tellu, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
-obj_mk_tell_template, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, MKTELLU, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, MKOBJTMP, -6, 1
+obj_mk_obj_template, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, MKOBJTMP, -6, 1
 #
 # ---- Polarimetry recipe
 #
