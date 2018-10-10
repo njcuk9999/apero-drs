@@ -43,6 +43,7 @@ import off_listing_RAW_spirou
 import off_listing_REDUC_spirou
 import obj_mk_tellu
 import obj_fit_tellu
+import obj_mk_obj_template
 import visu_RAW_spirou
 import visu_E2DS_spirou
 import pol_spirou
@@ -85,8 +86,10 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_preprocess_spirou',
                  'off_listing_RAW_spirou',
                  'off_listing_REDUC_spirou',
+                 'obj_mk_obj_template',
                  'obj_mk_tellu',
                  'obj_fit_tellu',
+                 'obj_mk_obj_template',
                  'visu_RAW_spirou',
                  'visu_E2DS_spirou',
                  'pol_spirou']
@@ -114,19 +117,20 @@ def get_versions():
     vv[cal_wave_mapper.__NAME__] = cal_wave_mapper.__version__
     vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
     vv[cal_FF_RAW_spirou.__NAME__] = cal_FF_RAW_spirou.__version__
-    vv[cal_HC_E2DS_spirou.__NAME__] = cal_HC_E2DS_spirou.__version__
+    # vv[cal_HC_E2DS_spirou.__NAME__] = cal_HC_E2DS_spirou.__version__
     vv[cal_HC_E2DS_EA_spirou.__NAME__] = cal_HC_E2DS_EA_spirou.__version__
     vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
     vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
     vv[cal_SHAPE_spirou.__NAME__] = cal_SHAPE_spirou.__version__
-    vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
+    # vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
     vv[cal_WAVE_E2DS_EA_spirou.__NAME__] = cal_WAVE_E2DS_EA_spirou.__version__
-    vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou.__version__
+    # vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou.__version__
     vv[cal_preprocess_spirou.__NAME__] = cal_preprocess_spirou.__version__
     vv[off_listing_RAW_spirou.__NAME__] = off_listing_RAW_spirou.__version__
     vv[off_listing_REDUC_spirou.__NAME__] = off_listing_REDUC_spirou.__version__
     vv[obj_mk_tellu.__NAME__] = obj_mk_tellu.__version__
     vv[obj_fit_tellu.__NAME__] = obj_fit_tellu.__version__
+    vv[obj_mk_obj_template] = obj_mk_obj_template.__version__
     vv[visu_RAW_spirou.__NAME__] = visu_RAW_spirou.__version__
     vv[visu_E2DS_spirou.__NAME__] = visu_E2DS_spirou.__version__
     vv[pol_spirou.__NAME__] = pol_spirou.__version__
@@ -768,6 +772,28 @@ def unit_test_obj_fit_tellu(rname, inputs):
     """
     # define name and arguments
     name = 'obj_fit_tellu'
+    arg_names = ['night_name', 'files']
+    arg_types = [str, list]
+
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
+
+
+def unit_test_obj_mk_obj_template(rname, inputs):
+    """
+    unit_test_obj_mk_obj_template
+
+    input = night_name files
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+
+    :return args: dict, the parameters to pass to the run
+    """
+    # define name and arguments
+    name = 'obj_mk_obj_template'
     arg_names = ['night_name', 'files']
     arg_types = [str, list]
 
