@@ -546,7 +546,7 @@ drift_peak_fpbox_size = 3
 
 # define drift peak types, the keys should be KW_EXT_TYPE header keys
 #
-drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp'}
+drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp', 'DARK_FP': 'fp'}
 
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
 #        to be recognised as a valid peak (before fitting a gaussian)
@@ -559,7 +559,7 @@ drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 #       files are allowed for each input type
 #        dictionary must have keys equal to the keys in
 #        drift_peak_allowed_types
-drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
+drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP', 'DARK_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
 
 #    Define fibers which these can be used on
 drift_peak_output_except = {'OBJ_FP': 'C', 'OBJ_HCONE': 'C', 'OBJ_HCTWO': 'C'}
