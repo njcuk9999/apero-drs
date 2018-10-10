@@ -886,7 +886,7 @@ pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
 
 # force reading the wave solution from calibDB
-calib_db_force_wavesol = True
+calib_db_force_wavesol = False
 
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
@@ -928,6 +928,11 @@ HC_TFIT_CUT_THRES = 1.0
 HC_TFIT_MIN_NUM_LINES = 10
 # Minimum total number of lines required                              - [cal_HC]
 HC_TFIT_MIN_TOT_LINES = 200
+
+# Define the distance in m/s away from the center of dv hist          - [cal_HC]
+#      points outside will be rejected [m/s]
+HC_TFIT_DVCUT_ORDER = 2000
+HC_TFIT_DVCUT_ALL = 5000
 
 # this sets the order of the polynomial used to ensure continuity     - [cal_HC]
 #     in the  xpix vs wave solutions by setting the first term = 12,
