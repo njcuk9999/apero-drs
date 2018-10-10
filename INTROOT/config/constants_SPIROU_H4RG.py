@@ -79,6 +79,10 @@ ic_ccdy_high = 3350  # 3450
 #       (earlier in list takes priority)
 fiber_types = ['AB', 'A', 'B', 'C']
 
+#    Define whether to use SKYDARK for dark corrections                  - [all]
+use_skydark_correction = False
+
+
 # -----------------------------------------------------------------------------
 #   fiber variables
 # -----------------------------------------------------------------------------
@@ -434,9 +438,9 @@ ic_extnbsig = 1  # 2.5
 #
 #                 4b - shape map + weight extraction (cosmic correction)
 #                          (function = spirouEXTOR.extract_shape_weight_cosm)
-ic_extract_type = '3d'  # '3d'
+ic_extract_type = '4b'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
-ic_ff_extract_type = '3c'
+ic_ff_extract_type = '4a'
 
 #   Set the number of pixels to set as                   - [cal_extract, cal_FF]
 #       the border (needed to allow for tilt to not go off edge of image)
