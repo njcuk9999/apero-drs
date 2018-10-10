@@ -1055,10 +1055,10 @@ ic_polar_remove_continuum = 1
 ic_polar_lsd_analysis = 1
 
 #  Define initial velocity (km/s) for output LSD profile          - [pol_spirou]
-ic_polar_lsd_v0 = -200.
+ic_polar_lsd_v0 = -150.
 
 #  Define final velocity (km/s) for output LSD profile            - [pol_spirou]
-ic_polar_lsd_vf = 200.
+ic_polar_lsd_vf = 150.
 
 #  Define number of points for output LSD profile                 - [pol_spirou]
 ic_polar_lsd_np = 201
