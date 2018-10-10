@@ -333,23 +333,17 @@ def main(night_name=None, files=None):
                 sPlt.tellu_fit_tellu_spline_plot(p, loc)
 
         # ------------------------------------------------------------------
-        # Shift the template and pca components to correct frame
+        # Shift the pca components to correct frame
         # ------------------------------------------------------------------
         # log process
-        wmsg1 = 'Shifting template on to master wavelength grid'
-        wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
-        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
-        # shift template
-        wargs = [loc['TEMPLATE2'], masterwave, loc['WAVE_IT']]
-        loc['TEMPLATE2'] = spirouTelluric.Wave2Wave(*wargs, reshape=True)
-        # log process
         wmsg1 = 'Shifting PCA components on to master wavelength grid'
-        wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
+        wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
         WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
         # shift pca components (one by one)
-        for comp in range(p['NPC']):
-            wargs = [loc['PCA'][:, comp], masterwave, loc['WAVE_IT']]
-            loc['PCA'][:, comp] = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+        for comp in range(loc['NPC']):
+            wargs = [loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
+            shift_pc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+            loc['PC'][:, comp] = shift_pc.reshape(loc['PC'][:, comp].shape)
 
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption
