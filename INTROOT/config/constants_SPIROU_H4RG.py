@@ -1063,8 +1063,8 @@ ic_polar_lsd_vf = 200.
 #  Define number of points for output LSD profile                 - [pol_spirou]
 ic_polar_lsd_np = 201
 
-#  Define number of points for output LSD profile                 - [pol_spirou]
-ic_polar_lsd_ccflines = 'marcs_t3000g50_all'
+#  Define files with spectral lines for LSD analysis              - [pol_spirou]
+ic_polar_lsd_ccflines = ['marcs_t2500g50_all','marcs_t3000g50_all','marcs_t3500g50_all']
 
 #  Define mask for selecting lines to be used in the LSD analysis - [pol_spirou]
 ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.], [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
