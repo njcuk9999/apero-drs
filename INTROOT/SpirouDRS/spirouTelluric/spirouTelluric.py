@@ -94,7 +94,7 @@ def get_molecular_tell_lines(p, loc):
     tapas, thdr, tcmt, _, _ = tdata
 
     # load all current telluric convolve files
-    convole_files = spirouDB.GetDatabaseTellConv(p, required=False)
+    convolve_files = spirouDB.GetDatabaseTellConv(p, required=False)
 
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
@@ -103,8 +103,12 @@ def get_molecular_tell_lines(p, loc):
     convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
     convolve_file = os.path.join(p['ARG_FILE_DIR'], convolve_file_name)
 
+    convolve_basefiles = []
+    for cfile in np.unique(convolve_files):
+        convolve_basefiles.append(os.path.basename(cfile))
+
     # find tapas file in files
-    if convolve_file not in convole_files:
+    if os.path.basename(convolve_file) not in convolve_basefiles:
         generate = True
     else:
         # if we already have a file for this wavelength just open it
@@ -314,6 +318,10 @@ def calc_recon_abso(p, loc):
     # loop around a number of times
     template2 = None
     for ite in range(p['TELLU_FIT_NITER']):
+        # log progress
+        wmsg = 'Iteration {0} of {1}'.format(ite + 1, p['TELLU_FIT_NITER'])
+        WLOG('', p['LOG_OPT'], wmsg)
+
         # --------------------------------------------------------------
         # if we don't have a template construct one
         if not loc['FLAG_TEMPLATE']:
@@ -401,7 +409,7 @@ def calc_recon_abso(p, loc):
         keep &= np.isfinite(fit_dd)
         keep &= np.sum(np.isfinite(loc['FIT_PC']), axis=1) == loc['NPC']
         # log number of kept pixels
-        wmsg = 'Number to keep total = {0}'.format(np.sum(keep))
+        wmsg = '\tNumber to keep total = {0}'.format(np.sum(keep))
         WLOG('', p['LOG_OPT'], wmsg)
         # --------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
