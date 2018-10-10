@@ -264,8 +264,13 @@ def main(night_name=None, files=None):
         else:
             wave_fiber = p['FIBER']
         # read master wave map
-        masterwave = spirouImage.GetWaveSolution(p, filename=masterwavefile,
-                                                 quiet=True)
+        mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                           return_wavemap=True, quiet=True,
+                                           return_header=True, fiber=wave_fiber)
+        masterwavep, masterwave, masterwaveheader = mout
+        # get wave acqtimes
+        master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
+
         # shift map
         wargs = [transmission_map, loc['WAVE'], masterwave]
         s_transmission_map = spirouTelluric.Wave2Wave(*wargs)
@@ -284,7 +289,22 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
         hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
         hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
-                                   value=loc['WAVEFILE'])
+                                   value=os.path.basename(masterwavefile))
+
+        # add wave solution date
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+                                   value=master_acqtimes[0])
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+                                   value=master_acqtimes[1])
+        # add wave solution number of orders
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                                   value=masterwavep.shape[0])
+        # add wave solution degree of fit
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                                   value=masterwavep.shape[1] - 1)
+        # add wave solution coefficients
+        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                         values=masterwavep)
         # write to file
         p = spirouImage.WriteImage(p, outfile, s_transmission_map, hdict)
 
