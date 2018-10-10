@@ -137,6 +137,18 @@ def main(night_name=None, files=None):
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
     big_cube0 = np.repeat([np.nan], flatsize).reshape(*dims)
 
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
+                                       return_wavemap=True, quiet=True,
+                                       fiber=wave_fiber)
+    _, loc['MASTERWAVE'] = mout
+    loc.set_source('MASTERWAVE', main_name)
+
     # ----------------------------------------------------------------------
     # Loop around files
     # ----------------------------------------------------------------------
@@ -157,36 +169,18 @@ def main(night_name=None, files=None):
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
         wargs = [it + 1, len(tell_files), basefilename]
 
+        # shift to correct berv
+        # TODO: Should be realivistic
+        dvshift = (1 - dv / CONSTANT_C)
+
+        image = spirouTelluric.Wave2Wave(tdata, loc['WAVE'] * dvshift,
+                                         loc['MASTERWAVE'])
+
         # loop around orders
         for order_num in range(loc['DATA'].shape[0]):
-            # find nans
-            keep = np.isfinite(tdata[order_num, :])
             # normalise the tdata
-            tdata[order_num, :] /= np.median(tdata[order_num, :][keep])
-            # update nan mask
-            keep = np.isfinite(tdata[order_num, :])
-            # if we have more than half our values spline otherwise disregard
-            if np.sum(keep) > (p['TELLU_TEMPLATE_KEEP_LIMIT'] * len(keep)):
-                # get wavelengths for keep mask
-                keepwave = loc['WAVE'][order_num][keep]
-                # get spectrum for keep mask
-                keepsp = tdata[order_num][keep]
-                # get spline fit
-                spline = IUVSpline(keepwave, keepsp, k=2, ext=1)
-                # get dv shift
-                dvshift = (1 - dv / CONSTANT_C)
-                # fit all points with the spline fit and add shift
-                image[order_num, :] = spline(loc['WAVE'][order_num]) * dvshift
-                # set zero values to NaN
-                zeromask = image[order_num, :] == 0
-                image[order_num, :][zeromask] = np.nan
-                # renomalise the image to the median over defined area
-                start = p['TELLU_TEMPLATE_MED_LOW']
-                end = p['TELLU_TEMPLATE_MED_HIGH']
-                image[order_num, :] /= np.nanmedian(image[order_num, start:end])
-            # else just set whole order to NaNs
-            else:
-                image[order_num, :] = np.nan
+            tdata[order_num, :] /= np.nanmedian(tdata[order_num, :])
+            image[order_num, :] /= np.nanmedian(image[order_num, :])
 
         # add to cube storage
         big_cube[:, :, it] = image
