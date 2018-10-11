@@ -153,7 +153,7 @@ def main(night_name=None, files=None):
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
     # construct header keywords for output products
-    hdict, loc = spirouPOLAR.polarHeader(p, loc, polardict)
+    hdict, loc = spirouPOLAR.PolarHeader(p, loc, polardict)
 
     # save POL data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
