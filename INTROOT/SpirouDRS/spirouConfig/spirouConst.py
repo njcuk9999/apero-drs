@@ -313,6 +313,10 @@ def TAGFILE():
 ckwargs = dict(package=PACKAGE(), configfolder=CONFIGFOLDER(),
                configfile=CONFIGFILE(), return_raw=False)
 pp = spirouConfigFile.read_config_file(**ckwargs)
+if 'USER_CONFIG' in pp:
+    pp, _ = spirouConfigFile.get_user_config(pp, package=PACKAGE(),
+                                             configfolder=CONFIGFOLDER(),
+                                             configfile=CONFIGFILE())
 
 # =============================================================================
 # Get tags from tag file
