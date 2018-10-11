@@ -35,9 +35,11 @@ run010d = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279535o_pp.fits']
 run010e = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279536o_pp.fits']
 
 # Extract the science
-run011a = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279694o_pp.fits']
-run011b = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279695o_pp.fits']
-run011c = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279696o_pp.fits']
+run011a = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279680o_pp.fits']
+run011b = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279681o_pp.fits']
+run011c = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279682o_pp.fits']
+run011d = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279683o_pp.fits']
+run011e = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279684o_pp.fits']
 
 # Run Make telluric recipes
 run012a = ['obj_mk_tellu', 'TEST4/20180527', '2279540o_pp_e2dsff_AB.fits']
@@ -47,9 +49,11 @@ run012d = ['obj_mk_tellu', 'TEST4/20180527', '2279535o_pp_e2dsff_AB.fits']
 run012e = ['obj_mk_tellu', 'TEST4/20180527', '2279536o_pp_e2dsff_AB.fits']
 
 # Run Fit telluric recipes on Gl699
-run013a = ['obj_fit_tellu', 'TEST4/20180527', '2279694o_pp_e2dsff_AB.fits']
-run013b = ['obj_fit_tellu', 'TEST4/20180527', '2279695o_pp_e2dsff_AB.fits']
-run013c = ['obj_fit_tellu', 'TEST4/20180527', '2279696o_pp_e2dsff_AB.fits']
+run013a = ['obj_fit_tellu', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
+run013b = ['obj_fit_tellu', 'TEST4/20180527', '2279681o_pp_e2dsff_AB.fits']
+run013c = ['obj_fit_tellu', 'TEST4/20180527', '2279682o_pp_e2dsff_AB.fits']
+run013d = ['obj_fit_tellu', 'TEST4/20180527', '2279683o_pp_e2dsff_AB.fits']
+run013e = ['obj_fit_tellu', 'TEST4/20180527', '2279684o_pp_e2dsff_AB.fits']
 
 # Run make obj template on Gl699
-run014 = ['obj_mk_obj_template', 'TEST4/20180527', '2279694o_pp_e2dsff_AB.fits']
+run014 = ['obj_mk_obj_template', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
