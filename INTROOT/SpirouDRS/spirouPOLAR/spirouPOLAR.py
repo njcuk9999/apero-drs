@@ -859,6 +859,126 @@ def polarimetry_ratio_method(p, loc):
     return loc
 
 
+def polar_products_header(p, loc, polardict) :
+    """
+        Function to construct header keywords to be saved in the polar products
+        
+        :param p: parameter dictionary, ParamDict containing constants
+        
+        :param loc: parameter dictionary, ParamDict containing data
+        
+        :param polardict: dictionary, ParamDict containing information on the
+        input data
+
+        :return hdict, loc: ParamDict, ParamDict: the header parameter
+        dictionary and the updated loc parameter dictionary
+        
+    """
+    
+    # add keys from original header of base file
+    hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
+    # add version number
+    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    # add stokes parameter keyword to header
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
+    # add number of exposures parameter keyword to header
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
+    # add the polarimetry method parameter keyword to header
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
+    
+    mjd_first, mjd_last = 0.0, 0.0
+    meanbjd, tot_exptime = 0.0, 0.0
+    bjd_first, bjd_last, exptime_last = 0.0, 0.0, 0.0
+    berv_first, berv_last = 0.0, 0.0
+    bervmaxs = []
+    
+    # loop over files in polar sequence to add keywords to header of products
+    for filename in polardict.keys():
+        # get this entry
+        entry = polardict[filename]
+        # get expnum, fiber, and header
+        expnum, fiber, hdr = entry['exposure'], entry['fiber'], entry['hdr']
+        # Add only times from fiber A
+        if fiber == 'A':
+            # calcualte total exposure time
+            tot_exptime += hdr['EXPTIME']
+            # get values for BJDCEN calculation
+            if expnum == 1:
+                mjd_first = hdr['MJDATE']
+                bjd_first = hdr['BJD']
+                berv_first = hdr['BERV']
+            elif expnum == loc['NEXPOSURES']:
+                mjd_last = hdr['MJDATE']
+                bjd_last = hdr['BJD']
+                berv_last = hdr['BERV']
+                exptime_last = hdr['EXPTIME']
+            meanbjd += hdr['BJD']
+            # add exposure file name
+            fileexp = p['kw_POL_FILENAM{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, fileexp, value=hdr['FILENAME'])
+            # add EXPTIME for each exposure
+            exptimeexp = p['kw_POL_EXPTIME{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, exptimeexp, value=hdr['EXPTIME'])
+            # add MJDATE for each exposure
+            mjdexp = p['kw_POL_MJDATE{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, mjdexp, value=hdr['MJDATE'])
+            # add MJDEND for each exposure
+            mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, mjdendexp, value=hdr['MJDEND'])
+            # add BJD for each exposure
+            bjdexp = p['kw_POL_BJD{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, bjdexp, value=hdr['BJD'])
+            # add BERV for each exposure
+            bervexp = p['kw_POL_BERV{0}'.format(expnum)]
+            hdict = spirouImage.AddKey(hdict, bervexp, value=hdr['BERV'])
+            # append BERVMAX value of each exposure
+            bervmaxs.append(hdr['BERVMAX'])
+
+    # add total exposure time parameter keyword to header
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
+    # update existing EXPTIME keyword
+    hdict = spirouImage.AddKey(hdict, p['kw_EXPTIME'], value=tot_exptime)
+
+    # add elapsed time parameter keyword to header
+    elapsed_time = (bjd_last - bjd_first) * 86400. + exptime_last
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_ELAPTIME'], value=elapsed_time)
+
+    # calculate MJD at center of polarimetric sequence
+    mjdcen = mjd_first + (mjd_last - mjd_first + exptime_last/86400.)/2.0
+    # add central MJD
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_MJDCEN'], value=mjdcen)
+    # update existing MJD keyword
+    hdict = spirouImage.AddKey(hdict, p['kw_ACQTIME_KEY_JUL'], value=mjdcen)
+
+    # calculate BJD at center of polarimetric sequence
+    bjdcen = bjd_first + (bjd_last - bjd_first + exptime_last/86400.)/2.0
+    # add central BJD
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_BJDCEN'], value=bjdcen)
+    # update existing BJD keyword
+    hdict = spirouImage.AddKey(hdict, p['kw_BJD'], value=bjdcen)
+
+    # calculate BERV at center by linear interpolation
+    berv_slope = (berv_last - berv_first) / (bjd_last - bjd_first)
+    berv_intercept = berv_first - berv_slope * bjd_first
+    loc['BERVCEN'] = berv_intercept + berv_slope * bjdcen
+    
+    # add central BERV
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_BERVCEN'], value=loc['BERVCEN'])
+    # update existing BERV keyword
+    hdict = spirouImage.AddKey(hdict, p['kw_BERV'], value=loc['BERVCEN'])
+    
+    # calculate maximum bervmax
+    bervmax = np.max(bervmaxs)
+    # update existing BERVMAX keyword
+    hdict = spirouImage.AddKey(hdict, p['kw_BERV_MAX'], value=bervmax)
+
+    # add mean BJD
+    meanbjd = meanbjd / loc['NEXPOSURES']
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_MEANBJD'], value=meanbjd)
+
+    return hdict, loc
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

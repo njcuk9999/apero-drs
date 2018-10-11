@@ -1057,26 +1057,29 @@ ic_polar_cont_overlap = 0
 #  Define the telluric mask for calculation of continnum          - [pol_spirou]
 ic_polar_cont_tellmask = [[930, 967], [1109, 1167], [1326, 1491], [1782, 1979], [1997, 2027], [2047, 2076]]
 
+# Remove continuum polarization (True = 1, False = 0)
+ic_polar_remove_continuum = 1
+
 #  Perform LSD analysis (True = 1, False = 0)                     - [pol_spirou]
 ic_polar_lsd_analysis = 1
 
 #  Define initial velocity (km/s) for output LSD profile          - [pol_spirou]
-ic_polar_lsd_v0 = -200.
+ic_polar_lsd_v0 = -150.
 
 #  Define final velocity (km/s) for output LSD profile            - [pol_spirou]
-ic_polar_lsd_vf = 200.
+ic_polar_lsd_vf = 150.
 
 #  Define number of points for output LSD profile                 - [pol_spirou]
 ic_polar_lsd_np = 201
 
-#  Define number of points for output LSD profile                 - [pol_spirou]
-ic_polar_lsd_ccflines = 'marcs_t3000g50_all'
+#  Define files with spectral lines for LSD analysis              - [pol_spirou]
+ic_polar_lsd_ccflines = ['marcs_t2500g50_all','marcs_t3000g50_all','marcs_t3500g50_all']
 
 #  Define mask for selecting lines to be used in the LSD analysis - [pol_spirou]
 ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.], [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
 
-#  Define number of points for output LSD profile                 - [pol_spirou]
-ic_polar_lsd_min_linedepth = 0.1
+#  Define minimum line depth to be used in the LSD analyis        - [pol_spirou]
+ic_polar_lsd_min_linedepth = 0.175
 
 # Normalize Stokes I spectrum before LSD analysis (True = 1, False = 0)
 ic_polar_lsd_normalize = 1

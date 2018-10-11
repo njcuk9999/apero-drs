@@ -4996,3 +4996,40 @@
 	- spirouConfig.py - move get_user_config to spirouConfigFile.py - (needed to fix not obtaining constants from user config file) (rev.ab88a21a)
 	- spirouLog.py - add a possibility to debug in ipython (rev.449fa77a)
 	- spirouFITS.py - fix error - now if image is not defined tries to get dimensions from header before giving error - Issue #483 (rev.82fecda8)
+
+
+
+================================================================================
+* Tue Sep 11 2018 Eder <edermartioli@gmail.com> - 0.3.033
+* Thu Oct 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.033
+
+================================================================================
+	- Added BJD# and MEANBJD to header of polar products (rev.29a19764)
+	- Minor changes (rev.630d0c27)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.b83c7206)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.c04144f9)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.c94b6171)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.947ed27a)
+	- Updated keyworks BERV, BJD, and MJD of polar products by central values calculated in the module. Also updated keyword EXPTIME by the sum of all EXPTIME values from individual exposures (rev.09beee21)
+	- Updated keyworks BERV, BJD, and MJD of polar products by central values calculated in the module. Also updated keyword EXPTIME by the sum of all EXPTIME values from individual exposures (rev.a7543efc)
+	- Tuned parameters to improve LSD analaysis and added new statistical quantities calculated from LSD analysis (rev.587fc630)
+	- Changed parameters for LSD analysis (rev.15791803)
+	- Implemented selection of CCFFILE in LSD analysis matching closest temperature to source observed (rev.b59d10d7)
+	- spirouLSD.py - add a few outstanding TODO comments and fix error print (filename may not be defined) (rev.d257822c)
+	- spirouPOLAR.__init__.py - chagen polarHeader --> PolarHeader (for convention) (rev.4efa4d03)
+	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)
+	- spirouLog.py - add a possibility to debug in ipython (rev.449fa77a)
+	- Minor changes (rev.630d0c27)
+
+================================================================================
+* Thu Oct 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.034
+
+================================================================================
+	- unit_test.py - make sure all plots are closed. (rev.e928eed7)
+	- spirouEXTOR.__init__.py - add alias for compare_extraction_modes (CompareExtMethod) - Issue #481 (rev.b0516e44)
+	- spirouEXTOR.py - add compare_extraction_mode function to test difference between flat and e2ds extraction modes (#481) (rev.06440731)
+	- cal_FF_RAW_spirou.py - save extraction method to header (like cal_extract) (rev.cacf1925)
+	- cal_extract_RAW_spirou.py - get flat header, compare flat extraction to extraction type  (Issue #481) (rev.beeed62d)
+	- spirouFITS.py - return header for flat file so we can get extraction type for the flat (Issue #481) (rev.1b8a26e6)
+	- unit_tests - do not currently test cal_WAVE_E2DS_EA_spirou.py - comment out (rev.67f480c4)
+	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)

@@ -89,13 +89,15 @@ def load_lsd_spectral_lines(p, loc):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
             LOG_OPT: string, option for logging
-            IC_POLAR_LSD_CCFLINES: string, file containing spectral lines data
+            IC_POLAR_LSD_CCFLINES: list of strings, list of files containing
+                                   spectral lines data
             IC_POLAR_LSD_WLRANGES: array of float pairs for wavelength ranges
             IC_POLAR_LSD_MIN_LINEDEPTH: float, line depth threshold
     :param loc: parameter dictionary, ParamDict to store data
         
     :return loc: parameter dictionaries,
         The updated parameter dictionary adds/updates the following:
+        loc['SELECTED_FILE_CCFLINES']: string, selected filename with CCF lines
         loc['LSD_LINES_WLC']: numpy array (1D), central wavelengths
         loc['LSD_LINES_ZNUMBER']: numpy array (1D), atomic number (Z)
         loc['LSD_LINES_DEPTH']: numpy array (1D), line depths
@@ -110,10 +112,26 @@ def load_lsd_spectral_lines(p, loc):
     relfolder = spirouConfig.Constants.LSD_MASK_DIR()
     # get absolute folder path from package and relfolder
     absfolder = spirouConfig.GetAbsFolderPath(package, relfolder)
-    # strip filename
-    filename = p['IC_POLAR_LSD_CCFLINES']
+
+    # get object temperature from header
+    obj_temperature = loc['HDR']['OBJTEMP']
+    wmsg = 'Temperature of the object observed: {0} K'
+    WLOG('info', p['LOG_OPT'], wmsg.format(obj_temperature))
+    
+    # find out which CCFLINE file is most appropriate for source
+    temp_diff_min, loc['SELECTED_FILE_CCFLINES'] = 1.e10, 'marcs_t3000g50_all'
+    for i in range(len(p['IC_POLAR_LSD_CCFLINES'])) :
+        filename = p['IC_POLAR_LSD_CCFLINES'][i]
+        suffix = filename.split('marcs_t')[1]
+        temp_in_file = float(suffix[0:suffix.find('g50_all')])
+        temp_diff = np.abs(obj_temperature - temp_in_file)
+        if temp_diff < temp_diff_min :
+            temp_diff_min = temp_diff
+            # get filename corresponding to the closest temperature to object
+            loc['SELECTED_FILE_CCFLINES'] = filename
+
     # get absolute path and filename
-    abspath = os.path.join(absfolder, filename)
+    abspath = os.path.join(absfolder, loc['SELECTED_FILE_CCFLINES'])
     # if path exists use it
     if os.path.exists(abspath):
         wmsg = 'Line mask used for LSD computation: {0}'
@@ -127,7 +145,8 @@ def load_lsd_spectral_lines(p, loc):
     else:
         emsg1 = 'LSD Line mask file: "{0}" not found, unable to proceed'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
+        eargs = [loc['SELECTED_FILE_CCFLINES']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
         wlcf, znf, depthf, landef = None, None, None, None
 
     # initialize data vectors
@@ -246,7 +265,7 @@ def prepare_polarimetry_data(p, loc):
     """
 
     func_name = __NAME__ + '.prepare_polarimetry_data()'
-
+    
     # get the shape of pol
     ydim, xdim = loc['POL'].shape
     # get wavelength ranges to be considered in each spectral order
@@ -254,6 +273,7 @@ def prepare_polarimetry_data(p, loc):
     # initialize output data vectors
     loc['LSD_WAVE'], loc['LSD_STOKESI'], loc['LSD_STOKESIERR'] = [], [], []
     loc['LSD_POL'], loc['LSD_POLERR'], loc['LSD_NULL'] = [], [], []
+    
     # loop over each order
     for order_num in range(ydim):
         # mask NaN values
@@ -280,7 +300,8 @@ def prepare_polarimetry_data(p, loc):
 
             if p['IC_POLAR_LSD_NORMALIZE']:
                 # measure continuum
-                kwargs = dict(binsize=50, overlap=25, window=2,
+                # TODO: Should be in constant file
+                kwargs = dict(binsize=30, overlap=15, window=2,
                               mode='median', use_linear_fit=True)
                 continuum, xbin, ybin = spirouCore.Continuum(wl, flux, **kwargs)
                 # normalize flux
@@ -303,6 +324,11 @@ def prepare_polarimetry_data(p, loc):
     loc['LSD_POLERR'] = loc['LSD_POLERR'][indices]
     loc['LSD_NULL'] = loc['LSD_NULL'][indices]
 
+    # apply barycentric RV correction to the wavelength vector
+    # TODO: Should be realivistic correction?
+    RVcorr = 1.0 + loc['BERVCEN'] / (constants.c / 1000.)
+    loc['LSD_WAVE'] =  loc['LSD_WAVE'] * RVcorr
+    
     # initialize temporary data vectors
     wl, flux, fluxerr, pol, polerr, null = [], [], [], [], [], []
     # loop over spectral ranges to select only spectral regions of interest
@@ -387,7 +413,7 @@ def lsd_analysis(p, loc):
                                                loc['LSD_STOKESI'],
                                                loc['LSD_STOKESIERR'],
                                                loc['LSD_VELOCITIES'], M,
-                                               normalize=True)
+                                               normalize=False)
 
     # fit gaussian to the measured flux LSD profile
     loc['LSD_STOKESI_MODEL'], loc['LSD_FIT_RV'], loc[
@@ -405,6 +431,17 @@ def lsd_analysis(p, loc):
                                             loc['LSD_POLERR'],
                                             loc['LSD_VELOCITIES'], Mp)
 
+    # calculate statistical quantities
+    loc['LSD_POL_MEAN'] = np.mean(loc['LSD_POL'])
+    loc['LSD_POL_STDDEV'] = np.std(loc['LSD_POL'])
+    loc['LSD_POL_MEDIAN'] = np.median(loc['LSD_POL'])
+    loc['LSD_POL_MEDABSDEV'] = np.median(np.abs(loc['LSD_POL'] -
+                                                loc['LSD_POL_MEDIAN']))
+    loc['LSD_STOKESVQU_MEAN'] = np.mean(loc['LSD_STOKESVQU'])
+    loc['LSD_STOKESVQU_STDDEV'] = np.std(loc['LSD_STOKESVQU'])
+    loc['LSD_NULL_MEAN'] = np.mean(loc['LSD_NULL'])
+    loc['LSD_NULL_STDDEV'] = np.std(loc['LSD_NULL'])
+    
     return loc
 
 
@@ -533,12 +570,12 @@ def fit_gaussian_to_lsd_profile(vels, Z):
         :param vels: numpy array (1D), input velocity data
         :param Z: numpy array (1D), input LSD profile data
         
-        :return Zgauss, outRV, outresolution:
-            Zgauss:     numpy array (1D), gaussian fit to LSD profile (same size
-                        as input vels and Z
-            RV:         float, velocity of minimum obtained from gaussian fit
-            resolution: float, spectral resolution obtained from sigma of 
-                        gaussian fit
+        :return Zgauss, RV, resolvingPower:
+            Zgauss: numpy array (1D), gaussian fit to LSD profile (same size
+                    as input vels and Z)
+            RV: float, velocity of minimum obtained from gaussian fit
+            resolvingPower: float, spectral resolving power calculated from 
+                            sigma of gaussian fit
         """
 
     # set speed of light in km/s
@@ -554,8 +591,8 @@ def fit_gaussian_to_lsd_profile(vels, Z):
     Zinv = 1.0 - Z
 
     # fit gaussian profile
-    popt, pcov = curve_fit(gauss_function, vels, Zinv,
-                           p0=[amplitude, rvel, sig])
+    guess = [amplitude, rvel, sig]
+    popt, pcov = curve_fit(gauss_function, vels, Zinv, p0=guess)
 
     # initialize output profile vector
     Zgauss = np.zeros_like(vels)
@@ -586,6 +623,7 @@ def get_order_ranges():
         
     :return orders: array of float pairs for wavelength ranges
     """
+    # TODO: Should be moved to file in .../INTROOT/SpirouDRS/data/
     orders = [[963.6, 986.0], [972.0, 998.4], [986.3, 1011], [1000.1, 1020],
               [1015, 1035], [1027.2, 1050], [1042, 1065], [1055, 1078],
               [1070, 1096],
@@ -641,7 +679,7 @@ def output_lsd_image(p, loc, hdict):
     # add input parameters for LSD analysis
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MASK'],
-                               value=p['IC_POLAR_LSD_CCFLINES'])
+                               value= loc['SELECTED_FILE_CCFLINES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_V0'],
                                value=p['IC_POLAR_LSD_V0'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_VF'],
@@ -654,6 +692,24 @@ def output_lsd_image(p, loc, hdict):
                                value=loc['LSD_FIT_RV'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_FIT_RESOL'],
                                value=loc['LSD_FIT_RESOL'])
+
+    # add statistical quantities from LSD analysis
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEANPOL'],
+                               value=loc['LSD_POL_MEAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STDDEVPOL'],
+                               value=loc['LSD_POL_STDDEV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEDIANPOL'],
+                               value=loc['LSD_POL_MEDIAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEDABSDEVPOL'],
+                               value=loc['LSD_POL_MEDABSDEV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STOKESVQU_MEAN'],
+                               value=loc['LSD_STOKESVQU_MEAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STOKESVQU_STDDEV'],
+                               value=loc['LSD_STOKESVQU_STDDEV'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_MEAN'],
+                               value=loc['LSD_NULL_MEAN'])
+    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_STDDEV'],
+                               value=loc['LSD_NULL_STDDEV'])
 
     # add information about the meaning of data columns
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL1'],
