@@ -242,10 +242,26 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ----------------------------------------------------------------------
         # Read Flat file
         # ----------------------------------------------------------------------
-        p, loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+        fout = spirouImage.ReadFlatFile(p, hdr, return_header=True)
+        p, loc['FLAT'], flathdr = fout
         loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
         # get all values in flat that are zero to 1
         loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
+
+        # get flat extraction mode
+        if p['KW_E2DS_EXTM'][0] in flathdr:
+            flat_ext_mode = flathdr[p['KW_E2DS_EXTM'][0]]
+        else:
+            flat_ext_mode = None
+
+        # ------------------------------------------------------------------
+        # Check extraction method is same as flat extraction method
+        # ------------------------------------------------------------------
+        # get extraction method and function
+        extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
+        # compare flat extraction mode to extraction mode
+        spirouEXTOR.CompareExtMethod(p, flat_ext_mode, extmethod,
+                                     'FLAT', 'EXTRACTION')
 
         # ------------------------------------------------------------------
         # Read Blaze file
@@ -398,8 +414,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Store extraction in file(s)
         # ------------------------------------------------------------------
         raw_ext_file = os.path.basename(p['FITSFILENAME'])
-        # get extraction method and function
-        extmethod, extfunc = spirouEXTOR.GetExtMethod(p, p['IC_EXTRACT_TYPE'])
         # construct filename
         e2dsfits, tag1 = spirouConfig.Constants.EXTRACT_E2DS_FILE(p)
         e2dsfitsname = os.path.split(e2dsfits)[-1]

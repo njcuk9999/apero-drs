@@ -470,8 +470,12 @@ def get_extraction_method(p, mode):
     elif mode == '3d':
         return 'TILTWEIGHT', 'extract_tilt_weight2cosm'
 
+    # -------------------------------------------------------------------------
+    # shape extraction (i.e. straightened)
+    # -------------------------------------------------------------------------
     elif mode == '4a':
         return 'SHAPEWEIGHT', 'extract_shape_weight'
+
 
     elif mode == '4b':
         return 'SHAPEWEIGHT', 'extract_shape_weight_cosm'
@@ -483,6 +487,34 @@ def get_extraction_method(p, mode):
         emsg1 = 'Extraction methods "modes" not up-to-date.'
         emsg2 = '   function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
+
+def compare_extraction_modes(p, mode1, mode2, name1=None, name2=None):
+
+    # if either mode is None do not run this
+    if (mode1 is None) or (mode2 is None):
+        return 1
+
+    # deal with names being empty
+    if name1 is None:
+        name1 = '1'
+    if name2 is None:
+        name2 = '2'
+    # clean up modes
+    mode1 = mode1.upper().strip()
+    mode2 = mode2.upper().strip()
+
+    # cause exception is mode 1 and mode 2 are not the same
+    wargs = [name1, mode1, name2, mode2]
+    if mode1 != mode2:
+        wmsg = ('Incompatible extraction modes for {0} (mode={1}) and {2} '
+                '(mode={3})')
+        WLOG('error', p['LOG_OPT'], wmsg.format(*wargs))
+        return 0
+    else:
+        wmsg = ('Extraction modes compatible for {0} (mode={1}) and {2} '
+                '(mode={3})')
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
 
 # =============================================================================

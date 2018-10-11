@@ -20,7 +20,7 @@ run007b = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279330c_pp.fits']
 
 # Run Wave solution analysis
 run008 = ['cal_HC_E2DS_EA_spirou', 'TEST3/20180526', '2279330c_pp_e2ds_AB.fits']
-run009 = ['cal_WAVE_E2DS_EA_spirou', 'TEST3/20180526', '2279327a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
+# run009 = ['cal_WAVE_E2DS_EA_spirou', 'TEST3/20180526', '2279327a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
 
 # Extract the tellurics
 run010a = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279383o_pp.fits']

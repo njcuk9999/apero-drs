@@ -28,6 +28,8 @@ __all__ = ['DeBananafication', 'Extraction', 'ExtractABOrderOffset',
 # =============================================================================
 # Function aliases
 # =============================================================================
+CompareExtMethod = spirouEXTOR.compare_extraction_modes
+
 DeBananafication = spirouEXTOR.debananafication
 
 Extraction = spirouEXTOR.extraction_wrapper
