@@ -14,7 +14,10 @@ run012c = ['obj_mk_tellu', 'TEST4/20180527', '2279542o_pp_e2dsff_AB.fits']
 run012d = ['obj_mk_tellu', 'TEST4/20180527', '2279535o_pp_e2dsff_AB.fits']
 run012e = ['obj_mk_tellu', 'TEST4/20180527', '2279536o_pp_e2dsff_AB.fits']
 
-# Run Fit telluric recipes (on telluric stars --> Should be science target!)
+# Run Fit telluric recipes on Gl699
 run013a = ['obj_fit_tellu', 'TEST4/20180527', '2279694o_pp_e2dsff_AB.fits']
 run013b = ['obj_fit_tellu', 'TEST4/20180527', '2279695o_pp_e2dsff_AB.fits']
 run013c = ['obj_fit_tellu', 'TEST4/20180527', '2279696o_pp_e2dsff_AB.fits']
+
+# Run make obj template on Gl699
+run014 = ['obj_mk_obj_template', 'TEST4/20180527', '2279694o_pp_e2dsff_AB.fits']
