@@ -119,9 +119,15 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # get wave image
-    _, loc['WAVE'] = spirouImage.GetWaveSolution(p, hdr=hdr,
-                                                 return_wavemap=True)
+    wout = spirouImage.GetWaveSolution(p, hdr=hdr, fiber=wave_fiber,
+                                       return_wavemap=True)
+    _, loc['WAVE'] = wout
     loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.GetWaveSolution')
 
     # ----------------------------------------------------------------------

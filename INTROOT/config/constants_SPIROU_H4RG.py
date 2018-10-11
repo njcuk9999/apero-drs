@@ -79,6 +79,10 @@ ic_ccdy_high = 3350  # 3450
 #       (earlier in list takes priority)
 fiber_types = ['AB', 'A', 'B', 'C']
 
+#    Define whether to use SKYDARK for dark corrections                  - [all]
+use_skydark_correction = False
+
+
 # -----------------------------------------------------------------------------
 #   fiber variables
 # -----------------------------------------------------------------------------
@@ -434,9 +438,9 @@ ic_extnbsig = 1  # 2.5
 #
 #                 4b - shape map + weight extraction (cosmic correction)
 #                          (function = spirouEXTOR.extract_shape_weight_cosm)
-ic_extract_type = '3d'  # '3d'
+ic_extract_type = '4b'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
-ic_ff_extract_type = '3c'
+ic_ff_extract_type = '4a'
 
 #   Set the number of pixels to set as                   - [cal_extract, cal_FF]
 #       the border (needed to allow for tilt to not go off edge of image)
@@ -542,7 +546,7 @@ drift_peak_fpbox_size = 3
 
 # define drift peak types, the keys should be KW_EXT_TYPE header keys
 #
-drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp'}
+drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp', 'DARK_FP': 'fp'}
 
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
 #        to be recognised as a valid peak (before fitting a gaussian)
@@ -555,7 +559,7 @@ drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 #       files are allowed for each input type
 #        dictionary must have keys equal to the keys in
 #        drift_peak_allowed_types
-drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
+drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP', 'DARK_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
 
 #    Define fibers which these can be used on
 drift_peak_output_except = {'OBJ_FP': 'C', 'OBJ_HCONE': 'C', 'OBJ_HCTWO': 'C'}
@@ -882,7 +886,7 @@ pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
 
 # force reading the wave solution from calibDB
-calib_db_force_wavesol = True
+calib_db_force_wavesol = False
 
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
@@ -924,6 +928,11 @@ HC_TFIT_CUT_THRES = 1.0
 HC_TFIT_MIN_NUM_LINES = 10
 # Minimum total number of lines required                              - [cal_HC]
 HC_TFIT_MIN_TOT_LINES = 200
+
+# Define the distance in m/s away from the center of dv hist          - [cal_HC]
+#      points outside will be rejected [m/s]
+HC_TFIT_DVCUT_ORDER = 2000
+HC_TFIT_DVCUT_ALL = 5000
 
 # this sets the order of the polynomial used to ensure continuity     - [cal_HC]
 #     in the  xpix vs wave solutions by setting the first term = 12,

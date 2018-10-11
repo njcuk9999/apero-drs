@@ -589,129 +589,20 @@ def read_config_file(config_file=None):
     # deal with relative paths
     for key in list(params.keys()):
         if type(params[key]) == str:
-            params[key] = check_for_rel_paths(params[key])
+            params[key] = spirouConfigFile.check_for_rel_paths(params[key])
 
     # Get user config parameters (if set and found)
     # only if USER_CONFIG in params (i.e. this is a primary config file)
     if 'USER_CONFIG' in params:
-        params, warn_messages = get_user_config(params)
+        gkwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
+                       configfile=CONFIG_FILE)
+        gout = spirouConfigFile.get_user_config(params, **gkwargs)
+        params, warn_messages = gout
     else:
         warn_messages = []
 
     # return dictionary
     return params, warn_messages
-
-
-def get_user_config(p):
-    """
-    Deal with the user defining a config file.
-
-    User config file overwrites default file and can be defined in two places:
-
-    - DRS_UCONFIG in the default (primary) config.py file
-    - DRS_UCONFIG in the environmental variables
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-
-    :return p: parameter dictionary, ParamDict containing constants
-        Updated with all keys from user config file (if set and found)
-    :return warn_msgs: list, a list of warning messages to pipe to the logger
-    """
-    func_name = __NAME__ + '.get_user_config()'
-    # set configfolder, defined location and warning messages
-    configfolder = None
-    defined_in = None
-    warn_msgs = []
-
-    if not p['USER_CONFIG']:
-        return p, warn_msgs
-
-    # set default config file (re-retrieve from package name etc)
-    ckwargs = dict(package=PACKAGE, configfolder=CONFIGFOLDER,
-                   configfile=CONFIG_FILE, config_file=None,
-                   return_filename=True)
-    d_config_file = spirouConfigFile.read_config_file(**ckwargs)
-
-    # get DRS_CONFIG from environmental variables
-    if 'DRS_UCONFIG' in os.environ:
-        # set path
-        rawpath = os.environ['DRS_UCONFIG']
-        # check for relative paths in config folder
-        rawpath = check_for_rel_paths(rawpath)
-        # check that path exists
-        if os.path.exists(rawpath):
-            configfolder = str(rawpath)
-            defined_in = 'environmental variables'
-            p['DRS_UCONFIG'] = str(rawpath)
-            p.set_source('DRS_UCONFIG', 'ENVIRONMENTAL VARIABLES')
-            # reset warn messages (not needed)
-        # deal with DRS_UCONFIG being set but not being found
-        else:
-            warn_msgs.append('Directory DRS_UCONFIG={0} does not '
-                             'exist'.format(rawpath))
-            warn_msgs.append('    but USER_CONFIG=1 and the user config '
-                             'folder is set')
-            warn_msgs.append('    in {0}'.format('the ENVIRONMENTAL VARIABLES'))
-            warn_msgs.append('    User config file will not be used.')
-    # get DRS_UCONFIG from default config file
-    if 'DRS_UCONFIG' in p:
-        # set path
-        rawpath = str(p['DRS_UCONFIG'])
-        # check for relative paths in config folder
-        rawpath = check_for_rel_paths(rawpath)
-        # check that path exists
-        if os.path.exists(rawpath):
-            configfolder = str(rawpath)
-            defined_in = d_config_file
-            p['DRS_UCONFIG'] = str(rawpath)
-            p.set_source('DRS_UCONFIG', func_name)
-            warn_msgs = []
-        # deal with DRS_UCONFIG being set but not being found
-        else:
-            warn_msgs.append('Directory DRS_UCONFIG={0} does not '
-                             'exist'.format(rawpath))
-            warn_msgs.append('    but USER_CONFIG=1 and the user config '
-                             'folder is set')
-            warn_msgs.append('    in {0}'.format(d_config_file))
-            warn_msgs.append('    User config file will not be used.')
-            warn_msgs.append('    Using primary config.py only')
-
-    # if we don't have a user
-    if configfolder is None:
-        warn_msgs.append('USER_CONFIG=1 but no configuration directory set')
-        warn_msgs.append('    Please set in primary config file or as an '
-                         'environmental variable (DRS_UCONFIG)')
-        warn_msgs.append('    User config file will not be used.')
-        warn_msgs.append('    Using primary config.py only')
-        return p, warn_msgs
-
-    # construct new path
-    configfile = os.path.join(configfolder, CONFIG_FILE)
-    # check config file exists here
-    if os.path.exists(configfile):
-        # get the values in this config file
-        keys, values = spirouConfigFile.read_config_file(config_file=configfile)
-        # loop around keys and add them to dictionary
-        for key, value in zip(keys, values):
-            if key not in ['USER_CONFIG', 'DRS_UCONFIG']:
-                p[key] = value
-                p.set_source(key, configfile)
-    else:
-        warn_msgs.append('User config file {0} does not '
-                         'exist'.format(configfile))
-        warn_msgs.append('    but USER_CONFIG=1 and the user config '
-                         'folder is set')
-        warn_msgs.append('    in {0}'.format(defined_in))
-        warn_msgs.append('    Either add user config file to {0}'
-                         ''.format(configfile))
-        warn_msgs.append('    Or remove DRS_UCONFIG from {0}'
-                         ''.format(defined_in))
-        warn_msgs.append('    User config file will not be used.')
-        warn_msgs.append('    Using primary config.py only')
-
-    # return parameters
-    return p, warn_msgs
 
 
 def load_config_from_file(p, key, required=False, logthis=False):
@@ -1117,26 +1008,7 @@ def check_set_default_val(p, key, dvalue, source=None):
     return p
 
 
-def check_for_rel_paths(path):
-    """
-    Checks for ~ and $HOME paths and
 
-    :param path: string, the path to check
-
-    :return: string, the path with the full path (using HOME environmental key)
-    """
-    # get home directory
-    home = os.environ.get('HOME')
-    if home is None:
-        return path
-    # check for ~ at start (i.e. home dir)
-    if path.startswith('~/'):
-        path = os.path.join(home, path[2:])
-    # check for $HOME at start
-    if path.startswith('$HOME/'):
-        path = os.path.join(home, path[6:])
-    # finally return path
-    return path
 
 # =============================================================================
 # End of code

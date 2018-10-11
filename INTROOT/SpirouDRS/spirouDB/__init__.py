@@ -60,6 +60,8 @@ GetDatabaseTellTemp = spirouTDB.get_database_tell_template
 
 GetDatabaseTellObj = spirouTDB.get_database_tell_obj
 
+GetDatabaseMasterWave = spirouTDB.get_database_master_wave
+
 PutTelluFile = spirouTDB.put_file
 
 UpdateDatabaseTellMol = spirouTDB.update_database_tell_mole

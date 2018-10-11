@@ -10,7 +10,8 @@ run001 = ['cal_DARK_spirou', 'TEST3/20180526', '2279303d_pp.fits']
 run002 = ['cal_BADPIX_spirou', 'TEST3/20180526', '2279321f_pp.fits', '2279303d_pp.fits']
 run003a = ['cal_loc_RAW_spirou', 'TEST3/20180526', '2279312f_pp.fits']
 run003b = ['cal_loc_RAW_spirou', 'TEST3/20180526', '2279307f_pp.fits']
-run005 = ['cal_SLIT_spirou', 'TEST3/20180526', '2279327a_pp.fits']
+run005a = ['cal_SLIT_spirou', 'TEST3/20180526', '2279327a_pp.fits']
+run005b = ['cal_SHAPE_spirou', 'TEST3/20180526', '2279327a_pp.fits']
 run006 = ['cal_FF_RAW_spirou', 'TEST3/20180526', '2279321f_pp.fits']
 
 # Extract the HC's/FP's
@@ -18,8 +19,8 @@ run007a = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279327a_pp.fits']
 run007b = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279330c_pp.fits']
 
 # Run Wave solution analysis
-run008 = ['cal_HC_E2DS_spirou', 'TEST3/20180526', '2279330c_pp_e2ds_AB.fits']
-run009 = ['cal_WAVE_E2DS_spirou', 'TEST3/20180526', '2279327a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
+run008 = ['cal_HC_E2DS_EA_spirou', 'TEST3/20180526', '2279330c_pp_e2ds_AB.fits']
+run009 = ['cal_WAVE_E2DS_EA_spirou', 'TEST3/20180526', '2279327a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
 
 # Extract the tellurics
 run010a = ['cal_extract_RAW_spirou', 'TEST3/20180526', '2279383o_pp.fits']

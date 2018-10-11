@@ -1,78 +1,56 @@
-Update Note Summary - Version 0.3.027 (Since 0.3.017)
+Update Note Summary - Version 0.3.032 (Since 0.3.027)
+
+
 
 Not done/not finished/to do:
 
-- cal_WAVE_E2DS/cal_HC_E2DS versions merging [Melissa]
-- cal_WAVE_E2DS_EA does not work with new extract (4b) Why?
-- integrate telluric use of different wave solutions [Neil + Etienne]
+- cal_WAVE_E2DS_spirou [Melissa] - DO NOT USE YET
 - drift code compatibility [Francois]
 - add the drift to cal_CCF [Francois]
+- obj_mk_obj_template needs testing [Etienne & Neil]
+- not merged Eders changes to pol_spirou [Neil]
+- not put a constraint on FF that must match extraction type [Neil]
+
+
 
 Done:
 
-- Integrated Etiennes "shape finding" algorithm
-    - adds new recipe "cal_SHAPE_spirou.py" - needed to run extraction
-    - cal_SHAPE_spirou.py works like cal_SLIT_spirou.py but produces a 2D
-      "shape" (dx offset) file
-    - cal_extract_RAW_spirou updated to support extraction modes "4a" and "4b"
-      which are equivalent to extraction modes "3c" and "3d" but with the tilt
-      replaced by the dxshift (actually image is straighted before-hand in the
-      case of "4a" and "4b" then extraction is 1 pixel wide in x and folded
-      along the y direction for A/B/C
-    - NOTE: Must set "ic_extract_type = 4b" (or 4a) to work with extraction!!!
-    - added "un-sum" extraction output (E2DSLL) to see what the extraction
-      is doing
+- added ability to use tellurics from multiple wavelength solutions in:
+    - obj_mk_tellu.py
+    - obj_fit_tellu.py
+    - obj_mk_obj_template.py
 
-- cal_HC_E2DS_EA_spirou: resolution & line profiles saved as outputs
+- updated obj_mk_obj_template.py (was out of date for the DRS + untests + bugs)
 
-- Fix issue #464: DRIFT codes input files now allowed:
-    - Fiber AB/A/B: FP_FP
-    - Fiber AB/A/B: HCONE_HCONE
-    - Fiber AB/A/B: HCTWO_HCTWO
-    - Fiber C: FP_FP and OBJ_FP
-    - Fiber C: HCONE_HCONE and OBJ_HCONE
-    - Fiber C: HCTWO_HCTWO and OBJ_HCTWO
+- made cal_HC_E2DS_EA_spirou.py more stable (added additional sigma clipping)
 
-- Fix issue #468: Wave solution functions merged
-    - now should ONLY use "GetWaveSolution" in recipes (though internal
-      functions exist to do the individual operations like get wave params
-      from header or generate wave map from wave params etc.
-    - Now prints where the wave solution was taken from FILE/HEADER/CALIBDB and
-      the associated filename
-    - Note that to force fiber type (when using calibDB) need to use
-      "fiber={FIBER}" otherwise fiber will be fiber = p['FIBER']
-      (i.e. WAVE_{fiber} is used in calib DB)
+- fixed bug in getting wave parameters from header
 
-- Fix issue #471: Filenames of all inputs added to headers of outputs
-  (and passed to future outputs) i.e. new header keys are:
-        - DARKFILE
-        - BADFILE1
-        - BADFILE2
-        - LOCOFILE
-        - TILTFILE
-        - SHAPFILE
-        - BLAZFILE
-        - FLATFILE
-        - EXTRFILE
-        - REFRFILE
-        - WAVEFILE
-        - INFILE
-        - HCFILE
-        - FPFILE
-    These can of course be changes as with other header keys in
-    spirouKeywords.py (located in directory .../INTROOT/SpirouDRS/spirouConfig/)
+- fixed major bug with extraction methods 4a and 4b
+    - methods 4a and 4b are now the default setting (change with
+      ic_extract_type and ic_ff_extract_type
 
-- Fixed issue #475: pre-procesing now always adds DPRTYPE even when file not
-  identified (as pp file is still made and can still be extracted)
+- moved cal_WAVE_E2DS_spirou and cal_HC_E2DS_spirou to misc folder
 
-- Constant added to force re-computation of line list
-  (for cal_WAVE_E2DS_EA_spirou)
+- force fiber A and fiber B to use wavelength solution from fiber AB
 
-- Re-adjusted unit tests + added new recipes
+- added a "un-summed" [E2DSLL] output from extraction to view how the image
+  looks after localisation + shape correction (before flattening/cosmic correction)
 
-- Improve plotting for cal_CCF plot (inputs added)
+- DARK_FP is now available for use on drift recipes
 
-- Plotting font/style added to allow changing plot font/style/theme for all
-  plots (allows presentation style plots to easily be produced)
+- OBJ_DARK (Sky) is now available for use on cal_DARK_spirou.py
+    - will add "SKYDARK" to calibDB
+    - change "use_skydark_correction = True" to use sky darks in calibDB if
+      available - note if set to True will ALWAYS use SKYDARK over DARK to use
+      DARK again must set "use_skydark_correction = False"
+
+- Fixed bug with cal_HC_E2DS_EA_spirou not saving parameters to header
+
+- Added feature for cal_HC_E2DS_EA_spirou to update input file header
+
+
+
+
 
 
