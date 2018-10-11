@@ -4933,3 +4933,52 @@
 	- recipe_control.txt - added and corrected dark_fp, dark_flat and obj_obj (rev.d2495ab1)
 	- output_keys.py - added output type extract_e2dsll_file (rev.36941c49)
 	- cal_extract_RAW_spirou.py - added "un-sum" extraction output (E2DSLL) to see what the extraction is doing (rev.34efe8bc)
+
+
+
+================================================================================
+* Tue Oct 09 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.030
+================================================================================
+
+	- spirouUnitRecipes.py - remove the moved HC/WAVE recipes from import (no longer in bin folder) (rev.09b55f4c)
+	- spirouTelluric - add function wave2wave to shift an image from one wavelength grid to another (Issue #478) (rev.fd27bb52)
+	- spirouFITS.py - allow wave solution to be obtained quietly (rev.03cb3e5a)
+	- spirouTDB - add get_database_master_wave to get the master wavelength grid from TelluDB (Issue #478) (rev.79bb509a)
+	- recipe_control.txt - Allow sky objects for cal_DARK_spirou (Issue #479) (rev.15b48645)
+	- master_tellu_SPIROU.py + file - modify master telluric database to have a MASTER_WAVE key - containing the master wavelength grid [unfinished] - Issue #478 (rev.f3b34703)
+	- wave2wave.py - backup of Etiennes function to shift images from one wavelength grid to another - Issue #478 (rev.cfbd0b62)
+	- HC/WAVE recipes - move all (older) recipes to misc folder - can still be used when in this directory - cannot currently be used with unit tests (rev.6f58ca4b)
+	- obj_mk_tellu.py - add code to shift transmission map [unfinished] - Issue #478 (rev.3079588a)
+	- obj_fit_tellu.py - add code to shift pca components and template components [unfinished] - Issue #478 (rev.10493a7c)
+	- cal_extract_RAW_spirou.py - fix bug with extraction method 4a and 4b - data2 shallow copied - shouldn't be! (Issue #477) (rev.07d50437)
+
+
+
+================================================================================
+* Wed Oct 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.031
+
+================================================================================
+	- Tellu_Test2.run - add additional test to test different wavelength solutions in telluric recipes (rev.dbd7cd87)
+	- spirouUnitTests/Runs - fix the units test with new recipes/names (rev.9c94c967)
+	- spirouUnitRecipes.py - fix for the change of name of obj_mk_tell_template --> obj_mk_obj_template (rev.57c17924)
+	- spirouWAVE.py - Etienne's fix for cal_HC stability in "fit_gaussian_triplets" (rev.6498dbd1)
+	- spirouFITS.py - add a quiet mode (to not duplicate log) and fix bug in getting wavemap from header (from wave params) (rev.db23f3c4)
+	- spirouConst.py - add filenames for obj_mk_obj_template (rev.38decfac)
+	- master_calibDB_SPIROU.txt - no longer need AB wave solutions and shape - only AB and C needed / shape generated online (rev.5d1186a0)
+	- output_keys.py - add obj_mk_obj_template filenames to output keys + recipe_control (rev.37d0a0d0)
+	- constnats_SPIROU_H4RG.py - turn off force calibDB for wave solution + add HC parameters (Etienne's fix) (rev.93ff0d0e)
+	- obj_mk_obj_template - renamed from obj_mk_tell_template.py + fixed for wavelength grid shift - Issue #478 (rev.09f3088a)
+	- obj_mk_tell_template.py - update with shifted wavelength grid - Issue #478 (rev.a254b44a)
+	- cal_HC_E2DS_EA_spirou.py - correct bug that wavelength solution parameters were not saved to header correctly (rev.a1971b91)
+	- recipe_control.txt - add DARK_FP to drift and driftpeak allowed inputs - Issue #475 (rev.3654147e)
+	- constants_SPIROU_H4RG.py - add dark_fp to the drift peak allowed constants (to all in use for drift/driftpeak) - Issue #475 (rev.069c6043)
+	- recipe_control.txt - add OBJ_DARK to allowed files used in cal_DARK_spirou.py (Issue #479) (rev.8e6e35e1)
+	- cal_DARK_spirou.py - all use of skydarks and push SKYDARK to calibDB if used (Issue #479) (rev.ee20f4ef)
+	- constants_SPIROU_H4RG.py - add key "use_skydark_correction" to allow SKYDARKs to be use (and take presence over DARK in calibDB) (rev.66ac412f)
+	- spirouTelluric.py - shift templates if they are not created at runtime from mastergrid to current wavelength grid - Issue #478 (rev.7c9d3b6e)
+	- spirouTelluric.py - fix bug with convolve_files (should not be re-copied into telluDB) (rev.6a0c2b8f)
+	- spirouImage.py - allow SKYDARK to be used (if present in calibDB) if USE_SKYDARK_CORRECTION = True - Issue #479 (rev.5159b7e9)
+	- obj_mk_tellu.py - fix headers in saved file (now wavelength is shifted) - Issue #478 (rev.73baeb8b)
+	- obj_fit_tellu.py - fix bug with shifting PCA components (Issue #478) (rev.f44df6a2)
+	- pol_spirou.py + all recipes use GetWaveSolution - force fiber A and B to use wave solution AB (Issue #480) (rev.2813e08f)
+	- all recipes using GetWaveSolution - force fiber A and B to use AB wave solution (rev.7c07ae63)

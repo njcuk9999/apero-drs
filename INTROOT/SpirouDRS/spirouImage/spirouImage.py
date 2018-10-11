@@ -1045,6 +1045,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     if nfiles is None:
         nfiles = p['NBFRAMES']
 
+    # -------------------------------------------------------------------------
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
@@ -1060,11 +1061,32 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
             WLOG('error', p['LOG_OPT'], [e.message, emsg])
             cdb, acqtime = None, None
 
+    # -------------------------------------------------------------------------
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
-        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using ' + darkfile)
-        darkimage, dhdr, nx, ny = spirouFITS.read_raw_data(darkfile)
+    else:
+        darkfile = None
+    # try to read 'SKYDARK' from cdb
+    if 'SKYDARK' in cdb:
+        skydarkfile = os.path.join(p['DRS_CALIB_DB'], cdb['SKYDARK'][1])
+    else:
+        skydarkfile = None
+
+    # -------------------------------------------------------------------------
+    # load the correct dark image
+    # -------------------------------------------------------------------------
+    # if we are allowed to use sky darks choose between them
+    if p['USE_SKYDARK_CORRECTION'] and skydarkfile is not None:
+        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(skydarkfile)
+        # Read dark file
+        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using SKY: ' + darkfile)
+        corrected_image = image - (darkimage * nfiles)
+    # else if we don't have a dark
+    elif darkfile is not None:
+        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(darkfile)
+        # Read dark file
+        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using DARK: ' + darkfile)
         corrected_image = image - (darkimage * nfiles)
     else:
         # get master config file name
@@ -1076,11 +1098,11 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         else:
             extstr = ''
         # log error
-        emsg1 = 'No valid DARK in calibDB {0} ' + extstr
+        emsg1 = 'No valid DARK/SKYDARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
-        dhdr, corrected_image, darkimage = None, None, None
-
+        darkimage, dhdr, corrected_image = None, None, None
+    # -------------------------------------------------------------------------
 
     # get the dark filename (from header)
     if p['KW_DARKFILE'][0] in dhdr:

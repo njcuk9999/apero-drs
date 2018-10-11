@@ -149,22 +149,22 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = spirouImage.ResizeImage(data0, **bkwargs)
+    data1 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
     wmsg = 'Image format changed to {1}x{0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*data2.shape))
+    WLOG('', p['LOG_OPT'], wmsg.format(*data1.shape))
 
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    p, data1 = spirouImage.CorrectForBadPix(p, data1, hdr)
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data2 == 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
+    n_bad_pix = np.sum(data1 == 0)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(data1.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
     WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
@@ -173,7 +173,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Get the miny, maxy and max_signal for the central column
     # ----------------------------------------------------------------------
     # get the central column
-    y = data2[p['IC_CENT_COL'], :]
+    y = data1[p['IC_CENT_COL'], :]
     # get the min max and max signal using box smoothed approach
     miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
@@ -187,12 +187,12 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # log that we are doing background measurement
         WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
         # get the bkgr measurement
-        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data2)
+        background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data1)
     else:
-        background = np.zeros_like(data2)
+        background = np.zeros_like(data1)
     # apply background correction to data (and set to zero where negative)
     # TODO: Etienne --> Francois - Cannot set negative flux to zero!
-    data2 = np.where(data2 > 0, data2 - background, 0)
+    data1 = np.where(data1 > 0, data1 - background, 0)
 
     # ----------------------------------------------------------------------
     # Read tilt slit angle
@@ -223,10 +223,16 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         # set source of wave file
         wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+        # Force A and B to AB solution
+        if fiber in ['A', 'B']:
+            wave_fiber = 'AB'
+        else:
+            wave_fiber = fiber
+
         # get wave image
         wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                            return_filename=True,
-                                           return_header=True)
+                                           return_header=True, fiber=wave_fiber)
         loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'], loc['WAVEHDR'] = wout
         loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS', 'WAVEHDR'], wsource)
 
@@ -269,9 +275,11 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # get the shape map
             p, shapemap = spirouImage.ReadShapeMap(p, hdr)
             # debananafy data and order profile
-            data2 = spirouEXTOR.DeBananafication(data2, shapemap)
+            data2 = spirouEXTOR.DeBananafication(np.array(data1), shapemap)
             order_profile = spirouEXTOR.DeBananafication(order_profile,
                                                          shapemap)
+        else:
+            data2 = np.array(data1)
 
         # ------------------------------------------------------------------
         # Average AB into one fiber for AB, A and B
