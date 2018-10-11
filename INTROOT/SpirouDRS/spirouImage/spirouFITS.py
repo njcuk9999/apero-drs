@@ -924,7 +924,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # -------------------------------------------------------------------------
     if not quiet:
         wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
-        wmsg2 = '\tFilename = {0}'.format(os.path.basename(filename))
+        wmsg2 = '\tWave file = {0}'.format(os.path.basename(filename))
         WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
 
     # -------------------------------------------------------------------------
