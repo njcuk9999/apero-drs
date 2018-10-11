@@ -329,9 +329,33 @@ def debug_start():
     try:
         print(cc + '\n\n\tError found and running in DEBUG mode\n' + nocol)
         # noinspection PyUnboundLocalVariable
-        uinput = raw_input(cc + '\tEnter python debugger? [Y]es or [N]o?\t'
-                           + nocol)
-        if 'Y' in uinput.upper():
+
+        message = ('Enter (1) ipython debugger (2) python debugger or '
+                   'exit (any other key)?\n\t Note ipython debugger requires '
+                   'ipdb installed\n\tChoose "1", "2", or exit:')
+
+        uinput = raw_input(cc + '\t' + message + '\t' + nocol)
+        if '1' in uinput.upper():
+            print(cc + '\n\t ==== IPYTHON DEBUGGER ====\n'
+                       '\n\t - type "list" to list code'
+                       '\n\t - type "up" to go up a level'
+                       '\n\t - type "interact" to go to an interactive shell'
+                       '\n\t - type "print(variable)" to print variable'
+                       '\n\t - type "print(dir())" to list available variables'
+                       '\n\t - type "continue" to exit'
+                       '\n\t - type "help" to see all commands'
+                       '\n\n\t ==================\n\n' + nocol)
+
+            try:
+                import ipdb
+                ipdb.set_trace()
+            except:
+                import pdb
+                pdb.set_trace()
+
+            print(cc + '\n\nCode Exited' + nocol)
+            EXIT_TYPE(1)
+        if '2' in uinput.upper():
             print(cc + '\n\t ==== DEBUGGER ====\n'
                        '\n\t - type "list" to list code'
                        '\n\t - type "up" to go up a level'
