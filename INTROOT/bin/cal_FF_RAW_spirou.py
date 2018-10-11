@@ -326,6 +326,9 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # get raw flat filename
         raw_flat_file = os.path.basename(p['FITSFILENAME'])
+        # get extraction method and function
+        efout = spirouEXTOR.GetExtMethod(p, p['IC_FF_EXTRACT_TYPE'])
+        extmethod, extfunc = efout
         # construct filename
         blazefits, tag1 = spirouConfig.Constants.FF_BLAZE_FILE(p)
         blazefitsname = os.path.split(blazefits)[-1]
@@ -347,6 +350,14 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=raw_flat_file)
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
         hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
+        # copy extraction method and function to header
+        #     (for reproducibility)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'],
+                                   value=extmethod)
+        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'],
+                                   value=extfunc)
+        # output keys
+        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
         # write 1D list of the SNR
         hdict = spirouImage.AddKey1DList(hdict, p['KW_EXTRA_SN'],
                                          values=loc['SNR'])
