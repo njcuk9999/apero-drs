@@ -26,7 +26,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['LoadPolarData', 'SortPolarFiles', 'CalculatePolarimetry',
            'CalculateContinuum', 'CalculateStokesI', 'LSDAnalysis',
-           'OutputLSDimage']
+           'OutputLSDimage', 'PolarHeader']
 
 # =============================================================================
 # Function aliases
@@ -44,6 +44,8 @@ CalculateStokesI = spirouPOLAR.calculate_stokes_I
 LSDAnalysis = spirouLSD.lsd_analysis_wrapper
 
 OutputLSDimage = spirouLSD.output_lsd_image
+
+PolarHeader = spirouPOLAR.polar_products_header
 
 # =============================================================================
 # End of code

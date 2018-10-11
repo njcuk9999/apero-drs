@@ -1013,7 +1013,8 @@ def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
         return hcref
 
 
-def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
+def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
+                   return_header=False):
     """
     Reads the flat file (from calib database or filename)
 
@@ -1035,8 +1036,16 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
                 as key from calibDB (first entry) to get wave file
     :param required: bool, if True code generates log exit else raises a
                      ConfigError (to be caught)
+    :param return_header: bool, if True returns the header as well
 
-    :return wave: numpy array (2D), the flat image
+    if not return_header:
+        :return p: parameter dictionary with output keys in
+        :return flat: numpy array (2D), the flat image
+    if return_header:
+        :return p: parameter dictionary with output keys in
+        :return flat: numpy array (2D), the flat image
+        :return header: dictionary, the flat header
+
     """
     func_name = __NAME__ + '.read_flat_file()'
     if key is None:
@@ -1064,7 +1073,10 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
         p['FLATFILE'] = 'UNKNOWN'
     p.set_source('FLATFILE', func_name)
     # return the wave file
-    return p, flat
+    if return_header:
+        return p, flat, hdict
+    else:
+        return p, flat
 
 
 def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
