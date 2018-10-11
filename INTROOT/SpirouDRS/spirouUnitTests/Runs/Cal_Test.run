@@ -10,48 +10,48 @@ run001 = ['cal_DARK_spirou', 'TEST1/20180805', 'dark_dark_P5_003d_pp.fits']
 run002 = ['cal_BADPIX_spirou', 'TEST1/20180805', '2295524f_pp.fits', 'dark_dark_P5_003d_pp.fits']
 run003a = ['cal_loc_RAW_spirou', 'TEST1/20180805', '2295510f_pp.fits', '2295511f_pp.fits', '2295512f_pp.fits', '2295513f_pp.fits', '2295514f_pp.fits']
 run003b = ['cal_loc_RAW_spirou', 'TEST1/20180805', '2295515f_pp.fits', '2295516f_pp.fits', '2295517f_pp.fits', '2295518f_pp.fits', '2295519f_pp.fits']
-run005a = ['cal_SLIT_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run005b = ['cal_SHAPE_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run006 = ['cal_FF_RAW_spirou', 'TEST1/20180805', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
+run004a = ['cal_SLIT_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run004b = ['cal_SHAPE_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run005 = ['cal_FF_RAW_spirou', 'TEST1/20180805', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
 
 # Extract the HC's/FP's
-run007a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run007b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
+run006a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run006b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
 
 # Run Wave solution analysis
-run008a = ['cal_HC_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
-run008b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
-run009a = ['cal_WAVE_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
-# run009b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
+run007a = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits']
+run007b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_C.fits']
+#run008a = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
+#run008b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_C.fits', '2295680c_pp_e2ds_AB.fits']
 
 # Extract the FPs/HCs
-run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run010b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295526a_pp.fits']
-run010c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295527a_pp.fits']
-run010d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295528a_pp.fits']
-run010e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295529a_pp.fits']
-run010f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
-run010g = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295532c_pp.fits']
+run009a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run009b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295526a_pp.fits']
+run009c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295527a_pp.fits']
+run009d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295528a_pp.fits']
+run009e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295529a_pp.fits']
+run009f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
+run009g = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295532c_pp.fits']
 
 # Extract the science
-run011a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
-run011b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295546o_pp.fits']
-run011c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295547o_pp.fits']
-run011d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295548o_pp.fits']
+run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
+run010b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295546o_pp.fits']
+run010c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295547o_pp.fits']
+run010d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295548o_pp.fits']
 run010e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295549o_pp.fits']
 run010f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295550o_pp.fits']
 
 # Run drift analysis
-run012a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
-run012b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run011a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run011b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 
 # Run CCF test
-run013 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
+run012 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
 
 # Run Other tests
-run014 = ['off_listing_RAW_spirou', 'TEST1/20180805']
-run015 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
-run016 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run017 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
-run018 = ['cal_exposure_meter', 'TEST1/20180805', '2295519f_pp.fits']
+run013 = ['off_listing_RAW_spirou', 'TEST1/20180805']
+run014 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
+run015 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run016 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run017 = ['cal_exposure_meter', 'TEST1/20180805', '2295519f_pp.fits']
 

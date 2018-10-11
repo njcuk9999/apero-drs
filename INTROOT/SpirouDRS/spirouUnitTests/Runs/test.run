@@ -2,13 +2,19 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
-# Run CCF test
-run013 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
+# Extract the science
+run011a = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279694o_pp.fits']
+run011b = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279695o_pp.fits']
+run011c = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279696o_pp.fits']
 
-# Run Other tests
-run014 = ['off_listing_RAW_spirou', 'TEST1/20180805']
-run015 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
-run016 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run017 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
-run018 = ['cal_exposure_meter', 'TEST1/20180805', '2295519f_pp.fits']
+# Run Make telluric recipes
+run012a = ['obj_mk_tellu', 'TEST4/20180527', '2279540o_pp_e2dsff_AB.fits']
+run012b = ['obj_mk_tellu', 'TEST4/20180527', '2279541o_pp_e2dsff_AB.fits']
+run012c = ['obj_mk_tellu', 'TEST4/20180527', '2279542o_pp_e2dsff_AB.fits']
+run012d = ['obj_mk_tellu', 'TEST4/20180527', '2279535o_pp_e2dsff_AB.fits']
+run012e = ['obj_mk_tellu', 'TEST4/20180527', '2279536o_pp_e2dsff_AB.fits']
 
+# Run Fit telluric recipes (on telluric stars --> Should be science target!)
+run013a = ['obj_fit_tellu', 'TEST4/20180527', '2279694o_pp_e2dsff_AB.fits']
+run013b = ['obj_fit_tellu', 'TEST4/20180527', '2279695o_pp_e2dsff_AB.fits']
+run013c = ['obj_fit_tellu', 'TEST4/20180527', '2279696o_pp_e2dsff_AB.fits']
