@@ -5019,3 +5019,17 @@
 	- spirouPOLAR.__init__.py - chagen polarHeader --> PolarHeader (for convention) (rev.4efa4d03)
 	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)
 	- spirouLog.py - add a possibility to debug in ipython (rev.449fa77a)
+	- Minor changes (rev.630d0c27)
+
+================================================================================
+* Thu Oct 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.034
+
+================================================================================
+	- unit_test.py - make sure all plots are closed. (rev.e928eed7)
+	- spirouEXTOR.__init__.py - add alias for compare_extraction_modes (CompareExtMethod) - Issue #481 (rev.b0516e44)
+	- spirouEXTOR.py - add compare_extraction_mode function to test difference between flat and e2ds extraction modes (#481) (rev.06440731)
+	- cal_FF_RAW_spirou.py - save extraction method to header (like cal_extract) (rev.cacf1925)
+	- cal_extract_RAW_spirou.py - get flat header, compare flat extraction to extraction type  (Issue #481) (rev.beeed62d)
+	- spirouFITS.py - return header for flat file so we can get extraction type for the flat (Issue #481) (rev.1b8a26e6)
+	- unit_tests - do not currently test cal_WAVE_E2DS_EA_spirou.py - comment out (rev.67f480c4)
+	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)
