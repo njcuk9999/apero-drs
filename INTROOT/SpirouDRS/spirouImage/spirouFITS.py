@@ -641,7 +641,8 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
 
 
 def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
-                   return_filename=False, required=True, fiber=None):
+                  return_filename=False, required=True, fiber=None,
+                  quiet=False):
     """
     Reads the wave file (from calib database or filename)
 
@@ -667,6 +668,7 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
                      ConfigError (to be caught)
     :param fiber: string, if not None forces the fiber type (i.e. look for
                   WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
+    :param quiet: bool, if True logs progress
 
     if return_filename is False and return header is False
 
@@ -693,8 +695,9 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
     if return_filename:
         return os.path.basename(read_file)
     # log wave file used
-    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    if not quiet:
+        wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+        WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -770,7 +773,8 @@ def get_wave_solution_old(p, image=None, hdr=None):
     return wave
 
 
-def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
+def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
+                                  nbx=None):
     func_name = __NAME__ + '.create_wavemap_from_waveparam()'
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
@@ -778,26 +782,28 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
     # get keys from header
     dim1 = hdr[dim1key]
     # raise error is image and nbpix is None
-    if image is None and nb_xpix is None:
-        emsg = ('Need to define an "image" or "nb_xpix" in order to '
+    if image is None and (nbo is None or nbx is None):
+        emsg = ('Need to define an "image" or ("nbo" and "nbx") in order to '
                 'produce wavemap from wave parameteres')
         WLOG('error', p['LOG_OPT'], emsg)
     # get the required dimensions of the wavemap
     if image is None:
-        dim1req = nb_xpix
+        dim1req = nbo
     else:
         dim1req = image.shape[0]
+        nbo = image.shape[0]
+        nbx = image.shape[1]
     # check that dim1 is the correct number of orders
     if dim1 != dim1req:
         emsg1 = (
             'Number of orders in HEADER ({0}={1}) not compatible with '
-            'number of orders in image ({2}')
+            'number of orders in image ({2})')
         eargs = [dim1key, dim1, dim1req]
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
     # define empty wave solution
-        wavemap = np.zeros_like(image)
-    xpixels = np.arange(image.shape[1])
+    wavemap = np.zeros((nbo, nbx))
+    xpixels = np.arange(nbx)
     # load the wave solution for each order
     for order_num in range(dim1):
         wavemap[order_num] = np.polyval(waveparams[order_num][::-1], xpixels)
@@ -808,7 +814,8 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nb_xpix=None):
 
 def get_wave_solution(p, image=None, hdr=None, filename=None,
                       return_wavemap=False, return_filename=False,
-                      nb_xpix=None, return_header=False, fiber=None):
+                      nbo=None, nbx=None, return_header=False, fiber=None,
+                      quiet=False):
     """
     Gets the wave solution coefficients (and wavemap if "return_wavemap" is
     True and filename if "return_filename" is True)
@@ -833,11 +840,14 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     :param return_wavemap: bool, if True returns wave map (same shape as input
                            image (in x direction) or number of orders x nb_xpix)
     :param return_filename: bool, if True returns filename
-    :param nb_xpix: int, the number of x pixels if image is None (used to
-                    generate wave map from wave parameters
+    :param nbo: int, the number of orders if image is None (used to
+                generate wave map from wave parameters
+    :param nbo: int, the number of x-pixels if image is None (used to
+                generate wave map from wave parameters
     :param return_header: bool, if True return file header
     :param fiber: string, if not None forces the fiber type (i.e. look for
                   WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
+    :param quiet: bool, if True does not print or log
 
     :return waveparams:numpy array (2D), the wave coefficients for each order
                        shape = (number of orders x number of coeffs)
@@ -845,9 +855,11 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
                        shape = (number of orders x image size)
                        or
                        shape = (number of orders x nb_xpix) - if image is None
+
     :return wavefile: string, the filename of the wave file
     :return header: dict, the header of the wave file (if return_header=True)
     """
+    func_name = __NAME__ + '.get_wave_solution()'
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
     dim2key = p['KW_WAVE_LL_DEG'][0]
@@ -857,6 +869,23 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         header_cond = False
     else:
         header_cond = (dim1key in hdr) and (dim2key in hdr) and (namekey in hdr)
+    # see if we can obtain nb_xpix from hdr
+    if (image is None) and hdr is not None:
+        if (nbo is None) and 'NAXIS2' in hdr:
+            nbo = hdr['NAXIS2']
+        else:
+            emsg1 = ('Cannot identify number of orders (no image defined, and'
+                    'NAXIS2 not in header)')
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        if (nbx is None) and 'NAXIS1' in hdr:
+            nbx = hdr['NAXIS1']
+        else:
+            emsg1 = ('Cannot identify number of x-pixels (no image defined, and'
+                    'NAXIS1 not in header)')
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
     # -------------------------------------------------------------------------
     # deal with where to get wave solution from
     # -------------------------------------------------------------------------
@@ -868,7 +897,8 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         obtain = 'file'
     # if force calibDB is True
     elif p['CALIB_DB_FORCE_WAVESOL']:
-        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber)
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber,
+                                       quiet=True)
         waveparams = read_waveparams(p, hdict)
         filename = read_wavefile(p, hdr, return_filename=True, fiber=fiber)
         obtain = 'calibDB'
@@ -877,7 +907,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
         waveparams = read_waveparams(p, hdr)
         if return_wavemap:
             wavemap = create_wavemap_from_waveparam(p, hdr, waveparams,
-                                                    image, nb_xpix)
+                                                    image, nbo, nbx)
         else:
             wavemap = None
         filename = hdr[namekey]
@@ -892,9 +922,10 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     # -------------------------------------------------------------------------
     # log where file came from
     # -------------------------------------------------------------------------
-    wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
-    wmsg2 = '\tFilename = {0}'.format(os.path.basename(filename))
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    if not quiet:
+        wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
+        wmsg2 = '\tWave file = {0}'.format(os.path.basename(filename))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
 
     # -------------------------------------------------------------------------
     # deal with returns

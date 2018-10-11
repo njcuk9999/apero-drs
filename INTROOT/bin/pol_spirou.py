@@ -92,8 +92,14 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # set source of wave file
     wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # get wave image
-    wout = spirouImage.GetWaveSolution(p, hdr=loc['HDR'], return_wavemap=True)
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HDR'], return_wavemap=True,
+                                       fiber=wave_fiber)
     _, loc['WAVE'] = wout
     loc.set_source('WAVE', wsource)
 

@@ -284,7 +284,10 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     if p['QC']:
         # set dark key
-        keydb = 'DARK'
+        if p['DPRTYPE'] == 'DARK_DARK':
+            keydb = 'DARK'
+        else:
+            keydb = 'SKYDARK'
         # copy dark fits file to the calibDB folder
         spirouDB.PutCalibFile(p, darkfits)
         # update the master calib DB file with new key

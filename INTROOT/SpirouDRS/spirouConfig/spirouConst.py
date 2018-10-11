@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.029'
+__version__ =  '0.3.032'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-10-06'
+__date__ =  '2018-10-11'
 
 
 # =============================================================================
@@ -313,6 +313,10 @@ def TAGFILE():
 ckwargs = dict(package=PACKAGE(), configfolder=CONFIGFOLDER(),
                configfile=CONFIGFILE(), return_raw=False)
 pp = spirouConfigFile.read_config_file(**ckwargs)
+if 'USER_CONFIG' in pp:
+    pp, _ = spirouConfigFile.get_user_config(pp, package=PACKAGE(),
+                                             configfolder=CONFIGFOLDER(),
+                                             configfile=CONFIGFILE())
 
 # =============================================================================
 # Get tags from tag file
@@ -1719,11 +1723,37 @@ def TELLU_FIT_RECON_FILE(p, filename):
 
 
 # noinspection PyPep8Naming
-def TELLU_TEMPLATE_FILE(p, loc):
-    func_name = 'TELLU_TEMPLATE_FILE'
+def OBJTELLU_TEMPLATE_FILE(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_FILE'
     # define filename
     reduced_dir = p['ARG_FILE_DIR']
     outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
+
+
+# noinspection PyPep8Naming
+def OBJTELLU_TEMPLATE_CUBE_FILE1(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_CUBE_FILE1'
+    # define filename
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'BigCube_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
+
+
+# noinspection PyPep8Naming
+def OBJTELLU_TEMPLATE_CUBE_FILE2(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_CUBE_FILE2'
+    # define filename
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'BigCube0_{0}.fits'.format(loc['OBJNAME'])
     outfile = os.path.join(reduced_dir, outfilename)
     # get tag
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])

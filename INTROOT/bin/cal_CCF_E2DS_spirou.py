@@ -154,9 +154,14 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # log
     WLOG('', p['LOG_OPT'], 'Reading wavelength solution ')
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
-                                       return_filename=True)
+                                       return_filename=True, fiber=wave_fiber)
     param_ll, wave_ll, wavefile = wout
     # save to storage
     loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'] = wout

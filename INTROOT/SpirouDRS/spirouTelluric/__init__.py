@@ -21,6 +21,11 @@ __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
 __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
+# define all
+__all__ = ['CheckBlackList', 'ConstructConvKernel1', 'ConstructConvKernel2',
+           'GetMolecularTellLines', 'GetNormalizedBlaze', 'GetBERV',
+           'CalculateAbsorptionPCA', 'CalcReconAbso', 'CalcMolecularAbsorption',
+           'InterpAtShiftedWavelengths', 'LinMini', 'Wave2Wave']
 
 
 # =============================================================================
@@ -49,6 +54,7 @@ InterpAtShiftedWavelengths = spirouTelluric.interp_at_shifted_wavelengths
 
 LinMini = spirouTelluric.lin_mini
 
+Wave2Wave = spirouTelluric.wave2wave
 
 # =============================================================================
 # Start of code
