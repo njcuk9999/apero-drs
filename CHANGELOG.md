@@ -4982,3 +4982,17 @@
 	- obj_fit_tellu.py - fix bug with shifting PCA components (Issue #478) (rev.f44df6a2)
 	- pol_spirou.py + all recipes use GetWaveSolution - force fiber A and B to use wave solution AB (Issue #480) (rev.2813e08f)
 	- all recipes using GetWaveSolution - force fiber A and B to use AB wave solution (rev.7c07ae63)
+
+
+
+================================================================================
+* Thu Oct 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.032
+
+================================================================================
+	- unit_tests - update tellu_test2 and test (rev.3a7ac5ca)
+	- spirouFITS.py - fix output of wavelength solution - Issue #483 (rev.844f70d5)
+	- spirouConst.py - after reading default config file must look for a user config file (parameters depend on it) (rev.4a1cc2a5)
+	- spirouConfigFile.py - moved get_user_config to here (to allow accessing from spirouConst.py) (rev.40db643c)
+	- spirouConfig.py - move get_user_config to spirouConfigFile.py - (needed to fix not obtaining constants from user config file) (rev.ab88a21a)
+	- spirouLog.py - add a possibility to debug in ipython (rev.449fa77a)
+	- spirouFITS.py - fix error - now if image is not defined tries to get dimensions from header before giving error - Issue #483 (rev.82fecda8)

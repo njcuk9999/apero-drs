@@ -36,8 +36,8 @@ run010e = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279536o_pp.fits']
 
 # Extract the science
 run011a = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279694o_pp.fits']
-run011a = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279695o_pp.fits']
-run011a = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279696o_pp.fits']
+run011b = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279695o_pp.fits']
+run011c = ['cal_extract_RAW_spirou', 'TEST4/20180527', '2279696o_pp.fits']
 
 # Run Make telluric recipes
 run012a = ['obj_mk_tellu', 'TEST4/20180527', '2279540o_pp_e2dsff_AB.fits']

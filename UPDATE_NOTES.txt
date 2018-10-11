@@ -1,4 +1,4 @@
-Update Note Summary - Version 0.3.031 (Since 0.3.027)
+Update Note Summary - Version 0.3.032 (Since 0.3.027)
 
 
 
@@ -23,6 +23,8 @@ Done:
 - updated obj_mk_obj_template.py (was out of date for the DRS + untests + bugs)
 
 - made cal_HC_E2DS_EA_spirou.py more stable (added additional sigma clipping)
+
+- fixed bug in getting wave parameters from header
 
 - fixed major bug with extraction methods 4a and 4b
     - methods 4a and 4b are now the default setting (change with
