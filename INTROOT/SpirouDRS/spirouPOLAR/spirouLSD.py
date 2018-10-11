@@ -145,7 +145,8 @@ def load_lsd_spectral_lines(p, loc):
     else:
         emsg1 = 'LSD Line mask file: "{0}" not found, unable to proceed'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
+        eargs = [loc['SELECTED_FILE_CCFLINES']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
         wlcf, znf, depthf, landef = None, None, None, None
 
     # initialize data vectors
@@ -299,6 +300,7 @@ def prepare_polarimetry_data(p, loc):
 
             if p['IC_POLAR_LSD_NORMALIZE']:
                 # measure continuum
+                # TODO: Should be in constant file
                 kwargs = dict(binsize=30, overlap=15, window=2,
                               mode='median', use_linear_fit=True)
                 continuum, xbin, ybin = spirouCore.Continuum(wl, flux, **kwargs)
@@ -323,6 +325,7 @@ def prepare_polarimetry_data(p, loc):
     loc['LSD_NULL'] = loc['LSD_NULL'][indices]
 
     # apply barycentric RV correction to the wavelength vector
+    # TODO: Should be realivistic correction?
     RVcorr = 1.0 + loc['BERVCEN'] / (constants.c / 1000.)
     loc['LSD_WAVE'] =  loc['LSD_WAVE'] * RVcorr
     
@@ -588,8 +591,8 @@ def fit_gaussian_to_lsd_profile(vels, Z):
     Zinv = 1.0 - Z
 
     # fit gaussian profile
-    popt, pcov = curve_fit(gauss_function, vels, Zinv,
-                           p0=[amplitude, rvel, sig])
+    guess = [amplitude, rvel, sig]
+    popt, pcov = curve_fit(gauss_function, vels, Zinv, p0=guess)
 
     # initialize output profile vector
     Zgauss = np.zeros_like(vels)
@@ -620,6 +623,7 @@ def get_order_ranges():
         
     :return orders: array of float pairs for wavelength ranges
     """
+    # TODO: Should be moved to file in .../INTROOT/SpirouDRS/data/
     orders = [[963.6, 986.0], [972.0, 998.4], [986.3, 1011], [1000.1, 1020],
               [1015, 1035], [1027.2, 1050], [1042, 1065], [1055, 1078],
               [1070, 1096],
