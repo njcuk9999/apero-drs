@@ -824,6 +824,7 @@ def fit_gaussian_triplets(p, loc):
     # get data from loc
     wave_ll, amp_ll = loc['LL_LINE'], loc['AMPL_LINE']
     poly_wave_sol = loc['WAVEPARAMS']
+
     # get dimensions
     nbo, nbpix = loc['NBO'], loc['NBPIX']
 
@@ -914,6 +915,39 @@ def fit_gaussian_triplets(p, loc):
                 wave_catalog[w_it] = wave_ll[id_match]
                 amp_catalog[w_it] = amp_ll[id_match]
                 dv[w_it] = distv
+
+        # ------------------------------------------------------------------
+        # loop through orders and reject bright lines not within
+        #     +- HC_TFIT_DVCUT km/s histogram peak
+        # ------------------------------------------------------------------
+
+        # width in dv [km/s] - though used for number of bins?
+        # TODO: Question: Why km/s --> number
+        nbins = 2 * p['HC_MAX_DV_CAT_GUESS'] // 1000
+        # loop around all order
+        for order_num in set(orders):
+            # get the good pixels in this order
+            good = (orders == order_num) & (np.isfinite(dv))
+            # get histogram of points for this order
+            histval, histcenters = np.histogram(dv[good], bins=nbins)
+            # get the center of the distribution
+            dv_cen = histcenters[np.argmax(histval)]
+            # define a mask to remove points away from center of histogram
+            mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
+            # apply mask to dv and to brightest lines
+            dv[mask] = np.nan
+            brightest_lines[mask] = False
+
+        # re-get the histogram of points for whole image
+        histval, histcenters = np.histogram(dv[np.isfinite(dv)], bins=nbins)
+        # re-find the center of the distribution
+        dv_cen = histcenters[np.argmax(histval)]
+        # re-define the mask to remove poitns away from center of histogram
+        mask =  (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
+        # re-apply mask to dv and to brightest lines
+        dv[mask] = np.nan
+        brightest_lines[mask] = False
+
         # ------------------------------------------------------------------
         # Find best trio of lines
         # ------------------------------------------------------------------
