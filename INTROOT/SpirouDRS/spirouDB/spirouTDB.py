@@ -318,6 +318,50 @@ def get_database_tell_obj(p, required=True):
     return rdata
 
 
+def get_database_master_wave(p, required=True):
+    func_name = __NAME__ + '.get_database_master_wave()'
+    # define key
+    key = 'MASTER_WAVE'
+    # get the telluric database (all lines)
+    t_database = spirouDB.get_database(p, dbkind='Telluric')
+    # check for key in database
+    if not required and key not in t_database:
+        return [], [], [], []
+    if key not in t_database:
+        # generate error message
+        emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
+        emsg2 = '   function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        return 0
+
+    # filter database by key
+    values = t_database[key]
+
+    # extract parameters from database values
+    filenames, humantimes, unixtimes, objnames = [], [], [], []
+    bervs, airmasses, watercols = [], [], []
+    for value in values:
+        # get this iterations value from value
+        _, filename, humant, unixt = value
+        # get absfilename
+        absfilename = os.path.join(p['DRS_TELLU_DB'], filename)
+        # check filename exists
+        if not os.path.exists(absfilename):
+            emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        # add to array
+        filenames = np.append(filenames, absfilename)
+        humantimes = np.append(humantimes, humant)
+        unixtimes = np.append(unixtimes, float(unixt))
+
+    # sort by unixtime
+    sort = np.argsort(unixtimes)
+
+    # return most recent filename
+    return filenames[sort][-1]
+
+
 # TODO: Move to spirouDB?
 def put_file(p, inputfile):
     """
