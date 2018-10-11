@@ -4996,3 +4996,26 @@
 	- spirouConfig.py - move get_user_config to spirouConfigFile.py - (needed to fix not obtaining constants from user config file) (rev.ab88a21a)
 	- spirouLog.py - add a possibility to debug in ipython (rev.449fa77a)
 	- spirouFITS.py - fix error - now if image is not defined tries to get dimensions from header before giving error - Issue #483 (rev.82fecda8)
+
+
+
+================================================================================
+* Tue Sep 11 2018 Eder <edermartioli@gmail.com> - 0.3.033
+* Thu Oct 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.033
+
+================================================================================
+	- Added BJD# and MEANBJD to header of polar products (rev.29a19764)
+	- Minor changes (rev.630d0c27)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.b83c7206)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.c04144f9)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.c94b6171)
+	- Added new keywords in polar products, mainly the BJD time calculated at center of observations. Also fixed small bugs (rev.947ed27a)
+	- Updated keyworks BERV, BJD, and MJD of polar products by central values calculated in the module. Also updated keyword EXPTIME by the sum of all EXPTIME values from individual exposures (rev.09beee21)
+	- Updated keyworks BERV, BJD, and MJD of polar products by central values calculated in the module. Also updated keyword EXPTIME by the sum of all EXPTIME values from individual exposures (rev.a7543efc)
+	- Tuned parameters to improve LSD analaysis and added new statistical quantities calculated from LSD analysis (rev.587fc630)
+	- Changed parameters for LSD analysis (rev.15791803)
+	- Implemented selection of CCFFILE in LSD analysis matching closest temperature to source observed (rev.b59d10d7)
+	- spirouLSD.py - add a few outstanding TODO comments and fix error print (filename may not be defined) (rev.d257822c)
+	- spirouPOLAR.__init__.py - chagen polarHeader --> PolarHeader (for convention) (rev.4efa4d03)
+	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)
+	- spirouLog.py - add a possibility to debug in ipython (rev.449fa77a)

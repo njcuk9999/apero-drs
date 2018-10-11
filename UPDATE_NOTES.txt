@@ -1,4 +1,4 @@
-Update Note Summary - Version 0.3.032 (Since 0.3.027)
+Update Note Summary - Version 0.3.033 (Since 0.3.027)
 
 
 
@@ -8,7 +8,6 @@ Not done/not finished/to do:
 - drift code compatibility [Francois]
 - add the drift to cal_CCF [Francois]
 - obj_mk_obj_template needs testing [Etienne & Neil]
-- not merged Eders changes to pol_spirou [Neil]
 - not put a constraint on FF that must match extraction type [Neil]
 
 
@@ -25,6 +24,8 @@ Done:
 - made cal_HC_E2DS_EA_spirou.py more stable (added additional sigma clipping)
 
 - fixed bug in getting wave parameters from header
+
+- added Eder's changes for pol_spirou
 
 - fixed major bug with extraction methods 4a and 4b
     - methods 4a and 4b are now the default setting (change with
