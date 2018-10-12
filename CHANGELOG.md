@@ -5053,3 +5053,4 @@
 	- cal_WAVE_E2DS_EA_spirou.py - currently only supports one FP_FP and one HC_HC (due to file updating) - added check to error if more used (rev.51325fa2)
 	- cal_HC_E2DS_EA_spirou.py - currently only supports one FP_FP and one HC_HC (due to file updating) - added check to error if more used (rev.b9e5ab48)
 	- spirouTelluric.py - change bad mask from 0.999 to 0.5 to avoid NaN fringing - Issue #478 (rev.8e68cffd)
+	- spirouTelluric.py - catch known warnings and disregard (rev.db5fd2ef)
