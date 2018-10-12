@@ -5033,3 +5033,17 @@
 	- spirouFITS.py - return header for flat file so we can get extraction type for the flat (Issue #481) (rev.1b8a26e6)
 	- unit_tests - do not currently test cal_WAVE_E2DS_EA_spirou.py - comment out (rev.67f480c4)
 	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)
+
+
+================================================================================
+* Thu Oct 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.035
+* Fri Oct 12 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com>
+================================================================================
+	- update unit_tests (rev.14af4dfd)
+	- unit_tests - do not currently test cal_WAVE_E2DS_EA_spirou.py - comment out (rev.67f480c4)
+	- spirouPOLAR.__init__.py - chagen polarHeader --> PolarHeader (for convention) (rev.4efa4d03)
+	- spirouWAVE.py - small pep8 and visual changes / simplifications (rev.d7ea41f1)
+	- spirouPlot.py - bring new plot in-line with other plots + pep8 changes (rev.9b3a5fdc)
+	- constants_SPIROU_H4RG.py - small pep8 fixes to constants (rev.a21d8b59)
+	- cal_WAVE_EA: moved plot of single HC order + fitted lines to spirouPlot (rev.ac877ef3)
+	- spirouPlot: moved plot of single HC order + fitted lines here from cal_WAVE_EA (rev.ba9be26c)
