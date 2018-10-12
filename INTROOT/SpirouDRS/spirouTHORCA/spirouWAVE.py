@@ -468,7 +468,8 @@ def fp_wavelength_sol_new(p, loc):
         for it in range(len(floc['llpos']) - 2, -1, -1):
             # check for gap in x positions
             flocdiff = floc['xxpos'][it + 1] - floc['xxpos'][it]
-            if flocdiff < (xxpos_diff_med + 0.5 * xxpos_diff_med):
+            if (xxpos_diff_med - 0.25 * xxpos_diff_med) < flocdiff \
+                    < (xxpos_diff_med + 0.25 * xxpos_diff_med):
                 # no gap: add 1 to line number of previous line
                 mpeak[it] = mpeak[it + 1] + 1
             # if there is a gap, fix it
@@ -483,16 +484,22 @@ def fp_wavelength_sol_new(p, loc):
                 dopd_1 = (mpeak[it] * floc['llpos'][it] - dopd0) * 1.e-3
                 dopd_2 = (mpeak[it + 1] * floc['llpos'][it + 1] - dopd0) * 1.e-3
                 if dopd_1 - dopd_2 > fp_large_jump:
-                    mpeak[it] = mpeak[it] - 1
+                    while dopd_1 - dopd_2 > fp_large_jump:
+                        mpeak[it] = mpeak[it] - 1
+                        dopd_1 = (mpeak[it] * floc['llpos'][it] - dopd0) * 1.e-3
+                        dopd_2 = (mpeak[it + 1] * floc['llpos'][it + 1] - dopd0) * 1.e-3
                 elif dopd_1 - dopd_2 < -fp_large_jump:
-                    mpeak[it] = mpeak[it] + 1
+                    while dopd_1 - dopd_2 < -fp_large_jump:
+                        mpeak[it] = mpeak[it] + 1
+                        dopd_1 = (mpeak[it] * floc['llpos'][it] - dopd0) * 1.e-3
+                        dopd_2 = (mpeak[it + 1] * floc['llpos'][it + 1] - dopd0) * 1.e-3
         # determination of observed effective cavity width
         dopd_t = mpeak * floc['llpos']
         # store m and d
         floc['m_fp'] = mpeak
         floc['dopd_t'] = dopd_t
         # for orders other than the reddest, attempt to cross-match
-        cm_ind = -2   # TODO: Should be in the constant file?
+        cm_ind = p['IC_WAVE_FP_CM_IND']
         if order_num != n_ord_final_fp:
             # check for overlap
             if floc['llpos'][cm_ind] > ll_prev[0]:
