@@ -585,9 +585,9 @@ def wave2wave(spectrum, wave1, wave2, reshape=False):
             # affected by a NaN value
             # normally we would use only pixels ==1, but we get values
             #    that are not exactly one due to the interpolation scheme.
-            #    We just set that >99.9% of the
+            #    We just set that >50% of the
             # flux comes from valid pixels
-            bad = (mask <= 0.999)
+            bad = (mask <= 0.5)
             # mask pixels affected by nan
             output_spectrum[iord, bad] = np.nan
 
