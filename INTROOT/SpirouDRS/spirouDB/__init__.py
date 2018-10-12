@@ -26,7 +26,7 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['CopyCDBfiles', 'GetAcqTime', 'GetCalibDatabase', 'GetCalibFile',
-           'PutCalibFile', 'UpdateCalibMaster', 'UpdateDatabaseTellTemp',
+           'PutCalibFile', 'UpdateCalibMaster', 'UpdateDatabaseObjTemp',
            'GetDatabaseTellMole', 'GetDatabaseTellConv',
            'GetDatabaseSky', 'GetDatabaseTellMap', 'PutTelluFile']
 
@@ -56,7 +56,7 @@ GetDatabaseSky = spirouTDB.get_database_sky
 GetDatabaseTellMap = spirouTDB.get_database_tell_map
 
 # TODO: rename variable
-GetDatabaseTellTemp = spirouTDB.get_database_tell_template
+GetDatabaseObjTemp = spirouTDB.get_database_obj_template
 
 GetDatabaseTellObj = spirouTDB.get_database_tell_obj
 
@@ -72,7 +72,7 @@ UpdateDatabaseSky = spirouTDB.update_database_sky
 
 UpdateDatabaseTellMap = spirouTDB.update_database_tell_map
 
-UpdateDatabaseTellTemp = spirouTDB.update_database_tell_temp
+UpdateDatabaseObjTemp = spirouTDB.update_database_obj_temp
 
 UpdateDatavaseTellObj = spirouTDB.update_database_tell_obj
 

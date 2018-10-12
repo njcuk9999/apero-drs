@@ -853,7 +853,7 @@ ic_fp_dopd0 = 2.44999e7  # 2.45e7
 ic_fp_fit_degree = 9
 
 #  Define the FP jump size that is too large                        - [cal_wave]
-ic_fp_large_jump = 0.7
+ic_fp_large_jump = 0.5
 
 #  Define the plot order for the comparison between spe and speref  - [cal_wave]
 ic_wave_idrift_plot_order = 14
@@ -957,6 +957,10 @@ HC_RESMAP_DV_SPAN = [-15, 15]
 HC_RESMAP_PLOT_XLIM = [-8, 8]
 # the line profile y limits                                           - [cal_HC]
 HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
+#index of FP line to start order cross-matching from                - [cal_wave]
+ic_wave_fp_cm_ind = -2
+# order to plot HC + fitted lines                                     - [cal_HC]
+ic_wave_ea_plot_order = 7
 
 # -----------------------------------------------------------------------------
 #  Telluric parameters
@@ -979,7 +983,7 @@ tellu_absorbers = ['combined', 'h2o', 'o3', 'n2o', 'o2', 'co2', 'ch4']
 
 # Define whether to fit the derivatives instead of the          - [obj_mk_tellu]
 #     principal components
-fit_deriv_pc = True
+fit_deriv_pc = False
 
 # Define whether to add the first derivative and broadening     - [obj_mk_tellu]
 #     factor to the principal components this allows a variable

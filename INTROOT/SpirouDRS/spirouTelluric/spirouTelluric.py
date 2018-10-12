@@ -11,7 +11,6 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 import os
-from astropy import constants
 from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 import warnings
 
@@ -38,9 +37,6 @@ WLOG = spirouCore.wlog
 ParamDict = spirouConfig.ParamDict
 # Get sigma FWHM
 SIG_FWHM = spirouCore.spirouMath.fwhm()
-# speed of light
-# noinspection PyPep8
-CONSTANT_C = constants.c.value
 
 
 # =============================================================================
@@ -99,7 +95,22 @@ def get_molecular_tell_lines(p, loc):
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
     # TODO: Make this the date and not the wave file name??
-    wave_file = os.path.basename(loc['WAVEFILE'])
+
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # read master wave map
+    masterwavefile = spirouDB.GetDatabaseMasterWave(p, required=True)
+    wave_file = os.path.basename(masterwavefile)
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                       return_wavemap=True, quiet=True,
+                                       return_header=True, fiber=wave_fiber)
+    masterwavep, masterwave, masterwaveheader = mout
+
+    # get the convolve file names
     convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
     convolve_file = os.path.join(p['ARG_FILE_DIR'], convolve_file_name)
 
@@ -148,7 +159,7 @@ def get_molecular_tell_lines(p, loc):
                 start = iord * xdim
                 end = (iord * xdim) + xdim
                 # interpolate the values at these points
-                svalues = tapas_spline(loc['WAVE'][iord, :])
+                svalues = tapas_spline(masterwave[iord, :])
                 # convolve with a gaussian function
                 cvalues = np.convolve(svalues, loc['KER'], mode='same')
                 # add to storage
@@ -260,7 +271,7 @@ def get_berv_value(p, hdr, filename=None):
     return dv, bjd, bvmax
 
 
-def interp_at_shifted_wavelengths(p, loc, thdr):
+def berv_correct_template(p, loc, thdr):
     func_name = __NAME__ + '.interp_at_shifted_wavelengths()'
     # Get the Barycentric correction from header
     dv, _, _ = get_berv_value(p, thdr)
@@ -280,7 +291,7 @@ def interp_at_shifted_wavelengths(p, loc, thdr):
             # calculate interpolation for keep temp at keep wave
             spline = IUVSpline(keepwave, keeptemp, ext=3)
             # interpolate at shifted values
-            dvshift = 1 + (dv / CONSTANT_C)
+            dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
             waveshift = loc['WAVE_IT'][order_num, :] * dvshift
             # interpolate at shifted wavelength
             start = order_num * xdim
@@ -308,7 +319,8 @@ def calc_recon_abso(p, loc):
     sp2 = sp.ravel()
     wave2 = loc['WAVE_IT'].ravel()
     # define the good pixels as those above minimum transmission
-    keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
+    with warnings.catch_warnings(record=True) as _:
+        keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
     # also require wavelength constraints
     keep &= (wave2 > p['TELLU_LAMBDA_MIN'])
     keep &= (wave2 < p['TELLU_LAMBDA_MAX'])
@@ -334,7 +346,8 @@ def calc_recon_abso(p, loc):
                 end = order_num * xdim + xdim
                 # produce a mask of good transmission
                 order_tapas = tapas_all_species[0, start:end]
-                mask = order_tapas > p['TRANSMISSION_CUT']
+                with warnings.catch_warnings(record=True) as _:
+                    mask = order_tapas > p['TRANSMISSION_CUT']
                 # get good transmission spectrum
                 spgood = sp[order_num, :] * np.array(mask, dtype=float)
                 recongood = recon_abso[start:end]
@@ -461,8 +474,8 @@ def calc_molecular_absorption(p, loc):
         log_tapas_abso = np.log(tapas_all_species[1:, :])
 
     # get good pixels
-    keep = np.min(log_tapas_abso, axis=0) > limit
     with warnings.catch_warnings(record=True) as _:
+        keep = np.min(log_tapas_abso, axis=0) > limit
         keep &= log_recon_abso > limit
     keep &= np.isfinite(recon_abso)
 
@@ -585,9 +598,9 @@ def wave2wave(spectrum, wave1, wave2, reshape=False):
             # affected by a NaN value
             # normally we would use only pixels ==1, but we get values
             #    that are not exactly one due to the interpolation scheme.
-            #    We just set that >99.9% of the
+            #    We just set that >50% of the
             # flux comes from valid pixels
-            bad = (mask <= 0.999)
+            bad = (mask <= 0.5)
             # mask pixels affected by nan
             output_spectrum[iord, bad] = np.nan
 
