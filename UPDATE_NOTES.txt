@@ -5,12 +5,14 @@ Not done/not finished/to do:
 
 - drift code compatibility [Francois]
 - add the drift to cal_CCF [Francois]
-- obj_mk_obj_template needs testing [Etienne & Neil]
+- Quality control on cal_WAVE_E2DS_EA_spirou needs changing (fails on many
+  HC_HC/FP_FP files) - [Melissa]
 
 
 Done:
 
 - update to cal_WAVE_E2DS_EA_spirou (FP jump analysis now more stable)
+    However still problems with quality control criteria
 
 - constaints on extraction that extraction type is the same as for FLAT file
   (i.e. 4a and 4b are compatible, mode 3d and 4b are not)
