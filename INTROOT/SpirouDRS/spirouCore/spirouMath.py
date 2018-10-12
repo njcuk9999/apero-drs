@@ -15,6 +15,8 @@ Version 0.0.0
 """
 from __future__ import division
 import numpy as np
+from astropy import constants as cc
+from astropy import units as uu
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 from scipy.interpolate import UnivariateSpline
@@ -39,6 +41,10 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Date format
 DATE_FMT = spirouConfig.Constants.DATE_FMT_DEFAULT()
 TIME_FMT = spirouConfig.Constants.TIME_FORMAT_DEFAULT()
+# noinspection PyPep8
+speed_of_light_ms = cc.c.to(uu.m / uu.s).value
+# noinspection PyPep8
+speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
@@ -60,6 +66,29 @@ def fwhm(sigma=1.0):
     :return: 2 * sqrt(2 * log(2)) * sigma = 2.3548200450309493 * sigma
     """
     return 2 * np.sqrt(2 * np.log(2)) * sigma
+
+
+def relativistic_waveshift(dv, units='km/s'):
+    """
+    Relativistic offset in wavelength
+
+    default is dv in km/s
+
+    :param dv: float or numpy array, the dv values
+    :param units: string or astropy units, the units of dv
+    :return:
+    """
+    # get c in correct units
+    if units == 'km/s' or units == uu.km/uu.s:
+        c = speed_of_light
+    elif units == 'm/s' or units == uu.m/uu.s:
+        c = speed_of_light_ms
+    else:
+        raise ValueError("Wrong units for dv ({0})".format(units))
+    # work out correction
+    corrv = np.sqrt((1 + dv / c) / (1 - dv / c))
+    # return correction
+    return corrv
 
 
 def polyval(p, x):
