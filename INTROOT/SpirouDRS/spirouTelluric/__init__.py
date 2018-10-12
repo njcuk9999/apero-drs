@@ -50,7 +50,7 @@ CalcReconAbso = spirouTelluric.calc_recon_abso
 
 CalcMolecularAbsorption = spirouTelluric.calc_molecular_absorption
 
-InterpAtShiftedWavelengths = spirouTelluric.interp_at_shifted_wavelengths
+BervCorrectTemplate = spirouTelluric.berv_correct_template
 
 LinMini = spirouTelluric.lin_mini
 
