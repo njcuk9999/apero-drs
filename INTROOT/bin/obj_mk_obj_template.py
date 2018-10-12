@@ -25,6 +25,7 @@ from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTelluric
+from SpirouDRS.spirouCore import spirouMath
 
 # =============================================================================
 # Define variables
@@ -149,9 +150,9 @@ def main(night_name=None, files=None):
         image = image.reshape(loc['DATA'].shape)
         # ------------------------------------------------------------------
         # Load the data for this file
-        tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
+        tdata0, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # Correct for the blaze
-        tdata = tdata * loc['NBLAZE']
+        tdata = tdata0 / loc['NBLAZE']
 
         # ------------------------------------------------------------------
         # Get the wave solution for this file
@@ -179,7 +180,7 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # shift to correct berv
         # TODO: Should be realivistic
-        dvshift = (1 - dv / CONSTANT_C)
+        dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
 
         image = spirouTelluric.Wave2Wave(tdata, loc['WAVE'] * dvshift,
                                          loc['MASTERWAVE'])
@@ -226,7 +227,7 @@ def main(night_name=None, files=None):
     # Update the telluric database with the template
     # ----------------------------------------------------------------------
     objname = loc['OBJNAME']
-    spirouDB.UpdateDatabaseTellTemp(p, outfilename, objname, loc['DATAHDR'])
+    spirouDB.UpdateDatabaseObjTemp(p, outfilename, objname, loc['DATAHDR'])
     # put file in telluDB
     spirouDB.PutTelluFile(p, outfile)
 
@@ -248,6 +249,21 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
     p = spirouImage.WriteImageMulti(p, outfile2, big_cube_s0, hdict)
+
+
+    # # mega plot
+    # nfiles = big_cube_s0.shape[1]
+    # ncols = int(np.ceil(np.sqrt(nfiles)))
+    # nrows = int(np.ceil(nfiles/ncols))
+    # fig, frames = plt.subplots(ncols=ncols, nrows=nrows)
+    # for it in range(big_cube_s0.shape[1]):
+    #     jt, kt = it // ncols, it % ncols
+    #     frame = frames[jt][kt]
+    #     frame.imshow(big_cube_s0[:, it, :], origin='lower')
+    #     frame.set(xlim=(2030, 2060))
+
+
+
 
     # ----------------------------------------------------------------------
     # End Message

@@ -5033,3 +5033,24 @@
 	- spirouFITS.py - return header for flat file so we can get extraction type for the flat (Issue #481) (rev.1b8a26e6)
 	- unit_tests - do not currently test cal_WAVE_E2DS_EA_spirou.py - comment out (rev.67f480c4)
 	- pol_spirou.py - Update to alias for convention polarHeader --> PolarHeader (rev.486d7811)
+
+
+================================================================================
+* Fri Oct 12 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.035
+
+================================================================================
+	- update unit test runs (rev.99517394)
+	- spirouTelluric.py - modify get_molecular_tell_lines to use master wavelength solution, rename functions to better describe functionality, use relativistic dv correction function (rev.ba180af0)
+	- spirouTDB.py - rename functions to better describe functionality (rev.4b484e12)
+	- spirouDB.__init__.py - rename aliases to better describe functions (rev.6ebe0beb)
+	- spirouPlot.py - add tellu_fit_debug_shift_plot - Issue #478 (rev.c6c46929)
+	- spirouMath.py - add relativistic_waveshift function (rev.4a2da36e)
+	- constants_SPIROU_H4RG.py - turn off the fit derviative part for principle components - Issue #478 (rev.e3a4f288)
+	- obj_mk_obj_template.py - further fixes for wavelength shift addition - Issue #478 (rev.2c8b7c5a)
+	- obj_fit_tellu.py - further fixes for wavelength shift addition - Issue #478 (rev.5a980e06)
+	- obj_fit_tellu.py - fix bugs in shifting wavelength (Issue #478) (rev.a878ca1b)
+	- cal_extract/FF_RAW_spirou.py - catch warnings from extraction process (rev.c788e478)
+	- cal_WAVE_E2DS_EA_spirou.py - currently only supports one FP_FP and one HC_HC (due to file updating) - added check to error if more used (rev.51325fa2)
+	- cal_HC_E2DS_EA_spirou.py - currently only supports one FP_FP and one HC_HC (due to file updating) - added check to error if more used (rev.b9e5ab48)
+	- spirouTelluric.py - change bad mask from 0.999 to 0.5 to avoid NaN fringing - Issue #478 (rev.8e68cffd)
+	- spirouTelluric.py - catch known warnings and disregard (rev.db5fd2ef)

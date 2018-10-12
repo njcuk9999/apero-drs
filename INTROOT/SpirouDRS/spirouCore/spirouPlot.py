@@ -2148,6 +2148,48 @@ def wave_ea_plot_line_profiles(p, loc):
 
     plt.subplots_adjust(hspace=0, wspace=0)
     plt.suptitle('Line Profiles for resolution grid')
+    # end plotting function properly
+    end_plotting()
+
+
+def wave_ea_plot_single_order(p, loc):
+
+    # set order to plot
+    plot_order = p['IC_WAVE_EA_PLOT_ORDER']
+    # get the correct order to plot for all_lines
+    #    (which is sized n_ord_final-n_ord_start)
+    plot_order_line = plot_order - p['IC_HC_N_ORD_START_2']
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot order and flux
+    frame.plot(loc['LL_OUT_2'][plot_order], loc['HCDATA'][plot_order],
+               label='HC spectrum - order '+ str(plot_order))
+    # plot found lines
+    # first line separate for labelling purposes
+    x0 = loc['ALL_LINES_1'][plot_order_line][0][0]
+    ymax0 = loc['ALL_LINES_1'][plot_order_line][0][2]
+    frame.vlines(x0, 0, ymax0, color='m', label='fitted lines')
+    # plot lines to the top of the figure
+    maxpoint = np.max(loc['HCDATA'][plot_order])
+    plt.vlines(x0, 0, maxpoint, color='gray', linestyles='dotted')
+    # rest of lines
+    for i in range(1, len(loc['ALL_LINES_1'][plot_order_line])):
+        # get x and y
+        x = loc['ALL_LINES_1'][plot_order_line][i][0]
+        ymaxi = loc['ALL_LINES_1'][plot_order_line][i][2]
+        # plot lines to their corresponding amplitude
+        frame.vlines(x, 0, ymaxi, color='m')
+        # plot lines to the top of the figure
+        frame.vlines(x, 0, maxpoint, color='gray', linestyles='dotted')
+    # plot
+    frame.legend(loc=0)
+    frame.set(xlabel='Wavelength', ylabel='Flux')
+    # end plotting function properly
+    end_plotting()
 
 
 # =============================================================================
@@ -2253,6 +2295,33 @@ def tellu_fit_tellu_spline_plot(p, loc):
     title = 'Reconstructed Spline Plot (Order = {0})'
     frame.set(title=title.format(selected_order),
               xlabel='Wavelength [nm]', ylabel='Normalised flux')
+    # end plotting function properly
+    end_plotting()
+
+
+def tellu_fit_debug_shift_plot(p, loc):
+    # get data from loc
+    tdata = loc['SP'] / np.nanmedian(loc['SP'])
+    tapas_before = loc['TAPAS_ALL_PRESHIFT'][0]
+    tapas_after = loc['TAPAS_ALL_SPECIES'][0]
+    pc1_before = loc['PC'][:, 0]
+    pc1_after = loc['PC_PRESHIFT'][:, 0]
+    # setup fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot the data vs pixel number
+    frame.plot(tdata, color='k', label='Spectrum')
+    frame.plot(pc1_before, color='g', marker='x', label='PC (before)')
+    frame.plot(tapas_before, color='0.5', marker='o', label='TAPAS (before)')
+    frame.plot(pc1_after, color='r', label='PC (After)')
+    frame.plot(tapas_after, color='b', label='TAPAS (After)')
+
+    plt.legend(loc=0)
+    frame.set(title='Wavelength shift (Before and after) compared to the data',
+              xlabel='Pixel number', ylabel='Normalised flux')
     # end plotting function properly
     end_plotting()
 
