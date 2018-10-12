@@ -146,8 +146,6 @@ def main(night_name=None, files=None):
         loc['FLAG_TEMPLATE'] = True
         # load template
         template, _, _, _, _ = spirouImage.ReadImage(p, template_file)
-        # renormalize the template
-        template = template / loc['NBLAZE']
         # add to loc
         loc['TEMPLATE'] = template
     # set the source for flag and template
@@ -221,7 +219,7 @@ def main(night_name=None, files=None):
     # Returns loc:
     #           PC
     #           NPC
-    #           FIT_OC
+    #           FIT_PC
     loc = spirouTelluric.CalculateAbsorptionPCA(p, loc, log_abso, keep)
 
     # Plot PCA components
@@ -325,6 +323,7 @@ def main(night_name=None, files=None):
             #           WAVE_IT
             # Returns:
             #           TEMPLATE2
+            # TODO: change name --> berv_correction
             loc = spirouTelluric.InterpAtShiftedWavelengths(p, loc, thdr)
 
             # debug plot
@@ -332,18 +331,56 @@ def main(night_name=None, files=None):
                 # plot the transmission map plot
                 sPlt.tellu_fit_tellu_spline_plot(p, loc)
 
+        # TODO: remove later
+        pcxxx = np.array(loc['PC'][:,0])
+        tapasxxx = np.array(loc['TAPAS_ALL_SPECIES'][0])
+
         # ------------------------------------------------------------------
         # Shift the pca components to correct frame
         # ------------------------------------------------------------------
         # log process
-        wmsg1 = 'Shifting PCA components on to master wavelength grid'
+        wmsg1 = 'Shifting PCA components from master wavelength grid'
         wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
         WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
         # shift pca components (one by one)
         for comp in range(loc['NPC']):
             wargs = [loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
             shift_pc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
-            loc['PC'][:, comp] = shift_pc.reshape(loc['PC'][:, comp].shape)
+            loc['PC'][:, comp] = shift_pc.reshape(wargs[0].shape)
+
+            wargs = [loc['FIT_PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
+            shift_fpc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+            loc['FIT_PC'][:, comp] = shift_fpc.reshape(wargs[0].shape)
+
+        # ------------------------------------------------------------------
+        # Shift the pca components to correct frame
+        # ------------------------------------------------------------------
+        # log process
+        wmsg1 = 'Shifting TAPAS spectrum from master wavelength grid'
+        wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        # shift tapas
+        for comp in range(len(loc['TAPAS_ALL_SPECIES'])):
+            wargs = [loc['TAPAS_ALL_SPECIES'][comp], loc['MASTERWAVE'],
+                     loc['WAVE_IT']]
+            stapas = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+            loc['TAPAS_ALL_SPECIES'][comp] = stapas.reshape(wargs[0].shape)
+
+        # TODO: remove later
+        plt = sPlt.plt
+        plt.figure()
+        plt.clf()
+        plt.plot(tdata.ravel()/np.nanmedian(tdata), color='k', label='Spectrum')
+        plt.plot(pcxxx, color='g', marker='x', label='PC (before)')
+        plt.plot(tapasxxx, color='0.5', marker='o', label='TAPAS (before)')
+
+        plt.plot(loc['PC'][:,0],color='r', label='PC (After)')
+        plt.plot(loc['TAPAS_ALL_SPECIES'][0],color='b', label='TAPAS (After)')
+
+        plt.legend(loc=0)
+
+        #
+        # WLOG('error', '', 'STOP')
 
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption
