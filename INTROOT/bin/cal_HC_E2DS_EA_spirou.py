@@ -77,6 +77,7 @@ def main(night_name=None, files=None):
 
     # make sure we only have one HCFILE more than one is not currently
     # supported
+    # TODO: Fix problem with updating output and then remove this
     if len(p['ARG_FILE_NAMES']) > 1:
         emsg = 'Currently we do not support multiple HCFILES'
         WLOG('error', p['LOG_OPT'], emsg)
