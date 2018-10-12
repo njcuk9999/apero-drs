@@ -319,7 +319,8 @@ def calc_recon_abso(p, loc):
     sp2 = sp.ravel()
     wave2 = loc['WAVE_IT'].ravel()
     # define the good pixels as those above minimum transmission
-    keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
+    with warnings.catch_warnings(record=True) as _:
+        keep = tapas_all_species[0, :] > p['TELLU_FIT_MIN_TRANSMISSION']
     # also require wavelength constraints
     keep &= (wave2 > p['TELLU_LAMBDA_MIN'])
     keep &= (wave2 < p['TELLU_LAMBDA_MAX'])
@@ -345,7 +346,8 @@ def calc_recon_abso(p, loc):
                 end = order_num * xdim + xdim
                 # produce a mask of good transmission
                 order_tapas = tapas_all_species[0, start:end]
-                mask = order_tapas > p['TRANSMISSION_CUT']
+                with warnings.catch_warnings(record=True) as _:
+                    mask = order_tapas > p['TRANSMISSION_CUT']
                 # get good transmission spectrum
                 spgood = sp[order_num, :] * np.array(mask, dtype=float)
                 recongood = recon_abso[start:end]
@@ -472,8 +474,8 @@ def calc_molecular_absorption(p, loc):
         log_tapas_abso = np.log(tapas_all_species[1:, :])
 
     # get good pixels
-    keep = np.min(log_tapas_abso, axis=0) > limit
     with warnings.catch_warnings(record=True) as _:
+        keep = np.min(log_tapas_abso, axis=0) > limit
         keep &= log_recon_abso > limit
     keep &= np.isfinite(recon_abso)
 
