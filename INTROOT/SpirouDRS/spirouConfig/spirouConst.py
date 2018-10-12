@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.017'
+__version__ =  '0.3.034'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-09-21'
+__date__ =  '2018-10-11'
 
 
 # =============================================================================
@@ -313,6 +313,10 @@ def TAGFILE():
 ckwargs = dict(package=PACKAGE(), configfolder=CONFIGFOLDER(),
                configfile=CONFIGFILE(), return_raw=False)
 pp = spirouConfigFile.read_config_file(**ckwargs)
+if 'USER_CONFIG' in pp:
+    pp, _ = spirouConfigFile.get_user_config(pp, package=PACKAGE(),
+                                             configfolder=CONFIGFOLDER(),
+                                             configfile=CONFIGFILE())
 
 # =============================================================================
 # Get tags from tag file
@@ -851,6 +855,33 @@ def SLIT_TILT_FILE(p):
     # return filename and tag
     return tiltfits, tag
 
+# noinspection PyPep8Naming
+def SLIT_SHAPE_FILE(p):
+    """
+    Defines the shape file location and filename
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+
+    :return tiltfits: string, slit tilt file location and filename
+    """
+    func_name = 'SLIT_SHAPE_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    calibprefix = CALIB_PREFIX(p)
+    shapefn = p['ARG_FILE_NAMES'][0].replace('.fits', '_shape.fits')
+    shapefitsname = calibprefix + shapefn
+    shapefits = os.path.join(reduced_dir, shapefitsname)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return shapefits, tag
+
 
 # noinspection PyPep8Naming
 def FF_BLAZE_FILE(p, fiber=None):
@@ -972,6 +1003,37 @@ def EXTRACT_E2DSFF_FILE(p, fiber=None):
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
     e2ds_ext = '_e2dsff_{0}.fits'.format(fiber)
+    e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
+    e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return e2dsfits, tag
+
+
+# noinspection PyPep8Naming
+def EXTRACT_E2DSLL_FILE(p, fiber=None):
+    """
+    Defines the extraction E2DSLL file name and location
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                arg_file_names: list, list of files taken from the command line
+                                (or call to recipe function) must have at least
+                                one string filename in the list
+    :param fiber: string, the fiber name, if None tries to get the fiber name
+                  from "p" (i.e. p['FIBER'])
+    :return e2dsfits: string, the filename and location of the extraction
+                      E2DS file
+    """
+    func_name = 'EXTRACT_E2DSLL_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    e2ds_ext = '_e2dsll_{0}.fits'.format(fiber)
     e2dsfitsname = p['ARG_FILE_NAMES'][0].replace('.fits', e2ds_ext)
     e2dsfits = os.path.join(reducedfolder, e2dsfitsname)
     # get tag
@@ -1508,6 +1570,27 @@ def WAVE_LINE_FILE_EA(p):
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
 
+def WAVE_RES_FILE_EA(p):
+    func_name = 'WAVE_RES_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_waveres_ea_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
 
 # noinspection PyPep8Naming
 def WAVE_E2DS_COPY(p):
@@ -1526,6 +1609,8 @@ def WAVE_E2DS_COPY(p):
     tag = tags[func_name]
     # return absolute path and tag
     return e2dscopy, tag
+
+
 
 
 # noinspection PyPep8Naming
@@ -1638,11 +1723,37 @@ def TELLU_FIT_RECON_FILE(p, filename):
 
 
 # noinspection PyPep8Naming
-def TELLU_TEMPLATE_FILE(p, loc):
-    func_name = 'TELLU_TEMPLATE_FILE'
+def OBJTELLU_TEMPLATE_FILE(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_FILE'
     # define filename
     reduced_dir = p['ARG_FILE_DIR']
     outfilename = 'Template_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
+
+
+# noinspection PyPep8Naming
+def OBJTELLU_TEMPLATE_CUBE_FILE1(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_CUBE_FILE1'
+    # define filename
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'BigCube_{0}.fits'.format(loc['OBJNAME'])
+    outfile = os.path.join(reduced_dir, outfilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return absolute path
+    return outfile, tag
+
+
+# noinspection PyPep8Naming
+def OBJTELLU_TEMPLATE_CUBE_FILE2(p, loc):
+    func_name = 'OBJTELLU_TEMPLATE_CUBE_FILE2'
+    # define filename
+    reduced_dir = p['ARG_FILE_DIR']
+    outfilename = 'BigCube0_{0}.fits'.format(loc['OBJNAME'])
     outfile = os.path.join(reduced_dir, outfilename)
     # get tag
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
@@ -2426,6 +2537,79 @@ def DEFAULT_LOG_OPT():
     program = path.replace('.py', '')
     # return program
     return program
+
+
+# =============================================================================
+# Plot functions
+# =============================================================================
+def PLOT_FONT_SIZE():
+    """
+    Set the default font size for all graphs
+
+    Note: A good size for viewing on the screen is around 12
+
+    setting value to None will use system defaults
+
+    :return fontsize: int or string or None: fontsize accepted by matplotlib
+    """
+    # fontsize = 20
+    fontsize = None
+    return fontsize
+
+
+def PLOT_FONT_WEIGHT():
+    """
+    Set the default font weight for all graphs
+
+    setting value to None will use system defaults
+
+    :return weight: string or None: font weight accepted by matplotlib
+    """
+    # weight = 'bold'
+    # weight = 'normal'
+    weight = None
+    return weight
+
+
+def PLOT_FONT_FAMILY():
+    """
+    Set the default font family for all graphs (i.e. monospace)
+
+    setting value to None will use system defaults
+
+    :return family: string or None: font family (style name) accepted by
+                    matplotlib
+    """
+    # family = 'monospace'
+    family = None
+    return family
+
+
+def PLOT_STYLE():
+
+    # style = 'seaborn'
+    # style = 'dark_background'
+    style = None
+    return style
+
+
+def FONT_DICT():
+    """
+    Font manager for matplotlib fonts - added to matplotlib.rcParams as a
+    dictionary
+    :return font: rcParams dictionary (must be accepted by maplotlbi.rcParams)
+
+    see:
+      https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
+    """
+    font = dict()
+    if PLOT_FONT_FAMILY() is not None:
+        font['family'] = PLOT_FONT_FAMILY()
+    if PLOT_FONT_WEIGHT() is not None:
+        font['weight'] = PLOT_FONT_WEIGHT()
+    if PLOT_FONT_SIZE() is not None:
+        font['size'] = PLOT_FONT_SIZE()
+    return font
 
 
 # =============================================================================

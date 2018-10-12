@@ -92,16 +92,18 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Get the wave solution
     # ------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
-    # set source
-    loc.set_source('WAVE', main_name)
+    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
+                                       return_wavemap=True,
+                                       return_filename=True)
+    _, loc['WAVE'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
     # get the wave keys
     loc = spirouImage.GetWaveKeys(p, loc, loc['DATAHDR'])
 
     # ------------------------------------------------------------------
     # Get and Normalise the blaze
     # ------------------------------------------------------------------
-    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+    p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
 
     # ------------------------------------------------------------------
     # Construct convolution kernels
@@ -247,20 +249,70 @@ def main(night_name=None, files=None):
             transmission_map[order_num, :] = sp[order_num, :] / sed
 
         # ------------------------------------------------------------------
+        # Shift transmisson map to master wave file
+        # ------------------------------------------------------------------
+        # TODO: Add later
+        # get master wave map
+        masterwavefile = spirouDB.GetDatabaseMasterWave(p)
+        # log process
+        wmsg1 = 'Shifting transmission map on to master wavelength grid'
+        wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        # Force A and B to AB solution
+        if p['FIBER'] in ['A', 'B']:
+            wave_fiber = 'AB'
+        else:
+            wave_fiber = p['FIBER']
+        # read master wave map
+        mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                           return_wavemap=True, quiet=True,
+                                           return_header=True, fiber=wave_fiber)
+        masterwavep, masterwave, masterwaveheader = mout
+        # get wave acqtimes
+        master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
+
+        # shift map
+        wargs = [transmission_map, loc['WAVE'], masterwave]
+        s_transmission_map = spirouTelluric.Wave2Wave(*wargs)
+
+        # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
+        # get raw file name
+        raw_in_file = os.path.basename(p['FITSFILENAME'])
+        # copy original keys
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        # set the input files
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                                   value=os.path.basename(masterwavefile))
+
+        # add wave solution date
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+                                   value=master_acqtimes[0])
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+                                   value=master_acqtimes[1])
+        # add wave solution number of orders
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+                                   value=masterwavep.shape[0])
+        # add wave solution degree of fit
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+                                   value=masterwavep.shape[1] - 1)
+        # add wave solution coefficients
+        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                         values=masterwavep)
         # write to file
-        p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
+        p = spirouImage.WriteImage(p, outfile, s_transmission_map, hdict)
 
         # ------------------------------------------------------------------
         # Generate the absorption map
         # ------------------------------------------------------------------
         # set up storage for the absorption
-        abso = np.array(transmission_map)
+        abso = np.array(s_transmission_map)
         # set values less than low threshold to low threshold
         # set values higher than high threshold to 1
         low, high = p['TELLU_ABSO_LOW_THRES'], p['TELLU_ABSO_HIGH_THRES']
@@ -343,11 +395,19 @@ def main(night_name=None, files=None):
         abso_e2ds = abso.reshape(nfiles, loc['YDIM'], loc['XDIM'])
         # get file name
         abso_map_file, tag2 = spirouConfig.Constants.TELLU_ABSO_MAP_FILE(p)
-        # write thie map to file
+        # get raw file name
+        raw_in_file = os.path.basename(p['FITSFILENAME'])
+        # write the map to file
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        # set the input files
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                                   value=loc['WAVEFILE'])
+
         # write to file
         p = spirouImage.WriteImage(p, abso_map_file, abso_e2ds, hdict)
 

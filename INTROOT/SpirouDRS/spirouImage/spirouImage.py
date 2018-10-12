@@ -16,14 +16,19 @@ import glob
 import warnings
 import scipy
 from scipy.ndimage import filters, median_filter
-from scipy.interpolate import InterpolatedUnivariateSpline as InterpUSpline
 from scipy.interpolate import griddata
+from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
+from scipy.ndimage import filters
+from scipy.stats import stats
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouEXTOR
 from SpirouDRS.spirouCore import spirouMath
+
+import off_listing_REDUC_spirou
+
 from . import spirouFITS
 from . import spirouTable
 
@@ -336,45 +341,102 @@ def get_all_similar_files(p, hdr):
     """
     func_name = __NAME__ + '.get_all_similar_files()'
 
+    # get the allowed file types
+    allowed_file_types_all = p['DRIFT_PEAK_ALLOWED_OUTPUT']
+
     # get the keys for this file
+    # if p['KW_OUTPUT'][0] in hdr:
+    #     output = hdr[p['KW_OUTPUT'][0]]
+    # else:
+    #     emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+    #     emsg2 = '\tfunction = {0}'.format(func_name)
+    #     WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    #     output = None
+
+    # get the output key for this file
     if p['KW_OUTPUT'][0] in hdr:
         output = hdr[p['KW_OUTPUT'][0]]
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
+        emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        eargs = [p['KW_OUTPUT'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
         output = None
 
+    # get lamp type and extraction type
     if p['KW_EXT_TYPE'][0] in hdr:
         ext_type = hdr[p['KW_EXT_TYPE'][0]]
+        drift_types = p['DRIFT_PEAK_ALLOWED_TYPES'].keys()
+        found, lamp = False, 'None'
+        for kind in drift_types:
+            if ext_type == kind:
+                lamp = p['DRIFT_PEAK_ALLOWED_TYPES'][kind]
+                found = True
+        if not found:
+            eargs1 = [p['KW_EXT_TYPE'][0], ' or '.join(drift_types)]
+            emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
+                     '{1}'.format(*eargs1))
+            emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            lamp = 'None'
+            ext_type = None
     else:
-        emsg1 = 'Key "{0}" missing from header'.format(p['KW_EXT_TYPE'][0])
+        emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        lamp = 'None'
         ext_type = None
+    # get file type allowed (using lamp type)
+    if lamp in allowed_file_types_all:
+        allowed_file_types = allowed_file_types_all[lamp]
+    else:
+        emsg1 = 'Reference file was identified as lamp={0}'
+        emsg2 = '\tHowever DRIFT_PEAK_ALLOWED_OUTPUT missing this key.'
+        emsg3 = '\tPlease check constants file'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        allowed_file_types = None
 
     # get expected index file name and location
     index_file = spirouConfig.Constants.INDEX_OUTPUT_FILENAME()
     path = p['REDUCED_DIR']
     index_path = os.path.join(path, index_file)
+
+    # if file does not exist try to index this folder
+    ntries = 0
+    while (not os.path.exists(index_path)) and (ntries < 5):
+        wmsg = 'No index file. Running indexing (Attempt {0} of {1})'
+        wargs = [ntries + 1, 5]
+        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        off_listing_REDUC_spirou.main(night_name=p['ARG_NIGHT_NAME'],
+                                      quiet=True)
+        ntries += 1
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
         itable = spirouTable.read_fits_table(index_path)
     else:
-        emsg = 'No index file. Please run off_listing_REDUC_spirou.py'
-        WLOG('error', p['LOG_OPT'], emsg)
+        emsg1 = 'No index file. Could not run indexing'
+        emsg2 = '\t Please run off_listing_REDUC_spirou.py'
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         itable = None
 
-    # mask by those with correct output and ext_type and not be itself
+    # check that we have the correct output type (i.e. EXT_E2DS)
     mask1 = itable[p['KW_OUTPUT'][0]] == output
-    mask2 = itable[p['KW_EXT_TYPE'][0]] == ext_type
+    # check that we have the correct extraction type (e.g. FP_FP or HCONE_HCONE)
+    mask2 = np.in1d(np.array(itable[p['KW_EXT_TYPE'][0]], dtype=str),
+                    np.array(allowed_file_types))
+    # check that we are not including the original filename
     mask3 = itable['FILENAME'] != os.path.basename(p['FITSFILENAME'])
-    mask = mask1 & mask2 & mask3
+    # check that fiber type is correct for all
+    mask4 = check_fiber_ext_type(p, itable, allowed_file_types)
+    # combine masks
+    mask = mask1 & mask2 & mask3 & mask4
 
-    # check that we have rows left
+    # check that we have some rows left
     if np.sum(mask) == 0:
         emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
-        eargs = [p['KW_OUTPUT'][0], output, p['KW_EXT_TYPE'][0], ext_type]
+        eargs = [p['KW_OUTPUT'][0], allowed_file_types,
+                 p['KW_EXT_TYPE'][0], ext_type]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # if we do get date and sort by it
     else:
@@ -409,8 +471,10 @@ def get_all_similar_files(p, hdr):
         itable = itable[sortmask]
         # get file list
         filelist = itable['ABSFILENAMES']
+        # get file types that are left
+        filetypes = np.unique(itable[p['KW_EXT_TYPE'][0]])
         # return file list
-        return list(filelist)
+        return list(filelist), list(filetypes)
 
 
 def interp_bad_regions(p, image):
@@ -468,7 +532,7 @@ def interp_bad_regions(p, image):
     # loop around all x pixels and shift pixels by interpolating with a spline
     for xi in range(dim2):
         # produce the universal spline fit
-        splinefit = InterpUSpline(xpixfit, image2[:, xi], k=1)
+        splinefit = IUVSpline(xpixfit, image2[:, xi], k=1)
         # apply the spline fit with the shift and write to the image
         image2[:, xi] = splinefit(xpixfit + pixshift[xi])
     # -------------------------------------------------------------------------
@@ -511,7 +575,7 @@ def interp_bad_regions(p, image):
     # add the curvature back in (again by interpolating with a spline)
     for xi in range(dim2):
         # produce the universal spline fit
-        splinefit = InterpUSpline(xpixfit, image2[:, xi], k=1)
+        splinefit = IUVSpline(xpixfit, image2[:, xi], k=1)
         # apply the spline fit with the shift and write to the image
         image2[:, xi] = splinefit(xpixfit - pixshift[xi])
     # -------------------------------------------------------------------------
@@ -586,6 +650,22 @@ def fix_non_preprocessed(p, image, filename=None):
     # else return image
     else:
         return image
+
+
+def check_fiber_ext_type(p, itable, allowed_file_types):
+    # define mask4 as a set of Trues (i.e. we allow all by default)
+    mask4 = np.ones(len(itable), dtype=bool)
+    # loop around the different types
+    for ext_type_ex in p['DRIFT_PEAK_OUTPUT_EXCEPT']:
+        # check ext_type in allowed types
+        if ext_type_ex not in allowed_file_types:
+            continue
+        # check fiber is correct if it isn't set all of this EXT_TYPE to False
+        if p['FIBER'] != p['DRIFT_PEAK_OUTPUT_EXCEPT'][ext_type_ex]:
+            tmp = itable[p['KW_EXT_TYPE'][0]] == ext_type_ex
+            mask4[tmp] = False
+    # return mask4
+    return mask4
 
 
 # =============================================================================
@@ -918,11 +998,14 @@ def measure_dark(pp, image, image_name, short_name):
     WLOG('info', pp['LOG_OPT'], wmsg.format(*wargs))
     # add required variables to pp
     source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
-    pp['histo_{0}'.format(short_name)] = histo
+
+    pp['histo_{0}'.format(short_name)] = np.array(histo)
     pp.set_source('histo_{0}'.format(short_name), source)
-    pp['med_{0}'.format(short_name)] = med
+
+    pp['med_{0}'.format(short_name)] = float(med)
     pp.set_source('med_{0}'.format(short_name), source)
-    pp['dadead_{0}'.format(short_name)] = dadead
+
+    pp['dadead_{0}'.format(short_name)] = float(dadead)
     pp.set_source('dadead_{0}'.format(short_name), source)
     # return the parameter dictionary with new values
     return pp
@@ -962,6 +1045,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     if nfiles is None:
         nfiles = p['NBFRAMES']
 
+    # -------------------------------------------------------------------------
     # get calibDB
     if 'calibDB' not in p:
         # get acquisition time
@@ -977,11 +1061,32 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
             WLOG('error', p['LOG_OPT'], [e.message, emsg])
             cdb, acqtime = None, None
 
+    # -------------------------------------------------------------------------
     # try to read 'DARK' from cdb
     if 'DARK' in cdb:
         darkfile = os.path.join(p['DRS_CALIB_DB'], cdb['DARK'][1])
-        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using ' + darkfile)
-        darkimage, nx, ny = spirouFITS.read_raw_data(darkfile, False, True)
+    else:
+        darkfile = None
+    # try to read 'SKYDARK' from cdb
+    if 'SKYDARK' in cdb:
+        skydarkfile = os.path.join(p['DRS_CALIB_DB'], cdb['SKYDARK'][1])
+    else:
+        skydarkfile = None
+
+    # -------------------------------------------------------------------------
+    # load the correct dark image
+    # -------------------------------------------------------------------------
+    # if we are allowed to use sky darks choose between them
+    if p['USE_SKYDARK_CORRECTION'] and skydarkfile is not None:
+        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(skydarkfile)
+        # Read dark file
+        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using SKY: ' + darkfile)
+        corrected_image = image - (darkimage * nfiles)
+    # else if we don't have a dark
+    elif darkfile is not None:
+        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(darkfile)
+        # Read dark file
+        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using DARK: ' + darkfile)
         corrected_image = image - (darkimage * nfiles)
     else:
         # get master config file name
@@ -993,16 +1098,24 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         else:
             extstr = ''
         # log error
-        emsg1 = 'No valid DARK in calibDB {0} ' + extstr
+        emsg1 = 'No valid DARK/SKYDARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
-        corrected_image, darkimage = None, None
+        darkimage, dhdr, corrected_image = None, None, None
+    # -------------------------------------------------------------------------
+
+    # get the dark filename (from header)
+    if p['KW_DARKFILE'][0] in dhdr:
+        p['DARKFILE'] = dhdr[p['KW_DARKFILE'][0]]
+    else:
+        p['DARKFILE'] = 'UNKNOWN'
+    p.set_source('DARKFILE', func_name)
 
     # finally return datac
     if return_dark:
-        return corrected_image, darkimage
+        return p, corrected_image, darkimage
     else:
-        return corrected_image
+        return p, corrected_image
 
 
 def get_badpixel_map(p, header=None):
@@ -1049,8 +1162,8 @@ def get_badpixel_map(p, header=None):
     if 'BADPIX' in cdb:
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
         WLOG('', p['LOG_OPT'], 'Doing Bad Pixel Correction using ' + badpixfile)
-        badpixmask, nx, ny = spirouFITS.read_raw_data(badpixfile, False, True)
-        return badpixmask
+        badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(badpixfile)
+        return badpixmask, bhdr
     else:
         # get master config file name
         masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
@@ -1091,13 +1204,21 @@ def correct_for_badpix(p, image, header):
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
     # get badpixmask
-    badpixmask = get_badpixel_map(p, header)
+    badpixmask, bhdr = get_badpixel_map(p, header)
     # create mask from badpixmask
     mask = np.array(badpixmask, dtype=bool)
     # correct image (set bad pixels to zero)
     corrected_image = np.where(mask, np.zeros_like(image), image)
+    # get badpixel file
+    if p['KW_BADPFILE1'][0] in bhdr:
+        p['BADPFILE1'] = bhdr[p['KW_BADPFILE1'][0]]
+        p['BADPFILE2'] = bhdr[p['KW_BADPFILE2'][0]]
+    else:
+        p['BADPFILE1'] = 'UNKNOWN'
+        p['BADPFILE2'] = 'UNKNOWN'
+    p.set_sources(['BADPFILE1', 'BADPFILE2'], func_name)
     # finally return corrected_image
-    return corrected_image
+    return p, corrected_image
 
 
 def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
@@ -1436,6 +1557,302 @@ def get_tilt(pp, lloc, image):
     return lloc
 
 
+def get_shape_map(p, loc):
+    func_name = __NAME__ + '.get_shape_map()'
+    # get constants from p
+    nbanana = p['SHAPE_NUM_ITERATIONS']
+    width = p['SHAPE_ABC_WIDTH']
+    nsections = p['SHAPE_NSECTIONS']
+    large_angle_range = p['SHAPE_LARGE_ANGLE_RANGE']
+    small_angle_range = p['SHAPE_SMALL_ANGLE_RANGE']
+    sigclipmax = p['SHAPE_SIGMACLIP_MAX']
+    med_filter_size = p['SHAPE_MEDIAN_FILTER_SIZE']
+    min_good_corr = p['SHAPE_MIN_GOOD_CORRELATION']
+    # get data from loc
+    data1 = np.array(loc['DATA'])
+    nbo = loc['NUMBER_ORDERS'] // 2
+    acc = loc['ACC']
+    # get the dimensions
+    dim0, dim1 = loc['DATA'].shape
+    master_dxmap = np.zeros_like(data1)
+    # define storage for plotting
+    slope_deg_arr, slope_arr, skeep_arr = [], [], []
+    xsec_arr, ccor_arr = [], []
+    ddx_arr, dx_arr = [], []
+    dypix_arr, cckeep_arr = [], []
+
+    # -------------------------------------------------------------------------
+    # iterating the correction, from coarser to finer
+    for banana_num in range(nbanana):
+        # ---------------------------------------------------------------------
+        # we use the code that will be used by the extraction to ensure
+        # that slice images are as straight as can be
+        # ---------------------------------------------------------------------
+        # if the map is not zeros, we use it as a starting point
+        if np.sum(master_dxmap != 0) != 0:
+            data2 = spirouEXTOR.DeBananafication(data1, master_dxmap)
+            # if this is not the first iteration, then we must be really close
+            # to a slope of 0
+            range_slopes_deg = small_angle_range
+        else:
+            data2 = np.array(data1)
+            # starting point for slope exploration
+            range_slopes_deg = large_angle_range
+        # expressed in pixels, not degrees
+        range_slopes = np.tan(np.deg2rad(np.array(range_slopes_deg)))
+        # set up iteration storage
+        slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
+        xsec_arr_i, ccor_arr_i = [], []
+        ddx_arr_i, dx_arr_i = [], []
+        dypix_arr_i,  cckeep_arr_i = [], []
+        # ---------------------------------------------------------------------
+        # loop around orders
+        for order_num in range(nbo):
+            # -----------------------------------------------------------------
+            # Log progress
+            wmsg = 'Banana iteration: {0}: Order {1}/{2} '
+            wargs = [banana_num + 1, order_num + 1, nbo]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            # -----------------------------------------------------------------
+            # create the x pixel vector (used with polynomials to find
+            #    order center)
+            xpix = np.arange(dim1)
+            # y order center positions (every other one)
+            ypix = np.polyval(acc[order_num * 2][::-1], xpix)
+            # defining a ribbon that will contain the straightened order
+            ribbon = np.zeros([width, dim1])
+            # get the widths
+            widths = np.arange(width) - width / 2.0
+            # get all bottoms and tops
+            bottoms = ypix - width/2 - 2
+            tops = ypix + width/2 + 2
+            # splitting the original image onto the ribbon
+            for ix in range(dim1):
+                # define bottom and top that encompasses all 3 fibers
+                bottom = int(bottoms[ix])
+                top = int(tops[ix])
+                sx = np.arange(bottom, top)
+                # calculate spline interpolation and ribbon values
+                if bottom > 0:
+                    spline = IUVSpline(sx, data2[bottom:top, ix], ext=1, k=1)
+                    ribbon[:, ix] = spline(ypix[ix] + widths)
+            # normalizing ribbon stripes to their median abs dev
+            for iw in range(width):
+                norm = np.nanmedian(np.abs(ribbon[iw, :]))
+                ribbon[iw, :] = ribbon[iw, :] / norm
+            # range explored in slopes
+            # TODO: Question: Where does the /8.0 come from?
+            sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
+            slopes = (np.arange(9) * sfactor) + range_slopes[0]
+            # log the range slope exploration
+            wmsg = '\tRange slope exploration: {0:.3f} -> {1:.3f} deg'
+            wargs = [range_slopes_deg[0], range_slopes_deg[1]]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            # -------------------------------------------------------------
+            # the domain is sliced into a number of sections, then we
+            # find the tilt that maximizes the RV content
+            xsection = dim1 * (np.arange(nsections) + 0.5) / nsections
+            dxsection = np.repeat([np.nan], len(xsection))
+            keep = np.zeros(len(dxsection), dtype=bool)
+            ribbon2 = np.array(ribbon)
+            # RV content per slice and per slope
+            rvcontent = np.zeros([len(slopes), nsections])
+            # loop around the slopes
+            for islope, slope in enumerate(slopes):
+                # copy the ribbon
+                ribbon2 = np.array(ribbon)
+                # interpolate new slope-ed ribbon
+                for iw in range(width):
+                    # get the ddx value
+                    ddx = (iw - width/2.0) * slope
+                    # get the spline
+                    spline = IUVSpline(xpix, ribbon[iw, :], ext=1)
+                    # calculate the new ribbon values
+                    ribbon2[iw, :] = spline(xpix + ddx)
+                # record the profile of the ribbon
+                profile = np.nanmedian(ribbon2, axis=0)
+                # loop around the sections to record rv content
+                for nsection in range(nsections):
+                    # sum of integral of derivatives == RV content.
+                    # This should be maximal when the angle is right
+                    start = nsection * dim1//nsections
+                    end = (nsection + 1) * dim1//nsections
+                    grad = np.gradient(profile[start:end])
+                    rvcontent[islope, nsection] = np.nansum(grad ** 2)
+            # -------------------------------------------------------------
+            # we find the peak of RV content and fit a parabola to that peak
+            for nsection in range(nsections):
+                # we must have some RV content (i.e., !=0)
+                if np.nanmax(rvcontent[:, nsection]) != 0:
+                    vec = np.ones_like(slopes)
+                    vec[0], vec[-1] = 0, 0
+                    # get the max pixel
+                    maxpix = np.nanargmax(rvcontent[:, nsection] * vec)
+                    # max RV and fit on the neighbouring pixels
+                    xff = slopes[maxpix - 1: maxpix + 2]
+                    yff = rvcontent[maxpix - 1: maxpix + 2, nsection]
+                    coeffs = np.polyfit(xff, yff, 2)
+                    # if peak within range, then its fine
+                    dcoeffs = -0.5 * coeffs[1] / coeffs[0]
+                    if np.abs(dcoeffs) < 1:
+                        dxsection[nsection] = dcoeffs
+                # we sigma-clip the dx[x] values relative to a linear fit
+                keep = np.isfinite(dxsection)
+            # -------------------------------------------------------------
+            # sigma clip
+            sigmax = np.inf
+            while sigmax > sigclipmax:
+                # recalculate the fit
+                coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+                # get the residuals
+                res = dxsection - np.polyval(coeffs, xsection)
+                # normalise residuals
+                res = res - np.nanmedian(res[keep])
+                res = res / np.nanmedian(np.abs(res[keep]))
+                # calculate the sigma
+                sigmax = np.nanmax(np.abs(res[keep]))
+                # do not keep bad residuals
+                with warnings.catch_warnings(record=True) as _:
+                    keep &= np.abs(res) < sigclipmax
+            # -------------------------------------------------------------
+            # fit a 2nd order polynomial to the slope vx position
+            #    along order
+            coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
+            # log slope at center
+            s_xpix = dim1//2
+            s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
+            wmsg = '\tSlope at pixel {0}: {1:.5f} deg'
+            wargs = [s_xpix, s_ypix]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            # get slope for full range
+            slope = np.polyval(coeffs, np.arange(dim1))
+            # -------------------------------------------------------------
+            # append to storage (for plotting)
+            xsec_arr_i.append(np.array(xsection))
+            slope_deg_arr_i.append(np.rad2deg(np.arctan(dxsection)))
+            slope_arr_i.append(np.rad2deg(np.arctan(slope)))
+            skeep_arr_i.append(np.array(keep))
+            # -------------------------------------------------------------
+            # correct for the slope the ribbons and look for the
+            yfit = np.polyval(coeffs, xpix)
+            #    slicer profile
+            for iw in range(width):
+                # get the x shift
+                ddx = (iw - width/2.0) * yfit
+                # calculate the spline at this width
+                spline = IUVSpline(xpix, ribbon[iw, :], ext=1)
+                # push spline values with shift into ribbon2
+                ribbon2[iw, :] = spline(xpix + ddx)
+
+            # median FP peak profile. We will cross-correlate each
+            # row of the ribbon with this
+            profile = np.nanmedian(ribbon2, axis=0)
+            medianprofile = filters.median_filter(profile, med_filter_size)
+            profile = profile - medianprofile
+
+            # -------------------------------------------------------------
+            # cross-correlation peaks of median profile VS position
+            #    along ribbon
+            # reset dx and ddx
+            dx = np.repeat([np.nan], width)
+            # TODO: Question: Why -3 to 4 where does this come from?
+            ddx = np.arange(-3, 4)
+            # set up cross-correlation storage
+            ccor = np.zeros([width, len(ddx)], dtype=float)
+            # loop around widths
+            for iw in range(width):
+                for jw in range(len(ddx)):
+                    # calculate the peasron r coefficient
+                    xff = ribbon2[iw, :]
+                    yff = np.roll(profile, ddx[jw])
+                    pearsonr_value = stats.pearsonr(xff, yff)[0]
+                    # push into cross-correlation storage
+                    ccor[iw, jw] = pearsonr_value
+                # fit a gaussian to the cross-correlation peak
+                xvec = ddx
+                yvec = ccor[iw, :]
+                with warnings.catch_warnings(record=True) as _:
+                    gcoeffs, _ = spirouMath.gauss_fit_nn(xvec, yvec, 4)
+                # check that max value is good
+                if np.nanmax(ccor[iw, :]) > min_good_corr:
+                    dx[iw] = gcoeffs[1]
+            # -------------------------------------------------------------
+            # remove any offset in dx, this would only shift the spectra
+            dx = dx - np.nanmedian(dx)
+            dypix = np.arange(len(dx))
+            with warnings.catch_warnings(record=True):
+                keep = np.abs(dx) < 1
+            keep &= np.isfinite(dx)
+            # -------------------------------------------------------------
+            # if the first pixel is nan and the second is OK,
+            #    then for continuity, pad
+            if (not keep[0]) and keep[1]:
+                keep[0] = True
+                dx[0] = dx[1]
+            # same at the other end
+            if (not keep[-1]) and keep[-2]:
+                keep[-1] = True
+                dx[-1] = dx[-2]
+            # -------------------------------------------------------------
+            # append to storage for plotting
+            ccor_arr_i.append(np.array(ccor))
+            ddx_arr_i.append(np.array(ddx))
+            dx_arr_i.append(np.array(dx))
+            dypix_arr_i.append(np.array(dypix))
+            cckeep_arr_i.append(np.array(keep))
+            # -------------------------------------------------------------
+            # spline everything onto the master DX map
+            spline = IUVSpline(dypix[keep], dx[keep], ext=0)
+            # for all field positions along the order, we determine the
+            #    dx+rotation values and update the master DX map
+            fracs = ypix - np.fix(ypix)
+            widths = np.arange(width)
+
+            for ix in range(dim1):
+                # get the fraction missed
+                # frac = ypix[ix] - np.fix(ypix[ix])
+                # get dx0 with slope factor added
+                dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope[ix]
+                # get the ypix at this value
+                ypix2 = int(ypix[ix]) + np.arange(-width//2, width//2)
+                # get the ddx
+                ddx = spline(widths - fracs[ix])
+                # set the zero shifts to NaNs
+                ddx[ddx == 0] = np.nan
+                # only set positive ypixels
+                pos_y_mask = ypix2 >= 0
+                # if we have some values add to master DX map
+                if np.sum(pos_y_mask) != 0:
+                    # get positions in y
+                    positions = ypix2[pos_y_mask]
+                    # get shifts combination od ddx and dx0 correction
+                    shifts = (ddx + dx0)[pos_y_mask]
+                    # apply shifts to master dx map at correct positions
+                    master_dxmap[positions, ix] += shifts
+        # ---------------------------------------------------------------------
+        # append to storage
+        slope_deg_arr.append(slope_deg_arr_i), slope_arr.append(slope_arr_i)
+        skeep_arr.append(skeep_arr_i), xsec_arr.append(xsec_arr_i)
+        ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
+        dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
+        cckeep_arr.append(cckeep_arr_i)
+
+    # push storage into loc
+    loc['SLOPE_DEG'], loc['SLOPE'] = slope_deg_arr, slope_arr
+    loc['S_KEEP'], loc['XSECTION'] = skeep_arr, xsec_arr
+    loc['CCOR'], loc['DDX'] = ccor_arr, ddx_arr
+    loc['DX'], loc['DYPIX'] = dx_arr, dypix_arr
+    loc['C_KEEP'] = cckeep_arr
+    # add DXMAP to loc
+    loc['DXMAP'] = master_dxmap
+    # set source
+    keys = ['SLOPE_DEG', 'SLOPE', 'S_KEEP', 'XSECTION', 'CCOR', 'DDX',
+            'DX', 'DYPIX', 'C_KEEP', 'DXMAP']
+    loc.set_sources(keys, func_name)
+    # return loc
+    return loc
+
+
 def fit_tilt(pp, lloc):
     """
     Fit the tilt (lloc['TILT'] with a polynomial of size = p['IC_TILT_FILT']
@@ -1734,10 +2151,8 @@ def get_acqtime(p, hdr, name=None, kind='human', return_value=False):
 def get_wave_keys(p, loc, hdr):
     func_name = __NAME__ + '.get_wave_keys()'
     # check for header key
-    if p['KW_WAVE_FILE'][0] in hdr:
+    if p['KW_WAVEFILE'][0] in hdr:
         wkwargs = dict(p=p, hdr=hdr, return_value=True)
-        loc['WAVEFILE'] = get_param(keyword='KW_WAVE_FILE', dtype=str,
-                                    **wkwargs)
         loc['WAVETIME1'] = get_param(keyword='KW_WAVE_TIME1', dtype=str,
                                      **wkwargs)
         loc['WAVETIME2'] = get_param(keyword='KW_WAVE_TIME2', **wkwargs)
@@ -1745,18 +2160,17 @@ def get_wave_keys(p, loc, hdr):
     else:
         # log warning
         wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVE_FILE'][0]))
+        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVEFILE'][0]))
         # get parameters from the calibDB
         key = 'WAVE_' + p['FIBER']
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
         fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
         # set the parameters in wave
-        loc['WAVEFILE'] = spirouDB.GetCalibFile(p, key, hdr)
         loc['WAVETIME1'] = calib_time_human
         loc['WAVETIME2'] = calib_time_unix
     # set sources
-    loc.set_sources(['WAVEFILE', 'WAVETIME1', 'WAVETIME2'], func_name)
+    loc.set_sources(['WAVETIME1', 'WAVETIME2'], func_name)
     # return loc
     return loc
 

@@ -68,8 +68,18 @@ def main(night_name=None, reffile=None):
     fiber1 = str(p['FIBER'])
 
     e2ds, hdr, cmt, nx, ny = spirouImage.ReadImage(p)
-    wave = spirouImage.ReadWaveFile(p)
-    blaze = spirouImage.ReadBlazeFile(p)
+    p, blaze = spirouImage.ReadBlazeFile(p)
+
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # get wave image
+    _, wave = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+                                          fiber=wave_fiber)
 
     # ----------------------------------------------------------------------
     # Get basic image properties

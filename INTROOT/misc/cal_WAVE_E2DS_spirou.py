@@ -139,13 +139,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Obtain the flat
     # ----------------------------------------------------------------------
     # get the flat
-    loc = spirouFLAT.GetFlat(p, loc, hchdr)
+    p, loc = spirouFLAT.GetFlat(p, loc, hchdr)
 
     # ----------------------------------------------------------------------
     # Read blaze
     # ----------------------------------------------------------------------
     # get tilts
-    loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hchdr)
+    p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hchdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
 
     # correct the data with the flat
@@ -346,6 +346,9 @@ def part2test(p, loc):
     # ------------------------------------------------------------------
     # archive result in e2ds spectra
     # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile1 = os.path.basename(p['HCFILES'][0])
+    raw_infile2 = os.path.basename(p['FPFILE'])
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_FP(p)
     wavefitsname = os.path.split(wavefits)[-1]
@@ -361,6 +364,11 @@ def part2test(p, loc):
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile1)
+    hdict = spirouImage.AddKey(hdict, p['kw_FPFILE'], value=raw_infile2)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders

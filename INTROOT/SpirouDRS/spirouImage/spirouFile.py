@@ -704,6 +704,11 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         emsg2 = ('\tOCODE={0} OBSTYPE={1} CCAS={2} CREF={3}'
                  ''.format(code, obstype, ccas, cref))
         WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+
+        # add key to header
+        hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
+        cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
+
         return filename, hdr, cdr
 
 
@@ -977,6 +982,9 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
     # if file not found log this
     emsg = 'File "{0}" not identified as a valid DRS input.'
     WLOG('warning', p['LOG_OPT'], emsg.format(basefilename))
+    # update header key 'DPRTYPE
+    hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
+    cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
     return filename, hdr, cdr
 
 

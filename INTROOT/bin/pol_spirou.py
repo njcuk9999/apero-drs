@@ -90,9 +90,19 @@ def main(night_name=None, files=None):
     # ------------------------------------------------------------------
     # Read wavelength solution
     # ------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, loc['HDR'])
-    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
-    
+    # set source of wave file
+    wsource = __NAME__ + '/main() + /spirouImage.GetWaveSolution'
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HDR'], return_wavemap=True,
+                                       fiber=wave_fiber)
+    _, loc['WAVE'] = wout
+    loc.set_source('WAVE', wsource)
+
     # ----------------------------------------------------------------------
     # Polarimetry computation
     # ----------------------------------------------------------------------
@@ -108,12 +118,6 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     loc = spirouPOLAR.CalculateContinuum(p, loc)
     
-    # ------------------------------------------------------------------
-    # LSD Analysis
-    # ------------------------------------------------------------------
-    if p['IC_POLAR_LSD_ANALYSIS']:
-        loc = spirouPOLAR.LSDAnalysis(p, loc)
-    
     # ----------------------------------------------------------------------
     # Plots
     # ----------------------------------------------------------------------
@@ -126,9 +130,6 @@ def main(night_name=None, files=None):
         sPlt.polar_result_plot(loc)
         # plot total flux (Stokes I)
         sPlt.polar_stokesI_plot(loc)
-        if p['IC_POLAR_LSD_ANALYSIS']:
-            # plot LSD analysis
-            sPlt.polar_lsd_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
     
@@ -151,38 +152,9 @@ def main(night_name=None, files=None):
              nullpol2fitsname]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
-    # add keys from original header of base file
-    hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
-    # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
-    # add number of exposures parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
-    # add the polarimetry method parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
-    # add total exposure time parameter keyword to header
-    tot_exptime = loc['NEXPOSURES'] * hdict['EXPTIME'][0]
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_EXPTIME'], value=tot_exptime)
-    
-    # loop over files in polar sequence to add keywords to header of products
-    for filename in polardict.keys():
-        # get this entry
-        entry = polardict[filename]
-        # get expnum, fiber, and header
-        expnum, fiber, hdr = entry['exposure'], entry['fiber'], entry['hdr']
-        # Add only times from fiber A
-        if fiber == 'A':
-            # add exposure file name
-            fileexp = p['kw_POL_FILENAM{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, fileexp, value=hdr['FILENAME'])
-            # add MJDATE for each exposure
-            mjdexp = p['kw_POL_MJDATE{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, mjdexp, value=hdr['MJDATE'])
-            # add MJDEND for each exposure
-            mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, mjdendexp, value=hdr['MJDEND'])
-    
+    # construct header keywords for output products
+    hdict, loc = spirouPOLAR.PolarHeader(p, loc, polardict)
+
     # save POL data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     p = spirouImage.WriteImageMulti(p, degpolfits, [loc['POL'], loc['POLERR']],
@@ -190,6 +162,7 @@ def main(night_name=None, files=None):
     # save NULL1 data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
     p = spirouImage.WriteImage(p, nullpol1fits, loc['NULL1'], hdict)
+    
     # save NULL2 data to file
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
     p = spirouImage.WriteImage(p, nullpol2fits, loc['NULL2'], hdict)
@@ -203,6 +176,15 @@ def main(night_name=None, files=None):
 
     # ------------------------------------------------------------------
     if p['IC_POLAR_LSD_ANALYSIS']:
+        # ------------------------------------------------------------------
+        # LSD Analysis
+        # ------------------------------------------------------------------
+        loc = spirouPOLAR.LSDAnalysis(p, loc)
+
+        if p['DRS_PLOT']:
+            # plot LSD analysis
+            sPlt.polar_lsd_plot(loc)
+
         #  save LSD analysis data to file
         p, lsdfits, lsdfitsfitsname = spirouPOLAR.OutputLSDimage(p, loc, hdict)
         

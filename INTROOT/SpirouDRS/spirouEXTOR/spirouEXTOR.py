@@ -10,6 +10,7 @@ Created on 2017-11-07 at 13:46
 """
 from __future__ import division
 import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 from collections import OrderedDict
 
 from SpirouDRS import spirouCore
@@ -27,6 +28,13 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
+
+
+# TODO: Move to loc (and read in main file)
+# TODO:   - just pass to extraction wrapper in loc and call from 4a/4b
+from astropy.io import fits
+shapefile = '/scratch/Projects/spirou_py3/data_h4rg/2295305a_dxmap.fits'
+
 
 
 # =============================================================================
@@ -221,20 +229,90 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
                         sigdet=sigdet, cosmic_sigcut=cosmic_sigcut,
                         cosmic_threshold=cosmic_threshold)
     # -------------------------------------------------------------------------
+    # shape weight extraction
+    # -------------------------------------------------------------------------
+    elif mode == '4a':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(sigdet, 'SIGDET')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_shape_weight
+        return ext_func(simage=image, pos=pos, gain=gain,
+                        r1=range1, r2=range2, orderp=order_profile,
+                        sigdet=sigdet)
+    # -------------------------------------------------------------------------
+    # shape weight extraction with cosmic correction
+    # -------------------------------------------------------------------------
+    elif mode == '4b':
+        # get and check values
+        range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
+        range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
+        cosmic_sigcut = kwargs.get('csigcut', p['IC_COSMIC_SIGCUT'])
+        cosmic_threshold = kwargs.get('cthres', p['IC_COSMIC_THRESH'])
+        check_for_none(range1, 'range1')
+        check_for_none(range2, 'range2')
+        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(sigdet, 'SIGDET')
+        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        check_for_none(tiltborder, 'Tilt Pixel Border')
+        # run extraction function
+        ext_func = extract_shape_weight_cosm
+        return ext_func(simage=image, pos=pos, gain=gain,
+                        r1=range1, r2=range2, orderp=order_profile,
+                        sigdet=sigdet, cosmic_sigcut=cosmic_sigcut,
+                        cosmic_threshold=cosmic_threshold)
+
+    # -------------------------------------------------------------------------
     # else error
     # -------------------------------------------------------------------------
     else:
         emsgs = ['mode = {0} is not valid',
                  '   Mode must be either:',
-                 '       0 - Simple extraction',
-                 '       1 - weighted extraction',
-                 '       2 - tilt extraction',
-                 '       3a - tilt weight extraction (old 1)',
-                 '       3b - tilt weight extraction 2 (old)',
-                 '       3c - tilt weight extraction 2',
-                 '       3d - tilt weight extraction 2 (cosmic correction)',
-                 '   Please check constants_SPIROU file.']
+                 '     0 - Simple extraction',
+                 '     1 - weighted extraction',
+                 '     2 - tilt extraction',
+                 '     3a - tilt weight extraction (old 1)',
+                 '     3b - tilt weight extraction 2 (old)',
+                 '     3c - tilt weight extraction 2',
+                 '     3d - tilt weight extraction 2 (cosmic correction)',
+                 '     4a - shape map + weight extraction',
+                 '     4b - shape map + weight extraction (cosmic correction)',
+                 '  Please check constants_SPIROU file.']
         WLOG('error', p['LOG_OPT'], emsgs)
+
+
+def debananafication(image, dx):
+    """
+    Uses a shape map (dx) to straighten (de-banana) an image
+
+    :param image: numpy array (2D), the original image
+    :param dx: numpy array (2D), the shape image (dx offsets)
+
+    :return image1: numpy array (2D), the straightened image
+    """
+    # getting the size of the image and creating the image after correction of
+    # distortion
+    image1 = np.array(image)
+    sz = np.shape(dx)
+
+    # x indices in the initial image
+    xpix = np.array(range(sz[1]))
+
+    # we shift all lines by the appropiate, pixel-dependent, dx
+    for it in range(sz[0]):
+        not0 = image[it, :] != 0
+        spline = IUVSpline(xpix[not0], image[it, not0], ext=1)
+        # only pixels where dx is finite are considered
+        nanmask = np.isfinite(dx[it, :])
+        image1[it, nanmask] = spline(xpix[nanmask] + dx[it, nanmask])
+    # return the straightened image
+    return image1
 
 
 # =============================================================================
@@ -393,12 +471,50 @@ def get_extraction_method(p, mode):
         return 'TILTWEIGHT', 'extract_tilt_weight2cosm'
 
     # -------------------------------------------------------------------------
+    # shape extraction (i.e. straightened)
+    # -------------------------------------------------------------------------
+    elif mode == '4a':
+        return 'SHAPEWEIGHT', 'extract_shape_weight'
+
+
+    elif mode == '4b':
+        return 'SHAPEWEIGHT', 'extract_shape_weight_cosm'
+
+    # -------------------------------------------------------------------------
     # else error
     # -------------------------------------------------------------------------
     else:
         emsg1 = 'Extraction methods "modes" not up-to-date.'
         emsg2 = '   function = {0}'.format(func_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
+
+def compare_extraction_modes(p, mode1, mode2, name1=None, name2=None):
+
+    # if either mode is None do not run this
+    if (mode1 is None) or (mode2 is None):
+        return 1
+
+    # deal with names being empty
+    if name1 is None:
+        name1 = '1'
+    if name2 is None:
+        name2 = '2'
+    # clean up modes
+    mode1 = mode1.upper().strip()
+    mode2 = mode2.upper().strip()
+
+    # cause exception is mode 1 and mode 2 are not the same
+    wargs = [name1, mode1, name2, mode2]
+    if mode1 != mode2:
+        wmsg = ('Incompatible extraction modes for {0} (mode={1}) and {2} '
+                '(mode={3})')
+        WLOG('error', p['LOG_OPT'], wmsg.format(*wargs))
+        return 0
+    else:
+        wmsg = ('Extraction modes compatible for {0} (mode={1}) and {2} '
+                '(mode={3})')
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
 
 # =============================================================================
@@ -656,6 +772,8 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     j2s = np.array(np.round(lim2s), dtype=int)
     # make sure the pixel positions are within the image
     mask = (j1s > 0) & (j2s < dim1)
+    # set up long spe
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # get the ranges ww0 = j2-j1+1, ww1 = i2-i1+1
     ww0, ww1 = j2s - j1s + 1, i2s - i1s + 1
     # calculate the tilt shift
@@ -683,11 +801,15 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
+            sumA = np.sum(weights * sx * fx, axis=1)
+            sumB = np.sum(weights * fx ** 2, axis=1)
+            spelong[:, ic] = sumA / sumB
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
+    spelong *= gain
 
-    return spe, 0
+    return spe, spelong, 0
 
 
 def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
@@ -737,8 +859,8 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     # get the upper bound of the order for each pixel value along the order
     lim2s = jcs + r2
     # get the pixels around the order
-    i1s = ics - 2
-    i2s = ics + 2
+    i1s = ics - tiltborder
+    i2s = ics + tiltborder
     # get the integer pixel position of the lower bounds
     j1s = np.array(np.round(lim1s), dtype=int)
     # get the integer pixel position of the upper bounds
@@ -753,6 +875,7 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
     wwa = work_out_ww(ww0, ww1, tiltshift, r1)
     # count of the detected cosmic rays
     cpt = 0
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
     # loop around each pixel along the order
     for ic in ics[tiltborder:-tiltborder]:
         if mask[ic]:
@@ -774,14 +897,18 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             #    quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
+            sumA = np.sum(weights * sx * fx, axis=1)
+            sumB = np.sum(weights * fx ** 2, axis=1)
+            spelong[:, ic] = sumA / sumB
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
             # Cosmic rays correction
             spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
                                          cosmic_sigcut, cosmic_threshold)
 
     spe *= gain
+    spelong *= gain
 
-    return spe, cpt
+    return spe, spelong, cpt
 
 
 def cosmic_correction(sx, spe, fx, ic, weights, cpt, cosmic_sigcut,
@@ -1249,6 +1376,183 @@ def extract_tilt_weight_old(image, pos, tilt=None, r1=None, r2=None,
     spe *= gain
     # return spe and nbcos
     return spe, nbcos
+
+
+# =============================================================================
+# shape extraction functions
+# =============================================================================
+def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
+    """
+    Extract order using tilt and weight (sigdet and badpix)
+
+    Same as extract_tilt_weight but slow (does NOT assume that rounded
+    separation between extraction edges is constant along order)
+
+
+    :param simage: numpy array (2D), the debananafied image (straightened image)
+    :param pos: numpy array (1D), the position fit coefficients
+                size = number of coefficients for fit
+    :param r1: float, the distance away from center to extract out to (top)
+               across the orders direction
+    :param r2: float, the distance away from center to extract out to (bottom)
+               across the orders direction
+    :param orderp: numpy array (2D), the image with fit superposed (zero filled)
+    :param gain: float, the gain of the image (for conversion from ADU/s to e-)
+    :param sigdet: float, the sigdet to use in the weighting
+                   weights = 1/(signal*gain + sigdet^2) with bad pixels
+                   multiplied by a weight of 1e-9 and good pixels
+                   multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
+
+    :return spe: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return nbcos: int, the number of cosmic rays found (always zero as no
+                   correction)
+    """
+    dim1, dim2 = simage.shape
+    # create storage for extration
+    spe = np.zeros(dim2, dtype=float)
+    # create array of pixel values
+    ics = np.arange(dim2)
+    # get positions across the orders for each pixel value along the order
+    jcs = np.polyval(pos[::-1], ics)
+    # get the lower bound of the order for each pixel value along the order
+    lim1s = jcs - r1
+    # get the upper bound of the order for each pixel value along the order
+    lim2s = jcs + r2
+    # get the integer pixel position of the lower bounds
+    j1s = np.array(np.round(lim1s), dtype=int)
+    # get the integer pixel position of the upper bounds
+    j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
+    # create a slice image
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    # loop around each pixel along the order
+    for ic in ics:
+        if mask[ic]:
+            # get the image slice
+            sx = simage[j1s[ic]:j2s[ic] + 1, ic]
+            # get hte order profile slice
+            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+            # Renormalise the rotated order profile
+            if np.sum(fx) > 0:
+                fx = fx / np.sum(fx)
+            else:
+                fx = np.ones(fx.shape, dtype=float)
+            # weight values less than 0 to 1e-9
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # weights are then modified by the gain and sigdet added
+            #    in quadrature
+            weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            # set the value of this pixel to the weighted sum
+            spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
+            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            # spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
+    # multiple spe by gain to convert to e-
+    spe *= gain
+    spelong *= gain
+
+    return spe, spelong, 0
+
+
+def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
+                              cosmic_sigcut=0.25, cosmic_threshold=5):
+    """
+    Extract order using tilt and weight (sigdet and badpix) and cosmic
+    correction
+
+    Same as extract_tilt_weight but slow (does NOT assume that rounded
+    separation between extraction edges is constant along order)
+
+
+    :param simage: numpy array (2D), the debananafied image (straightened image)
+    :param pos: numpy array (1D), the position fit coefficients
+                size = number of coefficients for fit
+    :param tilt: float, the tilt for this order
+
+    :param r1: float, the distance away from center to extract out to (top)
+               across the orders direction
+    :param r2: float, the distance away from center to extract out to (bottom)
+               across the orders direction
+    :param orderp: numpy array (2D), the image with fit superposed (zero filled)
+    :param gain: float, the gain of the image (for conversion from ADU/s to e-)
+    :param sigdet: float, the sigdet to use in the weighting
+                   weights = 1/(signal*gain + sigdet^2) with bad pixels
+                   multiplied by a weight of 1e-9 and good pixels
+                   multiplied by 1
+    :param tiltborder: int, the number of pixels to set as the border (needed
+                       to allow for tilt to not go off edge of image)
+    :param cosmic_sigcut: float, the sigma cut for cosmic rays
+    :param cosmic_threshold: int, the number of allowed cosmic rays per corr
+
+    :return spe: numpy array (1D), the extracted pixel values,
+                 size = image.shape[1] (along the order direction)
+    :return nbcos: int, the number of cosmic rays found
+    """
+    dim1, dim2 = simage.shape
+    # create storage for extration
+    spe = np.zeros(dim2, dtype=float)
+    # create array of pixel values
+    ics = np.arange(dim2)
+    # get positions across the orders for each pixel value along the order
+    jcs = np.polyval(pos[::-1], ics)
+    # get the lower bound of the order for each pixel value along the order
+    lim1s = jcs - r1
+    # get the upper bound of the order for each pixel value along the order
+    lim2s = jcs + r2
+    # get the integer pixel position of the lower bounds
+    j1s = np.array(np.round(lim1s), dtype=int)
+    # get the integer pixel position of the upper bounds
+    j2s = np.array(np.round(lim2s), dtype=int)
+    # make sure the pixel positions are within the image
+    mask = (j1s > 0) & (j2s < dim1)
+    # create a slice image
+    spelong = np.zeros((np.max(j2s - j1s) + 1, dim2), dtype=float)
+    # define the number of cosmics found
+    cpt = 0
+    # loop around each pixel along the order
+    for ic in ics:
+        if mask[ic]:
+            # get the image slice
+            sx = simage[j1s[ic]:j2s[ic] + 1, ic]
+            # get hte order profile slice
+            fx = orderp[j1s[ic]:j2s[ic] + 1, ic]
+            # Renormalise the rotated order profile
+            if np.sum(fx) > 0:
+                fx = fx / np.sum(fx)
+            else:
+                fx = np.ones(fx.shape, dtype=float)
+            # weight values less than 0 to 1e-9
+            raw_weights = np.where(sx > 0, 1, 1e-9)
+            # weights are then modified by the gain and sigdet added
+            #    in quadrature
+            weights = raw_weights / ((sx * gain) + sigdet ** 2)
+            # set the value of this pixel to the weighted sum
+            spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
+            spelong[:, ic] = (weights * sx * fx) / (weights * fx ** 2)
+            # Cosmic rays correction
+            spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
+                                         cosmic_sigcut, cosmic_threshold)
+    # multiple spe by gain to convert to e-
+    spe *= gain
+    spelong *= gain
+
+    return spe, spelong, cpt
+
+
+def get_slice_shape(x1, x2, y1, y2, shapeimage):
+
+    box = shapeimage[y1:y2 + 1, x1:x2 + 1]
+
+    x0 = np.tile(range(0, box.shape[1]), box.shape[0]).reshape(box.shape)
+    x0 = x0 - box.shape[1]/2 + 0.5
+
+    ww = box - x0
+
+    ww2=np.abs((1-np.abs(ww))*(np.abs(ww)  <=1 ))
+    return ww2
 
 
 # =============================================================================
