@@ -2299,6 +2299,33 @@ def tellu_fit_tellu_spline_plot(p, loc):
     end_plotting()
 
 
+def tellu_fit_debug_shift_plot(p, loc):
+    # get data from loc
+    tdata = loc['SP'] / np.nanmedian(loc['SP'])
+    tapas_before = loc['TAPAS_ALL_PRESHIFT'][0]
+    tapas_after = loc['TAPAS_ALL_SPECIES'][0]
+    pc1_before = loc['PC'][:, 0]
+    pc1_after = loc['PC_PRESHIFT'][:, 0]
+    # setup fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # plot the data vs pixel number
+    frame.plot(tdata, color='k', label='Spectrum')
+    frame.plot(pc1_before, color='g', marker='x', label='PC (before)')
+    frame.plot(tapas_before, color='0.5', marker='o', label='TAPAS (before)')
+    frame.plot(pc1_after, color='r', label='PC (After)')
+    frame.plot(tapas_after, color='b', label='TAPAS (After)')
+
+    plt.legend(loc=0)
+    frame.set(title='Wavelength shift (Before and after) compared to the data',
+              xlabel='Pixel number', ylabel='Normalised flux')
+    # end plotting function properly
+    end_plotting()
+
+
 def tellu_fit_recon_abso_plot(p, loc):
 
     if 'dark' in PLOT_STYLE:
