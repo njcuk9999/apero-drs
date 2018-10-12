@@ -511,32 +511,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------
 
-    # set order to plot
-    plot_order = 7
-    # get the correct order to plot for all_lines (which is sized n_ord_final-n_ord_start)
-    plot_order_line = plot_order - n_ord_start
-    plt.figure()
-    # plot order and flux
-    plt.plot(loc['LL_OUT_2'][plot_order], hcdata[plot_order], label='HC spectrum - order '
-                                                                + str(plot_order))
-    # plot found lines
-    # first line separate for labelling purposes
-    plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][0][2],
-               'm', label='fitted lines')
-    # plot lines to the top of the figure
-    plt.vlines(all_lines_1[plot_order_line][0][0], 0, np.max(hcdata[plot_order]), 'gray',
-               linestyles='dotted')
-    # rest of lines
-    for i in range(1, len(all_lines_1[plot_order_line])):
-        # plot lines to their corresponding amplitude
-        plt.vlines(all_lines_1[plot_order_line][i][0], 0, all_lines_1[plot_order_line][i][2],
-                   'm')
-        # plot lines to the top of the figure
-        plt.vlines(all_lines_1[plot_order_line][i][0], 0, np.max(hcdata[plot_order]), 'gray',
-                   linestyles='dotted')
-    plt.legend()
-    plt.xlabel('Wavelength')
-    plt.ylabel('Flux')
+    if p['DRS_PLOT']:
+        sPlt.wave_ea_plot_single_order(p, loc)
 
     # ----------------------------------------------------------------------
     # Quality control
