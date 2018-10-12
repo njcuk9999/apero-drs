@@ -79,6 +79,10 @@ ic_ccdy_high = 3350  # 3450
 #       (earlier in list takes priority)
 fiber_types = ['AB', 'A', 'B', 'C']
 
+#    Define whether to use SKYDARK for dark corrections                  - [all]
+use_skydark_correction = False
+
+
 # -----------------------------------------------------------------------------
 #   fiber variables
 # -----------------------------------------------------------------------------
@@ -296,7 +300,7 @@ ic_loc_delta_width = 1.85
 ic_locopt1 = 1
 
 # -----------------------------------------------------------------------------
-#   cal_slit parameters
+#   cal_slit (tilt) parameters
 # -----------------------------------------------------------------------------
 
 #   oversampling factor (for tilt finding)
@@ -310,6 +314,36 @@ ic_tilt_fit = 4
 
 #   Order to plot on slit image plot                                - [cal_slit]
 ic_slit_order_plot = 2 * 2
+
+# -----------------------------------------------------------------------------
+#   cal_slit (shape) parameters
+# -----------------------------------------------------------------------------
+# The number of iterations to run the shape finding out to         - [cal_shape]
+shape_num_iterations = 3
+
+# width of the ABC fibers                                          - [cal_shape]
+shape_abc_width = 55
+
+# the range of angles (in degrees) for the first iteration (large) - [cal_shape]
+# and subsequent iterations (small)
+shape_large_angle_range = [-12.0, 0.0]
+shape_small_angle_range = [-1.0, 1.0]
+
+# number of sections per order to split the order into             - [cal_shape]
+shape_nsections = 32
+
+# max sigma clip (in sigma) on points within a section             - [cal_shape]
+shape_sigmaclip_max = 4
+
+# the size of the median filter to apply along the order           - [cal_shape]
+#     (in pixels)
+shape_median_filter_size = 51
+
+# The minimum value for the cross-correlation to be deemed good    - [cal_shape]
+shape_min_good_correlation = 0.1
+
+#  The selected order to plot for the slit shape plot              - [cal_shape]
+shape_selected_order = 33
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
@@ -398,9 +432,15 @@ ic_extnbsig = 1  # 2.5
 #
 #                 3d - tilt weight extraction 2 (cosmic correction)
 #                         (function = spirouEXTOR.extract_tilt_weight2cosm)
-ic_extract_type = '3d'  # '3d'
+#
+#                 4a - shape map + weight extraction
+#                          (function = spirouEXTOR.extract_shape_weight)
+#
+#                 4b - shape map + weight extraction (cosmic correction)
+#                          (function = spirouEXTOR.extract_shape_weight_cosm)
+ic_extract_type = '4b'  # '3d'
 # Now select the extraction type in cal_ff ONLY                       - [cal_FF]
-ic_ff_extract_type = '3c'
+ic_ff_extract_type = '4a'
 
 #   Set the number of pixels to set as                   - [cal_extract, cal_FF]
 #       the border (needed to allow for tilt to not go off edge of image)
@@ -506,13 +546,23 @@ drift_peak_fpbox_size = 3
 
 # define drift peak types, the keys should be KW_EXT_TYPE header keys
 #
-drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp'}
+drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp', 'DARK_FP': 'fp'}
 
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
 #        to be recognised as a valid peak (before fitting a gaussian)
 #        dictionary must have keys equal to the keys in
 #        drift_peak_allowed_types
 drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
+
+#    Define the allowed file types for the input files
+#       fp/hc is based on the reference file these are which other
+#       files are allowed for each input type
+#        dictionary must have keys equal to the keys in
+#        drift_peak_allowed_types
+drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP', 'DARK_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
+
+#    Define fibers which these can be used on
+drift_peak_output_except = {'OBJ_FP': 'C', 'OBJ_HCONE': 'C', 'OBJ_HCTWO': 'C'}
 
 #    Define the minimum spacing between peaks in order to be  - [cal_drift-peak]
 #        recognised as a valid peak (before fitting a gaussian)
@@ -836,11 +886,13 @@ pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
 
 # force reading the wave solution from calibDB
-calib_db_force_wavesol = True
+calib_db_force_wavesol = False
 
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------
+# Whether to force the linelist to be created (or re-created)         - [cal_HC]
+HC_EA_FORCE_CREATE_LINELIST = False
 # whether to do plot per order (very slow + interactive)              - [cal_HC]
 HC_EA_PLOT_PER_ORDER = False
 # width of the box for fitting HC lines. Lines will be fitted         - [cal_HC]
@@ -876,6 +928,11 @@ HC_TFIT_CUT_THRES = 1.0
 HC_TFIT_MIN_NUM_LINES = 10
 # Minimum total number of lines required                              - [cal_HC]
 HC_TFIT_MIN_TOT_LINES = 200
+
+# Define the distance in m/s away from the center of dv hist          - [cal_HC]
+#      points outside will be rejected [m/s]
+HC_TFIT_DVCUT_ORDER = 2000
+HC_TFIT_DVCUT_ALL = 5000
 
 # this sets the order of the polynomial used to ensure continuity     - [cal_HC]
 #     in the  xpix vs wave solutions by setting the first term = 12,
@@ -1005,26 +1062,29 @@ ic_polar_cont_overlap = 0
 #  Define the telluric mask for calculation of continnum          - [pol_spirou]
 ic_polar_cont_tellmask = [[930, 967], [1109, 1167], [1326, 1491], [1782, 1979], [1997, 2027], [2047, 2076]]
 
+# Remove continuum polarization (True = 1, False = 0)
+ic_polar_remove_continuum = 1
+
 #  Perform LSD analysis (True = 1, False = 0)                     - [pol_spirou]
 ic_polar_lsd_analysis = 1
 
 #  Define initial velocity (km/s) for output LSD profile          - [pol_spirou]
-ic_polar_lsd_v0 = -200.
+ic_polar_lsd_v0 = -150.
 
 #  Define final velocity (km/s) for output LSD profile            - [pol_spirou]
-ic_polar_lsd_vf = 200.
+ic_polar_lsd_vf = 150.
 
 #  Define number of points for output LSD profile                 - [pol_spirou]
 ic_polar_lsd_np = 201
 
-#  Define number of points for output LSD profile                 - [pol_spirou]
-ic_polar_lsd_ccflines = 'marcs_t3000g50_all'
+#  Define files with spectral lines for LSD analysis              - [pol_spirou]
+ic_polar_lsd_ccflines = ['marcs_t2500g50_all','marcs_t3000g50_all','marcs_t3500g50_all']
 
 #  Define mask for selecting lines to be used in the LSD analysis - [pol_spirou]
 ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.], [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
 
-#  Define number of points for output LSD profile                 - [pol_spirou]
-ic_polar_lsd_min_linedepth = 0.1
+#  Define minimum line depth to be used in the LSD analyis        - [pol_spirou]
+ic_polar_lsd_min_linedepth = 0.175
 
 # Normalize Stokes I spectrum before LSD analysis (True = 1, False = 0)
 ic_polar_lsd_normalize = 1

@@ -35,6 +35,9 @@ LOC_LOCO_FILE3 = 'LOC_SUP'
 # Defines the slit tilt file tag
 SLIT_TILT_FILE = 'SLIT_TILT'
 
+# Define the shape file tag
+SLIT_SHAPE_FILE = 'SLIT_SHAPE'
+
 # Defines the flat fielding blaze file tag
 FF_BLAZE_FILE = 'FF_BLAZE'
 
@@ -46,6 +49,9 @@ EXTRACT_E2DS_FILE = 'EXT_E2DS'
 
 # Defines the E2DS flat-fielded file tag
 EXTRACT_E2DSFF_FILE = 'EXT_E2DS_FF'
+
+# Defines the E2DS non-folded file tag
+EXTRACT_E2DSLL_FILE = 'EXT_E2DS_LL'
 
 # Defines the extraction localisation file tag
 EXTRACT_LOCO_FILE = 'EXT_LOCO'
@@ -89,6 +95,9 @@ WAVE_FILE_FP = 'WAVE_FP_SOL'
 # Defines the wave solution copy of E2DS file tag
 WAVE_E2DS_COPY = 'WAVE_E2DSCOPY'
 
+# Defines the wave resolution fits file tag
+WAVE_RES_FILE_EA = 'WAVE_RES'
+
 # Defines the telluric trans map file tag
 TELLU_TRANS_MAP_FILE = 'TELLU_TRANS'
 
@@ -107,8 +116,12 @@ TELLU_FIT_OUT_FILE = 'TELLU_CORRECTED'
 # Defines the telluric reconstructed file tag
 TELLU_FIT_RECON_FILE = 'TELLU_RECON'
 
-# Defines the telluric template file tag
-TELLU_TEMPLATE_FILE = 'TELLU_TEMPLATE'
+# Defines the object tellu template file tag
+OBJTELLU_TEMPLATE_FILE = 'OBJTELLU_TEMPLATE'
+
+# Defines the object tellu bigcube template file tag
+OBJTELLU_TEMPLATE_CUBE_FILE1 = 'OBJTELLU_BIG1'
+OBJTELLU_TEMPLATE_CUBE_FILE2 = 'OBJTELLU_BIG0'
 
 # Defines the polarisation file tag
 DEG_POL_FILE = 'POL_DEG'

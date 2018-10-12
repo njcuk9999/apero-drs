@@ -49,7 +49,7 @@ CONSTANT_C = constants.c.value
 def get_normalized_blaze(p, loc, hdr):
     func_name = __NAME__ + '.get_normalized_blaze()'
     # Get the blaze
-    blaze = spirouImage.ReadBlazeFile(p, hdr)
+    p, blaze = spirouImage.ReadBlazeFile(p, hdr)
     # we mask domains that have <20% of the peak blaze of their respective order
     blaze_norm = np.array(blaze)
     for iord in range(blaze.shape[0]):
@@ -61,7 +61,7 @@ def get_normalized_blaze(p, loc, hdr):
     loc['NBLAZE'] = blaze_norm
     loc.set_sources(['BLAZE', 'NBLAZE'], func_name)
     # return loc
-    return loc
+    return p, loc
 
 
 def construct_convolution_kernal1(p, loc):
@@ -94,7 +94,7 @@ def get_molecular_tell_lines(p, loc):
     tapas, thdr, tcmt, _, _ = tdata
 
     # load all current telluric convolve files
-    convole_files = spirouDB.GetDatabaseTellConv(p, required=False)
+    convolve_files = spirouDB.GetDatabaseTellConv(p, required=False)
 
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
@@ -103,8 +103,12 @@ def get_molecular_tell_lines(p, loc):
     convolve_file_name = wave_file.replace('.fits', '_tapas_convolved.npy')
     convolve_file = os.path.join(p['ARG_FILE_DIR'], convolve_file_name)
 
+    convolve_basefiles = []
+    for cfile in np.unique(convolve_files):
+        convolve_basefiles.append(os.path.basename(cfile))
+
     # find tapas file in files
-    if convolve_file not in convole_files:
+    if os.path.basename(convolve_file) not in convolve_basefiles:
         generate = True
     else:
         # if we already have a file for this wavelength just open it
@@ -314,6 +318,10 @@ def calc_recon_abso(p, loc):
     # loop around a number of times
     template2 = None
     for ite in range(p['TELLU_FIT_NITER']):
+        # log progress
+        wmsg = 'Iteration {0} of {1}'.format(ite + 1, p['TELLU_FIT_NITER'])
+        WLOG('', p['LOG_OPT'], wmsg)
+
         # --------------------------------------------------------------
         # if we don't have a template construct one
         if not loc['FLAG_TEMPLATE']:
@@ -341,6 +349,17 @@ def calc_recon_abso(p, loc):
         # else we have template so load it
         else:
             template2 = loc['TEMPLATE2']
+            # -----------------------------------------------------------------
+            # Shift the template  to correct frame
+            # -----------------------------------------------------------------
+            # log process
+            wmsg1 = '\tShifting template on to master wavelength grid'
+            wargs = [os.path.basename(loc['MASTERWAVEFILE'])]
+            wmsg2 = '\t\tFile = {0}'.format(*wargs)
+            WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+            # shift template
+            wargs = [template2, loc['MASTERWAVE'], loc['WAVE_IT']]
+            template2 = wave2wave(*wargs, reshape=True).reshape(template2.shape)
         # --------------------------------------------------------------
         # get residual spectrum
         with warnings.catch_warnings(record=True) as _:
@@ -401,7 +420,7 @@ def calc_recon_abso(p, loc):
         keep &= np.isfinite(fit_dd)
         keep &= np.sum(np.isfinite(loc['FIT_PC']), axis=1) == loc['NPC']
         # log number of kept pixels
-        wmsg = 'Number to keep total = {0}'.format(np.sum(keep))
+        wmsg = '\tNumber to keep total = {0}'.format(np.sum(keep))
         WLOG('', p['LOG_OPT'], wmsg)
         # --------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
@@ -505,6 +524,75 @@ def get_blacklist():
 def lin_mini(vector, sample):
     return spirouMath.linear_minimization(vector, sample)
 
+
+def wave2wave(spectrum, wave1, wave2, reshape=False):
+    """
+    Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
+    another wavelength solution (map) "wave2"
+
+    :param spectrum: numpy array (2D),  flux in the reference frame of the
+                     file wave1
+    :param wave1: numpy array (2D), initial wavelength grid
+    :param wave2: numpy array (2D), destination wavelength grid
+    :param reshape: bool, if True try to reshape spectrum to the shape of
+                    the output wave solution
+
+    :return output_spectrum: numpy array (2D), spectrum resampled to "wave2"
+    """
+    func_name = __NAME__ + '.wave2wave()'
+    # deal with reshape
+    if reshape or (spectrum.shape != wave2.shape):
+        try:
+            spectrum = spectrum.reshape(wave2.shape)
+        except ValueError:
+            emsg = ('Spectrum (shape = {0}) cannot be reshaped to'
+                    ' shape = {1}')
+            eargs = [spectrum.shape, wave2.shape]
+            WLOG('error', func_name, emsg.format(*eargs))
+
+    # if they are the same
+    if np.sum(wave1 != wave2) == 0:
+        return spectrum
+
+    # size of array, assumes wave1, wave2 and spectrum have same shape
+    sz = np.shape(spectrum)
+    # create storage for the output spectrum
+    output_spectrum = np.zeros(sz) + np.nan
+
+    # looping through the orders to shift them from one grid to the other
+    for iord in range(sz[0]):
+        # only interpolate valid pixels
+        g = np.isfinite(spectrum[iord, :])
+
+        # if no valid pixel, thn skip order
+        if np.sum(g) != 0:
+            # spline the spectrum
+            spline = IUVSpline(wave1[iord, g], spectrum[iord, g], k=5, ext=1)
+
+            # keep track of pixels affected by NaNs
+            splinemask = IUVSpline(wave1[iord, :], g, k=5, ext=1)
+
+            # spline the input onto the output
+            output_spectrum[iord, :] = spline(wave2[iord, :])
+
+            # find which pixels are not NaNs
+            mask = splinemask(wave2[iord, :])
+
+            # set to NaN pixels outside of domain
+            bad = (output_spectrum[iord, :] == 0)
+            output_spectrum[iord, bad] = np.nan
+
+            # affected by a NaN value
+            # normally we would use only pixels ==1, but we get values
+            #    that are not exactly one due to the interpolation scheme.
+            #    We just set that >99.9% of the
+            # flux comes from valid pixels
+            bad = (mask <= 0.999)
+            # mask pixels affected by nan
+            output_spectrum[iord, bad] = np.nan
+
+    # return the filled output spectrum
+    return output_spectrum
 
 # =============================================================================
 # Start of code

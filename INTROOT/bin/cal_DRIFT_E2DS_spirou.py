@@ -119,15 +119,22 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
     # get wave image
-    loc['WAVE'] = spirouImage.ReadWaveFile(p, hdr)
-    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.ReadWaveFile')
+    wout = spirouImage.GetWaveSolution(p, hdr=hdr, fiber=wave_fiber,
+                                       return_wavemap=True)
+    _, loc['WAVE'] = wout
+    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.GetWaveSolution')
 
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
     # get flat
-    loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
+    p, loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
     loc.set_source('FLAT', __NAME__ + '/main() + /spirouImage.ReadFlatFile')
     # get all values in flat that are zero to 1
     loc['FLAT'] = np.where(loc['FLAT'] == 0, 1.0, loc['FLAT'])
@@ -178,12 +185,15 @@ def main(night_name=None, reffile=None):
     #    ref file
     # ------------------------------------------------------------------
     # get files
-    listfiles = spirouImage.GetAllSimilarFiles(p, hdr)
+    listfiles, listtypes = spirouImage.GetSimilarDriftFiles(p, hdr)
     # get the number of files
     nfiles = len(listfiles)
     # Log the number of files found
-    wmsg = 'Number of fp_fp files found on directory = {0}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
+    wmsgs = ['Number of files found on directory = {0}'.format(nfiles),
+             '\tExtensions allowed:']
+    for listtype in listtypes:
+        wmsgs.append('\t\t - {0}'.format(listtype))
+    WLOG('info', p['LOG_OPT'], wmsgs)
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -338,6 +348,8 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Save drift values to file
     # ------------------------------------------------------------------
+    # get raw input file name
+    raw_infile = os.path.basename(p['REFFILE'])
     # construct filename
     driftfits, tag = spirouConfig.Constants.DRIFT_E2DS_FITS_FILE(p)
     driftfitsname = os.path.split(driftfits)[-1]
@@ -349,6 +361,9 @@ def main(night_name=None, reffile=None):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    # set the input files
+    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
     # save drift values
     p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 

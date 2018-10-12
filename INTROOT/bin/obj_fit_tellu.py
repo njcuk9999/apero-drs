@@ -53,6 +53,8 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
+# get constants
+CONSTANTS = spirouConfig.Constants
 # Custom parameter dictionary
 ParamDict = spirouConfig.ParamDict
 # Get sigma FWHM
@@ -99,12 +101,21 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Read wavelength solution
     # ----------------------------------------------------------------------
-    loc['WAVE'] = spirouImage.GetWaveSolution(p, loc['DATA'], loc['DATAHDR'])
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # used for plotting only
+    wout = spirouImage.GetWaveSolution(p, image=loc['DATA'], hdr=loc['DATAHDR'],
+                                       return_wavemap=True, fiber=wave_fiber)
+    _, loc['WAVE'] = wout
+    loc.set_source('WAVE', main_name)
 
     # ----------------------------------------------------------------------
     # Get and Normalise the blaze
     # ----------------------------------------------------------------------
-    loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+    p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
 
     # ----------------------------------------------------------------------
     # Load transmission files
@@ -201,12 +212,45 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
     # ----------------------------------------------------------------------
+    # Requires p:
+    #           TELLU_NUMBER_OF_PRINCIPLE_COMP
+    #           ADD_DERIV_PC
+    #           FIT_DERIV_PC
+    # Requires loc:
+    #           DATA
+    # Returns loc:
+    #           PC
+    #           NPC
+    #           FIT_OC
     loc = spirouTelluric.CalculateAbsorptionPCA(p, loc, log_abso, keep)
+
     # Plot PCA components
     # debug plot
     if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
         # plot the transmission map plot
         sPlt.tellu_pca_comp_plot(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Get master wavelength grid for shifting
+    # ----------------------------------------------------------------------
+    # get master wave map
+    loc['MASTERWAVEFILE'] = spirouDB.GetDatabaseMasterWave(p)
+    loc.set_source('MASTERWAVEFILE', main_name)
+    # log progress
+    wmsg1 = 'Getting master wavelength grid'
+    wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
+    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=loc['MASTERWAVEFILE'],
+                                       return_wavemap=True, quiet=True,
+                                       fiber=wave_fiber)
+    _, loc['MASTERWAVE'] = mout
+    loc.set_source('MASTERWAVE', main_name)
 
     # ----------------------------------------------------------------------
     # Loop around telluric files
@@ -220,10 +264,9 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Construct output file names
         # ------------------------------------------------------------------
-        outfile1, tag1 = spirouConfig.Constants.TELLU_FIT_OUT_FILE(p, filename)
+        outfile1, tag1 = CONSTANTS.TELLU_FIT_OUT_FILE(p, filename)
         outfilename1 = os.path.basename(outfile1)
-        outfile2, tag2 = spirouConfig.Constants.TELLU_FIT_RECON_FILE(p,
-                                                                     filename)
+        outfile2, tag2 = CONSTANTS.TELLU_FIT_RECON_FILE(p, filename)
         outfilename2 = os.path.basename(outfile2)
 
         # ------------------------------------------------------------------
@@ -255,8 +298,18 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Read wavelength solution
         # ------------------------------------------------------------------
-        loc['WAVE_IT'] = spirouImage.GetWaveSolution(p, tdata, thdr)
-        loc.set_source('WAVE_IT', main_name)
+        # Force A and B to AB solution
+        if p['FIBER'] in ['A', 'B']:
+            wave_fiber = 'AB'
+        else:
+            wave_fiber = p['FIBER']
+        # get wavelength solution
+        wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
+                                           return_wavemap=True,
+                                           return_filename=True,
+                                           fiber=wave_fiber)
+        _, loc['WAVE_IT'], loc['WAVEFILE'] = wout
+        loc.set_sources(['WAVE_IT', 'WAVEFILE'], main_name)
         # load wave keys
         loc = spirouImage.GetWaveKeys(p, loc, thdr)
 
@@ -264,6 +317,14 @@ def main(night_name=None, files=None):
         # Interpolate at shifted wavelengths (if we have a template)
         # ------------------------------------------------------------------
         if loc['FLAG_TEMPLATE']:
+            # Requires p:
+            #           TELLU_FIT_KEEP_FRAC
+            # Requires loc:
+            #           DATA
+            #           TEMPLATE
+            #           WAVE_IT
+            # Returns:
+            #           TEMPLATE2
             loc = spirouTelluric.InterpAtShiftedWavelengths(p, loc, thdr)
 
             # debug plot
@@ -272,8 +333,44 @@ def main(night_name=None, files=None):
                 sPlt.tellu_fit_tellu_spline_plot(p, loc)
 
         # ------------------------------------------------------------------
+        # Shift the pca components to correct frame
+        # ------------------------------------------------------------------
+        # log process
+        wmsg1 = 'Shifting PCA components on to master wavelength grid'
+        wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        # shift pca components (one by one)
+        for comp in range(loc['NPC']):
+            wargs = [loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
+            shift_pc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+            loc['PC'][:, comp] = shift_pc.reshape(loc['PC'][:, comp].shape)
+
+        # ------------------------------------------------------------------
         # Calculate reconstructed absorption
         # ------------------------------------------------------------------
+        # Requires p:
+        #           TELLU_FIT_MIN_TRANSMISSION
+        #           TELLU_FIT_NITER
+        #           TELLU_LAMBDA_MIN
+        #           TELLU_LAMBDA_MAX
+        #           TELLU_FIT_VSINI
+        #           TRANSMISSION_CUT
+        #           FIT_DERIV_PC
+        #           LOG_OPT
+        # Requires loc:
+        #           FLAG_TEMPLATE
+        #           TAPAS_ALL_SPECIES
+        #           AMPS_ABSOL_TOTAL
+        #           WAVE_IT
+        #           TEMPLATE2
+        #           FIT_PC
+        #           NPC
+        #           PC
+        # Returns loc:
+        #           SP2
+        #           TEMPLATE2
+        #           RECON_ABSO
+        #           AMPS_ABSOL_TOTAL
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
         if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
@@ -283,16 +380,30 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # Get molecular absorption
         # ------------------------------------------------------------------
+        # Requires p:
+        #           TELLU_FIT_LOG_LIMIT
+        # Requeres loc:
+        #           RECON_ABSO
+        #           TAPAS_ALL_SPECIES
+        # Returns loc:
+        #           TAPAS_{molecule}
         loc = spirouTelluric.CalcMolecularAbsorption(p, loc)
 
         # ------------------------------------------------------------------
         # Get components amplitudes for header
         # ------------------------------------------------------------------
+        # get raw file name
+        raw_in_file = os.path.basename(p['FITSFILENAME'])
+        # start header storage
         hdict = OrderedDict()
-
         # add version number
         hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-
+        # set the input files
+        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+                                   value=loc['WAVEFILE'])
+        # set tellu keys
         npc = loc['NPC']
         if p['ADD_DERIV_PC']:
             values = loc['AMPS_ABSOL_TOTAL'][:npc - 2]
@@ -346,6 +457,7 @@ def main(night_name=None, files=None):
                 loc['WATERCOL'] = loc[molkey]
                 # set source
                 loc.set_source('WATERCOL', main_name)
+
         # write recon_abso to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)

@@ -108,8 +108,10 @@ def calculate_instrument_drift(p, loc):
     reffilename = spirouImage.ReadHcrefFile(p, loc['HCHDR'],
                                             return_filename=True)
     speref = spirouImage.ReadHcrefFile(p, loc['HCHDR'])
-    # get the wavelengths and parameters for the reference
-    waveref, _ = spirouTHORCA.get_e2ds_ll(p, loc['HCHDR'], filename=reffilename)
+    # get wave image
+    wout = spirouImage.GetWaveSolution(p, hdr=loc['HCHDR'], return_wavemap=True)
+    _, waveref = wout
+
     # cut down data to correct orders
     speref = speref[:n_order_final]
     waveref = waveref[:n_order_final]
@@ -656,7 +658,7 @@ def find_hc_gauss_peaks(p, loc):
     # get filename
     ini_table_name = spirouConfig.Constants.HC_INIT_LINELIST(p)
     # check if we already have a cached guess for this file
-    if os.path.exists(ini_table_name):
+    if os.path.exists(ini_table_name) and not p['HC_EA_FORCE_CREATE_LINELIST']:
         # if we do load from file
         ini_table = spirouImage.ReadTable(ini_table_name, fmt='ascii.rst',
                                           colnames=litems)
@@ -671,6 +673,7 @@ def find_hc_gauss_peaks(p, loc):
 
         # set sources
         loc.set_sources(litems, func_name)
+
         # return loc
         return loc
     else:
@@ -833,6 +836,7 @@ def fit_gaussian_triplets(p, loc):
     # get data from loc
     wave_ll, amp_ll = loc['LL_LINE'], loc['AMPL_LINE']
     poly_wave_sol = loc['WAVEPARAMS']
+
     # get dimensions
     nbo, nbpix = loc['NBO'], loc['NBPIX']
 
@@ -923,6 +927,39 @@ def fit_gaussian_triplets(p, loc):
                 wave_catalog[w_it] = wave_ll[id_match]
                 amp_catalog[w_it] = amp_ll[id_match]
                 dv[w_it] = distv
+
+        # ------------------------------------------------------------------
+        # loop through orders and reject bright lines not within
+        #     +- HC_TFIT_DVCUT km/s histogram peak
+        # ------------------------------------------------------------------
+
+        # width in dv [km/s] - though used for number of bins?
+        # TODO: Question: Why km/s --> number
+        nbins = 2 * p['HC_MAX_DV_CAT_GUESS'] // 1000
+        # loop around all order
+        for order_num in set(orders):
+            # get the good pixels in this order
+            good = (orders == order_num) & (np.isfinite(dv))
+            # get histogram of points for this order
+            histval, histcenters = np.histogram(dv[good], bins=nbins)
+            # get the center of the distribution
+            dv_cen = histcenters[np.argmax(histval)]
+            # define a mask to remove points away from center of histogram
+            mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
+            # apply mask to dv and to brightest lines
+            dv[mask] = np.nan
+            brightest_lines[mask] = False
+
+        # re-get the histogram of points for whole image
+        histval, histcenters = np.histogram(dv[np.isfinite(dv)], bins=nbins)
+        # re-find the center of the distribution
+        dv_cen = histcenters[np.argmax(histval)]
+        # re-define the mask to remove poitns away from center of histogram
+        mask =  (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
+        # re-apply mask to dv and to brightest lines
+        dv[mask] = np.nan
+        brightest_lines[mask] = False
+
         # ------------------------------------------------------------------
         # Find best trio of lines
         # ------------------------------------------------------------------
@@ -1285,6 +1322,62 @@ def generate_resolution_map(p, loc):
 
     # return loc
     return loc
+
+
+def generate_res_files(p, loc, hdict):
+    # get constants from p
+    resmap_size = p['HC_RESMAP_SIZE']
+    # get data from loc
+    map_dvs = np.array(loc['RES_MAP_DVS'])
+    map_lines = np.array(loc['RES_MAP_LINES'])
+    map_params = np.array(loc['RES_MAP_PARAMS'])
+    resolution_map = np.array(loc['RES_MAP'])
+
+    # get dimensions
+    nbo, nbpix = loc['NBO'], loc['NBPIX']
+
+    # bin size in order direction
+    bin_order = int(np.ceil(nbo / resmap_size[0]))
+    bin_x = int(np.ceil(nbpix / resmap_size[1]))
+    # get ranges of values
+    order_range = np.arange(0, nbo, bin_order)
+    x_range = np.arange(0, nbpix // bin_x)
+
+    # loop around the order bins
+    resdata, hdicts = [], []
+    for order_num in order_range:
+        # loop around the x position
+        for xpos in x_range:
+            # get the correct data
+            all_dvs = map_dvs[order_num // bin_order][xpos]
+            all_lines = map_lines[order_num // bin_order][xpos]
+            params = map_params[order_num // bin_order][xpos]
+            resolution = resolution_map[order_num // bin_order][xpos]
+            # get start and end order
+            start_order = order_num
+            end_order = start_order + bin_order - 1
+            # generate header keywordstores
+            kw_startorder = ['ORDSTART', '', 'First order covered in res map']
+            kw_endorder = ['ORDEND', '', 'Last order covered in res map']
+            kw_region = ['REGION', '', 'Region along x-axis in res map']
+            largs = [order_num, order_num + bin_order - 1, xpos]
+            comment = 'Resolution: order={0}-{1} r={2}'
+            kw_res = ['RESOL', '', comment.format(*largs)]
+            comment = 'Gaussian params: order={0}-{1} r={2}'
+            kw_params = ['GPARAMS', '', comment.format(*largs)]
+            # add keys to headed
+            hdict = spirouImage.AddKey(hdict, kw_startorder, value=start_order)
+            hdict = spirouImage.AddKey(hdict, kw_endorder, value=end_order)
+            hdict = spirouImage.AddKey(hdict, kw_region, value=xpos)
+            hdict = spirouImage.AddKey(hdict, kw_res, value=resolution)
+            hdict = spirouImage.AddKey1DList(hdict, kw_params,
+                                             values=params, dim1name='coeff')
+            # append this hdict to hicts
+            hdicts.append(dict(hdict))
+            # push data into correct columns
+            resdata.append(np.array(list(zip(all_dvs, all_lines))))
+    # return the data and hdicts
+    return resdata, hdicts
 
 
 # =============================================================================

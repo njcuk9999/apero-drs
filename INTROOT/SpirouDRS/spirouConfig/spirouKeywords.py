@@ -49,12 +49,15 @@ p = spirouConfig.check_params(p)
 USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_ACQTIME_KEY_JUL',
             'kw_AIRMASS',
+            'kw_BADPFILE1',
+            'kw_BADPFILE2',
             'kw_BBAD',
             'kw_BBFLAT',
             'kw_BERV',
             'kw_BERV_MAX',
             'kw_BHOT',
             'kw_BJD',
+            'kw_BLAZFILE',
             'kw_BNDARK',
             'kw_BNFLAT',
             'kw_BNILUM',
@@ -80,6 +83,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_CRPIX1',
             'kw_CRVAL1',
             'kw_CTYPE1',
+            'kw_DARKFILE',
             'kw_DARK_B_DEAD',
             'kw_DARK_B_MED',
             'kw_DARK_CUT',
@@ -101,9 +105,16 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_EM_TRASCUT',
             'kw_EM_WAVE',
             'kw_EXPTIME',
+            'kw_EXTFILE',
             'kw_EXTRA_SN',
+            'kw_EXT_TYPE',
+            'kw_FLATFILE',
             'kw_FLAT_RMS',
+            'kw_FPFILE',
             'kw_GAIN',
+            'kw_HCFILE',
+            'kw_INFILE',
+            'kw_LOCOFILE',
             'kw_LOCO_BCKGRD',
             'kw_LOCO_CTR_COEFF',
             'kw_LOCO_DEG_C',
@@ -126,8 +137,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
             'kw_OUTPUT',
-            'kw_EXT_TYPE',
             'kw_POL_EXPTIME',
+            'kw_POL_ELAPTIME',
             'kw_POL_METHOD',
             'kw_POL_NEXP',
             'kw_POL_STOKES',
@@ -135,6 +146,29 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_FILENAM2',
             'kw_POL_FILENAM3',
             'kw_POL_FILENAM4',
+            'kw_POL_EXPTIME1',
+            'kw_POL_EXPTIME2',
+            'kw_POL_EXPTIME3',
+            'kw_POL_EXPTIME4',
+            'kw_POL_LSD_COL1',
+            'kw_POL_LSD_COL2',
+            'kw_POL_LSD_COL3',
+            'kw_POL_LSD_COL4',
+            'kw_POL_LSD_COL5',
+            'kw_POL_LSD_FIT_RESOL',
+            'kw_POL_LSD_FIT_RV',
+            'kw_POL_LSD_MASK',
+            'kw_POL_LSD_NP',
+            'kw_POL_LSD_V0',
+            'kw_POL_LSD_VF',
+            'kw_POL_LSD_MEANPOL',
+            'kw_POL_LSD_STDDEVPOL',
+            'kw_POL_LSD_MEDIANPOL',
+            'kw_POL_LSD_MEDABSDEVPOL',
+            'kw_POL_LSD_STOKESVQU_MEAN',
+            'kw_POL_LSD_STOKESVQU_STDDEV',
+            'kw_POL_LSD_NULL_MEAN',
+            'kw_POL_LSD_NULL_STDDEV',
             'kw_POL_MJDATE1',
             'kw_POL_MJDATE2',
             'kw_POL_MJDATE3',
@@ -143,18 +177,21 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_MJDEND2',
             'kw_POL_MJDEND3',
             'kw_POL_MJDEND4',
-            'kw_POL_LSD_MASK',
-            'kw_POL_LSD_V0',
-            'kw_POL_LSD_VF',
-            'kw_POL_LSD_NP',
-            'kw_POL_LSD_FIT_RV',
-            'kw_POL_LSD_FIT_RESOL',
-            'kw_POL_LSD_COL1',
-            'kw_POL_LSD_COL2',
-            'kw_POL_LSD_COL3',
-            'kw_POL_LSD_COL4',
-            'kw_POL_LSD_COL5',
+            'kw_POL_BJD1',
+            'kw_POL_BJD2',
+            'kw_POL_BJD3',
+            'kw_POL_BJD4',
+            'kw_POL_BERV1',
+            'kw_POL_BERV2',
+            'kw_POL_BERV3',
+            'kw_POL_BERV4',
+            'kw_POL_MEANBJD',
+            'kw_POL_MJDCEN',
+            'kw_POL_BJDCEN',
+            'kw_POL_BERVCEN',
             'kw_RDNOISE',
+            'kw_REFFILE',
+            'kw_SHAPEFILE',
             'kw_TELLU_ABSO',
             'kw_TELLU_AMP_PC',
             'kw_TELLU_DV_TELL1',
@@ -162,18 +199,19 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
+            'kw_TILTFILE',
             'kw_UTC_OBS',
-            'kw_WAVE_FILE',
+            'kw_WAVEFILE',
             'kw_WAVE_LL_DEG',
             'kw_WAVE_ORD_N',
             'kw_WAVE_PARAM',
             'kw_WAVE_TIME1',
             'kw_WAVE_TIME2',
             'kw_drs_QC',
+            'kw_ppversion',
             'kw_root_drs_flat',
             'kw_root_drs_hc',
             'kw_root_drs_loc',
-            'kw_ppversion',
             'kw_version']
 
 
@@ -427,7 +465,6 @@ kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
 kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
-kw_WAVE_FILE = ['WAVEFILE', 0, 'Wave file used']
 kw_WAVE_TIME1 = ['WAVET1', 0, 'Wave file date+time human']
 kw_WAVE_TIME2 = ['WAVET2', 0, 'Wave file date+time unix']
 
@@ -520,24 +557,49 @@ kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
 kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
 kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
 kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
+kw_POL_ELAPTIME = ['ELAPTIME', '', 'Elapsed time of observation (sec)']
 kw_POL_FILENAM1 = ['FILENAM1', '', 'Base filename of exposure 1']
 kw_POL_FILENAM2 = ['FILENAM2', '', 'Base filename of exposure 2']
 kw_POL_FILENAM3 = ['FILENAM3', '', 'Base filename of exposure 3']
 kw_POL_FILENAM4 = ['FILENAM4', '', 'Base filename of exposure 4']
-kw_POL_MJDATE1 = ['MJDATE1', '', 'MJD of exposure 1']
-kw_POL_MJDATE2 = ['MJDATE2', '', 'MJD of exposure 2']
-kw_POL_MJDATE3 = ['MJDATE3', '', 'MJD of exposure 3']
-kw_POL_MJDATE4 = ['MJDATE4', '', 'MJD of exposure 4']
-kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND of exposure 1']
-kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND of exposure 2']
-kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND of exposure 3']
-kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND of exposure 4']
+kw_POL_EXPTIME1 = ['EXPTIME1', '', 'EXPTIME of exposure 1 (sec)']
+kw_POL_EXPTIME2 = ['EXPTIME2', '', 'EXPTIME of exposure 2 (sec)']
+kw_POL_EXPTIME3 = ['EXPTIME3', '', 'EXPTIME of exposure 3 (sec)']
+kw_POL_EXPTIME4 = ['EXPTIME4', '', 'EXPTIME of exposure 4 (sec)']
+kw_POL_MJDATE1 = ['MJDATE1', '', 'MJD at start of exposure 1']
+kw_POL_MJDATE2 = ['MJDATE2', '', 'MJD at start of exposure 2']
+kw_POL_MJDATE3 = ['MJDATE3', '', 'MJD at start of exposure 3']
+kw_POL_MJDATE4 = ['MJDATE4', '', 'MJD at start of exposure 4']
+kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND at end of exposure 1']
+kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND at end of exposure 2']
+kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND at end of exposure 3']
+kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND at end of exposure 4']
+kw_POL_BJD1 = ['BJD1', '', 'BJD at start of exposure 1']
+kw_POL_BJD2 = ['BJD2', '', 'BJD at start of exposure 2']
+kw_POL_BJD3 = ['BJD3', '', 'BJD at start of exposure 3']
+kw_POL_BJD4 = ['BJD4', '', 'BJD at start of exposure 4']
+kw_POL_BERV1 = ['BERV1', '', 'BERV at start of exposure 1']
+kw_POL_BERV2 = ['BERV2', '', 'BERV at start of exposure 2']
+kw_POL_BERV3 = ['BERV3', '', 'BERV at start of exposure 3']
+kw_POL_BERV4 = ['BERV4', '', 'BERV at start of exposure 4']
+kw_POL_MEANBJD = ['MEANBJD', '', 'Mean BJD for polar sequence']
+kw_POL_MJDCEN = ['MJDCEN', '', 'MJD at center of observation']
+kw_POL_BJDCEN = ['BJDCEN', '', 'BJD at center of observation']
+kw_POL_BERVCEN = ['BERVCEN', '', 'BERV at center of observation']
 kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
 kw_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
 kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
 kw_POL_LSD_NP = ['LSDNP', '', 'Number of points for LSD profile']
 kw_POL_LSD_FIT_RV = ['LSDFITRV', '', 'Radial velocity (km/s) from gaussian fit']
 kw_POL_LSD_FIT_RESOL = ['LSDRESOL', '', 'Resolving power from gaussian fit']
+kw_POL_LSD_MEANPOL = ['LSDMEPOL', '', 'Mean polarization of data in LSD']
+kw_POL_LSD_STDDEVPOL = ['LSDSDPOL', '', 'Std dev polarization of data in LSD']
+kw_POL_LSD_MEDIANPOL = ['LSDMDPOL', '', 'Median polarization of data in LSD']
+kw_POL_LSD_MEDABSDEVPOL = ['LSDMAPOL', '', 'Med abs dev polarization of data in LSD']
+kw_POL_LSD_STOKESVQU_MEAN = ['MEPOLLSD', '', 'Mean of pol LSD profile']
+kw_POL_LSD_STOKESVQU_STDDEV = ['SDPOLLSD', '', 'Std dev of pol LSD profile']
+kw_POL_LSD_NULL_MEAN = ['MENULLSD', '', 'Mean of null LSD profile']
+kw_POL_LSD_NULL_STDDEV = ['SDNULLSD', '', 'Std dev of null LSD profile']
 kw_POL_LSD_COL1 = ['LSDCOL1', '', 'Velocities (km/s)']
 kw_POL_LSD_COL2 = ['LSDCOL2', '', 'Stokes I LSD profile']
 kw_POL_LSD_COL3 = ['LSDCOL3', '', 'Gaussian fit to Stokes I LSD profile']
@@ -567,6 +629,21 @@ kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
 # -----------------------------------------------------------------------------
 # Define output
 # -----------------------------------------------------------------------------
+kw_DARKFILE = ['DARKFILE', '', 'DARK_DARK file used for correction']
+kw_BADPFILE1 = ['BADFILE1', '', 'FLAT_FLAT file used for BADPIX corr']
+kw_BADPFILE2 = ['BADFILE2', '', 'DARK_DARK file used for BADPIX corr']
+kw_LOCOFILE = ['LOCOFILE', '', 'DARK_FLAT/FLAT_DARK file used for localisation']
+kw_TILTFILE = ['TILTFILE', '', 'FP_FP file used for TILT']
+kw_SHAPEFILE = ['SHAPFILE', '', 'FP_FP file used for SHAPE']
+kw_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
+kw_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
+kw_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
+kw_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
+kw_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+kw_INFILE = ['INFILE', '', 'Input file userd to create output']
+kw_HCFILE = ['HCFILE', '', 'HC file used to create output']
+kw_FPFILE = ['FPFILE', '', 'FP file used to create output']
+
 kw_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
 kw_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
 

@@ -548,6 +548,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     else
         :return read_file: string, name of tilt file
     """
+    func_name = __NAME__ + '.read_tilt_file()'
     if key is None:
         key = 'TILT'
     # get filename
@@ -566,12 +567,82 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     image, hdict, _, nx, ny = rout
     # get the tilt keys
     tilt = read_key_2d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'], 1)
+    # get the tilt file
+    if p['KW_TILTFILE'][0] in hdict:
+        p['TILTFILE'] = hdict[p['KW_TILTFILE'][0]]
+    else:
+        p['TILTFILE'] = 'UNKNOWN'
+    p.set_source('TILTFILE', func_name)
+
     # return the first set of keys
-    return tilt[:, 0]
+    return p, tilt[:, 0]
 
 
-def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
-                   return_filename=False, required=True):
+def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
+                   required=True):
+    """
+    Reads the shape file (from calib database or filename)
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                fitsfilename: string, the full path of for the main raw fits
+                              file for a recipe
+                              i.e. /data/raw/20170710/filename.fits
+                kw_TILT: list, the keyword list for kw_TILT (defined in
+                         spirouKeywords.py)
+                IC_TILT_NBO: int, Number of orders in tilt file
+
+    :param hdr: dictionary or None, the header dictionary to look for the
+                     acquisition time in, if None loads the header from
+                     p['FITSFILENAME']
+    :param filename: string or None, the filename and path of the tilt file,
+                     if None gets the TILT file from the calib database
+                     keyword "TILT"
+    :param key: string or None, if None key='TILT' else uses string as key
+                from calibDB (first entry) to get tilt file
+    :param return_filename: bool, if true return the filename only
+    :param required: bool, if True code generates log exit else raises a
+                     ConfigError (to be caught)
+
+    if return_filename is False
+        :return tilt: numpy array (2D), the shape map image
+    else
+        :return read_file: string, name of shape file
+    """
+    func_name = __NAME__ + '.read_shape_file()'
+    if key is None:
+        key = 'SHAPE'
+    # get filename
+    if filename is None:
+        read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
+    else:
+        read_file = filename
+    # deal with returning filename
+    if return_filename:
+        return read_file
+    # log tilt file used
+    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+    WLOG('', p['LOG_OPT'], wmsg)
+    # read read_file
+    rout = readimage(p, filename=read_file, log=False)
+    shapemap, hdict, _, nx, ny = rout
+    # set NaN values to zeros
+    shapemap[~np.isfinite(shapemap)] = 0.0
+
+    # get the shape file
+    if p['KW_SHAPEFILE'][0] in hdict:
+        p['SHAPFILE'] = hdict[p['KW_SHAPEFILE'][0]]
+    else:
+        p['SHAPFILE'] = 'UNKNOWN'
+    p.set_source('SHAPFILE', func_name)
+
+    # return the shape map image
+    return p, shapemap
+
+
+def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
+                  return_filename=False, required=True, fiber=None,
+                  quiet=False):
     """
     Reads the wave file (from calib database or filename)
 
@@ -595,6 +666,9 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
     :param return_filename: bool, if true return the filename only
     :param required: bool, if True code generates log exit else raises a
                      ConfigError (to be caught)
+    :param fiber: string, if not None forces the fiber type (i.e. look for
+                  WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
+    :param quiet: bool, if True logs progress
 
     if return_filename is False and return header is False
 
@@ -608,7 +682,9 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         :return read_file: string, the file name associated with the wavelength
                            solution
     """
-    if key is None:
+    if key is None and fiber is not None:
+        key = 'WAVE_' + fiber
+    elif key is None:
         key = 'WAVE_' + p['FIBER']
     # get filename
     if filename is None:
@@ -617,10 +693,11 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         read_file = filename
     # deal with returning filename only
     if return_filename:
-        return read_file
+        return os.path.basename(read_file)
     # log wave file used
-    wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    if not quiet:
+        wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
+        WLOG('', p['LOG_OPT'], wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -632,7 +709,7 @@ def read_wave_file(p, hdr=None, filename=None, key=None, return_header=False,
         return wave
 
 
-def read_wave_params(p, hdr):
+def read_waveparams(p, hdr):
     func_name = __NAME__ + '.read_wave_params()'
     # get constants from p
     key = p['KW_WAVE_PARAM'][0]
@@ -660,7 +737,7 @@ def read_wave_params(p, hdr):
     return wave_params
 
 
-def get_wave_solution(p, image=None, hdr=None):
+def get_wave_solution_old(p, image=None, hdr=None):
     func_name = __NAME__ + '.get_wave_solution()'
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
@@ -673,7 +750,7 @@ def get_wave_solution(p, image=None, hdr=None):
     # if we have header use header to get wave solution
     if cond1 and cond2 and cond3:
         # get the wave parmaeters from the header
-        wave_params = read_wave_params(p, hdr)
+        wave_params = read_waveparams(p, hdr)
         # get the dimensions
         dim1 = hdr[dim1key]
         # check that dim1 is the correct number of orders
@@ -691,9 +768,176 @@ def get_wave_solution(p, image=None, hdr=None):
             wave[order_num] = np.polyval(wave_params[order_num][::-1], xpixels)
     # else we use the calibDB (using the header) to get the wave solution
     else:
-        wave = read_wave_file(p, hdr)
+        wave = read_wavefile(p, hdr)
     # return wave solution
     return wave
+
+
+def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
+                                  nbx=None):
+    func_name = __NAME__ + '.create_wavemap_from_waveparam()'
+    # get constants from p
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # get keys from header
+    dim1 = hdr[dim1key]
+    # raise error is image and nbpix is None
+    if image is None and (nbo is None or nbx is None):
+        emsg = ('Need to define an "image" or ("nbo" and "nbx") in order to '
+                'produce wavemap from wave parameteres')
+        WLOG('error', p['LOG_OPT'], emsg)
+    # get the required dimensions of the wavemap
+    if image is None:
+        dim1req = nbo
+    else:
+        dim1req = image.shape[0]
+        nbo = image.shape[0]
+        nbx = image.shape[1]
+    # check that dim1 is the correct number of orders
+    if dim1 != dim1req:
+        emsg1 = (
+            'Number of orders in HEADER ({0}={1}) not compatible with '
+            'number of orders in image ({2})')
+        eargs = [dim1key, dim1, dim1req]
+        emsg2 = '    function = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+    # define empty wave solution
+    wavemap = np.zeros((nbo, nbx))
+    xpixels = np.arange(nbx)
+    # load the wave solution for each order
+    for order_num in range(dim1):
+        wavemap[order_num] = np.polyval(waveparams[order_num][::-1], xpixels)
+    # return wavemap
+    return wavemap
+
+
+
+def get_wave_solution(p, image=None, hdr=None, filename=None,
+                      return_wavemap=False, return_filename=False,
+                      nbo=None, nbx=None, return_header=False, fiber=None,
+                      quiet=False):
+    """
+    Gets the wave solution coefficients (and wavemap if "return_wavemap" is
+    True and filename if "return_filename" is True)
+
+    The wavelength solution will be taken from:
+        1) filename (if not None)
+        2) calibDB (if CALIB_DB_FORCE_WAVESOL is True)
+        3) header (if hdr not None)
+        4) calibDB
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+           CALIB_DB_FORCE_WAVESOL: bool, if True do not attempt to use header
+    :param image: numpy array (2D) or None, image used to get the shape of the
+                  xpixels - if wavemap is constructed from wave parameters, can
+                  be None is nb_xpix is given
+    :param hdr: dictionary or None, the header used for the wave parameter keys
+                or if keys are not present for the date/time for the calibDB
+                entry
+    :param filename: string, the filename and path of the wave solution file to
+                     use (wave parameters are taken from file header)
+    :param return_wavemap: bool, if True returns wave map (same shape as input
+                           image (in x direction) or number of orders x nb_xpix)
+    :param return_filename: bool, if True returns filename
+    :param nbo: int, the number of orders if image is None (used to
+                generate wave map from wave parameters
+    :param nbo: int, the number of x-pixels if image is None (used to
+                generate wave map from wave parameters
+    :param return_header: bool, if True return file header
+    :param fiber: string, if not None forces the fiber type (i.e. look for
+                  WAVE_{fiber} as opposed to WAVE_{p['FIBER']})
+    :param quiet: bool, if True does not print or log
+
+    :return waveparams:numpy array (2D), the wave coefficients for each order
+                       shape = (number of orders x number of coeffs)
+    :return wavemap: numpy array (2D), the wave map
+                       shape = (number of orders x image size)
+                       or
+                       shape = (number of orders x nb_xpix) - if image is None
+
+    :return wavefile: string, the filename of the wave file
+    :return header: dict, the header of the wave file (if return_header=True)
+    """
+    func_name = __NAME__ + '.get_wave_solution()'
+    # get constants from p
+    dim1key = p['KW_WAVE_ORD_N'][0]
+    dim2key = p['KW_WAVE_LL_DEG'][0]
+    namekey = p['KW_WAVEFILE'][0]
+    # check for header keys in header
+    if hdr is None:
+        header_cond = False
+    else:
+        header_cond = (dim1key in hdr) and (dim2key in hdr) and (namekey in hdr)
+    # see if we can obtain nb_xpix from hdr
+    if (image is None) and hdr is not None:
+        if (nbo is None) and 'NAXIS2' in hdr:
+            nbo = hdr['NAXIS2']
+        else:
+            emsg1 = ('Cannot identify number of orders (no image defined, and'
+                    'NAXIS2 not in header)')
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        if (nbx is None) and 'NAXIS1' in hdr:
+            nbx = hdr['NAXIS1']
+        else:
+            emsg1 = ('Cannot identify number of x-pixels (no image defined, and'
+                    'NAXIS1 not in header)')
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
+    # -------------------------------------------------------------------------
+    # deal with where to get wave solution from
+    # -------------------------------------------------------------------------
+    # if filename is given we should get it from the filename
+    if filename is not None:
+        rout = readimage(p, filename=filename, log=False)
+        wavemap, hdict, _, nx, ny = rout
+        waveparams = read_waveparams(p, hdict)
+        obtain = 'file'
+    # if force calibDB is True
+    elif p['CALIB_DB_FORCE_WAVESOL']:
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber,
+                                       quiet=True)
+        waveparams = read_waveparams(p, hdict)
+        filename = read_wavefile(p, hdr, return_filename=True, fiber=fiber)
+        obtain = 'calibDB'
+    # if we have keys in the header use them
+    elif header_cond:
+        waveparams = read_waveparams(p, hdr)
+        if return_wavemap:
+            wavemap = create_wavemap_from_waveparam(p, hdr, waveparams,
+                                                    image, nbo, nbx)
+        else:
+            wavemap = None
+        filename = hdr[namekey]
+        hdict = hdr
+        obtain = 'header'
+    # else we try to use the calibDB
+    else:
+        wavemap, hdict = read_wavefile(p, hdr, return_header=True, fiber=fiber)
+        waveparams = read_waveparams(p, hdict)
+        filename = read_wavefile(p, hdr, return_filename=True, fiber=fiber)
+        obtain = 'calibDB'
+    # -------------------------------------------------------------------------
+    # log where file came from
+    # -------------------------------------------------------------------------
+    if not quiet:
+        wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
+        wmsg2 = '\tWave file = {0}'.format(os.path.basename(filename))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+
+    # -------------------------------------------------------------------------
+    # deal with returns
+    # -------------------------------------------------------------------------
+    returns = [waveparams]
+    if return_wavemap:
+        returns.append(wavemap)
+    if return_filename:
+        returns.append(filename)
+    if return_header:
+        returns.append(hdict)
+    return returns
 
 
 def get_good_object_name(p, hdr=None, rawname=None):
@@ -769,7 +1013,8 @@ def read_hcref_file(p, hdr=None, filename=None, key=None, return_header=False,
         return hcref
 
 
-def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
+def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
+                   return_header=False):
     """
     Reads the flat file (from calib database or filename)
 
@@ -791,8 +1036,16 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
                 as key from calibDB (first entry) to get wave file
     :param required: bool, if True code generates log exit else raises a
                      ConfigError (to be caught)
+    :param return_header: bool, if True returns the header as well
 
-    :return wave: numpy array (2D), the flat image
+    if not return_header:
+        :return p: parameter dictionary with output keys in
+        :return flat: numpy array (2D), the flat image
+    if return_header:
+        :return p: parameter dictionary with output keys in
+        :return flat: numpy array (2D), the flat image
+        :return header: dictionary, the flat header
+
     """
     func_name = __NAME__ + '.read_flat_file()'
     if key is None:
@@ -813,8 +1066,17 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True):
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
+    # get flat file name
+    if p['KW_FLATFILE'][0] in hdict:
+        p['FLATFILE'] = hdict[p['KW_FLATFILE'][0]]
+    else:
+        p['FLATFILE'] = 'UNKNOWN'
+    p.set_source('FLATFILE', func_name)
     # return the wave file
-    return flat
+    if return_header:
+        return p, flat, hdict
+    else:
+        return p, flat
 
 
 def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
@@ -861,8 +1123,14 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
+    # get blaze file name
+    if p['KW_BLAZFILE'][0] in hdict:
+        p['BLAZFILE'] = hdict[p['KW_BLAZFILE'][0]]
+    else:
+        p['BLAZFILE'] = 'UNKNOWN'
+    p.set_source('BLAZFILE', func_name)
     # return the wave file
-    return blaze
+    return p, blaze
 
 
 def read_order_profile_superposition(p, hdr=None, filename=None,

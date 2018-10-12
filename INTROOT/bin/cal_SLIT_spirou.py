@@ -101,7 +101,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    datac = spirouImage.CorrectForDark(p, data, hdr)
+    p, datac = spirouImage.CorrectForDark(p, data, hdr)
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -122,7 +122,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
 
     # ----------------------------------------------------------------------
     # Background computation
@@ -168,7 +168,7 @@ def main(night_name=None, files=None):
         # original there is a loop but it is not used --> removed
         p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
         # get localisation fit coefficients
-        loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
+        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
 
         # ------------------------------------------------------------------
         # Calculating the tilt
@@ -212,17 +212,24 @@ def main(night_name=None, files=None):
     # copy the tilt along the orders
     tiltima = np.ones((int(loc['NUMBER_ORDERS']/2), data2.shape[1]))
     tiltima *= loc['TILT'][:, None]
+    # get the raw tilt file name
+    raw_tilt_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
     tiltfits, tag = spirouConfig.Constants.SLIT_TILT_FILE(p)
-    tiltfitsname = os.path.split(tiltfits)[-1]
+    tiltfitsname = os.path.basename(tiltfits)
     # Log that we are saving tilt file
-    wmsg = 'Saving tilt  information in file: {0}'
+    wmsg = 'Saving tilt information in file: {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(tiltfitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=raw_tilt_file)
     # add tilt parameters as 1d list
     hdict = spirouImage.AddKey1DList(hdict, p['KW_TILT'], values=loc['TILT'])
     # write tilt file to file
