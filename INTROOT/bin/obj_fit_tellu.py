@@ -133,11 +133,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Load template (if available)
     # ----------------------------------------------------------------------
-    # TODO: Is this per object? If so how do we select? Based on OBJNAME?
-    # TODO: Currently just selects the most recent
     # read filename from telluDB
-    template_file = spirouDB.GetDatabaseTellTemp(p, loc['OBJNAME'],
-                                                 required=False)
+    template_file = spirouDB.GetDatabaseObjTemp(p, loc['OBJNAME'],
+                                                required=False)
     # if we don't have a template flag it
     if template_file is None:
         loc['FLAG_TEMPLATE'] = False
@@ -155,9 +153,6 @@ def main(night_name=None, files=None):
     # load the expected atmospheric transmission
     # ----------------------------------------------------------------------
     # read filename from telluDB
-    # TODO: This is per wave solution but wave solution in e2ds file header
-    # TODO:  If so how do we select?
-    # TODO: Currently just selects the most recent
     tapas_file_names = spirouDB.GetDatabaseTellConv(p)
     tapas_file_name = tapas_file_names[-1]
     # load atmospheric transmission
@@ -323,17 +318,17 @@ def main(night_name=None, files=None):
             #           WAVE_IT
             # Returns:
             #           TEMPLATE2
-            # TODO: change name --> berv_correction
-            loc = spirouTelluric.InterpAtShiftedWavelengths(p, loc, thdr)
+            loc = spirouTelluric.BervCorrectTemplate(p, loc, thdr)
 
             # debug plot
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
                 # plot the transmission map plot
                 sPlt.tellu_fit_tellu_spline_plot(p, loc)
 
-        # TODO: remove later
-        pcxxx = np.array(loc['PC'][:,0])
-        tapasxxx = np.array(loc['TAPAS_ALL_SPECIES'][0])
+        # store PC and TAPAS_ALL_SPECIES before shift
+        loc['PC_PRESHIFT'] = np.array(loc['PC'])
+        loc['TAPAS_ALL_PRESHIFT'] = np.array(loc['TAPAS_ALL_SPECIES'])
+        loc.set_sources(['PC_PRESHIFT', 'TAPAS_ALL_PRESHIFT'], main_name)
 
         # ------------------------------------------------------------------
         # Shift the pca components to correct frame
@@ -366,21 +361,9 @@ def main(night_name=None, files=None):
             stapas = spirouTelluric.Wave2Wave(*wargs, reshape=True)
             loc['TAPAS_ALL_SPECIES'][comp] = stapas.reshape(wargs[0].shape)
 
-        # TODO: remove later
-        plt = sPlt.plt
-        plt.figure()
-        plt.clf()
-        plt.plot(tdata.ravel()/np.nanmedian(tdata), color='k', label='Spectrum')
-        plt.plot(pcxxx, color='g', marker='x', label='PC (before)')
-        plt.plot(tapasxxx, color='0.5', marker='o', label='TAPAS (before)')
-
-        plt.plot(loc['PC'][:,0],color='r', label='PC (After)')
-        plt.plot(loc['TAPAS_ALL_SPECIES'][0],color='b', label='TAPAS (After)')
-
-        plt.legend(loc=0)
-
-        #
-        # WLOG('error', '', 'STOP')
+        # Debug plot to test shifting
+        if p['DRS_PLOT'] and p['DRS_DEBUG'] > 1:
+            sPlt.tellu_fit_debug_shift_plot(p, loc)
 
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption
