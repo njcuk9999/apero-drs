@@ -1,18 +1,19 @@
-Update Note Summary - Version 0.3.033 (Since 0.3.027)
-
+Update Note Summary - Version 0.3.035 (Since 0.3.027)
 
 
 Not done/not finished/to do:
 
-- cal_WAVE_E2DS_spirou [Melissa] - DO NOT USE YET
 - drift code compatibility [Francois]
 - add the drift to cal_CCF [Francois]
 - obj_mk_obj_template needs testing [Etienne & Neil]
-- not put a constraint on FF that must match extraction type [Neil]
-
 
 
 Done:
+
+- update to cal_WAVE_E2DS_EA_spirou (FP jump analysis now more stable)
+
+- constaints on extraction that extraction type is the same as for FLAT file
+  (i.e. 4a and 4b are compatible, mode 3d and 4b are not)
 
 - added ability to use tellurics from multiple wavelength solutions in:
     - obj_mk_tellu.py
@@ -29,7 +30,7 @@ Done:
 
 - fixed major bug with extraction methods 4a and 4b
     - methods 4a and 4b are now the default setting (change with
-      ic_extract_type and ic_ff_extract_type
+      ic_extract_type and ic_ff_extract_type)
 
 - moved cal_WAVE_E2DS_spirou and cal_HC_E2DS_spirou to misc folder
 
