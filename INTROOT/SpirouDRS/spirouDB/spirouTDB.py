@@ -216,10 +216,10 @@ def get_database_tell_map(p, required=True):
     return filenames[sort], objnames[sort], airmasses[sort], watercols[sort]
 
 
-def get_database_tell_template(p, object_name, required=True):
-    func_name = __NAME__ + '.get_database_tell_template()'
+def get_database_obj_template(p, object_name, required=True):
+    func_name = __NAME__ + '.get_database_obj_template()'
     # define key
-    key = 'TELL_TEMP'
+    key = 'OBJ_TEMP'
     # get the telluric database (all lines)
     t_database = spirouDB.get_database(p, dbkind='Telluric')
     # check for key in database
@@ -453,9 +453,9 @@ def update_database_tell_map(p, filename, objname, airmass, watercol, hdr=None):
     spirouDB.update_datebase(p, keys, lines, dbkind='Telluric')
 
 
-def update_database_tell_temp(p, filename, object_name, hdr=None):
+def update_database_obj_temp(p, filename, object_name, hdr=None):
     # define key for telluric convolve file
-    key = 'TELL_TEMP'
+    key = 'OBJ_TEMP'
     # get h_time and u_time
     h_time, u_time = spirouDB.get_times_from_header(p, hdr)
     # set up line
