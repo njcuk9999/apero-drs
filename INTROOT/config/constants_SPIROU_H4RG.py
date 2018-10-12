@@ -957,10 +957,9 @@ HC_RESMAP_DV_SPAN = [-15, 15]
 HC_RESMAP_PLOT_XLIM = [-8, 8]
 # the line profile y limits                                           - [cal_HC]
 HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
-
 #index of FP line to start order cross-matching from                - [cal_wave]
 ic_wave_fp_cm_ind = -2
-# order to plot HC + fitted lines                                   - [cal_HC]
+# order to plot HC + fitted lines                                     - [cal_HC]
 ic_wave_ea_plot_order = 7
 
 # -----------------------------------------------------------------------------
