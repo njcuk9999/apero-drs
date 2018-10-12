@@ -133,11 +133,9 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Load template (if available)
     # ----------------------------------------------------------------------
-    # TODO: Is this per object? If so how do we select? Based on OBJNAME?
-    # TODO: Currently just selects the most recent
     # read filename from telluDB
-    template_file = spirouDB.GetDatabaseTellTemp(p, loc['OBJNAME'],
-                                                 required=False)
+    template_file = spirouDB.GetDatabaseObjTemp(p, loc['OBJNAME'],
+                                                required=False)
     # if we don't have a template flag it
     if template_file is None:
         loc['FLAG_TEMPLATE'] = False
@@ -146,8 +144,6 @@ def main(night_name=None, files=None):
         loc['FLAG_TEMPLATE'] = True
         # load template
         template, _, _, _, _ = spirouImage.ReadImage(p, template_file)
-        # renormalize the template
-        template = template / loc['NBLAZE']
         # add to loc
         loc['TEMPLATE'] = template
     # set the source for flag and template
@@ -157,9 +153,6 @@ def main(night_name=None, files=None):
     # load the expected atmospheric transmission
     # ----------------------------------------------------------------------
     # read filename from telluDB
-    # TODO: This is per wave solution but wave solution in e2ds file header
-    # TODO:  If so how do we select?
-    # TODO: Currently just selects the most recent
     tapas_file_names = spirouDB.GetDatabaseTellConv(p)
     tapas_file_name = tapas_file_names[-1]
     # load atmospheric transmission
@@ -221,7 +214,7 @@ def main(night_name=None, files=None):
     # Returns loc:
     #           PC
     #           NPC
-    #           FIT_OC
+    #           FIT_PC
     loc = spirouTelluric.CalculateAbsorptionPCA(p, loc, log_abso, keep)
 
     # Plot PCA components
@@ -325,25 +318,52 @@ def main(night_name=None, files=None):
             #           WAVE_IT
             # Returns:
             #           TEMPLATE2
-            loc = spirouTelluric.InterpAtShiftedWavelengths(p, loc, thdr)
+            loc = spirouTelluric.BervCorrectTemplate(p, loc, thdr)
 
             # debug plot
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
                 # plot the transmission map plot
                 sPlt.tellu_fit_tellu_spline_plot(p, loc)
 
+        # store PC and TAPAS_ALL_SPECIES before shift
+        loc['PC_PRESHIFT'] = np.array(loc['PC'])
+        loc['TAPAS_ALL_PRESHIFT'] = np.array(loc['TAPAS_ALL_SPECIES'])
+        loc.set_sources(['PC_PRESHIFT', 'TAPAS_ALL_PRESHIFT'], main_name)
+
         # ------------------------------------------------------------------
         # Shift the pca components to correct frame
         # ------------------------------------------------------------------
         # log process
-        wmsg1 = 'Shifting PCA components on to master wavelength grid'
+        wmsg1 = 'Shifting PCA components from master wavelength grid'
         wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
         WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
         # shift pca components (one by one)
         for comp in range(loc['NPC']):
             wargs = [loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
             shift_pc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
-            loc['PC'][:, comp] = shift_pc.reshape(loc['PC'][:, comp].shape)
+            loc['PC'][:, comp] = shift_pc.reshape(wargs[0].shape)
+
+            wargs = [loc['FIT_PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
+            shift_fpc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+            loc['FIT_PC'][:, comp] = shift_fpc.reshape(wargs[0].shape)
+
+        # ------------------------------------------------------------------
+        # Shift the pca components to correct frame
+        # ------------------------------------------------------------------
+        # log process
+        wmsg1 = 'Shifting TAPAS spectrum from master wavelength grid'
+        wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
+        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        # shift tapas
+        for comp in range(len(loc['TAPAS_ALL_SPECIES'])):
+            wargs = [loc['TAPAS_ALL_SPECIES'][comp], loc['MASTERWAVE'],
+                     loc['WAVE_IT']]
+            stapas = spirouTelluric.Wave2Wave(*wargs, reshape=True)
+            loc['TAPAS_ALL_SPECIES'][comp] = stapas.reshape(wargs[0].shape)
+
+        # Debug plot to test shifting
+        if p['DRS_PLOT'] and p['DRS_DEBUG'] > 1:
+            sPlt.tellu_fit_debug_shift_plot(p, loc)
 
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption

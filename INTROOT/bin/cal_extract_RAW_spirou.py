@@ -16,6 +16,7 @@ Up-to-date with cal_extract_RAW_spirouALL AT-4 V47
 from __future__ import division
 import numpy as np
 import os
+import warnings
 
 from SpirouDRS import spirouBACK
 from SpirouDRS import spirouConfig
@@ -351,7 +352,8 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             eargs = [p, loc, data2, order_num]
             ekwargs = dict(mode=p['IC_EXTRACT_TYPE'],
                            order_profile=order_profile)
-            eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
+            with warnings.catch_warnings(record=True) as w:
+                eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
             #deal with different return
             if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
                 e2ds, e2dsll, cpt = eout
