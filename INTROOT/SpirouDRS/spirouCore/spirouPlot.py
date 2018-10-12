@@ -2010,6 +2010,36 @@ def wave_ea_plot_line_profiles(p, loc):
     plt.subplots_adjust(hspace=0, wspace=0)
     plt.suptitle('Line Profiles for resolution grid')
 
+def wave_ea_plot_single_order(p, loc):
+    # set order to plot
+    plot_order = p['IC_WAVE_EA_PLOT_ORDER']
+    # get the correct order to plot for all_lines (which is sized n_ord_final-n_ord_start)
+    plot_order_line = plot_order - p['IC_HC_N_ORD_START_2']
+    plt.figure()
+    # plot order and flux
+    plt.plot(loc['LL_OUT_2'][plot_order], loc['HCDATA'][plot_order],
+             label='HC spectrum - order '+ str(plot_order))
+    # plot found lines
+    # first line separate for labelling purposes
+    plt.vlines(loc['ALL_LINES_1'][plot_order_line][0][0], 0,
+               loc['ALL_LINES_1'][plot_order_line][0][2],
+               'm', label='fitted lines')
+    # plot lines to the top of the figure
+    plt.vlines(loc['ALL_LINES_1'][plot_order_line][0][0], 0,
+               np.max(loc['HCDATA'][plot_order]),
+               'gray', linestyles='dotted')
+    # rest of lines
+    for i in range(1, len(loc['ALL_LINES_1'][plot_order_line])):
+        # plot lines to their corresponding amplitude
+        plt.vlines(loc['ALL_LINES_1'][plot_order_line][i][0], 0,
+                   loc['ALL_LINES_1'][plot_order_line][i][2], 'm')
+        # plot lines to the top of the figure
+        plt.vlines(loc['ALL_LINES_1'][plot_order_line][i][0], 0,
+                   np.max(loc['HCDATA'][plot_order]), 'gray', linestyles='dotted')
+    plt.legend()
+    plt.xlabel('Wavelength')
+    plt.ylabel('Flux')
+
 
 # =============================================================================
 # telluric plotting function
