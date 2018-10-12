@@ -983,7 +983,7 @@ tellu_absorbers = ['combined', 'h2o', 'o3', 'n2o', 'o2', 'co2', 'ch4']
 
 # Define whether to fit the derivatives instead of the          - [obj_mk_tellu]
 #     principal components
-fit_deriv_pc = True
+fit_deriv_pc = False
 
 # Define whether to add the first derivative and broadening     - [obj_mk_tellu]
 #     factor to the principal components this allows a variable
