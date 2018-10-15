@@ -178,6 +178,27 @@ class Paths:
         self.add_root()
 
 
+
+# =============================================================================
+# Define file functions
+# =============================================================================
+def get_most_recent(filelist):
+    # set most recent time to None to start
+    most_recent = None
+    # loop around file list
+    for file_it in filelist:
+        # get modified time
+        file_time = os.path.getctime(file_it)
+        # add to most_recent if newer
+        if most_recent is None:
+            most_recent = file_time
+        elif file_time > most_recent:
+            most_recent = file_time
+    # return most recent time
+    return most_recent
+
+
+
 # =============================================================================
 # Define ID functions (pre-processing)
 # =============================================================================
