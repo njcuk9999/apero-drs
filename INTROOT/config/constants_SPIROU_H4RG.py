@@ -1021,10 +1021,12 @@ tellu_abso_dv_order = 33
 tellu_abso_dv_size = 5
 tellu_abso_dv_good_thres = 0.2
 
+# TODO: Need comments
 tellu_template_keep_limit = 0.5
 tellu_template_med_low = 2048 - 128
 tellu_template_med_high = 2048 + 128
 
+# TODO: Need comments
 tellu_number_of_principle_comp = 5
 tellu_fit_keep_frac = 20.0
 tellu_plot_order = 35
@@ -1164,6 +1166,14 @@ qc_wave_idrift_nborderout = 15
 #   Define the maximum allowed drift (in m/s) in the                 -[cal_wave]
 #       instrumental drift calculation
 qc_wave_idrift_rv_max = 150.0
+
+#   Define the order to use for SNR check when accepting tellu   -[obj_mk_tellu]
+#      files to the telluDB
+qc_tellu_snr_order = 35
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER"         -[obj_mk_tellu]
+#      that will be accepted to the telluDB
+qc_tellu_snr_min = 100
 
 # -----------------------------------------------------------------------------
 #  Calibration DB settings
