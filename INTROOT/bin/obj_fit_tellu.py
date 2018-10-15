@@ -179,13 +179,14 @@ def main(night_name=None, files=None):
 
     # check whether we can used pre-saved abso
     filetime = spirouImage.GetMostRecent(trans_files)
-    tellu_abso_save_file = spirouConfig.Constants.TELLU_ABSO_SAVE(p, filetime)
-    use_saved = os.path.exists(tellu_abso_save_file)
+    tout = spirouConfig.Constants.TELLU_ABSO_SAVE(p, filetime)
+    abso_save_file, absoprefix = tout
+    use_saved = os.path.exists(abso_save_file)
     try:
         # try loading from file
-        abso = np.load(tellu_abso_save_file)
+        abso = np.load(abso_save_file)
         # log progress
-        wmsg = 'Loaded abso from file {0}'.format(tellu_abso_save_file)
+        wmsg = 'Loaded abso from file {0}'.format(abso_save_file)
         WLOG('', p['LOG_OPT'], wmsg)
     except:
         # set up storage for the absorption
@@ -197,10 +198,16 @@ def main(night_name=None, files=None):
             # push data into array
             abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
         # log progres
-        wmsg = 'Saving abso to file {0}'.format(tellu_abso_save_file)
+        wmsg = 'Saving abso to file {0}'.format(abso_save_file)
         WLOG('', p['LOG_OPT'], wmsg)
+        # remove all abso save files (only need most recent one)
+        afolder = os.path.dirname(abso_save_file)
+        afilelist = os.listdir(afolder)
+        for afile in afilelist:
+            if afile.startswith(absoprefix):
+                os.remove(os.path.join(afolder, afile))
         # save to file for later use
-        np.save(tellu_abso_save_file, abso)
+        np.save(abso_save_file, abso)
 
     # log the absorption cube
     with warnings.catch_warnings(record=True) as w:
