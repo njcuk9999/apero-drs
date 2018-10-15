@@ -342,6 +342,18 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
+        # get SNR for each order from header
+        nbo = loc['DATA'].shape[0]
+        snr_order = p['QC_TELLU_SNR_ORDER']
+        snr = spirouImage.Read1Dkey(p, shdr, p['kw_E2DS_SNR'][0], nbo)
+        # check that SNR is high enough
+        if snr[snr_order] < p['QC_TELLU_SNR_MIN']:
+            fmsg = 'low SNR in order {0}: ({1:.2f} < {2:.2f})'
+            fargs = [snr_order, snr[snr_order], p['QC_TELLU_SNR_MIN']]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
         if passed:
             WLOG('info', p['LOG_OPT'],
                  'QUALITY CONTROL SUCCESSFUL - Well Done -')
@@ -360,11 +372,9 @@ def main(night_name=None, files=None):
         if p['QC']:
             # copy tellu file to the telluDB folder
             spirouDB.PutTelluFile(p, outfile)
-            airmass = loc['AIRMASS']
-            watercol = loc['WATERCOL']
-            name = loc['OBJNAME']
             # update the master tellu DB file with transmission map
-            targs = [p, outfilename, name, airmass, watercol]
+            targs = [p, outfilename, loc['OBJNAME'], loc['AIRMASS'],
+                     loc['WATERCOL']]
             spirouDB.UpdateDatabaseTellMap(*targs)
 
     # ----------------------------------------------------------------------
