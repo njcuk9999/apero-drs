@@ -387,12 +387,13 @@ def calc_recon_abso(p, loc):
                 # get start and end points
                 start = order_num * xdim
                 end = order_num * xdim + xdim
-                # produce a mask of good transmission
-                order_tapas = tapas_all_species[0, start:end]
-                mask = order_tapas > p['TRANSMISSION_CUT']
-                fmask = np.array(mask, dtype=float)
-                # get good transmission spectrum
+                # catch NaN warnings and ignore
                 with warnings.catch_warnings(record=True) as _:
+                    # produce a mask of good transmission
+                    order_tapas = tapas_all_species[0, start:end]
+                    mask = order_tapas > p['TRANSMISSION_CUT']
+                    fmask = np.array(mask, dtype=float)
+                    # get good transmission spectrum
                     resspecgood = resspec[start:end] * fmask
                     recongood = recon_abso[start:end]
                 # convolve spectrum
