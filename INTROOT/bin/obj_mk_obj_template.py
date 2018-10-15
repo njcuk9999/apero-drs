@@ -145,11 +145,15 @@ def main(night_name=None, files=None):
     loc.set_sources(keys, main_name)
 
     # ----------------------------------------------------------------------
-    # Loop around files
+    # Loop through input files
     # ----------------------------------------------------------------------
+    base_filelist, berv_list = [], []
+    # loop through files
     for it, filename in enumerate(tell_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
+        # append basename to file list
+        base_filelist.append(basefilename)
         # ------------------------------------------------------------------
         # create image for storage
         image = np.repeat([np.nan], np.product(loc['DATA'].shape))
@@ -159,6 +163,12 @@ def main(night_name=None, files=None):
         tdata0, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # Correct for the blaze
         tdata = tdata0 / loc['NBLAZE']
+
+        # get berv and add to list
+        if p['KW_BERV'][0] in thdr:
+            berv_list.append('{0}'.format(thdr[p['KW_BERV'][0]]))
+        else:
+            berv_list.append('UNKNOWN')
 
         # ------------------------------------------------------------------
         # Get the wave solution for this file
@@ -223,6 +233,11 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
     hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
                                value=loc['MASTERWAVEFILE'])
+    # add file list to header
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJFILELIST'],
+                                     values=base_filelist)
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJBERVLIST'],
+                                     values=berv_list)
     # add wave solution coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
