@@ -93,10 +93,16 @@ def main(night_name=None, files=None):
     # get current telluric maps from telluDB
     tellu_db_data = spirouDB.GetDatabaseTellObj(p, required=False)
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
-    # filter by object name (only keep OBJNAME objects
+    # filter by object name (only keep OBJNAME objects) and only keep
+    #   unique filenames
     tell_files = []
     for it in range(len(tellu_db_files)):
-        if loc['OBJNAME'] in tellu_db_names[it]:
+        # check that objname is correct
+        cond1 = loc['OBJNAME'] in tellu_db_names[it]
+        # check that filename is not already used
+        cond2 = tellu_db_files[it] not in tell_files
+        # append to file list if criteria correct
+        if cond1 and cond2:
             tell_files.append(tellu_db_files[it])
 
     # log if we have no files
