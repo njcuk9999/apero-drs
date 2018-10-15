@@ -122,6 +122,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     transdata = spirouDB.GetDatabaseTellMap(p)
     trans_files = transdata[0]
+    # make sure we have unique filenames for trans_files
+    trans_files = np.unique(trans_files)
 
     # ----------------------------------------------------------------------
     # Start plotting
