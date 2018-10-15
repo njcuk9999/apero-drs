@@ -575,7 +575,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     p.set_source('TILTFILE', func_name)
 
     # return the first set of keys
-    return p, tilt[:, 0]
+    return p, tilt
 
 
 def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
