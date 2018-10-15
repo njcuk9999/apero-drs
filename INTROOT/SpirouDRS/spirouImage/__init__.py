@@ -158,6 +158,8 @@ ReadHeader = spirouFITS.read_header
 
 ReadKey = spirouFITS.read_key
 
+Read1Dkey = spirouFITS.read_key_1d_list
+
 Read2Dkey = spirouFITS.read_key_2d_list
 
 ReadTiltFile = spirouFITS.read_tilt_file

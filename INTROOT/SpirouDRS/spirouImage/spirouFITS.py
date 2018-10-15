@@ -566,7 +566,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
     # get the tilt keys
-    tilt = read_key_2d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'], 1)
+    tilt = read_key_1d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'])
     # get the tilt file
     if p['KW_TILTFILE'][0] in hdict:
         p['TILTFILE'] = hdict[p['KW_TILTFILE'][0]]
@@ -1733,6 +1733,27 @@ def read_key(p, hdict=None, key=None):
     return keylookup(p, hdict, key=key)
 
 
+def read_key_1d_list(p, hdict, key, dim):
+    func_name = __NAME__ + '.read_key_2d_list()'
+    # create 2d list
+    values = np.zeros(dim, dtype=float)
+    # loop around the 2D array
+    for i_it in range(dim):
+        # construct the key name
+        keyname = '{0}{1}'.format(key, i_it)
+        # try to get the values
+        try:
+            # set the value
+            values[i_it] = float(hdict[keyname])
+        except KeyError:
+            emsg1 = ('Cannot find key "{0}" with dim={1} in "hdict"'
+                     '').format(keyname, dim)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # return values
+    return values
+
+
 def read_key_2d_list(p, hdict, key, dim1, dim2):
     """
     Read a set of header keys that were created from a 2D list
@@ -1770,8 +1791,8 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 # set the value
                 values[i_it][j_it] = float(hdict[keyname])
             except KeyError:
-                emsg1 = ('Cannot find key with dim1={1} dim2={2} in "hdict"'
-                         '').format(keyname, dim1, dim2)
+                emsg1 = ('Cannot find key "{0}" with dim1={1} dim2={2} in '
+                         '"hdict"').format(keyname, dim1, dim2)
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # return values
