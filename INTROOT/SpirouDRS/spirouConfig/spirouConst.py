@@ -1695,6 +1695,18 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
 
 
 # noinspection PyPep8Naming
+def TELLU_ABSO_SAVE(p, file_time):
+    # get telluDB path
+    path = p['DRS_TELLU_DB']
+    # construct filename
+    filename = 'tellu_save_{0}.npy'.format(file_time)
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile
+
+
+# noinspection PyPep8Naming
 def TELLU_FIT_OUT_FILE(p, filename):
     func_name = 'TELLU_FIT_OUT_FILE'
     # define filename
