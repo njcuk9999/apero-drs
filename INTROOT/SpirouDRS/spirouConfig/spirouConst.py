@@ -1699,11 +1699,12 @@ def TELLU_ABSO_SAVE(p, file_time):
     # get telluDB path
     path = p['DRS_TELLU_DB']
     # construct filename
-    filename = 'tellu_save_{0}.npy'.format(file_time)
+    prefix = 'tellu_save'
+    filename = '{0}_{1}.npy'.format(prefix, file_time)
     # construct absolute path
     outfile = os.path.join(path, filename)
     # return absolute path
-    return outfile
+    return outfile, prefix
 
 
 # noinspection PyPep8Naming
