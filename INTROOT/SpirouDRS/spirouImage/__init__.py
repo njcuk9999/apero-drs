@@ -106,6 +106,8 @@ GetObjName = spirouImage.get_obj_name
 
 GetAirmass = spirouImage.get_airmass
 
+GetMostRecent = spirouFile.get_most_recent
+
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
 GetWaveSolution = spirouFITS.get_wave_solution
