@@ -291,7 +291,7 @@ def berv_correct_template(p, loc, thdr):
             # calculate interpolation for keep temp at keep wave
             spline = IUVSpline(keepwave, keeptemp, ext=3)
             # interpolate at shifted values
-            dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
+            dvshift = spirouMath.relativistic_waveshift(-dv, units='km/s')
             waveshift = loc['WAVE_IT'][order_num, :] * dvshift
             # interpolate at shifted wavelength
             start = order_num * xdim
