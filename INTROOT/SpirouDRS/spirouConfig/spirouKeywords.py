@@ -136,6 +136,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_OBJRA',
             'kw_OBJRAPM',
             'kw_OBSTYPE',
+            'kw_OBJFILELIST',
+            'kw_OBJBERVLIST',
             'kw_OUTPUT',
             'kw_POL_EXPTIME',
             'kw_POL_ELAPTIME',
@@ -548,6 +550,10 @@ kw_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
 # Telluric principle component derivatives
 kw_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
 kw_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
+
+# File list for template
+kw_OBJFILELIST = ['FILE', None, 'Input file list']
+kw_OBJBERVLIST = ['BERV', None, 'Input file BERV list']
 
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
