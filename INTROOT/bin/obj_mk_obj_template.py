@@ -93,6 +93,10 @@ def main(night_name=None, files=None):
     # get current telluric maps from telluDB
     tellu_db_data = spirouDB.GetDatabaseTellObj(p, required=False)
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
+
+    # sort files by name
+    tellu_db_files = spirouImage.SortByName(tellu_db_files)
+
     # filter by object name (only keep OBJNAME objects) and only keep
     #   unique filenames
     tell_files = []
