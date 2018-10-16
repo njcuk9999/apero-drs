@@ -204,6 +204,8 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_TILTFILE',
             'kw_UTC_OBS',
             'kw_WAVEFILE',
+            'kw_WAVE_CODE',
+            'kw_WAVE_INIT',
             'kw_WAVE_LL_DEG',
             'kw_WAVE_ORD_N',
             'kw_WAVE_PARAM',
@@ -531,6 +533,12 @@ kw_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
 # the prefix to use to get the TH line list fit coefficients           [WAVE_AB]
 kw_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
 
+# the wave recipe used to produce file
+kw_WAVE_CODE = ['WAVECODE', None, 'DRS Recipe used to produce wave sol']
+
+# the input wave file used to produce file
+kw_WAVE_INIT = ['WAVEINIT', None, 'The input guess wave solution']
+
 # the x-axis dimension size for the TH line list file                  [WAVE_AB]
 kw_TH_NAXIS1 = ['NAXIS1', None, '']
 
@@ -645,7 +653,7 @@ kw_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
 kw_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
 kw_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
 kw_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
-kw_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+kw_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used in header keys']
 kw_INFILE = ['INFILE', '', 'Input file userd to create output']
 kw_HCFILE = ['HCFILE', '', 'HC file used to create output']
 kw_FPFILE = ['FPFILE', '', 'FP file used to create output']
