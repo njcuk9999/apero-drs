@@ -246,6 +246,8 @@ def main(night_name=None, files=None):
                                value=p['MAX_TIME_HUMAN'])
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
                                value=loc['POLY_WAVE_SOL'].shape[0])
@@ -319,8 +321,8 @@ def main(night_name=None, files=None):
     WLOG('', p['LOG_OPT'], wmsg)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
-    # add wave file nmae
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=fitsfilename)
+    # add wave file name
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=wavefitsname)
     # add wave solution date
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
                                value=p['MAX_TIME_HUMAN'])
