@@ -452,7 +452,7 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
     # save drift values
-    #    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
+    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
     # ------------------------------------------------------------------
     # print .tbl result
