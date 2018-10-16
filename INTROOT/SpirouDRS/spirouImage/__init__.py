@@ -180,6 +180,8 @@ ResizeImage = spirouImage.resize
 
 RotateImage = spirouImage.rotate
 
+SortByName = spirouFile.sort_by_name
+
 WriteImage = spirouFITS.writeimage
 
 WriteImageMulti = spirouFITS.write_image_multi
