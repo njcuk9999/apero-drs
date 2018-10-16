@@ -198,6 +198,20 @@ def get_most_recent(filelist):
     return most_recent
 
 
+def sort_by_name(filelist):
+    # define storage for base file list
+    baselist = []
+    # get base list of files
+    for file_it in filelist:
+        basename = os.path.basename(file_it)
+        baselist.append(basename)
+    # get sorted base file list
+    indices = np.argsort(baselist)
+    # apply sorted base file list to file list
+    sorted_filelist = np.array(filelist)[indices]
+    # return sorted filelist
+    return sorted_filelist
+
 
 # =============================================================================
 # Define ID functions (pre-processing)
