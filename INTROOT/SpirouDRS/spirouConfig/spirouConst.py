@@ -1202,6 +1202,7 @@ def DRIFT_E2DS_TBL_FILE(p, fiber=None):
     # return filename
     return drifttbl
 
+
 # noinspection PyPep8Naming
 def DRIFTCCF_E2DS_FITS_FILE(p, fiber=None):
     """
@@ -1220,7 +1221,7 @@ def DRIFTCCF_E2DS_FITS_FILE(p, fiber=None):
     :return driftfits: string, the drift_e2ds peak drift fits file location
                        and filename
     """
-    func_name = 'DRIFT_E2DS_FITS_FILE'
+    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
     # define filename
     if fiber is None:
         fiber = p['FIBER']
@@ -1262,6 +1263,7 @@ def DRIFTCCF_E2DS_TBL_FILE(p, fiber=None):
     drifttbl = os.path.join(reducedfolder, drifttblname)
     # return filename
     return drifttbl
+
 
 # noinspection PyPep8Naming
 def DRIFTPEAK_E2DS_FITS_FILE(p, fiber=None):
