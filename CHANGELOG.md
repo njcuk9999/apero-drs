@@ -5054,3 +5054,31 @@
 	- cal_HC_E2DS_EA_spirou.py - currently only supports one FP_FP and one HC_HC (due to file updating) - added check to error if more used (rev.b9e5ab48)
 	- spirouTelluric.py - change bad mask from 0.999 to 0.5 to avoid NaN fringing - Issue #478 (rev.8e68cffd)
 	- spirouTelluric.py - catch known warnings and disregard (rev.db5fd2ef)
+
+
+
+================================================================================
+* Sun Oct 14 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.036
+* Tue Oct 16 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.036
+
+================================================================================
+	- spirouEXTOR.py  - fix bug where whole order is zeros - will break spline (rev.10eef6ad)
+	- New recipe to compute the drift of simultaneous FP on Fiber C with fp.mas (rev.b5dde68f)
+	- New function DRIFTCCF_E2DS_TBL_FILE to save driftccf file (rev.6c229f78)
+	
+	
+
+================================================================================
+* Tue Oct 16 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.037
+
+================================================================================
+	- Cal_Test.run - add cal_DRIFTCCF_E2DS_spirou to tested codes (rev.a2825de2)
+	- spirouUnitRecipes.py - add cal_DRIFTCCF_E2DS_spirou to unit recipe definitions (rev.7af61eb8)
+	- spirouKeywords.py - add reference rv keyword and keywordstore definition (rev.818f6870)
+	- spirouConst.py - fix tags in new DRIFTCCF file name definitions (rev.c62a1e6b)
+	- recipe_control.txt - add cal_DRIFTCCF_E2DS_spiour to the runable codes - for FP only (rev.44baa139)
+	- output_keys.py - add DRIFTCCF_E2DS_FITS_FILE to output keys (rev.737ff685)
+	- constants_SPIROU_H4RG.py - add driftccf constants to constants file (rev.e2025bf7)
+	- cal_DRIFTCCF_E2DS_spirou.py - re-save driftfits to file (rev.d137862b)
+	- cal_DRIFTCCF_E2DS_spirou.py - pep8 changes + load constants from file + add flux ratio + save reference RV to header (rev.9f851f30)
+	- spirouEXTOR.py - undo debananafication all zeros check - does not work (rev.4ac08d74)
