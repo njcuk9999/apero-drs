@@ -307,6 +307,10 @@ def debananafication(image, dx):
     # we shift all lines by the appropiate, pixel-dependent, dx
     for it in range(sz[0]):
         not0 = image[it, :] != 0
+        # check that we have some values that aren't zero
+        if np.sum(not0) == 0:
+            continue
+        # do spline fit
         spline = IUVSpline(xpix[not0], image[it, not0], ext=1)
         # only pixels where dx is finite are considered
         nanmask = np.isfinite(dx[it, :])
