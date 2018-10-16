@@ -29,7 +29,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_DRIFT_E2DS_spirou.py'
+__NAME__ = 'cal_DRIFTCCF_E2DS_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -115,13 +115,14 @@ def main(night_name=None, reffile=None):
     # set sigdet and conad keywords (sigdet is changed later)
     p['KW_CCD_SIGDET'][1] = p['SIGDET']
     p['KW_CCD_CONAD'][1] = p['GAIN']
+    # manually set OBJNAME to FP
+    p['OBJNAME'] = 'FP'
 
     # ----------------------------------------------------------------------
     #  Earth Velocity calculation
     # ----------------------------------------------------------------------
     if p['IC_IMAGE_TYPE'] == 'H4RG':
         p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
-
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
@@ -131,11 +132,11 @@ def main(night_name=None, reffile=None):
         wave_fiber = 'AB'
     else:
         wave_fiber = p['FIBER']
-#    # get wave image
-#    wout = spirouImage.GetWaveSolution(p, hdr=hdr, fiber=wave_fiber,
-#                                       return_wavemap=True)
-#    _, loc['WAVE'] = wout
-#    loc.set_source('WAVE', __NAME__ + '/main() + /spirouImage.GetWaveSolution')
+    # # get wave image
+    # wout = spirouImage.GetWaveSolution(p, hdr=hdr, fiber=wave_fiber,
+    #                                    return_wavemap=True)
+    # _, loc['WAVE'] = wout
+    # loc.set_source('WAVE', __NAME__+'/main() + /spirouImage.GetWaveSolution')
 
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
@@ -168,20 +169,18 @@ def main(night_name=None, reffile=None):
             miny, maxy = spirouBACK.MeasureMinMax(loc['SPEREF'][order_num],
                                                   bsize)
             loc['SPEREF'][order_num] = loc['SPEREF'][order_num] - miny
-    
+
     # ----------------------------------------------------------------------
     # Preliminary set up = no flat, no blaze
     # ----------------------------------------------------------------------
     # reset flat to all ones
     # loc['FLAT'] = np.ones((nbo, nx))
     # set blaze to all ones (if not bug in correlbin !!!
-    #TODO Check why Blaze makes bugs in correlbin
+    # TODO Check why Blaze makes bugs in correlbin
     loc['BLAZE'] = np.ones((nbo, nx))
     # set sources
     # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
     loc.set_sources(['blaze'], __NAME__ + '/main()')
-
-
 
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -206,20 +205,18 @@ def main(night_name=None, reffile=None):
         # start interactive session if needed
         sPlt.start_interactive_session()
         # plot FP spectral order
-#        sPlt.drift_plot_selected_wave_ref(p, loc)
+        # sPlt.drift_plot_selected_wave_ref(p, loc)
         # plot photon noise uncertainty
         sPlt.drift_plot_photon_uncertainty(loc)
-
 
     # ----------------------------------------------------------------------
     # Get template RV (from ccf_mask)
     # ----------------------------------------------------------------------
-
-    #TODO To be put in constants_SPIROU_H4RG
-    p['CCF_MASK']='fp.mas'
-    p['TARGET_RV']=0.0
-    p['CCF_WIDTH']=7.5
-    p['CCF_STEP']=0.5
+    # Use CCF Mask function with drift constants
+    p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+    p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+    p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+    p['CCF_STEP'] = p['DRIFT_CCF_STEP']
 
     # get the CCF mask from file (check location of mask)
     loc = spirouRV.GetCCFMask(p, loc)
@@ -229,15 +226,14 @@ def main(night_name=None, reffile=None):
         loc['LL_MASK_CTR'] *= 1000.0
         loc['LL_MASK_D'] *= 1000.0
 
-
     # ----------------------------------------------------------------------
     # Do correlation
     # ----------------------------------------------------------------------
     # calculate and fit the CCF
-    loc['E2DSFF'] = loc['SPEREF']*1.
+    loc['E2DSFF'] = np.array(loc['SPEREF'])
     loc.set_source('E2DSFF', __NAME__ + '/main()')
-    p['CCF_FIT_TYPE']=1
-
+    p['CCF_FIT_TYPE'] = 1
+    # run the RV coravelation function with these parameters
     loc = spirouRV.Coravelation(p, loc)
 
     # ----------------------------------------------------------------------
@@ -248,18 +244,18 @@ def main(night_name=None, reffile=None):
     # get the average ccf
     loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = loc['AVERAGE_CCF']/np.max(loc['AVERAGE_CCF'])
+    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX'])/np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
     # get the contrast (ccf fit amplitude)
-    loc['CONTRAST'] = np.abs(100*ccf_res[0])
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
     # get the FWHM value
     loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
 
@@ -275,17 +271,16 @@ def main(night_name=None, reffile=None):
     wargs = [loc['CONTRAST'], loc['RV'], loc['FWHM'], loc['MAXCPP']]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
-    rvref=loc['RV']*1000.
+    # get the reference RV in m/s
+    rvref = loc['RV'] * 1000.
 
     # ----------------------------------------------------------------------
     # rv ccf plot
     # ----------------------------------------------------------------------
-    p['OBJNAME']='FP'
+
     if p['DRS_PLOT']:
         # Plot rv vs ccf (and rv vs ccf_fit)
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
-
-
 
     # ------------------------------------------------------------------
     # Get all other files that match kw_OUTPUT and kw_EXT_TYPE from
@@ -308,13 +303,14 @@ def main(night_name=None, reffile=None):
     # decide whether we need to skip (for large number of files)
     if len(listfiles) >= p['DRIFT_NLARGE']:
         skip = p['DRIFT_E2DS_FILE_SKIP']
-        nfiles = int(nfiles/skip)
+        nfiles = int(nfiles / skip)
     else:
         skip = 1
     # set up storage
     loc['MDRIFT'] = np.zeros(nfiles)
     loc['MERRDRIFT'] = np.zeros(nfiles)
     loc['DELTATIME'] = np.zeros(nfiles)
+    loc['FLUXRATIO'] = np.zeros(nfiles)
     # set loc sources
     keys = ['mdrift', 'merrdrift', 'deltatime']
     loc.set_sources(keys, __NAME__ + '/main()()')
@@ -351,42 +347,46 @@ def main(night_name=None, reffile=None):
                 # subtract off the background (miny)
                 loc['SPE'][order_num] = loc['SPE'][order_num] - miny
 
-    # ------------------------------------------------------------------
-    # Compute photon noise uncertainty for reference file
-    # ------------------------------------------------------------------
-    # set up the arguments for DeltaVrms2D
+        # ------------------------------------------------------------------
+        # calculate flux ratio
+        # ------------------------------------------------------------------
+        sorder = p['IC_DRIFT_ORDER_PLOT']
+        fratio = np.sum(loc['SPE'][sorder]) / np.sum(loc['SPEREF'][sorder])
+        loc['FLUXRATIO'][i_it] = fratio
+
+        # ------------------------------------------------------------------
+        # Compute photon noise uncertainty for reference file
+        # ------------------------------------------------------------------
+        # set up the arguments for DeltaVrms2D
         dargs = [loc['SPE'], loc['WAVE_LL']]
         dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
-                   threshold=p['IC_DRIFT_MAXFLUX'])
-    # run DeltaVrms2D
+                       threshold=p['IC_DRIFT_MAXFLUX'])
+        # run DeltaVrms2D
         dvrmsspe, wmeanspe = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
 
-    # ----------------------------------------------------------------------
-    # Do correlation
-    # ----------------------------------------------------------------------
-    # calculate and fit the CCF
-        loc['E2DSFF'] = loc['SPE']*1.
+        # ----------------------------------------------------------------------
+        # Do correlation
+        # ----------------------------------------------------------------------
+        # calculate and fit the CCF
+        loc['E2DSFF'] = loc['SPE'] * 1.
         loc.set_source('E2DSFF', __NAME__ + '/main()')
 
         loc = spirouRV.Coravelation(p, loc)
 
-    # ----------------------------------------------------------------------
-    # Correlation stats
-    # ----------------------------------------------------------------------
-    # get the maximum number of orders to use
+        # ----------------------------------------------------------------------
+        # Correlation stats
+        # ----------------------------------------------------------------------
+        # get the maximum number of orders to use
         nbmax = p['CCF_NUM_ORDERS_MAX']
-    # get the average ccf
+        # get the average ccf
         loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
-    # normalize the average ccf
-        normalized_ccf = loc['AVERAGE_CCF']/np.max(loc['AVERAGE_CCF'])
-    # get the fit for the normalized average ccf
+        # normalize the average ccf
+        normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+        # get the fit for the normalized average ccf
         ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
-                                       fit_type=1)
- 
-
-
-
-        meanrv = ccf_res[1]*1000.-rvref
+                                           fit_type=1)
+        # calculate the mean RV
+        meanrv = ccf_res[1] * 1000. - rvref
         # ------------------------------------------------------------------
         # Calculate delta time
         # ------------------------------------------------------------------
@@ -394,10 +394,14 @@ def main(night_name=None, reffile=None):
         deltatime = (bjdspe - bjdref) * 24
 
         err_meanrv = np.sqrt(dvrmsref + dvrmsspe)
-        merr = 1./np.sqrt(np.sum((1./err_meanrv)**2))
+        merr = 1. / np.sqrt(np.sum((1. / err_meanrv) ** 2))
         # Log the RV properties
-        wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s ')
-        WLOG('', p['LOG_OPT'], wmsg.format(deltatime, meanrv, merr))
+        wmsg = ('Time from ref= {0:.2f} h '
+                '- Flux Ratio= {1:.2f} '
+                '- Drift mean= {2:.2f} +- '
+                '{3:.2f} m/s')
+        wargs = [deltatime, loc['FLUXRATIO'][i_it], meanrv, merr]
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
         # add this iteration to storage
         loc['MDRIFT'][i_it] = meanrv
         loc['MERRDRIFT'][i_it] = merr
@@ -438,6 +442,9 @@ def main(night_name=None, reffile=None):
     WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # add the reference RV
+    hdict = spirouImage.AddKey(hdict, p['KW_REF_RV'], value=rvref)
+
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
@@ -445,7 +452,7 @@ def main(night_name=None, reffile=None):
     hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
     # save drift values
-#    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
+    #    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
     # ------------------------------------------------------------------
     # print .tbl result
