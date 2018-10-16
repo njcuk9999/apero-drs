@@ -608,6 +608,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=p['MAX_TIME_HUMAN'])
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
