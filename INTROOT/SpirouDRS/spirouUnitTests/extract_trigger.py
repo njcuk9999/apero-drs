@@ -12,6 +12,7 @@ Created on 2018-10-17 at 10:56
 from __future__ import division
 import numpy as np
 import os
+import sys
 from astropy.table import Table
 import itertools
 
@@ -20,33 +21,32 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 
-
 import cal_BADPIX_spirou
-import cal_CCF_E2DS_spirou
+# import cal_CCF_E2DS_spirou
 import cal_DARK_spirou
-import cal_DRIFT_E2DS_spirou
-import cal_DRIFTPEAK_E2DS_spirou
-import cal_exposure_meter
-import cal_wave_mapper
+# import cal_DRIFT_E2DS_spirou
+# import cal_DRIFTPEAK_E2DS_spirou
+# import cal_exposure_meter
+# import cal_wave_mapper
 import cal_extract_RAW_spirou
 import cal_FF_RAW_spirou
 # import cal_HC_E2DS_spirou
-import cal_HC_E2DS_EA_spirou
+# import cal_HC_E2DS_EA_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
 import cal_SHAPE_spirou
 # import cal_WAVE_E2DS_spirou
-import cal_WAVE_E2DS_EA_spirou
+# import cal_WAVE_E2DS_EA_spirou
 # import cal_WAVE_NEW_E2DS_spirou
 import cal_preprocess_spirou
-import off_listing_RAW_spirou
-import off_listing_REDUC_spirou
-import obj_mk_tellu
-import obj_fit_tellu
-import obj_mk_obj_template
-import visu_RAW_spirou
-import visu_E2DS_spirou
-import pol_spirou
+# import off_listing_RAW_spirou
+# import off_listing_REDUC_spirou
+# import obj_mk_tellu
+# import obj_fit_tellu
+# import obj_mk_obj_template
+# import visu_RAW_spirou
+# import visu_E2DS_spirou
+# import pol_spirou
 
 # =============================================================================
 # Define variables
@@ -257,6 +257,12 @@ def manage_runs(p, lls, errors, combinations, recipe):
     return lls, errors
 
 
+def ask(message):
+    if sys.version < 3:
+        input = raw_input
+    user_input = input(ask)
+    return user_input
+
 # =============================================================================
 # trigger functions
 # =============================================================================
@@ -341,11 +347,7 @@ def trigger_main(p, loc, recipe):
 # =============================================================================
 # main function
 # =============================================================================
-#def main(night_name=None):
-if True:
-    night_name = None
-    night_name = 'TEST1/20180805'
-
+def main(night_name=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -362,8 +364,13 @@ if True:
     # check for pre-processed files
     if SKIP_DONE:
         raw_files = skip_done_raw_files(p, raw_files)
-    # pre-process remaining files
-    # pp_lls = trigger_preprocess(p, raw_files)
+
+    # ask whether to pre-process
+    message = 'Will pre-process {0} files continue? [Y]es or [N]o:\t'
+    uinput = ask(message)
+    if 'Y' in uinput:
+        # pre-process remaining files
+        pp_lls = trigger_preprocess(p, raw_files)
 
     # ----------------------------------------------------------------------
     # Load the recipe_control
@@ -384,6 +391,8 @@ if True:
     # ----------------------------------------------------------------------
     # Run triggers
     # ----------------------------------------------------------------------
+    WLOG("Running triggers")
+
     # 1. cal_BADPIX_spirou.py
     badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou')
     # 2. cal_DARK_spirou.py
@@ -397,17 +406,14 @@ if True:
     # 6. cal_FF_RAW_spirou.py
     flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou')
     # 7. cal_extract_RAW_spirou.py
-    ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou')
+    # ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou')
 
-
-
-
-def main(night_name=None):
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    p = spirouStartup.End(p, outputs=None)
+    # return locals
     return dict(locals())
-
-
-
-
 
 
 # =============================================================================
@@ -417,7 +423,7 @@ if __name__ == "__main__":
     # run main with no arguments (get from command line - sys.argv)
     ll = main()
     # exit message if in debug mode
-    # spirouStartup.Exit(ll, has_plots=False)
+    spirouStartup.Exit(ll, has_plots=False)
 
 # =============================================================================
 # End of code
