@@ -289,7 +289,7 @@ def trigger_preprocess(p, filelist):
         # run preprocess
         try:
             args = [night_names[it], filenames[it]]
-            lls.append(cal_preprocess_spirou.main())
+            lls.append(cal_preprocess_spirou.main(*args))
         except Exception as e:
             emsgs = ['There was an exception']
             emsgs.append('Exception message reads: {0}'.format(e))
