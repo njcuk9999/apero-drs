@@ -258,7 +258,7 @@ def manage_runs(p, lls, errors, combinations, recipe):
 
 
 def ask(message):
-    if sys.version < 3:
+    if sys.version_info.major < 3:
         input = raw_input
     user_input = input(ask)
     return user_input
