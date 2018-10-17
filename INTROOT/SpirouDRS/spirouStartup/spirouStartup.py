@@ -577,10 +577,16 @@ def indexing(p, outputs, icolumns, abspath):
 
         # loop around index columns and add outputs to istore
         for icol in icolumns:
-            if icol not in istore:
-                istore[icol] = [outputs[output][icol]]
+            # get value from outputs
+            if icol not in outputs[output]:
+                value = 'None'
             else:
-                istore[icol].append(outputs[output][icol])
+                value = outputs[output][icol]
+            # push in to istore
+            if icol not in istore:
+                istore[icol] = [value]
+            else:
+                istore[icol].append(value)
     # ------------------------------------------------------------------------
     # deal with file existing (add existing rows)
     if os.path.exists(abspath):
