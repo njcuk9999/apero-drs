@@ -66,6 +66,9 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 # skip found files
 SKIP_DONE = True
+# test run
+TEST_RUN = False
+TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 # -----------------------------------------------------------------------------
@@ -184,7 +187,8 @@ def get_control_index(control, index_file, recipe):
     if 'None' in control['dprtype']:
         vmask = np.ones(len(index), dtype=bool)
     else:
-        vmask = np.in1d(index['DPRTYPE'], control['dprtype'])
+        idprtypes = np.array(index['DPRTYPE']).astype(str)
+        vmask = np.in1d(idprtypes, control['dprtype'])
     # apply mask
     vindex = index[vmask]
     # return control and vindex
@@ -223,18 +227,32 @@ def get_file_args(p, control, vindex, recipe):
     # return args
     return args
 
+def printrun(*args):
 
-def manage_runs(p, lls, errors, combinations, recipe):
+    printstring = ''
+    for arg in args:
+        printstring += '{0}\t'.format(arg)
+    TEST_STORE.append(printstring)
+
+
+def print_runs(p, lls, errors, combinations, recipe, night):
     # get command
     command = recipe_lookup(p, recipe)
     # loop around combinations
     for it, combination in enumerate(combinations):
         # log progress
-        wmsgs = [spirouStartup.spirouStartup.HEADER,
-                 spirouStartup.spirouStartup.HEADER]
+        printrun(recipe, ' '.join(list(combination)))
+
+
+def manage_runs(p, lls, errors, combinations, recipe, night):
+    # get command
+    command = recipe_lookup(p, recipe)
+    # loop around combinations
+    for it, combination in enumerate(combinations):
+        # log progress
+        wmsgs = [spirouStartup.spirouStartup.HEADER]
         wargs = [recipe, it + 1, len(combinations)]
         wmsgs.append(' TRIGGER {0} File {1} of {2}'.format(*wargs))
-        wmsgs.append(spirouStartup.spirouStartup.HEADER)
         wmsgs.append(spirouStartup.spirouStartup.HEADER)
         WLOG('warning', p['LOG_OPT'], wmsgs)
         # run command
@@ -248,7 +266,7 @@ def manage_runs(p, lls, errors, combinations, recipe):
             # push to ll
             pp = ParamDict()
             pp['RECIPE'] = recipe
-            pp['NIGHT_NAME'] = night_name
+            pp['NIGHT_NAME'] = night
             pp['ARGS'] = combination
             pp['ERROR'] = emsgs
             ll = dict(p=pp)
@@ -278,28 +296,29 @@ def trigger_preprocess(p, filelist):
     # loop around files
     lls = []
     for it in range(len(night_names)):
-        # log progress
-        wmsgs = [spirouStartup.spirouStartup.HEADER,
-                 spirouStartup.spirouStartup.HEADER]
-        wargs = [it + 1, len(night_names)]
-        wmsgs.append(' TRIGGER PRE-PROCESS File {0} of {1}'.format(*wargs))
-        wmsgs.append(spirouStartup.spirouStartup.HEADER)
-        wmsgs.append(spirouStartup.spirouStartup.HEADER)
-        WLOG('warning', p['LOG_OPT'], wmsgs)
-        # run preprocess
-        try:
-            args = [night_names[it], filenames[it]]
-            lls.append(cal_preprocess_spirou.main(*args))
-        except Exception as e:
-            emsgs = ['There was an exception']
-            emsgs.append('Exception message reads: {0}'.format(e))
-            WLOG('warning', p['LOG_OPT'], emsgs)
-            pp = ParamDict()
-            pp['NIGHT_NAME'] = night_names[it]
-            pp['FILENAME'] = filenames[it]
-            pp['EMSGS'] = emsgs
-            pp['Exception'] = e
-            lls.append(dict(p=pp))
+        if printrun:
+            print('cal_preprocess', ' '.join([night_names[it], filenames[it]]))
+        else:
+            # log progress
+            wmsgs = [spirouStartup.spirouStartup.HEADER]
+            wargs = [it + 1, len(night_names)]
+            wmsgs.append(' TRIGGER PRE-PROCESS File {0} of {1}'.format(*wargs))
+            wmsgs.append(spirouStartup.spirouStartup.HEADER)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
+            # run preprocess
+            try:
+                args = [night_names[it], filenames[it]]
+                lls.append(cal_preprocess_spirou.main(*args))
+            except Exception as e:
+                emsgs = ['There was an exception']
+                emsgs.append('Exception message reads: {0}'.format(e))
+                WLOG('warning', p['LOG_OPT'], emsgs)
+                pp = ParamDict()
+                pp['NIGHT_NAME'] = night_names[it]
+                pp['FILENAME'] = filenames[it]
+                pp['EMSGS'] = emsgs
+                pp['Exception'] = e
+                lls.append(dict(p=pp))
 
     # return local directories
     return lls
@@ -316,18 +335,18 @@ def trigger_main(p, loc, recipe):
     night_names = loc['INDEX_NIGHTNAME']
     index_files = loc['RAW_INDEX_FILES']
     fullcontrol = loc['CONTROL']
-    # log progress
-    wmsgs = [spirouStartup.spirouStartup.HEADER,
-             spirouStartup.spirouStartup.HEADER]
-    wmsgs.append(' TRIGGER RECIPE: {0}'.format(recipe))
-    wmsgs.append(spirouStartup.spirouStartup.HEADER)
-    wmsgs.append(spirouStartup.spirouStartup.HEADER)
-    WLOG('warning', p['LOG_OPT'], wmsgs)
     # loop through index files
     lls, errors = [], []
     for it, index_file in enumerate(index_files):
         # Get the night name for this recipes
         night_name = night_names[it]
+
+        # log progress
+        wmsgs = [spirouStartup.spirouStartup.HEADER]
+        wmsg = ' TRIGGER RECIPE: {0} NIGHT_NAME={1} ({2}/{3})'
+        wmsgs.append(wmsg.format(recipe, night_name, it+1, len(index_files)))
+        wmsgs.append(spirouStartup.spirouStartup.HEADER)
+        WLOG('warning', p['LOG_OPT'], wmsgs)
         # get the control and index for this
         control, vindex = get_control_index(fullcontrol, index_file, recipe)
         # get number of file args expected for this recipe
@@ -341,7 +360,11 @@ def trigger_main(p, loc, recipe):
             arguments.append(file_args['FILE{0}'.format(it + 1)])
         combinations = list(itertools.product(*arguments))
         # manage the running of this recipe
-        lls, errors = manage_runs(p, lls, errors, combinations, recipe)
+        if TEST_RUN:
+            print_runs(p, lls, errors, combinations, recipe, night_name)
+        else:
+            lls, errors = manage_runs(p, lls, errors, combinations,
+                                      recipe, night_name)
     # return local spaces and errors
     return lls, errors
 
@@ -363,17 +386,24 @@ def main(night_name=None):
     # Check pre-processing
     # ----------------------------------------------------------------------
     raw_files = find_all_raw_files(p)
+    n_raw = len(raw_files)
     # check for pre-processed files
     if SKIP_DONE:
         raw_files = skip_done_raw_files(p, raw_files)
 
     # ask whether to pre-process
     if len(raw_files) > 0:
-        message = 'Will pre-process {0} files continue? [Y]es or [N]o:\t'
-        uinput = ask(message.format(len(raw_files)))
+        message = 'Will pre-process {0}/{1} files continue? [Y]es or [N]o:\t'
+        uinput = ask(message.format(len(raw_files), n_raw))
         if 'Y' in uinput:
             # pre-process remaining files
             pp_lls = trigger_preprocess(p, raw_files)
+    elif not SKIP_DONE or n_raw == 0:
+        wmsg = 'No raw files found'
+        WLOG('warning', p['LOG_OPT'], wmsg)
+    else:
+        wmsg = 'All files pre-processed (Found {0} files)'
+        WLOG('', p['LOG_OPT'], wmsg.format(n_raw))
 
     # ----------------------------------------------------------------------
     # Load the recipe_control
