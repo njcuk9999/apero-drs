@@ -262,7 +262,7 @@ def ask(message):
         question = raw_input
     else:
         question = input
-    user_input = question(ask)
+    user_input = question(message)
     return user_input
 
 # =============================================================================
@@ -368,11 +368,12 @@ def main(night_name=None):
         raw_files = skip_done_raw_files(p, raw_files)
 
     # ask whether to pre-process
-    message = 'Will pre-process {0} files continue? [Y]es or [N]o:\t'
-    uinput = ask(message)
-    if 'Y' in uinput:
-        # pre-process remaining files
-        pp_lls = trigger_preprocess(p, raw_files)
+    if len(raw_files) > 0:
+        message = 'Will pre-process {0} files continue? [Y]es or [N]o:\t'
+        uinput = ask(message.format(len(raw_files)))
+        if 'Y' in uinput:
+            # pre-process remaining files
+            pp_lls = trigger_preprocess(p, raw_files)
 
     # ----------------------------------------------------------------------
     # Load the recipe_control
@@ -393,7 +394,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # Run triggers
     # ----------------------------------------------------------------------
-    WLOG("Running triggers")
+    WLOG('', p['LOG_OPT'], 'Running triggers')
 
     # 1. cal_BADPIX_spirou.py
     badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou')
