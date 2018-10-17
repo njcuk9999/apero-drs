@@ -1928,6 +1928,7 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
+                   p['KW_DPRTYPE'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0]]
