@@ -67,7 +67,7 @@ ParamDict = spirouConfig.ParamDict
 # skip found files
 SKIP_DONE = True
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
@@ -177,7 +177,7 @@ def get_night_name(path, filelist):
     return night_names, filenames
 
 
-def get_control_index(control, index_file, recipe):
+def get_control_index(control, index_file, recipe, fdprtypes=None):
     # load index file
     index = Table.read(index_file)
     # mask control file by recipe name
@@ -191,6 +191,15 @@ def get_control_index(control, index_file, recipe):
         vmask = np.in1d(idprtypes, control['dprtype'])
     # apply mask
     vindex = index[vmask]
+
+    # deal with dprtype filter
+    if fdprtypes is not None:
+        fmask = np.zeros(len(vindex), dtype=bool)
+        for fdprtype in fdprtypes:
+            fmask |= (vindex['DPRTYPE'] == fdprtype)
+        # apply fmask
+        vindex = vindex[fmask]
+
     # return control and vindex
     return control, vindex
 
@@ -324,12 +333,14 @@ def trigger_preprocess(p, filelist):
     return lls
 
 
-def trigger_main(p, loc, recipe):
+def trigger_main(p, loc, recipe, fdprtypes=None):
     """
 
-    :param p:
-    :param loc:
-    :param recipe:
+    :param p: parameter dictionary, contains spirou DRS constants
+    :param loc: parameter dictionary, contains the data
+    :param recipe: string, the name of the recipe (without .py)
+    :param fdprtypes: list of strings, allowed DPRTYPES
+
     :return:
     """
     night_names = loc['INDEX_NIGHTNAME']
@@ -345,10 +356,14 @@ def trigger_main(p, loc, recipe):
         wmsgs = [spirouStartup.spirouStartup.HEADER]
         wmsg = ' TRIGGER RECIPE: {0} NIGHT_NAME={1} ({2}/{3})'
         wmsgs.append(wmsg.format(recipe, night_name, it+1, len(index_files)))
+        if fdprtypes is not None:
+            for fdprtype in fdprtypes:
+                wmsgs.append('\tDPRTYPE: {0}'.format(fdprtype))
         wmsgs.append(spirouStartup.spirouStartup.HEADER)
         WLOG('warning', p['LOG_OPT'], wmsgs)
         # get the control and index for this
-        control, vindex = get_control_index(fullcontrol, index_file, recipe)
+        control, vindex = get_control_index(fullcontrol, index_file, recipe,
+                                            fdprtypes)
         # get number of file args expected for this recipe
         file_args_expected = np.max(control['number'])
         # get the files expected
@@ -377,9 +392,13 @@ def main(night_name=None):
     # Set up
     # ----------------------------------------------------------------------
     main_name = __NAME__ + '.main()'
+    if len(sys.argv) > 1:
+        night_name = sys.argv[1]
+
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name, require_night_name=False)
+
     loc = ParamDict()
 
     # ----------------------------------------------------------------------
@@ -438,8 +457,13 @@ def main(night_name=None):
     shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou')
     # 6. cal_FF_RAW_spirou.py
     flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou')
-    # 7. cal_extract_RAW_spirou.py
-    # ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou')
+    # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
+    # ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+    #                        fdprtypes=['HCONE_HCONE', 'FP_FP'])
+    # 8. cal_WAVE_E2DS_RAW_spirou.py
+
+    # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
+
 
     # ----------------------------------------------------------------------
     # End Message
