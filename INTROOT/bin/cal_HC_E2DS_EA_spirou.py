@@ -148,6 +148,11 @@ def main(night_name=None, files=None):
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
 
     # ----------------------------------------------------------------------
+    # Check that wave parameters are consistent with "ic_ll_degr_fit"
+    # ----------------------------------------------------------------------
+    loc = spirouImage.CheckWaveSolConsistency(p, loc)
+
+    # ----------------------------------------------------------------------
     # Read UNe solution
     # ----------------------------------------------------------------------
     wave_UNe, amp_UNe = spirouImage.ReadLineList(p)

@@ -209,6 +209,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
+    # Check that wave parameters are consistent with "ic_ll_degr_fit"
+    # ----------------------------------------------------------------------
+    loc = spirouImage.CheckWaveSolConsistency(p, loc)
+
+    # ----------------------------------------------------------------------
     # Read UNe solution
     # ----------------------------------------------------------------------
     wave_UNe, amp_UNe = spirouImage.ReadLineList(p)
