@@ -972,11 +972,14 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None,
     # need to check whether files is a list
     if type(files) == str:
         checkfiles = [files]
-    elif type(files) == list:
-        checkfiles = files
+    elif type(files) in [list, np.ndarray]:
+        checkfiles = list(files)
     else:
-        emsg = '"files" must be either a string or a list of strings'
-        WLOG('error', p['log_opt'], emsg)
+        emsg1 = ('Input Error: "files" must be either a string or a list '
+                 'of strings')
+        emsg2 = '\t"files" type is currently = "{0}"'.format(type(files))
+        emsg3 = '\tfunction = {0}'.format(func_name)
+        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
         checkfiles = []
 
     # if we don't have arg_file_names set it to the "files"
