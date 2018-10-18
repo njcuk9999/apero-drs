@@ -496,21 +496,21 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     WLOG('', p['LOG_OPT'], 'Running triggers')
 
-    # # 1. cal_BADPIX_spirou.py
-    # badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
+    # 1. cal_BADPIX_spirou.py
+    badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
     # 2. cal_DARK_spirou.py
     dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou', combine=True)
     # 3. cal_loc_RAW_spirou.py
-    # loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
-    # # 4. cal_SLIT_spirou.py
-    # slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
-    # # 5. cal_SHAPE_spirou.py
-    # shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou', combine=True)
-    # # 6. cal_FF_RAW_spirou.py
-    # flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
+    loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
+    # 4. cal_SLIT_spirou.py
+    slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
+    # 5. cal_SHAPE_spirou.py
+    shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou', combine=True)
+    # 6. cal_FF_RAW_spirou.py
+    flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
     # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
-    # ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-    #                        fdprtypes=['HCONE_HCONE', 'FP_FP'])
+    ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                           fdprtypes=['HCONE_HCONE', 'FP_FP'])
     # 8. cal_WAVE_E2DS_RAW_spirou.py
 
     # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
