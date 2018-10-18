@@ -5054,3 +5054,79 @@
 	- cal_HC_E2DS_EA_spirou.py - currently only supports one FP_FP and one HC_HC (due to file updating) - added check to error if more used (rev.b9e5ab48)
 	- spirouTelluric.py - change bad mask from 0.999 to 0.5 to avoid NaN fringing - Issue #478 (rev.8e68cffd)
 	- spirouTelluric.py - catch known warnings and disregard (rev.db5fd2ef)
+
+
+
+================================================================================
+* Mon Oct 15 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.036
+
+================================================================================
+	- spirouKeywords.py - add the two new header keys for bigcube list (rev.bdb62f34)
+	- obj_mk_obj_template.py - add file names and bervs for input files to big cube header (rev.09b38e2b)
+	- update_note.txt - update with telluric changes (rev.cae3ae30)
+	- spirouConst.py - add prefix and change filename (rev.f64f46d2)
+	- obj_fit_tellu.py - save and remove abso save files - massive speed up (rev.6de88749)
+	- spirouTelluric.py - catch more NaN warnings from order_tapas (rev.a7e267e0)
+	- spirouFile.py - add get_most_recent function to get most recent unix time of list of files (rev.9e46d6ee)
+	- spirouConst.py - add TELLU_ABSO_SAVE file (for saving loaded trans files) (rev.d00d9807)
+	- obj_fit_tellu.py - store abso unless there are new trans_files (rev.22fffa6b)
+	- spirouTelluric.py - swap sign on dv (rev.cbfcba8c)
+	- spirouFITS.py - fix for new output of read_tilt_file (rev.0b53da0e)
+	- spirouFITS.py - add reading a key 1D list from header (rev.6d55b94c)
+	- constants_SPIROU_H4RG.py - add constants for quality control in obj_mk_tellu (rev.5cbb32a3)
+	- obj_mk_tellu.py - quality control SNR in order QC_TELLU_SNR_ORDER greater than QC_TELLU_SNR_MIN (rev.30dd9792)
+	- obj_mk_obj_tellu.py - only use unique filenames for tellu files (rev.9a62fd0e)
+	- obj_fit_tellu.py - only use unique filenames from trans files (rev.8a2c6c4d)
+
+
+
+================================================================================
+* Tue Oct 16 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.037
+
+================================================================================
+	- spirouFile.py - add function to sort by base name (sort_by_name) with alias SortByName (rev.5e85258e)
+	- explore_headers.py - code to explore headers of all files in given dir string (with wild cards) (rev.63c85cdd)
+	- obj_mk_obj_stack.py - for making stacks of images (Nobs x Nb_xpix x Nbo) (rev.6c030a84)
+	- spirouKeywords.py - add new header keys to list + define them as keywordstores (rev.b05756cd)
+	- obj_mk_obj_template.py - sort template files by base file name (rev.60a3d747)
+	- cal_WAVE_E2DS_EA_spirou.py - add some header keys to help identify the source of output (rev.d17afad6)
+	- cal_HC_E2DS_EA_spirou.py - add some more header keys to enable identifying source of output files (rev.929b23e4)
+
+
+
+================================================================================
+* Wed Oct 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.038
+
+================================================================================
+	- extract_trigger.py - add filters to allow only certain files to be process based on DPRTYPE (rev.773e92b9)
+	- clean_calibDB - custom script to remove all unwanted keys (set in the code) and remove files not in the calibDB and move all good files to new folder with a new master calibDB file (rev.7b62e834)
+	- reset the calibDB and telluDB with new MASTER wave solutions (rev.d08619ae)
+	- spirouStartup.py - fix bug with inputs (numpy array not allowed) (rev.490ff1bd)
+	- extract_trigger.py - start work on a simple calibration trigger (upto and including extraction) (rev.eda392ea)
+	- spirouStartup.py - fixed problem when no column is present (set to None) (rev.b0e94316)
+	- extract_trigger.py - start of a trigger that goes from pp --> extraction (including all calibrations) - [NOT FINISHED] (rev.569db3fc)
+	- spirouConst.py - add DPRTYPE to index file for raw outputs (rev.b33a98c0)
+	- spirouFITS.py - added "check_wave_sol_consistency" function to check and remap coefficients if incorrect from constants file (IC_LL_DEGR_FIT) (rev.9f913b51)
+	- cal_HC/ cal_WAVE - added check for consistent number of coefficients in wave solution - if wrong refitted onto new coefficients with correct number (rev.b90ee7c5)
+
+
+
+================================================================================
+* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.039
+
+================================================================================
+	- unit_test.py - fix comment (rev.7f5d83c0)
+	- TelluricsAll.run - add a list of all tellurics for maestria (rev.986a0deb)
+	- constants_SPIROU_H4RG.py - add quality control parameters for mk_tellu (RMS) (rev.9dd5516d)
+	- obj_mk_tellu.py - add an RMS cut to the QC parameters checked (rev.d3e5d8db)
+	- obj_mk_obj_template.py - turn multi fits into fits cubes (rev.65a48759)
+	- unit_test_parallel.py - test of multiprocessing on unit tests - DRS not stable to use this yet! (rev.06c253ec)
+	- extract_trigger.py - for now only do up to extraction of HC_HC and FP_FP (rev.980fe3dc)
+	- Gl699_small.run - just extract and fit those across one glitch (rev.c8dd99cf)
+	- cal_HC/cal_WAVE only copy over original file parameters if QC passed (rev.dbbe92dd)
+	- spirouFITS.py - fix bug in check_wave_sol_consistency (rev.97dce735)
+	- obj_mk_tellu.py - add notes for new QC check (TODO's) (rev.f76e39c4)
+	- cal_WAVE_E2DS_EA_spirou.py - remove print statement (rev.76b09b20)
+	- cal_SHAPE_spirou.py - update permissions on cal_SHAPE (rev.a928d2c3)
+	- update run list (for maestria runs) (rev.0dcab8ec)
+	- recipe_control.txt - do not support FLAT_DARK and DARK_FLAT in cal_FF (rev.9a320102)
