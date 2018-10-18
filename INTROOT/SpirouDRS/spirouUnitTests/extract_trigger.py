@@ -37,7 +37,7 @@ import cal_loc_RAW_spirou
 import cal_SLIT_spirou
 import cal_SHAPE_spirou
 # import cal_WAVE_E2DS_spirou
-# import cal_WAVE_E2DS_EA_spirou
+import cal_WAVE_E2DS_EA_spirou
 # import cal_WAVE_NEW_E2DS_spirou
 import cal_preprocess_spirou
 # import off_listing_RAW_spirou
@@ -87,6 +87,7 @@ def recipe_lookup(p, key):
     lookup['cal_SHAPE_spirou'] = cal_SHAPE_spirou.main
     lookup['cal_FF_RAW_spirou'] = cal_FF_RAW_spirou.main
     lookup['cal_extract_RAW_spirou'] = cal_extract_RAW_spirou.main
+    lookup['cal_WAVE_E2DS_EA_spirou'] = cal_WAVE_E2DS_EA_spirou
     if key not in lookup:
         emsg = 'Recipe {0} not found in lookup table. Recipe unsupported.'
         WLOG('error', p['LOG_OPT'], emsg.format(key))
@@ -344,11 +345,12 @@ def manage_runs(p, lls, combinations, recipe, night):
 
 def ask(message):
     if sys.version_info.major < 3:
-        question = raw_input
+        raw_input = raw_input
     else:
-        question = input
-    user_input = question(message)
+        raw_input = input
+    user_input = raw_input(message)
     return user_input
+
 
 # =============================================================================
 # trigger functions
@@ -509,10 +511,11 @@ def main(night_name=None):
     # 6. cal_FF_RAW_spirou.py
     flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
     # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
-    ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+    hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['HCONE_HCONE', 'FP_FP'])
     # 8. cal_WAVE_E2DS_RAW_spirou.py
-
+    # wave_lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_EA_spirou',
+    #                         limit=1)
     # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
 
 
