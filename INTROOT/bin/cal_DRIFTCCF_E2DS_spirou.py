@@ -432,27 +432,27 @@ def main(night_name=None, reffile=None):
     # ------------------------------------------------------------------
     # Save drift values to file
     # ------------------------------------------------------------------
-    # get raw input file name
-    raw_infile = os.path.basename(p['REFFILE'])
-    # construct filename
-    driftfits, tag = spirouConfig.Constants.DRIFTCCF_E2DS_FITS_FILE(p)
-    driftfitsname = os.path.split(driftfits)[-1]
-    # log that we are saving drift values
-    wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
-    # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-    # add the reference RV
-    hdict = spirouImage.AddKey(hdict, p['KW_REF_RV'], value=rvref)
-
-    # set the version
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
-    # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
-    # save drift values
-    p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
+    # # get raw input file name
+    # raw_infile = os.path.basename(p['REFFILE'])
+    # # construct filename
+    # driftfits, tag = spirouConfig.Constants.DRIFTCCF_E2DS_FITS_FILE(p)
+    # driftfitsname = os.path.split(driftfits)[-1]
+    # # log that we are saving drift values
+    # wmsg = 'Saving drift values of Fiber {0} in {1}'
+    # WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
+    # # add keys from original header file
+    # hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    # # add the reference RV
+    # hdict = spirouImage.AddKey(hdict, p['KW_REF_RV'], value=rvref)
+    #
+    # # set the version
+    # hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    # hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    # # set the input files
+    # hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    # hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
+    # # save drift values
+    # p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
     # ------------------------------------------------------------------
     # print .tbl result
