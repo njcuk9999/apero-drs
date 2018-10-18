@@ -1,18 +1,28 @@
-Update Note Summary - Version 0.3.035 (Since 0.3.027)
+Update Note Summary - Version 0.3.037 (Since 0.3.027)
 
 
 Not done/not finished/to do:
 
-- drift code compatibility [Francois]
-- add the drift to cal_CCF [Francois]
-- Quality control on cal_WAVE_E2DS_EA_spirou needs changing (fails on many
-  HC_HC/FP_FP files) - [Melissa]
-
+- problem with shift with wavelength solution found in obj_mk_obj_template
+    - is this a problem with the template making process?
+    - is this a problem with the wavelength solutions?
+    - is this a problem with the calibDB from CFHT?
+    ---> pointing toward from with calibDB from CFHT
 
 Done:
 
+- new recipe cal_DRIFTCCF_E2DS_spirou - input same as cal_DRIFT_E2DS_spirou
+    - uses CCF of the FP_FP / OBJ_FP / DARK_FP with a cross-correlation to
+      calculate drift
+
 - update to cal_WAVE_E2DS_EA_spirou (FP jump analysis now more stable)
     However still problems with quality control criteria
+
+- telluric update:
+    - will reject objects from mk_tellu if SNR > 100 in order 35 (these can be
+      changed using "qc_tellu_snr_order" and "qc_tellu_snr_min"
+	- will now only use most recent obj template
+	- will now only use unique TELL_OBJ filenames
 
 - constaints on extraction that extraction type is the same as for FLAT file
   (i.e. 4a and 4b are compatible, mode 3d and 4b are not)

@@ -39,6 +39,7 @@ run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
 # Run drift analysis
 run011a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 run011b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run011c = ['cal_DRIFTCCF_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 
 # Run CCF test
 run012 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
