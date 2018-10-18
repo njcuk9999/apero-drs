@@ -53,8 +53,8 @@ cal_SHAPE_spirou, 1, a, ALIGN, pos_fp, pos_fp, None, FP_FP, fp_fp, RAW, SHAPE, 4
 # ---- Flat fielding recipes
 #
 cal_FF_RAW_spirou, 1, f, FLAT, pos_wl, pos_wl, None, FLAT_FLAT, flat_flat, RAW, FLAT-FIELD, 5, 4
-cal_FF_RAW_spirou, 1, f, FLAT, pos_wl, pos_pk, AB, FLAT_DARK, flat_dark, RAW, FLAT-FIELD, 5, 2
-cal_FF_RAW_spirou, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, FLAT-FIELD, 5, 2
+#cal_FF_RAW_spirou, 1, f, FLAT, pos_wl, pos_pk, AB, FLAT_DARK, flat_dark, RAW, FLAT-FIELD, 5, 2
+#cal_FF_RAW_spirou, 1, f, FLAT, pos_pk, pos_wl, C, DARK_FLAT, dark_flat, RAW, FLAT-FIELD, 5, 2
 #
 # ---- Extraction recipes
 #

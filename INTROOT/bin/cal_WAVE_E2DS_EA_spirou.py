@@ -209,6 +209,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     poly_wave_sol = loc['WAVEPARAMS']
 
     # ----------------------------------------------------------------------
+    # Check that wave parameters are consistent with "ic_ll_degr_fit"
+    # ----------------------------------------------------------------------
+    loc = spirouImage.CheckWaveSolConsistency(p, loc)
+
+    # ----------------------------------------------------------------------
     # Read UNe solution
     # ----------------------------------------------------------------------
     wave_UNe, amp_UNe = spirouImage.ReadLineList(p)
@@ -608,6 +613,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=p['MAX_TIME_HUMAN'])
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
@@ -617,12 +624,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
-    # update original E2DS hcfile and add header keys (via hdict)
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0a)
-    p = spirouImage.WriteImage(p, raw_infile1, loc['HCDATA'], hdict)
-    # update original E2DS fpfile and add header keys (via hdict)
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
-    p = spirouImage.WriteImage(p, raw_infile2, loc['FPDATA'], hdict)
+
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
@@ -630,13 +632,24 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # get filename for E2DS calibDB copy of FITSFILENAME
     e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)[0]
-    print(e2dscopy_filename)
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
     p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # only copy over if QC passed
+    if p['QC']:
+        # update original E2DS hcfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0a)
+        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
+        # update original E2DS fpfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
+        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+
 
     # ------------------------------------------------------------------
     # Save to result table
