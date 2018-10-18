@@ -189,6 +189,8 @@ def main(night_name=None, files=None):
         # ------------------------------------------------------------------
         # define storage for the transmission map
         transmission_map = np.zeros_like(loc['DATA'])
+        # define storage for measured rms within expected clean domains
+        exp_clean_rms = np.zeros(loc['DATA'].shape[0])
         # loop around the orders
         for order_num in range(loc['DATA'].shape[0]):
             # start and end
@@ -247,6 +249,18 @@ def main(night_name=None, files=None):
             sed[ww < p['TELLU_NAN_THRESHOLD']] = np.nan
             # save the spectrum (normalised by the SED) to the tranmission map
             transmission_map[order_num, :] = sp[order_num, :] / sed
+
+            # get expected clean rms
+            fmaskb = np.array(fmask).astype(bool)
+            with warnings.catch_warnings(record=True):
+                zerotrans = np.abs(transmission_map[order_num,fmaskb]-1)
+                ec_rms = np.nanmedian(zerotrans)
+                exp_clean_rms[order_num] = ec_rms
+
+            # log the rms
+            wmsg = 'Order {0}: Fractional RMS in telluric free domain = {1:.3f}'
+            wargs = [order_num, ec_rms]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
         # ------------------------------------------------------------------
         # Shift transmisson map to master wave file
@@ -342,6 +356,26 @@ def main(night_name=None, files=None):
         # ----------------------------------------------------------------------
         # set passed variable and fail message list
         passed, fail_msg = True, []
+        # get SNR for each order from header
+        nbo = loc['DATA'].shape[0]
+        snr_order = p['QC_TELLU_SNR_ORDER']
+        snr = spirouImage.Read1Dkey(p, shdr, p['kw_E2DS_SNR'][0], nbo)
+        # check that SNR is high enough
+        if snr[snr_order] < p['QC_TELLU_SNR_MIN']:
+            fmsg = 'low SNR in order {0}: ({1:.2f} < {2:.2f})'
+            fargs = [snr_order, snr[snr_order], p['QC_TELLU_SNR_MIN']]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+        # check that the RMS is not too low
+        if exp_clean_rms[snr_order] > p['QC_TELLU_CLEAN_RMS_MAX']:
+            fmsg = ('Expected clean RMS is too high in order {0} '
+                    '({1:.3f} > {2:.3f})')
+            fargs = [snr_order, exp_clean_rms[snr_order],
+                     p['QC_TELLU_CLEAN_RMS_MAX']]
+            fail_msg.append(fmsg.format(*fargs))
+            passed = False
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
         if passed:
             WLOG('info', p['LOG_OPT'],
                  'QUALITY CONTROL SUCCESSFUL - Well Done -')
@@ -360,11 +394,9 @@ def main(night_name=None, files=None):
         if p['QC']:
             # copy tellu file to the telluDB folder
             spirouDB.PutTelluFile(p, outfile)
-            airmass = loc['AIRMASS']
-            watercol = loc['WATERCOL']
-            name = loc['OBJNAME']
             # update the master tellu DB file with transmission map
-            targs = [p, outfilename, name, airmass, watercol]
+            targs = [p, outfilename, loc['OBJNAME'], loc['AIRMASS'],
+                     loc['WATERCOL']]
             spirouDB.UpdateDatabaseTellMap(*targs)
 
     # ----------------------------------------------------------------------
