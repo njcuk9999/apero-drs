@@ -1039,6 +1039,8 @@ tellu_fit_vsini2 = 30.0
 tellu_fit_recon_plt_order = 33
 tellu_fit_log_limit = -0.5
 
+
+
 # -----------------------------------------------------------------------------
 #   polarimetry parameters
 # -----------------------------------------------------------------------------
@@ -1169,11 +1171,15 @@ qc_wave_idrift_rv_max = 150.0
 
 #   Define the order to use for SNR check when accepting tellu   -[obj_mk_tellu]
 #      files to the telluDB
-qc_tellu_snr_order = 35
+qc_tellu_snr_order = 33
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER"         -[obj_mk_tellu]
 #      that will be accepted to the telluDB
 qc_tellu_snr_min = 100
+
+#  Define the maximum RMS around 1 for domain clean from         -[obj_mk_tellu]
+#     tellurics according to TAPAS
+qc_tellu_clean_rms_max = 0.01
 
 # -----------------------------------------------------------------------------
 #  Calibration DB settings
