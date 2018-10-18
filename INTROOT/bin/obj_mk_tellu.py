@@ -352,6 +352,14 @@ def main(night_name=None, files=None):
             fargs = [snr_order, snr[snr_order], p['QC_TELLU_SNR_MIN']]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+
+        # TODO: Use p['QC_TELLU_SNR_ORDER']
+        # TODO:   take 99% throughput from tapas model
+        # TODO:   keep only these in transmission data
+        # TODO:   calculate rms (maybe sigma clipped)
+        # TODO:   smaller than ~ 0.01 --> if not fail QC
+        # TODO:   print rms in all cases
+
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
