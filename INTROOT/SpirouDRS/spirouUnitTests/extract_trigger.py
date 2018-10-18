@@ -204,9 +204,10 @@ def get_control_index(control, index_file, recipe, fdprtypes=None):
     return control, vindex
 
 
-def get_file_args(p, control, vindex, recipe):
+def get_file_args(p, control, vindex, recipe, limit=None):
     # get the files in index that match the correct arguments
-    args = dict()
+    args = []
+    numbers = []
     # loop around control
     for row in range(len(control)):
         # get parameters from control
@@ -222,19 +223,59 @@ def get_file_args(p, control, vindex, recipe):
             wmsg = 'No files found for recipe "{0}" with key {1}'
             wargs = [recipe, dprtype]
             WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
-        # construct file number
-        argnumber = 'FILE{0}'.format(number)
+
         # make selected files into a list of strings
         values = []
         for value in vindex['FILENAME'][filemask]:
             values.append(str(value))
-        # add to args dictionary
-        if argnumber not in args:
-            args[argnumber] = list(values)
-        else:
-            args[argnumber] += list(values)
+        # deal with limit
+        if limit is not None:
+            values = values[:limit]
+        # append to lists
+        if len(values) != 0:
+            args.append(values)
+            numbers.append(number)
     # return args
-    return args
+    return args, numbers
+
+
+def add_files(p, night, filelist, numbers, combine=False):
+    func_name = __NAME__ + '.add_files()'
+    # find out which kind of recipe we are dealing with
+    numbers = np.array(numbers, dtype=int)
+    case1 = np.max(numbers) == 1
+    case2 = np.max(numbers) == 2
+
+    # set up storage
+    combinations = []
+    # deal with case 1
+    #   arguments = night_name files[0]
+    if case1 and combine:
+        for files in filelist:
+            comb = [night] + list(files)
+            combinations.append(comb)
+
+    elif case1:
+        for files in filelist:
+            for filename in files:
+                comb = [night] + [filename]
+                combinations.append(comb)
+
+    # deal with case 2
+    #   arugmentts = night_names files[0][0] files[1][0]
+    elif case2:
+        comb = [night] + [filelist[0][0], filelist[1][0]]
+        combinations.append(comb)
+
+    # else unsupported
+    else:
+        emsg1 = 'Recipe mode unsupported'
+        emsg2 = '\tfunc_name = {0}'.format(func_name)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
+    # return combinations
+    return combinations
+
 
 def printrun(*args):
 
@@ -244,7 +285,7 @@ def printrun(*args):
     TEST_STORE.append(printstring)
 
 
-def print_runs(p, lls, errors, combinations, recipe, night):
+def print_runs(p, combinations, recipe):
     # get command
     command = recipe_lookup(p, recipe)
     # loop around combinations
@@ -253,7 +294,7 @@ def print_runs(p, lls, errors, combinations, recipe, night):
         printrun(recipe, ' '.join(list(combination)))
 
 
-def manage_runs(p, lls, errors, combinations, recipe, night):
+def manage_runs(p, lls, combinations, recipe, night):
     # get command
     command = recipe_lookup(p, recipe)
     # loop around combinations
@@ -268,6 +309,15 @@ def manage_runs(p, lls, errors, combinations, recipe, night):
         try:
             ll = command(*list(combination))
             sPlt.closeall()
+            # keep only some parameters
+            pp['RECIPE'] = recipe
+            pp['NIGHT_NAME'] = night
+            pp['ARGS'] = combinations
+            pp['ERROR'] = list(ll['p']['LOGGER_ERROR'])
+            pp['WARNING'] = list(ll['p']['LOGGER_WARNING'])
+            pp['OUTPUTS'] = dict(ll['p']['OUTPUTS'])
+            # clean up
+            del ll
         except Exception as e:
             # log error
             emsgs = ['Error occured']
@@ -278,10 +328,11 @@ def manage_runs(p, lls, errors, combinations, recipe, night):
             pp['NIGHT_NAME'] = night
             pp['ARGS'] = combination
             pp['ERROR'] = emsgs
-            ll = dict(p=pp)
-            errors.append(ll)
+            pp['WARNING'] = []
+            pp['OUTPUTS'] = dict()
+        ll = dict(p=pp)
         lls.append(ll)
-    return lls, errors
+    return lls
 
 
 def ask(message):
@@ -333,7 +384,7 @@ def trigger_preprocess(p, filelist):
     return lls
 
 
-def trigger_main(p, loc, recipe, fdprtypes=None):
+def trigger_main(p, loc, recipe, limit=None, combine=False, fdprtypes=None):
     """
 
     :param p: parameter dictionary, contains spirou DRS constants
@@ -347,7 +398,7 @@ def trigger_main(p, loc, recipe, fdprtypes=None):
     index_files = loc['RAW_INDEX_FILES']
     fullcontrol = loc['CONTROL']
     # loop through index files
-    lls, errors = [], []
+    lls = []
     for it, index_file in enumerate(index_files):
         # Get the night name for this recipes
         night_name = night_names[it]
@@ -364,24 +415,17 @@ def trigger_main(p, loc, recipe, fdprtypes=None):
         # get the control and index for this
         control, vindex = get_control_index(fullcontrol, index_file, recipe,
                                             fdprtypes)
-        # get number of file args expected for this recipe
-        file_args_expected = np.max(control['number'])
         # get the files expected
-        file_args = get_file_args(p, control, vindex, recipe)
-        # make combinations of files
-        arguments = [[night_name]]
+        args, numbers = get_file_args(p, control, vindex, recipe, limit)
         # add files
-        for it in range(file_args_expected):
-            arguments.append(file_args['FILE{0}'.format(it + 1)])
-        combinations = list(itertools.product(*arguments))
+        combinations = add_files(p, night_name, args, numbers, combine)
         # manage the running of this recipe
         if TEST_RUN:
-            print_runs(p, lls, errors, combinations, recipe, night_name)
+            print_runs(p, combinations, recipe)
         else:
-            lls, errors = manage_runs(p, lls, errors, combinations,
-                                      recipe, night_name)
+            lls = manage_runs(p, lls, combinations, recipe, night_name)
     # return local spaces and errors
-    return lls, errors
+    return lls
 
 
 # =============================================================================
@@ -446,17 +490,23 @@ def main(night_name=None):
     WLOG('', p['LOG_OPT'], 'Running triggers')
 
     # 1. cal_BADPIX_spirou.py
-    badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou')
+    badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou',
+                              limit=1)
     # 2. cal_DARK_spirou.py
-    dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou')
+    dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou',
+                            combine=True)
     # 3. cal_loc_RAW_spirou.py
-    loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou')
+    loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou',
+                           combine=True)
     # 4. cal_SLIT_spirou.py
-    slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou')
+    slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou',
+                            combine=True)
     # 5. cal_SHAPE_spirou.py
-    shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou')
+    shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou',
+                             combine=True)
     # 6. cal_FF_RAW_spirou.py
-    flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou')
+    flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou',
+                            combine=True)
     # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
     # ext_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
     #                        fdprtypes=['HCONE_HCONE', 'FP_FP'])
