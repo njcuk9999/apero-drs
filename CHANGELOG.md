@@ -5177,3 +5177,11 @@
 	- extract_trigger.py - turn off test run (rev.de0c9aa5)
 	- extract_trigger.py - add options to combine all files from a night and to limit the number of files used for a recipe (rev.6b7dc768)
 	- recipe_control.txt - do not support FLAT_DARK and DARK_FLAT in cal_FF (rev.9a320102)
+
+
+
+================================================================================
+* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.042
+
+================================================================================
+	- cal_DRIFTCCF_E2DS_spirou.py - comment out saving of fits file - no loc['DRIFT'] defined (rev.9d385f2a)
