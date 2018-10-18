@@ -67,7 +67,7 @@ ParamDict = spirouConfig.ParamDict
 # skip found files
 SKIP_DONE = True
 # test run
-TEST_RUN = True
+TEST_RUN = False
 TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
