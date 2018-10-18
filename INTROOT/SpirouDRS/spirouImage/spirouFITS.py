@@ -948,7 +948,7 @@ def check_wave_sol_consistency(p, loc):
     input_coeffs = loc['WAVEPARAMS']
     input_map = loc['WAVE_INIT']
     # get dimensions
-    nbo, ncoeffs = input_coeffs.shape
+    nbo, ncoeffs = input_coeffs.shape[0], input_coeffs.shape[1] - 1
     dim1, dim2 = input_map.shape
 
     # check for inconsistency
@@ -962,7 +962,7 @@ def check_wave_sol_consistency(p, loc):
         # log warning
         wmsg = ('Inconsistent number of coefficients ({0}) expected {1}. '
                 'Re-mapping onto expected number of coefficients')
-        wargs = [required_ncoeffs]
+        wargs = [ncoeffs, required_ncoeffs]
         WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
         # set up output storage
         output_coeffs = np.zeros_like(input_coeffs)
@@ -972,7 +972,7 @@ def check_wave_sol_consistency(p, loc):
         # loop around orders
         for order_num in range(nbo):
             # get the wave map for this order
-            yfit = np.polyval(input_coeffs[::-1], xfit)
+            yfit = np.polyval(input_coeffs[order_num][::-1], xfit)
             # get the new coefficients based on a fit to this wavemap
             coeffs = np.polyfit(xfit, yfit, required_ncoeffs)[::-1]
             # push into storage
