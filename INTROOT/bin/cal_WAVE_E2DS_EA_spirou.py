@@ -624,12 +624,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
-    # update original E2DS hcfile and add header keys (via hdict)
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0a)
-    p = spirouImage.WriteImage(p, raw_infile1, loc['HCDATA'], hdict)
-    # update original E2DS fpfile and add header keys (via hdict)
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
-    p = spirouImage.WriteImage(p, raw_infile2, loc['FPDATA'], hdict)
+
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
@@ -643,6 +638,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # make a copy of the E2DS file for the calibBD
     p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # only copy over if QC passed
+    if p['QC']:
+        # update original E2DS hcfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0a)
+        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
+        # update original E2DS fpfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
+        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+
 
     # ------------------------------------------------------------------
     # Save to result table
