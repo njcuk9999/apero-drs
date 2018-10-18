@@ -178,6 +178,41 @@ class Paths:
         self.add_root()
 
 
+
+# =============================================================================
+# Define file functions
+# =============================================================================
+def get_most_recent(filelist):
+    # set most recent time to None to start
+    most_recent = None
+    # loop around file list
+    for file_it in filelist:
+        # get modified time
+        file_time = os.path.getctime(file_it)
+        # add to most_recent if newer
+        if most_recent is None:
+            most_recent = file_time
+        elif file_time > most_recent:
+            most_recent = file_time
+    # return most recent time
+    return most_recent
+
+
+def sort_by_name(filelist):
+    # define storage for base file list
+    baselist = []
+    # get base list of files
+    for file_it in filelist:
+        basename = os.path.basename(file_it)
+        baselist.append(basename)
+    # get sorted base file list
+    indices = np.argsort(baselist)
+    # apply sorted base file list to file list
+    sorted_filelist = np.array(filelist)[indices]
+    # return sorted filelist
+    return sorted_filelist
+
+
 # =============================================================================
 # Define ID functions (pre-processing)
 # =============================================================================
