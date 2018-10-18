@@ -102,7 +102,7 @@ def main(runname=None, quiet=False):
     runs = spirouUnitTests.get_runs(p, rparams, rfile)
 
     # ----------------------------------------------------------------------
-    # Get runs
+    # Run runs
     # ----------------------------------------------------------------------
     # storage for times
     times = OrderedDict()
