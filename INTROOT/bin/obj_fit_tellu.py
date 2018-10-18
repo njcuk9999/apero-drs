@@ -122,6 +122,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     transdata = spirouDB.GetDatabaseTellMap(p)
     trans_files = transdata[0]
+    # make sure we have unique filenames for trans_files
+    trans_files = np.unique(trans_files)
 
     # ----------------------------------------------------------------------
     # Start plotting
@@ -174,13 +176,38 @@ def main(night_name=None, files=None):
         emsg4 = '\tAdd more files or reduce number of PCA components'
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(nfiles, npc),
                                      emsg3, emsg4])
-    # set up storage for the absorption
-    abso = np.zeros([nfiles, np.product(loc['DATA'].shape)])
-    # loop around outputfiles and add them to abso
-    for it, filename in enumerate(trans_files):
-        # push data into array
-        data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
-        abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
+
+    # check whether we can used pre-saved abso
+    filetime = spirouImage.GetMostRecent(trans_files)
+    tout = spirouConfig.Constants.TELLU_ABSO_SAVE(p, filetime)
+    abso_save_file, absoprefix = tout
+    use_saved = os.path.exists(abso_save_file)
+    try:
+        # try loading from file
+        abso = np.load(abso_save_file)
+        # log progress
+        wmsg = 'Loaded abso from file {0}'.format(abso_save_file)
+        WLOG('', p['LOG_OPT'], wmsg)
+    except:
+        # set up storage for the absorption
+        abso = np.zeros([nfiles, np.product(loc['DATA'].shape)])
+        # loop around outputfiles and add them to abso
+        for it, filename in enumerate(trans_files):
+            # load data
+            data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
+            # push data into array
+            abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
+        # log progres
+        wmsg = 'Saving abso to file {0}'.format(abso_save_file)
+        WLOG('', p['LOG_OPT'], wmsg)
+        # remove all abso save files (only need most recent one)
+        afolder = os.path.dirname(abso_save_file)
+        afilelist = os.listdir(afolder)
+        for afile in afilelist:
+            if afile.startswith(absoprefix):
+                os.remove(os.path.join(afolder, afile))
+        # save to file for later use
+        np.save(abso_save_file, abso)
 
     # log the absorption cube
     with warnings.catch_warnings(record=True) as w:

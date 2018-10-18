@@ -596,6 +596,19 @@ drift_peak_plot_line_log_amp = False
 #    Define which peak to plot in the linelist vs amp plot    - [cal_drift-peak]
 drift_peak_selected_order = 30
 
+#    Define which mask to use                                  - [cal_drift-ccf]
+drift_ccf_mask = 'fp.mas'
+
+#    Define the drift target RV to use                         - [cal_drift-ccf]
+drift_target_rv = 0.0
+
+#    Define the drift CCF width to use                         - [cal_drift-ccf]
+drift_ccf_width = 7.5
+
+#    Define the drift CCF step to use                          - [cal_drift-ccf]
+drift_ccf_step = 0.5
+
+
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters
 # -----------------------------------------------------------------------------
@@ -627,6 +640,7 @@ badpix_full_flat = 'detector_flat_full.fits'
 #   Defines the threshold on the full detector flat file to       - [cal_badpix]
 #      deem pixels as good
 badpix_full_threshold = 0.3
+
 
 # -----------------------------------------------------------------------------
 #  cal_CCF_E2DS_spirou
@@ -1021,10 +1035,12 @@ tellu_abso_dv_order = 33
 tellu_abso_dv_size = 5
 tellu_abso_dv_good_thres = 0.2
 
+# TODO: Need comments
 tellu_template_keep_limit = 0.5
 tellu_template_med_low = 2048 - 128
 tellu_template_med_high = 2048 + 128
 
+# TODO: Need comments
 tellu_number_of_principle_comp = 5
 tellu_fit_keep_frac = 20.0
 tellu_plot_order = 35
@@ -1036,6 +1052,8 @@ tellu_fit_niter = 4
 tellu_fit_vsini2 = 30.0
 tellu_fit_recon_plt_order = 33
 tellu_fit_log_limit = -0.5
+
+
 
 # -----------------------------------------------------------------------------
 #   polarimetry parameters
@@ -1164,6 +1182,18 @@ qc_wave_idrift_nborderout = 15
 #   Define the maximum allowed drift (in m/s) in the                 -[cal_wave]
 #       instrumental drift calculation
 qc_wave_idrift_rv_max = 150.0
+
+#   Define the order to use for SNR check when accepting tellu   -[obj_mk_tellu]
+#      files to the telluDB
+qc_tellu_snr_order = 33
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER"         -[obj_mk_tellu]
+#      that will be accepted to the telluDB
+qc_tellu_snr_min = 100
+
+#  Define the maximum RMS around 1 for domain clean from         -[obj_mk_tellu]
+#     tellurics according to TAPAS
+qc_tellu_clean_rms_max = 0.01
 
 # -----------------------------------------------------------------------------
 #  Calibration DB settings
