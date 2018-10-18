@@ -325,6 +325,7 @@ def manage_runs(p, lls, combinations, recipe, night):
             # log error
             emsgs = ['Error occured']
             emsgs.append('{0}'.format(e))
+            WLOG('warning', p['LOG_OPT'], emsgs)
             # push to ll
             pp = ParamDict()
             pp['RECIPE'] = recipe
