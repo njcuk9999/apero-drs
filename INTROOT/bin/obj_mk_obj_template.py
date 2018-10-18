@@ -267,13 +267,13 @@ def main(night_name=None, files=None):
     # save big cube 1
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     big_cube_s = np.swapaxes(big_cube, 1, 2)
-    p = spirouImage.WriteImageMulti(p, outfile1, big_cube_s, hdict)
+    p = spirouImage.WriteImage(p, outfile1, big_cube_s, hdict)
     # log big cube 0
     wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
     # save big cube 0
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
-    p = spirouImage.WriteImageMulti(p, outfile2, big_cube_s0, hdict)
+    p = spirouImage.WriteImage(p, outfile2, big_cube_s0, hdict)
 
 
     # # mega plot
