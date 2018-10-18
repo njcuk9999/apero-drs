@@ -232,9 +232,8 @@ def get_file_args(p, control, vindex, recipe, limit=None):
         if limit is not None:
             values = values[:limit]
         # append to lists
-        if len(values) != 0:
-            args.append(values)
-            numbers.append(number)
+        args.append(values)
+        numbers.append(number)
     # return args
     return args, numbers
 
@@ -252,8 +251,9 @@ def add_files(p, night, filelist, numbers, combine=False):
     #   arguments = night_name files[0]
     if case1 and combine:
         for files in filelist:
-            comb = [night] + list(files)
-            combinations.append(comb)
+            if len(files) > 0:
+                comb = [night] + list(files)
+                combinations.append(comb)
 
     elif case1:
         for files in filelist:
@@ -264,8 +264,10 @@ def add_files(p, night, filelist, numbers, combine=False):
     # deal with case 2
     #   arugmentts = night_names files[0][0] files[1][0]
     elif case2:
-        comb = [night] + [filelist[0][0], filelist[1][0]]
-        combinations.append(comb)
+        if len(filelist) > 0:
+            if len(filelist[0]) > 0 and len(filelist[1]) > 0:
+                comb = [night] + [filelist[0][0], filelist[1][0]]
+                combinations.append(comb)
 
     # else unsupported
     else:
