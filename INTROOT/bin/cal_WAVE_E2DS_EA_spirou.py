@@ -637,7 +637,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # get filename for E2DS calibDB copy of FITSFILENAME
     e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)[0]
-    print(e2dscopy_filename)
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
