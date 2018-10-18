@@ -20,7 +20,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
-from . import spirouUnitRecipes
+from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 
 import cal_BADPIX_spirou
 # import cal_CCF_E2DS_spirou
