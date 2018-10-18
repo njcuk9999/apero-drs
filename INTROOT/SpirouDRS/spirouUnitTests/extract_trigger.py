@@ -309,6 +309,7 @@ def manage_runs(p, lls, combinations, recipe, night):
         WLOG('warning', p['LOG_OPT'], wmsgs)
         # run command
         try:
+            print(recipe, combination)
             ll = command(*list(combination))
             sPlt.closeall()
             # keep only some parameters
