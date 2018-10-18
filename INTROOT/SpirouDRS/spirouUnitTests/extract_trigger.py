@@ -20,6 +20,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from . import spirouUnitRecipes
 
 import cal_BADPIX_spirou
 # import cal_CCF_E2DS_spirou
@@ -67,7 +68,7 @@ ParamDict = spirouConfig.ParamDict
 # skip found files
 SKIP_DONE = True
 # test run
-TEST_RUN = True
+TEST_RUN = False
 TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
@@ -302,15 +303,17 @@ def manage_runs(p, lls, combinations, recipe, night):
     # loop around combinations
     for it, combination in enumerate(combinations):
         # log progress
+        rargs = [recipe, it + 1, len(combinations)]
+        runname = ' TRIGGER {0} File {1} of {2}'.format(*rargs)
         wmsgs = [spirouStartup.spirouStartup.HEADER]
-        wargs = [recipe, it + 1, len(combinations)]
-        wmsgs.append(' TRIGGER {0} File {1} of {2}'.format(*wargs))
+        wmsgs.append(runname)
         wmsgs.append(spirouStartup.spirouStartup.HEADER)
         WLOG('warning', p['LOG_OPT'], wmsgs)
         # run command
         try:
-            print(recipe, combination)
-            ll = command(*list(combination))
+            arglist = [recipe] + list(combination)
+            varbs, name = spirouUnitRecipes.wrapper(p, runname, arglist)
+            ll = spirouUnitRecipes.run_main(p, name, varbs)
             sPlt.closeall()
             # keep only some parameters
             pp['RECIPE'] = recipe
