@@ -68,6 +68,9 @@ DRIFT_E2DS_FITS_FILE = 'DRIFT_E2DS'
 # Defines the E2DS drift-peak file tag
 DRIFTPEAK_E2DS_FITS_FILE = 'DRIFTPEAK_E2DS'
 
+# Define the E2DS drift-ccf file tag
+DRIFTCCF_E2DS_FITS_FILE = 'DRIFTCCF_E2DS'
+
 # Defines the CCF file tag
 CCF_FITS_FILE = 'CCF_E2DS'
 CCF_FITS_FILE_FF = 'CCF_E2DS_FF'

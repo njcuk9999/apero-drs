@@ -97,6 +97,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                     mainfitsdir='reduced',
                                     mainfitsfile='hcfiles')
 
+    # make sure we only have one HCFILE more than one is not currently
+    # supported
+    # TODO: Fix problem with updating output and then remove this
+    if len(p['HCFILES']) > 1:
+        emsg = 'Currently we do not support multiple HCFILES'
+        WLOG('error', p['LOG_OPT'], emsg)
+
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
@@ -200,6 +207,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
+
+    # ----------------------------------------------------------------------
+    # Check that wave parameters are consistent with "ic_ll_degr_fit"
+    # ----------------------------------------------------------------------
+    loc = spirouImage.CheckWaveSolConsistency(p, loc)
 
     # ----------------------------------------------------------------------
     # Read UNe solution
@@ -510,32 +522,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------
 
-    # set order to plot
-    plot_order = 7
-    # get the correct order to plot for all_lines (which is sized n_ord_final-n_ord_start)
-    plot_order_line = plot_order - n_ord_start
-    plt.figure()
-    # plot order and flux
-    plt.plot(loc['LL_OUT_2'][plot_order], hcdata[plot_order], label='HC spectrum - order '
-                                                                + str(plot_order))
-    # plot found lines
-    # first line separate for labelling purposes
-    plt.vlines(all_lines_1[plot_order_line][0][0], 0, all_lines_1[plot_order_line][0][2],
-               'm', label='fitted lines')
-    # plot lines to the top of the figure
-    plt.vlines(all_lines_1[plot_order_line][0][0], 0, np.max(hcdata[plot_order]), 'gray',
-               linestyles='dotted')
-    # rest of lines
-    for i in range(1, len(all_lines_1[plot_order_line])):
-        # plot lines to their corresponding amplitude
-        plt.vlines(all_lines_1[plot_order_line][i][0], 0, all_lines_1[plot_order_line][i][2],
-                   'm')
-        # plot lines to the top of the figure
-        plt.vlines(all_lines_1[plot_order_line][i][0], 0, np.max(hcdata[plot_order]), 'gray',
-                   linestyles='dotted')
-    plt.legend()
-    plt.xlabel('Wavelength')
-    plt.ylabel('Flux')
+    if p['DRS_PLOT']:
+        sPlt.wave_ea_plot_single_order(p, loc)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -599,10 +587,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get raw input file name
     raw_infile1 = os.path.basename(p['HCFILES'][0])
     raw_infile2 = os.path.basename(p['FPFILE'])
+    tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
+    tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.split(wavefits)[-1]
-
     # log progress
     wargs = [p['FIBER'], wavefits]
     wmsg = 'Write wavelength solution for Fiber {0} in {1}'
@@ -612,13 +601,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     # set the input files
     hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile1)
     hdict = spirouImage.AddKey(hdict, p['kw_FPFILE'], value=raw_infile2)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=wavefitsname)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    # add wave solution date
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+                               value=p['MAX_TIME_HUMAN'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+                               value=p['MAX_TIME_UNIX'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
@@ -628,21 +624,32 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
-    # write original E2DS file and add header keys (via hdict)
-    # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
+
 
     # write the wave "spectrum"
+    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     p = spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
 
     # get filename for E2DS calibDB copy of FITSFILENAME
     e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)[0]
-    print(e2dscopy_filename)
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
     p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
+
+    # only copy over if QC passed
+    if p['QC']:
+        # update original E2DS hcfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0a)
+        raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
+        # update original E2DS fpfile and add header keys (via hdict)
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
+        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
+
 
     # ------------------------------------------------------------------
     # Save to result table
@@ -687,7 +694,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # make a copy of the E2DS file for the calibBD
     # set the version
-    hdict = OrderedDict()
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)

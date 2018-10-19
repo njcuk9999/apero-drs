@@ -75,6 +75,13 @@ def main(night_name=None, files=None):
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
 
+    # make sure we only have one HCFILE more than one is not currently
+    # supported
+    # TODO: Fix problem with updating output and then remove this
+    if len(p['ARG_FILE_NAMES']) > 1:
+        emsg = 'Currently we do not support multiple HCFILES'
+        WLOG('error', p['LOG_OPT'], emsg)
+
     # ----------------------------------------------------------------------
     # Read image file
     # ----------------------------------------------------------------------
@@ -139,6 +146,11 @@ def main(night_name=None, files=None):
                                        return_filename=True, fiber=wave_fiber)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
+
+    # ----------------------------------------------------------------------
+    # Check that wave parameters are consistent with "ic_ll_degr_fit"
+    # ----------------------------------------------------------------------
+    loc = spirouImage.CheckWaveSolConsistency(p, loc)
 
     # ----------------------------------------------------------------------
     # Read UNe solution
@@ -217,8 +229,8 @@ def main(night_name=None, files=None):
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.basename(wavefits)
+    # log progress
     WLOG('', p['LOG_OPT'], 'Saving wave map to {0}'.format(wavefitsname))
-
     # log progress
     wargs = [p['FIBER'], wavefitsname]
     wmsg = 'Write wavelength solution for Fiber {0} in {1}'
@@ -234,6 +246,13 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
     # add quality control
     hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    # add wave solution date
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+                               value=p['MAX_TIME_HUMAN'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+                               value=p['MAX_TIME_UNIX'])
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
                                value=loc['POLY_WAVE_SOL'].shape[0])
@@ -243,7 +262,6 @@ def main(night_name=None, files=None):
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['POLY_WAVE_SOL'])
-
     # write the wave "spectrum"
     p = spirouImage.WriteImage(p, wavefits, loc['WAVE_MAP2'], hdict)
 
@@ -269,7 +287,6 @@ def main(night_name=None, files=None):
 
     # make a copy of the E2DS file for the calibBD
     # set the version
-    hdict = OrderedDict()
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
     hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
@@ -301,29 +318,30 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Update header of current file
     # ----------------------------------------------------------------------
-    fitsfilename = p['FITSFILENAME']
-    tag4 = loc['HCHDR'][p['KW_OUTPUT'][0]]
+    # only copy over if QC passed
+    if p['QC']:
+        fitsfilename = p['FITSFILENAME']
+        tag4 = loc['HCHDR'][p['KW_OUTPUT'][0]]
 
-    # update it's own header
-    wmsg = 'Saving new wave parameters to own header'
-    WLOG('', p['LOG_OPT'], wmsg)
-    # add keys from original header file
-    hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
-    # add wave file nmae
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
-                               value=fitsfilename)
-    # add wave solution date
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
-                               value=p['MAX_TIME_HUMAN'])
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
-                               value=p['MAX_TIME_UNIX'])
-    # add wave solution coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
-                                     values=loc['POLY_WAVE_SOL'])
-    # Save E2DS file
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
-    hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
-    p = spirouImage.WriteImage(p, fitsfilename, loc['HCDATA'], hdict)
+        # update it's own header
+        wmsg = 'Saving new wave parameters to own header'
+        WLOG('', p['LOG_OPT'], wmsg)
+        # add keys from original header file
+        hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
+        # add wave file name
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=wavefitsname)
+        # add wave solution date
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+                                   value=p['MAX_TIME_HUMAN'])
+        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+                                   value=p['MAX_TIME_UNIX'])
+        # add wave solution coefficients
+        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+                                         values=loc['POLY_WAVE_SOL'])
+        # Save E2DS file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        p = spirouImage.WriteImage(p, fitsfilename, loc['HCDATA'], hdict)
 
     # ----------------------------------------------------------------------
     # End Message
