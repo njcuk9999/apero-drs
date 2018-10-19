@@ -140,8 +140,10 @@ def log_errors(p, errors):
     WLOG('', p['LOG_OPT'], '')
 
     for error in errors:
-        msg = 'Run {0} error = {1}'
-        WLOG('warning', p['LOG_OPT'], msg.format(error, errors[error]))
+        emsgs = ['Run {0}:'.format(error)]
+        for error_it in errors[error].split('\n'):
+            emsgs.append('\t' + error_it)
+        WLOG('warning', p['LOG_OPT'], emsgs)
 
 
 def manage_run(p, runname, run_i, timing):
