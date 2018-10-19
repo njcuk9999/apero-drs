@@ -141,7 +141,7 @@ def log_errors(p, errors):
 
     for error in errors:
         emsgs = ['Run {0}:'.format(error)]
-        for error_it in errors[error].split('\n'):
+        for error_it in str(errors[error]).split('\n'):
             emsgs.append('\t' + error_it)
         WLOG('warning', p['LOG_OPT'], emsgs)
 

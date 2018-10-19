@@ -66,13 +66,13 @@ if __name__ == "__main__":
         for msg in str(e).split('\n'):
             wmsgs.append('\t' + msg)
         WLOG('warning', p['LOG_OPT'], wmsgs)
-        errors[runn] = e
+        errors[runn] = str(e)
     except SystemExit as e:
         wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
         for msg in str(e).split('\n'):
             wmsgs.append('\t' + msg)
         WLOG('warning', p['LOG_OPT'], wmsgs)
-        errors[runn] = e
+        errors[runn] = str(e)
 
 
 # =============================================================================

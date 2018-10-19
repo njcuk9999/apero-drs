@@ -72,14 +72,14 @@ def unit_wrapper(p, runs):
             for msg in str(e).split('\n'):
                 wmsgs.append('\t' + msg)
             WLOG('warning', p['LOG_OPT'], wmsgs)
-            errors[runn] = e
+            errors[runn] = str(e)
         # Manage expected errors
         except SystemExit as e:
             wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
             for msg in str(e).split('\n'):
                 wmsgs.append('\t' + msg)
             WLOG('warning', p['LOG_OPT'], wmsgs)
-            errors[runn] = e
+            errors[runn] = str(e)
 
     # make sure all plots are closed
     sPlt.closeall()
