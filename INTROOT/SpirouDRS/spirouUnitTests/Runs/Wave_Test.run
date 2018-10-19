@@ -2,14 +2,14 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
-# run001 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-06', 'fp_fp_001a_pp_e2ds_AB.fits', 'hcone_hcone_001c_pp_e2ds_AB.fits']
-# run002 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-06', 'fp_fp_001a_pp_e2ds_C.fits', 'hcone_hcone_001c_pp_e2ds_C.fits']
-# run003 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-07', 'fp_fp_001a_pp_e2ds_AB.fits', 'hcone_hcone_001c_pp_e2ds_AB.fits']
-# run004 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-07', 'fp_fp_001a_pp_e2ds_C.fits', 'hcone_hcone_001c_pp_e2ds_C.fits']
-# run005 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-12', 'fp_fp_001a_pp_e2ds_AB.fits', 'hcone_hcone_001c_pp_e2ds_AB.fits']
-# run006 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-12', 'fp_fp_001a_pp_e2ds_C.fits', 'hcone_hcone_001c_pp_e2ds_C.fits']
-# run007 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-19', '2278295a_pp_e2ds_AB.fits', '2278299c_pp_e2ds_AB.fits']
-# run008 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-19', '2278295a_pp_e2ds_C.fits', '2278299c_pp_e2ds_C.fits']
+run001 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-06', 'fp_fp_001a_pp_e2ds_AB.fits', 'hcone_hcone_001c_pp_e2ds_AB.fits']
+run002 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-06', 'fp_fp_001a_pp_e2ds_C.fits', 'hcone_hcone_001c_pp_e2ds_C.fits']
+run003 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-07', 'fp_fp_001a_pp_e2ds_AB.fits', 'hcone_hcone_001c_pp_e2ds_AB.fits']
+run004 = ['cal_WAVE_E2DS_EA_spirou', '2018-04-07', 'fp_fp_001a_pp_e2ds_C.fits', 'hcone_hcone_001c_pp_e2ds_C.fits']
+run005 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-12', 'fp_fp_001a_pp_e2ds_AB.fits', 'hcone_hcone_001c_pp_e2ds_AB.fits']
+run006 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-12', 'fp_fp_001a_pp_e2ds_C.fits', 'hcone_hcone_001c_pp_e2ds_C.fits']
+run007 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-19', '2278295a_pp_e2ds_AB.fits', '2278299c_pp_e2ds_AB.fits']
+run008 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-19', '2278295a_pp_e2ds_C.fits', '2278299c_pp_e2ds_C.fits']
 run009 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-23', '2278928a_pp_e2ds_AB.fits', '2278930c_pp_e2ds_AB.fits']
 run010 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-23', '2278928a_pp_e2ds_C.fits', '2278930c_pp_e2ds_C.fits']
 run011 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-24', '2279069a_pp_e2ds_AB.fits', '2279071c_pp_e2ds_AB.fits']
