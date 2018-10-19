@@ -5057,8 +5057,17 @@
 
 
 
+
 ================================================================================
-* Mon Oct 15 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.036
+* Sun Oct 14 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.036
+
+================================================================================
+	- spirouEXTOR.py  - fix bug where whole order is zeros - will break spline (rev.10eef6ad)
+
+
+
+================================================================================
+* Mon Oct 15 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.037
 
 ================================================================================
 	- spirouKeywords.py - add the two new header keys for bigcube list (rev.bdb62f34)
@@ -5081,9 +5090,20 @@
 
 
 ================================================================================
-* Tue Oct 16 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.037
+* Tue Oct 16 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.038
 
 ================================================================================
+	- update version/date/changelog/update notes (rev.a4704115)
+	- Cal_Test.run - add cal_DRIFTCCF_E2DS_spirou to tested codes (rev.a2825de2)
+	- spirouUnitRecipes.py - add cal_DRIFTCCF_E2DS_spirou to unit recipe definitions (rev.7af61eb8)
+	- spirouKeywords.py - add reference rv keyword and keywordstore definition (rev.818f6870)
+	- spirouConst.py - fix tags in new DRIFTCCF file name definitions (rev.c62a1e6b)
+	- recipe_control.txt - add cal_DRIFTCCF_E2DS_spiour to the runable codes - for FP only (rev.44baa139)
+	- output_keys.py - add DRIFTCCF_E2DS_FITS_FILE to output keys (rev.737ff685)
+	- constants_SPIROU_H4RG.py - add driftccf constants to constants file (rev.e2025bf7)
+	- cal_DRIFTCCF_E2DS_spirou.py - re-save driftfits to file (rev.d137862b)
+	- cal_DRIFTCCF_E2DS_spirou.py - pep8 changes + load constants from file + add flux ratio + save reference RV to header (rev.9f851f30)
+	- spirouEXTOR.py - undo debananafication all zeros check - does not work (rev.4ac08d74)
 	- spirouFile.py - add function to sort by base name (sort_by_name) with alias SortByName (rev.5e85258e)
 	- explore_headers.py - code to explore headers of all files in given dir string (with wild cards) (rev.63c85cdd)
 	- obj_mk_obj_stack.py - for making stacks of images (Nobs x Nb_xpix x Nbo) (rev.6c030a84)
@@ -5095,7 +5115,16 @@
 
 
 ================================================================================
-* Wed Oct 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.038
+* Tue Oct 16 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.039
+
+================================================================================
+	- New recipe to compute the drift of simultaneous FP on Fiber C with fp.mas (rev.b5dde68f)
+	- New function DRIFTCCF_E2DS_TBL_FILE to save driftccf file (rev.6c229f78)
+
+
+
+================================================================================
+* Wed Oct 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.040
 
 ================================================================================
 	- extract_trigger.py - add filters to allow only certain files to be process based on DPRTYPE (rev.773e92b9)
@@ -5104,6 +5133,7 @@
 	- spirouStartup.py - fix bug with inputs (numpy array not allowed) (rev.490ff1bd)
 	- extract_trigger.py - start work on a simple calibration trigger (upto and including extraction) (rev.eda392ea)
 	- spirouStartup.py - fixed problem when no column is present (set to None) (rev.b0e94316)
+	- fp.mas - added the fp mask to the ccf_masks folder (for cal_driftccf) (rev.8a8ea6f2)
 	- extract_trigger.py - start of a trigger that goes from pp --> extraction (including all calibrations) - [NOT FINISHED] (rev.569db3fc)
 	- spirouConst.py - add DPRTYPE to index file for raw outputs (rev.b33a98c0)
 	- spirouFITS.py - added "check_wave_sol_consistency" function to check and remap coefficients if incorrect from constants file (IC_LL_DEGR_FIT) (rev.9f913b51)
@@ -5112,9 +5142,10 @@
 
 
 ================================================================================
-* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.039
+* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.041
 
 ================================================================================
+	- update date/version/changelog (rev.3898587b)
 	- unit_test.py - fix comment (rev.7f5d83c0)
 	- TelluricsAll.run - add a list of all tellurics for maestria (rev.986a0deb)
 	- constants_SPIROU_H4RG.py - add quality control parameters for mk_tellu (RMS) (rev.9dd5516d)
@@ -5130,3 +5161,11 @@
 	- cal_SHAPE_spirou.py - update permissions on cal_SHAPE (rev.a928d2c3)
 	- update run list (for maestria runs) (rev.0dcab8ec)
 	- recipe_control.txt - do not support FLAT_DARK and DARK_FLAT in cal_FF (rev.9a320102)
+
+
+
+================================================================================
+* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.042
+
+================================================================================
+	- cal_DRIFTCCF_E2DS_spirou.py - comment out saving of fits file - no loc['DRIFT'] defined (rev.9d385f2a)
