@@ -1,33 +1,45 @@
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 
-# runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
-run007b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_C.fits']
-run008a = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
-run008b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_C.fits', '2295680c_pp_e2ds_C.fits']
-
-# Extract the FPs/HCs
-run009a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run009b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295526a_pp.fits']
-run009c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295527a_pp.fits']
-run009d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295528a_pp.fits']
-run009e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295529a_pp.fits']
-run009f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
-run009g = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295532c_pp.fits']
-
-# Extract a single science (to test)
-run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
-
-# Run drift analysis
-run011a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
-run011b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
-
-# Run CCF test
-run012 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
-
-# Run Other tests
-run013 = ['off_listing_RAW_spirou', 'TEST1/20180805']
-run014 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
-run015 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
-run016 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
-run017 = ['cal_exposure_meter', 'TEST1/20180805', '2295519f_pp.fits']
+run015 = ['cal_HC_E2DS_EA_spirou', '2018-05-26', '2279330c_pp_e2ds_AB.fits']
+run016 = ['cal_HC_E2DS_EA_spirou', '2018-05-26', '2279330c_pp_e2ds_C.fits']
+run017 = ['cal_HC_E2DS_EA_spirou', '2018-05-27', '2279520c_pp_e2ds_AB.fits']
+run018 = ['cal_HC_E2DS_EA_spirou', '2018-05-27', '2279520c_pp_e2ds_C.fits']
+run019 = ['cal_HC_E2DS_EA_spirou', '2018-05-28', '2279733c_pp_e2ds_AB.fits']
+run020 = ['cal_HC_E2DS_EA_spirou', '2018-05-28', '2279733c_pp_e2ds_C.fits']
+run021 = ['cal_HC_E2DS_EA_spirou', '2018-05-29', '2279845c_pp_e2ds_AB.fits']
+run022 = ['cal_HC_E2DS_EA_spirou', '2018-05-29', '2279845c_pp_e2ds_C.fits']
+run023 = ['cal_HC_E2DS_EA_spirou', '2018-07-25', '2294230c_pp_e2ds_AB.fits']
+run024 = ['cal_HC_E2DS_EA_spirou', '2018-07-25', '2294230c_pp_e2ds_C.fits']
+run025 = ['cal_HC_E2DS_EA_spirou', '2018-07-26', '2294305c_pp_e2ds_AB.fits']
+run026 = ['cal_HC_E2DS_EA_spirou', '2018-07-26', '2294305c_pp_e2ds_C.fits']
+run027 = ['cal_HC_E2DS_EA_spirou', '2018-07-27', '2294335c_pp_e2ds_AB.fits']
+run028 = ['cal_HC_E2DS_EA_spirou', '2018-07-27', '2294335c_pp_e2ds_C.fits']
+run029 = ['cal_HC_E2DS_EA_spirou', '2018-07-28', '2294481c_pp_e2ds_AB.fits']
+run030 = ['cal_HC_E2DS_EA_spirou', '2018-07-28', '2294481c_pp_e2ds_C.fits']
+run031 = ['cal_HC_E2DS_EA_spirou', '2018-07-29', '2294775c_pp_e2ds_AB.fits']
+run032 = ['cal_HC_E2DS_EA_spirou', '2018-07-29', '2294775c_pp_e2ds_C.fits']
+run033 = ['cal_HC_E2DS_EA_spirou', '2018-07-30', '2294801c_pp_e2ds_AB.fits']
+run034 = ['cal_HC_E2DS_EA_spirou', '2018-07-30', '2294801c_pp_e2ds_C.fits']
+run035 = ['cal_HC_E2DS_EA_spirou', '2018-07-31', '2294914c_pp_e2ds_AB.fits']
+run036 = ['cal_HC_E2DS_EA_spirou', '2018-07-31', '2294914c_pp_e2ds_C.fits']
+run037 = ['cal_HC_E2DS_EA_spirou', '2018-08-01', '2295075c_pp_e2ds_AB.fits']
+run038 = ['cal_HC_E2DS_EA_spirou', '2018-08-01', '2295075c_pp_e2ds_C.fits']
+run039 = ['cal_HC_E2DS_EA_spirou', '2018-08-02', '2295196c_pp_e2ds_AB.fits']
+run040 = ['cal_HC_E2DS_EA_spirou', '2018-08-02', '2295196c_pp_e2ds_C.fits']
+run041 = ['cal_HC_E2DS_EA_spirou', '2018-08-03', '2295342c_pp_e2ds_AB.fits']
+run042 = ['cal_HC_E2DS_EA_spirou', '2018-08-03', '2295342c_pp_e2ds_C.fits']
+run043 = ['cal_HC_E2DS_EA_spirou', '2018-08-04', '2295398c_pp_e2ds_AB.fits']
+run044 = ['cal_HC_E2DS_EA_spirou', '2018-08-04', '2295398c_pp_e2ds_C.fits']
+run045 = ['cal_HC_E2DS_EA_spirou', '2018-08-05', '2295532c_pp_e2ds_AB.fits']
+run046 = ['cal_HC_E2DS_EA_spirou', '2018-08-05', '2295532c_pp_e2ds_C.fits']
+run047 = ['cal_HC_E2DS_EA_spirou', '2018-09-21', '2305110c_pp_e2ds_AB.fits']
+run048 = ['cal_HC_E2DS_EA_spirou', '2018-09-21', '2305110c_pp_e2ds_C.fits']
+run049 = ['cal_HC_E2DS_EA_spirou', '2018-09-22', '2305308c_pp_e2ds_AB.fits']
+run050 = ['cal_HC_E2DS_EA_spirou', '2018-09-22', '2305308c_pp_e2ds_C.fits']
+run051 = ['cal_HC_E2DS_EA_spirou', '2018-09-23', '2305498c_pp_e2ds_AB.fits']
+run052 = ['cal_HC_E2DS_EA_spirou', '2018-09-23', '2305498c_pp_e2ds_C.fits']
+run053 = ['cal_HC_E2DS_EA_spirou', '2018-09-24', '2305570c_pp_e2ds_AB.fits']
+run054 = ['cal_HC_E2DS_EA_spirou', '2018-09-24', '2305570c_pp_e2ds_C.fits']
+run055 = ['cal_HC_E2DS_EA_spirou', '2018-09-25', '2305967c_pp_e2ds_AB.fits']
+run056 = ['cal_HC_E2DS_EA_spirou', '2018-09-25', '2305967c_pp_e2ds_C.fits']
