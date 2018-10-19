@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.034'
+__version__ =  '0.3.042'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-10-11'
+__date__ =  '2018-10-18'
 
 
 # =============================================================================
@@ -1202,6 +1202,7 @@ def DRIFT_E2DS_TBL_FILE(p, fiber=None):
     # return filename
     return drifttbl
 
+
 # noinspection PyPep8Naming
 def DRIFTCCF_E2DS_FITS_FILE(p, fiber=None):
     """
@@ -1220,7 +1221,7 @@ def DRIFTCCF_E2DS_FITS_FILE(p, fiber=None):
     :return driftfits: string, the drift_e2ds peak drift fits file location
                        and filename
     """
-    func_name = 'DRIFT_E2DS_FITS_FILE'
+    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
     # define filename
     if fiber is None:
         fiber = p['FIBER']
@@ -1262,6 +1263,7 @@ def DRIFTCCF_E2DS_TBL_FILE(p, fiber=None):
     drifttbl = os.path.join(reducedfolder, drifttblname)
     # return filename
     return drifttbl
+
 
 # noinspection PyPep8Naming
 def DRIFTPEAK_E2DS_FITS_FILE(p, fiber=None):
@@ -1755,6 +1757,19 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
 
 
 # noinspection PyPep8Naming
+def TELLU_ABSO_SAVE(p, file_time):
+    # get telluDB path
+    path = p['DRS_TELLU_DB']
+    # construct filename
+    prefix = 'tellu_save'
+    filename = '{0}_{1}.npy'.format(prefix, file_time)
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile, prefix
+
+
+# noinspection PyPep8Naming
 def TELLU_FIT_OUT_FILE(p, filename):
     func_name = 'TELLU_FIT_OUT_FILE'
     # define filename
@@ -1975,6 +1990,7 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
+                   p['KW_DPRTYPE'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0]]

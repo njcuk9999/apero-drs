@@ -1,52 +1,33 @@
 # define run
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
+
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
+run007b = ['cal_HC_E2DS_EA_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_C.fits']
+run008a = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
+run008b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_C.fits', '2295680c_pp_e2ds_C.fits']
 
-# Run Make telluric recipes
-run011a = ['obj_mk_tellu', 'TEST2/20180731', '2294972o_pp_e2dsff_AB.fits']
-run011b = ['obj_mk_tellu', 'TEST2/20180731', '2294973o_pp_e2dsff_AB.fits']
-run011c = ['obj_mk_tellu', 'TEST2/20180801', '2295080o_pp_e2dsff_AB.fits']
-run011d = ['obj_mk_tellu', 'TEST2/20180801', '2295118o_pp_e2dsff_AB.fits']
-run011e = ['obj_mk_tellu', 'TEST2/20180801', '2295124o_pp_e2dsff_AB.fits']
-run011f = ['obj_mk_tellu', 'TEST2/20180801', '2295126o_pp_e2dsff_AB.fits']
-run011g = ['obj_mk_tellu', 'TEST2/20180802', '2295200o_pp_e2dsff_AB.fits']
-run011h = ['obj_mk_tellu', 'TEST2/20180802', '2295243o_pp_e2dsff_AB.fits']
-run011i = ['obj_mk_tellu', 'TEST2/20180802', '2295248o_pp_e2dsff_AB.fits']
-run011j = ['obj_mk_tellu', 'TEST2/20180802', '2295265o_pp_e2dsff_AB.fits']
-run011k = ['obj_mk_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
-run011l = ['obj_mk_tellu', 'TEST2/20180803', '2295353o_pp_e2dsff_AB.fits']
-run011m = ['obj_mk_tellu', 'TEST2/20180803', '2295358o_pp_e2dsff_AB.fits']
-run011n = ['obj_mk_tellu', 'TEST2/20180804', '2295412o_pp_e2dsff_AB.fits']
-run011o = ['obj_mk_tellu', 'TEST2/20180804', '2295470o_pp_e2dsff_AB.fits']
-run011p = ['obj_mk_tellu', 'TEST2/20180804', '2295479o_pp_e2dsff_AB.fits']
-run011q = ['obj_mk_tellu', 'TEST2/20180804', '2295480o_pp_e2dsff_AB.fits']
-run011r = ['obj_mk_tellu', 'TEST2/20180804', '2295485o_pp_e2dsff_AB.fits']
-run011s = ['obj_mk_tellu', 'TEST2/20180804', '2295486o_pp_e2dsff_AB.fits']
-run011t = ['obj_mk_tellu', 'TEST2/20180804', '2295487o_pp_e2dsff_AB.fits']
-run011u = ['obj_mk_tellu', 'TEST2/20180804', '2295492o_pp_e2dsff_AB.fits']
-run011v = ['obj_mk_tellu', 'TEST2/20180804', '2295506o_pp_e2dsff_AB.fits']
+# Extract the FPs/HCs
+run009a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run009b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295526a_pp.fits']
+run009c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295527a_pp.fits']
+run009d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295528a_pp.fits']
+run009e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295529a_pp.fits']
+run009f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
+run009g = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295532c_pp.fits']
 
-# Run Make telluric recipes
-run012a = ['obj_mk_tellu', 'TEST4/20180527', '2279540o_pp_e2dsff_AB.fits']
-run012b = ['obj_mk_tellu', 'TEST4/20180527', '2279541o_pp_e2dsff_AB.fits']
-run012c = ['obj_mk_tellu', 'TEST4/20180527', '2279542o_pp_e2dsff_AB.fits']
-run012d = ['obj_mk_tellu', 'TEST4/20180527', '2279535o_pp_e2dsff_AB.fits']
-run012e = ['obj_mk_tellu', 'TEST4/20180527', '2279536o_pp_e2dsff_AB.fits']
+# Extract a single science (to test)
+run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
 
-# Run Fit telluric recipes
-run013a = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
-run013b = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
-run013c = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
-run013d = ['obj_fit_tellu', 'TEST2/20180805', '2295548o_pp_e2dsff_AB.fits']
-run013e = ['obj_fit_tellu', 'TEST2/20180805', '2295549o_pp_e2dsff_AB.fits']
-run013f = ['obj_fit_tellu', 'TEST2/20180805', '2295550o_pp_e2dsff_AB.fits']
+# Run drift analysis
+run011a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run011b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 
-#Run Fit telluric recipes on Gl699
-run014a = ['obj_fit_tellu', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
-run014b = ['obj_fit_tellu', 'TEST4/20180527', '2279681o_pp_e2dsff_AB.fits']
-run014c = ['obj_fit_tellu', 'TEST4/20180527', '2279682o_pp_e2dsff_AB.fits']
-run014d = ['obj_fit_tellu', 'TEST4/20180527', '2279683o_pp_e2dsff_AB.fits']
-run014e = ['obj_fit_tellu', 'TEST4/20180527', '2279684o_pp_e2dsff_AB.fits']
+# Run CCF test
+run012 = ['cal_CCF_E2DS_spirou', 'TEST1/20180805', '2295680c_pp_e2ds_AB.fits', 'UrNe.mas', 0, 10, 0.1]
 
-# Run make obj template on Gl699
-run015 = ['obj_mk_obj_template', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
+# Run Other tests
+run013 = ['off_listing_RAW_spirou', 'TEST1/20180805']
+run014 = ['off_listing_REDUC_spirou', 'TEST1/20180805']
+run015 = ['visu_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run016 = ['visu_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
+run017 = ['cal_exposure_meter', 'TEST1/20180805', '2295519f_pp.fits']

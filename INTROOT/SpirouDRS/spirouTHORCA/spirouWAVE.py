@@ -429,6 +429,7 @@ def fp_wavelength_sol_new(p, loc):
     fp_large_jump = p['IC_FP_LARGE_JUMP']
     n_ord_start_fp = p['IC_FP_N_ORD_START']
     n_ord_final_fp = p['IC_FP_N_ORD_FINAL']
+    cm_ind = p['IC_WAVE_FP_CM_IND']
 
     # find FP lines
     loc = find_fp_lines_new(p, loc)
@@ -470,31 +471,43 @@ def fp_wavelength_sol_new(p, loc):
         for it in range(len(floc['llpos']) - 2, -1, -1):
             # check for gap in x positions
             flocdiff = floc['xxpos'][it + 1] - floc['xxpos'][it]
-            if flocdiff < (xxpos_diff_med + 0.5 * xxpos_diff_med):
+            lowcond = xxpos_diff_med - (0.25 * xxpos_diff_med)
+            highcond = xxpos_diff_med + (0.25 * xxpos_diff_med)
+            if lowcond < flocdiff < highcond:
                 # no gap: add 1 to line number of previous line
                 mpeak[it] = mpeak[it + 1] + 1
             # if there is a gap, fix it
             else:
+                # floc xxpox
+                flocx0 = floc['xxpos'][it]
+                flocx1 = floc['xxpos'][it + 1]
+                # floc llpos
+                floc0 = floc['llpos'][it]
+                floc1 = floc['llpos'][it + 1]
                 # estimate the number of peaks missed
-                m_offset = int(
-                    np.round((floc['xxpos'][it + 1] - floc['xxpos'][it])
-                             / xxpos_diff_med))
+                m_offset = int( np.round((flocx1 - flocx0) / xxpos_diff_med))
                 # add to m of previous peak
                 mpeak[it] = mpeak[it + 1] + m_offset
                 # verify there's no dopd jump, fix if present
-                dopd_1 = (mpeak[it] * floc['llpos'][it] - dopd0) * 1.e-3
-                dopd_2 = (mpeak[it + 1] * floc['llpos'][it + 1] - dopd0) * 1.e-3
+                dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
+                dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
+                # do loops to check jumps
                 if dopd_1 - dopd_2 > fp_large_jump:
-                    mpeak[it] = mpeak[it] - 1
+                    while (dopd_1 - dopd_2) > fp_large_jump:
+                        mpeak[it] = mpeak[it] - 1
+                        dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
+                        dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
                 elif dopd_1 - dopd_2 < -fp_large_jump:
-                    mpeak[it] = mpeak[it] + 1
+                    while (dopd_1 - dopd_2) < -fp_large_jump:
+                        mpeak[it] = mpeak[it] + 1
+                        dopd_1 = (mpeak[it] * floc0 - dopd0) * 1.e-3
+                        dopd_2 = (mpeak[it + 1] * floc1 - dopd0) * 1.e-3
         # determination of observed effective cavity width
         dopd_t = mpeak * floc['llpos']
         # store m and d
         floc['m_fp'] = mpeak
         floc['dopd_t'] = dopd_t
         # for orders other than the reddest, attempt to cross-match
-        cm_ind = -2   # TODO: Should be in the constant file?
         if order_num != n_ord_final_fp:
             # check for overlap
             if floc['llpos'][cm_ind] > ll_prev[0]:
@@ -655,6 +668,10 @@ def find_hc_gauss_peaks(p, loc):
         # if we do load from file
         ini_table = spirouImage.ReadTable(ini_table_name, fmt='ascii.rst',
                                           colnames=litems)
+        # log that we're reading from file
+        wmsg = 'Table of found lines already exists; reading lines from {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(ini_table_name))
+
         # load ini_table into loc
         for col in ini_table.colnames:
             loc[col] = np.array(ini_table[col])
