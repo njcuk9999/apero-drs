@@ -596,6 +596,19 @@ drift_peak_plot_line_log_amp = False
 #    Define which peak to plot in the linelist vs amp plot    - [cal_drift-peak]
 drift_peak_selected_order = 30
 
+#    Define which mask to use                                  - [cal_drift-ccf]
+drift_ccf_mask = 'fp.mas'
+
+#    Define the drift target RV to use                         - [cal_drift-ccf]
+drift_target_rv = 0.0
+
+#    Define the drift CCF width to use                         - [cal_drift-ccf]
+drift_ccf_width = 7.5
+
+#    Define the drift CCF step to use                          - [cal_drift-ccf]
+drift_ccf_step = 0.5
+
+
 # -----------------------------------------------------------------------------
 #  cal_BADPIX parameters
 # -----------------------------------------------------------------------------
@@ -627,6 +640,7 @@ badpix_full_flat = 'detector_flat_full.fits'
 #   Defines the threshold on the full detector flat file to       - [cal_badpix]
 #      deem pixels as good
 badpix_full_threshold = 0.3
+
 
 # -----------------------------------------------------------------------------
 #  cal_CCF_E2DS_spirou

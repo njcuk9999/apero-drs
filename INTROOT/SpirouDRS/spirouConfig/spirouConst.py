@@ -24,7 +24,7 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.040'
+__version__ =  '0.3.042'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
@@ -1197,6 +1197,68 @@ def DRIFT_E2DS_TBL_FILE(p, fiber=None):
         fiber = p['FIBER']
     reducedfolder = p['REDUCED_DIR']
     drift_ext = '_drift_{0}.tbl'.format(fiber)
+    drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
+    drifttbl = os.path.join(reducedfolder, drifttblname)
+    # return filename
+    return drifttbl
+
+
+# noinspection PyPep8Naming
+def DRIFTCCF_E2DS_FITS_FILE(p, fiber=None):
+    """
+    Defines the drift_e2ds fits file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
+
+    :return driftfits: string, the drift_e2ds peak drift fits file location
+                       and filename
+    """
+    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_driftccf_{0}.fits'.format(fiber)
+    driftfitsname = p['REFFILENAME'].replace('.fits', drift_ext)
+    driftfits = os.path.join(reducedfolder, driftfitsname)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return driftfits, tag
+
+
+# noinspection PyPep8Naming
+def DRIFTCCF_E2DS_TBL_FILE(p, fiber=None):
+    """
+    Defines the drift_e2ds table file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
+
+    :return driftfits: string, the drift_e2ds peak drift table file location
+                       and filename
+    """
+    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_driftccf_{0}.tbl'.format(fiber)
     drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
     drifttbl = os.path.join(reducedfolder, drifttblname)
     # return filename

@@ -193,6 +193,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_POL_BERVCEN',
             'kw_RDNOISE',
             'kw_REFFILE',
+            'kw_REF_RV',
             'kw_SHAPEFILE',
             'kw_TELLU_ABSO',
             'kw_TELLU_AMP_PC',
@@ -501,6 +502,11 @@ kw_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
 
 # fraction of total bad pixels
 kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
+
+# -----------------------------------------------------------------------------
+# Define DRIFT variables
+# -----------------------------------------------------------------------------
+kw_REF_RV = ['DFTREFRV', 0, 'Reference RV [m/s]']
 
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
