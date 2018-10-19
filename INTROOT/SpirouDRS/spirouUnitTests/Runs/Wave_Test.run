@@ -15,8 +15,10 @@ run010 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-23', '2278928a_pp_e2ds_C.fits', '2
 run011 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-24', '2279069a_pp_e2ds_AB.fits', '2279071c_pp_e2ds_AB.fits']
 run012 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-24', '2279069a_pp_e2ds_C.fits', '2279071c_pp_e2ds_C.fits']
 run013 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-25', '2279162a_pp_e2ds_AB.fits', '2279166c_pp_e2ds_AB.fits']
-run014 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-25', '2279162a_pp_e2ds_C.fits', '2279166c_pp_e2ds_C.fits']
-run015 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-26', '2279326a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
+# Note 14 passed on MTL calibDB failed on CFHT calibDB
+# run014 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-25', '2279162a_pp_e2ds_C.fits', '2279166c_pp_e2ds_C.fits']
+# Note 15 passed on CFHT calibDB failed on MTL calibDB
+# run015 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-26', '2279326a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
 run016 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-26', '2279326a_pp_e2ds_C.fits', '2279330c_pp_e2ds_C.fits']
 run017 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-27', '2279516a_pp_e2ds_AB.fits', '2279520c_pp_e2ds_AB.fits']
 run018 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-27', '2279516a_pp_e2ds_C.fits', '2279520c_pp_e2ds_C.fits']
@@ -48,14 +50,20 @@ run043 = ['cal_WAVE_E2DS_EA_spirou', '2018-08-04', '2295391a_pp_e2ds_AB.fits', '
 run044 = ['cal_WAVE_E2DS_EA_spirou', '2018-08-04', '2295391a_pp_e2ds_C.fits', '2295398c_pp_e2ds_C.fits']
 run045 = ['cal_WAVE_E2DS_EA_spirou', '2018-08-05', '2295525a_pp_e2ds_AB.fits', '2295532c_pp_e2ds_AB.fits']
 run046 = ['cal_WAVE_E2DS_EA_spirou', '2018-08-05', '2295525a_pp_e2ds_C.fits', '2295532c_pp_e2ds_C.fits']
-run047 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_AB.fits', '2305110c_pp_e2ds_AB.fits']
+# Run RUN047 error = Improper input: N=5 must not exceed M=0
+# run047 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_AB.fits', '2305110c_pp_e2ds_AB.fits']
 run048 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_C.fits', '2305110c_pp_e2ds_C.fits']
-run049 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_AB.fits', '2305308c_pp_e2ds_AB.fits']
-run050 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_C.fits', '2305308c_pp_e2ds_C.fits']
-run051 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-23', '2305491a_pp_e2ds_AB.fits', '2305498c_pp_e2ds_AB.fits']
+# Run RUN049 error = index 20 is out of bounds for axis 0 with size 20
+# run049 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_AB.fits', '2305308c_pp_e2ds_AB.fits']
+# Run RUN050 error = index 20 is out of bounds for axis 0 with size 20
+# run050 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_C.fits', '2305308c_pp_e2ds_C.fits']
+# Run RUN051 error = Improper input: N=5 must not exceed M=0
+# run051 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-23', '2305491a_pp_e2ds_AB.fits', '2305498c_pp_e2ds_AB.fits']
 run052 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-23', '2305491a_pp_e2ds_C.fits', '2305498c_pp_e2ds_C.fits']
-run053 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-24', '2305552a_pp_e2ds_AB.fits', '2305570c_pp_e2ds_AB.fits']
+# Run RUN053 error = Improper input: N=5 must not exceed M=0
+# run053 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-24', '2305552a_pp_e2ds_AB.fits', '2305570c_pp_e2ds_AB.fits']
 run054 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-24', '2305552a_pp_e2ds_C.fits', '2305570c_pp_e2ds_C.fits']
-run055 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-25', '2305960a_pp_e2ds_AB.fits', '2305967c_pp_e2ds_AB.fits']
+# Run RUN053 error = Improper input: N=5 must not exceed M=0
+# run055 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-25', '2305960a_pp_e2ds_AB.fits', '2305967c_pp_e2ds_AB.fits']
 run056 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-25', '2305960a_pp_e2ds_C.fits', '2305967c_pp_e2ds_C.fits']
 
