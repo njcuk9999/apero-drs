@@ -13,6 +13,7 @@ Created on 2017-12-06 at 14:26
 from SpirouDRS import spirouConfig
 from . import spirouUnitTests
 from . import unit_test
+from . import spirouUnitRecipes
 
 # =============================================================================
 # Define variables

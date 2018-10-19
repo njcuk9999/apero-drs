@@ -566,7 +566,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
     # get the tilt keys
-    tilt = read_key_2d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'], 1)
+    tilt = read_key_1d_list(p, hdict, p['KW_TILT'][0], p['IC_TILT_NBO'])
     # get the tilt file
     if p['KW_TILTFILE'][0] in hdict:
         p['TILTFILE'] = hdict[p['KW_TILTFILE'][0]]
@@ -575,7 +575,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
     p.set_source('TILTFILE', func_name)
 
     # return the first set of keys
-    return p, tilt[:, 0]
+    return p, tilt
 
 
 def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
@@ -938,6 +938,53 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     if return_header:
         returns.append(hdict)
     return returns
+
+
+def check_wave_sol_consistency(p, loc):
+    func_name = __NAME__ + '.check_wave_sol_consistency()'
+    # get constants from p
+    required_ncoeffs = p['IC_LL_DEGR_FIT']
+    # get data from loc
+    input_coeffs = loc['WAVEPARAMS']
+    input_map = loc['WAVE_INIT']
+    # get dimensions
+    nbo, ncoeffs = input_coeffs.shape[0], input_coeffs.shape[1] - 1
+    dim1, dim2 = input_map.shape
+
+    # check for inconsistency
+    if ncoeffs == required_ncoeffs:
+        # log progress
+        wmsg = 'Number of coefficients ({0}) consistent with requirements'
+        wargs = [required_ncoeffs]
+        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # else fix inconsistency
+    else:
+        # log warning
+        wmsg = ('Inconsistent number of coefficients ({0}) expected {1}. '
+                'Re-mapping onto expected number of coefficients')
+        wargs = [ncoeffs, required_ncoeffs]
+        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        # set up output storage
+        output_coeffs = np.zeros_like(input_coeffs)
+        output_map = np.zeros_like(input_map)
+        # define pixel array
+        xfit = np.arange(dim2)
+        # loop around orders
+        for order_num in range(nbo):
+            # get the wave map for this order
+            yfit = np.polyval(input_coeffs[order_num][::-1], xfit)
+            # get the new coefficients based on a fit to this wavemap
+            coeffs = np.polyfit(xfit, yfit, required_ncoeffs)[::-1]
+            # push into storage
+            output_coeffs[order_num] = coeffs
+            output_map[order_num] = yfit
+        # finally overwrite loc
+        loc['WAVEPARAMS'] = output_coeffs
+        loc['WAVE_INIT'] = output_map
+        # set source
+        loc.set_sources(['WAVEPARAMS', 'WAVE_INIT'], func_name)
+    # return loc
+    return loc
 
 
 def get_good_object_name(p, hdr=None, rawname=None):
@@ -1733,6 +1780,27 @@ def read_key(p, hdict=None, key=None):
     return keylookup(p, hdict, key=key)
 
 
+def read_key_1d_list(p, hdict, key, dim):
+    func_name = __NAME__ + '.read_key_2d_list()'
+    # create 2d list
+    values = np.zeros(dim, dtype=float)
+    # loop around the 2D array
+    for i_it in range(dim):
+        # construct the key name
+        keyname = '{0}{1}'.format(key, i_it)
+        # try to get the values
+        try:
+            # set the value
+            values[i_it] = float(hdict[keyname])
+        except KeyError:
+            emsg1 = ('Cannot find key "{0}" with dim={1} in "hdict"'
+                     '').format(keyname, dim)
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # return values
+    return values
+
+
 def read_key_2d_list(p, hdict, key, dim1, dim2):
     """
     Read a set of header keys that were created from a 2D list
@@ -1770,8 +1838,8 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 # set the value
                 values[i_it][j_it] = float(hdict[keyname])
             except KeyError:
-                emsg1 = ('Cannot find key with dim1={1} dim2={2} in "hdict"'
-                         '').format(keyname, dim1, dim2)
+                emsg1 = ('Cannot find key "{0}" with dim1={1} dim2={2} in '
+                         '"hdict"').format(keyname, dim1, dim2)
                 emsg2 = '    function = {0}'.format(func_name)
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # return values

@@ -74,45 +74,33 @@ def main(night_name=None, files=None):
     rdata = spirouImage.ReadImage(p, p['FITSFILENAME'])
     loc['DATA'], loc['DATAHDR'], loc['DATACDR'] = rdata[:3]
 
-    # Get object name and airmass
-    loc['OBJNAME'] = spirouImage.GetObjName(p, loc['DATAHDR'])
-    loc.set_source('OBJNAME', main_name)
-    loc['AIRMASS'] = spirouImage.GetAirmass(p, loc['DATAHDR'])
+    # Get output key
+    loc['OUTPUT'] = loc['DATAHDR'][p['KW_OUTPUT'][0]]
     # set source
     source = main_name + '+ spirouImage.ReadParams()'
-    loc.set_sources(['OBJNAME', 'AIRMASS'], source)
-
-    # ----------------------------------------------------------------------
-    # Get and Normalise the blaze
-    # ----------------------------------------------------------------------
-    p, loc = spirouTelluric.GetNormalizedBlaze(p, loc, loc['DATAHDR'])
+    loc.set_source('OUTPUT', source)
 
     # ----------------------------------------------------------------------
     # Get database files
     # ----------------------------------------------------------------------
     # get current telluric maps from telluDB
-    tellu_db_data = spirouDB.GetDatabaseTellObj(p, required=False)
-    tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
-
-    # sort files by name
-    tellu_db_files = spirouImage.SortByName(tellu_db_files)
-
+    files, output_codes = []
     # filter by object name (only keep OBJNAME objects) and only keep
     #   unique filenames
-    tell_files = []
-    for it in range(len(tellu_db_files)):
-        # check that objname is correct
-        cond1 = loc['OBJNAME'] in tellu_db_names[it]
+    use_files = []
+    for it in range(len(files)):
+        # check that OUTPUT is correct
+        cond1 = p['KW_OUTPUT'] in output_codes[it]
         # check that filename is not already used
-        cond2 = tellu_db_files[it] not in tell_files
+        cond2 = files[it] not in use_files
         # append to file list if criteria correct
         if cond1 and cond2:
-            tell_files.append(tellu_db_files[it])
+            use_files.append(files[it])
 
     # log if we have no files
-    if len(tell_files) == 0:
-        wmsg = 'No "TELL_OBJ" files found for object ="{0}" skipping'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(loc['OBJNAME']))
+    if len(use_files) == 0:
+        wmsg = 'No files found for OUTPUT ="{0}" skipping'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(loc['KW_OUTPUT']))
         # End Message
         wmsg = 'Recipe {0} has been successfully completed'
         WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
@@ -120,14 +108,14 @@ def main(night_name=None, files=None):
         return dict(locals())
     else:
         # log how many found
-        wmsg = 'N={0} "TELL_OBJ" files found for object ="{1}"'
-        WLOG('', p['LOG_OPT'], wmsg.format(len(tell_files), loc['OBJNAME']))
+        wmsg = 'N={0} files found for OUTPUT="{1}"'
+        WLOG('', p['LOG_OPT'], wmsg.format(len(use_files), loc['OUTPUT']))
 
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
     # ----------------------------------------------------------------------
     # set up flat size
-    dims = [loc['DATA'].shape[0], loc['DATA'].shape[1], len(tell_files)]
+    dims = [loc['DATA'].shape[0], loc['DATA'].shape[1], len(use_files)]
     flatsize = np.product(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
@@ -153,79 +141,33 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     base_filelist, berv_list = [], []
     # loop through files
-    for it, filename in enumerate(tell_files):
+    for it, filename in enumerate(use_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
         # append basename to file list
         base_filelist.append(basefilename)
         # ------------------------------------------------------------------
-        # create image for storage
-        image = np.repeat([np.nan], np.product(loc['DATA'].shape))
-        image = image.reshape(loc['DATA'].shape)
-        # ------------------------------------------------------------------
         # Load the data for this file
-        tdata0, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
-        # Correct for the blaze
-        tdata = tdata0 / loc['NBLAZE']
-
-        # get berv and add to list
-        if p['KW_BERV'][0] in thdr:
-            berv_list.append('{0}'.format(thdr[p['KW_BERV'][0]]))
-        else:
-            berv_list.append('UNKNOWN')
-
-        # ------------------------------------------------------------------
-        # Get the wave solution for this file
-        # ------------------------------------------------------------------
-        # Force A and B to AB solution
-        if p['FIBER'] in ['A', 'B']:
-            wave_fiber = 'AB'
-        else:
-            wave_fiber = p['FIBER']
-        # get wave solution
-        wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
-                                           return_wavemap=True,
-                                           fiber=wave_fiber,
-                                           return_filename=True)
-        _, loc['WAVE'], loc['WAVEFILE'] = wout
-        loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
-        # ------------------------------------------------------------------
-        # Get the Barycentric correction from header
-        dv, _, _ = spirouTelluric.GetBERV(p, thdr)
+        tdata, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # ------------------------------------------------------------------
         # log stats
-        wmsg = 'Processing file {0} of {1} file={2} dv={3}'
-        wargs = [it + 1, len(tell_files), basefilename, dv]
+        wmsg = 'Processing file {0} of {1} file={2}'
+        wargs = [it + 1, len(use_files), basefilename]
         WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
         # ------------------------------------------------------------------
-        # shift to correct berv
-        # TODO: Should be realivistic
-        dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
-
-        image = spirouTelluric.Wave2Wave(tdata, loc['WAVE'] * dvshift,
-                                         loc['MASTERWAVE'])
-        # ------------------------------------------------------------------
-        # loop around orders
-        for order_num in range(loc['DATA'].shape[0]):
-            # normalise the tdata
-            tdata[order_num, :] /= np.nanmedian(tdata[order_num, :])
-            image[order_num, :] /= np.nanmedian(image[order_num, :])
-        # ------------------------------------------------------------------
         # add to cube storage
-        big_cube[:, :, it] = image
         big_cube0[:, :, it] = tdata
-    # ----------------------------------------------------------------------
-    # make median image
-    big_cube_med = np.median(big_cube, axis=2)
 
     # ----------------------------------------------------------------------
-    # Write Cube median (the template) to file
+    # Save cubes to file
     # ----------------------------------------------------------------------
     # get raw file name
     raw_in_file = os.path.basename(p['FITSFILENAME'])
-    # construct filename
-    outfile, tag = spirouConfig.Constants.OBJTELLU_TEMPLATE_FILE(p, loc)
-    outfilename = os.path.basename(outfile)
+    # construct file names
+    outfile = raw_in_file.replace('.fits', '_stack.fits')
+    tag = loc['OUTPUT'] + '_STACK'
+    # log big cube 1
+    wmsg1 = 'Saving bigcube to file {0}'.format(os.path.basename(outfile))
 
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
@@ -245,50 +187,11 @@ def main(night_name=None, files=None):
     # add wave solution coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
-    # write to file
-    p = spirouImage.WriteImage(p, outfile, big_cube_med, hdict)
-
-    # ----------------------------------------------------------------------
-    # Update the telluric database with the template
-    # ----------------------------------------------------------------------
-    objname = loc['OBJNAME']
-    spirouDB.UpdateDatabaseObjTemp(p, outfilename, objname, loc['DATAHDR'])
-    # put file in telluDB
-    spirouDB.PutTelluFile(p, outfile)
-
-    # ----------------------------------------------------------------------
-    # Save cubes to file
-    # ----------------------------------------------------------------------
-    # construct file names
-    outfile1, tag1 = spirouConfig.Constants.OBJTELLU_TEMPLATE_CUBE_FILE1(p, loc)
-    outfile2, tag2 = spirouConfig.Constants.OBJTELLU_TEMPLATE_CUBE_FILE2(p, loc)
-    # log big cube 1
-    wmsg1 = 'Saving bigcube to file {0}'.format(os.path.basename(outfile1))
-    # save big cube 1
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
-    big_cube_s = np.swapaxes(big_cube, 1, 2)
-    p = spirouImage.WriteImage(p, outfile1, big_cube_s, hdict)
     # log big cube 0
-    wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
+    wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile))
     # save big cube 0
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
-    p = spirouImage.WriteImage(p, outfile2, big_cube_s0, hdict)
-
-
-    # # mega plot
-    # nfiles = big_cube_s0.shape[1]
-    # ncols = int(np.ceil(np.sqrt(nfiles)))
-    # nrows = int(np.ceil(nfiles/ncols))
-    # fig, frames = plt.subplots(ncols=ncols, nrows=nrows)
-    # for it in range(big_cube_s0.shape[1]):
-    #     jt, kt = it // ncols, it % ncols
-    #     frame = frames[jt][kt]
-    #     frame.imshow(big_cube_s0[:, it, :], origin='lower')
-    #     frame.set(xlim=(2030, 2060))
-
-
-
+    p = spirouImage.WriteImageMulti(p, outfile, big_cube_s0, hdict)
 
     # ----------------------------------------------------------------------
     # End Message

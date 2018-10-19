@@ -27,10 +27,11 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['AddKey', 'AddKey1DList', 'AddKey2DList', 'CheckFile', 'CheckFiles',
-           'ConvertToE', 'ConvertToADU', 'CopyOriginalKeys', 'CopyRootKeys',
-           'CorrectForDark', 'CorrectForBadPix', 'E2DStoS1D',
-           'FitTilt', 'FlipImage', 'FiberParams', 'GetSimilarDriftFiles',
-           'GetSigdet', 'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
+           'CheckWaveSolConsistency', 'ConvertToE', 'ConvertToADU',
+           'CopyOriginalKeys', 'CopyRootKeys', 'CorrectForDark',
+           'CorrectForBadPix', 'E2DStoS1D', 'FitTilt', 'FlipImage',
+           'FiberParams', 'GetSimilarDriftFiles', 'GetSigdet',
+           'GetExpTime', 'GetBadPixMap', 'GetGain', 'GetAcqTime',
            'GetKey', 'GetKeys', 'GetTilt', 'GetTypeFromHeader',
            'IdentifyUnProFile', 'InterpolateBadRegions', 'LocateBadPixels',
            'LocateFullBadPixels', 'MakeTable', 'MeasureDark', 'MergeTable',
@@ -55,6 +56,8 @@ AddKey2DList = spirouFITS.add_key_2d_list
 CheckFile = spirouFile.check_file_id
 
 CheckFiles = spirouFile.check_files_id
+
+CheckWaveSolConsistency = spirouFITS.check_wave_sol_consistency
 
 ConvertToE = spirouImage.convert_to_e
 
@@ -105,6 +108,8 @@ GetShapeMap = spirouImage.get_shape_map
 GetObjName = spirouImage.get_obj_name
 
 GetAirmass = spirouImage.get_airmass
+
+GetMostRecent = spirouFile.get_most_recent
 
 GetTypeFromHeader = spirouFITS.get_type_from_header
 
@@ -158,6 +163,8 @@ ReadHeader = spirouFITS.read_header
 
 ReadKey = spirouFITS.read_key
 
+Read1Dkey = spirouFITS.read_key_1d_list
+
 Read2Dkey = spirouFITS.read_key_2d_list
 
 ReadTiltFile = spirouFITS.read_tilt_file
@@ -175,6 +182,8 @@ ReadOrderProfile = spirouFITS.read_order_profile_superposition
 ResizeImage = spirouImage.resize
 
 RotateImage = spirouImage.rotate
+
+SortByName = spirouFile.sort_by_name
 
 WriteImage = spirouFITS.writeimage
 
