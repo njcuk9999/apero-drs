@@ -116,9 +116,19 @@ def main(runname=None, quiet=False):
             # do run
             rargs = [p, runn, runs[runn], times]
             times = spirouUnitTests.manage_run(*rargs)
+        # Manage unexpected errors
         except Exception as e:
-            wmsg = 'Run "{0}" had an error: {1}'.format(runn, e)
-            WLOG('warning', p['LOG_OPT'], wmsg)
+            wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
+            for msg in str(e).split('\n'):
+                wmsgs.append('\t' + msg)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
+            errors[runn] = e
+        # Manage expected errors
+        except SystemExit as e:
+            wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
+            for msg in str(e).split('\n'):
+                wmsgs.append('\t' + msg)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
             errors[runn] = e
 
     # ----------------------------------------------------------------------
