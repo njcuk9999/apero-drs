@@ -649,7 +649,7 @@ def exit_script(ll, has_plots=True):
         p['LOG_OPT'] = sys.argv[0]
     # if DRS_INTERACTIVE is False just return 0
     if not p['DRS_INTERACTIVE']:
-        print('Interactive mode off')
+        # print('Interactive mode off')
         return 0
     # find whether user is in ipython or python
     if find_ipython():

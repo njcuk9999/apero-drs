@@ -106,13 +106,30 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     # storage for times
     times = OrderedDict()
+    errors = OrderedDict()
     # log the start of the unit tests
     spirouUnitTests.unit_log_title(p)
     # loop around runs and process each
     for runn in list(runs.keys()):
-        # do run
-        rargs = [p, runn, runs[runn], times]
-        times = spirouUnitTests.manage_run(*rargs)
+        # try to run
+        try:
+            # do run
+            rargs = [p, runn, runs[runn], times]
+            times = spirouUnitTests.manage_run(*rargs)
+        # Manage unexpected errors
+        except Exception as e:
+            wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
+            for msg in str(e).split('\n'):
+                wmsgs.append('\t' + msg)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
+            errors[runn] = str(e)
+        # Manage expected errors
+        except SystemExit as e:
+            wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
+            for msg in str(e).split('\n'):
+                wmsgs.append('\t' + msg)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
+            errors[runn] = str(e)
 
     # ----------------------------------------------------------------------
     # Make sure all plots are close
@@ -123,6 +140,11 @@ def main(runname=None, quiet=False):
     # Print timings
     # ----------------------------------------------------------------------
     spirouUnitTests.log_timings(p, times)
+
+    # ----------------------------------------------------------------------
+    # Print errors
+    # ----------------------------------------------------------------------
+    spirouUnitTests.log_errors(p, errors)
 
     # ----------------------------------------------------------------------
     # End Message

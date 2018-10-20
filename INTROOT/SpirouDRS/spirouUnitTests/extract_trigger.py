@@ -22,32 +22,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 
-import cal_BADPIX_spirou
-# import cal_CCF_E2DS_spirou
-import cal_DARK_spirou
-# import cal_DRIFT_E2DS_spirou
-# import cal_DRIFTPEAK_E2DS_spirou
-# import cal_exposure_meter
-# import cal_wave_mapper
-import cal_extract_RAW_spirou
-import cal_FF_RAW_spirou
-# import cal_HC_E2DS_spirou
-# import cal_HC_E2DS_EA_spirou
-import cal_loc_RAW_spirou
-import cal_SLIT_spirou
-import cal_SHAPE_spirou
-# import cal_WAVE_E2DS_spirou
-import cal_WAVE_E2DS_EA_spirou
-# import cal_WAVE_NEW_E2DS_spirou
-import cal_preprocess_spirou
-# import off_listing_RAW_spirou
-# import off_listing_REDUC_spirou
-# import obj_mk_tellu
-# import obj_fit_tellu
-# import obj_mk_obj_template
-# import visu_RAW_spirou
-# import visu_E2DS_spirou
-# import pol_spirou
 
 # =============================================================================
 # Define variables
@@ -77,25 +51,6 @@ RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 # =============================================================================
 # Define functions
 # =============================================================================
-def recipe_lookup(p, key):
-    lookup = dict()
-    lookup['cal_preprocess_spirou'] = cal_preprocess_spirou
-    lookup['cal_BADPIX_spirou'] = cal_BADPIX_spirou.main
-    lookup['cal_DARK_spirou'] = cal_DARK_spirou.main
-    lookup['cal_loc_RAW_spirou'] = cal_loc_RAW_spirou.main
-    lookup['cal_SLIT_spirou'] = cal_SLIT_spirou.main
-    lookup['cal_SHAPE_spirou'] = cal_SHAPE_spirou.main
-    lookup['cal_FF_RAW_spirou'] = cal_FF_RAW_spirou.main
-    lookup['cal_extract_RAW_spirou'] = cal_extract_RAW_spirou.main
-    lookup['cal_WAVE_E2DS_EA_spirou'] = cal_WAVE_E2DS_EA_spirou
-    if key not in lookup:
-        emsg = 'Recipe {0} not found in lookup table. Recipe unsupported.'
-        WLOG('error', p['LOG_OPT'], emsg.format(key))
-        return 1
-    else:
-        return lookup[key]
-
-
 def find_all_raw_files(p):
     # define path to walk around
     if p['ARG_NIGHT_NAME'] == '':
@@ -299,8 +254,6 @@ def print_runs(p, combinations, recipe):
 
 
 def manage_runs(p, lls, combinations, recipe, night):
-    # get command
-    command = recipe_lookup(p, recipe)
     # loop around combinations
     for it, combination in enumerate(combinations):
         # log progress
@@ -310,6 +263,8 @@ def manage_runs(p, lls, combinations, recipe, night):
         wmsgs.append(runname)
         wmsgs.append(spirouStartup.spirouStartup.HEADER)
         WLOG('warning', p['LOG_OPT'], wmsgs)
+        # setup storage for output parameters
+        pp = ParamDict()
         # run command
         try:
             arglist = [recipe] + list(combination)
@@ -325,19 +280,36 @@ def manage_runs(p, lls, combinations, recipe, night):
             pp['OUTPUTS'] = dict(ll['p']['OUTPUTS'])
             # clean up
             del ll
+        # Manage unexpected errors
         except Exception as e:
             # log error
-            emsgs = ['Error occured']
-            emsgs.append('{0}'.format(e))
+            emsgs = ['Unexpected error occured']
+            for emsg in str(e).split('\n'):
+                emsgs.append('\t' + emsg)
             WLOG('warning', p['LOG_OPT'], emsgs)
             # push to ll
-            pp = ParamDict()
             pp['RECIPE'] = recipe
             pp['NIGHT_NAME'] = night
             pp['ARGS'] = combination
             pp['ERROR'] = emsgs
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
+        # Manage expected errors
+        except SystemExit as e:
+            # log error
+            # log error
+            emsgs = ['Unexpected error occured']
+            for emsg in str(e).split('\n'):
+                emsgs.append('\t' + emsg)
+            WLOG('warning', p['LOG_OPT'], emsgs)
+            # push to ll
+            pp['RECIPE'] = recipe
+            pp['NIGHT_NAME'] = night
+            pp['ARGS'] = combination
+            pp['ERROR'] = emsgs
+            pp['WARNING'] = []
+            pp['OUTPUTS'] = dict()
+        # append output parameters to ll and store in lls
         ll = dict(p=pp)
         lls.append(ll)
     return lls
