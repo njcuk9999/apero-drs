@@ -130,6 +130,22 @@ def log_timings(p, times):
     WLOG('', p['LOG_OPT'], '')
 
 
+def log_errors(p, errors):
+    # log the times
+    WLOG('', p['LOG_OPT'], '')
+    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    title = ' ERRORS: {RUNNAME} (V{DRS_VERSION})'.format(**p)
+    WLOG('', p['LOG_OPT'], title)
+    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG('', p['LOG_OPT'], '')
+
+    for error in errors:
+        emsgs = ['Run {0}:'.format(error)]
+        for error_it in str(errors[error]).split('\n'):
+            emsgs.append('\t' + error_it)
+        WLOG('warning', p['LOG_OPT'], emsgs)
+
+
 def manage_run(p, runname, run_i, timing):
     # get name of run (should be first element in run list
     name = run_i[0]
