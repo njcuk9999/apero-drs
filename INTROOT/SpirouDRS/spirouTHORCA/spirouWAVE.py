@@ -781,8 +781,9 @@ def find_hc_gauss_peaks(p, loc):
         WLOG('', p['LOG_OPT'], wmsg.format(npeaks))
 
         # debug plot
-        if p['HC_EA_PLOT_PER_ORDER']:
-            sPlt.wave_ea_plot_per_order_hcguess(loc, order_num)
+        if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
+            if p['HC_EA_PLOT_PER_ORDER']:
+                sPlt.wave_ea_plot_per_order_hcguess(loc, order_num)
     # ------------------------------------------------------------------
     # write to table
     columnnames, columnvalues, columnfmts = litems, [], []
@@ -796,7 +797,9 @@ def find_hc_gauss_peaks(p, loc):
     WLOG('', p['LOG_OPT'], wmsg.format(os.path.basename(ini_table_name)))
     spirouImage.WriteTable(ini_table, ini_table_name, fmt='ascii.rst')
 
-    sPlt.wave_ea_plot_allorder_hcguess(loc)
+    #plot all orders w/fitted gaussians
+    if p['DRS_PLOT']:
+        sPlt.wave_ea_plot_allorder_hcguess(loc)
 
     # return loc
     return loc

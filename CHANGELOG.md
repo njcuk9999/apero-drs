@@ -5132,6 +5132,13 @@
 	- reset the calibDB and telluDB with new MASTER wave solutions (rev.d08619ae)
 	- spirouStartup.py - fix bug with inputs (numpy array not allowed) (rev.490ff1bd)
 	- extract_trigger.py - start work on a simple calibration trigger (upto and including extraction) (rev.eda392ea)
+
+
+
+================================================================================
+* Wed Oct 17 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.041
+
+================================================================================
 	- spirouStartup.py - fixed problem when no column is present (set to None) (rev.b0e94316)
 	- fp.mas - added the fp mask to the ccf_masks folder (for cal_driftccf) (rev.8a8ea6f2)
 	- extract_trigger.py - start of a trigger that goes from pp --> extraction (including all calibrations) - [NOT FINISHED] (rev.569db3fc)
@@ -5142,7 +5149,7 @@
 
 
 ================================================================================
-* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.041
+* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.042
 
 ================================================================================
 	- update date/version/changelog (rev.3898587b)
@@ -5161,11 +5168,26 @@
 	- cal_SHAPE_spirou.py - update permissions on cal_SHAPE (rev.a928d2c3)
 	- update run list (for maestria runs) (rev.0dcab8ec)
 	- recipe_control.txt - do not support FLAT_DARK and DARK_FLAT in cal_FF (rev.9a320102)
-
-
-
-================================================================================
-* Thu Oct 18 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.042
-
-================================================================================
 	- cal_DRIFTCCF_E2DS_spirou.py - comment out saving of fits file - no loc['DRIFT'] defined (rev.9d385f2a)
+
+
+
+================================================================================
+* Fri Oct 19 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.043
+
+================================================================================
+	- unit_test runs - add maestria tests (rev.a7f0e145)
+	- update triggers/unit_tests to catch and handle errors better (rev.20f7c00a)
+	- update triggers/unit_tests to catch and handle errors better (rev.2e0d5962)
+	- redo tests - comments where broken (rev.197c927a)
+	- spirouStartup.py - remove print statement (was there to debug) (rev.2b83c7e3)
+	- spirouLog.py - return useful message on sys.exit (after error log) (rev.4ebbe16a)
+	- error_test.py - test catching errors for trigger/unit_tests (rev.5b241406)
+	- spirouWAVE.py - make debug plot only show in debug mode (even with plotting on) (rev.7aaa8499)
+	- update HC/WAVE test (rev.a07ca29b)
+	- unit_test.py - better catching/recording of errors (for batch run that doesn't crash out) (rev.d2460e0b)
+	- update HC/WAVE test (rev.02c5c2f5)
+	- update HC/WAVE test (rev.7b391260)
+	- update HC/WAVE test (rev.021a18ae)
+	- update HC/WAVE test (rev.16f9d95d)
+	- update HC/WAVE test (rev.820cf3b2)
