@@ -199,10 +199,17 @@ class logger:
 
         # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
         if key in EXIT_LEVELS:
+            # prepare error string
+            errorstring = ''
+            for mess in message:
+                errorstring += mess + '\n'
+            for error in errors:
+                errorstring += error + '\n'
+            # deal with debugging
             if spirouConfig.Constants.DEBUG():
-                debug_start()
+                debug_start(errorstring)
             else:
-                EXIT_TYPE(1)
+                EXIT_TYPE(errorstring)
 
     def update_param_dict(self, paramdict):
         for key in paramdict:
@@ -301,10 +308,13 @@ def printlogandcmd(message, key, human_time, dsec, option, wrap):
             printlog(cmd, key)
 
 
-def debug_start():
+def debug_start(errorstring):
     """
     Initiate debugger (for DEBUG mode) - will start when an error is raised
     if 'DRS_DEBUG' is set to True or 1 (in config.py)
+
+    :param errorstring: string, the error to pipe to Sys.Exit after
+                        debugging options selected
 
     uses pdb to do python debugging
 
@@ -354,7 +364,7 @@ def debug_start():
                 pdb.set_trace()
 
             print(cc + '\n\nCode Exited' + nocol)
-            EXIT_TYPE(1)
+            EXIT_TYPE(errorstring)
         if '2' in uinput.upper():
             print(cc + '\n\t ==== DEBUGGER ====\n'
                        '\n\t - type "list" to list code'
@@ -370,11 +380,11 @@ def debug_start():
             pdb.set_trace()
 
             print(cc + '\n\nCode Exited' + nocol)
-            EXIT_TYPE(1)
+            EXIT_TYPE(errorstring)
         else:
-            EXIT_TYPE(1)
+            EXIT_TYPE(errorstring)
     except:
-        EXIT_TYPE(1)
+        EXIT_TYPE(errorstring)
 
 
 def warninglogger(w, funcname=None):
