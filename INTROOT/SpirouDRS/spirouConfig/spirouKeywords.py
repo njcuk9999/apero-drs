@@ -93,6 +93,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_DARK_R_MED',
             'kw_DATE_OBS',
             'kw_DPRTYPE',
+            'kw_DRIFT_RV',
             'kw_E2DS_EXTM',
             'kw_E2DS_FUNC',
             'kw_E2DS_SNR',
@@ -525,7 +526,7 @@ kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
 kw_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
 kw_BJD = ['BJD', 0, 'Barycorrpy BJD']
 kw_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
-
+kw_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
 
 # -----------------------------------------------------------------------------
 # Define wave variables
