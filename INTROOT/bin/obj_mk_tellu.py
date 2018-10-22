@@ -264,8 +264,9 @@ def main(night_name=None, files=None):
                 # set all NaNs to zero so that it does not propagate when
                 #     we convlve by KER2 - must set sp2[bad] to zero as
                 #     NaN * 0.0 = NaN and we want 0.0!
-                sp2[bad] = 0.0
-                fmask[bad] = 0.0
+                sp2[nanmask] = 0.0
+                # trace the invalid points
+                fmask[nanmask] = 0.0
                 # multiple by the float mask
                 sp2 *= fmask
                 # convolve with the second kernel
