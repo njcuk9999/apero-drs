@@ -271,9 +271,10 @@ def main(night_name=None, files=None):
                 # set zero pixels to 1
                 sp2bw[sp2b == 0] = 1
                 # recalculate the mask using the deviation from original
-                dev = (sp2bw - sp[order_num, :] / sed)
-                dev /= np.nanmedian(np.abs(dev))
-                mask = mask1 * (np.abs(dev) < p['TELLU_SIGMA_DEV'])
+                with warnings.catch_warnings(record=True) as _:
+                    dev = (sp2bw - sp[order_num, :] / sed)
+                    dev /= np.nanmedian(np.abs(dev))
+                    mask = mask1 * (np.abs(dev) < p['TELLU_SIGMA_DEV'])
                 # update the SED with the corrected spectrum
                 sed *= sp2bw
             # identify bad pixels
