@@ -278,8 +278,9 @@ def main(night_name=None, files=None):
                 # update the SED with the corrected spectrum
                 sed *= sp2bw
             # identify bad pixels
-            bad = (sp[order_num, :] / sed[:] > 1.2)
-            sed[bad] = np.nan
+            with warnings.catch_warnings(record=True) as _:
+                bad = (sp[order_num, :] / sed[:] > 1.2)
+                sed[bad] = np.nan
 
             # debug plot
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1) and FORCE_PLOT_ON:
