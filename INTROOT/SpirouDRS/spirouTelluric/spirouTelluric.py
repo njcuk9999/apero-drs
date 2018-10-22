@@ -63,7 +63,7 @@ def get_normalized_blaze(p, loc, hdr):
 def construct_convolution_kernal1(p, loc):
     func_name = __NAME__ + '.construct_convolution_kernal()'
     # get the number of kernal pixels
-    npix_ker = int(np.ceil(3 * p['FWHM_PIXEL_LSF'] * 1.5 / 2) * 2 + 1)
+    npix_ker = int(np.ceil(3 * p['FWHM_PIXEL_LSF'] * 3.0 / 2) * 2 + 1)
     # set up the kernel exponent
     ker = np.arange(npix_ker) - npix_ker // 2
     # kernal is the a gaussian
