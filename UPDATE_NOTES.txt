@@ -1,15 +1,10 @@
-Update Note Summary - Version 0.3.043 (Since 0.3.027)
-
-
-Not done/not finished/to do:
-
-- problem with shift with wavelength solution found in obj_mk_obj_template
-    - is this a problem with the template making process?
-    - is this a problem with the wavelength solutions?
-    - is this a problem with the calibDB from CFHT?
-    ---> pointing toward from with calibDB from CFHT
+Update Note Summary - Version 0.3.045 (Since 0.3.027)
 
 Done:
+
+- added and integrated cal_CCF_E2DS_FP_spirou.py to the DRS
+    - However currently DOES NOT WORK for telluric corrected files
+      (due to presence of NaNs)
 
 - updated master wavelength solution AB and C (used in calibDB and telluDB)
 

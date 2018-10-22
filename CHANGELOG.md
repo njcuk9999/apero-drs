@@ -5191,3 +5191,26 @@
 	- update HC/WAVE test (rev.021a18ae)
 	- update HC/WAVE test (rev.16f9d95d)
 	- update HC/WAVE test (rev.820cf3b2)
+
+
+
+================================================================================
+* Tue Oct 16 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.044
+* Sat Oct 20 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.044
+* Sat Oct 20 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.044
+================================================================================
+	- New function DRIFTCCF_E2DS_TBL_FILE to save driftccf file (rev.6c229f78)
+	- cal_CCF_E2DS with simultaneous CCFDrift on FP fiber C (rev.9adc6fe6)
+	- update tests (rev.b9ae6f72)
+
+
+
+================================================================================
+* Mon Oct 22 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.045
+
+================================================================================
+	- updated permissions on spirouUnitTest files (chmod +x) (rev.1befaf6e)
+	- Tellu_Test.run - added a test of cal_CCF_E2DS_FP_spirou.py (currently not working) (rev.eac75e35)
+	- spirouKeywords.py - added kw_DRIFT_RV definition to keywords files (for use in cal_CCF_E2DS_FP_spirou.py) (rev.85368dfc)
+	- recipe_control.txt - added cal_CCF_E2DS_FP_spirou to recipe_control - for fiber AB only (will only work with fiber AB) (rev.2260a6e5)
+	- cal_CCF_E2DS_FP_spirou.py - added changes to integrate into DRS (rev.e0ac5640)
