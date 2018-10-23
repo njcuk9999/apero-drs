@@ -107,6 +107,32 @@ def order_profile(p, loc):
                             order 1 fiber B = 3
     """
     func_name = __NAME__ + '.order_profile()'
+
+
+    # get file based on loc and wave file
+    emlocofile = spirouConfig.Constants.EM_ORDERPROFILE_TMP_FILE(p)
+    emlocofilename = os.path.basename(emlocofile)
+
+    # if we have a tmp file try to open it
+    try:
+        # add to loc
+        emloco = np.load(emlocofile)
+        wmsg = '\tLoading order profile map from file {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(emlocofilename))
+        # add to loc
+        loc['ORDERIMAGE'] = emloco[0].astype(int)
+        loc['SUBORDERIMAGE'] = emloco[1].astype(int)
+        loc['FIBERIMAGE'] = emloco[2]
+        # add source
+        loc.set_sources(['orderimage', 'suborderimage', 'fiberimage'],
+                        emlocofile)
+        # return loc
+        return loc
+    except:
+        wmsg = '\tGenerating order profile map and saving to file {0}'
+        WLOG('', p['LOG_OPT'], wmsg.format(emlocofilename))
+
+
     # get data from loc
     image = loc['IMAGE']
     allacc, allass = loc['ALL_ACC'], loc['ALL_ASS']
@@ -200,11 +226,16 @@ def order_profile(p, loc):
                 WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # add to loc
-    loc['ORDERIMAGE'] = orderimage
-    loc['SUBORDERIMAGE'] = suborderimage
+    loc['ORDERIMAGE'] = orderimage.astype(int)
+    loc['SUBORDERIMAGE'] = suborderimage.astpye(int)
     loc['FIBERIMAGE'] = fiberimage
     # add source
     loc.set_sources(['orderimage', 'suborderimage', 'fiberimage'], func_name)
+
+    # save to tmp file
+    emloco = np.array([orderimage, suborderimage, fiberimage])
+    np.save(emlocofile, emloco)
+
     # return loc
     return loc
 
@@ -251,10 +282,23 @@ def create_wavelength_image(p, loc):
     image = loc['IMAGE']
     wave = loc['WAVE']
     allacc, allass = loc['ALL_ACC'], loc['ALL_ASS']
-    tilt = loc['TILT']
     orderimage = loc['ORDERIMAGE']
     suborderimage = loc['SUBORDERIMAGE']
     fiberimage = loc['FIBERIMAGE']
+    # -------------------------------------------------------------------------
+    # deal with having either tilt or shape
+    if 'SHAPE' in loc:
+        shape = loc['SHAPE']
+    else:
+        shape = None
+    if 'TILT' in loc:
+        tilt = loc['TILT']
+    else:
+        tilt = None
+
+    if shape is None and tilt is None:
+        WLOG('error', p['LOG_OPT'], 'Neither "SHAPE" nor "TILT" defined.')
+    # -------------------------------------------------------------------------
     # construct a "NaN" image (for wavelengths)
     ishape = image.shape
     # construct
@@ -293,10 +337,12 @@ def create_wavelength_image(p, loc):
                     # calculate centers
                     xcenters = np.array(x0s)
                     ycenters = np.polyval(centpoly, xcenters)
-                    # get deltax and delta y
-                    deltay = y0s - ycenters
-                    deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
-
+                    # get deltax
+                    if shape is not None:
+                        deltax = -shape[mask]
+                    else:
+                        deltay = y0s - ycenters
+                        deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
                     # construct lambda from x
                     lambda0 = np.polyval(awave0, x0s)
                     lambda1 = np.polyval(awave1, x0s) * deltax
@@ -319,9 +365,12 @@ def create_wavelength_image(p, loc):
                 # calculate centers
                 xcenters = np.array(x0s)
                 ycenters = np.polyval(centpoly, xcenters)
-                # get deltax and delta y
-                deltay = y0s - ycenters
-                deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+                # get deltax
+                if shape is not None:
+                    deltax = -shape[mask]
+                else:
+                    deltay = y0s - ycenters
+                    deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
 
                 # construct lambda from x
                 lambda0 = np.polyval(awave0, x0s)
@@ -345,9 +394,12 @@ def create_wavelength_image(p, loc):
                 # calculate centers
                 xcenters = np.array(x0s)
                 ycenters = np.polyval(centpoly, xcenters)
-                # get deltax and delta y
-                deltay = y0s - ycenters
-                deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+                # get deltax
+                if shape is not None:
+                    deltax = -shape[mask]
+                else:
+                    deltay = y0s - ycenters
+                    deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
 
                 # construct lambda from x
                 lambda0 = np.polyval(awave0, x0s)
@@ -371,9 +423,12 @@ def create_wavelength_image(p, loc):
                 # calculate centers
                 xcenters = np.array(x0s)
                 ycenters = np.polyval(centpoly, xcenters)
-                # get deltax and delta y
-                deltay = y0s - ycenters
-                deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
+                # get deltax from shape (-shape
+                if shape is not None:
+                    deltax = -shape[mask]
+                else:
+                    deltay = y0s - ycenters
+                    deltax = deltay * np.tan(np.deg2rad(-tilt[order_no]))
 
                 # construct lambda from x
                 lambda0 = np.polyval(awave0, x0s)
@@ -519,6 +574,8 @@ def create_image_from_e2ds(p, loc):
             x = wave[fiber][order_num]
             # get y data for this order and this fiber
             y = e2dsimages[fiber][order_num]
+            # normalise y
+            y = y / np.nanmedian(y)
 
             # set up interpolation (catch warnings)
             with warnings.catch_warnings(record=True) as _:
