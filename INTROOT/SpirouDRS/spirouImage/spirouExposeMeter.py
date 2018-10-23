@@ -227,7 +227,7 @@ def order_profile(p, loc):
 
     # add to loc
     loc['ORDERIMAGE'] = orderimage.astype(int)
-    loc['SUBORDERIMAGE'] = suborderimage.astpye(int)
+    loc['SUBORDERIMAGE'] = suborderimage.astype(int)
     loc['FIBERIMAGE'] = fiberimage
     # add source
     loc.set_sources(['orderimage', 'suborderimage', 'fiberimage'], func_name)
@@ -280,7 +280,7 @@ def create_wavelength_image(p, loc):
     func_name = __NAME__ + '.create_wavelength_image()'
     # get data from loc
     image = loc['IMAGE']
-    wave = loc['WAVE']
+    waveparams = loc['WAVEPARAMS']
     allacc, allass = loc['ALL_ACC'], loc['ALL_ASS']
     orderimage = loc['ORDERIMAGE']
     suborderimage = loc['SUBORDERIMAGE']
@@ -307,10 +307,8 @@ def create_wavelength_image(p, loc):
     yimage, ximage = np.indices(image.shape)
     # loop around number of orders (AB)
     for order_no in range(loc['NBO']):
-
         # get wavelength coefficients for this order
-        # TODO: in future this fit should have already be done!
-        awave0 = fit_wavelength(ximage[0], wave[order_no])
+        awave0 = waveparams[order_no][::-1]
         # get first derivative of wavelength coefficients
         awave1 = np.polyder(awave0, 1)
         # get second derivative of wavelength coefficients
@@ -564,10 +562,6 @@ def create_image_from_e2ds(p, loc):
     # loop around orders
     for order_num in range(loc['NBO']):
 
-        # log progress
-        wmsg = 'Extrapolating order {0}'.format(order_num)
-        WLOG('', p['LOG_OPT'], wmsg)
-
         # loop around fibers
         for fiber in allacc.keys():
             # get x data for this order and thus fiber
@@ -575,13 +569,15 @@ def create_image_from_e2ds(p, loc):
             # get y data for this order and this fiber
             y = e2dsimages[fiber][order_num]
             # normalise y
-            y = y / np.nanmedian(y)
+            if p['EM_NORM_FLUX']:
+                y = y / np.nanmedian(y)
 
             # set up interpolation (catch warnings)
             with warnings.catch_warnings(record=True) as _:
                 wave_interp = interp1d(x, y)
 
             # loop around each row in image, interpolate wavevalues
+            tvalid, ttotal = 0, 0
             for row in range(len(waveimage)):
                 # get row values
                 rvalues = waveimage[row]
@@ -616,6 +612,17 @@ def create_image_from_e2ds(p, loc):
                 with warnings.catch_warnings(record=True) as _:
                     ivalues = wave_interp(rvalues[validpixels])
                     newimage[row][validpixels] = ivalues
+
+                # append the valid pixels
+                tvalid += np.sum(validpixels)
+                ttotal += len(newimage[row])
+
+            # log progress
+            wmsg = ('Extrapolating order {0}: Fiber {1}, Nvalid = {2}/{3}'
+                    ' Percentage = {4:.2f}')
+            wargs = [order_num, fiber, tvalid, ttotal, 100.0*tvalid/ttotal]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
     # add to loc
     loc['SPE'] = newimage
     loc['SPE0'] = np.where(np.isfinite(newimage), newimage, 0.0)
@@ -668,7 +675,7 @@ def create_mask(p, loc):
     # combine masks
     mask = mask1 & mask2 & mask3
     # save mask to loc
-    loc['TELL_MASK_2D'] = mask
+    loc['TELL_MASK_2D'] = mask.astype(bool)
     loc.set_source('TELL_MASK_2D', func_name)
     # return loc
     return loc
