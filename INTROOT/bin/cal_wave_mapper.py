@@ -45,26 +45,26 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define main program function
 # =============================================================================
-def main(night_name=None, reffile=None, e2dsprefix=None):
+def main(night_name=None, flatfile=None, e2dsprefix=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
-    name, lname = ['reffile', 'e2dsprefix'], ['Reference file', 'E2DS Prefix']
-    req, call, call_priority = [True, True], [reffile, e2dsprefix], [True, True]
+    name, lname = ['flatfile', 'e2dsprefix'], ['Reference file', 'E2DS Prefix']
+    req, call, call_priority = [True, True], [flatfile, e2dsprefix], [True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0, 1], [str, str], name,
                                                     req, call, call_priority,
                                                     lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='reffile')
+                                    mainfitsfile='flatfile')
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
+    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'])
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -163,6 +163,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     lkeys = ['ALL_ACC', 'ALL_ASS', 'E2DSFILES', 'E2DSFILENAMES', 'ALLWAVE']
     loc.set_sources(lkeys, __NAME__ + '.main()')
     # get this fibers parameters
+    ehdr = dict()
     for fiber in p['FIBER_TYPES']:
         p = spirouImage.FiberParams(p, fiber, merge=True)
         # get localisation fit coefficients
@@ -186,7 +187,6 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
                                            fiber=wave_fiber)
         loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
         loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS'], wsource)
-        poly_wave_sol = loc['WAVEPARAMS']
 
         # add wave to all waves
         loc['ALLWAVE'][fiber] = loc['WAVE']
@@ -211,7 +211,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
                          emsg2, emsg3.format(p['E2DSPREFIX'])]
                 WLOG('error', p['LOG_OPT'], emsgs)
         # get data
-        e2dsdata, hdr, cdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
+        e2dsdata, ehdr, ecdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
         # store data
         loc['E2DSFILES'][fiber] = e2dsdata
         loc['E2DSFILENAMES'].append(e2dsfilename)
@@ -245,6 +245,19 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # Use E2DS file to
     # ------------------------------------------------------------------
     loc = spirouExM.create_image_from_e2ds(p, loc)
+
+    # ------------------------------------------------------------------
+    # Apply the flat field
+    # ------------------------------------------------------------------
+    if p['EM_FLAT_CORRECTION']:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Correcting for flat={0}'.format(p['FLATFILE']))
+        # normalise flat
+        if p['EM_NORM_FLUX']:
+            image2 = image2 / np.median(image2)
+        # correct for flat
+        loc['SPE'] = loc['SPE'] * image2
+        loc['SPE0'] = loc['SPE0'] * image2
 
     # ------------------------------------------------------------------
     # Construct parameters for header
@@ -322,6 +335,10 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
             out_spe_0 = spirouExM.unresize(p, out_spe_0, **kk)
             WLOG('', p['LOG_OPT'], 'Resizing/Flipping WAVEIMAGE')
             out_wave = spirouExM.unresize(p, out_wave, **kk)
+            WLOG('', p['LOG_OPT'], 'Rescaling SPE')
+            out_spe = out_spe / (p['GAIN'] * p['EXPTIME'])
+            WLOG('', p['LOG_OPT'], 'Rescaling SPE0')
+            out_spe_0 = out_spe_0 / (p['GAIN'] * p['EXPTIME'])
 
         # if raw need to rotate (undo pre-processing)
         if output == "raw":
