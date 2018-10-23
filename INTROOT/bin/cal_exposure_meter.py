@@ -42,7 +42,7 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define main program function
 # =============================================================================
-def main(night_name=None, reffile=None):
+def main(night_name=None, flatfile=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -50,17 +50,17 @@ def main(night_name=None, reffile=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
     name, lname = ['reffile'], ['Reference file']
-    req, call, call_priority = [True], [reffile], [True]
+    req, call, call_priority = [True], [flatfile], [True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], name, req, call,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='reffile')
+                                    mainfitsfile='flatfile')
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
+    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'])
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -160,8 +160,8 @@ def main(night_name=None, reffile=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    _, loc['WAVE'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE', 'WAVEFILE'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVEPARAMS', 'WAVE', 'WAVEFILE'], wsource)
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -201,6 +201,7 @@ def main(night_name=None, reffile=None):
     # log progress
     WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
     # make the 2D map of wavelength
+    loc = spirouExM.create_wavelength_image(p, loc)
 
     # ------------------------------------------------------------------
     # Use spectra wavelength to create 2D image from wave-image
@@ -263,7 +264,7 @@ def main(night_name=None, reffile=None):
         badpixmask, bhdr = spirouImage.GetBadPixMap(p, hdr)
         goodpixels = badpixmask == 0
         # apply mask (multiply)
-        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels.astype(float)
+        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels.astype(bool)
 
     # convert waveimage mask into float array
     loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'].astype('float')
@@ -298,6 +299,8 @@ def main(night_name=None, reffile=None):
             if p['EM_SAVE_TELL_SPEC']:
                 WLOG('', p['LOG_OPT'], 'Resizing/Flipping SPE')
                 out_spe = spirouExM.unresize(p, out_spe, **kk)
+                WLOG('', p['LOG_OPT'], 'Rescaling SPE')
+                out_spe = out_spe / (p['GAIN'] * p['EXPTIME'])
             if p['EM_SAVE_WAVE_MAP']:
                 WLOG('', p['LOG_OPT'], 'Resizing/Flipping WAVEIMAGE')
                 out_wave = spirouExM.unresize(p, out_wave, **kk)
