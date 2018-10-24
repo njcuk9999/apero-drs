@@ -1687,16 +1687,21 @@ def get_fiberc_e2ds_name(p, hdr):
     # -------------------------------------------------------------------------
     # Deal with E2DS/E2DSFF files
     # TODO: Do not hard code EXT_E2DS
-    if outputkey.startswith('EXT_E2DS'):
-        # check that we are using an AB file only
-        if '_AB' not in outputkey:
-            emsg = 'File {0} must be an AB file to be able to locate fiber C'
-            eargs = [ab_file]
-            WLOG('', p['LOG_OPT'], emsg.format(*eargs))
-            return None
-        else:
+    if outputkey.startswith('EXT_E2DS_') or outputkey.startswith('EXT_E2DS_FF'):
+        # deal with fiber manually
+        if outputkey.endswith('_AB'):
             # locate and return C file
             c_file = ab_file.replace('_AB', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_A'):
+            # locate and return C file
+            c_file = ab_file.replace('_A', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_B'):
+            # locate and return C file
+            c_file = ab_file.replace('_B', '_C')
             abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
             return abspath
     # -------------------------------------------------------------------------
@@ -1711,10 +1716,22 @@ def get_fiberc_e2ds_name(p, hdr):
             return None
         # get the ab file name
         ab_file = hdr[p['KW_INFILE'][0]]
-        # locate and return C file
-        c_file = ab_file.replace('_AB', '_C')
-        abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
-        return abspath
+        # deal with fiber manually
+        if outputkey.endswith('_AB'):
+            # locate and return C file
+            c_file = ab_file.replace('_AB', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_A'):
+            # locate and return C file
+            c_file = ab_file.replace('_A', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_B'):
+            # locate and return C file
+            c_file = ab_file.replace('_B', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
     # -------------------------------------------------------------------------
     # if we are still in the code we have an invalid outputkey
     emsg = '{0} = "{1}" invalid for recipe for file {2}'
