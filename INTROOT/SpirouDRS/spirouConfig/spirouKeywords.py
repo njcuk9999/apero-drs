@@ -201,6 +201,9 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_TELLU_AMP_PC',
             'kw_TELLU_DV_TELL1',
             'kw_TELLU_DV_TELL2',
+            'kw_TELLU_NPC',
+            'kw_TELLU_FIT_DPC',
+            'kw_TELLU_ADD_DPC',
             'kw_TH_NAXIS1',
             'kw_TH_NAXIS2',
             'kw_TILT',
@@ -570,6 +573,11 @@ kw_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
 # File list for template
 kw_OBJFILELIST = ['FILE', None, 'Input file list']
 kw_OBJBERVLIST = ['BERV', None, 'Input file BERV list']
+
+# Options input into tellu
+kw_TELLU_NPC = ['TELLUNPC', None, 'Number of Principle Components used']
+kw_TELLU_FIT_DPC = ['TELLUFDPC', None, 'Fit derivs instead of principle comps.']
+kw_TELLU_ADD_DPC = ['TELLUADPC', None, 'Add 1st+2nd derivs to principle comps.']
 
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
