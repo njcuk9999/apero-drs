@@ -63,7 +63,7 @@ SIG_FWHM = spirouCore.spirouMath.fwhm
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
-FORCE_PLOT_ON = True
+FORCE_PLOT_ON = False
 
 
 # =============================================================================
