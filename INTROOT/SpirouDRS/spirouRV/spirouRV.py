@@ -1668,5 +1668,61 @@ def fit_ccf(rv, ccf, fit_type):
     return result, ccf_fit
 
 # =============================================================================
+# Define file functions
+# =============================================================================
+
+def get_fiberc_e2ds_name(p, hdr):
+
+    # This depends on the input filetype
+    if p['KW_OUTPUT'][0] not in hdr:
+        emsg = 'Cannot find HEADER KEY = "{0}" - Fatal Error'
+        eargs = [p['KW_OUTPUT'][0]]
+        WLOG('', p['LOG_OPT'], emsg.format(*eargs))
+        return None
+    else:
+        outputkey = hdr[p['KW_OUTPUT'][0]]
+    # -------------------------------------------------------------------------
+    # first guess at the filename is the E2DS filename
+    ab_file = p['E2DSFILENAME']
+    # -------------------------------------------------------------------------
+    # Deal with E2DS/E2DSFF files
+    # TODO: Do not hard code EXT_E2DS
+    if outputkey.startswith('EXT_E2DS'):
+        # check that we are using an AB file only
+        if '_AB' not in outputkey:
+            emsg = 'File {0} must be an AB file to be able to locate fiber C'
+            eargs = [ab_file]
+            WLOG('', p['LOG_OPT'], emsg.format(*eargs))
+            return None
+        else:
+            # locate and return C file
+            c_file = ab_file.replace('_AB', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+    # -------------------------------------------------------------------------
+    # deal with TELLU_CORRECTED and POL_ FILES
+    # TODO: Do not hard code TELLU_CORRECTED and POL_
+    if outputkey.startswith('TELLU_CORRECTED') or outputkey.startswith('POL_'):
+        # get the infile name
+        if p['KW_INFILE'][0] not in hdr:
+            emsg = 'Header key = "{0}" missing from file={1}'
+            eargs = [p['KW_INFILE'][0]]
+            WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+            return None
+        # get the ab file name
+        ab_file = hdr[p['KW_INFILE'][0]]
+        # locate and return C file
+        c_file = ab_file.replace('_AB', '_C')
+        abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+        return abspath
+    # -------------------------------------------------------------------------
+    # if we are still in the code we have an invalid outputkey
+    emsg = '{0} = "{1}" invalid for recipe for file {2}'
+    eargs = [p['KW_OUTPUT'][0], outputkey, p['E2DSFILENAME']]
+    WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    return None
+
+
+# =============================================================================
 # End of code
 # =============================================================================
