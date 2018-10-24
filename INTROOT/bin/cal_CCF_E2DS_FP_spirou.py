@@ -339,19 +339,31 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # CCF drift on fiber C (FP)
     # ----------------------------------------------------------------------
     # get fiber C E2DS filename (assumes we are using AB input)
-    reffilename = e2dsfilename.replace('AB','C')
+    try:
+        reffilename = hdr[p['KW_INFILE']]
+        reffilename = reffilename.replace('AB', 'C')
+        abspath = os.path.join(p['ARG_FILE_DIR'], reffilename)
+        # print progress
+        wmsg = 'Loading fiber C data from file {0}'
+        WLOG('', p['LOG_OPT'], reffilename)
+        # load the E2DS fiber C data
+        speref, chdr, ccdr, nbo, nx = spirouImage.ReadData(p, abspath)
+    except KeyError:
+        emsg = 'Cannot find key "{0}" in header of file={1}'
+        eargs = [p['KW_INFILE'], e2dsfilename]
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        speref, chdr, ccdr = None, None, None
+
     # change the fiber to fiber C
     p['FIBER'] = 'C'
     # change the wave fiber ot fiber C
     wave_fiber = 'C'
-    # load the E2DS fiber C data
-    speref, hdr, cdr, nbo, nx = spirouImage.ReadData(p, reffilename)
     # add to loc
     loc = ParamDict()
     loc['SPEREF'] = speref
     loc.set_sources(['speref'], __NAME__ + '/main()')
     # get the wave solution
-    wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
+    wout = spirouImage.GetWaveSolution(p, hdr=chdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
     param_ll, wave_ll, wavefile = wout
     # save to storage
