@@ -94,6 +94,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, e2dsfilename = spirouStartup.SingleFileSetup(p, filename=p['E2DSFILE'])
+    p['E2DSFILENAME'] = e2dsfilename
+    p.set_source('E2DSFILENAME', 'spirouStartup.SingleFileSetup()')
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -198,10 +200,10 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     if np.isnan(np.sum(e2ds)):
         WLOG('warning', p['LOG_OPT'],
                  'NaN values found in e2ds, converting process')
-    #  First basic approach Replacing N.A.N by zeros
-    #    e2ds[np.isnan(e2ds)] = 0
+        #  First basic approach Replacing N.A.N by zeros
+        #    e2ds[np.isnan(e2ds)] = 0
 
-    # Second approach replacing N.A.N by the Adjusted Blaze
+        # Second approach replacing N.A.N by the Adjusted Blaze
         e2dsb = e2ds / blaze0
         for i in np.arange(len(e2ds)):
             with warnings.catch_warnings(record=True) as _:
@@ -339,25 +341,12 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # CCF drift on fiber C (FP)
     # ----------------------------------------------------------------------
     # get fiber C E2DS filename (assumes we are using AB input)
-    try:
-        reffilename = hdr[p['KW_INFILE'][0]]
-        reffilename = reffilename.replace('AB', 'C')
-        abspath = os.path.join(p['ARG_FILE_DIR'], reffilename)
-        # print progress
-        wmsg = 'Loading fiber C data from file {0}'
-        WLOG('', p['LOG_OPT'], reffilename)
-        # load the E2DS fiber C data
-        speref, chdr, ccdr, nbo, nx = spirouImage.ReadData(p, abspath)
-    except KeyError:
-        emsg = 'Cannot find key "{0}" in header of file={1}'
-        eargs = [p['KW_INFILE'][0], e2dsfilename]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
-        speref, chdr, ccdr = None, None, None
-
-    # change the fiber to fiber C
-    p['FIBER'] = 'C'
-    # change the wave fiber ot fiber C
-    wave_fiber = 'C'
+    e2dsc_file = spirouRV.GetFiberC_E2DSName(p, hdr)
+    e2dsc_filename = os.path.basename(e2dsc_file)
+    # load the E2DS fiber C data
+    speref, chdr, ccdr, nbo, nx = spirouImage.ReadData(p, e2dsc_file)
+    # change the fiber/wave fiber to fiber C
+    p['FIBER'], wave_fiber = 'C', 'C'
     # add to loc
     loc = ParamDict()
     loc['SPEREF'] = speref
