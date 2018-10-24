@@ -18,6 +18,7 @@ Up-to-date with cal_CCF_E2DS_spirou AT-4 V47
 from __future__ import division
 import numpy as np
 import os
+import warnings
 from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
@@ -201,16 +202,17 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     if np.isnan(np.sum(e2ds)):
         WLOG('warning', p['LOG_OPT'],
                  'NaN values found in e2ds, converting process')
-    #  First basic approach Replacing N.A.N by zeros
-    #    e2ds[np.isnan(e2ds)] = 0
+        #  First basic approach Replacing N.A.N by zeros
+        #    e2ds[np.isnan(e2ds)] = 0
 
-    # Second approach replacing N.A.N by the Adjusted Blaze
+        # Second approach replacing N.A.N by the Adjusted Blaze
         e2dsb = e2ds / blaze0
         for i in np.arange(len(e2ds)):
-           rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
-           if np.isnan(rap):
+            with warnings.catch_warnings(record=True) as _:
+                rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
+            if np.isnan(rap):
                rap = 0.0
-           e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
+            e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
 
     # ----------------------------------------------------------------------
     # correct extracted image for flat

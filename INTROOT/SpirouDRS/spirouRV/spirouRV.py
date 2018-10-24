@@ -81,7 +81,8 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     # get the total
     tot = np.sum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
     # convert to dvrms2
-    dvrms2 = (CONSTANT_C ** 2) / abs(tot)
+    with warnings.catch_warnings(record=True) as _:
+        dvrms2 = (CONSTANT_C ** 2) / abs(tot)
     # weighted mean of dvrms2 values
     weightedmean = 1. / np.sqrt(np.sum(1.0 / dvrms2))
     # return dv rms and weighted mean
