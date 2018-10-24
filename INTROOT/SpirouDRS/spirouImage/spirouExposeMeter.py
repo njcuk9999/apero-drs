@@ -108,7 +108,6 @@ def order_profile(p, loc):
     """
     func_name = __NAME__ + '.order_profile()'
 
-
     # get file based on loc and wave file
     emlocofile = spirouConfig.Constants.EM_ORDERPROFILE_TMP_FILE(p)
     emlocofilename = os.path.basename(emlocofile)
@@ -131,7 +130,6 @@ def order_profile(p, loc):
     except:
         wmsg = '\tGenerating order profile map and saving to file {0}'
         WLOG('', p['LOG_OPT'], wmsg.format(emlocofilename))
-
 
     # get data from loc
     image = loc['IMAGE']
