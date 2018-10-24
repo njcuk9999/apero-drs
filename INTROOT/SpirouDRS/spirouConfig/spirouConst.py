@@ -1463,6 +1463,20 @@ def EM_MASK_FILE(p):
 
 
 # noinspection PyPep8Naming
+def EM_ORDERPROFILE_TMP_FILE(p):
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get localisation name
+    locofile = p['LOCOFILE'].replace('.fits', '')
+    # construct file name
+    filename = 'em_orderp_map_{0}.npy'.format(locofile)
+    # construct absolute path
+    abspath = os.path.join(redfolder, filename)
+    # return absolute path
+    return abspath
+
+
+# noinspection PyPep8Naming
 def WAVE_MAP_SPE_FILE(p):
     """
     Defines the cal_exposure_meter wavelength
