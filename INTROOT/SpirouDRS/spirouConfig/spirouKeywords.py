@@ -46,184 +46,184 @@ p = spirouConfig.check_params(p)
 #     to test which variables are not currently in below list
 # ---------------------------------------------------------------
 # MUST UPDATE THIS IF VARIABLES ADDED
-USE_KEYS = ['kw_ACQTIME_KEY',
-            'kw_ACQTIME_KEY_JUL',
-            'kw_AIRMASS',
-            'kw_BADPFILE1',
-            'kw_BADPFILE2',
-            'kw_BBAD',
-            'kw_BBFLAT',
-            'kw_BERV',
-            'kw_BERV_MAX',
-            'kw_BHOT',
-            'kw_BJD',
-            'kw_BLAZFILE',
-            'kw_BNDARK',
-            'kw_BNFLAT',
-            'kw_BNILUM',
-            'kw_BTOT',
-            'kw_BUNIT',
-            'kw_CCAS',
-            'kw_CCD_CONAD',
-            'kw_CCD_SIGDET',
-            'kw_CCF_CDELT',
-            'kw_CCF_CONTRAST',
-            'kw_CCF_CRVAL',
-            'kw_CCF_CTYPE',
-            'kw_CCF_FWHM',
-            'kw_CCF_LINES',
-            'kw_CCF_MASK',
-            'kw_CCF_MAXCPP',
-            'kw_CCF_RV',
-            'kw_CCF_RVC',
-            'kw_CDELT1',
-            'kw_CDEN',
-            'kw_CMMTSEQ',
-            'kw_CREF',
-            'kw_CRPIX1',
-            'kw_CRVAL1',
-            'kw_CTYPE1',
-            'kw_DARKFILE',
-            'kw_DARK_B_DEAD',
-            'kw_DARK_B_MED',
-            'kw_DARK_CUT',
-            'kw_DARK_DEAD',
-            'kw_DARK_MED',
-            'kw_DARK_R_DEAD',
-            'kw_DARK_R_MED',
-            'kw_DATE_OBS',
-            'kw_DPRTYPE',
-            'kw_DRIFT_RV',
-            'kw_E2DS_EXTM',
-            'kw_E2DS_FUNC',
-            'kw_E2DS_SNR',
-            'kw_EM_LOCFILE',
-            'kw_EM_MAXWAVE',
-            'kw_EM_MINWAVE',
-            'kw_EM_TELLX',
-            'kw_EM_TELLY',
-            'kw_EM_TILT',
-            'kw_EM_TRASCUT',
-            'kw_EM_WAVE',
-            'kw_EXPTIME',
-            'kw_EXTFILE',
-            'kw_EXTRA_SN',
-            'kw_EXT_TYPE',
-            'kw_FLATFILE',
-            'kw_FLAT_RMS',
-            'kw_FPFILE',
-            'kw_GAIN',
-            'kw_HCFILE',
-            'kw_INFILE',
-            'kw_INFILELIST',
-            'kw_LOCOFILE',
-            'kw_LOCO_BCKGRD',
-            'kw_LOCO_CTR_COEFF',
-            'kw_LOCO_DEG_C',
-            'kw_LOCO_DEG_E',
-            'kw_LOCO_DEG_W',
-            'kw_LOCO_DELTA',
-            'kw_LOCO_FILE',
-            'kw_LOCO_FWHM_COEFF',
-            'kw_LOCO_NBO',
-            'kw_LOC_MAXFLX',
-            'kw_LOC_RMS_CTR',
-            'kw_LOC_RMS_WID',
-            'kw_LOC_SMAXPTS_CTR',
-            'kw_LOC_SMAXPTS_WID',
-            'kw_OBJDEC',
-            'kw_OBJDECPM',
-            'kw_OBJEQUIN',
-            'kw_OBJNAME',
-            'kw_OBJRA',
-            'kw_OBJRAPM',
-            'kw_OBSTYPE',
-            'kw_OBJFILELIST',
-            'kw_OBJBERVLIST',
-            'kw_OUTPUT',
-            'kw_POL_EXPTIME',
-            'kw_POL_ELAPTIME',
-            'kw_POL_METHOD',
-            'kw_POL_NEXP',
-            'kw_POL_STOKES',
-            'kw_POL_FILENAM1',
-            'kw_POL_FILENAM2',
-            'kw_POL_FILENAM3',
-            'kw_POL_FILENAM4',
-            'kw_POL_EXPTIME1',
-            'kw_POL_EXPTIME2',
-            'kw_POL_EXPTIME3',
-            'kw_POL_EXPTIME4',
-            'kw_POL_LSD_COL1',
-            'kw_POL_LSD_COL2',
-            'kw_POL_LSD_COL3',
-            'kw_POL_LSD_COL4',
-            'kw_POL_LSD_COL5',
-            'kw_POL_LSD_FIT_RESOL',
-            'kw_POL_LSD_FIT_RV',
-            'kw_POL_LSD_MASK',
-            'kw_POL_LSD_NP',
-            'kw_POL_LSD_V0',
-            'kw_POL_LSD_VF',
-            'kw_POL_LSD_MEANPOL',
-            'kw_POL_LSD_STDDEVPOL',
-            'kw_POL_LSD_MEDIANPOL',
-            'kw_POL_LSD_MEDABSDEVPOL',
-            'kw_POL_LSD_STOKESVQU_MEAN',
-            'kw_POL_LSD_STOKESVQU_STDDEV',
-            'kw_POL_LSD_NULL_MEAN',
-            'kw_POL_LSD_NULL_STDDEV',
-            'kw_POL_MJDATE1',
-            'kw_POL_MJDATE2',
-            'kw_POL_MJDATE3',
-            'kw_POL_MJDATE4',
-            'kw_POL_MJDEND1',
-            'kw_POL_MJDEND2',
-            'kw_POL_MJDEND3',
-            'kw_POL_MJDEND4',
-            'kw_POL_BJD1',
-            'kw_POL_BJD2',
-            'kw_POL_BJD3',
-            'kw_POL_BJD4',
-            'kw_POL_BERV1',
-            'kw_POL_BERV2',
-            'kw_POL_BERV3',
-            'kw_POL_BERV4',
-            'kw_POL_MEANBJD',
-            'kw_POL_MJDCEN',
-            'kw_POL_BJDCEN',
-            'kw_POL_BERVCEN',
-            'kw_RDNOISE',
-            'kw_REFFILE',
-            'kw_REF_RV',
-            'kw_SHAPEFILE',
-            'kw_TELLU_ABSO',
-            'kw_TELLU_AMP_PC',
-            'kw_TELLU_DV_TELL1',
-            'kw_TELLU_DV_TELL2',
-            'kw_TELLU_NPC',
-            'kw_TELLU_FIT_DPC',
-            'kw_TELLU_ADD_DPC',
-            'kw_TH_NAXIS1',
-            'kw_TH_NAXIS2',
-            'kw_TILT',
-            'kw_TILTFILE',
-            'kw_UTC_OBS',
-            'kw_WAVEFILE',
-            'kw_WAVE_CODE',
-            'kw_WAVE_INIT',
-            'kw_WAVE_LL_DEG',
-            'kw_WAVE_ORD_N',
-            'kw_WAVE_PARAM',
-            'kw_WAVE_TIME1',
-            'kw_WAVE_TIME2',
-            'kw_drs_QC',
-            'kw_ppversion',
-            'kw_root_drs_flat',
-            'kw_root_drs_hc',
-            'kw_root_drs_loc',
-            'kw_version']
-
+USE_KEYS = ['KW_ACQTIME_KEY',
+            'KW_ACQTIME_KEY_JUL',
+            'KW_AIRMASS',
+            'KW_BADPFILE1',
+            'KW_BADPFILE2',
+            'KW_BBAD',
+            'KW_BBFLAT',
+            'KW_BERV',
+            'KW_BERV_MAX',
+            'KW_BHOT',
+            'KW_BJD',
+            'KW_BLAZFILE',
+            'KW_BNDARK',
+            'KW_BNFLAT',
+            'KW_BNILUM',
+            'KW_BTOT',
+            'KW_BUNIT',
+            'KW_CCAS',
+            'KW_CCD_CONAD',
+            'KW_CCD_SIGDET',
+            'KW_CCF_CDELT',
+            'KW_CCF_CONTRAST',
+            'KW_CCF_CRVAL',
+            'KW_CCF_CTYPE',
+            'KW_CCF_FWHM',
+            'KW_CCF_LINES',
+            'KW_CCF_MASK',
+            'KW_CCF_MAXCPP',
+            'KW_CCF_RV',
+            'KW_CCF_RVC',
+            'KW_CDELT1',
+            'KW_CDEN',
+            'KW_CMMTSEQ',
+            'KW_CREF',
+            'KW_CRPIX1',
+            'KW_CRVAL1',
+            'KW_CTYPE1',
+            'KW_DARKFILE',
+            'KW_DARK_B_DEAD',
+            'KW_DARK_B_MED',
+            'KW_DARK_CUT',
+            'KW_DARK_DEAD',
+            'KW_DARK_MED',
+            'KW_DARK_R_DEAD',
+            'KW_DARK_R_MED',
+            'KW_DATE_OBS',
+            'KW_DPRTYPE',
+            'KW_DRIFT_RV',
+            'KW_DRS_QC',
+            'KW_E2DS_EXTM',
+            'KW_E2DS_FUNC',
+            'KW_E2DS_SNR',
+            'KW_EM_LOCFILE',
+            'KW_EM_MAXWAVE',
+            'KW_EM_MINWAVE',
+            'KW_EM_TELLX',
+            'KW_EM_TELLY',
+            'KW_EM_TILT',
+            'KW_EM_TRASCUT',
+            'KW_EM_WAVE',
+            'KW_EXPTIME',
+            'KW_EXTFILE',
+            'KW_EXTRA_SN',
+            'KW_EXT_TYPE',
+            'KW_FLATFILE',
+            'KW_FLAT_RMS',
+            'KW_FPFILE',
+            'KW_GAIN',
+            'KW_HCFILE',
+            'KW_INFILE',
+            'KW_INFILELIST',
+            'KW_LOCOFILE',
+            'KW_LOCO_BCKGRD',
+            'KW_LOCO_CTR_COEFF',
+            'KW_LOCO_DEG_C',
+            'KW_LOCO_DEG_E',
+            'KW_LOCO_DEG_W',
+            'KW_LOCO_DELTA',
+            'KW_LOCO_FILE',
+            'KW_LOCO_FWHM_COEFF',
+            'KW_LOCO_NBO',
+            'KW_LOC_MAXFLX',
+            'KW_LOC_RMS_CTR',
+            'KW_LOC_RMS_WID',
+            'KW_LOC_SMAXPTS_CTR',
+            'KW_LOC_SMAXPTS_WID',
+            'KW_MJDEND',
+            'KW_OBJBERVLIST',
+            'KW_OBJDEC',
+            'KW_OBJDECPM',
+            'KW_OBJEQUIN',
+            'KW_OBJFILELIST',
+            'KW_OBJNAME',
+            'KW_OBJRA',
+            'KW_OBJRAPM',
+            'KW_OBSTYPE',
+            'KW_OUTPUT',
+            'KW_POL_BERV1',
+            'KW_POL_BERV2',
+            'KW_POL_BERV3',
+            'KW_POL_BERV4',
+            'KW_POL_BERVCEN',
+            'KW_POL_BJD1',
+            'KW_POL_BJD2',
+            'KW_POL_BJD3',
+            'KW_POL_BJD4',
+            'KW_POL_BJDCEN',
+            'KW_POL_ELAPTIME',
+            'KW_POL_EXPTIME',
+            'KW_POL_EXPTIME1',
+            'KW_POL_EXPTIME2',
+            'KW_POL_EXPTIME3',
+            'KW_POL_EXPTIME4',
+            'KW_POL_FILENAM1',
+            'KW_POL_FILENAM2',
+            'KW_POL_FILENAM3',
+            'KW_POL_FILENAM4',
+            'KW_POL_LSD_COL1',
+            'KW_POL_LSD_COL2',
+            'KW_POL_LSD_COL3',
+            'KW_POL_LSD_COL4',
+            'KW_POL_LSD_COL5',
+            'KW_POL_LSD_FIT_RESOL',
+            'KW_POL_LSD_FIT_RV',
+            'KW_POL_LSD_MASK',
+            'KW_POL_LSD_MEANPOL',
+            'KW_POL_LSD_MEDABSDEVPOL',
+            'KW_POL_LSD_MEDIANPOL',
+            'KW_POL_LSD_NP',
+            'KW_POL_LSD_NULL_MEAN',
+            'KW_POL_LSD_NULL_STDDEV',
+            'KW_POL_LSD_STDDEVPOL',
+            'KW_POL_LSD_STOKESVQU_MEAN',
+            'KW_POL_LSD_STOKESVQU_STDDEV',
+            'KW_POL_LSD_V0',
+            'KW_POL_LSD_VF',
+            'KW_POL_MEANBJD',
+            'KW_POL_METHOD',
+            'KW_POL_MJDATE1',
+            'KW_POL_MJDATE2',
+            'KW_POL_MJDATE3',
+            'KW_POL_MJDATE4',
+            'KW_POL_MJDCEN',
+            'KW_POL_MJDEND1',
+            'KW_POL_MJDEND2',
+            'KW_POL_MJDEND3',
+            'KW_POL_MJDEND4',
+            'KW_POL_NEXP',
+            'KW_POL_STOKES',
+            'KW_RDNOISE',
+            'KW_REFFILE',
+            'KW_REF_RV',
+            'KW_SHAPEFILE',
+            'KW_TELLU_ABSO',
+            'KW_TELLU_ADD_DPC',
+            'KW_TELLU_AMP_PC',
+            'KW_TELLU_DV_TELL1',
+            'KW_TELLU_DV_TELL2',
+            'KW_TELLU_FIT_DPC',
+            'KW_TELLU_NPC',
+            'KW_TH_NAXIS1',
+            'KW_TH_NAXIS2',
+            'KW_TILT',
+            'KW_TILTFILE',
+            'KW_UTC_OBS',
+            'KW_WAVEFILE',
+            'KW_WAVE_CODE',
+            'KW_WAVE_INIT',
+            'KW_WAVE_LL_DEG',
+            'KW_WAVE_ORD_N',
+            'KW_WAVE_PARAM',
+            'KW_WAVE_TIME1',
+            'KW_WAVE_TIME2',
+            'KW_ppversion',
+            'KW_root_drs_flat',
+            'KW_root_drs_hc',
+            'KW_root_drs_loc',
+            'KW_version']
 
 # MUST UPDATE THIS IF VARIABLES FROM CONFIG FILES USED
 USE_PARAMS = ['DRS_NAME',
@@ -256,15 +256,15 @@ spirouConfig.check_config(p, USE_PARAMS)
 #   Note 2: for variable to be used in any code it must be defined in
 #          "USE_KEYS"   above  as a string
 #
-#           i.e.   kw_x = ['TEST', 1.23, 'This is a test keyword']
+#           i.e.   KW_x = ['TEST', 1.23, 'This is a test keyword']
 #
-#                   USE_KEYS = ['kw_x']
+#                   USE_KEYS = ['KW_x']
 #
 #            you can use the:
 #
 #            SpirouDRS.spirouConfig.SpirouKeywords.generate_use_keys()
 #
-#           to generate the list of USE_KEYS (will use all kw_ stored in file)
+#           to generate the list of USE_KEYS (will use all KW_ stored in file)
 #
 #
 #   Note 2: This is NOT the best place to set values, these variables are
@@ -285,111 +285,107 @@ spirouConfig.check_config(p, USE_PARAMS)
 # define the HEADER key for acquisition time (used to get value only)
 #   in format YYYY-mm-dd-HH-MM-SS.ss
 # TODO: This switch will be obsolete after H2RG testing is over
-if p['IC_IMAGE_TYPE'] == 'H4RG':
-    kw_ACQTIME_KEY = ['DATE', None, '']
-else:
-    kw_ACQTIME_KEY = ['ACQTIME1', None, '']
+KW_ACQTIME_KEY = ['DATE', None, '']
 
 # define the HEADER key for acquisition time (used to get value only)
 #   in unix time format (time since 1970-01-01-00-00-00)
-# TODO: This switch will be obsolete after H2RG testing is over
-if p['IC_IMAGE_TYPE'] == 'H4RG':
-    kw_ACQTIME_KEY_JUL = ['MJDATE', None, '']
-else:
-    kw_ACQTIME_KEY_JUL = ['ACQTIME', None, '']
+KW_ACQTIME_KEY_JUL = ['MJDATE', None, '']
 
 # define the observation date HEADER key
-kw_DATE_OBS = ['DATE-OBS', None, '']
+KW_DATE_OBS = ['DATE-OBS', None, '']
 
 # define the observation time HEADER key
-kw_UTC_OBS = ['UTC-OBS', None, '']
+KW_UTC_OBS = ['UTC-OBS', None, '']
 
 # define the observation ra HEADER key
-kw_OBJRA = ['OBJRA', None, '']
+KW_OBJRA = ['OBJRA', None, '']
 
 # define the observation dec HEADER key
-kw_OBJDEC = ['OBJDEC', None, '']
+KW_OBJDEC = ['OBJDEC', None, '']
 
 # define the observation name
-kw_OBJNAME = ['OBJNAME', None, '']
+KW_OBJNAME = ['OBJNAME', None, '']
 
 # define the observation equinox HEADER key
-kw_OBJEQUIN = ['OBJEQUIN', None, '']
+KW_OBJEQUIN = ['OBJEQUIN', None, '']
 
 # define the observation proper motion in ra HEADER key
-kw_OBJRAPM = ['OBJRAPM', None, '']
+KW_OBJRAPM = ['OBJRAPM', None, '']
 
 # define the observation proper motion in dec HEADER key
-kw_OBJDECPM = ['OBJDECPM', None, '']
+KW_OBJDECPM = ['OBJDECPM', None, '']
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
-kw_RDNOISE = ['RDNOISE', None, '']
+KW_RDNOISE = ['RDNOISE', None, '']
 
 # define the gain HEADER key (used to get value only)
-kw_GAIN = ['GAIN', None, '']
+KW_GAIN = ['GAIN', None, '']
 
 # define the exposure time HEADER key (used to get value only)
-kw_EXPTIME = ['EXPTIME', None, '']
+KW_EXPTIME = ['EXPTIME', None, '']
 
 # define the observation type HEADER key
-kw_OBSTYPE = ['OBSTYPE', None, '']
+KW_OBSTYPE = ['OBSTYPE', None, '']
 
 # define the science fiber type HEADER key
-kw_CCAS = ['SBCCAS_P', None, '']
+KW_CCAS = ['SBCCAS_P', None, '']
 
 # define the reference fiber type HEADER key
-kw_CREF = ['SBCREF_P', None, '']
+KW_CREF = ['SBCREF_P', None, '']
 
 # define the density HEADER key
-kw_CDEN = ['SBCDEN_P', None, '']
+KW_CDEN = ['SBCDEN_P', None, '']
 
 # define polarisation HEADER key
-kw_CMMTSEQ = ['CMMTSEQ', None, '']
+KW_CMMTSEQ = ['CMMTSEQ', None, '']
 
 # define the airmass HEADER key
-kw_AIRMASS = ['AIRMASS', None, '']
+KW_AIRMASS = ['AIRMASS', None, '']
+
+# define the MJ end date HEADER key
+KW_MJDEND = ['MJDEND', None, '']
 
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
 # DRS version
-kw_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+KW_version = ['VERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
               'DRS version']
 
-kw_ppversion = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
+KW_ppversion = ['PVERSION', '{0}_{1}'.format(p['DRS_NAME'], p['DRS_VERSION']),
                 'DRS Pre-Processing version']
 
 # root keys (for use below and in finding keys later)
-kw_root_drs_loc = ['LO', None, '']
-kw_root_drs_flat = ['FF', None, '']
-kw_root_drs_hc = ['LMP', None, '']
+KW_root_drs_loc = ['LO', None, '']
+KW_root_drs_flat = ['FF', None, '']
+KW_root_drs_hc = ['LMP', None, '']
 
 # Define the key to get the data fits file type
-kw_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
+KW_DPRTYPE = ['DPRTYPE', None, 'The type of file (from pre-process)']
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
 # -----------------------------------------------------------------------------
 # The fraction of dead pixels in the dark (in %)
-kw_DARK_DEAD = ['DADEAD', 0, 'Fraction dead pixels [%]']
+KW_DARK_DEAD = ['DADEAD', 0, 'Fraction dead pixels [%]']
 
 # The median dark level in ADU/s
-kw_DARK_MED = ['DAMED', 0, 'median dark level [ADU/s]']
+KW_DARK_MED = ['DAMED', 0, 'median dark level [ADU/s]']
 
 # The fraction of dead pixels in the blue part of the dark (in %)
-kw_DARK_B_DEAD = ['DABDEAD', 0, 'Fraction dead pixels blue part [%]']
+KW_DARK_B_DEAD = ['DABDEAD', 0, 'Fraction dead pixels blue part [%]']
 
 # The median dark level in the blue part of the dark in ADU/s
-kw_DARK_B_MED = ['DABMED', 0, 'median dark level blue part [ADU/s]']
+KW_DARK_B_MED = ['DABMED', 0, 'median dark level blue part [ADU/s]']
 
 # The fraction of dead pixels in the red part of the dark (in %)
-kw_DARK_R_DEAD = ['DARDEAD', 0, 'Fraction dead pixels red part [%]']
+KW_DARK_R_DEAD = ['DARDEAD', 0, 'Fraction dead pixels red part [%]']
 
 # The median dark level in the red part of the dark in ADU/s
-kw_DARK_R_MED = ['DARMED', 0, 'median dark level red part [ADU/s]']
+KW_DARK_R_MED = ['DARMED', 0, 'median dark level red part [ADU/s]']
 
 # The threshold of the dark level to retain in ADU
-kw_DARK_CUT = ['DACUT', p['DARK_CUTLIMIT'],
+KW_DARK_CUT = ['DACUT', p['DARK_CUTLIMIT'],
                'Threshold of dark level retain [ADU/s]']
 
 # -----------------------------------------------------------------------------
@@ -397,286 +393,286 @@ kw_DARK_CUT = ['DACUT', p['DARK_CUTLIMIT'],
 # -----------------------------------------------------------------------------
 
 # Mean background (as percentage)
-kw_LOCO_BCKGRD = [kw_root_drs_loc[0] + 'BCKGRD', 0, 'mean background [%]']
+KW_LOCO_BCKGRD = [KW_root_drs_loc[0] + 'BCKGRD', 0, 'mean background [%]']
 
 # Image conversion factor [e-/ADU]
-kw_CCD_CONAD = ['CONAD', 0, 'CCD conv factor [e-/ADU]']
+KW_CCD_CONAD = ['CONAD', 0, 'CCD conv factor [e-/ADU]']
 
 # Image readout noise
-kw_CCD_SIGDET = ['SIGDET', 0, 'CCD Readout Noise [e-]']
+KW_CCD_SIGDET = ['SIGDET', 0, 'CCD Readout Noise [e-]']
 
 # Coeff center order
-kw_LOCO_CTR_COEFF = [kw_root_drs_loc[0] + 'CTR', 0, 'Coeff center']
+KW_LOCO_CTR_COEFF = [KW_root_drs_loc[0] + 'CTR', 0, 'Coeff center']
 
 # fit degree for order centers
-kw_LOCO_DEG_C = [kw_root_drs_loc[0] + 'DEGCTR',  p['IC_LOCDFITC'],
+KW_LOCO_DEG_C = [KW_root_drs_loc[0] + 'DEGCTR',  p['IC_LOCDFITC'],
                  'degree fit ctr ord']
 
 # fit degree for order widths
-kw_LOCO_DEG_W = [kw_root_drs_loc[0] + 'DEGFWH', p['IC_LOCDFITW'],
+KW_LOCO_DEG_W = [KW_root_drs_loc[0] + 'DEGFWH', p['IC_LOCDFITW'],
                  'degree fit width ord']
 
 # fit degree for profile error
-kw_LOCO_DEG_E = [kw_root_drs_loc[0] + 'DEGERR', p['IC_LOCDFITP'],
+KW_LOCO_DEG_E = [KW_root_drs_loc[0] + 'DEGERR', p['IC_LOCDFITP'],
                  'degree fit profile error']
 
 # delta width (pix) for 3 convol shape model (currently not used??)
-kw_LOCO_DELTA = [kw_root_drs_loc[0] + 'PRODEL', p['IC_LOC_DELTA_WIDTH'],
+KW_LOCO_DELTA = [KW_root_drs_loc[0] + 'PRODEL', p['IC_LOC_DELTA_WIDTH'],
                  'param model 3gau']
 
 # Coeff width order
-kw_LOCO_FWHM_COEFF = [kw_root_drs_loc[0] + 'FW', 0, 'Coeff fwhm']
+KW_LOCO_FWHM_COEFF = [KW_root_drs_loc[0] + 'FW', 0, 'Coeff fwhm']
 
 # Number of orders located
-kw_LOCO_NBO = [kw_root_drs_loc[0] + 'NBO', 0, 'nb orders localised']
+KW_LOCO_NBO = [KW_root_drs_loc[0] + 'NBO', 0, 'nb orders localised']
 
 # Maximum flux in order
-kw_LOC_MAXFLX = [kw_root_drs_loc[0] + 'FLXMAX', 0, 'max flux in order [ADU]']
+KW_LOC_MAXFLX = [KW_root_drs_loc[0] + 'FLXMAX', 0, 'max flux in order [ADU]']
 
 # Maximum number of removed points allowed for location fit
-kw_LOC_SMAXPTS_CTR = [kw_root_drs_loc[0] + 'CTRMAX', 0, 'max rm pts ctr']
+KW_LOC_SMAXPTS_CTR = [KW_root_drs_loc[0] + 'CTRMAX', 0, 'max rm pts ctr']
 
 # Maximum number of removed points allowed for width fit
-#    (formally kw_LOC_Smaxpts_width)
-kw_LOC_SMAXPTS_WID = [kw_root_drs_loc[0] + 'WIDMAX', 0, 'max rm pts width']
+#    (formally KW_LOC_Smaxpts_width)
+KW_LOC_SMAXPTS_WID = [KW_root_drs_loc[0] + 'WIDMAX', 0, 'max rm pts width']
 
 # Maximum rms allowed for location fit
-kw_LOC_RMS_CTR = [kw_root_drs_loc[0] + 'RMSCTR', 0, 'max rms ctr']
+KW_LOC_RMS_CTR = [KW_root_drs_loc[0] + 'RMSCTR', 0, 'max rms ctr']
 
-# Maximum rms allowed for width fit (formally kw_LOC_rms_fwhm)
-kw_LOC_RMS_WID = [kw_root_drs_loc[0] + 'RMSWID', 0, 'max rms width']
+# Maximum rms allowed for width fit (formally KW_LOC_rms_fwhm)
+KW_LOC_RMS_WID = [KW_root_drs_loc[0] + 'RMSWID', 0, 'max rms width']
 
 # -----------------------------------------------------------------------------
 # Define cal_SLIT variables
 # -----------------------------------------------------------------------------
 # Tilt order keyword prefix
-kw_TILT = [kw_root_drs_loc[0] + 'TILT', 0, 'Tilt order']
+KW_TILT = [KW_root_drs_loc[0] + 'TILT', 0, 'Tilt order']
 
 # -----------------------------------------------------------------------------
 # Define cal_FF variables
 # -----------------------------------------------------------------------------
 
 # Signal to noise ratio for order center
-kw_EXTRA_SN = ['EXTSN', 0, 'S_N order center']
+KW_EXTRA_SN = ['EXTSN', 0, 'S_N order center']
 
 # Flat field RMS for order
-kw_FLAT_RMS = [kw_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
+KW_FLAT_RMS = [KW_root_drs_flat[0] + 'RMS', 0, 'FF RMS order']
 
 # -----------------------------------------------------------------------------
 # Define cal_EXTRACT variables
 # -----------------------------------------------------------------------------
 # TODO: Comment this section
 # localization file used
-kw_LOCO_FILE = [kw_root_drs_loc[0] + 'FILE', '', 'Localization file used']
+KW_LOCO_FILE = [KW_root_drs_loc[0] + 'FILE', '', 'Localization file used']
 
-kw_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
+KW_E2DS_EXTM = ['EXTMETH', '', 'Extraction method']
 
-kw_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
+KW_E2DS_FUNC = ['EXTFUNC', '', 'Extraction function']
 
-kw_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
+KW_E2DS_SNR = ['SNR', 0, 'Signal to Noise Ratio']
 
-kw_WAVE_TIME1 = ['WAVET1', 0, 'Wave file date+time human']
-kw_WAVE_TIME2 = ['WAVET2', 0, 'Wave file date+time unix']
+KW_WAVE_TIME1 = ['WAVET1', 0, 'Wave file date+time human']
+KW_WAVE_TIME2 = ['WAVET2', 0, 'Wave file date+time unix']
 
-kw_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
-kw_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
-kw_CDELT1 = ['CDELT1', 0, 'Coordinate at reference pixel [nm]']
-kw_CTYPE1 = ['CTYPE1', 'nm', 'Units of coordinate']
-kw_BUNIT = ['BUNIT', '', 'Units of data values']
+KW_CRPIX1 = ['CRPIX1', 0, 'Reference pixel']
+KW_CRVAL1 = ['CRVAL1', 0, 'Coordinate at reference pixel [nm]']
+KW_CDELT1 = ['CDELT1', 0, 'Coordinate at reference pixel [nm]']
+KW_CTYPE1 = ['CTYPE1', 'nm', 'Units of coordinate']
+KW_BUNIT = ['BUNIT', '', 'Units of data values']
 
 # -----------------------------------------------------------------------------
 # Define cal_BADPIX variables
 # -----------------------------------------------------------------------------
 # fraction of hot pixels
-kw_BHOT = ['BHOT', 0, 'Frac of hot px [%]']
+KW_BHOT = ['BHOT', 0, 'Frac of hot px [%]']
 
 # fraction of bad pixels from flat
-kw_BBFLAT = ['BBFLAT', 0, 'Frac of bad px from flat [%]']
+KW_BBFLAT = ['BBFLAT', 0, 'Frac of bad px from flat [%]']
 
 # fraction of non-finite pixels in dark
-kw_BNDARK = ['BNDARK', 0, 'Frac of non-finite px in dark [%]']
+KW_BNDARK = ['BNDARK', 0, 'Frac of non-finite px in dark [%]']
 
 # fraction of non-finite pixels in flat
-kw_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
+KW_BNFLAT = ['BNFLAT', 0, 'Frac of non-finite px in flat [%]']
 
 # fraction of bad pixels with all criteria
-kw_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
+KW_BBAD = ['BBAD', 0, 'Frac of bad px with all criteria [%]']
 
 # fraction of un-illuminated pixels (from engineering flat)
-kw_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
+KW_BNILUM = ['BNILUM', 0, 'Frac of un-illuminated pixels [%]']
 
 # fraction of total bad pixels
-kw_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
+KW_BTOT = ['BTOT', 0, 'Frac of bad pixels (total) [%]']
 
 # -----------------------------------------------------------------------------
 # Define DRIFT variables
 # -----------------------------------------------------------------------------
-kw_REF_RV = ['DFTREFRV', 0, 'Reference RV [m/s]']
+KW_REF_RV = ['DFTREFRV', 0, 'Reference RV [m/s]']
 
 # -----------------------------------------------------------------------------
 # Define cal_CCF variables
 # -----------------------------------------------------------------------------
 # TODO: Comment this section
-kw_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
-kw_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
-kw_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
-kw_CCF_RV = ['CCFRV', 0, 'Baryc RV (no drift correction) (km/s)']
-kw_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
-kw_CCF_FWHM = ['CCFFWHM', 0, 'FWHM of CCF (km/s)']
-kw_CCF_CONTRAST = ['CCFCONTR', 0, 'Contrast of  CCF (%)']
-kw_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
-kw_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
-kw_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
-kw_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
-kw_BJD = ['BJD', 0, 'Barycorrpy BJD']
-kw_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
-kw_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
+KW_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
+KW_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
+KW_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
+KW_CCF_RV = ['CCFRV', 0, 'Baryc RV (no drift correction) (km/s)']
+KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
+KW_CCF_FWHM = ['CCFFWHM', 0, 'FWHM of CCF (km/s)']
+KW_CCF_CONTRAST = ['CCFCONTR', 0, 'Contrast of  CCF (%)']
+KW_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
+KW_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
+KW_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
+KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
+KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
+KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
+KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
 
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
 # the number of orders used in the TH line list                        [WAVE_AB]
-kw_WAVE_ORD_N = ['TH_ORD_N', None, 'nb orders in total']
+KW_WAVE_ORD_N = ['TH_ORD_N', None, 'nb orders in total']
 
 # the number of fit coefficients from the TH line list fit             [WAVE_AB]
-kw_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
+KW_WAVE_LL_DEG = ['TH_LL_D', None, 'deg polyn fit ll(x,order)']
 
 # the prefix to use to get the TH line list fit coefficients           [WAVE_AB]
-kw_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
+KW_WAVE_PARAM = ['TH_LC', None, 'coeff ll(x,order)']
 
 # the wave recipe used to produce file
-kw_WAVE_CODE = ['WAVECODE', None, 'DRS Recipe used to produce wave sol']
+KW_WAVE_CODE = ['WAVECODE', None, 'DRS Recipe used to produce wave sol']
 
 # the input wave file used to produce file
-kw_WAVE_INIT = ['WAVEINIT', None, 'The input guess wave solution']
+KW_WAVE_INIT = ['WAVEINIT', None, 'The input guess wave solution']
 
 # the x-axis dimension size for the TH line list file                  [WAVE_AB]
-kw_TH_NAXIS1 = ['NAXIS1', None, '']
+KW_TH_NAXIS1 = ['NAXIS1', None, '']
 
 # the y-axis dimension size for the TH line list file                  [WAVE_AB]
-kw_TH_NAXIS2 = ['NAXIS2', None, '']
+KW_TH_NAXIS2 = ['NAXIS2', None, '']
 
 
 # -----------------------------------------------------------------------------
 # Define telluric variables
 # -----------------------------------------------------------------------------
 # Telluric absorption prefix (i.e. ABSO_H20)                     [OBJ_FIT_TELLU]
-kw_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
+KW_TELLU_ABSO = ['ABSO', None, 'Absorption key prefix']
 
 # Telluric principle component amplitudes (for use with 1D list)
-kw_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
+KW_TELLU_AMP_PC = ['AMP_PC', None, 'Principle Component Amplitudes']
 
 # Telluric principle component derivatives
-kw_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
-kw_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
+KW_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
+KW_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
 
 # File list for template
-kw_OBJFILELIST = ['FILE', None, 'Input file list']
-kw_OBJBERVLIST = ['BERV', None, 'Input file BERV list']
+KW_OBJFILELIST = ['FILE', None, 'Input file list']
+KW_OBJBERVLIST = ['BERV', None, 'Input file BERV list']
 
 # Options input into tellu
-kw_TELLU_NPC = ['TELLNPC', None, 'Number of Principle Components used']
-kw_TELLU_FIT_DPC = ['TELLFDPC', None, 'Fit derivs instead of principle comps.']
-kw_TELLU_ADD_DPC = ['TELLADPC', None, 'Add 1st+2nd derivs to principle comps.']
+KW_TELLU_NPC = ['TELLNPC', None, 'Number of Principle Components used']
+KW_TELLU_FIT_DPC = ['TELLFDPC', None, 'Fit derivs instead of principle comps.']
+KW_TELLU_ADD_DPC = ['TELLADPC', None, 'Add 1st+2nd derivs to principle comps.']
 
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
 # -----------------------------------------------------------------------------
 # TODO: Comment this section
-kw_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
-kw_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
-kw_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
-kw_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
-kw_POL_ELAPTIME = ['ELAPTIME', '', 'Elapsed time of observation (sec)']
-kw_POL_FILENAM1 = ['FILENAM1', '', 'Base filename of exposure 1']
-kw_POL_FILENAM2 = ['FILENAM2', '', 'Base filename of exposure 2']
-kw_POL_FILENAM3 = ['FILENAM3', '', 'Base filename of exposure 3']
-kw_POL_FILENAM4 = ['FILENAM4', '', 'Base filename of exposure 4']
-kw_POL_EXPTIME1 = ['EXPTIME1', '', 'EXPTIME of exposure 1 (sec)']
-kw_POL_EXPTIME2 = ['EXPTIME2', '', 'EXPTIME of exposure 2 (sec)']
-kw_POL_EXPTIME3 = ['EXPTIME3', '', 'EXPTIME of exposure 3 (sec)']
-kw_POL_EXPTIME4 = ['EXPTIME4', '', 'EXPTIME of exposure 4 (sec)']
-kw_POL_MJDATE1 = ['MJDATE1', '', 'MJD at start of exposure 1']
-kw_POL_MJDATE2 = ['MJDATE2', '', 'MJD at start of exposure 2']
-kw_POL_MJDATE3 = ['MJDATE3', '', 'MJD at start of exposure 3']
-kw_POL_MJDATE4 = ['MJDATE4', '', 'MJD at start of exposure 4']
-kw_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND at end of exposure 1']
-kw_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND at end of exposure 2']
-kw_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND at end of exposure 3']
-kw_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND at end of exposure 4']
-kw_POL_BJD1 = ['BJD1', '', 'BJD at start of exposure 1']
-kw_POL_BJD2 = ['BJD2', '', 'BJD at start of exposure 2']
-kw_POL_BJD3 = ['BJD3', '', 'BJD at start of exposure 3']
-kw_POL_BJD4 = ['BJD4', '', 'BJD at start of exposure 4']
-kw_POL_BERV1 = ['BERV1', '', 'BERV at start of exposure 1']
-kw_POL_BERV2 = ['BERV2', '', 'BERV at start of exposure 2']
-kw_POL_BERV3 = ['BERV3', '', 'BERV at start of exposure 3']
-kw_POL_BERV4 = ['BERV4', '', 'BERV at start of exposure 4']
-kw_POL_MEANBJD = ['MEANBJD', '', 'Mean BJD for polar sequence']
-kw_POL_MJDCEN = ['MJDCEN', '', 'MJD at center of observation']
-kw_POL_BJDCEN = ['BJDCEN', '', 'BJD at center of observation']
-kw_POL_BERVCEN = ['BERVCEN', '', 'BERV at center of observation']
-kw_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
-kw_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
-kw_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
-kw_POL_LSD_NP = ['LSDNP', '', 'Number of points for LSD profile']
-kw_POL_LSD_FIT_RV = ['LSDFITRV', '', 'Radial velocity (km/s) from gaussian fit']
-kw_POL_LSD_FIT_RESOL = ['LSDRESOL', '', 'Resolving power from gaussian fit']
-kw_POL_LSD_MEANPOL = ['LSDMEPOL', '', 'Mean polarization of data in LSD']
-kw_POL_LSD_STDDEVPOL = ['LSDSDPOL', '', 'Std dev polarization of data in LSD']
-kw_POL_LSD_MEDIANPOL = ['LSDMDPOL', '', 'Median polarization of data in LSD']
-kw_POL_LSD_MEDABSDEVPOL = ['LSDMAPOL', '', 'Med abs dev polarization of data in LSD']
-kw_POL_LSD_STOKESVQU_MEAN = ['MEPOLLSD', '', 'Mean of pol LSD profile']
-kw_POL_LSD_STOKESVQU_STDDEV = ['SDPOLLSD', '', 'Std dev of pol LSD profile']
-kw_POL_LSD_NULL_MEAN = ['MENULLSD', '', 'Mean of null LSD profile']
-kw_POL_LSD_NULL_STDDEV = ['SDNULLSD', '', 'Std dev of null LSD profile']
-kw_POL_LSD_COL1 = ['LSDCOL1', '', 'Velocities (km/s)']
-kw_POL_LSD_COL2 = ['LSDCOL2', '', 'Stokes I LSD profile']
-kw_POL_LSD_COL3 = ['LSDCOL3', '', 'Gaussian fit to Stokes I LSD profile']
-kw_POL_LSD_COL4 = ['LSDCOL4', '', 'Stokes V, U, or Q LSD profile']
-kw_POL_LSD_COL5 = ['LSDCOL5', '', 'Null polarization LSD profile']
+KW_POL_STOKES = ['STOKES', '', 'Stokes paremeter: Q, U, V, or I']
+KW_POL_NEXP = ['POLNEXP', '', 'Number of exposures for polarimetry']
+KW_POL_METHOD = ['POLMETHO', '', 'Polarimetry method']
+KW_POL_EXPTIME = ['TOTETIME', '', 'Total exposure time (sec)']
+KW_POL_ELAPTIME = ['ELAPTIME', '', 'Elapsed time of observation (sec)']
+KW_POL_FILENAM1 = ['FILENAM1', '', 'Base filename of exposure 1']
+KW_POL_FILENAM2 = ['FILENAM2', '', 'Base filename of exposure 2']
+KW_POL_FILENAM3 = ['FILENAM3', '', 'Base filename of exposure 3']
+KW_POL_FILENAM4 = ['FILENAM4', '', 'Base filename of exposure 4']
+KW_POL_EXPTIME1 = ['EXPTIME1', '', 'EXPTIME of exposure 1 (sec)']
+KW_POL_EXPTIME2 = ['EXPTIME2', '', 'EXPTIME of exposure 2 (sec)']
+KW_POL_EXPTIME3 = ['EXPTIME3', '', 'EXPTIME of exposure 3 (sec)']
+KW_POL_EXPTIME4 = ['EXPTIME4', '', 'EXPTIME of exposure 4 (sec)']
+KW_POL_MJDATE1 = ['MJDATE1', '', 'MJD at start of exposure 1']
+KW_POL_MJDATE2 = ['MJDATE2', '', 'MJD at start of exposure 2']
+KW_POL_MJDATE3 = ['MJDATE3', '', 'MJD at start of exposure 3']
+KW_POL_MJDATE4 = ['MJDATE4', '', 'MJD at start of exposure 4']
+KW_POL_MJDEND1 = ['MJDEND1', '', 'MJDEND at end of exposure 1']
+KW_POL_MJDEND2 = ['MJDEND2', '', 'MJDEND at end of exposure 2']
+KW_POL_MJDEND3 = ['MJDEND3', '', 'MJDEND at end of exposure 3']
+KW_POL_MJDEND4 = ['MJDEND4', '', 'MJDEND at end of exposure 4']
+KW_POL_BJD1 = ['BJD1', '', 'BJD at start of exposure 1']
+KW_POL_BJD2 = ['BJD2', '', 'BJD at start of exposure 2']
+KW_POL_BJD3 = ['BJD3', '', 'BJD at start of exposure 3']
+KW_POL_BJD4 = ['BJD4', '', 'BJD at start of exposure 4']
+KW_POL_BERV1 = ['BERV1', '', 'BERV at start of exposure 1']
+KW_POL_BERV2 = ['BERV2', '', 'BERV at start of exposure 2']
+KW_POL_BERV3 = ['BERV3', '', 'BERV at start of exposure 3']
+KW_POL_BERV4 = ['BERV4', '', 'BERV at start of exposure 4']
+KW_POL_MEANBJD = ['MEANBJD', '', 'Mean BJD for polar sequence']
+KW_POL_MJDCEN = ['MJDCEN', '', 'MJD at center of observation']
+KW_POL_BJDCEN = ['BJDCEN', '', 'BJD at center of observation']
+KW_POL_BERVCEN = ['BERVCEN', '', 'BERV at center of observation']
+KW_POL_LSD_MASK = ['LSDMASK', '', 'LSD mask filename']
+KW_POL_LSD_V0 = ['LSDV0', '', 'Initial velocity (km/s) for LSD profile']
+KW_POL_LSD_VF = ['LSDVF', '', 'Final velocity (km/s) for LSD profile']
+KW_POL_LSD_NP = ['LSDNP', '', 'Number of points for LSD profile']
+KW_POL_LSD_FIT_RV = ['LSDFITRV', '', 'Radial velocity (km/s) from gaussian fit']
+KW_POL_LSD_FIT_RESOL = ['LSDRESOL', '', 'Resolving power from gaussian fit']
+KW_POL_LSD_MEANPOL = ['LSDMEPOL', '', 'Mean polarization of data in LSD']
+KW_POL_LSD_STDDEVPOL = ['LSDSDPOL', '', 'Std dev polarization of data in LSD']
+KW_POL_LSD_MEDIANPOL = ['LSDMDPOL', '', 'Median polarization of data in LSD']
+KW_POL_LSD_MEDABSDEVPOL = ['LSDMAPOL', '', 'Med abs dev polarization of data in LSD']
+KW_POL_LSD_STOKESVQU_MEAN = ['MEPOLLSD', '', 'Mean of pol LSD profile']
+KW_POL_LSD_STOKESVQU_STDDEV = ['SDPOLLSD', '', 'Std dev of pol LSD profile']
+KW_POL_LSD_NULL_MEAN = ['MENULLSD', '', 'Mean of null LSD profile']
+KW_POL_LSD_NULL_STDDEV = ['SDNULLSD', '', 'Std dev of null LSD profile']
+KW_POL_LSD_COL1 = ['LSDCOL1', '', 'Velocities (km/s)']
+KW_POL_LSD_COL2 = ['LSDCOL2', '', 'Stokes I LSD profile']
+KW_POL_LSD_COL3 = ['LSDCOL3', '', 'Gaussian fit to Stokes I LSD profile']
+KW_POL_LSD_COL4 = ['LSDCOL4', '', 'Stokes V, U, or Q LSD profile']
+KW_POL_LSD_COL5 = ['LSDCOL5', '', 'Null polarization LSD profile']
 
 # -----------------------------------------------------------------------------
 # Define cal_exposure_meter variables
 # -----------------------------------------------------------------------------
 # TODO: Comment this section
-kw_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
-kw_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
-kw_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
-kw_EM_WAVE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
-kw_EM_TILT = ['TILTFILE', 0.0, 'Tilt solution file used']
-kw_EM_MINWAVE = ['MINLAM', 0.0, 'Minimum lambda used in mask [nm]']
-kw_EM_MAXWAVE = ['MAXLAM', 0.0, 'Maximum lambda used in mask [nm]']
-kw_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
+KW_EM_TELLX = ['TELL_X', 0.0, 'Telluric x file used (wavelengths)']
+KW_EM_TELLY = ['TELL_Y', 0.0, 'Telluric y file used (transmission)']
+KW_EM_LOCFILE = ['LOCFILE', 0.0, 'Loc file used (cent+fwhm fits)']
+KW_EM_WAVE = ['WAVEFILE', 0.0, 'Wavelength solution file used']
+KW_EM_TILT = ['TILTFILE', 0.0, 'Tilt solution file used']
+KW_EM_MINWAVE = ['MINLAM', 0.0, 'Minimum lambda used in mask [nm]']
+KW_EM_MAXWAVE = ['MAXLAM', 0.0, 'Maximum lambda used in mask [nm]']
+KW_EM_TRASCUT = ['TRANSCUT', 0.0, 'Minimum transmission used in mask']
 
 
 # -----------------------------------------------------------------------------
 # Define qc variables
 # -----------------------------------------------------------------------------
-kw_drs_QC = ['QC', 'PASSED', 'QCcontr']
+KW_DRS_QC = ['QC', 'PASSED', 'QCcontr']
 
 
 # -----------------------------------------------------------------------------
 # Define output
 # -----------------------------------------------------------------------------
-kw_DARKFILE = ['DARKFILE', '', 'DARK_DARK file used for correction']
-kw_BADPFILE1 = ['BADFILE1', '', 'FLAT_FLAT file used for BADPIX corr']
-kw_BADPFILE2 = ['BADFILE2', '', 'DARK_DARK file used for BADPIX corr']
-kw_LOCOFILE = ['LOCOFILE', '', 'DARK_FLAT/FLAT_DARK file used for localisation']
-kw_TILTFILE = ['TILTFILE', '', 'FP_FP file used for TILT']
-kw_SHAPEFILE = ['SHAPFILE', '', 'FP_FP file used for SHAPE']
-kw_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
-kw_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
-kw_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
-kw_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
-kw_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used in header keys']
-kw_INFILE = ['INFILE', '', 'Input file userd to create output']
-kw_INFILELIST = ['FILE', '', 'Input file list']
-kw_HCFILE = ['HCFILE', '', 'HC file used to create output']
-kw_FPFILE = ['FPFILE', '', 'FP file used to create output']
+KW_DARKFILE = ['DARKFILE', '', 'DARK_DARK file used for correction']
+KW_BADPFILE1 = ['BADFILE1', '', 'FLAT_FLAT file used for BADPIX corr']
+KW_BADPFILE2 = ['BADFILE2', '', 'DARK_DARK file used for BADPIX corr']
+KW_LOCOFILE = ['LOCOFILE', '', 'DARK_FLAT/FLAT_DARK file used for localisation']
+KW_TILTFILE = ['TILTFILE', '', 'FP_FP file used for TILT']
+KW_SHAPEFILE = ['SHAPFILE', '', 'FP_FP file used for SHAPE']
+KW_BLAZFILE = ['BLAZFILE', '', 'FLAT_FLAT file used for blaze file']
+KW_FLATFILE = ['FLATFILE', '', 'FLAT_FLAT file used for flat file']
+KW_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
+KW_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
+KW_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used in header keys']
+KW_INFILE = ['INFILE', '', 'Input file userd to create output']
+KW_INFILELIST = ['FILE', '', 'Input file list']
+KW_HCFILE = ['HCFILE', '', 'HC file used to create output']
+KW_FPFILE = ['FPFILE', '', 'FP file used to create output']
 
-kw_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
-kw_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
+KW_OUTPUT = ['DRSOUTID', '', 'DRS output identification code']
+KW_EXT_TYPE = ['DRS_EOUT', '', 'DRS Extraction input DPRTYPE']
 
 
 # =============================================================================
@@ -696,16 +692,16 @@ def test_keywords():
 def generate_use_keys():
     """
     Generate sorted USE_KEYS list from all variables in the memory with
-    'kw_' prefix. Note should have a fresh python instance running to avoid
+    'KW_' prefix. Note should have a fresh python instance running to avoid
     unwanted variables. Only for use in creating the list USE_KEYS for this
     code!
 
-    :return use_keys: list of strings, list of all keys with 'kw_' in their name
+    :return use_keys: list of strings, list of all keys with 'KW_' in their name
     """
     all_locals = np.sort(list(globals().keys()))
     use_keys = []
     for lkey in all_locals:
-        if 'kw_' in lkey:
+        if 'KW_' in lkey:
             use_keys.append(lkey)
     return use_keys
 
