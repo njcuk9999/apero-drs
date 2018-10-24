@@ -654,7 +654,7 @@ def unit_test_cal_exposure_meter(rname, inputs):
     """
     # define name and arguments
     name = 'cal_exposure_meter'
-    arg_names = ['night_name', 'reffile']
+    arg_names = ['night_name', 'flatfile']
     arg_types = [str, str]
 
     # get arguments
@@ -678,7 +678,7 @@ def unit_test_cal_wave_mapper(rname, inputs):
     """
     # define name and arguments
     name = 'cal_wave_mapper'
-    arg_names = ['night_name', 'reffile', 'e2dsprefix']
+    arg_names = ['night_name', 'flatfile', 'e2dsprefix']
     arg_types = [str, str, str]
 
     # get arguments
