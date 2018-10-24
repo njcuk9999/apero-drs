@@ -115,6 +115,7 @@ USE_KEYS = ['kw_ACQTIME_KEY',
             'kw_GAIN',
             'kw_HCFILE',
             'kw_INFILE',
+            'kw_INFILELIST',
             'kw_LOCOFILE',
             'kw_LOCO_BCKGRD',
             'kw_LOCO_CTR_COEFF',
@@ -662,6 +663,7 @@ kw_EXTFILE = ['EXTRFILE', '', 'Input file used to create extraction']
 kw_REFFILE = ['REFRFILE', '', 'Reference file used to create drift file']
 kw_WAVEFILE = ['WAVEFILE', 0.0, 'Wavelength solution file used in header keys']
 kw_INFILE = ['INFILE', '', 'Input file userd to create output']
+kw_INFILELIST = ['FILE', '', 'Input file list']
 kw_HCFILE = ['HCFILE', '', 'HC file used to create output']
 kw_FPFILE = ['FPFILE', '', 'FP file used to create output']
 
