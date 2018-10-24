@@ -340,7 +340,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # get fiber C E2DS filename (assumes we are using AB input)
     try:
-        reffilename = hdr[p['KW_INFILE']]
+        reffilename = hdr[p['KW_INFILE'][0]]
         reffilename = reffilename.replace('AB', 'C')
         abspath = os.path.join(p['ARG_FILE_DIR'], reffilename)
         # print progress
@@ -350,7 +350,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         speref, chdr, ccdr, nbo, nx = spirouImage.ReadData(p, abspath)
     except KeyError:
         emsg = 'Cannot find key "{0}" in header of file={1}'
-        eargs = [p['KW_INFILE'], e2dsfilename]
+        eargs = [p['KW_INFILE'][0], e2dsfilename]
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
         speref, chdr, ccdr = None, None, None
 
