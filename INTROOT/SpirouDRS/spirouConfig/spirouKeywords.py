@@ -575,9 +575,9 @@ kw_OBJFILELIST = ['FILE', None, 'Input file list']
 kw_OBJBERVLIST = ['BERV', None, 'Input file BERV list']
 
 # Options input into tellu
-kw_TELLU_NPC = ['TELLUNPC', None, 'Number of Principle Components used']
-kw_TELLU_FIT_DPC = ['TELLUFDPC', None, 'Fit derivs instead of principle comps.']
-kw_TELLU_ADD_DPC = ['TELLUADPC', None, 'Add 1st+2nd derivs to principle comps.']
+kw_TELLU_NPC = ['TELLNPC', None, 'Number of Principle Components used']
+kw_TELLU_FIT_DPC = ['TELLFDPC', None, 'Fit derivs instead of principle comps.']
+kw_TELLU_ADD_DPC = ['TELLADPC', None, 'Add 1st+2nd derivs to principle comps.']
 
 # -----------------------------------------------------------------------------
 # Define polarimetry variables
