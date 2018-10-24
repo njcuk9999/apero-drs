@@ -49,7 +49,7 @@ def main(night_name=None, flatfile=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
-    name, lname = ['reffile'], ['Reference file']
+    name, lname = ['flatfile'], ['Reference file']
     req, call, call_priority = [True], [flatfile], [True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], name, req, call,
