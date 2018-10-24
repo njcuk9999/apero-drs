@@ -38,7 +38,7 @@ EXIT = os._exit
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(debug_mode=0):
+def main(check=1, debug_mode=0):
     """
     cal_validate_spirou.py main function, if debug mode is None uses
     arguments from run time i.e.:
@@ -51,259 +51,260 @@ def main(debug_mode=0):
     :return ll: dictionary, containing all the local variables defined in
                 main
     """
-    # print log
-    print(' *****************************************')
-    print(' *        VALIDATING DRS ')
-    if DEBUG:
-        print(' * ')
-        print(' *     (DEBUG MODE ACTIVE) ')
-    print(' *****************************************')
-    # -------------------------------------------------------------------------
-    # Module tests
-    # -------------------------------------------------------------------------
-    print(' \n0) Checking dependencies...')
-    # loop around modules
-    passed = False
-    for module in list(MODULES.keys()):
-        # get required version
-        reqversion = MODULES[module]
-        # test for module and minimum version
-        passed = module_test(module, reqversion)
-    if not passed:
-        EXIT(1)
+    if check:
+        # print log
+        print(' *****************************************')
+        print(' *        VALIDATING DRS ')
+        if DEBUG:
+            print(' * ')
+            print(' *     (DEBUG MODE ACTIVE) ')
+        print(' *****************************************')
+        # ---------------------------------------------------------------------
+        # Module tests
+        # ---------------------------------------------------------------------
+        print(' \n0) Checking dependencies...')
+        # loop around modules
+        passed = False
+        for module in list(MODULES.keys()):
+            # get required version
+            reqversion = MODULES[module]
+            # test for module and minimum version
+            passed = module_test(module, reqversion)
+        if not passed:
+            EXIT(1)
 
-    # Check imports
-    print('\n1) Running core module tests')
-    # -------------------------------------------------------------------------
-    # SpirouDRS
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        import SpirouDRS
-        if debug_mode:
-            debug_message(SpirouDRS.__NAME__)
-    except ImportError as e:
-        print('Fatal error cannot import SpirouDRS')
-        print('INSTALL folder must be on PYTHONPATH')
-        EXIT(1)
-    # if other exception try to read constants file and check paths
-    except Exception as e:
-        print('\tInstallation failed with message')
-        print('\t{0}'.format(e))
-        EXIT(1)
+        # Check imports
+        print('\n1) Running core module tests')
+        # ---------------------------------------------------------------------
+        # SpirouDRS
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            import SpirouDRS
+            if debug_mode:
+                debug_message(SpirouDRS.__NAME__)
+        except ImportError as e:
+            print('Fatal error cannot import SpirouDRS')
+            print('INSTALL folder must be on PYTHONPATH')
+            EXIT(1)
+        # if other exception try to read constants file and check paths
+        except Exception as e:
+            print('\tInstallation failed with message')
+            print('\t{0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouConfig
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouConfig
-        if debug_mode:
-            debug_message(spirouConfig.__NAME__)
-            debug_message(spirouConfig.spirouConfig.__NAME__, True)
-            debug_message(spirouConfig.spirouKeywords.__NAME__, True)
-            debug_message(spirouConfig.spirouConst.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouConfig from SpirouDRS')
-        print('Error was: {0}'.format(e))
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouConfig
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouConfig
+            if debug_mode:
+                debug_message(spirouConfig.__NAME__)
+                debug_message(spirouConfig.spirouConfig.__NAME__, True)
+                debug_message(spirouConfig.spirouKeywords.__NAME__, True)
+                debug_message(spirouConfig.spirouConst.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouConfig from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouCore
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouCore
-        if debug_mode:
-            debug_message(spirouCore.__NAME__)
-            debug_message(spirouCore.spirouLog.__NAME__, True)
-            debug_message(spirouCore.spirouPlot.__NAME__, True)
-            debug_message(spirouCore.spirouMath.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouCore from SpirouDRS')
-        print('Error was: {0}'.format(e))
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouCore
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouCore
+            if debug_mode:
+                debug_message(spirouCore.__NAME__)
+                debug_message(spirouCore.spirouLog.__NAME__, True)
+                debug_message(spirouCore.spirouPlot.__NAME__, True)
+                debug_message(spirouCore.spirouMath.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouCore from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # test constants
-    # -------------------------------------------------------------------------
-    print('\n2) Running config test')
-    constants = try_to_read_config_file()
-    test_paths(constants)
+        # ---------------------------------------------------------------------
+        # test constants
+        # ---------------------------------------------------------------------
+        print('\n2) Running config test')
+        constants = try_to_read_config_file()
+        test_paths(constants)
 
-    # -------------------------------------------------------------------------
-    # spirouBACK
-    # -------------------------------------------------------------------------
-    print('\n3) Running sub-module tests')
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouBACK
-        if debug_mode:
-            debug_message(spirouBACK.__NAME__)
-            debug_message(spirouBACK.spirouBACK.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouBACK from SpirouDRS')
-        print('Error was: {0}'.format(e))   
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouBACK
+        # ---------------------------------------------------------------------
+        print('\n3) Running sub-module tests')
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouBACK
+            if debug_mode:
+                debug_message(spirouBACK.__NAME__)
+                debug_message(spirouBACK.spirouBACK.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouBACK from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouDB
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouDB
-        if debug_mode:
-            debug_message(spirouDB.__NAME__)
-            debug_message(spirouDB.spirouCDB.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouDB from SpirouDRS')
-        print('Error was: {0}'.format(e))   
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouDB
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouDB
+            if debug_mode:
+                debug_message(spirouDB.__NAME__)
+                debug_message(spirouDB.spirouCDB.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouDB from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouEXTOR
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouEXTOR
-        if debug_mode:
-            debug_message(spirouEXTOR.__NAME__)
-            debug_message(spirouEXTOR.spirouEXTOR.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouEXTOR from SpirouDRS')
-        print('Error was: {0}'.format(e))   
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
-    # -------------------------------------------------------------------------
-    # spirouspirouFLAT
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouFLAT
-        if debug_mode:
-            debug_message(spirouFLAT.__NAME__)
-            debug_message(spirouFLAT.spirouFLAT.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouFLAT from SpirouDRS')
-        print('Error was: {0}'.format(e))   
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
-    # -------------------------------------------------------------------------
-    # spirouImage
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouImage
-        if debug_mode:
-            debug_message(spirouImage.__NAME__)
-            debug_message(spirouImage.spirouImage.__NAME__, True)
-            debug_message(spirouImage.spirouFITS.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouImage from SpirouDRS')
-        print('Error was: {0}'.format(e))   
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
-    # -------------------------------------------------------------------------
-    # spirouLOCOR
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouLOCOR
-        if debug_mode:
-            debug_message(spirouLOCOR.__NAME__)
-            debug_message(spirouLOCOR.spirouLOCOR.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouLOCOR from SpirouDRS')
-        print('Error was: {0}'.format(e))   
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouEXTOR
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouEXTOR
+            if debug_mode:
+                debug_message(spirouEXTOR.__NAME__)
+                debug_message(spirouEXTOR.spirouEXTOR.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouEXTOR from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouspirouFLAT
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouFLAT
+            if debug_mode:
+                debug_message(spirouFLAT.__NAME__)
+                debug_message(spirouFLAT.spirouFLAT.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouFLAT from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouImage
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouImage
+            if debug_mode:
+                debug_message(spirouImage.__NAME__)
+                debug_message(spirouImage.spirouImage.__NAME__, True)
+                debug_message(spirouImage.spirouFITS.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouImage from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouLOCOR
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouLOCOR
+            if debug_mode:
+                debug_message(spirouLOCOR.__NAME__)
+                debug_message(spirouLOCOR.spirouLOCOR.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouLOCOR from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouRV
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouRV
-        if debug_mode:
-            debug_message(spirouRV.__NAME__)
-            debug_message(spirouRV.spirouRV.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouRV from SpirouDRS')
-        print('Error was: {0}'.format(e))
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouRV
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouRV
+            if debug_mode:
+                debug_message(spirouRV.__NAME__)
+                debug_message(spirouRV.spirouRV.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouRV from SpirouDRS')
+            print('Error was: {0}'.format(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouStartup
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouStartup
-        if debug_mode:
-            debug_message(spirouStartup.__NAME__)
-            debug_message(spirouStartup.spirouStartup.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouStartup from SpirouDRS')
-        print('Error was: ' + str(e))
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouStartup
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouStartup
+            if debug_mode:
+                debug_message(spirouStartup.__NAME__)
+                debug_message(spirouStartup.spirouStartup.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouStartup from SpirouDRS')
+            print('Error was: ' + str(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # spirouTHORCA
-    # -------------------------------------------------------------------------
-    try:
-        # noinspection PyUnresolvedReferences
-        from SpirouDRS import spirouTHORCA
-        if debug_mode:
-            debug_message(spirouTHORCA.__NAME__)
-            debug_message(spirouTHORCA.spirouTHORCA.__NAME__, True)
-    except ImportError as e:
-        print('Fatal error cannot import spirouTHORCA from SpirouDRS')
-        print('Error was: ' + str(e))
-        EXIT(1)
-    except Exception as e:
-        print('Installation failed with message')
-        print('   {0}'.format(e))
-        EXIT(1)
+        # ---------------------------------------------------------------------
+        # spirouTHORCA
+        # ---------------------------------------------------------------------
+        try:
+            # noinspection PyUnresolvedReferences
+            from SpirouDRS import spirouTHORCA
+            if debug_mode:
+                debug_message(spirouTHORCA.__NAME__)
+                debug_message(spirouTHORCA.spirouTHORCA.__NAME__, True)
+        except ImportError as e:
+            print('Fatal error cannot import spirouTHORCA from SpirouDRS')
+            print('Error was: ' + str(e))
+            EXIT(1)
+        except Exception as e:
+            print('Installation failed with message')
+            print('   {0}'.format(e))
+            EXIT(1)
 
-    # -------------------------------------------------------------------------
-    # Now we have all modules we can print the paths
-    # -------------------------------------------------------------------------
-    print('\n4) Running recipe test')
+        # ---------------------------------------------------------------------
+        # Now we have all modules we can print the paths
+        # ---------------------------------------------------------------------
+        print('\n4) Running recipe test')
 
     # if we have got to this stage all modules load and are present
     from SpirouDRS.spirouStartup import spirouStartup as Startup
@@ -334,21 +335,22 @@ def main(debug_mode=0):
     # -------------------------------------------------------------------------
     # Currently some files are required to run the DRS (calibDB setup)
     # -------------------------------------------------------------------------
+    if check:
+        from SpirouDRS.spirouTools import drs_reset
 
-    from SpirouDRS.spirouTools import drs_reset
-
-    # log and ask user to confirm
-    messages = ['\nFirst time installation?', '\nAdd required files to DRS?\n']
-    inputmessage = '\n\tSetup databases? [Y]es or [N]o\t'
-    uinput = drs_reset.custom_confirmation(messages, inputmessage)
-    # add calibDB files
-    if uinput:
-        drs_reset.reset_calibdb(cparams, log=True)
-        wlog('', __NAME__, 'Calibration database setup correctly.')
-        drs_reset.reset_telludb(cparams, log=True)
-        wlog('', __NAME__, 'Telluric database setup correctly.')
-    else:
-        wlog('', __NAME__, 'Assuming files setup correctly.')
+        # log and ask user to confirm
+        messages = ['\nFirst time installation?',
+                    '\nAdd required files to DRS?\n']
+        inputmessage = '\n\tSetup databases? [Y]es or [N]o\t'
+        uinput = drs_reset.custom_confirmation(messages, inputmessage)
+        # add calibDB files
+        if uinput:
+            drs_reset.reset_calibdb(cparams, log=True)
+            wlog('', __NAME__, 'Calibration database setup correctly.')
+            drs_reset.reset_telludb(cparams, log=True)
+            wlog('', __NAME__, 'Telluric database setup correctly.')
+        else:
+            wlog('', __NAME__, 'Assuming files setup correctly.')
 
     # -------------------------------------------------------------------------
     # return a copy of locally defined variables in the memory
@@ -484,15 +486,25 @@ def convert_version_to_list(v):
 if __name__ == "__main__":
     # if there is an argument it is the debug mode so try to convert it to
     #   boolean logic True/False
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         try:
-            debug = bool(eval(sys.argv[1]))
+            check = bool(eval(sys.argv[1]))
+            debug = bool(eval(sys.argv[2]))
         except Exception:
+            check = 1
             debug = DEBUG
+
+    elif len(sys.argv) == 2:
+        try:
+            check = bool(eval(sys.argv[1]))
+        except Exception:
+            check = 1
+        debug = DEBUG
     else:
+        check = 1
         debug = DEBUG
     # run main with no arguments (get from command line - sys.argv)
-    ll = main(debug_mode=debug)
+    ll = main(check=check, debug_mode=debug)
 
 # =============================================================================
 # End of code
