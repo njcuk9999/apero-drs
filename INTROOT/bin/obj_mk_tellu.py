@@ -123,6 +123,35 @@ def main(night_name=None, files=None):
         spirouDB.PutTelluFile(p, loc['TAPAS_ABSNAME'])
 
     # ------------------------------------------------------------------
+    # Get master wave solution map
+    # ------------------------------------------------------------------
+    # get master wave map
+    masterwavefile = spirouDB.GetDatabaseMasterWave(p)
+    # log process
+    wmsg1 = 'Shifting transmission map on to master wavelength grid'
+    wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
+    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                       return_wavemap=True, quiet=True,
+                                       return_header=True, fiber=wave_fiber)
+    masterwavep, masterwave, masterwaveheader = mout
+    # get wave acqtimes
+    master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                       return_wavemap=True, quiet=True,
+                                       return_header=True, fiber=wave_fiber)
+    masterwavep, masterwave, masterwaveheader = mout
+    # get wave acqtimes
+    master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
+
+    # ------------------------------------------------------------------
     # Loop around the files
     # ------------------------------------------------------------------
     # construct extension
@@ -147,9 +176,26 @@ def main(night_name=None, files=None):
         sp, shdr, scdr, _, _ = spirouImage.ReadImage(p, filename)
         # divide my blaze
         sp = sp / loc['BLAZE']
+
+        # ------------------------------------------------------------------
+        # Get the wave solution
+        # ------------------------------------------------------------------
+        wout = spirouImage.GetWaveSolution(p, image=sp, hdr=shdr,
+                                           return_wavemap=True,
+                                           return_filename=True)
+        _, loc['WAVE_IT'], loc['WAVEFILE_IT'] = wout
+        loc.set_sources(['WAVE_IT', 'WAVEFILE_IT'], main_name)
+
+        # ------------------------------------------------------------------
+        # Shift data to master wave file
+        # ------------------------------------------------------------------
+        # shift map
+        wargs = [sp, loc['WAVE_IT'], masterwave]
+        sp = spirouTelluric.Wave2Wave(*wargs)
         loc['SP'] = np.array(sp)
         loc.set_source('SP', main_name)
 
+        # ------------------------------------------------------------------
         # get output transmission filename
         outfile, tag1 = spirouConfig.Constants.TELLU_TRANS_MAP_FILE(p, filename)
         outfilename = os.path.basename(outfile)
@@ -213,6 +259,14 @@ def main(night_name=None, files=None):
             for it in range(p['N_ITER_SED_HOTSTAR']):
                 # copy the spectrum
                 sp2 = np.array(sp[order_num, :])
+                # flag Nans
+                nanmask = ~np.isfinite(sp2)
+                # set all NaNs to zero so that it does not propagate when
+                #     we convlve by KER2 - must set sp2[bad] to zero as
+                #     NaN * 0.0 = NaN and we want 0.0!
+                sp2[nanmask] = 0.0
+                # trace the invalid points
+                fmask[nanmask] = 0.0
                 # multiple by the float mask
                 sp2 *= fmask
                 # convolve with the second kernel
@@ -225,14 +279,16 @@ def main(night_name=None, files=None):
                 # set zero pixels to 1
                 sp2bw[sp2b == 0] = 1
                 # recalculate the mask using the deviation from original
-                dev = (sp2bw - sp[order_num, :] / sed)
-                dev /= np.nanmedian(np.abs(dev))
-                mask = mask1 * (np.abs(dev) < p['TELLU_SIGMA_DEV'])
+                with warnings.catch_warnings(record=True) as _:
+                    dev = (sp2bw - sp[order_num, :] / sed)
+                    dev /= np.nanmedian(np.abs(dev))
+                    mask = mask1 * (np.abs(dev) < p['TELLU_SIGMA_DEV'])
                 # update the SED with the corrected spectrum
                 sed *= sp2bw
             # identify bad pixels
-            bad = (sp[order_num, :] / sed[:] > 1.2)
-            sed[bad] = np.nan
+            with warnings.catch_warnings(record=True) as _:
+                bad = (sp[order_num, :] / sed[:] > 1.2)
+                sed[bad] = np.nan
 
             # debug plot
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1) and FORCE_PLOT_ON:
@@ -262,32 +318,6 @@ def main(night_name=None, files=None):
             wargs = [order_num, ec_rms]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
-        # ------------------------------------------------------------------
-        # Shift transmisson map to master wave file
-        # ------------------------------------------------------------------
-        # TODO: Add later
-        # get master wave map
-        masterwavefile = spirouDB.GetDatabaseMasterWave(p)
-        # log process
-        wmsg1 = 'Shifting transmission map on to master wavelength grid'
-        wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
-        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
-        # Force A and B to AB solution
-        if p['FIBER'] in ['A', 'B']:
-            wave_fiber = 'AB'
-        else:
-            wave_fiber = p['FIBER']
-        # read master wave map
-        mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
-                                           return_wavemap=True, quiet=True,
-                                           return_header=True, fiber=wave_fiber)
-        masterwavep, masterwave, masterwaveheader = mout
-        # get wave acqtimes
-        master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
-
-        # shift map
-        wargs = [transmission_map, loc['WAVE'], masterwave]
-        s_transmission_map = spirouTelluric.Wave2Wave(*wargs)
 
         # ------------------------------------------------------------------
         # Save transmission map to file
@@ -320,13 +350,13 @@ def main(night_name=None, files=None):
         hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                          values=masterwavep)
         # write to file
-        p = spirouImage.WriteImage(p, outfile, s_transmission_map, hdict)
+        p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
 
         # ------------------------------------------------------------------
         # Generate the absorption map
         # ------------------------------------------------------------------
         # set up storage for the absorption
-        abso = np.array(s_transmission_map)
+        abso = np.array(transmission_map)
         # set values less than low threshold to low threshold
         # set values higher than high threshold to 1
         low, high = p['TELLU_ABSO_LOW_THRES'], p['TELLU_ABSO_HIGH_THRES']

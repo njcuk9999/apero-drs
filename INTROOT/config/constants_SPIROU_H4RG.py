@@ -728,6 +728,12 @@ em_save_tell_spec = True
 #  Define whether to save the exposure meter mask                     - [cal_em]
 em_save_mask_map = True
 
+#  Define whether to normalise the flux                      - [cal_wave_mapper]
+em_norm_flux = False
+
+#  Define whether to multiple by flat                        - [cal_wave_mapper]
+em_flat_correction = True
+
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
 # -----------------------------------------------------------------------------

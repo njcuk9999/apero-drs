@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.043'
+__version__ =  '0.3.049'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-10-19'
+__date__ =  '2018-10-25'
 
 
 # =============================================================================
@@ -1460,6 +1460,20 @@ def EM_MASK_FILE(p):
     tag = tags[func_name] + '_{0}'.format(kind)
     # return absolute path and tag
     return fitsfile, tag
+
+
+# noinspection PyPep8Naming
+def EM_ORDERPROFILE_TMP_FILE(p):
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get localisation name
+    locofile = p['LOCOFILE'].replace('.fits', '')
+    # construct file name
+    filename = 'em_orderp_map_{0}.npy'.format(locofile)
+    # construct absolute path
+    abspath = os.path.join(redfolder, filename)
+    # return absolute path
+    return abspath
 
 
 # noinspection PyPep8Naming

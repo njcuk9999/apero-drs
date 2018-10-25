@@ -420,8 +420,9 @@ def main(night_name=None, files=None):
         #           AMPS_ABSOL_TOTAL
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
-        if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+        if p['DRS_PLOT']:
             # plot the recon abso plot
+            # TODO: Question - Is this plot broken???
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
         # ------------------------------------------------------------------
@@ -452,6 +453,11 @@ def main(night_name=None, files=None):
                                    value=loc['WAVEFILE'])
         # set tellu keys
         npc = loc['NPC']
+        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_NPC'], value=npc)
+        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_FIT_DPC'],
+                                   value=p['FIT_DERIV_PC'])
+        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_ADD_DPC'],
+                                   value=p['ADD_DERIV_PC'])
         if p['ADD_DERIV_PC']:
             values = loc['AMPS_ABSOL_TOTAL'][:npc - 2]
             hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
@@ -476,6 +482,9 @@ def main(night_name=None, files=None):
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        # log progress
+        wmsg = 'Saving {0} to file'.format(outfilename1)
+        WLOG('', p['LOG_OPT'], wmsg)
         # write sp_out to file
         p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
 
@@ -505,6 +514,9 @@ def main(night_name=None, files=None):
                 # set source
                 loc.set_source('WATERCOL', main_name)
 
+        # log progress
+        wmsg = 'Saving {0} to file'.format(outfilename2)
+        WLOG('', p['LOG_OPT'], wmsg)
         # write recon_abso to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)

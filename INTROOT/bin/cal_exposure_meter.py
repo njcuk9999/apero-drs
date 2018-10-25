@@ -42,25 +42,25 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define main program function
 # =============================================================================
-def main(night_name=None, reffile=None):
+def main(night_name=None, flatfile=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
-    name, lname = ['reffile'], ['Reference file']
-    req, call, call_priority = [True], [reffile], [True]
+    name, lname = ['flatfile'], ['Reference file']
+    req, call, call_priority = [True], [flatfile], [True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], name, req, call,
                                                     call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='reffile')
+                                    mainfitsfile='flatfile')
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
+    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'])
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -119,16 +119,22 @@ def main(night_name=None, reffile=None):
     WLOG('', p['LOG_OPT'], wmsg.format(*image2.shape))
 
     # ----------------------------------------------------------------------
-    # Read tilt slit angle
+    # Read shape or tilt slit angle
     # ----------------------------------------------------------------------
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
-    # get tilts
-    p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('TILT', tsource)
-    # set number of orders from tilt length
-    loc['NBO'] = len(loc['TILT'])
-    loc.set_source('NBO', __NAME__ + '/main()')
+
+
+    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
+        # get the shape map
+        p, loc['SHAPE'] = spirouImage.ReadShapeMap(p, hdr)
+        loc.set_source('SHAPE', tsource)
+    else:
+        # get tilts
+        p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+        loc.set_source('TILT', tsource)
 
     # ----------------------------------------------------------------------
     # Read blaze
@@ -136,6 +142,10 @@ def main(night_name=None, reffile=None):
     # get tilts
     p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+    # set number of orders from blaze file
+    loc['NBO'] = loc['BLAZE'].shape[0]
+    loc.set_source('NBO', __NAME__ + '/main()')
+
 
     # ------------------------------------------------------------------
     # Read wavelength solution
@@ -150,8 +160,8 @@ def main(night_name=None, reffile=None):
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
-    _, loc['WAVE'], loc['WAVEFILE'] = wout
-    loc.set_sources(['WAVE', 'WAVEFILE'], wsource)
+    loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
+    loc.set_sources(['WAVEPARAMS', 'WAVE', 'WAVEFILE'], wsource)
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -186,7 +196,7 @@ def main(night_name=None, reffile=None):
     loc = spirouExM.order_profile(p, loc)
 
     # ------------------------------------------------------------------
-    # Make 2D map of wavelengths accounting for tilt
+    # Make 2D map of wavelengths accounting for shape / tilt
     # ------------------------------------------------------------------
     # log progress
     WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
@@ -223,7 +233,11 @@ def main(night_name=None, reffile=None):
     # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+    if loc['SHAPE'] is not None:
+        hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'],
+                                   value=p['SHAPFILE'])
+    else:
+        hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
@@ -247,10 +261,10 @@ def main(night_name=None, reffile=None):
     # add bad pixel map (if required)
     if p['EM_COMBINED_BADPIX']:
         # get bad pix mask (True where bad)
-        badpixmask = spirouImage.GetBadPixMap(p, hdr)
+        badpixmask, bhdr = spirouImage.GetBadPixMap(p, hdr)
         goodpixels = badpixmask == 0
         # apply mask (multiply)
-        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels
+        loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'] & goodpixels.astype(bool)
 
     # convert waveimage mask into float array
     loc['TELL_MASK_2D'] = loc['TELL_MASK_2D'].astype('float')
@@ -285,6 +299,8 @@ def main(night_name=None, reffile=None):
             if p['EM_SAVE_TELL_SPEC']:
                 WLOG('', p['LOG_OPT'], 'Resizing/Flipping SPE')
                 out_spe = spirouExM.unresize(p, out_spe, **kk)
+                WLOG('', p['LOG_OPT'], 'Rescaling SPE')
+                out_spe = out_spe / (p['GAIN'] * p['EXPTIME'])
             if p['EM_SAVE_WAVE_MAP']:
                 WLOG('', p['LOG_OPT'], 'Resizing/Flipping WAVEIMAGE')
                 out_wave = spirouExM.unresize(p, out_wave, **kk)

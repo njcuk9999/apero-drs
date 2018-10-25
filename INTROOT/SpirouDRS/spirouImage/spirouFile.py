@@ -355,7 +355,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             filename = tmpfile
             # narrow down control options
             control = control[control['kind'] == 'RAW']
-            kind = 'raw'
+            kind = 'tmp'
         # if reducedfile exists we can narrow down the options
         elif os.path.exists(reducedfile):
             filename = reducedfile
@@ -383,8 +383,9 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
 
     # check if we still have options
     if len(control) == 0:
-        emsg1 = 'File "{0}" is a {1} file.'.format(basefilename, kind)
-        emsg2 = 'Not valid for recipe "{0}"'.format(recipe)
+        emsg1 = ('File "{0}" was found in the "{1}" directory.'
+                 ''.format(basefilename, kind))
+        emsg2 = 'Not a valid directory for recipe "{0}"'.format(recipe)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # ---------------------------------------------------------------------
