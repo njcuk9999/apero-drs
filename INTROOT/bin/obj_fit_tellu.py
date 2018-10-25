@@ -420,8 +420,9 @@ def main(night_name=None, files=None):
         #           AMPS_ABSOL_TOTAL
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
-        if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+        if p['DRS_PLOT']:
             # plot the recon abso plot
+            # TODO: Question - Is this plot broken???
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
         # ------------------------------------------------------------------
