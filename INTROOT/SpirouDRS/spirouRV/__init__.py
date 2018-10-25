@@ -25,7 +25,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 # define imports using asterisk
 __all__ = ['CalcRVdrift2D', 'Coravelation', 'CreateDriftFile',
            'DeltaVrms2D', 'DriftPerOrder', 'DriftAllOrders',
-           'FitCCF', 'GetDrift', 'GetCCFMask',
+           'FitCCF', 'GetDrift', 'GetCCFMask', 'GetFiberC_E2DSName',
            'PearsonRtest', 'RemoveWidePeaks', 'RemoveZeroPeaks',
            'ReNormCosmic2D', 'SigmaClip']
 
@@ -49,6 +49,8 @@ FitCCF = spirouRV.fit_ccf
 GetDrift = spirouRV.get_drift
 
 GetCCFMask = spirouRV.get_ccf_mask
+
+GetFiberC_E2DSName = spirouRV.get_fiberc_e2ds_name
 
 PearsonRtest = spirouRV.pearson_rtest
 

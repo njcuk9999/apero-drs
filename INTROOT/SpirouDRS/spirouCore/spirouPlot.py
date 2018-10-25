@@ -2300,12 +2300,26 @@ def tellu_fit_tellu_spline_plot(p, loc):
 
 
 def tellu_fit_debug_shift_plot(p, loc):
+    # get constants from p
+    s_order = p['TELLU_PLOT_ORDER']
+
+    ydim, xdim = loc['DATA'].shape
     # get data from loc
-    tdata = loc['SP'] / np.nanmedian(loc['SP'])
+    tdata = loc['SP']
     tapas_before = loc['TAPAS_ALL_PRESHIFT'][0]
     tapas_after = loc['TAPAS_ALL_SPECIES'][0]
-    pc1_before = loc['PC'][:, 0]
-    pc1_after = loc['PC_PRESHIFT'][:, 0]
+    pc1_before = loc['PC_PRESHIFT'][:, 0]
+    pc1_after = loc['PC'][:, 0]
+    # only show selected order
+    # get start and end points
+    start = s_order * xdim
+    end = s_order * xdim + xdim
+    # get this orders data
+    tdata_s = tdata[s_order, :] / np.nanmedian(tdata[s_order, :])
+    tapas_before_s = tapas_before[start:end]
+    tapas_after_S = tapas_after[start:end]
+    pc1_before_s = pc1_before[start:end]
+    pc1_after_s = pc1_after[start:end]
     # setup fig
     plt.figure()
     # clear the current figure
@@ -2313,15 +2327,17 @@ def tellu_fit_debug_shift_plot(p, loc):
     # set up axis
     frame = plt.subplot(111)
     # plot the data vs pixel number
-    frame.plot(tdata, color='k', label='Spectrum')
-    frame.plot(pc1_before, color='g', marker='x', label='PC (before)')
-    frame.plot(tapas_before, color='0.5', marker='o', label='TAPAS (before)')
-    frame.plot(pc1_after, color='r', label='PC (After)')
-    frame.plot(tapas_after, color='b', label='TAPAS (After)')
+    frame.plot(tdata_s, color='k', label='Spectrum')
+    frame.plot(pc1_before_s, color='g', marker='x', label='PC (before)')
+    frame.plot(tapas_before_s, color='0.5', marker='o', label='TAPAS (before)')
+    frame.plot(pc1_after_s, color='r', label='PC (After)')
+    frame.plot(tapas_after_S, color='b', label='TAPAS (After)')
 
-    plt.legend(loc=0)
-    frame.set(title='Wavelength shift (Before and after) compared to the data',
-              xlabel='Pixel number', ylabel='Normalised flux')
+    frame.legend(loc=0)
+    title = ('Wavelength shift (Before and after) compared to the data '
+             '(Order {0})')
+    frame.set(title=title.format(s_order), xlabel='Pixel number',
+              ylabel='Normalised flux')
     # end plotting function properly
     end_plotting()
 

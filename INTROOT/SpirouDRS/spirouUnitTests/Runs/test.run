@@ -2,12 +2,4 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
-run014 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-25', '2279162a_pp_e2ds_C.fits', '2279166c_pp_e2ds_C.fits']
-run015 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-26', '2279326a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
-run047 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_AB.fits', '2305110c_pp_e2ds_AB.fits']
-run048 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_C.fits', '2305110c_pp_e2ds_C.fits']
-run049 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_AB.fits', '2305308c_pp_e2ds_AB.fits']
-run050 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_C.fits', '2305308c_pp_e2ds_C.fits']
-run051 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-23', '2305491a_pp_e2ds_AB.fits', '2305498c_pp_e2ds_AB.fits']
-run053 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-24', '2305552a_pp_e2ds_AB.fits', '2305570c_pp_e2ds_AB.fits']
-run055 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-25', '2305960a_pp_e2ds_AB.fits', '2305967c_pp_e2ds_AB.fits']
+run018b = ['cal_CCF_E2DS_FP_spirou', 'TEST4/20180527', '2279680o_pp_e2dsff_AB_tellu_corrected.fits', 'gl581_Sep18_cleaned.mas', -110, 30, 0.5]
