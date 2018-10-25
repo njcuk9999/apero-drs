@@ -5214,3 +5214,77 @@
 	- spirouKeywords.py - added kw_DRIFT_RV definition to keywords files (for use in cal_CCF_E2DS_FP_spirou.py) (rev.85368dfc)
 	- recipe_control.txt - added cal_CCF_E2DS_FP_spirou to recipe_control - for fiber AB only (will only work with fiber AB) (rev.2260a6e5)
 	- cal_CCF_E2DS_FP_spirou.py - added changes to integrate into DRS (rev.e0ac5640)
+
+
+
+================================================================================
+* Mon Oct 22 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.046
+
+================================================================================
+	- obj_mk_tellu.py - make sure the NaNs do not propagate through to the convolution (NaN * 0.0 = NaN ---> need 0.0) (rev.463bb82d)
+	- obj_mk_tellu.py - make sure the NaNs do not propagate through to the convolution (NaN * 0.0 = NaN ---> need 0.0) (rev.8a42ae8d)
+	- obj_mk_tellu.py - catch warnings as sp now can have nans (rev.16aeefd2)
+	- obj_mk_obj_template.py - change median to nan median and catch warnings with nanmedian of empty stack (all nans) (rev.d192c50d)
+	- obj_mk_tellu.py - catch warnings in dev (nans allowed) (rev.378ec35d)
+	- spirouTelluric.py - kernal resize (rev.0ccbf573)
+	- obj_mk_tellu.py - shift data to master before (to match tapas) - instead of shifting transmission after (rev.0a12fbe4)
+	- spirouUnitRecipes.py - add cal_CCF_E2DS_FP_spirou to unit tests (rev.2dd9812f)
+
+
+
+================================================================================
+* Tue Oct 23 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.047
+
+================================================================================
+	- Cal_Test.run - add cal_wave_mapper to tested recipes (rev.919bab3b)
+	- spirouExoposureMeter.py - use wave parameters instead of wave map + add normalisation option (rev.06bd46d1)
+	- constants_SPIROU_H4RG.py - add constants for normalisation and flat_correction (rev.19d348fb)
+	- cal_exposure_meter.py - try rescale for the flux (Issue #490) (rev.bba4f0f8)
+	- cal_wave_mapper.py - divide through by flat field (on request) and attempt to rescale flux (Issue #490) (rev.92e9da4d)
+	- spirouExoposeMeter.py - Issue #490 - add ability to not re-calculate order profile image (if already processed) + add shape as well as tilt (use shape if in calibDB) (rev.0a1e0cee)
+	- spirouKeywords.py - add infilelist as keyword (For use for pushing input file list to header) (rev.c5ff8dd4)
+	- spirouConst.py - define a tmp file for the order profile map (Issue #490) (rev.29b9fb33)
+	- cal_wave_mapper.py - Issue #490 - add shape + fix badpixel function returns (rev.ce9b02e7)
+	- cal_exposure_meter.py - fix Issue #490 - use shape file + correct output of badpix mask (rev.42d25934)
+
+
+
+================================================================================
+* Wed Oct 24 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.048
+
+================================================================================
+	- spirouRV.py - need to deal with the differing fibers (for now manually) (rev.fc830e27)
+	- spirouRV.py - added function "get_foberc_e2ds_name" to deal with the different file types expected --> need E2DS AB file for C fiber (rev.a1d25393)
+	- spirouPOLAR.py - adjusted calls to headers to not be hard coded (should have been called from p --> spirouKeywords.py) (rev.8dca7843)
+	- spirouKeywords.py - add MJEND keyword (for pol_spirou.py) - also changed naming to all upper case (rev.78325376)
+	- obj_mk_tellu.py - turn off debug plot (rev.0da1f19c)
+	- cal_CCF_E2DS_FP_spirou.py - get correct filename for fiber C (E2DS file only) (rev.5dd7ca94)
+	- cal_validate_spirou.py - add option to check (check=0 just prints paths) (rev.79b84d63)
+	- cal_CCF_E2DS_FP_spirou.py - correct imports and catch warnings (As with cal_CCF_E2DS_spirou) (rev.0bec7905)
+	- cal_CCF_E2DS_FP_spirou.py - correct link to header key in p (rev.4bf1b2f7)
+	- spirouKeywords.py - make tellu header keys shorter (rev.537379cb)
+	- cal_CCF_E2DS_FP_spirou.py - load file C not from a telluric corrected spectrum but from the E2DS itself (using header) (rev.5dad40f9)
+	- spirouExposeMeter.py - fix some pep8 issues (rev.235c55e2)
+	- spirouKeywords.py - add header key definitions for options input in tellu (rev.989d0747)
+	- obj_fit_tellu.py - add extra header keys to know how many components were fit in PCA etc (rev.f5332212)
+	- cal_CCF_E2DS_spirou.py - fix some pep8 convension (rev.1bc50559)
+	- update unit test runs (rev.3f76805e)
+	- spirouUnitRecipes.py - update input name for cal_exposure_meter and cal_wave_mapper (rev.dbf131fd)
+	- cal_exposure_meter.py - correct input name: "reffile" --> "flatfile" (rev.3466c645)
+	- cal_CCF_E2DS_spirou.py + spirouRV.py - catch warnings for NaNs in mean and divide (rev.04cfcd89)
+
+
+
+================================================================================
+* Thu Oct 25 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.049
+
+================================================================================
+	- Tellurics2.run - add a second telluric run - to preprocess, extract and mk_tellu missed tellurics (rev.55e83023)
+	- update test - only 1 telluric test + move others to old_tests (rev.6d297f4e)
+	- spirouTelluric.py - template should be in MASTERWAVE frame not WAVE_IT frame (rev.4ef17b4d)
+	- spirouPlot.py - modify tellu_fit_debug_shift_plot to only plot one order (rev.57997f9c)
+	- recipe_control.txt - allow cal_CCF_E2DS_FP_spirou to use A, B files and TELLU_CORRECTED/POL_ files (rev.d0ad00b1)
+	- update unit tests (rev.059f866a)
+	- obj_fit_telluy.py - todo question about possibly broken plot (rev.d458a499)
+	- spirouFile.py - better error message when wrong directory used for input files (rev.454addce)
+	- new unit_test runs for maestria with missed Gl699 targets (rev.53e80579)
