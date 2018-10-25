@@ -1,15 +1,15 @@
-Update Note Summary - Version 0.3.043 (Since 0.3.027)
-
-
-Not done/not finished/to do:
-
-- problem with shift with wavelength solution found in obj_mk_obj_template
-    - is this a problem with the template making process?
-    - is this a problem with the wavelength solutions?
-    - is this a problem with the calibDB from CFHT?
-    ---> pointing toward from with calibDB from CFHT
+Update Note Summary - Version 0.3.049 (Since 0.3.027)
 
 Done:
+
+- added and integrated cal_CCF_E2DS_FP_spirou.py to the DRS
+    - Works on E2DS, E2DSFF, TELLU_CORRECTED, POL_ for fibers [AB, A, B]
+      requires FP in fiber C but not currently checked
+
+- updated exposure meter and wave mapper to use SHAPE instead of TILT if
+  available (and extraction mode 4a or 4b)
+
+- extra fixes/refinements to obj_mk_tellu, obj_fit_tellu, obj_mk_obj_template
 
 - updated master wavelength solution AB and C (used in calibDB and telluDB)
 

@@ -45,26 +45,26 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define main program function
 # =============================================================================
-def main(night_name=None, reffile=None, e2dsprefix=None):
+def main(night_name=None, flatfile=None, e2dsprefix=None):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
-    name, lname = ['reffile', 'e2dsprefix'], ['Reference file', 'E2DS Prefix']
-    req, call, call_priority = [True, True], [reffile, e2dsprefix], [True, True]
+    name, lname = ['flatfile', 'e2dsprefix'], ['Reference file', 'E2DS Prefix']
+    req, call, call_priority = [True, True], [flatfile, e2dsprefix], [True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0, 1], [str, str], name,
                                                     req, call, call_priority,
                                                     lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='reffile')
+                                    mainfitsfile='flatfile')
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['REFFILE'])
+    p, reffile = spirouStartup.SingleFileSetup(p, filename=p['FLATFILE'])
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -123,16 +123,22 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     WLOG('', p['LOG_OPT'], wmsg.format(*image2.shape))
 
     # ----------------------------------------------------------------------
-    # Read tilt slit angle
+    # Read shape or tilt slit angle
     # ----------------------------------------------------------------------
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
-    # get tilts
-    p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('TILT', tsource)
-    # set number of orders from tilt length
-    loc['NBO'] = len(loc['TILT'])
-    loc.set_source('NBO', __NAME__ + '/main()')
+
+
+    if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
+        # get the shape map
+        p, loc['SHAPE'] = spirouImage.ReadShapeMap(p, hdr)
+        loc.set_source('SHAPE', tsource)
+    else:
+        # get tilts
+        p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+        loc.set_source('TILT', tsource)
 
     # ----------------------------------------------------------------------
     # Read blaze
@@ -140,6 +146,9 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # get tilts
     p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+    # set number of orders from blaze file
+    loc['NBO'] = loc['BLAZE'].shape[0]
+    loc.set_source('NBO', __NAME__ + '/main()')
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -147,11 +156,14 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     # storage for fiber parameters
     loc['ALL_ACC'] = OrderedDict()
     loc['ALL_ASS'] = OrderedDict()
+    loc['E2DSFILENAMES'] = []
     loc['E2DSFILES'] = OrderedDict()
     loc['ALLWAVE'] = OrderedDict()
-    loc.set_sources(['ALL_ACC', 'ALL_ASS', 'E2DSFILES', 'ALLWAVE'],
-                    __NAME__ + '.main()')
+    # set source
+    lkeys = ['ALL_ACC', 'ALL_ASS', 'E2DSFILES', 'E2DSFILENAMES', 'ALLWAVE']
+    loc.set_sources(lkeys, __NAME__ + '.main()')
     # get this fibers parameters
+    ehdr = dict()
     for fiber in p['FIBER_TYPES']:
         p = spirouImage.FiberParams(p, fiber, merge=True)
         # get localisation fit coefficients
@@ -175,29 +187,43 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
                                            fiber=wave_fiber)
         loc['WAVEPARAMS'], loc['WAVE'], loc['WAVEFILE'] = wout
         loc.set_sources(['WAVE', 'WAVEFILE', 'WAVEPARAMS'], wsource)
-        poly_wave_sol = loc['WAVEPARAMS']
 
         # add wave to all waves
         loc['ALLWAVE'][fiber] = loc['WAVE']
         # ------------------------------------------------------------------
         # Get file names
         # ------------------------------------------------------------------
-        # get files using e2ds
-        e2dsfilename = '{0}_{1}.fits'.format(p['E2DSPREFIX'], fiber)
-        e2dsfile = os.path.join(p['REDUCED_DIR'], e2dsfilename)
+
+        if os.path.exists(p['E2DSPREFIX']):
+            e2dsfile = p['E2DSPREFIX']
+            e2dsfilename = os.path.basename(e2dsfile)
+
+        else:
+            # get files using e2ds
+            e2dsfilename = '{0}_{1}.fits'.format(p['E2DSPREFIX'], fiber)
+            e2dsfile = os.path.join(p['REDUCED_DIR'], e2dsfilename)
+            # check if file exists - if it doesn't raise exception
+            if not os.path.exists(e2dsfile):
+                emsg1 = 'File {0} does not exist in directory {1}'
+                emsg2 = '\tcheck E2DSPREFIX (Input argument 2)'
+                emsg3 = '\tE2DSPREFIX = {0}'
+                emsgs = [emsg1.format(e2dsfile, p['REDUCED_DIR']),
+                         emsg2, emsg3.format(p['E2DSPREFIX'])]
+                WLOG('error', p['LOG_OPT'], emsgs)
         # get data
-        e2dsdata, hdr, cdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
+        e2dsdata, ehdr, ecdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
         # store data
         loc['E2DSFILES'][fiber] = e2dsdata
+        loc['E2DSFILENAMES'].append(e2dsfilename)
 
-    # ------------------------------------------------------------------
-    # Get telluric and telluric mask and add to loc
-    # ------------------------------------------------------------------
-    # log process
-    wmsg = 'Loading telluric model and locating "good" tranmission'
-    WLOG('', p['LOG_OPT'], wmsg)
-    # load telluric and get mask (add to loc)
-    loc = spirouExM.get_telluric(p, loc)
+    # # ------------------------------------------------------------------
+    # # Get telluric and telluric mask and add to loc
+    # # ------------------------------------------------------------------
+    # # log process
+    # wmsg = 'Loading telluric model and locating "good" tranmission'
+    # WLOG('', p['LOG_OPT'], wmsg)
+    # # load telluric and get mask (add to loc)
+    # loc = spirouExM.get_telluric(p, loc)
 
     # ------------------------------------------------------------------
     # Make 2D map of orders
@@ -208,7 +234,7 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     loc = spirouExM.order_profile(p, loc)
 
     # ------------------------------------------------------------------
-    # Make 2D map of wavelengths accounting for tilt
+    # Make 2D map of wavelengths accounting for shape / tilt
     # ------------------------------------------------------------------
     # log progress
     WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
@@ -221,23 +247,39 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     loc = spirouExM.create_image_from_e2ds(p, loc)
 
     # ------------------------------------------------------------------
+    # Apply the flat field
+    # ------------------------------------------------------------------
+    if p['EM_FLAT_CORRECTION']:
+        # log progress
+        WLOG('', p['LOG_OPT'], 'Correcting for flat={0}'.format(p['FLATFILE']))
+        # normalise flat
+        if p['EM_NORM_FLUX']:
+            image2 = image2 / np.median(image2)
+        # correct for flat
+        loc['SPE'] = loc['SPE'] * image2
+        loc['SPE0'] = loc['SPE0'] * image2
+
+    # ------------------------------------------------------------------
     # Construct parameters for header
     # ------------------------------------------------------------------
     hdict = OrderedDict()
-    # add version number
+    # set the version
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+    if loc['SHAPE'] is not None:
+        hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'],
+                                   value=p['SHAPFILE'])
+    else:
+        hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
     hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
-    # add name of the TAPAS y data
-    hdict = spirouImage.AddKey(hdict, p['KW_EM_TELLY'], value=loc['TELLSPE'])
+    # add input filelist
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_INFILELIST'], dim1name='file',
+                                     values=loc['E2DSFILENAMES'])
     # add name of the localisation fits file used
     hfile = os.path.basename(loc['LOCO_CTR_FILE'])
     hdict = spirouImage.AddKey(hdict, p['kw_EM_LOCFILE'], value=hfile)
-    # add name of the wavelength solution used
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_WAVE'], value=p['WAVEFILE'])
     # add the max and min wavelength threshold
     hdict = spirouImage.AddKey(hdict, p['kw_EM_MINWAVE'],
                                value=p['EM_MIN_LAMBDA'])
@@ -247,9 +289,19 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
     hdict = spirouImage.AddKey(hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])
 
+
     # ------------------------------------------------------------------
     # Deal with output preferences
     # ------------------------------------------------------------------
+    # add bad pixel map (if required)
+    if p['EM_COMBINED_BADPIX']:
+        # get bad pix mask (True where bad)
+        badpixmask, bhdr = spirouImage.GetBadPixMap(p, hdr)
+        goodpixels = badpixmask == 0
+        # apply mask (multiply)
+        loc['SPE'] = loc['SPE'] * goodpixels.astype(float)
+        loc['SPE0'] = loc['SPE0'] * goodpixels.astype(float)
+
     # check EM_OUTPUT_TYPE and deal with set to "all"
     if p['EM_OUTPUT_TYPE'] not in ["drs", "raw", "preprocess", "all"]:
         emsg1 = '"EM_OUTPUT_TYPE" not understood'
@@ -283,6 +335,10 @@ def main(night_name=None, reffile=None, e2dsprefix=None):
             out_spe_0 = spirouExM.unresize(p, out_spe_0, **kk)
             WLOG('', p['LOG_OPT'], 'Resizing/Flipping WAVEIMAGE')
             out_wave = spirouExM.unresize(p, out_wave, **kk)
+            WLOG('', p['LOG_OPT'], 'Rescaling SPE')
+            out_spe = out_spe / (p['GAIN'] * p['EXPTIME'])
+            WLOG('', p['LOG_OPT'], 'Rescaling SPE0')
+            out_spe_0 = out_spe_0 / (p['GAIN'] * p['EXPTIME'])
 
         # if raw need to rotate (undo pre-processing)
         if output == "raw":

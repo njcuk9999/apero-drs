@@ -17,6 +17,7 @@ from __future__ import division
 import numpy as np
 from astropy import constants
 import os
+import warnings
 from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 
 from SpirouDRS import spirouConfig
@@ -216,7 +217,8 @@ def main(night_name=None, files=None):
         big_cube0[:, :, it] = tdata
     # ----------------------------------------------------------------------
     # make median image
-    big_cube_med = np.median(big_cube, axis=2)
+    with warnings.catch_warnings(record=True) as _:
+        big_cube_med = np.nanmedian(big_cube, axis=2)
 
     # ----------------------------------------------------------------------
     # Write Cube median (the template) to file
