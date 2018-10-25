@@ -285,14 +285,14 @@ def berv_correct_template(p, loc, thdr):
         # if we have enough values spline them
         if np.sum(keep) > p['TELLU_FIT_KEEP_FRAC']:
             # define keep wave
-            keepwave = loc['WAVE_IT'][order_num, keep]
+            keepwave = loc['MASTERWAVE'][order_num, keep]
             # define keep temp
             keeptemp = loc['TEMPLATE'][order_num, keep]
             # calculate interpolation for keep temp at keep wave
             spline = IUVSpline(keepwave, keeptemp, ext=3)
             # interpolate at shifted values
-            dvshift = spirouMath.relativistic_waveshift(-dv, units='km/s')
-            waveshift = loc['WAVE_IT'][order_num, :] * dvshift
+            dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
+            waveshift = loc['MASTERWAVE'][order_num, :] * dvshift
             # interpolate at shifted wavelength
             start = order_num * xdim
             end = order_num * xdim + xdim
@@ -363,7 +363,7 @@ def calc_recon_abso(p, loc):
         else:
             template2 = loc['TEMPLATE2']
             # -----------------------------------------------------------------
-            # Shift the template  to correct frame
+            # Shift the template to correct frame
             # -----------------------------------------------------------------
             # log process
             wmsg1 = '\tShifting template on to master wavelength grid'
