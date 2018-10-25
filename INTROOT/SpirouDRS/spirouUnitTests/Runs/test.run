@@ -2,14 +2,31 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
-run014 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-25', '2279162a_pp_e2ds_C.fits', '2279166c_pp_e2ds_C.fits']
-run015 = ['cal_WAVE_E2DS_EA_spirou', '2018-05-26', '2279326a_pp_e2ds_AB.fits', '2279330c_pp_e2ds_AB.fits']
-run047 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_AB.fits', '2305110c_pp_e2ds_AB.fits']
-run048 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-21', '2305103a_pp_e2ds_C.fits', '2305110c_pp_e2ds_C.fits']
-run049 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_AB.fits', '2305308c_pp_e2ds_AB.fits']
-run050 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-22', '2305301a_pp_e2ds_C.fits', '2305308c_pp_e2ds_C.fits']
-run051 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-23', '2305491a_pp_e2ds_AB.fits', '2305498c_pp_e2ds_AB.fits']
-run053 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-24', '2305552a_pp_e2ds_AB.fits', '2305570c_pp_e2ds_AB.fits']
-run055 = ['cal_WAVE_E2DS_EA_spirou', '2018-09-25', '2305960a_pp_e2ds_AB.fits', '2305967c_pp_e2ds_AB.fits']
+# Run Make telluric recipes
+run011a = ['obj_mk_tellu', 'TEST2/20180731', '2294972o_pp_e2dsff_AB.fits']
+run011b = ['obj_mk_tellu', 'TEST2/20180731', '2294973o_pp_e2dsff_AB.fits']
+run011c = ['obj_mk_tellu', 'TEST2/20180801', '2295080o_pp_e2dsff_AB.fits']
+run011d = ['obj_mk_tellu', 'TEST2/20180801', '2295118o_pp_e2dsff_AB.fits']
+run011e = ['obj_mk_tellu', 'TEST2/20180801', '2295124o_pp_e2dsff_AB.fits']
+run011f = ['obj_mk_tellu', 'TEST2/20180801', '2295126o_pp_e2dsff_AB.fits']
+run011g = ['obj_mk_tellu', 'TEST2/20180802', '2295200o_pp_e2dsff_AB.fits']
+run011h = ['obj_mk_tellu', 'TEST2/20180802', '2295243o_pp_e2dsff_AB.fits']
+run011i = ['obj_mk_tellu', 'TEST2/20180802', '2295248o_pp_e2dsff_AB.fits']
+run011j = ['obj_mk_tellu', 'TEST2/20180802', '2295265o_pp_e2dsff_AB.fits']
+run011k = ['obj_mk_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
+run011l = ['obj_mk_tellu', 'TEST2/20180803', '2295353o_pp_e2dsff_AB.fits']
+run011m = ['obj_mk_tellu', 'TEST2/20180803', '2295358o_pp_e2dsff_AB.fits']
+run011n = ['obj_mk_tellu', 'TEST2/20180804', '2295412o_pp_e2dsff_AB.fits']
+run011o = ['obj_mk_tellu', 'TEST2/20180804', '2295470o_pp_e2dsff_AB.fits']
+run011p = ['obj_mk_tellu', 'TEST2/20180804', '2295479o_pp_e2dsff_AB.fits']
+run011q = ['obj_mk_tellu', 'TEST2/20180804', '2295480o_pp_e2dsff_AB.fits']
+run011r = ['obj_mk_tellu', 'TEST2/20180804', '2295485o_pp_e2dsff_AB.fits']
+run011s = ['obj_mk_tellu', 'TEST2/20180804', '2295486o_pp_e2dsff_AB.fits']
+run011t = ['obj_mk_tellu', 'TEST2/20180804', '2295487o_pp_e2dsff_AB.fits']
+run011u = ['obj_mk_tellu', 'TEST2/20180804', '2295492o_pp_e2dsff_AB.fits']
+run011v = ['obj_mk_tellu', 'TEST2/20180804', '2295506o_pp_e2dsff_AB.fits']
+
+# Run Fit telluric recipes on a telluric (to test)
+run012a = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
 
 
