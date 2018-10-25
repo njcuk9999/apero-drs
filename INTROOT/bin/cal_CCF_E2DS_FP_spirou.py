@@ -31,7 +31,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_CCF_E2DS_spirou.py'
+__NAME__ = 'cal_CCF_E2DS_FP_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -94,7 +94,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, e2dsfilename = spirouStartup.SingleFileSetup(p, filename=p['E2DSFILE'])
-#    p, e2dsfilename = spirouStartup.SingleFileSetup(p, filename=p['E2DSFILE'],skipcheck=True)
+    p['E2DSFILENAME'] = e2dsfilename
+    p.set_source('E2DSFILENAME', 'spirouStartup.SingleFileSetup()')
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -106,7 +107,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Deal with optional run time arguments
     # ----------------------------------------------------------------------
     # define default arguments (if ccf_width and ccf_step are not defined
-    # in function call or run time arguments
+    # in function call or run time arguments)
     if 'ccf_width' not in p:
         p['CCF_WIDTH'] = p['IC_CCF_WIDTH']
     if 'ccf_step' not in p:
@@ -145,8 +146,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     #  Earth Velocity calculation
     # ----------------------------------------------------------------------
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
+    p, loc = spirouImage.GetEarthVelocityCorrection(p, loc, hdr)
 
     # ----------------------------------------------------------------------
     # Read wavelength solution
@@ -288,6 +288,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc['MAXCPP'] = np.sum(loc['CCF_MAX'])/np.sum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
+    RV0= float(ccf_res[1])*1.
+
     # get the contrast (ccf fit amplitude)
     loc['CONTRAST'] = np.abs(100*ccf_res[0])
     # get the FWHM value
@@ -336,6 +338,115 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     spirouImage.WriteTable(table, res_table_file, fmt='ascii')
 
     # ----------------------------------------------------------------------
+    # CCF drift on fiber C (FP)
+    # ----------------------------------------------------------------------
+    # get fiber C E2DS filename (assumes we are using AB input)
+    e2dsc_file = spirouRV.GetFiberC_E2DSName(p, hdr)
+    e2dsc_filename = os.path.basename(e2dsc_file)
+    # load the E2DS fiber C data
+    speref, chdr, ccdr, nbo, nx = spirouImage.ReadData(p, e2dsc_file)
+    # change the fiber/wave fiber to fiber C
+    p['FIBER'], wave_fiber = 'C', 'C'
+    # add to loc
+    loc = ParamDict()
+    loc['SPEREF'] = speref
+    loc.set_sources(['speref'], __NAME__ + '/main()')
+    # get the wave solution
+    wout = spirouImage.GetWaveSolution(p, hdr=chdr, return_wavemap=True,
+                                       return_filename=True, fiber=wave_fiber)
+    param_ll, wave_ll, wavefile = wout
+    # save to storage
+    loc['PARAM_LL'], loc['WAVE_LL'], loc['WAVEFILE'] = wout
+    source = __NAME__ + '/main() + spirouTHORCA.GetWaveSolution()'
+    loc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE'], source)
+
+    # ------------------------------------------------------------------
+    # Compute photon noise uncertainty for fiber C (FP)
+    # ------------------------------------------------------------------
+    # set up the arguments for DeltaVrms2D
+    dargs = [loc['SPEREF'], loc['WAVE_LL']]
+    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                   threshold=p['IC_DRIFT_MAXFLUX'])
+    # run DeltaVrms2D
+    dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+    # save to loc
+    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
+    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+    # log the estimated RV uncertainty
+    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+
+    # Use CCF Mask function with drift constants
+    p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+    p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+    p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+    p['CCF_STEP'] = p['DRIFT_CCF_STEP']
+    p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+    p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
+
+    # get the CCF mask from file (check location of mask)
+    loc = spirouRV.GetCCFMask(p, loc)
+    
+    # TODO Check why Blaze makes bugs in correlbin
+    loc['BLAZE'] = np.ones((nbo, nx))
+    # set sources
+    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    loc.set_sources(['blaze'], __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
+    # Do correlation on fiber C (FP)
+    # ----------------------------------------------------------------------
+    # calculate and fit the CCF
+    loc['E2DSFF'] = np.array(loc['SPEREF'])
+    loc.set_source('E2DSFF', __NAME__ + '/main()')
+    p['CCF_FIT_TYPE'] = 1
+    loc['BERV'] = 0.0
+    loc['BERV_MAX'] = 0.0
+    loc['BJD'] = 0.0
+
+    # run the RV coravelation function with these parameters
+    loc = spirouRV.Coravelation(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Update the Correlation stats with values using fiber C (FP) drift
+    # ----------------------------------------------------------------------
+    # get the maximum number of orders to use
+    nbmax = p['CCF_NUM_ORDERS_MAX']
+    # get the average ccf
+    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+    # get the fit for the normalized average ccf
+    ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
+                                       fit_type=1)
+    loc['CCF_RES'] = ccf_res
+    loc['CCF_FIT'] = ccf_fit
+    # get the max cpp
+    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    # get the RV value from the normalised average ccf fit center location
+    loc['RV'] = float(ccf_res[1])
+    # get the contrast (ccf fit amplitude)
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+    # get the FWHM value
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+    # set the source
+    keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
+            'CCF_RES', 'CCF_FIT']
+    loc.set_sources(keys, __NAME__ + '/main()')
+    # ----------------------------------------------------------------------
+    # log the stats
+    wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
+            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+    wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
+    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
+    # rv ccf plot
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # Plot rv vs ccf (and rv vs ccf_fit)
+        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+
+    # ----------------------------------------------------------------------
     # archive ccf to fits file
     # ----------------------------------------------------------------------
     raw_infile = os.path.basename(p['E2DSFILE'])
@@ -367,7 +478,6 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CDELT'], value=rvstep)
     # add ccf stats
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_RV'], value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_RVC'], value=loc['RV'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
@@ -379,6 +489,13 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
     hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
     hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'], value=loc['BERV_MAX'])
+
+    # Add the RV drift from fiber C to CCF header
+    hdict = spirouImage.AddKey(hdict, p['KW_DRIFT_RV'],
+                               value=loc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(hdict, p['KW_CCF_RVC'],
+                               value=RV0-loc['CCF_RES'][1])
+    
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, corfile, data, hdict)
 
@@ -399,6 +516,6 @@ if __name__ == "__main__":
     # exit message if in debug mode
     spirouStartup.Exit(ll)
 
-    # =============================================================================
-    # End of code
-    # =============================================================================
+# =============================================================================
+# End of code
+# =============================================================================
