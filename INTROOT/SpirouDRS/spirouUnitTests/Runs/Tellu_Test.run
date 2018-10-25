@@ -64,10 +64,3 @@ run011v = ['obj_mk_tellu', 'TEST2/20180804', '2295506o_pp_e2dsff_AB.fits']
 
 # Run Fit telluric recipes on a telluric (to test)
 run012a = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits']
-run012b = ['obj_fit_tellu', 'TEST2/20180802', '2295266o_pp_e2dsff_C.fits']
-
-# Test cal_CCF on a telluric (to test)
-run013 = ['cal_CCF_E2DS_spirou', 'TEST2/20180802', '2295266o_pp_e2dsff_AB_tellu_corrected.fits', 'tellurique_test9.mas', 0, 100, 0.5]
-run013 = ['cal_CCF_E2DS_FP_spirou', 'TEST2/20180802', '2295266o_pp_e2dsff_AB.fits', 'tellurique_test9.mas', 0, 100, 0.5]
-
-
