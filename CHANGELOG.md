@@ -5288,3 +5288,17 @@
 	- obj_fit_telluy.py - todo question about possibly broken plot (rev.d458a499)
 	- spirouFile.py - better error message when wrong directory used for input files (rev.454addce)
 	- new unit_test runs for maestria with missed Gl699 targets (rev.53e80579)
+	- update test files - mistake in run018b (rev.2b709e4c)
+	- Gl699_Aug05-A_B.run - unit test run for A and B files (rev.acad317d)
+
+
+
+================================================================================
+* Fri Oct 26 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.050
+
+================================================================================
+	- spirouKeywords.py - add separate set of header keys for the FP analysis (rev.bfa12618)
+	- spirouConst.py - add CCF_FP versions so files are separate (for now) (rev.7d10cf74)
+	- output_keys.py - add new keys for CCF_FP (rev.9494aeab)
+	- spirouConfig.py - define a copy function for ParamDict - copy all keys into new ParamDict (rev.eb344c56)
+	- cal_CCF_E2DS_FP_spirou.py - separate and keep separate the FP analysis (cp and cloc) - including header keys (rev.488a4b49)
