@@ -849,7 +849,7 @@ ic_hc_n_ord_final_2 = 46  # 40    #46
 #          3: Python (conversion of Fortran "fitgaus") - direct fortran gaussj
 #          4: Python (conversion of Fortran "fitgaus") - gaussj Melissa
 #          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
-hc_find_lines_mode = 0
+# hc_find_lines_mode = 0
 
 #  Define first order FP solution is calculated from                - [cal_wave]
 ic_fp_n_ord_start = 0  # 0   # 9
@@ -905,8 +905,11 @@ ic_wave_idrift_rv_cut = 20.0
 pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
 
-# force reading the wave solution from calibDB
+# force reading the wave solution from calibDB              - [cal_HC, cal_wave]
 calib_db_force_wavesol = False
+
+# Define whether to use FP in cal_WAVE solution                     - [cal_wave]
+ic_wave_use_fp = True
 
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
@@ -1129,8 +1132,6 @@ qc_max_dead = 1.0
 qc_max_dark = 1.0
 
 #   Min dark exposure time                                          - [cal_dark]
-#   TODO: This should be set to 599.0
-# qc_dark_time = 599.0
 qc_dark_time = 1.0
 
 #   Maximum points removed in location fit                           - [cal_loc]

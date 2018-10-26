@@ -189,10 +189,6 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
             barycorrpy = None
 
-        # TODO: zmeas needs to be set to the CCF shift result --> NO
-        # TODO: Need parallax and rv? --> NO
-        # TODO barycorrpy needs RA in degree, obs_long East and obs_alt in m
-
         # set up the barycorr arguments
         bkwargs = dict(ra=ra * 15., dec=dec, epoch=equinox, pmra=pmra,
                        pmdec=pmde, px=0.0, rv=0.0, lat=obs_lat,

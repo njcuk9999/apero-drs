@@ -919,7 +919,6 @@ def get_ccf_mask(p, loc, filename=None):
     filename = locate_mask(p, filename)
     # speed of light in km/s
     c = CONSTANT_C / 1000.0
-    # Question: Where is the mask file supposed to be located?
     # get table if not found raise error
     try:
         cols = ['ll_mask_s', 'll_mask_e', 'w_mask']

@@ -348,7 +348,6 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
 
     # ignore truncated comment warning since spirou images have some poorly 
     #   formatted header cards
-    # TODO: This should not be suppressed but dealt with properly!
     w1 = []
     for warning in w:
         wmsg = 'Card is too long, comment will be truncated.'
@@ -1534,7 +1533,7 @@ def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
                   if None uses the value = keywordstore[1]
     :param dim1name: string, the name for dimension 1 (rows), used in FITS rec
                      HEADER comments in form:
-          COMMENT = keywordstore[2] dim1name={row number}
+          comment = keywordstore[2] dim1name={row number}
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
@@ -1582,10 +1581,10 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
                   if None uses the value = keywordstore[1]
     :param dim1name: string, the name for dimension 1 (rows), used in FITS rec
                      HEADER comments in form:
-          COMMENT = keywordstore[2] dim1name={row number} dim2name={col number}
+          comment = keywordstore[2] dim1name={row number} dim2name={col number}
     :param dim2name: string, the name for dimension 2 (cols), used in FITS rec
                      HEADER comments in form:
-          COMMENT = keywordstore[2] dim1name={row number} dim2name={col number}
+          comment = keywordstore[2] dim1name={row number} dim2name={col number}
 
     :return hdict: dictionary, storage for adding to FITS rec
     """
@@ -2017,7 +2016,7 @@ def read_raw_header(filename, headerext=0):
 
     :return hdr: dictionary, the HEADER dictionary of key/value pairs,
                  where the values are the values in the HEADER
-    :return cmt: dictionary,  the COMMENT dictionary from the HEADER fits file
+    :return cmt: dictionary,  the comment dictionary from the HEADER fits file
                  of key/value pairs, where the values are the comments
                  from the HEADER file (for use in copying/writing keys to
                  new file)

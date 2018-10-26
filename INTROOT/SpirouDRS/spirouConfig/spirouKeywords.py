@@ -293,7 +293,6 @@ spirouConfig.check_config(p, USE_PARAMS)
 # -----------------------------------------------------------------------------
 # define the HEADER key for acquisition time (used to get value only)
 #   in format YYYY-mm-dd-HH-MM-SS.ss
-# TODO: This switch will be obsolete after H2RG testing is over
 KW_ACQTIME_KEY = ['DATE', None, '']
 
 # define the HEADER key for acquisition time (used to get value only)

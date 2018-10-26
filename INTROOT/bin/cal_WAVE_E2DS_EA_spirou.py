@@ -283,8 +283,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
-    # TODO: --> Below is not etienne's code!
-
     # ----------------------------------------------------------------------
     # Set up all_lines storage
     # ----------------------------------------------------------------------
@@ -396,51 +394,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         sPlt.wave_littrow_extrap_plot(loc, iteration=1)
 
     # ------------------------------------------------------------------
-    # Join 0-46 and 47-48 solutions
-    # ------------------------------------------------------------------
-
-    # # the littrow extrapolation (for orders > n_ord_final_2)
-    # litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final:]
-    # litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final:]
-    #
-    # # the wavelength solution for n_ord_start - n_ord_final
-    # # taking from loc allows avoiding an if smooth check
-    # ll_out = loc['LL_OUT_1'][n_ord_start:n_ord_final]
-    # param_out = loc['LL_PARAM_1'][n_ord_start:n_ord_final]
-    #
-    # print(np.shape(litt_extrap_sol_param_red))
-    # print(np.shape(param_out))
-    #
-    # # create stack
-    # ll_stack, param_stack = [], []
-    # # wavelength solution for n_ord_start - n_ord_final
-    # if len(ll_out) > 0:
-    #     ll_stack.append(ll_out)
-    #     param_stack.append(param_out)
-    # # add extrapolation from littrow to orders > n_ord_final
-    # if len(litt_extrap_sol_red) > 0:
-    #     ll_stack.append(litt_extrap_sol_red)
-    #     param_stack.append(litt_extrap_sol_param_red)
-    #
-    # # convert stacks to arrays and add to storage
-    # loc['LL_OUT_2'] = np.vstack(ll_stack)
-    # loc['LL_PARAM_2'] = np.vstack(param_stack)
-    # loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
-
-    # TODO can I remove this?
-    #     # rename for compatibility w FP solution functions
-    #    loc['LITTROW_EXTRAP_SOL_1'] = np.vstack(ll_stack)
-    #    loc['LITTROW_EXTRAP_PARAM_1'] = np.vstack(param_stack)
-    loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
-    loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
-
-    # ------------------------------------------------------------------
     # Incorporate FP into solution
     # ------------------------------------------------------------------
-
-    use_fp = True
-
-    if use_fp:
+    # Copy LL_OUT_1 and LL_PARAM_1 into new constants (for FP integration)
+    loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
+    loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
+    # only use FP if switched on in constants file
+    if p['IC_WAVE_USE_FP']:
         # ------------------------------------------------------------------
         # Find FP lines
         # ------------------------------------------------------------------

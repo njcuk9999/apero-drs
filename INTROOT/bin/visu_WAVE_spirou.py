@@ -47,8 +47,7 @@ def main(night_name=None, files=None):
     # Set up
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
-    # TODO add this recipe to recipe control
-    p = spirouStartup.Begin(recipe='cal_HC_E2DS_spirou.py')
+    p = spirouStartup.Begin(recipe=__NAME__)
     # get parameters from configuration files and run time arguments
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,

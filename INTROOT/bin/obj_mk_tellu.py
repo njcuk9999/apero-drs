@@ -554,7 +554,6 @@ def main(night_name=None, files=None):
             # fit the ratio across the points
             cfit = np.polyfit(dvpixels, cc, fitdeg)
             # work out the dv pix
-            # TODO: Is this related to the derivative?
             dvpix = -0.5 * (cfit[1] / cfit[0])
             # log stats
             wmsg = 'File: "{0}", dv={1}'

@@ -1454,11 +1454,6 @@ def locate_bad_pixels_full(p, image):
     :return newimage: numpy array (2D), the mask of the bad pixels
     :return stats: float, the fraction of un-illuminated pixels (percentage)
     """
-
-    # TODO: remove H2RG dependencies
-    # if we are using H2RG we don't need this map
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return np.ones_like(image, dtype=bool), 0
     # log that we are looking for bad pixels
     WLOG('', p['LOG_OPT'], 'Looking for bad pixels in full flat image')
     # get parameters from p
@@ -1517,8 +1512,7 @@ def get_tilt(pp, lloc, image):
 
     """
     nbo = lloc['NUMBER_ORDERS']
-    # storage for "nbcos"
-    # Question: what is nbcos? as it isn't used
+    # storage for "nbcos" (number of cosmic rays detected)
     lloc['NBCOS'] = np.zeros(nbo, dtype=int)
     lloc.set_source('NBCOS', __NAME__ + '/get_tilt()')
     # storage for tilt
@@ -1641,7 +1635,7 @@ def get_shape_map(p, loc):
                 norm = np.nanmedian(np.abs(ribbon[iw, :]))
                 ribbon[iw, :] = ribbon[iw, :] / norm
             # range explored in slopes
-            # TODO: Question: Where does the /8.0 come from?
+            # TODO: question Where does the /8.0 come from?
             sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration

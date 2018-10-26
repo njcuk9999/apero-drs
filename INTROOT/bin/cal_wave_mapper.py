@@ -76,7 +76,6 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # Get the required fiber type from the constants file
     # ----------------------------------------------------------------------
     # get the fiber type (set to AB)
-    # TODO: SET EM_FIB_TYPE to FIBER_TYPES
     p['FIBER'] = p['EM_FIB_TYPE']
     p['FIBER_TYPES'] = ['AB', 'C']
 

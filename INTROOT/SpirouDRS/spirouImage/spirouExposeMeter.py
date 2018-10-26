@@ -255,11 +255,10 @@ def create_wavelength_image(p, loc):
                        shape = (number of rows x number of columns)
                        shape = (y-dimension x x-dimension)
 
-                # TODO: This should be wavelength coefficient array
-                wave: numpy array (2D), the wavelength for each x pixel for each
-                      order.
+                WAVEPARAMS: numpy array (2D), the wavelength coefficents for
+                            order
                       shape = (number of orders x number of columns)
-                      shape = (number of orders x x-dimension)
+                      shape = (number of coefficients in wave solution)
                 acc: numpy array (2D), the fit coefficients array for
                       the centers fit
                       shape = (number of orders x number of fit coefficients)
@@ -449,26 +448,6 @@ def create_wavelength_image(p, loc):
     return loc
 
 
-# TODO: This function should be removed once we have wavelength coefficients
-def fit_wavelength(x, lam, order=5):
-    """
-    Temporary function to fit the wavelength values for each x value
-
-    :param x: numpy array (1D), the x pixel values along the order, must be the
-              same shape as "lam"
-    :param lam: numpy array(1D), the corresponding wavelength value for each
-                x pixel, must be the same shape as "x"
-    :param order: int, the order of the polynomial fit (default = 5)
-
-    :return coeffs: numpy array (1D), the coefficients defining the fit,
-            polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
-    """
-    # fit the coefficients
-    coeffs = np.polyfit(x, lam, order)
-    # return the coefficients
-    return coeffs
-
-
 def create_image_from_waveimage(loc, x, y):
     """
     Takes a spectrum "y" at wavelengths "x" and uses these to interpolate
@@ -501,7 +480,6 @@ def create_image_from_waveimage(loc, x, y):
     for row in range(len(waveimage)):
         # get row values
         rvalues = waveimage[row]
-        # TODO change mask out zeros to NaNs
         # mask out zeros (NaNs in future)
         invalidpixels = (rvalues == 0)
         invalidpixels &= ~np.isfinite(rvalues)
@@ -579,7 +557,6 @@ def create_image_from_e2ds(p, loc):
             for row in range(len(waveimage)):
                 # get row values
                 rvalues = waveimage[row]
-                # TODO change mask out zeros to NaNs
                 # mask out zeros (NaNs in future)
                 invalidpixels = (rvalues == 0)
                 invalidpixels &= ~np.isfinite(rvalues)

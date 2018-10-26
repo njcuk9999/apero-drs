@@ -451,9 +451,6 @@ def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params,
         # (numpy needs them backwards)
         coeffs = params[order_num][::-1]
         # get the y fit using the coefficients for this order and xfit
-        # TODO: Check order of params[i]
-        # Question: This could be wrong - if fit parameters are order
-        # Question: differently
         yfit = np.polyval(coeffs, xfit)
         # add to line list storage
         ll[order_num, :] = yfit
@@ -498,9 +495,6 @@ def get_dll_from_coefficients(params, nx, nbo):
         # get the coefficients for this order and flip them
         coeffs = params[order_num]
         # get the y fit using the coefficients for this order and xfit
-        # TODO: Check order of params[i]
-        # Question: This could be wrong - if fit parameters are order
-        # Question: differently
         yfiti = []
         # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
         for it in range(len(coeffs) - 1):

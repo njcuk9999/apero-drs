@@ -290,16 +290,6 @@ def main(night_name=None, files=None):
         outfilename2 = os.path.basename(outfile2)
 
         # ------------------------------------------------------------------
-        # Skip if output file already exists
-        # ------------------------------------------------------------------
-        # TODO: Do we really want to skip?
-        # if os.path.exists(outfile1):
-        #     # log that file was skipped
-        #     wmsg = 'File "{0}" exist, skipping.'
-        #     WLOG('', p['LOG_OPT'], wmsg.format(outfilename1))
-        #     continue
-
-        # ------------------------------------------------------------------
         # Read filename
         # ------------------------------------------------------------------
         # read image
@@ -422,7 +412,6 @@ def main(night_name=None, files=None):
         # debug plot
         if p['DRS_PLOT']:
             # plot the recon abso plot
-            # TODO: Question - Is this plot broken???
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
         # ------------------------------------------------------------------

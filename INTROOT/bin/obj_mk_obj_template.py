@@ -200,7 +200,6 @@ def main(night_name=None, files=None):
         WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # shift to correct berv
-        # TODO: Should be realivistic
         dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
 
         image = spirouTelluric.Wave2Wave(tdata, loc['WAVE'] * dvshift,
