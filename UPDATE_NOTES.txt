@@ -1,10 +1,12 @@
-Update Note Summary - Version 0.3.049 (Since 0.3.027)
+Update Note Summary - Version 0.3.050 (Since 0.3.027)
 
 Done:
 
 - added and integrated cal_CCF_E2DS_FP_spirou.py to the DRS
     - Works on E2DS, E2DSFF, TELLU_CORRECTED, POL_ for fibers [AB, A, B]
       requires FP in fiber C but not currently checked
+    - Adds a new set of header keys for FP
+    - Now FP analysis kept separate from first CCF analysis
 
 - updated exposure meter and wave mapper to use SHAPE instead of TILT if
   available (and extraction mode 4a or 4b)
