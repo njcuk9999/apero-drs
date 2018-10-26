@@ -75,6 +75,15 @@ USE_KEYS = ['KW_ACQTIME_KEY',
             'KW_CCF_MASK',
             'KW_CCF_MAXCPP',
             'KW_CCF_RV',
+            'KW_CCF_CDELT1',
+            'KW_CCF_CONTRAST1',
+            'KW_CCF_CRVAL1',
+            'KW_CCF_CTYPE1',
+            'KW_CCF_FWHM1',
+            'KW_CCF_LINES1',
+            'KW_CCF_MASK1',
+            'KW_CCF_MAXCPP1',
+            'KW_CCF_RV1',
             'KW_CCF_RVC',
             'KW_CDELT1',
             'KW_CDEN',
@@ -514,18 +523,29 @@ KW_REF_RV = ['DFTREFRV', 0, 'Reference RV [m/s]']
 # -----------------------------------------------------------------------------
 # TODO: Comment this section
 KW_CCF_CTYPE = ['CTYPE1', '', 'Pixel coordinate system']
-KW_CCF_CRVAL = ['CRVAL1', 0, 'Value of ref pixel']
+KW_CCF_CRVAL = ['CRVAL1', 0, 'RV CCF Value of ref pixel']
 KW_CCF_CDELT = ['CDELT1', 0, 'CCF steps [km/s]']
-KW_CCF_RV = ['CCFRV', 0, 'Baryc RV (no drift correction) (km/s)']
-KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
-KW_CCF_FWHM = ['CCFFWHM', 0, 'FWHM of CCF (km/s)']
-KW_CCF_CONTRAST = ['CCFCONTR', 0, 'Contrast of  CCF (%)']
-KW_CCF_MAXCPP = ['CCFMACPP', 0, 'max count/pixel of CCF (e-)']
-KW_CCF_MASK = ['CCFMASK', 0, 'Mask filename']
-KW_CCF_LINES = ['CCFLINES', 0, 'nbr of lines used']
+KW_CCF_RV = ['CCFRV1', 0, 'Baryc RV (no drift correction) (km/s)']
+KW_CCF_FWHM = ['CCFFWHM1', 0, 'FWHM of CCF (km/s)']
+KW_CCF_CONTRAST = ['CCFCONT1', 0, 'Contrast of  CCF (%)']
+KW_CCF_MAXCPP = ['CCFMACP1', 0, 'max count/pixel of CCF (e-)']
+KW_CCF_MASK = ['CCFMASK1', 0, 'Mask filename']
+KW_CCF_LINES = ['CCFLINE1', 0, 'nbr of lines used']
 KW_BERV = ['BERV', 0, 'Barycorrpy BC Velocity']
 KW_BJD = ['BJD', 0, 'Barycorrpy BJD']
 KW_BERV_MAX = ['BERVMAX', 0, 'Barycorrpy Max BC Velocity']
+
+KW_CCF_CTYPE1 = ['CTYPE2', '', 'FP Pixel coordinate system']
+KW_CCF_CRVAL1 = ['CRVAL2', 0, 'FP CCF Value of ref pixel']
+KW_CCF_CDELT1 = ['CDELT2', 0, 'FP CCF steps [km/s]']
+KW_CCF_RV1 = ['CCFRV2', 0, 'FP Drift (km/s)']
+KW_CCF_FWHM1 = ['CCFFWHM2', 0, 'FWHM of FP CCF (km/s)']
+KW_CCF_CONTRAST1 = ['CCFCONT2', 0, 'FP Contrast of  CCF (%)']
+KW_CCF_MAXCPP1 = ['CCFMACP2', 0, 'FP max count/pixel of CCF (e-)']
+KW_CCF_MASK1 = ['CCFMASK2', 0, 'FP Mask filename']
+KW_CCF_LINES1 = ['CCFLINE2', 0, 'FP nbr of lines used']
+
+KW_CCF_RVC = ['CCFRVC', 0, 'Baryc RV (drift corrected) (km/s) ']
 KW_DRIFT_RV = ['RVDRIFT', 0, 'RV simultaneous drift  (km/s)']
 
 # -----------------------------------------------------------------------------

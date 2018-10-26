@@ -74,6 +74,8 @@ DRIFTCCF_E2DS_FITS_FILE = 'DRIFTCCF_E2DS'
 # Defines the CCF file tag
 CCF_FITS_FILE = 'CCF_E2DS'
 CCF_FITS_FILE_FF = 'CCF_E2DS_FF'
+CCF_FP_FITS_FILE = 'CCF_E2DS_FP'
+CCF_FP_FITS_FILE_FF = 'CCF_E2DS_FP_FF'
 
 # Defines the exposure meter telluric spectrum map file tag
 EM_SPE_FILE = 'EM_TELL_SPEC'
