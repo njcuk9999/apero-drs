@@ -309,7 +309,7 @@ def main(night_name=None, files=None):
             # get expected clean rms
             fmaskb = np.array(fmask).astype(bool)
             with warnings.catch_warnings(record=True):
-                zerotrans = np.abs(transmission_map[order_num,fmaskb]-1)
+                zerotrans = np.abs(transmission_map[order_num, fmaskb]-1)
                 ec_rms = np.nanmedian(zerotrans)
                 exp_clean_rms[order_num] = ec_rms
 
@@ -317,7 +317,6 @@ def main(night_name=None, files=None):
             wmsg = 'Order {0}: Fractional RMS in telluric free domain = {1:.3f}'
             wargs = [order_num, ec_rms]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-
 
         # ------------------------------------------------------------------
         # Save transmission map to file

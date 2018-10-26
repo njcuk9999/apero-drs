@@ -239,6 +239,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
+        loc.set_source('WAVE_ACQTIMES', __NAME__ + '.main()')
+        # get the recipe that produced the wave solution
+        if 'WAVECODE' in loc['WAVEHDR']:
+            loc['WAVE_CODE'] = loc['WAVEHDR']['WAVECODE']
+        else:
+            loc['WAVE_CODE'] = 'UNKNOWN'
+        loc.set_source('WAVE_CODE', __NAME__ + '.main()')
 
         # ----------------------------------------------------------------------
         # Read Flat file
@@ -354,7 +361,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                            order_profile=order_profile)
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
-            #deal with different return
+            # deal with different return
             if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
                 e2ds, e2dsll, cpt = eout
             else:

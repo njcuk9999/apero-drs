@@ -13,13 +13,15 @@ import numpy as np
 import os
 import sys
 from astropy.io import fits
-
 import matplotlib
-
 matplotlib.use("TkAgg")
+# noinspection PyPep8
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# noinspection PyPep8
 from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+# noinspection PyPep8
 from matplotlib.figure import Figure
+
 
 # =============================================================================
 # Define variables
@@ -106,25 +108,25 @@ if __name__ == "__main__":
 
     toolbar = NavigationToolbar2TkAgg(canvas, root)
     toolbar.update()
+    # noinspection PyProtectedMember
     canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
-
 
     # on change dropdown value
     def change_dropdown(*args):
         print(tkvar.get())
-        filename = tkvar.get()
-        plot_file(filename, current_order)
+        filename1 = tkvar.get()
+        plot_file(filename1, current_order)
         global current_file
         global current_int
-        current_file = filename
+        current_file = filename1
         current_int = choices.index(tkvar.get())
 
 
     # on change dropdown value
     def change_order(*args):
         order_num = tkvar2.get()
-        filename = current_file
-        plot_file(filename, order_num)
+        filename1 = current_file
+        plot_file(filename1, order_num)
         global current_order
         current_order = order_num
 
@@ -151,18 +153,18 @@ if __name__ == "__main__":
         tkvar.set(current_file)
 
 
-    def plot_file(filename, order_num):
+    def plot_file(filename1, order_num):
         order_num = int(order_num)
-        absfilename = os.path.join(PATH, filename)
+        absfilename1 = os.path.join(PATH, filename1)
         try:
-            data = fits.getdata(absfilename)
+            data1 = fits.getdata(absfilename1)
             a.clear()
-            a.plot(data[order_num])
-            title = '{0} Order={1}'.format(filename, order_num)
+            a.plot(data1[order_num])
+            title = '{0} Order={1}'.format(filename1, order_num)
             a.set_title(title)
             canvas.draw()
         except Exception as e:
-            print('An error occured with file {0}'.format(filename))
+            print('An error occured with file {0}'.format(filename1))
             print('Error was: {0}'.format(e))
 
 

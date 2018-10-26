@@ -132,6 +132,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
     # if old use FORTRAN
     if method == 'old':
         # need to import
+        # noinspection PyBroadException
         try:
             # noinspection PyPep8
             from SpirouDRS.fortran import newbervmain
@@ -169,6 +170,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # ---------------------------------------------------------------------
         # need to import barycorrpy which required online files (astropy iers)
         #  therefore provide a way to set offline version first
+        # noinspection PyBroadException
         try:
             # file at: http://maia.usno.navy.mil/ser7/finals2000A.all
             from astropy.utils import iers

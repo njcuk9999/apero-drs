@@ -136,9 +136,9 @@ def main(night_name=None):
                 run0 = [str(jt) for jt in runi[it]]
                 # run function
                 args, name = spirouUnitRecipes.wrapper(p, name, inputs=run0)
-                ll = spirouUnitRecipes.run_main(p, name, args)
+                lls = spirouUnitRecipes.run_main(p, name, args)
                 # add logger values
-                logger_values.append(get_logger_values(ll))
+                logger_values.append(get_logger_values(lls))
             # Skip any exit errors
             except Exception as e:
                 errors.append([runi[it], e])
@@ -207,9 +207,9 @@ def get_valid_files(p):
     if len(files) == 0:
         if p['IC_FORCE_PREPROCESS']:
             emsgs = ['No valid pre-processed files found in {0}'
-                     ''.format(p['ARG_FILE_DIR'])]
-            emsgs.append('\tFiles need suffix={0} (Please run '
-                         'cal_preprocessing)'.format(p['PROCESSED_SUFFIX']))
+                     ''.format(p['ARG_FILE_DIR']),
+                     '\tFiles need suffix={0} (Please run '
+                     'cal_preprocessing)'.format(p['PROCESSED_SUFFIX'])]
         else:
             emsgs = ['No valid ".fits" files found in {0}'
                      ''.format(p['ARG_FILE_DIR'])]
@@ -282,9 +282,8 @@ def get_recipes(p, raw_only=True):
 
 
 def get_requirements(p, control):
-    # get constants from p
-    image_type = p['IC_IMAGE_TYPE']
 
+    p['REQ'] = True
     # set up storage
     requirements = dict()
     # loop around the lines in control
@@ -450,14 +449,14 @@ def iteration_bar(p, nightname, name, it_number1, t_number1,
 
 def check_skip(p, night_name):
     # get directory for run
-    dir = os.path.join(p['DRS_DATA_RAW'], night_name)
+    dir_ = os.path.join(p['DRS_DATA_RAW'], night_name)
     # check it exists
-    if not os.path.exists(dir):
-        emsg1 = 'Directory "{0}" does not exist'.format(dir)
+    if not os.path.exists(dir_):
+        emsg1 = 'Directory "{0}" does not exist'.format(dir_)
         emsg2 = '\tSomething wrong with night name={0}?'.format(night_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # construct filename
-    filename = os.path.join(dir, HISTORY_FILE_NAME)
+    filename = os.path.join(dir_, HISTORY_FILE_NAME)
 
     # if file in directory delete it
     if os.path.exists(filename):
@@ -496,13 +495,11 @@ def add_to_history(p, night_name, runs, errors, loggers):
     filename = os.path.join(dir, HISTORY_FILE_NAME)
 
     # construct history
-    lines = []
+    lines = ['\n' + spirouStartup.spirouStartup.HEADER + '\n',
+             ' * Automated run information',
+             '\n' + spirouStartup.spirouStartup.HEADER + '\n', '\n',
+             '\n DRS VERSION = {0}\n'.format(p['DRS_VERSION'])]
     # add version
-    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
-    lines.append(' * Automated run information')
-    lines.append('\n' + spirouStartup.spirouStartup.HEADER + '\n')
-    lines.append('\n')
-    lines.append('\n DRS VERSION = {0}\n'.format(p['DRS_VERSION']))
     # get the time format and display time zone from constants
     tfmt = spirouConfig.Constants.DATE_FMT_CALIBDB()
     zone = spirouConfig.Constants.LOG_TIMEZONE()

@@ -113,6 +113,7 @@ def order_profile(p, loc):
     emlocofilename = os.path.basename(emlocofile)
 
     # if we have a tmp file try to open it
+    # noinspection PyBroadException
     try:
         # add to loc
         emloco = np.load(emlocofile)
@@ -650,7 +651,7 @@ def create_mask(p, loc):
     # combine masks
     mask = mask1 & mask2 & mask3
     # save mask to loc
-    loc['TELL_MASK_2D'] = mask.astype(bool)
+    loc['TELL_MASK_2D'] = np.array(mask).astype(bool)
     loc.set_source('TELL_MASK_2D', func_name)
     # return loc
     return loc

@@ -10,11 +10,8 @@ Created on 2018-10-01 at 11:21
 @author: cook
 """
 from __future__ import division
-import numpy as np
 import os
-import warnings
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -99,14 +96,6 @@ if __name__ == "__main__":
     ll = main()
     # exit message if in debug mode
     spirouStartup.Exit(ll, has_plots=False)
-
-# =============================================================================
-# End of code
-# =============================================================================
-
-
-
-
 
 # =============================================================================
 # End of code

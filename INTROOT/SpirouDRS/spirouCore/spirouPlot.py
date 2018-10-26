@@ -24,6 +24,7 @@ from . import spirouMath
 # fix for MacOSX plots freezing
 gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg']
 for gui in gui_env:
+    # noinspection PyBroadException
     try:
         matplotlib.use(gui, warn=False, force=True)
         import matplotlib.pyplot as plt
@@ -55,9 +56,9 @@ WLOG = spirouLog.wlog
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Speed of light
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 # -----------------------------------------------------------------------------
 INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
@@ -70,7 +71,7 @@ font = spirouConfig.Constants.FONT_DICT()
 matplotlib.rc('font', **font)
 # set plot style
 PLOT_STYLE = spirouConfig.Constants.PLOT_STYLE()
-if PLOT_STYLE is not None:
+if PLOT_STYLE != 'None':
     plt.style.use(PLOT_STYLE)
 else:
     PLOT_STYLE = ''
@@ -657,7 +658,7 @@ def slit_shape_angle_plot(p, loc, mode='all'):
         for banana_num in range(nbanana):
             # get this iterations parameters
             slope_deg = slope_deg_arr[banana_num][order_num]
-            slope =  slope_arr[banana_num][order_num]
+            slope = slope_arr[banana_num][order_num]
             s_keep = s_keep_arr[banana_num][order_num]
             xsection = xsection_arr[banana_num][order_num]
             ccor = ccor_arr[banana_num][order_num]
@@ -1716,6 +1717,7 @@ def wave_littrow_check_plot(p, loc, iteration=0):
     x_cut_points = loc['X_CUT_POINTS_{0}'.format(iteration)]
     # set up colors
     import matplotlib.cm as cm
+    # noinspection PyUnresolvedReferences
     colors = cm.rainbow(np.linspace(0, 1, len(x_cut_points)))
     # set up fig
     plt.figure()
@@ -2167,7 +2169,7 @@ def wave_ea_plot_single_order(p, loc):
     frame = plt.subplot(111)
     # plot order and flux
     frame.plot(loc['LL_OUT_2'][plot_order], loc['HCDATA'][plot_order],
-               label='HC spectrum - order '+ str(plot_order))
+               label='HC spectrum - order ' + str(plot_order))
     # plot found lines
     # first line separate for labelling purposes
     x0 = loc['ALL_LINES_1'][plot_order_line][0][0]
@@ -2254,8 +2256,8 @@ def tellu_pca_comp_plot(p, loc):
     # add legend
     frame.legend(loc=0)
     # add labels
-    title = 'Reconstructed Spline Plot (Order = {0})'
-    frame.set(xlabel='Wavelength [nm]',
+    title = 'Principle component plot'
+    frame.set(title=title, xlabel='Wavelength [nm]',
               ylabel='Principle component power')
     # end plotting function properly
     end_plotting()
@@ -2317,7 +2319,7 @@ def tellu_fit_debug_shift_plot(p, loc):
     # get this orders data
     tdata_s = tdata[s_order, :] / np.nanmedian(tdata[s_order, :])
     tapas_before_s = tapas_before[start:end]
-    tapas_after_S = tapas_after[start:end]
+    tapas_after_s = tapas_after[start:end]
     pc1_before_s = pc1_before[start:end]
     pc1_after_s = pc1_after[start:end]
     # setup fig
@@ -2331,7 +2333,7 @@ def tellu_fit_debug_shift_plot(p, loc):
     frame.plot(pc1_before_s, color='g', marker='x', label='PC (before)')
     frame.plot(tapas_before_s, color='0.5', marker='o', label='TAPAS (before)')
     frame.plot(pc1_after_s, color='r', label='PC (After)')
-    frame.plot(tapas_after_S, color='b', label='TAPAS (After)')
+    frame.plot(tapas_after_s, color='b', label='TAPAS (After)')
 
     frame.legend(loc=0)
     title = ('Wavelength shift (Before and after) compared to the data '
@@ -2474,10 +2476,10 @@ def polar_result_plot(loc, in_wavelengths=True):
     end_plotting()
 
 
-def polar_stokesI_plot(loc, in_wavelengths=True):
+def polar_stokes_i_plot(loc, in_wavelengths=True):
     # get data from loc
-    wl, stokesI = loc['FLAT_X'], loc['FLAT_STOKESI']
-    stokesIerr = loc['FLAT_STOKESIERR']
+    wl, stokes_i = loc['FLAT_X'], loc['FLAT_STOKESI']
+    stokes_ierr = loc['FLAT_STOKESIERR']
     stokes = 'I'
     method, nexp = loc['METHOD'], loc['NEXPOSURES']
     # ---------------------------------------------------------------------
@@ -2499,7 +2501,7 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
     titleargs = [stokes, method, nexp]
     # ---------------------------------------------------------------------
     # plot polarimetry data
-    plt.errorbar(wl, stokesI, yerr=stokesIerr, fmt='-', label='Stokes I',
+    plt.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
                  alpha=0.5)
     # ---------------------------------------------------------------------
     # set title and labels
@@ -2514,10 +2516,10 @@ def polar_stokesI_plot(loc, in_wavelengths=True):
 def polar_lsd_plot(loc):
     # get data from loc
     vels = loc['LSD_VELOCITIES']
-    Z = loc['LSD_STOKESI']
-    Zgauss = loc['LSD_STOKESI_MODEL']
-    Zp = loc['LSD_STOKESVQU']
-    Znp = loc['LSD_NULL']
+    zz = loc['LSD_STOKESI']
+    zgauss = loc['LSD_STOKESI_MODEL']
+    z_p = loc['LSD_STOKESVQU']
+    z_np = loc['LSD_NULL']
     stokes = loc['STOKES']
 
     # ---------------------------------------------------------------------
@@ -2529,8 +2531,8 @@ def polar_lsd_plot(loc):
 
     # ---------------------------------------------------------------------
     frame = plt.subplot(3, 1, 1)
-    plt.plot(vels, Z, '-')
-    plt.plot(vels, Zgauss, '-')
+    plt.plot(vels, zz, '-')
+    plt.plot(vels, zgauss, '-')
     title = 'LSD Analysis'
     ylabel = 'Stokes I profile'
     xlabel = ''
@@ -2541,7 +2543,7 @@ def polar_lsd_plot(loc):
     # ---------------------------------------------------------------------
     frame = plt.subplot(3, 1, 2)
     title = ''
-    plt.plot(vels, Zp, '-')
+    plt.plot(vels, z_p, '-')
     ylabel = 'Stokes {0} profile'.format(stokes)
     xlabel = ''
     # set title and labels
@@ -2550,7 +2552,7 @@ def polar_lsd_plot(loc):
 
     # ---------------------------------------------------------------------
     frame = plt.subplot(3, 1, 3)
-    plt.plot(vels, Znp, '-')
+    plt.plot(vels, z_np, '-')
     xlabel = 'velocity (km/s)'
     ylabel = 'Null profile'
     # set title and labels

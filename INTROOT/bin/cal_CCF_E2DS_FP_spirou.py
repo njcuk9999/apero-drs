@@ -26,7 +26,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouRV
 from SpirouDRS import spirouStartup
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -170,7 +169,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # Read Flat file
     # ----------------------------------------------------------------------
-    #TODO We do not need to correct FLAT
+    # TODO We do not need to correct FLAT
     # log
     # WLOG('', p['LOG_OPT'], 'Reading Flat-Field ')
 
@@ -190,7 +189,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # reset flat to all ones
     # loc['FLAT'] = np.ones((nbo, nx))
     # set blaze to all ones (if not bug in correlbin !!!
-    #TODO Check why Blaze makes bugs in correlbin
+    # TODO Check why Blaze makes bugs in correlbin
     loc['BLAZE'] = np.ones((nbo, nx))
     # set sources
     # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
@@ -199,7 +198,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Modification of E2DS array  with N.A.N
     if np.isnan(np.sum(e2ds)):
         WLOG('warning', p['LOG_OPT'],
-                 'NaN values found in e2ds, converting process')
+             'NaN values found in e2ds, converting process')
         #  First basic approach Replacing N.A.N by zeros
         #    e2ds[np.isnan(e2ds)] = 0
 
@@ -209,7 +208,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
             with warnings.catch_warnings(record=True) as _:
                 rap = np.mean(e2dsb[i][np.isfinite(e2dsb[i])])
             if np.isnan(rap):
-               rap = 0.0
+                rap = 0.0
             e2ds[i] = np.where(np.isfinite(e2dsb[i]), e2ds[i], blaze0[i] * rap)
 
     # ----------------------------------------------------------------------
@@ -278,20 +277,20 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # get the average ccf
     loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
     # normalize the average ccf
-    normalized_ccf = loc['AVERAGE_CCF']/np.max(loc['AVERAGE_CCF'])
+    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
     ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
                                        fit_type=0)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
     # get the max cpp
-    loc['MAXCPP'] = np.sum(loc['CCF_MAX'])/np.sum(loc['PIX_PASSED_ALL'])
+    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     loc['RV'] = float(ccf_res[1])
-    RV0= float(ccf_res[1])*1.
+    rv0 = float(ccf_res[1]) * 1.
 
     # get the contrast (ccf fit amplitude)
-    loc['CONTRAST'] = np.abs(100*ccf_res[0])
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
     # get the FWHM value
     loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
 
@@ -325,9 +324,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     columns = ['order', 'maxcpp', 'nlines', 'contrast', 'RV', 'sig']
     # define values for each column
     values = [loc['ORDERS'],
-              loc['CCF_MAX']/loc['PIX_PASSED_ALL'],
+              loc['CCF_MAX'] / loc['PIX_PASSED_ALL'],
               loc['TOT_LINE'],
-              np.abs(100*loc['CCF_ALL_RESULTS'][:, 0]),
+              np.abs(100 * loc['CCF_ALL_RESULTS'][:, 0]),
               loc['CCF_ALL_RESULTS'][:, 1],
               loc['CCF_ALL_RESULTS'][:, 2]]
     # define the format for each column
@@ -387,7 +386,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     # get the CCF mask from file (check location of mask)
     cloc = spirouRV.GetCCFMask(cp, cloc)
-    
+
     # TODO Check why Blaze makes bugs in correlbin
     cloc['BLAZE'] = np.ones((nbo, nx))
     # set sources
@@ -517,8 +516,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     hdict = spirouImage.AddKey(hdict, p['KW_DRIFT_RV'],
                                value=cloc['CCF_RES'][1])
     hdict = spirouImage.AddKey(hdict, p['KW_CCF_RVC'],
-                               value=RV0 - cloc['CCF_RES'][1])
-    
+                               value=rv0 - cloc['CCF_RES'][1])
+
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, corfile, data, hdict)
 

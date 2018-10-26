@@ -37,6 +37,8 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
+
+
 # # test files
 # night_name, reffile = '180529', '2279713f_flat_flat_pp.fits'
 # e2dsprefix = '2279725a_fp_fp_pp_e2dsff'
@@ -53,7 +55,8 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with arguments being None (i.e. get from sys.argv)
     name, lname = ['flatfile', 'e2dsprefix'], ['Reference file', 'E2DS Prefix']
-    req, call, call_priority = [True, True], [flatfile, e2dsprefix], [True, True]
+    req, call = [True, True], [flatfile, e2dsprefix]
+    call_priority = [True, True]
     # now get custom arguments
     customargs = spirouStartup.GetCustomFromRuntime([0, 1], [str, str], name,
                                                     req, call, call_priority,
@@ -126,7 +129,6 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # ----------------------------------------------------------------------
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
-
 
     if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
         # log progress
@@ -287,7 +289,6 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # add the transmission cut
     hdict = spirouImage.AddKey(hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])
-
 
     # ------------------------------------------------------------------
     # Deal with output preferences

@@ -18,7 +18,6 @@ import numpy as np
 from astropy import constants
 import os
 import warnings
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -276,7 +275,6 @@ def main(night_name=None, files=None):
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
     p = spirouImage.WriteImage(p, outfile2, big_cube_s0, hdict)
 
-
     # # mega plot
     # nfiles = big_cube_s0.shape[1]
     # ncols = int(np.ceil(np.sqrt(nfiles)))
@@ -287,9 +285,6 @@ def main(night_name=None, files=None):
     #     frame = frames[jt][kt]
     #     frame.imshow(big_cube_s0[:, it, :], origin='lower')
     #     frame.set(xlim=(2030, 2060))
-
-
-
 
     # ----------------------------------------------------------------------
     # End Message

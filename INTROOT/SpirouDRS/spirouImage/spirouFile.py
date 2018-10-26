@@ -178,7 +178,6 @@ class Paths:
         self.add_root()
 
 
-
 # =============================================================================
 # Define file functions
 # =============================================================================
@@ -667,7 +666,7 @@ def odometer_code(control, filename):
 
 
 def odometer_header(p, hdr):
-    func_name = __NAME__ + '.odometer_header()'
+    # func_name = __NAME__ + '.odometer_header()'
     # set condition to True
     cond = True
     # get observation type
@@ -986,6 +985,198 @@ def strip_string_list(string_list):
         new_list.append(list_item.strip())
     # return new list
     return new_list
+
+
+def fallback_id_mode(p, control, filename, hdr, cdr):
+    # get base filename (no path)
+    basefilename = os.path.basename(filename)
+    # get unique_strings
+    ustrings = control['dstring']
+    # loop around ustrings
+    for u_it, ustring in enumerate(ustrings):
+        # skip Nones
+        if ustring == 'None':
+            continue
+        # search for ustring in filename (return on first found)
+        if ustring in basefilename:
+            # get dpr type
+            dprtype = control['dprtype'][u_it]
+            # log successful finding
+            wmsg = 'File "{0}" identified as "{1}"'
+            WLOG('info', p['LOG_OPT'], wmsg.format(basefilename, dprtype))
+            # log mode (in debug mode)
+            if p['DRS_DEBUG'] > 0:
+                wmsg = '\tID via filename   file={0}'
+                WLOG('', p['LOG_OPT'], wmsg.format(basefilename))
+            # update header key 'DPRTYPE
+            hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
+            cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
+            # return original filename and header
+            return filename, hdr, cdr
+    # if file not found log this
+    emsg = 'File "{0}" not identified as a valid DRS input.'
+    WLOG('warning', p['LOG_OPT'], emsg.format(basefilename))
+    # update header key 'DPRTYPE
+    hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
+    cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
+    return filename, hdr, cdr
+
+
+# TODO: Not used
+def check_id_filename(p, control, recipe, filename):
+    func_name = __NAME__ + '.check_id_filename()'
+    # set un-found initial parameters
+    found = False
+    found_row = None
+
+    dprtypes = list(control['dprtype'])
+
+    # loop around rows in control
+    for row in range(len(control)):
+        # skip if already found
+        if found:
+            continue
+        # get this iterations values
+        kind = control['kind'][row]
+        # ------------------------------------------------------------------
+        # deal with reduced files
+        if kind.upper() == 'REDUC':
+            found, dprtype = check_reduced_filename(p, filename, recipe,
+                                                    control[row])
+            # Need to set a new dprtype if reduced file
+            if found:
+                dprtypes[row] = dprtype
+        # ------------------------------------------------------------------
+        # deal with None
+        elif kind.upper() == 'RAW':
+            found = check_raw_filename(p, filename, recipe, control[row])
+        # ------------------------------------------------------------------
+        # if filename is found remember row
+        if found:
+            found_row = int(row)
+
+    # reassign control['dprtype'] to dprtypes
+    #     (needed as list before due to strings changing size)
+    control['dprtype'] = dprtypes
+    # deal with no file found
+    if not found:
+        return found, control
+    # if file found return row of control found in
+    else:
+        return found, control[found_row]
+
+
+# TODO: Not used?
+def check_id_header(p, control, recipe, filename, hdr=None):
+    # get base filename (no path)
+    basefilename = os.path.basename(filename)
+    # load header
+    hdr, _ = get_header_file(p, filename, hdr)
+    # check for DPRTYPE in header
+    if p['KW_DPRTYPE'][0] in hdr:
+        dprtype = hdr[p['KW_DPRTYPE'][0]]
+    # if we don't have it, obtain it
+    else:
+        _, hdr, _ = identify_unprocessed_file(p, filename, hdr=None, cdr=None)
+        dprtype = hdr[p['KW_DPRTYPE'][0]]
+    # -----------------------------------------------------------------------
+    # Only should be looking at the raw file for header info
+    # -----------------------------------------------------------------------
+    # we should not be here with anything but raw files
+    kinds = np.unique(control['kind'])
+    if (len(kinds) != 1) and (kinds[0].upper() != 'RAW'):
+        emsg1 = 'File "{0}" not identified (not a raw file)'
+        emsg2 = 'Only raw files valid for recipe "{0}"'.format(recipe)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # -----------------------------------------------------------------------
+    # use dprtype to select a single control setting
+    # -----------------------------------------------------------------------
+    # if DPRTYPE is None then let all files through
+    if 'None' in control['dprtype'] and kinds[0].upper() == 'RAW':
+        # get the first row in control where dprtype == 'None'
+        row = np.where(control['dprtype'] == 'None')[0][0]
+        # filter control by this row
+        control = control[row]
+        # print warning
+        wmsg = 'DPRTYPE not checked for recipe="{0}"'.format(recipe)
+        WLOG('warning', p['LOG_OPT'], wmsg)
+    # else if DPRTYPE not in dprtypes then give error
+    elif dprtype not in control['dprtype']:
+        emsg1 = 'File "{0}" identified as "{1}"'.format(basefilename, dprtype)
+        emsg2 = 'Not valid for recipe "{0}"'.format(recipe)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    # else we have the correct DPRTYPE --> select correct row of control
+    else:
+        # get the first row in control where dprtype is valid
+        row = np.where(control['dprtype'] == dprtype)[0][0]
+        # filter control by this row
+        control = control[row]
+    # return control
+    return control
+
+
+# TODO: Not used?
+def check_reduced_filename(p, filename, recipe, control):
+    # get variables from control
+    dstring = control['dstring']
+    ocode = control['ocode']
+    dprtype = control['dprtype']
+    desc = control['desc'].replace(' ', '_')
+    # check for None
+    c0 = dprtype == 'None'
+    c1 = dstring == 'None'
+    c2 = ocode == 'None'
+    # if both are None log warning
+    if c1 and c2:
+        wmsg = 'Filename not checked for recipe="{0}" (reduced file)'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(recipe))
+    # check dstring in filename
+    if not c1:
+        cond1 = dstring in filename
+    else:
+        cond1 = True
+    # check ocode in filename
+    if not c2:
+        cond2 = ocode in filename
+    else:
+        cond2 = True
+    # are conditions met?
+    found = cond1 and cond2
+
+    # set dprtype if we don't have one
+    if c0:
+        # add desc
+        dprtype = desc
+        # add dstring (if we have it)
+        if not c1:
+            dprtype += '_{0}'.format(dstring)
+        # add ocode (if we have it)
+        if not c2:
+            dprtype += '_{0}'.format(ocode)
+
+    # return found
+    return found, dprtype
+
+
+# TODO: Not used?
+def check_raw_filename(p, filename, recipe, control):
+    # get variables from control
+    dstring = control['dstring']
+    # check for None
+    c1 = dstring == 'None'
+    # if both are None log warning
+    if c1:
+        wmsg = 'Filename not checked for recipe="{0}" (raw file)'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(recipe))
+    # check dstring in filename
+    if not c1:
+        cond1 = dstring in filename
+    else:
+        cond1 = True
+    # are conditions met?
+    found = cond1
+    # return found
+    return found
 
 
 # =============================================================================
