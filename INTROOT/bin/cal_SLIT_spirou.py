@@ -74,7 +74,7 @@ def main(night_name=None, files=None):
     p = spirouStartup.LoadArguments(p, night_name, files)
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set the fiber type
-    p['FIB_TYP'] = ['AB']
+    p['FIB_TYP'] = 'AB'
     p.set_source('FIB_TYP', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
@@ -158,28 +158,22 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Loop around fiber types
     # ----------------------------------------------------------------------
+    # set fiber
+    p['FIBER'] = p['FIB_TYP']
+    # ------------------------------------------------------------------
+    # Get localisation coefficients
+    # ------------------------------------------------------------------
+    # original there is a loop but it is not used --> removed
+    p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
+    # get localisation fit coefficients
+    p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
 
-    for fiber in p['FIB_TYP']:
-        # set fiber
-        p['FIBER'] = fiber
-        # ------------------------------------------------------------------
-        # Get localisation coefficients
-        # ------------------------------------------------------------------
-        # original there is a loop but it is not used --> removed
-        p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
-        # get localisation fit coefficients
-        p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
+    # ------------------------------------------------------------------
+    # Calculating the tilt
+    # ------------------------------------------------------------------
+    # get the tilt by extracting the AB fibers and correlating them
+    loc = spirouImage.GetTilt(p, loc, data2)
 
-        # ------------------------------------------------------------------
-        # Calculating the tilt
-        # ------------------------------------------------------------------
-        # get the tilt by extracting the AB fibers and correlating them
-        loc = spirouImage.GetTilt(p, loc, data2)
-
-    # Question: if we loop around fib_typ - loc is overwritten
-    # Question:     (tilt overwritten in original)
-    # Question:   I.E.  looping around fib_typ is USELESS
-    # TODO: Remove fiber type for loop - or use it properly!!
     # fit the tilt with a polynomial
     loc = spirouImage.FitTilt(p, loc)
     # log the tilt dispersion

@@ -94,7 +94,6 @@ def get_molecular_tell_lines(p, loc):
 
     # tapas spectra resampled onto our data wavelength vector
     tapas_all_species = np.zeros([len(p['TELLU_ABSORBERS']), xdim * ydim])
-    # TODO: Make this the date and not the wave file name??
 
     # Force A and B to AB solution
     if p['FIBER'] in ['A', 'B']:
@@ -259,8 +258,7 @@ def get_berv_value(p, hdr, filename=None):
     if p['KW_BERV'][0] not in hdr:
         emsg = 'HEADER error, file="{0}". Keyword {1} not found'
         eargs = [filename, p['KW_BERV'][0]]
-        # TODO: CHANGE TO ERROR
-        WLOG('warning', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
         dv, bjd, bvmax = 0.0, -9999, 0.0
     else:
         # Get the Barycentric correction from header
@@ -485,7 +483,8 @@ def calc_molecular_absorption(p, loc):
     klog_tapas_abso = log_tapas_abso[:, keep]
 
     # work out amplitudes and recon
-    amps, recon = lin_mini(klog_recon_abso, klog_tapas_abso)
+    amps, recon = spirouMath.linear_minimization(klog_recon_abso,
+                                                 klog_tapas_abso)
 
     # load amplitudes into loc
     for it, molecule in enumerate(p['TELLU_ABSORBERS'][1:]):
@@ -534,7 +533,6 @@ def get_blacklist():
     return blacklist
 
 
-# TODO: Needs better commenting
 def lin_mini(vector, sample):
     return spirouMath.linear_minimization(vector, sample)
 

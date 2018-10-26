@@ -404,11 +404,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 sPlt.ext_aorder_fit(p, loc, data2, max_signal / 10.)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                # TODO: Remove H2RG dependency
-                if p['IC_IMAGE_TYPE'] == 'H2RG':
-                    sPlt.ext_sorder_fit(p, loc, data2)
-                else:
-                    sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
+                sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
 
