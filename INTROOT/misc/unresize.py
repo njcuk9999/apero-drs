@@ -19,7 +19,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouImage
-from SpirouDRS.spirouImage import spirouFile
+
 
 # =============================================================================
 # Define variables

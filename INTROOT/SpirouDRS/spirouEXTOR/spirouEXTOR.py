@@ -232,7 +232,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         check_for_none(range2, 'range2')
         check_for_none(order_profile, 'Order Profile Image')
         check_for_none(sigdet, 'SIGDET')
-        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        # tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
         check_for_none(tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_shape_weight
@@ -252,7 +252,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         check_for_none(range2, 'range2')
         check_for_none(order_profile, 'Order Profile Image')
         check_for_none(sigdet, 'SIGDET')
-        tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
+        # tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
         check_for_none(tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_shape_weight_cosm
@@ -312,6 +312,7 @@ def debananafication(image, dx):
 # =============================================================================
 # Custom wrapper function
 # =============================================================================
+# noinspection PyPep8Naming
 def extract_AB_order(pp, loc, image, rnum):
     """
     Perform the extraction on the AB fibers separately using the summation
@@ -469,7 +470,6 @@ def get_extraction_method(p, mode):
     # -------------------------------------------------------------------------
     elif mode == '4a':
         return 'SHAPEWEIGHT', 'extract_shape_weight'
-
 
     elif mode == '4b':
         return 'SHAPEWEIGHT', 'extract_shape_weight_cosm'
@@ -793,9 +793,9 @@ def extract_tilt_weight2(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             #    in quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            sumA = np.sum(weights * sx * fx, axis=1)
-            sumB = np.sum(weights * fx ** 2, axis=1)
-            spelong[:, ic] = sumA / sumB
+            sum_a = np.sum(weights * sx * fx, axis=1)
+            sum_b = np.sum(weights * fx ** 2, axis=1)
+            spelong[:, ic] = sum_a / sum_b
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
     # multiple spe by gain to convert to e-
     spe *= gain
@@ -889,9 +889,9 @@ def extract_tilt_weight2cosm(image, pos, tilt, r1, r2, orderp, gain, sigdet,
             #    quadrature
             weights = raw_weights / ((sx * gain) + sigdet ** 2)
             # set the value of this pixel to the weighted sum
-            sumA = np.sum(weights * sx * fx, axis=1)
-            sumB = np.sum(weights * fx ** 2, axis=1)
-            spelong[:, ic] = sumA / sumB
+            sum_a = np.sum(weights * sx * fx, axis=1)
+            sum_b = np.sum(weights * fx ** 2, axis=1)
+            spelong[:, ic] = sum_a / sum_b
             spe[ic] = np.sum(weights * sx * fx) / np.sum(weights * fx ** 2)
             # Cosmic rays correction
             spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
@@ -1336,7 +1336,6 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
     Same as extract_tilt_weight but slow (does NOT assume that rounded
     separation between extraction edges is constant along order)
 
-
     :param simage: numpy array (2D), the debananafied image (straightened image)
     :param pos: numpy array (1D), the position fit coefficients
                 size = number of coefficients for fit
@@ -1350,8 +1349,6 @@ def extract_shape_weight(simage, pos, r1, r2, orderp, gain, sigdet):
                    weights = 1/(signal*gain + sigdet^2) with bad pixels
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
-    :param tiltborder: int, the number of pixels to set as the border (needed
-                       to allow for tilt to not go off edge of image)
 
     :return spe: numpy array (1D), the extracted pixel values,
                  size = image.shape[1] (along the order direction)
@@ -1414,11 +1411,9 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
     Same as extract_tilt_weight but slow (does NOT assume that rounded
     separation between extraction edges is constant along order)
 
-
     :param simage: numpy array (2D), the debananafied image (straightened image)
     :param pos: numpy array (1D), the position fit coefficients
                 size = number of coefficients for fit
-    :param tilt: float, the tilt for this order
 
     :param r1: float, the distance away from center to extract out to (top)
                across the orders direction
@@ -1430,8 +1425,7 @@ def extract_shape_weight_cosm(simage, pos, r1, r2, orderp, gain, sigdet,
                    weights = 1/(signal*gain + sigdet^2) with bad pixels
                    multiplied by a weight of 1e-9 and good pixels
                    multiplied by 1
-    :param tiltborder: int, the number of pixels to set as the border (needed
-                       to allow for tilt to not go off edge of image)
+
     :param cosmic_sigcut: float, the sigma cut for cosmic rays
     :param cosmic_threshold: int, the number of allowed cosmic rays per corr
 
@@ -1499,7 +1493,7 @@ def get_slice_shape(x1, x2, y1, y2, shapeimage):
 
     ww = box - x0
 
-    ww2=np.abs((1-np.abs(ww))*(np.abs(ww)  <=1 ))
+    ww2 = np.abs((1 - np.abs(ww)) * (np.abs(ww) <= 1))
     return ww2
 
 

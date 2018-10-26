@@ -323,6 +323,7 @@ def create_drift_file(p, loc):
                 # do gauss fit
                 #    gg = [mean, amplitude, sigma, dc]
                 with warnings.catch_warnings(record=True) as w:
+                    # noinspection PyTypeChecker
                     gg, pcov = curve_fit(gf, index, tmp[index], p0=p0)
                     w_all += list(w)
             except ValueError:
@@ -544,9 +545,10 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
 
     print(len(loc['XPEAK_OLD']) - len(loc['XPEAK']))
     # log number of lines removed as double-fitted
-    if len(loc['XPEAK_OLD'])>len(loc['XPEAK']):
+    if len(loc['XPEAK_OLD']) > len(loc['XPEAK']):
         wmsg = 'Nb of double-fitted lines removed  = {0}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(len(loc['XPEAK_OLD']) - len(loc['XPEAK'])))
+        lenx = len(loc['XPEAK_OLD']) - len(loc['XPEAK'])
+        WLOG('info', p['LOG_OPT'], wmsg.format(lenx))
 
     return loc
 
@@ -672,6 +674,7 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
                     # fit a gaussian to that peak
                     #    gg = [mean, amplitude, sigma, dc]
                     with warnings.catch_warnings(record=True) as w:
+                        # noinspection PyTypeChecker
                         gg, pcov = curve_fit(gauss_function, index, tmp, p0=p0)
                     spirouCore.spirouLog.warninglogger(w)
                     # get position
@@ -1186,7 +1189,7 @@ def coravelation(p, loc, log=False):
         # ---------------------------------------------------------------------
         if p['DRS_PLOT'] and len(ll_sub_mask_ctr) > 0 and p['DRS_DEBUG'] == 2:
             # Plot rv vs ccf (and rv vs ccf_fit)
-            sPlt.ccf_rv_ccf_plot(rv_ccf, ccf_o, ccf_o_fit, order=order_num,
+            sPlt.ccf_rv_ccf_plot(p, rv_ccf, ccf_o, ccf_o_fit, order=order_num,
                                  fig=fig)
 
     # -------------------------------------------------------------------------
@@ -1666,12 +1669,11 @@ def fit_ccf(rv, ccf, fit_type):
     # return the best guess and the gaussian fit
     return result, ccf_fit
 
+
 # =============================================================================
 # Define file functions
 # =============================================================================
-
 def get_fiberc_e2ds_name(p, hdr):
-
     # This depends on the input filetype
     if p['KW_OUTPUT'][0] not in hdr:
         emsg = 'Cannot find HEADER KEY = "{0}" - Fatal Error'

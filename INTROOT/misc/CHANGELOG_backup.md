@@ -3404,7 +3404,7 @@
 	- update date and version (rev.a596936c)
 	- undo bad merge by @melissa-hobson (rev.8317474e)
 	- Revert changes to get wave solution from calibDB (errors were due to badly set up calibDB) (rev.6489937f)
-	- Merged changes from @edermartioli: added alias to calculate_stokes_I and added aliases to __all__ (rev.caa596c3)
+	- Merged changes from @edermartioli: added alias to calculate_stokes_i and added aliases to __all__ (rev.caa596c3)
 	- Merged changes from @edermartioli: Update output name with _A, save errors to output using WriteImageMulti, Implemented total flux (Stokes I) calculation, implemented polarimetric error calculation. (rev.569120ee)
 	- Merged changes from @edermartioli: aqdded stokesI plot, spelling correction + polarisation is now percentage (bug was missing in conversion) (rev.ae695cfd)
 	- Merged changes from @edermartioli: Update output name with _A, save errors to output using WriteImageMulti, Implemented total flux (Stokes I) calculation, implemented polarimetric error calculation. (rev.553fb412)

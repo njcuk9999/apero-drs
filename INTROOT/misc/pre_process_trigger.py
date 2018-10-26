@@ -75,7 +75,7 @@ def main():
         # search for pre-processed file
         if not FORCE_REPROCESS:
             # get odometer name
-            odo_name = basename.split('_')[0].split('.fits')[0]
+            odo_name = str(basename).split('_')[0].split('.fits')[0]
             # get directory files
             dir_files = os.listdir(directory)
             # set preprocessed file found flag

@@ -182,6 +182,7 @@ def main(night_name=None, files=None):
     tout = spirouConfig.Constants.TELLU_ABSO_SAVE(p, filetime)
     abso_save_file, absoprefix = tout
     use_saved = os.path.exists(abso_save_file)
+    # noinspection PyBroadException
     try:
         # try loading from file
         abso = np.load(abso_save_file)

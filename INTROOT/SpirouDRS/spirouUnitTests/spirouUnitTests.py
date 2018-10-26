@@ -26,6 +26,7 @@ try:
 except ImportError:
     from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 except ValueError:
+    # noinspection PyUnresolvedReferences
     import spirouUnitRecipes
 
 
@@ -93,12 +94,12 @@ def get_runs(p, rparams, rfile):
         emsg = 'No runs ("{0}## = ") found in file {1}'
         WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
     # sort into order
-    unsorted = np.array(list(runs.keys()))
-    sorted = np.sort(unsorted)
+    unsorted_arr = np.array(list(runs.keys()))
+    sorted_arr = np.sort(unsorted_arr)
     # add an OrderedDict
     sorted_runs = OrderedDict()
     # add runs to new dictionary in the correct order
-    for run_i in sorted:
+    for run_i in sorted_arr:
         sorted_runs[run_i] = runs[run_i]
     # return runs
     return sorted_runs
@@ -159,7 +160,7 @@ def manage_run(p, runname, run_i, timing):
     # start timer
     starttime = time.time()
     # run program
-    ll = spirouUnitRecipes.run_main(p, name, args)
+    _ = spirouUnitRecipes.run_main(p, name, args)
     # end timer
     endtime = time.time()
     # deal with closing plots

@@ -1,16 +1,14 @@
+# noinspection PyPep8
 import numpy as np
-from lin_mini import *
 import os
 import glob
-import pyfits
+from astropy.io import fits as pyfits
+
 import matplotlib.pyplot as plt
 from scipy.interpolate import InterpolatedUnivariateSpline
-import scipy.ndimage
-from PyAstronomy import pyasl
-from PyAstronomy import funcFit as fuf
-from astropy.table import Table
+from SpirouDRS.spirouCore.spirouMath import linear_minimization as lin_mini
 
-############################################################################################################
+##############################################################################
 # speed of light expressed in km/s. May be defined as a DRS parameter elsewhere
 c = 2.99792458e5
 
@@ -55,7 +53,7 @@ add_deriv_pc = True
 
 wave_file = 'spirou_wave_H4RG_v1.fits'
 
-############################################################################################################
+###############################################################################
 
 # we mask domains that have <20% of the peak blaze of their respective order
 blaze_norm = blaze + 0
@@ -111,9 +109,10 @@ if fit_deriv:
 
 #
 # we plot the PCs
-# if the "add_deriv_pc" flag is true, then we add the first (dx shift) and second (resolution) derivatites
-# of the first PC (largest variance contributor)
-# this will provide a measurement of the offset of absorbers relative to input components
+# if the "add_deriv_pc" flag is true, then we add the first (dx shift) and
+# second (resolution) derivatites of the first PC (largest variance contributor)
+# this will provide a measurement of the offset of absorbers relative to input
+# components
 #
 if flag_do_plot:
     for i in range(npc):
@@ -152,7 +151,7 @@ for fic in fics:
         0] + '_tellu.fits'
 
     # skip if file exists
-    if os.path.isfile(outname) == False:
+    if not os.path.isfile(outname):
 
         hdr = pyfits.getheader(fic)
         sp = pyfits.getdata(fic) / blaze_norm
@@ -187,9 +186,10 @@ for fic in fics:
         if flag_do_plot:
             all_mask = np.zeros([4088 * 49])
 
+        # noinspection PyPep8,PyPep8
         for ite in range(4):
 
-            if flag_template == False:
+            if not flag_template:
                 template2 = np.zeros([4088 * 49])
 
                 ew = 30 / 2.2 / 2.354  # gaussian ew for vinsi km/s
@@ -203,8 +203,9 @@ for fic in fics:
                     mask = tapas_all_species[0, iord * 4088:iord * 4088 + 4088]
                     mask = (mask > 0.98)
 
-                    sp2b = np.convolve(sp[iord, :] * mask / recon_abso[
-                                                            iord * 4088:iord * 4088 + 4088],
+                    # noinspection PyPep8
+                    sp2b = np.convolve(sp[iord, :] * mask /
+                                       recon_abso[iord * 4088:iord * 4088 + 4088],
                                        ker2, mode='same')
                     ww = np.convolve(mask.astype(float), ker2, mode='same')
                     template2[iord * 4088:iord * 4088 + 4088] = sp2b / ww
@@ -230,6 +231,7 @@ for fic in fics:
                     mask = tapas_all_species[0, iord * 4088:iord * 4088 + 4088]
                     mask = (mask > 0.98)
 
+                    # noinspection PyPep8
                     sp2b = np.convolve(
                         dd[iord * 4088:iord * 4088 + 4088] * mask / recon_abso[
                                                                     iord * 4088:iord * 4088 + 4088],
@@ -279,11 +281,13 @@ for fic in fics:
                      sp[plt_order, :] / np.nanmedian(sp[plt_order, :]), 'k-',
                      label='input SP')
 
+            # noinspection PyPep8,PyPep8
             plt.plot(waves[plt_order, :], (
             sp2[plt_order * 4088:plt_order * 4088 + 4088]) / np.nanmedian(
                 sp2[plt_order * 4088:plt_order * 4088 + 4088]) / recon_abso[
                                                                  plt_order * 4088:plt_order * 4088 + 4088],
                      'g-', label='cleaned sp')
+            # noinspection PyPep8
             plt.plot(waves[plt_order, :], (
             template2[plt_order * 4088:plt_order * 4088 + 4088]) / np.nanmedian(
                 template2[plt_order * 4088:plt_order * 4088 + 4088]), 'y-',

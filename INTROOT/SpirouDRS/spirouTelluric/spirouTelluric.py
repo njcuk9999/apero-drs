@@ -122,6 +122,7 @@ def get_molecular_tell_lines(p, loc):
         generate = True
     else:
         # if we already have a file for this wavelength just open it
+        # noinspection PyBroadException
         try:
             # load with numpy
             tapas_all_species = np.load(convolve_file)
@@ -453,7 +454,7 @@ def calc_recon_abso(p, loc):
     loc['RECON_ABSO'] = recon_abso
     loc['AMPS_ABSOL_TOTAL'] = amps_abso_total
     # set the source
-    skeys = ['SP2', 'TEMPLATE2', 'RECON_ABSO','AMPS_ABSOL_TOTAL']
+    skeys = ['SP2', 'TEMPLATE2', 'RECON_ABSO', 'AMPS_ABSOL_TOTAL']
     loc.set_sources(skeys, func_name)
     # return loc
     return loc
@@ -605,6 +606,7 @@ def wave2wave(spectrum, wave1, wave2, reshape=False):
 
     # return the filled output spectrum
     return output_spectrum
+
 
 # =============================================================================
 # Start of code

@@ -11,35 +11,37 @@ def lin_mini(vector, sample):
 
     #
     # vecteur de N elements
-    # sample : matrice N*M, chacune des M colonnes est ajustee en amplitude pour minimiser le chi2 par rapport au vecteur d'entree
+    # sample : matrice N*M, chacune des M colonnes est ajustee en amplitude
+    # pour minimiser le chi2 par rapport au vecteur d'entree
     # output : vecteur de M de long qui donne les amplitudes de chaque colonne
     #
-    # returns NaN values as amplitudes if the sample vectors lead to an auto-correlation matrix that
-    # cannot be inverted (i.e., that are full of zeros or are not linearly independent)
+    # returns NaN values as amplitudes if the sample vectors lead to an
+    # auto-correlation matrix that
+    # cannot be inverted (i.e., that are full of zeros or are not linearly
+    # independent)
     #
     vector = np.asarray(vector)
     sample = np.asarray(sample)
     sz_sample = np.shape(sample)
-    sz_vector = np.shape(vector)
 
     if cas == 1:
         #
-        M = np.zeros([sz_sample[0], sz_sample[0]])
+        mm = np.zeros([sz_sample[0], sz_sample[0]])
         #
         v = np.zeros(sz_sample[0])
 
         for i in range(sz_sample[0]):
             for j in range(i, sz_sample[0]):
-                M[i, j] = np.sum(sample[i, :] * sample[j, :])
-                M[j, i] = M[i, j]
+                mm[i, j] = np.sum(sample[i, :] * sample[j, :])
+                mm[j, i] = mm[i, j]
             v[i] = np.sum(vector * sample[i, :])
         #
-        if np.linalg.det(M) == 0:
+        if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[0]) + np.nan
             recon = np.zeros_like(v)
-            return (amps, recon)
+            return amps, recon
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps = np.matmul(np.linalg.inv(mm), v)
         #
         recon = np.zeros(sz_sample[1])
         #
@@ -51,16 +53,16 @@ def lin_mini(vector, sample):
     if cas == 2:
         # print('cas = 2')
         # print(sz_sample[1])
-        M = np.zeros([sz_sample[1], sz_sample[1]])
+        mm = np.zeros([sz_sample[1], sz_sample[1]])
         v = np.zeros(sz_sample[1])
 
         for i in range(sz_sample[1]):
             for j in range(i, sz_sample[1]):
-                M[i, j] = np.sum(sample[:, i] * sample[:, j])
-                M[j, i] = M[i, j]
+                mm[i, j] = np.sum(sample[:, i] * sample[:, j])
+                mm[j, i] = mm[i, j]
             v[i] = np.sum(vector * sample[:, i])
 
-        if np.linalg.det(M) == 0:
+        if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
             recon = np.zeros_like(v)
             return (amps, recon)

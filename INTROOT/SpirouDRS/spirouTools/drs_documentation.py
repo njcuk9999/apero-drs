@@ -368,6 +368,7 @@ def read_file(filename):
     """
     func_name = __NAME__ + '.read_file()'
     # open file
+    # noinspection PyPep8,PyBroadException
     try:
         f = open(filename, 'r')
     except:
@@ -453,6 +454,7 @@ def init_id_functions(module_name):
     """
     # import module
     fullpath = '{0}.{1}'.format(PACKAGE, module_name)
+    # noinspection PyPep8,PyBroadException
     try:
         imp = __import__(fullpath, fromlist=[''])
     except:

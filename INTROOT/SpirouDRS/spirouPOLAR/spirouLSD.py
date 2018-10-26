@@ -60,7 +60,7 @@ def lsd_analysis_wrapper(p, loc):
         Adds/updates the following:
         
         """
-    func_name = __NAME__ + '.lsd_analysis_wrapper()'
+    # func_name = __NAME__ + '.lsd_analysis_wrapper()'
     name = 'LSDAnalysis'
 
     # log start of LSD analysis calculations
@@ -120,12 +120,12 @@ def load_lsd_spectral_lines(p, loc):
     
     # find out which CCFLINE file is most appropriate for source
     temp_diff_min, loc['SELECTED_FILE_CCFLINES'] = 1.e10, 'marcs_t3000g50_all'
-    for i in range(len(p['IC_POLAR_LSD_CCFLINES'])) :
+    for i in range(len(p['IC_POLAR_LSD_CCFLINES'])):
         filename = p['IC_POLAR_LSD_CCFLINES'][i]
         suffix = filename.split('marcs_t')[1]
         temp_in_file = float(suffix[0:suffix.find('g50_all')])
         temp_diff = np.abs(obj_temperature - temp_in_file)
-        if temp_diff < temp_diff_min :
+        if temp_diff < temp_diff_min:
             temp_diff_min = temp_diff
             # get filename corresponding to the closest temperature to object
             loc['SELECTED_FILE_CCFLINES'] = filename
@@ -204,7 +204,7 @@ def get_wl_ranges(p, loc):
         loc['LSD_LINES_WLRANGES']: array of float pairs for wavelength ranges
        
     """
-    func_name = __NAME__ + '.get_wl_ranges()'
+    # func_name = __NAME__ + '.get_wl_ranges()'
 
     # speed of light in km/s
     c = constants.c / 1000.
@@ -264,7 +264,7 @@ def prepare_polarimetry_data(p, loc):
         
     """
 
-    func_name = __NAME__ + '.prepare_polarimetry_data()'
+    # func_name = __NAME__ + '.prepare_polarimetry_data()'
     
     # get the shape of pol
     ydim, xdim = loc['POL'].shape
@@ -326,8 +326,8 @@ def prepare_polarimetry_data(p, loc):
 
     # apply barycentric RV correction to the wavelength vector
     # TODO: Should be realivistic correction?
-    RVcorr = 1.0 + loc['BERVCEN'] / (constants.c / 1000.)
-    loc['LSD_WAVE'] =  loc['LSD_WAVE'] * RVcorr
+    rv_corr = 1.0 + loc['BERVCEN'] / (constants.c / 1000.)
+    loc['LSD_WAVE'] = loc['LSD_WAVE'] * rv_corr
     
     # initialize temporary data vectors
     wl, flux, fluxerr, pol, polerr, null = [], [], [], [], [], []
@@ -394,7 +394,7 @@ def lsd_analysis(p, loc):
         
     """
 
-    func_name = __NAME__ + '.lsd_analysis()'
+    # func_name = __NAME__ + '.lsd_analysis()'
 
     # initialize variables to define velocity vector of output LSD profile
     v0, vf, m = p['IC_POLAR_LSD_V0'], p['IC_POLAR_LSD_VF'], p['IC_POLAR_LSD_NP']
@@ -403,7 +403,7 @@ def lsd_analysis(p, loc):
     loc['LSD_VELOCITIES'] = np.linspace(v0, vf, m)
 
     # create line pattern matrix for flux LSD
-    M, Mp = line_pattern_matrix(loc['LSD_WAVE'], loc['LSD_LINES_WLC'],
+    mm, mmp = line_pattern_matrix(loc['LSD_WAVE'], loc['LSD_LINES_WLC'],
                                 loc['LSD_LINES_DEPTH'],
                                 loc['LSD_LINES_POL_WEIGHT'],
                                 loc['LSD_VELOCITIES'])
@@ -412,7 +412,7 @@ def lsd_analysis(p, loc):
     loc['LSD_STOKESI'] = calculate_lsd_profile(loc['LSD_WAVE'],
                                                loc['LSD_STOKESI'],
                                                loc['LSD_STOKESIERR'],
-                                               loc['LSD_VELOCITIES'], M,
+                                               loc['LSD_VELOCITIES'], mm,
                                                normalize=False)
 
     # fit gaussian to the measured flux LSD profile
@@ -424,12 +424,12 @@ def lsd_analysis(p, loc):
     loc['LSD_STOKESVQU'] = calculate_lsd_profile(loc['LSD_WAVE'],
                                                  loc['LSD_POL'],
                                                  loc['LSD_POLERR'],
-                                                 loc['LSD_VELOCITIES'], Mp)
+                                                 loc['LSD_VELOCITIES'], mmp)
 
     # calculate null polarimetry LSD profile
     loc['LSD_NULL'] = calculate_lsd_profile(loc['LSD_WAVE'], loc['LSD_NULL'],
                                             loc['LSD_POLERR'],
-                                            loc['LSD_VELOCITIES'], Mp)
+                                            loc['LSD_VELOCITIES'], mmp)
 
     # calculate statistical quantities
     loc['LSD_POL_MEAN'] = np.mean(loc['LSD_POL'])
@@ -456,9 +456,9 @@ def line_pattern_matrix(wl, wlc, depth, weight, vels):
     :param weight: numpy array (1D), line polar weights (size = number of lines)
     :param vels: numpy array (1D), , LSD profile velocity vector (size = m)
     
-    :return M, Mp
-        M: numpy array (2D) of size n x m, line pattern matrix for flux LSD.
-        Mp: numpy array (2D) of size n x m, line pattern matrix for polar LSD.
+    :return mm, mmp
+        mm: numpy array (2D) of size n x m, line pattern matrix for flux LSD.
+        mmp: numpy array (2D) of size n x m, line pattern matrix for polar LSD.
     """
 
     # set number of points and velocity (km/s) limits in LSD profile
@@ -471,10 +471,10 @@ def line_pattern_matrix(wl, wlc, depth, weight, vels):
     n = len(wl)
 
     # initialize line pattern matrix for flux LSD
-    M = np.zeros((n, m))
+    mm = np.zeros((n, m))
 
     # initialize line pattern matrix for polar LSD
-    Mp = np.zeros((n, m))
+    mmp = np.zeros((n, m))
 
     # set first i=0 -> trick to improve speed
     i0 = 0
@@ -493,17 +493,17 @@ def line_pattern_matrix(wl, wlc, depth, weight, vels):
                     noi0 = False
                 for j in range(m - 1):
                     if vels[j] <= v < vels[j + 1]:
-                        Mp[i][j] += weight[l]
-                        M[i][j] += depth[l]
-                        if M[i][j] > 1.0:
-                            M[i][j] = 1.0
+                        mmp[i][j] += weight[l]
+                        mm[i][j] += depth[l]
+                        if mm[i][j] > 1.0:
+                            mm[i][j] = 1.0
                         break
             elif v > vf:
                 break
-    return M, Mp
+    return mm, mmp
 
 
-def calculate_lsd_profile(wl, flux, fluxerr, vels, M, normalize=False):
+def calculate_lsd_profile(wl, flux, fluxerr, vels, mm, normalize=False):
     """
     Function to calculate the LSD profile Z given in Eq (4) of paper
     Donati et al. (1997), MNRAS 291, 658-682
@@ -513,68 +513,68 @@ def calculate_lsd_profile(wl, flux, fluxerr, vels, M, normalize=False):
     :param fluxerr: numpy array (1D), input flux or polarimetry error data 
                     (size = n)
     :param vels: numpy array (1D), , LSD profile velocity vector (size = m)
-    :param M: numpy array (2D) of size n x m, line pattern matrix for LSD.
+    :param mm: numpy array (2D) of size n x m, line pattern matrix for LSD.
     :param normalize: bool, to calculate a continuum and normalize profile
     
     :return Z: numpy array (1D) of size m, LSD profile.
     """
 
     # set number of spectral points
-    # n = len(wl)
+    n = len(wl)
 
     # First calculate transpose of M
-    MT = np.matrix.transpose(M)
+    mmt = np.matrix.transpose(mm)
 
     # Initialize matrix for dot product between MT . S^2
-    MTxS2 = np.zeros_like(MT)
+    mmt_x_s2 = np.zeros_like(mmt)
 
     # Then calculate dot product between MT . S^2, where S^2=covariance matrix
-    for j in range(np.shape(MT)[0]):
-        MTxS2[j] = MT[j] / fluxerr ** 2
+    for j in range(np.shape(mmt)[0]):
+        mmt_x_s2[j] = mmt[j] / fluxerr ** 2
 
     # calculate autocorrelation, i.e., MT . S^2 . M
-    MTxS2xM = MTxS2.dot(M)
+    mmt_x_s2_x_mm = mmt_x_s2.dot(mm)
 
     # calculate the inverse of autocorrelation using numpy pinv method
-    MTxS2xM_inv = np.linalg.pinv(MTxS2xM)
+    mmt_x_s2_x_mm_inv = np.linalg.pinv(mmt_x_s2_x_mm)
 
     # calculate cross correlation term, i.e. MT . S^2 . Y
-    XCorrTerm = MTxS2.dot(flux)
+    x_corr_term = mmt_x_s2.dot(flux)
 
     # calculate velocity profile
-    Z = MTxS2xM_inv.dot(XCorrTerm)
+    zz = mmt_x_s2_x_mm_inv.dot(x_corr_term)
     # recover last point
-    Z[-1] = np.median(Z[-6:-2])
+    zz[-1] = np.median(zz[-6:-2])
 
     if normalize:
         # calculate continuum of LSD profile to remove trend
-        cont_Z, xbin, ybin = spirouCore.Continuum(vels, Z, binsize=20,
+        cont_z, xbin, ybin = spirouCore.Continuum(vels, zz, binsize=20,
                                                   overlap=5,
                                                   sigmaclip=3.0, window=2,
                                                   mode="median",
                                                   use_linear_fit=False)
         # calculate normalized and detrended LSD profile
-        Z /= cont_Z
+        zz /= cont_z
 
-    return Z
+    return zz
 
 
 def gauss_function(x, a, x0, sigma):
     return a * np.exp(-(x - x0) ** 2 / (2. * sigma ** 2))
 
 
-def fit_gaussian_to_lsd_profile(vels, Z):
+def fit_gaussian_to_lsd_profile(vels, zz):
     """
         Function to fit gaussian to LSD Stokes I profile.
         
         :param vels: numpy array (1D), input velocity data
-        :param Z: numpy array (1D), input LSD profile data
+        :param zz: numpy array (1D), input LSD profile data
         
-        :return Zgauss, RV, resolvingPower:
-            Zgauss: numpy array (1D), gaussian fit to LSD profile (same size
+        :return z_gauss, RV, resolving_power:
+            z_gauss: numpy array (1D), gaussian fit to LSD profile (same size
                     as input vels and Z)
             RV: float, velocity of minimum obtained from gaussian fit
-            resolvingPower: float, spectral resolving power calculated from 
+            resolving_power: float, spectral resolving power calculated from
                             sigma of gaussian fit
         """
 
@@ -582,37 +582,38 @@ def fit_gaussian_to_lsd_profile(vels, Z):
     c = constants.c / 1000.
 
     # obtain velocity at minimum, amplitude, and sigma for initial guess
-    rvel = vels[np.argmin(Z)]
-    amplitude = 1.0 - np.min(Z)
-    resolvingPower = 50000.
-    sig = c / (resolvingPower * 2.3548)
+    rvel = vels[np.argmin(zz)]
+    amplitude = 1.0 - np.min(zz)
+    resolving_power = 50000.
+    sig = c / (resolving_power * 2.3548)
 
     # get inverted profile
-    Zinv = 1.0 - Z
+    z_inv = 1.0 - zz
 
     # fit gaussian profile
     guess = [amplitude, rvel, sig]
-    popt, pcov = curve_fit(gauss_function, vels, Zinv, p0=guess)
+    # noinspection PyTypeChecker
+    popt, pcov = curve_fit(gauss_function, vels, z_inv, p0=guess)
 
     # initialize output profile vector
-    Zgauss = np.zeros_like(vels)
+    z_gauss = np.zeros_like(vels)
 
-    for i in range(len(Zgauss)):
+    for i in range(len(z_gauss)):
         # calculate gaussian model profile
-        Zgauss[i] = gauss_function(vels[i], *popt)
+        z_gauss[i] = gauss_function(vels[i], *popt)
 
     # invert fit profile
-    Zgauss = 1.0 - Zgauss
+    z_gauss = 1.0 - z_gauss
 
     # calculate full width at half maximum (fwhm)
     fwhm = 2.35482 * popt[2]
     # calculate resolving power from mesasured fwhm
-    resolvingPower = c / fwhm
+    resolving_power = c / fwhm
 
     # set radial velocity directly from fitted v_0
-    RV = popt[1]
+    rv = popt[1]
 
-    return Zgauss, RV, resolvingPower
+    return z_gauss, rv, resolving_power
 
 
 def get_order_ranges():
@@ -679,7 +680,7 @@ def output_lsd_image(p, loc, hdict):
     # add input parameters for LSD analysis
     hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MASK'],
-                               value= loc['SELECTED_FILE_CCFLINES'])
+                               value=loc['SELECTED_FILE_CCFLINES'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_V0'],
                                value=p['IC_POLAR_LSD_V0'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_VF'],

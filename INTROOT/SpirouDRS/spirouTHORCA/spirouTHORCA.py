@@ -15,7 +15,6 @@ from astropy import units as uu
 import numpy as np
 import warnings
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -43,7 +42,7 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
 # Speed of light
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km/uu.s).value
 
 
@@ -116,7 +115,7 @@ def get_lamp_parameters(p, header, filename=None, kind=None):
     return p
 
 
-def first_guess_at_wave_solution(p, loc, mode=0):
+def first_guess_at_wave_solution(p, loc, mode='0'):
     """
     First guess at wave solution, consistency check, using the wavelength
     solutions line list
@@ -285,7 +284,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         # get all lines 7
         lines = np.array(loc[key][order_num])
         # keep only vqlid lines
-        testmask = lines[:,2] > 0
+        testmask = lines[:, 2] > 0
         lines = lines[testmask]
         # ---------------------------------------------------------------------
         # Criteria 1
@@ -324,7 +323,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         badlines = badfit | badsig | badampl
         # count number
         # noinspection PyPep8
-        num_bad, num_total = np.sum(badlines), badlines.size
+        num_bad, num_total = np.sum(badlines), np.array(badlines).size
         good_lines_total += num_total - num_bad
         # log only if we have bad
         if np.sum(badlines) > 0:
@@ -723,7 +722,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
     # set up storage
     littrow_extrap = np.zeros((ydim, len(x_cut_points)), dtype=float)
     littrow_extrap_sol = np.zeros_like(loc['HCDATA'])
-    littrow_extrap_param = np.zeros((ydim, fit_degree + 1),dtype=float)
+    littrow_extrap_param = np.zeros((ydim, fit_degree + 1), dtype=float)
 
     # calculate the echelle order position for this order
     echelle_order_nums = t_order_start - np.arange(ydim)
@@ -761,7 +760,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
     return loc
 
 
-def second_guess_at_wave_solution(p, loc, mode=0):
+def second_guess_at_wave_solution(p, loc, mode='0'):
     """
     Second guess at wave solution, consistency check, using the wavelength
     solutions line list
@@ -1292,6 +1291,7 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
 
             # -----------------------------------------------------------------
             # fit the gaussians to each line
+            # noinspection PyBroadException
             try:
                 fkwargs = dict(weights=line_weight,
                                return_fit=True,
@@ -1360,7 +1360,7 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
     return all_cal_line_fit
 
 
-def fit_emi_line(sll, sxpos, sdata, weight, mode='new'):
+def fit_emi_line(sll, sxpos, sdata, weight, mode=0):
     """
     Fit emission line
 
@@ -1516,7 +1516,9 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
     # TODO:     (requires fitgaus.so to be compiled and put in
     # TODO:      SpirouDRS.spirouTHORA folder)
     if mode == 0:
+        # noinspection PyBroadException
         try:
+            # noinspection PyUnresolvedReferences
             from SpirouDRS.fortran import fitgaus
         except:
             emsg1 = 'Fortran module "fitgaus" required.'
@@ -1539,6 +1541,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
         ag, siga, cfit = spirouMath.fitgaussian_lmfit(x, y, **fkwargs)
     elif mode == 3:
         try:
+            # noinspection PyUnresolvedReferences,PyUnresolvedReferences
             from SpirouDRS.fortran import gfit
         except Exception as e:
             emsg1 = 'Python file "gfit" error'
@@ -1550,6 +1553,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=0)
     elif mode == 4:
         try:
+            # noinspection PyUnresolvedReferences
             from SpirouDRS.fortran import gfit
         except Exception as e:
             emsg1 = 'Python file "gfit" error'
@@ -1561,6 +1565,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=1)
     elif mode == 5:
         try:
+            # noinspection PyUnresolvedReferences
             from SpirouDRS.fortran import gfit
         except Exception as e:
             emsg1 = 'Python file "gfit" error'

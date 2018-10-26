@@ -492,6 +492,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
             WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
     # deal with output dictionary (of required keys)
+    # noinspection PyTypeChecker
     p = write_output_dict(p, filename, hdicts[0])
     # return p
     return p
@@ -578,7 +579,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
 
 
 def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
-                   required=True):
+                    required=True):
     """
     Reads the shape file (from calib database or filename)
 
@@ -777,7 +778,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
     func_name = __NAME__ + '.create_wavemap_from_waveparam()'
     # get constants from p
     dim1key = p['KW_WAVE_ORD_N'][0]
-    dim2key = p['KW_WAVE_LL_DEG'][0]
+    # dim2key = p['KW_WAVE_LL_DEG'][0]
     # get keys from header
     dim1 = hdr[dim1key]
     # raise error is image and nbpix is None
@@ -810,7 +811,6 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
     return wavemap
 
 
-
 def get_wave_solution(p, image=None, hdr=None, filename=None,
                       return_wavemap=False, return_filename=False,
                       nbo=None, nbx=None, return_header=False, fiber=None,
@@ -841,7 +841,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     :param return_filename: bool, if True returns filename
     :param nbo: int, the number of orders if image is None (used to
                 generate wave map from wave parameters
-    :param nbo: int, the number of x-pixels if image is None (used to
+    :param nbx: int, the number of x-pixels if image is None (used to
                 generate wave map from wave parameters
     :param return_header: bool, if True return file header
     :param fiber: string, if not None forces the fiber type (i.e. look for
@@ -874,14 +874,14 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
             nbo = hdr['NAXIS2']
         else:
             emsg1 = ('Cannot identify number of orders (no image defined, and'
-                    'NAXIS2 not in header)')
+                     'NAXIS2 not in header)')
             emsg2 = '\tfunction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
         if (nbx is None) and 'NAXIS1' in hdr:
             nbx = hdr['NAXIS1']
         else:
             emsg1 = ('Cannot identify number of x-pixels (no image defined, and'
-                    'NAXIS1 not in header)')
+                     'NAXIS1 not in header)')
             emsg2 = '\tfunction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
@@ -1548,14 +1548,14 @@ def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
     # loop around the 2D array
     dim1 = len(values)
     for i_it in range(dim1):
-            # construct the key name
-            keyname = '{0}{1}'.format(key, i_it)
-            # get the value
-            value = values[i_it]
-            # construct the comment name
-            comm = '{0} {1}={2}'.format(comment, dim1name, i_it)
-            # add to header dictionary
-            hdict[keyname] = (value, comm)
+        # construct the key name
+        keyname = '{0}{1}'.format(key, i_it)
+        # get the value
+        value = values[i_it]
+        # construct the comment name
+        comm = '{0} {1}={2}'.format(comment, dim1name, i_it)
+        # add to header dictionary
+        hdict[keyname] = (value, comm)
     # return the header dictionary
     return hdict
 
@@ -1635,6 +1635,7 @@ def extract_key_word_store(keywordstore=None, func_name=None):
     if func_name is None:
         func_name = __NAME__ + '.extract_key_word_store()'
     # extract keyword, value and comment and put it into hdict
+    # noinspection PyBroadException
     try:
         key, dvalue, comment = keywordstore
     except Exception as _:
@@ -1979,6 +1980,7 @@ def deal_with_bad_header(hdu):
     headerstore = []
     # loop through HDU's until we cannot open them
     while cond:
+        # noinspection PyBroadException
         try:
             datastore.append(hdu[it].data)
             headerstore.append(hdu[it].header)
@@ -1989,7 +1991,7 @@ def deal_with_bad_header(hdu):
     # print message
     if len(datastore) > 0:
         WLOG('warning', DPROG, '    Partially recovered fits file')
-        WLOG('warning', DPROG, '    Problem with ext={0}'.format(it-1))
+        WLOG('warning', DPROG, '    Problem with ext={0}'.format(it - 1))
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -2171,8 +2173,8 @@ def math_type(p, framemath):
     if fm not in acceptable_math:
         emsgs = ['framemath="{0}" not a valid operation'.format(fm),
                  '    must be one of the following:']
-        for a_it in range(0, int(len(acceptable_math)/3)*3, 3):
-            a_math = acceptable_math[a_it: a_it+3]
+        for a_it in range(0, int(len(acceptable_math) / 3) * 3, 3):
+            a_math = acceptable_math[a_it: a_it + 3]
             emsgs.append('\t "{0}", "{1}", "{2}"'.format(*a_math))
         emsgs.append('    Error raised in function = {0}'.format(func_name))
         WLOG('error', p['LOG_OPT'], emsgs)
@@ -2190,7 +2192,6 @@ def math_type(p, framemath):
     else:
         kind, op = 'no', None
     return kind, op
-
 
 # =============================================================================
 # End of code

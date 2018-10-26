@@ -65,7 +65,7 @@ def measure_background_flatfield(p, image):
     :return minlevel: numpy array (2D), the 2 * size -th minimum pixel value
                       of each box for each pixel in the image
     """
-    func_name = __NAME__ + '.measure_background_flatfield()'
+    # func_name = __NAME__ + '.measure_background_flatfield()'
 
     # get constants
     size = p['IC_BKGR_WINDOW']
