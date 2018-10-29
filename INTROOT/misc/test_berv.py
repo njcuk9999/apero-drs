@@ -37,9 +37,6 @@ DUMP_PATH = '/scratch/Projects/spirou_py3/data_misc/berv_test/'
 # =============================================================================
 # Define functions
 # =============================================================================
-
-
-
 def date_axis(fig1, frame, x, y, fmt='%Y-%m-%d %H:%M:%S.%f'):
     # From:
     #    https://stackoverflow.com/a/45717773
@@ -47,7 +44,8 @@ def date_axis(fig1, frame, x, y, fmt='%Y-%m-%d %H:%M:%S.%f'):
         return datetime.strptime(s, fmt)
     x = list(map(striptime, x))
     frame.plot(x, y)
-    lloc = matplotlib.ticker.FixedLocator(matplotlib.dates.date2num(x), nbins=10)
+    lloc = matplotlib.ticker.FixedLocator(matplotlib.dates.date2num(x),
+                                          nbins=10)
     fmt = matplotlib.dates.DateFormatter(fmt)
     frame.xaxis.set_major_locator(lloc)
     frame.xaxis.set_major_formatter(fmt)

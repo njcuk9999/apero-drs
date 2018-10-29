@@ -23,7 +23,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 
-import cal_HC_E2DS_EA_spirou as cal_HC_E2DS_spirou
+import cal_HC_E2DS_spirou
 
 # =============================================================================
 # Define variables

@@ -161,6 +161,7 @@ for fic in fics:
             template2 = np.zeros([4088 * 49])
 
             for iord in range(49):
+                # noinspection PyUnboundLocalVariable
                 keep = np.isfinite(template[iord, :])
                 if np.sum(keep) > 20:
                     s = InterpolatedUnivariateSpline(waves[iord, keep],
@@ -211,10 +212,12 @@ for fic in fics:
                     template2[iord * 4088:iord * 4088 + 4088] = sp2b / ww
 
                     if flag_do_plot:
+                        # noinspection PyUnboundLocalVariable
                         all_mask[iord * 4088:iord * 4088 + 4088] = mask
 
             #
 
+            # noinspection PyUnboundLocalVariable
             dd = (sp2 / template2) / recon_abso
 
             if flag_template:
@@ -258,6 +261,7 @@ for fic in fics:
                 fit_dd = log_dd
 
             keep &= np.isfinite(fit_dd)
+            # noinspection PyUnboundLocalVariable
             keep &= (np.sum(np.isfinite(fit_pc), axis=1) == npc)
 
             print('total keep : ', np.sum(keep))

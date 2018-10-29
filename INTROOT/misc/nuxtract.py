@@ -222,7 +222,7 @@ for iord in range(0, n_ord):
                     v = np.zeros(wbox)
                     v[5:wbox - 5] = 1  # TODO: Why +/- 5?
                     maxpix = np.argmax(np.nanmedian(box2, axis=0) * v)
-                    if (maxpix > 5):  # TODO: Why 5?
+                    if maxpix > 5:  # TODO: Why 5?
                         part1, part2 = maxpix - 3, maxpix + 3
                         all_slices[:, :, ii % 10] += box2[:, part1:part2]
                 ii += 1

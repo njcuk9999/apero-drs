@@ -267,7 +267,7 @@ def manage_runs(p, lls, combinations, recipe, night):
         try:
             arglist = [recipe] + list(combination)
             varbs, name = spirouUnitRecipes.wrapper(p, runname, arglist)
-            lls = spirouUnitRecipes.run_main(p, name, varbs)
+            ll_s = spirouUnitRecipes.run_main(p, name, varbs)
             sPlt.closeall()
             # keep only some parameters
             pp['RECIPE'] = recipe
@@ -277,7 +277,7 @@ def manage_runs(p, lls, combinations, recipe, night):
             pp['WARNING'] = list(lls['p']['LOGGER_WARNING'])
             pp['OUTPUTS'] = dict(lls['p']['OUTPUTS'])
             # clean up
-            del lls
+            del ll_s
         # Manage unexpected errors
         except Exception as e:
             # log error
@@ -308,13 +308,14 @@ def manage_runs(p, lls, combinations, recipe, night):
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
         # append output parameters to ll and store in lls
-        lls = dict(p=pp)
-        lls.append(lls)
+        ll_s = dict(p=pp)
+        lls.append(ll_s)
     return lls
 
 
 def ask(message):
     if sys.version_info.major < 3:
+        # noinspection PyUnboundLocalVariable
         raw_input = raw_input
     else:
         raw_input = input

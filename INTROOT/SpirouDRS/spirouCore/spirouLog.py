@@ -346,6 +346,7 @@ def debug_start(errorstring):
                    'exit (any other key)?\n\t Note ipython debugger requires '
                    'ipdb installed\n\tChoose "1", "2", or exit:')
 
+        # noinspection PyUnboundLocalVariable
         uinput = raw_input(cc + '\t' + message + '\t' + nocol)
         if '1' in uinput.upper():
             print(cc + '\n\t ==== IPYTHON DEBUGGER ====\n'

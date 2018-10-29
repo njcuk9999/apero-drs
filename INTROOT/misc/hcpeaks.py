@@ -45,10 +45,10 @@ p = spirouStartup.LoadArguments(p)
 def gauss_function(x, a, x0, sigma, zp, slope):
     sigma = np.abs(sigma)
     return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2)) + zp + (
-                x - np.mean(x)) * slope
+            x - np.mean(x)) * slope
 
 
-def GAUSS_FUNCT(x, a):
+def gauss_funct(x, a):
     #
     # translated from IDL'S gaussfit function
     # used to generate a Gaussian but also returns its derivaties for
@@ -107,6 +107,7 @@ def GAUSS_FUNCT(x, a):
         pder[:, 4] = x
     if n > 5:
         pder[:, 5] = x ** 2
+    # noinspection PyUnboundLocalVariable
     return ff, pder
 
 
@@ -149,7 +150,8 @@ def gaussfit(xpix1, ypix1, nn):
 
     residu_prev = np.array(ypix1)
 
-    gfit, pder = GAUSS_FUNCT(xpix1, a0)
+    # noinspection PyUnboundLocalVariable
+    gfit, pder = gauss_funct(xpix1, a0)
 
     rms1 = 99
     nite = 0
@@ -157,7 +159,7 @@ def gaussfit(xpix1, ypix1, nn):
     # loops for 20 iterations MAX or an RMS with an RMS change in residual
     # smaller than 1e-6 of peak
     while (rms1 > 1e-6) & (nite <= 20):
-        gfit, pder = GAUSS_FUNCT(xpix1, a0)
+        gfit, pder = gauss_funct(xpix1, a0)
         residu = ypix1 - gfit
 
         amps1, fit1 = lin_mini(residu, pder)
@@ -171,7 +173,6 @@ def gaussfit(xpix1, ypix1, nn):
 
 
 def lin_mini(vector, sample):
-
     sz_sample = np.shape(sample)
     sz_vector = np.shape(vector)
 
@@ -194,6 +195,7 @@ def lin_mini(vector, sample):
     sample = np.asarray(sample)
     sz_sample = np.shape(sample)
 
+    # noinspection PyUnboundLocalVariable
     if cas == 1:
         #
         mm = np.zeros([sz_sample[0], sz_sample[0]])
@@ -383,7 +385,7 @@ if not os.path.isfile(catalog_name):
             keep &= (rms != 0)  # rms not zero
             keep &= (peak != 0)  # peak not a zero
             keep &= (
-                        peak / rms > sigma_peak)  # peak at least a few sigma
+                    peak / rms > sigma_peak)  # peak at least a few sigma
             # form RMS
 
             # position of peak within segement. It needs to be close enough to
@@ -538,8 +540,9 @@ for sol_iteration in range(3):
     # loop through all orders and find the best trio of lines
     for iord in set(order_):
         g_all = (np.where((order_ == iord) & (np.isfinite(wave_catalog))))[0]
-        g = (np.where(
-            (order_ == iord) & (np.isfinite(wave_catalog)) & brightest_lines))[0]
+
+        nanmask = (np.isfinite(wave_catalog))
+        g = (np.where((order_ == iord) & nanmask & brightest_lines))[0]
 
         bestn = 0
         best_fit = 0
@@ -610,7 +613,9 @@ for sol_iteration in range(3):
     ii = 0
     for expo_xpix in range(len(order_fit_continuity)):
         for expo_order in range(order_fit_continuity[expo_xpix]):
-            lin_model_slice[:, ii] = order_ ** expo_order * (xgau - 0) ** expo_xpix
+            part1 = order_ ** expo_order
+            part2 = (xgau - 0) ** expo_xpix
+            lin_model_slice[:, ii] = part1 * part2
             ii += 1
 
     recon0 = np.zeros_like(wave_catalog)
@@ -699,6 +704,7 @@ for sol_iteration in range(3):
         wave_map2[iord, :] = np.polyval((poly_wave_sol[iord, :])[::-1], xpix)
 
 # quality control
+# noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
 if sig * 1000 / np.sqrt(len(wave_catalog)) > 8:
     print('Error')
     exit()
@@ -716,8 +722,11 @@ bin_ord = 10
 for iord in range(0, 49, bin_ord):
     for xpos in range(0, 4):
         plt.subplot(5, 4, i_plot + 1)
+        # noinspection PyUnboundLocalVariable
         gg = (gauss_rms_dev < 0.05)
+        # noinspection PyUnboundLocalVariable
         gg &= (order_ // 10 == iord // 10)
+        # noinspection PyUnboundLocalVariable
         gg &= (xgau // 1022) == xpos
         gg &= np.isfinite(wave_catalog)
 
@@ -739,6 +748,7 @@ for iord in range(0, 49, bin_ord):
                                      int(xcens[i] + .5) + w + 1]
             all_lines[i, :] -= np.median(all_lines[i, base])
             all_lines[i, :] /= np.sum(all_lines[i, :])
+            # noinspection PyUnboundLocalVariable
             v = -299792.458 * (wave_map2[int(orders[i]),
                                int(xcens[i] + .5) - w:int(
                                    xcens[i] + .5) + w + 1] / wave_line[i] - 1)
@@ -766,6 +776,7 @@ for iord in range(0, 49, bin_ord):
             keep[np.abs(rms) > maxdev_threshold] = False
             n_it += 1
 
+        # noinspection PyUnboundLocalVariable
         resolution = popt_left[2] * 2.3548200450309493
 
         plt.plot(all_dvs[keep], all_lines[keep], 'g.')

@@ -119,16 +119,16 @@ def dark_setup(night_name, files):
 
     # get stats
     stats1 = [data.size, np.sum(~np.isfinite(data)),
-             np.nanmedian(data),
-             np.sum(~np.isfinite(data)) * 100 / np.product(data.shape),
-             p['DADEAD_FULL'],
-             datablue.size, np.sum(~np.isfinite(datablue)),
-             np.nanmedian(datablue),
-             np.sum(~np.isfinite(datablue)) * 100 / np.product(datablue.shape),
-             p['DADEAD_BLUE'], datared.size, np.sum(~np.isfinite(datared)),
-             np.nanmedian(datared),
-             np.sum(~np.isfinite(datared)) * 100 / np.product(datared.shape),
-             p['DADEAD_RED']]
+              np.nanmedian(data),
+              np.sum(~np.isfinite(data)) * 100 / np.product(data.shape),
+              p['DADEAD_FULL'],
+              datablue.size, np.sum(~np.isfinite(datablue)),
+              np.nanmedian(datablue),
+              np.sum(~np.isfinite(datablue)) * 100 / np.product(datablue.shape),
+              p['DADEAD_BLUE'], datared.size, np.sum(~np.isfinite(datared)),
+              np.nanmedian(datared),
+              np.sum(~np.isfinite(datared)) * 100 / np.product(datared.shape),
+              p['DADEAD_RED']]
 
     return stats1
 

@@ -854,7 +854,7 @@ def unit_test_obj_mk_obj_template(rname, inputs):
     return args, name
 
 
-def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
+def unit_test_visu_raw_spirou(rname, inputs):
     """
     unit_test_cal_ff_raw_spirou
 
@@ -864,13 +864,8 @@ def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return outs: list of strings, the output filenames
     """
     # define name and arguments
     name = 'visu_RAW_spirou'

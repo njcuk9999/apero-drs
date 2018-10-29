@@ -24,6 +24,7 @@ def lin_mini(vector, sample):
     sample = np.asarray(sample)
     sz_sample = np.shape(sample)
 
+    # noinspection PyUnboundLocalVariable
     if cas == 1:
         #
         mm = np.zeros([sz_sample[0], sz_sample[0]])
@@ -48,7 +49,7 @@ def lin_mini(vector, sample):
         for i in range(sz_sample[0]):
             recon += amps[i] * sample[i, :]
         #
-        return (amps, recon)
+        return amps, recon
 
     if cas == 2:
         # print('cas = 2')
@@ -65,13 +66,13 @@ def lin_mini(vector, sample):
         if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
             recon = np.zeros_like(v)
-            return (amps, recon)
+            return amps, recon
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps = np.matmul(np.linalg.inv(mm), v)
 
         recon = np.zeros(sz_sample[0])
 
         for i in range(sz_sample[1]):
             recon += amps[i] * sample[:, i]
 
-        return (amps, recon)
+        return amps, recon

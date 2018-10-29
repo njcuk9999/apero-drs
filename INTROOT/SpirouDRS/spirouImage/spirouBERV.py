@@ -134,7 +134,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         # need to import
         # noinspection PyBroadException
         try:
-            # noinspection PyPep8
+            # noinspection PyUnresolvedReferences
             from SpirouDRS.fortran import newbervmain
         except:
             emsg1 = ('For method="old" must compile fortran routine '

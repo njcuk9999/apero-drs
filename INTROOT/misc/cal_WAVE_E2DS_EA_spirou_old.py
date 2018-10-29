@@ -49,9 +49,12 @@ def lin_mini(vector, sample):
     sz_vector = np.shape(vector)
 
     if sz_vector[0] == sz_sample[0]:
+        # noinspection PyUnusedLocal
         cas = 2
     if sz_vector[0] == sz_sample[1]:
         cas = 1
+    else:
+        cas = None
 
     #
     # vecteur de N elements
@@ -162,6 +165,7 @@ def gaus_funct(x, a):
     zz = (x - a[1]) / a[2]  #
     ezz = np.exp(-zz ** 2 / 2.)  # GAUSSIAN PART
     #
+    ff = None
     if n == 3:
         ff = a[0] * ezz
     if n == 4:
@@ -205,6 +209,7 @@ def gaussfit(xpix, ypix, nn):
     # 2 PIX FWHM and therefore 2/2.54 e-width
     ew_guess = 2 * np.median(np.gradient(xpix)) / 2.354
 
+    a0 = None
     if nn == 3:
         # only amp, cen and ew
         a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess]
@@ -569,7 +574,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.plot(wave_catalog, dv, 'g.', label='all lines')
     plt.xlabel('wavelength')
     plt.ylabel('velocity offset from catalogue')
-
+    dv_pred = None
     for ite in range(2):
         meddv = np.zeros_like(xbins)
 
@@ -706,7 +711,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # set/unset smoothing
     poly_smooth = False
-
+    new_wavelength_solution_polyfit = None
     if poly_smooth:
 
         plt.figure()
@@ -760,6 +765,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
             # sigma-clipping of the order VS polynomial coefficients.
             # using higher-order polynomial
+            fit, err = None, None
             while nsigmax > 3:
                 fit = np.polyfit(nth_order[keep], tmp[keep],
                                  order_fit_continuity[nth_poly_order])
@@ -872,6 +878,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             maxdev = 999
             maxdev_threshold = 8
 
+            popt_left = None
             while maxdev > maxdev_threshold:
                 # noinspection PyTypeChecker
                 popt_left, pcov = curve_fit(gauss_function, all_dvs[keep],
