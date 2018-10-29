@@ -324,10 +324,10 @@ def update_py_version(filename, version):
 
     if uinput1 is not None:
         # update version
-        lines[version_it] = '{0} \'{1}\'\n'.format(VERSIONSTR, uinput1)
+        lines[version_it] = '{0} \'{1}\'\n'.format(VERSIONSTR.strip(), uinput1)
         # update date
         dt = datetime.now()
-        dargs = [DATESTR, dt.year, dt.month, dt.day]
+        dargs = [DATESTR.strip(), dt.year, dt.month, dt.day]
         lines[date_it] = '{0} \'{1:04d}-{2:02d}-{3:02d}\'\n'.format(*dargs)
         # write lines
         f = open(filename, 'w')

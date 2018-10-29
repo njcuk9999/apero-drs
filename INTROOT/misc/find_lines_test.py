@@ -9,9 +9,7 @@ Created on 2018-06-01 15:35
 Version 0.0.1
 """
 import numpy as np
-import warnings
 import matplotlib.pyplot as plt
-import time
 
 from SpirouDRS import spirouTHORCA
 

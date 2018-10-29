@@ -44,6 +44,9 @@ def main(check=1, debug_mode=0):
     arguments from run time i.e.:
         cal_validate_spirou.py [debug_mode]
 
+    :param check: bool or int, if 1 or True runs the check for modules/
+                  DRS modules, if 0 or False just prints paths
+
     :param debug_mode: bool or int, if 1 or True runs in debug mode
                        (extra output), if 0 or False runs in normal mode
                        (less output)
@@ -425,8 +428,10 @@ def test_paths(p):
 
 def module_test(module, reqversion):
     # try to import module
+    # noinspection PyBroadException
     try:
         imod = __import__(module)
+        # noinspection PyBroadException
         try:
             # try to get version
             version = imod.__version__
@@ -467,6 +472,7 @@ def version_test(modname, current, required):
 
 def convert_version_to_list(v):
 
+    # noinspection PyBroadException
     try:
         vlist = v.split('.')
     except:
@@ -487,24 +493,26 @@ if __name__ == "__main__":
     # if there is an argument it is the debug mode so try to convert it to
     #   boolean logic True/False
     if len(sys.argv) == 3:
+        # noinspection PyBroadException
         try:
-            check = bool(eval(sys.argv[1]))
-            debug = bool(eval(sys.argv[2]))
+            check2 = bool(eval(sys.argv[1]))
+            debug2 = bool(eval(sys.argv[2]))
         except Exception:
-            check = 1
-            debug = DEBUG
+            check2 = 1
+            debug2 = DEBUG
 
     elif len(sys.argv) == 2:
+        # noinspection PyBroadException
         try:
-            check = bool(eval(sys.argv[1]))
+            check2 = bool(eval(sys.argv[1]))
         except Exception:
-            check = 1
-        debug = DEBUG
+            check2 = 1
+        debug2 = DEBUG
     else:
-        check = 1
-        debug = DEBUG
+        check2 = 1
+        debug2 = DEBUG
     # run main with no arguments (get from command line - sys.argv)
-    ll = main(check=check, debug_mode=debug)
+    ll = main(check=check2, debug_mode=debug2)
 
 # =============================================================================
 # End of code

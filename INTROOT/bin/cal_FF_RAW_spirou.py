@@ -258,7 +258,7 @@ def main(night_name=None, files=None):
                            order_profile=order_profile)
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
-            #deal with different return
+            # deal with different return
             if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
                 e2ds, e2dsll, cpt = eout
             else:

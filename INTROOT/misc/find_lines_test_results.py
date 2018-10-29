@@ -25,8 +25,8 @@ FOLDER2 = WORKSPACE + 'FIND_LINDS_TEST/SCIPY'
 FILENAME1 = '180529_2279845c_hc_pp_wave_AB.fits'
 FILENAME2 = '180529_2279845e_hc_pp_wave_AB.fits'
 # -----------------------------------------------------------------------------
-FIRST = 13
-LAST = 40
+# FIRST = 13
+# LAST = 40
 
 FIRST = 0
 LAST = 50
@@ -58,8 +58,8 @@ def plot_wave_residual(y1, y2):
     ydim, xdim = y1.shape
 
     jet = plt.get_cmap('jet')
-    cNorm = colors.Normalize(vmin=0, vmax=ydim)
-    scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
+    c_norm = colors.Normalize(vmin=0, vmax=ydim)
+    scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=jet)
 
     plt.figure()
     for order in range(ydim):
@@ -67,11 +67,11 @@ def plot_wave_residual(y1, y2):
         if not (FIRST <= order <= LAST):
             continue
 
-        colorVal = scalarMap.to_rgba(order)
+        color_val = scalar_map.to_rgba(order)
 
         plt.plot(y1[order] - y2[order], label='Order = {0}'.format(order),
-                 color=colorVal)
-        plt.text(-10, y1[order][0] - y2[order][0], s=order, color=colorVal)
+                 color=color_val)
+        plt.text(-10, y1[order][0] - y2[order][0], s=order, color=color_val)
 
     plt.legend(loc=0, ncol=5)
     plt.xlabel('Pixel number')

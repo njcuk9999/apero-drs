@@ -45,8 +45,6 @@ reffile = '2305120o_pp_e2dsff_AB_tellu_corrected.fits'
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-
-
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'],
@@ -72,7 +70,6 @@ if __name__ == "__main__":
 
     fig1, frame1 = plt.subplots(ncols=1, nrows=1)
 
-
     # loop around files and sum flux
     for filename in files:
 
@@ -81,6 +78,7 @@ if __name__ == "__main__":
 
         print('Processing file {0}'.format(filename))
 
+        # noinspection PyBroadException
         try:
             data = fits.getdata(filename, ext=0)
             header = fits.getheader(filename, ext=0)
@@ -105,14 +103,12 @@ if __name__ == "__main__":
         for order_num in range(data.shape[0]):
             frame1.plot(wave[order_num], data[order_num])
 
-
     fig2, frame2 = plt.subplots(ncols=1, nrows=1)
     frame2.scatter(times, fluxes)
     frame2.set(xlabel='MJDate', ylabel='Sum of flux')
 
     plt.show()
     plt.close()
-
 
 
 # =============================================================================
