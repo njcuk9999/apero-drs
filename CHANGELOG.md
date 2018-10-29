@@ -5302,3 +5302,20 @@
 	- output_keys.py - add new keys for CCF_FP (rev.9494aeab)
 	- spirouConfig.py - define a copy function for ParamDict - copy all keys into new ParamDict (rev.eb344c56)
 	- cal_CCF_E2DS_FP_spirou.py - separate and keep separate the FP analysis (cp and cloc) - including header keys (rev.488a4b49)
+
+
+
+================================================================================
+* Fri Oct 26 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.051
+
+================================================================================
+	- pep8 clean up (rev.e2f3254a)
+	- update TODO's, remove old H3RG dependencies and clean up (rev.b5721f9a)
+
+
+
+================================================================================
+* Mon Oct 29 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.052
+
+================================================================================
+	- pep8 clean up (rev.edded0ad)
