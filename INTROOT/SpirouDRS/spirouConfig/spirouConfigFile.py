@@ -16,7 +16,6 @@ import string
 import pkg_resources
 import warnings
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -120,7 +119,6 @@ def read_config_file(package=None, configfolder=None, configfile=None,
         return dict(zip(keys, values))
 
 
-
 def get_user_config(p, package, configfolder, configfile):
     """
     Deal with the user defining a config file.
@@ -132,6 +130,13 @@ def get_user_config(p, package, configfolder, configfile):
 
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
+
+    :param package: string, the DRS package (to get the absolute path)
+
+    :param configfolder: string, the relative path of the config file relative
+                         to the package path
+
+    :param configfile: string, the name of the config file to look for
 
     :return p: parameter dictionary, ParamDict containing constants
         Updated with all keys from user config file (if set and found)
@@ -310,6 +315,7 @@ def gettxt(filename):
 
 def get_raw_txt(filename, comments, delimiter):
     with warnings.catch_warnings(record=True) as _:
+        # noinspection PyBroadException
         try:
             raw = np.genfromtxt(filename, comments=comments,
                                 delimiter=delimiter, dtype=str).astype(str)
@@ -354,7 +360,7 @@ def validate_text_file(filename, comments='#'):
         for char in line:
             if char not in VALID_CHARS:
                 invalid = True
-                emsg += '\n\t\tLine {1} character={0}'.format(char, l+1)
+                emsg += '\n\t\tLine {1} character={0}'.format(char, l + 1)
         emsg += '\n\n\tfunction = {0}'.format(func_name)
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
@@ -404,7 +410,7 @@ def read_lines(filename, comments='#', delimiter=' '):
                         '\n\t\t Lines must be "key" = "value"'
                         '\n\t\t Where "key" and "value" are a valid python '
                         'strings and contains no equal signs')
-                raise ConfigException(emsg.format(l+1, filename, line))
+                raise ConfigException(emsg.format(l + 1, filename, line))
 
             raw.append([key, value])
     # check that raw has entries
@@ -486,6 +492,7 @@ def evaluate_value(value):
     :return: object, if eval(value) works returns properly formated object
              else returns the value as a string
     """
+    # noinspection PyBroadException
     try:
         newvalue = eval(value)
         if type(newvalue) not in [int, float, bool, complex, list, dict]:
@@ -513,7 +520,6 @@ def get_tags(package, relfolder, filename):
     tags = dict(zip(nkeys, nvalues))
     # return tags
     return tags
-
 
 # =============================================================================
 # End of code

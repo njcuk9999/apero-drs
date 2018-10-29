@@ -18,7 +18,6 @@ import os
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
@@ -257,8 +256,8 @@ def part2test(p, loc):
     WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
     # fit lines
     start, end = p['IC_HC_N_ORD_START_2'], p['IC_HC_N_ORD_FINAL_2']
-    ll = loc['LITTROW_EXTRAP_SOL_1'][start: end]
-    loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
+    lls = loc['LITTROW_EXTRAP_SOL_1'][start: end]
+    loc = spirouTHORCA.Fit1DSolution(p, loc, lls,  iteration=2)
 
     # ------------------------------------------------------------------
     # Littrow test
@@ -463,20 +462,20 @@ def part2test(p, loc):
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
     # if p['QC']:
-        # # set the wave key
-        # keydb = 'WAVE_{0}'.format(p['FIBER'])
-        # # copy wave file to calibDB folder
-        # spirouDB.PutFile(p, wavefits)
-        # # update the master calib DB file with new key
-        # spirouDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
-
-        # # set the hcref key
-        # keydb = 'HCREF_{0}'.format(p['FIBER'])
-        # # copy wave file to calibDB folder
-        # spirouDB.PutFile(p, e2dscopy_filename)
-        # # update the master calib DB file with new key
-        # e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
-        # spirouDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
+    #     # set the wave key
+    #     keydb = 'WAVE_{0}'.format(p['FIBER'])
+    #     # copy wave file to calibDB folder
+    #     spirouDB.PutFile(p, wavefits)
+    #     # update the master calib DB file with new key
+    #     spirouDB.UpdateMaster(p, keydb, wavefitsname, loc['HCHDR'])
+    #
+    #     # set the hcref key
+    #     keydb = 'HCREF_{0}'.format(p['FIBER'])
+    #     # copy wave file to calibDB folder
+    #     spirouDB.PutFile(p, e2dscopy_filename)
+    #     # update the master calib DB file with new key
+    #     e2dscopyfits = os.path.split(e2dscopy_filename)[-1]
+    #     spirouDB.UpdateMaster(p, keydb, e2dscopyfits, loc['HCHDR'])
 
     # return p and loc
     return p, loc

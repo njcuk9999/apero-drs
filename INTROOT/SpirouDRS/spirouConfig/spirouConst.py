@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.050'
+__version__ = '0.3.052'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-10-26'
+__date__ = '2018-10-29'
 
 
 # =============================================================================
@@ -445,6 +445,7 @@ def LOG_OPT(p):
     # deal with the log_opt "log option"
     #    either {program}   or {program}:{prefix}   or {program}:{prefix}+[...]
 
+    # noinspection PyBroadException
     try:
         program = p['PROGRAM']
         log_opt = program
@@ -465,7 +466,7 @@ def PROGRAM(p=None):
     # get run time parameters
     rparams = list(sys.argv)
     # get program name
-    if (p is not None):
+    if p is not None:
         if 'RECIPE' in p:
             program = p['RECIPE']
         else:
@@ -855,6 +856,7 @@ def SLIT_TILT_FILE(p):
     # return filename and tag
     return tiltfits, tag
 
+
 # noinspection PyPep8Naming
 def SLIT_SHAPE_FILE(p):
     """
@@ -1191,7 +1193,7 @@ def DRIFT_E2DS_TBL_FILE(p, fiber=None):
     :return driftfits: string, the drift_e2ds peak drift table file location
                        and filename
     """
-    func_name = 'DRIFT_E2DS_FITS_FILE'
+    # func_name = 'DRIFT_E2DS_FITS_FILE'
     # define filename
     if fiber is None:
         fiber = p['FIBER']
@@ -1253,7 +1255,7 @@ def DRIFTCCF_E2DS_TBL_FILE(p, fiber=None):
     :return driftfits: string, the drift_e2ds peak drift table file location
                        and filename
     """
-    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
+    # func_name = 'DRIFTCCF_E2DS_FITS_FILE'
     # define filename
     if fiber is None:
         fiber = p['FIBER']
@@ -1315,7 +1317,7 @@ def DRIFTPEAK_E2DS_TBL_FILE(p, fiber=None):
     :return driftfits: string, the drift peak drift table file location and
                        filename
     """
-    func_name = 'DRIFTPEAK_E2DS_TBL_FILE'
+    # func_name = 'DRIFTPEAK_E2DS_TBL_FILE'
     # define filename
     if fiber is None:
         fiber = p['FIBER']
@@ -1404,7 +1406,7 @@ def CCF_FP_TABLE_FILE(p):
                 reffile: string, the CCF reference file
     :return ccf_table_file:
     """
-    func_name = 'CCF_FP_TABLE_FILE'
+    # func_name = 'CCF_FP_TABLE_FILE'
     # start with the CCF fits file name
     corfile = CCF_FP_FITS_FILE(p)[0]
     # we want to save the file as a tbl file not a fits file
@@ -1426,14 +1428,13 @@ def CCF_TABLE_FILE(p):
                 reffile: string, the CCF reference file
     :return ccf_table_file:
     """
-    func_name = 'CCF_TABLE_FILE'
+    # func_name = 'CCF_TABLE_FILE'
     # start with the CCF fits file name
     corfile = CCF_FITS_FILE(p)[0]
     # we want to save the file as a tbl file not a fits file
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
     return ccf_table_file
-
 
 
 # noinspection PyPep8Naming
@@ -1701,6 +1702,8 @@ def WAVE_LINE_FILE_EA(p):
     wavellfile = os.path.join(reducedfolder, wavellfn)
     return wavellfile
 
+
+# noinspection PyPep8Naming
 def WAVE_RES_FILE_EA(p):
     func_name = 'WAVE_RES_FILE_EA'
     # set reduced folder name
@@ -1740,8 +1743,6 @@ def WAVE_E2DS_COPY(p):
     tag = tags[func_name]
     # return absolute path and tag
     return e2dscopy, tag
-
-
 
 
 # noinspection PyPep8Naming
@@ -2687,6 +2688,7 @@ def DEFAULT_LOG_OPT():
 # =============================================================================
 # Plot functions
 # =============================================================================
+# noinspection PyPep8Naming
 def PLOT_FONT_SIZE():
     """
     Set the default font size for all graphs
@@ -2698,10 +2700,11 @@ def PLOT_FONT_SIZE():
     :return fontsize: int or string or None: fontsize accepted by matplotlib
     """
     # fontsize = 20
-    fontsize = None
+    fontsize = 'None'
     return fontsize
 
 
+# noinspection PyPep8Naming
 def PLOT_FONT_WEIGHT():
     """
     Set the default font weight for all graphs
@@ -2712,10 +2715,11 @@ def PLOT_FONT_WEIGHT():
     """
     # weight = 'bold'
     # weight = 'normal'
-    weight = None
+    weight = 'None'
     return weight
 
 
+# noinspection PyPep8Naming
 def PLOT_FONT_FAMILY():
     """
     Set the default font family for all graphs (i.e. monospace)
@@ -2726,18 +2730,20 @@ def PLOT_FONT_FAMILY():
                     matplotlib
     """
     # family = 'monospace'
-    family = None
+    family = 'None'
     return family
 
 
+# noinspection PyPep8Naming
 def PLOT_STYLE():
 
     # style = 'seaborn'
     # style = 'dark_background'
-    style = None
+    style = 'None'
     return style
 
 
+# noinspection PyPep8Naming
 def FONT_DICT():
     """
     Font manager for matplotlib fonts - added to matplotlib.rcParams as a
@@ -2748,11 +2754,11 @@ def FONT_DICT():
       https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
     """
     font = dict()
-    if PLOT_FONT_FAMILY() is not None:
+    if PLOT_FONT_FAMILY() != 'None':
         font['family'] = PLOT_FONT_FAMILY()
-    if PLOT_FONT_WEIGHT() is not None:
+    if PLOT_FONT_WEIGHT() != 'None':
         font['weight'] = PLOT_FONT_WEIGHT()
-    if PLOT_FONT_SIZE() is not None:
+    if PLOT_FONT_SIZE() != 'None':
         font['size'] = PLOT_FONT_SIZE()
     return font
 

@@ -546,6 +546,7 @@ drift_peak_fpbox_size = 3
 
 # define drift peak types, the keys should be KW_EXT_TYPE header keys
 #
+# noinspection PyPep8
 drift_peak_allowed_types = {'FP_FP': 'fp', 'HCONE_HCONE': 'hc', 'HCTWO_HCTWO': 'hc', 'OBJ_FP': 'fp', 'DARK_FP': 'fp'}
 
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
@@ -559,6 +560,7 @@ drift_peak_peak_sig_lim = {'fp': 1.0, 'hc': 7.0}
 #       files are allowed for each input type
 #        dictionary must have keys equal to the keys in
 #        drift_peak_allowed_types
+# noinspection PyPep8
 drift_peak_allowed_output = {'fp': ['FP_FP', 'OBJ_FP', 'DARK_FP'], 'hc': ['HCONE_HCONE', 'HCTWO_HCTWO', 'OBJ_HCONE', 'OBJ_HCTWO']}
 
 #    Define fibers which these can be used on
@@ -849,7 +851,7 @@ ic_hc_n_ord_final_2 = 46  # 40    #46
 #          3: Python (conversion of Fortran "fitgaus") - direct fortran gaussj
 #          4: Python (conversion of Fortran "fitgaus") - gaussj Melissa
 #          5: Python (conversion of Fortran "fitgaus") - gaussj Neil
-hc_find_lines_mode = 0
+# hc_find_lines_mode = 0
 
 #  Define first order FP solution is calculated from                - [cal_wave]
 ic_fp_n_ord_start = 0  # 0   # 9
@@ -905,8 +907,11 @@ ic_wave_idrift_rv_cut = 20.0
 pixel_shift_inter = 0.0
 pixel_shift_slope = 0.0
 
-# force reading the wave solution from calibDB
+# force reading the wave solution from calibDB              - [cal_HC, cal_wave]
 calib_db_force_wavesol = False
+
+# Define whether to use FP in cal_WAVE solution                     - [cal_wave]
+ic_wave_use_fp = True
 
 # -----------------------------------------------------------------------------
 #   cal_hc/cal_wave parameters
@@ -977,7 +982,7 @@ HC_RESMAP_DV_SPAN = [-15, 15]
 HC_RESMAP_PLOT_XLIM = [-8, 8]
 # the line profile y limits                                           - [cal_HC]
 HC_RESMAP_PLOT_YLIM = [-0.05, 0.7]
-#index of FP line to start order cross-matching from                - [cal_wave]
+# index of FP line to start order cross-matching from               - [cal_wave]
 ic_wave_fp_cm_ind = -2
 # order to plot HC + fitted lines                                     - [cal_HC]
 ic_wave_ea_plot_order = 7
@@ -1060,7 +1065,6 @@ tellu_fit_recon_plt_order = 33
 tellu_fit_log_limit = -0.5
 
 
-
 # -----------------------------------------------------------------------------
 #   polarimetry parameters
 # -----------------------------------------------------------------------------
@@ -1083,6 +1087,7 @@ ic_polar_cont_binsize = 1000
 ic_polar_cont_overlap = 0
 
 #  Define the telluric mask for calculation of continnum          - [pol_spirou]
+# noinspection PyPep8
 ic_polar_cont_tellmask = [[930, 967], [1109, 1167], [1326, 1491], [1782, 1979], [1997, 2027], [2047, 2076]]
 
 # Remove continuum polarization (True = 1, False = 0)
@@ -1101,9 +1106,11 @@ ic_polar_lsd_vf = 150.
 ic_polar_lsd_np = 201
 
 #  Define files with spectral lines for LSD analysis              - [pol_spirou]
-ic_polar_lsd_ccflines = ['marcs_t2500g50_all','marcs_t3000g50_all','marcs_t3500g50_all']
+# noinspection PyPep8
+ic_polar_lsd_ccflines = ['marcs_t2500g50_all', 'marcs_t3000g50_all', 'marcs_t3500g50_all']
 
 #  Define mask for selecting lines to be used in the LSD analysis - [pol_spirou]
+# noinspection PyPep8
 ic_polar_lsd_wlranges = [[983., 1116.], [1163., 1260.], [1280., 1331.], [1490., 1790.], [1975., 1995.], [2030., 2047.5]]
 
 #  Define minimum line depth to be used in the LSD analyis        - [pol_spirou]
@@ -1113,6 +1120,7 @@ ic_polar_lsd_min_linedepth = 0.175
 ic_polar_lsd_normalize = 1
 
 # Definitions of output LSD data 
+# noinspection PyPep8
 ic_polar_lsd_datainfo = ['LSD_VELOCITIES', 'LSD_STOKESI', 'LSD_STOKESI_MODEL', 'LSD_STOKESVQU', 'LSD_NULL']
 
 # -----------------------------------------------------------------------------
@@ -1129,8 +1137,6 @@ qc_max_dead = 1.0
 qc_max_dark = 1.0
 
 #   Min dark exposure time                                          - [cal_dark]
-#   TODO: This should be set to 599.0
-# qc_dark_time = 599.0
 qc_dark_time = 1.0
 
 #   Maximum points removed in location fit                           - [cal_loc]

@@ -39,7 +39,7 @@ CalculatePolarimetry = spirouPOLAR.calculate_polarimetry_wrapper
 
 CalculateContinuum = spirouPOLAR.calculate_continuum
 
-CalculateStokesI = spirouPOLAR.calculate_stokes_I
+CalculateStokesI = spirouPOLAR.calculate_stokes_i
 
 LSDAnalysis = spirouLSD.lsd_analysis_wrapper
 

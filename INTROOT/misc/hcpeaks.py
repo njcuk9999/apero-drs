@@ -1,23 +1,20 @@
 # looping through e2ds orders to find HC peaks.
 #  -- Method
 #
-# We find the highest pixel, fit a gaussian to it (-w to +w window) and keep its e-width
-# as well as other parameters that may be used as quality checks
-# the "keep" vector is used to keep track of pixels where we haven't had a window yet
-# and may find a peak
+# We find the highest pixel, fit a gaussian to it (-w to +w window) and
+# keep its e-width as well as other parameters that may be used as quality
+# checks the "keep" vector is used to keep track of pixels where we haven't
+# had a window yet and may find a peak
 
 from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 
-from astropy.table import Table
 from astropy.io import ascii
 from scipy.optimize import curve_fit
 
 import numpy as np
 import os
-import warnings
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -45,13 +42,13 @@ p = spirouStartup.LoadArguments(p)
 # =============================================================================
 # Defining a Gaussian with a DC level and slope underneath
 # =============================================================================
-def gauss_function(x, a, x0, sig, zp, slope):
-    sig = np.abs(sig)
-    return a * np.exp(-(x - x0) ** 2 / (2 * sig ** 2)) + zp + (
-                x - np.mean(x)) * slope
+def gauss_function(x, a, x0, sigma, zp, slope):
+    sigma = np.abs(sigma)
+    return a * np.exp(-(x - x0) ** 2 / (2 * sigma ** 2)) + zp + (
+            x - np.mean(x)) * slope
 
 
-def GAUSS_FUNCT(x, a):
+def gauss_funct(x, a):
     #
     # translated from IDL'S gaussfit function
     # used to generate a Gaussian but also returns its derivaties for
@@ -71,13 +68,13 @@ def GAUSS_FUNCT(x, a):
     # CATEGORY:
     #   E2 - CURVE AND SURFACE FITTING.
     # CALLING SEQUENCE:
-    #   FUNCT,X,A,F,PDER
+    #   FUNCT,X,A,F,pder
     # INPUTS:
     #   X = VALUES OF INDEPENDENT VARIABLE.
     #   A = PARAMETERS OF EQUATION DESCRIBED BELOW.
     # OUTPUTS:
     #   F = VALUE OF FUNCTION AT EACH X(I).
-    #   PDER = matrix with the partial derivatives for function fitting
+    #   pder = matrix with the partial derivatives for function fitting
     #
     # PROCEDURE:
     #   F = A(0)*EXP(-Z^2/2) + A(3) + A(4)*X + A(5)*X^2
@@ -88,32 +85,33 @@ def GAUSS_FUNCT(x, a):
     n = len(a)
     nx = len(x)
     #
-    Z = (x - a[1]) / a[2]  #
-    EZ = np.exp(-Z ** 2 / 2.)  # GAUSSIAN PART
+    zz = (x - a[1]) / a[2]  #
+    ezz = np.exp(-zz ** 2 / 2.)  # GAUSSIAN PART
     #
     if n == 3:
-        F = a[0] * EZ
+        ff = a[0] * ezz
     if n == 4:
-        F = a[0] * EZ + a[3]
+        ff = a[0] * ezz + a[3]
     if n == 5:
-        F = a[0] * EZ + a[3] + a[4] * x
+        ff = a[0] * ezz + a[3] + a[4] * x
     if n == 6:
-        F = a[0] * EZ + a[3] + a[4] * x + a[5] * x ** 2
+        ff = a[0] * ezz + a[3] + a[4] * x + a[5] * x ** 2
     #
-    PDER = np.zeros([nx, n])
-    PDER[:, 0] = EZ  # COMPUTE PARTIALS
-    PDER[:, 1] = a[0] * EZ * Z / a[2]
-    PDER[:, 2] = PDER[:, 1] * Z
+    pder = np.zeros([nx, n])
+    pder[:, 0] = ezz  # COMPUTE PARTIALS
+    pder[:, 1] = a[0] * ezz * zz / a[2]
+    pder[:, 2] = pder[:, 1] * zz
     if n > 3:
-        PDER[:, 3] = 1.0
+        pder[:, 3] = 1.0
     if n > 4:
-        PDER[:, 4] = x
+        pder[:, 4] = x
     if n > 5:
-        PDER[:, 5] = x ** 2
-    return F, PDER
+        pder[:, 5] = x ** 2
+    # noinspection PyUnboundLocalVariable
+    return ff, pder
 
 
-def gaussfit(xpix, ypix, nn):
+def gaussfit(xpix1, ypix1, nn):
     # fits a Gaussian function to xpix and ypix without prior
     # knowledge of parameters. The gaussians are expected to have
     # their peaks within the min/max range of xpix
@@ -126,44 +124,47 @@ def gaussfit(xpix, ypix, nn):
     # nn=6 -> the Guassian has a 2nd order polynomial floor
     #
     # outputs ->
-    # [ amplitude , center of peak, amplitude of peak, [dc level], [slope], [2nd order tern] ]
+    # [ amplitude , center of peak, amplitude of peak, [dc level], [slope],
+    # [2nd order tern] ]
     #
 
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
-    ew_guess = 2 * np.median(np.gradient(xpix)) / 2.3548200450309493
+    ew_guess = 2 * np.median(np.gradient(xpix1)) / 2.3548200450309493
 
     if nn == 3:
         # only amp, cen and ew
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess]
+        a0 = [np.max(ypix1) - np.min(ypix1), xpix1[np.argmax(ypix1)], ew_guess]
     if nn == 4:
         # only amp, cen, ew, dc offset
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess,
-              np.min(ypix)]
+        a0 = [np.max(ypix1) - np.min(ypix1), xpix1[np.argmax(ypix1)], ew_guess,
+              np.min(ypix1)]
     if nn == 5:
         # only amp, cen, ew, dc offset, slope
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess,
-              np.min(ypix), 0]
+        a0 = [np.max(ypix1) - np.min(ypix1), xpix1[np.argmax(ypix1)], ew_guess,
+              np.min(ypix1), 0]
     if nn == 6:
         # only amp, cen, ew, dc offset, slope, curvature
-        a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess,
-              np.min(ypix), 0, 0]
+        a0 = [np.max(ypix1) - np.min(ypix1), xpix1[np.argmax(ypix1)], ew_guess,
+              np.min(ypix1), 0, 0]
 
-    residu_prev = np.array(ypix)
+    residu_prev = np.array(ypix1)
 
-    gfit, pder = GAUSS_FUNCT(xpix, a0)
+    # noinspection PyUnboundLocalVariable
+    gfit, pder = gauss_funct(xpix1, a0)
 
-    rms = 99
+    rms1 = 99
     nite = 0
 
-    # loops for 20 iterations MAX or an RMS with an RMS change in residual smaller than 1e-6 of peak
-    while (rms > 1e-6) & (nite <= 20):
-        gfit, pder = GAUSS_FUNCT(xpix, a0)
-        residu = ypix - gfit
+    # loops for 20 iterations MAX or an RMS with an RMS change in residual
+    # smaller than 1e-6 of peak
+    while (rms1 > 1e-6) & (nite <= 20):
+        gfit, pder = gauss_funct(xpix1, a0)
+        residu = ypix1 - gfit
 
-        amps, fit = lin_mini(residu, pder)
-        a0 += amps
-        rms = np.std(residu - residu_prev) / (np.max(ypix) - np.min(ypix))
+        amps1, fit1 = lin_mini(residu, pder)
+        a0 += amps1
+        rms1 = np.std(residu - residu_prev) / (np.max(ypix1) - np.min(ypix1))
 
         residu_prev = residu
         nite += 1
@@ -172,8 +173,6 @@ def gaussfit(xpix, ypix, nn):
 
 
 def lin_mini(vector, sample):
-    import numpy as np
-
     sz_sample = np.shape(sample)
     sz_vector = np.shape(vector)
 
@@ -184,68 +183,70 @@ def lin_mini(vector, sample):
 
     #
     # vecteur de N elements
-    # sample : matrice N*M, chacune des M colonnes est ajustee en amplitude pour minimiser le chi2 par rapport au vecteur d'entree
+    # sample : matrice N*M, chacune des M colonnes est ajustee en amplitude
+    # pour minimiser le chi2 par rapport au vecteur d'entree
     # output : vecteur de M de long qui donne les amplitudes de chaque colonne
     #
-    # returns NaN values as amplitudes if the sample vectors lead to an auto-correlation matrix that
-    # cannot be inverted (i.e., that are full of zeros or are not linearly independent)
+    # returns NaN values as amplitudes if the sample vectors lead to an
+    # auto-correlation matrix that cannot be inverted (i.e., that are full of
+    # zeros or are not linearly independent)
     #
     vector = np.asarray(vector)
     sample = np.asarray(sample)
     sz_sample = np.shape(sample)
-    sz_vector = np.shape(vector)
 
+    # noinspection PyUnboundLocalVariable
     if cas == 1:
         #
-        M = np.zeros([sz_sample[0], sz_sample[0]])
+        mm = np.zeros([sz_sample[0], sz_sample[0]])
         #
-        v = np.zeros(sz_sample[0])
+        vv = np.zeros(sz_sample[0])
 
-        for i in range(sz_sample[0]):
-            for j in range(i, sz_sample[0]):
-                M[i, j] = np.sum(sample[i, :] * sample[j, :])
-                M[j, i] = M[i, j]
-            v[i] = np.sum(vector * sample[i, :])
+        for it in range(sz_sample[0]):
+            for jt in range(it, sz_sample[0]):
+                mm[it, jt] = np.sum(sample[it, :] * sample[jt, :])
+                mm[j, it] = mm[it, jt]
+            vv[it] = np.sum(vector * sample[it, :])
         #
-        if np.linalg.det(M) == 0:
-            amps = np.zeros(sz_sample[0]) + np.nan
-            recon = np.zeros_like(v)
-            return (amps, recon)
+        if np.linalg.det(mm) == 0:
+            amps1 = np.zeros(sz_sample[0]) + np.nan
+            recon1 = np.zeros_like(vv)
+            return amps1, recon1
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps1 = np.matmul(np.linalg.inv(mm), vv)
         #
-        recon = np.zeros(sz_sample[1])
+        recon1 = np.zeros(sz_sample[1])
         #
-        for i in range(sz_sample[0]):
-            recon += amps[i] * sample[i, :]
+        for it in range(sz_sample[0]):
+            recon1 += amps1[it] * sample[it, :]
         #
-        return (amps, recon)
+        return amps1, recon1
 
     if cas == 2:
         # print('cas = 2')
         # print(sz_sample[1])
-        M = np.zeros([sz_sample[1], sz_sample[1]])
-        v = np.zeros(sz_sample[1])
+        mm = np.zeros([sz_sample[1], sz_sample[1]])
+        vv = np.zeros(sz_sample[1])
 
-        for i in range(sz_sample[1]):
-            for j in range(i, sz_sample[1]):
-                M[i, j] = np.sum(sample[:, i] * sample[:, j])
-                M[j, i] = M[i, j]
-            v[i] = np.sum(vector * sample[:, i])
+        for it in range(sz_sample[1]):
+            for jt in range(it, sz_sample[1]):
+                mm[it, jt] = np.sum(sample[:, it] * sample[:, jt])
+                mm[jt, it] = mm[it, jt]
+            vv[i] = np.sum(vector * sample[:, it])
 
-        if np.linalg.det(M) == 0:
-            amps = np.zeros(sz_sample[1]) + np.nan
-            recon = np.zeros_like(v)
-            return (amps, recon)
+        if np.linalg.det(mm) == 0:
+            amps1 = np.zeros(sz_sample[1]) + np.nan
+            recon1 = np.zeros_like(vv)
+            return amps1, recon1
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps1 = np.matmul(np.linalg.inv(mm), vv)
 
-        recon = np.zeros(sz_sample[0])
+        recon1 = np.zeros(sz_sample[0])
 
-        for i in range(sz_sample[1]):
-            recon += amps[i] * sample[:, i]
+        for it in range(sz_sample[1]):
+            recon1 += amps1[it] * sample[:, it]
 
-        return (amps, recon)
+        return amps1, recon1
 
 
 # =============================================================================
@@ -254,8 +255,9 @@ def lin_mini(vector, sample):
 # HC file that is used for wavelength solution estimate
 
 # hcfile = '2295398c_pp_e2dsff_AB.fits'
-hcfile = '2279046c_pp_e2dsff_C.fits'
-hcfile = '/scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/hcone_hcone_001_pp_e2ds_AB.fits'
+# hcfile = '2279046c_pp_e2dsff_C.fits'
+hcfile = '/scratch/Projects/spirou_py3/data_h4rg/reduced/AT5/20180409/' \
+         'hcone_hcone_001_pp_e2ds_AB.fits'
 
 # setting the fibre
 p['fiber'] = 'AB'
@@ -263,7 +265,8 @@ p['fiber'] = 'AB'
 # number of sigma above local RMS for a line to be flagged as such
 sigma_peak = 2.0
 
-# width of the box for fitting HC lines. Lines will be fitted from -W to +W, so a 2*W+1 window
+# width of the box for fitting HC lines. Lines will be fitted from -W to +W,
+# so a 2*W+1 window
 w = 6
 
 # reading HC e2ds
@@ -271,16 +274,19 @@ hc_sp = pyfits.getdata(hcfile)
 hc_ini = np.array(hc_sp)
 
 # getting header info with wavelength polynomials
-# this can be a very poor fit, as long as the lines are within ~10 pixels, we're fine
+# this can be a very poor fit, as long as the lines are within
+# ~10 pixels, we're fine
 wave_hdr = pyfits.getheader(hcfile)
 
-# plot per-order. This is way too much plotting in most cases, just for debugging
+# plot per-order. This is way too much plotting in most cases, just
+# for debugging
 doplot_per_order = False
 
 # plot some sanity-check graphs along the way
 doplot_sanity = True
 
-file_catalog_urne = '/scratch/Projects/spirou_py3/spirou_py3/INTROOT/SpirouDRS/data/wavelength_cats/catalogue_UNe.dat'
+file_catalog_urne = '/scratch/Projects/spirou_py3/spirou_py3/INTROOT/' \
+                    'SpirouDRS/data/wavelength_cats/catalogue_UNe.dat'
 
 # the RMS of line-fitted line must be before 0 and 0.2 of the peak value
 # must be SNR>5 (or 1/SNR<0.2)
@@ -297,18 +303,21 @@ ew_max = 1.1
 # 20 is a good number, and I see now reason to change it
 nmax_bright = 20
 
-# in the 3-lines alogrithm, we consider a line valid if it is within 500m/s of the fit
+# in the 3-lines alogrithm, we consider a line valid if it is within 500m/s
+# of the fit
 cut_fit_threshold = 1.0  # en km/s
 
-# this sets the order of the polynomial used to ensure continuity in the xpix vs wave solutions
-# by setting the first term = 12, we force that the zeroth element of the xpix of the wavelegnth
+# this sets the order of the polynomial used to ensure continuity in the xpix
+# vs wave solutions
+# by setting the first term = 12, we force that the zeroth element of the xpix
+# of the wavelegnth
 # grid is fitted with a 12th order polynomial as a function of order number
 order_fit_continuity = [12, 9, 6, 2, 2]
 
 # =============================================================================
 
 # polynomial xpix/wavelength for all orders
-poly_wave_sol = spirouImage.ReadWaveParams(p, wave_hdr)
+poly_wave_sol = spirouImage.GetWaveSolution(p, wave_hdr)
 
 wave = np.zeros([49, 4088])
 xpix = np.array(range(4088))
@@ -316,7 +325,8 @@ for iord in range(49):
     wave[iord, :] = np.polyval((poly_wave_sol[iord, :])[::-1], xpix)
     # creating a wavelength[pix] vector for all orders
 
-# defining empty variables, so will be used later, others are just there to confuse the reader
+# defining empty variables, so will be used later, others are just there to
+# confuse the reader
 ew_ini = []
 xgau_ini = []
 peak_ini = []
@@ -329,19 +339,23 @@ gauss_rms_dev_ini = []
 # looping through e2ds orders to find HC peaks.
 #  -- Method
 #
-# We find the highest pixel, fit a gaussian to it (-w to +w window) and keep its e-width
+# We find the highest pixel, fit a gaussian to it (-w to +w window) and keep
+# its e-width
 # as well as other parameters that may be used as quality checks
-# the "keep" vector is used to keep track of pixels where we haven't had a window yet
+# the "keep" vector is used to keep track of pixels where we haven't had a
+# window yet
 # and may find a peak
 
-xprev = -1  # to be sure we are not picking the same line twice, we force a >1 pixel difference between consecutive lines
+xprev = -1  # to be sure we are not picking the same line twice, we force a >1
+# pixel difference between consecutive lines
 
-# as this part of the code is long, we will save an ASCII file with all the relevant parameters
+# as this part of the code is long, we will save an ASCII file with all the
+# relevant parameters
 # if the file is present, we just read it
 catalog_name = (hcfile.split('.'))[0] + '_linelist_old.dat'
 
 # checking if we have a catalog
-if os.path.isfile(catalog_name) == False:
+if not os.path.isfile(catalog_name):
     for iord in range(49):
         npeaks = 0
 
@@ -371,9 +385,11 @@ if os.path.isfile(catalog_name) == False:
             keep &= (rms != 0)  # rms not zero
             keep &= (peak != 0)  # peak not a zero
             keep &= (
-                        peak / rms > sigma_peak)  # peak at least a few sigma form RMS
+                    peak / rms > sigma_peak)  # peak at least a few sigma
+            # form RMS
 
-            # position of peak within segement. It needs to be close enough to the center of the segment
+            # position of peak within segement. It needs to be close enough to
+            # the center of the segment
             # if it is at the edge, we'll catch it in the following iteration
             #
             # we keep (or not) the peak
@@ -391,7 +407,8 @@ if os.path.isfile(catalog_name) == False:
                 # similar to an 1/SNR value
                 gauss_rms_dev0 = np.std(segment - g2) / popt_left[0]
 
-                # all values that will be added (if keep_peak=True) to the vector of all line
+                # all values that will be added (if keep_peak=True) to the
+                # vector of all line
                 # parameters
                 zp0 = popt_left[3]
                 slope0 = popt_left[4]
@@ -431,7 +448,8 @@ if os.path.isfile(catalog_name) == False:
         if doplot_per_order:
             plt.show()
         print('npeaks = ', npeaks)
-    # create a dictonnary with all the peak infos. will be saved as an ASCII file
+    # create a dictonnary with all the peak infos. will be saved as an
+    # ASCII file
     catalog_lines = dict()
     catalog_lines['ord'] = ord_ini
     catalog_lines['xgau'] = xgau_ini
@@ -456,14 +474,18 @@ for sol_iteration in range(3):
     # algorithm :
     #
     # within each order, we loop through all bright lines and pick 3 lines
-    # These 3 lines are assumed to be good, we fit a second-order xpix vs wavelength
-    # polynomial and test it against all other fitted lines along the order
+    # These 3 lines are assumed to be good, we fit a second-order xpix vs
+    # wavelength polynomial and test it against all other fitted lines along
+    # the order
     # we keep track of the best fit for the order, i.e., the fit that
     # provides a solution with the largest number of lines within +-500 m/s
-    # We then assume that the fit is fine, we keep the lines that match the "best fit"
+    # We then assume that the fit is fine, we keep the lines that match the
+    # "best fit"
     # and we move to the next order
-    # Once we have "valid" lines for most/all orders, we attempt to fit a 5th order polynomial
-    # of the xpix vs lambda for all orders. The coefficient of the fit must be continuous from
+    # Once we have "valid" lines for most/all orders, we attempt to fit a 5th
+    # order polynomial
+    # of the xpix vs lambda for all orders. The coefficient of the fit must be
+    # continuous from
     # one order to the next
 
     # we perform the fit twice, once to get a coarse solution, once to refine
@@ -471,7 +493,7 @@ for sol_iteration in range(3):
     # not 100% elegant, but who cares, it takes 5µs ...
     #
     xgau = catalog_lines['xgau']
-    ord = catalog_lines['ord']
+    order_ = catalog_lines['ord']
     gauss_rms_dev = catalog_lines['gauss_rms_dev']
     ew = catalog_lines['ew']
     peak = catalog_lines['peak']
@@ -480,12 +502,13 @@ for sol_iteration in range(3):
     # only those lines will be used to derive the first
     # estimates of the per-order fit
     brightest_lines = np.zeros(len(xgau), dtype=bool)
-    for iord in set(ord):
-        g = (ord == iord)
+    for iord in set(order_):
+        g = (order_ == iord)
         peak2 = np.array(peak[g])
         peak2.sort()
-        good = (ord == iord)
-        nmax = nmax_bright  # we may have fewer lines within the order than the nmax_bright variable
+        good = (order_ == iord)
+        nmax = nmax_bright  # we may have fewer lines within the order than
+        # the nmax_bright variable
         if np.sum(g) < nmax_bright:
             nmax = np.sum(g) - 1
         good &= peak > (peak2[::-1])[nmax]
@@ -494,11 +517,12 @@ for sol_iteration in range(3):
     wave_sol = np.zeros_like(xgau)
     for i in range(len(xgau)):
         wave_sol[i] = np.polyval(
-            (poly_wave_sol[np.array(ord[i], dtype=int), :])[::-1], xgau[i])
+            (poly_wave_sol[np.array(order_[i], dtype=int), :])[::-1], xgau[i])
 
     # width_box = ([120000,5000,5000,1000,1000,1000])[sol_iteration]
 
-    # keeping track of the velocity offset between predicted and observed line centers
+    # keeping track of the velocity offset between predicted and observed
+    # line centers
     dv = np.zeros(len(wave_sol)) + np.nan
 
     # wavelength given in the catalog for the matched line
@@ -514,10 +538,11 @@ for sol_iteration in range(3):
         i += 1
 
     # loop through all orders and find the best trio of lines
-    for iord in set(ord):
-        g_all = (np.where((ord == iord) & (np.isfinite(wave_catalog))))[0]
-        g = (np.where(
-            (ord == iord) & (np.isfinite(wave_catalog)) & brightest_lines))[0]
+    for iord in set(order_):
+        g_all = (np.where((order_ == iord) & (np.isfinite(wave_catalog))))[0]
+
+        nanmask = (np.isfinite(wave_catalog))
+        g = (np.where((order_ == iord) & nanmask & brightest_lines))[0]
 
         bestn = 0
         best_fit = 0
@@ -529,19 +554,21 @@ for sol_iteration in range(3):
                     xx = xgau[index]
                     yy = wave_catalog[index]
                     fit = np.polyfit(xx, yy,
-                                     2)  # fit the lines and take it as a best-guess solution
+                                     2)  # fit the lines and take it as a
+                    # best-guess solution
                     dd = (wave_catalog[g_all] / np.polyval(fit, np.array(
                         xgau[g_all])) - 1) * 299792.458  # error
 
                     nkeep = np.sum(np.abs(dd) < cut_fit_threshold)
-                    if nkeep > bestn:  # the number of good lines is the largest seen to date
+                    if nkeep > bestn:  # the number of good lines is the
+                        # largest seen to date
                         bestn = nkeep
                         best_fit = fit
 
-        print(
-        'order = ', iord, ' valid/total lines : ', bestn, ' / ', len(g_all))
+        print('order = ', iord, ' valid/total lines : ',
+              bestn, ' / ', len(g_all))
 
-        g = (np.where(ord == iord))[0]
+        g = (np.where(order_ == iord))[0]
         if bestn >= 10:
             dd = (wave_catalog[g] / np.polyval(best_fit, np.array(
                 xgau[g])) - 1) * 299792.458
@@ -570,7 +597,7 @@ for sol_iteration in range(3):
 
     wave_catalog = wave_catalog[g]
     xgau = xgau[g]
-    ord = ord[g]
+    order_ = order_[g]
     dv = dv[g]
     ew = ew[g]
     gauss_rms_dev = gauss_rms_dev[g]
@@ -586,7 +613,9 @@ for sol_iteration in range(3):
     ii = 0
     for expo_xpix in range(len(order_fit_continuity)):
         for expo_order in range(order_fit_continuity[expo_xpix]):
-            lin_model_slice[:, ii] = ord ** expo_order * (xgau - 0) ** expo_xpix
+            part1 = order_ ** expo_order
+            part2 = (xgau - 0) ** expo_xpix
+            lin_model_slice[:, ii] = part1 * part2
             ii += 1
 
     recon0 = np.zeros_like(wave_catalog)
@@ -620,7 +649,7 @@ for sol_iteration in range(3):
             lin_model_slice = lin_model_slice[g, :]
             wave_catalog = wave_catalog[g]
             xgau = xgau[g]
-            ord = ord[g]
+            order_ = order_[g]
             dv = dv[g]
             ew = ew[g]
             gauss_rms_dev = gauss_rms_dev[g]
@@ -632,7 +661,7 @@ for sol_iteration in range(3):
     plt.subplot(2, 2, 1)
 
     for iord in range(49):
-        g = (ord == iord)
+        g = (order_ == iord)
         plt.plot(wave_catalog[g], 2.99e5 * (wave_catalog / recon0 - 1)[g], '.')
 
         plt.xlabel('Wavelength (nm)')
@@ -640,7 +669,7 @@ for sol_iteration in range(3):
 
     plt.subplot(2, 2, 2)
     for iord in range(49):
-        g = (ord == iord)
+        g = (order_ == iord)
         plt.plot(1 / gauss_rms_dev[g], 2.99e5 * (wave_catalog / recon0 - 1)[g],
                  '.')
         plt.xlabel('Line SNR estimate')
@@ -648,14 +677,14 @@ for sol_iteration in range(3):
 
     plt.subplot(2, 2, 3)
     for iord in range(49):
-        g = (ord == iord)
+        g = (order_ == iord)
         plt.plot(xgau[g] % 1, 2.99e5 * (wave_catalog / recon0 - 1)[g], '.')
         plt.xlabel('modulo pixel position')
         plt.ylabel('dv (km/s)')
 
     plt.subplot(2, 2, 4)
     for iord in range(49):
-        g = (ord == iord)
+        g = (order_ == iord)
         plt.plot(ew[g], 2.99e5 * (wave_catalog / recon0 - 1)[g], '.')
         plt.xlabel('e-width of the fitted line')
         plt.ylabel('dv (km/s)')
@@ -675,6 +704,7 @@ for sol_iteration in range(3):
         wave_map2[iord, :] = np.polyval((poly_wave_sol[iord, :])[::-1], xpix)
 
 # quality control
+# noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
 if sig * 1000 / np.sqrt(len(wave_catalog)) > 8:
     print('Error')
     exit()
@@ -682,7 +712,7 @@ if sig * 1000 / np.sqrt(len(wave_catalog)) > 8:
 # wave_map2 (wave map) --> fits
 # poly_wave_sol  --> header
 
-# ===============================================================================================
+# =============================================================================
 
 resolution_map = np.zeros([5, 4])
 
@@ -692,13 +722,16 @@ bin_ord = 10
 for iord in range(0, 49, bin_ord):
     for xpos in range(0, 4):
         plt.subplot(5, 4, i_plot + 1)
+        # noinspection PyUnboundLocalVariable
         gg = (gauss_rms_dev < 0.05)
-        gg &= (ord // 10 == iord // 10)
+        # noinspection PyUnboundLocalVariable
+        gg &= (order_ // 10 == iord // 10)
+        # noinspection PyUnboundLocalVariable
         gg &= (xgau // 1022) == xpos
         gg &= np.isfinite(wave_catalog)
 
         xcens = xgau[gg]
-        orders = ord[gg]
+        orders = order_[gg]
         wave_line = wave_catalog[gg]
 
         all_lines = np.zeros([np.sum(gg), 2 * w + 1])
@@ -708,11 +741,14 @@ for iord in range(0, 49, bin_ord):
         base[0:3] = True
         base[2 * w - 2:2 * w + 1] = True
 
+        # noinspection PyTypeChecker
         for i in range(np.sum(gg)):
             all_lines[i, :] = hc_ini[int(orders[i]),
-                              int(xcens[i] + .5) - w:int(xcens[i] + .5) + w + 1]
+                                     int(xcens[i] + .5) - w:
+                                     int(xcens[i] + .5) + w + 1]
             all_lines[i, :] -= np.median(all_lines[i, base])
             all_lines[i, :] /= np.sum(all_lines[i, :])
+            # noinspection PyUnboundLocalVariable
             v = -299792.458 * (wave_map2[int(orders[i]),
                                int(xcens[i] + .5) - w:int(
                                    xcens[i] + .5) + w + 1] / wave_line[i] - 1)
@@ -728,17 +764,19 @@ for iord in range(0, 49, bin_ord):
         maxdev_threshold = 8
         n_it = 0
         while maxdev > maxdev_threshold:
+            # noinspection PyTypeChecker
             popt_left, pcov = curve_fit(gauss_function, all_dvs[keep],
                                         all_lines[keep], p0=[.3, 0, 1, 0, 0])
             res = all_lines - gauss_function(all_dvs, popt_left[0],
                                              popt_left[1], popt_left[2],
                                              popt_left[3], popt_left[4])
 
-            rms = (res) / np.median(np.abs(res))
+            rms = res / np.median(np.abs(res))
             maxdev = np.max(np.abs(rms[keep]))
             keep[np.abs(rms) > maxdev_threshold] = False
             n_it += 1
 
+        # noinspection PyUnboundLocalVariable
         resolution = popt_left[2] * 2.3548200450309493
 
         plt.plot(all_dvs[keep], all_lines[keep], 'g.')

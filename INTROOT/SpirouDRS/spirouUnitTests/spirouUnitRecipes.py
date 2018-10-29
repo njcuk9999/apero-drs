@@ -114,6 +114,7 @@ def get_versions():
     vv = OrderedDict()
     vv[cal_BADPIX_spirou.__NAME__] = cal_BADPIX_spirou.__version__
     vv[cal_CCF_E2DS_spirou.__NAME__] = cal_CCF_E2DS_spirou.__version__
+    vv[cal_CCF_E2DS_FP_spirou.__NAME__] = cal_CCF_E2DS_FP_spirou.__version__
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
@@ -129,7 +130,7 @@ def get_versions():
     vv[cal_SHAPE_spirou.__NAME__] = cal_SHAPE_spirou.__version__
     # vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
     vv[cal_WAVE_E2DS_EA_spirou.__NAME__] = cal_WAVE_E2DS_EA_spirou.__version__
-    # vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou.__version__
+    # vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou
     vv[cal_preprocess_spirou.__NAME__] = cal_preprocess_spirou.__version__
     vv[off_listing_RAW_spirou.__NAME__] = off_listing_RAW_spirou.__version__
     vv[off_listing_REDUC_spirou.__NAME__] = off_listing_REDUC_spirou.__version__
@@ -167,6 +168,7 @@ def wrapper(p, rname, inputs=None):
     return varbs, name
 
 
+# noinspection PyUnusedLocal
 def run_main(p, name, args):
     # set the program name
     command = '{0}.main(**args)'.format(name)
@@ -294,7 +296,6 @@ def unit_test_cal_shape_spirou(rname, inputs):
     # get arguments
     args = get_args(name, rname, inputs, arg_names, arg_types)
     return args, name
-
 
 
 def unit_test_cal_ff_raw_spirou(rname, inputs):
@@ -853,7 +854,7 @@ def unit_test_obj_mk_obj_template(rname, inputs):
     return args, name
 
 
-def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
+def unit_test_visu_raw_spirou(rname, inputs):
     """
     unit_test_cal_ff_raw_spirou
 
@@ -863,13 +864,8 @@ def unit_test_visu_raw_spirou(rname, inputs, outputs=None):
     :param rname: string, identifier for this run
     :param inputs: list of objects, raw parameters to pass to run, if outputs
                    is None returns parameters to pass to file
-    :param outputs: dictionary or None, output of code - locals() if not None
-                    returns output filenames
 
-    if outputs is None:
-        :return args: dict, the parameters to pass to the run
-    else:
-        :return outs: list of strings, the output filenames
+    :return outs: list of strings, the output filenames
     """
     # define name and arguments
     name = 'visu_RAW_spirou'
