@@ -210,6 +210,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         hc_x = all_lines[order_num][line_ind][5]  # x_out
 
         # Find FP line immediately after the HC line
+        initial_peak = 0
         for j in range(1, len(pos)):
             if pos[j - 1] < hc_x < pos[j]:
                 # interpolate and save the FP ref line wavelength
@@ -456,6 +457,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # plot by order - TODO move to spirouPLOT?
 
     # define colours
+    # noinspection PyUnresolvedReferences
     col = cm.rainbow(np.linspace(0, 1, n_fin))
     plt.figure()
     for i in range(n_fin):
@@ -508,6 +510,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # Comparison plot with initial wave sol - TODO move to spirouPLOT
     # define colours
+    # noinspection PyUnresolvedReferences
     col = cm.rainbow(np.linspace(0, 1, n_fin))
     plt.figure()
     for ord_num in range(n_fin):

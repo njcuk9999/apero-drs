@@ -402,6 +402,7 @@ def recipe_mode_2(req, nfiles):
             if len(ufiles) > 0:
                 runs.append(ufiles)
     # return runs
+    # noinspection PyUnboundLocalVariable
     return runs
 
 
@@ -484,15 +485,15 @@ def check_skip(p, night_name):
 
 def add_to_history(p, night_name, runs, errors, loggers):
     # get directory for run
-    dir = os.path.join(p['DRS_DATA_RAW'], night_name)
+    dir_ = os.path.join(p['DRS_DATA_RAW'], night_name)
     # check it exists
-    if not os.path.exists(dir):
-        emsg1 = 'Directory "{0}" does not exist'.format(dir)
+    if not os.path.exists(dir_):
+        emsg1 = 'Directory "{0}" does not exist'.format(dir_)
         emsg2 = '\tSomething wrong with night name={0}?'.format(night_name)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # construct filename
-    filename = os.path.join(dir, HISTORY_FILE_NAME)
+    filename = os.path.join(dir_, HISTORY_FILE_NAME)
 
     # construct history
     lines = ['\n' + spirouStartup.spirouStartup.HEADER + '\n',

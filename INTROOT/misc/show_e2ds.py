@@ -112,6 +112,7 @@ if __name__ == "__main__":
     canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
 
     # on change dropdown value
+    # noinspection PyUnusedLocal
     def change_dropdown(*args):
         print(tkvar.get())
         filename1 = tkvar.get()
@@ -123,6 +124,7 @@ if __name__ == "__main__":
 
 
     # on change dropdown value
+    # noinspection PyUnusedLocal
     def change_order(*args):
         order_num = tkvar2.get()
         filename1 = current_file
@@ -131,6 +133,7 @@ if __name__ == "__main__":
         current_order = order_num
 
 
+    # noinspection PyUnusedLocal
     def nextplot(*args):
         global current_int
         current_int += 1
@@ -142,6 +145,7 @@ if __name__ == "__main__":
         tkvar.set(current_file)
 
 
+    # noinspection PyUnusedLocal
     def previousplot(*args):
         global current_int
         current_int -= 1

@@ -2247,20 +2247,24 @@ def e2dstos1d(wave, e2dsffb, sbin):
             ys1d = yi * 1.
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
+        # noinspection PyUnboundLocalVariable
         lim1 = xs1d[-1]
         lim2 = xi[0]
         if lim1 < lim2:
             zone0x = np.arange(lim1 + sbin, lim2, sbin)
             zone0y = np.zeros(len(zone0x), 'd')
+            # noinspection PyUnboundLocalVariable
             ys1d = np.concatenate((ys1d, zone0y, yi))
             xs1d = np.concatenate((xs1d, zone0x, xi))
         else:
             ind = int(round((lim1 - lim2) / sbin))
             w = 1. - np.arange(ind * 1. + 1.) / ind
+            # noinspection PyUnboundLocalVariable
             zonec = ys1d[-ind - 1:] * w + yi[0:ind + 1] * (1. - w)
             ys1d = np.concatenate((ys1d[:-ind - 1], zonec, yi[ind + 1:]))
             xs1d = np.concatenate((xs1d[:-ind - 1], xi))
 
+    # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
     return xs1d, ys1d
 
 

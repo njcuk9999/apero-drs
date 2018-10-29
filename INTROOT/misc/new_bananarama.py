@@ -197,6 +197,7 @@ for ite_banana in range(nbanana):
 
         sigmax = 99
         while sigmax > 4:
+            # noinspection PyUnboundLocalVariable
             fit = np.polyfit(xsection[keep], dxsection[keep], 2)
             res = (dxsection - np.polyval(fit, xsection))
             res -= np.nanmedian(res[keep])
@@ -207,6 +208,7 @@ for ite_banana in range(nbanana):
 
         #
         # we fit a 2nd order polynomial to the slope vx position along order
+        # noinspection PyUnboundLocalVariable
         fit = np.polyfit(xsection[keep], dxsection[keep], 2)
         print('slope at pixel 2044 : ',
               np.arctan(np.polyval(fit, 2044)) * 180 / np.pi, ' deg')
@@ -228,6 +230,7 @@ for ite_banana in range(nbanana):
         for i in range(wpix):
             ddx = (i - wpix / 2.) * np.polyval(fit, xpix)
             spline = InterpolatedUnivariateSpline(xpix, ribbon[i, :], ext=1)
+            # noinspection PyUnboundLocalVariable
             ribbon2[i, :] = spline(xpix + ddx)
 
         # median FP peak profile. We will cross-correlate each row of the
@@ -245,7 +248,7 @@ for ite_banana in range(nbanana):
             # fit a gaussian to the CC peak
             g, gg = spirouMath.gauss_fit_nn(ddx, cc[i, :], 4)
 
-            if np.nanmax(cc[i, :]) > (0.1):
+            if np.nanmax(cc[i, :]) > 0.1:
                 dx[i] = g[1]
 
         # remove any offset in dx, this would only shift the spectra

@@ -62,6 +62,7 @@ def gauss_funct(x, a):
         pder[:, 4] = x
     if n > 5:
         pder[:, 5] = x ** 2
+    # noinspection PyUnboundLocalVariable
     return ff, pder
 
 
@@ -104,6 +105,7 @@ def gaussfit(xpix, ypix, nn):
 
     residu_prev = np.array(ypix)
 
+    # noinspection PyUnboundLocalVariable
     gfit, pder = gauss_funct(xpix, a0)
 
     rms = 99

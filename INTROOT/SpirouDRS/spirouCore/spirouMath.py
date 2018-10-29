@@ -79,8 +79,10 @@ def relativistic_waveshift(dv, units='km/s'):
     :return:
     """
     # get c in correct units
+    # noinspection PyUnresolvedReferences
     if units == 'km/s' or units == uu.km/uu.s:
         c = speed_of_light
+    # noinspection PyUnresolvedReferences
     elif units == 'm/s' or units == uu.m/uu.s:
         c = speed_of_light_ms
     else:

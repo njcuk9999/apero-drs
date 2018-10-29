@@ -368,6 +368,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
                      'cal_preprocess_spirou.py')
             emsg3 = '\tfunction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            kind = 'None'
         # if neither exist we have a problem
         else:
             emsg1 = 'File {0} does not exist'.format(filename)
@@ -1024,7 +1025,7 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
 
 # TODO: Not used
 def check_id_filename(p, control, recipe, filename):
-    func_name = __NAME__ + '.check_id_filename()'
+    # func_name = __NAME__ + '.check_id_filename()'
     # set un-found initial parameters
     found = False
     found_row = None

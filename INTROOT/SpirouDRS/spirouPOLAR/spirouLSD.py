@@ -117,7 +117,7 @@ def load_lsd_spectral_lines(p, loc):
     obj_temperature = loc['HDR']['OBJTEMP']
     wmsg = 'Temperature of the object observed: {0} K'
     WLOG('info', p['LOG_OPT'], wmsg.format(obj_temperature))
-    
+
     # find out which CCFLINE file is most appropriate for source
     temp_diff_min, loc['SELECTED_FILE_CCFLINES'] = 1.e10, 'marcs_t3000g50_all'
     for i in range(len(p['IC_POLAR_LSD_CCFLINES'])):
@@ -265,7 +265,7 @@ def prepare_polarimetry_data(p, loc):
     """
 
     # func_name = __NAME__ + '.prepare_polarimetry_data()'
-    
+
     # get the shape of pol
     ydim, xdim = loc['POL'].shape
     # get wavelength ranges to be considered in each spectral order
@@ -273,7 +273,7 @@ def prepare_polarimetry_data(p, loc):
     # initialize output data vectors
     loc['LSD_WAVE'], loc['LSD_STOKESI'], loc['LSD_STOKESIERR'] = [], [], []
     loc['LSD_POL'], loc['LSD_POLERR'], loc['LSD_NULL'] = [], [], []
-    
+
     # loop over each order
     for order_num in range(ydim):
         # mask NaN values
@@ -328,7 +328,7 @@ def prepare_polarimetry_data(p, loc):
     # TODO: Should be realivistic correction?
     rv_corr = 1.0 + loc['BERVCEN'] / (constants.c / 1000.)
     loc['LSD_WAVE'] = loc['LSD_WAVE'] * rv_corr
-    
+
     # initialize temporary data vectors
     wl, flux, fluxerr, pol, polerr, null = [], [], [], [], [], []
     # loop over spectral ranges to select only spectral regions of interest
@@ -404,9 +404,9 @@ def lsd_analysis(p, loc):
 
     # create line pattern matrix for flux LSD
     mm, mmp = line_pattern_matrix(loc['LSD_WAVE'], loc['LSD_LINES_WLC'],
-                                loc['LSD_LINES_DEPTH'],
-                                loc['LSD_LINES_POL_WEIGHT'],
-                                loc['LSD_VELOCITIES'])
+                                  loc['LSD_LINES_DEPTH'],
+                                  loc['LSD_LINES_POL_WEIGHT'],
+                                  loc['LSD_VELOCITIES'])
 
     # calculate flux LSD profile
     loc['LSD_STOKESI'] = calculate_lsd_profile(loc['LSD_WAVE'],
@@ -441,7 +441,7 @@ def lsd_analysis(p, loc):
     loc['LSD_STOKESVQU_STDDEV'] = np.std(loc['LSD_STOKESVQU'])
     loc['LSD_NULL_MEAN'] = np.mean(loc['LSD_NULL'])
     loc['LSD_NULL_STDDEV'] = np.std(loc['LSD_NULL'])
-    
+
     return loc
 
 
@@ -520,6 +520,7 @@ def calculate_lsd_profile(wl, flux, fluxerr, vels, mm, normalize=False):
     """
 
     # set number of spectral points
+    # noinspection PyUnusedLocal
     n = len(wl)
 
     # First calculate transpose of M

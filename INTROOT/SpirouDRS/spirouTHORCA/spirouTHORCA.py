@@ -1158,6 +1158,10 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
                     line = float(ll_line_s[ll_i])
             # perform the gaussian fit on the line
             with warnings.catch_warnings(record=True) as _:
+                if mode == 'new':
+                    mode = 3
+                else:
+                    mode = 2
                 # TODO: PROBLEM WITH FIT_EMI_LINE
                 # TODO:  1 scipy.optimize.curve_fit does not give
                 # TODO:    same result as foutran fitgaus.fitgaus routine
