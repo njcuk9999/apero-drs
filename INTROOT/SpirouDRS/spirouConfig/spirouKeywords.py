@@ -245,6 +245,7 @@ USE_PARAMS = ['DRS_NAME',
               'DARK_CUTLIMIT']
 
 # load ICDP config file
+# noinspection PyBroadException
 try:
     p, _ = spirouConfig.load_config_from_file(p, key='ICDP_NAME', required=True,
                                               logthis=False)
@@ -293,7 +294,6 @@ spirouConfig.check_config(p, USE_PARAMS)
 # -----------------------------------------------------------------------------
 # define the HEADER key for acquisition time (used to get value only)
 #   in format YYYY-mm-dd-HH-MM-SS.ss
-# TODO: This switch will be obsolete after H2RG testing is over
 KW_ACQTIME_KEY = ['DATE', None, '']
 
 # define the HEADER key for acquisition time (used to get value only)
@@ -641,7 +641,8 @@ KW_POL_LSD_FIT_RESOL = ['LSDRESOL', '', 'Resolving power from gaussian fit']
 KW_POL_LSD_MEANPOL = ['LSDMEPOL', '', 'Mean polarization of data in LSD']
 KW_POL_LSD_STDDEVPOL = ['LSDSDPOL', '', 'Std dev polarization of data in LSD']
 KW_POL_LSD_MEDIANPOL = ['LSDMDPOL', '', 'Median polarization of data in LSD']
-KW_POL_LSD_MEDABSDEVPOL = ['LSDMAPOL', '', 'Med abs dev polarization of data in LSD']
+KW_POL_LSD_MEDABSDEVPOL = ['LSDMAPOL', '',
+                           'Med abs dev polarization of data in LSD']
 KW_POL_LSD_STOKESVQU_MEAN = ['MEPOLLSD', '', 'Mean of pol LSD profile']
 KW_POL_LSD_STOKESVQU_STDDEV = ['SDPOLLSD', '', 'Std dev of pol LSD profile']
 KW_POL_LSD_NULL_MEAN = ['MENULLSD', '', 'Mean of null LSD profile']

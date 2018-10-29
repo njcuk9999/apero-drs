@@ -142,8 +142,6 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Identification of bad pixels
     # ----------------------------------------------------------------------
-    # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
-
     # get number of bad dark pixels (as a fraction of total pixels)
     with warnings.catch_warnings(record=True) as w:
         baddark = 100.0 * np.sum(data0 > p['DARK_CUTLIMIT'])
@@ -174,8 +172,6 @@ def main(night_name=None, files=None):
         sPlt.start_interactive_session()
         # plot the image with blue and red regions
         sPlt.darkplot_image_and_regions(p, data)
-        # plot the data cut
-        sPlt.darkplot_datacut(datacutmask)
         # plot histograms
         sPlt.darkplot_histograms(p)
         # end interactive session
@@ -248,11 +244,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
     # Set to zero dark value > dark_cutlimit
-    # TODO: Remove H2RG requirement
-    if p['IC_IMAGE_TYPE'] == 'H4RG':
-        cutmask = data0 > p['DARK_CUTLIMIT']
-    else:
-        cutmask = np.zeros_like(data0)
+    cutmask = data0 > p['DARK_CUTLIMIT']
     data0c = np.where(cutmask, np.zeros_like(data0), data0)
     # write image and add header keys (via hdict)
     p = spirouImage.WriteImage(p, darkfits, data0c, hdict)
@@ -260,7 +252,6 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Save bad pixel mask
     # ----------------------------------------------------------------------
-    # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
     # construct bad pixel file name
     badpixelfits, tag = spirouConfig.Constants.DARK_BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
@@ -293,13 +284,12 @@ def main(night_name=None, files=None):
         # update the master calib DB file with new key
         spirouDB.UpdateCalibMaster(p, keydb, darkfitsname, hdr)
 
-        # TODO: Remove BADPIX from cal_DARK (now in cal_BADPIX)
-        # set badpix key
-        keydb = 'BADPIX_OLD'
-        # copy badpix fits file to calibDB folder
-        spirouDB.PutCalibFile(p, badpixelfits)
-        # update the master calib DB file with new key
-        spirouDB.UpdateCalibMaster(p, keydb, badpixelfitsname, hdr)
+        # # set badpix key
+        # keydb = 'BADPIX_OLD'
+        # # copy badpix fits file to calibDB folder
+        # spirouDB.PutCalibFile(p, badpixelfits)
+        # # update the master calib DB file with new key
+        # spirouDB.UpdateCalibMaster(p, keydb, badpixelfitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

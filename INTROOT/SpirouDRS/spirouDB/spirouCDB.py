@@ -483,7 +483,7 @@ def put_file(p, inputfile):
     func_name = __NAME__ + '.put_file()'
     # construct output filename
     outputfile = os.path.join(p['DRS_CALIB_DB'], os.path.split(inputfile)[1])
-
+    # noinspection PyExceptClausesOrder
     try:
         shutil.copyfile(inputfile, outputfile)
         os.chmod(outputfile, 0o0644)

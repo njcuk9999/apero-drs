@@ -129,7 +129,7 @@ def main(night_name=None, files=None):
         # plot polarimetry results
         sPlt.polar_result_plot(loc)
         # plot total flux (Stokes I)
-        sPlt.polar_stokesI_plot(loc)
+        sPlt.polar_stokes_i_plot(loc)
         # end interactive session
         sPlt.end_interactive_session()
     
@@ -139,8 +139,8 @@ def main(night_name=None, files=None):
     # construct file names
     degpolfits, tag1 = spirouConfig.Constants.DEG_POL_FILE(p, loc)
     degpolfitsname = os.path.split(degpolfits)[-1]
-    stokesIfits, tag2 = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
-    stokesIfitsname = os.path.split(stokesIfits)[-1]
+    stokes_ifits, tag2 = spirouConfig.Constants.STOKESI_POL_FILE(p, loc)
+    stokes_ifitsname = os.path.split(stokes_ifits)[-1]
     nullpol1fits, tag3 = spirouConfig.Constants.NULL_POL1_FILE(p, loc)
     nullpol1fitsname = os.path.split(nullpol1fits)[-1]
     nullpol2fits, tag4 = spirouConfig.Constants.NULL_POL2_FILE(p, loc)
@@ -148,7 +148,7 @@ def main(night_name=None, files=None):
 
     # log that we are saving POL spectrum
     wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
-    wargs = [degpolfitsname, stokesIfitsname, nullpol1fitsname,
+    wargs = [degpolfitsname, stokes_ifitsname, nullpol1fitsname,
              nullpol2fitsname]
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
@@ -172,7 +172,7 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     # save STOKESI data to file
     multi_image = [loc['STOKESI'], loc['STOKESIERR']]
-    p = spirouImage.WriteImageMulti(p, stokesIfits, multi_image, hdict)
+    p = spirouImage.WriteImageMulti(p, stokes_ifits, multi_image, hdict)
 
     # ------------------------------------------------------------------
     if p['IC_POLAR_LSD_ANALYSIS']:

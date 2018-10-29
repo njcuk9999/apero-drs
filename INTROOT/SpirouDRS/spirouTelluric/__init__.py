@@ -25,7 +25,7 @@ __release__ = spirouConfig.Constants.RELEASE()
 __all__ = ['CheckBlackList', 'ConstructConvKernel1', 'ConstructConvKernel2',
            'GetMolecularTellLines', 'GetNormalizedBlaze', 'GetBERV',
            'CalculateAbsorptionPCA', 'CalcReconAbso', 'CalcMolecularAbsorption',
-           'InterpAtShiftedWavelengths', 'LinMini', 'Wave2Wave']
+           'LinMini', 'Wave2Wave']
 
 
 # =============================================================================

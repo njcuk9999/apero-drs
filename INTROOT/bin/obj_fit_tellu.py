@@ -182,6 +182,7 @@ def main(night_name=None, files=None):
     tout = spirouConfig.Constants.TELLU_ABSO_SAVE(p, filetime)
     abso_save_file, absoprefix = tout
     use_saved = os.path.exists(abso_save_file)
+    # noinspection PyBroadException
     try:
         # try loading from file
         abso = np.load(abso_save_file)
@@ -288,16 +289,6 @@ def main(night_name=None, files=None):
         outfilename1 = os.path.basename(outfile1)
         outfile2, tag2 = CONSTANTS.TELLU_FIT_RECON_FILE(p, filename)
         outfilename2 = os.path.basename(outfile2)
-
-        # ------------------------------------------------------------------
-        # Skip if output file already exists
-        # ------------------------------------------------------------------
-        # TODO: Do we really want to skip?
-        # if os.path.exists(outfile1):
-        #     # log that file was skipped
-        #     wmsg = 'File "{0}" exist, skipping.'
-        #     WLOG('', p['LOG_OPT'], wmsg.format(outfilename1))
-        #     continue
 
         # ------------------------------------------------------------------
         # Read filename
@@ -422,7 +413,6 @@ def main(night_name=None, files=None):
         # debug plot
         if p['DRS_PLOT']:
             # plot the recon abso plot
-            # TODO: Question - Is this plot broken???
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
         # ------------------------------------------------------------------
