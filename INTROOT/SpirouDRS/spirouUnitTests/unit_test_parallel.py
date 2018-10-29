@@ -50,6 +50,7 @@ UNIT_TEST_PATH = os.path.join(UNIT_PATH, 'Runs')
 # Max Processes
 MAX_PROCESSES = 10
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -85,7 +86,6 @@ def unit_wrapper(p, runs):
     sPlt.closeall()
     # return times
     return times, errors
-
 
 
 def group_runs(runs):
@@ -211,7 +211,6 @@ def main(runname=None, quiet=False):
     # ----------------------------------------------------------------------
     runs = spirouUnitTests.get_runs(p, rparams, rfile)
 
-
     # ----------------------------------------------------------------------
     # group runs (for parallelisation)
     # ----------------------------------------------------------------------
@@ -242,9 +241,6 @@ def main(runname=None, quiet=False):
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
-
-
-
 
 
 # =============================================================================

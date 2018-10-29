@@ -17,15 +17,13 @@ from __future__ import division
 import numpy as np
 from astropy import constants
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
-from SpirouDRS import spirouTelluric
-from SpirouDRS.spirouCore import spirouMath
+
 
 # =============================================================================
 # Define variables
@@ -84,7 +82,7 @@ def main(night_name=None, files=None):
     # Get database files
     # ----------------------------------------------------------------------
     # get current telluric maps from telluDB
-    files, output_codes = []
+    files, output_codes = [], []
     # filter by object name (only keep OBJNAME objects) and only keep
     #   unique filenames
     use_files = []

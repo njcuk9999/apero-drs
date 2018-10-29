@@ -11,15 +11,10 @@ Created on 2018-10-19 at 11:55
 """
 
 from __future__ import division
-import numpy as np
-import os
-import warnings
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouImage
-from SpirouDRS import spirouStartup
+
 
 # =============================================================================
 # Define variables
@@ -36,14 +31,14 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def cause_error():
 
-    emsgs = ['TEST ERROR']
-    emsgs.append('Caused by: error_test.cause_error()')
-    emsgs.append('Return to Exit')
+    emsgs = ['TEST ERROR', 'Caused by: error_test.cause_error()',
+             'Return to Exit']
 
     WLOG('error', 'TEST', emsgs)
     return 0

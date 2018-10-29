@@ -1,6 +1,6 @@
 import glob
 import os
-import shutil
+
 
 inputpath = '/spirou/data/raw/**'
 outputpath = '/spirou/data/raw/tells/'

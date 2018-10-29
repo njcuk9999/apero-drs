@@ -14,14 +14,12 @@ import numpy as np
 import os
 import sys
 from astropy.table import Table
-import itertools
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS.spirouUnitTests import spirouUnitRecipes
-
 
 # =============================================================================
 # Define variables
@@ -46,6 +44,8 @@ TEST_RUN = False
 TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
+
+
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -237,7 +237,6 @@ def add_files(p, night, filelist, numbers, combine=False):
 
 
 def printrun(*args):
-
     printstring = ''
     for arg in args:
         printstring += '{0}\t'.format(arg)
@@ -250,7 +249,7 @@ def print_runs(p, combinations, recipe):
         # log progress
         printrun(recipe, ' '.join(list(combination)))
 
-        print(recipe, combination)
+        print(p['LOG_OPT'], recipe, combination)
 
 
 def manage_runs(p, lls, combinations, recipe, night):
@@ -259,9 +258,8 @@ def manage_runs(p, lls, combinations, recipe, night):
         # log progress
         rargs = [recipe, it + 1, len(combinations)]
         runname = ' TRIGGER {0} File {1} of {2}'.format(*rargs)
-        wmsgs = [spirouStartup.spirouStartup.HEADER]
-        wmsgs.append(runname)
-        wmsgs.append(spirouStartup.spirouStartup.HEADER)
+        wmsgs = [spirouStartup.spirouStartup.HEADER, runname,
+                 spirouStartup.spirouStartup.HEADER]
         WLOG('warning', p['LOG_OPT'], wmsgs)
         # setup storage for output parameters
         pp = ParamDict()
@@ -269,17 +267,17 @@ def manage_runs(p, lls, combinations, recipe, night):
         try:
             arglist = [recipe] + list(combination)
             varbs, name = spirouUnitRecipes.wrapper(p, runname, arglist)
-            ll = spirouUnitRecipes.run_main(p, name, varbs)
+            ll_s = spirouUnitRecipes.run_main(p, name, varbs)
             sPlt.closeall()
             # keep only some parameters
             pp['RECIPE'] = recipe
             pp['NIGHT_NAME'] = night
             pp['ARGS'] = combinations
-            pp['ERROR'] = list(ll['p']['LOGGER_ERROR'])
-            pp['WARNING'] = list(ll['p']['LOGGER_WARNING'])
-            pp['OUTPUTS'] = dict(ll['p']['OUTPUTS'])
+            pp['ERROR'] = list(lls['p']['LOGGER_ERROR'])
+            pp['WARNING'] = list(lls['p']['LOGGER_WARNING'])
+            pp['OUTPUTS'] = dict(lls['p']['OUTPUTS'])
             # clean up
-            del ll
+            del ll_s
         # Manage unexpected errors
         except Exception as e:
             # log error
@@ -310,13 +308,14 @@ def manage_runs(p, lls, combinations, recipe, night):
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
         # append output parameters to ll and store in lls
-        ll = dict(p=pp)
-        lls.append(ll)
+        ll_s = dict(p=pp)
+        lls.append(ll_s)
     return lls
 
 
 def ask(message):
     if sys.version_info.major < 3:
+        # noinspection PyUnboundLocalVariable
         raw_input = raw_input
     else:
         raw_input = input
@@ -351,8 +350,8 @@ def trigger_preprocess(p, filelist):
                 args = [night_names[it], filenames[it]]
                 lls.append(cal_preprocess_spirou.main(*args))
             except Exception as e:
-                emsgs = ['There was an exception']
-                emsgs.append('Exception message reads: {0}'.format(e))
+                emsgs = ['There was an exception',
+                         'Exception message reads: {0}'.format(e)]
                 WLOG('warning', p['LOG_OPT'], emsgs)
                 pp = ParamDict()
                 pp['NIGHT_NAME'] = night_names[it]
@@ -371,6 +370,10 @@ def trigger_main(p, loc, recipe, limit=None, combine=False, fdprtypes=None):
     :param p: parameter dictionary, contains spirou DRS constants
     :param loc: parameter dictionary, contains the data
     :param recipe: string, the name of the recipe (without .py)
+    :param limit: int, the limit of the number of times to run recipe
+    :param combine: bool, if True takes all files and add them as a single
+                    argument, if False keeps all files as separate arguments
+                    for separate runs of the recipe
     :param fdprtypes: list of strings, allowed DPRTYPES
 
     :return:
@@ -387,7 +390,7 @@ def trigger_main(p, loc, recipe, limit=None, combine=False, fdprtypes=None):
         # log progress
         wmsgs = [spirouStartup.spirouStartup.HEADER]
         wmsg = ' TRIGGER RECIPE: {0} NIGHT_NAME={1} ({2}/{3})'
-        wmsgs.append(wmsg.format(recipe, night_name, it+1, len(index_files)))
+        wmsgs.append(wmsg.format(recipe, night_name, it + 1, len(index_files)))
         if fdprtypes is not None:
             for fdprtype in fdprtypes:
                 wmsgs.append('\tDPRTYPE: {0}'.format(fdprtype))
@@ -484,12 +487,11 @@ def main(night_name=None):
     flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
     # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
     hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                           fdprtypes=['HCONE_HCONE', 'FP_FP'])
+                            fdprtypes=['HCONE_HCONE', 'FP_FP'])
     # 8. cal_WAVE_E2DS_RAW_spirou.py
     # wave_lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_EA_spirou',
     #                         limit=1)
     # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
-
 
     # ----------------------------------------------------------------------
     # End Message
@@ -511,4 +513,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-

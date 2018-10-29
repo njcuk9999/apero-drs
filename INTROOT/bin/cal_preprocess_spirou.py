@@ -153,11 +153,8 @@ def main(night_name=None, ufiles=None):
         # ------------------------------------------------------------------
         # rotate image
         # ------------------------------------------------------------------
-        # TODO: Eventually remove H2RG fix
-        # do not rotate for H2RG
-        if p['IC_IMAGE_TYPE'] == 'H4RG':
-            # rotation to match HARPS orientation (expected by DRS)
-            image = spirouImage.RotateImage(image, p['RAW_TO_PP_ROTATION'])
+        # rotation to match HARPS orientation (expected by DRS)
+        image = spirouImage.RotateImage(image, p['RAW_TO_PP_ROTATION'])
 
         # ------------------------------------------------------------------
         # Save rotated image

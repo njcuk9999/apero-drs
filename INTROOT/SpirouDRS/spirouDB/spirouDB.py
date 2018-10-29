@@ -100,8 +100,10 @@ def get_database(p, update=False, dbkind=None):
             key = line.split()[0]
             # check if key already in database
             if key in t_database:
+                # noinspection PyTypeChecker
                 t_database[key].append([l_it] + line.split()[1:])
             else:
+                # noinspection PyTypeChecker
                 t_database[key] = [[l_it] + line.split()[1:]]
         # will crash if we don't have 5 variables --> thus log and exit
         except ValueError:

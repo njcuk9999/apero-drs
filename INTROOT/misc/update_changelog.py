@@ -10,14 +10,10 @@ Created on 2018-07-04 at 10:38
 @author: cook
 """
 from __future__ import division
-import numpy as np
 import os
-import warnings
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 
 # =============================================================================
@@ -47,9 +43,9 @@ TMPFILENAME = 'CHANGELOG.tmp'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path, kind='rpm', version=None, since=None):
+def update(filename, path1, kind='rpm', version=None, since=None):
     # get default run
-    cargs = [path, filename]
+    cargs = [path1, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
     if kind == 'rpm':
         command += ' -O {0}'.format(kind)
@@ -136,12 +132,12 @@ if __name__ == "__main__":
     # get the absolute path
     path = spirouConfig.GetAbsFolderPath(CONSTANTS.PACKAGE(), PATH)
     # get the version
-    version = p['DRS_VERSION']
+    drs_version = p['DRS_VERSION']
     # get the last entry
     last_entry = get_last_entry(FILENAME)
     # get the change log
     WLOG('', p['RECIPE'], 'Creating changelog')
-    update(TMPFILENAME, path, kind='rpm', version=version, since=last_entry)
+    update(TMPFILENAME, path, kind='rpm', version=drs_version, since=last_entry)
     # now append to full changelog (do not overwrite contents)
     WLOG('', p['RECIPE'], 'Saving change log to file {0}'.format(FILENAME))
     add_to_full(FILENAME, TMPFILENAME)
