@@ -122,6 +122,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     transdata = spirouDB.GetDatabaseTellMap(p)
     trans_files = transdata[0]
+    # make sure we have unique filenames for trans_files
+    trans_files = np.unique(trans_files)
 
     # ----------------------------------------------------------------------
     # Start plotting
@@ -174,13 +176,38 @@ def main(night_name=None, files=None):
         emsg4 = '\tAdd more files or reduce number of PCA components'
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(nfiles, npc),
                                      emsg3, emsg4])
-    # set up storage for the absorption
-    abso = np.zeros([nfiles, np.product(loc['DATA'].shape)])
-    # loop around outputfiles and add them to abso
-    for it, filename in enumerate(trans_files):
-        # push data into array
-        data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
-        abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
+
+    # check whether we can used pre-saved abso
+    filetime = spirouImage.GetMostRecent(trans_files)
+    tout = spirouConfig.Constants.TELLU_ABSO_SAVE(p, filetime)
+    abso_save_file, absoprefix = tout
+    use_saved = os.path.exists(abso_save_file)
+    try:
+        # try loading from file
+        abso = np.load(abso_save_file)
+        # log progress
+        wmsg = 'Loaded abso from file {0}'.format(abso_save_file)
+        WLOG('', p['LOG_OPT'], wmsg)
+    except:
+        # set up storage for the absorption
+        abso = np.zeros([nfiles, np.product(loc['DATA'].shape)])
+        # loop around outputfiles and add them to abso
+        for it, filename in enumerate(trans_files):
+            # load data
+            data_it, _, _, _, _ = spirouImage.ReadImage(p, filename=filename)
+            # push data into array
+            abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
+        # log progres
+        wmsg = 'Saving abso to file {0}'.format(abso_save_file)
+        WLOG('', p['LOG_OPT'], wmsg)
+        # remove all abso save files (only need most recent one)
+        afolder = os.path.dirname(abso_save_file)
+        afilelist = os.listdir(afolder)
+        for afile in afilelist:
+            if afile.startswith(absoprefix):
+                os.remove(os.path.join(afolder, afile))
+        # save to file for later use
+        np.save(abso_save_file, abso)
 
     # log the absorption cube
     with warnings.catch_warnings(record=True) as w:
@@ -393,8 +420,9 @@ def main(night_name=None, files=None):
         #           AMPS_ABSOL_TOTAL
         loc = spirouTelluric.CalcReconAbso(p, loc)
         # debug plot
-        if p['DRS_PLOT'] and (p['DRS_DEBUG'] > 1):
+        if p['DRS_PLOT']:
             # plot the recon abso plot
+            # TODO: Question - Is this plot broken???
             sPlt.tellu_fit_recon_abso_plot(p, loc)
 
         # ------------------------------------------------------------------
@@ -425,6 +453,11 @@ def main(night_name=None, files=None):
                                    value=loc['WAVEFILE'])
         # set tellu keys
         npc = loc['NPC']
+        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_NPC'], value=npc)
+        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_FIT_DPC'],
+                                   value=p['FIT_DERIV_PC'])
+        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_ADD_DPC'],
+                                   value=p['ADD_DERIV_PC'])
         if p['ADD_DERIV_PC']:
             values = loc['AMPS_ABSOL_TOTAL'][:npc - 2]
             hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
@@ -449,6 +482,9 @@ def main(night_name=None, files=None):
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        # log progress
+        wmsg = 'Saving {0} to file'.format(outfilename1)
+        WLOG('', p['LOG_OPT'], wmsg)
         # write sp_out to file
         p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
 
@@ -478,6 +514,9 @@ def main(night_name=None, files=None):
                 # set source
                 loc.set_source('WATERCOL', main_name)
 
+        # log progress
+        wmsg = 'Saving {0} to file'.format(outfilename2)
+        WLOG('', p['LOG_OPT'], wmsg)
         # write recon_abso to file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)

@@ -781,7 +781,7 @@ def find_hc_gauss_peaks(p, loc):
         WLOG('', p['LOG_OPT'], wmsg.format(npeaks))
 
         # debug plot
-        if p['DRS_PLOT']:
+        if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
             if p['HC_EA_PLOT_PER_ORDER']:
                 sPlt.wave_ea_plot_per_order_hcguess(loc, order_num)
     # ------------------------------------------------------------------

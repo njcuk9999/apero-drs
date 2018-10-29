@@ -17,6 +17,7 @@ from __future__ import division
 import numpy as np
 from astropy import constants
 import os
+import warnings
 from scipy.interpolate import InterpolatedUnivariateSpline as IUVSpline
 
 from SpirouDRS import spirouConfig
@@ -93,10 +94,20 @@ def main(night_name=None, files=None):
     # get current telluric maps from telluDB
     tellu_db_data = spirouDB.GetDatabaseTellObj(p, required=False)
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
-    # filter by object name (only keep OBJNAME objects
+
+    # sort files by name
+    tellu_db_files = spirouImage.SortByName(tellu_db_files)
+
+    # filter by object name (only keep OBJNAME objects) and only keep
+    #   unique filenames
     tell_files = []
     for it in range(len(tellu_db_files)):
-        if loc['OBJNAME'] in tellu_db_names[it]:
+        # check that objname is correct
+        cond1 = loc['OBJNAME'] in tellu_db_names[it]
+        # check that filename is not already used
+        cond2 = tellu_db_files[it] not in tell_files
+        # append to file list if criteria correct
+        if cond1 and cond2:
             tell_files.append(tellu_db_files[it])
 
     # log if we have no files
@@ -139,11 +150,15 @@ def main(night_name=None, files=None):
     loc.set_sources(keys, main_name)
 
     # ----------------------------------------------------------------------
-    # Loop around files
+    # Loop through input files
     # ----------------------------------------------------------------------
+    base_filelist, berv_list = [], []
+    # loop through files
     for it, filename in enumerate(tell_files):
         # get base filenmae
         basefilename = os.path.basename(filename)
+        # append basename to file list
+        base_filelist.append(basefilename)
         # ------------------------------------------------------------------
         # create image for storage
         image = np.repeat([np.nan], np.product(loc['DATA'].shape))
@@ -153,6 +168,12 @@ def main(night_name=None, files=None):
         tdata0, thdr, tcdr, _, _ = spirouImage.ReadImage(p, filename)
         # Correct for the blaze
         tdata = tdata0 / loc['NBLAZE']
+
+        # get berv and add to list
+        if p['KW_BERV'][0] in thdr:
+            berv_list.append('{0}'.format(thdr[p['KW_BERV'][0]]))
+        else:
+            berv_list.append('UNKNOWN')
 
         # ------------------------------------------------------------------
         # Get the wave solution for this file
@@ -196,7 +217,8 @@ def main(night_name=None, files=None):
         big_cube0[:, :, it] = tdata
     # ----------------------------------------------------------------------
     # make median image
-    big_cube_med = np.median(big_cube, axis=2)
+    with warnings.catch_warnings(record=True) as _:
+        big_cube_med = np.nanmedian(big_cube, axis=2)
 
     # ----------------------------------------------------------------------
     # Write Cube median (the template) to file
@@ -217,6 +239,11 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
     hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
                                value=loc['MASTERWAVEFILE'])
+    # add file list to header
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJFILELIST'],
+                                     values=base_filelist)
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJBERVLIST'],
+                                     values=berv_list)
     # add wave solution coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
@@ -242,13 +269,13 @@ def main(night_name=None, files=None):
     # save big cube 1
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
     big_cube_s = np.swapaxes(big_cube, 1, 2)
-    p = spirouImage.WriteImageMulti(p, outfile1, big_cube_s, hdict)
+    p = spirouImage.WriteImage(p, outfile1, big_cube_s, hdict)
     # log big cube 0
     wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
     # save big cube 0
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
-    p = spirouImage.WriteImageMulti(p, outfile2, big_cube_s0, hdict)
+    p = spirouImage.WriteImage(p, outfile2, big_cube_s0, hdict)
 
 
     # # mega plot

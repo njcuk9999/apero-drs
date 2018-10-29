@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ =  '0.3.035'
+__version__ =  '0.3.050'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ =  '2018-10-12'
+__date__ =  '2018-10-26'
 
 
 # =============================================================================
@@ -1204,6 +1204,68 @@ def DRIFT_E2DS_TBL_FILE(p, fiber=None):
 
 
 # noinspection PyPep8Naming
+def DRIFTCCF_E2DS_FITS_FILE(p, fiber=None):
+    """
+    Defines the drift_e2ds fits file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
+
+    :return driftfits: string, the drift_e2ds peak drift fits file location
+                       and filename
+    """
+    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_driftccf_{0}.fits'.format(fiber)
+    driftfitsname = p['REFFILENAME'].replace('.fits', drift_ext)
+    driftfits = os.path.join(reducedfolder, driftfitsname)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(fiber)
+    # return filename and tag
+    return driftfits, tag
+
+
+# noinspection PyPep8Naming
+def DRIFTCCF_E2DS_TBL_FILE(p, fiber=None):
+    """
+    Defines the drift_e2ds table file name and location using
+    "reffilename" and replacing ".fits" with "_driftnew_{fiber}.fits"
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                fiber: string, the fiber type
+                reffilename: string, the name of the reference file name
+    :param fiber: string or None, if None uses "FIBER" from p, else is the
+                  fiber to use (i.e. AB or A or B or C)
+
+    :return driftfits: string, the drift_e2ds peak drift table file location
+                       and filename
+    """
+    func_name = 'DRIFTCCF_E2DS_FITS_FILE'
+    # define filename
+    if fiber is None:
+        fiber = p['FIBER']
+    reducedfolder = p['REDUCED_DIR']
+    drift_ext = '_driftccf_{0}.tbl'.format(fiber)
+    drifttblname = p['REFFILENAME'].replace('.fits', drift_ext)
+    drifttbl = os.path.join(reducedfolder, drifttblname)
+    # return filename
+    return drifttbl
+
+
+# noinspection PyPep8Naming
 def DRIFTPEAK_E2DS_FITS_FILE(p, fiber=None):
     """
     Defines the drift peak fits drift file name and location using "reffilename"
@@ -1298,6 +1360,60 @@ def CCF_FITS_FILE(p):
 
 
 # noinspection PyPep8Naming
+def CCF_FP_FITS_FILE(p):
+    """
+    Defines the CCF fits file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return corfile: string, the CCF table file location and name
+    """
+    func_name = 'CCF_FP_FITS_FILE'
+    # define filename
+    reducedfolder = p['REDUCED_DIR']
+    # get new extension using ccf_mask without the extention
+    newext = '_ccf_fp_' + p['CCF_MASK'].replace('.mas', '')
+    # set the new filename as the reference file without the _e2ds
+    if '_e2dsff' in p['E2DSFILE']:
+        corfilename = p['E2DSFILE'].replace('_e2dsff', newext)
+        key = func_name + '_FF'
+        tag = tags[key]
+    else:
+        tag = tags[func_name]
+        corfilename = p['E2DSFILE'].replace('_e2ds', newext)
+
+    corfile = os.path.join(reducedfolder, corfilename)
+    # return the new ccf file location and name
+    return corfile, tag
+
+
+# noinspection PyPep8Naming
+def CCF_FP_TABLE_FILE(p):
+    """
+    Defines the CCF table file location and name
+
+    :param p: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+                reduced_dir: string, the reduced data directory
+                             (i.e. p['DRS_DATA_REDUC']/p['ARG_NIGHT_NAME'])
+                ccf_mask: string, the CCF mask file
+                reffile: string, the CCF reference file
+    :return ccf_table_file:
+    """
+    func_name = 'CCF_FP_TABLE_FILE'
+    # start with the CCF fits file name
+    corfile = CCF_FP_FITS_FILE(p)[0]
+    # we want to save the file as a tbl file not a fits file
+    ccf_table_file = corfile.replace('.fits', '.tbl')
+    # return the new ccf table file location and name
+    return ccf_table_file
+
+
+# noinspection PyPep8Naming
 def CCF_TABLE_FILE(p):
     """
     Defines the CCF table file location and name
@@ -1317,6 +1433,7 @@ def CCF_TABLE_FILE(p):
     ccf_table_file = corfile.replace('.fits', '.tbl')
     # return the new ccf table file location and name
     return ccf_table_file
+
 
 
 # noinspection PyPep8Naming
@@ -1398,6 +1515,20 @@ def EM_MASK_FILE(p):
     tag = tags[func_name] + '_{0}'.format(kind)
     # return absolute path and tag
     return fitsfile, tag
+
+
+# noinspection PyPep8Naming
+def EM_ORDERPROFILE_TMP_FILE(p):
+    # get folder path
+    redfolder = p['REDUCED_DIR']
+    # get localisation name
+    locofile = p['LOCOFILE'].replace('.fits', '')
+    # construct file name
+    filename = 'em_orderp_map_{0}.npy'.format(locofile)
+    # construct absolute path
+    abspath = os.path.join(redfolder, filename)
+    # return absolute path
+    return abspath
 
 
 # noinspection PyPep8Naming
@@ -1695,6 +1826,19 @@ def TELLU_ABSO_NORM_MAP_FILE(p):
 
 
 # noinspection PyPep8Naming
+def TELLU_ABSO_SAVE(p, file_time):
+    # get telluDB path
+    path = p['DRS_TELLU_DB']
+    # construct filename
+    prefix = 'tellu_save'
+    filename = '{0}_{1}.npy'.format(prefix, file_time)
+    # construct absolute path
+    outfile = os.path.join(path, filename)
+    # return absolute path
+    return outfile, prefix
+
+
+# noinspection PyPep8Naming
 def TELLU_FIT_OUT_FILE(p, filename):
     func_name = 'TELLU_FIT_OUT_FILE'
     # define filename
@@ -1915,6 +2059,7 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
+                   p['KW_DPRTYPE'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0]]

@@ -23,9 +23,11 @@ from SpirouDRS import spirouCore
 
 import cal_BADPIX_spirou
 import cal_CCF_E2DS_spirou
+import cal_CCF_E2DS_FP_spirou
 import cal_DARK_spirou
 import cal_DRIFT_E2DS_spirou
 import cal_DRIFTPEAK_E2DS_spirou
+import cal_DRIFTCCF_E2DS_spirou
 import cal_exposure_meter
 import cal_wave_mapper
 import cal_extract_RAW_spirou
@@ -68,9 +70,11 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # define valid recipes
 VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_CCF_E2DS_spirou',
+                 'cal_CCF_E2DS_FP_spirou',
                  'cal_DARK_spirou',
                  'cal_DRIFT_E2DS_spirou',
                  'cal_DRIFTPEAK_E2DS_spirou',
+                 'cal_DRIFTCCF_E2DS_spirou',
                  'cal_exposure_meter',
                  'cal_wave_mapper',
                  'cal_extract_RAW_spirou',
@@ -113,6 +117,7 @@ def get_versions():
     vv[cal_DARK_spirou.__NAME__] = cal_DARK_spirou.__version__
     vv[cal_DRIFT_E2DS_spirou.__NAME__] = cal_DRIFT_E2DS_spirou.__version__
     vv[cdriftpeak.__NAME__] = cdriftpeak.__version__
+    vv[cal_DRIFTCCF_E2DS_spirou.__NAME__] = cal_DRIFTCCF_E2DS_spirou.__version__
     vv[cal_exposure_meter.__NAME__] = cal_exposure_meter.__version__
     vv[cal_wave_mapper.__NAME__] = cal_wave_mapper.__version__
     vv[cal_extract_RAW_spirou.__NAME__] = cal_extract_RAW_spirou.__version__
@@ -467,6 +472,29 @@ def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs):
     return args, name
 
 
+def unit_test_cal_driftccf_e2ds_spirou(rname, inputs):
+    """
+    unit_test_cal_driftccf_e2ds_spirou
+
+    input = night_name files
+    output = DRIFT_E2DS_FITS_FILE, DRIFT_E2DS_TBL_FILE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+
+    :return args: dict, the parameters to pass to the run
+    """
+    # define name and arguments
+    name = 'cal_DRIFTCCF_E2DS_spirou'
+    arg_names = ['night_name', 'reffile']
+    arg_types = [str, str]
+
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
+
+
 def unit_test_cal_ccf_e2ds_spirou(rname, inputs):
     """
     unit_test_cal_ccf_e2ds_spirou
@@ -482,6 +510,29 @@ def unit_test_cal_ccf_e2ds_spirou(rname, inputs):
     """
     # define name and arguments
     name = 'cal_CCF_E2DS_spirou'
+    arg_names = ['night_name', 'e2dsfile', 'mask', 'rv', 'width', 'step']
+    arg_types = [str, str, str, float, int, float]
+
+    # get arguments
+    args = get_args(name, rname, inputs, arg_names, arg_types)
+    return args, name
+
+
+def unit_test_cal_ccf_e2ds_fp_spirou(rname, inputs):
+    """
+    unit_test_cal_ccf_e2ds_spirou
+
+    input = night_name files
+    output = DRIFTPEAK_E2DS_FITS_FILE, DRIFTPEAK_E2DS_TBL_FILE
+
+    :param rname: string, identifier for this run
+    :param inputs: list of objects, raw parameters to pass to run, if outputs
+                   is None returns parameters to pass to file
+
+    :return args: dict, the parameters to pass to the run
+    """
+    # define name and arguments
+    name = 'cal_CCF_E2DS_FP_spirou'
     arg_names = ['night_name', 'e2dsfile', 'mask', 'rv', 'width', 'step']
     arg_types = [str, str, str, float, int, float]
 
@@ -628,7 +679,7 @@ def unit_test_cal_exposure_meter(rname, inputs):
     """
     # define name and arguments
     name = 'cal_exposure_meter'
-    arg_names = ['night_name', 'reffile']
+    arg_names = ['night_name', 'flatfile']
     arg_types = [str, str]
 
     # get arguments
@@ -652,7 +703,7 @@ def unit_test_cal_wave_mapper(rname, inputs):
     """
     # define name and arguments
     name = 'cal_wave_mapper'
-    arg_names = ['night_name', 'reffile', 'e2dsprefix']
+    arg_names = ['night_name', 'flatfile', 'e2dsprefix']
     arg_types = [str, str, str]
 
     # get arguments

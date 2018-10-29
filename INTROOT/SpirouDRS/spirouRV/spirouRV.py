@@ -81,7 +81,8 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     # get the total
     tot = np.sum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
     # convert to dvrms2
-    dvrms2 = (CONSTANT_C ** 2) / abs(tot)
+    with warnings.catch_warnings(record=True) as _:
+        dvrms2 = (CONSTANT_C ** 2) / abs(tot)
     # weighted mean of dvrms2 values
     weightedmean = 1. / np.sqrt(np.sum(1.0 / dvrms2))
     # return dv rms and weighted mean
@@ -1665,6 +1666,79 @@ def fit_ccf(rv, ccf, fit_type):
     ccf_fit = (fit + 1 - fit_type) * max_ccf
     # return the best guess and the gaussian fit
     return result, ccf_fit
+
+# =============================================================================
+# Define file functions
+# =============================================================================
+
+def get_fiberc_e2ds_name(p, hdr):
+
+    # This depends on the input filetype
+    if p['KW_OUTPUT'][0] not in hdr:
+        emsg = 'Cannot find HEADER KEY = "{0}" - Fatal Error'
+        eargs = [p['KW_OUTPUT'][0]]
+        WLOG('', p['LOG_OPT'], emsg.format(*eargs))
+        return None
+    else:
+        outputkey = hdr[p['KW_OUTPUT'][0]]
+    # -------------------------------------------------------------------------
+    # first guess at the filename is the E2DS filename
+    ab_file = p['E2DSFILENAME']
+    # -------------------------------------------------------------------------
+    # Deal with E2DS/E2DSFF files
+    # TODO: Do not hard code EXT_E2DS
+    if outputkey.startswith('EXT_E2DS_') or outputkey.startswith('EXT_E2DS_FF'):
+        # deal with fiber manually
+        if outputkey.endswith('_AB'):
+            # locate and return C file
+            c_file = ab_file.replace('_AB', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_A'):
+            # locate and return C file
+            c_file = ab_file.replace('_A', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_B'):
+            # locate and return C file
+            c_file = ab_file.replace('_B', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+    # -------------------------------------------------------------------------
+    # deal with TELLU_CORRECTED and POL_ FILES
+    # TODO: Do not hard code TELLU_CORRECTED and POL_
+    if outputkey.startswith('TELLU_CORRECTED') or outputkey.startswith('POL_'):
+        # get the infile name
+        if p['KW_INFILE'][0] not in hdr:
+            emsg = 'Header key = "{0}" missing from file={1}'
+            eargs = [p['KW_INFILE'][0]]
+            WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+            return None
+        # get the ab file name
+        ab_file = hdr[p['KW_INFILE'][0]]
+        # deal with fiber manually
+        if outputkey.endswith('_AB'):
+            # locate and return C file
+            c_file = ab_file.replace('_AB', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_A'):
+            # locate and return C file
+            c_file = ab_file.replace('_A', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+        if outputkey.endswith('_B'):
+            # locate and return C file
+            c_file = ab_file.replace('_B', '_C')
+            abspath = os.path.join(p['ARG_FILE_DIR'], c_file)
+            return abspath
+    # -------------------------------------------------------------------------
+    # if we are still in the code we have an invalid outputkey
+    emsg = '{0} = "{1}" invalid for recipe for file {2}'
+    eargs = [p['KW_OUTPUT'][0], outputkey, p['E2DSFILENAME']]
+    WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    return None
+
 
 # =============================================================================
 # End of code
