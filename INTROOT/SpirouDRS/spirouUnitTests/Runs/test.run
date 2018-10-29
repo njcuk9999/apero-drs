@@ -2,19 +2,4 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
-# Run Fit telluric recipes on Gl699
-run013a = ['obj_fit_tellu', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
-run013b = ['obj_fit_tellu', 'TEST4/20180527', '2279681o_pp_e2dsff_AB.fits']
-run013c = ['obj_fit_tellu', 'TEST4/20180527', '2279682o_pp_e2dsff_AB.fits']
-run013d = ['obj_fit_tellu', 'TEST4/20180527', '2279683o_pp_e2dsff_AB.fits']
-run013e = ['obj_fit_tellu', 'TEST4/20180527', '2279684o_pp_e2dsff_AB.fits']
-run013f = ['obj_fit_tellu', 'TEST2/20180805', '2295545o_pp_e2dsff_AB.fits']
-run013g = ['obj_fit_tellu', 'TEST2/20180805', '2295546o_pp_e2dsff_AB.fits']
-run013h = ['obj_fit_tellu', 'TEST2/20180805', '2295547o_pp_e2dsff_AB.fits']
-run013i = ['obj_fit_tellu', 'TEST2/20180805', '2295548o_pp_e2dsff_AB.fits']
-run013j = ['obj_fit_tellu', 'TEST2/20180805', '2295549o_pp_e2dsff_AB.fits']
-run013k = ['obj_fit_tellu', 'TEST2/20180805', '2295550o_pp_e2dsff_AB.fits']
-
-# Run make obj template on Gl699
-run014 = ['obj_mk_obj_template', 'TEST4/20180527', '2279680o_pp_e2dsff_AB.fits']
-
+run018b = ['cal_CCF_E2DS_FP_spirou', 'TEST4/20180527', '2279680o_pp_e2dsff_AB_tellu_corrected.fits', 'gl581_Sep18_cleaned.mas', -110, 30, 0.5]

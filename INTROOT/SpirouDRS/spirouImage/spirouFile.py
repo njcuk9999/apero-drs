@@ -178,6 +178,41 @@ class Paths:
         self.add_root()
 
 
+
+# =============================================================================
+# Define file functions
+# =============================================================================
+def get_most_recent(filelist):
+    # set most recent time to None to start
+    most_recent = None
+    # loop around file list
+    for file_it in filelist:
+        # get modified time
+        file_time = os.path.getctime(file_it)
+        # add to most_recent if newer
+        if most_recent is None:
+            most_recent = file_time
+        elif file_time > most_recent:
+            most_recent = file_time
+    # return most recent time
+    return most_recent
+
+
+def sort_by_name(filelist):
+    # define storage for base file list
+    baselist = []
+    # get base list of files
+    for file_it in filelist:
+        basename = os.path.basename(file_it)
+        baselist.append(basename)
+    # get sorted base file list
+    indices = np.argsort(baselist)
+    # apply sorted base file list to file list
+    sorted_filelist = np.array(filelist)[indices]
+    # return sorted filelist
+    return sorted_filelist
+
+
 # =============================================================================
 # Define ID functions (pre-processing)
 # =============================================================================
@@ -320,7 +355,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             filename = tmpfile
             # narrow down control options
             control = control[control['kind'] == 'RAW']
-            kind = 'raw'
+            kind = 'tmp'
         # if reducedfile exists we can narrow down the options
         elif os.path.exists(reducedfile):
             filename = reducedfile
@@ -348,8 +383,9 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
 
     # check if we still have options
     if len(control) == 0:
-        emsg1 = 'File "{0}" is a {1} file.'.format(basefilename, kind)
-        emsg2 = 'Not valid for recipe "{0}"'.format(recipe)
+        emsg1 = ('File "{0}" was found in the "{1}" directory.'
+                 ''.format(basefilename, kind))
+        emsg2 = 'Not a valid directory for recipe "{0}"'.format(recipe)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
 
     # ---------------------------------------------------------------------

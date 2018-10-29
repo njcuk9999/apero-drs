@@ -558,6 +558,19 @@ class ParamDict(CaseInsensitiveDict):
         # return keys
         return return_keys
 
+    def copy(self):
+        # make new copy of param dict
+        pp = ParamDict()
+        keys = list(self.keys())
+        values = list(self.values())
+        # loop around keys and add to new copy
+        for k_it, key in enumerate(keys):
+            value = values[k_it]
+            pp[key] = type(value)(value)
+            pp.set_source(key, self.sources[key])
+        # return new param dict filled
+        return pp
+
 
 # =============================================================================
 #   Read/Write/Get Functions

@@ -1,18 +1,38 @@
-Update Note Summary - Version 0.3.035 (Since 0.3.027)
-
-
-Not done/not finished/to do:
-
-- drift code compatibility [Francois]
-- add the drift to cal_CCF [Francois]
-- Quality control on cal_WAVE_E2DS_EA_spirou needs changing (fails on many
-  HC_HC/FP_FP files) - [Melissa]
-
+Update Note Summary - Version 0.3.050 (Since 0.3.027)
 
 Done:
 
+- added and integrated cal_CCF_E2DS_FP_spirou.py to the DRS
+    - Works on E2DS, E2DSFF, TELLU_CORRECTED, POL_ for fibers [AB, A, B]
+      requires FP in fiber C but not currently checked
+    - Adds a new set of header keys for FP
+    - Now FP analysis kept separate from first CCF analysis
+
+- updated exposure meter and wave mapper to use SHAPE instead of TILT if
+  available (and extraction mode 4a or 4b)
+
+- extra fixes/refinements to obj_mk_tellu, obj_fit_tellu, obj_mk_obj_template
+
+- updated master wavelength solution AB and C (used in calibDB and telluDB)
+
+- added simplified trigger, and advances in unit_testing
+  (Error catching + handling)
+
+- unit test updates
+
+- new recipe cal_DRIFTCCF_E2DS_spirou - input same as cal_DRIFT_E2DS_spirou
+    - uses CCF of the FP_FP / OBJ_FP / DARK_FP with a cross-correlation to
+      calculate drift
+    - added fp.mas to CCF masks for this recipe
+
 - update to cal_WAVE_E2DS_EA_spirou (FP jump analysis now more stable)
     However still problems with quality control criteria
+
+- telluric update:
+    - will reject objects from mk_tellu if SNR > 100 in order 35 (these can be
+      changed using "qc_tellu_snr_order" and "qc_tellu_snr_min"
+	- will now only use most recent obj template
+	- will now only use unique TELL_OBJ filenames
 
 - constaints on extraction that extraction type is the same as for FLAT file
   (i.e. 4a and 4b are compatible, mode 3d and 4b are not)
