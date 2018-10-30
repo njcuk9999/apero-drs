@@ -25,6 +25,7 @@ CALIBDB = 'master_calib_SPIROU.txt'
 # -----------------------------------------------------------------------------
 REF_NUM = 10
 
+STD_ORDER = [33, 34, 35, 36, 37]
 
 CURRENT_DATA = []
 CURRENT_FILE = []
@@ -61,7 +62,7 @@ def diffplot(frame, data, title, ticks=None, labels=False, colorbar=True):
     if ticks is None:
         ticks = [-200, -100, 0, 100, 200]
     # set title
-    frame.set_title(title)
+    frame.set_title(title, fontsize='small')
     # add colour bar
     if colorbar:
         # make an axis for colorbar
@@ -116,15 +117,22 @@ if __name__ == "__main__":
         dv = ((diff/data_ref)) * 299792458
         # normalise scatter around zero
         ddv = dv - np.median(dv)
+        # get the standard deviation
+        x_ind, y_ind = np.indices(ddv.shape)
+        stdmask = np.zeros_like(ddv, dtype=bool)
+        for stdorder in STD_ORDER:
+            stdmask |= (x_ind == stdorder)
+        std = np.std(ddv[stdmask])
 
         # construct title
-        title = '{0} Recipe={1}'
-        if 'WAVE' in hdr_array[it]['WAVECODE']:
+        title = '{0} ({1}) std={2:.3f}'
+        prog = hdr_array[it]['WAVECODE']
+        if 'WAVE' in prog:
             code = 'WAVE'
         else:
             code = 'HC'
-        odocode = files[it].split('_')[1]
-        targs = [odocode, code]
+        odocode = files[it].split('_pp')[0]
+        targs = [odocode, code, std]
 
         # choose whether to plot colorbar
         cbar = kt == ncols -1
@@ -141,7 +149,7 @@ if __name__ == "__main__":
         # set current data
         CURRENT_DATA.append(ddv)
         CURRENT_FILE.append(files[it])
-        CURRENT_CODE.append(code)
+        CURRENT_CODE.append(prog)
 
     cid = fig.canvas.mpl_connect('button_press_event', on_pick)
 
