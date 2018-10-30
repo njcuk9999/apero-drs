@@ -26,6 +26,7 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
+from SpirouDRS import spirouRV
 
 # =============================================================================
 # Define variables
@@ -305,8 +306,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc = spirouRV.RemoveWidePeaks(p, loc)
 
     # get parameters from p
-    n_init = p['IC_FP_N_ORD_START']
-    n_fin = p['IC_FP_N_ORD_FINAL']
+    n_init = 1   #p['IC_FP_N_ORD_START']
+    n_fin = 47    #p['IC_FP_N_ORD_FINAL']
+    #TODO calHC is not saving lines for first/last orderrs!!
     size = p['IC_FP_SIZE']
     threshold = p['IC_FP_THRESHOLD']
     dopd0 = p['IC_FP_DOPD0']
@@ -355,22 +357,41 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 # save the FP ref line number
                 initial_peak = j
         # ----------------------------------------------------------------------
-        # number adjacent peaks differentially and asign wavelengths
+        # number adjacent peaks differentially and assign wavelengths
         # ----------------------------------------------------------------------
 
-        for k in range(len(pos)):
-            # number peaks differentially
-            dif_numb = k - initial_peak
-            # get wavelength using differential numbering and reference peak
-            FP_ll.append(1 / (1 / FP_ll_ref[order_num] - dif_numb / dopd0))
-            # save order number
-            FP_order.append(order_num)
-            # save differential numbering
-            dif_n.append(dif_numb)
-            # save x positions of the lines
-            FP_xx.append(pos[k])
+        # differential numbering (assuming no gaps)
+        dif_num = np.arange(len(x_fp)) - initial_peak
+        # find gaps in x
+        # get median of x difference
+        med_x_diff = np.median(x_fp[1:]-x_fp[:-1])
+        # reference peak number needs to not change!
+        # so loop from reference peak onwards
+        for i in range(initial_peak, len(x_fp)-1):
+            # get normalized x difference
+            x_diff = (x_fp[i+1] - x_fp[i])/med_x_diff
+            # towards red, xdiff > median
+            if x_diff >= 2:
+                # jump can be estimated as int(x_diff)-1
+                x_jump = int(x_diff) - 1
+                dif_num[i+1:] += x_jump
+        # now loop from reference peak backwards
+        for i in range(initial_peak-1, -1, -1):
+            # get normalized x difference
+            x_diff = (x_fp[i+1] - x_fp[i])/med_x_diff
+            # towards blue, xdiff < median
+            if x_diff >= 1.5:
+                # jump can be estimated as int(x_diff)
+                x_jump = int(x_diff)
+                dif_num[:i+1] -= x_jump
 
-    # # get initial wavelength solution from loc (is in there from firstguess)
+        # get wavelength using differential numbering and reference peak
+        FP_ll.append(1 / (1 / FP_ll_ref[order_num - n_init] - dif_num / dopd0))
+        # save differential numbering
+        dif_n.append(dif_num)
+
+    #
+    # # # get initial wavelength solution from loc (is in there from firstguess)
     # ll_init = loc['WAVE_MAP2']
     # # set up storage
     # FP_ll = []
