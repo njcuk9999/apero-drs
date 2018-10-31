@@ -169,7 +169,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         wave_fiber = p['FIBER']
     # get wave image
-    wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
+    wout = spirouImage.GetWaveSolution(p, hdr=hchdr,
+                                       filename = '/data/CFHT/calibDB_cfht/2018-07-30_MASTER_wave_ea_AB.fits',
+                                       return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
@@ -324,6 +326,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # reference peaks
     FP_ll_ref = []
     FP_xx_ref = []
+    HC_ll_ref = []
+    HC_xx_ref = []
     dif_n = []
 
     # loop over orders
@@ -340,8 +344,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         best_line_ind = np.argmin(abs(dv))
         # get best HC line x value
         best_line_x = xgau[mask2][best_line_ind]
+        HC_xx_ref.append(best_line_x)
         # calculate best HC line wavelength value
-        best_line_ll = np.polyval(loc['POLY_WAVE_SOL'][0][::-1], best_line_x)
+        best_line_ll = np.polyval(loc['POLY_WAVE_SOL'][order_num][::-1], best_line_x)
+        HC_ll_ref.append(best_line_ll)
         # get mask of FP lines for order
         mask_fp = np.where(loc['ORDPEAK'] == order_num)
         # get x values of FP lines
@@ -370,25 +376,275 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         for i in range(initial_peak, len(x_fp)-1):
             # get normalized x difference
             x_diff = (x_fp[i+1] - x_fp[i])/med_x_diff
-            # towards red, xdiff > median
-            if x_diff >= 2:
+            # for first half, xdiff < median; for second, xdiff > median
+            # need to also check which half point is in
+            if (i > len(x_fp)/2) & (x_diff >= 2):
                 # jump can be estimated as int(x_diff)-1
                 x_jump = int(x_diff) - 1
-                dif_num[i+1:] += x_jump
+                dif_num[i:] += x_jump
+            elif (i < len(x_fp)/2) & (x_diff >= 1.5):
+                # jump can be estimated as int(x_diff)
+                x_jump = int(x_diff)
+                dif_num[i:] += x_jump
         # now loop from reference peak backwards
         for i in range(initial_peak-1, -1, -1):
             # get normalized x difference
             x_diff = (x_fp[i+1] - x_fp[i])/med_x_diff
             # towards blue, xdiff < median
-            if x_diff >= 1.5:
+            if (i < len(x_fp)/2) & (x_diff >= 1.5):
                 # jump can be estimated as int(x_diff)
                 x_jump = int(x_diff)
                 dif_num[:i+1] -= x_jump
+            elif (i > len(x_fp)/2) & (x_diff >= 2):
+                # jump can be estimated as int(x_diff)-1
+                x_jump = int(x_diff) - 1
+                dif_num[:i+1] -= x_jump
+
 
         # get wavelength using differential numbering and reference peak
         FP_ll.append(1 / (1 / FP_ll_ref[order_num - n_init] - dif_num / dopd0))
         # save differential numbering
         dif_n.append(dif_num)
+        # save order number
+        FP_order.append(np.ones(len(x_fp))*order_num)
+        # save x positions
+        FP_xx.append(x_fp)
+
+    # ----------------------------------------------------------------------
+    # Plot initial and new wavelengths for an order - TODO move to spirouPLOT
+    # ----------------------------------------------------------------------
+
+    # set plot order
+    plot_order = 27
+
+    # create mask to select FP lines from plot_order only
+    ind = np.where(loc['ORDPEAK'] == plot_order)
+    # get new FP line wavelengths for plot_order
+    FP_ll_plot = FP_ll[plot_order - n_init]
+    # get FP line pixel positions for plot_order
+    FP_xx_plot = loc['XPEAK'][ind]
+    # determine FP line wavelengths from initial wavelength solution
+    FP_ll_plot_orig =  np.polyval(loc['WAVEPARAMS'][plot_order][::-1],FP_xx_plot)
+    # plot FP wavelength difference
+    plt.figure()
+    plt.plot(FP_ll_plot_orig, FP_ll_plot - FP_ll_plot_orig, 'o')
+    plt.xlabel('initial FP wavelength [nm]')
+    plt.ylabel('initial - new FP wavelengths [nm]')
+    plt.title('FP wavelengths - order ' + str(plot_order))
+
+    # ----------------------------------------------------------------------
+    # Assign absolute FP numbers for reddest order
+    # ----------------------------------------------------------------------
+
+    # determine absolute number for reference peak of reddest order
+    m_init = int(round(dopd0 / FP_ll_ref[n_fin - n_init - 1]))
+    # absolute numbers for reddest order:
+    # get differential numbers for reddest order peaks
+    aux_n = dif_n[n_fin - n_init - 1]
+    # calculate absolute peak numbers for reddest order
+    m_aux = m_init - aux_n
+    # set m vector
+    m = m_aux
+    # initialise vector of order numbers for previous order
+    m_ord_prev = m_aux
+
+    # ----------------------------------------------------------------------
+    # Plot FP lines, reference HC line for reddest order -
+    # TODO move to spirouPLOT
+    # ----------------------------------------------------------------------
+
+    # get FP line wavelengths for reddest order
+    FP_ll_red = FP_ll[-1]
+    # get wavelength of reference HC line for reddest order
+    HC_ll_red = HC_ll_ref[-1]
+    # get pixel position of reference HC line for reddest order
+    HC_x_red = HC_xx_ref[-1]
+    # plot
+    plt.figure()
+    plt.plot(loc['WAVE_MAP2'][n_fin - 1], fpdata[n_fin - 1])
+    plt.xlabel('nm')
+    plt.ylabel('e-')
+    plt.title('FP order ' + str(n_fin - 1))
+    for i in range(len(FP_ll_red)):
+        plt.vlines(FP_ll_red[i], 0, 200000)
+    plt.vlines(HC_ll_red, 0, 200000, color='green')
+    plt.vlines(FP_ll_ref[n_fin - n_init - 1], 0, 200000, color='red')
+
+    # ----------------------------------------------------------------------
+    # Assign absolute FP numbers for rest of orders by wavelength matching
+    # ----------------------------------------------------------------------
+    # loop over orders from reddest-1 to bluest
+    for i in range(n_fin - n_init - 2, -1, -1):
+        # define auxiliary arrays with ll for order and previous order
+        FP_ll_ord = FP_ll[i]
+        FP_ll_ord_prev = FP_ll[i+1]
+        # check if overlap
+        if FP_ll_ord[-1] >= FP_ll_ord_prev[0]:
+            # find closest peak to last of this order in previous order
+            m_match = (np.abs(FP_ll_ord_prev - FP_ll_ord[-1])).argmin()
+            # get order number for last peak (take int so it's not an array)
+            m_end = int(m_ord_prev[m_match])
+            # define array of absolute peak numbers
+            m_ord = m_end + dif_n[i][-1] - dif_n[i]
+            #m_ord = m_end + np.arange(len(FP_ll_ord) - 1, -1, -1)
+            # insert absolute order numbers at the start of m
+            m = np.concatenate((m_ord, m))
+            # redefine order number vector for previous order
+            m_ord_prev = m_ord
+        # if no overlap - TODO do something about it!
+        else:
+            print('no overlap')
+
+    # ----------------------------------------------------------------------
+    # Derive d for each HC line
+    # ----------------------------------------------------------------------
+
+    # set up storage
+    # effective cavity width for the HC lines
+    d = []
+    # 1/line number of the closest FP line to each HC line
+    one_m_d = []
+    # line number of the closest FP line to each HC line
+    m_d = []
+    one_m_d_w = []
+    # wavelength of HC lines
+    HC_ll_test = []
+
+    # loop over orders
+    for ord_num in range(n_fin - n_init):
+        # create order mask
+        ind_ord = np.where(np.concatenate(FP_order).ravel() == ord_num + n_init)
+        # get FP line wavelengths for the order
+        FP_ll_ord = FP_ll[ord_num]
+        # get FP line pixel positions for the order
+        FP_x_ord = FP_xx[ord_num]
+        # get FP line numbers for the order
+        m_ord = m[ind_ord]
+        # HC mask - keep best lines with small dv only
+        HC_mask = np.where((abs(loc['DV_T'])<0.25) & (loc['ORD_T'] == ord_num + n_init))
+        # get HC line pixel positions for the order
+        HC_x_ord = loc['XGAU_T'][HC_mask]
+        # get HC line wavelengths for the order
+        HC_ll_ord = np.polyval(loc['POLY_WAVE_SOL'][ord_num + n_init][::-1], HC_x_ord)
+        # loop over HC lines in the order
+        for j in range(len(HC_ll_ord)):
+            # loop over FP lines in the order
+            for k in range(len(FP_ll_ord) - 1):
+                # find surrounding FP lines for the HC line
+                if FP_ll_ord[k - 1] < HC_ll_ord[j] <= FP_ll_ord[k]:
+                    # derive d for the HC line
+                    t1 = HC_ll_ord[j] * m_ord[k] * (m_ord[k] + 1)
+                    t2 = FP_x_ord[k] - FP_x_ord[k - 1]
+                    t3 = m_ord[k] * FP_x_ord[k] - \
+                         (m_ord[k] + 1) * FP_x_ord[k - 1] \
+                         + HC_x_ord[j]
+                    d.append(0.5 * t1 * (t2 / t3))
+                    # save 1/line number of closest FP line
+                    one_m_d.append(1. / m_ord[k])
+                    # save 1/ weighted average of line numbers - not used
+                    one_m_d_w.append(1. /
+                                     ((HC_x_ord[j] - FP_x_ord[k]) /
+                                      (FP_x_ord[k - 1] - FP_x_ord[k])
+                                      + m_ord[k]))
+                    # save line number of closest FP line
+                    m_d.append(m_ord[k])
+                    # save HC line wavelength
+                    HC_ll_test.append(HC_ll_ord[j])
+
+    # log line number span
+    wargs = [m_d[0], m_d[-1]]
+    wmsg = 'Mode number span: {0} - {1}'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
+    # Sigma clipping on bad d values
+    # save copies of d and one_m_d for comparison
+    d_all = np.copy(np.asarray(d))
+    one_m_d_all = np.copy(np.asarray(one_m_d))
+    # define boundaries and mask
+    # critlower = np.median(d) - np.std(d) * 4.
+    # critupper = np.median(d) + np.std(d) * 4.
+    # sig_clip_d = np.where((d > critlower) & (d < critupper))
+    # get difference in consecutive points (zero added for dimensionality)
+    d_diff = np.concatenate(([0], d_all[1:]-d_all[:-1]))
+    critlower = np.median(d_diff) - np.std(d_diff)
+    critupper = np.median(d_diff) + np.std(d_diff)
+    sig_clip_d = np.where((d_diff > critlower) & (d_diff < critupper))
+    # sigma clip
+    d = np.asarray(d)[sig_clip_d]
+    HC_ll_test = np.asarray(HC_ll_test)[sig_clip_d]
+    one_m_d = np.asarray(one_m_d)[sig_clip_d]
+    # log number of points removed
+    wargs = [len(d_all) - np.shape(sig_clip_d)[1]]
+    wmsg = '{0} points removed by d sigma clip'
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
+    # Verification sigma clip plot - TODO move to spirouPLOT
+    if (len(d_all) - np.shape(sig_clip_d)[1]) > 0:
+        plt.figure()
+        plt.plot(one_m_d_all, d_all, 'o')
+
+    # ----------------------------------------------------------------------
+    # Fit (1/m) vs d
+    # ----------------------------------------------------------------------
+
+    # define sorted arrays
+    one_m_sort = np.asarray(one_m_d).argsort()
+    one_m_d = np.asarray(one_m_d)[one_m_sort]
+    d = np.asarray(d)[one_m_sort]
+
+    # polynomial fit
+    fit_1m_d = np.polyfit(one_m_d, d, 5)
+    fit_1m_d_func = np.poly1d(fit_1m_d)
+
+    # plot 1/m vs d and the fitted polynomial - TODO move to spirouPLOT
+    plt.figure()
+    # plot values
+    plt.plot(one_m_d, d, 'o')
+    # plot initial cavity width value
+    plt.hlines(dopd0 / 2., min(one_m_d), max(one_m_d), label='original d')
+    # plot reference peak of reddest order
+    plt.plot(1. / m_init, dopd0 / 2., 'D')
+    # plot fit
+    plt.plot(one_m_d, fit_1m_d_func(one_m_d), label='polynomial fit')
+    plt.xlabel('1/m')
+    plt.ylabel('d')
+    plt.legend(loc='best')
+
+    # ----------------------------------------------------------------------
+    # Update FP peak wavelengths
+    # ----------------------------------------------------------------------
+
+    # define storage
+    FP_ll_new = []
+
+    # loop over peak numbers
+    for i in range(len(m)):
+        # calculate wavelength from fit to 1/m vs d
+        FP_ll_new.append(2 * fit_1m_d_func(1. / m[i]) / m[i])
+
+    # plot by order - TODO move to spirouPLOT?
+
+    # define colours
+    col = cm.rainbow(np.linspace(0, 1, n_fin))
+    plt.figure()
+    for ind_ord in range(n_fin - n_init):
+        # get parameters for initial wavelength solution
+        c_aux = np.poly1d(loc['WAVEPARAMS'][ind_ord + n_init][::-1])
+        # order mask
+        ord_mask = np.where(np.concatenate(FP_order).ravel() == ind_ord + n_init)
+        # get FP line pixel positions for the order
+        FP_x_ord = FP_xx[ind_ord]
+        # derive FP line wavelengths using initial solution
+        FP_ll_orig = c_aux(FP_x_ord)
+        # get new FP line wavelengths for the order
+        FP_ll_new_ord = np.asarray(FP_ll_new)[ord_mask]
+        # plot old-new wavelengths
+        plt.plot(FP_x_ord, FP_ll_orig - FP_ll_new_ord, 'o',
+                 label='order ' + str(ind_ord), color=col[ind_ord])
+    plt.xlabel('FP peak position [pix]')
+    plt.ylabel('FP old-new wavelength difference [nm]')
+    plt.legend(loc='best')
+
 
     #
     # # # get initial wavelength solution from loc (is in there from firstguess)
