@@ -78,7 +78,7 @@ plothelp = 'Plot graphs: True/1, Do not plot graphs: False/0'
 
 
 # -----------------------------------------------------------------------------
-# cal_preprocess_spirou
+# test.py
 # -----------------------------------------------------------------------------
 test.name = 'test.py'
 test.outputdir = 'tmp'
