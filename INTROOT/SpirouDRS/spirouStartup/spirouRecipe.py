@@ -9,11 +9,14 @@ Created on 2018-09-14 at 18:19
 
 @author: cook
 """
+from astropy.io import fits
 import argparse
 import os
 import glob
 
 from SpirouDRS import spirouCore
+from SpirouDRS import spirouConfig
+
 
 # =============================================================================
 # Define variables
@@ -21,6 +24,8 @@ from SpirouDRS import spirouCore
 __NAME__ = 'cal_preprocess_spirou.py'
 # Get Logging function
 WLOG = spirouCore.wlog
+# get print colours
+BCOLOR = spirouConfig.Constants.BColors
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -39,18 +44,44 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # get parameterse from drs_params
         log_opt = self.drs_params['LOG_OPT']
         # construct error message
-        emsg1 = 'Argument Error:'
+        underline = BCOLOR.UNDERLINE
+        if self.drs_params['COLOURED_LOG']:
+            red, end = BCOLOR.FAIL, BCOLOR.ENDC
+            yellow, blue = BCOLOR.WARNING, BCOLOR.OKBLUE
+        else:
+            red, end = BCOLOR.ENDC, BCOLOR.ENDC
+            yellow, blue = BCOLOR.ENDC, BCOLOR.ENDC
+        # Manually print error message (with help)
+        print()
+        print(red + underline + 'Argument Error:' + end)
+        print()
+        print(BCOLOR.WARNING + message + end)
+        print()
+        print(blue + self.format_help() + end)
+        # log message (without print)
+        emsg1 = '\nArgument Error:'
         emsg2 = '\t {0}'.format(message)
-        emsg3 = ''
-        emsg4 = self.format_help()
-        # log message
-        WLOG('error', log_opt, [emsg1, emsg2, emsg3, emsg3, emsg4])
+        WLOG('error', log_opt, [emsg1, emsg2],
+             logonly=True)
+
+
 
     def _print_message(self, message, file=None):
         # get parameterse from drs_params
         log_opt = self.drs_params['LOG_OPT']
-        # log message
-        WLOG('warning', log_opt, message)
+        # construct error message
+        underline = BCOLOR.UNDERLINE
+        if self.drs_params['COLOURED_LOG']:
+            green, end = BCOLOR.OKGREEN, BCOLOR.ENDC
+            yellow, blue = BCOLOR.WARNING, BCOLOR.OKBLUE
+        else:
+            green, end = BCOLOR.ENDC, BCOLOR.ENDC
+            yellow, blue = BCOLOR.ENDC, BCOLOR.ENDC
+        # Manually print error message (with help)
+        print()
+        print(green + underline + 'Help for: {0}.py'.format(log_opt) + end)
+        print()
+        print(blue + self.format_help() + end)
 
 
 class CheckDirectory(argparse.Action):
@@ -125,7 +156,6 @@ class CheckFiles(argparse.Action):
         # set default values
         self.drs_params['LOG_OPT'] = ''
         self.drs_params['RECIPE'] = dict()
-        self.drs_params['RECIPE']['extension'] = ''
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
@@ -134,30 +164,37 @@ class CheckFiles(argparse.Action):
         input_dir = getattr(self.namespace, 'input_dir', '')
         # check if "directory" is in namespace
         directory = getattr(self.namespace, 'directory', '')
+        # get argument/keyword argument
+        if self.dest in self.drs_params['RECIPE']['args']:
+            arg = self.drs_params['RECIPE']['args'][self.dest]
+        elif  self.dest in self.drs_params['RECIPE']['kwargs']:
+            arg = self.drs_params['RECIPE']['kwargs'][self.dest]
+        else:
+            arg = None
         # get display limit
         limit = self.drs_params['DRS_NIGHT_NAME_DISPLAY_LIMIT']
-        # check if extension is in recipe
-        if self.drs_params['RECIPE']['extension'] != '':
-            ext = '.' + self.drs_params['RECIPE']['extension']
-        else:
-            ext = ''
+        # check if arg extension is in recipe (by looking at arg.files)
+        ext = ''
+        if len(arg.files) > 0:
+            if arg.files[0].ext != '':
+                ext = '.' + arg.files[0].ext
         # get parameterse from drs_params
         log_opt = self.drs_params['LOG_OPT']
         # step 1: check for wildcards and absolute path
         cond1, newfilename = check_for_file(filename, log_opt)
         if cond1:
-            return newfilename
+            return newfilename, None
         # step 2: check if file is in input_dir
         input_path = os.path.join(input_dir, directory, filename)
         cond2, newfilename = check_for_file(input_path, log_opt)
         if cond2:
-            return newfilename
+            return newfilename, input_path
         # step 3: check if file is valid if we add ".fits"
         filename1 = filename + ext
         input_path1 = os.path.join(input_dir, directory, filename1)
         cond3, newfilename = check_for_file(input_path1, log_opt)
         if cond3:
-            return newfilename
+            return newfilename, input_path1
         # step 4: return error message
         else:
             path = os.path.join(input_dir, directory)
@@ -172,6 +209,37 @@ class CheckFiles(argparse.Action):
                 emsgs.append('\t\t {0}'.format(file_it))
             WLOG('error', log_opt, emsgs)
 
+    def check_drs_file(self, path, files):
+        # get argument/keyword argument
+        if self.dest in self.drs_params['RECIPE']['args']:
+            arg = self.drs_params['RECIPE']['args'][self.dest]
+        elif  self.dest in self.drs_params['RECIPE']['kwargs']:
+            arg = self.drs_params['RECIPE']['kwargs'][self.dest]
+        else:
+            arg = None
+        # if not a list make a list (for ease of use)
+        if type(files) is not list:
+            files = [files]
+
+        # loop around each file
+        for filename in files:
+            # get extension
+            ext = ''
+            if len(arg.files) > 0:
+                if arg.files[0].ext != '':
+                    ext = arg.files[0].ext
+            # if file is not a fits file do not check it
+            if ext != 'fits':
+                continue
+
+            # make path
+            filepath = os.path.join(path, filename)
+            # try to open header of file
+            try:
+                header =
+
+
+
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.drs_params = parser.drs_params
@@ -183,14 +251,16 @@ class CheckFiles(argparse.Action):
             # must loop around values
             for value in values:
                 # check file could return list or string
-                file_it = self.check_file(value)
+                file_it, fpath = self.check_file(value)
+                file_it = self.check_drs_file(fpath, file_it)
                 # must add to files depending on whether list or string
                 if type(file_it) is list:
                     files += file_it
                 else:
                     files.append(file_it)
         else:
-            files = self.check_file(values)
+            files, fpath = self.check_file(values)
+            files = self.check_drs_file(fpath, files)
         # Add the attribute
         setattr(namespace, self.dest, files)
 
@@ -212,6 +282,90 @@ class CheckBool(argparse.Action):
             value = self.check_bool(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
+
+
+class CheckOptions(argparse.Action):
+    def check_options(self, value):
+
+        if value in self.choices:
+            return value
+        else:
+            emsg1 = 'Arguement "{0}" must be {1}'
+            eargs1 = [self.dest, ' or '.join(self.choices)]
+            emsg2 = '\tCurrent value = {0}'.format(value)
+            WLOG('error', '', [emsg1.format(*eargs1), emsg2])
+
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if type(values) == list:
+            value = list(map(self.check_options, values))
+        else:
+            value = self.check_options(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class DrsArgument:
+    def __init__(self, name, **kwargs):
+        # get argument name
+        self.argname = name
+        # get full name
+        self.name = name
+        while self.name.startswith('-'):
+            self.name = self.name[1:]
+        # get position
+        self.pos = kwargs.get('pos', None)
+        # add names from altnames
+        self.names = [name] + kwargs.get('altnames', [])
+        # get dtype
+        self.dtype = kwargs.get('dtype', None)
+        # get default
+        self.default = kwargs.get('default', None)
+        # get options
+        self.options = kwargs.get('options', None)
+        # get help str
+        self.helpstr = kwargs.get('helpstr', '')
+        # get files
+        self.files = kwargs.get('files', [])
+        # set empty
+        self.props = dict()
+
+
+    def make_properties(self):
+        # deal with dtype
+        if self.dtype == 'files':
+            self.props['action'] = CheckFiles
+            self.props['nargs'] = '+'
+            self.props['type'] = str
+        elif self.dtype == 'file':
+            self.props['action'] = CheckFiles
+            self.props['nargs'] = 1
+            self.props['type'] = str
+        elif self.dtype == 'directory':
+            self.props['action'] = CheckDirectory
+            self.props['nargs'] = 1
+            self.props['type'] = str
+        elif self.dtype == 'bool':
+            self.props['action'] = CheckBool
+            self.props['type'] = str
+            self.props['choices'] = ['True', 'False', '1', '0']
+        elif self.dtype == 'options':
+            self.props['action'] = CheckOptions
+            self.props['type'] = str
+            self.props['choices'] = self.options
+        elif self.dtype=='switch':
+            self.props['action'] = 'store_true'
+        elif type(self.dtype) is type:
+            self.props['type'] = self.dtype
+            self.props['nargs'] = 1
+        else:
+            self.props['type'] = str
+            self.props['nargs'] = 1
+        # deal with default argument
+        if self.default is not None:
+            self.props['default'] = self.default
+        # add help string
+        self.props['help'] = self.helpstr
 
 
 class DrsRecipe:
@@ -236,9 +390,9 @@ class DrsRecipe:
         self.kwargs = dict()
         # define arg list
         self.arg_list = []
+        self.str_arg_list = None
 
-    def arg(self, name=None, dtype=None, pos=0, default=None, helpstr=None,
-            key=None, key1=None, key2=None, nargs=None):
+    def arg(self, name=None, **kwargs):
         """
         Add an argument to the recipe
 
@@ -253,131 +407,144 @@ class DrsRecipe:
         # set name
         if name is None:
             name = 'Arg{0}'.format(len(self.args) + 1)
-        if key is None:
-            key = ''
-        if key1 is None:
-            key1 = ''
-        if key2 is None:
-            key2 = ''
-        # arg list
-        arglist = dict()
-        arglist['name'] = name
-        # set other properties
-        arglist['dtype'] = dtype
-        arglist['pos'] = pos
-        arglist['default'] = default
-        arglist['nargs'] = nargs
-        arglist['helpstr'] = helpstr
-        arglist['key'] = key
-        arglist['key1'] = key1
-        arglist['key2'] = key2
+        # create argument
+        argument = DrsArgument(name, **kwargs)
+        # make arg parser properties
+        argument.make_properties()
+        # recast name
+        name = argument.name
         # add to arg list
-        if name not in self.args.keys():
-            self.args[name] = [arglist]
-        else:
-            self.args[name].append(arglist)
+        self.args[name] = argument
 
-    def kwarg(self, name=None, dtype=None, default=None, helpstr=None,
-              key=None, key1=None, key2=None):
+    def kwarg(self, name=None, **kwargs):
         """
         Add a keyword argument to the recipe
 
         :param name: string or None, the name and reference of the argument
         :param dtype: type or None, the type expected for the argument (will
                       raise error if not this type)
+
+        :param default: object or None, the default value for the keyword
+                        argument
+        :param helpstr: string or  None, the help string
+        :param options: list of strings or None: the options allowed for
+                        keyword argument
+        :param altnames: list of strings or None: alternative names for the
+                         reference of the argument
+
         :return None:
         """
         if name is None:
-            name = 'kwarg{0}'.format(len(self.args) + 1)
-        # set name
-        if key is None:
-            key = ''
-        if key1 is None:
-            key1 = ''
-        if key2 is None:
-            key2 = ''
-        # arg list
-        kwarglist = dict()
-        kwarglist['name'] = name
-        # set other properties
-        kwarglist['dtype'] = dtype
-        kwarglist['default'] = default
-        kwarglist['helpstr'] = helpstr
-        kwarglist['key'] = key
-        kwarglist['key1'] = key1
-        kwarglist['key2'] = key2
-        # add to arg list
-        self.kwargs[name] = kwarglist
+            name = 'Kwarg{0}'.format(len(self.args) + 1)
+        # create keyword argument
+        keywordargument = DrsArgument(name, **kwargs)
+        # make arg parser properties
+        keywordargument.make_properties()
+        # recast name
+        name = keywordargument.name
+        # set to keyword argument
+        self.kwargs[name] = keywordargument
 
-    def make(self):
-        self.arg_list = []
-        # first process the arguments
-        for argitem in self.args:
-            argi = self.args[argitem][0]
-            # get arg name
-            name = argi['name'].replace(' ', '_')
-            # get props
-            props = get_arg_props(argi)
-            # add to arg_list
-            self.arg_list.append([name, props])
-        # then add the keywrod arguments
-        for argitem in self.kwargs:
-            argi = self.kwargs[argitem]
-            # get arg name
-            dest = argi['name'].replace(' ', '_')
-            # get props
-            props = get_arg_props(argi)
-            # add to arg_list
-            self.arg_list.append([dest, props])
+    def parse_args(self, dictionary):
+        self.str_arg_list = []
+        if dictionary is None:
+            return None
+        for argname in self.args:
+            # check if key in dictionary
+            if argname not in dictionary:
+                continue
+            # get value(s)
+            values = dictionary[argname]
+            # pass this argument
+            self.pass_arg(self.args[argname], values)
+        for kwargname in self.kwargs:
+            # check if key in dictionary
+            if kwargname not in dictionary:
+                continue
+            # get value(s)
+            values = dictionary[kwargname]
+            # pass this argument
+            self.pass_arg(self.kwargs[kwargname], values)
+        # check if we have parameters
+        if len(self.str_arg_list) == 0:
+            self.str_arg_list = None
+
+    def pass_arg(self, arg, values):
+        # check that value is not None
+        if values is None:
+            return
+        # if we have an optional argument
+        if '-' in arg.argname:
+            strfmt = '{0}={1}'
+        # if we have a positional argument
+        else:
+            strfmt = '{1}'
+        # now add these arguments (as a string) to str_arg_list
+        if type(values) == list:
+            for value in values:
+                strarg = [arg.argname, value]
+                self.str_arg_list.append(strfmt.format(strarg))
+        else:
+            strarg = [arg.argname, values]
+            self.str_arg_list.append(strfmt.format(strarg))
+
+
+class DrsInput:
+    def __init__(self, name, ext):
+        # define a name
+        self.name = name
+        # define the extension
+        self.ext = ext
+
+
+class DrsFitsFile(DrsInput):
+    def __init__(self, name, **kwargs):
+        # define a name
+        self.name = name
+        # get super init
+        super(DrsInput).__init__(name, 'fits')
+        # add header
+        self.header = dict()
+        # add values to the header
+        for kwarg in kwargs:
+            self.header[kwarg] = kwargs[kwarg]
+
+    def check(self, header):
+        # store fail messages
+        fail_msgs = []
+        # loop around keys to check
+        for key in self.header:
+            # check whether key is in header
+            if key in header:
+                # check if we are checking a list
+                if type(self.header[key]) is not list:
+                    items = [self.header[key]]
+                else:
+                    items = self.header[key]
+                # find the file
+                correct = False
+                for item in items:
+                    if item == key:
+                        correct = True
+                # add to the fail msgs
+                if not correct:
+                    msg = 'Key {0} not equal to {1}'
+                    margs = [key, ' , '.join(items)]
+                    fail_msgs.append(msg.format(*margs))
+            else:
+                fail_msgs.append('Key {0} not in header'.format(key))
+
+        found = len(fail_msgs) == 0
+        # return found and fail_msgs
+        return found, fail_msgs
+
+
+
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_arg_props(argi):
-    """
-
-    :param argi:
-    :return:
-    """
-    props = dict()
-    # deal with dtype
-    dtype = argi['dtype']
-    if dtype == 'files':
-        props['action'] = CheckFiles
-        props['nargs'] = '+'
-        props['type'] = str
-    elif dtype == 'file':
-        props['action'] = CheckFiles
-        props['nargs'] = 1
-        props['type'] = str
-    elif dtype == 'directory':
-        props['action'] = CheckDirectory
-        props['nargs'] = 1
-        props['type'] = str
-    elif dtype == 'bool':
-        props['action'] = CheckBool
-        props['type'] = str
-    elif dtype=='switch':
-        props['action'] = 'store_true'
-    elif type(dtype) is type:
-        props['type'] = dtype
-        props['nargs'] = 1
-    else:
-        props['type'] = str
-        props['nargs'] = 1
-    # deal with default
-    if argi['default'] is not None:
-        props['default'] = argi['default']
-    # deal with help string
-    if argi['helpstr'] is None:
-        props['help'] = ''
-    else:
-        props['help'] = argi['helpstr']
-    # return the props dictionary
-    return props
-
-
 def check_for_file(path, log_opt):
 
     # get glob list of files using glob
