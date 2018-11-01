@@ -1,13 +1,62 @@
 from . import spirouRecipe
+from . import spirouFiles
 
 # =============================================================================
-# Define variables
+# Commonly used arguments
 # =============================================================================
-drs_recipe = spirouRecipe.DrsRecipe
+directory = dict(name='directory', dtype='directory',
+                 helpstr='The "night_name" or absolute path of the directory')
+
+# =============================================================================
+# Commonly used options
+# =============================================================================
+combine = dict(name='--combine', dtype='bool',
+               helpstr='Whether to combine fits files in file list or to '
+                       'process them separately')
+
+flipimage = dict(name='--flipimage', dtype='options',
+                 helpstr='Whether to flip fits image',
+                 options=['None', 'x', 'y', 'both'])
+
+fluxunits = dict(name='--fluxunits', dtype='options',
+                 helpstr='Output units for flux',
+                 options=['ADU/s', 'e-'])
+
+resize = dict(name='--resize', dtype='bool',
+              helpstr='Whether to resize image')
+
+plot = dict(name='--plot', dtype='bool', altnames=['-p'],
+            helpstr='Manually turn on/off plot of graphs')
+
+add_cal = dict(name='--add2calib', dtype='bool',
+               helpstr='Whether to add outputs to calibration database')
+
+darkfile = dict(name='--darkfile', dtype='file',
+                files=[spirouFiles.dark_dark],
+                helpstr='Define a custom file to use for dark correction'
+                        ' Checks for an absolute path and then checks '
+                        '"directory".')
+
+badfile = dict(name='--badpixfile', dtype='file',
+               helpstr='Define a custom file to use for bad pixel correction.'
+                       ' Checks for an absolute path and then checks '
+                       '"directory".')
+
+dodark = dict(name='--darkcorr', dtype='bool',
+              helpstr='Whether to correct for the dark file')
+
+dobad = dict(name='--badcorr', dtype='bool',
+             helpstr='Whether to correct for the bad pixel file')
+
+
+
 
 # =============================================================================
 # List of usable recipes
 # =============================================================================
+drs_recipe = spirouRecipe.DrsRecipe
+
+# Below one must define all recipes and put into the "recipes" list
 cal_badpix = drs_recipe()
 cal_ccf = drs_recipe()
 cal_dark = drs_recipe()
@@ -28,54 +77,35 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2, cal_extract,
            test]
 
 # =============================================================================
-# Add inputs below
+# Recipe definitions
 # =============================================================================
-# This section is for defining the inputs arguments and keywords and
-#    outputs of the recipes. Steps that need to be followed are:
+# Each recipe requires the following:
+#    recipe = drs_recipe()  [DEFINED ABOVE]
 #
-#    1)  setup the recipe with a call to "drs_recipe()"
-#                  >> my_recipe = drs_recipe()
+#    recipe.name            the full name of the python script file
+#    recipe.outputdir       the output directory [raw/tmp/reduced]
+#    recipe.inputdir        the input directory [raw/tmp/reduced]
+#    recipe.inputtype       the extension to look for and add for files
+#                           (i.e. "fits")
+#    recipe.description     the description (for help file)
 #
-#    2)  give the recipe filename (and __NAME__) with
-#                  >> my_recipe.name = "my_name.py"
+#    arguments:
+#         recipe.arg(name=[STRING],             the name for the argument
+#                    pos=[INT],                 the expected position
+#                    dtype=[STRING or None],    the arg type (see below)
+#                    helpstr=[STRING]           the help string for the argument
+#                    )
 #
-#    3)  give the recipe an output dir
-#          - default is "reduced"
-#          - options are ["reduced", "raw", "tmp"] or a valid path
-#                  >> my_recipe.outputdir = "reduced"
+#   options:
+#         recipe.kwarg(name=[STRING],           the name for the argument
+#                      dtype=[STRING]           the kwarg type (see below)
+#                      options=[LIST OF STRINGS], the options allowed
+#                      helpstr=[STRING]         the help string for the argument
+#                      )
 #
-#    4)  give the recipe an input dir
-#          - default is "tmp"
-#          - options are ["reduced", "raw", "tmp"] or a valid path
-#                  >> my_recipe.inputdir = "tmp"
+#    Note arg/kwarg types allowed:
+#       directory, files, file, bool, options, switch
 #
-#    5)  give the recipe an input type
-#          - default is "raw"
-#          - options are ["raw", "pp", "reduced", None]
-#                  >> my_recipe.inputtype = "raw"
-#
-#    6)  give the recipe a run order (for deciding the order to run in triggers)
-#          - default is None
-#          - options are [None, 0, 1, 2, ...]  - any valid positive integer
-#                  >> my_recipe.run_order = 0
-#
-#    7)  give the recipe some arguments/keyword arguments
-#          - default is no arguments
-#          - options within an argument are:
-#                 :name: string or None, the name and reference of the argument
-#                 :dtype: string, type or None: the type of an argument
-#                          if string must be ["infile", "outfile"] if type
-#                          error will be raised, if None not checked
-#                 :pos: int, the expected position of the argument in the
-#                       call to the recipe or function (only for arguments
-#                       not keyword arguments)
-#                 :helpstr: string or None, the help string related to this
-#                           argument
-#              >> my_recipe.arg(name='Arg1', dtype=str, pos=0)
-#              >> my_recipe.kwarg(name='plot', dtype=bool)
-# comment help files
-plothelp = 'Plot graphs: True/1, Do not plot graphs: False/0'
-
 
 # -----------------------------------------------------------------------------
 # test.py
@@ -85,17 +115,21 @@ test.outputdir = 'tmp'
 test.inputdir = 'raw'
 test.inputtype = 'raw'
 test.extension = 'fits'
-test.description = 'Pre-processing recipe'
-test.arg(name='directory', dtype='directory', pos=0,
-         helpstr='- The "night_name" or absolute directory path')
-test.arg(name='ufiles', dtype='files', pos=1,
-         helpstr='- The fits files to use, separated by spaces')
-test.kwarg(name='-plot', dtype='bool',
-           helpstr='- Manually turn on/off plotting (True/False/1/0)')
-test.kwarg(name='--plotoff', dtype='switch',
-           helpstr='- Force plotting to be off')
-test.kwarg(name='--ploton', dtype='switch',
-           helpstr='- Force plotting to be on')
+test.description = 'Test recipe - used to test the argument parser of the DRS'
+test.arg(pos=0, **directory)
+test.arg(pos=1, name='filelist', dtype='files',
+         helpstr='A list of fits files to use, separated by spaces')
+test.kwarg(**plot)
+test.kwarg(**combine)
+test.kwarg(**flipimage)
+test.kwarg(**fluxunits)
+test.kwarg(**resize)
+test.kwarg(**add_cal)
+test.kwarg(**darkfile)
+test.kwarg(**dodark)
+test.kwarg(**badfile)
+test.kwarg(**dobad)
+
 
 # -----------------------------------------------------------------------------
 # cal_preprocess_spirou
@@ -109,12 +143,8 @@ cal_pp.arg(name='directory', dtype='directory', pos=0,
            helpstr='- The "night_name" or absolute directory path')
 cal_pp.arg(name='ufiles', dtype='infile', pos=1,
            helpstr='- The fits files to use, separated by spaces')
-cal_pp.kwarg(name='-plot', dtype='bool',
-             helpstr='- Manually turn on/off plotting (True/False/1/0)')
-cal_pp.kwarg(name='--plotoff', dtype='switch',
-             helpstr='- Force plotting to be off')
-cal_pp.kwarg(name='--ploton', dtype='switch',
-             helpstr='- Force plotting to be on')
+cal_pp.kwarg(**plot)
+
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
@@ -126,12 +156,7 @@ cal_badpix.run_order = 1
 cal_badpix.arg(name='directory', dtype='directory', pos=0)
 cal_badpix.arg(name='flatfile', key='flat_dark', dtype='infile', pos=1)
 cal_badpix.arg(name='darkfile', key='dark_dark', dtype='infile', pos=2)
-cal_badpix.kwarg(name='-plot', dtype='bool',
-                 helpstr='- Manually turn on/off plotting (True/False/1/0)')
-cal_badpix.kwarg(name='--plotoff', dtype='switch',
-                 helpstr='- Force plotting to be off')
-cal_badpix.kwarg(name='--ploton', dtype='switch',
-                 helpstr='- Force plotting to be on')
+cal_badpix.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_dark_spirou
@@ -143,12 +168,8 @@ cal_dark.intputtype = 'pp'
 cal_dark.run_order = 2
 cal_dark.arg(name='directory', dtype='path', pos=0)
 cal_dark.arg(name='files', key='dark_dark', dtype='infile', pos='1+')
-cal_dark.kwarg(name='-plot', dtype='bool',
-               helpstr='- Manually turn on/off plotting (True/False/1/0)')
-cal_dark.kwarg(name='--plotoff', dtype='switch',
-               helpstr='- Force plotting to be off')
-cal_dark.kwarg(name='--ploton', dtype='switch',
-               helpstr='- Force plotting to be on')
+cal_dark.kwarg(**plot)
+
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
@@ -163,7 +184,7 @@ cal_loc.arg(name='files', key='flat_dark', dtype='infile', pos='1+')
 cal_loc.arg(name='files', key='dark_flat', dtype='infile', pos='1+')
 cal_loc.kwarg(name='DARK_FILE', dtype='outfile',
               helpstr='Force a dark file [file/path]')
-cal_loc.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_loc.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_SLIT_spirou
@@ -175,7 +196,7 @@ cal_slit.inputtype = 'pp'
 cal_slit.run_order = 4
 cal_slit.arg(name='directory', dtype='path', pos=0)
 cal_slit.arg(name='files', key='fp_fp', dtype='infile', pos='1+')
-cal_slit.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_slit.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_spirou
@@ -189,7 +210,7 @@ cal_ff.arg(name='directory', dtype='path', pos=0)
 cal_ff.arg(name='files', key='flat_flat', dtype='infile', pos='1+')
 cal_ff.arg(name='files', key='flat_dark', dtype='infile', pos='1+')
 cal_ff.arg(name='files', key='dark_flat', dtype='infile', pos='1+')
-cal_badpix.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_ff.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
@@ -202,7 +223,7 @@ cal_extract.run_order = 6
 cal_extract.arg(name='directory', dtype='path', pos=0)
 cal_extract.arg(name='files', dtype=str, pos='1+')
 cal_extract.kwarg(name='fiber', dtype=str)
-cal_extract.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_extract.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
@@ -215,7 +236,7 @@ cal_hc.run_order = 7
 cal_hc.arg(name='directory', dtype='path', pos=0)
 cal_hc.arg(name='files', dtype='outfile', pos='1+')
 cal_hc.arg(name='files', dtype='outfile', pos='1+')
-cal_hc.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_hc.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
@@ -234,7 +255,7 @@ cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
              dtype='outfile', pos='2+')
 cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
              dtype='outfile', pos='2+')
-cal_wave.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_wave.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -253,7 +274,7 @@ cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
                dtype='outfile', pos=1)
 cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
                dtype='outfile', pos=1)
-cal_drift1.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_drift1.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFTPEAK_E2DS_spirou
@@ -272,7 +293,7 @@ cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
                dtype='outfile', pos=1)
 cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
                dtype='outfile', pos=1)
-cal_drift2.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_drift2.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_CCF_E2DS_spirou
@@ -294,7 +315,7 @@ cal_ccf.arg(name='mask', dtype='str', pos=2)
 cal_ccf.arg(name='rv', dtype=float, pos=3)
 cal_ccf.arg(name='width', dtype=float, pos=4)
 cal_ccf.arg(name='step', dtype=float, pos=5)
-cal_ccf.kwarg(name='plot', dtype=bool, helpstr=plothelp)
+cal_ccf.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
