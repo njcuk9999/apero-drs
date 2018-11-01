@@ -76,6 +76,8 @@ def input_setup(name, fkwargs=None, quiet=False):
     drs_params.set_source('RECIPE', func_name)
     # load properties into recipe dictionary
     drs_params['RECIPE']['name'] = name
+    drs_params['RECIPE']['args'] = list(recipe.args)
+    drs_params['RECIPE']['kwargs'] = list(recipe.kwargs)
     drs_params['RECIPE']['outputdir'] = recipe.outputdir.upper()
     drs_params['RECIPE']['inputdir'] = recipe.inputdir.upper()
     drs_params['RECIPE']['inputtype'] = recipe.inputtype.upper()
@@ -84,16 +86,23 @@ def input_setup(name, fkwargs=None, quiet=False):
     desc = recipe.description
     parser = spirouRecipe.DRSArgumentParser(drs_params, description=desc)
     # deal with function call
-    fargs = parse_function_arguments(recipe, fkwargs)
+    recipe.parse_args(fkwargs)
     # add arguments
-    for rarg in recipe.arg_list:
+    for rarg in recipe.args:
         # extract out name and kwargs from rarg
-        rname = rarg[0]
-        rkwargs = rarg[1]
+        rname = recipe.args[rarg].names
+        rkwargs = recipe.args[rarg].props
         # parse into parser
-        parser.add_argument(rname, **rkwargs)
+        parser.add_argument(*rname, **rkwargs)
+    # add keyword arguments
+    for rarg in recipe.kwargs:
+        # extract out name and kwargs from rarg
+        rname = recipe.kwargs[rarg].names
+        rkwargs = recipe.kwargs[rarg].props
+        # parse into parser
+        parser.add_argument(*rname, **rkwargs)
     # get params
-    params = vars(parser.parse_args(args=fargs))
+    params = vars(parser.parse_args(args=recipe.str_arg_list))
     del parser
     # add to DRS parameters
     drs_params['INPUT'] = params
@@ -329,77 +338,8 @@ def find_recipe(name):
             found_recipe = recipe
     if found_recipe is None:
         raise ValueError('No recipe named {0}'.format(name))
-    # make the recipe
-    found_recipe.make()
-    desc = found_recipe.description
     # return
     return found_recipe
-
-
-def parse_function_arguments(recipe, rkwargs):
-
-    # get list of arguments and keyword arguments
-    arg_names, arg_items = [], []
-    for arg_item in recipe.arg_list:
-        # get arg name
-        arg_name = arg_item[0]
-        # remove optionals (-, --)
-        while arg_name.startswith('-'):
-            arg_name = arg_name[1:]
-        # append to lists
-        arg_names.append(arg_name)
-        arg_items.append(arg_item[0])
-
-    arg_string_list = []
-    correct = True
-    for it in range(len(arg_names)):
-        # get name and item
-        arg_name, arg_item = arg_names[it], arg_items[it]
-        # find keyword arguments without value
-        if '--' in arg_item:
-            if arg_name in rkwargs:
-                # get rkwargs value
-                rvalue = rkwargs[arg_name]
-                # check for None
-                if rvalue is None:
-                    continue
-                # add to argument string (for parser)
-                arg_string_list.append('{0}'.format(arg_item))
-        # find keyword arguments (Optional)
-        elif '-' in arg_item:
-            if arg_name in rkwargs:
-                # get rkwargs value
-                rvalue = rkwargs[arg_name]
-                # check for None
-                if rvalue is None:
-                    continue
-                # add to argument string (for parser)
-                arg_string_list.append('{0}={1}'
-                                       .format(arg_item, rkwargs[arg_name]))
-        # find positional arguments
-        elif arg_name in rkwargs:
-            # get rkwargs value
-            rvalue = rkwargs[arg_name]
-            # check for None value
-            if rvalue is None:
-                correct = False
-                break
-            # check for list
-            if type(rvalue) == list:
-                # convert to string joined by spaces
-                for rvalue_it in rvalue:
-                    arg_string_list.append('{0}'.format(rvalue_it))
-            # else it should be a string
-            else:
-                arg_string_list.append('{0}'.format(rvalue))
-        # else we do not have the correct format and should check command line
-        else:
-            correct = False
-    if not correct:
-        return None
-    else:
-        # return arg_string
-        return arg_string_list
 
 
 def load_other_config_file(p, key, logthis=True, required=False):
