@@ -282,6 +282,8 @@ class CheckFiles(argparse.Action):
         # storage for correct
         correct_drsfile = None
         # try to check header for keys and values
+        # TODO: Need to make this "inclusive" or "exclusive" based on
+        # TODO:   "filelogic" input key
         for drs_file in drs_files:
             # get drs check_ext
             check_ext = drs_file.check_ext
