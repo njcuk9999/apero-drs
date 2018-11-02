@@ -113,11 +113,11 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2, cal_extract,
 test.name = 'test.py'
 test.outputdir = 'tmp'
 test.inputdir = 'raw'
-test.inputtype = 'raw'
+test.inputtype = 'pp'
 test.extension = 'fits'
 test.description = 'Test recipe - used to test the argument parser of the DRS'
 test.arg(pos=0, **directory)
-test.arg(pos=1, name='filelist', dtype='files',
+test.arg(pos=1, name='filelist', dtype='files', files=[spirouFiles.raw_file],
          helpstr='A list of fits files to use, separated by spaces')
 test.kwarg(**plot)
 test.kwarg(**combine)
