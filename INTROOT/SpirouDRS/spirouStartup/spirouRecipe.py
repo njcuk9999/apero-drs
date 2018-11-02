@@ -283,36 +283,14 @@ class CheckFiles(argparse.Action):
         correct_drsfile = None
         # try to check header for keys and values
         for drs_file in drs_files:
-            # get drs header
-            drsheader = drs_file.header
             # get drs check_ext
             check_ext = drs_file.check_ext
-            # start off thinking this file is correct
-            correct_file = True
             # check ext "check_ext"
             check_file_extension(self.dest, recipename, filename, check_ext,
                                  log_opt, fail_msgs)
-            # loop around keys that are needed for this to be a good file
-            for drskey in drsheader:
-                # get key from drs_params
-                if drskey in self.drs_params:
-                    key = self.drs_params[drskey][0]
-                else:
-                    key = drskey
-                # check if key is in file header
-                if key in fileheader:
-                    # check if key is correct
-                    if drsheader[drskey].strip() != fileheader[key].strip():
-                        correct_file = False
-                        # construct fail msg
-                        fmsg = ('ERROR: file header key "{0}"="{1}" should '
-                                'be "{2}"')
-                        fargs = [key, fileheader[key], drsheader[drskey]]
-                        fail_msgs.append(fmsg.format(*fargs))
-                else:
-                    correct_file = False
-                    fmsg = 'ERROR: file header key "{0}" not in header'
-                    fail_msgs.append(fmsg.format(key))
+            # check header
+            correct_file = drs_file.check(self, fileheader, self.drs_params,
+                                          fail_msgs)
             # if this is the correct file store the drsfile
             if correct_file:
                 correct_drsfile = drs_file
@@ -445,6 +423,63 @@ class MakeListing(argparse.Action):
 # =============================================================================
 class DrsArgument(object):
     def __init__(self, name, **kwargs):
+        """
+        Create a DRS Argument object
+
+        :param name: string, the name of the argument and call, for optional
+                     arguments should include the "-" and "--" in front
+                     ("arg.name" will not include these but "arg.argname"
+                     and "arg.names" will)
+
+        :param kwargs: currently allowed kwargs are:
+
+            - pos: int or None, the position of a position argument, if None
+                   not a positional argument (i.e. optional argument)
+
+            - altnames: list of strings or None, the alternative calls to
+                        the argument in argparse (as well as "name"), if None
+                        only call to argument is "name"
+
+            - dtype: string or type or None, the data type currently must
+                     be one of the following:
+                        ['files', 'file', 'directory', 'bool',
+                         'options', 'switch', int, float, str, list]
+                     if None set to string.
+                     these control the checking of the argument in most cases.
+                     int/flat/str/list are not checked
+
+            - options: list of strings or None, sets the allowed string values
+                       of the argument, if None no options are required (other
+                       than those set by dtype)
+
+            - helpstr: string or None, if not None sets the text to add to the
+                       help string
+
+            - files: list of DrsInput objects or None, if not None and dtype
+                     is "files" or "file" sets the type of file to expect
+                     the way the list is understood is based on "filelogic"
+
+            - filelogic: string, either "inclusive" or "exclusive", if
+                         inclusive and combination of DrsInput objects are
+                         valid, if exclusive only one DrsInput in the list is
+                         valid for all files i.e.
+                         - if files = [A, B] and filelogic = 'inclusive'
+                           the input files may all be A or all be B
+                         - if files = [A, B] and filelogic = 'exclusive'
+                           the input files may be either A or B
+        """
+        # ----------------------------------------------
+        # define class constants
+        # ----------------------------------------------
+        # define allowed properties
+        self.propkeys = ['action', 'nargs', 'type', 'choices', 'default',
+                         'help']
+        # define allowed dtypes
+        self.allowed_dtypes = ['files', 'file', 'directory', 'bool',
+                               'options', 'switch', int, float, str, list]
+        # ----------------------------------------------
+        # assign values from construction
+        # ----------------------------------------------
         # get argument name
         self.argname = str(name)
         # get full name
@@ -465,10 +500,40 @@ class DrsArgument(object):
         self.helpstr = kwargs.get('helpstr', '')
         # get files
         self.files = kwargs.get('files', [])
+        # get file logic
+        self.filelogic = kwargs.get('filelogic', 'inclusive')
+        if self.filelogic not in ['inclusive', 'exclusive']:
+            emsg = ('DrsArgument Error: "filelogic" must equal "inclusive" '
+                    'or "exclusive" only. '
+                    'Current value is "{0}"'.format(self.filelogic))
+            raise ValueError(emsg)
+
         # set empty
         self.props = dict()
 
     def make_properties(self):
+        """
+        Make the properties dictionary for argparser based on the
+        "arg.dtype" assigned during construction.
+        i.e. one of the following provides the information to fill arg.props
+            ['files', 'file', 'directory', 'bool', 'options',
+             'switch', int, float, str, list]
+
+        This must be run manually once an instance of DrsArgument is
+        constructed.
+
+        :return None:
+        """
+        # deal with no dtype
+        if self.dtype is None:
+            self.dtype = str
+        # make sure dtype is valid
+        if self.dtype not in self.allowed_dtypes:
+            a_dtypes_str = ['"{0}"'.format(i) for i in self.allowed_dtypes]
+            eargs = [' or '.join(a_dtypes_str), self.dtype]
+            emsg = ('DrsArgument Error: "dtype" is not valid. Must be equal'
+                    ' to {0}. Current value is "{1}"'.format(*eargs))
+            raise ValueError(emsg)
         # deal with dtype
         if self.dtype == 'files':
             self.props['action'] = CheckFiles
@@ -505,22 +570,52 @@ class DrsArgument(object):
         self.props['help'] = self.helpstr
 
     def assign_properties(self, props):
-        # define allowed properties
-        propkeys = ['action', 'nargs', 'type', 'choices', 'default', 'help']
+        """
+        Assigns argparse properties from "props"
+
+        Instead of creating properties based on dtype one can assign
+        properties based on a input dictionary "props". This is useful
+        when one has a defined static set or properties to pass to
+        argparse. Only keys in the following list will be allowed to be passed
+        to arg.props:
+            ['action', 'nargs', 'type', 'choices', 'default', 'help']
+
+        :param props: dictionary, contains pre-defined key value pairs to
+                      parse to argparser keys must be in the following list:
+                      ['action', 'nargs', 'type', 'choices', 'default', 'help']
+        :return None:
+        """
+
         # loop around properties
-        for prop in propkeys:
+        for prop in self.propkeys:
             if prop in props:
                 self.props[prop] = props[prop]
 
     def __str__(self):
+        """
+        Defines the str(DrsArgument) return for DrsArgument
+        :return str: the string representation of DrSArgument
+                     i.e. DrsArgument[name]
+        """
         return 'DrsArgument[{0}]'.format(self.name)
 
     def __repr__(self):
+        """
+        Defines the print(DrsArgument) return for DrsArgument
+        :return str: the string representation of DrSArgument
+                     i.e. DrsArgument[name]
+        """
         return 'DrsArgument[{0}]'.format(self.name)
 
 
 class DrsRecipe(object):
     def __init__(self, name=None):
+        """
+        Create a DRS Recipe object
+
+        :param name: string, name of the recipe (the .py file) relating to
+                     this recipe object
+        """
         # name
         if name is None:
             self.name = 'Unknown'
@@ -600,6 +695,18 @@ class DrsRecipe(object):
         self.kwargs[name] = keywordargument
 
     def parse_args(self, dictionary):
+        """
+        Parse a dictionary of arguments into argparser in the format required
+        to match up to the recipe.args/recipe.kwarg assigned to this
+        DrsRecipe by calls to "recipe.arg" and "recipe.kwarg"
+
+        :param dictionary: list of key value pairs where the keys must match
+                           the names (without "-" and "--") of the arguments
+                           and keyword arguments. This is then passed into
+                           "recipe.str_arg_list" for parsing into argparser
+                           directly (and overiding run time arguments)
+        :return None:
+        """
         self.str_arg_list = []
         if dictionary is None:
             return None
@@ -610,7 +717,7 @@ class DrsRecipe(object):
             # get value(s)
             values = dictionary[argname]
             # pass this argument
-            self.pass_arg(self.args[argname], values)
+            self.parse_arg(self.args[argname], values)
         for kwargname in self.kwargs:
             # check if key in dictionary
             if kwargname not in dictionary:
@@ -618,12 +725,22 @@ class DrsRecipe(object):
             # get value(s)
             values = dictionary[kwargname]
             # pass this argument
-            self.pass_arg(self.kwargs[kwargname], values)
+            self.parse_arg(self.kwargs[kwargname], values)
         # check if we have parameters
         if len(self.str_arg_list) == 0:
             self.str_arg_list = None
 
-    def pass_arg(self, arg, values):
+    def parse_arg(self, arg, values):
+        """
+        Parse argument to "recipe.str_arg_list"
+
+        :param arg: str, the name of the argument (with "-" and "--" for
+                    optional arguments)
+        :param values: object, the object to push into the value of argument.
+                       The string representation of this value must be
+                       readable by argparser i.e. int/float/str etc
+        :return None:
+        """
         # check that value is not None
         if values is None:
             return
@@ -643,7 +760,16 @@ class DrsRecipe(object):
             self.str_arg_list.append(strfmt.format(*strarg))
 
     def make_specials(self):
+        """
+        Make special arguments based on pre-defined static properties
+        (i.e. a valid kwargs for parser.add_argument)
 
+        Currently adds the following special arguments:
+
+        --listing, --list     List the files in the given input directory
+
+        :return None:
+        """
         # make listing functionality
         listingprops = make_listing()
         name = listingprops['name']
@@ -652,31 +778,80 @@ class DrsRecipe(object):
         self.specialargs[name] = listing
 
     def __str__(self):
+        """
+        Defines the str(DrsRecipe) return for DrsRecipe
+        :return str: the string representation of DrsRecipe
+                     i.e. DrsRecipe[name]
+        """
         return 'DrsRecipe[{0}]'.format(self.name)
 
     def __repr__(self):
+        """
+        Defines the print(DrsRecipe) return for DrsRecipe
+        :return str: the string representation of DrsRecipe
+                     i.e. DrsRecipe[name]
+        """
         return 'DrsRecipe[{0}]'.format(self.name)
 
 
-class DrsInput:
+class DrsInputFile:
+
     def __init__(self, name, ext):
+        """
+        Create a DRS Input File object
+
+        :param name: string, the name of the DRS input file
+        :param ext: string, the extension for the DRS input file (without
+                    the '.' i.e. A.txt  ext='txt'
+
+        - Parent class for Drs Fits File object (DrsFitsFile)
+        """
         # define a name
         self.name = name
         # define the extension
         self.ext = ext
 
     def __str__(self):
-        return 'DrsInput[{0}]'.format(self.name)
+        """
+        Defines the str(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        return 'DrsInputFile[{0}]'.format(self.name)
 
     def __repr__(self):
-        return 'DrsInput[{0}]'.format(self.name)
+        """
+        Defines the print(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        return 'DrsInputFile[{0}]'.format(self.name)
 
-class DrsFitsFile(DrsInput):
+
+class DrsFitsFile(DrsInputFile):
     def __init__(self, name, **kwargs):
+        """
+        Create a DRS Fits File Input object
+
+        :param name: string, the name of the DRS input file
+
+        :param kwargs: currently allowed kwargs are:
+
+            - ext: string or None, the extension for the DRS input file
+                   (without the '.' i.e. A.txt  ext='txt'). This will be
+                   checked if used in a DrsArgument if not None.
+
+            - fiber: string or None, the fiber of the Fits File.
+
+            - KW_{str}: string, any keywordstore variable name currently
+                        defined in spirouKeywords.py. If used in DrsArgument
+                        the HEADER of this fits file must have the value
+                        of this KW_{str} to be a valid argument.
+        """
         # define a name
         self.name = name
         # get super init
-        DrsInput.__init__(self, name, 'fits')
+        DrsInputFile.__init__(self, name, 'fits')
         # if ext in kwargs then we have a file extension to check
         self.check_ext = kwargs.get('ext', None)
         # get fiber type (if set)
@@ -690,47 +865,78 @@ class DrsFitsFile(DrsInput):
             if 'KW_' in kwarg.upper():
                 self.header[kwarg] = kwargs[kwarg]
 
+    def check(self, header, params, fail_msgs):
+        """
+        Check "header" for valid key value pairs
 
+        Uses recipe.header with the KW_{str} keyword-store keys to locate
+        the params[KW_{str}] to check in "header"
+        i.e. the following must be True for all keys
 
-    def check(self, header):
-        # store fail messages
-        fail_msgs = []
-        # loop around keys to check
-        for key in self.header:
-            # check whether key is in header
-            if key in header:
-                # check if we are checking a list
-                if type(self.header[key]) is not list:
-                    items = [self.header[key]]
-                else:
-                    items = self.header[key]
-                # find the file
-                correct = False
-                for item in items:
-                    if item == key:
-                        correct = True
-                # add to the fail msgs
-                if not correct:
-                    msg = 'Key {0} not equal to {1}'
-                    margs = [key, ' , '.join(items)]
-                    fail_msgs.append(msg.format(*margs))
+        key = params[KW_{str}][0]
+        recipe.header[KW_{str}]] == header[key]
+
+        :param header: dictionary, the header file from a fits file to check
+                       for the correct keys
+
+        :return file_found: bool, True if file found
+        :return fail_msgs: list of strings, strings contain error messages
+                           for all checks that failed
+        """
+        # start off thinking this file is correct
+        correct_file = True
+        # loop around keys that are needed for this to be a good file
+        for drskey in self.header:
+            # get key from drs_params
+            if drskey in params:
+                key = params[drskey][0]
             else:
-                fail_msgs.append('Key {0} not in header'.format(key))
+                key = drskey
+            # check if key is in file header
+            if key in header:
+                # check if key is correct
+                if self.header[drskey].strip() != header[key].strip():
+                    correct_file = False
+                    # construct fail msg
+                    fmsg = ('ERROR: file header key "{0}"="{1}" should '
+                            'be "{2}"')
+                    fargs = [key, header[key], self.header[drskey]]
+                    fail_msgs.append(fmsg.format(*fargs))
+            else:
+                correct_file = False
+                fmsg = 'ERROR: file header key "{0}" not in header'
+                fail_msgs.append(fmsg.format(key))
 
-        found = len(fail_msgs) == 0
-        # return found and fail_msgs
-        return found, fail_msgs
+        return correct_file, fail_msgs
+
 
     def string_output(self):
+        """
+        String output for DrsFitsFile. If fiber is not None this also
+        contains the fiber type
+
+        i.e. DrsFitsFile[{name}_{fiber}] or DrsFitsFile[{name}]
+        :return string: str, the string to print
+        """
         if self.fiber is None:
             return 'DrsFitsFile[{0}]'.format(self.name)
         else:
             return 'DrsFitsFile[{0}_{1}]'.format(self.name, self.fiber)
 
     def __str__(self):
+        """
+        Defines the str(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
         return self.string_output()
 
     def __repr__(self):
+        """
+        Defines the print(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
         return self.string_output()
 
 
