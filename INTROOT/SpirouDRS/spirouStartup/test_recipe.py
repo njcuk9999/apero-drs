@@ -29,7 +29,7 @@ __NAME__ = 'test.py'
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(directory=None, ufiles=None, **kwargs):
+def main(directory=None, filelist=None, **kwargs):
 
     # TODO: New setup, including:
     # TODO:    - loading config/constants
@@ -39,7 +39,7 @@ def main(directory=None, ufiles=None, **kwargs):
     # TODO:    - checking files based on inputs (all in **kwargs)
 
     # assign function calls
-    fkwargs = dict(directory=directory, ufiles=ufiles, **kwargs)
+    fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
     kwargs = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
 
