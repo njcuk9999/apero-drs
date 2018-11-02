@@ -76,12 +76,11 @@ def input_setup(name, fkwargs=None, quiet=False):
     drs_params.set_source('RECIPE', func_name)
     # load properties into recipe dictionary
     drs_params['RECIPE']['name'] = name
-    drs_params['RECIPE']['args'] = list(recipe.args)
-    drs_params['RECIPE']['kwargs'] = list(recipe.kwargs)
-    drs_params['RECIPE']['outputdir'] = recipe.outputdir.upper()
+    drs_params['RECIPE']['args'] = recipe.args
+    drs_params['RECIPE']['kwargs'] = recipe.kwargs
+    # drs_params['RECIPE']['outputdir'] = recipe.outputdir.upper()
     drs_params['RECIPE']['inputdir'] = recipe.inputdir.upper()
-    drs_params['RECIPE']['inputtype'] = recipe.inputtype.upper()
-    drs_params['RECIPE']['extension'] = recipe.extension
+    # drs_params['RECIPE']['inputtype'] = recipe.inputtype.upper()
     # set up storage for arguments
     desc = recipe.description
     parser = spirouRecipe.DRSArgumentParser(drs_params, description=desc)
@@ -99,6 +98,13 @@ def input_setup(name, fkwargs=None, quiet=False):
         # extract out name and kwargs from rarg
         rname = recipe.kwargs[rarg].names
         rkwargs = recipe.kwargs[rarg].props
+        # parse into parser
+        parser.add_argument(*rname, **rkwargs)
+    # add special arguments
+    for rarg in recipe.specialargs:
+        # extract out name and kwargs from rarg
+        rname = recipe.specialargs[rarg].names
+        rkwargs = recipe.specialargs[rarg].props
         # parse into parser
         parser.add_argument(*rname, **rkwargs)
     # get params
