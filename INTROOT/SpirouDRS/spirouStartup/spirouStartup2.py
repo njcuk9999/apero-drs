@@ -21,7 +21,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
 from . import spirouRecipe
-from . import recipes
+from . import recipes_spirou
 
 # =============================================================================
 # Define variables
@@ -42,7 +42,7 @@ ParamDict = spirouConfig.ParamDict
 # get the config error
 ConfigError = spirouConfig.ConfigError
 # get recipes
-RECIPES = recipes.recipes
+RECIPES = recipes_spirou.recipes
 # -----------------------------------------------------------------------------
 # define the print/log header divider
 HEADER = ' *****************************************'
