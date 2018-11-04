@@ -10,13 +10,13 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 
-from . import spirouRecipe
+from . import spirouFile
 
 # =============================================================================
 # Define Files
 # =============================================================================
-drs_input = spirouRecipe.DrsInput
-drs_finput = spirouRecipe.DrsFitsFile
+drs_input = spirouFile.DrsInput
+drs_finput = spirouFile.DrsFitsFile
 
 drs_finput('', KW_CCAS='', KW_CREF='')
 drs_finput('', KW_DPRTYPE='', ext='')
