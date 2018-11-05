@@ -23,7 +23,7 @@ from SpirouDRS import spirouStartup
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'test.py'
+__NAME__ = 'cal_FF_RAW_spirou.py'
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -41,11 +41,11 @@ def main(directory=None, filelist=None, **kwargs):
     # assign function calls
     fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
-    kwargs = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
+    params = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
 
 
-    for kwarg in kwargs['INPUT']:
-        print('{0} = {1}'.format(kwarg, kwargs['INPUT'][kwarg]))
+    for param in params['INPUT']:
+        print('{0} = {1}'.format(param, params['INPUT'][param]))
 
     # return a copy of locally defined variables in the memory
     return dict(locals())
