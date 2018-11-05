@@ -56,8 +56,13 @@ def input_setup(name, fkwargs=None, quiet=False):
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
+    # Clean WLOG
+    WLOG.clean_log()
+    # find recipe
+    recipe = find_recipe(name)
     # quietly load DRS parameters (for setup)
-    drs_params = get_drs_params(name, quiet=True)
+    recipe.get_drs_params(quiet=True)
+    drs_params = recipe.drs_params
     # display
     if not quiet:
         # display title
@@ -69,8 +74,6 @@ def input_setup(name, fkwargs=None, quiet=False):
     # -------------------------------------------------------------------------
     # Deal with obtaining and understanding command-line/function- call inputs
     # -------------------------------------------------------------------------
-    # find recipe
-    recipe = find_recipe(name)
     # add params to drs_params
     drs_params['RECIPE'] = dict()
     drs_params.set_source('RECIPE', func_name)
@@ -83,7 +86,7 @@ def input_setup(name, fkwargs=None, quiet=False):
     # drs_params['RECIPE']['inputtype'] = recipe.inputtype.upper()
     # set up storage for arguments
     desc = recipe.description
-    parser = spirouRecipe.DRSArgumentParser(drs_params, description=desc)
+    parser = spirouRecipe.DRSArgumentParser(recipe, description=desc)
     # deal with function call
     recipe.parse_args(fkwargs)
     # add arguments
@@ -119,8 +122,6 @@ def input_setup(name, fkwargs=None, quiet=False):
 def get_drs_params(recipe, quiet=False):
     func_name = __NAME__ + '.run_begin()'
     constants_name = 'spirouConfig.Constants'
-    # Clean WLOG
-    WLOG.clean_log()
     # Get config parameters from primary file
     try:
         drs_params, warn_messages = spirouConfig.ReadConfigFile()
@@ -187,7 +188,7 @@ def display_drs_title(p):
     :return None:
     """
     # create title
-    title = ' * {DRS_NAME} @(#) Geneva Observatory ({DRS_VERSION})'.format(**p)
+    title = ' * {DRS_NAME} DRS (V{DRS_VERSION})'.format(**p)
 
     # Log title
     display_title(title)
