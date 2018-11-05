@@ -10,10 +10,34 @@ directory = dict(name='directory', dtype='directory',
 # =============================================================================
 # Commonly used options
 # =============================================================================
+
+add_cal = dict(name='--add2calib', dtype='bool',
+               helpstr='Whether to add outputs to calibration database')
+dobad = dict(name='--badcorr', dtype='bool',
+             helpstr='Whether to correct for the bad pixel file')
+badfile = dict(name='--badpixfile', dtype='file',
+               files=[sf.out_badpix],
+               helpstr='Define a custom file to use for bad pixel correction.'
+                       ' Checks for an absolute path and then checks '
+                       '"directory".')
+backsub = dict(name='--backsub', dtype='bool',
+               helpstr='Whether to do background subtraction')
 combine = dict(name='--combine', dtype='bool',
                helpstr='Whether to combine fits files in file list or to '
                        'process them separately')
-
+dodark = dict(name='--darkcorr', dtype='bool',
+              helpstr='Whether to correct for the dark file')
+darkfile = dict(name='--darkfile', dtype='file',
+                files=[sf.out_dark],
+                helpstr='Define a custom file to use for dark correction'
+                        ' Checks for an absolute path and then checks '
+                        '"directory".')
+extractmethod = dict(name='--extractmethod', dtype='options',
+                     helpstr='Define a custom extraction method',
+                     options=['1', '2', '3a', '3b', '3c', '3d', '4a', '4b'])
+extfiber = dict(name='--extfiber', dtype='options',
+                helpstr='Define which fibers to extract',
+                options=['ALL', 'AB', 'A', 'B', 'C'])
 flipimage = dict(name='--flipimage', dtype='options',
                  helpstr='Whether to flip fits image',
                  options=['None', 'x', 'y', 'both'])
@@ -21,36 +45,20 @@ flipimage = dict(name='--flipimage', dtype='options',
 fluxunits = dict(name='--fluxunits', dtype='options',
                  helpstr='Output units for flux',
                  options=['ADU/s', 'e-'])
-
-resize = dict(name='--resize', dtype='bool',
-              helpstr='Whether to resize image')
-
 plot = dict(name='--plot', dtype='bool', altnames=['-p'],
             helpstr='Manually turn on/off plot of graphs')
-
-add_cal = dict(name='--add2calib', dtype='bool',
-               helpstr='Whether to add outputs to calibration database')
-
-darkfile = dict(name='--darkfile', dtype='file',
-                files=[sf.out_dark],
-                helpstr='Define a custom file to use for dark correction'
+resize = dict(name='--resize', dtype='bool',
+              helpstr='Whether to resize image')
+shapefile = dict(name='--tiltfile', dtype='file',
+                 files=[sf.out_silt_shape],
+                 helpstr='Define a custom file to use for tilt correction.'
+                         ' Checks for an absolute path and then checks '
+                         '"directory".')
+tiltfile = dict(name='--tiltfile', dtype='file',
+                files=[sf.out_slit_tilt],
+                helpstr='Define a custom file to use for tilt correction.'
                         ' Checks for an absolute path and then checks '
                         '"directory".')
-
-badfile = dict(name='--badpixfile', dtype='file',
-               files=[sf.out_badpix],
-               helpstr='Define a custom file to use for bad pixel correction.'
-                       ' Checks for an absolute path and then checks '
-                       '"directory".')
-
-dodark = dict(name='--darkcorr', dtype='bool',
-              helpstr='Whether to correct for the dark file')
-
-dobad = dict(name='--badcorr', dtype='bool',
-             helpstr='Whether to correct for the bad pixel file')
-
-
-
 
 # =============================================================================
 # List of usable recipes
@@ -69,12 +77,14 @@ cal_hc = drs_recipe()
 cal_loc = drs_recipe()
 cal_pp = drs_recipe()
 cal_slit = drs_recipe()
+cal_shape = drs_recipe()
 cal_wave = drs_recipe()
 
 test = drs_recipe()
 # push into a list
-recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2, cal_extract,
-           cal_ff, cal_hc, cal_loc, cal_pp, cal_slit, cal_wave,
+recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2,
+           cal_extract, cal_ff, cal_hc, cal_loc, cal_pp, cal_slit,
+           cal_shape, cal_wave,
            test]
 
 # =============================================================================
@@ -122,19 +132,16 @@ test.arg(pos=1, name='filelist', dtype='files',
          files=[sf.pp_dark_dark, sf.pp_flat_flat],
          filelogic='exclusive',
          helpstr='A list of fits files to use, separated by spaces')
-# test.arg(pos=1, name='filelist', dtype='files', files=[sf.pp_flat_flat],
-#          helpstr='A list of fits files to use, separated by spaces')
 test.kwarg(**plot)
+test.kwarg(**add_cal)
+test.kwarg(**dobad)
+test.kwarg(**badfile)
 test.kwarg(**combine)
+test.kwarg(**dodark)
+test.kwarg(**darkfile)
 test.kwarg(**flipimage)
 test.kwarg(**fluxunits)
 test.kwarg(**resize)
-test.kwarg(**add_cal)
-test.kwarg(**darkfile)
-test.kwarg(**dodark)
-test.kwarg(**badfile)
-test.kwarg(**dobad)
-
 
 # -----------------------------------------------------------------------------
 # cal_preprocess_spirou
@@ -161,16 +168,16 @@ cal_badpix.run_order = 1
 cal_badpix.arg(name='directory', dtype='directory', pos=0)
 cal_badpix.arg(name='flatfile', dtype='files', files=[sf.pp_flat_flat], pos=1)
 cal_badpix.arg(name='darkfile', dtype='files', files=[sf.pp_dark_dark], pos=2)
-cal_badpix.kwarg(**plot)
-cal_badpix.kwarg(**combine)
-cal_badpix.kwarg(**flipimage)
-cal_badpix.kwarg(**fluxunits)
-cal_badpix.kwarg(**resize)
 cal_badpix.kwarg(**add_cal)
-cal_badpix.kwarg(**darkfile)
-cal_badpix.kwarg(**dodark)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
+cal_badpix.kwarg(**combine)
+cal_badpix.kwarg(**darkfile)
+cal_badpix.kwarg(**dodark)
+cal_badpix.kwarg(**flipimage)
+cal_badpix.kwarg(**fluxunits)
+cal_badpix.kwarg(**plot)
+cal_badpix.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_dark_spirou
@@ -182,8 +189,12 @@ cal_dark.intputtype = 'pp'
 cal_dark.run_order = 2
 cal_dark.arg(name='directory', dtype='directory', pos=0)
 cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+')
+cal_dark.kwarg(**add_cal)
+cal_dark.kwarg(**combine)
+cal_dark.kwarg(**flipimage)
+cal_dark.kwarg(**fluxunits)
 cal_dark.kwarg(**plot)
-
+cal_dark.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_spirou
@@ -194,10 +205,19 @@ cal_loc.inputdir = 'tmp'
 cal_loc.inputtype = 'pp'
 cal_loc.run_order = 3
 cal_loc.arg(name='directory', dtype='directory', pos=0)
-cal_loc.arg(name='files', dtype='files', files=[sf.pp_dark_flat], pos='1+')
-cal_loc.arg(name='files', dtype='files', files=[sf.pp_flat_dark], pos='1+')
+cal_loc.arg(name='files', dtype='files', filelogic='exclusive',
+            files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+')
+cal_loc.kwarg(**add_cal)
+cal_loc.kwarg(**badfile)
+cal_loc.kwarg(**dobad)
+cal_loc.kwarg(**backsub)
+cal_loc.kwarg(**combine)
 cal_loc.kwarg(**darkfile)
+cal_loc.kwarg(**dodark)
+cal_loc.kwarg(**flipimage)
+cal_loc.kwarg(**fluxunits)
 cal_loc.kwarg(**plot)
+cal_loc.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_SLIT_spirou
@@ -208,8 +228,40 @@ cal_slit.inputdir = 'tmp'
 cal_slit.inputtype = 'pp'
 cal_slit.run_order = 4
 cal_slit.arg(name='directory', dtype='directory', pos=0)
-cal_slit.arg(name='files', key='fp_fp', dtype='files', pos='1+')
+cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+')
+cal_slit.kwarg(**add_cal)
+cal_slit.kwarg(**badfile)
+cal_slit.kwarg(**dobad)
+cal_slit.kwarg(**backsub)
+cal_slit.kwarg(**combine)
+cal_slit.kwarg(**darkfile)
+cal_slit.kwarg(**dodark)
+cal_slit.kwarg(**flipimage)
+cal_slit.kwarg(**fluxunits)
 cal_slit.kwarg(**plot)
+cal_slit.kwarg(**resize)
+
+# -----------------------------------------------------------------------------
+# cal_SHAPE_spirou
+# -----------------------------------------------------------------------------
+cal_shape.name = 'cal_SHAPE_spirou.py'
+cal_shape.outputdir = 'reduced'
+cal_shape.inputdir = 'tmp'
+cal_shape.inputtype = 'pp'
+cal_shape.run_order = 4
+cal_shape.arg(name='directory', dtype='directory', pos=0)
+cal_shape.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+')
+cal_shape.kwarg(**add_cal)
+cal_shape.kwarg(**badfile)
+cal_shape.kwarg(**dobad)
+cal_shape.kwarg(**backsub)
+cal_shape.kwarg(**combine)
+cal_shape.kwarg(**darkfile)
+cal_shape.kwarg(**dodark)
+cal_shape.kwarg(**flipimage)
+cal_shape.kwarg(**fluxunits)
+cal_shape.kwarg(**plot)
+cal_shape.kwarg(**resize)
 
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_spirou
@@ -220,10 +272,23 @@ cal_ff.inputdir = 'tmp'
 cal_ff.inputtype = 'pp'
 cal_ff.run_order = 5
 cal_ff.arg(name='directory', dtype='directory', pos=0)
-cal_ff.arg(name='files', key='flat_flat', dtype='files', pos='1+')
-cal_ff.arg(name='files', key='flat_dark', dtype='files', pos='1+')
-cal_ff.arg(name='files', key='dark_flat', dtype='files', pos='1+')
+cal_ff.arg(name='files', dtype='files', filelogic='exclusive',
+           files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark], pos='1+')
+cal_ff.kwarg(**add_cal)
+cal_ff.kwarg(**badfile)
+cal_ff.kwarg(**dobad)
+cal_ff.kwarg(**backsub)
+cal_ff.kwarg(**combine)
+cal_ff.kwarg(**darkfile)
+cal_ff.kwarg(**dodark)
+cal_ff.kwarg(**extractmethod)
+cal_ff.kwarg(**extfiber)
+cal_ff.kwarg(**flipimage)
+cal_ff.kwarg(**fluxunits)
 cal_ff.kwarg(**plot)
+cal_ff.kwarg(**resize)
+cal_ff.kwarg(**shapefile)
+cal_ff.kwarg(**tiltfile)
 
 # -----------------------------------------------------------------------------
 # cal_extract_RAW_spirou
@@ -234,41 +299,54 @@ cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
 cal_extract.run_order = 6
 cal_extract.arg(name='directory', dtype='directory', pos=0)
-cal_extract.arg(name='files', dtype=str, pos='1+')
-cal_extract.kwarg(name='fiber', dtype=str)
+cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file])
+cal_extract.kwarg(**add_cal)
+cal_extract.kwarg(**badfile)
+cal_extract.kwarg(**dobad)
+cal_extract.kwarg(**backsub)
+cal_extract.kwarg(**combine)
+cal_extract.kwarg(**darkfile)
+cal_extract.kwarg(**dodark)
+cal_extract.kwarg(**extractmethod)
+cal_extract.kwarg(**extfiber)
+cal_extract.kwarg(**flipimage)
+cal_extract.kwarg(**fluxunits)
 cal_extract.kwarg(**plot)
+cal_extract.kwarg(**resize)
+cal_extract.kwarg(**shapefile)
+cal_extract.kwarg(**tiltfile)
 
 # -----------------------------------------------------------------------------
 # cal_HC_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_hc.name = 'cal_HC_E2DS_spirou.py'
-cal_hc.outputdir = 'reduced'
-cal_hc.inputdir = 'reduced'
-cal_hc.inputtype = 'reduced'
-cal_hc.run_order = 7
-cal_hc.arg(name='directory', dtype='directory', pos=0)
-cal_hc.arg(name='files', dtype='files', pos='1+')
-cal_hc.arg(name='files', dtype='files', pos='1+')
-cal_hc.kwarg(**plot)
+# cal_hc.outputdir = 'reduced'
+# cal_hc.inputdir = 'reduced'
+# cal_hc.inputtype = 'reduced'
+# cal_hc.run_order = 7
+# cal_hc.arg(name='directory', dtype='directory', pos=0)
+# cal_hc.arg(name='files', dtype='files', pos='1+')
+# cal_hc.arg(name='files', dtype='files', pos='1+')
+# cal_hc.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_WAVE_E2DS_spirou
 # -----------------------------------------------------------------------------
 cal_wave.name = 'cal_WAVE_E2DS_spirou.py'
-cal_wave.outputdir = 'reduced'
-cal_wave.inputdir = 'reduced'
-cal_wave.inputtype = 'reduced'
-cal_wave.run_order = 8
-cal_wave.arg(name='directory', dtype='directory', pos=0)
-cal_wave.arg(name='fpfile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
-             dtype='files', pos=1)
-cal_wave.arg(name='fpfile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
-             dtype='files', pos=1)
-cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
-             dtype='files', pos='2+')
-cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
-             dtype='files', pos='2+')
-cal_wave.kwarg(**plot)
+# cal_wave.outputdir = 'reduced'
+# cal_wave.inputdir = 'reduced'
+# cal_wave.inputtype = 'reduced'
+# cal_wave.run_order = 8
+# cal_wave.arg(name='directory', dtype='directory', pos=0)
+# cal_wave.arg(name='fpfile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
+#              dtype='files', pos=1)
+# cal_wave.arg(name='fpfile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
+#              dtype='files', pos=1)
+# cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
+#              dtype='files', pos='2+')
+# cal_wave.arg(name='hcfiles', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
+#              dtype='files', pos='2+')
+# cal_wave.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -278,16 +356,16 @@ cal_drift1.outputdir = 'reduced'
 cal_drift1.inputdir = 'reduced'
 cal_drift1.inputtype = 'reduced'
 cal_drift1.run_order = 9
-cal_drift1.arg(name='directory', dtype='directory', pos=0)
-cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
-               dtype='files', pos=1)
-cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
-               dtype='files', pos=1)
-cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
-               dtype='files', pos=1)
-cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
-               dtype='files', pos=1)
-cal_drift1.kwarg(**plot)
+# cal_drift1.arg(name='directory', dtype='directory', pos=0)
+# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
+#                dtype='files', pos=1)
+# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
+#                dtype='files', pos=1)
+# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
+#                dtype='files', pos=1)
+# cal_drift1.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
+#                dtype='files', pos=1)
+# cal_drift1.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFTPEAK_E2DS_spirou
@@ -297,16 +375,16 @@ cal_drift2.outputdir = 'reduced'
 cal_drift2.inputdir = 'reduced'
 cal_drift2.inputtype = 'reduced'
 cal_drift2.run_order = 10
-cal_drift2.arg(name='directory', dtype='directory', pos=0)
-cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
-               dtype='files', pos=1)
-cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
-               dtype='files', pos=1)
-cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
-               dtype='files', pos=1)
-cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
-               dtype='files', pos=1)
-cal_drift2.kwarg(**plot)
+# cal_drift2.arg(name='directory', dtype='directory', pos=0)
+# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='FP_FP',
+#                dtype='files', pos=1)
+# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='FP_FP',
+#                dtype='files', pos=1)
+# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DS_FILE', key2='HCONE_HCONE',
+#                dtype='files', pos=1)
+# cal_drift2.arg(name='reffile', key1='EXTRACT_E2DSFF_FILE', key2='HCONE_HCONE',
+#                dtype='files', pos=1)
+# cal_drift2.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # cal_CCF_E2DS_spirou
@@ -316,19 +394,19 @@ cal_ccf.outputdir = 'reduced'
 cal_ccf.inputdir = 'reduced'
 cal_ccf.inputtype = 'reduced'
 cal_ccf.run_order = 11
-cal_ccf.arg(name='directory', dtype='directory', pos=0)
-cal_ccf.arg(name='e2dsfile', key1='EXTRACT_E2DS_FILE', dtype='files', pos=1)
-cal_ccf.arg(name='e2dsfile', key1='EXTRACT_E2DSFF_FILE', dtype='files', pos=1)
-cal_ccf.arg(name='e2dsfile', key1='TELLU_CORRECTED', dtype='files', pos=1)
-cal_ccf.arg(name='e2dsfile', key1='TELLU_CORRECTED', dtype='files', pos=1)
-cal_ccf.arg(name='e2dsfile', key1='POL_DEG', dtype='files', pos=1)
-cal_ccf.arg(name='e2dsfile', key1='POL_STOKES_I', dtype='files', pos=1)
-cal_ccf.arg(name='e2dsfile', key1='POL_LSD', dtype='files', pos=1)
-cal_ccf.arg(name='mask', dtype=str, pos=2)
-cal_ccf.arg(name='rv', dtype=float, pos=3)
-cal_ccf.arg(name='width', dtype=float, pos=4)
-cal_ccf.arg(name='step', dtype=float, pos=5)
-cal_ccf.kwarg(**plot)
+# cal_ccf.arg(name='directory', dtype='directory', pos=0)
+# cal_ccf.arg(name='e2dsfile', key1='EXTRACT_E2DS_FILE', dtype='files', pos=1)
+# cal_ccf.arg(name='e2dsfile', key1='EXTRACT_E2DSFF_FILE', dtype='files', pos=1)
+# cal_ccf.arg(name='e2dsfile', key1='TELLU_CORRECTED', dtype='files', pos=1)
+# cal_ccf.arg(name='e2dsfile', key1='TELLU_CORRECTED', dtype='files', pos=1)
+# cal_ccf.arg(name='e2dsfile', key1='POL_DEG', dtype='files', pos=1)
+# cal_ccf.arg(name='e2dsfile', key1='POL_STOKES_I', dtype='files', pos=1)
+# cal_ccf.arg(name='e2dsfile', key1='POL_LSD', dtype='files', pos=1)
+# cal_ccf.arg(name='mask', dtype=str, pos=2)
+# cal_ccf.arg(name='rv', dtype=float, pos=3)
+# cal_ccf.arg(name='width', dtype=float, pos=4)
+# cal_ccf.arg(name='step', dtype=float, pos=5)
+# cal_ccf.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
