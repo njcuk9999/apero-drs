@@ -15,7 +15,7 @@ from . import spirouFile
 # =============================================================================
 # Define Files
 # =============================================================================
-drs_input = spirouFile.DrsInput
+drs_input = spirouFile.DrsInputFile
 drs_finput = spirouFile.DrsFitsFile
 
 drs_finput('', KW_CCAS='', KW_CREF='')
