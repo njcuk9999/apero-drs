@@ -9,7 +9,7 @@ Created on 2018-09-14 at 18:19
 
 @author: cook
 """
-from astropy.io import fits
+import numpy as np
 import argparse
 import sys
 import os
@@ -38,6 +38,14 @@ ParamDict = spirouConfig.ParamDict
 ConfigError = spirouConfig.ConfigError
 # define hard display limit
 HARD_DISPLAY_LIMIT = 99
+# define display strings for types
+STRTYPE = dict()
+STRTYPE[int] = 'int'
+STRTYPE[float] = 'float'
+STRTYPE[str] = 'str'
+STRTYPE[complex] = 'complex'
+STRTYPE[list] = 'list'
+STRTYPE[np.ndarray] = 'np.ndarray'
 # -----------------------------------------------------------------------------
 
 
@@ -103,6 +111,8 @@ class DRSArgumentParser(argparse.ArgumentParser):
             self.print_help()
             # quit after call
             self.exit()
+        if '--listing' in sys.argv:
+            return True
         else:
             return False
 
@@ -144,7 +154,8 @@ class CheckDirectory(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        skip = parser.has_help()
+        if skip: return 0
         # get drs parameters
         self.recipe = parser.recipe
         # check value
@@ -205,6 +216,7 @@ class CheckFiles(argparse.Action):
         # ---------------------------------------------------------------------
         # step 3: check if file is valid if we add ".fits"
         filename1 = filename + ext
+        input_dir_full = os.path.join(input_dir, directory)
         input_path1 = os.path.join(input_dir_full, filename1)
         cout3 = check_for_file(self.dest, self.id_num, input_path1, log_opt,
                                kind='ADDFITS')
@@ -216,8 +228,10 @@ class CheckFiles(argparse.Action):
         emsgs = ['Argument Error: File was not found.'
                  ''.format(filename), '\tTried:']
         emsgs.append('\t\t ' + filename)
-        emsgs.append('\t\t ' + os.path.join(input_dir_full, filename))
-        emsgs.append('\t\t ' + os.path.join(input_dir_full, filename1))
+        path1 = os.path.realpath(os.path.join(input_dir_full, filename))
+        emsgs.append('\t\t ' + path1)
+        path2 = os.path.realpath(os.path.join(input_dir_full, filename1))
+        emsgs.append('\t\t ' + path2)
         # generate error message
         emsgs.append('\tSome available files are as follows:')
         # get some available directories
@@ -284,16 +298,6 @@ class CheckFiles(argparse.Action):
             print_check_error(self.dest, self.id_num, filename, recipename,
                               emsgs, value, log_opt)
         # ---------------------------------------------------------------------
-        # try to open header of file
-        try:
-            # obtain the header
-            fileheader = fits.getheader(filepath)
-        except Exception as e:
-            emsg1 = ('An error occured when trying to read the header of '
-                    'file="{0}" from dir={1}'.format(filename, path))
-            emsg2 = '\tfunction={0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
-            fileheader = None
         # storage for correct
         correct_drsfile = None
         # get exclusive/inclusive argument
@@ -310,15 +314,20 @@ class CheckFiles(argparse.Action):
             if len(errors) > 0:
                 print_check_error(self.dest, self.id_num, filename, recipename,
                                   errors, value, log_opt)
+
+            # -----------------------------------------------------------------
+            # create an instance of this drs_file with the filename set
+            file_instance = drs_file.new(filename=filepath)
+            file_instance.read()
             # -----------------------------------------------------------------
             # check header
-            cfargs = [fileheader, drs_file, herrors, self.dest, self.id_num,
-                      filename, self.recipe, value, log_opt]
+            cfargs = [file_instance, herrors, self.dest, self.id_num,
+                      self.recipe, value, log_opt]
             correct_file, herrors = check_file_header(*cfargs)
             # -----------------------------------------------------------------
             # if logic is exclusive must match current file types
             if self.id_type is not None:
-                c_args = [drs_file, correct_file, logic, self.id_type]
+                c_args = [file_instance, correct_file, logic, self.id_type]
                 correct_file, errors = check_exclusivity(*c_args)
             if len(errors) > 0:
                 print_check_error(self.dest, self.id_num, filename, recipename,
@@ -326,7 +335,7 @@ class CheckFiles(argparse.Action):
             # -----------------------------------------------------------------
             # if this is the correct file store the drsfile
             if correct_file:
-                correct_drsfile = drs_file
+                correct_drsfile = file_instance
                 break
         # ---------------------------------------------------------------------
         # construct errors from header loop
@@ -351,7 +360,8 @@ class CheckFiles(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        skip = parser.has_help()
+        if skip: return 0
         # reset id parameters
         self.id_num = 0
         self.id_type = None
@@ -396,11 +406,66 @@ class CheckBool(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        skip = parser.has_help()
+        if skip: return 0
         if type(values) == list:
             value = list(map(self.check_bool, values))
         else:
             value = self.check_bool(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class CheckType(argparse.Action):
+    def eval_type(self, value):
+        emsg = 'Argument "{0}"="{1}" should be type "{2}"'
+        eargs = [self.dest, value, self.type]
+        try:
+            return self.type(value)
+        except ValueError as e:
+            WLOG('error', '', emsg.format(*eargs))
+        except TypeError as e:
+            WLOG('error', '', emsg.format(*eargs))
+
+    def check_type(self, value):
+        # check that type matches
+        if type(value) is self.type:
+            return value
+        # check if passed as a list
+        if (self.nargs == 1) and (type(value) is list):
+            if len(value) == 0:
+                emsg = 'Argument "{0}" should not be an empty list.'
+                WLOG('error', '', emsg.format(self.dest))
+            else:
+                return self.eval_type(value[0])
+        # else if we have a list we should iterate
+        elif type(value) is list:
+            values = []
+            for it in self.nargs:
+                values.append(self.eval_type(values[it]))
+            if len(values) < len(value):
+                wmsg = 'Argument too long (expected {0} got {1})'
+                wargs = [self.nargs, len(value)]
+                WLOG('warning', '', wmsg.format(*wargs))
+            return values
+        # else
+        else:
+            emsg = ('Argument "{0}"="{1}" list expected with {2} arguments '
+                    'got type {3}')
+            eargs = [self.dest, value, self.nargs, type(value)]
+            WLOG('error', '', emsg.format(eargs))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        skip = parser.has_help()
+        if skip:
+            return 0
+        if self.nargs == 1:
+            value = self.check_type(values)
+        elif type(values) == list:
+            value = list(map(self.check_type, values))
+        else:
+            value = self.check_type(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
@@ -417,7 +482,8 @@ class CheckOptions(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
-        parser.has_help()
+        skip = parser.has_help()
+        if skip: return 0
         if type(values) == list:
             value = list(map(self.check_options, values))
         else:
@@ -433,11 +499,7 @@ class MakeListing(argparse.Action):
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def __call__(self, parser, namespace, values, option_string=None):
-        # check for help
-        parser.has_help()
-        # get drs parameters
-        self.recipe = parser.recipe
+    def display_listing(self, namespace):
         # get input dir
         input_dir = get_input_dir(self.recipe)
         # check if "directory" is in namespace
@@ -455,17 +517,23 @@ class MakeListing(argparse.Action):
         for filename in filelist:
             wmsgs.append('\t' + filename)
         WLOG('', self.recipe.drs_params['LOG_OPT'], wmsgs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        parser.has_help()
+        # get drs parameters
+        self.recipe = parser.recipe
+        # display listing
+        self.display_listing(namespace)
         # quit after call
         parser.exit()
-
-
 
 
 # =============================================================================
 # Define Object Classes
 # =============================================================================
 class DrsArgument(object):
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, kind, **kwargs):
         """
         Create a DRS Argument object
 
@@ -511,6 +579,8 @@ class DrsArgument(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
         """
+
+
         # ----------------------------------------------
         # define class constants
         # ----------------------------------------------
@@ -523,20 +593,25 @@ class DrsArgument(object):
         # ----------------------------------------------
         # assign values from construction
         # ----------------------------------------------
+        # deal with name
         # get argument name
         self.argname = str(name)
         # get full name
         self.name = name
         while self.name.startswith('-'):
             self.name = self.name[1:]
+        # get kind
+        if kind in ['arg', 'kwarg', 'special']:
+            self.kind = kind
+        else:
+            emsg = '"kind" must be "arg" or "kwarg" or "special"'
+            self.exception(emsg)
         # get position
         self.pos = kwargs.get('pos', None)
         # add names from altnames
         self.names = [self.argname] + kwargs.get('altnames', [])
         # get dtype
         self.dtype = kwargs.get('dtype', None)
-        # get default
-        self.default = kwargs.get('default', None)
         # get options
         self.options = kwargs.get('options', None)
         # get help str
@@ -546,10 +621,22 @@ class DrsArgument(object):
         # get file logic
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
-            emsg = ('DrsArgument Error: "filelogic" must equal "inclusive" '
+            emsg = ('"filelogic" must equal "inclusive" '
                     'or "exclusive" only. '
                     'Current value is "{0}"'.format(self.filelogic))
-            raise ValueError(emsg)
+            self.exception(emsg)
+        # deal with no default/default_ref for kwarg
+        if kind == 'kwarg':
+            if ('default' not in kwargs) and ('default_ref' not in kwargs):
+                emsg = ('**kwargs must contain either "default"'
+                        ' or "default_ref" for full definition of argument.')
+                self.exception(emsg)
+        # get default
+        self.default = kwargs.get('default', None)
+        # get default_ref
+        self.default_ref = kwargs.get('default_ref', None)
+
+
 
         # set empty
         self.props = dict()
@@ -601,6 +688,7 @@ class DrsArgument(object):
         elif self.dtype=='switch':
             self.props['action'] = 'store_true'
         elif type(self.dtype) is type:
+            self.props['action'] = CheckType
             self.props['type'] = self.dtype
             self.props['nargs'] = 1
         else:
@@ -633,6 +721,10 @@ class DrsArgument(object):
         for prop in self.propkeys:
             if prop in props:
                 self.props[prop] = props[prop]
+
+    def exception(self, message):
+        log_opt = 'DrsArgument[{0}] Error'.format(self.name)
+        WLOG('error', log_opt, message)
 
     def __str__(self):
         """
@@ -706,7 +798,7 @@ class DrsRecipe(object):
         if name is None:
             name = 'Arg{0}'.format(len(self.args) + 1)
         # create argument
-        argument = DrsArgument(name, **kwargs)
+        argument = DrsArgument(name, kind='arg', **kwargs)
         # make arg parser properties
         argument.make_properties()
         # recast name
@@ -735,7 +827,7 @@ class DrsRecipe(object):
         if name is None:
             name = 'Kwarg{0}'.format(len(self.args) + 1)
         # create keyword argument
-        keywordargument = DrsArgument(name, **kwargs)
+        keywordargument = DrsArgument(name, kind='kwarg', **kwargs)
         # make arg parser properties
         keywordargument.make_properties()
         # recast name
@@ -822,7 +914,8 @@ class DrsRecipe(object):
         # make listing functionality
         listingprops = make_listing()
         name = listingprops['name']
-        listing = DrsArgument(name, altnames=listingprops['altnames'])
+        listing = DrsArgument(name, kind='special',
+                              altnames=listingprops['altnames'])
         listing.assign_properties(listingprops)
         self.specialargs[name] = listing
 
@@ -907,7 +1000,60 @@ class DrsRecipe(object):
 
 
 # =============================================================================
-# Define checks
+# Define parser functions (to link from classes to argparse
+# =============================================================================
+def recipe_setup(recipe, fkwargs):
+    """
+    Interface between "recipe", inputs to function ("fkwargs") and argparse
+    parser (inputs from command line)
+
+    :param recipe: DrsRecipe instance, the Drs Recipe object
+    :param fkwargs: dictionary, a dictionary where the keys match
+                    arguments/keyword arguments in recipe (without -/--), and
+                    the values are those to set in the output
+                    (set to None for not value set)
+
+    :return params:  dictionary, a dictionary where the keys match arguments/
+                     keywords (without -/--) and values are the values to be
+                     used for this recipe
+    """
+    # set up storage for arguments
+    desc = recipe.description
+    parser = DRSArgumentParser(recipe, description=desc)
+    # deal with function call
+    recipe.parse_args(fkwargs)
+    # -------------------------------------------------------------------------
+    # add arguments from recipe
+    for rarg in recipe.args:
+        # extract out name and kwargs from rarg
+        rname = recipe.args[rarg].names
+        rkwargs = recipe.args[rarg].props
+        # parse into parser
+        parser.add_argument(*rname, **rkwargs)
+    # -------------------------------------------------------------------------
+    # add keyword arguments
+    for rarg in recipe.kwargs:
+        # extract out name and kwargs from rarg
+        rname = recipe.kwargs[rarg].names
+        rkwargs = recipe.kwargs[rarg].props
+        # parse into parser
+        parser.add_argument(*rname, **rkwargs)
+    # add special arguments
+    for rarg in recipe.specialargs:
+        # extract out name and kwargs from rarg
+        rname = recipe.specialargs[rarg].names
+        rkwargs = recipe.specialargs[rarg].props
+        # parse into parser
+        parser.add_argument(*rname, **rkwargs)
+    # get params
+    params = vars(parser.parse_args(args=recipe.str_arg_list))
+    del parser
+    # return parameters
+    return params
+
+
+# =============================================================================
+# Define check functions
 # =============================================================================
 def check_for_file(argname, idnum, path, log_opt, kind=None):
 
@@ -934,7 +1080,7 @@ def check_for_file(argname, idnum, path, log_opt, kind=None):
         wmsg = 'Arg "{0}"[{1}]: File "{2}" exists in directory "{3}"' + kindstr
         WLOG('', log_opt, wmsg.format(argname, idnum, filename, directory))
         # return True and filename
-        return True, raw_files[0]
+        return True, os.path.realpath(raw_files[0])
 
     # else we have multiple files (from wild cards)
     else:
@@ -946,20 +1092,21 @@ def check_for_file(argname, idnum, path, log_opt, kind=None):
             # get directory
             directory_it = os.path.dirname(raw_file)
             # check that we don't have multiple directories
-            if directory is not None:
-                if directory_it != directory:
-                    emsg = ('Wildcard Error: Can only have files from one '
-                            'directory. Multiple found')
-                    WLOG('error', log_opt, emsg)
-            else:
-                directory = str(directory_it)
-            # add to list of files
-            files.append(raw_file)
+            # if directory is not None:
+            #     if directory_it != directory:
+            #         emsg = ('Wildcard Error: Can only have files from one '
+            #                 'directory. Multiple found')
+            #         WLOG('error', log_opt, emsg)
+            # else:
+            #     directory = str(directory_it)
+            directory = str(directory_it)
+            # add to list of files (removing relative paths)
+            files.append(os.path.realpath(raw_file))
         # log message
         wmsgs = ['Arg "{0}"[{1}]: Files found to exist (Abs. path + wildcard):'
                  ''.format(argname, idnum)]
         for raw_file in raw_files:
-            wmsgs.append('\t' + raw_file)
+            wmsgs.append('\t' + os.path.realpath(raw_file))
         WLOG('', log_opt, wmsgs)
         # return True, filename and new idnum
         return True, files
@@ -980,8 +1127,7 @@ def check_file_extension(filename, ext):
     return emsgs
 
 
-def check_file_header(fileheader, drs_file, errors, argname, idnum, filename,
-                      recipe, value, log_opt):
+def check_file_header(drs_file, errors, argname, idnum, recipe, value, log_opt):
     # get recipe
     params = recipe.drs_params
     recipename = recipe.name
@@ -996,13 +1142,12 @@ def check_file_header(fileheader, drs_file, errors, argname, idnum, filename,
         else:
             key = drskey
         # find if key found in header
-        if key not in fileheader:
+        if key not in drs_file.header:
             emsgs.append('Key {0} not found in header'.format(key))
-
 
     # if we found errors in header key print these errors
     if len(emsgs) > 0:
-        print_check_error(argname, idnum, filename, recipename, errors,
+        print_check_error(argname, idnum, drs_file.filename, recipename, errors,
                           value, log_opt)
     # get error storage
     if len(errors) == 3:
@@ -1019,7 +1164,7 @@ def check_file_header(fileheader, drs_file, errors, argname, idnum, filename,
         else:
             key = drskey
         # get value and required value
-        value = fileheader[key].strip()
+        value = drs_file.header[key].strip()
         rvalue = rkeys[drskey].strip()
         # add to error storage
         keys.append(key)
@@ -1027,7 +1172,7 @@ def check_file_header(fileheader, drs_file, errors, argname, idnum, filename,
         rvalues.append(rvalue)
 
         # check if key is in file header
-        if key in fileheader:
+        if key in drs_file.header:
             # check if key is correct
             if rvalue != value:
                 found = False
