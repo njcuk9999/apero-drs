@@ -8,55 +8,81 @@ directory = dict(name='directory', dtype='directory',
                  helpstr='The "night_name" or absolute path of the directory')
 
 # =============================================================================
-# Commonly used options
+# Option definitions
 # =============================================================================
-
+#
+# Note for these to work MUST add to spirouStartup.spirou_options_manager
+#
+# -----------------------------------------------------------------------------
 add_cal = dict(name='--add2calib', dtype='bool',
-               helpstr='Whether to add outputs to calibration database')
-dobad = dict(name='--badcorr', dtype='bool',
-             helpstr='Whether to correct for the bad pixel file')
-badfile = dict(name='--badpixfile', dtype='file',
+               helpstr='[BOOLEAN] Whether to add outputs to calibration database',
+               default=True)
+# -----------------------------------------------------------------------------
+dobad = dict(name='--badcorr', dtype='bool', default=True,
+             helpstr='[BOOLEAN] Whether to correct for the bad pixel file')
+# -----------------------------------------------------------------------------
+badfile = dict(name='--badpixfile', dtype='file', default='None',
                files=[sf.out_badpix],
-               helpstr='Define a custom file to use for bad pixel correction.'
-                       ' Checks for an absolute path and then checks '
-                       '"directory".')
-backsub = dict(name='--backsub', dtype='bool',
-               helpstr='Whether to do background subtraction')
+               helpstr='[STRING] Define a custom file to use for bad pixel '
+                       'correction. Checks for an absolute path and then '
+                       'checks "directory".')
+# -----------------------------------------------------------------------------
+backsub = dict(name='--backsub', dtype='bool', default=True,
+               helpstr='[BOOLEAN] Whether to do background subtraction',
+               default_ref='option_backsub')
+# -----------------------------------------------------------------------------
+# Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr='Whether to combine fits files in file list or to '
-                       'process them separately')
-dodark = dict(name='--darkcorr', dtype='bool',
-              helpstr='Whether to correct for the dark file')
-darkfile = dict(name='--darkfile', dtype='file',
+               helpstr='[BOOLEAN] Whether to combine fits files in file list '
+                       'or to process them separately')
+# -----------------------------------------------------------------------------
+debug = dict(name='--debug', dtype=int, default_ref='DRS_DEBUG',
+             helpstr='[INTEGER] Whether to run in debug mode')
+# -----------------------------------------------------------------------------
+dodark = dict(name='--darkcorr', dtype='bool', default=True,
+              helpstr='[BOOLEAN] Whether to correct for the dark file')
+# -----------------------------------------------------------------------------
+darkfile = dict(name='--darkfile', dtype='file', default='None',
                 files=[sf.out_dark],
-                helpstr='Define a custom file to use for dark correction'
-                        ' Checks for an absolute path and then checks '
-                        '"directory".')
+                helpstr='[STRING] Define a custom file to use for dark '
+                        'correction. Checks for an absolute path and '
+                        'then checks "directory".')
+# -----------------------------------------------------------------------------
+# Must set default_ref per recipe!!
 extractmethod = dict(name='--extractmethod', dtype='options',
-                     helpstr='Define a custom extraction method',
+                     helpstr='[STRING] Define a custom extraction method',
                      options=['1', '2', '3a', '3b', '3c', '3d', '4a', '4b'])
-extfiber = dict(name='--extfiber', dtype='options',
-                helpstr='Define which fibers to extract',
+# -----------------------------------------------------------------------------
+extfiber = dict(name='--extfiber', dtype='options', default='ALL',
+                helpstr='[STRING] Define which fibers to extract',
                 options=['ALL', 'AB', 'A', 'B', 'C'])
-flipimage = dict(name='--flipimage', dtype='options',
-                 helpstr='Whether to flip fits image',
+# -----------------------------------------------------------------------------
+flipimage = dict(name='--flipimage', dtype='options', default='both',
+                 helpstr='[BOOLEAN] Whether to flip fits image',
                  options=['None', 'x', 'y', 'both'])
-
-fluxunits = dict(name='--fluxunits', dtype='options',
-                 helpstr='Output units for flux',
+# -----------------------------------------------------------------------------
+fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
+                 helpstr='[BOOLEAN] Output units for flux',
                  options=['ADU/s', 'e-'])
-plot = dict(name='--plot', dtype='bool', altnames=['-p'],
-            helpstr='Manually turn on/off plot of graphs')
-resize = dict(name='--resize', dtype='bool',
-              helpstr='Whether to resize image')
-shapefile = dict(name='--tiltfile', dtype='file',
+# -----------------------------------------------------------------------------
+plot = dict(name='--plot', dtype='bool',
+            helpstr='[BOOLEAN] Manually turn on/off plot of graphs',
+            default_ref='DRS_PLOT')
+# -----------------------------------------------------------------------------
+resize = dict(name='--resize', dtype='bool', default=True,
+              helpstr='[BOOLEAN] Whether to resize image')
+# -----------------------------------------------------------------------------
+shapefile = dict(name='--shapefile', dtype='file', default='None',
                  files=[sf.out_silt_shape],
-                 helpstr='Define a custom file to use for tilt correction.'
+                 helpstr='[STRING] Define a custom file to use for shape '
+                         'correction. If unset uses closest file from calibDB.'
                          ' Checks for an absolute path and then checks '
                          '"directory".')
-tiltfile = dict(name='--tiltfile', dtype='file',
+# -----------------------------------------------------------------------------
+tiltfile = dict(name='--tiltfile', dtype='file', default='None',
                 files=[sf.out_slit_tilt],
-                helpstr='Define a custom file to use for tilt correction.'
+                helpstr='[STRING] Define a custom file to use for tilt '
+                        ' correction. If unset uses closest file from calibDB.'
                         ' Checks for an absolute path and then checks '
                         '"directory".')
 
@@ -136,7 +162,8 @@ test.kwarg(**plot)
 test.kwarg(**add_cal)
 test.kwarg(**dobad)
 test.kwarg(**badfile)
-test.kwarg(**combine)
+test.kwarg(default=False, **combine)
+test.kwarg(**debug)
 test.kwarg(**dodark)
 test.kwarg(**darkfile)
 test.kwarg(**flipimage)
@@ -153,8 +180,9 @@ cal_pp.inputtype = 'raw'
 cal_pp.description = 'Pre-processing recipe'
 cal_pp.arg(name='directory', dtype='directory', pos=0,
            helpstr='- The "night_name" or absolute directory path')
-cal_pp.arg(name='ufiles', dtype='files', pos=1,
+cal_pp.arg(name='ufiles', dtype='files', pos=1, files=[sf.raw_file],
            helpstr='- The fits files to use, separated by spaces')
+cal_pp.kwarg(**debug)
 cal_pp.kwarg(**plot)
 
 # -----------------------------------------------------------------------------
@@ -171,7 +199,8 @@ cal_badpix.arg(name='darkfile', dtype='files', files=[sf.pp_dark_dark], pos=2)
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
-cal_badpix.kwarg(**combine)
+cal_badpix.kwarg(default=True, **combine)
+cal_badpix.kwarg(**debug)
 cal_badpix.kwarg(**darkfile)
 cal_badpix.kwarg(**dodark)
 cal_badpix.kwarg(**flipimage)
@@ -190,7 +219,8 @@ cal_dark.run_order = 2
 cal_dark.arg(name='directory', dtype='directory', pos=0)
 cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+')
 cal_dark.kwarg(**add_cal)
-cal_dark.kwarg(**combine)
+cal_dark.kwarg(default=True, **combine)
+cal_dark.kwarg(**debug)
 cal_dark.kwarg(**flipimage)
 cal_dark.kwarg(**fluxunits)
 cal_dark.kwarg(**plot)
@@ -211,7 +241,8 @@ cal_loc.kwarg(**add_cal)
 cal_loc.kwarg(**badfile)
 cal_loc.kwarg(**dobad)
 cal_loc.kwarg(**backsub)
-cal_loc.kwarg(**combine)
+cal_loc.kwarg(default=True, **combine)
+cal_loc.kwarg(**debug)
 cal_loc.kwarg(**darkfile)
 cal_loc.kwarg(**dodark)
 cal_loc.kwarg(**flipimage)
@@ -233,7 +264,8 @@ cal_slit.kwarg(**add_cal)
 cal_slit.kwarg(**badfile)
 cal_slit.kwarg(**dobad)
 cal_slit.kwarg(**backsub)
-cal_slit.kwarg(**combine)
+cal_slit.kwarg(default=True, **combine)
+cal_slit.kwarg(**debug)
 cal_slit.kwarg(**darkfile)
 cal_slit.kwarg(**dodark)
 cal_slit.kwarg(**flipimage)
@@ -255,7 +287,8 @@ cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
 cal_shape.kwarg(**dobad)
 cal_shape.kwarg(**backsub)
-cal_shape.kwarg(**combine)
+cal_shape.kwarg(default=True, **combine)
+cal_shape.kwarg(**debug)
 cal_shape.kwarg(**darkfile)
 cal_shape.kwarg(**dodark)
 cal_shape.kwarg(**flipimage)
@@ -278,10 +311,11 @@ cal_ff.kwarg(**add_cal)
 cal_ff.kwarg(**badfile)
 cal_ff.kwarg(**dobad)
 cal_ff.kwarg(**backsub)
-cal_ff.kwarg(**combine)
+cal_ff.kwarg(default=True, **combine)
+cal_ff.kwarg(**debug)
 cal_ff.kwarg(**darkfile)
 cal_ff.kwarg(**dodark)
-cal_ff.kwarg(**extractmethod)
+cal_ff.kwarg(default_ref='IC_FF_EXTRACT_TYPE', **extractmethod)
 cal_ff.kwarg(**extfiber)
 cal_ff.kwarg(**flipimage)
 cal_ff.kwarg(**fluxunits)
@@ -304,10 +338,11 @@ cal_extract.kwarg(**add_cal)
 cal_extract.kwarg(**badfile)
 cal_extract.kwarg(**dobad)
 cal_extract.kwarg(**backsub)
-cal_extract.kwarg(**combine)
+cal_extract.kwarg(default=True, **combine)
+cal_extract.kwarg(**debug)
 cal_extract.kwarg(**darkfile)
 cal_extract.kwarg(**dodark)
-cal_extract.kwarg(**extractmethod)
+cal_extract.kwarg(default_ref='IC_EXTRACT_TYPE', **extractmethod)
 cal_extract.kwarg(**extfiber)
 cal_extract.kwarg(**flipimage)
 cal_extract.kwarg(**fluxunits)
