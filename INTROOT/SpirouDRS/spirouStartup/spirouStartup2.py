@@ -62,118 +62,98 @@ def input_setup(name, fkwargs=None, quiet=False):
     recipe = find_recipe(name)
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True)
-    drs_params = recipe.drs_params
     # display
     if not quiet:
         # display title
-        display_drs_title(drs_params)
+        display_drs_title(recipe.drs_params)
         # display initial parameterisation
-        display_initial_parameterisation(drs_params)
+        display_initial_parameterisation(recipe.drs_params)
         # display system info (log only)
         display_system_info()
     # -------------------------------------------------------------------------
-    # Deal with obtaining and understanding command-line/function- call inputs
+    # interface between "recipe", "fkwargs" and command line (via argparse)
+    input_parameters = spirouRecipe.recipe_setup(recipe, fkwargs)
     # -------------------------------------------------------------------------
-    # add params to drs_params
-    drs_params['RECIPE'] = dict()
-    drs_params.set_source('RECIPE', func_name)
-    # load properties into recipe dictionary
-    drs_params['RECIPE']['name'] = name
-    drs_params['RECIPE']['args'] = recipe.args
-    drs_params['RECIPE']['kwargs'] = recipe.kwargs
-    # drs_params['RECIPE']['outputdir'] = recipe.outputdir.upper()
-    drs_params['RECIPE']['inputdir'] = recipe.inputdir.upper()
-    # drs_params['RECIPE']['inputtype'] = recipe.inputtype.upper()
-    # set up storage for arguments
-    desc = recipe.description
-    parser = spirouRecipe.DRSArgumentParser(recipe, description=desc)
-    # deal with function call
-    recipe.parse_args(fkwargs)
-    # add arguments
-    for rarg in recipe.args:
-        # extract out name and kwargs from rarg
-        rname = recipe.args[rarg].names
-        rkwargs = recipe.args[rarg].props
-        # parse into parser
-        parser.add_argument(*rname, **rkwargs)
-    # add keyword arguments
-    for rarg in recipe.kwargs:
-        # extract out name and kwargs from rarg
-        rname = recipe.kwargs[rarg].names
-        rkwargs = recipe.kwargs[rarg].props
-        # parse into parser
-        parser.add_argument(*rname, **rkwargs)
-    # add special arguments
-    for rarg in recipe.specialargs:
-        # extract out name and kwargs from rarg
-        rname = recipe.specialargs[rarg].names
-        rkwargs = recipe.specialargs[rarg].props
-        # parse into parser
-        parser.add_argument(*rname, **rkwargs)
-    # get params
-    params = vars(parser.parse_args(args=recipe.str_arg_list))
-    del parser
+    # deal with options from input_parameters
+    input_parameters = option_manager(recipe, input_parameters)
+    # -------------------------------------------------------------------------
     # add to DRS parameters
-    drs_params['INPUT'] = params
+    drs_params = recipe.drs_params
+    drs_params['INPUT'] = input_parameters
+    drs_params.set_source('INPUT', func_name)
+    # push values of keys matched in input_parameters into drs_parameters
+    for key in input_parameters.keys():
+        if key in drs_params:
+            drs_params[key] = input_parameters[key]
+            drs_params.set_source(key, func_name)
+    # update default params
+    spirouConfig.Constants.UPDATE_PP(drs_params)
     # return arguments
     return drs_params
 
 
-def get_drs_params(recipe, quiet=False):
-    func_name = __NAME__ + '.run_begin()'
-    constants_name = 'spirouConfig.Constants'
-    # Get config parameters from primary file
-    try:
-        drs_params, warn_messages = spirouConfig.ReadConfigFile()
-    except ConfigError as e:
-        WLOG(e.level, DPROG, e.message)
-        drs_params, warn_messages = None, []
-    # log warning messages
-    if len(warn_messages) > 0:
-        WLOG('warning', DPROG, warn_messages)
-    # set recipe name
-    drs_params['RECIPE'] = recipe.split('.py')[0]
-    drs_params.set_source('RECIPE', func_name)
-    # get variables from spirouConst
-    drs_params['DRS_NAME'] = spirouConfig.Constants.NAME()
-    drs_params['DRS_VERSION'] = spirouConfig.Constants.VERSION()
-    drs_params.set_sources(['DRS_NAME', 'DRS_VERSION'], constants_name)
+# =============================================================================
+# option arguments
+# =============================================================================
+def option_manager(recipe, input_parameters):
+    """
+    Takes all the optional parameters and deals with them.
 
-    # get program name
-    drs_params['PROGRAM'] = spirouConfig.Constants.PROGRAM(drs_params)
-    drs_params.set_source('program', func_name)
-    # get the logging option
-    drs_params['LOG_OPT'] = drs_params['PROGRAM']
-    drs_params.set_source('LOG_OPT', func_name)
+    :param params:
+    :param input_parameters:
+    :return:
+    """
+    # get drs params
+    params = recipe.drs_params
+    # loop around options
+    for key in recipe.kwargs:
+        # get keyword argument
+        kwarg = recipe.kwargs[key]
+        # make sure kind == 'kwarg
+        if kwarg.kind != 'kwarg':
+            continue
+        # check that kwarg is in input_parameters
+        if kwarg.name not in input_parameters:
+            eargs = [kwarg.name, recipe.name]
+            emsg = 'Cannot find input "{0}" for recipe "{1}"'
+            kwarg.exception(emsg.format(*eargs))
+        # check that kwarg is None (should be None if we need to change it)
+        if input_parameters[kwarg.name] is not None:
+            # if we have the value we should pipe it into default_ref
+            #  i.e. the value in the parameters file
+            if kwarg.default_ref is not None:
+                param_key = kwarg.default_ref
+                value = input_parameters[kwarg.name]
+            else:
+                continue
+        # check that default is None
+        elif kwarg.default is not None:
+            value, param_key = kwarg.default, None
+        # else check that we have default_ref
+        elif kwarg.default_ref is None:
+            eargs = [kwarg.name, recipe.name]
+            emsg = '"default_ref" is unset for "{0}" for recipe "{1}"'
+            kwarg.exception(emsg.format(*eargs))
+            value, param_key = None, None
+        # else check that default_ref is in drs_params (i.e. defined in a
+        #   constant file)
+        elif kwarg.default_ref not in params:
+            eargs = [kwarg.default_ref, kwarg.name, recipe.name]
+            emsg = ('"default_ref"="{0}" not found in constant params for '
+                    ' "{1}" for recipe "{2}"')
+            kwarg.exception(emsg.format(*eargs))
+            value, param_key = None, None
+        # else we have all we need to reset the value
+        else:
+            value = params[kwarg.default_ref]
+            param_key = kwarg.default_ref
+        # if we have reached this point then set value
+        input_parameters[kwarg.name] = value
+        if param_key is not None:
+            input_parameters[kwarg.default_ref] = value
 
-    # check input parameters
-    drs_params = spirouConfig.CheckCparams(drs_params)
-
-    # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
-    if not drs_params['DRS_INTERACTIVE']:
-        drs_params['DRS_PLOT'] = 0
-
-    # set up array to store inputs/outputs
-    drs_params['INPUTS'] = OrderedDict()
-    drs_params['OUTPUTS'] = OrderedDict()
-    source = recipe + '.main() + ' + func_name
-    drs_params.set_sources(['INPUTS', 'OUTPUTS'], source)
-    # -------------------------------------------------------------------------
-    # load ICDP config file
-    logthis = not quiet
-    drs_params = load_other_config_file(drs_params, 'ICDP_NAME', required=True,
-                                        logthis=logthis)
-    # load keywords
-    try:
-        cparams, warnlogs = spirouConfig.GetKeywordArguments(drs_params)
-        # print warning logs
-        for warnlog in warnlogs:
-            WLOG('warning', DPROG, warnlog)
-    except spirouConfig.ConfigError as e:
-        WLOG(e.level, DPROG, e.message)
-
-    # return drs parameters
-    return drs_params
+    # return the parameters
+    return input_parameters
 
 
 # =============================================================================
@@ -305,7 +285,6 @@ def display_initial_parameterisation(p):
                       ':{DRS_DEBUG}').format(**p))
 
 
-# noinspection PyListCreation
 def display_system_info(logonly=True, return_message=False):
     """
     Display system information via the WLOG command
@@ -318,6 +297,7 @@ def display_system_info(logonly=True, return_message=False):
 
     :return None:
     """
+    # noinspection PyListCreation
     messages = [HEADER]
     messages.append(" * System information:")
     messages.append(HEADER)
@@ -334,7 +314,6 @@ def display_system_info(logonly=True, return_message=False):
         WLOG('', '', messages, logonly=logonly)
 
 
-
 # =============================================================================
 # Worker functions
 # =============================================================================
@@ -347,43 +326,6 @@ def find_recipe(name):
         raise ValueError('No recipe named {0}'.format(name))
     # return
     return found_recipe
-
-
-def load_other_config_file(p, key, logthis=True, required=False):
-    """
-    Load a secondary configuration file from p[key] with wrapper to deal
-    with ConfigErrors (pushed to WLOG)
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                key: "key" defined in call
-
-    :param key: string, the key in "p" storing the location of the secondary
-                configuration file
-    :param logthis: bool, if True loading of this config file is logged to
-                    screen/log file
-    :param required: bool, if required is True then the secondary config file
-                     is required for the DRS to run and a ConfigError is raised
-                     (program exit)
-
-    :return p: parameter, dictionary, the updated parameter dictionary with
-               the secondary configuration files loaded into it as key/value
-               pairs
-    """
-    # try to load config file from file
-    try:
-        pp, lmsgs = spirouConfig.LoadConfigFromFile(p, key, required=required,
-                                                    logthis=logthis)
-    except spirouConfig.ConfigError as e:
-        WLOG(e.level, p['LOG_OPT'], e.message)
-        pp, lmsgs = ParamDict(), []
-
-    # log messages caught in loading config file
-    if len(lmsgs) > 0:
-        WLOG('', DPROG, lmsgs)
-    # return parameter dictionary
-    return pp
 
 
 def sort_version(messages=None):
