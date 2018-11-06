@@ -111,7 +111,7 @@ class DrsFitsFile(DrsInputFile):
         self.required_header_keys = dict()
         self.get_header_keys(kwargs)
         # set empty attributes
-        self.filename = None
+        self.filename = kwargs.get('filename', None)
         self.directory = None
         self.basename = None
         self.data = None
