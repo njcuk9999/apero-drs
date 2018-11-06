@@ -329,6 +329,14 @@ tags = spirouConfigFile.get_tags(**ckwargs)
 # =============================================================================
 # Define General functions
 # =============================================================================
+def UPDATE_PP(params):
+    # get pp as a global
+    global pp
+    # set global pp value to local value
+    for key in params:
+        pp[key] = params[key]
+
+
 # noinspection PyPep8Naming
 def INTERACITVE_PLOTS_ENABLED():
     """
@@ -468,7 +476,7 @@ def PROGRAM(p=None):
     # get program name
     if p is not None:
         if 'RECIPE' in p:
-            program = p['RECIPE']
+            program = p['RECIPE'].split('.py')[0]
         else:
             program = os.path.basename(rparams[0]).split('.py')[0]
     else:
