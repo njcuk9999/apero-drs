@@ -9,46 +9,56 @@ Created on 2018-09-14 at 13:57
 
 @author: cook
 """
-
+from __future__ import division
 import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as u
-from tqdm import tqdm
-import warnings
 
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouConfig
+from SpirouDRS import spirouCore
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_FF_RAW_spirou.py'
+__NAME__ = 'cal_badpix_spirou.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
+# Get Logging function
+WLOG = spirouCore.wlog
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def main(directory=None, filelist=None, **kwargs):
-
-    # TODO: New setup, including:
-    # TODO:    - loading config/constants
-    # TODO:    - setting paths based on config/constants
-    # TODO:    - making DIRS based on inputs
-    # TODO:    - showing header/paths/sys info
-    # TODO:    - checking files based on inputs (all in **kwargs)
-
     # assign function calls
     fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
     params = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
-
-
-    for param in params['INPUT']:
-        print('{0} = {1}'.format(param, params['INPUT'][param]))
-
+    # display everything that comes from "INPUT"
+    print_input(params)
     # return a copy of locally defined variables in the memory
     return dict(locals())
+
+
+def print_input(params):
+    for param in params['INPUT']:
+        value = params['INPUT'][param]
+        pargs = dict(name=param, value=value, kind=type(value))
+
+        is_list = type(value) in [list, np.ndarray]
+
+        if is_list:
+            print('{name} ({kind})'.format(**pargs))
+            for it in range(len(value[0])):
+                args = [it, value[0][it], value[1][it]]
+                print('\t[{0}]: {1} {2}'.format(*args))
+        else:
+            print('{name} = {value}\t({kind})'.format(**pargs))
+
 
 # =============================================================================
 # Start of code
