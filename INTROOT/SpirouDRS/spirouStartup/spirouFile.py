@@ -13,6 +13,7 @@ from astropy import version as av
 import argparse
 import os
 import glob
+import warnings
 from collections import OrderedDict
 
 from SpirouDRS import spirouCore
@@ -213,7 +214,6 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
-    # TODO: fill out
     def read(self, ext=None, hdr_ext=0):
         """
         Read this fits file data and header
@@ -283,7 +283,6 @@ class DrsFitsFile(DrsInputFile):
         # set the shape
         self.shape = self.data.shape
 
-
     def read_multi(self):
         pass
 
@@ -321,8 +320,26 @@ class DrsFitsFile(DrsInputFile):
         if self.hdict is not None:
             for key in list(self.hdict.keys()):
                 hdu.header[key] = self.hdict[key]
+        # write to file
+        with warnings.catch_warnings(record=True) as w:
+            try:
+                hdu.writeto(self.filename, overwrite=True)
+            except Exception as e:
+                emsg1 = ('Cannot write image to fits file {0}'
+                         ''.format(self.basename))
+                emsg2 = '    Error {0}: {1}'.format(type(e), e)
+                emsg3 = '    function = {0}'.format(func_name)
+                WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
-        # write output dictionary
+        # ignore truncated comment warning since spirou images have some poorly
+        #   formatted header cards
+        w1 = []
+        for warning in w:
+            wmsg = 'Card is too long, comment will be truncated.'
+            if wmsg != str(warning.message):
+                w1.append(warning)
+        # add warnings to the warning logger and log if we have them
+        spirouCore.spirouLog.warninglogger(w1)
 
 
         pass
