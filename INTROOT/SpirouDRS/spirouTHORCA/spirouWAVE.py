@@ -890,7 +890,7 @@ def fit_gaussian_triplets(p, loc):
             # get the peaks for this order
             order_peaks = peak[good]
             # we may have fewer lines within the order than nmax_bright
-            if np.sum(good) < nmax_bright:
+            if np.sum(good) <= nmax_bright:
                 nmax = np.sum(good) - 1
             else:
                 nmax = nmax_bright
