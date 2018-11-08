@@ -20,7 +20,6 @@ from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
 from SpirouDRS import spirouDB
-from SpirouDRS import spirouRV
 
 # =============================================================================
 # Define variables
@@ -46,22 +45,28 @@ ParamDict = spirouConfig.ParamDict
 # Auxiliary functions - to be moved elsewhere later
 # =============================================================================
 def lin_mini(vector, sample):
-
     sz_sample = np.shape(sample)
     sz_vector = np.shape(vector)
 
     if sz_vector[0] == sz_sample[0]:
+        # noinspection PyUnusedLocal
         cas = 2
     if sz_vector[0] == sz_sample[1]:
         cas = 1
+    else:
+        cas = None
 
     #
     # vecteur de N elements
-    # sample : matrice N*M, chacune des M colonnes est ajustee en amplitude pour minimiser le chi2 par rapport au vecteur d'entree
-    # output : vecteur de M de long qui donne les amplitudes de chaque colonne
+    # sample : matrice N*M, chacune des M colonnes est ajustee en amplitude
+    # pour minimiser le chi2 par rapport au vecteur d'entree
+    # output : vecteur de M de long qui donne les amplitudes de chaque
+    # colonne
     #
-    # returns NaN values as amplitudes if the sample vectors lead to an auto-correlation matrix that
-    # cannot be inverted (i.e., that are full of zeros or are not linearly independent)
+    # returns NaN values as amplitudes if the sample vectors lead to an
+    # auto-correlation matrix that
+    # cannot be inverted (i.e., that are full of zeros or are not linearly
+    # independent)
     #
     vector = np.asarray(vector)
     sample = np.asarray(sample)
@@ -69,22 +74,22 @@ def lin_mini(vector, sample):
 
     if cas == 1:
         #
-        M = np.zeros([sz_sample[0], sz_sample[0]])
+        mm = np.zeros([sz_sample[0], sz_sample[0]])
         #
         v = np.zeros(sz_sample[0])
 
         for i in range(sz_sample[0]):
             for j in range(i, sz_sample[0]):
-                M[i, j] = np.sum(sample[i, :] * sample[j, :])
-                M[j, i] = M[i, j]
+                mm[i, j] = np.sum(sample[i, :] * sample[j, :])
+                mm[j, i] = mm[i, j]
             v[i] = np.sum(vector * sample[i, :])
         #
-        if np.linalg.det(M) == 0:
+        if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[0]) + np.nan
             recon = np.zeros_like(v)
             return amps, recon
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps = np.matmul(np.linalg.inv(mm), v)
         #
         recon = np.zeros(sz_sample[1])
         #
@@ -96,21 +101,21 @@ def lin_mini(vector, sample):
     if cas == 2:
         # print('cas = 2')
         # print(sz_sample[1])
-        M = np.zeros([sz_sample[1], sz_sample[1]])
+        mm = np.zeros([sz_sample[1], sz_sample[1]])
         v = np.zeros(sz_sample[1])
 
         for i in range(sz_sample[1]):
             for j in range(i, sz_sample[1]):
-                M[i, j] = np.sum(sample[:, i] * sample[:, j])
-                M[j, i] = M[i, j]
+                mm[i, j] = np.sum(sample[:, i] * sample[:, j])
+                mm[j, i] = mm[i, j]
             v[i] = np.sum(vector * sample[:, i])
 
-        if np.linalg.det(M) == 0:
+        if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
             recon = np.zeros_like(v)
             return amps, recon
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps = np.matmul(np.linalg.inv(mm), v)
 
         recon = np.zeros(sz_sample[0])
 
@@ -120,7 +125,7 @@ def lin_mini(vector, sample):
         return amps, recon
 
 
-def GAUSS_FUNCT(x, a):
+def gaus_funct(x, a):
     #
     # translated from IDL'S gaussfit function
     # used to generate a Gaussian but also returns its derivaties for
@@ -157,29 +162,30 @@ def GAUSS_FUNCT(x, a):
     n = len(a)
     nx = len(x)
     #
-    Z = (x - a[1]) / a[2]  #
-    EZ = np.exp(-Z ** 2 / 2.)  # GAUSSIAN PART
+    zz = (x - a[1]) / a[2]  #
+    ezz = np.exp(-zz ** 2 / 2.)  # GAUSSIAN PART
     #
+    ff = None
     if n == 3:
-        F = a[0] * EZ
+        ff = a[0] * ezz
     if n == 4:
-        F = a[0] * EZ + a[3]
+        ff = a[0] * ezz + a[3]
     if n == 5:
-        F = a[0] * EZ + a[3] + a[4] * x
+        ff = a[0] * ezz + a[3] + a[4] * x
     if n == 6:
-        F = a[0] * EZ + a[3] + a[4] * x + a[5] * x ^ 2
+        ff = a[0] * ezz + a[3] + a[4] * x + a[5] * x ^ 2
     #
-    PDER = np.zeros([nx, n])
-    PDER[:, 0] = EZ  # COMPUTE PARTIALS
-    PDER[:, 1] = a[0] * EZ * Z / a[2]
-    PDER[:, 2] = PDER[:, 1] * Z
+    pder = np.zeros([nx, n])
+    pder[:, 0] = ezz  # COMPUTE PARTIALS
+    pder[:, 1] = a[0] * ezz * zz / a[2]
+    pder[:, 2] = pder[:, 1] * zz
     if n > 3:
-        PDER[:, 3] = 1.0
+        pder[:, 3] = 1.0
     if n > 4:
-        PDER[:, 4] = x
+        pder[:, 4] = x
     if n > 5:
-        PDER[:, 5] = x ** 2
-    return F, PDER
+        pder[:, 5] = x ** 2
+    return ff, pder
 
 
 def gaussfit(xpix, ypix, nn):
@@ -195,13 +201,15 @@ def gaussfit(xpix, ypix, nn):
     # nn=6 -> the Guassian has a 2nd order polynomial floor
     #
     # outputs ->
-    # [ amplitude , center of peak, amplitude of peak, [dc level], [slope], [2nd order tern] ]
+    # [ amplitude , center of peak, amplitude of peak, [dc level],
+    # [slope], [2nd order tern] ]
     #
 
     # we guess that the Gaussian is close to Nyquist and has a
     # 2 PIX FWHM and therefore 2/2.54 e-width
     ew_guess = 2 * np.median(np.gradient(xpix)) / 2.354
 
+    a0 = None
     if nn == 3:
         # only amp, cen and ew
         a0 = [np.max(ypix) - np.min(ypix), xpix[np.argmax(ypix)], ew_guess]
@@ -220,14 +228,15 @@ def gaussfit(xpix, ypix, nn):
 
     residu_prev = np.array(ypix)
 
-    gfit, pder = GAUSS_FUNCT(xpix, a0)
+    gfit, pder = gaus_funct(xpix, a0)
 
     rms = 99
     nite = 0
 
-    # loops for 20 iterations MAX or an RMS with an RMS change in residual smaller than 1e-6 of peak
+    # loops for 20 iterations MAX or an RMS with an RMS change in residual
+    # smaller than 1e-6 of peak
     while (rms > 1e-6) & (nite <= 20):
-        gfit, pder = GAUSS_FUNCT(xpix, a0)
+        gfit, pder = gaus_funct(xpix, a0)
         residu = ypix - gfit
 
         amps, fit = lin_mini(residu, pder)
@@ -411,7 +420,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     xgau = []
     peak1 = []
     dx = []
-    ord = []
+    order_ = []
     zp = []
     slope = []
     gauss_rms_dev = []
@@ -442,7 +451,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # keep track of pixels where we look for peaks
 
         if doplot_per_order:
-            plt.plot(wave[iord, :], hcdata[iord, :])
+            plt.plot(hcdata[iord, :])
 
         # print order message
         wmsg = 'Searching for peaks in order {0}'
@@ -461,8 +470,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             keep &= (peak != 0)
             keep &= (peak / rms > sigma_peak)
 
-            # position of peak within segment. It needs to be close enough to the
-            # center of the segment
+            # position of peak within segment. It needs to be close enough
+            # to the center of the segment
             # if it is at the edge, we'll catch it in the following iteration
             #
             # we keep (or not) the peak
@@ -478,8 +487,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 # the residual of the
                 gauss_rms_dev0 = np.std(segment - g2) / popt_left[0]
 
-                # all values that will be added (if keep_peak=True) to the vector of all line
-                # parameters
+                # all values that will be added (if keep_peak=True) to the
+                # vector of all line parameters
                 zp0 = popt_left[3]
                 slope0 = popt_left[4]
                 ew0 = popt_left[2]
@@ -488,7 +497,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
                 keep_peak = True
 
-                # the RMS of line-fitted line must be before 0 and 0.2 of the peak value
+                # the RMS of line-fitted line must be before 0 and 0.2 of the
+                # peak value
                 gauss_rms_dev_min = 0
                 gauss_rms_dev_max = 0.1
 
@@ -496,7 +506,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 ew_min = 0.7
                 ew_max = 1.1
                 wave0 = np.polyval((poly_wave_sol[iord, :])[::-1],
-                                   xgau0 + pixel_shift_inter + pixel_shift_slope * xgau0)
+                                   xgau0 + pixel_shift_inter +
+                                   pixel_shift_slope * xgau0)
 
                 keep_peak &= gauss_rms_dev0 > gauss_rms_dev_min
                 keep_peak &= gauss_rms_dev0 < gauss_rms_dev_max
@@ -510,12 +521,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     ew = np.append(ew, ew0)
                     xgau = np.append(xgau, xgau0)
                     peak1 = np.append(peak1, peak0)
-                    ord = np.append(ord, iord)
+                    order_ = np.append(order_, iord)
                     gauss_rms_dev = np.append(gauss_rms_dev, gauss_rms_dev0)
                     wave_hdr_sol = np.append(wave_hdr_sol, wave0)
 
                     if doplot_per_order:
-                        plt.plot(wave[iord, xpix], g2, '--')
+                        plt.plot(g2, '--')
         if doplot_per_order:
             plt.show()
 
@@ -525,15 +536,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
 
     # reading the UNe catalog
-    wave_UNe, amp_UNe = spirouImage.ReadLineList(p)
-    loc['LL_LINE'], loc['AMPL_LINE'] = wave_UNe, amp_UNe
+    wave_u_ne, amp_u_ne = spirouImage.ReadLineList(p)
+    loc['LL_LINE'], loc['AMPL_LINE'] = wave_u_ne, amp_u_ne
     source = __NAME__ + '/main() + spirouImage.ReadLineList()'
     loc.set_sources(['ll_line', 'ampl_line'], source)
 
     wmsg = 'Matching found lines to the catalogue'
     WLOG('info', p['LOG_OPT'], wmsg.format())
 
-    # keeping track of the velocity offset between predicted and observed line centers
+    # keeping track of the velocity offset between predicted and observed
+    # line centers
     dv = np.zeros(len(wave_hdr_sol)) + np.nan
 
     # wavelength given in the catalog for the matched line
@@ -544,13 +556,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     for wave0 in wave_hdr_sol:
         i += 1
         # find closest catalog line to the line considered
-        idmin = np.argmin(np.abs(wave_UNe - wave0))
-        ddv = (wave_UNe[idmin] / wave0 - 1) * 2.997e8
+        idmin = np.argmin(np.abs(wave_u_ne - wave0))
+        ddv = (wave_u_ne[idmin] / wave0 - 1) * 2.997e8
         # if within 2km/s, we consider a match
         if np.abs(ddv) < 30000:
             dv[i] = ddv
-            wave_catalog[i] = wave_UNe[idmin]
-            amp_catalog[i] = amp_UNe[idmin]
+            wave_catalog[i] = wave_u_ne[idmin]
+            amp_catalog[i] = amp_u_ne[idmin]
 
     # define 100-nm bins
     # TODO why not from 900?
@@ -562,7 +574,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     plt.plot(wave_catalog, dv, 'g.', label='all lines')
     plt.xlabel('wavelength')
     plt.ylabel('velocity offset from catalogue')
-
+    dv_pred = None
     for ite in range(2):
         meddv = np.zeros_like(xbins)
 
@@ -578,7 +590,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # print bin and total number of lines in 100-nm bin
             if ite == 0:
                 wargs = [xbin, xbin + 100, np.sum(g)]
-                wmsg = 'In wavelength bin {0}-{1}, {2} lines matched to catalogue'
+                wmsg = 'In wavelength bin {0}-{1}, {2} lines matched to ' \
+                       'catalogue'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             elif ite == 1:
                 wargs = [xbin, xbin + 100, np.sum(g)]
@@ -628,7 +641,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # keep relevant lines
         # -> right order
         # -> finite dv
-        gg = (ord == iord) & (np.isfinite(dv))
+        gg = (order_ == iord) & (np.isfinite(dv))
         nlines = np.sum(gg)
 
         # if we have less than 10 lines, then its bad
@@ -647,7 +660,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 dd = dv[gg] - np.polyval(fit, xgau[gg])
                 # print info
                 wargs = [iord, nsigmax, np.std(dd)]
-                wmsg = 'Sigma-clip for order {0}: sigma={1:.2f}, vel. offset vs pix stddev={2:.2f}'
+                wmsg = 'Sigma-clip for order {0}: sigma={1:.2f}, vel. ' \
+                       'offset vs pix stddev={2:.2f}'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
                 dd /= np.std(dd)
@@ -661,8 +675,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 wmsg = 'vel. offset vs pix coeffs: {0}, sigma={1:.2f}'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
-                # if the largest deviation from the 2nd order fit is >3 sigma (either + or -)
-                # then we remove the point
+                # if the largest deviation from the 2nd order fit is >3
+                # sigma (either + or -) then we remove the point
                 if nsigmax > 3:
                     tmp = gg[gg]
                     tmp[argmax] = False
@@ -697,7 +711,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # set/unset smoothing
     poly_smooth = False
-
+    new_wavelength_solution_polyfit = None
     if poly_smooth:
 
         plt.figure()
@@ -741,7 +755,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 # print information to screen
                 wargs = [nth_poly_order, nsigmax, np.mean(keep), ite]
                 wmsg = 'Coeff order {0}: ' \
-                       'Linear sigma-clip: sigma={1:.2f}, qc?={2:.2f}, iteration={3}'
+                       'Linear sigma-clip: sigma={1:.2f}, qc?={2:.2f}, ' \
+                       'iteration={3}'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
                 ite += 1
@@ -750,6 +765,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
             # sigma-clipping of the order VS polynomial coefficients.
             # using higher-order polynomial
+            fit, err = None, None
             while nsigmax > 3:
                 fit = np.polyfit(nth_order[keep], tmp[keep],
                                  order_fit_continuity[nth_poly_order])
@@ -763,7 +779,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 # print information to screen
                 wargs = [nth_poly_order, nsigmax, np.mean(keep), ite]
                 wmsg = 'Coeff order {0}: ' \
-                       'Polynomial sigma-clip: sigma={1:.2f}, qc?={2:.2f}, iteration={3}'
+                       'Polynomial sigma-clip: sigma={1:.2f}, qc?={2:.2f}, ' \
+                       'iteration={3}'
                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
                 ite += 1
@@ -786,9 +803,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 plt.xlabel('$\lambda$ (nm)')
                 plt.plot(nth_order[keep], err[keep], 'c.')
 
-            new_wavelength_solution_polyfit[nth_poly_order, :] = np.polyval(fit,
-                                                                            nth_order)
-
+            nwsp = np.polyval(fit, nth_order)
+            new_wavelength_solution_polyfit[nth_poly_order, :] = nwsp
         wave_map3 = np.zeros([nbo, nbpix])
         xpix = np.array(range(nbpix))
         for iord in range(nbo):
@@ -827,12 +843,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         for xpos in range(0, 4):
             plt.subplot(5, 4, i_plot + 1)
             gg = (gauss_rms_dev < 0.05)
-            gg &= (ord // 10 == iord // 10)
+            gg &= (order_ // 10 == iord // 10)
             gg &= (xgau // 1024) == xpos
             gg &= np.isfinite(wave_catalog)
 
             xcens = xgau[gg]
-            orders = ord[gg]
+            orders = order_[gg]
             wave_line = wave_catalog[gg]
 
             all_lines = np.zeros([np.sum(gg), 2 * window + 1])
@@ -841,17 +857,17 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             base = np.zeros(2 * window + 1, dtype=bool)
             base[0:3] = True
             base[2 * window - 2:2 * window + 1] = True
+            # noinspection PyTypeChecker
             for i in range(np.sum(gg)):
-                all_lines[i, :] = hc_ini[int(orders[i]),
-                                  int(xcens[i] + .5) - window:int(
-                                      xcens[i] + .5) + window + 1]
+                part1 = int(orders[i])
+                part2 = int(xcens[i] + .5) - window
+                part3 = int(xcens[i] + .5) + window + 1
+                all_lines[i, :] = hc_ini[part1, part2:part3]
                 all_lines[i, :] -= np.nanmedian(all_lines[i, base])
                 all_lines[i, :] /= np.nansum(all_lines[i, :])
 
-                v = -2.997e5 * (wave_map2[int(orders[i]), int(xcens[i] + .5) -
-                                                          window:int(
-                    xcens[i] + .5) + window + 1]
-                                / wave_line[i] - 1)
+                v = -2.997e5 * (wave_map2[part1, part2:part3] /
+                                wave_line[i] - 1)
                 all_dvs[i, :] = v
 
             all_dvs = all_dvs.ravel()
@@ -862,7 +878,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             maxdev = 999
             maxdev_threshold = 8
 
+            popt_left = None
             while maxdev > maxdev_threshold:
+                # noinspection PyTypeChecker
                 popt_left, pcov = curve_fit(gauss_function, all_dvs[keep],
                                             all_lines[keep],
                                             p0=[.3, 0, 1, 0, 0])
@@ -885,10 +903,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             plt.plot(xx, gplot, 'k--')
             wargs = [np.sum(gg), iord, iord + 9, xpos, resolution,
                      2.997e5 / resolution]
-            wmsg = 'nlines={0}, orders={1}-{2}, x region={3}, resolution={4:.2f} km/s, R={5:.2f}'
+            wmsg = 'nlines={0}, orders={1}-{2}, x region={3}, ' \
+                   'resolution={4:.2f} km/s, R={5:.2f}'
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
 
-            #        print('nlines : ', np.sum(gg), 'iord=', iord, ' xpos=', xpos,
+            #        print('nlines : ', np.sum(gg), 'iord=', iord,
+            #              ' xpos=', xpos,
             #              ' resolution = ', resolution, ' km/s', 'R = ',
             #              2.997e5 / resolution)
             plt.xlim([-8, 8])
@@ -934,7 +954,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # keep relevant lines
         # -> right order
         # -> finite dv
-        gg = (ord == iord) & (np.isfinite(dv))
+        gg = (order_ == iord) & (np.isfinite(dv))
         nlines = np.sum(gg)
         # put lines into ALL_LINES structure
         # reminder:
@@ -984,7 +1004,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # keep relevant lines
             # -> right order
             # -> finite dv
-            gg = (ord == iord) & (np.isfinite(dv))
+            gg = (order_ == iord) & (np.isfinite(dv))
             nlines = np.sum(gg)
             # put lines into ALL_LINES structure
             # reminder:
@@ -1002,10 +1022,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # get the final wavelength value for each peak in order
             output_wave_2 = np.polyval(new_wavelength_solution_polyfit[:, iord],
                                        xgau[gg])
-            # get the initial solution wavelength value for each peak in the order
-            # allow pixel shifting
-            xgau_shift = xgau[gg] + pixel_shift_inter + pixel_shift_slope * \
-                         xgau[gg]
+            # get the initial solution wavelength value for each peak in
+            # the order allow pixel shifting
+            part1 = xgau[gg] + pixel_shift_inter
+            part2 = pixel_shift_slope * xgau[gg]
+            xgau_shift = part1 + part2
             input_wave = np.polyval((poly_wave_sol[iord, :])[::-1], xgau_shift)
             # convert the pixel equivalent width to wavelength units
             xgau_ew_ini = xgau[gg] - ew[gg] / 2
@@ -1024,7 +1045,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             res_2 = np.concatenate(
                 (res_2, 2.997e5 * (input_wave - output_wave_2) / output_wave_2))
 
-    # For compatibility w/already defined functions, I need to save here all_lines_2
+    # For compatibility w/already defined functions, I need to save
+    # here all_lines_2
     if poly_smooth:
         loc['ALL_LINES_2'] = all_lines_2
         loc['LL_PARAM_2'] = np.fliplr(
@@ -1160,8 +1182,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
     # select the orders to fit
-    ll = loc['LITTROW_EXTRAP_SOL_1'][start:end]
-    loc = spirouTHORCA.Fit1DSolution(p, loc, ll, iteration=2)
+    lls = loc['LITTROW_EXTRAP_SOL_1'][start:end]
+    loc = spirouTHORCA.Fit1DSolution(p, loc, lls, iteration=2)
 
     # ------------------------------------------------------------------
     # Calculate uncertainties
@@ -1180,7 +1202,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     #
     # # print statistics
     # wmsg1 = 'On fiber {0} fit line statistic:'.format(p['FIBER'])
-    # wargs2 = [mean1*1000., np.sqrt(var1)*1000., num_lines, 1000.*np.sqrt(var1/num_lines)]
+    # wargs2 = [mean1*1000., np.sqrt(var1)*1000., num_lines,
+    #           1000.*np.sqrt(var1/num_lines)]
     # wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
     #              'value:{3:.2f}[m/s])'.format(*wargs2))
     # WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
@@ -1215,7 +1238,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # set order to plot
     plot_order = 7
-    # get the correct order to plot for all_lines (which is sized n_ord_final-n_ord_start)
+    # get the correct order to plot for all_lines (which is sized
+    #     n_ord_final-n_ord_start)
     plot_order_line = plot_order - n_ord_start
     plt.figure()
     # plot order and flux

@@ -248,18 +248,18 @@ if __name__ == "__main__":
     # get values from config file
     p = spirouStartup.Begin(recipe=__NAME__, quiet=True)
     # get the version
-    version = p['DRS_VERSION']
+    drs_version = p['DRS_VERSION']
     # check full log file for previous entries
-    since = get_last_entry(FILENAME)
+    drs_since = get_last_entry(FILENAME)
     # log if not None
-    if since is not None:
+    if drs_since is not None:
         wmsg = 'Found previous entries: starting from Commit {0}'
-        WLOG('', __NAME__, wmsg.format(since))
+        WLOG('', __NAME__, wmsg.format(drs_since))
     # get full log
     WLOG('', __NAME__, 'Getting full commit log')
-    update(TMPFILENAME, PATH, kind='rpm', version=version, since=since)
+    update(TMPFILENAME, PATH, kind='rpm', version=drs_version, since=drs_since)
     # get lines group them and save to full file
-    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version)
+    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=drs_version)
 
 # =============================================================================
 # End of code

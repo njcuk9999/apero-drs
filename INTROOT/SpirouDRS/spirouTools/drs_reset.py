@@ -110,9 +110,6 @@ def reset_reduced_folders(p, log=True):
 
 
 def reset_calibdb(p, log=True):
-    # TODO: eventually the calibDB should be reset to empty
-    # TODO:    Thus this function will not be needed
-
     # log progress
     WLOG('', DPROG, 'Resetting calibration database')
 
@@ -159,9 +156,6 @@ def reset_calibdb(p, log=True):
 
 
 def reset_telludb(p, log=True):
-    # TODO: eventually the telluDB should be reset to empty
-    # TODO:    Thus this function will not be needed
-
     # log progress
     WLOG('', DPROG, 'Resetting telluric database')
 

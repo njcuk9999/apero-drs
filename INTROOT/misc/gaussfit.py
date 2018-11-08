@@ -1,8 +1,9 @@
-from lin_mini import *
+
 import numpy as np
+from SpirouDRS.spirouCore.spirouMath import linear_minimization as lin_mini
 
 
-def GAUSS_FUNCT(x, a):
+def gauss_funct(x, a):
     #
     # translated from IDL'S gaussfit function
     # used to generate a Gaussian but also returns its derivaties for
@@ -22,13 +23,13 @@ def GAUSS_FUNCT(x, a):
     # CATEGORY:
     #   E2 - CURVE AND SURFACE FITTING.
     # CALLING SEQUENCE:
-    #   FUNCT,X,A,F,PDER
+    #   FUNCT,X,A,F,pder
     # INPUTS:
     #   X = VALUES OF INDEPENDENT VARIABLE.
     #   A = PARAMETERS OF EQUATION DESCRIBED BELOW.
     # OUTPUTS:
     #   F = VALUE OF FUNCTION AT EACH X(I).
-    #   PDER = matrix with the partial derivatives for function fitting
+    #   pder = matrix with the partial derivatives for function fitting
     #
     # PROCEDURE:
     #   F = A(0)*EXP(-Z^2/2) + A(3) + A(4)*X + A(5)*X^2
@@ -39,29 +40,30 @@ def GAUSS_FUNCT(x, a):
     n = len(a)
     nx = len(x)
     #
-    Z = (x - a[1]) / a[2]  #
-    EZ = np.exp(-Z ** 2 / 2.)  # GAUSSIAN PART
+    zz = (x - a[1]) / a[2]  #
+    ezz = np.exp(-zz ** 2 / 2.)  # GAUSSIAN PART
     #
     if n == 3:
-        F = a[0] * EZ
+        ff = a[0] * ezz
     if n == 4:
-        F = a[0] * EZ + a[3]
+        ff = a[0] * ezz + a[3]
     if n == 5:
-        F = a[0] * EZ + a[3] + a[4] * x
+        ff = a[0] * ezz + a[3] + a[4] * x
     if n == 6:
-        F = a[0] * EZ + a[3] + a[4] * X + a[5] * X ^ 2
+        ff = a[0] * ezz + a[3] + a[4] * x + a[5] * x ^ 2
     #
-    PDER = np.zeros([nx, n])
-    PDER[:, 0] = EZ  # COMPUTE PARTIALS
-    PDER[:, 1] = a[0] * EZ * Z / a[2]
-    PDER[:, 2] = PDER[:, 1] * Z
+    pder = np.zeros([nx, n])
+    pder[:, 0] = ezz  # COMPUTE PARTIALS
+    pder[:, 1] = a[0] * ezz * zz / a[2]
+    pder[:, 2] = pder[:, 1] * zz
     if n > 3:
-        PDER[:, 3] = 1.0
+        pder[:, 3] = 1.0
     if n > 4:
-        PDER[:, 4] = x
+        pder[:, 4] = x
     if n > 5:
-        PDER[:, 5] = x ** 2
-    return F, PDER
+        pder[:, 5] = x ** 2
+    # noinspection PyUnboundLocalVariable
+    return ff, pder
 
 
 def gaussfit(xpix, ypix, nn):
@@ -77,7 +79,8 @@ def gaussfit(xpix, ypix, nn):
     # nn=6 -> the Guassian has a 2nd order polynomial floor
     #
     # outputs ->
-    # [ amplitude , center of peak, amplitude of peak, [dc level], [slope], [2nd order tern] ]
+    # [ amplitude , center of peak, amplitude of peak, [dc level], [slope],
+    # [2nd order tern] ]
     #
 
     # we guess that the Gaussian is close to Nyquist and has a
@@ -102,14 +105,16 @@ def gaussfit(xpix, ypix, nn):
 
     residu_prev = np.array(ypix)
 
-    gfit, pder = GAUSS_FUNCT(xpix, a0)
+    # noinspection PyUnboundLocalVariable
+    gfit, pder = gauss_funct(xpix, a0)
 
     rms = 99
     nite = 0
 
-    # loops for 20 iterations MAX or an RMS with an RMS change in residual smaller than 1e-6 of peak
+    # loops for 20 iterations MAX or an RMS with an RMS change in residual
+    # smaller than 1e-6 of peak
     while (rms > 1e-6) & (nite <= 20):
-        gfit, pder = GAUSS_FUNCT(xpix, a0)
+        gfit, pder = gauss_funct(xpix, a0)
         residu = ypix - gfit
 
         amps, fit = lin_mini(residu, pder)

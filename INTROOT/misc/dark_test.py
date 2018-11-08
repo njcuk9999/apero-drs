@@ -11,11 +11,7 @@ Created on 2018-10-02 at 18:32
 """
 from __future__ import division
 import numpy as np
-import os
-import warnings
-import sys
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
@@ -43,8 +39,8 @@ FILES = ['dark_dark_NormalUSB_001d_pp.fits',
          'dark_dark_NormalUSB_004d_pp.fits',
          'dark_dark_NormalUSB_005d_pp.fits']
 
-def dark_setup(night_name, files):
 
+def dark_setup(night_name, files):
     # ----------------------------------------------------------------------
     # Set up
     # ----------------------------------------------------------------------
@@ -91,7 +87,7 @@ def dark_setup(night_name, files):
     # data = data[::-1, ::-1] * p['exptime'] * p['gain']
     # convert NaN to zeros
     nanmask = ~np.isfinite(data)
-    data0 = np.where(nanmask, np.zeros_like(data), data)
+    data = np.where(nanmask, np.zeros_like(data), data)
     # resize blue image
     bkwargs = dict(xlow=p['IC_CCDX_BLUE_LOW'], xhigh=p['IC_CCDX_BLUE_HIGH'],
                    ylow=p['IC_CCDY_BLUE_LOW'], yhigh=p['IC_CCDY_BLUE_HIGH'])
@@ -122,26 +118,20 @@ def dark_setup(night_name, files):
     p = spirouImage.MeasureDark(p, datared, 'Red part', 'red')
 
     # get stats
-    stats = []
-    stats.append(data.size)
-    stats.append(np.sum(~np.isfinite(data)))
-    stats.append(np.nanmedian(data))
-    stats.append(np.sum(~np.isfinite(data)) * 100 /np.product(data.shape))
-    stats.append(p['DADEAD_FULL'])
+    stats1 = [data.size, np.sum(~np.isfinite(data)),
+              np.nanmedian(data),
+              np.sum(~np.isfinite(data)) * 100 / np.product(data.shape),
+              p['DADEAD_FULL'],
+              datablue.size, np.sum(~np.isfinite(datablue)),
+              np.nanmedian(datablue),
+              np.sum(~np.isfinite(datablue)) * 100 / np.product(datablue.shape),
+              p['DADEAD_BLUE'], datared.size, np.sum(~np.isfinite(datared)),
+              np.nanmedian(datared),
+              np.sum(~np.isfinite(datared)) * 100 / np.product(datared.shape),
+              p['DADEAD_RED']]
 
-    stats.append(datablue.size)
-    stats.append(np.sum(~np.isfinite(datablue)))
-    stats.append(np.nanmedian(datablue))
-    stats.append(np.sum(~np.isfinite(datablue)) * 100 / np.product(datablue.shape))
-    stats.append(p['DADEAD_BLUE'])
+    return stats1
 
-    stats.append(datared.size)
-    stats.append(np.sum(~np.isfinite(datared)))
-    stats.append(np.nanmedian(datared))
-    stats.append(np.sum(~np.isfinite(datared)) * 100 / np.product(datared.shape))
-    stats.append(p['DADEAD_RED'])
-
-    return stats
 
 # generate stats
 stats = dict()
@@ -151,8 +141,7 @@ for FILE in FILES:
 # print stats
 print('\n\n\n\n')
 for FILE in FILES:
-
-    print('\n\n' + '='*25 + '\n' + FILE + '\n' + '='*25 + '\n')
+    print('\n\n' + '=' * 25 + '\n' + FILE + '\n' + '=' * 25 + '\n')
 
     print('FULL')
     print('\tSIZE = {0}'.format(stats[FILE][0]))

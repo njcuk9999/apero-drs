@@ -12,7 +12,6 @@ Created on 2018-07-20
 from __future__ import division
 import numpy as np
 import os
-from collections import OrderedDict
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
@@ -216,8 +215,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Read UNe solution
     # ----------------------------------------------------------------------
-    wave_UNe, amp_UNe = spirouImage.ReadLineList(p)
-    loc['LL_LINE'], loc['AMPL_LINE'] = wave_UNe, amp_UNe
+    wave_u_ne, amp_u_ne = spirouImage.ReadLineList(p)
+    loc['LL_LINE'], loc['AMPL_LINE'] = wave_u_ne, amp_u_ne
     source = __NAME__ + '.main() + spirouImage.ReadLineList()'
     loc.set_sources(['ll_line', 'ampl_line'], source)
 
@@ -283,8 +282,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
-    # TODO: --> Below is not etienne's code!
-
     # ----------------------------------------------------------------------
     # Set up all_lines storage
     # ----------------------------------------------------------------------
@@ -331,20 +328,22 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get the final wavelength value for each peak in order
         output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
         # convert the pixel equivalent width to wavelength units
-        xgau_ew_ini = xgau[gg] - ew[gg]/2
-        xgau_ew_fin = xgau[gg] + ew[gg]/2
+        xgau_ew_ini = xgau[gg] - ew[gg] / 2
+        xgau_ew_fin = xgau[gg] + ew[gg] / 2
         ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
         ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
         ew_ll = ew_ll_fin - ew_ll_ini
         # put all lines in the order into array
         gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
-                                      wave_catalog[gg] - output_wave_1, amp_catalog[gg],
+                                      wave_catalog[gg] - output_wave_1,
+                                      amp_catalog[gg],
                                       xgau[gg], ew[gg], test))
         # append the array for the order into a list
         all_lines_1.append(gau_params)
         # save dv in km/s and auxiliary order number
-#        res_1 = np.concatenate((res_1,2.997e5*(input_wave - output_wave_1)/output_wave_1))
-#        ord_save = np.concatenate((ord_save, test*iord))
+        # res_1 = np.concatenate((res_1,2.997e5*(input_wave - output_wave_1)/
+        #                        output_wave_1))
+        # ord_save = np.concatenate((ord_save, test*iord))
 
     # add to loc
     loc['ALL_LINES_1'] = all_lines_1
@@ -352,13 +351,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc['LL_OUT_1'] = np.array(loc['WAVE_MAP2'])
     loc.set_sources(['ALL_LINES_1', 'LL_PARAM_1'], __NAME__ + '/main()')
 
-
-    # For compatibility w/already defined functions, I need to save here all_lines_2
+    # For compatibility w/already defined functions, I need to save
+    # here all_lines_2
     all_lines_2 = list(all_lines_1)
     loc['ALL_LINES_2'] = all_lines_2
-#    loc['LL_PARAM_2'] = np.fliplr(fit_per_order)
-#    loc['LL_OUT_2'] = np.array(loc['WAVE_MAP2'])
-#    loc.set_sources(['ALL_LINES_2', 'LL_PARAM_2'], __NAME__ + '/main()')
+    # loc['LL_PARAM_2'] = np.fliplr(fit_per_order)
+    # loc['LL_OUT_2'] = np.array(loc['WAVE_MAP2'])
+    # loc.set_sources(['ALL_LINES_2', 'LL_PARAM_2'], __NAME__ + '/main()')
 
     # ------------------------------------------------------------------
     # Littrow test
@@ -374,7 +373,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['IC_LITTROW_FIT_DEG_1'] = 7
 
     # Do Littrow check
-    ckwargs = dict(ll=loc['LL_OUT_1'][n_ord_start:n_ord_final, :], iteration=1, log=True)
+    ckwargs = dict(ll=loc['LL_OUT_1'][n_ord_start:n_ord_final, :],
+                   iteration=1, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
@@ -396,58 +396,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         sPlt.wave_littrow_extrap_plot(loc, iteration=1)
 
     # ------------------------------------------------------------------
-    # Join 0-46 and 47-48 solutions
-    # ------------------------------------------------------------------
-
-    # # the littrow extrapolation (for orders > n_ord_final_2)
-    # litt_extrap_sol_red = loc['LITTROW_EXTRAP_SOL_1'][n_ord_final:]
-    # litt_extrap_sol_param_red = loc['LITTROW_EXTRAP_PARAM_1'][n_ord_final:]
-    #
-    # # the wavelength solution for n_ord_start - n_ord_final
-    # # taking from loc allows avoiding an if smooth check
-    # ll_out = loc['LL_OUT_1'][n_ord_start:n_ord_final]
-    # param_out = loc['LL_PARAM_1'][n_ord_start:n_ord_final]
-    #
-    # print(np.shape(litt_extrap_sol_param_red))
-    # print(np.shape(param_out))
-    #
-    # # create stack
-    # ll_stack, param_stack = [], []
-    # # wavelength solution for n_ord_start - n_ord_final
-    # if len(ll_out) > 0:
-    #     ll_stack.append(ll_out)
-    #     param_stack.append(param_out)
-    # # add extrapolation from littrow to orders > n_ord_final
-    # if len(litt_extrap_sol_red) > 0:
-    #     ll_stack.append(litt_extrap_sol_red)
-    #     param_stack.append(litt_extrap_sol_param_red)
-    #
-    # # convert stacks to arrays and add to storage
-    # loc['LL_OUT_2'] = np.vstack(ll_stack)
-    # loc['LL_PARAM_2'] = np.vstack(param_stack)
-    # loc.set_sources(['LL_OUT_2', 'LL_PARAM_2'], __NAME__ + '/main()')
-
-    # TODO can I remove this?
-    #     # rename for compatibility w FP solution functions
-    #    loc['LITTROW_EXTRAP_SOL_1'] = np.vstack(ll_stack)
-    #    loc['LITTROW_EXTRAP_PARAM_1'] = np.vstack(param_stack)
-    #loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
-    #loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
-
-    # ------------------------------------------------------------------
     # Incorporate FP into solution
     # ------------------------------------------------------------------
 
-    # TODO this is a temporary test of not using Littrow!!
-    # feed cal_HC_EA solution into find_fp_lines_new_setup
-    loc['WAVE'] = loc['WAVE_MAP2']
-    # feed cal_HC_EA solution params into p_wavelength_sol_new
-    loc['LITTROW_EXTRAP_PARAM_1'] = loc['POLY_WAVE_SOL']
+    # Copy LL_OUT_1 and LL_PARAM_1 into new constants (for FP integration)
+    loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
+    loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
+    # only use FP if switched on in constants file
+    if p['IC_WAVE_USE_FP']:
 
-
-    use_fp = True
-
-    if use_fp:
         # ------------------------------------------------------------------
         # Find FP lines
         # ------------------------------------------------------------------
@@ -484,16 +441,15 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     end = p['IC_HC_N_ORD_FINAL_2']
 
     # recalculate echelle orders for Fit1DSolution
-    o_orders = np.arange(start,end)
+    o_orders = np.arange(start, end)
     echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
     loc['ECHELLE_ORDERS'] = echelle_order
     loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
 
     # select the orders to fit
-    #ll = loc['LITTROW_EXTRAP_SOL_1'][start:end]
-    # TODO this is a temporary test of not using Littrow!!
-    ll = loc['WAVE_MAP2'][start:end]
-    loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
+    lls = loc['LITTROW_EXTRAP_SOL_1'][start:end]
+    loc = spirouTHORCA.Fit1DSolution(p, loc, lls, iteration=2)
+
     # from here, LL_OUT_2 wil be 0-47
 
     # ------------------------------------------------------------------
@@ -555,14 +511,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # iterate through Littrow test cut values
     lit_it = 2
     # checks every other value
-    for x_it in range(1, len(loc['X_CUT_POINTS_'+str(lit_it)]), 2):
+    for x_it in range(1, len(loc['X_CUT_POINTS_' + str(lit_it)]), 2):
         # get x cut point
-        x_cut_point = loc['X_CUT_POINTS_'+str(lit_it)][x_it]
+        x_cut_point = loc['X_CUT_POINTS_' + str(lit_it)][x_it]
         # get the sigma for this cut point
-        sig_littrow = loc['LITTROW_SIG_'+str(lit_it)][x_it]
+        sig_littrow = loc['LITTROW_SIG_' + str(lit_it)][x_it]
         # get the abs min and max dev littrow values
-        min_littrow = abs(loc['LITTROW_MINDEV_'+str(lit_it)][x_it])
-        max_littrow = abs(loc['LITTROW_MAXDEV_'+str(lit_it)][x_it])
+        min_littrow = abs(loc['LITTROW_MINDEV_' + str(lit_it)][x_it])
+        max_littrow = abs(loc['LITTROW_MAXDEV_' + str(lit_it)][x_it])
         # check if sig littrow is above maximum
         rms_littrow_max = p['QC_RMS_LITTROW_MAX']
         dev_littrow_max = p['QC_DEV_LITTROW_MAX']
@@ -632,11 +588,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                                value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
     hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
-                               value=loc['LL_PARAM_FINAL'].shape[1]-1)
+                               value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
-
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
@@ -662,23 +617,22 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
         p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
 
-
     # ------------------------------------------------------------------
     # Save to result table
     # ------------------------------------------------------------------
     # calculate stats for table
     final_mean = 1000 * loc['X_MEAN_2']
     final_var = 1000 * loc['X_VAR_2']
-    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))        #loc['X_ITER_2']
-    err = 1000 * np.sqrt(loc['X_VAR_2']/num_lines)
-    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_'+str(lit_it)])
+    num_lines = int(np.sum(loc['X_ITER_2'][:, 2]))  # loc['X_ITER_2']
+    err = 1000 * np.sqrt(loc['X_VAR_2'] / num_lines)
+    sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
     # construct filename
     wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
     wavetblname = os.path.split(wavetbl)[-1]
     # construct and write table
     columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
-                    'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
+                   'rms_L2000', 'rms_L2500', 'rms_L3000', 'rms_L3500']
     columnformats = ['{:20s}', '{:30s}', '{:3s}', '{:7.4f}', '{:6.2f}',
                      '{:3d}', '{:6.3f}', '{:6.2f}', '{:6.2f}', '{:6.2f}',
                      '{:6.2f}', '{:6.2f}', '{:6.2f}', '{:6.2f}']
@@ -740,7 +694,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                    loc['X_DETAILS_2'][it][2][jt],
                    loc['SCALE_2'][it][jt]]
             columnvalues.append(row)
-
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
