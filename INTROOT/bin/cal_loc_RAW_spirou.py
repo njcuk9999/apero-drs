@@ -147,9 +147,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Construct image order_profile
     # ----------------------------------------------------------------------
-    bkwargs = dict(mode='manual', method='new')
-    order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'],
-                                                 **bkwargs)
+    order_profile = spirouLOCOR.BoxSmoothedImage(data2, p['LOC_BOX_SIZE'])
     # data 2 is now set to the order profile
     data2o = data2.copy()
     data2 = order_profile.copy()

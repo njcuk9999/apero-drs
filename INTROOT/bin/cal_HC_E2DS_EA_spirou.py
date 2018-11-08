@@ -10,14 +10,11 @@ Created on 2018-08-28
 @author: artigau, hobson, cook
 """
 from __future__ import division
-import numpy as np
 import os
-from collections import OrderedDict
 
 from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-from SpirouDRS import spirouFLAT
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS import spirouTHORCA
@@ -155,8 +152,8 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Read UNe solution
     # ----------------------------------------------------------------------
-    wave_UNe, amp_UNe = spirouImage.ReadLineList(p)
-    loc['LL_LINE'], loc['AMPL_LINE'] = wave_UNe, amp_UNe
+    wave_u_ne, amp_u_ne = spirouImage.ReadLineList(p)
+    loc['LL_LINE'], loc['AMPL_LINE'] = wave_u_ne, amp_u_ne
     source = __NAME__ + '.main() + spirouImage.ReadLineList()'
     loc.set_sources(['ll_line', 'ampl_line'], source)
 

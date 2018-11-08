@@ -48,7 +48,7 @@ CHAR_LEN = spirouConfig.Constants.CHARACTER_LOG_LENGTH()
 # =============================================================================
 # Define classes
 # =============================================================================
-class logger:
+class Logger:
     def __init__(self, paramdict=None):
         """
         Construct logger (storage param dict here)
@@ -204,6 +204,7 @@ class logger:
             for mess in message:
                 errorstring += mess + '\n'
             for error in errors:
+                # noinspection PyTypeChecker
                 errorstring += error + '\n'
             # deal with debugging
             if spirouConfig.Constants.DEBUG():
@@ -258,7 +259,7 @@ class logger:
 # Define our instance of wlog
 # =============================================================================
 # Get our instance of logger
-wlog = logger()
+wlog = Logger()
 
 
 # =============================================================================
@@ -336,6 +337,7 @@ def debug_start(errorstring):
     else:
         cc = nocol
     # ask to run debugger
+    # noinspection PyBroadException
     try:
         print(cc + '\n\n\tError found and running in DEBUG mode\n' + nocol)
         # noinspection PyUnboundLocalVariable
@@ -344,6 +346,7 @@ def debug_start(errorstring):
                    'exit (any other key)?\n\t Note ipython debugger requires '
                    'ipdb installed\n\tChoose "1", "2", or exit:')
 
+        # noinspection PyUnboundLocalVariable
         uinput = raw_input(cc + '\t' + message + '\t' + nocol)
         if '1' in uinput.upper():
             print(cc + '\n\t ==== IPYTHON DEBUGGER ====\n'
@@ -356,6 +359,7 @@ def debug_start(errorstring):
                        '\n\t - type "help" to see all commands'
                        '\n\n\t ==================\n\n' + nocol)
 
+            # noinspection PyBroadException
             try:
                 import ipdb
                 ipdb.set_trace()
