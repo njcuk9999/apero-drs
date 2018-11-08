@@ -3404,7 +3404,7 @@
 	- update date and version (rev.a596936c)
 	- undo bad merge by @melissa-hobson (rev.8317474e)
 	- Revert changes to get wave solution from calibDB (errors were due to badly set up calibDB) (rev.6489937f)
-	- Merged changes from @edermartioli: added alias to calculate_stokes_I and added aliases to __all__ (rev.caa596c3)
+	- Merged changes from @edermartioli: added alias to calculate_stokes_i and added aliases to __all__ (rev.caa596c3)
 	- Merged changes from @edermartioli: Update output name with _A, save errors to output using WriteImageMulti, Implemented total flux (Stokes I) calculation, implemented polarimetric error calculation. (rev.569120ee)
 	- Merged changes from @edermartioli: aqdded stokesI plot, spelling correction + polarisation is now percentage (bug was missing in conversion) (rev.ae695cfd)
 	- Merged changes from @edermartioli: Update output name with _A, save errors to output using WriteImageMulti, Implemented total flux (Stokes I) calculation, implemented polarimetric error calculation. (rev.553fb412)
@@ -3886,7 +3886,7 @@
 * Wed Jul 04 2018 Eder <edermartioli@gmail.com> - 0.2.074
 
 ================================================================================
-	- Removed duplicated function calculate_stokes_I in spirouPOLAR.py (rev.720f9328)
+	- Removed duplicated function calculate_stokes_i in spirouPOLAR.py (rev.720f9328)
 
 
 
@@ -5302,3 +5302,20 @@
 	- output_keys.py - add new keys for CCF_FP (rev.9494aeab)
 	- spirouConfig.py - define a copy function for ParamDict - copy all keys into new ParamDict (rev.eb344c56)
 	- cal_CCF_E2DS_FP_spirou.py - separate and keep separate the FP analysis (cp and cloc) - including header keys (rev.488a4b49)
+
+
+
+================================================================================
+* Fri Oct 26 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.051
+
+================================================================================
+	- pep8 clean up (rev.e2f3254a)
+	- update TODO's, remove old H3RG dependencies and clean up (rev.b5721f9a)
+
+
+
+================================================================================
+* Mon Oct 29 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.052
+
+================================================================================
+	- pep8 clean up (rev.edded0ad)

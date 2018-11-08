@@ -35,9 +35,9 @@ NIGHTNAME = '20170710'
 OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710/'
 NEWPATH = '/scratch/Projects/spirou_py3/data/reduced/20170710/'
 # -----------------------------------------------------------------------------
-FILENAME = 'hcone_hcone02c61_e2ds_AB.fits'
-FILENAME = 'fp_fp02a203_e2ds_AB.fits'
-FILENAME = 'hcone_hcone03c61_e2ds_AB.fits'
+# FILENAME = 'hcone_hcone02c61_e2ds_AB.fits'
+# FILENAME = 'fp_fp02a203_e2ds_AB.fits'
+# FILENAME = 'hcone_hcone03c61_e2ds_AB.fits'
 FILENAME = 'hcone_hcone06c61_e2ds_C.fits'
 
 
@@ -89,6 +89,7 @@ def plot_image(frame, image, title='', scale=None):
         # find out the conversion factor
         factor = int(np.max(image.shape)/np.min(image.shape))
         # scale up image
+        # noinspection PyTypeChecker
         newimage = np.repeat(image, factor, axis=small)
     else:
         newimage = image
@@ -150,10 +151,7 @@ def scale_image(image, scale=None):
         WLOG('error', DPROG, 'scale = {0} not understood'.format(scale))
 
 
-if 1:
-    night_name = NIGHTNAME
-    oldfile = os.path.join(OLDPATH, FILENAME)
-    newfile = os.path.join(NEWPATH, FILENAME)
+def main(night_name=None, oldfile=None, newfile=None):
 
     # ----------------------------------------------------------------------
     # Set up
@@ -196,8 +194,6 @@ if 1:
     wmsg = 'Recipe {0} has been successfully completed'
     WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
 
-
-def main(night_name=None, oldfile=None, newfile=None):
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

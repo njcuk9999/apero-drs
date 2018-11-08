@@ -44,9 +44,9 @@ DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # Speed of light
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
@@ -485,7 +485,7 @@ def fp_wavelength_sol_new(p, loc):
                 floc0 = floc['llpos'][it]
                 floc1 = floc['llpos'][it + 1]
                 # estimate the number of peaks missed
-                m_offset = int( np.round((flocx1 - flocx0) / xxpos_diff_med))
+                m_offset = int(np.round((flocx1 - flocx0) / xxpos_diff_med))
                 # add to m of previous peak
                 mpeak[it] = mpeak[it + 1] + m_offset
                 # verify there's no dopd jump, fix if present
@@ -797,7 +797,7 @@ def find_hc_gauss_peaks(p, loc):
     WLOG('', p['LOG_OPT'], wmsg.format(os.path.basename(ini_table_name)))
     spirouImage.WriteTable(ini_table, ini_table_name, fmt='ascii.rst')
 
-    #plot all orders w/fitted gaussians
+    # plot all orders w/fitted gaussians
     if p['DRS_PLOT']:
         sPlt.wave_ea_plot_allorder_hcguess(loc)
 
@@ -890,7 +890,7 @@ def fit_gaussian_triplets(p, loc):
             # get the peaks for this order
             order_peaks = peak[good]
             # we may have fewer lines within the order than nmax_bright
-            if np.sum(good) < nmax_bright:
+            if np.sum(good) <= nmax_bright:
                 nmax = np.sum(good) - 1
             else:
                 nmax = nmax_bright
@@ -963,7 +963,7 @@ def fit_gaussian_triplets(p, loc):
         # re-find the center of the distribution
         dv_cen = histcenters[np.argmax(histval)]
         # re-define the mask to remove poitns away from center of histogram
-        mask =  (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
+        mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
         # re-apply mask to dv and to brightest lines
         dv[mask] = np.nan
         brightest_lines[mask] = False
@@ -983,7 +983,7 @@ def fit_gaussian_triplets(p, loc):
             pos_bright = np.where(good_bright)[0]
             pos = np.where(good)[0]
             # get number of good_bright
-            num_gb = np.sum(good_bright)
+            num_gb = int(np.sum(good_bright))
             bestn = 0
             best_coeffs = np.zeros(triplet_deg + 1)
             # get the indices of the triplets of bright lines
@@ -1248,7 +1248,7 @@ def generate_resolution_map(p, loc):
             base[2 * wsize - 2: 2 * wsize + 1] = True
 
             # loop around all good lines
-            for it in range(np.sum(mask)):
+            for it in range(int(np.sum(mask))):
                 # get limits
                 border = int(b_orders[it])
                 start = int(b_xgau[it] + 0.5) - wsize
@@ -1396,7 +1396,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
     dopd0 = p['IC_FP_DOPD0']
     # get parameters from loc
     fp_data = loc['FPDATA']
-    FP_ll_init = loc['LITTROW_EXTRAP_SOL_1']
+    fp_ll_init = loc['LITTROW_EXTRAP_SOL_1']
     blaze = loc['BLAZE']
     # define storage
     floc = OrderedDict()
@@ -1414,7 +1414,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
         # define the range over which to fit the line by a gaussian
         xx = np.arange(xpos - size, xpos + size)
         # do the gaussian fit
-        fll_it = FP_ll_init[order_num, xpos - size:xpos + size]
+        fll_it = fp_ll_init[order_num, xpos - size:xpos + size]
         fdata_it = fp_data[order_num, xpos - size:xpos + size]
         weight_it = np.ones(2 * size)
         gparams = spirouTHORCA.fit_emi_line(fll_it, xx, fdata_it, weight_it,
@@ -1425,7 +1425,7 @@ def find_fp_lines(p, loc, pos, size, order_num, mode):
             # refit in smaller region around poorly fitted line
             size2 = 2
             # redo the gaussian fit
-            fll_it = FP_ll_init[order_num, xpos - size2:xpos + size2]
+            fll_it = fp_ll_init[order_num, xpos - size2:xpos + size2]
             fdata_it = fp_data[order_num, xpos - size2:xpos + size2]
             weight_it = np.ones(2 * size2)
             gparams = spirouTHORCA.fit_emi_line(fll_it, xx, fdata_it, weight_it,
@@ -1487,23 +1487,23 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
     # get constants from p
     n_init = p['IC_FP_N_ORD_START']
     n_fin = p['IC_FP_N_ORD_FINAL']
-    n_init_HC = p['IC_HC_N_ORD_START_2']
-    n_fin_HC = p['IC_HC_N_ORD_FINAL_2']
+    n_init_hc = p['IC_HC_N_ORD_START_2']
+    n_fin_hc = p['IC_HC_N_ORD_FINAL_2']
     # insert FP lines into all_lines at the correct orders
     # define wavelength difference limit for keeping a line
     fp_cut = np.std(newll - llpos_all)
     # define correct starting order number
-    start_order = min(n_init, n_init_HC)
+    start_order = min(n_init, n_init_hc)
     # define starting point for prepended zeroes
     insert_count = 0
     for order_num in range(n_init, n_fin):
-        if order_num < n_init_HC:
+        if order_num < n_init_hc:
             # prepend zeros to all_lines if FP solution is fitted for
             #     bluer orders than HC was
             all_lines_2.insert(insert_count, np.zeros((1, 8), dtype=float))
             # add 1 to insertion counter for next order
             insert_count += 1
-        elif order_num >= n_fin_HC:
+        elif order_num >= n_fin_hc:
             # append zeros to all_lines if FP solution is fitted for
             #     redder orders than HC was
             all_lines_2.append(np.zeros((1, 8), dtype=float))
@@ -1514,12 +1514,12 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                 if abs(newll[it] - llpos_all[it]) < fp_cut:
                     # put FP line data into an array
                     newdll = newll[it] - llpos_all[it]
-                    FP_line = np.array([newll[it], 0.0, 0.0, newdll,
+                    fp_line = np.array([newll[it], 0.0, 0.0, newdll,
                                         0.0, xxpos_all[it], 0.0, ampl_all[it]])
-                    FP_line = FP_line.reshape((1, 8))
+                    fp_line = fp_line.reshape((1, 8))
                     # append FP line data to all_lines
                     torder = order_num - start_order
-                    tvalues = [all_lines_2[torder], FP_line]
+                    tvalues = [all_lines_2[torder], fp_line]
                     all_lines_2[torder] = np.concatenate(tvalues)
     # return all lines 2
     return all_lines_2
@@ -1528,14 +1528,14 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
 def find_fp_lines_new(p, loc):
     # get parameters from p
     # minimum spacing between FP peaks
-    peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
+    # peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
     # get redefined variables
     loc = find_fp_lines_new_setup(loc)
     # use spirouRV to get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
     # remove wide/spurious peaks
     loc = spirouRV.RemoveWidePeaks(p, loc)
-
+    # return loc
     return loc
 
 

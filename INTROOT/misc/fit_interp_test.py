@@ -22,12 +22,6 @@ WORKSPACE = './'
 
 # -----------------------------------------------------------------------------
 
-# =============================================================================
-# Define functions
-# =============================================================================
-def function():
-    pass
-
 
 # =============================================================================
 # Start of code
@@ -42,8 +36,8 @@ if __name__ == "__main__":
     y = np.sin(x / 128.) + np.random.random(size=len(x))
 
 
-    def func(x, a, b):
-        return np.sin(x / a) + b
+    def func(x1, a1, b1):
+        return np.sin(x1 / a1) + b1
 
 
     xfit = np.linspace(0, 2048, 4096)
@@ -57,6 +51,7 @@ if __name__ == "__main__":
     y2 = np.fft.ifft(lowyfft).real
 
     p0 = [100.0, 1.0]
+    # noinspection PyTypeChecker
     ppot, pcov = curve_fit(func, x, y, p0=p0)
     yfit3 = func(xfit, *ppot)
 

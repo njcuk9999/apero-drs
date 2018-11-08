@@ -239,6 +239,13 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
         # get dates
         loc['WAVE_ACQTIMES'] = spirouDB.GetTimes(p, loc['WAVEHDR'])
+        loc.set_source('WAVE_ACQTIMES', __NAME__ + '.main()')
+        # get the recipe that produced the wave solution
+        if 'WAVECODE' in loc['WAVEHDR']:
+            loc['WAVE_CODE'] = loc['WAVEHDR']['WAVECODE']
+        else:
+            loc['WAVE_CODE'] = 'UNKNOWN'
+        loc.set_source('WAVE_CODE', __NAME__ + '.main()')
 
         # ----------------------------------------------------------------------
         # Read Flat file
@@ -354,7 +361,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                            order_profile=order_profile)
             with warnings.catch_warnings(record=True) as w:
                 eout = spirouEXTOR.Extraction(*eargs, **ekwargs)
-            #deal with different return
+            # deal with different return
             if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
                 e2ds, e2dsll, cpt = eout
             else:
@@ -404,11 +411,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
                 sPlt.ext_aorder_fit(p, loc, data2, max_signal / 10.)
             else:
                 # plot image with selected order fit and edge fit (faster)
-                # TODO: Remove H2RG dependency
-                if p['IC_IMAGE_TYPE'] == 'H2RG':
-                    sPlt.ext_sorder_fit(p, loc, data2)
-                else:
-                    sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
+                sPlt.ext_sorder_fit(p, loc, data2, max_signal / 10.)
             # plot e2ds against wavelength
             sPlt.ext_spectral_order_plot(p, loc)
 

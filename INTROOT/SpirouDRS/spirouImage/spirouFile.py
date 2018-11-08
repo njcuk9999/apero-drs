@@ -178,7 +178,6 @@ class Paths:
         self.add_root()
 
 
-
 # =============================================================================
 # Define file functions
 # =============================================================================
@@ -369,6 +368,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
                      'cal_preprocess_spirou.py')
             emsg3 = '\tfunction = {0}'.format(func_name)
             WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            kind = 'None'
         # if neither exist we have a problem
         else:
             emsg1 = 'File {0} does not exist'.format(filename)
@@ -667,7 +667,7 @@ def odometer_code(control, filename):
 
 
 def odometer_header(p, hdr):
-    func_name = __NAME__ + '.odometer_header()'
+    # func_name = __NAME__ + '.odometer_header()'
     # set condition to True
     cond = True
     # get observation type
@@ -988,7 +988,6 @@ def strip_string_list(string_list):
     return new_list
 
 
-# TODO: Not used
 def fallback_id_mode(p, control, filename, hdr, cdr):
     # get base filename (no path)
     basefilename = os.path.basename(filename)
@@ -1026,7 +1025,7 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
 
 # TODO: Not used
 def check_id_filename(p, control, recipe, filename):
-    func_name = __NAME__ + '.check_id_filename()'
+    # func_name = __NAME__ + '.check_id_filename()'
     # set un-found initial parameters
     found = False
     found_row = None
