@@ -37,19 +37,21 @@ DUMP_PATH = '/scratch/Projects/spirou_py3/data_misc/berv_test/'
 # =============================================================================
 # Define functions
 # =============================================================================
-def date_axis(fig, frame, x, y, fmt='%Y-%m-%d %H:%M:%S.%f'):
+def date_axis(fig1, frame, x, y, fmt='%Y-%m-%d %H:%M:%S.%f'):
     # From:
     #    https://stackoverflow.com/a/45717773
-    f = lambda s: datetime.strptime(s, fmt)
-    x = list(map(f, x))
+    def striptime(s):
+        return datetime.strptime(s, fmt)
+    x = list(map(striptime, x))
     frame.plot(x, y)
-    loc = matplotlib.ticker.FixedLocator(matplotlib.dates.date2num(x), nbins=10)
+    lloc = matplotlib.ticker.FixedLocator(matplotlib.dates.date2num(x),
+                                          nbins=10)
     fmt = matplotlib.dates.DateFormatter(fmt)
-    frame.xaxis.set_major_locator(loc)
+    frame.xaxis.set_major_locator(lloc)
     frame.xaxis.set_major_formatter(fmt)
-    fig.autofmt_xdate()
+    fig1.autofmt_xdate()
 
-    return fig, frame
+    return fig1, frame
 
 
 # =============================================================================
@@ -66,7 +68,9 @@ if __name__ == "__main__":
     # dates / times setup
     year0 = Time(2017, format='decimalyear')
     year1 = Time(2018, format='decimalyear')
+    # noinspection PyUnresolvedReferences,PyTypeChecker
     dates = Time(np.arange(year0, year1 + 1*uu.day, 1*uu.day))
+    # noinspection PyUnresolvedReferences,PyTypeChecker
     times = Time(np.arange(year0, year0 + 1*uu.day, 1*uu.min))
 
     # define variables
@@ -77,7 +81,6 @@ if __name__ == "__main__":
     var_pmra = 10**np.arange(-3, 3, 0.1)
     var_pmde = 10**np.arange(-3, 3, 0.1)
     var_equinox = [2000.0]
-
 
     variables = [var_dates, var_utc, var_ra, var_dec, var_pmra, var_pmde,
                  var_equinox]
@@ -135,7 +138,6 @@ if __name__ == "__main__":
         dump_name = 'data_dump_{0}'.format(var)
         dump_path = os.path.join(DUMP_PATH, dump_name)
         np.save(dump_path, np.array(storage[var]))
-
 
     plt.close('all')
     plt.ion()

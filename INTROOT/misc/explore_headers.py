@@ -24,22 +24,22 @@ DIR = '/spirou/cfht_nights/calibDB/'
 EXT = '_pp_wave_*.fits'
 # -----------------------------------------------------------------------------
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
-def print_full_table(table):
-    tablestrings = table.pformat(max_lines=len(table)*10,
-                                 max_width=9999)
+def print_full_table(ptable):
+    tablestrings = ptable.pformat(max_lines=len(table)*10,
+                                  max_width=9999)
     for tablestring in tablestrings:
         print(tablestring)
 
 
-
-def get_key(header, key):
-    if key not in header:
+def get_key(hdr, key):
+    if key not in hdr:
         return 'None'
     else:
-        return str(header[key])
+        return str(hdr[key])
 
 
 # =============================================================================

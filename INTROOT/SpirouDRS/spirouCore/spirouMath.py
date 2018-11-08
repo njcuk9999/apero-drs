@@ -41,9 +41,9 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Date format
 DATE_FMT = spirouConfig.Constants.DATE_FMT_DEFAULT()
 TIME_FMT = spirouConfig.Constants.TIME_FORMAT_DEFAULT()
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
-# noinspection PyPep8
+# noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
 
@@ -79,8 +79,10 @@ def relativistic_waveshift(dv, units='km/s'):
     :return:
     """
     # get c in correct units
+    # noinspection PyUnresolvedReferences
     if units == 'km/s' or units == uu.km/uu.s:
         c = speed_of_light
+    # noinspection PyUnresolvedReferences
     elif units == 'm/s' or units == uu.m/uu.s:
         c = speed_of_light_ms
     else:
@@ -188,7 +190,7 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
 def fitgaussian_lmfit(x, y, weights, return_fit=True,
                       return_uncertainties=False):
     try:
-        # noinspection PyPep8
+        # noinspection PyUnresolvedReferences
         from lmfit.models import Model, GaussianModel
     except ImportError:
         print(' Need module lmfit to use fitgauss_lmfit')
@@ -451,9 +453,6 @@ def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, params,
         # (numpy needs them backwards)
         coeffs = params[order_num][::-1]
         # get the y fit using the coefficients for this order and xfit
-        # TODO: Check order of params[i]
-        # Question: This could be wrong - if fit parameters are order
-        # Question: differently
         yfit = np.polyval(coeffs, xfit)
         # add to line list storage
         ll[order_num, :] = yfit
@@ -498,9 +497,6 @@ def get_dll_from_coefficients(params, nx, nbo):
         # get the coefficients for this order and flip them
         coeffs = params[order_num]
         # get the y fit using the coefficients for this order and xfit
-        # TODO: Check order of params[i]
-        # Question: This could be wrong - if fit parameters are order
-        # Question: differently
         yfiti = []
         # derivative =  (j)*(a_j)*x^(j-1)   where j = it + 1
         for it in range(len(coeffs) - 1):
@@ -537,20 +533,20 @@ def linear_minimization(vector, sample):
 
     if case == 1:
         # set up storage
-        M = np.zeros([sz_sample[0], sz_sample[0]])
+        mm = np.zeros([sz_sample[0], sz_sample[0]])
         v = np.zeros(sz_sample[0])
         for i in range(sz_sample[0]):
             for j in range(i, sz_sample[0]):
-                M[i, j] = np.nansum(sample[i, :] * sample[j, :])
-                M[j, i] = M[i, j]
+                mm[i, j] = np.nansum(sample[i, :] * sample[j, :])
+                mm[j, i] = mm[i, j]
             v[i] = np.nansum(vector * sample[i, :])
 
-        if np.linalg.det(M) == 0:
+        if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[0]) + np.nan
             recon = np.zeros_like(v)
             return amps, recon
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps = np.matmul(np.linalg.inv(mm), v)
         recon = np.zeros(sz_sample[1])
         for i in range(sz_sample[0]):
             recon += amps[i] * sample[i, :]
@@ -558,20 +554,20 @@ def linear_minimization(vector, sample):
 
     if case == 2:
         # set up storage
-        M = np.zeros([sz_sample[1], sz_sample[1]])
+        mm = np.zeros([sz_sample[1], sz_sample[1]])
         v = np.zeros(sz_sample[1])
         for i in range(sz_sample[1]):
             for j in range(i, sz_sample[1]):
-                M[i, j] = np.nansum(sample[:, i] * sample[:, j])
-                M[j, i] = M[i, j]
+                mm[i, j] = np.nansum(sample[:, i] * sample[:, j])
+                mm[j, i] = mm[i, j]
             v[i] = np.nansum(vector * sample[:, i])
 
-        if np.linalg.det(M) == 0:
+        if np.linalg.det(mm) == 0:
             amps = np.zeros(sz_sample[1]) + np.nan
             recon = np.zeros_like(v)
             return amps, recon
 
-        amps = np.matmul(np.linalg.inv(M), v)
+        amps = np.matmul(np.linalg.inv(mm), v)
         recon = np.zeros(sz_sample[0])
         for i in range(sz_sample[1]):
             recon += amps[i] * sample[:, i]

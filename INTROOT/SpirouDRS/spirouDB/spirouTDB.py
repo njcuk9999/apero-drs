@@ -339,7 +339,7 @@ def get_database_master_wave(p, required=True):
 
     # extract parameters from database values
     filenames, humantimes, unixtimes, objnames = [], [], [], []
-    bervs, airmasses, watercols = [], [], []
+    # bervs, airmasses, watercols = [], [], []
     for value in values:
         # get this iterations value from value
         _, filename, humant, unixt = value
@@ -379,7 +379,7 @@ def put_file(p, inputfile):
     func_name = __NAME__ + '.put_file()'
     # construct output filename
     outputfile = os.path.join(p['DRS_TELLU_DB'], os.path.split(inputfile)[1])
-
+    # noinspection PyExceptClausesOrder
     try:
         shutil.copyfile(inputfile, outputfile)
         os.chmod(outputfile, 0o0644)

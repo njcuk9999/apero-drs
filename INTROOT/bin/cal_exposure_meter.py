@@ -72,9 +72,8 @@ def main(night_name=None, flatfile=None):
     # Get the required fiber type from the constants file
     # ----------------------------------------------------------------------
     # get the fiber type (set to AB)
-    # TODO: SET EM_FIB_TYPE to FIBER_TYPES
     p['FIBER'] = p['EM_FIB_TYPE']
-    p['FIBER_TYPES'] = ['AB']
+    p['FIBER_TYPES'] = [p['EM_FIB_TYPE']]
 
     # ----------------------------------------------------------------------
     # Read flat image file
@@ -124,7 +123,6 @@ def main(night_name=None, flatfile=None):
     # set source of tilt file
     tsource = __NAME__ + '/main() + /spirouImage.ReadTiltFile'
 
-
     if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
         # log progress
         WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
@@ -145,7 +143,6 @@ def main(night_name=None, flatfile=None):
     # set number of orders from blaze file
     loc['NBO'] = loc['BLAZE'].shape[0]
     loc.set_source('NBO', __NAME__ + '/main()')
-
 
     # ------------------------------------------------------------------
     # Read wavelength solution

@@ -71,8 +71,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, kind='Drift', prefixes='fp_fp',
-                                       calibdb=True)
+    p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set the fiber type
     p['FIBER'] = fiber
     p.set_source('FIBER', __NAME__ + '/__main__')
@@ -204,7 +203,7 @@ def main(night_name=None, files=None, fiber='AB'):
         eargs = [p, loc, data2, order_profile, order_num]
         ekwargs = dict(range1=p['IC_EXT_D_RANGE'],
                        range2=p['IC_EXT_D_RANGE'])
-        e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs, **ekwargs)
+        e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
         # get window size
         blaze_win1 = int(data2.shape[0] / 2) - p['IC_EXTFBLAZ']
         blaze_win2 = int(data2.shape[0] / 2) + p['IC_EXTFBLAZ']
@@ -256,7 +255,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # Get files, remove fitsfilename, and sort
     prefix = p['ARG_FILE_NAMES'][0][0:5]
     suffix = p['ARG_FILE_NAMES'][0][-8:]
-    listfiles = spirouImage.GetAllSimilarFiles(p, rfolder, prefix, suffix)
+    listfiles = spirouImage.GetSimilarDriftFiles(p, rfolder)
     # remove reference file
     try:
         listfiles.remove(reffilename)
@@ -330,7 +329,7 @@ def main(night_name=None, files=None, fiber='AB'):
             eargs = [p, loc, data2i, order_profile, order_num]
             ekwargs = dict(range1=p['IC_EXT_D_RANGE'],
                            range2=p['IC_EXT_D_RANGE'])
-            e2ds, cpt = spirouEXTOR.ExtractWeightOrder(*eargs, **ekwargs)
+            e2ds, cpt = spirouEXTOR.Extraction(*eargs, **ekwargs)
             # save in loc
             loc['SPE'][order_num] = e2ds
         # ------------------------------------------------------------------

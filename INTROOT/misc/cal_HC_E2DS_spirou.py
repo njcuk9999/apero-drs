@@ -251,8 +251,8 @@ def part2(p, loc):
     loc['ECHELLE_ORDERS'] = p['IC_HC_T_ORDER_START'] - orderrange
     loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
     # select the orders to fit
-    ll = loc['LITTROW_EXTRAP_SOL_1'][start: end]
-    loc = spirouTHORCA.Fit1DSolution(p, loc, ll,  iteration=2)
+    lls = loc['LITTROW_EXTRAP_SOL_1'][start: end]
+    loc = spirouTHORCA.Fit1DSolution(p, loc, lls,  iteration=2)
 
     # ------------------------------------------------------------------
     # Littrow test

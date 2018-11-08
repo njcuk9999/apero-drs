@@ -570,8 +570,8 @@ def interp_bad_regions(p, image):
     # log progress
     WLOG('', p['LOG_OPT'], '   - Un-straightening interpolation image')
     # make sure all NaNs are 0
-    image2 = np.where(np.isfinite, image2, np.zeros_like(image2))
-    image = np.where(np.isfinite, image, np.zeros_like(image))
+    image2 = np.where(np.isfinite(image2), image2, np.zeros_like(image2))
+    image = np.where(np.isfinite(image), image, np.zeros_like(image))
     # add the curvature back in (again by interpolating with a spline)
     for xi in range(dim2):
         # produce the universal spline fit
@@ -910,6 +910,7 @@ def median_one_over_f_noise2(p, image):
 # =============================================================================
 # Define Image correction functions
 # =============================================================================
+# noinspection PyTypeChecker
 def measure_dark(pp, image, image_name, short_name):
     """
     Measure the dark pixels in "image"
@@ -957,6 +958,7 @@ def measure_dark(pp, image, image_name, short_name):
     """
     func_name = __NAME__ + '.measure_dark()'
     # make sure image is a numpy array
+    # noinspection PyBroadException
     try:
         image = np.array(image)
     except Exception as _:
@@ -973,6 +975,7 @@ def measure_dark(pp, image, image_name, short_name):
     med = np.median(fimage)
     # get the 5th and 95th percentile qmin
     try:
+        # noinspection PyTypeChecker
         qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
@@ -1423,11 +1426,11 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
             'Fraction of non-finite pixels in dark: {0:.4f} %',
             'Fraction of non-finite pixels in flat: {0:.4f} %',
             'Fraction of bad pixels with all criteria: {0:.4f} %']
-    badpix_stats = [(np.sum(badpix_dark) / badpix_dark.size) * 100,
-                    (np.sum(badpix_flat) / badpix_flat.size) * 100,
-                    (np.sum(~valid_dark) / valid_dark.size) * 100,
-                    (np.sum(~valid_flat) / valid_flat.size) * 100,
-                    (np.sum(badpix_map) / badpix_map.size) * 100]
+    badpix_stats = [(np.sum(badpix_dark) / np.array(badpix_dark).size) * 100,
+                    (np.sum(badpix_flat) / np.array(badpix_flat).size) * 100,
+                    (np.sum(~valid_dark) / np.array(valid_dark).size) * 100,
+                    (np.sum(~valid_flat) / np.array(valid_flat).size) * 100,
+                    (np.sum(badpix_map) / np.array(badpix_map).size) * 100]
 
     for it in range(len(text)):
         WLOG('', p['LOG_OPT'], text[it].format(badpix_stats[it]))
@@ -1454,11 +1457,6 @@ def locate_bad_pixels_full(p, image):
     :return newimage: numpy array (2D), the mask of the bad pixels
     :return stats: float, the fraction of un-illuminated pixels (percentage)
     """
-
-    # TODO: remove H2RG dependencies
-    # if we are using H2RG we don't need this map
-    if p['IC_IMAGE_TYPE'] == 'H2RG':
-        return np.ones_like(image, dtype=bool), 0
     # log that we are looking for bad pixels
     WLOG('', p['LOG_OPT'], 'Looking for bad pixels in full flat image')
     # get parameters from p
@@ -1475,13 +1473,17 @@ def locate_bad_pixels_full(p, image):
         WLOG('error', p['LOG_OPT'], emsg.format(filename, datadir))
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
+
+    if image.shape != mdata.shape:
+        wmsg = 'Full flat shape = {0}, image shape = {1}'
+        WLOG('warning', p['LOG_OPT'], wmsg.format(mdata.shape, image.shape))
     # apply threshold
     # mask = np.rot90(mdata, -1) < threshold
     mask = np.abs(np.rot90(mdata, -1)-1) > threshold
 
     # -------------------------------------------------------------------------
     # log results
-    badpix_stats = (np.sum(mask) / mask.size) * 100
+    badpix_stats = (np.sum(mask) / np.array(mask).size) * 100
     text = 'Fraction of un-illuminated pixels in engineering flat {0:.4f} %'
     WLOG('', p['LOG_OPT'], text.format(badpix_stats))
 
@@ -1517,8 +1519,7 @@ def get_tilt(pp, lloc, image):
 
     """
     nbo = lloc['NUMBER_ORDERS']
-    # storage for "nbcos"
-    # Question: what is nbcos? as it isn't used
+    # storage for "nbcos" (number of cosmic rays detected)
     lloc['NBCOS'] = np.zeros(nbo, dtype=int)
     lloc.set_source('NBCOS', __NAME__ + '/get_tilt()')
     # storage for tilt
@@ -1641,7 +1642,7 @@ def get_shape_map(p, loc):
                 norm = np.nanmedian(np.abs(ribbon[iw, :]))
                 ribbon[iw, :] = ribbon[iw, :] / norm
             # range explored in slopes
-            # TODO: Question: Where does the /8.0 come from?
+            # TODO: question Where does the /8.0 come from?
             sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
@@ -2162,7 +2163,6 @@ def get_wave_keys(p, loc, hdr):
         wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
         WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVEFILE'][0]))
         # get parameters from the calibDB
-        key = 'WAVE_' + p['FIBER']
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
         fmt = spirouConfig.Constants.DATE_FMT_HEADER()
         calib_time_unix = spirouMath.stringtime2unixtime(calib_time_human, fmt)
@@ -2194,7 +2194,7 @@ def get_airmass(p, hdr):
 
 # TODO insert paremeter dictionnary
 # TODO: FIX PROBLEMS: Write doc string
-def e2dstos1d(wave, e2dsffb, bin):
+def e2dstos1d(wave, e2dsffb, sbin):
     """
     Convert E2DS (2-dimension) spectra to 1-dimension spectra
     with merged spectral orders and regular sampling
@@ -2202,7 +2202,7 @@ def e2dstos1d(wave, e2dsffb, bin):
 
     :param wave: wavelength solution
     :param e2dsffb : e2ds falt-fielded and blaze corrected
-    :param bin : S1d sampling in nm
+    :param sbin : S1d sampling in nm
     """
     # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
     for o in range(len(e2dsffb)):
@@ -2224,21 +2224,21 @@ def e2dstos1d(wave, e2dsffb, bin):
         # Computation of the new coordinates
         #   if o == 0:
         xx = x[y > 0]
-        l1 = 1. * (int(xx[0] * (1. / bin)) + 1) / (1. / bin) + bin
-        l2 = 1. * (int(xx[-1] * (1. / bin))) / (1. / bin) - bin
+        l1 = 1. * (int(xx[0] * (1. / sbin)) + 1) / (1. / sbin) + sbin
+        l2 = 1. * (int(xx[-1] * (1. / sbin))) / (1. / sbin) - sbin
         #   else:
         #       l1 = 1. * (int(x[0] * (1. / bin)) + 1) / (1. / bin) + bin
         #       l2 = 1. * (int(x[-1] * (1. / bin))) / (1. / bin) - bin
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Interpolation by cubic spline
-        xxi = np.arange(l1, l2 + bin, bin) - bin / 2.
+        xxi = np.arange(l1, l2 + sbin, sbin) - sbin / 2.
         yyi = griddata(xx, yy, xxi, method='cubic')
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Computation of the derivation
-        xi = xxi[0:-1] + bin / 2.
-        yi = (yyi[1:] - yyi[0:-1]) / bin
+        xi = xxi[0:-1] + sbin / 2.
+        yi = (yyi[1:] - yyi[0:-1]) / sbin
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
         # Merging of orders
@@ -2247,20 +2247,24 @@ def e2dstos1d(wave, e2dsffb, bin):
             ys1d = yi * 1.
 
         # TODO: FIX PROBLEMS: ADD COMMENTS TO SECTION + Fix PEP8
+        # noinspection PyUnboundLocalVariable
         lim1 = xs1d[-1]
         lim2 = xi[0]
         if lim1 < lim2:
-            zone0x = np.arange(lim1 + bin, lim2, bin)
+            zone0x = np.arange(lim1 + sbin, lim2, sbin)
             zone0y = np.zeros(len(zone0x), 'd')
+            # noinspection PyUnboundLocalVariable
             ys1d = np.concatenate((ys1d, zone0y, yi))
             xs1d = np.concatenate((xs1d, zone0x, xi))
         else:
-            ind = int(round((lim1 - lim2) / bin))
+            ind = int(round((lim1 - lim2) / sbin))
             w = 1. - np.arange(ind * 1. + 1.) / ind
+            # noinspection PyUnboundLocalVariable
             zonec = ys1d[-ind - 1:] * w + yi[0:ind + 1] * (1. - w)
             ys1d = np.concatenate((ys1d[:-ind - 1], zonec, yi[ind + 1:]))
             xs1d = np.concatenate((xs1d[:-ind - 1], xi))
 
+    # noinspection PyUnboundLocalVariable,PyUnboundLocalVariable
     return xs1d, ys1d
 
 

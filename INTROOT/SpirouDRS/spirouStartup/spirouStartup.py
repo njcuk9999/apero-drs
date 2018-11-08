@@ -183,7 +183,9 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
                             'calibdb' - the DRS_CALIB_DB folder
                             or the full path to the file
 
-
+    :param require_night_name: bool, if False we do not check or need the
+                               the night_name (useful for recipes that do not
+                               need a night_name as input)
 
     :param quiet: bool, if True does not print or log messages
 
@@ -298,7 +300,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
 
     returns SystemExit if file is not valid for recipe
     """
-    func_name = __NAME__ + '.initial_file_setup()'
+    # func_name = __NAME__ + '.initial_file_setup()'
     log_opt = p['LOG_OPT']
     recipe = p['RECIPE']
     # -------------------------------------------------------------------------
@@ -379,7 +381,7 @@ def single_file_setup(p, filename, log=True, skipcheck=False, pos=None):
 
     returns SystemExit if file is not valid for recipe
     """
-    func_name = __NAME__ + '.single_file_setup()'
+    # func_name = __NAME__ + '.single_file_setup()'
 
     recipe = p['RECIPE']
     # check file based on recipe name
@@ -423,7 +425,7 @@ def multi_file_setup(p, files=None, log=True, skipcheck=False):
     returns SystemExit if any file is not valid for recipe
     """
 
-    func_name = __NAME__ + '.single_file_setup()'
+    # func_name = __NAME__ + '.single_file_setup()'
     # check file based on recipe name
     locations = []
     recipe = p['RECIPE']
@@ -489,7 +491,7 @@ def load_calibdb(p, calibdb=True):
 
 
 def main_end_script(p, outputs='reduced'):
-    func_name = __NAME__ + '.main_end_script()'
+    # func_name = __NAME__ + '.main_end_script()'
 
     if outputs == 'pp':
         # index outputs to pp dir
@@ -621,6 +623,7 @@ def sort_and_save_outputs(istore, abspath):
     spirouImage.WriteFitsTable(itable, abspath)
 
 
+# noinspection PyProtectedMember
 def exit_script(ll, has_plots=True):
     """
     Exit script for handling interactive endings to sessions (if DRS_PLOT is
@@ -674,6 +677,7 @@ def exit_script(ll, has_plots=True):
     if 'Y' in uinput.upper():
         # if user in ipython we need to try opening ipython
         if kind == 'ipython':
+            # noinspection PyBroadException
             try:
                 from IPython import embed
                 # this is only to be used in this situation and should not
@@ -690,6 +694,7 @@ def exit_script(ll, has_plots=True):
             code.interact(local=ll)
     # if "No" and not interactive quit python/ipython
     elif not find_interactive():
+        # noinspection PyProtectedMember
         os._exit(0)
     # if interactive ask about closing plots
     if find_interactive() and has_plots:
@@ -738,6 +743,7 @@ def spirou_input_yes_no(p, question):
         return True
     else:
         return False
+
 
 # =============================================================================
 # Define general functions
