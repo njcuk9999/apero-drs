@@ -398,11 +398,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Incorporate FP into solution
     # ------------------------------------------------------------------
+
     # Copy LL_OUT_1 and LL_PARAM_1 into new constants (for FP integration)
     loc['LITTROW_EXTRAP_SOL_1'] = np.array(loc['LL_OUT_1'])
     loc['LITTROW_EXTRAP_PARAM_1'] = np.array(loc['LL_PARAM_1'])
     # only use FP if switched on in constants file
     if p['IC_WAVE_USE_FP']:
+
         # ------------------------------------------------------------------
         # Find FP lines
         # ------------------------------------------------------------------
@@ -447,6 +449,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # select the orders to fit
     lls = loc['LITTROW_EXTRAP_SOL_1'][start:end]
     loc = spirouTHORCA.Fit1DSolution(p, loc, lls, iteration=2)
+
     # from here, LL_OUT_2 wil be 0-47
 
     # ------------------------------------------------------------------
@@ -465,20 +468,23 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # extrapolate Littrow solution
     # ------------------------------------------------------------------
-    ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
-    loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+    # TODO this is a temporary test of not using Littrow!!
+    #ekwargs = dict(ll=loc['LL_OUT_2'], iteration=2)
+    #loc = spirouTHORCA.ExtrapolateLittrowSolution(p, loc, **ekwargs)
+    loc['LL_FINAL'] = loc['LL_OUT_2']
+    loc['LL_PARAM_FINAL'] = loc['LL_PARAM_2']
 
     # ------------------------------------------------------------------
     # Plot littrow solution
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
-        # plot littrow x pixels against fitted wavelength solution
-        sPlt.wave_littrow_extrap_plot(loc, iteration=2)
+    #if p['DRS_PLOT']:
+    #    # plot littrow x pixels against fitted wavelength solution
+    #    sPlt.wave_littrow_extrap_plot(loc, iteration=2)
 
     # ------------------------------------------------------------------
     # Join 0-47 and 47-49 solutions
     # ------------------------------------------------------------------
-    loc = spirouTHORCA.JoinOrders(p, loc)
+    #loc = spirouTHORCA.JoinOrders(p, loc)
 
     # ------------------------------------------------------------------
     # Plot single order, wavelength-calibrated, with found lines
