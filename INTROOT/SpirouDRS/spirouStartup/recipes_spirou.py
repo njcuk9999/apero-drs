@@ -143,6 +143,12 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_drift1, cal_drift2,
 #    Note arg/kwarg types allowed:
 #       directory, files, file, bool, options, switch
 #
+# -----------------------------------------------------------------------------
+# generic recipe
+# -----------------------------------------------------------------------------
+raw_recipe = drs_recipe()
+pp_recipe = drs_recipe()
+out_recipe = drs_recipe()
 
 # -----------------------------------------------------------------------------
 # test.py
