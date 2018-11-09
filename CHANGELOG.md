@@ -5319,3 +5319,37 @@
 
 ================================================================================
 	- pep8 clean up (rev.edded0ad)
+
+
+
+================================================================================
+* Mon Oct 29 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.053
+
+================================================================================
+	- add hc_test.run back to unit tests (rev.d3f4b083)
+
+
+
+================================================================================
+* Tue Oct 30 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.054
+
+================================================================================
+	- test_wavsol.py - fixed bugs and added STD for H band (rev.94eaa633)
+	- test_wavsol.py - added code to compare wave solutions from a calibDB (defined manually in the code) (rev.cfc23578)
+	- HC_Test.run - added run 47 back in (had been missed) (rev.1f1e6104)
+
+
+
+================================================================================
+* Wed Nov 07 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.3.055
+================================================================================
+	- Add hcone files for the cal_DRIFTCCF_E2DS recipe (rev.11998745)
+	- New UrNe CCF mask based on lines used for the wavelength solution and to be used to compute DRIFT on hcone files (rev.e572c156)
+
+
+
+================================================================================
+* Thu Nov 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.056
+
+================================================================================
+	- spirouWAVE.py - Melissa's fix for Issue #507 ->   "<" needs to be "<=" (rev.38b9c0b1)
