@@ -18,7 +18,7 @@ from collections import OrderedDict
 
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouConfig
-
+from . import spirouFile
 
 # =============================================================================
 # Define variables
@@ -317,7 +317,7 @@ class CheckFiles(argparse.Action):
 
             # -----------------------------------------------------------------
             # create an instance of this drs_file with the filename set
-            file_instance = drs_file.new(filename=filepath)
+            file_instance = drs_file.new(filename=filepath, recipe=self.recipe)
             file_instance.read()
             # -----------------------------------------------------------------
             # check header
@@ -357,6 +357,111 @@ class CheckFiles(argparse.Action):
         # ---------------------------------------------------------------------
         # return filename and drs file type
         return filepath, correct_drsfile
+
+
+    def check_file_types(self, files, value):
+
+        # get log_opt
+        log_opt = self.recipe.drs_params['LOG_OPT']
+        # get the recipe arguments
+        recipe_args = self.get_recipe_arguments()
+        # if None then skip
+        if recipe_args is not None:
+            recipe_file_types = recipe_args.files
+        else:
+            return [], []
+        # set up storage for valid files
+        valid_files, valid_file_types = [], []
+        # loop around filenames in argument
+        for it, filename in enumerate(files):
+            self.check_file_type(it, filename, value)
+
+
+    def check_file_type(self, filename, value):
+        # get log_opt
+        log_opt = self.recipe.drs_params['LOG_OPT']
+        # get the recipe arguments
+        recipe_args = self.get_recipe_arguments()
+        recipe_file_types = recipe_args.files
+        recipe_logic = recipe_args.filelogic
+        # storage for error messages
+        msgs = []
+        # set up placeholder for correct_Drsfile
+        correct_drsfile = None
+        # loop around valid file types
+        for file_type in recipe_file_types:
+            # set up a new file
+            file_instance = file_type.new(filename=filename,
+                                          recipe=self.recipe)
+            file_instance.read()
+            # now check file
+            check1, msg1 = file_instance.check_file_exists(quiet=True)
+            # check extension
+            check2, msg2 = file_instance.check_file_extension(quiet=True)
+            # check file header
+            check3, msgtype, msg3 = file_instance.check_file_header(quiet=True)
+            # check exclusivity
+            check4, msg4 = file_instance.check_exclusivity(self.id_type,
+                                                           quiet=True)
+
+            # check conditions and report appropriate error
+            if not check1:
+                self.print_error(filename, msg1)
+            elif not check2:
+                self.print_error(filename, msg2)
+            elif not check3:
+                msgs.append(msg3)
+            elif not check4:
+                self.print_error(filename, msg4)
+            else:
+                correct_drsfile = file_instance
+                break
+        # ---------------------------------------------------------------------
+        # construct errors from header loop
+        che_args = [msgs, self.recipe.drs_params, recipe_file_types,
+                    recipe_logic]
+        errors = spirouFile.construct_header_error(*che_args)
+        # ---------------------------------------------------------------------
+        # if we have a correct drs file then display passed message
+        if correct_drsfile is not None:
+            self.print_success(filename, correct_drsfile)
+        # else we have an error
+        else:
+            self.print_error(self, filename, errors)
+
+    def print_error(self, filename, messages):
+        # get log_opt
+        log_opt = self.recipe.drs_params['LOG_OPT']
+        # construct main error message
+        eargs = [self.dest, self.id_num, filename, self.recipe.name]
+        emsgs = ['Arg "{0}"[{1}]: File "{2}" not valid for recipe "{3}"'
+                 ''.format(*eargs)]
+        # loop around error messages and append
+        for message in messages:
+            emsgs.append(message)
+        # print and log
+        WLOG('error', log_opt, emsgs)
+
+    def print_success(self, filename, correct_drsfile):
+        # get log_opt
+        log_opt = self.recipe.drs_params['LOG_OPT']
+        # log correct
+        wmsg = ('Arg "{0}"[{1}]: File "{2}" (identified as "{3}") '
+                'valid for recipe "{4}"')
+        wargs = [self.dest, self.id_num, filename, correct_drsfile.name,
+                 self.recipe.name]
+        # print and log
+        WLOG('', log_opt, wmsg.format(*wargs))
+
+    def get_recipe_arguments(self):
+        # get argument/keyword argument
+        if self.dest in self.recipe.args:
+            arg = self.recipe.args[self.dest]
+        elif  self.dest in self.recipe.kwargs:
+            arg = self.recipe.kwargs[self.dest]
+        else:
+            arg = None
+        return arg
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
@@ -1347,58 +1452,6 @@ def load_other_config_file(p, key, logthis=True, required=False):
         WLOG('', DPROG, lmsgs)
     # return parameter dictionary
     return pp
-
-
-def construct_header_error(herrors, params, drs_files, logic):
-
-    # get error storage
-    keys, rvalues, values = herrors
-
-    emsgs = ['Current file has:']
-    used = []
-    # loop around the current values
-    for it, key in enumerate(keys):
-        emsg = '\t{0} = {1}'.format(key, values[it])
-        if (key, values[it]) not in used:
-            emsgs.append(emsg)
-            used.append((key, values[it]))
-
-    # print the required values
-    emsgs.append('Recipe required values are:')
-    used, used_it = [], []
-    # log around the required values
-    for it, drs_file in enumerate(drs_files):
-        # do not list files we have already checked
-        if drs_file in used:
-            continue
-        # add to used list
-        used.append(drs_file)
-        used_it.append(str(it + 1))
-        # get emsg
-        emsg = '\t{0}. '.format(it + 1)
-        # get rkeys
-        rkeys = drs_file.required_header_keys
-        # loop around keys in drs_file
-        keys = []
-        for drskey in rkeys:
-            # get key from drs_params
-            if drskey in params:
-                key = params[drskey][0]
-            else:
-                key = drskey
-            # append key to file
-            keys.append('{0}={1}'.format(key, rkeys[drskey]))
-        emsg += ' and '.join(keys)
-        # append to emsgs
-        emsgs.append(emsg)
-    # deal with exclusivity message
-    emsg = ' or '.join(used_it)
-    if logic == 'exclusive':
-        emsgs.append(emsg + ' exclusively')
-    else:
-        emsgs.append(emsg + ' inclusively')
-    # return error strings
-    return emsgs
 
 
 def print_check_error(argname, idnum, filename, recipename, errors,
