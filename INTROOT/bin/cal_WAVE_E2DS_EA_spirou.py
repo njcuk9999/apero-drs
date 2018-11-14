@@ -505,7 +505,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # iterate through Littrow test cut values
     lit_it = 2
     # checks every other value
-    for x_it in range(3, len(loc['X_CUT_POINTS_' + str(lit_it)]), 2):
+    for x_it in range(1, len(loc['X_CUT_POINTS_' + str(lit_it)]), 2):
         # get x cut point
         x_cut_point = loc['X_CUT_POINTS_' + str(lit_it)][x_it]
         # get the sigma for this cut point
@@ -608,7 +608,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
         # update original E2DS fpfile and add header keys (via hdict)
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
-        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
         p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
 
     # ------------------------------------------------------------------
