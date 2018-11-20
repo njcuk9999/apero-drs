@@ -20,7 +20,7 @@ from astropy.io import fits
 # =============================================================================
 # Define variables
 # =============================================================================
-PATH = '/spirou/cfht_nights/cfht/calibDB/'
+PATH = '/spirou/cfht_nights/cfht/calibDB_2/'
 CALIBDB = 'master_calib_SPIROU.txt'
 # -----------------------------------------------------------------------------
 REF_NUM = 10
@@ -91,6 +91,8 @@ if __name__ == "__main__":
     for line in lines:
         if 'AB' in line and line.startswith('WAVE') and 'MASTER' not in line:
             files.append(line.split()[2])
+
+    files = np.sort(files)
     # add data to the data cubes
     data_array, hdr_array = [], []
     for filename in files:
@@ -161,6 +163,8 @@ if __name__ == "__main__":
 
     plt.subplots_adjust(wspace=0.025, hspace=0.5)
     plt.show()
+
+
 
 
 # =============================================================================
