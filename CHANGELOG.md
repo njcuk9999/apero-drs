@@ -5353,3 +5353,63 @@
 
 ================================================================================
 	- spirouWAVE.py - Melissa's fix for Issue #507 ->   "<" needs to be "<=" (rev.38b9c0b1)
+
+
+
+================================================================================
+* Tue Oct 30 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.057
+
+================================================================================
+	- cal_WAVE_NEW update (rev.ab94ecd8)
+
+
+
+================================================================================
+* Wed Oct 31 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.058
+
+================================================================================
+	- cal_WAVE_NEW update (rev.bee08367)
+
+
+
+================================================================================
+* Thu Nov 01 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.059
+
+================================================================================
+	- Test of not using Littrow sols for cal_WAVE_EA (rev.69b43391)
+
+
+
+================================================================================
+* Thu Nov 08 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.060
+
+================================================================================
+	- cal_WAVE_EA match to master (rev.e38c6619)
+	- Bug fix for fit_gaussian triplet (fixes #507) (rev.863e2dfb)
+
+
+
+================================================================================
+* Thu Nov 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.061
+
+================================================================================
+	- update date/version/changelog (rev.92c692e8)
+
+
+
+================================================================================
+* Wed Nov 14 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.062
+
+================================================================================
+	- fit_triplets sigma-clip change (rev.b6f7746f)
+	- cal_WAVE_E2DS_EA - fix HC file being overwritten with FP data (fixes #513) (rev.56007df4)
+
+
+
+================================================================================
+* Tue Nov 20 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.063
+
+================================================================================
+	- add test files to misc (rev.e50431cb)
+	- add Etiennes files in misc folder (rev.5d9698d8)
+	- Runs - update the unit tests (rev.e4f1a9b7)
