@@ -284,6 +284,16 @@ def WAVELENGTH_CATS_DIR():
     return wavelength_cats_dir
 
 
+def CAVITY_LENGTH_FILE():
+    """
+    Define the cavity length file (located in the WAVELENGTH_CATS_DIR()
+
+    :return:
+    """
+    cavity_length_file = 'cavity_length.dat'
+    return cavity_length_file
+
+
 # noinspection PyPep8Naming
 def DATA_CONSTANT_DIR():
     """
@@ -876,13 +886,103 @@ def SLIT_SHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['ARG_FILE_NAMES'][0].replace('.fits', '_shape.fits')
+    shapefn = p['FPFILES'][0].replace('.fits', '_shape.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
     tag = tags[func_name]
     # return filename and tag
     return shapefits, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_IN_FP_FILE(p):
+    func_name = 'SLIT_SHAPE_IN_FP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['FPFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-StartingFp_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_OUT_FP_FILE(p):
+    func_name = 'SLIT_SHAPE_OUT_FP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['FPFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-CorrectedFp_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_IN_HC_FILE(p):
+    func_name = 'SLIT_SHAPE_IN_HC_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['HCFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-StartingHC_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_OUT_HC_FILE(p):
+    func_name = 'SLIT_SHAPE_OUT_HC_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['HCFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-CorrectedHC_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_OVERLAP_FILE(p):
+    func_name = 'SLIT_SHAPE_OVERLAP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['FPFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-Order_Overlap_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
 
 
 # noinspection PyPep8Naming
