@@ -163,6 +163,9 @@ def get_offset_sp(sp_fp,sp_hc,iord,doplot=False):
 				peakval = np.append(peakval,a0[0])
 				ewval = np.append(ewval,a0[2])
 
+	# TODO: =======================================================
+	# TODO: GOT TO HERE
+	# TODO: =======================================================
 
 	# we sort the FP peaks by their x pixel position
 	index = np.argsort(xpeak)
