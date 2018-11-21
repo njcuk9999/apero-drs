@@ -319,7 +319,7 @@ ic_slit_order_plot = 2 * 2
 #   cal_slit (shape) parameters
 # -----------------------------------------------------------------------------
 # The number of iterations to run the shape finding out to         - [cal_shape]
-shape_num_iterations = 3
+shape_num_iterations = 4
 
 # width of the ABC fibers                                          - [cal_shape]
 shape_abc_width = 55
@@ -342,8 +342,14 @@ shape_median_filter_size = 51
 # The minimum value for the cross-correlation to be deemed good    - [cal_shape]
 shape_min_good_correlation = 0.1
 
+# Defines the minimum max correlation limit                        - [cal_shape]
+shape_min_median_correlation = 0.3
+
 #  The selected order to plot for the slit shape plot              - [cal_shape]
 shape_selected_order = 33
+
+#  Define whether to output debug (sanity check) files             - [cal_shape]
+shape_debug_outputs = True
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
