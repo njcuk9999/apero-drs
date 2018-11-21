@@ -143,13 +143,6 @@ def main(night_name=None, files=None):
     masterwavep, masterwave, masterwaveheader = mout
     # get wave acqtimes
     master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
-    # read master wave map
-    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
-                                       return_wavemap=True, quiet=True,
-                                       return_header=True, fiber=wave_fiber)
-    masterwavep, masterwave, masterwaveheader = mout
-    # get wave acqtimes
-    master_acqtimes = spirouDB.GetTimes(p, masterwaveheader)
 
     # ------------------------------------------------------------------
     # Loop around the files
