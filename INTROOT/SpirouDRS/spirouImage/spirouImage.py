@@ -46,6 +46,10 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
+# Get plotting functions
+sPlt = spirouCore.sPlt
+# Get parameter dictionary
+ParamDict = spirouConfig.ParamDict
 # get the default log_opt
 DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
@@ -1696,7 +1700,7 @@ def read_cavity_length(p, filename=None):
             cavityfile = os.path.join(datadir, filename)
         cavityfilename = os.path.basename(filename)
     else:
-        cavityfilename = spirouConfig.Constants.CAVITY_LENGTH_FILE(p)
+        cavityfilename = spirouConfig.Constants.CAVITY_LENGTH_FILE()
         cavityfile = os.path.join(datadir, cavityfilename)
     # check that line file exists
     if not os.path.exists(cavityfile):
@@ -1705,7 +1709,7 @@ def read_cavity_length(p, filename=None):
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
     # read filename as a table (no header so need data_start=0)
     colnames = ['NTH_ORDER', 'WAVELENGTH_COEFF']
-    table = spirouTable.read_table(cavityfile, fmt='ascii.tab',
+    table = spirouTable.read_table(cavityfile, fmt='ascii',
                                    colnames=colnames, data_start=0)
     # push columns into numpy arrays and force to floats
     coeff_nums = np.array(table['NTH_ORDER'], dtype=float)
@@ -2038,6 +2042,7 @@ def get_shape_map2(p, loc):
     med_filter_size = p['SHAPE_MEDIAN_FILTER_SIZE']
     min_good_corr = p['SHAPE_MIN_GOOD_CORRELATION']
     min_med_corr = p['SHAPE_MIN_MEDIAN_CORRELATION']
+    plot_on = p.get(p['PLOT_PER_ORDER'], False)
     # get data from loc
     hcdata1 = np.array(loc['HCDATA'])
     fpdata1 = np.array(loc['FPDATA'])
@@ -2055,6 +2060,18 @@ def get_shape_map2(p, loc):
     xsec_arr, ccor_arr = [], []
     ddx_arr, dx_arr = [], []
     dypix_arr, cckeep_arr = [], []
+
+    # define storage in loc
+    loc['CORR_DX_FROM_FP'] = np.zeros((nbo, dim1))
+    loc['XPEAK2'] = [[]] * nbo
+    loc['PEAKVAL2'] = [[]] * nbo
+    loc['EWVAL2'] = [[]] * nbo
+    loc['ERR_PIX'] = [[]] * nbo
+    loc['GOOD_MASK'] = [[]] * nbo
+    # set source
+    sources = ['CORR_DX_FROM_FP', 'XPEAK2', 'PEAKVAL2', 'EWVAL2', 'ERR_PIX',
+               'GOOD_MASK']
+    loc.set_sources(sources, func_name)
 
     # -------------------------------------------------------------------------
     # iterating the correction, from coarser to finer
@@ -2087,8 +2104,8 @@ def get_shape_map2(p, loc):
         for order_num in range(nbo):
             # -----------------------------------------------------------------
             # Log progress
-            wmsg = 'Banana iteration: {0}: Order {1}/{2} '
-            wargs = [banana_num + 1, order_num + 1, nbo]
+            wmsg = 'Banana iteration: {0}/{1}: Order {2}/{3} '
+            wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # -----------------------------------------------------------------
             # create the x pixel vector (used with polynomials to find
@@ -2114,20 +2131,19 @@ def get_shape_map2(p, loc):
                 if bottom > 0:
                     # for the hc data
                     spline_hc = IUVSpline(sx, hcdata2[bottom:top, ix],
-                                          ext=1, k=1)
+                                          ext=1, k=3)
                     ribbon_hc[:, ix] = spline_hc(ypix[ix] + widths)
                     # for the fp data
                     spline_fp = IUVSpline(sx, fpdata2[bottom:top, ix],
-                                          ext=1, k=1)
+                                          ext=1, k=3)
                     ribbon_fp[:, ix] = spline_fp(ypix[ix] + widths)
 
             # normalizing ribbon stripes to their median abs dev
             for iw in range(width):
                 # for the hc data
-                norm_hc = np.nanmedian(np.abs(ribbon_hc[iw, :]))
-                ribbon_hc[iw, :] = ribbon_hc[iw, :] / norm_hc
-                # for the fp data
                 norm_fp = np.nanmedian(np.abs(ribbon_fp[iw, :]))
+                ribbon_hc[iw, :] = ribbon_hc[iw, :] / norm_fp
+                # for the fp data
                 ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
             # range explored in slopes
             # TODO: question Where does the /8.0 come from?
@@ -2221,6 +2237,17 @@ def get_shape_map2(p, loc):
             slope_deg_arr_i.append(np.rad2deg(np.arctan(dxsection)))
             slope_arr_i.append(np.rad2deg(np.arctan(slope)))
             skeep_arr_i.append(np.array(keep))
+
+            # -----------------------------------------------------------------
+            # append to new loc
+            loc2 = ParamDict()
+            if p['DRS_PLOT'] and p['DRS_DEBUG'] >= 2:
+                # add temp keys for debug plot
+                loc2['NUMBER_ORDERS'] = loc['NUMBER_ORDERS']
+                loc2['HCDATA'] = loc['HCDATA']
+                loc2['SLOPE_DEG'] = np.rad2deg(np.arctan(dxsection))
+                loc2['SLOPE'] = np.rad2deg(np.arctan(slope))
+                loc2['S_KEEP'] = np.array(keep)
             # -------------------------------------------------------------
             # correct for the slope the ribbons and look for the
             #    slicer profile in the fp
@@ -2238,18 +2265,19 @@ def get_shape_map2(p, loc):
             ribbon_hc2 = np.array(ribbon_hc)
             for iw in range(width):
                 # get the x shift
-                ddx = (ix - width/2.0) * yfit
+                ddx = (iw - width/2.0) * yfit
                 # calculate the spline at this width
                 spline_hc = IUVSpline(xpix, ribbon_hc[iw, :], ext=1)
                 # push spline values with shift into ribbon2
-                ribbon_fp2[iw, :] = spline_hc(xpix + ddx)
+                ribbon_hc2[iw, :] = spline_hc(xpix + ddx)
 
             # -------------------------------------------------------------
             # get the median values of the fp and hc
             sp_fp = np.nanmedian(ribbon_fp2, axis=0)
             sp_hc = np.nanmedian(ribbon_hc2, axis=0)
 
-            corr_dx_from_fp = get_offset_sp(p, loc, sp_fp, sp_hc, order_num)
+            loc = get_offset_sp(p, loc, sp_fp, sp_hc, order_num)
+            corr_dx_from_fp = loc['CORR_DX_FROM_FP'][order_num]
 
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
@@ -2271,7 +2299,7 @@ def get_shape_map2(p, loc):
             for iw in range(width):
                 for jw in range(len(ddx)):
                     # calculate the peasron r coefficient
-                    xff = ribbon_fp[iw, :]
+                    xff = ribbon_fp2[iw, :]
                     yff = np.roll(profile, ddx[jw])
                     pearsonr_value = stats.pearsonr(xff, yff)[0]
                     # push into cross-correlation storage
@@ -2307,6 +2335,13 @@ def get_shape_map2(p, loc):
             dx_arr_i.append(np.array(dx))
             dypix_arr_i.append(np.array(dypix))
             cckeep_arr_i.append(np.array(keep))
+            # -----------------------------------------------------------------
+            if p['DRS_PLOT'] and p['DRS_DEBUG'] >= 2:
+                # add temp keys for debug plot
+                loc2['XSECTION'] = np.array(xsection)
+                loc2['CCOR'], loc2['DDX'] = ccor, ddx
+                loc2['DX'], loc2['DYPIX'] = dx, dypix
+                loc2['C_KEEP'] = keep
             # -------------------------------------------------------------
             # spline everything onto the master DX map
             #    ext=3 forces that out-of-range values are set to boundary
@@ -2356,7 +2391,7 @@ def get_shape_map2(p, loc):
                 # set the zero shifts to NaNs
                 ddx[ddx == 0] = np.nan
                 # only set positive ypixels
-                pos_y_mask = (ypix2 >= 0) and good_ccor_mask
+                pos_y_mask = (ypix2 >= 0) & good_ccor_mask
                 # if we have some values add to master DX map
                 if np.sum(pos_y_mask) != 0:
                     # get positions in y
@@ -2375,6 +2410,19 @@ def get_shape_map2(p, loc):
                     shifts = (ddx + dx0)[pos_y_mask] - corr_dx_from_fp[ix]
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
+
+
+            # -----------------------------------------------------------------
+            if p['DRS_PLOT'] and (p['DRS_DEBUG'] >= 2) and plot_on:
+                # plo
+                sPlt.plt.ioff()
+                sPlt.slit_shape_angle_plot(p, loc2, bnum=banana_num,
+                                           order=order_num)
+                sPlt.slit_shape_offset_plot(p, loc, bnum=banana_num,
+                                            order=order_num)
+                sPlt.plt.show()
+                sPlt.plt.close()
+                sPlt.plt.ion()
         # ---------------------------------------------------------------------
         # append to storage
         slope_deg_arr.append(slope_deg_arr_i), slope_arr.append(slope_arr_i)
@@ -2416,36 +2464,6 @@ def get_shape_map2(p, loc):
 
 
 def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
-
-    # TODO: Move to constants file
-    # defines the shape offset xoffset (before and after) fp peaks
-    p['SHAPEOFFSET_XOFFSET'] = 30
-    # defines the bottom percentile for fp peak
-    p['SHAPEOFFSET_BOTTOM_PERCENTILE'] = 10
-    # defines the top percentile for fp peak
-    p['SHAPEOFFSET_TOP_PERCENTILE'] = 95
-    # defines the floor below which top values should be set to this fraction
-    #   away from the max top value
-    p['SHAPEOFFSET_TOP_FLOOR_FRAC'] = 0.1
-    # define the median filter to apply to the hc (high pass filter)
-    p['SHAPEOFFSET_MED_FILTER_WIDTH'] = 15
-    # Maximum number of FP (larger than expected number (~10000 to ~25000)
-    p['SHAPEOFFSET_FPINDEX_MAX'] = 30000
-    # Define the maximum allowed offset (in nm) that we allow for the detector)
-    p['SHAPEOFFSET_DRIFT_MARGIN'] = 20
-    # Define the number of iterations to do for the wave_fp inversion trick
-    p['SHAPEOFFSET_WAVEFP_INV_ITERATION'] = 5
-    # Define the border in pixels at the edge of the detector
-    p['SHAPEOFFSET_MASK_BORDER'] = 30
-    # Define the minimum maxpeak value as a fraction of the maximum maxpeak
-    p['SHAPEOFFSET_MINIMUM_MAXPEAK_FRAC'] = 0.4
-    # Define the width of the FP mask (+/- the center)
-    p['SHAPEOFFSET_MASK_PIXWIDTH'] = 3
-    # Define the width of the FP to extract (+/- the center)
-    p['SHAPEOFFSET_MASK_EXTWIDTH'] = 5
-
-    # -------------------------------------------------------------------------
-
     # get constants from p
     xoffset = p['SHAPEOFFSET_XOFFSET']
     bottom_fp_percentile = p['SHAPEOFFSET_BOTTOM_PERCENTILE']
@@ -2453,17 +2471,20 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     top_floor_frac = p['SHAPEOFFSET_TOP_FLOOR_FRAC']
     med_filter_wid = p['SHAPEOFFSET_MED_FILTER_WIDTH']
     fpindexmax = p['SHAPEOFFSET_FPINDEX_MAX']
+    valid_fp_length = p['SHAPEOFFSET_VALID_FP_LENGTH']
     drift_margin = p['SHAPEOFFSET_DRIFT_MARGIN']
     inv_iterations = p['SHAPEOFFSET_WAVEFP_INV_ITERATION']
     mask_border = p['SHAPEOFFSET_MASK_BORDER']
     minimum_maxpeak_frac = p['SHAPEOFFSET_MINIMUM_MAXPEAK_FRAC']
     mask_pixwidth = p['SHAPEOFFSET_MASK_PIXWIDTH']
     mask_extwidth = p['SHAPEOFFSET_MASK_EXTWIDTH']
+    deviant_percentiles = p['SHAPEOFFSET_DEVIANT_PERCENTILES']
+    fp_max_num_error = p['SHAPEOFFSET_FPMAX_NUM_ERROR']
+    fit_hc_sigma = p['SHAPEOFFSET_FIT_HC_SIGMA']
+    maxdev_threshold = p['SHAPEOFFSET_MAXDEV_THRESHOLD']
     # -------------------------------------------------------------------------
     # get data from loc
-    hcdata1 = np.array(loc['HCDATA'])
-    fpdata1 = np.array(loc['FPDATA'])
-    dim1, dim2 = np.shape(hcdata1)
+    dim1, dim2 = np.shape(loc['HCDATA'])
     poly_wave_ref = loc['MASTERWAVEP']
     une_lines = loc['LL_LINE']
     poly_cavity = loc['CAVITY_LEN_COEFFS']
@@ -2471,6 +2492,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # define storage for the bottom and top values of the FPs
     bottom = np.zeros_like(sp_fp)
     top = np.zeros_like(sp_fp)
+
     # -------------------------------------------------------------------------
     # loop around pixels
     for xpix in range(dim2):
@@ -2523,20 +2545,16 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # all contained within the relevant domain
     xdomain = np.linspace(0, dim2, 3).astype(int)
     wave_start_med_end = np.polyval(poly_wave_ref[order_num][::-1], xdomain)
-
     # get the wavelengths for the fp
     wave_fp = np.polyval(poly_cavity, wave_start_med_end[1]) * 2/fpindex
-
     # -------------------------------------------------------------------------
     # we give a 20 nm marging on either side... who knows, maybe SPIRou
     #    has drifted
     good = (wave_fp > wave_start_med_end[0] - drift_margin)
     good &= (wave_fp < wave_start_med_end[2] + drift_margin)
-
     # keep only the relevant FPs in this good region
     fpindex = fpindex[good]
     wave_fp = wave_fp[good]
-
     # -------------------------------------------------------------------------
     # a numerical trick so that we don't have to invert the poly_cavity
     #    polynomial wave_fp depends on the cavity length, which in turns
@@ -2544,37 +2562,32 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     #    fixes the problem
     for iteration in range(inv_iterations):
         wave_fp = np.polyval(poly_cavity, wave_fp) * 2 / fpindex
-
     # -------------------------------------------------------------------------
     # get the pixel position along the spectrum
     xpixs = np.arange(len(sp_fp))
     # storage to be appended to
-    # x position of the FP peak
-    xpeak = []
-    # peak value. Could be used for quality check
-    peakval = []
-    # e-width of the line. Could be used for quality check
-    ewval = []
+    # x position of the FP peak, peak value. Could be used for quality check,
+    #    e-width of the line. Could be used for quality check
+    xpeak, peakval, ewval = [], [], []
     # peak value of the FP spectrum
     maxfp = np.max(sp_fp)
     # current maximum value after masking
     max_it = float(maxfp)
     # mask
-    mask = np.ones_like(sp_fp)
+    mask = np.ones_like(sp_fp).astype(int)
     # deal with borders
-    mask[:mask_border] = 0.0
-    mask[-mask_border:] = 0.0
-
+    mask[:mask_border] = 0
+    mask[-mask_border:] = 0
     # looping while FP peaks are at least "minimum_maxpeak_frac" * 100% of
     #     the max peak value
     while max_it > (maxfp * minimum_maxpeak_frac):
         # get the position of the maximum peak
-        pos = np.argmax(sp_fp[mask])
+        pos = np.argmax(sp_fp * mask)
         # get the current maximum value
         max_it = sp_fp[pos]
         # set this peak to False in the mask
         fpstart, fpend = pos - mask_pixwidth, pos + mask_pixwidth + 1
-        mask[fpstart:fpend] = 0.0
+        mask[fpstart:fpend] = 0
         # set the width
         extstart, extend = pos - mask_extwidth, pos + mask_extwidth + 1
         # extract a window in the spectrum
@@ -2582,24 +2595,25 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         xx = xpixs[extstart:extend]
         # find the domain between the minima before and the minima after the
         #   peak value
-        mask1 = np.ones_like(yy)
-        mask1[:mask_extwidth] = 0.0
-        mask2 = np.ones_like(yy)
-        mask2[mask_extwidth:] = 0.0
+        mask1 = np.ones_like(yy).astype(int)
+        mask1[:mask_extwidth] = 0
+        mask2 = np.ones_like(yy).astype(int)
+        mask2[mask_extwidth:] = 0
         # find the minima of the fp's in this mask
         y0 = np.argmin(yy/np.max(yy) + mask1)
         y1 = np.argmin(yy/np.max(yy) + mask2)
         # re-set xx and yy
         xx = np.array(xx[y0:y1 + 1])
         yy = np.array(yy[y0:y1 + 1])
+
         # the FP must be at least 5 pixels long to be valid
-        if len(xx) > 5:
+        if len(xx) > valid_fp_length:
             # set up the guess: amp, x0, w, zp
             guess = [np.max(yy) - np.min(yy),  xx[np.argmax(yy)],
-                     1.0, np.min(yy), 0.0]
+                     1, np.min(yy), 0]
             # try to fit a gaussian
             try:
-                coeffs = spirouMath.fitgaussian(xx, yy, guess=guess)
+                coeffs, _ = curve_fit(spirouMath.gauss_fit_s, xx, yy, p0=guess)
                 goodfit = True
             except Exception as _:
                 goodfit = False
@@ -2610,9 +2624,156 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
                 ewval.append(coeffs[2])
 
 
-
-
-    return 0
+    # -------------------------------------------------------------------------
+    # sort FP peaks by their x pixel position
+    indices = np.argsort(xpeak)
+    # apply sort to vectors
+    xpeak2 = np.array(xpeak)[indices]
+    peakval2 = np.array(peakval)[indices]
+    ewval2 = np.array(ewval)[indices]
+    # we  "count" the FP peaks and determine their number in the
+    #   FP interference
+    # determine distance between consecutive peaks
+    xpeak2_mean = (xpeak2[1:] + xpeak2[:-1]) / 2
+    dxpeak = xpeak2[1:] - xpeak2[:-1]
+    # we clip the most deviant peaks
+    lowermask = dxpeak > np.percentile(dxpeak, deviant_percentiles[0])
+    uppermask = dxpeak < np.percentile(dxpeak, deviant_percentiles[1])
+    good = lowermask & uppermask
+    # apply good mask and fit the peak separation
+    fit_peak_separation = np.polyfit(xpeak2_mean[good], dxpeak[good], 2)
+    # Looping through peaks and counting the number of meddx between peaks
+    #    we know that peaks will be at integer multiple or medds (in the
+    #    overwhelming majority, they will be at 1 x meddx)
+    ipeak = np.zeros(len(xpeak2), dtype=int)
+    # loop around the xpeaks
+    for it in range(1, len(xpeak2)):
+        # get the distance between peaks
+        dx = xpeak2[it] - xpeak2[it - 1]
+        # get the estimate from the fit peak separation
+        dx_est = np.polyval(fit_peak_separation, xpeak2[it])
+        # find the integer number of the peak
+        ipeak[it] = ipeak[it - 1] + np.round(dx / dx_est)
+        # if we have a unexpected deviation log it
+        if np.round(dx/dx_est) != 1:
+            wmsg = '\t\tdx = {0:.5f} dx/dx_est = {1:.5f} estimate = {2:.5f}'
+            wargs = [dx, dx/dx_est, dx_est]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # -------------------------------------------------------------------------
+    # Trusting the wavelength solution this is the wavelength of FP peaks
+    wave_from_hdr = np.polyval(poly_wave_ref[order_num][::-1], xpeak2)
+    # We estimate the FP order of the first FP peak. This integer value
+    # should be good to within a few units
+    fit0 = np.polyval(poly_cavity, wave_from_hdr[0])
+    fp_peak0_est = int(fit0 * 2 / wave_from_hdr[0])
+    # we scan "zp", which is the FP order of the first FP peak that we've
+    #    found we assume that the error in FP order assignment could range
+    #    from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
+    #    tested to date
+    best_zp = int(fp_peak0_est)
+    max_good = 0
+    # loop around estimates
+    fpstart = fp_peak0_est - fpindex[0] - fp_max_num_error
+    fpend = fp_peak0_est - fpindex[0] + fp_max_num_error
+    # loop from fpstart to fpend
+    for zp in range(fpstart, fpend):
+        # we take a trial solution between wave (from the theoretical FP
+        #    solution) and the x position of measured peaks
+        fitzp = np.polyfit(wave_fp[zp - ipeak], xpeak2, 3)
+        # we predict an x position for the known U Ne lines
+        xpos_predict = np.polyval(fitzp, une_lines)
+        # deal with borders
+        good = (xpos_predict > 0) & (xpos_predict < dim2)
+        xpos_predict = xpos_predict[good]
+        # we check how many of these lines indeed fall on > "fit_hc_sigma"
+        #    sigma excursion of the HC spectrum
+        xpos_predict_int = np.zeros(len(xpos_predict), dtype=int)
+        for it in range(len(xpos_predict_int)):
+            xpos_predict_int[it] = xpos_predict[it]
+        # the FP order number that produces the most HC matches
+        #   is taken to be the right wavelength solution
+        frac_good = np.mean(sp_hc[xpos_predict_int] > fit_hc_sigma)
+        # update the best values if better than last iteration
+        if frac_good > max_good:
+            max_good, best_zp = frac_good, zp
+    # -------------------------------------------------------------------------
+    # log the predicted vs measured FP peak
+    wmsg = '\tPredicted FP peak #: {0}   Measured FP peak #: {1}'
+    wargs = [fp_peak0_est, fpindex[best_zp]]
+    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # -------------------------------------------------------------------------
+    # we find teh actual wavelength of our IDed peaks
+    wave_xpeak2 = wave_fp[best_zp - ipeak]
+    # get the derivative of the polynomial
+    poly = poly_wave_ref[order_num]
+    deriv_poly = np.polyder(poly[::-1], 1)[::-1]
+    # we find the corresponding offset
+    err_wave = wave_xpeak2 - np.polyval(poly[::-1], xpeak2)
+    err_pix = err_wave / np.polyval(deriv_poly[::-1], xpeak2)
+    # -------------------------------------------------------------------------
+    # first we perform a thresholding with a 1st order polynomial
+    maxabsdev = np.inf
+    good = np.isfinite(err_pix)
+    # loop around until we are better than threshold
+    while maxabsdev > maxdev_threshold:
+        # get the error fit (1st order polynomial)
+        fit_err_xpix = np.polyfit(xpeak2[good], err_pix[good], 1)
+        # get the deviation from error fit
+        dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
+        # get the median absolute deviation
+        absdev = np.nanmedian(np.abs(dev))
+        # get the max median asbolute deviation
+        maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
+        # iterate the good mask
+        good &= np.abs(dev/absdev)  < maxdev_threshold
+    # -------------------------------------------------------------------------
+    # then we perform a thresholding with a 5th order polynomial
+    maxabsdev = np.inf
+    # loop around until we are better than threshold
+    while maxabsdev > maxdev_threshold:
+        # get the error fit (1st order polynomial)
+        fit_err_xpix = np.polyfit(xpeak2[good], err_pix[good], 5)
+        # get the deviation from error fit
+        dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
+        # get the median absolute deviation
+        absdev = np.nanmedian(np.abs(dev))
+        # get the max median asbolute deviation
+        maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
+        # iterate the good mask
+        good &= np.abs(dev/absdev)  < maxdev_threshold
+    # -------------------------------------------------------------------------
+    # this relation is the (sigma-clipped) fit between the xpix error
+    #    and xpix along the order. The corresponding correction vector will
+    #    be sent back to the dx grid
+    corr_err_xpix = np.polyval(fit_err_xpix, np.arange(dim2))
+    # -------------------------------------------------------------------------
+    # get the statistics
+    std_dev = np.std(dev)
+    errpix_med = np.nanmedian(err_pix)
+    std_corr = np.std(corr_err_xpix[xpos_predict_int])
+    corr_med = np.nanmedian(corr_err_xpix[xpos_predict_int])
+    cent_fit = np.polyfit(xpeak2[good], fpindex[zp - ipeak[good]], 5)
+    num_fp_cent = np.polyval(cent_fit, dim2//2)
+    # log the statistics
+    wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
+    wmsg1 = '\t\tstddev pixel error relative to fit: {0:.5f} pix'.format(*wargs)
+    wmsg2 = '\t\tabsdev pixel error relative to fit: {1:.5f} pix'.format(*wargs)
+    wmsg3 = '\t\tmedian pixel error relative to zero: {2:.5f} pix'.format(*wargs)
+    wmsg4 = '\t\tstddev applied correction: {3:.5f} pix'.format(*wargs)
+    wmsg5 = '\t\tmed applied correction: {4:.5f} pix'.format(*wargs)
+    wmsg6 = '\t\tNth FP peak at center of order: {5:.5f}'.format(*wargs)
+    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3, wmsg4, wmsg5, wmsg6])
+    # -------------------------------------------------------------------------
+    # save to loc
+    loc['CORR_DX_FROM_FP'][order_num] = corr_err_xpix
+    loc['XPEAK2'][order_num] = xpeak2
+    loc['PEAKVAL2'][order_num] = peakval2
+    loc['EWVAL2'][order_num] = ewval2
+    loc['ERR_PIX'][order_num] = err_pix
+    loc['GOOD_MASK'][order_num] = good
+    # -------------------------------------------------------------------------
+    # return loc
+    return loc
 
 
 
