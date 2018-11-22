@@ -33,7 +33,7 @@ from SpirouDRS import spirouTHORCA
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_SHAPE_spirou.py'
+__NAME__ = 'cal_SHAPE_spirou2.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -45,6 +45,8 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
+# force plot off
+PLOT_PER_ORDER = False
 
 
 # =============================================================================
@@ -94,9 +96,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
     p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['FPFILE'])
-    fiber1 = str(p['FIBER'])
     p, hcfilenames = spirouStartup.MultiFileSetup(p, files=p['HCFILES'])
-    fiber2 = str(p['FIBER'])
+    # set fiber (it doesn't matter with the 2D image but we need this to get
+    # the lamp type for FPFILES and HCFILES, AB == C
+    p['FIBER'] = 'AB'
+    p['FIB_TYP'] = [p['FIBER']]
+    fsource = __NAME__ + '/main()'
+    p.set_sources(['FIBER', 'FIB_TYP'], fsource)
     # set the hcfilename to the first hcfilenames
     hcfitsfilename = hcfilenames[0]
 
@@ -106,25 +112,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # as we have custom arguments need to load the calibration database
     p = spirouStartup.LoadCalibDB(p)
 
-    # ----------------------------------------------------------------------
-    # Have to check that the fibers match
-    # ----------------------------------------------------------------------
-    if fiber1 == fiber2:
-        p['FIBER'] = fiber1
-        fsource = __NAME__ + '/main() & spirouStartup.GetFiberType()'
-        p.set_source('FIBER', fsource)
-    else:
-        emsg = 'Fiber not matching for {0} and {1}, should be the same'
-        eargs = [hcfitsfilename, fpfitsfilename]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
-    # set the fiber type
-    p['FIB_TYP'] = [p['FIBER']]
-    p.set_source('FIB_TYP', __NAME__ + '/main()')
+    # add a force plot off
+    p['PLOT_PER_ORDER'] = PLOT_PER_ORDER
+    p.set_source('PLOT_PER_ORDER', __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
     # Read FP and HC files
     # ----------------------------------------------------------------------
-
     # read and combine all HC files except the first (fpfitsfilename)
     rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
     p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(*rargs)
@@ -162,10 +156,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
+    # p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
     hcdatac = hcdata
 
-    p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
+    # p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
     fpdatac = fpdata
 
     # ----------------------------------------------------------------------
@@ -204,50 +198,48 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
-    p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
+    # p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
+    # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
 
     # ----------------------------------------------------------------------
     # Background computation for HC file
     # ----------------------------------------------------------------------
-    if p['IC_DO_BKGR_SUBTRACTION']:
-        # log that we are doing background measurement
-        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
-        # get the bkgr measurement
-        bdata = spirouBACK.MeasureBackgroundFF(p, hcdata2)
-        background, gridx, gridy, minlevel = bdata
-    else:
-        background = np.zeros_like(hcdata2)
-
-    hcdata2 = hcdata2 - background
-
-    # correct data2 with background (where positive)
-    hcdata2 = np.where(hcdata2 > 0, hcdata2 - background, 0)
+    # if p['IC_DO_BKGR_SUBTRACTION']:
+    #     # log that we are doing background measurement
+    #     WLOG('', p['LOG_OPT'], 'Doing background measurement on HC frame')
+    #     # get the bkgr measurement
+    #     bdata = spirouBACK.MeasureBackgroundFF(p, hcdata2)
+    #     background, gridx, gridy, minlevel = bdata
+    # else:
+    #     background = np.zeros_like(hcdata2)
+    #
+    # hcdata2 = hcdata2 - background
+    #
+    # # correct data2 with background (where positive)
+    # hcdata2 = np.where(hcdata2 > 0, hcdata2 - background, 0)
 
     # save data to loc
-    loc = ParamDict()
     loc['HCDATA'] = hcdata2
     loc.set_source('HCDATA', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Background computation for FP file
     # ----------------------------------------------------------------------
-    if p['IC_DO_BKGR_SUBTRACTION']:
-        # log that we are doing background measurement
-        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
-        # get the bkgr measurement
-        bdata = spirouBACK.MeasureBackgroundFF(p, fpdata2)
-        background, gridx, gridy, minlevel = bdata
-    else:
-        background = np.zeros_like(fpdata2)
-
-    fpdata2 = fpdata2 - background
-
-    # correct data2 with background (where positive)
-    fpdata2 = np.where(fpdata2 > 0, fpdata2 - background, 0)
+    # if p['IC_DO_BKGR_SUBTRACTION']:
+    #     # log that we are doing background measurement
+    #     WLOG('', p['LOG_OPT'], 'Doing background measurement on FP frame')
+    #     # get the bkgr measurement
+    #     bdata = spirouBACK.MeasureBackgroundFF(p, fpdata2)
+    #     background, gridx, gridy, minlevel = bdata
+    # else:
+    #     background = np.zeros_like(fpdata2)
+    #
+    # fpdata2 = fpdata2 - background
+    #
+    # # correct data2 with background (where positive)
+    # fpdata2 = np.where(fpdata2 > 0, fpdata2 - background, 0)
 
     # save data to loc
-    loc = ParamDict()
     loc['FPDATA'] = fpdata2
     loc.set_source('FPDATA', __NAME__ + '/main()')
 
@@ -285,7 +277,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get master wave map
     masterwavefile = spirouDB.GetDatabaseMasterWave(p)
     # log process
-    wmsg1 = 'Shifting transmission map on to master wavelength grid'
+    wmsg1 = 'Getting master wavelength grid'
     wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
     WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
     # Force A and B to AB solution
@@ -325,15 +317,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Plotting
     # ------------------------------------------------------------------
-    if p['DRS_PLOT']:
+    if p['DRS_PLOT'] and p['DRS_DEBUG'] < 2:
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
-        # plot the shape process for each order
-        if p['DRS_DEBUG'] == 2:
-            sPlt.slit_shape_angle_plot(p, loc, mode='all')
         # plot the shape process for one order
-        else:
-            sPlt.slit_shape_angle_plot(p, loc, mode='single')
+        sPlt.slit_shape_angle_plot(p, loc)
         # end interactive section
         sPlt.end_interactive_session()
 
