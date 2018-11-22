@@ -629,43 +629,57 @@ def slit_tilt_angle_and_fit_plot(loc):
     end_plotting()
 
 
-def slit_shape_angle_plot(p, loc, mode='all'):
+def slit_shape_angle_plot(p, loc, bnum=None, order=None):
 
     # get constants from p
     sorder = p['SHAPE_SELECTED_ORDER']
-    nbo = loc['NUMBER_ORDERS'] // 2
     nbanana = p['SHAPE_NUM_ITERATIONS']
     width = p['SHAPE_ABC_WIDTH']
 
     # get data from loc
+    nbo = loc['NUMBER_ORDERS'] // 2
     slope_deg_arr, slope_arr = loc['SLOPE_DEG'], loc['SLOPE']
     s_keep_arr, xsection_arr = loc['S_KEEP'], loc['XSECTION']
     ccor_arr, ddx_arr = loc['CCOR'], loc['DDX']
     dx_arr, dypix_arr, c_keep_arr = loc['DX'], loc['DYPIX'], loc['C_KEEP']
     # get the dimensions
-    dim0, dim1 = loc['DATA'].shape
+    dim0, dim1 = loc['HCDATA'].shape
 
-    # get list of orders for for loop
-    if mode == 'all':
-        orders = np.arange(nbo)
-        plt.ioff()
+    if (bnum is not None) and (order is not None):
+        orders = np.array([order])
+        bananas = np.array([bnum])
+        special = True
     else:
         orders = np.array([sorder])
+        bananas = range(nbanana)
+        special = False
 
     # loop around orders
     for order_num in orders:
         # iterating the correction, from coarser to finer
-        for banana_num in range(nbanana):
+        for banana_num in bananas:
             # get this iterations parameters
-            slope_deg = slope_deg_arr[banana_num][order_num]
-            slope = slope_arr[banana_num][order_num]
-            s_keep = s_keep_arr[banana_num][order_num]
-            xsection = xsection_arr[banana_num][order_num]
-            ccor = ccor_arr[banana_num][order_num]
-            ddx = ddx_arr[banana_num][order_num]
-            dx = dx_arr[banana_num][order_num]
-            dypix = dypix_arr[banana_num][order_num]
-            c_keep = c_keep_arr[banana_num][order_num]
+            if special:
+                slope_deg = slope_deg_arr
+                slope = slope_arr
+                s_keep = s_keep_arr
+                xsection = xsection_arr
+                ccor = ccor_arr
+                ddx = ddx_arr
+                dx = dx_arr
+                dypix = dypix_arr
+                c_keep = c_keep_arr
+            else:
+                slope_deg = slope_deg_arr[banana_num][order_num]
+                slope = slope_arr[banana_num][order_num]
+                s_keep = s_keep_arr[banana_num][order_num]
+                xsection = xsection_arr[banana_num][order_num]
+                ccor = ccor_arr[banana_num][order_num]
+                ddx = ddx_arr[banana_num][order_num]
+                dx = dx_arr[banana_num][order_num]
+                dypix = dypix_arr[banana_num][order_num]
+                c_keep = c_keep_arr[banana_num][order_num]
+
             # set up fig
             plt.figure()
             # clear the current figure
@@ -698,17 +712,52 @@ def slit_shape_angle_plot(p, loc, mode='all'):
             title = 'Iteration {0} - Order {1}'
             plt.suptitle(title.format(banana_num, order_num))
 
-        # if mode = 'all' show the graphs each time
-        if mode == 'all':
-            plt.show()
-            plt.close()
 
     # if mode is single end properly else if all turn back on interactive mode
-    if mode == 'single':
+    if special:
+        pass
+    else:
         # end plotting function properly
         end_plotting()
-    else:
-        plt.ion()
+
+
+def slit_shape_offset_plot(p, loc, bnum=None, order=None):
+    # get data from loc
+    corr_err_xpix_arr = loc['CORR_DX_FROM_FP']
+    xpeak2_arr = loc['XPEAK2']
+    err_pix_arr = loc['ERR_PIX']
+    goodmask_arr = loc['GOOD_MASK']
+    dim0, dim1 = loc['HCDATA'].shape
+    order_num, banana_num = order, bnum
+
+    # get this iterations parameters
+    corr_err_xpix = corr_err_xpix_arr[order_num]
+    xpeak2= xpeak2_arr[order_num]
+    err_pix = err_pix_arr[order_num]
+    good = goodmask_arr[order_num]
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame = plt.subplot(111)
+    # ----------------------------------------------------------------
+    # plot
+    # ----------------------------------------------------------------
+    frame.plot(xpeak2, err_pix, color='r', linestyle='None', marker='.',
+               label='err pixel')
+    frame.plot(xpeak2[good], err_pix[good], color='g', linestyle='None',
+               marker='.', label='err pixel (for fit)')
+    frame.plot(np.arange(dim1), corr_err_xpix, color='k',
+               label='fit to err pix')
+    # ----------------------------------------------------------------
+    # labels, title, and legend
+    # ----------------------------------------------------------------
+    title = 'Iteration {0} - Order {1}'.format(banana_num, order_num)
+    frame.set(xlabel='Pixel', ylabel='Err Pixel', title=title)
+    frame.legend(loc=0)
+
+
 
 
 # =============================================================================
