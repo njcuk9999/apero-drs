@@ -219,29 +219,33 @@ def read_table(filename, fmt, colnames=None, **kwargs):
     # check that format in format_table
     if fmt not in ftable['Format']:
         emsg1 = 'fmt={0} not valid for astropy.table reading'
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        emsg2 = '    file = {0}'.format(filename)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             emsg1 = 'fmt={0} cannot be read by astropy.table'
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            emsg2 = '    file = {0}'.format(filename)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
     # check that filename exists
     if not os.path.exists(filename):
         emsg1 = 'File {0} does not exist'
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        emsg2 = '    file = {0}'.format(filename)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
 
     # try to load file using astropy table
     try:
         table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
         emsg1 = ' Error {0}: {1}'.format(type(e), e)
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        emsg2 = '    file = {0}'.format(filename)
+        emsg3 = '    function = {0}'.format(func_name)
+        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
         table = None
 
     # if we have colnames rename the columns
@@ -250,8 +254,9 @@ def read_table(filename, fmt, colnames=None, **kwargs):
             emsg1 = ('Number of columns ({0}) not equal to number of '
                      'columns in table ({1})'
                      ''.format(len(colnames), len(table.colnames)))
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            emsg2 = '    file = {0}'.format(filename)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
