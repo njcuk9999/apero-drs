@@ -79,7 +79,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
                                                         last_multi=True)
     else:
-        customargs = dict(hcfile=hcfile, fpfile=fpfiles)
+        customargs = dict(hcfile=hcfile, fpfiles=fpfiles)
 
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
