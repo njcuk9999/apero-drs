@@ -2138,15 +2138,25 @@ def INDEX_OUTPUT_FILENAME():
 
 # noinspection PyPep8Naming
 def OUTPUT_FILE_HEADER_KEYS(p):
+    """
+    Output file header keys.
+
+    This list is the master list and RAW_OUTPUT_COLUMNS, REDUC_OUTPUT_COLUMNS
+    etc must be in this list
+    :param p:
+    :return:
+    """
     # Get required header keys from spirouKeywords.py (via p)
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0],
+                   p['KW_DPRTYPE'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0],
                    p['KW_CMPLTEXP'][0],
@@ -2157,8 +2167,11 @@ def OUTPUT_FILE_HEADER_KEYS(p):
 
 # noinspection PyPep8Naming
 def RAW_OUTPUT_COLUMNS(p):
+    func_name = __NAME__ + '.RAW_OUTPUT_COLUMNS()'
+    # define selected keys
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2168,16 +2181,35 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_CDEN'][0],
                    p['KW_CMPLTEXP'][0],
                    p['KW_NEXP'][0]]
+    # check in master list
+    masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
+    for key in output_keys:
+        if key not in OUTPUT_FILE_HEADER_KEYS(p):
+            emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            raise ValueError(emsg1 + '\n' + emsg2)
+    # return keys
     return output_keys
 
 
 # noinspection PyPep8Naming
 def REDUC_OUTPUT_COLUMNS(p):
+    func_name = __NAME__ + '.RAW_OUTPUT_COLUMNS()'
+
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0]]
+    # check in master list
+    masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
+    for key in output_keys:
+        if key not in OUTPUT_FILE_HEADER_KEYS(p):
+            emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            raise ValueError(emsg1 + '\n' + emsg2)
+    # return keys
     return output_keys
 
 
@@ -2185,6 +2217,7 @@ def REDUC_OUTPUT_COLUMNS(p):
 def GEN_OUTPUT_COLUMNS(p):
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
