@@ -5413,3 +5413,61 @@
 	- add test files to misc (rev.e50431cb)
 	- add Etiennes files in misc folder (rev.5d9698d8)
 	- Runs - update the unit tests (rev.e4f1a9b7)
+
+
+
+================================================================================
+* Wed Nov 21 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.064
+
+================================================================================
+	- add copy of old xt code (to compare with new one for changes) (rev.1218e840)
+	- add function: read_cavity_length, get_shape_map2, get_offset_sp for new shape code (rev.99f7a855)
+	- spirouConst.py - add new file definitions (rev.c9045df7)
+	- output_keys.py - add defintions for shape sanity check debug files (rev.058679ad)
+	- notes on etiennes codes - no real changes just comments (rev.0b376319)
+	- constants_SPIROU_H4RG.py - modify SHAPE constants to for new shape code (rev.1801851a)
+	- obj_mk_tellu.py - fix copy of code - redundant (rev.e1a1d7f3)
+	- cal_SHAPE_spirou2.py - modification of cal_SHAPE_spirou.py with changes to cal_shape needed (rev.9467b289)
+	- spirouBERV.py - fix bug in berv code - non-objects should not look for star parameters (rev.de5e6cc5)
+
+
+
+================================================================================
+* Thu Nov 22 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.065
+
+================================================================================
+	- spirouTable.py - updated the error outputs to include filename (rev.8d78f0f0)
+	- spirouImage.py - continued to modify get_offset_sp and get_shape_file2 (for new SHAPE code) (rev.8dcde75d)
+	- spirouPlot.py - adjusted slit_shape_angle_plot and added slit_shape_offset_plot (for new SHAPE recipe) (rev.02eacc31)
+	- spirouMath.py - adjusted problem in gauss_fit_s file "correction = (x - np.mean(x)) * slope" --> "correction = (x - x0) * slope" (rev.593b0493)
+	- updated the catalogue_UNe.dat file and added cavity_length.dat file (for new SHAPE code) (rev.3e291d5f)
+	- master_tellu_SPIROU.txt - updated the master calibdb with the new MASTER_WAVE.fits (rev.135870af)
+	- master_calib_SPIROU.txt - updated the master calibdb with the new MASTER_WAVE.fits (rev.04ab9bb4)
+	- recipe_control.txt - added cal_SHAPE_spirou2 to the recipe control (with two arguments for FP_FP and HC_HC files - pp fits not e2ds!) (rev.ab4a4df5)
+	- constants_SPIROU_H4RG.py - added new constants and modified constants changed by Etienne (rev.5aeeac6d)
+	- cal_SHAPE_spirou2.py - continued work on adapting Etiennes changes into cal_SHAPE (rev.5011215e)
+
+
+
+================================================================================
+* Fri Nov 23 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.066
+
+================================================================================
+	- spirouFits.py - fix bug with hdict being empty (possible on some writes) (rev.505b1705)
+
+
+
+================================================================================
+* Sat Nov 24 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.067
+
+================================================================================
+	- Cal_Test.run - add cal_SHAPE_spirou2 to Cal_Test.run (rev.c04b93a9)
+	- unit tests: add cal_SHAPE_spirou2 to unit test definition (rev.9d48194d)
+	- spirouImage.py - update get_shape_map2 and get_offset_sp in-line with Etienne's changes (rev.8c29b9e5)
+	- spirouPlot.py - update new shape plots in-ilne with Etiennes changes (rev.90d51ec7)
+	- spirouMath.py - update "gauss_fit_s" (Etienne updated it) (rev.1338156b)
+	- spirouKeywords.py - add extra keys (for index.fits) and for wave-list in bigcubes (rev.a8114448)
+	- spirouConst.py - update acquisition of filenames now we have "HCFILE" and "FPFILES" (not "HCFILES" and "FPFILE") (rev.f9756ecc)
+	- constants_SPIROU_H4RG.py - update constants inline with Etiennes changes (rev.9054d7d2)
+	- obj_mk_obj_template.py - list wave files in header (along with file name and berv) for big cube (rev.a50cab72)
+	- cal_SHAPE_spirou2.py - continued work on shape upgrade + now 1 hcfile and multiple fp files (rev.f351dfa3)
