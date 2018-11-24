@@ -937,7 +937,7 @@ def SLIT_SHAPE_IN_HC_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['HCFILES'][0]
+    oldfilename = p['HCFILE']
     # construct prefix
     prefix = 'SHAPE-DEBUG-StartingHC_'
     # construct new filename and full path
@@ -955,7 +955,7 @@ def SLIT_SHAPE_OUT_HC_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     # get filename
-    oldfilename = p['HCFILES'][0]
+    oldfilename = p['HCFILE']
     # construct prefix
     prefix = 'SHAPE-DEBUG-CorrectedHC_'
     # construct new filename and full path
@@ -2148,7 +2148,9 @@ def OUTPUT_FILE_HEADER_KEYS(p):
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0],
                    p['KW_OUTPUT'][0],
-                   p['KW_EXT_TYPE'][0]]
+                   p['KW_EXT_TYPE'][0],
+                   p['KW_CMPLTEXP'][0],
+                   p['KW_NEXP'][0]]
     # return output_keys
     return output_keys
 
@@ -2163,7 +2165,9 @@ def RAW_OUTPUT_COLUMNS(p):
                    p['KW_DPRTYPE'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
-                   p['KW_CDEN'][0]]
+                   p['KW_CDEN'][0],
+                   p['KW_CMPLTEXP'][0],
+                   p['KW_NEXP'][0]]
     return output_keys
 
 
