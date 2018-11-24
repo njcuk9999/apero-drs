@@ -44,7 +44,8 @@ TEST_RUN = False
 TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
-
+DATECOL = 'MJDATE'
+DATECOL = 'LAST_MODIFIED'
 
 # -----------------------------------------------------------------------------
 
@@ -78,6 +79,11 @@ def skip_done_raw_files(p, filelist):
     donepath = p['DRS_DATA_WORKING']
     # define path to raw folder
     rawpath = p['DRS_DATA_RAW']
+    # deal with ending /
+    while rawpath.endswith(os.path.sep):
+        rawpath = rawpath[:-1]
+    while donepath.endswith(os.path.sep):
+        donepath = donepath[:-1]
     # storage
     newfilelist = []
     # loop around files
@@ -137,6 +143,10 @@ def get_night_name(path, filelist):
 def get_control_index(control, index_file, recipe, fdprtypes=None):
     # load index file
     index = Table.read(index_file)
+
+    if recipe == 'cal_preprocess_spirou':
+        return control, index
+
     # mask control file by recipe name
     cmask = np.array(control['Recipe']) == recipe
     control = control[cmask]
@@ -165,11 +175,15 @@ def get_file_args(p, control, vindex, recipe, limit=None):
     # get the files in index that match the correct arguments
     args = []
     numbers = []
+    sequences = []
+    totals = []
     # loop around control
     for row in range(len(control)):
         # get parameters from control
         number = control['number'][row]
         dprtype = control['dprtype'][row]
+        sequence = control['cmpltexp'][row]
+        total = control['nexp'][row]
         # construct a mask of files
         if dprtype == 'None':
             filemask = np.ones(len(vindex), dtype=bool)
@@ -191,8 +205,10 @@ def get_file_args(p, control, vindex, recipe, limit=None):
         # append to lists
         args.append(values)
         numbers.append(number)
+        sequences.append(sequence)
+        totals.append(total)
     # return args
-    return args, numbers
+    return args, numbers, sequences, totals
 
 
 def add_files(p, night, filelist, numbers, combine=False):
@@ -236,20 +252,19 @@ def add_files(p, night, filelist, numbers, combine=False):
     return combinations
 
 
-def printrun(*args):
-    printstring = ''
-    for arg in args:
-        printstring += '{0}\t'.format(arg)
-    TEST_STORE.append(printstring)
+def printrun(arg):
+    TEST_STORE.append(arg)
 
 
 def print_runs(p, combinations, recipe):
     # loop around combinations
     for it, combination in enumerate(combinations):
-        # log progress
-        printrun(recipe, ' '.join(list(combination)))
 
-        print(p['LOG_OPT'], recipe, combination)
+        command = 'run0000 = {0}'
+        clist = [recipe] + list(np.array(combination).astype(str))
+        # log progress
+        printrun(command.format(clist))
+        print(command.format(clist))
 
 
 def manage_runs(p, lls, combinations, recipe, night):
@@ -323,6 +338,49 @@ def ask(message):
     return user_input
 
 
+def get_groups(vindex):
+
+    date = vindex[DATECOL]
+    dprtypes = vindex['DPRTYPE']
+    raw_seqs = vindex['CMPLTEXP']
+    seqs = np.zeros(len(raw_seqs)).astype(int)
+    # mask out '--'
+    for it in range(len(raw_seqs)):
+        try:
+            seqs[it] = int(raw_seqs[it])
+        except:
+            pass
+
+    # sort vindex by date
+    vindex = vindex[np.argsort(date)]
+
+
+    groupnames = np.unique(dprtypes)
+    allgroups = dict()
+
+    for groupname in groupnames:
+        # build a mask for this group
+        groupmask = np.where(groupname == dprtypes)[0]
+        # group by CMPLTEXP and NEXP
+        last_seq = 0
+        groups, group = [], []
+        for row in range(len(vindex)):
+            if row not in groupmask:
+                continue
+            if seqs[row] < last_seq:
+                groups.append(group)
+                group = []
+            group.append(row)
+            last_seq = seqs[row]
+        if len(group) != 0:
+            groups.append(group)
+        # add indices to allgroups
+        allgroups[groupname] = groups
+
+    return allgroups
+
+
+
 # =============================================================================
 # trigger functions
 # =============================================================================
@@ -336,7 +394,8 @@ def trigger_preprocess(p, filelist):
     # loop around files
     lls = []
     for it in range(len(night_names)):
-        if printrun:
+        if TEST_RUN:
+            print_runs(p, )
             print('cal_preprocess', ' '.join([night_names[it], filenames[it]]))
         else:
             # log progress
@@ -399,17 +458,367 @@ def trigger_main(p, loc, recipe, limit=None, combine=False, fdprtypes=None):
         # get the control and index for this
         control, vindex = get_control_index(fullcontrol, index_file, recipe,
                                             fdprtypes)
-        # get the files expected
-        args, numbers = get_file_args(p, control, vindex, recipe, limit)
-        # add files
-        combinations = add_files(p, night_name, args, numbers, combine)
+        # make sure MJDATE is float
+        vindex[DATECOL] = np.array(vindex[DATECOL]).astype(float)
+        # make the runs
+        runs = trigger_runs(p, recipe, night_name, control, vindex)
         # manage the running of this recipe
         if TEST_RUN:
-            print_runs(p, combinations, recipe)
+            print_runs(p, runs, recipe)
         else:
-            lls = manage_runs(p, lls, combinations, recipe, night_name)
+            lls = manage_runs(p, lls, runs, recipe, night_name)
     # return local spaces and errors
     return lls
+
+
+def trigger_runs(p, recipe, night_name, control, vindex):
+
+    # define groups of different objects
+    groups = get_groups(vindex)
+
+    # manually deal with recipes separately # TODO: change
+    if recipe == 'cal_BADPIX_spirou':
+        return cal_badpix_spirou(night_name, vindex, groups)
+
+    if recipe == 'cal_DARK_spirou':
+        return cal_dark_spirou(night_name, vindex, groups)
+
+    if recipe == 'cal_loc_RAW_spirou':
+        return cal_loc_raw_spirou(night_name, vindex, groups)
+
+    if recipe == 'cal_SLIT_spirou':
+        return cal_slit_spirou(night_name, vindex, groups)
+
+    if recipe == 'cal_SHAPE_spirou':
+        return cal_shape_spirou(night_name, vindex, groups)
+
+    if recipe == 'cal_SHAPE_spirou2':
+        return cal_shape_spirou2(night_name, vindex, groups)
+
+    if recipe == 'cal_FF_RAW_spirou':
+        return cal_ff_raw_spirou(night_name, vindex, groups)
+
+    if recipe == 'cal_extract_RAW_spirou':
+        return cal_extract_raw_spirou(night_name, vindex, groups)
+
+    return []
+
+
+# =============================================================================
+# recipe functions
+# =============================================================================
+def cal_badpix_spirou(night_name, vindex, groups):
+    """
+    for cal_badpix we need 1 dark_dark and 1 flat_flat
+    we need to match the groups by date
+    we need to choose the last file in the dark_dark and flat_flat groups
+    """
+    # get the dark_dark files
+    if 'DARK_DARK' in groups:
+        dark_groups = groups['DARK_DARK']
+        dark_dates = get_group_vindex(vindex, dark_groups, DATECOL)
+        dark_files = get_group_vindex(vindex, dark_groups, 'FILENAME')
+        num_dark_groups = len(dark_dates)
+        mean_dark_dates = get_group_mean(dark_dates)
+
+    else:
+        WLOG('warning', '', 'DARK_DARK not in groups')
+        return []
+
+    # get the flat_flat files
+    if 'FLAT_FLAT' in groups:
+        flat_groups = groups['FLAT_FLAT']
+        flat_dates = get_group_vindex(vindex, flat_groups, DATECOL)
+        flat_files = get_group_vindex(vindex, flat_groups, 'FILENAME')
+        num_flat_groups = len(dark_dates)
+        mean_flat_dates = get_group_mean(flat_dates)
+    else:
+        WLOG('warning', '', 'FLAT_FLAT not in groups')
+        return []
+
+    # runs
+    runs = []
+    # match dark groups and flat groups
+    if num_dark_groups > num_flat_groups:
+        for num in range(num_flat_groups):
+            # find dark group closest
+            date_dist = mean_flat_dates[num] - np.array(mean_dark_dates)
+            pos = np.argmin(np.abs(date_dist))
+            myrun = [night_name, flat_files[num][-1], dark_files[pos][-1]]
+            runs.append(myrun)
+    else:
+        for num in range(num_dark_groups):
+            # find dark group closest
+            date_dist = mean_dark_dates[num] - np.array(mean_flat_dates)
+            pos = np.argmin(np.abs(date_dist))
+            myrun = [night_name, flat_files[pos][-1], dark_files[num][-1]]
+            runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_dark_spirou(night_name, vindex, groups):
+    """
+    for cal_dark we need all but the first dark in a sequence (unless there
+    is only one dark file)
+
+    """
+    # get the dark_dark files
+    if 'DARK_DARK' in groups:
+        dark_groups = groups['DARK_DARK']
+        dark_files = get_group_vindex(vindex, dark_groups, 'FILENAME')
+        num_dark_groups = len(dark_files)
+    else:
+        WLOG('warning', '', 'DARK_DARK not in groups')
+        return []
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(num_dark_groups):
+        if len(dark_files[num]) == 1:
+            myrun = [night_name] + dark_files[num]
+        else:
+             myrun = [night_name] + dark_files[num][1:]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_loc_raw_spirou(night_name, vindex, groups):
+    """
+    for cal_loc_raw_spirou we need to do all the flat_dark groups and
+    all of the dark_flat groups separately, we need to use all files except
+    the first unless there is only one file
+
+    """
+    # get the flat_dark files
+    if 'FLAT_DARK' in groups:
+        flat_dark_groups = groups['FLAT_DARK']
+        flat_dark_files = get_group_vindex(vindex, flat_dark_groups, 'FILENAME')
+        num_flat_dark_groups = len(flat_dark_files)
+    else:
+        num_flat_dark_groups = 0
+        flat_dark_files = []
+    # get the flat_dark files
+    if 'DARK_FLAT' in groups:
+        dark_flat_groups = groups['DARK_FLAT']
+        dark_flat_files = get_group_vindex(vindex, dark_flat_groups, 'FILENAME')
+        num_dark_flat_groups = len(dark_flat_files)
+    else:
+        dark_flat_files = []
+        num_dark_flat_groups = 0
+
+    if len(dark_flat_files) == 0 and len(flat_dark_files) == 0:
+        WLOG('warning', '', 'Must have FLAT_DARK or DARK_FLAT files in group')
+        return []
+
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(num_flat_dark_groups):
+        if len(flat_dark_files[num]) == 1:
+            myrun = [night_name] + flat_dark_files[num]
+        else:
+             myrun = [night_name] + flat_dark_files[num][1:]
+        runs.append(myrun)
+    # push all from group into file
+    for num in range(num_dark_flat_groups):
+        if len(dark_flat_files[num]) == 1:
+            myrun = [night_name] + dark_flat_files[num]
+        else:
+             myrun = [night_name] + dark_flat_files[num][1:]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_slit_spirou(night_name, vindex, groups):
+    # get the dark_dark files
+    if 'FP_FP' in groups:
+        fp_fp_groups = groups['FP_FP']
+        fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
+        num_fp_fp_groups = len(fp_fp_files)
+    else:
+        WLOG('warning', '', 'FP_FP not in groups')
+        return []
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(num_fp_fp_groups):
+        if len(fp_fp_files[num]) == 1:
+            myrun = [night_name] + fp_fp_files[num]
+        else:
+             myrun = [night_name] + fp_fp_files[num][1:]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_shape_spirou(night_name, vindex, groups):
+    """
+    for cal_shape_spirou we use all the fp_fp files except the first (unless
+    there is only one fp_fp file)
+    """
+    # get the dark_dark files
+    if 'FP_FP' in groups:
+        fp_fp_groups = groups['FP_FP']
+        fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
+        num_fp_fp_groups = len(fp_fp_files)
+    else:
+        WLOG('warning', '', 'FP_FP not in groups')
+        return []
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(num_fp_fp_groups):
+        if len(fp_fp_files[num]) == 1:
+            myrun = [night_name] + fp_fp_files[num]
+        else:
+             myrun = [night_name] + fp_fp_files[num][1:]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_shape_spirou2(night_name, vindex, groups):
+    """
+    for cal_shape_spirou2 we need to match hc groups to fp groups
+    we need to use the last hc of a group and all but the first fp_fp in a
+    sequence (unless there is only fp_fp file)
+    """
+    # get the dark_dark files
+    if 'FP_FP' in groups:
+        fp_fp_groups = groups['FP_FP']
+        fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
+        fp_fp_dates = get_group_vindex(vindex, fp_fp_groups, DATECOL)
+        num_fp_fp_groups = len(fp_fp_files)
+        mean_fp_fp_dates = get_group_mean(fp_fp_dates)
+    else:
+        WLOG('warning', '', 'FP_FP not in groups')
+        return []
+
+    if 'HCONE_HCONE' in groups:
+        hc_hc_groups = groups['HCONE_HCONE']
+        hc_hc_files = get_group_vindex(vindex, hc_hc_groups, 'FILENAME')
+        hc_hc_dates = get_group_vindex(vindex, hc_hc_groups, DATECOL)
+        num_hc_hc_groups = len(hc_hc_files)
+        mean_hc_hc_dates = get_group_mean(hc_hc_dates)
+    else:
+        WLOG('warning', '', 'HCONE_HCONE not in groups')
+        return []
+    # runs
+    runs = []
+    # match dark groups and flat groups
+    for num in range(num_hc_hc_groups):
+        # find dark group closest
+        date_dist = mean_hc_hc_dates[num] - np.array(mean_fp_fp_dates)
+        pos = np.argmin(np.abs(date_dist))
+
+        if len(fp_fp_files[pos]) == 1:
+            myrun = [night_name, hc_hc_files[num][-1]] + fp_fp_files[pos]
+        else:
+            myrun = [night_name, hc_hc_files[num][-1]] + fp_fp_files[pos][1:]
+        runs.append(myrun)
+
+    # return runs
+    return runs
+
+
+def cal_ff_raw_spirou(night_name, vindex, groups):
+    """
+    for cal_ff_raw_spirou we use all the flat_flat files except the first
+    (unless there is only one fp_fp file)
+    """
+    # get the dark_dark files
+    if 'FLAT_FLAT' in groups:
+        flat_flat_groups = groups['FLAT_FLAT']
+        flat_flat_files = get_group_vindex(vindex, flat_flat_groups, 'FILENAME')
+        num_flat_flat_groups = len(flat_flat_files)
+    else:
+        WLOG('warning', '', 'FLAT_FLAT not in groups')
+        return []
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(num_flat_flat_groups):
+        if len(flat_flat_files[num]) == 1:
+            myrun = [night_name] + flat_flat_files[num]
+        else:
+             myrun = [night_name] + flat_flat_files[num][1:]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_extract_raw_spirou(night_name, vindex, groups):
+    """
+    for cal_extract_raw_spirou we just separate files and run each
+    separately
+    """
+    # get the dark_dark files
+    filelist = []
+    for group in groups:
+        file_groups = groups[group]
+        for subgroup in file_groups:
+            filelist += get_group_vindex(vindex, subgroup, 'FILENAME')
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(len(filelist)):
+        myrun = [night_name, filelist[num]]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+
+# =============================================================================
+# group functions
+# =============================================================================
+def get_group_vindex(vindex, group, col=None):
+
+
+    # case 1 we have an integer as a group
+    if type(group) == int:
+        if col is None:
+            return vindex[group]
+        else:
+            return vindex[group][col]
+
+    if type(group) == list:
+        # case 2 we have a list of ints as a group
+        if type(group[0]) == int:
+            rlist = []
+            for row in range(len(group)):
+                if col is None:
+                    rlist.append(vindex[group[row]])
+                else:
+                    rlist.append(vindex[group[row]][col])
+            return rlist
+        # case 3 we have a list of list as a group
+        if type(group[0]) == list:
+            rlist = []
+            for it in range(len(group)):
+                rit_list = []
+                for row in range(len(group[it])):
+                    if col is None:
+                        rit_list.append(vindex[group[it][row]])
+                    else:
+                        rit_list.append(vindex[group[it][row]][col])
+                rlist.append(rit_list)
+            return rlist
+
+def get_group_mean(group):
+    if type(group) == int:
+        return group
+    if type(group) == list:
+        if type(group[0]) == int:
+            return np.mean(group)
+        if type(group[0]) == list:
+            rlist = []
+            for it in range(len(group)):
+                rlist.append(np.mean(group[it]))
+            return rlist
 
 
 # =============================================================================
@@ -474,20 +883,24 @@ def main(night_name=None):
     WLOG('', p['LOG_OPT'], 'Running triggers')
 
     # 1. cal_BADPIX_spirou.py
-    badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
+    ## badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
     # 2. cal_DARK_spirou.py
-    dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou', combine=True)
+    ##dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou', combine=True)
     # 3. cal_loc_RAW_spirou.py
-    loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
+    ##loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
     # 4. cal_SLIT_spirou.py
-    slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
+    ##slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
     # 5. cal_SHAPE_spirou.py
-    shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou', combine=True)
+    shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2', combine=True)
     # 6. cal_FF_RAW_spirou.py
     flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
     # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
     hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                             fdprtypes=['HCONE_HCONE', 'FP_FP'])
+    # 8. extract objects
+    obj_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                           fdprtypes=['OBJ_FP', 'OBJ_OBJ'])
+
     # 8. cal_WAVE_E2DS_RAW_spirou.py
     # wave_lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_EA_spirou',
     #                         limit=1)
