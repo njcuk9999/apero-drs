@@ -43,16 +43,16 @@ def get_earth_velocity_correction(p, loc, hdr):
         loc['BERV_MAX'] = hdr[p['KW_BERV_MAX'][0]]
         return p, loc
 
+    # Get the OBSTYPE for file (from hdr)
+    p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
     # -----------------------------------------------------------------------
     #  Earth Velocity calculation only if OBSTYPE = OBJECT (NOT A CALIBRATION)
     # -----------------------------------------------------------------------
     # if p['IC_IMAGE_TYPE'] == 'H4RG':
     if p['IC_IMAGE_TYPE'] == 'H4RG' and p['OBSTYPE'] == 'OBJECT':
-
         # ----------------------------------------------------------------------
         # Read star parameters
         # ----------------------------------------------------------------------
-        p = spirouImage.get_param(p, hdr, 'KW_OBSTYPE', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_OBJRA', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_OBJDEC', dtype=str)
         p = spirouImage.get_param(p, hdr, 'KW_OBJEQUIN')
