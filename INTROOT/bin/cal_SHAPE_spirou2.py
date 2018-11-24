@@ -52,7 +52,7 @@ PLOT_PER_ORDER = False
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, fpfile=None, hcfiles=None):
+def main(night_name=None, hcfile=None, fpfiles=None):
     """
     cal_SLIT_spirou.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -74,29 +74,22 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    if hcfiles is None or fpfile is None:
-        names, types = ['fpfile', 'hcfiles'], [str, str]
+    if hcfile is None or fpfiles is None:
+        names, types = ['hcfile', 'fpfiles'], [str, str]
         customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
                                                         last_multi=True)
     else:
-        customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
+        customargs = dict(hcfile=hcfile, fpfile=fpfiles)
 
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
-                                    mainfitsfile='hcfiles')
-
-    # make sure we only have one HCFILE more than one is not currently
-    # supported
-    # TODO: Fix problem with updating output and then remove this
-    if len(p['HCFILES']) > 1:
-        emsg = 'Currently we do not support multiple HCFILES'
-        WLOG('error', p['LOG_OPT'], emsg)
+                                    mainfitsfile='fpfiles')
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
     # ----------------------------------------------------------------------
-    p, fpfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['FPFILE'])
-    p, hcfilenames = spirouStartup.MultiFileSetup(p, files=p['HCFILES'])
+    p, hcfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['HCFILE'])
+    p, fpfilenames = spirouStartup.MultiFileSetup(p, files=p['FPFILES'])
     # set fiber (it doesn't matter with the 2D image but we need this to get
     # the lamp type for FPFILES and HCFILES, AB == C
     p['FIBER'] = 'AB'
@@ -104,7 +97,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     fsource = __NAME__ + '/main()'
     p.set_sources(['FIBER', 'FIB_TYP'], fsource)
     # set the hcfilename to the first hcfilenames
-    hcfitsfilename = hcfilenames[0]
+    fpfitsfilename = fpfilenames[0]
 
     # ----------------------------------------------------------------------
     # Once we have checked the e2dsfile we can load calibDB
@@ -119,11 +112,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # Read FP and HC files
     # ----------------------------------------------------------------------
-    # read and combine all HC files except the first (fpfitsfilename)
-    rargs = [p, 'add', hcfitsfilename, hcfilenames[1:]]
-    p, hcdata, hchdr, hccdr = spirouImage.ReadImageAndCombine(*rargs)
-    # read first file (fpfitsfilename)
-    fpdata, fphdr, fpcdr, _, _ = spirouImage.ReadImage(p, fpfitsfilename)
+    # read and combine all FP files except the first (fpfitsfilename)
+    rargs = [p, 'add', fpfitsfilename, fpfilenames[1:]]
+    p, fpdata, fphdr, fpcdr = spirouImage.ReadImageAndCombine(*rargs)
+    # read first file (hcfitsfilename)
+    hcdata, hchdr, hccdr, _, _ = spirouImage.ReadImage(p, hcfitsfilename)
 
     # add data and hdr to loc
     loc = ParamDict()
@@ -158,6 +151,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
     hcdatac = hcdata
+    p['DARKFILE'] = 'None'
 
     # p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
     fpdatac = fpdata
@@ -200,6 +194,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ----------------------------------------------------------------------
     # p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
     # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
+    p['BADPFILE1'] = 'None'
+    p['BADPFILE2'] = 'None'
 
     # ----------------------------------------------------------------------
     # Background computation for HC file
@@ -317,7 +313,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Plotting
     # ------------------------------------------------------------------
-    if p['DRS_PLOT'] and p['DRS_DEBUG'] < 2:
+    if p['DRS_PLOT']:
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
         # plot the shape process for one order
@@ -337,8 +333,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wmsg = 'Saving shape information in file: {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(shapefitsname))
     # Copy keys from fits file
-    # Copy keys from fits file
-    hdict = spirouImage.CopyOriginalKeys(fphdr, hccdr)
+    hdict = spirouImage.CopyOriginalKeys(fphdr, fpcdr)
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
@@ -346,6 +341,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
     hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_HCFILE'], value=p['HCFILE'])
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_INFILELIST'],
+                                     values=p['FPFILES'], dim1name='fpfile')
     hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
     # write tilt file to file
     p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
@@ -365,19 +363,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
         # write input fp file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
-        p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA'])
+        p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA'], hdict)
         # write output fp file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-        p = spirouImage.WriteImage(p, output_fp_file, loc['FPDATA2'])
+        p = spirouImage.WriteImage(p, output_fp_file, loc['FPDATA2'], hdict)
         # write input fp file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
-        p = spirouImage.WriteImage(p, input_hc_file, loc['HCDATA'])
+        p = spirouImage.WriteImage(p, input_hc_file, loc['HCDATA'], hdict)
         # write output fp file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
-        p = spirouImage.WriteImage(p, output_hc_file, loc['HCDATA2'])
+        p = spirouImage.WriteImage(p, output_hc_file, loc['HCDATA2'], hdict)
         # write overlap file
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag5)
-        p = spirouImage.WriteImage(p, overlap_file, loc['ORDER_OVERLAP'])
+        p = spirouImage.WriteImage(p, overlap_file, loc['ORDER_OVERLAP'],
+                                   hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
