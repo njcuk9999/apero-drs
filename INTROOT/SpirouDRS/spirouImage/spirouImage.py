@@ -2041,20 +2041,24 @@ def get_shape_map2(p, loc):
     sigclipmax = p['SHAPE_SIGMACLIP_MAX']
     med_filter_size = p['SHAPE_MEDIAN_FILTER_SIZE']
     min_good_corr = p['SHAPE_MIN_GOOD_CORRELATION']
-    min_med_corr = p['SHAPE_MIN_MEDIAN_CORRELATION']
+    short_medfilt_width = p['SHAPE_SHORT_DX_MEDFILT_WID']
+    long_medfilt_width = p['SHAPE_LONG_DX_MEDFILT_WID']
+
     plot_on = p.get(p['PLOT_PER_ORDER'], False)
     # get data from loc
     hcdata1 = np.array(loc['HCDATA'])
     fpdata1 = np.array(loc['FPDATA'])
     nbo = loc['NUMBER_ORDERS'] // 2
     acc = loc['ACC']
-    #storage for mapping orders
-    map_orders = np.zeros_like(hcdata1) - 1
-    order_overlap = np.zeros_like(hcdata1)
-
     # get the dimensions
     dim0, dim1 = loc['HCDATA'].shape
     master_dxmap = np.zeros_like(hcdata1)
+    #storage for mapping orders
+    map_orders = np.zeros_like(hcdata1) - 1
+    order_overlap = np.zeros_like(hcdata1)
+    slope_all_ord = np.zeros((nbo, dim1))
+    corr_dx_from_fp = np.zeros((nbo, dim1))
+
     # define storage for plotting
     slope_deg_arr, slope_arr, skeep_arr = [], [], []
     xsec_arr, ccor_arr = [], []
@@ -2072,6 +2076,18 @@ def get_shape_map2(p, loc):
     sources = ['CORR_DX_FROM_FP', 'XPEAK2', 'PEAKVAL2', 'EWVAL2', 'ERR_PIX',
                'GOOD_MASK']
     loc.set_sources(sources, func_name)
+
+    # -------------------------------------------------------------------------
+    # create the x pixel vector (used with polynomials to find
+    #    order center)
+    xpix = np.array(range(dim1))
+    # y order center positions (every other one)
+    ypix = np.zeros((nbo, dim1))
+    # loop around order number
+    for order_num in range(nbo):
+        # x pixel vecctor that is used with polynomials to
+        # find the order center y order center
+        ypix[order_num] = np.polyval(acc[order_num * 2][::-1], xpix)
 
     # -------------------------------------------------------------------------
     # iterating the correction, from coarser to finer
@@ -2099,6 +2115,11 @@ def get_shape_map2(p, loc):
         xsec_arr_i, ccor_arr_i = [], []
         ddx_arr_i, dx_arr_i = [], []
         dypix_arr_i,  cckeep_arr_i = [], []
+
+        # storage for loc2
+        loc2s = []
+        # get dx array (NaN)
+        dx = np.zeros((nbo, width)) + np.nan
         # ---------------------------------------------------------------------
         # loop around orders
         for order_num in range(nbo):
@@ -2108,19 +2129,14 @@ def get_shape_map2(p, loc):
             wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # -----------------------------------------------------------------
-            # create the x pixel vector (used with polynomials to find
-            #    order center)
-            xpix = np.arange(dim1)
-            # y order center positions (every other one)
-            ypix = np.polyval(acc[order_num * 2][::-1], xpix)
             # defining a ribbon that will contain the straightened order
             ribbon_hc = np.zeros([width, dim1])
             ribbon_fp = np.zeros([width, dim1])
             # get the widths
             widths = np.arange(width) - width / 2.0
             # get all bottoms and tops
-            bottoms = ypix - width/2 - 2
-            tops = ypix + width/2 + 2
+            bottoms = ypix[order_num] - width/2 - 2
+            tops = ypix[order_num] + width/2 + 2
             # splitting the original image onto the ribbon
             for ix in range(dim1):
                 # define bottom and top that encompasses all 3 fibers
@@ -2132,11 +2148,11 @@ def get_shape_map2(p, loc):
                     # for the hc data
                     spline_hc = IUVSpline(sx, hcdata2[bottom:top, ix],
                                           ext=1, k=3)
-                    ribbon_hc[:, ix] = spline_hc(ypix[ix] + widths)
+                    ribbon_hc[:, ix] = spline_hc(ypix[order_num, ix] + widths)
                     # for the fp data
                     spline_fp = IUVSpline(sx, fpdata2[bottom:top, ix],
                                           ext=1, k=3)
-                    ribbon_fp[:, ix] = spline_fp(ypix[ix] + widths)
+                    ribbon_fp[:, ix] = spline_fp(ypix[order_num, ix] + widths)
 
             # normalizing ribbon stripes to their median abs dev
             for iw in range(width):
@@ -2204,8 +2220,23 @@ def get_shape_map2(p, loc):
                 # we sigma-clip the dx[x] values relative to a linear fit
                 keep = np.isfinite(dxsection)
             # -------------------------------------------------------------
+            # work out the median slope
+            dxdiff = dxsection[1:] - dxsection[:-1]
+            xdiff = xsection[1:] - xsection[:-1]
+            medslope = np.nanmedian(dxdiff/xdiff)
+            # work out the residual of dxsection (based on median slope)
+            residual = dxsection - (medslope * xsection)
+            residual = residual - np.nanmedian(residual)
+            res_residual = residual - np.nanmedian(residual)
+            residual = residual / np.nanmedian(np.abs(res_residual))
+            # work out the maximum sigma and update keep vector
+            # TODO: Question: sigmax is off by floating point
+            # TODO: Question: dxsection is off by floating point
+            sigmax = np.nanmax(np.abs(residual[keep]))
+            with warnings.catch_warnings(record=True) as _:
+                keep &= np.abs(residual) < sigclipmax
+            # -------------------------------------------------------------
             # sigma clip
-            sigmax = np.inf
             while sigmax > sigclipmax:
                 # recalculate the fit
                 coeffs = np.polyfit(xsection[keep], dxsection[keep], 2)
@@ -2230,12 +2261,12 @@ def get_shape_map2(p, loc):
             wargs = [s_xpix, s_ypix]
             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
             # get slope for full range
-            slope = np.polyval(coeffs, np.arange(dim1))
+            slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim1))
             # -------------------------------------------------------------
             # append to storage (for plotting)
             xsec_arr_i.append(np.array(xsection))
             slope_deg_arr_i.append(np.rad2deg(np.arctan(dxsection)))
-            slope_arr_i.append(np.rad2deg(np.arctan(slope)))
+            slope_arr_i.append(np.rad2deg(np.arctan(slope_all_ord[order_num])))
             skeep_arr_i.append(np.array(keep))
 
             # -----------------------------------------------------------------
@@ -2246,8 +2277,9 @@ def get_shape_map2(p, loc):
                 loc2['NUMBER_ORDERS'] = loc['NUMBER_ORDERS']
                 loc2['HCDATA'] = loc['HCDATA']
                 loc2['SLOPE_DEG'] = np.rad2deg(np.arctan(dxsection))
-                loc2['SLOPE'] = np.rad2deg(np.arctan(slope))
+                loc2['SLOPE'] = np.rad2deg(np.arctan(slope_all_ord[order_num]))
                 loc2['S_KEEP'] = np.array(keep)
+
             # -------------------------------------------------------------
             # correct for the slope the ribbons and look for the
             #    slicer profile in the fp
@@ -2277,7 +2309,7 @@ def get_shape_map2(p, loc):
             sp_hc = np.nanmedian(ribbon_hc2, axis=0)
 
             loc = get_offset_sp(p, loc, sp_fp, sp_hc, order_num)
-            corr_dx_from_fp = loc['CORR_DX_FROM_FP'][order_num]
+            corr_dx_from_fp[order_num] = loc['CORR_DX_FROM_FP'][order_num]
 
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
@@ -2289,8 +2321,6 @@ def get_shape_map2(p, loc):
             # -------------------------------------------------------------
             # cross-correlation peaks of median profile VS position
             #    along ribbon
-            # reset dx and ddx
-            dx = np.repeat([np.nan], width)
             # TODO: Question: Why -3 to 4 where does this come from?
             ddx = np.arange(-3, 4)
             # set up cross-correlation storage
@@ -2311,28 +2341,29 @@ def get_shape_map2(p, loc):
                     gcoeffs, _ = spirouMath.gauss_fit_nn(xvec, yvec, 4)
                 # check that max value is good
                 if np.nanmax(ccor[iw, :]) > min_good_corr:
-                    dx[iw] = gcoeffs[1]
+                    dx[order_num, iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
-            dypix = np.arange(len(dx))
+            dypix = np.arange(len(dx[order_num]))
             with warnings.catch_warnings(record=True):
-                keep = np.abs(dx - np.nanmedian(dx)) < 1
-            keep &= np.isfinite(dx)
+                keep = np.abs(dx[order_num] - np.nanmedian(dx[order_num])) < 1
+            keep &= np.isfinite(dx[order_num])
             # -------------------------------------------------------------
             # if the first pixel is nan and the second is OK,
             #    then for continuity, pad
-            if (not keep[0]) and keep[1]:
-                keep[0] = True
-                dx[0] = dx[1]
-            # same at the other end
-            if (not keep[-1]) and keep[-2]:
-                keep[-1] = True
-                dx[-1] = dx[-2]
+            # if (not keep[0]) and keep[1]:
+            #     keep[0] = True
+            #     dx[0] = dx[1]
+            # # same at the other end
+            # if (not keep[-1]) and keep[-2]:
+            #     keep[-1] = True
+            #     dx[-1] = dx[-2]
+
             # -------------------------------------------------------------
             # append to storage for plotting
             ccor_arr_i.append(np.array(ccor))
             ddx_arr_i.append(np.array(ddx))
-            dx_arr_i.append(np.array(dx))
+            dx_arr_i.append(np.array(dx[order_num]))
             dypix_arr_i.append(np.array(dypix))
             cckeep_arr_i.append(np.array(keep))
             # -----------------------------------------------------------------
@@ -2340,32 +2371,78 @@ def get_shape_map2(p, loc):
                 # add temp keys for debug plot
                 loc2['XSECTION'] = np.array(xsection)
                 loc2['CCOR'], loc2['DDX'] = ccor, ddx
-                loc2['DX'], loc2['DYPIX'] = dx, dypix
+                loc2['DX'], loc2['DYPIX'] = dx[order_num], dypix
                 loc2['C_KEEP'] = keep
+            # append loc2 to storage
+            loc2s.append(loc2)
+            # -----------------------------------------------------------------
+            # set those values that should not be kept to NaN
+            dx[order_num][~keep] = np.nan
+
+        # -----------------------------------------------------------------
+        # get the median filter of dx (short median filter)
+        dx2_short = np.array(dx)
+        for iw in range(width):
+            dx2_short[:, iw] = median_filter_ea(dx[:, iw], short_medfilt_width)
+        # get the median filter of short dx with longer median
+        #     filter/second pass
+        dx2_long = np.array(dx)
+        for iw in range(width):
+            dx2_long[:, iw] = median_filter_ea(dx2_short[:, iw],
+                                               long_medfilt_width)
+        # apply short dx filter to dx2
+        dx2 = np.array(dx2_short)
+        # apply long dx filter to NaN positions of short dx filter
+        nanmask = ~np.isfinite(dx2)
+        dx2[nanmask] = dx2_long[nanmask]
+
+        # ---------------------------------------------------------------------
+        # dx plot
+        if p['DRS_PLOT']:
+            # plots setup: start interactive plot
+            sPlt.start_interactive_session()
+            # plot
+            sPlt.slit_shape_dx_plot(p, dx, dx2, banana_num)
+            # end interactive section
+            sPlt.end_interactive_session()
+
+        # ---------------------------------------------------------------------
+        # loop around orders
+        for order_num in range(nbo):
+
+            # -------------------------------------------------------------
+            # log process
+            wmsg = ('Update of the big dx map after filtering of pre-order '
+                    'dx: {0}/{1}')
+            wargs = [order_num + 1, nbo]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+
             # -------------------------------------------------------------
             # spline everything onto the master DX map
             #    ext=3 forces that out-of-range values are set to boundary
             #    value this simply uses the last reliable dx measurement for
             #    the neighbouring slit position
-            spline = IUVSpline(dypix[keep], dx[keep], ext=3)
 
-            # we find the pixels where the correlation with median profile
-            #    is >0.3 and add 1 pixel of buffer
-            max_ccor = np.nanmax(ccor, axis=1)
-
-            med_corr_mask = np.where(max_ccor > min_med_corr)
+            # redefine keep array from dx2
+            keep = np.isfinite(dx2[order_num])
+            # redefine dypix
+            dypix = np.arange(len(keep))
+            # get locations of keep
+            pos_keep = np.where(keep)[0]
             # set the start point
-            start_good_ccor = np.min(med_corr_mask) - 1
+            start_good_ccor = np.min(pos_keep) - 2
             # deal with start being out-of-bounds
             if start_good_ccor == -1:
                 start_good_ccor = 0
             # set the end point
-            end_good_ccor = np.max(med_corr_mask) + 2
+            end_good_ccor = np.max(pos_keep) + 2
             # deal with end being out-of-bounds
             if end_good_ccor == width:
                 end_good_ccor = width - 1
+            # work out spline
+            spline = IUVSpline(dypix[keep], dx2[order_num][keep], ext=3)
             # define a mask for the good ccor
-            good_ccor_mask = np.zeros(len(max_ccor), dtype=bool)
+            good_ccor_mask = np.zeros(len(keep), dtype=bool)
             good_ccor_mask[start_good_ccor:end_good_ccor] = True
 
             # log start and end points
@@ -2376,16 +2453,17 @@ def get_shape_map2(p, loc):
             # -------------------------------------------------------------
             # for all field positions along the order, we determine the
             #    dx+rotation values and update the master DX map
-            fracs = ypix - np.fix(ypix)
+            fracs = ypix[order_num] - np.fix(ypix[order_num])
             widths = np.arange(width)
 
             for ix in range(dim1):
-                # get the fraction missed
-                # frac = ypix[ix] - np.fix(ypix[ix])
+                # get slope
+                slope = slope_all_ord[order_num, ix]
                 # get dx0 with slope factor added
-                dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope[ix]
+                dx0 = (widths - width // 2 + (1 - fracs[ix])) * slope
                 # get the ypix at this value
-                ypix2 = int(ypix[ix]) + np.arange(-width//2, width//2)
+                widthrange = np.arange(-width//2, width//2)
+                ypix2 = int(ypix[order_num, ix]) + widthrange
                 # get the ddx
                 ddx = spline(widths - fracs[ix])
                 # set the zero shifts to NaNs
@@ -2407,16 +2485,16 @@ def get_shape_map2(p, loc):
                         map_orders[positions, ix] = order_num
 
                     # get shifts combination od ddx and dx0 correction
-                    shifts = (ddx + dx0)[pos_y_mask] - corr_dx_from_fp[ix]
+                    ddx_f = ddx + dx0
+                    shifts = ddx_f[pos_y_mask] - corr_dx_from_fp[order_num][ix]
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
 
-
             # -----------------------------------------------------------------
             if p['DRS_PLOT'] and (p['DRS_DEBUG'] >= 2) and plot_on:
-                # plo
+                # plot angle and offset plot for each order
                 sPlt.plt.ioff()
-                sPlt.slit_shape_angle_plot(p, loc2, bnum=banana_num,
+                sPlt.slit_shape_angle_plot(p, loc2s[order_num], bnum=banana_num,
                                            order=order_num)
                 sPlt.slit_shape_offset_plot(p, loc, bnum=banana_num,
                                             order=order_num)
@@ -2463,6 +2541,38 @@ def get_shape_map2(p, loc):
     return loc
 
 
+def median_filter_ea(vector, width):
+    """
+    Median filter array "vector" by a box of width "width"
+    Note: uses nanmedian to median the boxes
+
+    :param vector: numpy array (1D): the vector to median filter
+    :param width: int, the size of the median box to apply
+
+    :return vector2: numpy array (1D): same size as "vector" except the pixel
+                     value is that of the median of box +/- width//2 of each
+                     pixel
+    """
+    # construct an output vector filled with NaNs
+    vector2 = np.zeros_like(vector) + np.nan
+    # loop around pixel in vector
+    for ix in range(len(vector)):
+        # define a start and end of our median box
+        start = ix - width // 2
+        end = ix + width // 2
+        # deal with boundaries
+        if start < 0:
+            start = 0
+        if end > len(vector) - 1:
+            end = len(vector) - 1
+        # set the value of the new pixel equal to the median of the box of
+        #   the original vector (and deal with NaNs)
+        with warnings.catch_warnings(record=True) as _:
+            vector2[ix] = np.nanmedian(vector[start:end])
+    # return new vector
+    return vector2
+
+
 def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # get constants from p
     xoffset = p['SHAPEOFFSET_XOFFSET']
@@ -2482,6 +2592,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     fp_max_num_error = p['SHAPEOFFSET_FPMAX_NUM_ERROR']
     fit_hc_sigma = p['SHAPEOFFSET_FIT_HC_SIGMA']
     maxdev_threshold = p['SHAPEOFFSET_MAXDEV_THRESHOLD']
+    absdev_threshold = p['SHAPEOFFSET_ABSDEV_THRESHOLD']
     # -------------------------------------------------------------------------
     # get data from loc
     dim1, dim2 = np.shape(loc['HCDATA'])
@@ -2578,6 +2689,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # deal with borders
     mask[:mask_border] = 0
     mask[-mask_border:] = 0
+
     # looping while FP peaks are at least "minimum_maxpeak_frac" * 100% of
     #     the max peak value
     while max_it > (maxfp * minimum_maxpeak_frac):
@@ -2603,8 +2715,8 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         y0 = np.argmin(yy/np.max(yy) + mask1)
         y1 = np.argmin(yy/np.max(yy) + mask2)
         # re-set xx and yy
-        xx = np.array(xx[y0:y1 + 1])
-        yy = np.array(yy[y0:y1 + 1])
+        xx = np.array(xx[y0:y1 + 1]).astype(float)
+        yy = np.array(yy[y0:y1 + 1]).astype(float)
 
         # the FP must be at least 5 pixels long to be valid
         if len(xx) > valid_fp_length:
@@ -2623,6 +2735,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
                 peakval.append(coeffs[0])
                 ewval.append(coeffs[2])
 
+    # TODO: Question: xpeak is off from EA code by ~ 10e-6
 
     # -------------------------------------------------------------------------
     # sort FP peaks by their x pixel position
@@ -2722,6 +2835,9 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
         absdev = np.nanmedian(np.abs(dev))
+        # very low thresholding values tend to clip valid points
+        if absdev < absdev_threshold:
+            absdev = absdev_threshold
         # get the max median asbolute deviation
         maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
         # iterate the good mask
@@ -2737,6 +2853,9 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         dev = err_pix - np.polyval(fit_err_xpix, xpeak2)
         # get the median absolute deviation
         absdev = np.nanmedian(np.abs(dev))
+        # very low thresholding values tend to clip valid points
+        if absdev < absdev_threshold:
+            absdev = absdev_threshold
         # get the max median asbolute deviation
         maxabsdev = np.nanmax(np.abs(dev[good]/absdev))
         # iterate the good mask
