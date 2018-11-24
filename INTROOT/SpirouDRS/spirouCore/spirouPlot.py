@@ -29,7 +29,7 @@ for gui in gui_env:
         matplotlib.use(gui, warn=False, force=True)
         import matplotlib.pyplot as plt
         from matplotlib.patches import Rectangle
-
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
         break
     except:
         continue
@@ -721,7 +721,81 @@ def slit_shape_angle_plot(p, loc, bnum=None, order=None):
         end_plotting()
 
 
+
+def slit_shape_dx_plot(p, dx, dx2, bnum):
+    # get constants from p
+    nbanana = p['SHAPE_NUM_ITERATIONS']
+
+    # set the zeropoint
+    zeropoint = np.nanmedian(dx)
+    # get the sig of dx
+    sig_dx = np.nanmedian(np.abs(dx - zeropoint))
+    # set up fig
+    plt.figure()
+    # clear the current figure
+    plt.clf()
+    # set up axis
+    frame1 = plt.subplot(131)
+    frame2 = plt.subplot(132)
+    frame3 = plt.subplot(133)
+    # ----------------------------------------------------------------------
+    # plot dx
+    vmin = (-2 * sig_dx) + zeropoint
+    vmax = (2* sig_dx) + zeropoint
+    im1 = frame1.imshow(dx, vmin=vmin, vmax=vmax)
+
+    divider1 = make_axes_locatable(frame1)
+    cax1 = divider1.append_axes("top", size="10%", pad=0.05)
+
+    cb1 = plt.colorbar(im1, cax=cax1, orientation='horizontal')
+    cb1.ax.xaxis.set_ticks_position('top')
+    cb1.ax.xaxis.set_label_position('top')
+    cb1.set_label('dx')
+
+    frame1.set(xlabel='width [pix]', ylabel='order number', title='dx')
+    # ----------------------------------------------------------------------
+    # plot dx2
+    vmin = (-2 * sig_dx) + zeropoint
+    vmax = (2* sig_dx) + zeropoint
+    im2 = frame2.imshow(dx2, vmin=vmin, vmax=vmax)
+
+    divider2 = make_axes_locatable(frame2)
+    cax2 = divider2.append_axes("top", size="10%", pad=0.05)
+
+    cb2 = plt.colorbar(im2, cax=cax2, orientation='horizontal')
+    cb2.ax.xaxis.set_ticks_position('top')
+    cb2.ax.xaxis.set_label_position('top')
+    cb2.set_label('dx2')
+
+    frame2.set(xlabel='width [pix]', ylabel='order number', title='dx2')
+    # ----------------------------------------------------------------------
+    # plot diff
+    vmin = (-0.5 * sig_dx) + zeropoint
+    vmax = (0.5* sig_dx) + zeropoint
+    im3 = frame3.imshow(dx - dx2, vmin=vmin, vmax=vmax)
+
+    divider3 = make_axes_locatable(frame3)
+    cax3 = divider3.append_axes("top", size="10%", pad=0.05)
+
+    cb3 = plt.colorbar(im3, cax=cax3, orientation='horizontal')
+    cb3.ax.xaxis.set_ticks_position('top')
+    cb3.ax.xaxis.set_label_position('top')
+    cb3.set_label('dx - dx2')
+
+    frame3.set(xlabel='width [pix]', ylabel='order number', title='dx - dx2')
+
+    # ----------------------------------------------------------------------
+    # title
+    # ----------------------------------------------------------------------
+    plt.suptitle('Iteration {0} / {1}'.format(bnum, nbanana))
+    # ----------------------------------------------------------------------
+    # end plotting function properly
+    end_plotting()
+
+
 def slit_shape_offset_plot(p, loc, bnum=None, order=None):
+    # get constants from p
+    nbanana = p['SHAPE_NUM_ITERATIONS']
     # get data from loc
     corr_err_xpix_arr = loc['CORR_DX_FROM_FP']
     xpeak2_arr = loc['XPEAK2']
@@ -753,7 +827,8 @@ def slit_shape_offset_plot(p, loc, bnum=None, order=None):
     # ----------------------------------------------------------------
     # labels, title, and legend
     # ----------------------------------------------------------------
-    title = 'Iteration {0} - Order {1}'.format(banana_num, order_num)
+    title = 'Iteration {0}/{1} - Order {2}'.format(banana_num, nbanana,
+                                                   order_num)
     frame.set(xlabel='Pixel', ylabel='Err Pixel', title=title)
     frame.legend(loc=0)
 
