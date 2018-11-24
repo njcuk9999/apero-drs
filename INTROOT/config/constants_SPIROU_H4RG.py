@@ -340,10 +340,7 @@ shape_sigmaclip_max = 4
 shape_median_filter_size = 51
 
 # The minimum value for the cross-correlation to be deemed good    - [cal_shape]
-shape_min_good_correlation = 0.1
-
-# Defines the minimum max correlation limit                        - [cal_shape]
-shape_min_median_correlation = 0.3
+shape_min_good_correlation = 0.3
 
 #  The selected order to plot for the slit shape plot              - [cal_shape]
 shape_selected_order = 33
@@ -411,6 +408,16 @@ SHAPEOFFSET_FIT_HC_SIGMA = 3
 # Define the maximum allowed maximum absolute deviation away       - [cal_shape]
 #     from the error fit
 SHAPEOFFSET_MAXDEV_THRESHOLD = 5
+
+# very low thresholding values tend to clip valid points           - [cal_shape]
+SHAPEOFFSET_ABSDEV_THRESHOLD = 0.2
+
+# Define the first pass (short) median filter width for dx         - [cal_shape]
+SHAPE_SHORT_DX_MEDFILT_WID = 9
+
+# Define the second pass (long) median filter width for dx.        - [cal_shape]
+#    Used to fill NaN positions in dx that are not covered by short pass
+SHAPE_LONG_DX_MEDFILT_WID = 9
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
