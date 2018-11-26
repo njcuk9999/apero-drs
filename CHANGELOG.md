@@ -5471,3 +5471,26 @@
 	- constants_SPIROU_H4RG.py - update constants inline with Etiennes changes (rev.9054d7d2)
 	- obj_mk_obj_template.py - list wave files in header (along with file name and berv) for big cube (rev.a50cab72)
 	- cal_SHAPE_spirou2.py - continued work on shape upgrade + now 1 hcfile and multiple fp files (rev.f351dfa3)
+
+
+
+================================================================================
+* Sat Nov 24 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.068
+
+================================================================================
+	- update extraction trigger (rev.f0713458)
+	- spirouConst.py - add MJDATE to index.fit (rev.7e2d2bd0)
+	- cal_SHAPE_spirou/spirou2 - correct mistakes found by unit test run (rev.86e39c45)
+	- obj_mk_obj_template.py - list wave files in header (along with file name and berv) for big cube (rev.a50cab72)
+
+
+
+================================================================================
+* Mon Nov 26 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.069
+
+================================================================================
+	- run_off_listing.py - correct to try/except in run_off_listing.py (rev.deea1f03)
+	- extract_trigger.py - upgrades to extract trigger just do extractions (rev.7026d36c)
+	- run_off_listing.py - code to redo indexing (rev.801bc170)
+	- spirouStartup.py - fix error with change to indexing (and old index files) (rev.898a8382)
+	- spirouConst.py - change func_name for REDUC_OUTPUT_COLUMNS (rev.a58fba12)
