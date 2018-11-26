@@ -151,7 +151,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # Loop through input files
     # ----------------------------------------------------------------------
-    base_filelist, berv_list = [], []
+    base_filelist, berv_list, wave_list = [], [], []
     # loop through files
     for it, filename in enumerate(tell_files):
         # get base filenmae
@@ -189,6 +189,10 @@ def main(night_name=None, files=None):
                                            return_filename=True)
         _, loc['WAVE'], loc['WAVEFILE'] = wout
         loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
+
+        # add wave to wave list
+        wave_list.append('{0}'.format(loc['WAVEFILE']))
+
         # ------------------------------------------------------------------
         # Get the Barycentric correction from header
         dv, _, _ = spirouTelluric.GetBERV(p, thdr)
@@ -239,9 +243,11 @@ def main(night_name=None, files=None):
                                value=loc['MASTERWAVEFILE'])
     # add file list to header
     hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJFILELIST'],
-                                     values=base_filelist)
+                                     values=base_filelist, dim1name='row')
     hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJBERVLIST'],
-                                     values=berv_list)
+                                     values=berv_list, dim1name='row')
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJWAVELIST'],
+                                     values=wave_list, dim1name='row')
     # add wave solution coefficients
     hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])

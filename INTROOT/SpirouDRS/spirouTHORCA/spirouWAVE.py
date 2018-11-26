@@ -805,392 +805,417 @@ def find_hc_gauss_peaks(p, loc):
     return loc
 
 
-def fit_gaussian_triplets(p, loc):
-    """
-    Fits the Gaussian peaks with sigma clipping
-
-    fits a second-order xpix vs wavelength polynomial and test it against
-    all other fitted lines along the order we keep track of the best fit for
-    the order, i.e., the fit that provides a solution with the largest number
-    of lines within +-500 m/s
-
-    We then assume that the fit is fine, we keep the lines that match the
-    "best fit" and we move to the next order.
-
-    Once we have "valid" lines for most/all orders, we attempt to fit a
-    5th order polynomial of the xpix vs lambda for all orders.
-    The coefficient of the fit must be continuous from one order to the next
-
-    we perform the fit twice, once to get a coarse solution, once to refine
-    as we will trim some variables, we define them on each loop
-    not 100% elegant, but who cares, it takes 5µs ...
-
-    :param p:
-    :param loc:
-    :return:
-    """
-
-    # get constants from p
-    nmax_bright = p['HC_NMAX_BRIGHT']
-    n_iterations = p['HC_NITER_FIT_TRIPLET']
-    cat_guess_dist = p['HC_MAX_DV_CAT_GUESS']
-    triplet_deg = p['HC_TFIT_DEG']
-    cut_fit_threshold = p['HC_TFIT_CUT_THRES']
-    minimum_number_of_lines = p['HC_TFIT_MIN_NUM_LINES']
-    minimum_total_number_of_lines = p['HC_TFIT_MIN_TOT_LINES']
-    order_fit_continuity = p['HC_TFIT_ORDER_FIT_CONTINUITY']
-    sigma_clip_num = p['HC_TFIT_SIGCLIP_NUM']
-    sigma_clip_threshold = p['HC_TFIT_SIGCLIP_THRES']
-    # get data from loc
-    wave_ll, amp_ll = loc['LL_LINE'], loc['AMPL_LINE']
-    poly_wave_sol = loc['WAVEPARAMS']
-
-    # get dimensions
-    nbo, nbpix = loc['NBO'], loc['NBPIX']
-
-    # ------------------------------------------------------------------
-    # triplet loop
-    # TODO: Move loop out of function
-    # set up storage
-    wave_catalog = []
-    amp_catalog = []
-    wave_map2 = np.zeros((nbo, nbpix))
-    sig = np.nan
-    # get coefficients
-    xgau = np.array(loc['XGAU_INI'])
-    orders = np.array(loc['ORD_INI'])
-    gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
-    ew = np.array(loc['EW_INI'])
-    peak2 = np.array(loc['PEAK_INI'])
-    dv = np.array([])
-
-    for sol_iteration in range(n_iterations):
-        # log progress
-        # TODO Move log progress out of function
-        wmsg = 'Fit Triplet {0} of {1}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(sol_iteration + 1, n_iterations))
-        # get coefficients
-        xgau = np.array(loc['XGAU_INI'])
-        orders = np.array(loc['ORD_INI'])
-        gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
-        ew = np.array(loc['EW_INI'])
-        peak = np.array(loc['PEAK_INI'])
-        # get peak again for saving (to make sure nothing goes wrong
-        #     in selection)
-        peak2 = np.array(loc['PEAK_INI'])
-        # --------------------------------------------------------------
-        # find the brightest lines for each order, only those lines will
-        #     be used to derive the first estimates of the per-order fit
-        # ------------------------------------------------------------------
-        brightest_lines = np.zeros(len(xgau), dtype=bool)
-        # loop around order
-        for order_num in set(orders):
-            # find all order_nums that belong to this order
-            good = orders == order_num
-            # get the peaks for this order
-            order_peaks = peak[good]
-            # we may have fewer lines within the order than nmax_bright
-            if np.sum(good) <= nmax_bright:
-                nmax = np.sum(good) - 1
-            else:
-                nmax = nmax_bright
-            # Find the "nmax" brightest peaks
-            smallest_peak = np.sort(order_peaks)[::-1][nmax]
-            good &= (peak > smallest_peak)
-            # apply good mask to brightest_lines storage
-            brightest_lines[good] = True
-        # ------------------------------------------------------------------
-        # Calculate wave solution at each x gaussian center
-        # ------------------------------------------------------------------
-        ini_wave_sol = np.zeros_like(xgau)
-        # get wave solution for these xgau values
-        for order_num in set(orders):
-            # find all order_nums that belong to this order
-            good = orders == order_num
-            # get the xgau for this order
-            xgau_order = xgau[good]
-            # get wave solution for this order
-            pargs = poly_wave_sol[order_num][::-1], xgau_order
-            wave_sol_order = np.polyval(*pargs)
-            # pipe wave solution for order into full wave_sol
-            ini_wave_sol[good] = wave_sol_order
-        # ------------------------------------------------------------------
-        # match gaussian peaks
-        # ------------------------------------------------------------------
-        # keep track of the velocity offset between predicted and observed
-        #    line centers
-        dv = np.repeat(np.nan, len(ini_wave_sol))
-        # wavelength given in the catalog for the matched line
-        wave_catalog = np.repeat(np.nan, len(ini_wave_sol))
-        # amplitude given in the catolog for the matched lines
-        amp_catalog = np.zeros(len(ini_wave_sol))
-        # loop around all lines in ini_wave_sol
-        for w_it, wave0 in enumerate(ini_wave_sol):
-            # find closest catalog line to the line considered
-            id_match = np.argmin(np.abs(wave_ll - wave0))
-            # find distance between catalog and ini solution  in m/s
-            distv = ((wave_ll[id_match] / wave0) - 1) * speed_of_light_ms
-            # check that distance is below threshold
-            if np.abs(distv) < cat_guess_dist:
-                wave_catalog[w_it] = wave_ll[id_match]
-                amp_catalog[w_it] = amp_ll[id_match]
-                dv[w_it] = distv
-
-        # ------------------------------------------------------------------
-        # loop through orders and reject bright lines not within
-        #     +- HC_TFIT_DVCUT km/s histogram peak
-        # ------------------------------------------------------------------
-
-        # width in dv [km/s] - though used for number of bins?
-        # TODO: Question: Why km/s --> number
-        nbins = 2 * p['HC_MAX_DV_CAT_GUESS'] // 1000
-        # loop around all order
-        for order_num in set(orders):
-            # get the good pixels in this order
-            good = (orders == order_num) & (np.isfinite(dv))
-            # get histogram of points for this order
-            histval, histcenters = np.histogram(dv[good], bins=nbins)
-            # get the center of the distribution
-            dv_cen = histcenters[np.argmax(histval)]
-            # define a mask to remove points away from center of histogram
-            mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
-            # apply mask to dv and to brightest lines
-            dv[mask] = np.nan
-            brightest_lines[mask] = False
-
-        # re-get the histogram of points for whole image
-        histval, histcenters = np.histogram(dv[np.isfinite(dv)], bins=nbins)
-        # re-find the center of the distribution
-        dv_cen = histcenters[np.argmax(histval)]
-        # re-define the mask to remove poitns away from center of histogram
-        mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
-        # re-apply mask to dv and to brightest lines
-        dv[mask] = np.nan
-        brightest_lines[mask] = False
-
-        # ------------------------------------------------------------------
-        # Find best trio of lines
-        # ------------------------------------------------------------------
-        for order_num in set(orders):
-            # find this order's lines
-            good = orders == order_num
-            # find all usable lines in this order
-            good_all = good & (np.isfinite(wave_catalog))
-            # good_all = good & (np.isfinite(dv))
-            # find all bright usable lines in this order
-            good_bright = good_all & brightest_lines
-            # get the positions of lines
-            pos_bright = np.where(good_bright)[0]
-            pos = np.where(good)[0]
-            # get number of good_bright
-            num_gb = int(np.sum(good_bright))
-            bestn = 0
-            best_coeffs = np.zeros(triplet_deg + 1)
-            # get the indices of the triplets of bright lines
-            indices = itertools.combinations(range(num_gb), 3)
-            # loop around triplets
-            for index in indices:
-                # get this iterations positions
-                pos_it = pos_bright[np.array(index)]
-                # get the x values for this iterations position
-                xx = xgau[pos_it]
-                # get the y values for this iterations position
-                yy = wave_catalog[pos_it]
-                # fit this position's lines and take it as the best-guess
-                #    solution
-                coeffs = np.polyfit(xx, yy, triplet_deg)
-                # extrapolate out over all lines
-                fit_all = np.polyval(coeffs, xgau[good_all])
-                # work out the error in velocity
-                ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
-                # work out the number of lines to keep
-                nkeep = np.sum(np.abs(ev) < cut_fit_threshold)
-                # if number of lines to keep largest seen --> store
-                if nkeep > bestn:
-                    bestn = nkeep
-                    best_coeffs = np.array(coeffs)
-            # Log the total number of valid lines found
-            wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
-            wargs = [order_num, bestn, np.sum(good_all)]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-            # if we have the minimum number of lines check that we satisfy
-            #   the cut_fit_threshold for all good lines and reject outliers
-            if bestn >= minimum_number_of_lines:
-                # extrapolate out best fit coefficients over all lines in
-                #    this order
-                fit_best = np.polyval(best_coeffs, xgau[good])
-                # work out the error in velocity
-                ev = ((wave_catalog[good] / fit_best) - 1) * speed_of_light
-                abs_ev = np.abs(ev)
-                # if max error in velocity greater than threshold, remove
-                #    those greater than cut_fit_threshold
-                if np.nanmax(abs_ev) > cut_fit_threshold:
-                    # get outliers
-                    outliers = pos[abs_ev > cut_fit_threshold]
-                    # set outliers to NaN in wave catalog
-                    wave_catalog[outliers] = np.nan
-                    # set dv of outliers to NaN
-                    dv[outliers] = np.nan
-            # else set everything to NaN
-            else:
-                wave_catalog[good] = np.nan
-                dv[good] = np.nan
-
-        # ------------------------------------------------------------------
-        # Plot wave catalogue all lines and brightest lines
-        # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
-            pargs = [wave_catalog, dv, brightest_lines, sol_iteration]
-            sPlt.wave_ea_plot_wave_cat_all_and_brightest(p, *pargs)
-
-        # ------------------------------------------------------------------
-        # Keep only wave_catalog where values are finite
-        # -----------------------------------------------------------------
-        # create mask
-        good = np.isfinite(wave_catalog)
-        # apply mask
-        wave_catalog = wave_catalog[good]
-        amp_catalog = amp_catalog[good]
-        xgau = xgau[good]
-        orders = orders[good]
-        dv = dv[good]
-        ew = ew[good]
-        gauss_rms_dev = gauss_rms_dev[good]
-        peak2 = peak2[good]
-
-        # ------------------------------------------------------------------
-        # Quality check on the total number of lines found
-        # ------------------------------------------------------------------
-        if np.sum(good) < minimum_total_number_of_lines:
-            emsg1 = 'Insufficient number of lines found.'
-            emsg2 = '\t Found = {0}  Required = {1}'
-            eargs = [np.sum(good), minimum_total_number_of_lines]
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs)])
-
-        # ------------------------------------------------------------------
-        # Linear model slice generation
-        # ------------------------------------------------------------------
-        # storage for the linear model slice
-        lin_mod_slice = np.zeros((len(xgau), np.sum(order_fit_continuity)))
-
-        # construct the unit vectors for wavelength model
-        # loop around order fit continuity values
-        ii = 0
-        for expo_xpix in range(len(order_fit_continuity)):
-            # loop around orders
-            for expo_order in range(order_fit_continuity[expo_xpix]):
-                part1 = orders ** expo_order
-                part2 = np.array(xgau) ** expo_xpix
-                lin_mod_slice[:, ii] = part1 * part2
-                # iterate
-                ii += 1
-
-        # ------------------------------------------------------------------
-        # Sigma clipping
-        # ------------------------------------------------------------------
-        # storage for arrays
-        recon0 = np.zeros_like(wave_catalog)
-        amps0 = np.zeros(np.sum(order_fit_continuity))
-
-        # Loop sigma_clip_num times for sigma clipping and numerical
-        #    convergence. In most cases ~10 iterations would be fine but this
-        #    is fast
-        for sigma_it in range(sigma_clip_num):
-            # calculate the linear minimization
-            largs = [wave_catalog - recon0, lin_mod_slice]
-            amps, recon = spirouMath.linear_minimization(*largs)
-            # add the amps and recon to new storage
-            amps0 = amps0 + amps
-            recon0 = recon0 + recon
-            # loop around the amplitudes and normalise
-            for a_it in range(len(amps0)):
-                # work out the residuals
-                res = (wave_catalog - recon0)
-                # work out the sum of residuals
-                sum_r = np.sum(res * lin_mod_slice[:, a_it])
-                sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
-                # normalise by sum squared
-                ampsx = sum_r / sum_l2
-                # add this contribution on
-                amps0[a_it] += ampsx
-                recon0 += (ampsx * lin_mod_slice[:, a_it])
-            # recalculate dv [in km/s]
-            dv = ((wave_catalog / recon0) - 1) * speed_of_light
-            # calculate the standard deviation
-            sig = np.std(dv)
-            absdev = np.abs(dv / sig)
-            # Sigma clip those above sigma_clip_threshold
-            if np.max(absdev) > sigma_clip_threshold:
-                # log sigma clipping
-                wmsg = '\tSigma-clipping at (>{0}) --> max(sig)={1:.5f} sigma'
-                wargs = [sigma_clip_threshold, np.max(absdev)]
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
-                # mask for sigma clip
-                sig_mask = absdev < sigma_clip_threshold
-                # apply mask
-                recon0 = recon0[sig_mask]
-                lin_mod_slice = lin_mod_slice[sig_mask]
-                wave_catalog = wave_catalog[sig_mask]
-                amp_catalog = amp_catalog[sig_mask]
-                xgau = xgau[sig_mask]
-                orders = orders[sig_mask]
-                dv = dv[sig_mask]
-                ew = ew[sig_mask]
-                gauss_rms_dev = gauss_rms_dev[sig_mask]
-                peak2 = peak2[sig_mask]
-            # Log stats
-            sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
-            wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
-            wargs = [sigma_it, sig, sig1, len(wave_catalog)]
-            WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
-
-        # ------------------------------------------------------------------
-        # Plot wave catalogue all lines and brightest lines
-        # ------------------------------------------------------------------
-        if p['DRS_PLOT']:
-            pargs = [orders, wave_catalog, recon0, gauss_rms_dev, xgau, ew,
-                     sol_iteration]
-            sPlt.wave_ea_plot_tfit_grid(p, *pargs)
-
-        # ------------------------------------------------------------------
-        # Construct wave map
-        # ------------------------------------------------------------------
-        xpix = np.arange(nbpix)
-        wave_map2 = np.zeros((nbo, nbpix))
-        poly_wave_sol = np.zeros_like(loc['WAVEPARAMS'])
-
-        # loop around the orders
-        for order_num in range(nbo):
-            ii = 0
-            for expo_xpix in range(len(order_fit_continuity)):
-                for expo_order in range(order_fit_continuity[expo_xpix]):
-                    # calculate new coefficient
-                    new_coeff = (order_num ** expo_order) * amps0[ii]
-                    # add to poly wave solution
-                    poly_wave_sol[order_num, expo_xpix] += new_coeff
-                    # iterate
-                    ii += 1
-            # add to wave_map2
-            wcoeffs = poly_wave_sol[order_num, :][::-1]
-            wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
-
-    # save parameters to loc
-    loc['WAVE_CATALOG'] = wave_catalog
-    loc['AMP_CATALOG'] = amp_catalog
-    loc['SIG'] = sig
-    loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
-    loc['POLY_WAVE_SOL'] = poly_wave_sol
-    loc['WAVE_MAP2'] = wave_map2
-
-    loc['XGAU_T'] = xgau
-    loc['ORD_T'] = orders
-    loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
-    loc['DV_T'] = dv
-    loc['EW_T'] = ew
-    loc['PEAK_T'] = peak2
-
-    # return loc
-    return loc
+# def fit_gaussian_triplets(p, loc):
+#     """
+#     Fits the Gaussian peaks with sigma clipping
+#
+#     fits a second-order xpix vs wavelength polynomial and test it against
+#     all other fitted lines along the order we keep track of the best fit for
+#     the order, i.e., the fit that provides a solution with the largest number
+#     of lines within +-500 m/s
+#
+#     We then assume that the fit is fine, we keep the lines that match the
+#     "best fit" and we move to the next order.
+#
+#     Once we have "valid" lines for most/all orders, we attempt to fit a
+#     5th order polynomial of the xpix vs lambda for all orders.
+#     The coefficient of the fit must be continuous from one order to the next
+#
+#     we perform the fit twice, once to get a coarse solution, once to refine
+#     as we will trim some variables, we define them on each loop
+#     not 100% elegant, but who cares, it takes 5µs ...
+#
+#     :param p:
+#     :param loc:
+#     :return:
+#     """
+#
+#     # get constants from p
+#     nmax_bright = p['HC_NMAX_BRIGHT']
+#     n_iterations = p['HC_NITER_FIT_TRIPLET']
+#     cat_guess_dist = p['HC_MAX_DV_CAT_GUESS']
+#     triplet_deg = p['HC_TFIT_DEG']
+#     cut_fit_threshold = p['HC_TFIT_CUT_THRES']
+#     minimum_number_of_lines = p['HC_TFIT_MIN_NUM_LINES']
+#     minimum_total_number_of_lines = p['HC_TFIT_MIN_TOT_LINES']
+#     order_fit_continuity = p['HC_TFIT_ORDER_FIT_CONTINUITY']
+#     sigma_clip_num = p['HC_TFIT_SIGCLIP_NUM']
+#     sigma_clip_threshold = p['HC_TFIT_SIGCLIP_THRES']
+#     # get data from loc
+#     wave_ll, amp_ll = loc['LL_LINE'], loc['AMPL_LINE']
+#     poly_wave_sol = loc['WAVEPARAMS']
+#
+#     # get dimensions
+#     nbo, nbpix = loc['NBO'], loc['NBPIX']
+#
+#     # ------------------------------------------------------------------
+#     # triplet loop
+#     # TODO: Move loop out of function
+#     # set up storage
+#     wave_catalog = []
+#     amp_catalog = []
+#     wave_map2 = np.zeros((nbo, nbpix))
+#     sig = np.nan
+#     # get coefficients
+#     xgau = np.array(loc['XGAU_INI'])
+#     orders = np.array(loc['ORD_INI'])
+#     gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+#     ew = np.array(loc['EW_INI'])
+#     peak2 = np.array(loc['PEAK_INI'])
+#     dv = np.array([])
+#
+#     for sol_iteration in range(n_iterations):
+#         # log progress
+#         # TODO Move log progress out of function
+#         wmsg = 'Fit Triplet {0} of {1}'
+#         WLOG('info', p['LOG_OPT'], wmsg.format(sol_iteration + 1, n_iterations))
+#         # get coefficients
+#         xgau = np.array(loc['XGAU_INI'])
+#         orders = np.array(loc['ORD_INI'])
+#         gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+#         ew = np.array(loc['EW_INI'])
+#         peak = np.array(loc['PEAK_INI'])
+#         # get peak again for saving (to make sure nothing goes wrong
+#         #     in selection)
+#         peak2 = np.array(loc['PEAK_INI'])
+#         # --------------------------------------------------------------
+#         # find the brightest lines for each order, only those lines will
+#         #     be used to derive the first estimates of the per-order fit
+#         # ------------------------------------------------------------------
+#         brightest_lines = np.zeros(len(xgau), dtype=bool)
+#         # loop around order
+#         for order_num in set(orders):
+#             # find all order_nums that belong to this order
+#             good = orders == order_num
+#             # get the peaks for this order
+#             order_peaks = peak[good]
+#             # we may have fewer lines within the order than nmax_bright
+#             if np.sum(good) <= nmax_bright:
+#                 nmax = np.sum(good) - 1
+#             else:
+#                 nmax = nmax_bright
+#             # Find the "nmax" brightest peaks
+#             smallest_peak = np.sort(order_peaks)[::-1][nmax]
+#             good &= (peak > smallest_peak)
+#             # apply good mask to brightest_lines storage
+#             brightest_lines[good] = True
+#         # ------------------------------------------------------------------
+#         # Calculate wave solution at each x gaussian center
+#         # ------------------------------------------------------------------
+#         ini_wave_sol = np.zeros_like(xgau)
+#         # get wave solution for these xgau values
+#         for order_num in set(orders):
+#             # find all order_nums that belong to this order
+#             good = orders == order_num
+#             # get the xgau for this order
+#             xgau_order = xgau[good]
+#             # get wave solution for this order
+#             pargs = poly_wave_sol[order_num][::-1], xgau_order
+#             wave_sol_order = np.polyval(*pargs)
+#             # pipe wave solution for order into full wave_sol
+#             ini_wave_sol[good] = wave_sol_order
+#         # ------------------------------------------------------------------
+#         # match gaussian peaks
+#         # ------------------------------------------------------------------
+#         # keep track of the velocity offset between predicted and observed
+#         #    line centers
+#         dv = np.repeat(np.nan, len(ini_wave_sol))
+#         # wavelength given in the catalog for the matched line
+#         wave_catalog = np.repeat(np.nan, len(ini_wave_sol))
+#         # amplitude given in the catolog for the matched lines
+#         amp_catalog = np.zeros(len(ini_wave_sol))
+#         # loop around all lines in ini_wave_sol
+#         for w_it, wave0 in enumerate(ini_wave_sol):
+#             # find closest catalog line to the line considered
+#             id_match = np.argmin(np.abs(wave_ll - wave0))
+#             # find distance between catalog and ini solution  in m/s
+#             distv = ((wave_ll[id_match] / wave0) - 1) * speed_of_light_ms
+#             # check that distance is below threshold
+#             if np.abs(distv) < cat_guess_dist:
+#                 wave_catalog[w_it] = wave_ll[id_match]
+#                 amp_catalog[w_it] = amp_ll[id_match]
+#                 dv[w_it] = distv
+#
+#         # ------------------------------------------------------------------
+#         # loop through orders and reject bright lines not within
+#         #     +- HC_TFIT_DVCUT km/s histogram peak
+#         # ------------------------------------------------------------------
+#
+#         # width in dv [km/s] - though used for number of bins?
+#         # TODO: Question: Why km/s --> number
+#         nbins = 2 * p['HC_MAX_DV_CAT_GUESS'] // 1000
+#         # loop around all order
+#         for order_num in set(orders):
+#             # get the good pixels in this order
+#             good = (orders == order_num) & (np.isfinite(dv))
+#             # get histogram of points for this order
+#             histval, histcenters = np.histogram(dv[good], bins=nbins)
+#             # get the center of the distribution
+#             dv_cen = histcenters[np.argmax(histval)]
+#             # define a mask to remove points away from center of histogram
+#             mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
+#             # apply mask to dv and to brightest lines
+#             dv[mask] = np.nan
+#             brightest_lines[mask] = False
+#
+#         # re-get the histogram of points for whole image
+#         histval, histcenters = np.histogram(dv[np.isfinite(dv)], bins=nbins)
+#         # re-find the center of the distribution
+#         dv_cen = histcenters[np.argmax(histval)]
+#         # re-define the mask to remove poitns away from center of histogram
+#         mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
+#         # re-apply mask to dv and to brightest lines
+#         dv[mask] = np.nan
+#         brightest_lines[mask] = False
+#
+#         # ------------------------------------------------------------------
+#         # Find best trio of lines
+#         # ------------------------------------------------------------------
+#         for order_num in set(orders):
+#             # find this order's lines
+#             good = orders == order_num
+#             # find all usable lines in this order
+#             good_all = good & (np.isfinite(wave_catalog))
+#             # good_all = good & (np.isfinite(dv))
+#             # find all bright usable lines in this order
+#             good_bright = good_all & brightest_lines
+#             # get the positions of lines
+#             pos_bright = np.where(good_bright)[0]
+#             pos = np.where(good)[0]
+#             # get number of good_bright
+#             num_gb = int(np.sum(good_bright))
+#             bestn = 0
+#             best_coeffs = np.zeros(triplet_deg + 1)
+#             # get the indices of the triplets of bright lines
+#             indices = itertools.combinations(range(num_gb), 3)
+#             # loop around triplets
+#             for index in indices:
+#                 # get this iterations positions
+#                 pos_it = pos_bright[np.array(index)]
+#                 # get the x values for this iterations position
+#                 xx = xgau[pos_it]
+#                 # get the y values for this iterations position
+#                 yy = wave_catalog[pos_it]
+#                 # fit this position's lines and take it as the best-guess
+#                 #    solution
+#                 coeffs = np.polyfit(xx, yy, triplet_deg)
+#                 # extrapolate out over all lines
+#                 fit_all = np.polyval(coeffs, xgau[good_all])
+#                 # work out the error in velocity
+#                 ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
+#                 # work out the number of lines to keep
+#                 nkeep = np.sum(np.abs(ev) < cut_fit_threshold)
+#                 # if number of lines to keep largest seen --> store
+#                 if nkeep > bestn:
+#                     bestn = nkeep
+#                     best_coeffs = np.array(coeffs)
+#             # Log the total number of valid lines found
+#             wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
+#             wargs = [order_num, bestn, np.sum(good_all)]
+#             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+#             # if we have the minimum number of lines check that we satisfy
+#             #   the cut_fit_threshold for all good lines and reject outliers
+#             if bestn >= minimum_number_of_lines:
+#                 # extrapolate out best fit coefficients over all lines in
+#                 #    this order
+#                 fit_best = np.polyval(best_coeffs, xgau[good])
+#                 # work out the error in velocity
+#                 ev = ((wave_catalog[good] / fit_best) - 1) * speed_of_light
+#                 abs_ev = np.abs(ev)
+#                 # if max error in velocity greater than threshold, remove
+#                 #    those greater than cut_fit_threshold
+#                 if np.nanmax(abs_ev) > cut_fit_threshold:
+#                     # get outliers
+#                     outliers = pos[abs_ev > cut_fit_threshold]
+#                     # set outliers to NaN in wave catalog
+#                     wave_catalog[outliers] = np.nan
+#                     # set dv of outliers to NaN
+#                     dv[outliers] = np.nan
+#             # else set everything to NaN
+#             else:
+#                 wave_catalog[good] = np.nan
+#                 dv[good] = np.nan
+#
+#         # ------------------------------------------------------------------
+#         # Plot wave catalogue all lines and brightest lines
+#         # ------------------------------------------------------------------
+#         if p['DRS_PLOT']:
+#             pargs = [wave_catalog, dv, brightest_lines, sol_iteration]
+#             sPlt.wave_ea_plot_wave_cat_all_and_brightest(p, *pargs)
+#
+#         # ------------------------------------------------------------------
+#         # Keep only wave_catalog where values are finite
+#         # -----------------------------------------------------------------
+#         # create mask
+#         good = np.isfinite(wave_catalog)
+#         # apply mask
+#         wave_catalog = wave_catalog[good]
+#         amp_catalog = amp_catalog[good]
+#         xgau = xgau[good]
+#         orders = orders[good]
+#         dv = dv[good]
+#         ew = ew[good]
+#         gauss_rms_dev = gauss_rms_dev[good]
+#         peak2 = peak2[good]
+#
+#         # test save pre-sig-clip arrays to go into cal_wave
+#         # create mask
+#         good = np.isfinite(wave_catalog)
+#         # apply mask
+#         wave_catalog_0 = wave_catalog[good]
+#         amp_catalog_0 = amp_catalog[good]
+#         xgau_0 = xgau[good]
+#         orders_0 = orders[good]
+#         dv_0 = dv[good]
+#         ew_0 = ew[good]
+#         gauss_rms_dev_0 = gauss_rms_dev[good]
+#         peak2_0 = peak2[good]
+#
+#
+#         # ------------------------------------------------------------------
+#         # Quality check on the total number of lines found
+#         # ------------------------------------------------------------------
+#         if np.sum(good) < minimum_total_number_of_lines:
+#             emsg1 = 'Insufficient number of lines found.'
+#             emsg2 = '\t Found = {0}  Required = {1}'
+#             eargs = [np.sum(good), minimum_total_number_of_lines]
+#             WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs)])
+#
+#         # ------------------------------------------------------------------
+#         # Linear model slice generation
+#         # ------------------------------------------------------------------
+#         # storage for the linear model slice
+#         lin_mod_slice = np.zeros((len(xgau), np.sum(order_fit_continuity)))
+#
+#         # construct the unit vectors for wavelength model
+#         # loop around order fit continuity values
+#         ii = 0
+#         for expo_xpix in range(len(order_fit_continuity)):
+#             # loop around orders
+#             for expo_order in range(order_fit_continuity[expo_xpix]):
+#                 part1 = orders ** expo_order
+#                 part2 = np.array(xgau) ** expo_xpix
+#                 lin_mod_slice[:, ii] = part1 * part2
+#                 # iterate
+#                 ii += 1
+#
+#         # ------------------------------------------------------------------
+#         # Sigma clipping
+#         # ------------------------------------------------------------------
+#         # storage for arrays
+#         recon0 = np.zeros_like(wave_catalog)
+#         amps0 = np.zeros(np.sum(order_fit_continuity))
+#
+#         # Loop sigma_clip_num times for sigma clipping and numerical
+#         #    convergence. In most cases ~10 iterations would be fine but this
+#         #    is fast
+#         for sigma_it in range(sigma_clip_num):
+#             # calculate the linear minimization
+#             largs = [wave_catalog - recon0, lin_mod_slice]
+#             amps, recon = spirouMath.linear_minimization(*largs)
+#             # add the amps and recon to new storage
+#             amps0 = amps0 + amps
+#             recon0 = recon0 + recon
+#             # loop around the amplitudes and normalise
+#             for a_it in range(len(amps0)):
+#                 # work out the residuals
+#                 res = (wave_catalog - recon0)
+#                 # work out the sum of residuals
+#                 sum_r = np.sum(res * lin_mod_slice[:, a_it])
+#                 sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
+#                 # normalise by sum squared
+#                 ampsx = sum_r / sum_l2
+#                 # add this contribution on
+#                 amps0[a_it] += ampsx
+#                 recon0 += (ampsx * lin_mod_slice[:, a_it])
+#             # recalculate dv [in km/s]
+#             dv = ((wave_catalog / recon0) - 1) * speed_of_light
+#             # calculate the standard deviation
+#             sig = np.std(dv)
+#             absdev = np.abs(dv / sig)
+#             # Sigma clip those above sigma_clip_threshold
+#             if np.max(absdev) > sigma_clip_threshold:
+#                 # log sigma clipping
+#                 wmsg = '\tSigma-clipping at (>{0}) --> max(sig)={1:.5f} sigma'
+#                 wargs = [sigma_clip_threshold, np.max(absdev)]
+#                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+#                 # mask for sigma clip
+#                 sig_mask = absdev < sigma_clip_threshold
+#                 # apply mask
+#                 recon0 = recon0[sig_mask]
+#                 lin_mod_slice = lin_mod_slice[sig_mask]
+#                 wave_catalog = wave_catalog[sig_mask]
+#                 amp_catalog = amp_catalog[sig_mask]
+#                 xgau = xgau[sig_mask]
+#                 orders = orders[sig_mask]
+#                 dv = dv[sig_mask]
+#                 ew = ew[sig_mask]
+#                 gauss_rms_dev = gauss_rms_dev[sig_mask]
+#                 peak2 = peak2[sig_mask]
+#             # Log stats
+#             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
+#             wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
+#             wargs = [sigma_it, sig, sig1, len(wave_catalog)]
+#             WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+#
+#         # ------------------------------------------------------------------
+#         # Plot wave catalogue all lines and brightest lines
+#         # ------------------------------------------------------------------
+#         if p['DRS_PLOT']:
+#             pargs = [orders, wave_catalog, recon0, gauss_rms_dev, xgau, ew,
+#                      sol_iteration]
+#             sPlt.wave_ea_plot_tfit_grid(p, *pargs)
+#
+#         # ------------------------------------------------------------------
+#         # Construct wave map
+#         # ------------------------------------------------------------------
+#         xpix = np.arange(nbpix)
+#         wave_map2 = np.zeros((nbo, nbpix))
+#         poly_wave_sol = np.zeros_like(loc['WAVEPARAMS'])
+#
+#         # loop around the orders
+#         for order_num in range(nbo):
+#             ii = 0
+#             for expo_xpix in range(len(order_fit_continuity)):
+#                 for expo_order in range(order_fit_continuity[expo_xpix]):
+#                     # calculate new coefficient
+#                     new_coeff = (order_num ** expo_order) * amps0[ii]
+#                     # add to poly wave solution
+#                     poly_wave_sol[order_num, expo_xpix] += new_coeff
+#                     # iterate
+#                     ii += 1
+#             # add to wave_map2
+#             wcoeffs = poly_wave_sol[order_num, :][::-1]
+#             wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
+#
+#     # save parameters to loc
+#     loc['WAVE_CATALOG'] = wave_catalog
+#     loc['AMP_CATALOG'] = amp_catalog
+#     loc['SIG'] = sig
+#     loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
+#     loc['POLY_WAVE_SOL'] = poly_wave_sol
+#     loc['WAVE_MAP2'] = wave_map2
+#
+#     loc['XGAU_T'] = xgau
+#     loc['ORD_T'] = orders
+#     loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+#     loc['DV_T'] = dv
+#     loc['EW_T'] = ew
+#     loc['PEAK_T'] = peak2
+#
+#     #save test
+#     loc['WAVE_CATALOG_0'] = wave_catalog_0
+#     loc['AMP_CATALOG_0'] = amp_catalog_0
+#     loc['XGAU_T_0'] = xgau_0
+#     loc['ORD_T_0'] = orders_0
+#     loc['GAUSS_RMS_DEV_T_0'] = gauss_rms_dev_0
+#     loc['DV_T_0'] = dv_0
+#     loc['EW_T_0'] = ew_0
+#     loc['PEAK_T_0'] = peak2_0
+#
+#
+#     # return loc
+#     return loc
 
 
 def generate_resolution_map(p, loc):
@@ -1550,4 +1575,482 @@ def find_fp_lines_new_setup(loc):
     # set lamp as FP
     loc['LAMP'] = 'fp'
 
+    return loc
+
+###########################################################
+# TESTS
+
+def fit_gaussian_triplets(p, loc):
+    """
+    Fits the Gaussian peaks with sigma clipping
+
+    fits a second-order xpix vs wavelength polynomial and test it against
+    all other fitted lines along the order we keep track of the best fit for
+    the order, i.e., the fit that provides a solution with the largest number
+    of lines within +-500 m/s
+
+    We then assume that the fit is fine, we keep the lines that match the
+    "best fit" and we move to the next order.
+
+    Once we have "valid" lines for most/all orders, we attempt to fit a
+    5th order polynomial of the xpix vs lambda for all orders.
+    The coefficient of the fit must be continuous from one order to the next
+
+    we perform the fit twice, once to get a coarse solution, once to refine
+    as we will trim some variables, we define them on each loop
+    not 100% elegant, but who cares, it takes 5µs ...
+
+    :param p:
+    :param loc:
+    :return:
+    """
+
+    # get constants from p
+    nmax_bright = p['HC_NMAX_BRIGHT']
+    n_iterations = p['HC_NITER_FIT_TRIPLET']
+    cat_guess_dist = p['HC_MAX_DV_CAT_GUESS']
+    triplet_deg = p['HC_TFIT_DEG']
+    cut_fit_threshold = p['HC_TFIT_CUT_THRES']
+    minimum_number_of_lines = p['HC_TFIT_MIN_NUM_LINES']
+    minimum_total_number_of_lines = p['HC_TFIT_MIN_TOT_LINES']
+    order_fit_continuity = p['HC_TFIT_ORDER_FIT_CONTINUITY']
+    sigma_clip_num = p['HC_TFIT_SIGCLIP_NUM']
+    sigma_clip_threshold = p['HC_TFIT_SIGCLIP_THRES']
+    # get data from loc
+    wave_ll, amp_ll = loc['LL_LINE'], loc['AMPL_LINE']
+    poly_wave_sol = loc['WAVEPARAMS']
+
+    # get dimensions
+    nbo, nbpix = loc['NBO'], loc['NBPIX']
+
+    # ------------------------------------------------------------------
+    # triplet loop
+    # TODO: Move loop out of function
+    # set up storage
+    wave_catalog = []
+    amp_catalog = []
+    wave_map2 = np.zeros((nbo, nbpix))
+    sig = np.nan
+    # get coefficients
+    xgau = np.array(loc['XGAU_INI'])
+    orders = np.array(loc['ORD_INI'])
+    gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+    ew = np.array(loc['EW_INI'])
+    peak2 = np.array(loc['PEAK_INI'])
+    dv = np.array([])
+
+    for sol_iteration in range(n_iterations):
+        # log progress
+        # TODO Move log progress out of function
+        wmsg = 'Fit Triplet {0} of {1}'
+        WLOG('info', p['LOG_OPT'], wmsg.format(sol_iteration + 1, n_iterations))
+        # get coefficients
+        xgau = np.array(loc['XGAU_INI'])
+        orders = np.array(loc['ORD_INI'])
+        gauss_rms_dev = np.array(loc['GAUSS_RMS_DEV_INI'])
+        ew = np.array(loc['EW_INI'])
+        peak = np.array(loc['PEAK_INI'])
+        # get peak again for saving (to make sure nothing goes wrong
+        #     in selection)
+        peak2 = np.array(loc['PEAK_INI'])
+        # --------------------------------------------------------------
+        # find the brightest lines for each order, only those lines will
+        #     be used to derive the first estimates of the per-order fit
+        # ------------------------------------------------------------------
+        brightest_lines = np.zeros(len(xgau), dtype=bool)
+        # loop around order
+        for order_num in set(orders):
+            # find all order_nums that belong to this order
+            good = orders == order_num
+            # get the peaks for this order
+            order_peaks = peak[good]
+            # we may have fewer lines within the order than nmax_bright
+            if np.sum(good) <= nmax_bright:
+                nmax = np.sum(good) - 1
+            else:
+                nmax = nmax_bright
+            # Find the "nmax" brightest peaks
+            smallest_peak = np.sort(order_peaks)[::-1][nmax]
+            good &= (peak > smallest_peak)
+            # apply good mask to brightest_lines storage
+            brightest_lines[good] = True
+        # ------------------------------------------------------------------
+        # Calculate wave solution at each x gaussian center
+        # ------------------------------------------------------------------
+        ini_wave_sol = np.zeros_like(xgau)
+        # get wave solution for these xgau values
+        for order_num in set(orders):
+            # find all order_nums that belong to this order
+            good = orders == order_num
+            # get the xgau for this order
+            xgau_order = xgau[good]
+            # get wave solution for this order
+            pargs = poly_wave_sol[order_num][::-1], xgau_order
+            wave_sol_order = np.polyval(*pargs)
+            # pipe wave solution for order into full wave_sol
+            ini_wave_sol[good] = wave_sol_order
+        # ------------------------------------------------------------------
+        # match gaussian peaks
+        # ------------------------------------------------------------------
+        # keep track of the velocity offset between predicted and observed
+        #    line centers
+        dv = np.repeat(np.nan, len(ini_wave_sol))
+        # wavelength given in the catalog for the matched line
+        wave_catalog = np.repeat(np.nan, len(ini_wave_sol))
+        # amplitude given in the catolog for the matched lines
+        amp_catalog = np.zeros(len(ini_wave_sol))
+        # loop around all lines in ini_wave_sol
+        for w_it, wave0 in enumerate(ini_wave_sol):
+            # find closest catalog line to the line considered
+            id_match = np.argmin(np.abs(wave_ll - wave0))
+            # find distance between catalog and ini solution  in m/s
+            distv = ((wave_ll[id_match] / wave0) - 1) * speed_of_light_ms
+            # check that distance is below threshold
+            if np.abs(distv) < cat_guess_dist:
+                wave_catalog[w_it] = wave_ll[id_match]
+                amp_catalog[w_it] = amp_ll[id_match]
+                dv[w_it] = distv
+
+        # ------------------------------------------------------------------
+        # loop through orders and reject bright lines not within
+        #     +- HC_TFIT_DVCUT km/s histogram peak
+        # ------------------------------------------------------------------
+
+        # width in dv [km/s] - though used for number of bins?
+        # TODO: Question: Why km/s --> number
+        nbins = 2 * p['HC_MAX_DV_CAT_GUESS'] // 1000
+        # loop around all order
+        for order_num in set(orders):
+            # get the good pixels in this order
+            good = (orders == order_num) & (np.isfinite(dv))
+            # get histogram of points for this order
+            histval, histcenters = np.histogram(dv[good], bins=nbins)
+            # get the center of the distribution
+            dv_cen = histcenters[np.argmax(histval)]
+            # define a mask to remove points away from center of histogram
+            mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ORDER']) & good
+            # apply mask to dv and to brightest lines
+            dv[mask] = np.nan
+            brightest_lines[mask] = False
+
+        # re-get the histogram of points for whole image
+        histval, histcenters = np.histogram(dv[np.isfinite(dv)], bins=nbins)
+        # re-find the center of the distribution
+        dv_cen = histcenters[np.argmax(histval)]
+        # re-define the mask to remove poitns away from center of histogram
+        mask = (np.abs(dv-dv_cen) > p['HC_TFIT_DVCUT_ALL'])
+        # re-apply mask to dv and to brightest lines
+        dv[mask] = np.nan
+        brightest_lines[mask] = False
+
+        # ------------------------------------------------------------------
+        # Find best trio of lines
+        # ------------------------------------------------------------------
+        for order_num in set(orders):
+            # find this order's lines
+            good = orders == order_num
+            # find all usable lines in this order
+            good_all = good & (np.isfinite(wave_catalog))
+            # good_all = good & (np.isfinite(dv))
+            # find all bright usable lines in this order
+            good_bright = good_all & brightest_lines
+            # get the positions of lines
+            pos_bright = np.where(good_bright)[0]
+            pos = np.where(good)[0]
+            # get number of good_bright
+            num_gb = int(np.sum(good_bright))
+            bestn = 0
+            best_coeffs = np.zeros(triplet_deg + 1)
+            # get the indices of the triplets of bright lines
+            indices = itertools.combinations(range(num_gb), 3)
+            # loop around triplets
+            for index in indices:
+                # get this iterations positions
+                pos_it = pos_bright[np.array(index)]
+                # get the x values for this iterations position
+                xx = xgau[pos_it]
+                # get the y values for this iterations position
+                yy = wave_catalog[pos_it]
+                # fit this position's lines and take it as the best-guess
+                #    solution
+                coeffs = np.polyfit(xx, yy, triplet_deg)
+                # extrapolate out over all lines
+                fit_all = np.polyval(coeffs, xgau[good_all])
+                # work out the error in velocity
+                ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
+                # work out the number of lines to keep
+                nkeep = np.sum(np.abs(ev) < cut_fit_threshold)
+                # if number of lines to keep largest seen --> store
+                if nkeep > bestn:
+                    bestn = nkeep
+                    best_coeffs = np.array(coeffs)
+            # Log the total number of valid lines found
+            wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
+            wargs = [order_num, bestn, np.sum(good_all)]
+            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            # if we have the minimum number of lines check that we satisfy
+            #   the cut_fit_threshold for all good lines and reject outliers
+            if bestn >= minimum_number_of_lines:
+                # extrapolate out best fit coefficients over all lines in
+                #    this order
+                fit_best = np.polyval(best_coeffs, xgau[good])
+                # work out the error in velocity
+                ev = ((wave_catalog[good] / fit_best) - 1) * speed_of_light
+                abs_ev = np.abs(ev)
+                # if max error in velocity greater than threshold, remove
+                #    those greater than cut_fit_threshold
+                if np.nanmax(abs_ev) > cut_fit_threshold:
+                    # get outliers
+                    outliers = pos[abs_ev > cut_fit_threshold]
+                    # set outliers to NaN in wave catalog
+                    wave_catalog[outliers] = np.nan
+                    # set dv of outliers to NaN
+                    dv[outliers] = np.nan
+            # else set everything to NaN
+            else:
+                wave_catalog[good] = np.nan
+                dv[good] = np.nan
+
+        # ------------------------------------------------------------------
+        # Plot wave catalogue all lines and brightest lines
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            pargs = [wave_catalog, dv, brightest_lines, sol_iteration]
+            sPlt.wave_ea_plot_wave_cat_all_and_brightest(p, *pargs)
+
+        # ------------------------------------------------------------------
+        # Keep only wave_catalog where values are finite
+        # -----------------------------------------------------------------
+        # create mask
+        good = np.isfinite(wave_catalog)
+        # apply mask
+        wave_catalog = wave_catalog[good]
+        amp_catalog = amp_catalog[good]
+        xgau = xgau[good]
+        orders = orders[good]
+        dv = dv[good]
+        ew = ew[good]
+        gauss_rms_dev = gauss_rms_dev[good]
+        peak2 = peak2[good]
+
+        # test save pre-sig-clip arrays to go into cal_wave
+        # create mask
+        good = np.isfinite(wave_catalog)
+        # apply mask
+        wave_catalog_0 = wave_catalog[good]
+        amp_catalog_0 = amp_catalog[good]
+        xgau_0 = xgau[good]
+        orders_0 = orders[good]
+        dv_0 = dv[good]
+        ew_0 = ew[good]
+        gauss_rms_dev_0 = gauss_rms_dev[good]
+        peak2_0 = peak2[good]
+
+
+        # ------------------------------------------------------------------
+        # Quality check on the total number of lines found
+        # ------------------------------------------------------------------
+        if np.sum(good) < minimum_total_number_of_lines:
+            emsg1 = 'Insufficient number of lines found.'
+            emsg2 = '\t Found = {0}  Required = {1}'
+            eargs = [np.sum(good), minimum_total_number_of_lines]
+            WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs)])
+
+        # ------------------------------------------------------------------
+        # Linear model slice generation
+        # ------------------------------------------------------------------
+        # storage for the linear model slice
+        lin_mod_slice = np.zeros((len(xgau), np.sum(order_fit_continuity)))
+
+        # construct the unit vectors for wavelength model
+        # loop around order fit continuity values
+        ii = 0
+        for expo_xpix in range(len(order_fit_continuity)):
+            # loop around orders
+            for expo_order in range(order_fit_continuity[expo_xpix]):
+                part1 = orders ** expo_order
+                part2 = np.array(xgau) ** expo_xpix
+                lin_mod_slice[:, ii] = part1 * part2
+                # iterate
+                ii += 1
+
+        # ------------------------------------------------------------------
+        # Sigma clipping
+        # ------------------------------------------------------------------
+        # storage for arrays
+        recon0 = np.zeros_like(wave_catalog)
+        amps0 = np.zeros(np.sum(order_fit_continuity))
+
+        # Loop sigma_clip_num times for sigma clipping and numerical
+        #    convergence. In most cases ~10 iterations would be fine but this
+        #    is fast
+        for sigma_it in range(sigma_clip_num):
+            # calculate the linear minimization
+            largs = [wave_catalog - recon0, lin_mod_slice]
+            amps, recon = spirouMath.linear_minimization(*largs)
+            # add the amps and recon to new storage
+            amps0 = amps0 + amps
+            recon0 = recon0 + recon
+            # loop around the amplitudes and normalise
+            for a_it in range(len(amps0)):
+                # work out the residuals
+                res = (wave_catalog - recon0)
+                # work out the sum of residuals
+                sum_r = np.sum(res * lin_mod_slice[:, a_it])
+                sum_l2 = np.sum(lin_mod_slice[:, a_it] ** 2)
+                # normalise by sum squared
+                ampsx = sum_r / sum_l2
+                # add this contribution on
+                amps0[a_it] += ampsx
+                recon0 += (ampsx * lin_mod_slice[:, a_it])
+            # recalculate dv [in km/s]
+            dv = ((wave_catalog / recon0) - 1) * speed_of_light
+            # calculate the standard deviation
+            sig = np.std(dv)
+            absdev = np.abs(dv / sig)
+
+
+            # initialize lists for saving
+            recon0_aux = []
+            lin_mod_slice_aux = []
+            wave_catalog_aux = []
+            amp_catalog_aux = []
+            xgau_aux = []
+            orders_aux = []
+            dv_aux = []
+            ew_aux = []
+            gauss_rms_dev_aux = []
+            peak2_aux = []
+
+            # Sigma clip worst line per order
+            for ord in set(orders):
+                # mask for order
+                order_mask = orders == ord
+                # get abs dev for order
+                absdev_ord = absdev[order_mask]
+                # check if above threshold
+                if np.max(absdev_ord) > sigma_clip_threshold:
+                    # create mask for worst line
+                    sig_mask = absdev_ord < np.max(absdev_ord)
+                    # apply mask
+                    recon0_aux.append(recon0[order_mask][sig_mask])
+                    lin_mod_slice_aux.append(lin_mod_slice[order_mask][sig_mask])
+                    wave_catalog_aux.append(wave_catalog[order_mask][sig_mask])
+                    amp_catalog_aux.append(amp_catalog[order_mask][sig_mask])
+                    xgau_aux.append(xgau[order_mask][sig_mask])
+                    orders_aux.append(orders[order_mask][sig_mask])
+                    dv_aux.append(dv[order_mask][sig_mask])
+                    ew_aux.append(ew[order_mask][sig_mask])
+                    gauss_rms_dev_aux.append(gauss_rms_dev[order_mask][sig_mask])
+                    peak2_aux.append(peak2[order_mask][sig_mask])
+                # if all below threshold keep all
+                else:
+                    recon0_aux.append(recon0[order_mask])
+                    lin_mod_slice_aux.append(lin_mod_slice[order_mask])
+                    wave_catalog_aux.append(wave_catalog[order_mask])
+                    amp_catalog_aux.append(amp_catalog[order_mask])
+                    xgau_aux.append(xgau[order_mask])
+                    orders_aux.append(orders[order_mask])
+                    dv_aux.append(dv[order_mask])
+                    ew_aux.append(ew[order_mask])
+                    gauss_rms_dev_aux.append(gauss_rms_dev[order_mask])
+                    peak2_aux.append(peak2[order_mask])
+            # save aux lists to initial arrays
+            orders = np.concatenate(orders_aux)
+            recon0 = np.concatenate(recon0_aux)
+            lin_mod_slice = np.concatenate(lin_mod_slice_aux)
+            wave_catalog = np.concatenate(wave_catalog_aux)
+            amp_catalog = np.concatenate(amp_catalog_aux)
+            xgau = np.concatenate(xgau_aux)
+            dv = np.concatenate(dv_aux)
+            ew= np.concatenate(ew_aux)
+            gauss_rms_dev = np.concatenate(gauss_rms_dev_aux)
+            peak2 = np.concatenate(peak2_aux)
+
+            # if np.max(absdev) > sigma_clip_threshold:
+            #     # log sigma clipping
+            #     wmsg = '\tSigma-clipping at (>{0}) --> max(sig)={1:.5f} sigma'
+            #     wargs = [sigma_clip_threshold, np.max(absdev)]
+            #     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            #     # mask for sigma clip
+            #     sig_mask = absdev < sigma_clip_threshold
+            #     # apply mask
+            #     recon0 = recon0[sig_mask]
+            #     lin_mod_slice = lin_mod_slice[sig_mask]
+            #     wave_catalog = wave_catalog[sig_mask]
+            #     amp_catalog = amp_catalog[sig_mask]
+            #     xgau = xgau[sig_mask]
+            #     orders = orders[sig_mask]
+            #     dv = dv[sig_mask]
+            #     ew = ew[sig_mask]
+            #     gauss_rms_dev = gauss_rms_dev[sig_mask]
+            #     peak2 = peak2[sig_mask]
+
+            # Log stats
+            sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
+            wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
+            wargs = [sigma_it, sig, sig1, len(wave_catalog)]
+            WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+
+        # ------------------------------------------------------------------
+        # Plot wave catalogue all lines and brightest lines
+        # ------------------------------------------------------------------
+        if p['DRS_PLOT']:
+            pargs = [orders, wave_catalog, recon0, gauss_rms_dev, xgau, ew,
+                     sol_iteration]
+            sPlt.wave_ea_plot_tfit_grid(p, *pargs)
+
+        # ------------------------------------------------------------------
+        # Construct wave map
+        # ------------------------------------------------------------------
+        xpix = np.arange(nbpix)
+        wave_map2 = np.zeros((nbo, nbpix))
+        poly_wave_sol = np.zeros_like(loc['WAVEPARAMS'])
+
+        # loop around the orders
+        for order_num in range(nbo):
+            ii = 0
+            for expo_xpix in range(len(order_fit_continuity)):
+                for expo_order in range(order_fit_continuity[expo_xpix]):
+                    # calculate new coefficient
+                    new_coeff = (order_num ** expo_order) * amps0[ii]
+                    # add to poly wave solution
+                    poly_wave_sol[order_num, expo_xpix] += new_coeff
+                    # iterate
+                    ii += 1
+            # add to wave_map2
+            wcoeffs = poly_wave_sol[order_num, :][::-1]
+            wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
+
+    # save parameters to loc
+    loc['WAVE_CATALOG'] = wave_catalog
+    loc['AMP_CATALOG'] = amp_catalog
+    loc['SIG'] = sig
+    loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
+    loc['POLY_WAVE_SOL'] = poly_wave_sol
+    loc['WAVE_MAP2'] = wave_map2
+
+    loc['XGAU_T'] = xgau
+    loc['ORD_T'] = orders
+    loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+    loc['DV_T'] = dv
+    loc['EW_T'] = ew
+    loc['PEAK_T'] = peak2
+
+    #save test
+    loc['WAVE_CATALOG_0'] = wave_catalog_0
+    loc['AMP_CATALOG_0'] = amp_catalog_0
+    loc['XGAU_T_0'] = xgau_0
+    loc['ORD_T_0'] = orders_0
+    loc['GAUSS_RMS_DEV_T_0'] = gauss_rms_dev_0
+    loc['DV_T_0'] = dv_0
+    loc['EW_T_0'] = ew_0
+    loc['PEAK_T_0'] = peak2_0
+
+    loc['LIN_MOD_SLICE'] = lin_mod_slice
+    loc['RECON0'] = recon0
+
+
+
+    # return loc
     return loc

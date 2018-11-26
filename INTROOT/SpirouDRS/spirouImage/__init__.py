@@ -105,6 +105,8 @@ GetTilt = spirouImage.get_tilt
 
 GetShapeMap = spirouImage.get_shape_map
 
+GetShapeMap2 = spirouImage.get_shape_map2
+
 GetObjName = spirouImage.get_obj_name
 
 GetAirmass = spirouImage.get_airmass
@@ -172,6 +174,8 @@ ReadTiltFile = spirouFITS.read_tilt_file
 ReadShapeMap = spirouFITS.read_shape_file
 
 ReadLineList = spirouImage.read_line_list
+
+ReadCavityLength = spirouImage.read_cavity_length
 
 ReadHcrefFile = spirouFITS.read_hcref_file
 
