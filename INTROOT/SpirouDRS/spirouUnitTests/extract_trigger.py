@@ -45,7 +45,7 @@ TEST_STORE = []
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 DATECOL = 'MJDATE'
-DATECOL = 'LAST_MODIFIED'
+# DATECOL = 'LAST_MODIFIED'
 
 # -----------------------------------------------------------------------------
 
@@ -891,9 +891,9 @@ def main(night_name=None):
     # 4. cal_SLIT_spirou.py
     ##slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
     # 5. cal_SHAPE_spirou.py
-    shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2', combine=True)
+    #shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2', combine=True)
     # 6. cal_FF_RAW_spirou.py
-    flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
+    #flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
     # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
     hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                             fdprtypes=['HCONE_HCONE', 'FP_FP'])
