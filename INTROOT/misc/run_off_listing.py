@@ -57,6 +57,9 @@ if __name__ == "__main__":
                 night_name = filename
                 # run off listing
                 off_listing_REDUC_spirou.main(night_name)
+        except Exception as e:
+            print('Error with off listing on folder="{0}"'.format(filename))
+            print('\t{0}'.format(e))
 
 
 
