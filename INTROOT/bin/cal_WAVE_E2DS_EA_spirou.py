@@ -608,7 +608,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
         # update original E2DS fpfile and add header keys (via hdict)
         hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
-        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
+        raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
         p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
 
     # ------------------------------------------------------------------

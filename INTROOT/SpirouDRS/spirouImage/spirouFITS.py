@@ -506,10 +506,10 @@ def write_output_dict(p, filename, hdict):
     # loop around the keys and find them in hdict (or add null character if
     #     not found)
     for key in output_file_header_keys:
-        if key in hdict:
-            p['OUTPUTS'][bfilename][key] = str(hdict[key][0])
-        else:
-            p['OUTPUTS'][bfilename][key] = '--'
+        p['OUTPUTS'][bfilename][key] = '--'
+        if hdict is not None:
+            if key in hdict:
+                p['OUTPUTS'][bfilename][key] = str(hdict[key][0])
     # add DRS_TYPE
     p['OUTPUTS'][bfilename]['DRS_TYPE'] = p['DRS_TYPE']
     # return p
