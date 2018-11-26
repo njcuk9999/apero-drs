@@ -594,6 +594,13 @@ def indexing(p, outputs, icolumns, abspath):
     if os.path.exists(abspath):
         # get the current index fits file
         idict = spirouImage.ReadFitsTable(abspath, return_dict=True)
+        # check that all keys are in idict
+        for key in icolumns:
+            if key not in list(idict.keys()):
+                wmsg1 = ('Warning: Index file does not have column="{0}"'
+                         ''.format(key))
+                wmsg2 = '\tPlease run the appropriate off_listing recipe'
+                WLOG('warning', p['LOG_OPT'], [wmsg1, wmsg2])
         # loop around rows in idict
         for row in range(len(idict['FILENAME'])):
             # skip if we already have this file
@@ -604,8 +611,12 @@ def indexing(p, outputs, icolumns, abspath):
             istore['LAST_MODIFIED'].append(idict['LAST_MODIFIED'][row])
             # loop around columns
             for icol in icolumns:
-                # add to the istore
-                istore[icol].append(idict[icol][row])
+                # if column not in index deal with it
+                if icol not in idict.keys():
+                    istore[icol].append('None')
+                else:
+                    # add to the istore
+                    istore[icol].append(idict[icol][row])
     # ------------------------------------------------------------------------
     return istore
 
