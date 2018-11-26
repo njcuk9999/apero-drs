@@ -23,12 +23,6 @@ mode = 'raw'
 mode = 'reduced'
 # -----------------------------------------------------------------------------
 
-# =============================================================================
-# Define functions
-# =============================================================================
-def function():
-    pass
-
 
 # =============================================================================
 # Start of code
@@ -40,9 +34,14 @@ if __name__ == "__main__":
     files = os.listdir(WORKSPACE)
     # loop around files
     for filename in files:
+
+        abspath = os.path.join(WORKSPACE, filename)
         # check if directory
-        if not os.path.isdir(filename):
+        if not os.path.isdir(abspath):
+            print('"{0}" if not a directory'.format(filename))
             continue
+        # process
+        print('Processing dir: {0}'.format(filename))
         # try to run off-listing is directory
         try:
             # deal with raw off listing
@@ -59,7 +58,7 @@ if __name__ == "__main__":
                 off_listing_REDUC_spirou.main(night_name)
         except Exception as e:
             print('Error with off listing on folder="{0}"'.format(filename))
-            print('\t{0}'.format(e))
+            print('\t{0}: {1}'.format(type(e), e))
 
 
 
