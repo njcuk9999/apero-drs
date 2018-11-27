@@ -129,6 +129,9 @@ def get_night_name(path, filelist):
         # remove leading os.path.sep
         while uncommonpath.startswith(os.path.sep):
             uncommonpath = uncommonpath[1:]
+        # remove trailing separator
+        while uncommonpath.endswith(os.path.sep):
+            uncommonpath = uncommonpath[:-1]
         # get basename
         basename = os.path.basename(uncommonpath)
         # get nightname
@@ -253,6 +256,7 @@ def add_files(p, night, filelist, numbers, combine=False):
 
 
 def printrun(arg):
+    global TEST_STORE
     TEST_STORE.append(arg)
 
 
@@ -385,8 +389,9 @@ def get_groups(vindex):
 # trigger functions
 # =============================================================================
 def trigger_preprocess(p, filelist):
+    recipe = 'cal_preprocess_spirou'
     # define path to raw folder
-    rawpath = p['DRS_DATA_RAW']
+    rawpath = p['DRS_DATA_WORKING']
     # get night name
     night_names, filenames = get_night_name(rawpath, filelist)
     # pre-process files
@@ -394,9 +399,12 @@ def trigger_preprocess(p, filelist):
     # loop around files
     lls = []
     for it in range(len(night_names)):
+
+        # get raw filename
+        rawfilename = filenames[it].replace('_pp.fits', '.fits')
+
         if TEST_RUN:
-            print_runs(p, )
-            print('cal_preprocess', ' '.join([night_names[it], filenames[it]]))
+            print_runs(p, [[night_names[it], rawfilename]], recipe)
         else:
             # log progress
             wmsgs = [spirouStartup.spirouStartup.HEADER]
@@ -406,7 +414,7 @@ def trigger_preprocess(p, filelist):
             WLOG('warning', p['LOG_OPT'], wmsgs)
             # run preprocess
             try:
-                args = [night_names[it], filenames[it]]
+                args = [night_names[it], rawfilename]
                 lls.append(cal_preprocess_spirou.main(*args))
             except Exception as e:
                 emsgs = ['There was an exception',
@@ -414,7 +422,7 @@ def trigger_preprocess(p, filelist):
                 WLOG('warning', p['LOG_OPT'], emsgs)
                 pp = ParamDict()
                 pp['NIGHT_NAME'] = night_names[it]
-                pp['FILENAME'] = filenames[it]
+                pp['FILENAME'] = rawfilename
                 pp['EMSGS'] = emsgs
                 pp['Exception'] = e
                 lls.append(dict(p=pp))
@@ -808,6 +816,7 @@ def get_group_vindex(vindex, group, col=None):
                 rlist.append(rit_list)
             return rlist
 
+
 def get_group_mean(group):
     if type(group) == int:
         return group
@@ -846,12 +855,14 @@ def main(night_name=None):
     # check for pre-processed files
     if SKIP_DONE:
         raw_files = skip_done_raw_files(p, raw_files)
+    # sort by name
+    raw_files = np.sort(raw_files)
 
     # ask whether to pre-process
     if len(raw_files) > 0:
         message = 'Will pre-process {0}/{1} files continue? [Y]es or [N]o:\t'
         uinput = ask(message.format(len(raw_files), n_raw))
-        if 'Y' in uinput:
+        if 'Y' in uinput.upper():
             # pre-process remaining files
             pp_lls = trigger_preprocess(p, raw_files)
     elif not SKIP_DONE or n_raw == 0:
@@ -871,6 +882,7 @@ def main(night_name=None):
     # Find index_files
     # ----------------------------------------------------------------------
     loc['RAW_INDEX_FILES'] = find_all_index_files(p)
+    loc['RAW_INDEX_FILES'] = np.sort(loc['RAW_INDEX_FILES'])
     gout = get_night_name(p['DRS_DATA_WORKING'], loc['RAW_INDEX_FILES'])
     loc['INDEX_NIGHTNAME'], loc['INDEX_FILES'] = gout
     # set sources
@@ -882,24 +894,24 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     WLOG('', p['LOG_OPT'], 'Running triggers')
 
-    # 1. cal_BADPIX_spirou.py
-    ## badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
-    # 2. cal_DARK_spirou.py
-    ##dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou', combine=True)
-    # 3. cal_loc_RAW_spirou.py
-    ##loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
-    # 4. cal_SLIT_spirou.py
-    ##slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
-    # 5. cal_SHAPE_spirou.py
-    #shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2', combine=True)
-    # 6. cal_FF_RAW_spirou.py
-    #flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
-    # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
-    hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                            fdprtypes=['HCONE_HCONE', 'FP_FP'])
-    # 8. extract objects
-    obj_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                           fdprtypes=['OBJ_FP', 'OBJ_OBJ'])
+    # # 1. cal_BADPIX_spirou.py
+    # badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
+    # # 2. cal_DARK_spirou.py
+    # dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou', combine=True)
+    # # 3. cal_loc_RAW_spirou.py
+    # loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
+    # # 4. cal_SLIT_spirou.py
+    # slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
+    # # 5. cal_SHAPE_spirou.py
+    # shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2', combine=True)
+    # # 6. cal_FF_RAW_spirou.py
+    # flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
+    # # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
+    # hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+    #                         fdprtypes=['HCONE_HCONE', 'FP_FP'])
+    # # 8. extract objects
+    # obj_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+    #                        fdprtypes=['OBJ_FP', 'OBJ_OBJ'])
 
     # 8. cal_WAVE_E2DS_RAW_spirou.py
     # wave_lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_EA_spirou',
