@@ -218,11 +218,12 @@ cal_CCF_E2DS_FP_spirou, 1, POL_LSD, None, None, None, AB, None, None, REDUC, CCF
 obj_fit_tellu, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
+# obj_fit_tellu, 1, EXT_E2DS_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, EXT_E2DS_FF_AB, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, EXT_E2DS_FF_A, None, None, None, A, None, None, REDUC, FITTELLU, -6, 1
 obj_fit_tellu, 1, EXT_E2DS_FF_B, None, None, None, B, None, None, REDUC, FITTELLU, -6, 1
-obj_fit_tellu, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
+# obj_fit_tellu, 1, EXT_E2DS_FF_C, None, None, None, C, None, None, REDUC, FITTELLU, -6, 1
+obj_fit_tellu, 1, POL_STOKES_I, None, None, None, AB, None, None, REDUC, FITTELLU, -6, 1
 obj_mk_tellu, 1, EXT_E2DS_AB, None, None, None, AB, None, None, REDUC, MKTELLU, -6, 1
 obj_mk_tellu, 1, EXT_E2DS_A, None, None, None, A, None, None, REDUC, MKTELLU, -6, 1
 obj_mk_tellu, 1, EXT_E2DS_B, None, None, None, B, None, None, REDUC, MKTELLU, -6, 1
@@ -250,6 +251,9 @@ pol_spirou, 1, EXT_E2DS_FF_AB, None, None, None, None, None, None, REDUC, POLARI
 pol_spirou, 1, EXT_E2DS_FF_A, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
 pol_spirou, 1, EXT_E2DS_FF_B, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
 pol_spirou, 1, EXT_E2DS_FF_C, None, None, None, None, None, None, REDUC, POLARIZATION, -14, 4
+pol_spirou, 1, TELLU_CORRECTED_AB, None, None, None, AB, None, None, REDUC, POLARIZATION, -14, 1
+pol_spirou, 1, TELLU_CORRECTED_A, None, None, None, A, None, None, REDUC, POLARIZATION, -14, 1
+pol_spirou, 1, TELLU_CORRECTED_B, None, None, None, B, None, None, REDUC, POLARIZATION, -14, 1
 #
 # ---- Other recipes
 #
