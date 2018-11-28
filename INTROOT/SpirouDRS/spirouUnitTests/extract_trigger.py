@@ -15,12 +15,15 @@ import os
 import sys
 from astropy.table import Table
 from collections import OrderedDict
+from multiprocessing import Process
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
 from SpirouDRS.spirouUnitTests import spirouUnitRecipes
+from SpirouDRS.spirouUnitTests import spirouUnitTests
+
 
 # =============================================================================
 # Define variables
@@ -48,15 +51,43 @@ RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 DATECOL = 'MJDATE'
 # DATECOL = 'LAST_MODIFIED'
 
+# telluric object list
+TELL_WHITELIST = ['17Peg', '31Cas', '51Dra', '59Peg', '74PscB', 'betSer',
+                  'chiCap', 'gamSct', 'gamTri', 'HD130917', 'HD159170',
+                  'HR1314', 'HR6025', 'HR8489', 'HR875', 'iotCyg', 'omiCapA',
+                  'phiLeo', 'pi.02Ori', 'zetLep', 'zetVir']
+
+DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
+         '2018-05-27', '2018-05-28', '2018-05-29', '2018-05-30', '2018-05-31',
+         '2018-07-22', '2018-07-23', '2018-07-24', '2018-07-25', '2018-07-26',
+         '2018-07-27', '2018-07-28', '2018-07-29', '2018-07-30', '2018-07-31',
+         '2018-08-01', '2018-08-02', '2018-08-03', '2018-08-04', '2018-08-05',
+         '2018-08-06', '2018-08-07', '2018-09-19', '2018-09-20', '2018-09-21',
+         '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
+         '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
+         '2018-10-26', '2018-10-27']
+
+# define run number
+RUNNUMBER = 0
+
 # switches
 RUN_BADPIX = False
 RUN_DARK = False
 RUN_LOC = False
 RUN_SLIT = False
-RUN_SHAPE = False
-RUN_FLAT = False
-RUN_EXTRACT_HCFP = False
-RUN_EXTRACT_OBJ = False
+RUN_SHAPE = True
+RUN_FLAT = True
+RUN_EXTRACT_HCFP = True
+RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_OBJ = True
+
+# turn on parallelisation
+PARALLEL = True
+
+# Max Processes
+MAX_PROCESSES = 10
+
+
 # -----------------------------------------------------------------------------
 
 
@@ -281,14 +312,67 @@ def printrun(arg):
 
 
 def print_runs(p, combinations, recipe):
+    global RUNNUMBER
     # loop around combinations
     for it, combination in enumerate(combinations):
-
-        command = 'run0000 = {0}'
+        command = 'run{0:04d} = {1}'
         clist = [recipe] + list(np.array(combination).astype(str))
         # log progress
-        printrun(command.format(clist))
-        print(command.format(clist))
+        printrun(command.format(RUNNUMBER, clist))
+        print(command.format(RUNNUMBER, clist))
+        # iterate run number
+        RUNNUMBER += 1
+
+
+def manage_run(p, recipe, args, runname, night):
+    # setup storage for output parameters
+    pp = ParamDict()
+    # run command
+    try:
+        arglist = [recipe] + list(args)
+        varbs, name = spirouUnitRecipes.wrapper(p, runname, arglist)
+        ll_s = spirouUnitRecipes.run_main(p, name, varbs)
+        sPlt.closeall()
+        # keep only some parameters
+        pp['RECIPE'] = recipe
+        pp['NIGHT_NAME'] = night
+        pp['ARGS'] = args
+        pp['ERROR'] = list(ll_s['p']['LOGGER_ERROR'])
+        pp['WARNING'] = list(ll_s['p']['LOGGER_WARNING'])
+        pp['OUTPUTS'] = dict(ll_s['p']['OUTPUTS'])
+        # clean up
+        del ll_s
+    # Manage unexpected errors
+    except Exception as e:
+        # log error
+        emsgs = ['Unexpected error occured in run={0}'.format(runname)]
+        for emsg in str(e).split('\n'):
+            emsgs.append('\t' + emsg)
+        WLOG('warning', p['LOG_OPT'], emsgs)
+        # push to ll
+        pp['RECIPE'] = recipe
+        pp['NIGHT_NAME'] = night
+        pp['ARGS'] = args
+        pp['ERROR'] = emsgs
+        pp['WARNING'] = []
+        pp['OUTPUTS'] = dict()
+    # Manage expected errors
+    except SystemExit as e:
+        # log error
+        emsgs = ['Unexpected error occured in run={0}'.format(runname)]
+        for emsg in str(e).split('\n'):
+            emsgs.append('\t' + emsg)
+        WLOG('warning', p['LOG_OPT'], emsgs)
+        # push to ll
+        pp['RECIPE'] = recipe
+        pp['NIGHT_NAME'] = night
+        pp['ARGS'] = args
+        pp['ERROR'] = emsgs
+        pp['WARNING'] = []
+        pp['OUTPUTS'] = dict()
+    # append output parameters to ll and store in lls
+    ll_s = dict(p=pp)
+    return ll_s
 
 
 def manage_runs(p, lls, combinations, recipe, night):
@@ -300,55 +384,7 @@ def manage_runs(p, lls, combinations, recipe, night):
         wmsgs = [spirouStartup.spirouStartup.HEADER, runname,
                  spirouStartup.spirouStartup.HEADER]
         WLOG('warning', p['LOG_OPT'], wmsgs)
-        # setup storage for output parameters
-        pp = ParamDict()
-        # run command
-        try:
-            arglist = [recipe] + list(combination)
-            varbs, name = spirouUnitRecipes.wrapper(p, runname, arglist)
-            ll_s = spirouUnitRecipes.run_main(p, name, varbs)
-            sPlt.closeall()
-            # keep only some parameters
-            pp['RECIPE'] = recipe
-            pp['NIGHT_NAME'] = night
-            pp['ARGS'] = combinations
-            pp['ERROR'] = list(lls['p']['LOGGER_ERROR'])
-            pp['WARNING'] = list(lls['p']['LOGGER_WARNING'])
-            pp['OUTPUTS'] = dict(lls['p']['OUTPUTS'])
-            # clean up
-            del ll_s
-        # Manage unexpected errors
-        except Exception as e:
-            # log error
-            emsgs = ['Unexpected error occured Recipe={0} Run={1}'
-                     ''.format(recipe, it)]
-            for emsg in str(e).split('\n'):
-                emsgs.append('\t' + emsg)
-            WLOG('warning', p['LOG_OPT'], emsgs)
-            # push to ll
-            pp['RECIPE'] = recipe
-            pp['NIGHT_NAME'] = night
-            pp['ARGS'] = combination
-            pp['ERROR'] = emsgs
-            pp['WARNING'] = []
-            pp['OUTPUTS'] = dict()
-        # Manage expected errors
-        except SystemExit as e:
-            # log error
-            emsgs = ['Expected error occured Recipe={0} Run={1}'
-                     ''.format(recipe, it)]
-            for emsg in str(e).split('\n'):
-                emsgs.append('\t' + emsg)
-            WLOG('warning', p['LOG_OPT'], emsgs)
-            # push to ll
-            pp['RECIPE'] = recipe
-            pp['NIGHT_NAME'] = night
-            pp['ARGS'] = combination
-            pp['ERROR'] = emsgs
-            pp['WARNING'] = []
-            pp['OUTPUTS'] = dict()
-        # append output parameters to ll and store in lls
-        ll_s = dict(p=pp)
+        ll_s = manage_run(p, recipe, combination, runname, night)
         lls.append(ll_s)
     return lls
 
@@ -364,7 +400,6 @@ def ask(message):
 
 
 def get_groups(vindex):
-
     date = vindex[DATECOL]
     dprtypes = vindex['DPRTYPE']
     raw_seqs = vindex['CMPLTEXP']
@@ -378,7 +413,6 @@ def get_groups(vindex):
 
     # sort vindex by date
     vindex = vindex[np.argsort(date)]
-
 
     groupnames = np.unique(dprtypes)
     allgroups = dict()
@@ -404,6 +438,142 @@ def get_groups(vindex):
 
     return allgroups
 
+
+# =============================================================================
+# parallelisation functions
+# =============================================================================
+def group_runs(runs):
+    # define storage for group runs
+    groups = OrderedDict()
+    # start group number at zero
+    group_number = 0
+    # start group program is None
+    group_program = None
+    # loop around runs
+    for runn in runs:
+        # get iteration program
+        program = runs[runn][0]
+        # get group program
+        if group_program is None:
+            group_program = str(program)
+            group_number += 1
+        elif program != group_program:
+            group_program = str(program)
+            group_number += 1
+        else:
+            group_program = str(group_program)
+            group_number += 0
+
+        # get key name
+        group_name = 'Group{0:03d}'.format(group_number)
+        # add run to group
+        if group_name not in groups:
+            groups[group_name] = [runs[runn]]
+        else:
+            groups[group_name].append(runs[runn])
+    # return group runs
+    return groups
+
+
+def parallelize(groups, max_number):
+    new_groups = OrderedDict()
+
+    for group_name in groups:
+        # get the length of groups
+        group_length = len(groups[group_name])
+        # get the max length of sub groups
+        max_length = int(np.ceil(group_length / max_number))
+        # set up the iteration
+        sub_group = []
+        # loop around elements in this group
+        for element in groups[group_name]:
+            if group_name not in new_groups:
+                new_groups[group_name] = []
+            # end group if longer than max_number
+            if len(sub_group) >= max_length:
+                new_groups[group_name].append(sub_group)
+                sub_group = []
+            # append to next group
+            sub_group.append(element)
+        # make sure to add last group!
+        new_groups[group_name].append(sub_group)
+    # return new groups with subgroups
+    return new_groups
+
+
+def make_subgroup_dict(sub_group, group_name):
+    sruns = OrderedDict()
+    for it, element in enumerate(sub_group):
+        # construct name for run
+        sname = '{0}-{1:03d}'.format(group_name, it)
+        sruns[sname] = element
+    return sruns
+
+
+def run_parallel(p, runs, recipe, night_name):
+    # make parallel runs
+    pruns = dict()
+    for jt, run_it in enumerate(runs):
+        pruns['RUN{0}'.format(jt)] = [recipe] + run_it
+    # ----------------------------------------------------------------------
+    # group runs (for parallelisation)
+    # ----------------------------------------------------------------------
+    # get groups that can be run in parallel
+    groups = group_runs(pruns)
+    # split groups by max number of processes
+    groups = parallelize(groups, MAX_PROCESSES)
+    # loop around groups
+    for group_name in groups:
+        # process storage
+        pp = []
+        # loop around sub groups (to be run at the same time)
+        for sub_group in groups[group_name]:
+            # make sub_group a dict
+            sruns = make_subgroup_dict(sub_group, group_name)
+            print(group_name, sruns)
+            # do parallel run
+            process = Process(target=unit_wrapper, args=(p, sruns))
+            process.start()
+            pp.append(process)
+        # do not continue until
+        for process in pp:
+            while process.is_alive():
+                pass
+    return []
+
+
+def unit_wrapper(p, runs):
+    # storage for times
+    times = OrderedDict()
+    errors = OrderedDict()
+    # log the start of the unit tests
+    spirouUnitTests.unit_log_title(p)
+    # loop around runs and process each
+    for runn in list(runs.keys()):
+        # try to run
+        try:
+            # do run
+            rargs = [p, runn, runs[runn], times]
+            times = spirouUnitTests.manage_run(*rargs)
+        # Manage unexpected errors
+        except Exception as e:
+            wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
+            for msg in str(e).split('\n'):
+                wmsgs.append('\t' + msg)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
+            errors[runn] = str(e)
+        # Manage expected errors
+        except SystemExit as e:
+            wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
+            for msg in str(e).split('\n'):
+                wmsgs.append('\t' + msg)
+            WLOG('warning', p['LOG_OPT'], wmsgs)
+            errors[runn] = str(e)
+
+    # make sure all plots are closed
+    sPlt.closeall()
+    # return times
+    return times, errors
 
 
 # =============================================================================
@@ -438,7 +608,17 @@ def trigger_preprocess(p, filelist):
             # run preprocess
             try:
                 args = [night_names[it], rawfilename]
-                lls.append(cal_preprocess_spirou.main(*args))
+                ll = cal_preprocess_spirou.main(*args)
+                # keep only some parameters
+                pp = ParamDict()
+                pp['RECIPE'] = recipe
+                pp['NIGHT_NAME'] = night_names[it]
+                pp['ARGS'] = rawfilename
+                pp['ERROR'] = list(ll['p']['LOGGER_ERROR'])
+                pp['WARNING'] = list(ll['p']['LOGGER_WARNING'])
+                pp['OUTPUTS'] = dict(ll['p']['OUTPUTS'])
+                lls.append(pp)
+                del ll
             # Manage unexpected errors
             except Exception as e:
                 wmsgs = ['PPRun "{0}" had an unexpected error:'.format(it)]
@@ -491,6 +671,9 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     for it, index_file in enumerate(index_files):
         # Get the night name for this recipes
         night_name = night_names[it]
+        # if night name not in list continue
+        if night_name.replace('/', '') not in DATES:
+            continue
 
         # log progress
         wmsgs = [spirouStartup.spirouStartup.HEADER]
@@ -518,6 +701,8 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
         # manage the running of this recipe
         if TEST_RUN:
             print_runs(p, runs, recipe)
+        elif PARALLEL:
+            lls = run_parallel(p, runs, recipe, night_name)
         else:
             lls = manage_runs(p, lls, runs, recipe, night_name)
     # return local spaces and errors
@@ -525,7 +710,6 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
 
 
 def trigger_runs(p, recipe, night_name, control, vindex):
-
     # define groups of different objects
     groups = get_groups(vindex)
 
@@ -631,7 +815,7 @@ def cal_dark_spirou(night_name, vindex, groups):
         if len(dark_files[num]) == 1:
             myrun = [night_name] + dark_files[num]
         else:
-             myrun = [night_name] + dark_files[num][1:]
+            myrun = [night_name] + dark_files[num][1:]
         runs.append(myrun)
     # return runs
     return runs
@@ -672,14 +856,14 @@ def cal_loc_raw_spirou(night_name, vindex, groups):
         if len(flat_dark_files[num]) == 1:
             myrun = [night_name] + flat_dark_files[num]
         else:
-             myrun = [night_name] + flat_dark_files[num][1:]
+            myrun = [night_name] + flat_dark_files[num][1:]
         runs.append(myrun)
     # push all from group into file
     for num in range(num_dark_flat_groups):
         if len(dark_flat_files[num]) == 1:
             myrun = [night_name] + dark_flat_files[num]
         else:
-             myrun = [night_name] + dark_flat_files[num][1:]
+            myrun = [night_name] + dark_flat_files[num][1:]
         runs.append(myrun)
     # return runs
     return runs
@@ -701,7 +885,7 @@ def cal_slit_spirou(night_name, vindex, groups):
         if len(fp_fp_files[num]) == 1:
             myrun = [night_name] + fp_fp_files[num]
         else:
-             myrun = [night_name] + fp_fp_files[num][1:]
+            myrun = [night_name] + fp_fp_files[num][1:]
         runs.append(myrun)
     # return runs
     return runs
@@ -727,7 +911,7 @@ def cal_shape_spirou(night_name, vindex, groups):
         if len(fp_fp_files[num]) == 1:
             myrun = [night_name] + fp_fp_files[num]
         else:
-             myrun = [night_name] + fp_fp_files[num][1:]
+            myrun = [night_name] + fp_fp_files[num][1:]
         runs.append(myrun)
     # return runs
     return runs
@@ -797,7 +981,7 @@ def cal_ff_raw_spirou(night_name, vindex, groups):
         if len(flat_flat_files[num]) == 1:
             myrun = [night_name] + flat_flat_files[num]
         else:
-             myrun = [night_name] + flat_flat_files[num][1:]
+            myrun = [night_name] + flat_flat_files[num][1:]
         runs.append(myrun)
     # return runs
     return runs
@@ -824,13 +1008,10 @@ def cal_extract_raw_spirou(night_name, vindex, groups):
     return runs
 
 
-
 # =============================================================================
 # group functions
 # =============================================================================
 def get_group_vindex(vindex, group, col=None):
-
-
     # case 1 we have an integer as a group
     if type(group) == int:
         if col is None:
@@ -896,6 +1077,12 @@ def main(night_name=None):
     if len(sys.argv) > 1:
         night_name = sys.argv[1]
 
+    # clear run number and test store
+    global RUNNUMBER
+    global TEST_STORE
+    RUNNUMBER = 0
+    TEST_STORE = []
+
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     p = spirouStartup.LoadArguments(p, night_name, require_night_name=False)
@@ -957,40 +1144,46 @@ def main(night_name=None):
     WLOG('', p['LOG_OPT'], 'Running triggers')
     all_lls = OrderedDict()
 
-    # # 1. cal_BADPIX_spirou.py
+    # 1. cal_BADPIX_spirou.py
     if RUN_BADPIX:
         lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou')
         all_lls['cal_BADPIX_spirou'] = lls
-    # # 2. cal_DARK_spirou.py
+    # 2. cal_DARK_spirou.py
     if RUN_DARK:
         lls = trigger_main(p, loc, recipe='cal_DARK_spirou')
         all_lls['cal_DARK_spirou'] = lls
-    # # 3. cal_loc_RAW_spirou.py
+    # 3. cal_loc_RAW_spirou.py
     if RUN_LOC:
         lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou')
         all_lls['cal_loc_RAW_spirou'] = lls
-    # # 4. cal_SLIT_spirou.py
+    # 4. cal_SLIT_spirou.py
     if RUN_SLIT:
         lls = trigger_main(p, loc, recipe='cal_SLIT_spirou')
         all_lls['cal_SLIT_spirou'] = lls
-    # # 5. cal_SHAPE_spirou.py
+    # 5. cal_SHAPE_spirou.py
     if RUN_SHAPE:
         lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2')
         all_lls['cal_SHAPE_spirou2'] = lls
-    # # 6. cal_FF_RAW_spirou.py
+    # 6. cal_FF_RAW_spirou.py
     if RUN_FLAT:
         lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou')
         all_lls['cal_FF_RAW_spirou'] = lls
-    # # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
+    # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
     if RUN_EXTRACT_HCFP:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                                 fdprtypes=['HCONE_HCONE', 'FP_FP'])
+                           fdprtypes=['HCONE_HCONE', 'FP_FP'])
         all_lls['cal_extract_RAW_spirou (HC/FP)'] = lls
-    # # 8. extract objects
+    # 8. extract tellurics
+    if RUN_EXTRACT_TELLU:
+        lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                           fdprtypes=['OBJ_FP', 'OBJ_OBJ'],
+                           fobjnames=TELL_WHITELIST)
+        all_lls['cal_extract_RAW_spirou (TELLU)'] = lls
+    # 9. extract objects
     if RUN_EXTRACT_OBJ:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                               fdprtypes=['OBJ_FP', 'OBJ_OBJ'],
-                               fobjnames=['Gl699', 'Gl15A'])
+                           fdprtypes=['OBJ_FP', 'OBJ_OBJ'],
+                           fobjnames=['Gl699', 'Gl15A'])
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
 
     # 8. cal_WAVE_E2DS_RAW_spirou.py
@@ -998,12 +1191,19 @@ def main(night_name=None):
     #                         limit=1)
     # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
 
+
+    # if test run print report
+    if TEST_RUN:
+        for line in TEST_STORE:
+            print(line)
+
     # ----------------------------------------------------------------------
     # report errors
     # ----------------------------------------------------------------------
     for recipe in all_lls:
-        errors = all_lls[recipe][1]
-        report_errors(p, errors, recipe)
+        if len(all_lls[recipe]) == 2:
+            errors = all_lls[recipe][1]
+            report_errors(p, errors, recipe)
 
     # ----------------------------------------------------------------------
     # End Message
@@ -1021,6 +1221,7 @@ if __name__ == "__main__":
     ll = main()
     # exit message if in debug mode
     spirouStartup.Exit(ll, has_plots=False)
+
 
 # =============================================================================
 # End of code

@@ -21,6 +21,7 @@ import time
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS.spirouCore import spirouMath
+from . import spirouDB
 
 # =============================================================================
 # Define variables
@@ -109,7 +110,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
 
     # get and check the lock file (Any errors must close and remove lock file
     #     after this point)
-    lock, lock_file = get_check_lock_file(p)
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # construct lines for each key in keys
     lines = []
     for k_it in range(len(keys)):
@@ -132,8 +133,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         else:
             emsg = 'File {0} has no HEADER keyword {1} - function = {2}'
             eargs = [hdr['@@@hname'], acqtime_key, funcname]
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
 
         # construct database line entry
@@ -144,8 +144,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     # write lines to master
     write_files_to_master(p, lines, keys, lock, lock_file)
     # finally close the lock file and remove it for next access
-    lock.close()
-    os.remove(lock_file)
+    spirouDB.close_lock_file(p, lock, lock_file)
 
 
 def get_acquisition_time(p, header=None, kind='human', filename=None):
@@ -282,7 +281,7 @@ def get_database(p, max_time=None, update=False):
     p['MAX_TIME_UNIX'] = max_time
     p.set_source('MAX_TIME_UNIX', func_name)
     # get and check the lock file
-    lock, lock_file = get_check_lock_file(p)
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # try to open the master file
     lines = read_master_file(p, lock, lock_file)
     # store all lines that have unix time <= max_time
@@ -302,8 +301,7 @@ def get_database(p, max_time=None, update=False):
         # will crash if we don't have 5 variables --> thus log and exit
         except ValueError:
             # Must close and remove lock file before exiting
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             emsg1 = 'Incorrectly formatted line in calibDB - function = {0}'
             lineedit = line.replace('\n', '')
             emsg2 = '   Line {0}: "{1}"'.format(l_it + 1, lineedit)
@@ -317,8 +315,7 @@ def get_database(p, max_time=None, update=False):
         # get human time in UTC/GMT
         t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
         if t_fmt_unix != t:
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             emsg1 = 'Times do not match in calibDB'
             emsg2 = '\tHuman time = {0}'.format(t_fmt)
             emsg3 = '\tUnix time = {0}'.format(t_human)
@@ -329,8 +326,7 @@ def get_database(p, max_time=None, update=False):
             t = float(t)
         except ValueError:
             # Must close and remove lock file before exiting
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             emsg1 = 'unix time="{0}" is not a valid float'.format(t)
             emsg2 = '    for key {0}="{1}"'.format(key, line)
             emsg3 = '    function = {0}'.format(func_name)
@@ -348,8 +344,7 @@ def get_database(p, max_time=None, update=False):
     # Need to check if lists are empty after loop
     # Must close and remove lock file before exiting
     if len(keys) == 0:
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         calibdb_file = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg1 = 'There are no entries in calibDB'
@@ -365,15 +360,13 @@ def get_database(p, max_time=None, update=False):
     try:
         c_database = choose_keys(p, utimes, keys, dirnames, filenames)
     except ConfigError as e:
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log error in standard way
         WLOG(e.level, p['LOG_OPT'], e.msg)
         c_database = None
 
     # Must close and remove lock file before continuing
-    lock.close()
-    os.remove(lock_file)
+    spirouDB.close_lock_file(p, lock, lock_file)
     # return calibDB dictionary
     return c_database, p
 
@@ -641,44 +634,6 @@ def get_file_name(p, key, hdr=None, filename=None, required=True):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def get_check_lock_file(p):
-    """
-    Creates a lock_file if it doesn't exist, if it does waits for it to not
-    exist - acts to stop calibDB being open multiple times at once
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                CALIB_MAX_WAIT: float, the maximum wait time (in seconds)
-                                for calibration database file to be in
-                                use (locked) after which an error is raised
-
-    :return lock: file, the opened lock_file (using open(lockfile, 'w'))
-    :return lockfile: string, the opened lock file name
-    """
-    # create lock file (to make sure database is only open once at a time)
-    # construct lock file name
-    lock_file = spirouConfig.Constants.CALIBDB_LOCKFILE(p)
-    # check if lock file already exists
-    if os.path.exists(lock_file):
-        WLOG('warning', p['LOG_OPT'], 'CalibDB locked. Waiting...')
-    # wait until lock_file does not exist or we have exceeded max wait time
-    wait_time = 0
-    while os.path.exists(lock_file) or wait_time > p['CALIB_MAX_WAIT']:
-        time.sleep(1)
-        wait_time += 1
-    if wait_time > p['CALIB_MAX_WAIT']:
-        emsg1 = ('CalibDB can not be accessed (file locked and max wait time '
-                 'exceeded.')
-        emsg2 = ('Please make sure CalibDB is not being used and '
-                 'manually delete {0}').format(lock_file)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-    # open the lock file
-    lock = open(lock_file, 'w')
-    # return lock file and name
-    return lock, lock_file
-
-
 def write_files_to_master(p, lines, keys, lock, lock_file):
     """
     writes database entries to master file
@@ -704,8 +659,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file):
         f = open(masterfile, 'a')
     except IOError:
         # Must close and delete lock file
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         emsg1 = 'I/O Error on file: {0}'.format(masterfile)
         emsg2 = '   function = {0}'.format(func_name)
@@ -745,8 +699,7 @@ def read_master_file(p, lock, lock_file):
         f = open(masterfile, 'r')
     except IOError:
         # Must close and delete lock file
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         emsg1 = 'CalibDB master file: {0} can not be found!'.format(masterfile)
         emsg2 = '   function = {0}'.format(func_name)
