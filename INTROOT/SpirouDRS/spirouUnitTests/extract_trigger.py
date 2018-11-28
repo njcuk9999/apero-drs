@@ -14,6 +14,7 @@ import numpy as np
 import os
 import sys
 from astropy.table import Table
+from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -47,7 +48,17 @@ RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 DATECOL = 'MJDATE'
 # DATECOL = 'LAST_MODIFIED'
 
+# switches
+RUN_BADPIX = False
+RUN_DARK = False
+RUN_LOC = False
+RUN_SLIT = False
+RUN_SHAPE = False
+RUN_FLAT = False
+RUN_EXTRACT_HCFP = False
+RUN_EXTRACT_OBJ = False
 # -----------------------------------------------------------------------------
+
 
 # =============================================================================
 # Define functions
@@ -143,7 +154,8 @@ def get_night_name(path, filelist):
     return night_names, filenames
 
 
-def get_control_index(control, index_file, recipe, fdprtypes=None):
+def get_control_index(control, index_file, recipe, fdprtypes=None,
+                      objnames=None):
     # load index file
     index = Table.read(index_file)
 
@@ -169,6 +181,14 @@ def get_control_index(control, index_file, recipe, fdprtypes=None):
             fmask |= (vindex['DPRTYPE'] == fdprtype)
         # apply fmask
         vindex = vindex[fmask]
+
+    # deal with objname filter
+    if objnames is not None:
+        omask = np.zeros(len(vindex), dtype=bool)
+        for objname in objnames:
+            omask |= (vindex['OBJNAME'] == objname)
+        # apply omask
+        vindex = vindex[omask]
 
     # return control and vindex
     return control, vindex
@@ -300,7 +320,8 @@ def manage_runs(p, lls, combinations, recipe, night):
         # Manage unexpected errors
         except Exception as e:
             # log error
-            emsgs = ['Unexpected error occured']
+            emsgs = ['Unexpected error occured Recipe={0} Run={1}'
+                     ''.format(recipe, it)]
             for emsg in str(e).split('\n'):
                 emsgs.append('\t' + emsg)
             WLOG('warning', p['LOG_OPT'], emsgs)
@@ -314,8 +335,8 @@ def manage_runs(p, lls, combinations, recipe, night):
         # Manage expected errors
         except SystemExit as e:
             # log error
-            # log error
-            emsgs = ['Unexpected error occured']
+            emsgs = ['Expected error occured Recipe={0} Run={1}'
+                     ''.format(recipe, it)]
             for emsg in str(e).split('\n'):
                 emsgs.append('\t' + emsg)
             WLOG('warning', p['LOG_OPT'], emsgs)
@@ -394,6 +415,8 @@ def trigger_preprocess(p, filelist):
     rawpath = p['DRS_DATA_WORKING']
     # get night name
     night_names, filenames = get_night_name(rawpath, filelist)
+    # catch errors
+    errors = OrderedDict()
     # pre-process files
     import cal_preprocess_spirou
     # loop around files
@@ -416,32 +439,47 @@ def trigger_preprocess(p, filelist):
             try:
                 args = [night_names[it], rawfilename]
                 lls.append(cal_preprocess_spirou.main(*args))
+            # Manage unexpected errors
             except Exception as e:
-                emsgs = ['There was an exception',
-                         'Exception message reads: {0}'.format(e)]
-                WLOG('warning', p['LOG_OPT'], emsgs)
+                wmsgs = ['PPRun "{0}" had an unexpected error:'.format(it)]
+                for msg in str(e).split('\n'):
+                    wmsgs.append('\t' + msg)
+                WLOG('warning', p['LOG_OPT'], wmsgs)
+                errors['Run{0}'.format(it)] = str(e)
+
                 pp = ParamDict()
                 pp['NIGHT_NAME'] = night_names[it]
                 pp['FILENAME'] = rawfilename
-                pp['EMSGS'] = emsgs
+                pp['EMSGS'] = wmsgs
+                pp['Exception'] = e
+                lls.append(dict(p=pp))
+            # Manage expected errors
+            except SystemExit as e:
+                wmsgs = ['PPRun "{0}" had an expected error:'.format(it)]
+                for msg in str(e).split('\n'):
+                    wmsgs.append('\t' + msg)
+                WLOG('warning', p['LOG_OPT'], wmsgs)
+                errors['PPRun{0}'.format(it)] = str(e)
+
+                pp = ParamDict()
+                pp['NIGHT_NAME'] = night_names[it]
+                pp['FILENAME'] = rawfilename
+                pp['EMSGS'] = wmsgs
                 pp['Exception'] = e
                 lls.append(dict(p=pp))
 
     # return local directories
-    return lls
+    return lls, errors
 
 
-def trigger_main(p, loc, recipe, limit=None, combine=False, fdprtypes=None):
+def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
     """
 
     :param p: parameter dictionary, contains spirou DRS constants
     :param loc: parameter dictionary, contains the data
     :param recipe: string, the name of the recipe (without .py)
-    :param limit: int, the limit of the number of times to run recipe
-    :param combine: bool, if True takes all files and add them as a single
-                    argument, if False keeps all files as separate arguments
-                    for separate runs of the recipe
     :param fdprtypes: list of strings, allowed DPRTYPES
+    :param fobjnames: list of strings, allowed OBJNAMES
 
     :return:
     """
@@ -458,14 +496,21 @@ def trigger_main(p, loc, recipe, limit=None, combine=False, fdprtypes=None):
         wmsgs = [spirouStartup.spirouStartup.HEADER]
         wmsg = ' TRIGGER RECIPE: {0} NIGHT_NAME={1} ({2}/{3})'
         wmsgs.append(wmsg.format(recipe, night_name, it + 1, len(index_files)))
+        # add dprtype filter
         if fdprtypes is not None:
             for fdprtype in fdprtypes:
                 wmsgs.append('\tDPRTYPE: {0}'.format(fdprtype))
+        # add objname filter
+        if fobjnames is not None:
+            for fobjname in fobjnames:
+                wmsgs.append('\tOBJNAME: {0}'.format(fobjname))
+
+        # add closing header
         wmsgs.append(spirouStartup.spirouStartup.HEADER)
         WLOG('warning', p['LOG_OPT'], wmsgs)
         # get the control and index for this
         control, vindex = get_control_index(fullcontrol, index_file, recipe,
-                                            fdprtypes)
+                                            fdprtypes, fobjnames)
         # make sure MJDATE is float
         vindex[DATECOL] = np.array(vindex[DATECOL]).astype(float)
         # make the runs
@@ -830,6 +875,16 @@ def get_group_mean(group):
             return rlist
 
 
+def report_errors(p, errors, recipe):
+    if len(errors) > 0:
+        WLOG('warning', p['LOG_OPT'], '')
+        WLOG('warning', p['LOG_OPT'], '{0} Errors:'.format(recipe))
+        WLOG('warning', p['LOG_OPT'], '')
+        for key in errors:
+            error = errors[key]
+            WLOG('warning', p['LOG_OPT'], error)
+
+
 # =============================================================================
 # main function
 # =============================================================================
@@ -865,12 +920,19 @@ def main(night_name=None):
         if 'Y' in uinput.upper():
             # pre-process remaining files
             pp_lls = trigger_preprocess(p, raw_files)
+        else:
+            pp_lls = [None, dict()]
     elif not SKIP_DONE or n_raw == 0:
         wmsg = 'No raw files found'
         WLOG('warning', p['LOG_OPT'], wmsg)
+        pp_lls = [None, dict()]
     else:
         wmsg = 'All files pre-processed (Found {0} files)'
         WLOG('', p['LOG_OPT'], wmsg.format(n_raw))
+        pp_lls = [None, dict()]
+
+    # report pp errors
+    report_errors(p, pp_lls[1], 'cal_preprocess')
 
     # ----------------------------------------------------------------------
     # Load the recipe_control
@@ -893,30 +955,55 @@ def main(night_name=None):
     # Run triggers
     # ----------------------------------------------------------------------
     WLOG('', p['LOG_OPT'], 'Running triggers')
+    all_lls = OrderedDict()
 
     # # 1. cal_BADPIX_spirou.py
-    # badpix_lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou', limit=1)
+    if RUN_BADPIX:
+        lls = trigger_main(p, loc, recipe='cal_BADPIX_spirou')
+        all_lls['cal_BADPIX_spirou'] = lls
     # # 2. cal_DARK_spirou.py
-    # dark_lls = trigger_main(p, loc, recipe='cal_DARK_spirou', combine=True)
+    if RUN_DARK:
+        lls = trigger_main(p, loc, recipe='cal_DARK_spirou')
+        all_lls['cal_DARK_spirou'] = lls
     # # 3. cal_loc_RAW_spirou.py
-    # loc_lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou', combine=True)
+    if RUN_LOC:
+        lls = trigger_main(p, loc, recipe='cal_loc_RAW_spirou')
+        all_lls['cal_loc_RAW_spirou'] = lls
     # # 4. cal_SLIT_spirou.py
-    # slit_lls = trigger_main(p, loc, recipe='cal_SLIT_spirou', combine=True)
+    if RUN_SLIT:
+        lls = trigger_main(p, loc, recipe='cal_SLIT_spirou')
+        all_lls['cal_SLIT_spirou'] = lls
     # # 5. cal_SHAPE_spirou.py
-    # shape_lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2', combine=True)
+    if RUN_SHAPE:
+        lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2')
+        all_lls['cal_SHAPE_spirou2'] = lls
     # # 6. cal_FF_RAW_spirou.py
-    # flat_lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou', combine=True)
+    if RUN_FLAT:
+        lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou')
+        all_lls['cal_FF_RAW_spirou'] = lls
     # # 7. cal_extract_RAW_spirou.py (HCONE_HCONE, FP_FP)
-    # hcfp_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-    #                         fdprtypes=['HCONE_HCONE', 'FP_FP'])
+    if RUN_EXTRACT_HCFP:
+        lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                                 fdprtypes=['HCONE_HCONE', 'FP_FP'])
+        all_lls['cal_extract_RAW_spirou (HC/FP)'] = lls
     # # 8. extract objects
-    # obj_lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-    #                        fdprtypes=['OBJ_FP', 'OBJ_OBJ'])
+    if RUN_EXTRACT_OBJ:
+        lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                               fdprtypes=['OBJ_FP', 'OBJ_OBJ'],
+                               fobjnames=['Gl699', 'Gl15A'])
+        all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
 
     # 8. cal_WAVE_E2DS_RAW_spirou.py
     # wave_lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_EA_spirou',
     #                         limit=1)
     # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
+
+    # ----------------------------------------------------------------------
+    # report errors
+    # ----------------------------------------------------------------------
+    for recipe in all_lls:
+        errors = all_lls[recipe][1]
+        report_errors(p, errors, recipe)
 
     # ----------------------------------------------------------------------
     # End Message
