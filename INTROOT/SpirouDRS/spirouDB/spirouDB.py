@@ -108,8 +108,7 @@ def get_database(p, update=False, dbkind=None):
         # will crash if we don't have 5 variables --> thus log and exit
         except ValueError:
             # Must close and remove lock file before exiting
-            lock.close()
-            os.remove(lock_file)
+            close_lock_file(p, lock, lock_file)
             emsg1 = 'Incorrectly formatted line in {0} - function = {1}'
             eargs = [dbkind, func_name]
             lineedit = line.replace('\n', '')
@@ -119,8 +118,7 @@ def get_database(p, update=False, dbkind=None):
     # Need to check if lists are empty after loop
     # Must close and remove lock file before exiting
     if len(t_database) == 0:
-        lock.close()
-        os.remove(lock_file)
+        close_lock_file(p, lock, lock_file)
         # log and exit
         telludb_file = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
         emsg1 = 'There are no entries in {0}'.format(dbkind)
@@ -129,8 +127,7 @@ def get_database(p, update=False, dbkind=None):
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
 
     # Must close and remove lock file before continuing
-    lock.close()
-    os.remove(lock_file)
+    close_lock_file(p, lock, lock_file)
     # return telluDB dictionary
     return t_database
 
@@ -227,8 +224,7 @@ def update_datebase(p, keys, lines, dbkind=None):
     # write lines to master
     write_files_to_master(p, lines, ukeys, lock, lock_file, dbkind)
     # finally close the lock file and remove it for next access
-    lock.close()
-    os.remove(lock_file)
+    close_lock_file(p, lock, lock_file)
 
 
 # =============================================================================
@@ -242,8 +238,8 @@ def get_check_lock_file(p, dbkind):
     :param p: parameter dictionary, ParamDict containing constants
         Must contain at least:
                 log_opt: string, log option, normally the program name
-                TELLU_MAX_WAIT: float, the maximum wait time (in seconds)
-                                for telluric database file to be in
+                DB_MAX_WAIT: float, the maximum wait time (in seconds)
+                                for  database file to be in
                                 use (locked) after which an error is raised
     :param dbkind: string or None: if None set to "Database" else is the name
                    of the type of database (i.e. Telluric or Calibration)
@@ -254,26 +250,83 @@ def get_check_lock_file(p, dbkind):
     """
     # create lock file (to make sure database is only open once at a time)
     # construct lock file name
-    lock_file = spirouConfig.Constants.TELLUDB_LOCKFILE(p)
+    max_wait_time = p['DB_MAX_WAIT']
+    # deal with dbkind
+    if dbkind == 'Telluric':
+        name = 'TelluDB'
+        lock_file = spirouConfig.Constants.TELLUDB_LOCKFILE(p)
+    else:
+        name = 'CalibDB'
+        lock_file = spirouConfig.Constants.CALIBDB_LOCKFILE(p)
+
     # check if lock file already exists
     if os.path.exists(lock_file):
-        wmsg = '{0} locked. Waiting...'.format(dbkind)
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG('warning', p['LOG_OPT'], '{0} locked. Waiting...'.format(name))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
-    while os.path.exists(lock_file) or wait_time > p['TELLU_MAX_WAIT']:
+    while os.path.exists(lock_file) or wait_time > max_wait_time:
         time.sleep(1)
         wait_time += 1
-    if wait_time > p['TELLU_MAX_WAIT']:
-        emsg1 = ('TelluDB can not be accessed (file locked and max wait time '
-                 'exceeded.')
-        emsg2 = ('Please make sure TelluDB is not being used and '
-                 'manually delete {0}').format(lock_file)
+    if wait_time > max_wait_time:
+        emsg1 = ('{0} can not be accessed (file locked and max wait time '
+                 'exceeded.'.format(name))
+        emsg2 = ('Please make sure {0} is not being used and '
+                 'manually delete {1}').format(name, lock_file)
         WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-    # open the lock file
-    lock = open(lock_file, 'w')
+    # try to open the lock file
+    # wait until lock_file does not exist or we have exceeded max wait time
+    lock = open_lock_file(p, lock_file)
     # return lock file and name
     return lock, lock_file
+
+
+def open_lock_file(p, lock_file):
+    # try to open the lock file
+    # wait until lock_file does not exist or we have exceeded max wait time
+    wait_time = 0
+    open_file = True
+    lock = None
+    while open_file and wait_time < p['DB_MAX_WAIT']:
+        try:
+            lock = open(lock_file, 'w')
+            open_file = False
+        except Exception as e:
+            if wait_time == 0:
+                WLOG('warning', p['LOG_OPT'], 'Waiting to open lock')
+            time.sleep(5)
+            wait_time += 1
+    if wait_time > p['DB_MAX_WAIT']:
+        emsg1 = ('CalibDB can not be accessed (Cannot open lock file and max '
+                 'wait time exceeded.')
+        emsg2 = ('Please make sure CalibDB is not being used and '
+                 'manually delete {0}').format(lock_file)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    return lock
+
+
+def close_lock_file(p, lock, lock_file):
+    # try to open the lock file
+    # wait until lock_file does not exist or we have exceeded max wait time
+    wait_time = 0
+    close_file = True
+    while close_file and wait_time < p['DB_MAX_WAIT']:
+        try:
+            lock.close()
+            if os.path.exists(lock_file):
+                os.remove(lock_file)
+            close_file = False
+        except Exception as e:
+            if wait_time == 0:
+                WLOG('warning', p['LOG_OPT'], 'Waiting to close lock')
+            time.sleep(5)
+            wait_time += 1
+    if wait_time > p['DB_MAX_WAIT']:
+        emsg1 = ('CalibDB can not be close (Cannot close lock file and max '
+                 'wait time exceeded.')
+        emsg2 = ('Please make sure CalibDB is not being used and '
+                 'manually delete {0}').format(lock_file)
+        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+
 
 
 def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
@@ -313,8 +366,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
         f = open(masterfile, 'a')
     except IOError:
         # Must close and delete lock file
-        lock.close()
-        os.remove(lock_file)
+        close_lock_file(p, lock, lock_file)
         # log and exit
         emsg1 = 'I/O Error on file: {0}'.format(masterfile)
         emsg2 = '   function = {0}'.format(func_name)
@@ -357,8 +409,7 @@ def read_master_file(p, lock, lock_file, dbkind):
         f = open(masterfile, 'r')
     except IOError:
         # Must close and delete lock file
-        lock.close()
-        os.remove(lock_file)
+        close_lock_file(p, lock, lock_file)
         # log and exit
         eargs = [dbkind, masterfile]
         emsg1 = '{0} master file: {1} can not be found!'.format(*eargs)
