@@ -1,0 +1,27 @@
+# ============================================
+# Telluric white list file
+# ============================================
+#
+# The OBJNAME of the whitelisted file
+#
+17Peg
+31Cas
+51Dra
+59Peg
+74PscB
+betSer
+chiCap
+gamSct
+gamTri
+HD130917
+HD159170
+HR1314
+HR6025
+HR8489
+HR875
+iotCyg
+omiCapA
+phiLeo
+pi.02Ori
+zetLep
+zetVir
