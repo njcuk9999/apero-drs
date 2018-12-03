@@ -596,9 +596,9 @@ KW_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
 KW_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
 
 # File list for template
-KW_OBJFILELIST = ['LFILE', None, 'Input FILE']
-KW_OBJBERVLIST = ['LBERV', None, 'Input BERV']
-KW_OBJWAVELIST = ['LWAVE', None, 'Input WAVE']
+KW_OBJFILELIST = ['INA', None, 'Input FILE']
+KW_OBJBERVLIST = ['INB', None, 'Input BERV']
+KW_OBJWAVELIST = ['INC', None, 'Input WAVE']
 
 # Options input into tellu
 KW_TELLU_NPC = ['TELLNPC', None, 'Number of Principle Components used']
