@@ -669,6 +669,14 @@ def output_lsd_image(p, loc, hdict):
     lsdfits, tag = spirouConfig.Constants.LSD_POL_FILE(p, loc)
     lsdfitsfitsname = os.path.split(lsdfits)[-1]
 
+    columns = ['velocities', 'stokesI', 'stokesI_model', 'stokesVQU', 'Null']
+    values = [loc['LSD_VELOCITIES'], loc['LSD_STOKESI'],
+              loc['LSD_STOKESI_MODEL'], loc['LSD_STOKESVQU'],
+              loc['LSD_NULL']]
+    formats = [float, float, float, float, float]
+
+
+
     # save all data into a single array for output FITS
     loc['LSDDATA'] = []
     loc['LSDDATA'] = np.append(loc['LSDDATA'], loc['LSD_VELOCITIES'])
@@ -712,7 +720,6 @@ def output_lsd_image(p, loc, hdict):
                                value=loc['LSD_NULL_MEAN'])
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_STDDEV'],
                                value=loc['LSD_NULL_STDDEV'])
-
     # add information about the meaning of data columns
     hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL1'],
                                value=p['IC_POLAR_LSD_DATAINFO'][0])
@@ -727,8 +734,13 @@ def output_lsd_image(p, loc, hdict):
 
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
 
+    # Store LSD analysis data in FITS TABLE
+    table = spirouImage.MakeTable(columns, values, formats)
+    spirouImage.WriteTable(table, lsdfits, fmt='fits', header=hdict)
+    # deal with output onto index.fits
+    p = spirouImage.spirouFITS.write_output_dict(p, lsdfits, hdict)
     # Store LSD analysis data in file
-    p = spirouImage.WriteImage(p, lsdfits, loc['LSDDATA'], hdict)
+    #p = spirouImage.WriteImage(p, lsdfits, loc['LSDDATA'], hdict)
     # return p, lsdfits and lsdfitsname
     return p, lsdfits, lsdfitsfitsname
 
