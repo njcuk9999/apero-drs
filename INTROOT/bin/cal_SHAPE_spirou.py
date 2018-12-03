@@ -177,11 +177,7 @@ def main(night_name=None, files=None):
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
         # plot the shape process for each order
-        if p['DRS_DEBUG'] == 2:
-            sPlt.slit_shape_angle_plot(p, loc, mode='all')
-        # plot the shape process for one order
-        else:
-            sPlt.slit_shape_angle_plot(p, loc, mode='single')
+        sPlt.slit_shape_angle_plot(p, loc)
         # end interactive section
         sPlt.end_interactive_session()
 

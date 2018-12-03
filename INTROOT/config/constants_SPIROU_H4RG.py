@@ -319,10 +319,10 @@ ic_slit_order_plot = 2 * 2
 #   cal_slit (shape) parameters
 # -----------------------------------------------------------------------------
 # The number of iterations to run the shape finding out to         - [cal_shape]
-shape_num_iterations = 3
+shape_num_iterations = 4
 
 # width of the ABC fibers                                          - [cal_shape]
-shape_abc_width = 55
+shape_abc_width = 60
 
 # the range of angles (in degrees) for the first iteration (large) - [cal_shape]
 # and subsequent iterations (small)
@@ -340,10 +340,84 @@ shape_sigmaclip_max = 4
 shape_median_filter_size = 51
 
 # The minimum value for the cross-correlation to be deemed good    - [cal_shape]
-shape_min_good_correlation = 0.1
+shape_min_good_correlation = 0.3
 
 #  The selected order to plot for the slit shape plot              - [cal_shape]
 shape_selected_order = 33
+
+#  Define whether to output debug (sanity check) files             - [cal_shape]
+shape_debug_outputs = True
+
+# defines the shape offset xoffset (before and after) fp peaks     - [cal_shape]
+SHAPEOFFSET_XOFFSET = 30
+
+# defines the bottom percentile for fp peak                        - [cal_shape]
+SHAPEOFFSET_BOTTOM_PERCENTILE = 10
+
+# defines the top percentile for fp peak                           - [cal_shape]
+SHAPEOFFSET_TOP_PERCENTILE = 95
+
+# defines the floor below which top values should be set to        - [cal_shape]
+#   this fraction away from the max top value
+SHAPEOFFSET_TOP_FLOOR_FRAC = 0.1
+
+# define the median filter to apply to the hc (high pass filter)   - [cal_shape]
+SHAPEOFFSET_MED_FILTER_WIDTH = 15
+
+# Maximum number of FP (larger than expected number                - [cal_shape]
+#      (~10000 to ~25000)
+SHAPEOFFSET_FPINDEX_MAX = 30000
+
+# Define the valid length of a FP peak                             - [cal_shape]
+SHAPEOFFSET_VALID_FP_LENGTH = 5
+
+# Define the maximum allowed offset (in nm) that we allow for      - [cal_shape]
+#     the detector)
+SHAPEOFFSET_DRIFT_MARGIN = 20
+
+# Define the number of iterations to do for the wave_fp            - [cal_shape]
+#     inversion trick
+SHAPEOFFSET_WAVEFP_INV_ITERATION = 5
+
+# Define the border in pixels at the edge of the detector          - [cal_shape]
+SHAPEOFFSET_MASK_BORDER = 30
+
+# Define the minimum maxpeak value as a fraction of the            - [cal_shape]
+#    maximum maxpeak
+SHAPEOFFSET_MINIMUM_MAXPEAK_FRAC = 0.4
+
+# Define the width of the FP mask (+/- the center)                 - [cal_shape]
+SHAPEOFFSET_MASK_PIXWIDTH = 3
+
+# Define the width of the FP to extract (+/- the center)           - [cal_shape]
+SHAPEOFFSET_MASK_EXTWIDTH = 5
+
+# Define the most deviant peaks                                    - [cal_shape]
+SHAPEOFFSET_DEVIANT_PERCENTILES = [5, 95]
+
+# Define the maximum error in FP order assignment                  - [cal_shape]
+#    we assume that the error in FP order assignment could range
+#    from -50 to +50 in practice, it is -1, 0 or +1 for the cases we've
+#    tested to date
+SHAPEOFFSET_FPMAX_NUM_ERROR = 50
+
+# The number of sigmas that the HC spectrum is allowed to be       - [cal_shape]
+#     away from the predicted (from FP) position
+SHAPEOFFSET_FIT_HC_SIGMA = 3
+
+# Define the maximum allowed maximum absolute deviation away       - [cal_shape]
+#     from the error fit
+SHAPEOFFSET_MAXDEV_THRESHOLD = 5
+
+# very low thresholding values tend to clip valid points           - [cal_shape]
+SHAPEOFFSET_ABSDEV_THRESHOLD = 0.2
+
+# Define the first pass (short) median filter width for dx         - [cal_shape]
+SHAPE_SHORT_DX_MEDFILT_WID = 9
+
+# Define the second pass (long) median filter width for dx.        - [cal_shape]
+#    Used to fill NaN positions in dx that are not covered by short pass
+SHAPE_LONG_DX_MEDFILT_WID = 9
 
 # -----------------------------------------------------------------------------
 #   cal_ff parameters
