@@ -1734,7 +1734,8 @@ def read_cavity_length(p, filename=None):
 # =============================================================================
 # Shape functions
 # =============================================================================
-def get_shape_map(p, loc):
+# TODO: Remove old shape map
+def get_shape_map_old(p, loc):
     func_name = __NAME__ + '.get_shape_map()'
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
@@ -2030,7 +2031,7 @@ def get_shape_map(p, loc):
     return loc
 
 
-def get_shape_map2(p, loc):
+def get_shape_map(p, loc):
     func_name = __NAME__ + '.get_shape_map()'
     # get constants from p
     nbanana = p['SHAPE_NUM_ITERATIONS']
@@ -2893,7 +2894,6 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # -------------------------------------------------------------------------
     # return loc
     return loc
-
 
 
 # =============================================================================
