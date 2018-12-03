@@ -673,8 +673,6 @@ def output_lsd_image(p, loc, hdict):
     values = [loc['LSD_VELOCITIES'], loc['LSD_STOKESI'],
               loc['LSD_STOKESI_MODEL'], loc['LSD_STOKESVQU'],
               loc['LSD_NULL']]
-    formats = [float, float, float, float, float]
-
 
 
     # save all data into a single array for output FITS
@@ -735,7 +733,7 @@ def output_lsd_image(p, loc, hdict):
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
 
     # Store LSD analysis data in FITS TABLE
-    table = spirouImage.MakeTable(columns, values, formats)
+    table = spirouImage.MakeTable(columns, values)
     spirouImage.WriteTable(table, lsdfits, fmt='fits', header=hdict)
     # deal with output onto index.fits
     p = spirouImage.spirouFITS.write_output_dict(p, lsdfits, hdict)
