@@ -88,6 +88,7 @@ USE_KEYS = ['KW_ACQTIME_KEY',
             'KW_CDELT1',
             'KW_CDEN',
             'KW_CMMTSEQ',
+            'KW_CMPLTEXP',
             'KW_CREF',
             'KW_CRPIX1',
             'KW_CRVAL1',
@@ -142,6 +143,7 @@ USE_KEYS = ['KW_ACQTIME_KEY',
             'KW_LOC_SMAXPTS_CTR',
             'KW_LOC_SMAXPTS_WID',
             'KW_MJDEND',
+            'KW_NEXP',
             'KW_OBJBERVLIST',
             'KW_OBJDEC',
             'KW_OBJDECPM',
@@ -150,6 +152,7 @@ USE_KEYS = ['KW_ACQTIME_KEY',
             'KW_OBJNAME',
             'KW_OBJRA',
             'KW_OBJRAPM',
+            'KW_OBJWAVELIST',
             'KW_OBSTYPE',
             'KW_OUTPUT',
             'KW_POL_BERV1',
@@ -353,6 +356,12 @@ KW_AIRMASS = ['AIRMASS', None, '']
 
 # define the MJ end date HEADER key
 KW_MJDEND = ['MJDEND', None, '']
+
+# define the exposure number within sequence HEADER key
+KW_CMPLTEXP = ['CMPLTEXP', None, '']
+
+# define the total number of exposures HEADER key
+KW_NEXP = ['NEXP', None, '']
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -587,8 +596,9 @@ KW_TELLU_DV_TELL1 = ['DV_TELL1', None, 'Principle Component first der.']
 KW_TELLU_DV_TELL2 = ['DV_TELL2', None, 'Principle Component second der.']
 
 # File list for template
-KW_OBJFILELIST = ['FILE', None, 'Input file list']
-KW_OBJBERVLIST = ['BERV', None, 'Input file BERV list']
+KW_OBJFILELIST = ['LISTFILE', None, 'In FILE']
+KW_OBJBERVLIST = ['LISTBERV', None, 'In BERV']
+KW_OBJWAVELIST = ['LISTWAVE', None, 'In WAVE']
 
 # Options input into tellu
 KW_TELLU_NPC = ['TELLNPC', None, 'Number of Principle Components used']

@@ -38,6 +38,13 @@ SLIT_TILT_FILE = 'SLIT_TILT'
 # Define the shape file tag
 SLIT_SHAPE_FILE = 'SLIT_SHAPE'
 
+# Define the shape sanity check debug files
+SLIT_SHAPE_IN_FP_FILE = 'SHAPE_IN_FP'
+SLIT_SHAPE_OUT_FP_FILE = 'SHAPE_OUT_FP'
+SLIT_SHAPE_IN_HC_FILE = 'SHAPE_IN_HC'
+SLIT_SHAPE_OUT_HC_FILE = 'SHAPE_OUT_HC'
+SLIT_SHAPE_OVERLAP_FILE = 'SHAPE_ORD_OVERLAP'
+
 # Defines the flat fielding blaze file tag
 FF_BLAZE_FILE = 'FF_BLAZE'
 

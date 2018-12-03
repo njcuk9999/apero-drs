@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.3.056'
+__version__ = '0.3.069'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2018-11-08'
+__date__ = '2018-11-26'
 
 
 # =============================================================================
@@ -282,6 +282,16 @@ def WAVELENGTH_CATS_DIR():
     """
     wavelength_cats_dir = './data/wavelength_cats'
     return wavelength_cats_dir
+
+
+def CAVITY_LENGTH_FILE():
+    """
+    Define the cavity length file (located in the WAVELENGTH_CATS_DIR()
+
+    :return:
+    """
+    cavity_length_file = 'cavity_length.dat'
+    return cavity_length_file
 
 
 # noinspection PyPep8Naming
@@ -876,13 +886,103 @@ def SLIT_SHAPE_FILE(p):
     # define filename
     reduced_dir = p['REDUCED_DIR']
     calibprefix = CALIB_PREFIX(p)
-    shapefn = p['ARG_FILE_NAMES'][0].replace('.fits', '_shape.fits')
+    shapefn = p['FPFILES'][0].replace('.fits', '_shape.fits')
     shapefitsname = calibprefix + shapefn
     shapefits = os.path.join(reduced_dir, shapefitsname)
     # get tag
     tag = tags[func_name]
     # return filename and tag
     return shapefits, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_IN_FP_FILE(p):
+    func_name = 'SLIT_SHAPE_IN_FP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['FPFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-StartingFp_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_OUT_FP_FILE(p):
+    func_name = 'SLIT_SHAPE_OUT_FP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['FPFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-CorrectedFp_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_IN_HC_FILE(p):
+    func_name = 'SLIT_SHAPE_IN_HC_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['HCFILE']
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-StartingHC_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_OUT_HC_FILE(p):
+    func_name = 'SLIT_SHAPE_OUT_HC_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['HCFILE']
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-CorrectedHC_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
+
+
+# noinspection PyPep8Naming
+def SLIT_SHAPE_OVERLAP_FILE(p):
+    func_name = 'SLIT_SHAPE_OVERLAP_FILE'
+    # define filename
+    reduced_dir = p['REDUCED_DIR']
+    # get filename
+    oldfilename = p['FPFILES'][0]
+    # construct prefix
+    prefix = 'SHAPE-DEBUG-Order_Overlap_'
+    # construct new filename and full path
+    newfilename = prefix + oldfilename
+    abspath = os.path.join(reduced_dir, newfilename)
+    # get tag
+    tag = tags[func_name]
+    # return filename and tag
+    return abspath, tag
 
 
 # noinspection PyPep8Naming
@@ -2038,42 +2138,78 @@ def INDEX_OUTPUT_FILENAME():
 
 # noinspection PyPep8Naming
 def OUTPUT_FILE_HEADER_KEYS(p):
+    """
+    Output file header keys.
+
+    This list is the master list and RAW_OUTPUT_COLUMNS, REDUC_OUTPUT_COLUMNS
+    etc must be in this list
+    :param p:
+    :return:
+    """
     # Get required header keys from spirouKeywords.py (via p)
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
                    p['KW_CDEN'][0],
+                   p['KW_DPRTYPE'][0],
                    p['KW_OUTPUT'][0],
-                   p['KW_EXT_TYPE'][0]]
+                   p['KW_EXT_TYPE'][0],
+                   p['KW_CMPLTEXP'][0],
+                   p['KW_NEXP'][0]]
     # return output_keys
     return output_keys
 
 
 # noinspection PyPep8Naming
 def RAW_OUTPUT_COLUMNS(p):
+    func_name = __NAME__ + '.RAW_OUTPUT_COLUMNS()'
+    # define selected keys
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
                    p['KW_DPRTYPE'][0],
                    p['KW_CCAS'][0],
                    p['KW_CREF'][0],
-                   p['KW_CDEN'][0]]
+                   p['KW_CDEN'][0],
+                   p['KW_CMPLTEXP'][0],
+                   p['KW_NEXP'][0]]
+    # check in master list
+    masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
+    for key in output_keys:
+        if key not in OUTPUT_FILE_HEADER_KEYS(p):
+            emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            raise ValueError(emsg1 + '\n' + emsg2)
+    # return keys
     return output_keys
 
 
 # noinspection PyPep8Naming
 def REDUC_OUTPUT_COLUMNS(p):
+    func_name = __NAME__ + '.REDUC_OUTPUT_COLUMNS()'
+
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0]]
+    # check in master list
+    masterlist = __NAME__ + '.OUTPUT_FILE_HEADER_KEYS()'
+    for key in output_keys:
+        if key not in OUTPUT_FILE_HEADER_KEYS(p):
+            emsg1 = 'Key {0} must be in {1}'.format(key, masterlist)
+            emsg2 = '\tfunction = {0}'.format(func_name)
+            raise ValueError(emsg1 + '\n' + emsg2)
+    # return keys
     return output_keys
 
 
@@ -2081,6 +2217,7 @@ def REDUC_OUTPUT_COLUMNS(p):
 def GEN_OUTPUT_COLUMNS(p):
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
+                   p['KW_ACQTIME_KEY_JUL'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
