@@ -308,7 +308,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ------------------------------------------------------------------
     # Calculate shape map
     # ------------------------------------------------------------------
-    loc = spirouImage.GetShapeMap2(p, loc)
+    loc = spirouImage.GetShapeMap(p, loc)
 
     # ------------------------------------------------------------------
     # Plotting
