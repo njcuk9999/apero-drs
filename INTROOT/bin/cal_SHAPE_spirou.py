@@ -26,13 +26,14 @@ from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouLOCOR
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouTHORCA
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_SHAPE_spirou.py'
+__NAME__ = 'cal_SHAPE_spirou2.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -44,12 +45,14 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
+# force plot off
+PLOT_PER_ORDER = False
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(night_name=None, files=None):
+def main(night_name=None, hcfile=None, fpfiles=None):
     """
     cal_SLIT_spirou.py main function, if night_name and files are None uses
     arguments from run time i.e.:
@@ -71,90 +74,189 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    p = spirouStartup.LoadArguments(p, night_name, files)
-    p = spirouStartup.InitialFileSetup(p, calibdb=True)
-    # set the fiber type
+    if hcfile is None or fpfiles is None:
+        names, types = ['hcfile', 'fpfiles'], [str, str]
+        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+                                                        last_multi=True)
+    else:
+        customargs = dict(hcfile=hcfile, fpfiles=fpfiles)
+
+    # get parameters from configuration files and run time arguments
+    p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
+                                    mainfitsfile='fpfiles')
+
+    # ----------------------------------------------------------------------
+    # Construct reference filename and get fiber type
+    # ----------------------------------------------------------------------
+    p, hcfitsfilename = spirouStartup.SingleFileSetup(p, filename=p['HCFILE'])
+    p, fpfilenames = spirouStartup.MultiFileSetup(p, files=p['FPFILES'])
+    # set fiber (it doesn't matter with the 2D image but we need this to get
+    # the lamp type for FPFILES and HCFILES, AB == C
     p['FIBER'] = 'AB'
-    p.set_source('FIBER', __NAME__ + '/main()')
+    p['FIB_TYP'] = [p['FIBER']]
+    fsource = __NAME__ + '/main()'
+    p.set_sources(['FIBER', 'FIB_TYP'], fsource)
+    # set the hcfilename to the first hcfilenames
+    fpfitsfilename = fpfilenames[0]
 
     # ----------------------------------------------------------------------
-    # Read image file
+    # Once we have checked the e2dsfile we can load calibDB
     # ----------------------------------------------------------------------
-    # read the image data
-    p, data, hdr, cdr = spirouImage.ReadImageAndCombine(p, framemath='add')
+    # as we have custom arguments need to load the calibration database
+    p = spirouStartup.LoadCalibDB(p)
+
+    # add a force plot off
+    p['PLOT_PER_ORDER'] = PLOT_PER_ORDER
+    p.set_source('PLOT_PER_ORDER', __NAME__ + '.main()')
 
     # ----------------------------------------------------------------------
+    # Read FP and HC files
+    # ----------------------------------------------------------------------
+    # read and combine all FP files except the first (fpfitsfilename)
+    rargs = [p, 'add', fpfitsfilename, fpfilenames[1:]]
+    p, fpdata, fphdr, fpcdr = spirouImage.ReadImageAndCombine(*rargs)
+    # read first file (hcfitsfilename)
+    hcdata, hchdr, hccdr, _, _ = spirouImage.ReadImage(p, hcfitsfilename)
+
+    # add data and hdr to loc
+    loc = ParamDict()
+    loc['HCDATA'], loc['HCHDR'], loc['HCCDR'] = hcdata, hchdr, hccdr
+    loc['FPDATA'], loc['FPHDR'], loc['FPCDR'] = fpdata, fphdr, fpcdr
+    # set the source
+    sources = ['HCDATA', 'HCHDR', 'HCCDR']
+    loc.set_sources(sources, 'spirouImage.ReadImageAndCombine()')
+    sources = ['FPDATA', 'FPHDR', 'FPCDR']
+    loc.set_sources(sources, 'spirouImage.ReadImage()')
+
+    # ---------------------------------------------------------------------
     # fix for un-preprocessed files
     # ----------------------------------------------------------------------
-    data = spirouImage.FixNonPreProcess(p, data)
+    hcdata = spirouImage.FixNonPreProcess(p, hcdata)
+    fpdata = spirouImage.FixNonPreProcess(p, fpdata)
 
     # ----------------------------------------------------------------------
-    # Get basic image properties
+    # Get basic image properties for reference file
     # ----------------------------------------------------------------------
     # get sig det value
-    p = spirouImage.GetSigdet(p, hdr, name='sigdet')
+    p = spirouImage.GetSigdet(p, fphdr, name='sigdet')
     # get exposure time
-    p = spirouImage.GetExpTime(p, hdr, name='exptime')
+    p = spirouImage.GetExpTime(p, fphdr, name='exptime')
     # get gain
-    p = spirouImage.GetGain(p, hdr, name='gain')
+    p = spirouImage.GetGain(p, fphdr, name='gain')
+    # get lamp parameters
+    p = spirouTHORCA.GetLampParams(p, hchdr)
 
     # ----------------------------------------------------------------------
     # Correction of DARK
     # ----------------------------------------------------------------------
-    p, datac = spirouImage.CorrectForDark(p, data, hdr)
-    datac = data
+    # p, hcdatac = spirouImage.CorrectForDark(p, hcdata, hchdr)
+    hcdatac = hcdata
+    p['DARKFILE'] = 'None'
+
+    # p, fpdatac = spirouImage.CorrectForDark(p, fpdata, fphdr)
+    fpdatac = fpdata
 
     # ----------------------------------------------------------------------
-    # Resize image
+    # Resize hc data
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
+    hcdata = spirouImage.ConvertToE(spirouImage.FlipImage(hcdatac), p=p)
     # convert NaN to zeros
-    data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
+    hcdata0 = np.where(~np.isfinite(hcdata), np.zeros_like(hcdata), hcdata)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = spirouImage.ResizeImage(data0, **bkwargs)
+    hcdata2 = spirouImage.ResizeImage(hcdata0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('Image format changed to '
-                            '{0}x{1}').format(*data2.shape))
+    WLOG('', p['LOG_OPT'], ('HC Image format changed to '
+                            '{0}x{1}').format(*hcdata2.shape))
+
+    # ----------------------------------------------------------------------
+    # Resize fp data
+    # ----------------------------------------------------------------------
+    # rotate the image and convert from ADU/s to e-
+    fpdata = spirouImage.ConvertToE(spirouImage.FlipImage(fpdatac), p=p)
+    # convert NaN to zeros
+    fpdata0 = np.where(~np.isfinite(fpdata), np.zeros_like(fpdata), fpdata)
+    # resize image
+    bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
+                   ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
+                   getshape=False)
+    fpdata2 = spirouImage.ResizeImage(fpdata0, **bkwargs)
+    # log change in data size
+    WLOG('', p['LOG_OPT'], ('FP Image format changed to '
+                            '{0}x{1}').format(*fpdata2.shape))
+
 
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
     # ----------------------------------------------------------------------
-    p, data2 = spirouImage.CorrectForBadPix(p, data2, hdr)
+    # p, hcdata2 = spirouImage.CorrectForBadPix(p, hcdata2, hchdr)
+    # p, fpdata2 = spirouImage.CorrectForBadPix(p, fpdata2, fphdr)
+    p['BADPFILE1'] = 'None'
+    p['BADPFILE2'] = 'None'
 
     # ----------------------------------------------------------------------
-    # Background computation
+    # Background computation for HC file
     # ----------------------------------------------------------------------
-    if p['IC_DO_BKGR_SUBTRACTION']:
-        # log that we are doing background measurement
-        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
-        # get the bkgr measurement
-        bdata = spirouBACK.MeasureBackgroundFF(p, data2)
-        background, gridx, gridy, minlevel = bdata
-    else:
-        background = np.zeros_like(data2)
-
-    data2 = data2 - background
-
-    # correct data2 with background (where positive)
-    data2 = np.where(data2 > 0, data2 - background, 0)
+    # if p['IC_DO_BKGR_SUBTRACTION']:
+    #     # log that we are doing background measurement
+    #     WLOG('', p['LOG_OPT'], 'Doing background measurement on HC frame')
+    #     # get the bkgr measurement
+    #     bdata = spirouBACK.MeasureBackgroundFF(p, hcdata2)
+    #     background, gridx, gridy, minlevel = bdata
+    # else:
+    #     background = np.zeros_like(hcdata2)
+    #
+    # hcdata2 = hcdata2 - background
+    #
+    # # correct data2 with background (where positive)
+    # hcdata2 = np.where(hcdata2 > 0, hcdata2 - background, 0)
 
     # save data to loc
-    loc = ParamDict()
-    loc['DATA'] = data2
-    loc.set_source('DATA', __NAME__ + '/main()')
+    loc['HCDATA'] = hcdata2
+    loc.set_source('HCDATA', __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
+    # Background computation for FP file
+    # ----------------------------------------------------------------------
+    # if p['IC_DO_BKGR_SUBTRACTION']:
+    #     # log that we are doing background measurement
+    #     WLOG('', p['LOG_OPT'], 'Doing background measurement on FP frame')
+    #     # get the bkgr measurement
+    #     bdata = spirouBACK.MeasureBackgroundFF(p, fpdata2)
+    #     background, gridx, gridy, minlevel = bdata
+    # else:
+    #     background = np.zeros_like(fpdata2)
+    #
+    # fpdata2 = fpdata2 - background
+    #
+    # # correct data2 with background (where positive)
+    # fpdata2 = np.where(fpdata2 > 0, fpdata2 - background, 0)
+
+    # save data to loc
+    loc['FPDATA'] = fpdata2
+    loc.set_source('FPDATA', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
     # ----------------------------------------------------------------------
     # get the number of bad pixels
-    n_bad_pix = np.sum(data2 <= 0)
-    n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
+    n_bad_pix = np.sum(hcdata2 <= 0)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata2.shape)
     # Log number
-    wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
+    wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
+    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+
+    # ----------------------------------------------------------------------
+    # Log the number of dead pixels
+    # ----------------------------------------------------------------------
+    # get the number of bad pixels
+    n_bad_pix = np.sum(fpdata2 <= 0)
+    n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata2.shape)
+    # Log number
+    wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
     WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ------------------------------------------------------------------
@@ -163,12 +265,50 @@ def main(night_name=None, files=None):
     # original there is a loop but it is not used --> removed
     p = spirouImage.FiberParams(p, p['FIBER'], merge=True)
     # get localisation fit coefficients
-    p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
+    p, loc = spirouLOCOR.GetCoeffs(p, fphdr, loc)
+
+    # ------------------------------------------------------------------
+    # Get master wave solution map
+    # ------------------------------------------------------------------
+    # get master wave map
+    masterwavefile = spirouDB.GetDatabaseMasterWave(p)
+    # log process
+    wmsg1 = 'Getting master wavelength grid'
+    wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
+    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    # Force A and B to AB solution
+    if p['FIBER'] in ['A', 'B']:
+        wave_fiber = 'AB'
+    else:
+        wave_fiber = p['FIBER']
+    # read master wave map
+    mout = spirouImage.GetWaveSolution(p, filename=masterwavefile,
+                                       return_wavemap=True, quiet=True,
+                                       return_header=True, fiber=wave_fiber)
+    loc['MASTERWAVEP'], loc['MASTERWAVE'], loc['MASTERWAVEHDR'] = mout
+    # set sources
+    wsource = ['MASTERWAVEP', 'MASTERWAVE', 'MASTERWAVEHDR']
+    loc.set_sources(wsource, 'spirouImage.GetWaveSolution()')
+
+    # ----------------------------------------------------------------------
+    # Read UNe solution
+    # ----------------------------------------------------------------------
+    wave_u_ne, amp_u_ne = spirouImage.ReadLineList(p)
+    loc['LL_LINE'], loc['AMPL_LINE'] = wave_u_ne, amp_u_ne
+    source = __NAME__ + '.main() + spirouImage.ReadLineList()'
+    loc.set_sources(['LL_LINE', 'AMPL_LINE'], source)
+
+    # ----------------------------------------------------------------------
+    # Read cavity length file
+    # ----------------------------------------------------------------------
+    loc['CAVITY_LEN_COEFFS'] = spirouImage.ReadCavityLength(p)
+    source = __NAME__ + '.main() + spirouImage.ReadCavityLength()'
+    loc.set_source('CAVITY_LEN_COEFFS', source)
 
     # ------------------------------------------------------------------
     # Calculate shape map
     # ------------------------------------------------------------------
-    loc = spirouImage.GetShapeMap(p, loc)
+    loc = spirouImage.GetShapeMap2(p, loc)
 
     # ------------------------------------------------------------------
     # Plotting
@@ -176,13 +316,13 @@ def main(night_name=None, files=None):
     if p['DRS_PLOT']:
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
-        # plot the shape process for each order
+        # plot the shape process for one order
         sPlt.slit_shape_angle_plot(p, loc)
         # end interactive section
         sPlt.end_interactive_session()
 
     # ------------------------------------------------------------------
-    # Writing to file
+    # Writing DXMAP to file
     # ------------------------------------------------------------------
     # get the raw tilt file name
     raw_shape_file = os.path.basename(p['FITSFILENAME'])
@@ -193,8 +333,7 @@ def main(night_name=None, files=None):
     wmsg = 'Saving shape information in file: {0}'
     WLOG('', p['LOG_OPT'], wmsg.format(shapefitsname))
     # Copy keys from fits file
-    # Copy keys from fits file
-    hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
+    hdict = spirouImage.CopyOriginalKeys(fphdr, fpcdr)
     # add version number
     hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
     hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
@@ -202,9 +341,42 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
     hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
     hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(hdict, p['KW_HCFILE'], value=p['HCFILE'])
+    hdict = spirouImage.AddKey1DList(hdict, p['KW_INFILELIST'],
+                                     values=p['FPFILES'], dim1name='fpfile')
     hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
     # write tilt file to file
     p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
+
+
+    # ------------------------------------------------------------------
+    # Writing sanity check files
+    # ------------------------------------------------------------------
+    if p['SHAPE_DEBUG_OUTPUTS']:
+        # log
+        WLOG('', p['LOG_OPT'], 'Saving debug sanity check files')
+        # construct file names
+        input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
+        output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
+        input_hc_file, tag3 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
+        output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
+        overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
+        # write input fp file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA'], hdict)
+        # write output fp file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        p = spirouImage.WriteImage(p, output_fp_file, loc['FPDATA2'], hdict)
+        # write input fp file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+        p = spirouImage.WriteImage(p, input_hc_file, loc['HCDATA'], hdict)
+        # write output fp file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        p = spirouImage.WriteImage(p, output_hc_file, loc['HCDATA2'], hdict)
+        # write overlap file
+        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag5)
+        p = spirouImage.WriteImage(p, overlap_file, loc['ORDER_OVERLAP'],
+                                   hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -233,7 +405,7 @@ def main(night_name=None, files=None):
         # copy shape file to the calibDB folder
         spirouDB.PutCalibFile(p, shapefits)
         # update the master calib DB file with new key
-        spirouDB.UpdateCalibMaster(p, keydb, shapefitsname, hdr)
+        spirouDB.UpdateCalibMaster(p, keydb, shapefitsname, fphdr)
 
     # ----------------------------------------------------------------------
     # End Message
