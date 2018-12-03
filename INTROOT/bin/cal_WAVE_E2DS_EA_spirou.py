@@ -202,7 +202,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         wave_fiber = p['FIBER']
     # get wave image
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
-                                       return_filename=True, fiber=wave_fiber)
+                                       return_filename=True, fiber=wave_fiber,
+                                       filename='/data/CFHT/calibDB_cfht/2018-07-30_MASTER_wave_ea_AB.fits')
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
@@ -324,14 +325,17 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # gparams[7] = output weights for the pixel position
 
         # dummy array for weights
-        test = np.ones(np.shape(xgau[gg]), 'd')
+        test = np.ones(np.shape(xgau[gg]), 'd')*1e4
         # get the final wavelength value for each peak in order
         output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
+        #output_wave_1 = np.polynomial.chebyshev.chebval(xgau[gg], fit_per_order[iord])
         # convert the pixel equivalent width to wavelength units
         xgau_ew_ini = xgau[gg] - ew[gg] / 2
         xgau_ew_fin = xgau[gg] + ew[gg] / 2
         ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
         ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
+        #ew_ll_ini = np.polynomial.chebyshev.chebval(xgau_ew_ini, fit_per_order[iord])
+        #ew_ll_fin = np.polynomial.chebyshev.chebval(xgau_ew_fin, fit_per_order[iord])
         ew_ll = ew_ll_fin - ew_ll_ini
         # put all lines in the order into array
         gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
@@ -453,6 +457,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Repeat Littrow test
     # ------------------------------------------------------------------
 
+
     # Do Littrow check
     ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
@@ -513,6 +518,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get the abs min and max dev littrow values
         min_littrow = abs(loc['LITTROW_MINDEV_' + str(lit_it)][x_it])
         max_littrow = abs(loc['LITTROW_MAXDEV_' + str(lit_it)][x_it])
+        # get the corresponding order
+        min_littrow_ord = abs(loc['LITTROW_MINDEVORD_' + str(lit_it)][x_it])
+        max_littrow_ord = abs(loc['LITTROW_MAXDEVORD_' + str(lit_it)][x_it])
         # check if sig littrow is above maximum
         rms_littrow_max = p['QC_RMS_LITTROW_MAX']
         dev_littrow_max = p['QC_DEV_LITTROW_MAX']
@@ -525,10 +533,40 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
-                    '{1:.2f}|{2:.2f} > {3:.2f})')
-            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max]
+                    '{1:.2f}|{2:.2f} > {3:.2f} for order {4}|{5})')
+            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+                     min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            # if sig was out of bounds, recalculate
+            if sig_littrow > rms_littrow_max:
+                # get the residuals
+                respix = loc['LITTROW_YY_' + str(lit_it)][x_it]
+                # check if min is out of bounds
+                if min_littrow > dev_littrow_max:
+                    # remove respective order
+                    respix_2 = np.delete(respix, min_littrow_ord)
+                    worst_order = min_littrow_ord
+                # check if max is out of bounds
+                elif max_littrow > dev_littrow_max:
+                    # remove respective order
+                    respix_2 = np.delete(respix, max_littrow_ord)
+                    worst_order = max_littrow_ord
+               # calculate stats
+                mean = np.sum(respix_2) / len(respix_2)
+                mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                rms = np.sqrt(mean2 - mean ** 2)
+                if rms > rms_littrow_max:
+                    fmsg = ('Littrow test (x={0}) failed (sig littrow = '
+                            '{1:.2f} > {2:.2f} removing order {3})')
+                    fargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                    fail_msg.append(fmsg.format(*fargs))
+                else:
+                    wargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                    wmsg = ('Littrow test (x={0}) passed (sig littrow = '
+                            '{1:.2f} > {2:.2f} removing order {3})')
+                    fail_msg.append(wmsg.format(*wargs))
+
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -552,7 +590,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
     tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
-    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
     wavefitsname = os.path.split(wavefits)[-1]
     # log progress
     wargs = [p['FIBER'], wavefits]
