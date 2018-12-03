@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
@@ -59,15 +59,15 @@ RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
 RUN_EXTRACT_TELLU = False
 RUN_EXTRACT_OBJ = False
-RUN_EXTRACT_ALL = True
-RUN_HC_WAVE = False
-RUN_WAVE_WAVE = True
+RUN_EXTRACT_ALL = False
+RUN_HC_WAVE = True
+RUN_WAVE_WAVE = False
 RUN_OBJ_MK_TELLU = False
 RUN_OBJ_FIT_TELLU = False
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = True
+SKIP_DONE_EXTRACT = False
 SKIP_DONE_HC_WAVE = False
 SKIP_DONE_WAVE_WAVE = False
 SKIP_DONE_MK_TELLU = False
