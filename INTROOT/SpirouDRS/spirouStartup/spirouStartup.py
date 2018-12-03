@@ -16,6 +16,7 @@ Last modified: 2017-10-11 at 10:49
 from __future__ import division
 import numpy as np
 import os
+import time
 import sys
 import code
 from collections import OrderedDict
@@ -72,14 +73,20 @@ def run_begin(recipe, quiet=False):
     """
     func_name = __NAME__ + '.run_begin()'
 
+    # set up process id
+    pid = assign_pid()
+
     # Clean WLOG
-    WLOG.clean_log()
+    WLOG.clean_log(pid)
     # Get config parameters from primary file
     try:
         cparams, warn_messages = spirouConfig.ReadConfigFile()
     except ConfigError as e:
         WLOG(e.level, DPROG, e.message)
         cparams, warn_messages = None, []
+    # add process id to cparams
+    cparams['PID'] = pid
+    cparams.set_source('PID', func_name)
 
     # log warning messages
     if len(warn_messages) > 0:
@@ -116,6 +123,10 @@ def run_begin(recipe, quiet=False):
 
     # return parameters
     return cparams
+
+
+def assign_pid():
+    return 'PID-{0:020d}'.format(int(time.time() * 1e7))
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
@@ -505,7 +516,7 @@ def main_end_script(p, outputs='reduced'):
     # add the logger messsages to p
     p = WLOG.output_param_dict(p)
     # finally clear out the log in WLOG
-    WLOG.clean_log()
+    WLOG.clean_log(p['PID'])
     # return p
     return p
 
