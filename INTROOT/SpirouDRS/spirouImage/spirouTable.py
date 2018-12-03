@@ -15,6 +15,7 @@ import os
 from astropy.table import Table, vstack
 from astropy.table import TableMergeError
 from astropy.io.registry import get_formats
+from astropy.io import fits
 from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
@@ -114,7 +115,7 @@ def make_table(columns, values, formats=None, units=None):
     return table
 
 
-def write_table(table, filename, fmt='fits'):
+def write_table(table, filename, fmt='fits', header=None):
     """
     Writes a table to file "filename" with format "fmt"
 
@@ -123,6 +124,11 @@ def write_table(table, filename, fmt='fits'):
                      to written to
     :param fmt: string, the format of the table to read from (must be valid
                 for astropy.table to read - see below)
+
+    :param header: None or dict, if fmt='fits' this can be a header dictionary
+                   of key, value, comment groups
+                       i.e. header[key] = [value, comment]
+                   which will be put into the header
 
     :return None:
 
@@ -152,6 +158,15 @@ def write_table(table, filename, fmt='fits'):
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
         WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+
+    if (fmt == 'fits') and (header is not None):
+        # reload fits data
+        data, filehdr = fits.getdata(filename, header=True)
+        # push keys into file header (value, comment tuple)
+        for key in list(header.keys()):
+            filehdr[key] = tuple(header[key])
+        # save data
+        fits.writeto(filename, data, filehdr, overwrite=True)
 
 
 def merge_table(table, filename, fmt='fits'):
