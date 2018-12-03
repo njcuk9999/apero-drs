@@ -2702,7 +2702,7 @@ def COLOUREDLEVELS():
     # http://ozzmaker.com/add-colour-to-text-in-python/
     clevels = dict(error=BColors.FAIL,  # red
                    warning=BColors.WARNING,  # yellow
-                   info=BColors.OKGREEN,  # green
+                   info=BColors.OKBLUE,  # green
                    graph=BColors.OKBLUE,  # green
                    all=BColors.OKGREEN)  # green
     return clevels
@@ -2710,15 +2710,30 @@ def COLOUREDLEVELS():
 
 # defines the colours
 class BColors:
-    HEADER = '\033[95;1m'
-    OKBLUE = '\033[94;1m'
-    OKGREEN = '\033[92;1m'
-    WARNING = '\033[93;1m'
-    FAIL = '\033[91;1m'
-    ENDC = '\033[0;0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
+    if 'THEME' not in pp:
+        theme = 'DARK'
+    else:
+        theme = pp['THEME']
+
+    if theme == 'DARK':
+        HEADER = '\033[95;1m'
+        OKBLUE = '\033[94;1m'
+        OKGREEN = '\033[92;1m'
+        WARNING = '\033[1;93;1m'
+        FAIL = '\033[1;91;1m'
+        ENDC = '\033[0;0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
+    else:
+        HEADER = '\033[95;1m'
+        OKBLUE = '\033[1;36m'
+        OKGREEN = '\033[1;32m'
+        WARNING = '\033[1;34m'
+        FAIL = '\033[1;31m'
+        ENDC = '\033[0;0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
 
 # noinspection PyPep8Naming
 def COLOURED_LOG(p=None):
