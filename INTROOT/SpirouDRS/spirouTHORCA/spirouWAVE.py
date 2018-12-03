@@ -445,6 +445,9 @@ def fp_wavelength_sol_new(p, loc):
         # select the lines in the order
         gg = loc['ORDPEAK'] == order_num
         # store the initial wavelengths of the lines
+        #floc['llpos'] = np.polynomial.chebyshev.chebval(
+        #    loc['XPEAK'][gg],
+        #    loc['LITTROW_EXTRAP_PARAM_1'][order_num])
         floc['llpos'] = np.polyval(
             loc['LITTROW_EXTRAP_PARAM_1'][order_num][::-1],
             loc['XPEAK'][gg])
@@ -478,10 +481,10 @@ def fp_wavelength_sol_new(p, loc):
                 mpeak[it] = mpeak[it + 1] + 1
             # if there is a gap, fix it
             else:
-                # floc xxpox
+                # get line x positions
                 flocx0 = floc['xxpos'][it]
                 flocx1 = floc['xxpos'][it + 1]
-                # floc llpos
+                # get line wavelengths
                 floc0 = floc['llpos'][it]
                 floc1 = floc['llpos'][it + 1]
                 # estimate the number of peaks missed
@@ -550,8 +553,39 @@ def fp_wavelength_sol_new(p, loc):
                     # store new m and d
                     floc['m_fp'] = mpeak
                     floc['dopd_t'] = dopd_t
-            # else:
-            #     print('no overlap for order ' + str(order_num))
+            else:
+                print('no overlap for order ' + str(order_num))
+                # save previous mpeak calculated
+                m_init = mpeak[cm_ind]
+                m_test = mpeak[cm_ind]
+                # get dopd for last line of current & first of last order
+                dopd_curr = (m_test * floc['llpos'][cm_ind] - dopd0) * 1.e-3
+                dopd_prev = (m_prev[0] * ll_prev[0] - dopd0) * 1.e-3
+                # do loops to check jumps
+                if dopd_curr - dopd_prev > fp_large_jump:
+                    while (dopd_curr - dopd_prev) > fp_large_jump:
+                        m_test = m_test - 1
+                        dopd_curr = (m_test * floc['llpos'][cm_ind] - dopd0) * 1.e-3
+                elif dopd_curr - dopd_prev < -fp_large_jump:
+                    while (dopd_curr - dopd_prev) < -fp_large_jump:
+                        m_test = m_test + 1
+                        dopd_curr = (m_test * floc['llpos'][cm_ind] - dopd0) * 1.e-3
+                # recalculate m if there's an offset from cross_match
+                m_offset_c = m_test - m_init
+                if m_offset_c != 0:
+                    mpeak = mpeak + m_offset_c
+                    # print note for dev if different
+                    if p['DRS_DEBUG']:
+                        wargs = [order_num, mpeak[cm_ind] - m_init]
+                        wmsg = 'M difference for order {0}: {1}'
+                        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                    # recalculate observed effective cavity width
+                    dopd_t = mpeak * floc['llpos']
+                    # store new m and d
+                    floc['m_fp'] = mpeak
+                    floc['dopd_t'] = dopd_t
+
+
         # add to storage
         llpos_all += list(floc['llpos'])
         xxpos_all += list(floc['xxpos'])
@@ -1516,7 +1550,7 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
     n_fin_hc = p['IC_HC_N_ORD_FINAL_2']
     # insert FP lines into all_lines at the correct orders
     # define wavelength difference limit for keeping a line
-    fp_cut = np.std(newll - llpos_all)
+    fp_cut = 3*np.std(newll - llpos_all)
     # define correct starting order number
     start_order = min(n_init, n_init_hc)
     # define starting point for prepended zeroes
@@ -1539,7 +1573,7 @@ def insert_fp_lines(p, newll, llpos_all, all_lines_2, order_rec_all,
                 if abs(newll[it] - llpos_all[it]) < fp_cut:
                     # put FP line data into an array
                     newdll = newll[it] - llpos_all[it]
-                    fp_line = np.array([newll[it], 0.0, 0.0, newdll,
+                    fp_line = np.array([newll[it], 0.0, 0.0, 0.0,
                                         0.0, xxpos_all[it], 0.0, ampl_all[it]])
                     fp_line = fp_line.reshape((1, 8))
                     # append FP line data to all_lines
@@ -1556,6 +1590,8 @@ def find_fp_lines_new(p, loc):
     # peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
     # get redefined variables
     loc = find_fp_lines_new_setup(loc)
+    # reset minimum value (to find more edge peaks which are important)
+    # p['DRIFT_PEAK_PEAK_SIG_LIM']['fp'] = 0.7
     # use spirouRV to get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
     # remove wide/spurious peaks
@@ -2022,6 +2058,159 @@ def fit_gaussian_triplets(p, loc):
             wcoeffs = poly_wave_sol[order_num, :][::-1]
             wave_map2[order_num, :] = np.polyval(wcoeffs, xpix)
 
+        # TODO ----------------------------------------------------------------
+        # TODO: Remove below
+        # TODO ----------------------------------------------------------------
+        wave_map3 = np.zeros((nbo, nbpix))
+        poly_wave_sol3 = np.zeros_like(loc['WAVEPARAMS'])
+        wave_mapc = np.zeros((nbo, nbpix))
+        poly_wave_solc = np.zeros_like(loc['WAVEPARAMS'])
+        for order_num in range(nbo):
+            order_mask = orders == order_num
+            if np.sum(order_mask) == 0:
+                print('No values found for order {0}'.format(order_num))
+                continue
+            wcoeffs = np.polyfit(xgau[order_mask], wave_catalog[order_mask], loc['WAVEPARAMS'].shape[1]-1)[::-1]
+            poly_wave_sol3[order_num, :] = wcoeffs
+            wave_map3[order_num, :] = np.polyval(wcoeffs[::-1], xpix)
+            poly_wave_solc[order_num, :] = np.polynomial.chebyshev.chebfit(xgau[order_mask], wave_catalog[order_mask],4)
+            wave_mapc[order_num, :] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']),poly_wave_solc[order_num, :])
+        # save parameters to loc
+        loc['WAVE_CATALOG'] = wave_catalog
+        loc['AMP_CATALOG'] = amp_catalog
+        loc['SIG'] = sig
+        loc['SIG1'] = sig * 1000 / np.sqrt(len(wave_catalog))
+        loc['POLY_WAVE_SOL'] = poly_wave_sol
+        loc['WAVE_MAP2'] = wave_map2
+        loc['XGAU_T'] = xgau
+        loc['ORD_T'] = orders
+        loc['GAUSS_RMS_DEV_T'] = gauss_rms_dev
+        loc['DV_T'] = dv
+        loc['EW_T'] = ew
+        loc['PEAK_T'] = peak2
+
+        loc2 = spirouConfig.ParamDict()
+        for key in loc:
+            loc2[key] = loc[key]
+        loc2['POLY_WAVE_SOL'] = poly_wave_sol3
+        loc2['WAVE_MAP2'] = wave_map3
+
+        def do_stuff(p, loc):
+            # ----------------------------------------------------------------------
+            # Set up all_lines storage
+            # ----------------------------------------------------------------------
+            # initialise up all_lines storage
+            all_lines_1 = []
+            # get parameters from p
+            n_ord_start = p['IC_HC_N_ORD_START_2']
+            n_ord_final = p['IC_HC_N_ORD_FINAL_2']
+            # get values from loc
+            xgau = np.array(loc['XGAU_T'])
+            dv = np.array(loc['DV_T'])
+            fit_per_order = np.array(loc['POLY_WAVE_SOL'])
+            ew = np.array(loc['EW_T'])
+            peak = np.array(loc['PEAK_T'])
+            amp_catalog = np.array(loc['AMP_CATALOG'])
+            wave_catalog = np.array(loc['WAVE_CATALOG'])
+            ord_t = np.array(loc['ORD_T'])
+            # loop through orders
+            for iord in range(n_ord_start, n_ord_final):
+                # keep relevant lines
+                # -> right order
+                # -> finite dv
+                gg = (ord_t == iord)
+                nlines = np.sum(gg)
+                # put lines into ALL_LINES structure
+                # reminder:
+                # gparams[0] = output wavelengths
+                # gparams[1] = output sigma(gauss fit width)
+                # gparams[2] = output amplitude(gauss fit)
+                # gparams[3] = difference in input / output wavelength
+                # gparams[4] = input amplitudes
+                # gparams[5] = output pixel positions
+                # gparams[6] = output pixel sigma width (gauss fit width in pixels)
+                # gparams[7] = output weights for the pixel position
+
+                # dummy array for weights
+                test = np.ones(np.shape(xgau[gg]), 'd')
+                # get the final wavelength value for each peak in order
+                output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
+                # convert the pixel equivalent width to wavelength units
+                xgau_ew_ini = xgau[gg] - ew[gg] / 2
+                xgau_ew_fin = xgau[gg] + ew[gg] / 2
+                ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
+                ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
+                ew_ll = ew_ll_fin - ew_ll_ini
+                # put all lines in the order into array
+                gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
+                                              wave_catalog[gg] - output_wave_1,
+                                              amp_catalog[gg],
+                                              xgau[gg], ew[gg], test))
+                # append the array for the order into a list
+                all_lines_1.append(gau_params)
+                # save dv in km/s and auxiliary order number
+                # res_1 = np.concatenate((res_1,2.997e5*(input_wave - output_wave_1)/
+                #                        output_wave_1))
+                # ord_save = np.concatenate((ord_save, test*iord))
+            # add to loc
+            loc['ALL_LINES_1'] = all_lines_1
+            loc['LL_PARAM_1'] = np.array(fit_per_order)
+            loc['LL_OUT_1'] = np.array(loc['WAVE_MAP2'])
+            loc.set_sources(['ALL_LINES_1', 'LL_PARAM_1'], __NAME__ + '/main()')
+            # For compatibility w/already defined functions, I need to save
+            # here all_lines_2
+            all_lines_2 = list(all_lines_1)
+            loc['ALL_LINES_2'] = all_lines_2
+            # # ------------------------------------------------------------------
+            # # Littrow test
+            # # ------------------------------------------------------------------
+            # # calculate echelle orders
+            # o_orders = np.arange(n_ord_start, n_ord_final)
+            # echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+            # loc['ECHELLE_ORDERS'] = echelle_order
+            # loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+            # # reset Littrow fit degree
+            # p['IC_LITTROW_FIT_DEG_1'] = 7
+            # # Do Littrow check
+            # ckwargs = dict(ll=loc['LL_OUT_1'][n_ord_start:n_ord_final, :],
+            #                iteration=1, log=True)
+            # loc = spirouTHORCA.calculate_littrow_sol(p, loc, **ckwargs)
+            # # Plot wave solution littrow check
+            # if p['DRS_PLOT']:
+            #     # plot littrow x pixels against fitted wavelength solution
+            #     sPlt.wave_littrow_check_plot(p, loc, iteration=1)
+
+        do_stuff(p, loc)
+        do_stuff(p, loc2)
+
+
+    loc['POLY_WAVE_SOL3'] = poly_wave_sol3
+    loc['WAVE_MAP3'] = wave_map3
+
+    loc['POLY_WAVE_SOL4'] = poly_wave_solc
+    loc['WAVE_MAP4'] = wave_mapc
+
+    #loc['POLY_WAVE_SOL4'][-1] = poly_wave_sol[-1]
+    #loc['WAVE_MAP4'][-1] = wave_map3[-1]
+
+    loc['POLY_WAVE_SOL4'][-2] = np.polynomial.chebyshev.chebfit(np.arange(loc['NBPIX']), loc['WAVE_MAP2'][-2], 4)
+    loc['WAVE_MAP4'][-2] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']), loc['POLY_WAVE_SOL4'][-2])
+
+    loc['POLY_WAVE_SOL4'][-1] = np.polynomial.chebyshev.chebfit(np.arange(loc['NBPIX']), loc['WAVE_MAP2'][-1], 4)
+    loc['WAVE_MAP4'][-1] = np.polynomial.chebyshev.chebval(np.arange(loc['NBPIX']), loc['POLY_WAVE_SOL4'][-1])
+
+    loc['POLY_WAVE_SOL5'] = poly_wave_sol
+    loc['WAVE_MAP5'] = wave_map2
+
+    loc['POLY_WAVE_SOL5'][0] = poly_wave_sol3[0]
+    loc['WAVE_MAP5'][0] = wave_map3[0]
+
+
+# TODO ----------------------------------------------------------------
+        # TODO: Remove above
+        # TODO ----------------------------------------------------------------
+
+
     # save parameters to loc
     loc['WAVE_CATALOG'] = wave_catalog
     loc['AMP_CATALOG'] = amp_catalog
@@ -2050,7 +2239,8 @@ def fit_gaussian_triplets(p, loc):
     loc['LIN_MOD_SLICE'] = lin_mod_slice
     loc['RECON0'] = recon0
 
-
+    loc['POLY_WAVE_SOLC'] = poly_wave_solc
+    loc['WAVE_MAPC'] = wave_mapc
 
     # return loc
     return loc
