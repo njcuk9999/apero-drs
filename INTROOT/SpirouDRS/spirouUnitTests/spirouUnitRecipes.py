@@ -37,7 +37,6 @@ import cal_HC_E2DS_EA_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
 import cal_SHAPE_spirou
-import cal_SHAPE_spirou2
 # import cal_WAVE_E2DS_spirou
 import cal_WAVE_E2DS_EA_spirou
 # import cal_WAVE_NEW_E2DS_spirou
@@ -130,7 +129,6 @@ def get_versions():
     vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
     vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
     vv[cal_SHAPE_spirou.__NAME__] = cal_SHAPE_spirou.__version__
-    vv[cal_SHAPE_spirou2.__NAME__] = cal_SHAPE_spirou2.__version__
     # vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
     vv[cal_WAVE_E2DS_EA_spirou.__NAME__] = cal_WAVE_E2DS_EA_spirou.__version__
     # vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou
@@ -293,30 +291,6 @@ def unit_test_cal_shape_spirou(rname, inputs):
     """
     # define name and arguments
     name = 'cal_SHAPE_spirou'
-    arg_names = ['night_name', 'files']
-    arg_types = [str, list]
-
-    # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
-    return args, name
-
-
-def unit_test_cal_shape_spirou2(rname, inputs):
-    """
-    unit_test_cal_shape_spirou
-
-    input = night_name files
-    output = SLIT_SHAPE_FILE
-
-    :param rname: string, identifier for this run
-    :param inputs: list of objects, raw parameters to pass to run, if outputs
-                   is None returns parameters to pass to file
-
-
-    :return args: dict, the parameters to pass to the run
-    """
-    # define name and arguments
-    name = 'cal_SHAPE_spirou2'
     arg_names = ['night_name', 'hcfile', 'fpfiles']
     arg_types = [str, str, list]
 
