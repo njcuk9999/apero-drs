@@ -33,7 +33,7 @@ from SpirouDRS import spirouTHORCA
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_SHAPE_spirou2.py'
+__NAME__ = 'cal_SHAPE_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
