@@ -246,13 +246,15 @@ class Logger:
         # add to full log
         self.pout['LOGGER_FULL'].append([[ttime, mess]])
 
-    def clean_log(self):
+    def clean_log(self, processid):
         # get log storage keys
         storekey = spirouConfig.Constants.LOG_STORAGE_KEYS()
-
+        # clean out for this ID
+        self.pout[processid] = spirouConfig.ParamDict()
+        # populate log keys
         for key in storekey:
-            self.pout[storekey[key]] = []
-        self.pout['LOGGER_FULL'] = []
+            self.pout[processid][storekey[key]] = []
+        self.pout[processid]['LOGGER_FULL'] = []
 
 
 # =============================================================================
