@@ -580,7 +580,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wmsg = 'Cannot remove all orders. Check IC_LITTROW_REMOVE_ORDERS'
         WLOG('error', p['LOG_OPT'], wmsg)
     # get the total number of orders to fit
-    num_orders = len(loc['ALL_LINES_{0}'.format(iteration)])
+    num_orders = len(loc['ECHELLE_ORDERS'])
     # get the dimensions of the data
     ydim, xdim = loc['HCDATA'].shape
     # deal with removing orders (via weighting stats)
@@ -589,7 +589,9 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         rmask[np.array(remove_orders)] = False
     # storage of results
     keys = ['LITTROW_MEAN', 'LITTROW_SIG', 'LITTROW_MINDEV',
-            'LITTROW_MAXDEV', 'LITTROW_PARAM', 'LITTROW_XX', 'LITTROW_YY']
+            'LITTROW_MAXDEV', 'LITTROW_PARAM', 'LITTROW_XX', 'LITTROW_YY',
+            'LITTROW_INVORD', 'LITTROW_FRACLL', 'LITTROW_PARAM0',
+            'LITTROW_MINDEVORD', 'LITTROW_MAXDEVORD']
     for key in keys:
         nkey = key + '_{0}'.format(iteration)
         loc[nkey] = []
@@ -614,6 +616,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         # fit the inverse order numbers against the fractional
         #    wavelength contrib.
         coeffs = np.polyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
+        coeffs0 = np.polyfit(inv_orderpos, frac_ll_point, fit_degree)[::-1]
         # calculate the fit values
         cfit = np.polyval(coeffs[::-1], inv_orderpos)
         # calculate the residuals
@@ -637,12 +640,19 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         rms = np.sqrt(mean2 - mean ** 2)
         mindev = np.min(respix)
         maxdev = np.max(respix)
+        mindev_ord = np.argmin(respix)
+        maxdev_ord = np.argmax(respix)
         # add to storage
+        loc['LITTROW_INVORD_{0}'.format(iteration)].append(inv_orderpos)
+        loc['LITTROW_FRACLL_{0}'.format(iteration)].append(frac_ll_point)
         loc['LITTROW_MEAN_{0}'.format(iteration)].append(mean)
         loc['LITTROW_SIG_{0}'.format(iteration)].append(rms)
         loc['LITTROW_MINDEV_{0}'.format(iteration)].append(mindev)
         loc['LITTROW_MAXDEV_{0}'.format(iteration)].append(maxdev)
+        loc['LITTROW_MINDEVORD_{0}'.format(iteration)].append(mindev_ord)
+        loc['LITTROW_MAXDEVORD_{0}'.format(iteration)].append(maxdev_ord)
         loc['LITTROW_PARAM_{0}'.format(iteration)].append(coeffs)
+        loc['LITTROW_PARAM0_{0}'.format(iteration)].append(coeffs0)
         loc['LITTROW_XX_{0}'.format(iteration)].append(orderpos)
         loc['LITTROW_YY_{0}'.format(iteration)].append(respix)
         # if log then log output
