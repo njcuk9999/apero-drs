@@ -41,11 +41,45 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get param dictionary
 ParamDict = spirouConfig.ParamDict
-# skip found files
-SKIP_DONE = True
+
 # test run
 TEST_RUN = False
 TEST_STORE = []
+
+# define run number
+RUNNUMBER = 0
+
+# switches
+RUN_BADPIX = False
+RUN_DARK = False
+RUN_LOC = False
+RUN_SLIT = False
+RUN_SHAPE = False
+RUN_FLAT = False
+RUN_EXTRACT_HCFP = False
+RUN_EXTRACT_TELLU = False
+RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_ALL = True
+RUN_HC_WAVE = False
+RUN_WAVE_WAVE = True
+RUN_OBJ_MK_TELLU = False
+RUN_OBJ_FIT_TELLU = False
+
+# skip found files
+SKIP_DONE_PP = True
+SKIP_DONE_EXTRACT = True
+SKIP_DONE_HC_WAVE = False
+SKIP_DONE_WAVE_WAVE = False
+SKIP_DONE_MK_TELLU = False
+SKIP_DONE_FIT_TELLU = False
+
+# turn on parallelisation
+PARALLEL = True
+
+# Max Processes
+MAX_PROCESSES = 10
+
+# -----------------------------------------------------------------------------
 # allowed files
 RAW_CODES = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
 DATECOL = 'MJDATE'
@@ -66,29 +100,6 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
          '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
          '2018-10-26', '2018-10-27']
-
-# define run number
-RUNNUMBER = 0
-
-# switches
-RUN_BADPIX = False
-RUN_DARK = False
-RUN_LOC = False
-RUN_SLIT = False
-RUN_SHAPE = True
-RUN_FLAT = True
-RUN_EXTRACT_HCFP = True
-RUN_EXTRACT_TELLU = True
-RUN_EXTRACT_OBJ = True
-
-# turn on parallelisation
-PARALLEL = True
-
-# Max Processes
-MAX_PROCESSES = 10
-
-
-# -----------------------------------------------------------------------------
 
 
 # =============================================================================
@@ -196,6 +207,7 @@ def get_control_index(control, index_file, recipe, fdprtypes=None,
     # mask control file by recipe name
     cmask = np.array(control['Recipe']) == recipe
     control = control[cmask]
+
     # get valied files from index
     if 'None' in control['dprtype']:
         vmask = np.ones(len(index), dtype=bool)
@@ -204,6 +216,10 @@ def get_control_index(control, index_file, recipe, fdprtypes=None,
         vmask = np.in1d(idprtypes, control['dprtype'])
     # apply mask
     vindex = index[vmask]
+
+    # deal with stripping string rows
+    vindex['DPRTYPE'] = np.array(strip_names(vindex['DPRTYPE']))
+    vindex['OBJNAME'] = np.array(strip_names(vindex['OBJNAME']))
 
     # deal with dprtype filter
     if fdprtypes is not None:
@@ -526,11 +542,13 @@ def run_parallel(p, runs, recipe, night_name):
     for group_name in groups:
         # process storage
         pp = []
+
+        print('GROUP = {0}'.format(group_name))
         # loop around sub groups (to be run at the same time)
         for sub_group in groups[group_name]:
             # make sub_group a dict
             sruns = make_subgroup_dict(sub_group, group_name)
-            print(group_name, sruns)
+            print('', sruns)
             # do parallel run
             process = Process(target=unit_wrapper, args=(p, sruns))
             process.start()
@@ -698,13 +716,20 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
         vindex[DATECOL] = np.array(vindex[DATECOL]).astype(float)
         # make the runs
         runs = trigger_runs(p, recipe, night_name, control, vindex)
+        # update recipe names (fudge)
+        if recipe == 'cal_HC_E2DS_spirou':
+            recipe1 = 'cal_HC_E2DS_EA_spirou'
+        elif recipe == 'cal_WAVE_E2DS_spirou':
+            recipe1 = 'cal_WAVE_E2DS_EA_spirou'
+        else:
+            recipe1 = str(recipe)
         # manage the running of this recipe
         if TEST_RUN:
-            print_runs(p, runs, recipe)
+            print_runs(p, runs, recipe1)
         elif PARALLEL:
-            lls = run_parallel(p, runs, recipe, night_name)
+            lls = run_parallel(p, runs, recipe1, night_name)
         else:
-            lls = manage_runs(p, lls, runs, recipe, night_name)
+            lls = manage_runs(p, lls, runs, recipe1, night_name)
     # return local spaces and errors
     return lls
 
@@ -736,8 +761,21 @@ def trigger_runs(p, recipe, night_name, control, vindex):
         return cal_ff_raw_spirou(night_name, vindex, groups)
 
     if recipe == 'cal_extract_RAW_spirou':
-        return cal_extract_raw_spirou(night_name, vindex, groups)
+        return cal_extract_raw_spirou(p, night_name, vindex, groups)
 
+    if recipe == 'cal_HC_E2DS_spirou':
+        return cal_hc_e2ds_ea_spirou(p, night_name, vindex, groups)
+
+    if recipe == 'cal_WAVE_E2DS_spirou':
+        return cal_wave_e2ds_ea_spirou(p,night_name, vindex, groups)
+
+    if recipe == 'obj_mk_tellu':
+        return obj_mk_tellu(p, night_name, vindex, groups)
+
+    if recipe == 'obj_fit_tellu':
+        return obj_fit_tellu(p, night_name, vindex, groups)
+
+    WLOG('warning', p['LOG_OPT'], 'Error Recipe={0} not defined'.format(recipe))
     return []
 
 
@@ -987,22 +1025,216 @@ def cal_ff_raw_spirou(night_name, vindex, groups):
     return runs
 
 
-def cal_extract_raw_spirou(night_name, vindex, groups):
+def cal_extract_raw_spirou(p, night_name, vindex, groups):
     """
     for cal_extract_raw_spirou we just separate files and run each
     separately
     """
+    reducedpath = p['DRS_DATA_REDUC']
     # get the dark_dark files
     filelist = []
     for group in groups:
         file_groups = groups[group]
         for subgroup in file_groups:
             filelist += get_group_vindex(vindex, subgroup, 'FILENAME')
+    # -------------------------------------------------------------------------
+    # skip done
+    if SKIP_DONE_EXTRACT:
+        filelist2 = []
+        for num in range(len(filelist)):
+            filename2ab = filelist[num].replace('.fits', '_e2ds_AB.fits')
+            filename2a = filelist[num].replace('.fits', '_e2ds_A.fits')
+            filename2b = filelist[num].replace('.fits', '_e2ds_B.fits')
+            filename2c = filelist[num].replace('.fits', '_e2ds_C.fits')
+            abspath_ab = os.path.join(reducedpath, night_name, filename2ab)
+            abspath_a = os.path.join(reducedpath, night_name, filename2a)
+            abspath_b = os.path.join(reducedpath, night_name, filename2b)
+            abspath_c = os.path.join(reducedpath, night_name, filename2c)
+            # check existence
+            cond1 = not os.path.exists(abspath_ab)
+            cond2 = not os.path.exists(abspath_a)
+            cond3 = not os.path.exists(abspath_b)
+            cond4 = not os.path.exists(abspath_c)
+            # append file if not in existence
+            if cond1 or cond2 or cond3 or cond4:
+                filelist2.append(filelist[num])
+    else:
+        filelist2 = list(filelist)
+    # -------------------------------------------------------------------------
     # runs
     runs = []
     # push all from group into file
+    for num in range(len(filelist2)):
+        myrun = [night_name, filelist2[num]]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def cal_hc_e2ds_ea_spirou(p, night_name, vindex, groups):
+    """
+    for cal_shape_spirou2 we need to match hc groups to fp groups
+    we need to use the last hc of a group and all but the first fp_fp in a
+    sequence (unless there is only fp_fp file)
+
+    for cal_hc_e2ds_ea_spirou we need to get hc files and add the e2ds code
+    for fiber AB and C
+    """
+    if 'HCONE_HCONE' in groups:
+        hc_hc_groups = groups['HCONE_HCONE']
+        hc_hc_files = get_group_vindex(vindex, hc_hc_groups, 'FILENAME')
+        if SKIP_DONE_HC_WAVE:
+            path = os.path.join(p['DRS_DATA_REDUC'], night_name)
+            hc_hc_files = get_group_skip(hc_hc_files, path, '.fits',
+                                         '_wave_ea_AB.fits')
+            hc_hc_files = get_group_skip(hc_hc_files, path, '.fits',
+                                         '_wave_ea_C.fits')
+        num_hc_hc_groups = len(hc_hc_files)
+        hc_EAB_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_AB.fits')
+        hc_EC_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_C.fits')
+    else:
+        WLOG('warning', '', 'HCONE_HCONE not in groups')
+        return []
+    # -------------------------------------------------------------------------
+    # runs
+    runs = []
+    # match dark groups and flat groups
+    for num in range(num_hc_hc_groups):
+        # create run for HC E2DS AB file
+        myrun = [night_name, hc_EAB_files[num][-1]]
+        runs.append(myrun)
+        # create run for HC E2DS C file
+        myrun = [night_name, hc_EC_files[num][-1]]
+        runs.append(myrun)
+
+    # return runs
+    return runs
+
+
+def cal_wave_e2ds_ea_spirou(p, night_name, vindex, groups):
+    """
+    for cal_shape_spirou2 we need to match hc groups to fp groups
+    we need to use the last hc of a group and all but the first fp_fp in a
+    sequence (unless there is only fp_fp file)
+
+    for cal_hc_e2ds_ea_spirou we need to get hc files and add the e2ds code
+    for fiber AB and C
+    """
+    # get the dark_dark files
+    if 'FP_FP' in groups:
+        fp_fp_groups = groups['FP_FP']
+        fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
+        if SKIP_DONE_WAVE_WAVE:
+            path = os.path.join(p['DRS_DATA_REDUC'], night_name)
+            fout = get_group_skip(fp_fp_files, path, '.fits', '_wave_ea_AB.fits',
+                                  fp_fp_groups)
+            fp_fp_groups, fp_fp_files = fout
+        fp_fp_dates = get_group_vindex(vindex, fp_fp_groups, DATECOL)
+        num_fp_fp_groups = len(fp_fp_files)
+        mean_fp_fp_dates = get_group_mean(fp_fp_dates)
+        fp_EAB_files = get_group_replace(fp_fp_files, '.fits', '_e2ds_AB.fits')
+        fp_EC_files = get_group_replace(fp_fp_files, '.fits', '_e2ds_C.fits')
+    else:
+        WLOG('warning', '', 'FP_FP not in groups')
+        return []
+
+    if 'HCONE_HCONE' in groups:
+        hc_hc_groups = groups['HCONE_HCONE']
+        hc_hc_files = get_group_vindex(vindex, hc_hc_groups, 'FILENAME')
+        if SKIP_DONE_WAVE_WAVE:
+            path = os.path.join(p['DRS_DATA_REDUC'], night_name)
+            hout = get_group_skip(hc_hc_files, path, '.fits',
+                                  '_wave_ea_AB.fits', hc_hc_groups)
+            hc_hc_groups, hc_hc_files = hout
+        hc_hc_dates = get_group_vindex(vindex, hc_hc_groups, DATECOL)
+        num_hc_hc_groups = len(hc_hc_files)
+        mean_hc_hc_dates = get_group_mean(hc_hc_dates)
+        hc_EAB_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_AB.fits')
+        hc_EC_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_C.fits')
+
+    else:
+        WLOG('warning', '', 'HCONE_HCONE not in groups')
+        return []
+    # runs
+    runs = []
+    # match dark groups and flat groups
+    for num in range(num_hc_hc_groups):
+        # find dark group closest
+        date_dist = mean_hc_hc_dates[num] - np.array(mean_fp_fp_dates)
+        pos = int(np.argmin(np.abs(date_dist)))
+
+        myrun = [night_name, fp_EAB_files[pos][-1], hc_EAB_files[num][-1]]
+        runs.append(myrun)
+        myrun = [night_name, fp_EC_files[pos][-1], hc_EC_files[num][-1]]
+        runs.append(myrun)
+
+    # return runs
+    return runs
+
+
+def obj_fit_tellu(p, night_name, vindex, groups):
+    """
+    for obj_fit_tellu any file can be used but must be _e2dsff_AB.fits
+    """
+    # get the dark_dark files
+    filelist = []
+    objnamelist = []
+    for group in groups:
+        file_groups = groups[group]
+        for subgroup in file_groups:
+            filelist += get_group_vindex(vindex, subgroup, 'FILENAME')
+            objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
+    # change filenames to e2ds_ab
+    filelist2 = []
     for num in range(len(filelist)):
-        myrun = [night_name, filelist[num]]
+        # select objects only
+        if not filelist[num].endswith('o_pp.fits'):
+            continue
+        # select objects only (not sky)
+        if 'sky' in objnamelist[num]:
+            continue
+        else:
+            filename2 = filelist[num].replace('.fits', '_e2dsff_AB.fits')
+            filelist2.append(filename2)
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(len(filelist2)):
+        myrun = [night_name, filelist2[num]]
+        runs.append(myrun)
+    # return runs
+    return runs
+
+
+def obj_mk_tellu(p, night_name, vindex, groups):
+    """
+    for obj_mk_tellu any file with objname in the telluric list is valid
+    and must be _e2dsff_AB.fits
+    """
+    # get the dark_dark files
+    filelist = []
+    objnamelist = []
+    for group in groups:
+        file_groups = groups[group]
+        for subgroup in file_groups:
+            filelist += get_group_vindex(vindex, subgroup, 'FILENAME')
+            objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
+    # change filenames to e2ds_ab
+    filelist2 = []
+    for num in range(len(filelist)):
+        # select objects only
+        if not filelist[num].endswith('o_pp.fits'):
+            continue
+        if objnamelist[num] not in TELL_WHITELIST:
+            continue
+        else:
+            filename2 = filelist[num].replace('.fits', '_e2dsff_AB.fits')
+            filelist2.append(filename2)
+    # runs
+    runs = []
+    # push all from group into file
+    for num in range(len(filelist2)):
+        myrun = [night_name, filelist2[num]]
         runs.append(myrun)
     # return runs
     return runs
@@ -1056,6 +1288,17 @@ def get_group_mean(group):
             return rlist
 
 
+def get_group_replace(group, replace1, replace2):
+    outgroup = []
+    for group_it in group:
+        outgroup_it = []
+        for file_it in group_it:
+            outfile = file_it.replace(replace1, replace2)
+            outgroup_it.append(outfile)
+        outgroup.append(outgroup_it)
+    return outgroup
+
+
 def report_errors(p, errors, recipe):
     if len(errors) > 0:
         WLOG('warning', p['LOG_OPT'], '')
@@ -1064,6 +1307,33 @@ def report_errors(p, errors, recipe):
         for key in errors:
             error = errors[key]
             WLOG('warning', p['LOG_OPT'], error)
+
+
+def get_group_skip(group, path, replace1, replace2, groups=None):
+    outgroups, outfiles = [], []
+    for it, group_it in enumerate(group):
+        outfile_it, outgroup_it = [], []
+        for jt, file_it in enumerate(group_it):
+            testfile = file_it.replace(replace1, replace2)
+            testpath = os.path.join(path, testfile)
+            if not os.path.exists(testpath):
+                outfile_it.append(file_it)
+                if groups is not None:
+                    outgroup_it.append(groups[it][jt])
+        outgroups.append(outgroup_it)
+        outfiles.append(outfile_it)
+    if groups is not None:
+        return outgroups, outfiles
+    else:
+        return outfiles
+
+
+def strip_names(innames):
+    outnames = []
+    for inname in innames:
+        outnames.append(inname.strip())
+    return outnames
+
 
 
 # =============================================================================
@@ -1095,7 +1365,7 @@ def main(night_name=None):
     raw_files = find_all_raw_files(p)
     n_raw = len(raw_files)
     # check for pre-processed files
-    if SKIP_DONE:
+    if SKIP_DONE_PP:
         raw_files = skip_done_raw_files(p, raw_files)
     # sort by name
     raw_files = np.sort(raw_files)
@@ -1109,7 +1379,7 @@ def main(night_name=None):
             pp_lls = trigger_preprocess(p, raw_files)
         else:
             pp_lls = [None, dict()]
-    elif not SKIP_DONE or n_raw == 0:
+    elif not SKIP_DONE_PP or n_raw == 0:
         wmsg = 'No raw files found'
         WLOG('warning', p['LOG_OPT'], wmsg)
         pp_lls = [None, dict()]
@@ -1128,7 +1398,7 @@ def main(night_name=None):
     loc.set_source('CONTROL', main_name)
 
     # ----------------------------------------------------------------------
-    # Find index_files
+    # Find raw index_files
     # ----------------------------------------------------------------------
     loc['RAW_INDEX_FILES'] = find_all_index_files(p)
     loc['RAW_INDEX_FILES'] = np.sort(loc['RAW_INDEX_FILES'])
@@ -1176,21 +1446,39 @@ def main(night_name=None):
     # 8. extract tellurics
     if RUN_EXTRACT_TELLU:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                           fdprtypes=['OBJ_FP', 'OBJ_OBJ'],
+                           fdprtypes=['OBJ_FP', 'OBJ_DARK'],
                            fobjnames=TELL_WHITELIST)
         all_lls['cal_extract_RAW_spirou (TELLU)'] = lls
     # 9. extract objects
     if RUN_EXTRACT_OBJ:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
-                           fdprtypes=['OBJ_FP', 'OBJ_OBJ'],
+                           fdprtypes=['OBJ_FP', 'OBJ_DARK'],
                            fobjnames=['Gl699', 'Gl15A'])
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
 
-    # 8. cal_WAVE_E2DS_RAW_spirou.py
-    # wave_lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_EA_spirou',
-    #                         limit=1)
-    # 9. cal_extract_RAW_spirou.py (OBJ_FP, OBJ_OBJ, FP_FP)
+    # 9. extract objects
+    if RUN_EXTRACT_ALL:
+        lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
+                           fdprtypes=['OBJ_FP', 'OBJ_DARK'])
+        all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
 
+    # 10. get cal hc wave solutions
+    if RUN_HC_WAVE:
+        lls = trigger_main(p, loc, recipe='cal_HC_E2DS_spirou')
+
+    # 11. get cal hc wave solutions
+    if RUN_WAVE_WAVE:
+        lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_spirou')
+
+    # 12. get cal hc wave solutions
+    if RUN_OBJ_MK_TELLU:
+        lls = trigger_main(p, loc, recipe='obj_mk_tellu',
+                           fobjnames=TELL_WHITELIST)
+
+    # 13. get cal hc wave solutions
+    if RUN_OBJ_FIT_TELLU:
+        lls = trigger_main(p, loc, recipe='obj_fit_tellu',
+                           fobjnames=['Gl699', 'Gl15A'])
 
     # if test run print report
     if TEST_RUN:
