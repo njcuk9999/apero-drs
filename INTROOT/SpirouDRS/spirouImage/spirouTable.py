@@ -132,6 +132,16 @@ def write_table(table, filename, fmt='fits', header=None):
 
     :return None:
 
+    Note to open fits tables in IDL see here:
+        https://idlastro.gsfc.nasa.gov/ftp/pro/fits_table/aaareadme.txt
+
+        lookup:
+            ftab_print, 'file.fits'
+        read:
+            tab = readfits('file.fits', hdr, /EXTEN)
+            col1 = tbget(hdr, tab, 'COLUMN1')
+
+
     astropy.table writeable formats are as follows:
 
     """
