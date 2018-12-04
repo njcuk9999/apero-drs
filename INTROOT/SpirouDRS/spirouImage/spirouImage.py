@@ -468,13 +468,27 @@ def get_all_similar_files(p, hdr):
             # merge into string
             stringtime = '{0}-{1}'.format(part1, part2)
             # convert to unix time
-            unix_time = spirouMath.stringtime2unixtime(stringtime)
+            # TODO: Do we want bad unix_times to just warn or to crash code
+            try:
+                unix_time = spirouMath.stringtime2unixtime(stringtime)
+            except spirouMath.MathException as e:
+                emsg1 = 'Time="{0}" not valid for file = {1}'
+                emsg2 = '\tFrom header: {0}="{1}" {2}="{3}"'
+                eargs1 = [stringtime, itable['FILENAME'][row]]
+                eargs2 = [p['kw_DATE_OBS'][0], part1,
+                          p['kw_UTC_OBS'][0], part2]
+                emsgs = [emsg1.format(*eargs1), emsg2.format(*eargs2)]
+                WLOG('warning', p['LOG_OPT'], emsgs)
+                unix_time = np.nan
             # append to list
             unix_times.append(unix_time)
         # sort by unix time
         sortmask = np.argsort(unix_times)
         # apply sort mask
         itable = itable[sortmask]
+        # remove NaNs
+        nanmask = ~np.isfinite(unix_times)
+        itable = itable[nanmask]
         # get file list
         filelist = itable['ABSFILENAMES']
         # get file types that are left
