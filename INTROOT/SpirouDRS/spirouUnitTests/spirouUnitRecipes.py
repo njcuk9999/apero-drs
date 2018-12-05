@@ -172,7 +172,7 @@ def run_main(p, name, args):
     command = '{0}.main(**args)'.format(name)
     ll = eval(command)
     # print pid
-    WLOG(p, 'info', 'PID = {0}'.format(ll['PID']))
+    WLOG(p, 'info', 'PID = {0}'.format(ll['p']['PID']))
     # return locals
     return ll
 
