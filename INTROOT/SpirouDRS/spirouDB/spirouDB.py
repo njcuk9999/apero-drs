@@ -113,7 +113,7 @@ def get_database(p, update=False, dbkind=None):
             eargs = [dbkind, func_name]
             lineedit = line.replace('\n', '')
             emsg2 = '   Line {0}: "{1}"'.format(l_it + 1, lineedit)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+            WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
 
     # Need to check if lists are empty after loop
     # Must close and remove lock file before exiting
@@ -124,7 +124,7 @@ def get_database(p, update=False, dbkind=None):
         emsg1 = 'There are no entries in {0}'.format(dbkind)
         emsg2 = '   Please check {0} file at {1}'.format(dbkind, telludb_file)
         emsg3 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     # Must close and remove lock file before continuing
     close_lock_file(p, lock, lock_file)
@@ -150,7 +150,7 @@ def get_times_from_header(p, header=None, filename=None):
                 emsg1 = '"header" and "filename" not defined in {0}'
                 emsg2 = '   AND "arg_file_names" not defined in ParamDict'
                 eargs = func_name
-                WLOG('error', p['LOG_OPT'], [emsg1.format(eargs), emsg2])
+                WLOG(p, 'error', [emsg1.format(eargs), emsg2])
         # else we have a filename defined
         else:
             headerfile = filename
@@ -158,7 +158,7 @@ def get_times_from_header(p, header=None, filename=None):
             if not os.path.exists(headerfile):
                 emsg = ('"header" not defined in {0} and "filename" '
                         'path not found.')
-                WLOG('error', p['LOG_OPT'], emsg.format(func_name))
+                WLOG(p, 'error', emsg.format(func_name))
         # get file
         header = fits.getheader(headerfile, ext=0)
     else:
@@ -177,7 +177,7 @@ def get_times_from_header(p, header=None, filename=None):
     else:
         eargs = [p['KW_ACQTIME_KEY'][0], p['KW_ACQTIME_KEY_UNIX'][0],
                  headerfile, func_name]
-        WLOG('error', p['LOG_OPT'], ('Keys {0} or {1} not in HEADER file of {1}'
+        WLOG(p, 'error', ('Keys {0} or {1} not in HEADER file of {1}'
                                      ' for function {2}'.format(*eargs)))
         human_time, unix_time = None, None
     # return human time and unix time
@@ -215,7 +215,7 @@ def update_datebase(p, keys, lines, dbkind=None):
         emsg1 = '{0}: Length of keys ({1}) does not match length of lines ({2})'
         emsg2 = '\tfunction = {0}'.format(funcname)
         eargs = [dbkind, len(keys), len(lines)]
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
     # get and check the lock file (Any errors must close and remove lock file
     #     after this point)
     lock, lock_file = get_check_lock_file(p, dbkind)
@@ -261,7 +261,7 @@ def get_check_lock_file(p, dbkind):
 
     # check if lock file already exists
     if os.path.exists(lock_file):
-        WLOG('warning', p['LOG_OPT'], '{0} locked. Waiting...'.format(name))
+        WLOG(p, 'warning', '{0} locked. Waiting...'.format(name))
     # wait until lock_file does not exist or we have exceeded max wait time
     wait_time = 0
     while os.path.exists(lock_file) or wait_time > max_wait_time:
@@ -272,7 +272,7 @@ def get_check_lock_file(p, dbkind):
                  'exceeded.'.format(name))
         emsg2 = ('Please make sure {0} is not being used and '
                  'manually delete {1}').format(name, lock_file)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # try to open the lock file
     # wait until lock_file does not exist or we have exceeded max wait time
     lock = open_lock_file(p, lock_file)
@@ -292,7 +292,7 @@ def open_lock_file(p, lock_file):
             open_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG('warning', p['LOG_OPT'], 'Waiting to open lock')
+                WLOG(p, 'warning', 'Waiting to open lock')
             time.sleep(5)
             wait_time += 1
     if wait_time > p['DB_MAX_WAIT']:
@@ -300,7 +300,7 @@ def open_lock_file(p, lock_file):
                  'wait time exceeded.')
         emsg2 = ('Please make sure CalibDB is not being used and '
                  'manually delete {0}').format(lock_file)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     return lock
 
 
@@ -317,7 +317,7 @@ def close_lock_file(p, lock, lock_file):
             close_file = False
         except Exception as e:
             if wait_time == 0:
-                WLOG('warning', p['LOG_OPT'], 'Waiting to close lock')
+                WLOG(p, 'warning', 'Waiting to close lock')
             time.sleep(5)
             wait_time += 1
     if wait_time > p['DB_MAX_WAIT']:
@@ -325,7 +325,7 @@ def close_lock_file(p, lock, lock_file):
                  'wait time exceeded.')
         emsg2 = ('Please make sure CalibDB is not being used and '
                  'manually delete {0}').format(lock_file)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
 
 
@@ -359,7 +359,7 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
     else:
         emsg1 = 'Invalid Database kind ({0})'.format(dbkind)
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         masterfile = None
     # try to
     try:
@@ -370,13 +370,13 @@ def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
         # log and exit
         emsg1 = 'I/O Error on file: {0}'.format(masterfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     else:
         # write database line entry to file
         f.writelines(lines)
         f.close()
         wmsg = 'Updating {0} with {1}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(dbkind, ', '.join(keys)))
+        WLOG(p, 'info', wmsg.format(dbkind, ', '.join(keys)))
         try:
             os.chmod(masterfile, 0o666)
         except OSError:
@@ -414,7 +414,7 @@ def read_master_file(p, lock, lock_file, dbkind):
         eargs = [dbkind, masterfile]
         emsg1 = '{0} master file: {1} can not be found!'.format(*eargs)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     else:
         # write database line entry to file
         lines = list(f.readlines())
