@@ -200,9 +200,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # ----------------------------------------------------------------------
     # define loc storage parameter dictionary
     loc = ParamDict()
-    # get tilts
-    p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
-    loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+    # get tilts (if the mode requires it)
+    if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+        p, loc['TILT'] = spirouImage.ReadTiltFile(p, hdr)
+        loc.set_source('TILT', __NAME__ + '/main() + /spirouImage.ReadTiltFile')
+    else:
+        loc['TILT'] = None
+        loc.set_source('TILT', __NAME__ + '/main()')
+
 
     # ----------------------------------------------------------------------
     #  Earth Velocity calculation
