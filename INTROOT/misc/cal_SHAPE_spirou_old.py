@@ -108,16 +108,16 @@ def main(night_name=None, files=None):
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
+    data = spirouImage.ConvertToE(spirouImage.FlipImage(p, datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = spirouImage.ResizeImage(data0, **bkwargs)
+    data2 = spirouImage.ResizeImage(p, data0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('Image format changed to '
+    WLOG(p, '', ('Image format changed to '
                             '{0}x{1}').format(*data2.shape))
 
     # ----------------------------------------------------------------------
@@ -130,7 +130,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
-        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
+        WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
         bdata = spirouBACK.MeasureBackgroundFF(p, data2)
         background, gridx, gridy, minlevel = bdata
@@ -155,7 +155,7 @@ def main(night_name=None, files=None):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -191,18 +191,18 @@ def main(night_name=None, files=None):
     shapefitsname = os.path.basename(shapefits)
     # Log that we are saving tilt file
     wmsg = 'Saving shape information in file: {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(shapefitsname))
+    WLOG(p, '', wmsg.format(shapefitsname))
     # Copy keys from fits file
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
     # write tilt file to file
     p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
 
@@ -215,13 +215,13 @@ def main(night_name=None, files=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
