@@ -2507,7 +2507,7 @@ def TIME_FORMAT_DEFAULT():
 # Define logger functions
 # =============================================================================
 # noinspection PyPep8Naming
-def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
+def LOG_FILE_NAME(p, dir_data_msg=None):
     """
     Define the log filename and full path.
 
@@ -2535,21 +2535,24 @@ def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
     # deal with no dir_data_msg
     if dir_data_msg is None:
         dir_data_msg = p.get('DRS_DATA_MSG', None)
-    # deal with no utime (set it to the time now)
-    if utime is None:
-        utime = time.time()
-    # Get the used date if it is not None
-    p['DRS_USED_DATE'] = p.get('DRS_USED_DATE', 'None').upper()
-    udate = p['DRS_USED_DATE']
-    # if we don't have a udate use the date
-    if udate == 'undefined' or udate == 'NONE':
-        date = time.strftime('%Y-%m-%d', time.gmtime(utime))
+
+    # deal with no PID
+    if 'PID' not in p:
+        pid = 'UNKNOWN-PID'
     else:
-        date = p['DRS_USED_DATE']
+        pid = p['PID']
+
+    # deal with no recipe
+    if 'RECIPE' not in p:
+        recipe = 'UNKNOWN-RECIPE'
+    else:
+        recipe = p['RECIPE'].replace('.py', '')
+
     # Get the HOST name (if it does not exist host = 'HOST')
     host = os.environ.get('HOST', 'HOST')
     # construct the logfile path
-    lpath = os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
+    largs = [host, pid, recipe]
+    lpath = os.path.join(dir_data_msg, 'DRS-{0}_{1}_{2}'.format(*largs))
     # return lpath
     return lpath
 
@@ -2616,7 +2619,7 @@ def LOG_TRIG_KEYS():
     if the following is defined:
     >> trig_key[error] = '!'
     and the following log is used:
-    >> WLOG('error', 'program', 'message')
+    >> WLOG(p, 'error', 'message')
     the output is:
     >> print("TIMESTAMP - ! |program|message")
 
