@@ -105,7 +105,7 @@ def earth_velocity_correction(p, loc, method='old'):
     #  Earth Velocity calculation
     # --------------------------------------------------------------------------
 
-    WLOG('', p['LOG_OPT'], 'Computing Earth RV correction')
+    WLOG(p, '', 'Computing Earth RV correction')
     args = [p, target_alpha, target_delta, target_equinox, obs_year,
             obs_month, obs_day, obs_hour, p['IC_LONGIT_OBS'],
             p['IC_LATIT_OBS'], p['IC_ALTIT_OBS'], target_pmra, target_pmde]
@@ -113,7 +113,7 @@ def earth_velocity_correction(p, loc, method='old'):
     berv, bjd, bervmax = newbervmain(*args, method=method)
     # log output
     wmsg = 'Barycentric Earth RV correction: {0:.3f} km/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(berv))
+    WLOG(p, 'info', wmsg.format(berv))
 
     # finally save berv, bjd, bervmax to p
     loc['BERV'], loc['BJD'], loc['BERV_MAX'] = berv, bjd, bervmax
@@ -127,7 +127,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
                 obs_lat, obs_alt, pmra, pmde, method='old'):
     # if method is off return zeros
     if method == 'off':
-        WLOG('warning', p['LOG_OPT'], 'BERV not calculated.')
+        WLOG(p, 'warning', 'BERV not calculated.')
         return 0.0, 0.0, 0.0
 
     # if old use FORTRAN
@@ -141,7 +141,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
             emsg1 = ('For method="old" must compile fortran routine '
                      '"newbervmain" in the SpirouDRS/fortran directory:')
             emsg2 = '\t>>> f2py -c -m newbervmain --noopt --quiet newbervmain.f'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # pipe to FORTRAN
         # newbervmain needs RA in hour, obs_long West and obs_alt in km
         args = [ra, dec, equinox, year, month, day, hour, obs_long, obs_lat,
@@ -189,7 +189,7 @@ def newbervmain(p, ra, dec, equinox, year, month, day, hour, obs_long,
         except:
             emsg1 = 'For method="new" must have barcorrpy installed '
             emsg2 = '\ti.e. ">>> pip install barycorrpy'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             barycorrpy = None
 
         # set up the barycorr arguments

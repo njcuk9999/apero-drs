@@ -50,15 +50,13 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get parameter dictionary
 ParamDict = spirouConfig.ParamDict
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 
 
 # =============================================================================
 # Define Image modification function
 # =============================================================================
-def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
+def resize(p, image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
            getshape=True):
     """
     Resize an image based on a pixel values
@@ -85,6 +83,14 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
     :return newimage: numpy array (2D), the new resized image
     """
     func_name = __NAME__ + '.resize()'
+
+    # deal with no xlow or ylow
+    if xlow is None:
+        xlow = p['IC_CCDX_LOW']
+        xhigh = p['IC_CCDX_HIGH']
+    if ylow is None:
+        ylow = p['IC_CCDY_LOW']
+        yhigh = p['IC_CCDY_HIGH']
     # Deal with no low/high values
     if xhigh is None:
         xhigh = image.shape(1)
@@ -102,7 +108,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif xlow == xhigh:
             emsg1 = '"xlow" and "xhigh" cannot have the same values'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -111,7 +117,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         elif ylow == yhigh:
             emsg1 = '"ylow" and "yhigh" cannot have the same values'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -122,7 +128,7 @@ def resize(image, x=None, y=None, xlow=0, xhigh=None, ylow=0, yhigh=None,
         emsg1 = 'Cannot resize "image" to ({0}-{1} by {2}-{3})'.format(*eargs1)
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         newimage = None
 
     # if getshape is True return newimage, newimage.shape[0], newimage.shape[1]
@@ -148,7 +154,7 @@ def rotate(image, rotation):
     return newimage
 
 
-def flip_image(image, fliprows=True, flipcols=True):
+def flip_image(p, image, fliprows=True, flipcols=True):
     """
     Flips the image in the x and/or the y direction
 
@@ -163,7 +169,7 @@ def flip_image(image, fliprows=True, flipcols=True):
     if len(image.shape) < 2:
         emsg1 = 'Image must has at least two dimensions, shape = {0}'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1.format(image.shape), emsg2])
+        WLOG(p, 'error', [emsg1.format(image.shape), emsg2])
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]
@@ -178,7 +184,7 @@ def flip_image(image, fliprows=True, flipcols=True):
         return image
 
 
-def convert_to_e(image, p=None, gain=None, exptime=None):
+def convert_to_e(image, p, gain=None, exptime=None):
     """
     Converts image from ADU/s into e-
 
@@ -195,41 +201,34 @@ def convert_to_e(image, p=None, gain=None, exptime=None):
     :return newimage: numpy array (2D), the image in e-
     """
     func_name = __NAME__ + '.convert_to_e()'
+
+    # test of we have exptime and gain defined - if we do convert - else
+    #     raise error
+    if gain is not None and exptime is not None:
+        try:
+            gain, exptime = float(gain), float(exptime)
+            newimage = image * gain * exptime
+        except ValueError:
+            emsg1 = ('"gain" and "exptime" must be floats')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2])
+            newimage = None
     # test if we have p and exptime/gain are in p - if we do convert -
     #    else raise error
-    if p is not None:
+    else:
         try:
             newimage = image * p['EXPTIME'] * p['GAIN']
         except KeyError:
             emsg1 = ('If parameter dictionary is defined keys "exptime" '
                      'must be in parameter dictionary.')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', '', [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             newimage = None
-    # test of we have exptime and gain defined - if we do convert - else
-    #     raise error
-    elif gain is not None and exptime is not None:
-        try:
-            gain, exptime = float(gain), float(exptime)
-            newimage = image * gain * exptime
-        except ValueError:
-            emsg1 = ('"gain" and "exptime" must be floats if parameter '
-                     'dictionary is None.')
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', '', [emsg1, emsg2])
-            newimage = None
-    # if neither p['exptime'] and p['gain' or exptime and gain are defined
-    #     raise error
-    else:
-        emsg1 = 'Either "p" or ("gain" and "exptime") must be defined'
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', '', [emsg1, emsg2])
-        newimage = None
 
     return newimage
 
 
-def convert_to_adu(image, p=None, exptime=None):
+def convert_to_adu(image, p, exptime=None):
     """
     Converts image from ADU/s into ADU
 
@@ -245,19 +244,9 @@ def convert_to_adu(image, p=None, exptime=None):
     :return newimage: numpy array (2D), the image in e-
     """
     func_name = __NAME__ + '.convert_to_adu()'
-    # test if we have p and exptime is in p - if we do convert - else raise
-    #    error
-    if p is not None:
-        try:
-            newimage = image * p['EXPTIME']
-        except KeyError:
-            emsg1 = ('If parameter dictionary is defined key "exptime" '
-                     'must be in parameter dictionary.')
-            emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', '', [emsg1, emsg2])
-            newimage = None
+
     # test of we have exptime defined - if we do convert - else raise error
-    elif exptime is not None:
+    if exptime is not None:
         try:
             exptime = float(exptime)
             newimage = image * exptime
@@ -265,14 +254,19 @@ def convert_to_adu(image, p=None, exptime=None):
             emsg1 = ('"exptime" must be a float if parameter '
                      'dictionary is None.')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', '', [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             newimage = None
-    # if neither p['exptime'] or exptime are defined raise error
+    # test if we have p and exptime is in p - if we do convert - else raise
+    #    error
     else:
-        emsg1 = 'Either "p" or "exptime" must be defined'
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', '', [emsg1, emsg2])
-        newimage = None
+        try:
+            newimage = image * p['EXPTIME']
+        except KeyError:
+            emsg1 = ('If parameter dictionary is defined key "exptime" '
+                     'must be in parameter dictionary.')
+            emsg2 = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2])
+            newimage = None
 
     return newimage
 
@@ -309,7 +303,7 @@ def get_all_similar_files_old(p, directory, prefix=None, suffix=None):
             emsg1 = ('"prefix" and "suffix" not defined and "arg_file_names" '
                      'not found in "p"')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # get file prefix and suffix
     if prefix is None:
         prefix = p['ARG_FILE_NAMES'][0][0:5]
@@ -356,7 +350,7 @@ def get_all_similar_files(p, hdr):
     # else:
     #     emsg1 = 'Key "{0}" missing from header'.format(p['KW_OUTPUT'][0])
     #     emsg2 = '\tfunction = {0}'.format(func_name)
-    #     WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+    #     WLOG(p, 'error', [emsg1, emsg2])
     #     output = None
 
     # get the output key for this file
@@ -366,7 +360,7 @@ def get_all_similar_files(p, hdr):
         emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
         eargs = [p['KW_OUTPUT'][0], p['REFFILENAME']]
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
         output = None
 
     # get lamp type and extraction type
@@ -383,14 +377,14 @@ def get_all_similar_files(p, hdr):
             emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
                      '{1}'.format(*eargs1))
             emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             lamp = 'None'
             ext_type = None
     else:
         emsg1 = 'Header key = "{0}" missing from file {1}'
         emsg2 = '\tfunction = {0}'.format(func_name)
         eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
         lamp = 'None'
         ext_type = None
     # get file type allowed (using lamp type)
@@ -400,7 +394,7 @@ def get_all_similar_files(p, hdr):
         emsg1 = 'Reference file was identified as lamp={0}'
         emsg2 = '\tHowever DRIFT_PEAK_ALLOWED_OUTPUT missing this key.'
         emsg3 = '\tPlease check constants file'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         allowed_file_types = None
 
     # get expected index file name and location
@@ -413,17 +407,17 @@ def get_all_similar_files(p, hdr):
     while (not os.path.exists(index_path)) and (ntries < 5):
         wmsg = 'No index file. Running indexing (Attempt {0} of {1})'
         wargs = [ntries + 1, 5]
-        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, 'warning', wmsg.format(*wargs))
         off_listing_REDUC_spirou.main(night_name=p['ARG_NIGHT_NAME'],
                                       quiet=True)
         ntries += 1
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
-        itable = spirouTable.read_fits_table(index_path)
+        itable = spirouTable.read_fits_table(p, index_path)
     else:
         emsg1 = 'No index file. Could not run indexing'
         emsg2 = '\t Please run off_listing_REDUC_spirou.py'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         itable = None
 
     # check that we have the correct output type (i.e. EXT_E2DS)
@@ -443,7 +437,7 @@ def get_all_similar_files(p, hdr):
         emsg = 'No other valid files found that match {0}="{1}" {2}="{3}"'
         eargs = [p['KW_OUTPUT'][0], allowed_file_types,
                  p['KW_EXT_TYPE'][0], ext_type]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     # if we do get date and sort by it
     else:
         # apply mask
@@ -478,7 +472,7 @@ def get_all_similar_files(p, hdr):
                 eargs2 = [p['kw_DATE_OBS'][0], part1,
                           p['kw_UTC_OBS'][0], part2]
                 emsgs = [emsg1.format(*eargs1), emsg2.format(*eargs2)]
-                WLOG('warning', p['LOG_OPT'], emsgs)
+                WLOG(p, 'warning', emsgs)
                 unix_time = np.nan
             # append to list
             unix_times.append(unix_time)
@@ -487,8 +481,13 @@ def get_all_similar_files(p, hdr):
         # apply sort mask
         itable = itable[sortmask]
         # remove NaNs
-        nanmask = ~np.isfinite(unix_times)
+        nanmask = np.isfinite(unix_times)
         itable = itable[nanmask]
+        # raise error if we have no valid files left
+        if np.sum(nanmask) == 0:
+            emsg = 'No other valid files {0}/{1} (All files have invalid times)'
+            eargs = [np.sum(nanmask), len(nanmask)]
+            WLOG(p, 'error', emsg.format(*eargs))
         # get file list
         filelist = itable['ABSFILENAMES']
         # get file types that are left
@@ -548,7 +547,7 @@ def interp_bad_regions(p, image):
     pixshift = ypixfit - np.mean(ypixfit)
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], '   - Straightening interpolation image')
+    WLOG(p, '', '   - Straightening interpolation image')
     # loop around all x pixels and shift pixels by interpolating with a spline
     for xi in range(dim2):
         # produce the universal spline fit
@@ -557,7 +556,7 @@ def interp_bad_regions(p, image):
         image2[:, xi] = splinefit(xpixfit + pixshift[xi])
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], '   - Applying median filter to interpolation image')
+    WLOG(p, '', '   - Applying median filter to interpolation image')
     # loop around all y pixels and median filter
     for yi in range(dim1):
         # get this iterations row data
@@ -573,7 +572,7 @@ def interp_bad_regions(p, image):
         image2[yi, rowmask] = row_med[rowmask]
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], '   - Applying convolution to interpolation image')
+    WLOG(p, '', '   - Applying convolution to interpolation image')
     # define a kernal (box size) for the convolution
     kernel = np.repeat(1.0/kernel_size, kernel_size)
     # loop around all y pixels and apply a convolution over a median
@@ -588,7 +587,7 @@ def interp_bad_regions(p, image):
         image2[yi, :] = np.convolve(row_med, kernel, mode='same')
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], '   - Un-straightening interpolation image')
+    WLOG(p, '', '   - Un-straightening interpolation image')
     # make sure all NaNs are 0
     image2 = np.where(np.isfinite(image2), image2, np.zeros_like(image2))
     image = np.where(np.isfinite(image), image, np.zeros_like(image))
@@ -600,7 +599,7 @@ def interp_bad_regions(p, image):
         image2[:, xi] = splinefit(xpixfit - pixshift[xi])
     # -------------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], '   - Calculating good and bad pixels (from ratio)')
+    WLOG(p, '', '   - Calculating good and bad pixels (from ratio)')
     # calculate the ratio between original image and interpolated image
     ratio = image/image2
     # set all ratios greater than 1 to the inverse (reflect around 1)
@@ -652,7 +651,7 @@ def fix_non_preprocessed(p, image, filename=None):
         if filename is None:
             emsg1 = 'Need to identify whether file is preprocessed'
             emsg2 = '\tPlease add "filename" to call to {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         else:
             if p['PROCESSED_SUFFIX'] in filename:
                 p['PREPROCESSED'] = True
@@ -662,7 +661,7 @@ def fix_non_preprocessed(p, image, filename=None):
     if not p['PREPROCESSED']:
         # log warning
         wmsg = 'Warning: Using non-preprocessed file!'
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG(p, 'warning', wmsg)
         # get rotation
         rotation = p['RAW_TO_PP_ROTATION']
         # rotate and return image
@@ -984,7 +983,7 @@ def measure_dark(pp, image, image_name, short_name):
     except Exception as _:
         emsg1 = '"image" is not a valid numpy array'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', pp['LOG_OPT'], [emsg1, emsg2])
+        WLOG(pp, 'error', [emsg1, emsg2])
     # flatten the image
     fimage = image.flat
     # get the finite (non-NaN) mask
@@ -999,7 +998,7 @@ def measure_dark(pp, image, image_name, short_name):
         qmin, qmax = np.percentile(fimage, [pp['DARK_QMIN'], pp['DARK_QMAX']])
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', pp['LOG_OPT'], [e.message, emsg])
+        WLOG(pp, 'error', [e.message, emsg])
         qmin, qmax = None, None
     # get the histogram for flattened data
     try:
@@ -1009,7 +1008,7 @@ def measure_dark(pp, image, image_name, short_name):
                              density=True)
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', pp['LOG_OPT'], [e.message, emsg])
+        WLOG(pp, 'error', [e.message, emsg])
         histo = None
     # get the fraction of dead pixels as a percentage
     dadead = imax * 100 / np.product(image.shape)
@@ -1018,7 +1017,7 @@ def measure_dark(pp, image, image_name, short_name):
              pp['DARK_QMAX'], qmin, qmax]
     wmsg = ('{0:12s}: Frac dead pixels= {1:.4f} % - Median= {2:.3f} ADU/s - '
             'Percent[{3}:{4}]= {5:.2f}-{6:.2f} ADU/s')
-    WLOG('info', pp['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(pp, 'info', wmsg.format(*wargs))
     # add required variables to pp
     source = '{0}/{1}'.format(__NAME__, 'measure_dark()')
 
@@ -1081,7 +1080,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
             acqtime = p['MAX_TIME_UNIX']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [e.message, emsg])
+            WLOG(p, 'error', [e.message, emsg])
             cdb, acqtime = None, None
 
     # -------------------------------------------------------------------------
@@ -1101,15 +1100,15 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
     # -------------------------------------------------------------------------
     # if we are allowed to use sky darks choose between them
     if p['USE_SKYDARK_CORRECTION'] and skydarkfile is not None:
-        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(skydarkfile)
+        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, skydarkfile)
         # Read dark file
-        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using SKY: ' + darkfile)
+        WLOG(p, '', 'Doing Dark Correction using SKY: ' + darkfile)
         corrected_image = image - (darkimage * nfiles)
     # else if we don't have a dark
     elif darkfile is not None:
-        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(darkfile)
+        darkimage, dhdr, _, _ = spirouFITS.read_raw_data(p, darkfile)
         # Read dark file
-        WLOG('', p['LOG_OPT'], 'Doing Dark Correction using DARK: ' + darkfile)
+        WLOG(p, '', 'Doing Dark Correction using DARK: ' + darkfile)
         corrected_image = image - (darkimage * nfiles)
     else:
         # get master config file name
@@ -1123,7 +1122,7 @@ def correct_for_dark(p, image, header, nfiles=None, return_dark=False):
         # log error
         emsg1 = 'No valid DARK/SKYDARK in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
+        WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
         darkimage, dhdr, corrected_image = None, None, None
     # -------------------------------------------------------------------------
 
@@ -1178,14 +1177,14 @@ def get_badpixel_map(p, header=None):
             acqtime = p['MAX_TIME_UNIX']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [e.message, emsg])
+            WLOG(p, 'error', [e.message, emsg])
             cdb, acqtime = None, None
 
     # try to read 'BADPIX' from cdb
     if 'BADPIX' in cdb:
         badpixfile = os.path.join(p['DRS_CALIB_DB'], cdb['BADPIX'][1])
-        WLOG('', p['LOG_OPT'], 'Doing Bad Pixel Correction using ' + badpixfile)
-        badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(badpixfile)
+        WLOG(p, '', 'Doing Bad Pixel Correction using ' + badpixfile)
+        badpixmask, bhdr, nx, ny = spirouFITS.read_raw_data(p, badpixfile)
         return badpixmask, bhdr
     else:
         # get master config file name
@@ -1199,7 +1198,7 @@ def get_badpixel_map(p, header=None):
         # log error
         emsg1 = 'No valid BADPIX in calibDB {0} ' + extstr
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(masterfile, acqtime), emsg2])
+        WLOG(p, 'error', [emsg1.format(masterfile, acqtime), emsg2])
         return 0
 
 
@@ -1276,7 +1275,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
     """
     func_name = __NAME__ + '.normalise_median_flat()'
     # log that we are normalising the flat
-    WLOG('', p['LOG_OPT'], 'Normalising the flat')
+    WLOG(p, '', 'Normalising the flat')
 
     # get used percentile
     if percentile is None:
@@ -1284,7 +1283,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
             percentile = p['BADPIX_NORM_PERCENTILE']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [e.message, emsg])
+            WLOG(p, 'error', [e.message, emsg])
 
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -1297,7 +1296,7 @@ def normalise_median_flat(p, image, method='new', wmed=None, percentile=None):
             wmed = p['BADPIX_FLAT_MED_WID']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [e.message, emsg])
+            WLOG(p, 'error', [e.message, emsg])
 
     # create storage for median-filtered flat image
     image_med = np.zeros_like(image)
@@ -1352,7 +1351,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
     """
     func_name = __NAME__ + '.locate_bad_pixels()'
     # log that we are looking for bad pixels
-    WLOG('', p['LOG_OPT'], 'Looking for bad pixels')
+    WLOG(p, '', 'Looking for bad pixels')
     # -------------------------------------------------------------------------
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -1365,14 +1364,14 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
             wmed = p['BADPIX_FLAT_MED_WID']
         except spirouConfig.ConfigError as e:
             emsg = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [e.message, emsg])
+            WLOG(p, 'error', [e.message, emsg])
 
     # maxi differential pixel response relative to the expected value
     try:
         cut_ratio = p['BADPIX_FLAT_CUT_RATIO']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [e.message, emsg])
+        WLOG(p, 'error', [e.message, emsg])
         cut_ratio = None
 
     # illumination cut parameter. If we only cut the pixels that
@@ -1388,14 +1387,14 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
         illum_cut = p['BADPIX_ILLUM_CUT']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [e.message, emsg])
+        WLOG(p, 'error', [e.message, emsg])
         illum_cut = None
     # hotpix. Max flux in ADU/s to be considered too hot to be used
     try:
         max_hotpix = p['BADPIX_MAX_HOTPIX']
     except spirouConfig.ConfigError as e:
         emsg = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [e.message, emsg])
+        WLOG(p, 'error', [e.message, emsg])
         max_hotpix = None
     # -------------------------------------------------------------------------
     # create storage for ratio of flat_ref to flat_med
@@ -1409,7 +1408,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
         emsg1 = ('Flat image ({0}x{1}) and Dark image ({2}x{3}) must have the '
                  'same shape.')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
     # -------------------------------------------------------------------------
     # as there may be a small level of scattered light and thermal
     # background in the dark  we subtract the running median to look
@@ -1453,7 +1452,7 @@ def locate_bad_pixels(p, fimage, fmed, dimage, wmed=None):
                     (np.sum(badpix_map) / np.array(badpix_map).size) * 100]
 
     for it in range(len(text)):
-        WLOG('', p['LOG_OPT'], text[it].format(badpix_stats[it]))
+        WLOG(p, '', text[it].format(badpix_stats[it]))
     # -------------------------------------------------------------------------
     # return bad pixel map
     return badpix_map, badpix_stats
@@ -1478,7 +1477,7 @@ def locate_bad_pixels_full(p, image):
     :return stats: float, the fraction of un-illuminated pixels (percentage)
     """
     # log that we are looking for bad pixels
-    WLOG('', p['LOG_OPT'], 'Looking for bad pixels in full flat image')
+    WLOG(p, '', 'Looking for bad pixels in full flat image')
     # get parameters from p
     filename = p['BADPIX_FULL_FLAT']
     threshold = p['BADPIX_FULL_THRESHOLD']
@@ -1490,13 +1489,13 @@ def locate_bad_pixels_full(p, image):
     # check that filepath exists
     if not os.path.exists(absfilename):
         emsg = 'badpix full flat ({0}) not found in {1}. Please correct.'
-        WLOG('error', p['LOG_OPT'], emsg.format(filename, datadir))
+        WLOG(p, 'error', emsg.format(filename, datadir))
     # read image
     mdata, _, _, _, _ = spirouFITS.readimage(p, absfilename, kind='FULLFLAT')
 
     if image.shape != mdata.shape:
         wmsg = 'Full flat shape = {0}, image shape = {1}'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(mdata.shape, image.shape))
+        WLOG(p, 'warning', wmsg.format(mdata.shape, image.shape))
     # apply threshold
     # mask = np.rot90(mdata, -1) < threshold
     mask = np.abs(np.rot90(mdata, -1)-1) > threshold
@@ -1505,7 +1504,7 @@ def locate_bad_pixels_full(p, image):
     # log results
     badpix_stats = (np.sum(mask) / np.array(mask).size) * 100
     text = 'Fraction of un-illuminated pixels in engineering flat {0:.4f} %'
-    WLOG('', p['LOG_OPT'], text.format(badpix_stats))
+    WLOG(p, '', text.format(badpix_stats))
 
     # return mask
     return mask, badpix_stats
@@ -1571,7 +1570,7 @@ def get_tilt(pp, lloc, image):
         # log the tilt and angle
         wmsg = 'Order {0}: Tilt = {1:.2f} on pixel {2:.1f} = {3:.2f} deg'
         wargs = [order_num / 2, delta, 2 * lloc['OFFSET'], angle]
-        WLOG('', pp['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(pp, '', wmsg.format(*wargs))
         # save tilt angle to lloc
         lloc['TILT'][int(order_num / 2)] = angle
     # return the lloc
@@ -1653,7 +1652,7 @@ def read_line_list(p=None, filename=None):
     if p is None and filename is None:
         emsg1 = 'p (ParamDict) or "filename" must be defined'
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # assign line file
     if filename is not None:
         # if filename is absolute path and file exists use this
@@ -1674,15 +1673,15 @@ def read_line_list(p=None, filename=None):
         emsg1 = ('p[\'IC_LL_LINE_FILE\'] (ParamDict) or "filename" '
                  'must be defined')
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         linefile = ''
     # check that line file exists
     if not os.path.exists(linefile):
         emsg1 = 'Line list file={0} does not exist.'.format(linefile)
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # read filename as a table (no header so need data_start=0)
-    linetable = spirouTable.read_table(linefile,
+    linetable = spirouTable.read_table(p, linefile,
                                        fmt='ascii.tab',
                                        colnames=['ll', 'amp', 'kind'],
                                        data_start=0)
@@ -1691,7 +1690,7 @@ def read_line_list(p=None, filename=None):
     amp = np.array(linetable['amp'], dtype=float)
     # log that we have opened line file
     wmsg = 'List of {0} HC lines read in file {1}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(len(ll), linefile))
+    WLOG(p, '', wmsg.format(len(ll), linefile))
     # return line list and amps
     return ll, amp
 
@@ -1720,10 +1719,10 @@ def read_cavity_length(p, filename=None):
     if not os.path.exists(cavityfile):
         emsg1 = 'Cavity file={0} does not exist.'.format(cavityfile)
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # read filename as a table (no header so need data_start=0)
     colnames = ['NTH_ORDER', 'WAVELENGTH_COEFF']
-    table = spirouTable.read_table(cavityfile, fmt='ascii',
+    table = spirouTable.read_table(p, cavityfile, fmt='ascii',
                                    colnames=colnames, data_start=0)
     # push columns into numpy arrays and force to floats
     coeff_nums = np.array(table['NTH_ORDER'], dtype=float)
@@ -1732,7 +1731,7 @@ def read_cavity_length(p, filename=None):
     # log that we have opened line file
     wmsg = 'List of {0} cavity length coefficients read in file {1}'
     wargs = [ncoeff, cavityfilename]
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # reformat into well behaved array
     poly_cavity = np.zeros(ncoeff)
@@ -1804,7 +1803,7 @@ def get_shape_map_old(p, loc):
             # Log progress
             wmsg = 'Banana iteration: {0}: Order {1}/{2} '
             wargs = [banana_num + 1, order_num + 1, nbo]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # -----------------------------------------------------------------
             # create the x pixel vector (used with polynomials to find
             #    order center)
@@ -1839,7 +1838,7 @@ def get_shape_map_old(p, loc):
             # log the range slope exploration
             wmsg = '\tRange slope exploration: {0:.3f} -> {1:.3f} deg'
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
@@ -1915,7 +1914,7 @@ def get_shape_map_old(p, loc):
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
             wmsg = '\tSlope at pixel {0}: {1:.5f} deg'
             wargs = [s_xpix, s_ypix]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # get slope for full range
             slope = np.polyval(coeffs, np.arange(dim1))
             # -------------------------------------------------------------
@@ -2142,7 +2141,7 @@ def get_shape_map(p, loc):
             # Log progress
             wmsg = 'Banana iteration: {0}/{1}: Order {2}/{3} '
             wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # -----------------------------------------------------------------
             # defining a ribbon that will contain the straightened order
             ribbon_hc = np.zeros([width, dim1])
@@ -2183,7 +2182,7 @@ def get_shape_map(p, loc):
             # log the range slope exploration
             wmsg = '\tRange slope exploration: {0:.3f} -> {1:.3f} deg'
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
@@ -2274,7 +2273,7 @@ def get_shape_map(p, loc):
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
             wmsg = '\tSlope at pixel {0}: {1:.5f} deg'
             wargs = [s_xpix, s_ypix]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # get slope for full range
             slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim1))
             # -------------------------------------------------------------
@@ -2430,7 +2429,7 @@ def get_shape_map(p, loc):
             wmsg = ('Update of the big dx map after filtering of pre-order '
                     'dx: {0}/{1}')
             wargs = [order_num + 1, nbo]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
             # -------------------------------------------------------------
             # spline everything onto the master DX map
@@ -2463,7 +2462,7 @@ def get_shape_map(p, loc):
             # log start and end points
             wmsg = '\tData along slice. Start={0} End={1}'
             wargs = [start_good_ccor, end_good_ccor]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
             # -------------------------------------------------------------
             # for all field positions along the order, we determine the
@@ -2786,7 +2785,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
         if np.round(dx/dx_est) != 1:
             wmsg = '\t\tdx = {0:.5f} dx/dx_est = {1:.5f} estimate = {2:.5f}'
             wargs = [dx, dx/dx_est, dx_est]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
     # -------------------------------------------------------------------------
     # Trusting the wavelength solution this is the wavelength of FP peaks
     wave_from_hdr = np.polyval(poly_wave_ref[order_num][::-1], xpeak2)
@@ -2828,7 +2827,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     # log the predicted vs measured FP peak
     wmsg = '\tPredicted FP peak #: {0}   Measured FP peak #: {1}'
     wargs = [fp_peak0_est, fpindex[best_zp]]
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
     # -------------------------------------------------------------------------
     # we find teh actual wavelength of our IDed peaks
     wave_xpeak2 = wave_fp[best_zp - ipeak]
@@ -2896,7 +2895,7 @@ def get_offset_sp(p, loc, sp_fp, sp_hc, order_num):
     wmsg4 = '\t\tstddev applied correction: {3:.5f} pix'.format(*wargs)
     wmsg5 = '\t\tmed applied correction: {4:.5f} pix'.format(*wargs)
     wmsg6 = '\t\tNth FP peak at center of order: {5:.5f}'.format(*wargs)
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3, wmsg4, wmsg5, wmsg6])
+    WLOG(p, '', [wmsg1, wmsg2, wmsg3, wmsg4, wmsg5, wmsg6])
     # -------------------------------------------------------------------------
     # save to loc
     loc['CORR_DX_FROM_FP'][order_num] = corr_err_xpix
@@ -3020,7 +3019,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
         else:
             emsg1 = 'Dtype "{0}" is not a valid python type. Keyword={1}'
             emsg2 = '     function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(dtype, keyword), emsg2])
+            WLOG(p, 'error', [emsg1.format(dtype, keyword), emsg2])
             value = None
     except ValueError:
         if not required:
@@ -3029,7 +3028,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
             emsg1 = ('Cannot convert keyword "{0}"="{1}" to type "{2}"'
                      '').format(keyword, rawvalue, dtype)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             value = None
 
     # deal with return value
@@ -3099,7 +3098,7 @@ def get_wave_keys(p, loc, hdr):
     else:
         # log warning
         wmsg = 'Warning key="{0}" not in HEADER file (Using CalibDB)'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(p['KW_WAVEFILE'][0]))
+        WLOG(p, 'warning', wmsg.format(p['KW_WAVEFILE'][0]))
         # get parameters from the calibDB
         calib_time_human = spirouDB.GetAcqTime(p, hdr)
         fmt = spirouConfig.Constants.DATE_FMT_HEADER()
