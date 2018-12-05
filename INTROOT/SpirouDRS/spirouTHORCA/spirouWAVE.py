@@ -39,8 +39,6 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get plotting functions
 sPlt = spirouCore.sPlt
 # Speed of light
@@ -140,33 +138,33 @@ def calculate_instrument_drift(p, loc):
     # log RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainy on spectrum is {1} m/s'
     wargs = [p['FIBER'], wmeandata]
-    WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
     # ---------------------------------------------------------------------
     # log unexpected RV uncertainty
     if wmeandata > p['IC_WAVE_IDRIFT_MAX_ERR']:
         wmsg1 = 'Unexpected RV uncertainty on spectrum. Check Flux.'
         wmsg2 = '\tmean > ic_wave_idrift_max_err  ({0:.3f} > {1:.3f})'
         wargs = [wmeandata, p['IC_WAVE_IDRIFT_MAX_ERR']]
-        WLOG('error', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2.format(*wargs)])
+        WLOG(p, 'error', [wmsg1, wmsg2.format(*wargs)])
     # ---------------------------------------------------------------------
     # Compute the correction of the cosmics and re-normalisation by
     #   comparison with the reference spectrum
     # ---------------------------------------------------------------------
     # log process
     wmsg = 'Normalizing spectrum and doing cosmic correction'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    WLOG(p, '', wmsg)
     # correction of the cosmics and renomalisation by comparison with
     #   the reference spectrum
     dkwargs = dict(threshold=p['IC_WAVE_IDRIFT_MAXFLUX'],
                    size=p['IC_WAVE_IDRIFT_BOXSIZE'],
                    cut=p['IC_WAVE_IDRIFT_CUT_E2DS'])
-    spen, cfluxr, cpt = spirouRV.ReNormCosmic2D(speref, spe, **dkwargs)
+    spen, cfluxr, cpt = spirouRV.ReNormCosmic2D(p, speref, spe, **dkwargs)
     # ------------------------------------------------------------------
     # Calculate the RV drift
     # ------------------------------------------------------------------
     # log process
     wmsg = 'Normalizing spectrum and doing cosmic correction'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    WLOG(p, '', wmsg)
     # calculate the drift
     dkwargs = dict(sigdet=p['IC_WAVE_IDRIFT_NOISE'],
                    threshold=p['IC_WAVE_IDRIFT_MAXFLUX'],
@@ -196,24 +194,24 @@ def calculate_instrument_drift(p, loc):
     # log removal of orders from RV calculation
     if nborderout > 0:
         wmsg = 'On fiber {0} discarding {0} order(s) for drift computation'
-        WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(nborderout))
+        WLOG(p, 'info', wmsg.format(nborderout))
     # log the rv properties
     wmsg = ('On fiber {0}\tDrift: {1:.3f} m/s - Cosmic found: {2} - '
             'Flux ration: {3:.3f}')
     wargs = [p['FIBER'], meanrv2, cpt, meancfluxr]
-    WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
     # log warning about number of orders removed and meanrv value
     if nborderout > p['QC_WAVE_IDRIFT_NBORDEROUT']:
         wmsg1 = 'Abnormal drift compared with previous calibration'
         wargs = [nborderout, p['QC_WAVE_IDRIFT_NBORDEROUT']]
         wmsg2 = ('\tnumber of RV orders removed > max ({0} > {1})'
                  ''.format(*wargs))
-        WLOG('warning', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+        WLOG(p, 'warning', [wmsg1, wmsg2])
     if meanrv2 > p['QC_WAVE_IDRIFT_RV_MAX']:
         wmsg1 = 'Abnormal drift compared with previous calibration'
         wargs = [meanrv2, p['QC_WAVE_IDRIFT_RV_MAX']]
         wmsg2 = '\tcalculated drift > max ({0} > {1})'.format(*wargs)
-        WLOG('warning', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+        WLOG(p, 'warning', [wmsg1, wmsg2])
     # add to loc
     loc['DRIFT_REF'] = reffilename
     loc['DRIFT_RV'] = meanrv2
@@ -311,7 +309,7 @@ def fp_wavelength_sol(p, loc, mode='new'):
         # log number of identified lines per order
         wmsg = 'On order {0:2}, {1:2} lines identified'
         wargs = [order_num, len(pos)]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
         # find the fp lines
         find_data = find_fp_lines(p, loc, pos, size, order_num, mode)
         # add to storage
@@ -342,7 +340,7 @@ def fp_wavelength_sol(p, loc, mode='new'):
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
         coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
-    spirouCore.WarnLog(w, funcname=func_name)
+    spirouCore.WarnLog(p, w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
     # update line wavelengths using the new cavity width fit
@@ -544,7 +542,7 @@ def fp_wavelength_sol_new(p, loc):
                     if p['DRS_DEBUG']:
                         wargs = [order_num, m_match - m_init]
                         wmsg = 'M difference for order {0}: {1}'
-                        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                        WLOG(p, '', wmsg.format(*wargs))
                     # recalculate observed effective cavity width
                     dopd_t = mpeak * floc['llpos']
                     # store new m and d
@@ -578,7 +576,7 @@ def fp_wavelength_sol_new(p, loc):
     #     width, weighted by blaze
     with warnings.catch_warnings(record=True) as w:
         coeffs = np.polyfit(m_fp_all, dopd_all, fit_deg, w=weight_bl_all)[::-1]
-    spirouCore.WarnLog(w, funcname=func_name)
+    spirouCore.WarnLog(p, w, funcname=func_name)
     # get the values of the fitted cavity width difference
     cfit = np.polyval(coeffs[::-1], m_fp_all)
     # update line wavelengths using the new cavity width fit
@@ -622,7 +620,7 @@ def generate_wave_map(p, loc):
     # print a warning if pixel_shift is not 0
     if pixel_shift_slope != 0 or pixel_shift_inter != 0:
         wmsg = 'Pixel shift is not 0, check that this is desired'
-        WLOG('warning', p['LOG_OPT'], wmsg.format())
+        WLOG(p, 'warning', wmsg.format())
 
     # generate wave map with shift
     wave_map = np.zeros([nbo, nbpix])
@@ -666,11 +664,11 @@ def find_hc_gauss_peaks(p, loc):
     # check if we already have a cached guess for this file
     if os.path.exists(ini_table_name) and not p['HC_EA_FORCE_CREATE_LINELIST']:
         # if we do load from file
-        ini_table = spirouImage.ReadTable(ini_table_name, fmt='ascii.rst',
+        ini_table = spirouImage.ReadTable(p, ini_table_name, fmt='ascii.rst',
                                           colnames=litems)
         # log that we're reading from file
         wmsg = 'Table of found lines already exists; reading lines from {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(ini_table_name))
+        WLOG(p, '', wmsg.format(ini_table_name))
 
         # load ini_table into loc
         for col in ini_table.colnames:
@@ -700,7 +698,7 @@ def find_hc_gauss_peaks(p, loc):
     for order_num in range(nbo):
         # print progress for user
         wmsg = 'Processing Order {0} of {1}'
-        WLOG('', p['LOG_OPT'], wmsg.format(order_num, nbo))
+        WLOG(p, '', wmsg.format(order_num, nbo))
         # set number of peaks found
         npeaks = 0
         # extract this orders spectrum
@@ -778,7 +776,7 @@ def find_hc_gauss_peaks(p, loc):
                     loc['G2_INI'].append(g2)
         # display the number of peaks found
         wmsg = '\tNumber of peaks found = {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(npeaks))
+        WLOG(p, '', wmsg.format(npeaks))
 
         # debug plot
         if p['DRS_PLOT'] and p['DRS_DEBUG'] == 2:
@@ -790,12 +788,12 @@ def find_hc_gauss_peaks(p, loc):
     for colname in columnnames:
         columnvalues.append(loc[colname])
         columnfmts.append(None)
-    ini_table = spirouImage.MakeTable(columnnames, columnvalues,
+    ini_table = spirouImage.MakeTable(p, columnnames, columnvalues,
                                       columnfmts)
     # save the table to file
     wmsg = 'Writing HC line-list to file {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(os.path.basename(ini_table_name)))
-    spirouImage.WriteTable(ini_table, ini_table_name, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(os.path.basename(ini_table_name)))
+    spirouImage.WriteTable(p, ini_table, ini_table_name, fmt='ascii.rst')
 
     # plot all orders w/fitted gaussians
     if p['DRS_PLOT']:
@@ -868,7 +866,7 @@ def find_hc_gauss_peaks(p, loc):
 #         # log progress
 #         # TODO Move log progress out of function
 #         wmsg = 'Fit Triplet {0} of {1}'
-#         WLOG('info', p['LOG_OPT'], wmsg.format(sol_iteration + 1, n_iterations))
+#         WLOG(p, 'info', wmsg.format(sol_iteration + 1, n_iterations))
 #         # get coefficients
 #         xgau = np.array(loc['XGAU_INI'])
 #         orders = np.array(loc['ORD_INI'])
@@ -1012,7 +1010,7 @@ def find_hc_gauss_peaks(p, loc):
 #             # Log the total number of valid lines found
 #             wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
 #             wargs = [order_num, bestn, np.sum(good_all)]
-#             WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+#             WLOG(p, '', wmsg.format(*wargs))
 #             # if we have the minimum number of lines check that we satisfy
 #             #   the cut_fit_threshold for all good lines and reject outliers
 #             if bestn >= minimum_number_of_lines:
@@ -1079,7 +1077,7 @@ def find_hc_gauss_peaks(p, loc):
 #             emsg1 = 'Insufficient number of lines found.'
 #             emsg2 = '\t Found = {0}  Required = {1}'
 #             eargs = [np.sum(good), minimum_total_number_of_lines]
-#             WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs)])
+#             WLOG(p, 'error', [emsg1, emsg2.format(*eargs)])
 #
 #         # ------------------------------------------------------------------
 #         # Linear model slice generation
@@ -1138,7 +1136,7 @@ def find_hc_gauss_peaks(p, loc):
 #                 # log sigma clipping
 #                 wmsg = '\tSigma-clipping at (>{0}) --> max(sig)={1:.5f} sigma'
 #                 wargs = [sigma_clip_threshold, np.max(absdev)]
-#                 WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+#                 WLOG(p, '', wmsg.format(*wargs))
 #                 # mask for sigma clip
 #                 sig_mask = absdev < sigma_clip_threshold
 #                 # apply mask
@@ -1156,7 +1154,7 @@ def find_hc_gauss_peaks(p, loc):
 #             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
 #             wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
 #             wargs = [sigma_it, sig, sig1, len(wave_catalog)]
-#             WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+#             WLOG(p, 'info', wmsg.format(*wargs))
 #
 #         # ------------------------------------------------------------------
 #         # Plot wave catalogue all lines and brightest lines
@@ -1331,7 +1329,7 @@ def generate_resolution_map(p, loc):
             wargs = [order_num, order_num + bin_order, np.sum(mask), xpos,
                      resolution,
                      resolution1]
-            WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
         # store criteria
         map_dvs.append(order_dvs)
         map_lines.append(order_lines)
@@ -1351,7 +1349,7 @@ def generate_resolution_map(p, loc):
     wmsg2 = 'Median resolution: {0:.3f}'.format(np.median(resolution_map))
     wmsg3 = 'StdDev resolution: {0:.3f}'.format(np.std(resolution_map))
 
-    WLOG('info', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
+    WLOG(p, '', [wmsg1, wmsg2, wmsg3])
 
     # return loc
     return loc
@@ -1399,11 +1397,11 @@ def generate_res_files(p, loc, hdict):
             comment = 'Gaussian params: order={0}-{1} r={2}'
             kw_params = ['GPARAMS', '', comment.format(*largs)]
             # add keys to headed
-            hdict = spirouImage.AddKey(hdict, kw_startorder, value=start_order)
-            hdict = spirouImage.AddKey(hdict, kw_endorder, value=end_order)
-            hdict = spirouImage.AddKey(hdict, kw_region, value=xpos)
-            hdict = spirouImage.AddKey(hdict, kw_res, value=resolution)
-            hdict = spirouImage.AddKey1DList(hdict, kw_params,
+            hdict = spirouImage.AddKey(p, hdict, kw_startorder, value=start_order)
+            hdict = spirouImage.AddKey(p, hdict, kw_endorder, value=end_order)
+            hdict = spirouImage.AddKey(p, hdict, kw_region, value=xpos)
+            hdict = spirouImage.AddKey(p, hdict, kw_res, value=resolution)
+            hdict = spirouImage.AddKey1DList(p, hdict, kw_params,
                                              values=params, dim1name='coeff')
             # append this hdict to hicts
             hdicts.append(dict(hdict))
@@ -1489,7 +1487,7 @@ def correct_for_large_fp_jumps(p, order_num, find_data, dopd_all):
         # print warning message
         wmsg = 'Jump larger than +0.7 on order {0:2}'
         wargs = [order_num]
-        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, 'warning', wmsg.format(*wargs))
         # shift line numbers one down
         find_data['m_fp'] = find_data['m_fp'] - 1.
         # recalculate cavity width with corrected line numbers
@@ -1498,7 +1496,7 @@ def correct_for_large_fp_jumps(p, order_num, find_data, dopd_all):
         # print warning message
         wmsg = 'Jump larger than -0.7 on order {0:2}'
         wargs = [order_num]
-        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, 'warning', wmsg.format(*wargs))
         # shift line numbers one up
         find_data['m_fp'] = find_data['m_fp'] + 1.
         # recalculate cavity width with corrected line numbers
@@ -1643,7 +1641,7 @@ def fit_gaussian_triplets(p, loc):
         # log progress
         # TODO Move log progress out of function
         wmsg = 'Fit Triplet {0} of {1}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(sol_iteration + 1, n_iterations))
+        WLOG(p, 'info', wmsg.format(sol_iteration + 1, n_iterations))
         # get coefficients
         xgau = np.array(loc['XGAU_INI'])
         orders = np.array(loc['ORD_INI'])
@@ -1787,7 +1785,7 @@ def fit_gaussian_triplets(p, loc):
             # Log the total number of valid lines found
             wmsg = '\tOrder {0}: Number of valid lines = {1} / {2}'
             wargs = [order_num, bestn, np.sum(good_all)]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # if we have the minimum number of lines check that we satisfy
             #   the cut_fit_threshold for all good lines and reject outliers
             if bestn >= minimum_number_of_lines:
@@ -1854,7 +1852,7 @@ def fit_gaussian_triplets(p, loc):
             emsg1 = 'Insufficient number of lines found.'
             emsg2 = '\t Found = {0}  Required = {1}'
             eargs = [np.sum(good), minimum_total_number_of_lines]
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(*eargs)])
+            WLOG(p, 'error', [emsg1, emsg2.format(*eargs)])
 
         # ------------------------------------------------------------------
         # Linear model slice generation
@@ -1971,7 +1969,7 @@ def fit_gaussian_triplets(p, loc):
             #     # log sigma clipping
             #     wmsg = '\tSigma-clipping at (>{0}) --> max(sig)={1:.5f} sigma'
             #     wargs = [sigma_clip_threshold, np.max(absdev)]
-            #     WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            #     WLOG(p, '', wmsg.format(*wargs))
             #     # mask for sigma clip
             #     sig_mask = absdev < sigma_clip_threshold
             #     # apply mask
@@ -1990,7 +1988,7 @@ def fit_gaussian_triplets(p, loc):
             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
             wmsg = '\t{0} | RMS={1:.5f} km/s sig={2:.5f} m/s n={3}'
             wargs = [sigma_it, sig, sig1, len(wave_catalog)]
-            WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
