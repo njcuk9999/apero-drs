@@ -59,7 +59,7 @@ DATESTR = '__date__ = '
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path, kind='rpm', version=None, since=None, until=None):
+def update(p, filename, path, kind='rpm', version=None, since=None, until=None):
     # get default run
     cargs = [path, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -80,10 +80,10 @@ def update(filename, path, kind='rpm', version=None, since=None, until=None):
     os.system(command)
     # check that file created
     if not os.path.exists(filename):
-        WLOG('error', __NAME__.split('.py')[0], 'Error with gcg (see above)')
+        WLOG(p, 'error', 'Error with gcg (see above)')
 
 
-def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
+def process_lines(p, fullfilename, tmpfilename, path, kind='rpm', version=None):
 
     # read log
     f = open(tmpfilename, 'r')
@@ -148,7 +148,7 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
         wargs = [it + 1, len(references)]
         WLOG('', __NAME__, 'Processing commit {0} of {1}'.format(*wargs))
         # get entry
-        update(tmpfilename2, path, since=reference[0], until=reference[1],
+        update(p, tmpfilename2, path, since=reference[0], until=reference[1],
                kind=kind, version=version)
         # check we have tmpfile
         if not os.path.exists(tmpfilename2):
@@ -363,7 +363,7 @@ if __name__ == "__main__":
     WLOG('', __NAME__, 'Getting full commit log')
     update(TMPFILENAME, PATH, kind='rpm', version=version0, since=since0)
     # get lines group them and save to full file
-    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version0)
+    process_lines(p, FILENAME, TMPFILENAME, PATH, kind='rpm', version=version0)
     # update version text file
     update_version_file(VERSIONFILE, version0)
     # remove backup
