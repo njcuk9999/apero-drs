@@ -118,7 +118,7 @@ def order_profile(p, loc):
         # add to loc
         emloco = np.load(emlocofile)
         wmsg = '\tLoading order profile map from file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(emlocofilename))
+        WLOG(p, '', wmsg.format(emlocofilename))
         # add to loc
         loc['ORDERIMAGE'] = emloco[0].astype(int)
         loc['SUBORDERIMAGE'] = emloco[1].astype(int)
@@ -130,7 +130,7 @@ def order_profile(p, loc):
         return loc
     except:
         wmsg = '\tGenerating order profile map and saving to file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(emlocofilename))
+        WLOG(p, '', wmsg.format(emlocofilename))
 
     # get data from loc
     image = loc['IMAGE']
@@ -222,7 +222,7 @@ def order_profile(p, loc):
             else:
                 emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
                 emsg2 = '\tfunction={0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
 
     # add to loc
     loc['ORDERIMAGE'] = orderimage.astype(int)
@@ -295,7 +295,7 @@ def create_wavelength_image(p, loc):
         tilt = None
 
     if shape is None and tilt is None:
-        WLOG('error', p['LOG_OPT'], 'Neither "SHAPE" nor "TILT" defined.')
+        WLOG(p, 'error', 'Neither "SHAPE" nor "TILT" defined.')
     # -------------------------------------------------------------------------
     # construct a "NaN" image (for wavelengths)
     ishape = image.shape
@@ -439,7 +439,7 @@ def create_wavelength_image(p, loc):
             else:
                 emsg1 = 'Fiber type="{0}" invalid'.format(fiber)
                 emsg2 = '\tfunction={0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
 
     # add to loc
     loc['WAVEIMAGE'] = waveimage
@@ -597,7 +597,7 @@ def create_image_from_e2ds(p, loc):
             wmsg = ('Extrapolating order {0}: Fiber {1}, Nvalid = {2}/{3}'
                     ' Percentage = {4:.2f}')
             wargs = [order_num, fiber, tvalid, ttotal, 100.0*tvalid/ttotal]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
     # add to loc
     loc['SPE'] = newimage
@@ -665,7 +665,7 @@ def unresize(p, image, xsize, ysize):
     # log change
     wargs = image.shape[1], image.shape[0], xsize, ysize
     wmsg = 'Resizing from ({0}x{1}) to ({2}x{3}) [Fill with NaNs]'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # create an array of given size
     size = np.product([ysize, xsize])
@@ -678,8 +678,8 @@ def unresize(p, image, xsize, ysize):
     newimage[ylow:yhigh, xlow:xhigh] = image
 
     # rotate the image
-    WLOG('', p['LOG_OPT'], 'Flipping image in x and y')
-    newimage = spirouImage.flip_image(newimage)
+    WLOG(p, '', 'Flipping image in x and y')
+    newimage = spirouImage.flip_image(p, newimage)
 
     # return a copy of locally defined variables in the memory
     return newimage

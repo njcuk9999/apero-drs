@@ -34,15 +34,13 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # get the logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 
 
 # =============================================================================
 # Define usable table functions
 # =============================================================================
-def make_table(columns, values, formats=None, units=None):
+def make_table(p, columns, values, formats=None, units=None):
     """
     Construct an astropy table from columns and values
 
@@ -71,13 +69,13 @@ def make_table(columns, values, formats=None, units=None):
     lval = len(values)
     # make sure we have as many columns as we do values
     if lcol != lval:
-        WLOG('error', '', emsg.format(lcol, 'values', lval))
+        WLOG(p, 'error', emsg.format(lcol, 'values', lval))
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
             emsg1 = emsg.format(lcol, 'formats', len(formats))
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     else:
         formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
@@ -85,14 +83,14 @@ def make_table(columns, values, formats=None, units=None):
         if lcol != len(units):
             emsg1 = emsg.format(lcol, 'units', len(formats))
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
             emsg1 = 'All values must have same number of rows '
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -107,7 +105,7 @@ def make_table(columns, values, formats=None, units=None):
                 eargs1 = [formats[c_it], col]
                 emsg1 = 'Format "{0}" is invalid (Column = {1})'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', DPROG, [emsg1.format(*eargs1), emsg2])
+                WLOG(p, 'error', [emsg1.format(*eargs1), emsg2])
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -115,7 +113,7 @@ def make_table(columns, values, formats=None, units=None):
     return table
 
 
-def write_table(table, filename, fmt='fits', header=None):
+def write_table(p, table, filename, fmt='fits', header=None):
     """
     Writes a table to file "filename" with format "fmt"
 
@@ -152,14 +150,14 @@ def write_table(table, filename, fmt='fits', header=None):
     if fmt not in ftable['Format']:
         emsg1 = 'fmt={0} not valid for astropy.table reading'.format(fmt)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             emsg1 = 'fmt={0} cannot be read by astropy.table'.format(fmt)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # try to write table to file
     try:
         table.write(filename, format=fmt, overwrite=True)
@@ -167,7 +165,7 @@ def write_table(table, filename, fmt='fits', header=None):
         emsg1 = 'Cannot write table to file'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     if (fmt == 'fits') and (header is not None):
         # reload fits data
@@ -179,7 +177,7 @@ def write_table(table, filename, fmt='fits', header=None):
         fits.writeto(filename, data, filehdr, overwrite=True)
 
 
-def merge_table(table, filename, fmt='fits'):
+def merge_table(p, table, filename, fmt='fits'):
     """
     If a file already exists for "filename" try to merge this new table with
     the old one (requires all columns/formats to be the same).
@@ -199,9 +197,9 @@ def merge_table(table, filename, fmt='fits'):
     # first try to open table
     if os.path.exists(filename):
         # read old table
-        old_table = read_table(filename, fmt)
+        old_table = read_table(p, filename, fmt)
         # check against new table (colnames and formats)
-        old_table = prep_merge(filename, old_table, table)
+        old_table = prep_merge(p, filename, old_table, table)
         # generate a new table
         try:
             new_table = vstack([old_table, table])
@@ -209,16 +207,16 @@ def merge_table(table, filename, fmt='fits'):
             emsg1 = 'Cannot merge file={0}'.format(filename)
             emsg2 = '    Error reads: {0}'.format(e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             new_table = None
         # write new table
-        write_table(new_table, filename, fmt)
+        write_table(p, new_table, filename, fmt)
     # else just write the table
     else:
-        write_table(table, filename, fmt)
+        write_table(p, table, filename, fmt)
 
 
-def read_table(filename, fmt, colnames=None, **kwargs):
+def read_table(p, filename, fmt, colnames=None, **kwargs):
     """
     Reads a table from file "filename" in format "fmt", if colnames are defined
     renames the columns to these name
@@ -246,7 +244,7 @@ def read_table(filename, fmt, colnames=None, **kwargs):
         emsg1 = 'fmt={0} not valid for astropy.table reading'
         emsg2 = '    file = {0}'.format(filename)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
@@ -254,14 +252,14 @@ def read_table(filename, fmt, colnames=None, **kwargs):
             emsg1 = 'fmt={0} cannot be read by astropy.table'
             emsg2 = '    file = {0}'.format(filename)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     # check that filename exists
     if not os.path.exists(filename):
         emsg1 = 'File {0} does not exist'
         emsg2 = '    file = {0}'.format(filename)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     # try to load file using astropy table
     try:
@@ -270,7 +268,7 @@ def read_table(filename, fmt, colnames=None, **kwargs):
         emsg1 = ' Error {0}: {1}'.format(type(e), e)
         emsg2 = '    file = {0}'.format(filename)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         table = None
 
     # if we have colnames rename the columns
@@ -281,7 +279,7 @@ def read_table(filename, fmt, colnames=None, **kwargs):
                      ''.format(len(colnames), len(table.colnames)))
             emsg2 = '    file = {0}'.format(filename)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
@@ -291,12 +289,12 @@ def read_table(filename, fmt, colnames=None, **kwargs):
     return table
 
 
-def print_full_table(table):
+def print_full_table(p, table):
     tablestrings = table.pformat(max_lines=len(table)*10,
                                  max_width=9999)
-    WLOG('', '', '=' * len(tablestrings[0]), wrap=False)
-    WLOG('', '', tablestrings, wrap=False)
-    WLOG('', '', '=' * len(tablestrings[0]), wrap=False)
+    WLOG(p, '', '=' * len(tablestrings[0]), wrap=False)
+    WLOG(p, '', tablestrings, wrap=False)
+    WLOG(p, '', '=' * len(tablestrings[0]), wrap=False)
 
 
 # =============================================================================
@@ -317,13 +315,13 @@ def make_fits_table(dictionary=None):
         return astropy_table
 
 
-def read_fits_table(filename, return_dict=False):
+def read_fits_table(p, filename, return_dict=False):
     func_name = __NAME__ + '.read_fits_table()'
     # check that filename exists
     if not os.path.exists(filename):
         emsg1 = 'File {0} does not exist'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # read data
     try:
         astropy_table = Table.read(filename)
@@ -331,7 +329,7 @@ def read_fits_table(filename, return_dict=False):
         emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
         emsg2 = '\tError was: {0}'.format(e)
         emsg3 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         astropy_table = None
     # return dict if return_dict is True
     if return_dict:
@@ -346,7 +344,7 @@ def read_fits_table(filename, return_dict=False):
     return astropy_table
 
 
-def write_fits_table(astropy_table, output_filename):
+def write_fits_table(p, astropy_table, output_filename):
     func_name = __NAME__ + '.write_fits_table()'
     # get directory name
     dir_name = os.path.dirname(output_filename)
@@ -354,7 +352,7 @@ def write_fits_table(astropy_table, output_filename):
     if not os.path.exists(dir_name):
         emsg1 = 'Errors directory {0} does not exist'.format(dir_name)
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # write data
     try:
         astropy_table.write(output_filename, format='fits', overwrite=True)
@@ -362,13 +360,13 @@ def write_fits_table(astropy_table, output_filename):
         emsg1 = 'Error cannot write {0} as a fits table'.format(output_filename)
         emsg2 = '\tError was: {0}'.format(e)
         emsg3 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
 
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def prep_merge(filename, table, preptable):
+def prep_merge(p, filename, table, preptable):
     func_name = __NAME__ + '.prep_merge()'
     # set up new table to store prepped data
     newtable = Table()
@@ -380,7 +378,7 @@ def prep_merge(filename, table, preptable):
         if col not in table.colnames:
             emsg1 = 'Column {0} not in file {1}'.format(col, filename)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # check format
         if table[col].dtype != pformat:
             try:
@@ -388,7 +386,7 @@ def prep_merge(filename, table, preptable):
             except Exception as e:
                 emsg1 = 'Incompatible data types for column={0} for file {1}'
                 emsg2 = '    error reads: {0}'.format(e)
-                WLOG('error', DPROG, [emsg1.format(col, filename), emsg2])
+                WLOG(p, 'error', [emsg1.format(col, filename), emsg2])
         else:
             newtable[col] = table[col]
     # return prepped table
