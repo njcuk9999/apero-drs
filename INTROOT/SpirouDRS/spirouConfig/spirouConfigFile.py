@@ -179,6 +179,8 @@ def get_user_config(p, package, configfolder, configfile):
             warn_msgs.append('    in {0}'.format('the ENVIRONMENTAL VARIABLES'))
             warn_msgs.append('    User config file will not be used.')
     # get DRS_UCONFIG from default config file
+    #    This needs to be done again in case the path supplied in the
+    #    environmental variable "DRS_UCONFIG" did not exist
     if 'DRS_UCONFIG' in p:
         # set path
         rawpath = str(p['DRS_UCONFIG'])
