@@ -31,8 +31,6 @@ __release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
 # Get Logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # get the config error
@@ -65,7 +63,7 @@ def lsd_analysis_wrapper(p, loc):
 
     # log start of LSD analysis calculations
     wmsg = 'Running function {0} to perform LSD analysis'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
 
     # load spectral lines
     loc = load_lsd_spectral_lines(p, loc)
@@ -116,7 +114,7 @@ def load_lsd_spectral_lines(p, loc):
     # get object temperature from header
     obj_temperature = loc['HDR']['OBJTEMP']
     wmsg = 'Temperature of the object observed: {0} K'
-    WLOG('info', p['LOG_OPT'], wmsg.format(obj_temperature))
+    WLOG(p, 'info', wmsg.format(obj_temperature))
 
     # find out which CCFLINE file is most appropriate for source
     temp_diff_min, loc['SELECTED_FILE_CCFLINES'] = 1.e10, 'marcs_t3000g50_all'
@@ -135,7 +133,7 @@ def load_lsd_spectral_lines(p, loc):
     # if path exists use it
     if os.path.exists(abspath):
         wmsg = 'Line mask used for LSD computation: {0}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(abspath))
+        WLOG(p, 'info', wmsg.format(abspath))
         # load spectral lines data from file
         wlcf, znf, depthf, landef = np.loadtxt(abspath, delimiter='  ',
                                                skiprows=1,
@@ -146,7 +144,7 @@ def load_lsd_spectral_lines(p, loc):
         emsg1 = 'LSD Line mask file: "{0}" not found, unable to proceed'
         emsg2 = '    function = {0}'.format(func_name)
         eargs = [loc['SELECTED_FILE_CCFLINES']]
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
         wlcf, znf, depthf, landef = None, None, None, None
 
     # initialize data vectors
@@ -685,56 +683,56 @@ def output_lsd_image(p, loc, hdict):
 
     # add LSD parameters keywords to header
     # add input parameters for LSD analysis
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MASK'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_POL_STOKES'], value=loc['STOKES'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_MASK'],
                                value=loc['SELECTED_FILE_CCFLINES'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_V0'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_V0'],
                                value=p['IC_POLAR_LSD_V0'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_VF'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_VF'],
                                value=p['IC_POLAR_LSD_VF'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NP'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_NP'],
                                value=p['IC_POLAR_LSD_NP'])
 
     # add fitted values from gaussian fit to Stokes I LSD
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_FIT_RV'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_FIT_RV'],
                                value=loc['LSD_FIT_RV'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_FIT_RESOL'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_FIT_RESOL'],
                                value=loc['LSD_FIT_RESOL'])
 
     # add statistical quantities from LSD analysis
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEANPOL'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_MEANPOL'],
                                value=loc['LSD_POL_MEAN'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STDDEVPOL'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_STDDEVPOL'],
                                value=loc['LSD_POL_STDDEV'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEDIANPOL'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_MEDIANPOL'],
                                value=loc['LSD_POL_MEDIAN'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_MEDABSDEVPOL'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_MEDABSDEVPOL'],
                                value=loc['LSD_POL_MEDABSDEV'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STOKESVQU_MEAN'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_STOKESVQU_MEAN'],
                                value=loc['LSD_STOKESVQU_MEAN'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_STOKESVQU_STDDEV'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_STOKESVQU_STDDEV'],
                                value=loc['LSD_STOKESVQU_STDDEV'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_MEAN'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_NULL_MEAN'],
                                value=loc['LSD_NULL_MEAN'])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_NULL_STDDEV'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_NULL_STDDEV'],
                                value=loc['LSD_NULL_STDDEV'])
     # add information about the meaning of data columns
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL1'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_COL1'],
                                value=p['IC_POLAR_LSD_DATAINFO'][0])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL2'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_COL2'],
                                value=p['IC_POLAR_LSD_DATAINFO'][1])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL3'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_COL3'],
                                value=p['IC_POLAR_LSD_DATAINFO'][2])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL4'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_COL4'],
                                value=p['IC_POLAR_LSD_DATAINFO'][3])
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_LSD_COL5'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_LSD_COL5'],
                                value=p['IC_POLAR_LSD_DATAINFO'][4])
 
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
 
     # Store LSD analysis data in FITS TABLE
-    table = spirouImage.MakeTable(columns, values)
-    spirouImage.WriteTable(table, lsdfits, fmt='fits', header=hdict)
+    table = spirouImage.MakeTable(p, columns, values)
+    spirouImage.WriteTable(p, table, lsdfits, fmt='fits', header=hdict)
     # deal with output onto index.fits
     p = spirouImage.spirouFITS.write_output_dict(p, lsdfits, hdict)
     # Store LSD analysis data in file
