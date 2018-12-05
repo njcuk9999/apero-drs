@@ -208,7 +208,6 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         loc['TILT'] = None
         loc.set_source('TILT', __NAME__ + '/main()')
 
-
     # ----------------------------------------------------------------------
     #  Earth Velocity calculation
     # ----------------------------------------------------------------------
