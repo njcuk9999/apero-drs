@@ -263,7 +263,7 @@ def get_file_args(p, control, vindex, recipe, limit=None):
         if np.sum(filemask) == 0:
             wmsg = 'No files found for recipe "{0}" with key {1}'
             wargs = [recipe, dprtype]
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
 
         # make selected files into a list of strings
         values = []
@@ -316,7 +316,7 @@ def add_files(p, night, filelist, numbers, combine=False):
     else:
         emsg1 = 'Recipe mode unsupported'
         emsg2 = '\tfunc_name = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # return combinations
     return combinations
@@ -364,7 +364,7 @@ def manage_run(p, recipe, args, runname, night):
         emsgs = ['Unexpected error occured in run={0}'.format(runname)]
         for emsg in str(e).split('\n'):
             emsgs.append('\t' + emsg)
-        WLOG('warning', p['LOG_OPT'], emsgs)
+        WLOG(p, 'warning', emsgs)
         # push to ll
         pp['RECIPE'] = recipe
         pp['NIGHT_NAME'] = night
@@ -378,7 +378,7 @@ def manage_run(p, recipe, args, runname, night):
         emsgs = ['Unexpected error occured in run={0}'.format(runname)]
         for emsg in str(e).split('\n'):
             emsgs.append('\t' + emsg)
-        WLOG('warning', p['LOG_OPT'], emsgs)
+        WLOG(p, 'warning', emsgs)
         # push to ll
         pp['RECIPE'] = recipe
         pp['NIGHT_NAME'] = night
@@ -399,7 +399,7 @@ def manage_runs(p, lls, combinations, recipe, night):
         runname = ' TRIGGER {0} File {1} of {2}'.format(*rargs)
         wmsgs = [spirouStartup.spirouStartup.HEADER, runname,
                  spirouStartup.spirouStartup.HEADER]
-        WLOG('warning', p['LOG_OPT'], wmsgs)
+        WLOG(p, 'warning', wmsgs)
         ll_s = manage_run(p, recipe, combination, runname, night)
         lls.append(ll_s)
     return lls
@@ -578,14 +578,14 @@ def unit_wrapper(p, runs):
             wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
             for msg in str(e).split('\n'):
                 wmsgs.append('\t' + msg)
-            WLOG('warning', p['LOG_OPT'], wmsgs)
+            WLOG(p, 'warning', wmsgs)
             errors[runn] = str(e)
         # Manage expected errors
         except SystemExit as e:
             wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
             for msg in str(e).split('\n'):
                 wmsgs.append('\t' + msg)
-            WLOG('warning', p['LOG_OPT'], wmsgs)
+            WLOG(p, 'warning', wmsgs)
             errors[runn] = str(e)
 
     # make sure all plots are closed
@@ -622,7 +622,7 @@ def trigger_preprocess(p, filelist):
             wargs = [it + 1, len(night_names)]
             wmsgs.append(' TRIGGER PRE-PROCESS File {0} of {1}'.format(*wargs))
             wmsgs.append(spirouStartup.spirouStartup.HEADER)
-            WLOG('warning', p['LOG_OPT'], wmsgs)
+            WLOG(p, 'warning', wmsgs)
             # run preprocess
             try:
                 args = [night_names[it], rawfilename]
@@ -642,7 +642,7 @@ def trigger_preprocess(p, filelist):
                 wmsgs = ['PPRun "{0}" had an unexpected error:'.format(it)]
                 for msg in str(e).split('\n'):
                     wmsgs.append('\t' + msg)
-                WLOG('warning', p['LOG_OPT'], wmsgs)
+                WLOG(p, 'warning', wmsgs)
                 errors['Run{0}'.format(it)] = str(e)
 
                 pp = ParamDict()
@@ -656,7 +656,7 @@ def trigger_preprocess(p, filelist):
                 wmsgs = ['PPRun "{0}" had an expected error:'.format(it)]
                 for msg in str(e).split('\n'):
                     wmsgs.append('\t' + msg)
-                WLOG('warning', p['LOG_OPT'], wmsgs)
+                WLOG(p, 'warning', wmsgs)
                 errors['PPRun{0}'.format(it)] = str(e)
 
                 pp = ParamDict()
@@ -708,7 +708,7 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
 
         # add closing header
         wmsgs.append(spirouStartup.spirouStartup.HEADER)
-        WLOG('warning', p['LOG_OPT'], wmsgs)
+        WLOG(p, 'warning', wmsgs)
         # get the control and index for this
         control, vindex = get_control_index(fullcontrol, index_file, recipe,
                                             fdprtypes, fobjnames)
@@ -740,25 +740,25 @@ def trigger_runs(p, recipe, night_name, control, vindex):
 
     # manually deal with recipes separately # TODO: change
     if recipe == 'cal_BADPIX_spirou':
-        return cal_badpix_spirou(night_name, vindex, groups)
+        return cal_badpix_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_DARK_spirou':
-        return cal_dark_spirou(night_name, vindex, groups)
+        return cal_dark_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_loc_RAW_spirou':
-        return cal_loc_raw_spirou(night_name, vindex, groups)
+        return cal_loc_raw_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_SLIT_spirou':
-        return cal_slit_spirou(night_name, vindex, groups)
+        return cal_slit_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_SHAPE_spirou':
-        return cal_shape_spirou(night_name, vindex, groups)
+        return cal_shape_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_SHAPE_spirou2':
-        return cal_shape_spirou2(night_name, vindex, groups)
+        return cal_shape_spirou2(p, night_name, vindex, groups)
 
     if recipe == 'cal_FF_RAW_spirou':
-        return cal_ff_raw_spirou(night_name, vindex, groups)
+        return cal_ff_raw_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_extract_RAW_spirou':
         return cal_extract_raw_spirou(p, night_name, vindex, groups)
@@ -775,14 +775,14 @@ def trigger_runs(p, recipe, night_name, control, vindex):
     if recipe == 'obj_fit_tellu':
         return obj_fit_tellu(p, night_name, vindex, groups)
 
-    WLOG('warning', p['LOG_OPT'], 'Error Recipe={0} not defined'.format(recipe))
+    WLOG(p, 'warning', 'Error Recipe={0} not defined'.format(recipe))
     return []
 
 
 # =============================================================================
 # recipe functions
 # =============================================================================
-def cal_badpix_spirou(night_name, vindex, groups):
+def cal_badpix_spirou(p, night_name, vindex, groups):
     """
     for cal_badpix we need 1 dark_dark and 1 flat_flat
     we need to match the groups by date
@@ -797,7 +797,7 @@ def cal_badpix_spirou(night_name, vindex, groups):
         mean_dark_dates = get_group_mean(dark_dates)
 
     else:
-        WLOG('warning', '', 'DARK_DARK not in groups')
+        WLOG(p, 'warning', 'DARK_DARK not in groups')
         return []
 
     # get the flat_flat files
@@ -808,7 +808,7 @@ def cal_badpix_spirou(night_name, vindex, groups):
         num_flat_groups = len(dark_dates)
         mean_flat_dates = get_group_mean(flat_dates)
     else:
-        WLOG('warning', '', 'FLAT_FLAT not in groups')
+        WLOG(p, 'warning', 'FLAT_FLAT not in groups')
         return []
 
     # runs
@@ -832,7 +832,7 @@ def cal_badpix_spirou(night_name, vindex, groups):
     return runs
 
 
-def cal_dark_spirou(night_name, vindex, groups):
+def cal_dark_spirou(p, night_name, vindex, groups):
     """
     for cal_dark we need all but the first dark in a sequence (unless there
     is only one dark file)
@@ -844,7 +844,7 @@ def cal_dark_spirou(night_name, vindex, groups):
         dark_files = get_group_vindex(vindex, dark_groups, 'FILENAME')
         num_dark_groups = len(dark_files)
     else:
-        WLOG('warning', '', 'DARK_DARK not in groups')
+        WLOG(p, 'warning', 'DARK_DARK not in groups')
         return []
     # runs
     runs = []
@@ -859,7 +859,7 @@ def cal_dark_spirou(night_name, vindex, groups):
     return runs
 
 
-def cal_loc_raw_spirou(night_name, vindex, groups):
+def cal_loc_raw_spirou(p, night_name, vindex, groups):
     """
     for cal_loc_raw_spirou we need to do all the flat_dark groups and
     all of the dark_flat groups separately, we need to use all files except
@@ -884,7 +884,7 @@ def cal_loc_raw_spirou(night_name, vindex, groups):
         num_dark_flat_groups = 0
 
     if len(dark_flat_files) == 0 and len(flat_dark_files) == 0:
-        WLOG('warning', '', 'Must have FLAT_DARK or DARK_FLAT files in group')
+        WLOG(p, 'warning', 'Must have FLAT_DARK or DARK_FLAT files in group')
         return []
 
     # runs
@@ -907,14 +907,14 @@ def cal_loc_raw_spirou(night_name, vindex, groups):
     return runs
 
 
-def cal_slit_spirou(night_name, vindex, groups):
+def cal_slit_spirou(p, night_name, vindex, groups):
     # get the dark_dark files
     if 'FP_FP' in groups:
         fp_fp_groups = groups['FP_FP']
         fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
         num_fp_fp_groups = len(fp_fp_files)
     else:
-        WLOG('warning', '', 'FP_FP not in groups')
+        WLOG(p, 'warning', 'FP_FP not in groups')
         return []
     # runs
     runs = []
@@ -929,7 +929,7 @@ def cal_slit_spirou(night_name, vindex, groups):
     return runs
 
 
-def cal_shape_spirou(night_name, vindex, groups):
+def cal_shape_spirou(p, night_name, vindex, groups):
     """
     for cal_shape_spirou we use all the fp_fp files except the first (unless
     there is only one fp_fp file)
@@ -940,7 +940,7 @@ def cal_shape_spirou(night_name, vindex, groups):
         fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
         num_fp_fp_groups = len(fp_fp_files)
     else:
-        WLOG('warning', '', 'FP_FP not in groups')
+        WLOG(p, 'warning', 'FP_FP not in groups')
         return []
     # runs
     runs = []
@@ -955,7 +955,7 @@ def cal_shape_spirou(night_name, vindex, groups):
     return runs
 
 
-def cal_shape_spirou2(night_name, vindex, groups):
+def cal_shape_spirou2(p, night_name, vindex, groups):
     """
     for cal_shape_spirou2 we need to match hc groups to fp groups
     we need to use the last hc of a group and all but the first fp_fp in a
@@ -969,7 +969,7 @@ def cal_shape_spirou2(night_name, vindex, groups):
         num_fp_fp_groups = len(fp_fp_files)
         mean_fp_fp_dates = get_group_mean(fp_fp_dates)
     else:
-        WLOG('warning', '', 'FP_FP not in groups')
+        WLOG(p, 'warning', 'FP_FP not in groups')
         return []
 
     if 'HCONE_HCONE' in groups:
@@ -979,7 +979,7 @@ def cal_shape_spirou2(night_name, vindex, groups):
         num_hc_hc_groups = len(hc_hc_files)
         mean_hc_hc_dates = get_group_mean(hc_hc_dates)
     else:
-        WLOG('warning', '', 'HCONE_HCONE not in groups')
+        WLOG(p, 'warning', 'HCONE_HCONE not in groups')
         return []
     # runs
     runs = []
@@ -999,7 +999,7 @@ def cal_shape_spirou2(night_name, vindex, groups):
     return runs
 
 
-def cal_ff_raw_spirou(night_name, vindex, groups):
+def cal_ff_raw_spirou(p, night_name, vindex, groups):
     """
     for cal_ff_raw_spirou we use all the flat_flat files except the first
     (unless there is only one fp_fp file)
@@ -1010,7 +1010,7 @@ def cal_ff_raw_spirou(night_name, vindex, groups):
         flat_flat_files = get_group_vindex(vindex, flat_flat_groups, 'FILENAME')
         num_flat_flat_groups = len(flat_flat_files)
     else:
-        WLOG('warning', '', 'FLAT_FLAT not in groups')
+        WLOG(p, 'warning', 'FLAT_FLAT not in groups')
         return []
     # runs
     runs = []
@@ -1093,7 +1093,7 @@ def cal_hc_e2ds_ea_spirou(p, night_name, vindex, groups):
         hc_EAB_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_AB.fits')
         hc_EC_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_C.fits')
     else:
-        WLOG('warning', '', 'HCONE_HCONE not in groups')
+        WLOG(p, 'warning', 'HCONE_HCONE not in groups')
         return []
     # -------------------------------------------------------------------------
     # runs
@@ -1135,7 +1135,7 @@ def cal_wave_e2ds_ea_spirou(p, night_name, vindex, groups):
         fp_EAB_files = get_group_replace(fp_fp_files, '.fits', '_e2ds_AB.fits')
         fp_EC_files = get_group_replace(fp_fp_files, '.fits', '_e2ds_C.fits')
     else:
-        WLOG('warning', '', 'FP_FP not in groups')
+        WLOG(p, 'warning', 'FP_FP not in groups')
         return []
 
     if 'HCONE_HCONE' in groups:
@@ -1153,7 +1153,7 @@ def cal_wave_e2ds_ea_spirou(p, night_name, vindex, groups):
         hc_EC_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_C.fits')
 
     else:
-        WLOG('warning', '', 'HCONE_HCONE not in groups')
+        WLOG(p, 'warning', 'HCONE_HCONE not in groups')
         return []
     # runs
     runs = []
@@ -1301,12 +1301,12 @@ def get_group_replace(group, replace1, replace2):
 
 def report_errors(p, errors, recipe):
     if len(errors) > 0:
-        WLOG('warning', p['LOG_OPT'], '')
-        WLOG('warning', p['LOG_OPT'], '{0} Errors:'.format(recipe))
-        WLOG('warning', p['LOG_OPT'], '')
+        WLOG(p, 'warning', '')
+        WLOG(p, 'warning', '{0} Errors:'.format(recipe))
+        WLOG(p, 'warning', '')
         for key in errors:
             error = errors[key]
-            WLOG('warning', p['LOG_OPT'], error)
+            WLOG(p, 'warning', error)
 
 
 def get_group_skip(group, path, replace1, replace2, groups=None):
@@ -1381,11 +1381,11 @@ def main(night_name=None):
             pp_lls = [None, dict()]
     elif not SKIP_DONE_PP or n_raw == 0:
         wmsg = 'No raw files found'
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG(p, 'warning', wmsg)
         pp_lls = [None, dict()]
     else:
         wmsg = 'All files pre-processed (Found {0} files)'
-        WLOG('', p['LOG_OPT'], wmsg.format(n_raw))
+        WLOG(p, '', wmsg.format(n_raw))
         pp_lls = [None, dict()]
 
     # report pp errors
@@ -1394,7 +1394,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # Load the recipe_control
     # ----------------------------------------------------------------------
-    loc['CONTROL'] = spirouImage.spirouFile.get_control_file()
+    loc['CONTROL'] = spirouImage.spirouFile.get_control_file(p)
     loc.set_source('CONTROL', main_name)
 
     # ----------------------------------------------------------------------
@@ -1411,7 +1411,7 @@ def main(night_name=None):
     # ----------------------------------------------------------------------
     # Run triggers
     # ----------------------------------------------------------------------
-    WLOG('', p['LOG_OPT'], 'Running triggers')
+    WLOG(p, '', 'Running triggers')
     all_lls = OrderedDict()
 
     # 1. cal_BADPIX_spirou.py
