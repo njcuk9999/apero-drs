@@ -87,7 +87,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             fiber_type = [fiber_type]
         else:
             emsg = 'fiber_type="{0}" not understood'
-            WLOG('error', p['LOG_OPT'], emsg.format(fiber_type))
+            WLOG(p, 'error', emsg.format(fiber_type))
     # set fiber type
     p['FIB_TYPE'] = fiber_type
     p.set_source('FIB_TYPE', __NAME__ + '__main__()')
@@ -130,7 +130,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         emsg2 = '\tPlease run pre-processing on file.'
         emsg3 = ('\tIf pre-processing fails or skips file, file is not '
                  'currrently as valid DRS fits file.')
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2, emsg3])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2, emsg3])
     else:
         p['DPRTYPE'] = p['DPRTYPE'].strip()
 
@@ -143,17 +143,17 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to ADU
-    data = spirouImage.ConvertToADU(spirouImage.FlipImage(datac), p=p)
+    data = spirouImage.ConvertToADU(spirouImage.FlipImage(p, datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data1 = spirouImage.ResizeImage(data0, **bkwargs)
+    data1 = spirouImage.ResizeImage(p, data0, **bkwargs)
     # log change in data size
     wmsg = 'Image format changed to {1}x{0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*data1.shape))
+    WLOG(p, '', wmsg.format(*data1.shape))
 
     # ----------------------------------------------------------------------
     # Correct for the BADPIX mask (set all bad pixels to zero)
@@ -168,7 +168,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data1.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.4f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
     # Get the miny, maxy and max_signal for the central column
@@ -179,14 +179,14 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
     miny, maxy, max_signal, diff_maxmin = spirouBACK.MeasureMinMaxSignal(p, y)
     # Log max average flux/pixel
     wmsg = 'Maximum average flux/pixel in the spectrum: {0:.1f} [ADU]'
-    WLOG('info', p['LOG_OPT'], wmsg.format(max_signal/p['NBFRAMES']))
+    WLOG(p, 'info', wmsg.format(max_signal / p['NBFRAMES']))
 
     # ----------------------------------------------------------------------
     # Background computation
     # ----------------------------------------------------------------------
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
-        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
+        WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
         background, xc, yc, minlevel = spirouBACK.MeasureBackgroundFF(p, data1)
     else:
@@ -299,7 +299,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # ------------------------------------------------------------------
         if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
             # log progress
-            WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
+            WLOG(p, '', 'Debananafying (straightening) image')
             # get the shape map
             p, shapemap = spirouImage.ReadShapeMap(p, hdr)
             # debananafy data and order profile
@@ -377,16 +377,16 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # set the noise
             noise = p['SIGDET'] * np.sqrt(range1 + range2)
             # get window size
-            blaze_win1 = int(data2.shape[0]/2) - p['IC_EXTFBLAZ']
-            blaze_win2 = int(data2.shape[0]/2) + p['IC_EXTFBLAZ']
+            blaze_win1 = int(data2.shape[0] / 2) - p['IC_EXTFBLAZ']
+            blaze_win2 = int(data2.shape[0] / 2) + p['IC_EXTFBLAZ']
             # get average flux per pixel
-            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2*p['IC_EXTFBLAZ'])
+            flux = np.sum(e2ds[blaze_win1:blaze_win2]) / (2 * p['IC_EXTFBLAZ'])
             # calculate signal to noise ratio = flux/sqrt(flux + noise^2)
-            snr = flux / np.sqrt(flux + noise**2)
+            snr = flux / np.sqrt(flux + noise ** 2)
             # log the SNR RMS
             wmsg = 'On fiber {0} order {1}: S/N= {2:.1f} Nbcosmic= {3}'
             wargs = [p['FIBER'], order_num, snr, cpt]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
             # add calculations to storage
             e2ds = np.where(loc['BLAZE'][order_num] > 1, e2ds, 0.)
             loc['E2DS'][order_num] = e2ds
@@ -398,10 +398,10 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
             # set sources
             loc.set_sources(['e2ds', 'SNR'], source)
             # Log if saturation level reached
-            satvalue = (flux/p['GAIN'])/(range1 + range2)
+            satvalue = (flux / p['GAIN']) / (range1 + range2)
             if satvalue > (p['QC_LOC_FLUMAX'] * p['NBFRAMES']):
                 wmsg = 'SATURATION LEVEL REACHED on Fiber {0} order={1}'
-                WLOG('warning', p['LOG_OPT'], wmsg.format(fiber, order_num))
+                WLOG(p, 'warning', wmsg.format(fiber, order_num))
 
         # ------------------------------------------------------------------
         # Plots
@@ -432,77 +432,88 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         e2dsfllitsname = os.path.split(e2dsllfits)[-1]
         # log that we are saving E2DS spectrum
         wmsg = 'Saving E2DS spectrum of Fiber {0} in {1}'
-        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfitsname))
+        WLOG(p, '', wmsg.format(p['FIBER'], e2dsfitsname))
         wmsg = 'Saving E2DSFF spectrum of Fiber {0} in {1}'
-        WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], e2dsfffitsname))
+        WLOG(p, '', wmsg.format(p['FIBER'], e2dsfffitsname))
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
         # set the version
-        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
 
         # set the input files
-        hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'],
+                                   value=p['DARKFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
                                    value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
                                    value=p['BADPFILE2'])
-        hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-        hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'],
+                                   value=p['LOCOFILE'])
+        if p['IC_EXTRACT_TYPE'] not in ['4a', '4b']:
+            hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'],
+                                       value=p['TILTFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'],
+                                   value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'],
+                                   value=p['FLATFILE'])
         if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
-            hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
                                        value=p['SHAPFILE'])
-        hdict = spirouImage.AddKey(hdict, p['KW_EXTFILE'], value=raw_ext_file)
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXTFILE'],
+                                   value=raw_ext_file)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
         # construct loco filename
         locofile, _ = spirouConfig.Constants.EXTRACT_LOCO_FILE(p)
         locofilename = os.path.basename(locofile)
         # add barycentric keys to header
-        hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
         # copy extraction method and function to header
         #     (for reproducibility)
-        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_EXTM'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_EXTM'],
                                    value=extmethod)
-        hdict = spirouImage.AddKey(hdict, p['KW_E2DS_FUNC'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_E2DS_FUNC'],
                                    value=extfunc)
         # add localization file name to header
-        hdict = spirouImage.AddKey(hdict, p['KW_LOCO_FILE'], value=locofilename)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_FILE'],
+                                   value=locofilename)
         # add wave solution date
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                    value=loc['WAVE_ACQTIMES'][0])
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                    value=loc['WAVE_ACQTIMES'][1])
         # add wave solution number of orders
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                    value=loc['WAVEPARAMS'].shape[0])
         # add wave solution degree of fit
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                    value=loc['WAVEPARAMS'].shape[1] - 1)
         # write 1D list of the SNR
-        hdict = spirouImage.AddKey1DList(hdict, p['KW_E2DS_SNR'],
+        hdict = spirouImage.AddKey1DList(p, hdict, p['KW_E2DS_SNR'],
                                          values=loc['SNR'])
         # add localization file keys to header
         root = p['KW_ROOT_DRS_LOC'][0]
-        hdict = spirouImage.CopyRootKeys(hdict, locofile, root=root)
+        hdict = spirouImage.CopyRootKeys(p, hdict, locofile, root=root)
         # add wave solution coefficients
-        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+        hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                          values=loc['WAVEPARAMS'])
         # Save E2DS file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
-        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
         p = spirouImage.WriteImage(p, e2dsfits, loc['E2DS'], hdict)
         # Save E2DSFF file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
         p = spirouImage.WriteImage(p, e2dsfffits, loc['E2DSFF'], hdict)
         # Save E2DSLL file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
-        hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'], value=p['DPRTYPE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
+                                   value=p['DPRTYPE'])
         if p['IC_EXTRACT_TYPE'] in ['3c', '3d', '4a', '4b']:
             llstack = np.vstack(loc['E2DSLL'])
             p = spirouImage.WriteImage(p, e2dsllfits, llstack, hdict)
@@ -523,7 +534,7 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         except Exception as e:
             emsg1 = 'Cannot compute 1D spectrum'
             emsg2 = '\tError reads: {0}'.format(e)
-            WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'warning', [emsg1, emsg2])
             xs1d, ys1d = None, None
         # Plot the 1D spectrum
         if p['DRS_PLOT'] and (xs1d is not None) and (ys1d is not None):
@@ -536,20 +547,20 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
 
             # add header keys
             # set the version
-            hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
-            hdict = spirouImage.AddKey(hdict, p['KW_EXT_TYPE'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+            hdict = spirouImage.AddKey(p, hdict, p['KW_EXT_TYPE'],
                                        value=p['DPRTYPE'])
-            hdict = spirouImage.AddKey(hdict, p['KW_CRPIX1'], value=1.0)
-            hdict = spirouImage.AddKey(hdict, p['KW_CRVAL1'], value=xs1d[0])
-            hdict = spirouImage.AddKey(hdict, p['KW_CDELT1'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CRPIX1'], value=1.0)
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CRVAL1'], value=xs1d[0])
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CDELT1'],
                                        value=p['IC_BIN_S1D'])
-            hdict = spirouImage.AddKey(hdict, p['KW_CTYPE1'], value='nm')
-            hdict = spirouImage.AddKey(hdict, p['KW_BUNIT'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_CTYPE1'], value='nm')
+            hdict = spirouImage.AddKey(p, hdict, p['KW_BUNIT'],
                                        value='Relative Flux')
             # log writing to file
             wmsg = 'Saving S1D spectrum of Fiber {0} in {1}'
-            WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], s1dfilename))
+            WLOG(p, '', wmsg.format(p['FIBER'], s1dfilename))
             # Write to file
             p = spirouImage.WriteImage(p, s1dfile, ys1d, hdict)
 
@@ -565,18 +576,18 @@ def main(night_name=None, files=None, fiber_type=None, **kwargs):
         # Question: Why is this test ignored?
         # For some reason this test is ignored in old code
         passed = True
-        WLOG('info', p['LOG_OPT'], fail_msg[-1])
+        WLOG(p, 'info', fail_msg[-1])
 
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 

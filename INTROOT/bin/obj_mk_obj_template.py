@@ -112,16 +112,16 @@ def main(night_name=None, files=None):
     # log if we have no files
     if len(tell_files) == 0:
         wmsg = 'No "TELL_OBJ" files found for object ="{0}" skipping'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(loc['OBJNAME']))
+        WLOG(p, 'warning', wmsg.format(loc['OBJNAME']))
         # End Message
         wmsg = 'Recipe {0} has been successfully completed'
-        WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+        WLOG(p, 'info', wmsg.format(p['PROGRAM']))
         # return a copy of locally defined variables in the memory
         return dict(locals())
     else:
         # log how many found
         wmsg = 'N={0} "TELL_OBJ" files found for object ="{1}"'
-        WLOG('', p['LOG_OPT'], wmsg.format(len(tell_files), loc['OBJNAME']))
+        WLOG(p, '', wmsg.format(len(tell_files), loc['OBJNAME']))
 
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
@@ -200,12 +200,12 @@ def main(night_name=None, files=None):
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
         wargs = [it + 1, len(tell_files), basefilename, dv]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # shift to correct berv
         dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
 
-        image = spirouTelluric.Wave2Wave(tdata, loc['WAVE'] * dvshift,
+        image = spirouTelluric.Wave2Wave(p, tdata, loc['WAVE'] * dvshift,
                                          loc['MASTERWAVE'])
         # ------------------------------------------------------------------
         # loop around orders
@@ -234,22 +234,22 @@ def main(night_name=None, files=None):
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                value=loc['MASTERWAVEFILE'])
     # add file list to header
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJFILELIST'],
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJFILELIST'],
                                      values=base_filelist, dim1name='row')
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJBERVLIST'],
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJBERVLIST'],
                                      values=berv_list, dim1name='row')
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJWAVELIST'],
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJWAVELIST'],
                                      values=wave_list, dim1name='row')
     # add wave solution coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
     # write to file
     p = spirouImage.WriteImage(p, outfile, big_cube_med, hdict)
@@ -271,13 +271,13 @@ def main(night_name=None, files=None):
     # log big cube 1
     wmsg1 = 'Saving bigcube to file {0}'.format(os.path.basename(outfile1))
     # save big cube 1
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     big_cube_s = np.swapaxes(big_cube, 1, 2)
     p = spirouImage.WriteImage(p, outfile1, big_cube_s, hdict)
     # log big cube 0
     wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile2))
     # save big cube 0
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     big_cube_s0 = np.swapaxes(big_cube0, 1, 2)
     p = spirouImage.WriteImage(p, outfile2, big_cube_s0, hdict)
 

@@ -150,26 +150,26 @@ def main(night_name=None, files=None):
     wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
     wargs = [degpolfitsname, stokes_ifitsname, nullpol1fitsname,
              nullpol2fitsname]
-    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
 
     # construct header keywords for output products
     hdict, loc = spirouPOLAR.PolarHeader(p, loc, polardict)
 
     # save POL data to file
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     p = spirouImage.WriteImageMulti(p, degpolfits, [loc['POL'], loc['POLERR']],
                                     hdict)
     # save NULL1 data to file
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
     p = spirouImage.WriteImage(p, nullpol1fits, loc['NULL1'], hdict)
     
     # save NULL2 data to file
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
     p = spirouImage.WriteImage(p, nullpol2fits, loc['NULL2'], hdict)
 
     # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_STOKES'], value="I")
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_POL_STOKES'], value="I")
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     # save STOKESI data to file
     multi_image = [loc['STOKESI'], loc['STOKESIERR']]
     p = spirouImage.WriteImageMulti(p, stokes_ifits, multi_image, hdict)
@@ -190,7 +190,7 @@ def main(night_name=None, files=None):
         
         # log that we are saving LSD analysis data
         wmsg = 'Saving LSD analysis data to {0}'.format(lsdfitsfitsname)
-        WLOG('info', p['LOG_OPT'], wmsg)
+        WLOG(p, 'info', wmsg)
 
     # ----------------------------------------------------------------------
     # End Message

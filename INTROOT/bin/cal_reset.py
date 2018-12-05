@@ -43,9 +43,10 @@ def main():
     program = __NAME__.split('.py')[0]
     p = spirouConfig.ParamDict()
     p['LOG_OPT'], p['PROGRAM'] = program, program
+    p['PID'] = None
 
     # log run
-    WLOG('info', program, 'Now Running reset script.')
+    WLOG(p, 'info', 'Now Running reset script.')
 
     # run DRS reset
     spirouTools.DRS_Reset(log=True, called=True)

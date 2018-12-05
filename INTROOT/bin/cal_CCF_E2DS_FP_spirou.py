@@ -82,8 +82,8 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     call = [e2dsfile, mask, rv, width, step]
     call_priority = [True, True, True, True, True]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, name, req, call,
-                                                    call_priority, lname)
+    customargs = spirouStartup.GetCustomFromRuntime(p, pos, fmt, name, req,
+                                                    call, call_priority, lname)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='e2dsfile',
@@ -151,7 +151,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # Read wavelength solution
     # ----------------------------------------------------------------------
     # log
-    WLOG('', p['LOG_OPT'], 'Reading wavelength solution ')
+    WLOG(p, '', 'Reading wavelength solution ')
     # Force A and B to AB solution
     if p['FIBER'] in ['A', 'B']:
         wave_fiber = 'AB'
@@ -171,7 +171,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # ----------------------------------------------------------------------
     # TODO We do not need to correct FLAT
     # log
-    # WLOG('', p['LOG_OPT'], 'Reading Flat-Field ')
+    # WLOG(p, '', 'Reading Flat-Field ')
 
     # get flat
     # loc['FLAT'] = spirouImage.ReadFlatFile(p, hdr)
@@ -197,8 +197,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
 
     # Modification of E2DS array  with N.A.N
     if np.isnan(np.sum(e2ds)):
-        WLOG('warning', p['LOG_OPT'],
-             'NaN values found in e2ds, converting process')
+        WLOG(p, 'warning', 'NaN values found in e2ds, converting process')
         #  First basic approach Replacing N.A.N by zeros
         #    e2ds[np.isnan(e2ds)] = 0
 
@@ -233,9 +232,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     # wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    # WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    # WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
     wmsg = 'On fiber estimated RV uncertainty on spectrum is {0:.3f} m/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(wmeanref))
+    WLOG(p, 'info', wmsg.format(wmeanref))
     # TEST N.A.N
     # loc['E2DSFF'][20:22,2000:3000]=np.nan
     # e2ds[20:30,1000:3000]=np.nan
@@ -279,7 +278,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # normalize the average ccf
     normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
-    ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
+    ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                        fit_type=0)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
@@ -304,7 +303,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] '
             'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
     wargs = [loc['CONTRAST'], loc['RV'], loc['FWHM'], loc['MAXCPP']]
-    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
 
     # ----------------------------------------------------------------------
     # rv ccf plot
@@ -319,7 +318,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # construct filename
     res_table_file = spirouConfig.Constants.CCF_FP_TABLE_FILE(p)
     # log progress
-    WLOG('', p['LOG_OPT'], 'Archiving CCF on file {0}'.format(res_table_file))
+    WLOG(p, '', 'Archiving CCF on file {0}'.format(res_table_file))
     # define column names
     columns = ['order', 'maxcpp', 'nlines', 'contrast', 'RV', 'sig']
     # define values for each column
@@ -332,9 +331,9 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # define the format for each column
     formats = ['2.0f', '5.0f', '4.0f', '4.1f', '9.4f', '7.4f']
     # construct astropy table from column names, values and formats
-    table = spirouImage.MakeTable(columns, values, formats)
+    table = spirouImage.MakeTable(p, columns, values, formats)
     # save table to file
-    spirouImage.WriteTable(table, res_table_file, fmt='ascii')
+    spirouImage.WriteTable(p, table, res_table_file, fmt='ascii')
 
     # ----------------------------------------------------------------------
     # CCF drift on fiber C (FP)
@@ -374,7 +373,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
 
     # Use CCF Mask function with drift constants
     cp['CCF_MASK'] = cp['DRIFT_CCF_MASK']
@@ -417,7 +416,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     # normalize the average ccf
     normalized_ccf = cloc['AVERAGE_CCF'] / np.max(cloc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
-    ccf_res, ccf_fit = spirouRV.FitCCF(cloc['RV_CCF'], normalized_ccf,
+    ccf_res, ccf_fit = spirouRV.FitCCF(p, cloc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     cloc['CCF_RES'] = ccf_res
     cloc['CCF_FIT'] = ccf_fit
@@ -438,7 +437,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
             'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
     wargs = [cloc['CONTRAST'], float(ccf_res[1]), cloc['FWHM'], cloc['MAXCPP']]
-    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
     # ----------------------------------------------------------------------
     # rv ccf plot
     # ----------------------------------------------------------------------
@@ -454,7 +453,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     corfile, tag = spirouConfig.Constants.CCF_FP_FITS_FILE(p)
     corfilename = os.path.split(corfile)[-1]
     # log that we are archiving the CCF on file
-    WLOG('', p['LOG_OPT'], 'Archiving CCF on file {0}'.format(corfilename))
+    WLOG(p, '', 'Archiving CCF on file {0}'.format(corfilename))
     # get constants from p
     mask = cp['CCF_MASK']
     # if file exists remove it
@@ -464,58 +463,58 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     data = np.vstack([loc['CCF'], loc['AVERAGE_CCF']])
     # add drs keys
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_infile)
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_infile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
     # -------------------------------------------------------------------------
     # add parameters for CCF (before FP)
     # add CCF keys
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CTYPE'], value='km/s')
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CRVAL'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL'],
                                value=loc['RV_CCF'][0])
     # the rv step
     rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CDELT'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_RV'], value=loc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CONTRAST'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV'], value=loc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_MAXCPP'], value=loc['MAXCPP'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_LINES'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP'], value=loc['MAXCPP'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES'],
                                value=np.sum(loc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # add berv values
-    hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'], value=loc['BERV_MAX'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'], value=loc['BERV_MAX'])
     # -------------------------------------------------------------------------
     # add parameters for CCF (after FP)
     # add CCF keys
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CTYPE1'], value='km/s')
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CRVAL1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
                                value=cloc['RV_CCF'][0])
     # the rv step
     rvstep = np.abs(cloc['RV_CCF'][0] - cloc['RV_CCF'][1])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CDELT1'], value=rvstep)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_RV1'], value=cloc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_FWHM1'], value=cloc['FWHM'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_CONTRAST1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'], value=cloc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=cloc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
                                value=cloc['CONTRAST'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_MAXCPP1'], value=cloc['MAXCPP'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_MASK1'], value=cp['CCF_MASK'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_LINES1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'], value=cloc['MAXCPP'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=cp['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
                                value=np.sum(cloc['TOT_LINE']))
     # -------------------------------------------------------------------------
     # Add the RV drift from fiber C to CCF header
-    hdict = spirouImage.AddKey(hdict, p['KW_DRIFT_RV'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRIFT_RV'],
                                value=cloc['CCF_RES'][1])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCF_RVC'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RVC'],
                                value=rv0 - cloc['CCF_RES'][1])
 
     # write image and add header keys (via hdict)

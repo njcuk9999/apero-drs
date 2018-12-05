@@ -345,7 +345,7 @@ def main(check=1, debug_mode=0):
         messages = ['\nFirst time installation?',
                     '\nAdd required files to DRS?\n']
         inputmessage = '\n\tSetup databases? [Y]es or [N]o\t'
-        uinput = drs_reset.custom_confirmation(messages, inputmessage)
+        uinput = drs_reset.custom_confirmation(cparams, messages, inputmessage)
         # add calibDB files
         if uinput:
             drs_reset.reset_calibdb(cparams, log=True)
