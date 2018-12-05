@@ -89,7 +89,7 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     return dvrms2, weightedmean
 
 
-def renormalise_cosmic2d(speref, spe, threshold, size, cut):
+def renormalise_cosmic2d(p, speref, spe, threshold, size, cut):
     """
     Correction of the cosmics and renormalisation by comparison with
     reference spectrum (for the 2D image)
@@ -152,12 +152,12 @@ def renormalise_cosmic2d(speref, spe, threshold, size, cut):
     with warnings.catch_warnings(record=True) as w:
         spefc = np.where(abs(z) > cut * rrms, spereff * rnormspe, spef)
     # log warnings
-    spirouCore.WarnLog(w, funcname=func_name)
+    spirouCore.WarnLog(p, w, funcname=func_name)
     # get the total z above cut*mean
     with warnings.catch_warnings(record=True) as w:
         cpt = np.sum(abs(z) > cut * rrms)
     # log warnings
-    spirouCore.WarnLog(w, funcname=func_name)
+    spirouCore.WarnLog(p, w, funcname=func_name)
     # create a normalise spectrum for the corrected spef
     cnormspe = np.sum(spefc, axis=1) / np.sum(spereff, axis=1)
     # get the normed spectrum for each pixel for each order
@@ -327,10 +327,10 @@ def create_drift_file(p, loc):
                     gg, pcov = curve_fit(gf, index, tmp[index], p0=p0)
                     w_all += list(w)
             except ValueError:
-                WLOG('warning', p['LOG_OPT'], 'ydata or xdata contains NaNS')
+                WLOG(p, 'warning', 'ydata or xdata contains NaNS')
                 gg = [np.nan, np.nan, np.nan, np.nan]
             except RuntimeError:
-                # WLOG('warning', p['log_opt'], 'Least-squares fails')
+                # WLOG(p, 'warning', 'Least-squares fails')
                 gg = [np.nan, np.nan, np.nan, np.nan]
 
             # little sanity check to be sure that the peak is not the same as
@@ -376,10 +376,10 @@ def create_drift_file(p, loc):
             # iterator
             ipeak += 1
         # display warning messages
-        spirouCore.spirouLog.warninglogger(w_all)
+        spirouCore.spirouLog.warninglogger(p, w_all)
         # log how many FPs were found and how many rejected
         wmsg = 'Order {0} : {1} peaks found, {2} peaks rejected'
-        WLOG('', p['LOG_OPT'], wmsg.format(order_num, ipeak, nreject))
+        WLOG(p, '', wmsg.format(order_num, ipeak, nreject))
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
         allordpeak = np.append(allordpeak, np.array(ordpeak)[indsort])
@@ -398,7 +398,7 @@ def create_drift_file(p, loc):
 
     # Log the total number of FP lines found
     wmsg = 'Total Nb of FP lines found = {0}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(len(allxpeak)))
+    WLOG(p, 'info', wmsg.format(len(allxpeak)))
 
     # set source
     source = __NAME__ + '/create_drift_file()'
@@ -475,7 +475,7 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
     except spirouConfig.ConfigError as e:
         emsg1 = 'Error {0}: {1}'.format(type(e), e)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # minimum spacing between FP peaks
     peak_spacing = p['DRIFT_PEAK_INTER_PEAK_SPACING']
@@ -541,14 +541,14 @@ def remove_wide_peaks(p, loc, expwidth=None, cutwidth=None):
 
     # log number of lines removed for width
     wmsg = 'Nb of lines removed due to suspicious width = {0}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(np.sum(~mask)))
+    WLOG(p, 'info', wmsg.format(np.sum(~mask)))
 
     print(len(loc['XPEAK_OLD']) - len(loc['XPEAK']))
     # log number of lines removed as double-fitted
     if len(loc['XPEAK_OLD']) > len(loc['XPEAK']):
         wmsg = 'Nb of double-fitted lines removed  = {0}'
         lenx = len(loc['XPEAK_OLD']) - len(loc['XPEAK'])
-        WLOG('info', p['LOG_OPT'], wmsg.format(lenx))
+        WLOG(p, 'info', wmsg.format(lenx))
 
     return loc
 
@@ -612,7 +612,7 @@ def remove_zero_peaks(p, loc):
 
     # log number of lines removed
     wmsg = 'Nb of lines removed with no width measurement = {0}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(np.sum(~mask)))
+    WLOG(p, 'info', wmsg.format(np.sum(~mask)))
 
     # return loc
     return loc
@@ -676,16 +676,16 @@ def get_drift(p, sp, ordpeak, xpeak0, gaussfit=False):
                     with warnings.catch_warnings(record=True) as w:
                         # noinspection PyTypeChecker
                         gg, pcov = curve_fit(gauss_function, index, tmp, p0=p0)
-                    spirouCore.spirouLog.warninglogger(w)
+                    spirouCore.spirouLog.warninglogger(p, w)
                     # get position
                     xpeaks[peak] = gg[1]
                 except ValueError:
-                    WLOG('warning', p['LOG_OPT'],
+                    WLOG(p, 'warning',
                          'ydata or xdata contains NaNS')
                 except RuntimeError:
                     wmsg = ('Problem with gaussfit (Not a big deal, one in '
                             'thousands of fits')
-                    WLOG('warning', p['LOG_OPT'], wmsg)
+                    WLOG(p, 'warning', wmsg)
         # else barycenter adjustment
         else:
             # range from -2 to +2 pixels from position of peak
@@ -809,7 +809,7 @@ def drift_per_order(loc, fileno):
     return loc
 
 
-def drift_all_orders(loc, fileno, nomin, nomax):
+def drift_all_orders(p, loc, fileno, nomin, nomax):
     """
     Work out the weighted mean drift across all orders
 
@@ -864,7 +864,7 @@ def drift_all_orders(loc, fileno, nomin, nomax):
         meanvrright = np.sum(driftright / errdrift) / sumerr
         merrdrift = 1.0 / np.sqrt(np.sum(1.0 / errdrift ** 2))
     # log warnings
-    spirouCore.WarnLog(w, funcname=func_name)
+    spirouCore.WarnLog(p, w, funcname=func_name)
 
     # add to storage
     loc['MEANRV'][fileno] = meanvr
@@ -916,7 +916,7 @@ def get_ccf_mask(p, loc, filename=None):
             filename = p['CCF_MASK']
         except spirouConfig.ConfigError as e:
             emsg1 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [e.message, emsg1])
+            WLOG(p, 'error', [e.message, emsg1])
 
     # try to locate mask
     filename = locate_mask(p, filename)
@@ -925,15 +925,16 @@ def get_ccf_mask(p, loc, filename=None):
     # get table if not found raise error
     try:
         cols = ['ll_mask_s', 'll_mask_e', 'w_mask']
-        ccfmask = spirouImage.ReadTable(filename, fmt='ascii', colnames=cols)
+        ccfmask = spirouImage.ReadTable(p, filename, fmt='ascii',
+                                        colnames=cols)
     except IOError:
         emsg = 'Template file: "{0}" not found, unable to proceed'
-        WLOG('error', p['LOG_OPT'], emsg.format(filename))
+        WLOG(p, 'error', emsg.format(filename))
         ccfmask = None
     # log that we are using a specific RV template with x rows
     wmsg = 'Using RV template: {0} ({1} rows)'
     wargs = [os.path.split(filename)[-1], len(ccfmask['ll_mask_s'])]
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
     # calculate the difference in mask_e and mask_s
     ll_mask_d = np.array(ccfmask['ll_mask_e']) - np.array(ccfmask['ll_mask_s'])
     ll_mask_ctr = np.array(ccfmask['ll_mask_s']) + ll_mask_d * 0.5
@@ -982,7 +983,7 @@ def locate_mask(p, filename):
     if os.path.exists(filename):
         abspath = os.path.join(os.getcwd(), filename)
         wmsg = 'Template used for CCF computation: {0}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(abspath))
+        WLOG(p, 'info', wmsg.format(abspath))
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
@@ -996,12 +997,12 @@ def locate_mask(p, filename):
         # if path exists use it
         if os.path.exists(abspath):
             wmsg = 'Template used for CCF computation: {0}'
-            WLOG('info', p['LOG_OPT'], wmsg.format(abspath))
+            WLOG(p, 'info', wmsg.format(abspath))
         # else raise error
         else:
             emsg1 = 'Template file: "{0}" not found, unable to proceed'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(filename),
+            WLOG(p, 'error', [emsg1.format(filename),
                                          emsg2])
     # return abspath
     return abspath
@@ -1092,7 +1093,7 @@ def coravelation(p, loc, log=False):
     # log that we are computing ccf
     if log:
         wmsg = 'Computing CCF at RV= {0:6.1f} [km/s]'
-        WLOG('', p['LOG_OPT'], wmsg.format(p['TARGET_RV']))
+        WLOG(p, '', wmsg.format(p['TARGET_RV']))
     # -------------------------------------------------------------------------
     # get rvmin and rvmax
     if 'RVMIN' not in p:
@@ -1160,7 +1161,7 @@ def coravelation(p, loc, log=False):
             ccf_o, pix_passed, ll_range, ccf_noise = calculate_ccf(*ccf_args)
             # -----------------------------------------------------------------
             # fit the CCF
-            fit_args = [rv_ccf, np.array(ccf_o), fit_type]
+            fit_args = [p, rv_ccf, np.array(ccf_o), fit_type]
             try:
                 ccf_o_results, ccf_o_fit = fit_ccf(*fit_args)
             except RuntimeError:
@@ -1617,7 +1618,7 @@ def correlbin(flux, ll, dll, blaze, ll_s, ll_e, ll_wei, i_start, i_end,
     return out_ccf, pix, llrange, ccf_noise
 
 
-def fit_ccf(rv, ccf, fit_type):
+def fit_ccf(p, rv, ccf, fit_type):
     """
     Fit the CCF to a guassian function
 
@@ -1639,7 +1640,7 @@ def fit_ccf(rv, ccf, fit_type):
         emsg = ('Error "rv" (len={0}) and "ccf" (len={1}) are not the same '
                 'length (in {2})')
         eargs = [len(rv), len(ccf), __NAME__ + '/fit_ccf()']
-        WLOG('error', '', emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
 
     # get constants
     max_ccf, min_ccf = np.max(ccf), np.min(ccf)
@@ -1678,7 +1679,7 @@ def get_fiberc_e2ds_name(p, hdr):
     if p['KW_OUTPUT'][0] not in hdr:
         emsg = 'Cannot find HEADER KEY = "{0}" - Fatal Error'
         eargs = [p['KW_OUTPUT'][0]]
-        WLOG('', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, '', emsg.format(*eargs))
         return None
     else:
         outputkey = hdr[p['KW_OUTPUT'][0]]
@@ -1713,7 +1714,7 @@ def get_fiberc_e2ds_name(p, hdr):
         if p['KW_INFILE'][0] not in hdr:
             emsg = 'Header key = "{0}" missing from file={1}'
             eargs = [p['KW_INFILE'][0]]
-            WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+            WLOG(p, 'error', emsg.format(*eargs))
             return None
         # get the ab file name
         ab_file = hdr[p['KW_INFILE'][0]]
@@ -1737,7 +1738,7 @@ def get_fiberc_e2ds_name(p, hdr):
     # if we are still in the code we have an invalid outputkey
     emsg = '{0} = "{1}" invalid for recipe for file {2}'
     eargs = [p['KW_OUTPUT'][0], outputkey, p['E2DSFILENAME']]
-    WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+    WLOG(p, 'error', emsg.format(*eargs))
     return None
 
 
