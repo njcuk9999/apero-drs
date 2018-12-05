@@ -174,7 +174,7 @@ def main(night_name=None, files=None):
         emsg2 = '\tNumber of files = {0}, number of PCA components = {1}'
         emsg3 = '\tNumber of files > number of PCA components'
         emsg4 = '\tAdd more files or reduce number of PCA components'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2.format(nfiles, npc),
+        WLOG(p, 'error', [emsg1, emsg2.format(nfiles, npc),
                                      emsg3, emsg4])
 
     # check whether we can used pre-saved abso
@@ -188,7 +188,7 @@ def main(night_name=None, files=None):
         abso = np.load(abso_save_file)
         # log progress
         wmsg = 'Loaded abso from file {0}'.format(abso_save_file)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
     except:
         # set up storage for the absorption
         abso = np.zeros([nfiles, np.product(loc['DATA'].shape)])
@@ -200,7 +200,7 @@ def main(night_name=None, files=None):
             abso[it, :] = data_it.reshape(np.product(loc['DATA'].shape))
         # log progres
         wmsg = 'Saving abso to file {0}'.format(abso_save_file)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         # remove all abso save files (only need most recent one)
         afolder = os.path.dirname(abso_save_file)
         afilelist = os.listdir(afolder)
@@ -222,13 +222,13 @@ def main(night_name=None, files=None):
     # log fraction of valid (non NaN) pixels
     fraction = np.sum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels (not NaNs) for PCA construction = {0:.3f}'
-    WLOG('', p['LOG_OPT'], wmsg.format(fraction))
+    WLOG(p, '', wmsg.format(fraction))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as w:
         keep &= np.min(log_abso, axis=0) > -1
     fraction = np.sum(keep) / len(keep)
     wmsg = 'Fraction of valid pixels with transmission > 1 - (1/e) = {0:.3f}'
-    WLOG('', p['LOG_OPT'], wmsg.format(fraction))
+    WLOG(p, '', wmsg.format(fraction))
 
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
@@ -260,7 +260,7 @@ def main(night_name=None, files=None):
     # log progress
     wmsg1 = 'Getting master wavelength grid'
     wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    WLOG(p, '', [wmsg1, wmsg2])
     # Force A and B to AB solution
     if p['FIBER'] in ['A', 'B']:
         wave_fiber = 'AB'
@@ -354,14 +354,15 @@ def main(night_name=None, files=None):
         # log process
         wmsg1 = 'Shifting PCA components from master wavelength grid'
         wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
-        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        WLOG(p, '', [wmsg1, wmsg2])
         # shift pca components (one by one)
         for comp in range(loc['NPC']):
-            wargs = [loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
+            wargs = [p, loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
             shift_pc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
             loc['PC'][:, comp] = shift_pc.reshape(wargs[0].shape)
 
-            wargs = [loc['FIT_PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
+            wargs = [p, loc['FIT_PC'][:, comp], loc['MASTERWAVE'],
+                     loc['WAVE_IT']]
             shift_fpc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
             loc['FIT_PC'][:, comp] = shift_fpc.reshape(wargs[0].shape)
 
@@ -371,10 +372,10 @@ def main(night_name=None, files=None):
         # log process
         wmsg1 = 'Shifting TAPAS spectrum from master wavelength grid'
         wmsg2 = '\tFile = {0}'.format(os.path.basename(loc['MASTERWAVEFILE']))
-        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        WLOG(p, '', [wmsg1, wmsg2])
         # shift tapas
         for comp in range(len(loc['TAPAS_ALL_SPECIES'])):
-            wargs = [loc['TAPAS_ALL_SPECIES'][comp], loc['MASTERWAVE'],
+            wargs = [p, loc['TAPAS_ALL_SPECIES'][comp], loc['MASTERWAVE'],
                      loc['WAVE_IT']]
             stapas = spirouTelluric.Wave2Wave(*wargs, reshape=True)
             loc['TAPAS_ALL_SPECIES'][comp] = stapas.reshape(wargs[0].shape)
@@ -435,30 +436,30 @@ def main(night_name=None, files=None):
         # start header storage
         hdict = OrderedDict()
         # add version number
-        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
         # set the input files
-        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
         # set tellu keys
         npc = loc['NPC']
-        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_NPC'], value=npc)
-        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_FIT_DPC'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_NPC'], value=npc)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_FIT_DPC'],
                                    value=p['FIT_DERIV_PC'])
-        hdict = spirouImage.AddKey(hdict, p['KW_TELLU_ADD_DPC'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_ADD_DPC'],
                                    value=p['ADD_DERIV_PC'])
         if p['ADD_DERIV_PC']:
             values = loc['AMPS_ABSOL_TOTAL'][:npc - 2]
-            hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
+            hdict = spirouImage.AddKey1DList(p, hdict, p['KW_TELLU_AMP_PC'],
                                              values=values, dim1name='amp')
-            hdict = spirouImage.AddKey(hdict, p['KW_TELLU_DV_TELL1'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_DV_TELL1'],
                                        value=loc['AMPS_ABSOL_TOTAL'][npc - 2])
-            hdict = spirouImage.AddKey(hdict, p['KW_TELLU_DV_TELL2'],
+            hdict = spirouImage.AddKey(p, hdict, p['KW_TELLU_DV_TELL2'],
                                        value=loc['AMPS_ABSOL_TOTAL'][npc - 1])
         else:
             values = loc['AMPS_ABSOL_TOTAL'][:npc]
-            hdict = spirouImage.AddKey1DList(hdict, p['KW_TELLU_AMP_PC'],
+            hdict = spirouImage.AddKey1DList(p, hdict, p['KW_TELLU_AMP_PC'],
                                              values=values, dim1name='PC')
 
         # ------------------------------------------------------------------
@@ -471,10 +472,10 @@ def main(night_name=None, files=None):
         sp_out = sp_out * loc['NBLAZE']
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(thdr, tcdr, hdict=hdict)
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         # log progress
         wmsg = 'Saving {0} to file'.format(outfilename1)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         # write sp_out to file
         p = spirouImage.WriteImage(p, outfile1, sp_out, hdict)
 
@@ -497,7 +498,7 @@ def main(night_name=None, files=None):
             molkey = '{0}_{1}'.format(p['KW_TELLU_ABSO'][0], molecule.upper())
             molkws = [molkey, 0, 'Absorption in {0}'.format(molecule.upper())]
             # load into hdict
-            hdict = spirouImage.AddKey(hdict, molkws, value=loc[molkey])
+            hdict = spirouImage.AddKey(p, hdict, molkws, value=loc[molkey])
             # add water col
             if molecule == 'h2o':
                 loc['WATERCOL'] = loc[molkey]
@@ -506,9 +507,9 @@ def main(night_name=None, files=None):
 
         # log progress
         wmsg = 'Saving {0} to file'.format(outfilename2)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         # write recon_abso to file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, outfile2, recon_abso2, hdict)
 
         # ------------------------------------------------------------------

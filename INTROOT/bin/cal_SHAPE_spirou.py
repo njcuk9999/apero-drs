@@ -76,7 +76,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     if hcfile is None or fpfiles is None:
         names, types = ['hcfile', 'fpfiles'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(hcfile=hcfile, fpfiles=fpfiles)
@@ -160,32 +160,32 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # Resize hc data
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    hcdata = spirouImage.ConvertToE(spirouImage.FlipImage(hcdatac), p=p)
+    hcdata = spirouImage.ConvertToE(spirouImage.FlipImage(p, hcdatac), p=p)
     # convert NaN to zeros
     hcdata0 = np.where(~np.isfinite(hcdata), np.zeros_like(hcdata), hcdata)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    hcdata2 = spirouImage.ResizeImage(hcdata0, **bkwargs)
+    hcdata2 = spirouImage.ResizeImage(p, hcdata0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('HC Image format changed to '
+    WLOG(p, '', ('HC Image format changed to '
                             '{0}x{1}').format(*hcdata2.shape))
 
     # ----------------------------------------------------------------------
     # Resize fp data
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    fpdata = spirouImage.ConvertToE(spirouImage.FlipImage(fpdatac), p=p)
+    fpdata = spirouImage.ConvertToE(spirouImage.FlipImage(p, fpdatac), p=p)
     # convert NaN to zeros
     fpdata0 = np.where(~np.isfinite(fpdata), np.zeros_like(fpdata), fpdata)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    fpdata2 = spirouImage.ResizeImage(fpdata0, **bkwargs)
+    fpdata2 = spirouImage.ResizeImage(p, fpdata0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('FP Image format changed to '
+    WLOG(p, '', ('FP Image format changed to '
                             '{0}x{1}').format(*fpdata2.shape))
 
 
@@ -202,7 +202,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ----------------------------------------------------------------------
     # if p['IC_DO_BKGR_SUBTRACTION']:
     #     # log that we are doing background measurement
-    #     WLOG('', p['LOG_OPT'], 'Doing background measurement on HC frame')
+    #     WLOG(p, '', 'Doing background measurement on HC frame')
     #     # get the bkgr measurement
     #     bdata = spirouBACK.MeasureBackgroundFF(p, hcdata2)
     #     background, gridx, gridy, minlevel = bdata
@@ -223,7 +223,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ----------------------------------------------------------------------
     # if p['IC_DO_BKGR_SUBTRACTION']:
     #     # log that we are doing background measurement
-    #     WLOG('', p['LOG_OPT'], 'Doing background measurement on FP frame')
+    #     WLOG(p, '', 'Doing background measurement on FP frame')
     #     # get the bkgr measurement
     #     bdata = spirouBACK.MeasureBackgroundFF(p, fpdata2)
     #     background, gridx, gridy, minlevel = bdata
@@ -247,7 +247,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(hcdata2.shape)
     # Log number
     wmsg = 'Nb HC dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -257,7 +257,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(fpdata2.shape)
     # Log number
     wmsg = 'Nb FP dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ------------------------------------------------------------------
     # Get localisation coefficients
@@ -275,7 +275,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # log process
     wmsg1 = 'Getting master wavelength grid'
     wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    WLOG(p, '', [wmsg1, wmsg2])
     # Force A and B to AB solution
     if p['FIBER'] in ['A', 'B']:
         wave_fiber = 'AB'
@@ -331,20 +331,20 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     shapefitsname = os.path.basename(shapefits)
     # Log that we are saving tilt file
     wmsg = 'Saving shape information in file: {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(shapefitsname))
+    WLOG(p, '', wmsg.format(shapefitsname))
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(fphdr, fpcdr)
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_HCFILE'], value=p['HCFILE'])
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_INFILELIST'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_HCFILE'], value=p['HCFILE'])
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'],
                                      values=p['FPFILES'], dim1name='fpfile')
-    hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
     # write tilt file to file
     p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
 
@@ -354,7 +354,7 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # ------------------------------------------------------------------
     if p['SHAPE_DEBUG_OUTPUTS']:
         # log
-        WLOG('', p['LOG_OPT'], 'Saving debug sanity check files')
+        WLOG(p, '', 'Saving debug sanity check files')
         # construct file names
         input_fp_file, tag1 = spirouConfig.Constants.SLIT_SHAPE_IN_FP_FILE(p)
         output_fp_file, tag2 = spirouConfig.Constants.SLIT_SHAPE_OUT_FP_FILE(p)
@@ -362,19 +362,19 @@ def main(night_name=None, hcfile=None, fpfiles=None):
         output_hc_file, tag4 = spirouConfig.Constants.SLIT_SHAPE_IN_HC_FILE(p)
         overlap_file, tag5 = spirouConfig.Constants.SLIT_SHAPE_OVERLAP_FILE(p)
         # write input fp file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         p = spirouImage.WriteImage(p, input_fp_file, loc['FPDATA'], hdict)
         # write output fp file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, output_fp_file, loc['FPDATA2'], hdict)
         # write input fp file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
         p = spirouImage.WriteImage(p, input_hc_file, loc['HCDATA'], hdict)
         # write output fp file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         p = spirouImage.WriteImage(p, output_hc_file, loc['HCDATA2'], hdict)
         # write overlap file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag5)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag5)
         p = spirouImage.WriteImage(p, overlap_file, loc['ORDER_OVERLAP'],
                                    hdict)
 
@@ -387,13 +387,13 @@ def main(night_name=None, hcfile=None, fpfiles=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
