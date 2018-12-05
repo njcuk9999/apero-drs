@@ -59,7 +59,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
@@ -94,7 +94,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
@@ -242,13 +242,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -265,7 +265,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # p['IC_LL_LINE_FILE'] = 'cat_UNe_drift_filt_waveformat.rdb'
     # # log message
     # wmsg = 'Processing Wavelength Calibration for Fiber {0}'
-    # WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+    # WLOG(p, 'info', wmsg.format(p['FIBER']))
     #
     # # ------------------------------------------------------------------
     # # First guess at solution for each order
@@ -280,7 +280,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # # ------------------------------------------------------------------
     # # log message
     # wmsg = 'On fiber {0} cleaning list of identified lines'
-    # WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER']))
+    # WLOG(p, '', wmsg.format(p['FIBER']))
     # # clean lines
     # # question - this wasn't being done on oldDRS version as catalogue is good
     # # so is it necessary here? Probably safer...
@@ -553,7 +553,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # log line number span
     wargs = [m_d[0], m_d[-1]]
     wmsg = 'Mode number span: {0} - {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # Sigma clipping on bad d values
     # save copies of d and one_m_d for comparison
@@ -575,7 +575,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # log number of points removed
     wargs = [len(d_all) - np.shape(sig_clip_d)[1]]
     wmsg = '{0} points removed by d sigma clip'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # Verification sigma clip plot - TODO move to spirouPLOT
     if (len(d_all) - np.shape(sig_clip_d)[1]) > 0:
@@ -865,7 +865,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # # log line number span
     # wargs = [m_d[0], m_d[-1]]
     # wmsg = 'Mode number span: {0} - {1}'
-    # WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # WLOG(p, '', wmsg.format(*wargs))
     #
     # # Sigma clipping on bad d values
     # # save copies of d and one_m_d for comparison
@@ -882,7 +882,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # # log number of points removed
     # wargs = [len(d_all) - np.shape(sig_clip_d)[1]]
     # wmsg = '{0} points removed by d sigma clip'
-    # WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # WLOG(p, '', wmsg.format(*wargs))
     #
     # # Verification sigma clip plot - TODO move to spirouPLOT
     # if (len(d_all) - np.shape(sig_clip_d)[1]) > 0:
@@ -1004,20 +1004,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # # log progress
     # wargs = [p['FIBER'], wavefitsname]
     # wmsg = 'Write wavelength solution for Fiber {0} in {1}'
-    # WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    # WLOG(p, '', wmsg.format(*wargs))
     # # write solution to fitsfilename header
     # # copy original keys
     # hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # # add version number
-    # hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    # hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     # # add quality control
-    # hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # # add number of orders
-    # hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
     #                            value=loc['LL_PARAM_FINAL'].shape[0])
     # # add degree of fit
-    # hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
     #                            value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # # add wave solution
     # hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
@@ -1030,7 +1030,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # # get filename for E2DS calibDB copy of FITSFILENAME
     # e2dscopy_filename, tag2 = spirouConfig.Constants.WAVE_E2DS_COPY(p)
     # # make a copy of the E2DS file for the calibBD
-    # hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     # p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
     #
     # # ----------------------------------------------------------------------
@@ -1045,7 +1045,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
