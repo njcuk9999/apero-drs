@@ -20,7 +20,7 @@ from collections import OrderedDict
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
-
+from . import spirouFITS
 
 # =============================================================================
 # Define variables
@@ -158,10 +158,18 @@ def write_table(p, table, filename, fmt='fits', header=None):
             emsg1 = 'fmt={0} cannot be read by astropy.table'.format(fmt)
             emsg2 = '    function = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2])
+    # get and check for file lock file
+    lock, lock_file = spirouFITS.check_fits_lock_file(p, filename)
     # try to write table to file
     try:
+        # write file
         table.write(filename, format=fmt, overwrite=True)
+        # close lock file
+        spirouFITS.close_fits_lock_file(p, lock, lock_file, filename)
     except Exception as e:
+        # close lock file
+        spirouFITS.close_fits_lock_file(p, lock, lock_file, filename)
+        # log error
         emsg1 = 'Cannot write table to file'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
@@ -173,8 +181,22 @@ def write_table(p, table, filename, fmt='fits', header=None):
         # push keys into file header (value, comment tuple)
         for key in list(header.keys()):
             filehdr[key] = tuple(header[key])
-        # save data
-        fits.writeto(filename, data, filehdr, overwrite=True)
+        # get and check for file lock file
+        lock, lock_file = spirouFITS.check_fits_lock_file(p, filename)
+        # try to write table to file
+        try:
+            # save data
+            fits.writeto(filename, data, filehdr, overwrite=True)
+            # close lock file
+            spirouFITS.close_fits_lock_file(p, lock, lock_file, filename)
+        except Exception as e:
+            # close lock file
+            spirouFITS.close_fits_lock_file(p, lock, lock_file, filename)
+            # log error
+            emsg1 = 'Cannot write header to file'
+            emsg2 = '    Error {0}: {1}'.format(type(e), e)
+            emsg3 = '    function = {0}'.format(func_name)
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
 
 def merge_table(p, table, filename, fmt='fits'):
@@ -353,10 +375,18 @@ def write_fits_table(p, astropy_table, output_filename):
         emsg1 = 'Errors directory {0} does not exist'.format(dir_name)
         emsg2 = '\tfunction = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2])
+    # get and check for file lock file
+    lock, lock_file = spirouFITS.check_fits_lock_file(p, output_filename)
     # write data
     try:
+        # write file
         astropy_table.write(output_filename, format='fits', overwrite=True)
+        # close lock file
+        spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
     except Exception as e:
+        # close lock file
+        spirouFITS.close_fits_lock_file(p, lock, lock_file, output_filename)
+        # log error
         emsg1 = 'Error cannot write {0} as a fits table'.format(output_filename)
         emsg2 = '\tError was: {0}'.format(e)
         emsg3 = '\tfunction = {0}'.format(func_name)
