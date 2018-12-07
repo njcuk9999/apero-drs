@@ -359,12 +359,12 @@ def main(night_name=None, files=None):
         for comp in range(loc['NPC']):
             wargs = [p, loc['PC'][:, comp], loc['MASTERWAVE'], loc['WAVE_IT']]
             shift_pc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
-            loc['PC'][:, comp] = shift_pc.reshape(wargs[0].shape)
+            loc['PC'][:, comp] = shift_pc.reshape(wargs[1].shape)
 
             wargs = [p, loc['FIT_PC'][:, comp], loc['MASTERWAVE'],
                      loc['WAVE_IT']]
             shift_fpc = spirouTelluric.Wave2Wave(*wargs, reshape=True)
-            loc['FIT_PC'][:, comp] = shift_fpc.reshape(wargs[0].shape)
+            loc['FIT_PC'][:, comp] = shift_fpc.reshape(wargs[1].shape)
 
         # ------------------------------------------------------------------
         # Shift the pca components to correct frame
@@ -378,7 +378,7 @@ def main(night_name=None, files=None):
             wargs = [p, loc['TAPAS_ALL_SPECIES'][comp], loc['MASTERWAVE'],
                      loc['WAVE_IT']]
             stapas = spirouTelluric.Wave2Wave(*wargs, reshape=True)
-            loc['TAPAS_ALL_SPECIES'][comp] = stapas.reshape(wargs[0].shape)
+            loc['TAPAS_ALL_SPECIES'][comp] = stapas.reshape(wargs[1].shape)
 
         # Debug plot to test shifting
         if p['DRS_PLOT'] and p['DRS_DEBUG'] > 1:
