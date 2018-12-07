@@ -270,7 +270,7 @@ def get_check_lock_file(p, dbkind):
     if wait_time > max_wait_time:
         emsg1 = ('{0} can not be accessed (file locked and max wait time '
                  'exceeded.'.format(name))
-        emsg2 = ('Please make sure {0} is not being used and '
+        emsg2 = ('\tPlease make sure {0} is not being used and '
                  'manually delete {1}').format(name, lock_file)
         WLOG(p, 'error', [emsg1, emsg2])
     # try to open the lock file
@@ -293,12 +293,12 @@ def open_lock_file(p, lock_file):
         except Exception as e:
             if wait_time == 0:
                 WLOG(p, 'warning', 'Waiting to open lock')
-            time.sleep(5)
+            time.sleep(1)
             wait_time += 1
     if wait_time > p['DB_MAX_WAIT']:
-        emsg1 = ('CalibDB can not be accessed (Cannot open lock file and max '
+        emsg1 = ('DB can not be accessed (Cannot open lock file and max '
                  'wait time exceeded.')
-        emsg2 = ('Please make sure CalibDB is not being used and '
+        emsg2 = ('\tPlease make sure DB is not being used and '
                  'manually delete {0}').format(lock_file)
         WLOG(p, 'error', [emsg1, emsg2])
     return lock
@@ -318,12 +318,12 @@ def close_lock_file(p, lock, lock_file):
         except Exception as e:
             if wait_time == 0:
                 WLOG(p, 'warning', 'Waiting to close lock')
-            time.sleep(5)
+            time.sleep(1)
             wait_time += 1
     if wait_time > p['DB_MAX_WAIT']:
-        emsg1 = ('CalibDB can not be close (Cannot close lock file and max '
+        emsg1 = ('DB can not be closed (Cannot close lock file and max '
                  'wait time exceeded.')
-        emsg2 = ('Please make sure CalibDB is not being used and '
+        emsg2 = ('Please make sure DB is not being used and '
                  'manually delete {0}').format(lock_file)
         WLOG(p, 'error', [emsg1, emsg2])
 
