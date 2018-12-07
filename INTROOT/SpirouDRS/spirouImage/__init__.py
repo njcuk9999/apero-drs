@@ -59,6 +59,10 @@ CheckFiles = spirouFile.check_files_id
 
 CheckWaveSolConsistency = spirouFITS.check_wave_sol_consistency
 
+CheckFitsLockFile = spirouFITS.check_fits_lock_file
+
+CloseFitsLockFile = spirouFITS.close_fits_lock_file
+
 ConvertToE = spirouImage.convert_to_e
 
 ConvertToADU = spirouImage.convert_to_adu
@@ -134,6 +138,8 @@ MeasureDark = spirouImage.measure_dark
 MergeTable = spirouTable.merge_table
 
 NormMedianFlat = spirouImage.normalise_median_flat
+
+OpenFitsLockFile = spirouFITS.open_fits_lock_file
 
 PPCorrectTopBottom = spirouImage.ref_top_bottom
 
