@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = False
+TEST_RUN = True
 TEST_STORE = []
 
 # define run number
@@ -57,21 +57,21 @@ RUN_SLIT = False
 RUN_SHAPE = False
 RUN_FLAT = False
 RUN_EXTRACT_HCFP = False
-RUN_EXTRACT_TELLU = False
-RUN_EXTRACT_OBJ = False
-RUN_EXTRACT_ALL = False
+RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_OBJ = True
+RUN_EXTRACT_ALL = True
 RUN_HC_WAVE = False
 RUN_WAVE_WAVE = False
-RUN_OBJ_MK_TELLU = False
+RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = False
-SKIP_DONE_HC_WAVE = False
-SKIP_DONE_WAVE_WAVE = False
-SKIP_DONE_MK_TELLU = False
-SKIP_DONE_FIT_TELLU = False
+SKIP_DONE_EXTRACT = True
+SKIP_DONE_HC_WAVE = True
+SKIP_DONE_WAVE_WAVE = True
+SKIP_DONE_MK_TELLU = True
+SKIP_DONE_FIT_TELLU = True
 
 # turn on parallelisation
 PARALLEL = True
@@ -1176,6 +1176,8 @@ def obj_fit_tellu(p, night_name, vindex, groups):
     """
     for obj_fit_tellu any file can be used but must be _e2dsff_AB.fits
     """
+    reducedpath = p['DRS_DATA_REDUC']
+    extension = '_e2dsff_AB_tellu_corrected.fits'
     # get the dark_dark files
     filelist = []
     objnamelist = []
@@ -1184,23 +1186,37 @@ def obj_fit_tellu(p, night_name, vindex, groups):
         for subgroup in file_groups:
             filelist += get_group_vindex(vindex, subgroup, 'FILENAME')
             objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
+    # -------------------------------------------------------------------------
+    # skip done
+    if SKIP_DONE_EXTRACT:
+        filelist2, objnamelist2 = [], []
+        for num in range(len(filelist)):
+            filename2ab = filelist[num].replace('.fits', extension)
+            abspath_ab = os.path.join(reducedpath, night_name, filename2ab)
+            # append file if not in existence
+            if not os.path.exists(abspath_ab):
+                filelist2.append(filelist[num])
+                objnamelist2.append(objnamelist[num])
+    else:
+        filelist2, objnamelist2 = list(filelist), list(objnamelist)
+    # -------------------------------------------------------------------------
     # change filenames to e2ds_ab
-    filelist2 = []
-    for num in range(len(filelist)):
+    filelist3 = []
+    for num in range(len(filelist2)):
         # select objects only
         if not filelist[num].endswith('o_pp.fits'):
             continue
         # select objects only (not sky)
-        if 'sky' in objnamelist[num]:
+        if 'sky' in objnamelist2[num]:
             continue
         else:
-            filename2 = filelist[num].replace('.fits', '_e2dsff_AB.fits')
-            filelist2.append(filename2)
+            filename3 = filelist2[num].replace('.fits', '_e2dsff_AB.fits')
+            filelist3.append(filename3)
     # runs
     runs = []
     # push all from group into file
-    for num in range(len(filelist2)):
-        myrun = [night_name, filelist2[num]]
+    for num in range(len(filelist3)):
+        myrun = [night_name, filelist3[num]]
         runs.append(myrun)
     # return runs
     return runs
@@ -1211,6 +1227,8 @@ def obj_mk_tellu(p, night_name, vindex, groups):
     for obj_mk_tellu any file with objname in the telluric list is valid
     and must be _e2dsff_AB.fits
     """
+    reducedpath = p['DRS_DATA_REDUC']
+    extension = '_e2dsff_AB_trans.fits'
     # get the dark_dark files
     filelist = []
     objnamelist = []
@@ -1219,22 +1237,36 @@ def obj_mk_tellu(p, night_name, vindex, groups):
         for subgroup in file_groups:
             filelist += get_group_vindex(vindex, subgroup, 'FILENAME')
             objnamelist += get_group_vindex(vindex, subgroup, 'OBJNAME')
+    # -------------------------------------------------------------------------
+    # skip done
+    if SKIP_DONE_EXTRACT:
+        filelist2, objnamelist2 = [], []
+        for num in range(len(filelist)):
+            filename2ab = filelist[num].replace('.fits', extension)
+            abspath_ab = os.path.join(reducedpath, night_name, filename2ab)
+            # append file if not in existence
+            if not os.path.exists(abspath_ab):
+                filelist2.append(filelist[num])
+                objnamelist2.append(objnamelist[num])
+    else:
+        filelist2, objnamelist2 = list(filelist), list(objnamelist)
+    # -------------------------------------------------------------------------
     # change filenames to e2ds_ab
-    filelist2 = []
-    for num in range(len(filelist)):
+    filelist3 = []
+    for num in range(len(filelist2)):
         # select objects only
-        if not filelist[num].endswith('o_pp.fits'):
+        if not filelist2[num].endswith('o_pp.fits'):
             continue
-        if objnamelist[num] not in TELL_WHITELIST:
+        if objnamelist2[num] not in TELL_WHITELIST:
             continue
         else:
-            filename2 = filelist[num].replace('.fits', '_e2dsff_AB.fits')
-            filelist2.append(filename2)
+            filename3 = filelist2[num].replace('.fits', '_e2dsff_AB.fits')
+            filelist3.append(filename3)
     # runs
     runs = []
     # push all from group into file
-    for num in range(len(filelist2)):
-        myrun = [night_name, filelist2[num]]
+    for num in range(len(filelist3)):
+        myrun = [night_name, filelist3[num]]
         runs.append(myrun)
     # return runs
     return runs
