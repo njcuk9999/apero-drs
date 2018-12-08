@@ -50,28 +50,28 @@ TEST_STORE = []
 RUNNUMBER = 0
 
 # switches
-RUN_BADPIX = False
-RUN_DARK = False
-RUN_LOC = False
-RUN_SLIT = False
-RUN_SHAPE = False
-RUN_FLAT = False
-RUN_EXTRACT_HCFP = False
+RUN_BADPIX = True
+RUN_DARK = True
+RUN_LOC = True
+RUN_SLIT = True
+RUN_SHAPE = True
+RUN_FLAT = True
+RUN_EXTRACT_HCFP = True
 RUN_EXTRACT_TELLU = True
 RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_ALL = True
-RUN_HC_WAVE = False
-RUN_WAVE_WAVE = False
+RUN_HC_WAVE = True
+RUN_WAVE_WAVE = True
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = True
-SKIP_DONE_HC_WAVE = True
-SKIP_DONE_WAVE_WAVE = True
-SKIP_DONE_MK_TELLU = True
-SKIP_DONE_FIT_TELLU = True
+SKIP_DONE_EXTRACT = False
+SKIP_DONE_HC_WAVE = False
+SKIP_DONE_WAVE_WAVE = False
+SKIP_DONE_MK_TELLU = False
+SKIP_DONE_FIT_TELLU = False
 
 # turn on parallelisation
 PARALLEL = True
@@ -100,7 +100,7 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
          '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
          '2018-10-26', '2018-10-27']
-
+DATES = None
 
 # =============================================================================
 # Define functions
@@ -690,8 +690,9 @@ def trigger_main(p, loc, recipe, fdprtypes=None, fobjnames=None):
         # Get the night name for this recipes
         night_name = night_names[it]
         # if night name not in list continue
-        if night_name.replace('/', '') not in DATES:
-            continue
+        if DATES is not None:
+            if night_name.replace('/', '') not in DATES:
+                continue
 
         # log progress
         wmsgs = [spirouStartup.spirouStartup.HEADER]
@@ -1514,9 +1515,12 @@ def main(night_name=None):
 
     # if test run print report
     if TEST_RUN:
+        print('\n\n')
+        print('TEST RUN LIST:')
+        print('\n\n')
         for line in TEST_STORE:
             print(line)
-
+        print('\n\n')
     # ----------------------------------------------------------------------
     # report errors
     # ----------------------------------------------------------------------
