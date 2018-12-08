@@ -39,11 +39,8 @@ def main():
     # ----------------------------------------------------------------------
     # Run Reset
     # ----------------------------------------------------------------------
-    # program name
-    program = __NAME__.split('.py')[0]
-    p = spirouConfig.ParamDict()
-    p['LOG_OPT'], p['PROGRAM'] = program, program
-    p['PID'] = None
+    # get constants
+    p = spirouStartup.Begin(__NAME__)
 
     # log run
     WLOG(p, 'info', 'Now Running reset script.')
