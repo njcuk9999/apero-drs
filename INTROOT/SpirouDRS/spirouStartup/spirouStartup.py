@@ -93,6 +93,10 @@ def run_begin(recipe, quiet=False):
     # set recipe name
     cparams['RECIPE'] = recipe.split('.py')[0]
     cparams.set_source('RECIPE', func_name)
+    # set program and log_opt
+    cparams['LOG_OPT'] = cparams['RECIPE']
+    cparams['PROGRAM'] = cparams['RECIPE']
+    cparams.set_sources(['LOG_OPT', 'PROGRAM'], func_name)
     # get variables from spirouConst
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
