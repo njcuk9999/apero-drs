@@ -1254,7 +1254,10 @@ def check_fits_lock_file(p, filename):
     # construct lock file name
     max_wait_time = p['DB_MAX_WAIT']
     # get lock file name
-    lock_file = filename.replace('.fits', '.lock')
+    if '.fits' in filename:
+        lock_file = filename.replace('.fits', '.lock')
+    else:
+        lock_file = filename + '.lock'
 
     # check if lock file already exists
     if os.path.exists(lock_file):
