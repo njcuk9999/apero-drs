@@ -983,7 +983,7 @@ def locate_mask(p, filename):
     if os.path.exists(filename):
         abspath = os.path.join(os.getcwd(), filename)
         wmsg = 'Template used for CCF computation: {0}'
-        WLOG(p, 'info', wmsg.format(abspath))
+        WLOG(p, '', wmsg.format(abspath))
     else:
         # get package name and relative path
         package = spirouConfig.Constants.PACKAGE()
