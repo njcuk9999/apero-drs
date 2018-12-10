@@ -5560,6 +5560,26 @@
 	- cal_SHAPE_spirou.py - renamed from cal_SHAPE_spirou2.py (old code moved to ./misc) (rev.e82e71a1)
 
 
+================================================================================
+* Mon Dec 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.074
+
+================================================================================
+	- improvements to fp_wavelength_sol_new fp m value determination (rev.630b4d1c)
+	- Littrow: get total orders from echelle_orders, not all_lines; (rev.caacdbb9)
+	- spirouMath: calculates wave coeff from chebyshev polynomials (rev.c9e38fcb)
+	- cal_WAVE_NEW_E2DS_EA update (calculates wave sol, does Littrow) (rev.0cbd9a55)
+	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
+
+
+================================================================================
+* Mon Dec 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.074
+
+================================================================================
+	- improvements to fp_wavelength_sol_new fp m value determination (rev.630b4d1c)
+	- Littrow: get total orders from echelle_orders, not all_lines; (rev.caacdbb9)
+	- spirouMath: calculates wave coeff from chebyshev polynomials (rev.c9e38fcb)
+	- cal_WAVE_NEW_E2DS_EA update (calculates wave sol, does Littrow) (rev.0cbd9a55)
+	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
 
 ================================================================================
 * Tue Dec 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.075
@@ -5567,6 +5587,12 @@
 ================================================================================
 	- spirouImage.py - adjust warning for getting unix_time from string (where time is not valid) - warning or error? (rev.3259a87c)
 
+
+================================================================================
+* Tue Dec 04 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.075
+
+================================================================================
+	- Remove hard-coded initial wavelenth solution (rev.19a390c7)
 
 
 ================================================================================
@@ -5612,7 +5638,7 @@
 
 
 ================================================================================
-* Sat Dec 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.001
+* Sat Dec 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.000
 
 ================================================================================
     - confirmation of parallisation (log/fits/databases)
@@ -5626,3 +5652,22 @@
 	- spirouStartup.py - define initial values for log_opt and program in Begin() (rev.0d016ad7)
 	- constants_SPIROU_H4RG.py - add "fitsopen_max_wait" time (rev.b1d766bd)
 	- cal_reset.py - fix fake p (with real p) (rev.bbbe93c7)
+
+
+================================================================================
+* Sat Dec 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.002
+
+================================================================================
+	- constants_SPIROU_H4RG.py - add "fitsopen_max_wait" time (rev.b1d766bd)
+
+
+================================================================================
+* Mon Dec 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.003
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py - correct pep8 and add TODO's for problems (rev.b4e5a6f3)
+	- cal_WAVE_NEW_E2DS_spirou.py - correct pep8 and WLOG changes (rev.9bfbdf50)
+	- update timings for V0.4.001 (rev.89c6b2c1)
+	- spirouRV.py - change an info log message to general log message (too many for CCF) (rev.8e990df7)
+	- spirouLSD.py - remove some of the info logs and make them general logs (rev.42142016)
+	- pol_spirou.py - remove some of the info logs and make them general logs (rev.56fb9972)
