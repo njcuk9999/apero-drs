@@ -671,7 +671,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     sig_littrow = 1000 * np.array(loc['LITTROW_SIG_' + str(lit_it)])
     # construct filename
     wavetbl = spirouConfig.Constants.WAVE_TBL_FILE_EA(p)
-    wavetblname = os.path.split(wavetbl)[-1]
+    wavetblname = os.path.basename(wavetbl)
     # construct and write table
     columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
                    'N_lines', 'err', 'rms_L500', 'rms_L1000', 'rms_L1500',
