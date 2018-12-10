@@ -79,7 +79,7 @@ class DrsInputFile:
 
         :return None:
         """
-        func_name = __NAME__ + '.DrsFitsFile.set_filename()'
+        # func_name = __NAME__ + '.DrsFitsFile.set_filename()'
         # skip if filename is None
         if filename is None:
             return True
@@ -154,11 +154,11 @@ class DrsInputFile:
     def __message__(self, messages):
         # get log_opt
         if self.recipe is not None:
-            log_opt = self.recipe.drs_params['LOG_OPT']
+            params = self.recipe.drs_params
         else:
-            log_opt = DPROG
+            params = None
         # print and log via wlogger
-        WLOG('', log_opt, messages)
+        WLOG(params, '', messages)
 
     def __log__(self, messages, kind):
         # format initial error message
@@ -171,11 +171,11 @@ class DrsInputFile:
             messages = message0 + [messages]
         # get log_opt
         if self.recipe is not None:
-            log_opt = self.recipe.drs_params['LOG_OPT']
+            params = self.recipe.drs_params
         else:
-            log_opt = DPROG
+            params = None
         # print and log via wlogger
-        WLOG(kind, log_opt, messages)
+        WLOG(params, kind, messages)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -196,9 +196,7 @@ class DrsInputFile:
             self.__message__(msg.format(*args))
         return cond, msg.format(*args)
 
-
     def check_file_extension(self, quiet=False):
-
         if self.ext is None:
             msg = 'File "{0}" extension not checked.'
             args = [self.basename]
@@ -298,7 +296,7 @@ class DrsFitsFile(DrsInputFile):
         """
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
-        kwargs['check_ext'] = kwargs.get('check_ext', self.check_ext)
+        kwargs['check_ext'] = kwargs.get('check_ext', self.ext)
         kwargs['fiber'] = kwargs.get('fiber', self.fiber)
         kwargs['outtag'] = kwargs.get('KW_OUTPUT', self.outtag)
         for key in self.required_header_keys:
@@ -425,10 +423,10 @@ class DrsFitsFile(DrsInputFile):
         if drs_file is None:
             emsg = 'File type not set'
             cond = True
-        if logic == 'exclusive':
+        elif logic == 'exclusive':
             cond = drs_file.name == self.name
             if cond:
-                emsg = ('File identified as "{0}" files match')
+                emsg = 'File identified as "{0}" files match'
                 emsg = emsg.format(self.name, drs_file.name)
             else:
                 emsg = ('File identified as "{0}" however first file '
@@ -440,7 +438,7 @@ class DrsFitsFile(DrsInputFile):
         else:
             cond = False
             emsg = ('logic = "{0}" is not understood must be "exclusive" or'
-                     ' "inclusive".')
+                    ' "inclusive".')
             emsg = emsg.format(logic)
 
         if (not cond) and (not quiet):
@@ -468,6 +466,8 @@ class DrsFitsFile(DrsInputFile):
         if check:
             if self.data is not None:
                 return True
+        # get params
+        params = self.recipe.drs_params
         # check that filename is set
         self.check_filename()
         # attempt to open hdu of fits file
@@ -490,7 +490,7 @@ class DrsFitsFile(DrsInputFile):
             n_ext = None
         # deal with unknown number of extensions
         if n_ext is None:
-            data, header = deal_with_bad_header(hdu)
+            data, header = deal_with_bad_header(params, hdu)
         # else get the data and header based on how many extnesions there are
         else:
             # deal with extension number
@@ -543,6 +543,8 @@ class DrsFitsFile(DrsInputFile):
 
     def write(self, dtype=None):
         func_name = __NAME__ + '.DrsFitsFile.write()'
+        # get params
+        params = self.recipe.drs_params
         # ---------------------------------------------------------------------
         # check that filename is set
         self.check_filename()
@@ -595,7 +597,7 @@ class DrsFitsFile(DrsInputFile):
             if wmsg != str(warning.message):
                 w1.append(warning)
         # add warnings to the warning logger and log if we have them
-        spirouCore.spirouLog.warninglogger(w1)
+        spirouCore.spirouLog.warninglogger(params, w1)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary()
@@ -1159,7 +1161,7 @@ class DrsFitsFile(DrsInputFile):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def deal_with_bad_header(hdu):
+def deal_with_bad_header(p, hdu):
     """
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
@@ -1188,8 +1190,8 @@ def deal_with_bad_header(hdu):
         it += 1
     # print message
     if len(datastore) > 0:
-        WLOG('warning', DPROG, '\tPartially recovered fits file')
-        WLOG('warning', DPROG, '\tProblem with ext={0}'.format(it - 1))
+        WLOG(p, 'warning', '\tPartially recovered fits file')
+        WLOG(p, 'warning', '\tProblem with ext={0}'.format(it - 1))
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -1198,7 +1200,7 @@ def deal_with_bad_header(hdu):
     # if valid is empty we have a problem
     if len(valid) == 0:
         emsg = 'Recovery failed: Fatal I/O Error cannot load file.'
-        WLOG('error', DPROG, emsg)
+        WLOG(p, 'error', emsg)
         data, header = None, None
     else:
         data = datastore[valid[0]]
