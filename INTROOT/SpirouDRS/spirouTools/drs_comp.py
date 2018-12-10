@@ -28,8 +28,6 @@ WLOG = spirouCore.wlog
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 NIGHTNAME = '20170710'
 OLDPATH = '/scratch/Projects/SPIRou_Pipeline/data/reduced/20170710/'
@@ -44,7 +42,7 @@ FILENAME = 'hcone_hcone06c61_e2ds_C.fits'
 # =============================================================================
 # Define functions
 # =============================================================================
-def diff_image(image1, image2, name1='Image 1', name2='Image 2', scale=None):
+def diff_image(p, image1, image2, name1='Image 1', name2='Image 2', scale=None):
     """
     Difference image plot (plots the images and the difference between those
     images)
@@ -59,20 +57,20 @@ def diff_image(image1, image2, name1='Image 1', name2='Image 2', scale=None):
     """
 
     fig1, frame1 = plt.subplots(ncols=1, nrows=1)
-    _ = plot_image(frame1, image1, title=name1, scale=scale)
+    _ = plot_image(p, frame1, image1, title=name1, scale=scale)
 
     fig2, frame2 = plt.subplots(ncols=1, nrows=1)
-    _ = plot_image(frame2, image2, title=name2, scale=scale)
+    _ = plot_image(p, frame2, image2, title=name2, scale=scale)
 
     fig3, frame3 = plt.subplots(ncols=1, nrows=1)
-    _ = plot_image(frame3, image2-image1, scale=scale,
+    _ = plot_image(p, frame3, image2-image1, scale=scale,
                    title='"{0}" - "{1}"'.format(name2, name1))
 
     plt.show()
     plt.close()
 
 
-def plot_image(frame, image, title='', scale=None):
+def plot_image(p, frame, image, title='', scale=None):
     """
     Plot the image (rescaled and resized to be as square as possible)
 
@@ -94,7 +92,7 @@ def plot_image(frame, image, title='', scale=None):
     else:
         newimage = image
     # scale the iamge
-    newimage, strscale = scale_image(newimage, scale=scale)
+    newimage, strscale = scale_image(p, newimage, scale=scale)
     # plot the image
     im = frame.imshow(newimage)
     # set title
@@ -108,7 +106,7 @@ def plot_image(frame, image, title='', scale=None):
     return frame
 
 
-def scale_image(image, scale=None):
+def scale_image(p, image, scale=None):
     """
     Apply a scaling to the image. Currently supported options are:
         - log:    log10 image
@@ -148,7 +146,7 @@ def scale_image(image, scale=None):
         # return scale
         return newimage, sscale
     else:
-        WLOG('error', DPROG, 'scale = {0} not understood'.format(scale))
+        WLOG(p, 'error', 'scale = {0} not understood'.format(scale))
 
 
 def main(night_name=None, oldfile=None, newfile=None):
@@ -164,7 +162,8 @@ def main(night_name=None, oldfile=None, newfile=None):
     names = ['oldfile', 'newfile']
     call = [oldfile, newfile]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
+    customargs = spirouStartup.GetCustomFromRuntime(p, pos, fmt, names,
+                                                    calls=call)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='newfile')
@@ -175,10 +174,10 @@ def main(night_name=None, oldfile=None, newfile=None):
     # check that path exists
     emsg = '{0} file = {1} does not exist'
     if not os.path.exists(p['OLDFILE']):
-        WLOG('error', p['LOG_OPT'], emsg.format('old', p['OLDFILE']))
+        WLOG(p, 'error', emsg.format('old', p['OLDFILE']))
     # check that paths exists
     if not os.path.exists(p['NEWFILE']):
-        WLOG('error', DPROG, emsg.format('new', p['NEWFILE']))
+        WLOG(p, 'error', emsg.format('new', p['NEWFILE']))
     # load files
     data1, hdr1, cdr1, _, _ = spirouImage.ReadImage(p, filename=oldfile)
     data2, hdr2, cdr2, _, _ = spirouImage.ReadImage(p, filename=newfile)
@@ -186,13 +185,13 @@ def main(night_name=None, oldfile=None, newfile=None):
     # ----------------------------------------------------------------------
     # Do difference image
     # ----------------------------------------------------------------------
-    diff_image(data1, data2, 'old image', 'new image', scale=(1, 99))
+    diff_image(p, data1, data2, 'old image', 'new image', scale=(1, 99))
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
 
     # return a copy of locally defined variables in the memory
     return dict(locals())

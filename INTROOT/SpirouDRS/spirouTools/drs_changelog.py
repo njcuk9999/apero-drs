@@ -59,7 +59,7 @@ DATESTR = '__date__ = '
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path, kind='rpm', version=None, since=None, until=None):
+def update(p, filename, path, kind='rpm', version=None, since=None, until=None):
     # get default run
     cargs = [path, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -80,10 +80,10 @@ def update(filename, path, kind='rpm', version=None, since=None, until=None):
     os.system(command)
     # check that file created
     if not os.path.exists(filename):
-        WLOG('error', __NAME__.split('.py')[0], 'Error with gcg (see above)')
+        WLOG(p, 'error', 'Error with gcg (see above)')
 
 
-def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
+def process_lines(p, fullfilename, tmpfilename, path, kind='rpm', version=None):
 
     # read log
     f = open(tmpfilename, 'r')
@@ -106,7 +106,7 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
     fullreferences = get_references(fulllines)
 
     # log process
-    WLOG('', __NAME__, 'Getting references')
+    WLOG(p, '', 'Getting references')
 
     # filter unwanted lines
     tmplines2 = []
@@ -146,9 +146,9 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
     for it, reference in enumerate(references):
         # print progress
         wargs = [it + 1, len(references)]
-        WLOG('', __NAME__, 'Processing commit {0} of {1}'.format(*wargs))
+        WLOG(p, '', 'Processing commit {0} of {1}'.format(*wargs))
         # get entry
-        update(tmpfilename2, path, since=reference[0], until=reference[1],
+        update(p, tmpfilename2, path, since=reference[0], until=reference[1],
                kind=kind, version=version)
         # check we have tmpfile
         if not os.path.exists(tmpfilename2):
@@ -190,7 +190,7 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
         # print progress
         # print progress
         wargs = [it + 1, len(dates)]
-        WLOG('', __NAME__, 'Processing day {0} of {1}'.format(*wargs))
+        WLOG(p, '', 'Processing day {0} of {1}'.format(*wargs))
         # loop around keys
         for key in entry_storage:
             # check we have date
@@ -203,7 +203,7 @@ def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
                     newlines.append(newline)
 
     # finally write newlines to file
-    WLOG('', __NAME__, 'Writing to file {0}'.format(fullfilename))
+    WLOG(p, '', 'Writing to file {0}'.format(fullfilename))
     f = open(fullfilename, 'w')
     f.writelines(newlines)
     f.close()
@@ -358,12 +358,12 @@ if __name__ == "__main__":
     # log if not None
     if since0 is not None:
         wmsg = 'Found previous entries: starting from Commit {0}'
-        WLOG('', __NAME__, wmsg.format(since0))
+        WLOG(p, '', wmsg.format(since0))
     # get full log
-    WLOG('', __NAME__, 'Getting full commit log')
-    update(TMPFILENAME, PATH, kind='rpm', version=version0, since=since0)
+    WLOG(p, '', 'Getting full commit log')
+    update(p, TMPFILENAME, PATH, kind='rpm', version=version0, since=since0)
     # get lines group them and save to full file
-    process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=version0)
+    process_lines(p, FILENAME, TMPFILENAME, PATH, kind='rpm', version=version0)
     # update version text file
     update_version_file(VERSIONFILE, version0)
     # remove backup

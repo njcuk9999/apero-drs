@@ -53,7 +53,7 @@ def get_database_tell_mole(p):
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         return 0
 
     # filter database by key
@@ -70,7 +70,7 @@ def get_database_tell_mole(p):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humantime)
@@ -97,7 +97,7 @@ def get_database_tell_conv(p, required=True):
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         return 0
 
     # filter database by key
@@ -114,7 +114,7 @@ def get_database_tell_conv(p, required=True):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humantime)
@@ -139,7 +139,7 @@ def get_database_sky(p):
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         return 0
 
     # filter database by key
@@ -156,7 +156,7 @@ def get_database_sky(p):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humantime)
@@ -182,7 +182,7 @@ def get_database_tell_map(p, required=True):
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         return 0
 
     # filter database by key
@@ -200,7 +200,7 @@ def get_database_tell_map(p, required=True):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humant)
@@ -230,7 +230,7 @@ def get_database_obj_template(p, object_name, required=True):
             # generate error message
             emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
             emsg2 = '   function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             return 0
 
     # filter database by key
@@ -247,7 +247,7 @@ def get_database_obj_template(p, object_name, required=True):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # check object name matches
         if objname != object_name:
             continue
@@ -281,7 +281,7 @@ def get_database_tell_obj(p, required=True):
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         return 0
 
     # filter database by key
@@ -299,7 +299,7 @@ def get_database_tell_obj(p, required=True):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humant)
@@ -331,7 +331,7 @@ def get_database_master_wave(p, required=True):
         # generate error message
         emsg1 = 'Telluric database has no valid "{0}" entry '.format(key)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         return 0
 
     # filter database by key
@@ -349,7 +349,7 @@ def get_database_master_wave(p, required=True):
         if not os.path.exists(absfilename):
             emsg1 = 'Database error: Cannot find file="{0}"'.format(absfilename)
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         # add to array
         filenames = np.append(filenames, absfilename)
         humantimes = np.append(humantimes, humant)
@@ -386,11 +386,11 @@ def put_file(p, inputfile):
     except IOError:
         emsg1 = 'I/O problem on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     except OSError:
         emsg1 = 'Unable to chmod on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, '', [emsg1, emsg2])
 
 
 def update_database_tell_mole(p, filename, hdr=None):

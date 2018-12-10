@@ -53,8 +53,6 @@ __release__ = spirouConfig.Constants.RELEASE()
 ParamDict = spirouConfig.ParamDict
 # Get Logging function
 WLOG = spirouLog.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Speed of light
 # noinspection PyUnresolvedReferences
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
@@ -64,7 +62,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 INTERACTIVE_PLOTS = spirouConfig.Constants.INTERACITVE_PLOTS_ENABLED()
 # check for matplotlib import errors
 if len(matplotlib_emsg) > 0:
-    WLOG('error', DPROG, matplotlib_emsg)
+    WLOG(None, 'error', matplotlib_emsg)
 # -----------------------------------------------------------------------------
 # set plot parameters
 font = spirouConfig.Constants.FONT_DICT()
@@ -467,7 +465,7 @@ def debug_locplot_finding_orders(pp, no, ncol, ind0, ind1, ind2, cgx, wx, ycc):
     """
     # log output for this row
     wargs = [no, ncol, ind0, cgx, wx]
-    WLOG('', pp['LOG_OPT'], '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
+    WLOG(pp, '', '{0:d} {0:d}  {0:f}  {0:f}  {0:f}'.format(*wargs))
 
     xx = np.array([ind1, cgx - wx / 2., cgx - wx / 2., cgx - wx / 2., cgx,
                    cgx + wx / 2., cgx + wx / 2., cgx + wx / 2., ind2])
@@ -1089,7 +1087,7 @@ def ff_rms_plot(p, loc):
     # plot a statistic for mean SNR and mean RMS
     wmsg = 'Mean S/N= {0:.1f} - Mean RMS = {1:.5f}'
     wargs = [np.mean(loc['SNR']), np.mean(rmsc)]
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
     # end plotting function properly
     end_plotting()
 
@@ -1427,7 +1425,7 @@ def drift_plot_dtime_against_mdrift(p, loc, kind=None):
     else:
         emsg1 = 'kind="{0}" not understood'.format(kind)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         kindstr = None
     # get mstr from kindstr
     if kindstr == 'median':
@@ -2296,7 +2294,7 @@ def wave_ea_plot_single_order(p, loc):
                label='HC spectrum - order ' + str(plot_order))
     # plot found lines
     # first line separate for labelling purposes
-    x0 = loc['ALL_LINES_1'][plot_order_line][0][0]
+    x0 = loc['ALL_LINES_1'][plot_order_line][0][0] + loc['ALL_LINES_1'][plot_order_line][0][3]
     ymax0 = loc['ALL_LINES_1'][plot_order_line][0][2]
     frame.vlines(x0, 0, ymax0, color='m', label='fitted lines')
     # plot lines to the top of the figure
@@ -2305,7 +2303,7 @@ def wave_ea_plot_single_order(p, loc):
     # rest of lines
     for i in range(1, len(loc['ALL_LINES_1'][plot_order_line])):
         # get x and y
-        x = loc['ALL_LINES_1'][plot_order_line][i][0]
+        x = loc['ALL_LINES_1'][plot_order_line][i][0] + loc['ALL_LINES_1'][plot_order_line][i][3]
         ymaxi = loc['ALL_LINES_1'][plot_order_line][i][2]
         # plot lines to their corresponding amplitude
         frame.vlines(x, 0, ymaxi, color='m')

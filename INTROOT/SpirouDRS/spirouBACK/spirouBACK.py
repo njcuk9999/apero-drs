@@ -134,11 +134,11 @@ def measure_background_flatfield(p, image):
     return background, gridx1c, gridy1c, minlevel2
 
 
-def measure_background_and_get_central_pixels(pp, loc, image):
+def measure_background_and_get_central_pixels(p, loc, image):
     """
     Takes the image and measure the background
 
-    :param pp: parameter dictionary, ParamDict containing constants
+    :param p: parameter dictionary, ParamDict containing constants
             Must contain at least:
                 IC_OFFSET: int, row number of image to start processing at
                 IC_CENT_COL: int, Definition of the central column
@@ -168,30 +168,30 @@ def measure_background_and_get_central_pixels(pp, loc, image):
     """
     # clip the data - start with the ic_offset row and only
     # deal with the central column column=ic_cent_col
-    y = image[pp['IC_OFFSET']:, pp['IC_CENT_COL']]
+    y = image[p['IC_OFFSET']:, p['IC_CENT_COL']]
     # measure min max of box smoothed central col
-    miny, maxy, max_signal, diff_maxmin = measure_min_max(pp, y)
+    miny, maxy, max_signal, diff_maxmin = measure_min_max(p, y)
     # normalised the central pixel values above the minimum amplitude
     #   zero by miny and normalise by (maxy - miny)
     #   Set all values below ic_min_amplitude to zero
-    max_amp = pp['IC_MIN_AMPLITUDE']
+    max_amp = p['IC_MIN_AMPLITUDE']
     ycc = np.where(diff_maxmin > max_amp, (y - miny) / diff_maxmin, 0)
     # get the normalised minimum values for those rows above threshold
     #   i.e. good background measurements
     normed_miny = miny / diff_maxmin
-    goodback = np.compress(ycc > pp['IC_LOCSEUIL'], normed_miny)
+    goodback = np.compress(ycc > p['IC_LOCSEUIL'], normed_miny)
     # measure the mean good background as a percentage
     # (goodback and ycc are between 0 and 1)
     mean_backgrd = np.mean(goodback) * 100
     # Log the maximum signal and the mean background
-    WLOG('info', pp['LOG_OPT'], ('Maximum flux/pixel in the spectrum: '
-                                 '{0:.1f} [e-]').format(max_signal))
-    WLOG('info', pp['LOG_OPT'], ('Average background level: '
-                                 '{0:.2f} [%]').format(mean_backgrd))
+    wmsg = 'Maximum flux/pixel in the spectrum: {0:.1f} [e-]'
+    WLOG(p, 'info', wmsg.format(max_signal))
+    wmsg = 'Average background level: {0:.2f} [%]'
+    WLOG(p, 'info', wmsg.format(mean_backgrd))
     # if in debug mode plot y, miny and maxy else just plot y
-    if pp['DRS_DEBUG'] == 0 and pp['DRS_PLOT']:
+    if p['DRS_DEBUG'] == 0 and p['DRS_PLOT']:
         sPlt.locplot_y_miny_maxy(y, miny, maxy)
-    if pp['DRS_PLOT']:
+    if p['DRS_PLOT']:
         sPlt.locplot_y_miny_maxy(y)
 
     # set function name (for source)
@@ -238,7 +238,7 @@ def measure_min_max(pp, y):
     with warnings.catch_warnings(record=True) as w:
         diff_maxmin = maxy - miny
     # log any catch warnings
-    spirouCore.WarnLog(w, funcname)
+    spirouCore.WarnLog(pp, w, funcname)
     # return values
     return miny, maxy, max_signal, diff_maxmin
 

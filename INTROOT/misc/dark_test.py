@@ -74,11 +74,11 @@ def dark_setup(night_name, files):
     # Dark exposure time check
     # ----------------------------------------------------------------------
     # log the Dark exposure time
-    WLOG('info', p['LOG_OPT'], 'Dark Time = {0:.3f} s'.format(p['EXPTIME']))
+    WLOG(p, 'info', 'Dark Time = {0:.3f} s'.format(p['EXPTIME']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
     if p['EXPTIME'] < p['QC_DARK_TIME']:
         emsg = 'Dark exposure time too short (< {0:.1f} s)'
-        WLOG('error', p['LOG_OPT'], emsg.format(p['QC_DARK_TIME']))
+        WLOG(p, 'error', emsg.format(p['QC_DARK_TIME']))
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -91,25 +91,25 @@ def dark_setup(night_name, files):
     # resize blue image
     bkwargs = dict(xlow=p['IC_CCDX_BLUE_LOW'], xhigh=p['IC_CCDX_BLUE_HIGH'],
                    ylow=p['IC_CCDY_BLUE_LOW'], yhigh=p['IC_CCDY_BLUE_HIGH'])
-    datablue, nx2, ny2 = spirouImage.ResizeImage(data, **bkwargs)
+    datablue, nx2, ny2 = spirouImage.ResizeImage(p, data, **bkwargs)
     # Make sure we have data in the blue image
     if nx2 == 0 or ny2 == 0:
-        WLOG('error', p['LOG_OPT'], ('IC_CCD(X/Y)_BLUE_(LOW/HIGH) remove '
+        WLOG(p, 'error', ('IC_CCD(X/Y)_BLUE_(LOW/HIGH) remove '
                                      'all pixels from image.'))
     # resize red image
     rkwargs = dict(xlow=p['IC_CCDX_RED_LOW'], xhigh=p['IC_CCDX_RED_HIGH'],
                    ylow=p['IC_CCDY_RED_LOW'], yhigh=p['IC_CCDY_RED_HIGH'])
-    datared, nx3, ny3 = spirouImage.ResizeImage(data, **rkwargs)
+    datared, nx3, ny3 = spirouImage.ResizeImage(p, data, **rkwargs)
     # Make sure we have data in the red image
     if nx3 == 0 or ny3 == 0:
-        WLOG('error', p['LOG_OPT'], ('IC_CCD(X/Y)_RED_(LOW/HIGH) remove '
+        WLOG(p, 'error', ('IC_CCD(X/Y)_RED_(LOW/HIGH) remove '
                                      'all pixels from image.'))
 
     # ----------------------------------------------------------------------
     # Dark Measurement
     # ----------------------------------------------------------------------
     # Log that we are doing dark measurement
-    WLOG('', p['LOG_OPT'], 'Doing Dark measurement')
+    WLOG(p, '', 'Doing Dark measurement')
     # measure dark for whole frame
     p = spirouImage.MeasureDark(p, data, 'Whole det', 'full')
     # measure dark for blue part

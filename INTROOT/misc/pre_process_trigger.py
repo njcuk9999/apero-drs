@@ -107,7 +107,7 @@ def main():
     number_files = len(valid_files)
 
     if number_files == 0:
-        WLOG('warning', p['LOG_OPT'], 'All files up-to-date.')
+        WLOG(p, 'warning', 'All files up-to-date.')
 
     # loop around valid files
     for v_it, valid_file in enumerate(valid_files):
@@ -120,7 +120,7 @@ def main():
         WLOG('', '', '')
         WLOG('', '', '=' * 50)
         wmsg = 'Processing file {0} of {1}'.format(v_it + 1, number_files)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         WLOG('', '', '=' * 50)
         WLOG('', '', '')
         # run pre-processing
@@ -130,7 +130,7 @@ def main():
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
