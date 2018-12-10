@@ -37,9 +37,9 @@ def main(directory=None, filelist=None, **kwargs):
     # assign function calls
     fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
-    params = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
+    p = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
     # display everything that comes from "INPUT"
-    print_input(params)
+    print_input(p)
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
