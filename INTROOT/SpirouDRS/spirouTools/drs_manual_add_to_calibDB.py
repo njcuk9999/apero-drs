@@ -51,7 +51,8 @@ def main(night_name=None, key=None, filename=None):
     names = ['key', 'filename']
     call = [key, filename]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
+    customargs = spirouStartup.GetCustomFromRuntime(p, pos, fmt, names,
+                                                    calls=call)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='filename',

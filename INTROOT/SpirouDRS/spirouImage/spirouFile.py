@@ -241,7 +241,7 @@ def identify_unprocessed_file(p, filename, hdr=None, cdr=None):
     """
     # ----------------------------------------------------------------------
     # load control file
-    control = get_control_file()
+    control = get_control_file(p)
     # only look at raw files
     rawmask = control['kind'] == 'RAW'
     control = control[rawmask]
@@ -309,7 +309,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
     # remove .py from recipe (in case it is here)
     recipe = recipe.split('.py')[0]
     # load control file
-    control = get_control_file()
+    control = get_control_file(p)
     # get some needed paths
     rawpath = spirouConfig.Constants.RAW_DIR(p)
     tmppath = spirouConfig.Constants.TMP_DIR(p)
@@ -322,7 +322,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
     if skipcheck:
         # log that we are skipping checks
         wmsg = 'Skipping filename check'
-        WLOG('warning', p['LOG_OPT'], [wmsg])
+        WLOG(p, 'warning', [wmsg])
         # add values to p for skipped
         p['DPRTYPE'] = 'None'
         p['PREPROCESSED'] = True
@@ -336,7 +336,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
     elif recipe not in control['Recipe']:
         emsg1 = 'No recipe named {0}'.format(recipe)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # Get mask of recipe and apply it to control
     else:
         recipemask = control['Recipe'] == recipe
@@ -367,14 +367,14 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             emsg2 = ('\tFile is not pre-processed. Please run '
                      'cal_preprocess_spirou.py')
             emsg3 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             kind = 'None'
         # if neither exist we have a problem
         else:
             emsg1 = 'File {0} does not exist'.format(filename)
             emsg2 = '\tChecked raw and reduced folders.'
             emsg3 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             kind = 'None'
     else:
         kind = 'None'
@@ -386,7 +386,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
         emsg1 = ('File "{0}" was found in the "{1}" directory.'
                  ''.format(basefilename, kind))
         emsg2 = 'Not a valid directory for recipe "{0}"'.format(recipe)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # ---------------------------------------------------------------------
     # check recipe input type (raw or reduced)
@@ -422,7 +422,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             eargs3 = [control['dprtype'], control['ocode']]
             emsg3 = '\tDPRTYPE="{0}" OCODE="{1}"'.format(*eargs3)
             emsg4 = '\t{0} [NIGHT NAME] [ARG1] [ARG2] [ARG3] [...]'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3,
+            WLOG(p, 'error', [emsg1, emsg2, emsg3,
                                          emsg4.format(recipe)])
 
     # ---------------------------------------------------------------------
@@ -440,7 +440,7 @@ def check_file_id(p, filename, recipe, skipcheck=False, hdr=None, pos=None,
             emsg1 = 'Error in recipe control file'
             emsg2 = '   Bad line: "kind" must be "RAW" or "REDUC". Line:'
             line = control.__str__().split('\n')[2]
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, line])
+            WLOG(p, 'error', [emsg1, emsg2, line])
             path = ''
         # return p and path
         return p, path
@@ -503,7 +503,7 @@ def check_files_id(p, files, recipe, hdr=None, **kwargs):
         # add function name error message
         emsgs.append('\tfunction = {0}'.format(func_name))
         # log error message
-        WLOG('error', p['LOG_OPT'], emsgs)
+        WLOG(p, 'error', emsgs)
     else:
         # return p
         return p
@@ -547,12 +547,12 @@ def check_preprocess(p, filename=None):
         # check that we have a suffix to check
         if suffix == "None":
             wmsg = 'Not checking for pre-processed file={0}'.format(filename)
-            WLOG('', p['LOG_OPT'], wmsg)
+            WLOG(p, '', wmsg)
             return 0
         # else check file ends with
         elif filename.endswith(suffix):
             wmsg = 'Pre-processing valid for file={0}'.format(filename)
-            WLOG('', p['LOG_OPT'], wmsg)
+            WLOG(p, '', wmsg)
             return 1
         # else generate helpful error
         else:
@@ -562,7 +562,7 @@ def check_preprocess(p, filename=None):
                      '"IC_FORCE_PREPROCESS"',
                      '\t\tfile = {0}'.format(filename),
                      '\t\tfunction = {0}'.format(func_name)]
-            WLOG('error', p['LOG_OPT'], emsgs)
+            WLOG(p, 'error', emsgs)
 
 
 def fiber_params(pp, fiber, merge=False):
@@ -597,7 +597,7 @@ def fiber_params(pp, fiber, merge=False):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def get_control_file():
+def get_control_file(p):
     # get SpirouDRS data folder
     package = spirouConfig.Constants.PACKAGE()
     relfolder = spirouConfig.Constants.DATA_CONSTANT_DIR()
@@ -606,7 +606,8 @@ def get_control_file():
     controlfn, controlfmt = spirouConfig.Constants.RECIPE_CONTROL_FILE()
     controlfile = os.path.join(datadir, controlfn)
     # load control file
-    control = spirouTable.read_table(controlfile, fmt=controlfmt, comment='#')
+    control = spirouTable.read_table(p, controlfile, fmt=controlfmt,
+                                     comment='#')
     # return control
     return control
 
@@ -618,7 +619,7 @@ def get_header_file(p, filename, hdr=None, cdr=None):
         if not os.path.exists(filename):
             emsg1 = 'Cannot read header. File does not exist ({0})'
             emsg2 = '    fuction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(filename), emsg2])
+            WLOG(p, 'error', [emsg1.format(filename), emsg2])
         else:
             hdr, cdr = spirouFITS.read_header(p, filename, return_comments=True)
     # return header and comments
@@ -639,13 +640,13 @@ def get_properties_from_control(p, control):
         if p['DRS_DEBUG']:
             # log that fiber was identified
             wmsg = 'Identified file as {0}, fiber={1}'
-            WLOG('', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['FIBER']))
+            WLOG(p, '', wmsg.format(p['DPRTYPE'], p['FIBER']))
     else:
         p['FIBER'] = None
         if p['DRS_DEBUG']:
             # log that fiber was identified
             wmsg = 'Identified file as {0}'
-            WLOG('', p['LOG_OPT'], wmsg.format(p['DPRTYPE']))
+            WLOG(p, '', wmsg.format(p['DPRTYPE']))
     # ----------------------------------------------------------------------
     # return p
     return p
@@ -705,11 +706,11 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
         dstring = control['dstring'][matchno]
         # log successful finding
         wmsg = 'File "{0}" identified as "{1}"'
-        WLOG('info', p['LOG_OPT'], wmsg.format(basefilename, dprtype))
+        WLOG(p, 'info', wmsg.format(basefilename, dprtype))
         # log mode (in debug mode)
         if p['DRS_DEBUG'] > 0:
             wmsg = '\tID via HEADER   OCODE={0} OBSTYPE={1} CCAS={2} CREF={3}'
-            WLOG('', p['LOG_OPT'], wmsg.format(code, obstype, ccas, cref))
+            WLOG(p, '', wmsg.format(code, obstype, ccas, cref))
         # add key to header
         hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
         cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
@@ -739,7 +740,7 @@ def id_mode(p, control, filename, hdr, cdr, code, obstype, ccas, cref):
                  ''.format(basefilename))
         emsg2 = ('\tOCODE={0} OBSTYPE={1} CCAS={2} CREF={3}'
                  ''.format(code, obstype, ccas, cref))
-        WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'warning', [emsg1, emsg2])
 
         # add key to header
         hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
@@ -837,13 +838,13 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
                      ''.format(p['kw_EXT_TYPE'][0]))
             emsg3 = ('\tPlease re-run extraction OR use a valid extraction '
                      'output')
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             dprtype = None
     # else crash
     else:
         emsg1 = 'Error in recipe control file. Kind must be "RAW" or "REDUC"'
         emsg2 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         dprtype = None
     # -----------------------------------------------------------------------
     # get KW_OUTPUT value
@@ -865,7 +866,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
         control = control[row]
         # print warning
         wmsg = 'DPRTYPE not checked for recipe="{0}"'.format(recipe)
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG(p, 'warning', wmsg)
     # -----------------------------------------------------------------------
     # if output is None and dprtype exists: we have a raw file
     elif (output is None) and (dprtype in dprtypes):
@@ -875,7 +876,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
         control = control[row]
         # log identification
         wmsg = 'Input identification: {0} (TYPE={1})'.format('RAW', dprtype)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
 
     # -----------------------------------------------------------------------
     # if output is None and we expect a RAW file: we have the wrong file
@@ -883,7 +884,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
         emsg1 = 'File "{0}" identified as "{1}"'.format(bfilename, dprtype)
         emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
         emsg3 = '\tError was: WRONG DPRTYPE'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # -----------------------------------------------------------------------
     # if output is None and we expect a REDUC file: we are missing the
     #     header key
@@ -892,7 +893,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
         emsg2 = ('\tHeader key "{0}" missing! Please re-run extraction'
                  '').format(p['kw_OUTPUT'][0])
         emsg3 = '\tError was: OUTPUT HEADER KEY MISSING'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # -----------------------------------------------------------------------
     # if we have an output and expect a REDUCE file: then we have a reduc file
     elif (output is not None) and (kinds[0].upper() == 'REDUC'):
@@ -905,7 +906,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             # print warning
             wargs = [p['kw_OUTPUT'][0], recipe]
             wmsg = 'ID ({0}) not checked for recipe="{1}"'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
         # else if we have the output in ocodes use this
         elif output in ocodes:
             # condition 1:
@@ -915,7 +916,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             emsg1 = 'File "{0}" output="{1}"'.format(bfilename, output)
             emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
             emsg3 = '\tError was: WRONG ID ({0})'.format(output)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             cond1 = False
         # ++++++++++++++++++++++++++
         # Cond2: Check DPRTYPE
@@ -926,7 +927,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             # print warning
             wargs = [p['kw_EXT_TYPE'][0], recipe]
             wmsg = 'TYPE ({0}) not checked for recipe="{1}"'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
 
         # if we didn't find a dprtype due to missing header key skip
         elif (dprtype is None) or (dprtype == 'None'):
@@ -934,7 +935,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             # print warning
             wargs = [p['kw_EXT_TYPE'][0], recipe]
             wmsg = 'TYPE ({0}) not checked for recipe="{1}"'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
         elif dprtype in dprtypes:
             # condition 2:
             cond2 = dprtype == dprtypes
@@ -942,7 +943,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             emsg1 = 'File "{0}" TYPE="{1}"'.format(bfilename, dprtype)
             emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
             emsg3 = '\tError was: WRONG TYPE ({0})'.format(p['kw_EXT_TYPE'][0])
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             cond2 = False
         # ++++++++++++++++++++++++++
         # Check we still have rows
@@ -951,7 +952,7 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
             emsg1 = 'File "{0}" ID="{1}"'.format(bfilename, dprtype)
             emsg2 = '\tNot valid for recipe "{0}"'.format(recipe)
             emsg3 = '\tError was: NONE FOUND ({0})'.format(output)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
         # ++++++++++++++++++++++++++
         # Filter by cond1 and cond2
@@ -963,14 +964,14 @@ def identify_from_header(p, control, recipe, filename, hdr=None):
 
         # log identification
         wmsg = 'Input identification: {0} (ID={1}, TYPE={2})'
-        WLOG('', p['LOG_OPT'], wmsg.format('REDUC', output, dprtype))
+        WLOG(p, '', wmsg.format('REDUC', output, dprtype))
     # -----------------------------------------------------------------------
     # else we have hit an unexpected error
     else:
         emsg1 = 'File "{0}" identified as "{1}"'.format(bfilename, dprtype)
         emsg2 = '\tOutput type = {0}'.format(output)
         emsg3 = '\tUnknown error occurred'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     return control
 
@@ -1004,11 +1005,11 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
             dprtype = control['dprtype'][u_it]
             # log successful finding
             wmsg = 'File "{0}" identified as "{1}"'
-            WLOG('info', p['LOG_OPT'], wmsg.format(basefilename, dprtype))
+            WLOG(p, 'info', wmsg.format(basefilename, dprtype))
             # log mode (in debug mode)
             if p['DRS_DEBUG'] > 0:
                 wmsg = '\tID via filename   file={0}'
-                WLOG('', p['LOG_OPT'], wmsg.format(basefilename))
+                WLOG(p, '', wmsg.format(basefilename))
             # update header key 'DPRTYPE
             hdr[p['KW_DPRTYPE'][0]] = dprtype.strip()
             cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
@@ -1016,7 +1017,7 @@ def fallback_id_mode(p, control, filename, hdr, cdr):
             return filename, hdr, cdr
     # if file not found log this
     emsg = 'File "{0}" not identified as a valid DRS input.'
-    WLOG('warning', p['LOG_OPT'], emsg.format(basefilename))
+    WLOG(p, 'warning', emsg.format(basefilename))
     # update header key 'DPRTYPE
     hdr[p['KW_DPRTYPE'][0]] = 'UNKNOWN'
     cdr[p['KW_DPRTYPE'][0]] = p['KW_DPRTYPE'][2]
@@ -1088,7 +1089,7 @@ def check_id_header(p, control, recipe, filename, hdr=None):
     if (len(kinds) != 1) and (kinds[0].upper() != 'RAW'):
         emsg1 = 'File "{0}" not identified (not a raw file)'
         emsg2 = 'Only raw files valid for recipe "{0}"'.format(recipe)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # -----------------------------------------------------------------------
     # use dprtype to select a single control setting
     # -----------------------------------------------------------------------
@@ -1100,12 +1101,12 @@ def check_id_header(p, control, recipe, filename, hdr=None):
         control = control[row]
         # print warning
         wmsg = 'DPRTYPE not checked for recipe="{0}"'.format(recipe)
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG(p, 'warning', wmsg)
     # else if DPRTYPE not in dprtypes then give error
     elif dprtype not in control['dprtype']:
         emsg1 = 'File "{0}" identified as "{1}"'.format(basefilename, dprtype)
         emsg2 = 'Not valid for recipe "{0}"'.format(recipe)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # else we have the correct DPRTYPE --> select correct row of control
     else:
         # get the first row in control where dprtype is valid
@@ -1130,7 +1131,7 @@ def check_reduced_filename(p, filename, recipe, control):
     # if both are None log warning
     if c1 and c2:
         wmsg = 'Filename not checked for recipe="{0}" (reduced file)'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(recipe))
+        WLOG(p, 'warning', wmsg.format(recipe))
     # check dstring in filename
     if not c1:
         cond1 = dstring in filename
@@ -1168,7 +1169,7 @@ def check_raw_filename(p, filename, recipe, control):
     # if both are None log warning
     if c1:
         wmsg = 'Filename not checked for recipe="{0}" (raw file)'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(recipe))
+        WLOG(p, 'warning', wmsg.format(recipe))
     # check dstring in filename
     if not c1:
         cond1 = dstring in filename

@@ -73,7 +73,7 @@ def main(night_name=None, e2dsfiles=None):
     # need custom args (to accept full path or wild card
     if e2dsfiles is None:
         names, types = ['e2dsfiles'], [str]
-        customargs = spirouStartup.GetCustomFromRuntime([0], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(e2dsfiles=e2dsfiles)
@@ -88,7 +88,7 @@ def main(night_name=None, e2dsfiles=None):
         e2dsfiles = spirouFile.Paths(p['E2DSFILES'],
                                      root=p['ARG_FILE_DIR']).abs_paths
     except PathException as e:
-        WLOG('error', p['LOG_OPT'], e)
+        WLOG(p, 'error', e)
 
     # loop around files
     for it, e2dsfile in enumerate(e2dsfiles):
@@ -97,9 +97,9 @@ def main(night_name=None, e2dsfiles=None):
         # log the file process
         wargs = [e2dsfilename, it + 1, len(e2dsfiles)]
         wmsg = ' * Processing file {0} ({1} of {2})'.format(*wargs)
-        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
-        WLOG('', p['LOG_OPT'], wmsg)
-        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+        WLOG(p, '', spirouStartup.spirouStartup.HEADER)
+        WLOG(p, '', wmsg)
+        WLOG(p, '', spirouStartup.spirouStartup.HEADER)
 
         # ------------------------------------------------------------------
         # Check that we can process file
@@ -107,15 +107,15 @@ def main(night_name=None, e2dsfiles=None):
         # check if ufile exists
         if not os.path.exists(e2dsfile):
             wmsg = 'File {0} does not exist... skipping'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(e2dsfilename))
+            WLOG(p, 'warning', wmsg.format(e2dsfilename))
             continue
         elif ('e2ds' not in e2dsfilename) and ('e2dsff' not in e2dsfilename):
             wmsg = 'File {0} not a valid E2DS or E2DSFF file'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(e2dsfilename))
+            WLOG(p, 'warning', wmsg.format(e2dsfilename))
             continue
         elif '.fits' not in e2dsfilename:
             wmsg = 'File {0} not a fits file... skipping'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(e2dsfilename))
+            WLOG(p, 'warning', wmsg.format(e2dsfilename))
             continue
 
         # ----------------------------------------------------------------------
@@ -171,9 +171,9 @@ def main(night_name=None, e2dsfiles=None):
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr, hdict=hdict)
 
         # add berv values
-        hdict = spirouImage.AddKey(hdict, p['KW_BERV'], value=loc['BERV'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=loc['BJD'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BERV_MAX'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV'], value=loc['BERV'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=loc['BJD'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BERV_MAX'],
                                    value=loc['BERV_MAX'])
 
         # write image and add header keys (via hdict)

@@ -32,7 +32,7 @@ from SpirouDRS import spirouStartup
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'cal_SLIT_spirou.py'
+__NAME__ = 'cal_SHAPE_spirou.py'
 # Get version and author
 __version__ = spirouConfig.Constants.VERSION()
 __author__ = spirouConfig.Constants.AUTHORS()
@@ -74,8 +74,8 @@ def main(night_name=None, files=None):
     p = spirouStartup.LoadArguments(p, night_name, files)
     p = spirouStartup.InitialFileSetup(p, calibdb=True)
     # set the fiber type
-    p['FIB_TYP'] = 'AB'
-    p.set_source('FIB_TYP', __NAME__ + '/main()')
+    p['FIBER'] = 'AB'
+    p.set_source('FIBER', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -102,6 +102,7 @@ def main(night_name=None, files=None):
     # Correction of DARK
     # ----------------------------------------------------------------------
     p, datac = spirouImage.CorrectForDark(p, data, hdr)
+    datac = data
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -136,9 +137,15 @@ def main(night_name=None, files=None):
     else:
         background = np.zeros_like(data2)
 
-    # data2=data2-background
+    data2 = data2 - background
+
     # correct data2 with background (where positive)
     data2 = np.where(data2 > 0, data2 - background, 0)
+
+    # save data to loc
+    loc = ParamDict()
+    loc['DATA'] = data2
+    loc.set_source('DATA', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
     # Log the number of dead pixels
@@ -150,16 +157,6 @@ def main(night_name=None, files=None):
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
     WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
-    # ----------------------------------------------------------------------
-    # Log the number of dead pixels
-    # ----------------------------------------------------------------------
-    loc = ParamDict()
-
-    # ----------------------------------------------------------------------
-    # Loop around fiber types
-    # ----------------------------------------------------------------------
-    # set fiber
-    p['FIBER'] = p['FIB_TYP']
     # ------------------------------------------------------------------
     # Get localisation coefficients
     # ------------------------------------------------------------------
@@ -169,16 +166,9 @@ def main(night_name=None, files=None):
     p, loc = spirouLOCOR.GetCoeffs(p, hdr, loc)
 
     # ------------------------------------------------------------------
-    # Calculating the tilt
+    # Calculate shape map
     # ------------------------------------------------------------------
-    # get the tilt by extracting the AB fibers and correlating them
-    loc = spirouImage.GetTilt(p, loc, data2)
-
-    # fit the tilt with a polynomial
-    loc = spirouImage.FitTilt(p, loc)
-    # log the tilt dispersion
-    wmsg = 'Tilt dispersion = {0:.3f} deg'
-    WLOG(p, 'info', wmsg.format(loc['RMS_TILT']))
+    loc = spirouImage.GetShapeMap(p, loc)
 
     # ------------------------------------------------------------------
     # Plotting
@@ -186,34 +176,23 @@ def main(night_name=None, files=None):
     if p['DRS_PLOT']:
         # plots setup: start interactive plot
         sPlt.start_interactive_session()
-        # plot image with selected order shown
-        sPlt.slit_sorder_plot(p, loc, data2)
-        # plot slit tilt angle and fit
-        sPlt.slit_tilt_angle_and_fit_plot(loc)
+        # plot the shape process for each order
+        sPlt.slit_shape_angle_plot(p, loc)
         # end interactive section
         sPlt.end_interactive_session()
 
     # ------------------------------------------------------------------
-    # Replace tilt by the global fit
+    # Writing to file
     # ------------------------------------------------------------------
-    loc['TILT'] = loc['YFIT_TILT']
-    oldsource = loc.get_source('tilt')
-    loc.set_source('TILT', oldsource + '+{0}/main()'.format(__NAME__))
-
-    # ----------------------------------------------------------------------
-    # Save and record of tilt table
-    # ----------------------------------------------------------------------
-    # copy the tilt along the orders
-    tiltima = np.ones((int(loc['NUMBER_ORDERS']/2), data2.shape[1]))
-    tiltima *= loc['TILT'][:, None]
     # get the raw tilt file name
-    raw_tilt_file = os.path.basename(p['FITSFILENAME'])
+    raw_shape_file = os.path.basename(p['FITSFILENAME'])
     # construct file name and path
-    tiltfits, tag = spirouConfig.Constants.SLIT_TILT_FILE(p)
-    tiltfitsname = os.path.basename(tiltfits)
+    shapefits, tag = spirouConfig.Constants.SLIT_SHAPE_FILE(p)
+    shapefitsname = os.path.basename(shapefits)
     # Log that we are saving tilt file
-    wmsg = 'Saving tilt information in file: {0}'
-    WLOG(p, '', wmsg.format(tiltfitsname))
+    wmsg = 'Saving shape information in file: {0}'
+    WLOG(p, '', wmsg.format(shapefitsname))
+    # Copy keys from fits file
     # Copy keys from fits file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # add version number
@@ -223,37 +202,16 @@ def main(night_name=None, files=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=raw_tilt_file)
-    # add tilt parameters as 1d list
-    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_TILT'], values=loc['TILT'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'], value=raw_shape_file)
     # write tilt file to file
-    p = spirouImage.WriteImage(p, tiltfits, tiltima, hdict)
+    p = spirouImage.WriteImage(p, shapefits, loc['DXMAP'], hdict)
 
     # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
+    # TODO: Decide on some quality control criteria?
     # set passed variable and fail message list
     passed, fail_msg = True, []
-    # check that tilt rms is below required
-    if loc['RMS_TILT'] > p['QC_SLIT_RMS']:
-        # add failed message to fail message list
-        fmsg = 'abnormal RMS of SLIT angle ({0:.2f} > {1:.2f} deg)'
-        fail_msg.append(fmsg.format(loc['RMS_TILT'], p['QC_SLIT_RMS']))
-        passed = False
-    # check that tilt is less than max tilt required
-    max_tilt = np.max(loc['TILT'])
-    if max_tilt > p['QC_SLIT_MAX']:
-        # add failed message to fail message list
-        fmsg = 'abnormal SLIT angle ({0:.2f} > {1:.2f} deg)'
-        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MAX']))
-        passed = False
-    # check that tilt is greater than min tilt required
-    min_tilt = np.min(loc['TILT'])
-    if min_tilt < p['QC_SLIT_MIN']:
-        # add failed message to fail message list
-        fmsg = 'abnormal SLIT angle ({0:.2f} < {1:.2f} deg)'
-        fail_msg.append(fmsg.format(max_tilt, p['QC_SLIT_MIN']))
-        passed = False
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
@@ -268,14 +226,14 @@ def main(night_name=None, files=None):
         p.set_source('QC', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
-    # Update the calibration data base
+    # Move to calibDB and update calibDB
     # ----------------------------------------------------------------------
     if p['QC']:
-        keydb = 'TILT'
-        # copy localisation file to the calibDB folder
-        spirouDB.PutCalibFile(p, tiltfits)
+        keydb = 'SHAPE'
+        # copy shape file to the calibDB folder
+        spirouDB.PutCalibFile(p, shapefits)
         # update the master calib DB file with new key
-        spirouDB.UpdateCalibMaster(p, keydb, tiltfitsname, hdr)
+        spirouDB.UpdateCalibMaster(p, keydb, shapefitsname, hdr)
 
     # ----------------------------------------------------------------------
     # End Message

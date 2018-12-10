@@ -88,7 +88,7 @@ def main(night_name=None):
         for miss in missed:
             wargs = [w1, miss[1], miss[0], w2]
             wmsg = 'Could not find required files for {1} in {2}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
         eargs = [e1, e2]
         wmsg = '{0}\tContinue? [Y]es or [N]o?\t{1}'.format(*eargs)
         # require user input
@@ -102,7 +102,7 @@ def main(night_name=None):
         print('\n')
         if 'N' in uinput.upper():
             wmsg = 'Code ended by user'
-            WLOG('error', p['LOG_OPT'], wmsg)
+            WLOG(p, 'error', wmsg)
 
     # ----------------------------------------------------------------------
     # Run given recipes
@@ -145,7 +145,7 @@ def main(night_name=None):
                 emsg1 = 'Error caught and handled'
                 emsg2 = '\tError reads: {0}'.format(e)
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
-                WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'warning', [emsg1, emsg2])
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
                 logger_values.append([])
             except SystemExit as e:
@@ -153,7 +153,7 @@ def main(night_name=None):
                 emsg1 = 'Exit caught and handled'
                 emsg2 = '\tError reads: {0}'.format(e)
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
-                WLOG('warning', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'warning', [emsg1, emsg2])
                 WLOG('', '', spirouStartup.spirouStartup.HEADER)
                 logger_values.append([])
         # check and add to history
@@ -167,7 +167,7 @@ def main(night_name=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
@@ -213,7 +213,7 @@ def get_valid_files(p):
         else:
             emsgs = ['No valid ".fits" files found in {0}'
                      ''.format(p['ARG_FILE_DIR'])]
-        WLOG('error', p['LOG_OPT'], emsgs)
+        WLOG(p, 'error', emsgs)
     # return file list
     return files, night_names
 
@@ -242,7 +242,7 @@ def get_all_files(p):
 
 
 def get_recipes(p, raw_only=True):
-    control = spirouFile.get_control_file()
+    control = spirouFile.get_control_file(p)
     # filter out negative order numbers (should not be used/checked)
     negorder = control['order'] < 0
     control = control[~negorder]
@@ -275,7 +275,7 @@ def get_recipes(p, raw_only=True):
         except ImportError:
             emsg1 = 'FATAL ERROR: Cannot import module="{0}"'
             emsg2 = '   Please check Recipe control file'
-            WLOG('error', p['LOG_OPT'], [emsg1.format(name), emsg2])
+            WLOG(p, 'error', [emsg1.format(name), emsg2])
 
     # return control file and import dict
     return control, import_dict
@@ -443,7 +443,7 @@ def iteration_bar(p, nightname, name, it_number1, t_number1,
 
     wmsg1 = 'Processing Group = {0:25s} ({1} of {2})'.format(*wargs1)
     wmsg2 = '           Run   = {0:25s} ({1} of {2})'.format(*wargs2)
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    WLOG(p, '', [wmsg1, wmsg2])
     WLOG('', '', '=' * 50)
     WLOG('', '', '')
 
@@ -455,7 +455,7 @@ def check_skip(p, night_name):
     if not os.path.exists(dir_):
         emsg1 = 'Directory "{0}" does not exist'.format(dir_)
         emsg2 = '\tSomething wrong with night name={0}?'.format(night_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # construct filename
     filename = os.path.join(dir_, HISTORY_FILE_NAME)
 
@@ -490,7 +490,7 @@ def add_to_history(p, night_name, runs, errors, loggers):
     if not os.path.exists(dir_):
         emsg1 = 'Directory "{0}" does not exist'.format(dir_)
         emsg2 = '\tSomething wrong with night name={0}?'.format(night_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # construct filename
     filename = os.path.join(dir_, HISTORY_FILE_NAME)

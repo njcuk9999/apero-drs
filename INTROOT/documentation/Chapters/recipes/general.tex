@@ -258,22 +258,22 @@ Files are written to disk using the \spirouImage.WriteImage() function. This req
 # ----------------------------------------------------------------------
 # log that we are saving localization file
 wmsg = 'Saving FWHM information in file: {0}'
-WLOG('', p['log_opt'], wmsg.format(locofits2name))
+WLOG(p, '', wmsg.format(locofits2name))
 
 # add keys from original header file
 hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
 
 # define new keys to add
-hdict = spirouImage.AddKey(hdict, p['kw_version'])
-hdict = spirouImage.AddKey(hdict, p['kw_CCD_SIGDET'])
-hdict = spirouImage.AddKey(hdict, p['kw_LOCO_NBO'], value=rorder_num)
+hdict = spirouImage.AddKey(p, hdict, p['kw_version'])
+hdict = spirouImage.AddKey(p, hdict, p['kw_CCD_SIGDET'])
+hdict = spirouImage.AddKey(p, hdict, p['kw_LOCO_NBO'], value=rorder_num)
 
 # write 2D list of position fit coefficients
 hdict = spirouImage.AddKey2DList(hdict, p['kw_LOCO_CTR_COEFF'],
                                  values=loc['acc'][0:rorder_num])
 
 # add quality control
-hdict = spirouImage.AddKey(hdict, p['kw_drs_QC'], value=p['QC'])
+hdict = spirouImage.AddKey(p, hdict, p['kw_drs_QC'], value=p['QC'])
 
 # write image and add header keys (via hdict)
 spirouImage.WriteImage(locofits2, width_fits, hdict)
@@ -315,13 +315,13 @@ if np.sum(loc['max_rmpts_wid']) > p['QC_LOC_MAXLOCFIT_REMOVED_WID']:
 # finally log the failed messages and set QC = 1 if we pass the
 # quality control QC = 0 if we fail quality control
 if passed:
-    WLOG('info', p['log_opt'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+    WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
     p['QC'] = 1
     p.set_source('QC', __NAME__ + '/main()')
 else:
     for farg in fail_msg:
         wmsg = 'QUALITY CONTROL FAILED: {0}'
-        WLOG('info', p['log_opt'], wmsg.format(farg))
+        WLOG(p, 'info', wmsg.format(farg))
     p['QC'] = 0
     p.set_source('QC', __NAME__ + '/main()')
 \end{pythonbox}
@@ -382,7 +382,7 @@ recipe.py arg1 arg2 arg3
 # End Message
 # ----------------------------------------------------------------------
 wmsg = 'Recipe {0} has been successfully completed'
-WLOG('info', p['log_opt'], wmsg.format(p['program']))
+WLOG(p, 'info', wmsg.format(p['program']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

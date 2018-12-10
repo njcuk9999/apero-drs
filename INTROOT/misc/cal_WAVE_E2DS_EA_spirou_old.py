@@ -284,7 +284,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
@@ -319,7 +319,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
@@ -399,7 +399,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # print a warning if pixel_shift is not 0
     if pixel_shift_slope != 0 or pixel_shift_inter != 0:
         wmsg = 'Pixel shift is not 0, check that this is desired'
-        WLOG('warning', p['LOG_OPT'], wmsg.format())
+        WLOG(p, 'warning', wmsg.format())
 
     wave_map = np.zeros([nbo, nbpix])
     xpix = np.arange(nbpix) + pixel_shift_inter + pixel_shift_slope * np.arange(
@@ -445,7 +445,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # will be compared to the expected lines from the catalog
 
     wmsg = 'Searching for gaussian peaks on the HC spectrum'
-    WLOG('info', p['LOG_OPT'], wmsg.format())
+    WLOG(p, 'info', wmsg.format())
 
     for iord in range(nbo):
         # keep track of pixels where we look for peaks
@@ -455,7 +455,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
         # print order message
         wmsg = 'Searching for peaks in order {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(iord))
+        WLOG(p, '', wmsg.format(iord))
 
         # scanning through each order, 1/3rd of w at a time
         for indmax in range(window * 2, nbpix - window * 2 - 1, window // 3):
@@ -533,7 +533,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # print total found lines
     wargs = [len(wave_hdr_sol)]
     wmsg = '{0} gaussian peaks found in HC spectrum'
-    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
 
     # reading the UNe catalog
     wave_u_ne, amp_u_ne = spirouImage.ReadLineList(p)
@@ -542,7 +542,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     loc.set_sources(['ll_line', 'ampl_line'], source)
 
     wmsg = 'Matching found lines to the catalogue'
-    WLOG('info', p['LOG_OPT'], wmsg.format())
+    WLOG(p, 'info', wmsg.format())
 
     # keeping track of the velocity offset between predicted and observed
     # line centers
@@ -592,18 +592,18 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 wargs = [xbin, xbin + 100, np.sum(g)]
                 wmsg = 'In wavelength bin {0}-{1}, {2} lines matched to ' \
                        'catalogue'
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                WLOG(p, '', wmsg.format(*wargs))
             elif ite == 1:
                 wargs = [xbin, xbin + 100, np.sum(g)]
                 wmsg = 'In wavelength bin {0}-{1}, {2} lines with dv<5 kept'
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                WLOG(p, '', wmsg.format(*wargs))
 
             i += 1
         # print total number of lines for ite=0
         if ite == 0:
             wargs = [np.sum(np.isfinite(dv))]
             wmsg = 'Total {0} lines matched to catalogue'
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
         # 3rd degree polynomial fit to the center of bins vs median dv per bin
         fit = np.polyfit(xbins + 50, meddv, 3)
@@ -618,7 +618,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         if ite == 1:
             wargs = [np.sum(np.isfinite(dv))]
             wmsg = 'Total {0} lines with dv<5 kept'
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
     if doplot_sanity:
         # plot the predicted velocity offset from the catalogue
@@ -633,7 +633,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     fit_per_order = np.zeros([nbo, fit_degree + 1])
 
     wmsg = 'Sigma-clipping of found lines'
-    WLOG('info', p['LOG_OPT'], wmsg.format())
+    WLOG(p, 'info', wmsg.format())
 
     plt.figure()  # open new figure
     # loop through orders
@@ -662,7 +662,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 wargs = [iord, nsigmax, np.std(dd)]
                 wmsg = 'Sigma-clip for order {0}: sigma={1:.2f}, vel. ' \
                        'offset vs pix stddev={2:.2f}'
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                WLOG(p, '', wmsg.format(*wargs))
 
                 dd /= np.std(dd)
 
@@ -673,7 +673,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 # np.set_printoptions(precision=3)
                 wargs = [fit, nsigmax]
                 wmsg = 'vel. offset vs pix coeffs: {0}, sigma={1:.2f}'
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                WLOG(p, '', wmsg.format(*wargs))
 
                 # if the largest deviation from the 2nd order fit is >3
                 # sigma (either + or -) then we remove the point
@@ -717,7 +717,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         plt.figure()
         plt.clf()
         wmsg = 'Forcing continuity of the polynomial fit coefficients'
-        WLOG('info', p['LOG_OPT'], wmsg.format())
+        WLOG(p, 'info', wmsg.format())
 
         # We will force continuity of the coefficients of the polynomial
         # fit. The 1st term (wavelength at pix=0) is much better determined
@@ -757,7 +757,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 wmsg = 'Coeff order {0}: ' \
                        'Linear sigma-clip: sigma={1:.2f}, qc?={2:.2f}, ' \
                        'iteration={3}'
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                WLOG(p, '', wmsg.format(*wargs))
 
                 ite += 1
 
@@ -781,7 +781,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                 wmsg = 'Coeff order {0}: ' \
                        'Polynomial sigma-clip: sigma={1:.2f}, qc?={2:.2f}, ' \
                        'iteration={3}'
-                WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+                WLOG(p, '', wmsg.format(*wargs))
 
                 ite += 1
 
@@ -831,7 +831,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     resolution_map = np.zeros([5, 4])
 
     wmsg = 'Determining the LSF'
-    WLOG('info', p['LOG_OPT'], wmsg.format())
+    WLOG(p, 'info', wmsg.format())
 
     i_plot = 0
     # determining the LSF
@@ -905,7 +905,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                      2.997e5 / resolution]
             wmsg = 'nlines={0}, orders={1}-{2}, x region={3}, ' \
                    'resolution={4:.2f} km/s, R={5:.2f}'
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
             #        print('nlines : ', np.sum(gg), 'iord=', iord,
             #              ' xpos=', xpos,
@@ -928,7 +928,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     wargs = [np.mean(resolution_map), np.median(resolution_map),
              np.std(resolution_map)]
     wmsg = 'Resolution stats:  mean={0:.2f}, median={1:.2f}, stddev={2:.2f}'
-    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
 
     # TODO: --> Below is not etienne's code!
 
@@ -1149,7 +1149,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # print message to screen
         wmsg = 'Identification of lines in reference file: {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(fpfile))
+        WLOG(p, '', wmsg.format(fpfile))
 
         # ------------------------------------------------------------------
         # Get the FP solution
@@ -1206,7 +1206,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     #           1000.*np.sqrt(var1/num_lines)]
     # wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
     #              'value:{3:.2f}[m/s])'.format(*wargs2))
-    # WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+    # WLOG(p, 'info', [wmsg1, wmsg2])
     #
     # # Save to loc for later use - names given for coherence with cal_HC
     # loc['X_MEAN_1'] = mean1
@@ -1318,14 +1318,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'],
+        WLOG(p, 'info',
              'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -1340,23 +1340,23 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # log progress
     wargs = [p['FIBER'], wavefits]
     wmsg = 'Write wavelength solution for Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
     # write solution to fitsfilename header
     # copy original keys
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
 
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
     # write original E2DS file and add header keys (via hdict)
     # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
@@ -1369,7 +1369,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
     spirouImage.WriteImage(e2dscopy_filename, loc['HCDATA'], hdict)
@@ -1399,12 +1399,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
                     [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
     # make table
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # merge table
     wmsg = 'Global result summary saved in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
-    spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(wavetblname))
+    spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
 
     # ------------------------------------------------------------------
     # Save line list table file
@@ -1434,14 +1434,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavelltblname))
+    WLOG(p, '', wmsg.format(wavelltblname))
 
     # make table
     columnvalues = np.array(columnvalues).T
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
-    spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
+    spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
 
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB

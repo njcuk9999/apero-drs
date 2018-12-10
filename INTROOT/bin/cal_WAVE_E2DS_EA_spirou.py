@@ -87,7 +87,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
@@ -101,7 +101,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # TODO: Fix problem with updating output and then remove this
     if len(p['HCFILES']) > 1:
         emsg = 'Currently we do not support multiple HCFILES'
-        WLOG('error', p['LOG_OPT'], emsg)
+        WLOG(p, 'error', emsg)
 
     # ----------------------------------------------------------------------
     # Construct reference filename and get fiber type
@@ -129,7 +129,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
@@ -272,13 +272,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -323,15 +323,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # gparams[6] = output pixel sigma width (gauss fit width in pixels)
         # gparams[7] = output weights for the pixel position
 
+        chebval = np.polynomial.chebyshev.chebval
+
         # dummy array for weights
-        test = np.ones(np.shape(xgau[gg]), 'd')
+        test = np.ones(np.shape(xgau[gg]), 'd')*1e4
         # get the final wavelength value for each peak in order
         output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
+        # output_wave_1 = chebval(xgau[gg], fit_per_order[iord])
         # convert the pixel equivalent width to wavelength units
         xgau_ew_ini = xgau[gg] - ew[gg] / 2
         xgau_ew_fin = xgau[gg] + ew[gg] / 2
         ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
         ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
+        # ew_ll_ini = chebval(xgau_ew_ini, fit_per_order[iord])
+        # ew_ll_fin = chebval(xgau_ew_fin, fit_per_order[iord])
         ew_ll = ew_ll_fin - ew_ll_ini
         # put all lines in the order into array
         gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
@@ -408,7 +413,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # print message to screen
         wmsg = 'Identification of lines in reference file: {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(fpfile))
+        WLOG(p, '', wmsg.format(fpfile))
 
         # ------------------------------------------------------------------
         # Get the FP solution
@@ -452,7 +457,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Repeat Littrow test
     # ------------------------------------------------------------------
-
     # Do Littrow check
     ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
@@ -513,6 +517,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get the abs min and max dev littrow values
         min_littrow = abs(loc['LITTROW_MINDEV_' + str(lit_it)][x_it])
         max_littrow = abs(loc['LITTROW_MAXDEV_' + str(lit_it)][x_it])
+        # get the corresponding order
+        min_littrow_ord = abs(loc['LITTROW_MINDEVORD_' + str(lit_it)][x_it])
+        max_littrow_ord = abs(loc['LITTROW_MAXDEVORD_' + str(lit_it)][x_it])
         # check if sig littrow is above maximum
         rms_littrow_max = p['QC_RMS_LITTROW_MAX']
         dev_littrow_max = p['QC_DEV_LITTROW_MAX']
@@ -525,21 +532,60 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # check if min/max littrow is out of bounds
         if np.max([max_littrow, min_littrow]) > dev_littrow_max:
             fmsg = ('Littrow test (x={0}) failed (min|max dev = '
-                    '{1:.2f}|{2:.2f} > {3:.2f})')
-            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max]
+                    '{1:.2f}|{2:.2f} > {3:.2f} for order {4}|{5})')
+            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+                     min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+            # if sig was out of bounds, recalculate
+            if sig_littrow > rms_littrow_max:
+                # get the residuals
+                respix = loc['LITTROW_YY_' + str(lit_it)][x_it]
+                # check if min is out of bounds
+                if min_littrow > dev_littrow_max:
+                    # remove respective order
+                    respix_2 = np.delete(respix, min_littrow_ord)
+                    worst_order = min_littrow_ord
+                # check if max is out of bounds
+                elif max_littrow > dev_littrow_max:
+                    # remove respective order
+                    respix_2 = np.delete(respix, max_littrow_ord)
+                    worst_order = max_littrow_ord
+                # else break?
+                else:
+                    # TODO: What if min_littrow and max_littrow tests
+                    # TODO:     both are not met --> crash as respix_2
+                    # TODO:     not defined
+                    emsg = 'Undefined condition (min/max Littrow) ask Melissa'
+                    WLOG(p, 'error', emsg)
+                    respix_2, worst_order = None, None
+
+                # calculate stats
+                mean = np.sum(respix_2) / len(respix_2)
+                mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                rms = np.sqrt(mean2 - mean ** 2)
+                if rms > rms_littrow_max:
+                    fmsg = ('Littrow test (x={0}) failed (sig littrow = '
+                            '{1:.2f} > {2:.2f} removing order {3})')
+                    fargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                    fail_msg.append(fmsg.format(*fargs))
+                else:
+                    wargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                    wmsg = ('Littrow test (x={0}) passed (sig littrow = '
+                            '{1:.2f} > {2:.2f} removing order {3})')
+                    fail_msg.append(wmsg.format(*wargs))
+
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'],
+        WLOG(p, 'info',
              'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -552,50 +598,53 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
     tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
+    # TODO: file was set to WAVE_FILE_EA_2... does not exist
+    # TODO:       - set to WAVE_FILE_EA
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.split(wavefits)[-1]
     # log progress
     wargs = [p['FIBER'], wavefits]
     wmsg = 'Write wavelength solution for Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
     # write solution to fitsfilename header
     # copy original keys
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile1)
-    hdict = spirouImage.AddKey(hdict, p['kw_FPFILE'], value=raw_infile2)
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=wavefitsname)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile1)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=wavefitsname)
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add wave solution date
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                value=p['MAX_TIME_HUMAN'])
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
+                               value=loc['WAVEFILE'])
     # add number of orders
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                value=loc['LL_PARAM_FINAL'].shape[1] - 1)
     # add wave solution
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
 
     # write the wave "spectrum"
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     p = spirouImage.WriteImage(p, wavefits, loc['LL_FINAL'], hdict)
 
     # get filename for E2DS calibDB copy of FITSFILENAME
     e2dscopy_filename = spirouConfig.Constants.WAVE_E2DS_COPY(p)[0]
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
     p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
@@ -603,11 +652,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # only copy over if QC passed
     if p['QC']:
         # update original E2DS hcfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0a)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0a)
         raw_infilepath1 = os.path.join(p['ARG_FILE_DIR'], raw_infile1)
         p = spirouImage.WriteImage(p, raw_infilepath1, loc['HCDATA'], hdict)
         # update original E2DS fpfile and add header keys (via hdict)
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag0b)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag0b)
         raw_infilepath2 = os.path.join(p['ARG_FILE_DIR'], raw_infile2)
         p = spirouImage.WriteImage(p, raw_infilepath2, loc['FPDATA'], hdict)
 
@@ -636,12 +685,12 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     [sig_littrow[1]], [sig_littrow[2]], [sig_littrow[3]],
                     [sig_littrow[4]], [sig_littrow[5]], [sig_littrow[6]]]
     # make table
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # merge table
     wmsg = 'Global result summary saved in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
-    spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(wavetblname))
+    spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # Save resolution and line profiles to file
@@ -650,13 +699,13 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get wave filename
     resfits, tag3 = spirouConfig.Constants.WAVE_RES_FILE_EA(p)
     resfitsname = os.path.basename(resfits)
-    WLOG('', p['LOG_OPT'], 'Saving wave resmap to {0}'.format(resfitsname))
+    WLOG(p, '', 'Saving wave resmap to {0}'.format(resfitsname))
 
     # make a copy of the E2DS file for the calibBD
     # set the version
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile)
 
     # get res data in correct format
     resdata, hdicts = spirouTHORCA.GenerateResFiles(p, loc, hdict)
@@ -691,14 +740,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavelltblname))
+    WLOG(p, '', wmsg.format(wavelltblname))
 
     # make table
     columnvalues = np.array(columnvalues).T
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
-    spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
+    spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
 
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB

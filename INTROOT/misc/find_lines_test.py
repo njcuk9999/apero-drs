@@ -104,6 +104,11 @@ def plot_res(xs, ys, labels):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
+
+    p = dict()
+    p['PID'] = None
+    p['RECIPE'] = 'find_lines_test'
+
     # Generate a Gaussian with noise
     x_in = np.linspace(MIN_X, MAX_X, NUM_POINTS)
     noise = np.random.uniform(0, MAX_NOISE, size=NUM_POINTS)
@@ -112,7 +117,7 @@ if __name__ == "__main__":
 
     guess = INPUT_PARAMS
 
-    fargs = [x_in, y_in, w_in, guess]
+    fargs = [p, x_in, y_in, w_in, guess]
 
     # Fortran
     a1, e1, c1 = spirouTHORCA.spirouTHORCA.fitgaus_wrapper(*fargs, mode=0)
