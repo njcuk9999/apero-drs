@@ -150,7 +150,7 @@ def main(night_name=None, files=None):
     wmsg = 'Saving POL, STOKESI, NULL1, and NULL2 to {0}, {1}, {2}, {3}'
     wargs = [degpolfitsname, stokes_ifitsname, nullpol1fitsname,
              nullpol2fitsname]
-    WLOG(p, 'info', wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # construct header keywords for output products
     hdict, loc = spirouPOLAR.PolarHeader(p, loc, polardict)
@@ -190,7 +190,7 @@ def main(night_name=None, files=None):
         
         # log that we are saving LSD analysis data
         wmsg = 'Saving LSD analysis data to {0}'.format(lsdfitsfitsname)
-        WLOG(p, 'info', wmsg)
+        WLOG(p, '', wmsg)
 
     # ----------------------------------------------------------------------
     # End Message
