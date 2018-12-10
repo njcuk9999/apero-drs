@@ -10,13 +10,9 @@ Created on 2018-09-14 at 18:05
 @author: cook
 """
 from __future__ import division
-import numpy as np
-import os
 import sys
-import code
-from collections import OrderedDict
+import time
 
-from SpirouDRS import spirouDB
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 
@@ -56,12 +52,14 @@ def input_setup(name, fkwargs=None, quiet=False):
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
+    # set up process id
+    pid = assign_pid()
     # Clean WLOG
-    WLOG.clean_log()
+    WLOG.clean_log(pid)
     # find recipe
     recipe = find_recipe(name)
     # quietly load DRS parameters (for setup)
-    recipe.get_drs_params(quiet=True)
+    recipe.get_drs_params(quiet=True, pid=pid)
     # display
     if not quiet:
         # display title
@@ -69,7 +67,7 @@ def input_setup(name, fkwargs=None, quiet=False):
         # display initial parameterisation
         display_initial_parameterisation(recipe.drs_params)
         # display system info (log only)
-        display_system_info()
+        display_system_info(recipe.drs_params)
     # -------------------------------------------------------------------------
     # interface between "recipe", "fkwargs" and command line (via argparse)
     input_parameters = spirouRecipe.recipe_setup(recipe, fkwargs)
@@ -99,7 +97,7 @@ def option_manager(recipe, input_parameters):
     """
     Takes all the optional parameters and deals with them.
 
-    :param params:
+    :param recipe:
     :param input_parameters:
     :return:
     """
@@ -168,16 +166,16 @@ def display_drs_title(p):
     :return None:
     """
     # create title
-    title = ' * {DRS_NAME} DRS (V{DRS_VERSION})'.format(**p)
+    title = ' * {DRS_NAME} @{PID} ({DRS_VERSION})'.format(**p)
 
     # Log title
-    display_title(title)
+    display_title(p, title)
 
     if p['DRS_DEBUG'] == 42:
-        display_ee()
+        display_ee(p)
 
 
-def display_title(title):
+def display_title(p, title):
     """
     Display any title between HEADER bars via the WLOG command
 
@@ -186,13 +184,12 @@ def display_title(title):
     :return None:
     """
     # Log title
-    WLOG('', '', HEADER)
-    WLOG('', '',
-         '{0}'.format(title))
-    WLOG('', '', HEADER)
+    WLOG(p, '', HEADER)
+    WLOG(p, '', '{0}'.format(title))
+    WLOG(p, '', HEADER)
 
 
-def display_ee():
+def display_ee(p):
     bcolors = spirouConfig.Constants.BColors
 
     # noinspection PyPep8
@@ -212,7 +209,7 @@ def display_ee():
             '']
 
     for line in logo:
-        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
+        WLOG(p, '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
 
 
 def display_initial_parameterisation(p):
@@ -252,40 +249,39 @@ def display_initial_parameterisation(p):
     :return None:
     """
     # Add initial parameterisation
-    WLOG('', '', '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
-    WLOG('', '', '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'
-                 ''.format(**p))
-    WLOG('', '', '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
-    WLOG('', '', '(dir_drs_uconfig)   DRS_UCONFIG={DRS_UCONFIG}'.format(**p))
-    WLOG('', '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
-    WLOG('', '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
-    # WLOG('', '', ('(print_log)         DRS_LOG={DRS_LOG}         '
+    WLOG(p, '', '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    WLOG(p, '', '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'
+                ''.format(**p))
+    WLOG(p, '', '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
+    WLOG(p, '', '(dir_drs_uconfig)   DRS_UCONFIG={DRS_UCONFIG}'.format(**p))
+    WLOG(p, '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    WLOG(p, '', '(dir_tellu_db)      DRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
+    WLOG(p, '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    # WLOG(p, '', ('(print_log)         DRS_LOG={DRS_LOG}         '
     #               '%(0: minimum stdin-out logs)').format(**p))
-    WLOG('', '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
-                  '%(error/warning/info/all)').format(**p))
-    WLOG('', '', ('(log_level)         LOG_LEVEL={LOG_LEVEL}         '
-                  '%(error/warning/info/all)').format(**p))
-    WLOG('', '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
-                  '%(def/undef/trigger)').format(**p))
-    WLOG('', '', ('(used_date)         DRS_USED_DATE={DRS_USED_DATE}'
-                  '').format(**p))
+    WLOG(p, '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
+                 '%(error/warning/info/all)').format(**p))
+    WLOG(p, '', ('(log_level)         LOG_LEVEL={LOG_LEVEL}         '
+                 '%(error/warning/info/all)').format(**p))
+    WLOG(p, '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
+                 '%(def/undef/trigger)').format(**p))
     if p['DRS_DATA_WORKING'] is None:
-        WLOG('', '', ('(working_dir)       DRS_DATA_WORKING is not set, '
-                      'running on-line mode'))
+        WLOG(p, '', ('(working_dir)       DRS_DATA_WORKING is not set, '
+                     'running on-line mode'))
     else:
-        WLOG('', '', ('(working_dir)       DRS_DATA_WORKING={DRS_DATA_WORKING}'
-                      '').format(**p))
+        WLOG(p, '', ('(working_dir)       DRS_DATA_WORKING={DRS_DATA_WORKING}'
+                     '').format(**p))
     if p['DRS_INTERACTIVE'] == 0:
-        WLOG('', '', ('                    DRS_INTERACTIVE is not set, '
-                      'running on-line mode'))
+        WLOG(p, '', ('                    DRS_INTERACTIVE is not set, '
+                     'running on-line mode'))
     else:
-        WLOG('', '', '                    DRS_INTERACTIVE is set')
+        WLOG(p, '', '                    DRS_INTERACTIVE is set')
     if p['DRS_DEBUG'] > 0:
-        WLOG('', '', ('                    DRS_DEBUG is set, debug mode level'
-                      ':{DRS_DEBUG}').format(**p))
+        WLOG(p, '', ('                    DRS_DEBUG is set, debug mode level'
+                     ':{DRS_DEBUG}').format(**p))
 
 
-def display_system_info(logonly=True, return_message=False):
+def display_system_info(p, logonly=True, return_message=False):
     """
     Display system information via the WLOG command
 
@@ -311,12 +307,16 @@ def display_system_info(logonly=True, return_message=False):
         return messages
     else:
         # return messages for logger
-        WLOG('', '', messages, logonly=logonly)
+        WLOG(p, '', messages, logonly=logonly)
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
+def assign_pid():
+    return 'PID-{0:020d}'.format(int(time.time() * 1e7))
+
+
 def find_recipe(name):
     found_recipe = None
     for recipe in RECIPES:
