@@ -1789,8 +1789,7 @@ def WAVE_LINE_FILE(p):
 # noinspection PyPep8Naming
 def WAVE_TBL_FILE_EA(p):
     reducedfolder = p['REDUCED_DIR']
-    fpfile = p['FPFILE'].replace('.fits', '')
-    wavetblfb = 'cal_WAVE_EA_result_fpfile_{0}.tbl'.format(fpfile)
+    wavetblfb = 'cal_WAVE_EA_result.tbl'
     wavetblfile = os.path.join(reducedfolder, wavetblfb)
     return wavetblfile
 
