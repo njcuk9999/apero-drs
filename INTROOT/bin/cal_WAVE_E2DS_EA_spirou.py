@@ -323,18 +323,20 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # gparams[6] = output pixel sigma width (gauss fit width in pixels)
         # gparams[7] = output weights for the pixel position
 
+        chebval = np.polynomial.chebyshev.chebval
+
         # dummy array for weights
         test = np.ones(np.shape(xgau[gg]), 'd')*1e4
         # get the final wavelength value for each peak in order
         output_wave_1 = np.polyval(fit_per_order[iord][::-1], xgau[gg])
-        #output_wave_1 = np.polynomial.chebyshev.chebval(xgau[gg], fit_per_order[iord])
+        # output_wave_1 = chebval(xgau[gg], fit_per_order[iord])
         # convert the pixel equivalent width to wavelength units
         xgau_ew_ini = xgau[gg] - ew[gg] / 2
         xgau_ew_fin = xgau[gg] + ew[gg] / 2
         ew_ll_ini = np.polyval(fit_per_order[iord, :], xgau_ew_ini)
         ew_ll_fin = np.polyval(fit_per_order[iord, :], xgau_ew_fin)
-        #ew_ll_ini = np.polynomial.chebyshev.chebval(xgau_ew_ini, fit_per_order[iord])
-        #ew_ll_fin = np.polynomial.chebyshev.chebval(xgau_ew_fin, fit_per_order[iord])
+        # ew_ll_ini = chebval(xgau_ew_ini, fit_per_order[iord])
+        # ew_ll_fin = chebval(xgau_ew_fin, fit_per_order[iord])
         ew_ll = ew_ll_fin - ew_ll_ini
         # put all lines in the order into array
         gau_params = np.column_stack((output_wave_1, ew_ll, peak[gg],
@@ -455,8 +457,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Repeat Littrow test
     # ------------------------------------------------------------------
-
-
     # Do Littrow check
     ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
@@ -551,7 +551,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                     # remove respective order
                     respix_2 = np.delete(respix, max_littrow_ord)
                     worst_order = max_littrow_ord
-               # calculate stats
+                # else break?
+                else:
+                    # TODO: What if min_littrow and max_littrow tests
+                    # TODO:     both are not met --> crash as respix_2
+                    # TODO:     not defined
+                    emsg = 'Undefined condition (min/max Littrow) ask Melissa'
+                    WLOG(p, 'error', emsg)
+                    respix_2, worst_order = None, None
+
+                # calculate stats
                 mean = np.sum(respix_2) / len(respix_2)
                 mean2 = np.sum(respix_2 ** 2) / len(respix_2)
                 rms = np.sqrt(mean2 - mean ** 2)
@@ -589,7 +598,9 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
     tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
-    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
+    # TODO: file was set to WAVE_FILE_EA_2... does not exist
+    # TODO:       - set to WAVE_FILE_EA
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
     wavefitsname = os.path.split(wavefits)[-1]
     # log progress
     wargs = [p['FIBER'], wavefits]
@@ -613,7 +624,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                value=p['MAX_TIME_UNIX'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_CODE'], value=__NAME__)
-    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_INIT'],
+                               value=loc['WAVEFILE'])
     # add number of orders
     hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
