@@ -33,8 +33,6 @@ ParamDict = spirouConfig.ParamDict
 WLOG = spirouCore.wlog
 # get default config parameters
 PARAMS = spirouStartup.Begin(recipe=__NAME__, quiet=True)
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 
 
@@ -80,7 +78,7 @@ def display_calibdb(max_time=None):
     if max_time is None:
         # log master calib db file
         wmsg = 'CalibDB located at: {0}'.format(path)
-        WLOG('', DPROG, wmsg)
+        WLOG(p, '', wmsg)
         # get and check the lock file
         lock, lock_file = spirouCDB.get_check_lock_file(p)
         # try to open the master file
@@ -96,7 +94,7 @@ def display_calibdb(max_time=None):
         args = [path, max_time, p['CALIB_DB_MATCH']]
         wmsgs = ['CalibDB located at: {0}'.format(*args),
                  '    max_time={1}  method={2}'.format(*args)]
-        WLOG('', DPROG, wmsgs)
+        WLOG(p, '', wmsgs)
         # get database at max_time
         cdb, p = spirouCDB.get_database(p, max_time)
         # loop around entries
@@ -108,14 +106,36 @@ def display_calibdb(max_time=None):
 # =============================================================================
 # Define workeer functions
 # =============================================================================
+def set_up():
+    """
+    Load the parameter dictionary (i.e. the recipe setup)
+
+    :return p: ParamDict, the parameter dictionary with all constants from
+               config files loaded in
+    """
+    # Set up
+    # get parameters from config files/run time args/load paths + calibdb
+    p = spirouStartup.Begin(recipe=__NAME__)
+    # need custom args (to accept full path or wild card
+    args, kwargs = [p, 'ICDP_NAME'], dict(required=True, logthis=False)
+    p = spirouStartup.LoadOtherConfig(*args, **kwargs)
+    p['RECIPE'] = __NAME__
+    p['LOG_OPT'], p['PROGRAM'] = p['RECIPE'], p['RECIPE']
+    # return p
+    return p
+
+
+
 def list_files(path, kind=None, prefix=None, suffix=None, substring=None,
                nightname=None, raw=False):
+    # get p
+    p = set_up()
     # print message
     if kind is None:
         wmsg = 'All files in {1} are:'
     else:
         wmsg = 'All {0} files in {1} are:'
-    WLOG('', DPROG, wmsg.format(kind, path))
+    WLOG(p, '', wmsg.format(kind, path))
     # create storage
     store = OrderedDict()
     # loop around files

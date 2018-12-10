@@ -35,12 +35,12 @@ sPlt = spirouCore.sPlt
 # =============================================================================
 # Define functions
 # =============================================================================
-def cause_error():
+def cause_error(p):
 
     emsgs = ['TEST ERROR', 'Caused by: error_test.cause_error()',
              'Return to Exit']
 
-    WLOG('error', 'TEST', emsgs)
+    WLOG(p, 'error', emsgs)
     return 0
 
 
@@ -55,18 +55,18 @@ if __name__ == "__main__":
     runn = 'TEST1'
     errors = dict()
     try:
-        cause_error()
+        cause_error(p)
     except Exception as e:
         wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
         for msg in str(e).split('\n'):
             wmsgs.append('\t' + msg)
-        WLOG('warning', p['LOG_OPT'], wmsgs)
+        WLOG(p, 'warning', wmsgs)
         errors[runn] = str(e)
     except SystemExit as e:
         wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
         for msg in str(e).split('\n'):
             wmsgs.append('\t' + msg)
-        WLOG('warning', p['LOG_OPT'], wmsgs)
+        WLOG(p, 'warning', wmsgs)
         errors[runn] = str(e)
 
 

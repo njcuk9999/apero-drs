@@ -103,7 +103,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     # log process
     # wmsg = 'Interpolating over bad regions'
-    # WLOG('', p['log_opt'], wmsg)
+    # WLOG(p, '', wmsg)
     # run interpolation
     # datac = spirouImage.InterpolateBadRegions(p, datac)
 
@@ -111,16 +111,16 @@ def main(night_name=None, files=None):
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
+    data = spirouImage.ConvertToE(spirouImage.FlipImage(p, datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = spirouImage.ResizeImage(data0, **bkwargs)
+    data2 = spirouImage.ResizeImage(p, data0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('Image format changed to '
+    WLOG(p, '', ('Image format changed to '
                             '{0}x{1}').format(*data2.shape))
 
     # ----------------------------------------------------------------------
@@ -133,7 +133,7 @@ def main(night_name=None, files=None):
     # ----------------------------------------------------------------------
     if p['IC_DO_BKGR_SUBTRACTION']:
         # log that we are doing background measurement
-        WLOG('', p['LOG_OPT'], 'Doing background measurement on raw frame')
+        WLOG(p, '', 'Doing background measurement on raw frame')
         # get the bkgr measurement
         bdata = spirouBACK.MeasureBackgroundFF(p, data2)
         background, gridx, gridy, minlevel = bdata
@@ -160,14 +160,14 @@ def main(night_name=None, files=None):
     rawfitsname = os.path.split(rawfits)[-1]
     # log saving order profile
     wmsg = 'Saving processed raw frame in {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(rawfitsname))
+    WLOG(p, '', wmsg.format(rawfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
     # write to file
     p = spirouImage.WriteImage(p, rawfits, order_profile, hdict)
 
@@ -197,7 +197,7 @@ def main(night_name=None, files=None):
     # Search for order center on the central column - quick estimation
     # ----------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], 'Searching order center on central column')
+    WLOG(p, '', 'Searching order center on central column')
     # plot the minimum of ycc and ic_locseuil if in debug and plot mode
     if p['DRS_DEBUG'] == 0 and p['DRS_PLOT']:
         sPlt.debug_locplot_min_ycc_loc_threshold(p, loc['YCC'])
@@ -212,7 +212,7 @@ def main(night_name=None, files=None):
     number_of_orders = np.min([p['IC_LOCNBMAXO'], len(posc)])
     # log the number of orders than have been detected
     wargs = [p['FIBER'], int(number_of_orders/p['NBFIB']), p['NBFIB']]
-    WLOG('info', p['LOG_OPT'], ('On fiber {0} {1} orders have been detected '
+    WLOG(p, 'info', ('On fiber {0} {1} orders have been detected '
                                 'on {2} fiber(s)').format(*wargs))
 
     # ----------------------------------------------------------------------
@@ -276,7 +276,7 @@ def main(night_name=None, files=None):
             # Log order number and fit at central pixel and width and rms
             wargs = [rorder_num, cf_data['cfitval'], wf_data['cfitval'],
                      cf_data['rms']]
-            WLOG('', p['LOG_OPT'], ('ORDER: {0} center at pixel {1:.1f} width '
+            WLOG(p, '', ('ORDER: {0} center at pixel {1:.1f} width '
                                     '{2:.1f} rms {3:.3f}').format(*wargs))
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # sigma fit params
@@ -305,18 +305,18 @@ def main(night_name=None, files=None):
             rorder_num += 1
         # else log that the order is unusable
         else:
-            WLOG('', p['LOG_OPT'], 'Order found too much incomplete, discarded')
+            WLOG(p, '', 'Order found too much incomplete, discarded')
 
     # Log that order geometry has been measured
-    WLOG('info', p['LOG_OPT'], ('On fiber {0} {1} orders geometry have been '
+    WLOG(p, 'info', ('On fiber {0} {1} orders geometry have been '
                                 'measured').format(p['FIBER'], rorder_num))
     # Get mean rms
     mean_rms_center = np.sum(loc['RMS_CENTER'][:rorder_num]) * 1000/rorder_num
     mean_rms_fwhm = np.sum(loc['RMS_FWHM'][:rorder_num]) * 1000/rorder_num
     # Log mean rms values
     wmsg = 'Average uncertainty on {0}: {1:.2f} [mpix]'
-    WLOG('info', p['LOG_OPT'], wmsg.format('position', mean_rms_center))
-    WLOG('info', p['LOG_OPT'], wmsg.format('width', mean_rms_fwhm))
+    WLOG(p, 'info', wmsg.format('position', mean_rms_center))
+    WLOG(p, 'info', wmsg.format('width', mean_rms_fwhm))
 
     # ----------------------------------------------------------------------
     # Plot of RMS for positions and widths
@@ -359,13 +359,13 @@ def main(night_name=None, files=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -377,48 +377,48 @@ def main(night_name=None, files=None):
     locofits, tag2 = spirouConfig.Constants.LOC_LOCO_FILE(p)
     locofitsname = os.path.split(locofits)[-1]
     # log that we are saving localization file
-    WLOG('', p['LOG_OPT'], ('Saving localization information '
+    WLOG(p, '', ('Saving localization information '
                             'in file: {0}').format(locofitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=raw_loco_file)
-    hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_BCKGRD'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=raw_loco_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_BCKGRD'],
                                value=loc['MEAN_BACKGRD'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_NBO'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_NBO'],
                                value=rorder_num)
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_C'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DEG_C'],
                                value=p['IC_LOCDFITC'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_W'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DEG_W'],
                                value=p['IC_LOCDFITW'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_E'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DELTA'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DEG_E'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DELTA'])
 
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_MAXFLX'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_MAXFLX'],
                                value=float(loc['MAX_SIGNAL']))
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_CTR'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_CTR'],
                                value=np.sum(loc['MAX_RMPTS_POS']))
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_WID'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_WID'],
                                value=np.sum(loc['MAX_RMPTS_WID']))
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_CTR'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_CTR'],
                                value=mean_rms_center)
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_WID'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_WID'],
                                value=mean_rms_fwhm)
     # write 2D list of position fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_CTR_COEFF'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_LOCO_CTR_COEFF'],
                                      values=loc['ACC'][0:rorder_num])
     # write 2D list of width fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_FWHM_COEFF'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_LOCO_FWHM_COEFF'],
                                      values=loc['ASS'][0:rorder_num])
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # write center fits and add header keys (via hdict)
     center_fits = spirouLOCOR.CalcLocoFits(loc['ACC'], data2.shape[1])
     p = spirouImage.WriteImage(p, locofits, center_fits, hdict)
@@ -432,42 +432,42 @@ def main(night_name=None, files=None):
 
     # log that we are saving localization file
     wmsg = 'Saving FWHM information in file: {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(locofits2name))
+    WLOG(p, '', wmsg.format(locofits2name))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCD_SIGDET'])
-    hdict = spirouImage.AddKey(hdict, p['KW_CCD_CONAD'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_NBO'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=p['BADPFILE1'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=p['BADPFILE2'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_SIGDET'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCD_CONAD'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_NBO'],
                                value=rorder_num)
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_C'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DEG_C'],
                                value=p['IC_LOCDFITC'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_W'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DEG_W'],
                                value=p['IC_LOCDFITW'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCO_DEG_E'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_MAXFLX'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCO_DEG_E'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_MAXFLX'],
                                value=float(loc['MAX_SIGNAL']))
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_CTR'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_CTR'],
                                value=np.sum(loc['MAX_RMPTS_POS']))
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_SMAXPTS_WID'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_SMAXPTS_WID'],
                                value=np.sum(loc['MAX_RMPTS_WID']))
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_CTR'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_CTR'],
                                value=mean_rms_center)
-    hdict = spirouImage.AddKey(hdict, p['KW_LOC_RMS_WID'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOC_RMS_WID'],
                                value=mean_rms_fwhm)
     # write 2D list of position fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_CTR_COEFF'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_LOCO_CTR_COEFF'],
                                      values=loc['ACC'][0:rorder_num])
     # write 2D list of width fit coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_LOCO_FWHM_COEFF'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_LOCO_FWHM_COEFF'],
                                      values=loc['ASS'][0:rorder_num])
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # write image and add header keys (via hdict)
     width_fits = spirouLOCOR.CalcLocoFits(loc['ASS'], data2.shape[1])
     p = spirouImage.WriteImage(p, locofits2, width_fits, hdict)
@@ -482,16 +482,16 @@ def main(night_name=None, files=None):
         # log that we are saving localization file
         wmsg1 = 'Saving localization image with superposition of orders in '
         wmsg2 = 'file: {0}'.format(locofits3name)
-        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        WLOG(p, '', [wmsg1, wmsg2])
         # superpose zeros over the fit in the image
         data4 = spirouLOCOR.ImageLocSuperimp(data2o, loc['ACC'][0:rorder_num])
         # save this image to file
-        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
-        hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=p['DARKFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'],
                                    value=p['BADPFILE1'])
-        hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'],
                                    value=p['BADPFILE2'])
         p = spirouImage.WriteImage(p, locofits3, data4, hdict)
 

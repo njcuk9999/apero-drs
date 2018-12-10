@@ -16,6 +16,7 @@ Last modified: 2017-10-11 at 10:49
 from __future__ import division
 import numpy as np
 import os
+import time
 import sys
 import code
 from collections import OrderedDict
@@ -37,8 +38,6 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # get param dict
 ParamDict = spirouConfig.ParamDict
 # get the config error
@@ -72,22 +71,32 @@ def run_begin(recipe, quiet=False):
     """
     func_name = __NAME__ + '.run_begin()'
 
+    # set up process id
+    pid = assign_pid()
+
     # Clean WLOG
-    WLOG.clean_log()
+    WLOG.clean_log(pid)
     # Get config parameters from primary file
     try:
         cparams, warn_messages = spirouConfig.ReadConfigFile()
     except ConfigError as e:
-        WLOG(e.level, DPROG, e.message)
+        WLOG(None, e.level, e.message)
         cparams, warn_messages = None, []
+    # add process id to cparams
+    cparams['PID'] = pid
+    cparams.set_source('PID', func_name)
 
     # log warning messages
     if len(warn_messages) > 0:
-        WLOG('warning', DPROG, warn_messages)
+        WLOG(cparams, 'warning', warn_messages)
 
     # set recipe name
     cparams['RECIPE'] = recipe.split('.py')[0]
     cparams.set_source('RECIPE', func_name)
+    # set program and log_opt
+    cparams['LOG_OPT'] = cparams['RECIPE']
+    cparams['PROGRAM'] = cparams['RECIPE']
+    cparams.set_sources(['LOG_OPT', 'PROGRAM'], func_name)
     # get variables from spirouConst
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
@@ -102,7 +111,7 @@ def run_begin(recipe, quiet=False):
         # display initial parameterisation
         display_initial_parameterisation(cparams)
         # display system info (log only)
-        display_system_info()
+        display_system_info(cparams)
 
     # if DRS_INTERACTIVE is not True then DRS_PLOT should be turned off too
     if not cparams['DRS_INTERACTIVE']:
@@ -116,6 +125,10 @@ def run_begin(recipe, quiet=False):
 
     # return parameters
     return cparams
+
+
+def assign_pid():
+    return 'PID-{0:020d}'.format(int(time.time() * 1e7))
 
 
 def load_arguments(cparams, night_name=None, files=None, customargs=None,
@@ -241,9 +254,9 @@ def load_arguments(cparams, night_name=None, files=None, customargs=None,
         cparams, warnlogs = spirouConfig.GetKeywordArguments(cparams)
         # print warning logs
         for warnlog in warnlogs:
-            WLOG('warning', DPROG, warnlog)
+            WLOG(cparams, 'warning', warnlog)
     except spirouConfig.ConfigError as e:
-        WLOG(e.level, DPROG, e.message)
+        WLOG(cparams, e.level, e.message)
     # -------------------------------------------------------------------------
     # Reduced directory
     # if reduced directory does not exist create it
@@ -301,7 +314,6 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
     returns SystemExit if file is not valid for recipe
     """
     # func_name = __NAME__ + '.initial_file_setup()'
-    log_opt = p['LOG_OPT']
     recipe = p['RECIPE']
     # -------------------------------------------------------------------------
     if not no_night_name:
@@ -318,7 +330,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
             for nightname in nightnames:
                 emsgs.append('\t {0}'.format(nightname))
             # log error message
-            WLOG('error', log_opt, emsgs)
+            WLOG(p, 'error', emsgs)
     if not no_files:
         fits_fn = p['FITSFILENAME']
         # -------------------------------------------------------------------------
@@ -327,9 +339,9 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
             wmsg1 = 'Argument Error: No fits file defined at run time argument'
             wmsg2 = '    format must be:'
             emsg = '    >>> {0}.py [FOLDER] [FILES]'
-            WLOG('error', log_opt, [wmsg1, wmsg2, emsg.format(recipe)])
+            WLOG(p, 'error', [wmsg1, wmsg2, emsg.format(recipe)])
         if not os.path.exists(fits_fn):
-            WLOG('error', log_opt, 'File : {0} does not exist'.format(fits_fn))
+            WLOG(p, 'error', 'File : {0} does not exist'.format(fits_fn))
 
     # -------------------------------------------------------------------------
     # deal with no files being defined
@@ -351,7 +363,7 @@ def initial_file_setup(p, files=None, calibdb=False, no_night_name=False,
         wmsg = 'Now processing Image with {1} recipe'
     else:
         wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], recipe))
+    WLOG(p, 'info', wmsg.format(p['DPRTYPE'], recipe))
     # -------------------------------------------------------------------------
     # return p
     return p
@@ -395,7 +407,7 @@ def single_file_setup(p, filename, log=True, skipcheck=False, pos=None):
             wmsg = 'Now processing Image with {1} recipe'
         else:
             wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-        WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+        WLOG(p, 'info', wmsg.format(p['DPRTYPE'], p['PROGRAM']))
     # return p
     return p, location
 
@@ -443,7 +455,7 @@ def multi_file_setup(p, files=None, log=True, skipcheck=False):
             wmsg = 'Now processing Image(s) with {1} recipe'
         else:
             wmsg = 'Now processing Image(s) TYPE {0} with {1} recipe'
-        WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+        WLOG(p, 'info', wmsg.format(p['DPRTYPE'], p['PROGRAM']))
     # return p
     return p, locations
 
@@ -473,7 +485,7 @@ def load_calibdb(p, calibdb=True):
     """
     if calibdb:
         if not os.path.exists(p['DRS_CALIB_DB']):
-            WLOG('error', p['LOG_OPT'],
+            WLOG(p, 'error',
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
         # then make sure files are copied
         spirouDB.CopyCDBfiles(p)
@@ -501,11 +513,11 @@ def main_end_script(p, outputs='reduced'):
         index_outputs(p)
     # log end message
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
     # add the logger messsages to p
     p = WLOG.output_param_dict(p)
     # finally clear out the log in WLOG
-    WLOG.clean_log()
+    WLOG.clean_log(p['PID'])
     # return p
     return p
 
@@ -521,7 +533,7 @@ def index_pp(p):
     outputs = p['OUTPUTS']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG('', p['LOG_OPT'], 'No outputs to index, skipping indexing')
+        WLOG(p, '', 'No outputs to index, skipping indexing')
         return 0
     # get the index columns
     icolumns = spirouConfig.Constants.RAW_OUTPUT_COLUMNS(p)
@@ -530,7 +542,7 @@ def index_pp(p):
     istore = indexing(p, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    sort_and_save_outputs(istore, abspath)
+    sort_and_save_outputs(p, istore, abspath)
 
 
 def index_outputs(p):
@@ -544,7 +556,7 @@ def index_outputs(p):
     outputs = p['OUTPUTS']
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG('', p['LOG_OPT'], 'No outputs to index, skipping indexing')
+        WLOG(p, '', 'No outputs to index, skipping indexing')
         return 0
     # get the index columns
     icolumns = spirouConfig.Constants.REDUC_OUTPUT_COLUMNS(p)
@@ -553,14 +565,14 @@ def index_outputs(p):
     istore = indexing(p, outputs, icolumns, abspath)
     # ------------------------------------------------------------------------
     # sort and save
-    sort_and_save_outputs(istore, abspath)
+    sort_and_save_outputs(p, istore, abspath)
 
 
 def indexing(p, outputs, icolumns, abspath):
     # ------------------------------------------------------------------------
     # log indexing
     wmsg = 'Indexing outputs onto {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(abspath))
+    WLOG(p, '', wmsg.format(abspath))
     # construct a dictionary from outputs and icolumns
     istore = OrderedDict()
     # get output path
@@ -593,14 +605,14 @@ def indexing(p, outputs, icolumns, abspath):
     # deal with file existing (add existing rows)
     if os.path.exists(abspath):
         # get the current index fits file
-        idict = spirouImage.ReadFitsTable(abspath, return_dict=True)
+        idict = spirouImage.ReadFitsTable(p, abspath, return_dict=True)
         # check that all keys are in idict
         for key in icolumns:
             if key not in list(idict.keys()):
                 wmsg1 = ('Warning: Index file does not have column="{0}"'
                          ''.format(key))
                 wmsg2 = '\tPlease run the appropriate off_listing recipe'
-                WLOG('warning', p['LOG_OPT'], [wmsg1, wmsg2])
+                WLOG(p, 'warning', [wmsg1, wmsg2])
         # loop around rows in idict
         for row in range(len(idict['FILENAME'])):
             # skip if we already have this file
@@ -621,7 +633,7 @@ def indexing(p, outputs, icolumns, abspath):
     return istore
 
 
-def sort_and_save_outputs(istore, abspath):
+def sort_and_save_outputs(p, istore, abspath):
     # ------------------------------------------------------------------------
     # sort the istore by column name and add to table
     sortmask = np.argsort(istore['FILENAME'])
@@ -631,7 +643,7 @@ def sort_and_save_outputs(istore, abspath):
     # ------------------------------------------------------------------------
     # Make fits table and write fits table
     itable = spirouImage.MakeFitsTable(istore)
-    spirouImage.WriteFitsTable(itable, abspath)
+    spirouImage.WriteFitsTable(p, itable, abspath)
 
 
 # noinspection PyProtectedMember
@@ -672,10 +684,10 @@ def exit_script(ll, has_plots=True):
         kind = 'python'
     # log message
     wmsg = 'Press "Enter" to exit or [Y]es to continue in {0}'
-    WLOG('', '', '')
-    WLOG('', '', HEADER, printonly=True)
-    WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
-    WLOG('', '', HEADER, printonly=True)
+    WLOG(p, '', '')
+    WLOG(p, '', HEADER, printonly=True)
+    WLOG(p, 'warning', wmsg.format(kind), printonly=True)
+    WLOG(p, '', HEADER, printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
@@ -711,9 +723,9 @@ def exit_script(ll, has_plots=True):
     if find_interactive() and has_plots:
         # deal with closing plots
         wmsg = 'Close plots? [Y]es or [N]o?'
-        WLOG('', '', HEADER, printonly=True)
-        WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
-        WLOG('', '', HEADER, printonly=True)
+        WLOG(p, '', HEADER, printonly=True)
+        WLOG(p, 'warning', wmsg.format(kind), printonly=True)
+        WLOG(p, '', HEADER, printonly=True)
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
             # noinspection PyUnresolvedReferences
@@ -727,7 +739,6 @@ def exit_script(ll, has_plots=True):
 
 
 def spirou_input_yes_no(p, question):
-
     # if DRS_INTERACTIVE is False just return 0
     if not p['DRS_INTERACTIVE']:
         print('Interactive mode off')
@@ -741,7 +752,7 @@ def spirou_input_yes_no(p, question):
     wmsg = question
     WLOG('', '', '')
     WLOG('', '', HEADER, printonly=True)
-    WLOG('warning', p['LOG_OPT'], wmsg.format(kind), printonly=True)
+    WLOG(p, 'warning', wmsg.format(kind), printonly=True)
     WLOG('', '', HEADER, printonly=True)
     # deal with python 2 / python 3 input method
     if sys.version_info.major < 3:
@@ -765,7 +776,7 @@ def check_key_fparams(p):
         if p['FITSFILENAME'] is not None:
             if not os.path.exists(p['FITSFILENAME']):
                 emsg = 'Fatal error cannot find FITSFILENAME={0}'
-                WLOG('error', DPROG, emsg.format(p['FITSFILENAME']))
+                WLOG(p, 'error', emsg.format(p['FITSFILENAME']))
 
     if 'ARG_FILE_NAMES' in p:
         for afile in p['ARG_FILE_NAMES']:
@@ -773,7 +784,7 @@ def check_key_fparams(p):
             if not os.path.exists(apath):
                 emsg1 = 'Fatal error cannot find ARG_FILE_NAME={0}'
                 emsg2 = '   in directory = {0}'.format(p['ARG_FILE_DIR'])
-                WLOG('error', DPROG, [emsg1.format(afile), emsg2])
+                WLOG(p, 'error', [emsg1.format(afile), emsg2])
     # finally return param dict
     return p
 
@@ -981,7 +992,7 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None,
         emsg1 = (' Error "cparams" must contain "DRS_DATA_RAW" and '
                  '"ARG_NIGHT_NAME"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # get chosen arg_file_dir
     p = set_arg_file_dir(p, mfd, rnn)
 
@@ -996,7 +1007,7 @@ def get_call_arg_files_fitsfilename(p, files, mfd=None,
                  'of strings')
         emsg2 = '\t"files" type is currently = "{0}"'.format(type(files))
         emsg3 = '\tfunction = {0}'.format(func_name)
-        WLOG('error', p['log_opt'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         checkfiles = []
 
     # if we don't have arg_file_names set it to the "files"
@@ -1105,7 +1116,7 @@ def set_arg_file_dir(p, mfd=None, require_night_name=True):
             emsgs = ['Fatal error cannot find '
                      'NIGHT_NAME="{0}"'.format(p['ARG_NIGHT_NAME']),
                      '    in directory {0} ({1})'.format(arg_fp, location)]
-            WLOG('error', DPROG, emsgs)
+            WLOG(p, 'error', emsgs)
         elif not require_night_name:
             p['ARG_FILE_DIR'] = ''
         # else it is the directory which is wrong (cal_validate was not run)
@@ -1113,7 +1124,7 @@ def set_arg_file_dir(p, mfd=None, require_night_name=True):
             emsg1 = ('Fatal error cannot find directory NIGHT_NAME="{0}"'
                      ''.format(p['ARG_FILE_DIR']))
             # log error
-            WLOG('error', DPROG, emsg1)
+            WLOG(p, 'error', emsg1)
 
     # return p
     return p
@@ -1146,12 +1157,12 @@ def load_other_config_file(p, key, logthis=True, required=False):
         pp, lmsgs = spirouConfig.LoadConfigFromFile(p, key, required=required,
                                                     logthis=logthis)
     except spirouConfig.ConfigError as e:
-        WLOG(e.level, p['LOG_OPT'], e.message)
+        WLOG(p, e.level, e.message)
         pp, lmsgs = ParamDict(), []
 
     # log messages caught in loading config file
     if len(lmsgs) > 0:
-        WLOG('', DPROG, lmsgs)
+        WLOG(p, '', lmsgs)
     # return parameter dictionary
     return pp
 
@@ -1199,12 +1210,12 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
     func_name = __NAME__ + '.deal_with_prefixes()'
     # if we have p then we are just checking a filename
     if p is None:
-        p = ParamDict(log_opt=DPROG)
+        p = ParamDict(log_opt=__NAME__)
         if filename is None:
             emsgs = ['ParamDict "p" or "filename" must be defined '
                      '(both are None)',
                      '   function = {0}'.format(func_name)]
-            WLOG('error', p['LOG_OPT'], emsgs)
+            WLOG(p, 'error', emsgs)
     # if we have no prefixes we can just return p
     if prefixes is None:
         return p
@@ -1230,7 +1241,7 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
             wmsg = 'Correct type of image ({1})'
         else:
             wmsg = 'Correct type of image for {0} ({1})'
-        WLOG('info', p['LOG_OPT'], wmsg.format(kind, ' or '.join(prefixes)))
+        WLOG(p, 'info', wmsg.format(kind, ' or '.join(prefixes)))
         # if a2p is not None we have some variables that need added to
         # parameter dictionary based on the prefix found
         if add_to_p is not None:
@@ -1258,10 +1269,10 @@ def deal_with_prefixes(p=None, kind=None, prefixes=None,
             wmsg = 'Wrong type of image, should be {1}'
         else:
             wmsg = 'Wrong type of image for {0}, should be {1}'
-        WLOG('error', p['LOG_OPT'], wmsg.format(kind, ' or '.join(prefixes)))
+        WLOG(p, 'error', wmsg.format(kind, ' or '.join(prefixes)))
 
 
-def get_arguments(positions, types, names, required, calls, cprior, lognames,
+def get_arguments(p, positions, types, names, required, calls, cprior, lognames,
                   require_night_name=True, recipe=None):
     """
     Take the "positions" and extract from sys.argv[2:] (first arg is the program
@@ -1337,7 +1348,7 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
                     else:
                         emsgs.append(('\t>>> {0} {1}'.format(*eargs)))
                     # log error
-                    WLOG('error', recipe, emsgs)
+                    WLOG(p, 'error', emsgs)
                     raw_value = None
             # else we must use the value from calls
             else:
@@ -1358,14 +1369,14 @@ def get_arguments(positions, types, names, required, calls, cprior, lognames,
         except ValueError:
             emsg = 'Arguments Error: "{0}" should be a {1} (Value = {2})'
             eargs = [lognames[pos], TYPENAMES[kind], raw_value]
-            WLOG('error', recipe, emsg.format(*eargs))
+            WLOG(p, 'error', emsg.format(*eargs))
         except TypeError:
             pass
     # return dict
     return customdict
 
 
-def get_multi_last_argument(customdict, positions, types, names, lognames):
+def get_multi_last_argument(p, customdict, positions, types, names, lognames):
     """
     Takes the largest argument in "positions" and pushes all further arguments
     into a list under names[max(positions)], all further arguments are
@@ -1422,7 +1433,7 @@ def get_multi_last_argument(customdict, positions, types, names, lognames):
                     emsg = ('Arguments Error: "{0}" should be a {1} '
                             '(Value = {2})')
                     eargs = [lognames[pos], TYPENAMES[maxkind], raw_value]
-                    WLOG('error', DPROG, emsg.format(*eargs))
+                    WLOG(p, 'error', emsg.format(*eargs))
     else:
         customdict[maxname] = [customdict[maxname]]
     # return the new custom dictionary
@@ -1448,7 +1459,7 @@ def get_file(p, path, filename):
     """
     # if path is None and name is None
     if path is None:
-        WLOG('error', p['LOG_OPT'], 'No file defined')
+        WLOG(p, 'error', 'No file defined')
     # if name and path are not None
     if filename is None:
         filename = os.path.basename(path)
@@ -1458,11 +1469,11 @@ def get_file(p, path, filename):
     # test if path exists
     if not os.path.exists(path):
         emsg = 'Directory: {0} does not exist'
-        WLOG('error', p['LOG_OPT'], emsg.format(path))
+        WLOG(p, 'error', emsg.format(path))
     # test if path + file exits
     if not os.path.exists(location):
         emsg = 'File : {0} does not exist at location {1}'
-        WLOG('error', p['LOG_OPT'], emsg.format(filename, path))
+        WLOG(p, 'error', emsg.format(filename, path))
     # if all conditions passed return full path
     return location
 
@@ -1576,7 +1587,7 @@ def sort_version(messages=None):
 # =============================================================================
 # Define custom argument functions
 # =============================================================================
-def get_custom_from_run_time_args(positions=None, types=None, names=None,
+def get_custom_from_run_time_args(p, positions=None, types=None, names=None,
                                   required=None, calls=None, cprior=None,
                                   lognames=None, last_multi=False,
                                   require_night_name=True, recipe=None):
@@ -1623,7 +1634,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     """
     # deal with no recipe
     if recipe is None:
-        recipe = str(DPROG)
+        recipe = str(__NAME__)
     recipe = recipe.split('.py')[0]
     # deal with no positions (use length of types or names or exit with error)
     if positions is None:
@@ -1634,7 +1645,7 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
         else:
             emsg = ('Either "positions", "name" or "types" must be defined to'
                     'get custom arguments.')
-            WLOG('', recipe, emsg)
+            WLOG(p, '', emsg)
     # deal with no types (set to strings)
     if types is None:
         types = [str] * len(positions)
@@ -1650,12 +1661,12 @@ def get_custom_from_run_time_args(positions=None, types=None, names=None,
     if cprior is None:
         cprior = [False] * len(positions)
     # loop around positions test the type and add the value to dictionary
-    customdict = get_arguments(positions, types, names, required, calls,
+    customdict = get_arguments(p, positions, types, names, required, calls,
                                cprior, lognames, require_night_name,
                                recipe)
     # deal with the position needing to find additional parameters
     if last_multi:
-        customdict = get_multi_last_argument(customdict, positions, types,
+        customdict = get_multi_last_argument(p, customdict, positions, types,
                                              names, lognames)
     # finally return dictionary
     return customdict
@@ -1733,7 +1744,7 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None, rnn=True):
             emsg2 = ('    customarg[{0}]={1} (type={2})'
                      ''.format(mff, cmff, tcmff))
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
             rawfilename = None
 
         # check if mainfitsvalue is a full path
@@ -1756,18 +1767,18 @@ def get_custom_arg_files_fitsfilename(p, customargs, mff, mfd=None, rnn=True):
             emsg1 = ('The value of mainfitsfile: "{0}"={1} must be a '
                      'valid python string or list').format(*eargs)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # if mainfitsfile is not a key in customargs raise an error
     else:
         emsg1 = ('If using custom arguments "mainfitsfile" must be a '
                  'key in "customargs"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     return p
 
 
-def load_minimum(p, customargs=None):
+def load_minimum(p, customargs=None, quiet=False):
     """
     Load minimal settings (without fitsfilename, arg_file_names, arg_file_dir
     etc)
@@ -1819,7 +1830,8 @@ def load_minimum(p, customargs=None):
     p.set_source('RAW_DIR', source + ' & {0}/RAW_DIR()')
     # -------------------------------------------------------------------------
     # load ICDP config file
-    p = load_other_config_file(p, 'ICDP_NAME', required=True)
+    logthis = not quiet
+    p = load_other_config_file(p, 'ICDP_NAME', required=True, logthis=logthis)
     # -------------------------------------------------------------------------
     # if we have customargs
     if customargs is not None:
@@ -1844,16 +1856,16 @@ def display_drs_title(p):
     :return None:
     """
     # create title
-    title = ' * {DRS_NAME} @(#) Geneva Observatory ({DRS_VERSION})'.format(**p)
+    title = ' * {DRS_NAME} @{PID} ({DRS_VERSION})'.format(**p)
 
     # Log title
-    display_title(title)
+    display_title(p, title)
 
     if p['DRS_DEBUG'] == 42:
-        display_ee()
+        display_ee(p)
 
 
-def display_title(title):
+def display_title(p, title):
     """
     Display any title between HEADER bars via the WLOG command
 
@@ -1862,13 +1874,12 @@ def display_title(title):
     :return None:
     """
     # Log title
-    WLOG('', '', HEADER)
-    WLOG('', '',
-         '{0}'.format(title))
-    WLOG('', '', HEADER)
+    WLOG(p, '', HEADER)
+    WLOG(p, '', '{0}'.format(title))
+    WLOG(p, '', HEADER)
 
 
-def display_ee():
+def display_ee(p):
     bcolors = spirouConfig.Constants.BColors
 
     # noinspection PyPep8
@@ -1888,7 +1899,7 @@ def display_ee():
             '']
 
     for line in logo:
-        WLOG('', '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
+        WLOG(p, '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
 
 
 def display_initial_parameterisation(p):
@@ -1928,37 +1939,38 @@ def display_initial_parameterisation(p):
     :return None:
     """
     # Add initial parameterisation
-    WLOG('', '', '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
-    WLOG('', '', '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'
-                 ''.format(**p))
-    WLOG('', '', '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
-    WLOG('', '', '(dir_drs_uconfig)   DRS_UCONFIG={DRS_UCONFIG}'.format(**p))
-    WLOG('', '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
-    WLOG('', '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
+    WLOG(p, '', '(dir_data_raw)      DRS_DATA_RAW={DRS_DATA_RAW}'.format(**p))
+    WLOG(p, '', '(dir_data_reduc)    DRS_DATA_REDUC={DRS_DATA_REDUC}'
+                ''.format(**p))
+    WLOG(p, '', '(dir_drs_config)    DRS_CONFIG={DRS_CONFIG}'.format(**p))
+    WLOG(p, '', '(dir_drs_uconfig)   DRS_UCONFIG={DRS_UCONFIG}'.format(**p))
+    WLOG(p, '', '(dir_calib_db)      DRS_CALIB_DB={DRS_CALIB_DB}'.format(**p))
+    WLOG(p, '', '(dir_tellu_db)      DRS_TELLU_DB={DRS_TELLU_DB}'.format(**p))
+    WLOG(p, '', '(dir_data_msg)      DRS_DATA_MSG={DRS_DATA_MSG}'.format(**p))
     # WLOG('', '', ('(print_log)         DRS_LOG={DRS_LOG}         '
     #               '%(0: minimum stdin-out logs)').format(**p))
-    WLOG('', '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
-                  '%(error/warning/info/all)').format(**p))
-    WLOG('', '', ('(log_level)         LOG_LEVEL={LOG_LEVEL}         '
-                  '%(error/warning/info/all)').format(**p))
-    WLOG('', '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
-                  '%(def/undef/trigger)').format(**p))
-    WLOG('', '', ('(used_date)         DRS_USED_DATE={DRS_USED_DATE}'
-                  '').format(**p))
+    WLOG(p, '', ('(print_level)       PRINT_LEVEL={PRINT_LEVEL}         '
+                 '%(error/warning/info/all)').format(**p))
+    WLOG(p, '', ('(log_level)         LOG_LEVEL={LOG_LEVEL}         '
+                 '%(error/warning/info/all)').format(**p))
+    WLOG(p, '', ('(plot_graph)        DRS_PLOT={DRS_PLOT}            '
+                 '%(def/undef/trigger)').format(**p))
+    WLOG(p, '', ('(used_date)         DRS_USED_DATE={DRS_USED_DATE}'
+                 '').format(**p))
     if p['DRS_DATA_WORKING'] is None:
-        WLOG('', '', ('(working_dir)       DRS_DATA_WORKING is not set, '
-                      'running on-line mode'))
+        WLOG(p, '', ('(working_dir)       DRS_DATA_WORKING is not set, '
+                     'running on-line mode'))
     else:
-        WLOG('', '', ('(working_dir)       DRS_DATA_WORKING={DRS_DATA_WORKING}'
-                      '').format(**p))
+        WLOG(p, '', ('(working_dir)       DRS_DATA_WORKING={DRS_DATA_WORKING}'
+                     '').format(**p))
     if p['DRS_INTERACTIVE'] == 0:
-        WLOG('', '', ('                    DRS_INTERACTIVE is not set, '
-                      'running on-line mode'))
+        WLOG(p, '', ('                    DRS_INTERACTIVE is not set, '
+                     'running on-line mode'))
     else:
-        WLOG('', '', '                    DRS_INTERACTIVE is set')
+        WLOG(p, '', '                    DRS_INTERACTIVE is set')
     if p['DRS_DEBUG'] > 0:
-        WLOG('', '', ('                    DRS_DEBUG is set, debug mode level'
-                      ':{DRS_DEBUG}').format(**p))
+        WLOG(p, '', ('                    DRS_DEBUG is set, debug mode level'
+                     ':{DRS_DEBUG}').format(**p))
 
 
 def display_run_files(p):
@@ -1975,10 +1987,10 @@ def display_run_files(p):
 
     :return None:
     """
-    WLOG('', p['LOG_OPT'], ('Now running : {PROGRAM} on file(s): '
-                            '{STR_FILE_NAMES}').format(**p))
+    WLOG(p, '', ('Now running : {PROGRAM} on file(s): '
+                 '{STR_FILE_NAMES}').format(**p))
     tmp = spirouConfig.Constants.RAW_DIR(p)
-    WLOG('', p['LOG_OPT'], 'On directory {0}'.format(tmp))
+    WLOG(p, '', 'On directory {0}'.format(tmp))
 
 
 def display_custom_args(p, customargs):
@@ -1998,10 +2010,10 @@ def display_custom_args(p, customargs):
     """
     wmsg = 'Now running : {0} with: '.format(p['PROGRAM'])
 
-    WLOG('', p['LOG_OPT'], wmsg)
+    WLOG(p, '', wmsg)
     for customarg in customargs:
         wmsg = '       -- {0}={1} '.format(customarg, p[customarg])
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
 
 
 def display_help_file(p):
@@ -2037,7 +2049,7 @@ def display_help_file(p):
     # do display help
     if display_help:
         # Log help file
-        WLOG('', p['LOG_OPT'], 'HELP mode for  ' + p['PROGRAM'])
+        WLOG(p, '', 'HELP mode for  ' + p['PROGRAM'])
         # Get man file
         man_file = spirouConfig.Constants.MANUAL_FILE(p)
         # try to open man file
@@ -2053,17 +2065,17 @@ def display_help_file(p):
             except Exception as e:
                 emsg1 = 'Cannot open help file {0}'.format(man_file)
                 emsg2 = '   error {0} was: {1}'.format(type(e), e)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
 
         # else print that we have no man file
         else:
             # log and exit
             emsg = 'No help file is not found for this recipe'
-            WLOG('error', p['LOG_OPT'], emsg)
+            WLOG(p, 'error', emsg)
 
 
 # noinspection PyListCreation
-def display_system_info(logonly=True, return_message=False):
+def display_system_info(p, logonly=True, return_message=False):
     """
     Display system information via the WLOG command
 
@@ -2088,7 +2100,7 @@ def display_system_info(logonly=True, return_message=False):
         return messages
     else:
         # return messages for logger
-        WLOG('', '', messages, logonly=logonly)
+        WLOG(p, '', messages, logonly=logonly)
 
 # =============================================================================
 # End of code

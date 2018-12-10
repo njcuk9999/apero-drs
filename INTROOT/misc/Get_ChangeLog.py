@@ -47,7 +47,7 @@ REVKEY = '(rev.'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path, kind='rpm', version=None, since=None, until=None):
+def update(p, filename, path, kind='rpm', version=None, since=None, until=None):
     # get default run
     cargs = [path, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -68,7 +68,7 @@ def update(filename, path, kind='rpm', version=None, since=None, until=None):
     os.system(command)
     # check that file created
     if not os.path.exists(filename):
-        WLOG('error', __NAME__.split('.py')[0], 'Error with gcg (see above)')
+        WLOG(p, 'error', 'Error with gcg (see above)')
 
 
 def process_lines(fullfilename, tmpfilename, path, kind='rpm', version=None):
@@ -257,7 +257,8 @@ if __name__ == "__main__":
         WLOG('', __NAME__, wmsg.format(drs_since))
     # get full log
     WLOG('', __NAME__, 'Getting full commit log')
-    update(TMPFILENAME, PATH, kind='rpm', version=drs_version, since=drs_since)
+    update(p, TMPFILENAME, PATH, kind='rpm', version=drs_version,
+           since=drs_since)
     # get lines group them and save to full file
     process_lines(FILENAME, TMPFILENAME, PATH, kind='rpm', version=drs_version)
 

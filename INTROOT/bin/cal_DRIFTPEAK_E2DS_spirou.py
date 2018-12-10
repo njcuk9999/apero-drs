@@ -72,7 +72,8 @@ def main(night_name=None, reffile=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
-        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+        customargs = spirouStartup.GetCustomFromRuntime(p,
+                                                        [0], [str], ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
@@ -121,11 +122,11 @@ def main(night_name=None, reffile=None):
             emsg1 = ('Wrong type of image for Drift, header key "{0}" should be'
                      '{1}'.format(*eargs1))
             emsg2 = '\tPlease check DRIFT_PEAK_ALLOWED_TYPES'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     else:
         emsg = 'Header key = "{0}" missing from file {1}'
         eargs = [p['KW_EXT_TYPE'][0], p['REFFILENAME']]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     loc.set_source('LAMP', __NAME__ + '/main()')
 
     # ----------------------------------------------------------------------
@@ -190,7 +191,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # log that we are identifying peaks
     wmsg = 'Identification of lines in reference file: {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['REFFILE']))
+    WLOG(p, '', wmsg.format(p['REFFILE']))
     # get the position of FP peaks from reference file
     loc = spirouRV.CreateDriftFile(p, loc)
 
@@ -233,7 +234,7 @@ def main(night_name=None, reffile=None):
              '\tExtensions allowed:']
     for listtype in listtypes:
         wmsgs.append('\t\t - {0}'.format(listtype))
-    WLOG('info', p['LOG_OPT'], wmsgs)
+    WLOG(p, 'info', wmsgs)
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -274,7 +275,7 @@ def main(night_name=None, reffile=None):
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading
         wmsg = 'Reading file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(os.path.split(fpfile)[-1]))
+        WLOG(p, '', wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
         # read e2ds files and get timestamp
         # ------------------------------------------------------------------
@@ -334,7 +335,7 @@ def main(night_name=None, reffile=None):
             # work out median drifts per order
             loc = spirouRV.DriftPerOrder(loc, i_it)
             # work out mean drift across all orders
-            loc = spirouRV.DriftAllOrders(loc, i_it, nomin, nomax)
+            loc = spirouRV.DriftAllOrders(p, loc, i_it, nomin, nomax)
             # log the mean drift
             wmsg = ('Time from ref= {0:.2f} h '
                     '- Flux Ratio= {1:.2f} '
@@ -342,7 +343,7 @@ def main(night_name=None, reffile=None):
                     '{3:.2f} m/s')
             wargs = [loc['DELTATIME'][i_it], loc['FLUXRATIO'][i_it],
                      loc['MEANRV'][i_it], loc['MERRDRIFT'][i_it]]
-            WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'info', wmsg.format(*wargs))
         # else we can't use this extract
         else:
             if p['DRS_PLOT']:
@@ -359,8 +360,8 @@ def main(night_name=None, reffile=None):
             # log that we cannot use this extraction
             wmsg1 = 'The correlation of some orders compared to the template is'
             wmsg2 = '   < {0}, something went wrong in the extract.'
-            WLOG('warning', p['LOG_OPT'], wmsg1)
-            WLOG('warning', p['LOG_OPT'], wmsg2.format(prcut))
+            WLOG(p, 'warning', wmsg1)
+            WLOG(p, 'warning', wmsg2.format(prcut))
     # ------------------------------------------------------------------
     # peak to peak drift
     driftptp = np.max(loc['MEANRV']) - np.min(loc['MEANRV'])
@@ -369,7 +370,7 @@ def main(night_name=None, reffile=None):
     wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
             '{2:.2f} hour')
     wargs = [driftptp, driftrms, np.max(loc['DELTATIME'])]
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Plot of mean drift
@@ -390,16 +391,16 @@ def main(night_name=None, reffile=None):
     driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
+    WLOG(p, '', wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # set the version
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_REFFILE'], value=raw_infile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
     # save drift values
     p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
@@ -414,12 +415,12 @@ def main(night_name=None, reffile=None):
     columnformats = ['7.4f', '6.2f', '6.3f', '6.2f', '6.2f']
     columnvalues = [loc['DELTATIME'], loc['MEANRV'], loc['MERRDRIFT'],
                     loc['MEANRV_LEFT'], loc['MEANRV_RIGHT']]
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
     wmsg = 'Average Drift saved in {0} Saved '
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(drifttblname))
-    spirouImage.WriteTable(table, drifttbl, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(drifttblname))
+    spirouImage.WriteTable(p, table, drifttbl, fmt='ascii.rst')
 
     # ------------------------------------------------------------------
     # Plot amp and llpeak

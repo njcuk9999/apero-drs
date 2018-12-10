@@ -68,7 +68,8 @@ def main(night_name=None, reffile=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
-        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0], [str],
+                                                        ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
@@ -144,7 +145,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # log that we are performing background correction
     if p['IC_DRIFT_BACK_CORR']:
-        WLOG('', p['LOG_OPT'], 'Perform background correction')
+        WLOG(p, '', 'Perform background correction')
         # get the box size from constants
         bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
         # Loop around the orders
@@ -167,7 +168,7 @@ def main(night_name=None, reffile=None):
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
 
     # ------------------------------------------------------------------
     # Reference plots
@@ -193,7 +194,7 @@ def main(night_name=None, reffile=None):
              '\tExtensions allowed:']
     for listtype in listtypes:
         wmsgs.append('\t\t - {0}'.format(listtype))
-    WLOG('info', p['LOG_OPT'], wmsgs)
+    WLOG(p, 'info', wmsgs)
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -222,7 +223,7 @@ def main(night_name=None, reffile=None):
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading
         wmsg = 'Reading file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(os.path.split(fpfile)[-1]))
+        WLOG(p, '', wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
         # read e2ds files and get timestamp
         # ------------------------------------------------------------------
@@ -261,7 +262,7 @@ def main(night_name=None, reffile=None):
         # ------------------------------------------------------------------
         # correction of the cosmics and renomalisation by comparison with
         #   the reference spectrum
-        dargs = [loc['SPEREF'], loc['SPE']]
+        dargs = [p, loc['SPEREF'], loc['SPE']]
         dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'],
                        cut=p['IC_DRIFT_CUT_E2DS'])
@@ -293,7 +294,7 @@ def main(night_name=None, reffile=None):
         # Log the RV properties
         wmsg = ('Time from ref={0:.2f} h  - Drift mean= {1:.2f} +- {2:.3f} m/s '
                 '- Flux ratio= {3:.3f} - Nb Comsic= {4}')
-        WLOG('', p['LOG_OPT'], wmsg.format(deltatime, meanrv, merr,
+        WLOG(p, '', wmsg.format(deltatime, meanrv, merr,
                                            meanfratio, cpt))
         # add this iteration to storage
         loc['DRIFT'][i_it] = -1.0 * rv
@@ -334,7 +335,7 @@ def main(night_name=None, reffile=None):
     wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
             '{2:.2f} hour')
     wargs = [driftptp, driftrms, np.max(loc['DELTATIME'])]
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Plot of mean drift
@@ -355,15 +356,15 @@ def main(night_name=None, reffile=None):
     driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
+    WLOG(p, '', wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # set the version
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_REFFILE'], value=raw_infile)
     # save drift values
     p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
@@ -377,12 +378,12 @@ def main(night_name=None, reffile=None):
     columnnames = ['time', 'drift', 'drifterr']
     columnformats = ['7.4f', '6.2f', '6.3f']
     columnvalues = [loc['DELTATIME'], loc['MDRIFT'], loc['MERRDRIFT']]
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
     wmsg = 'Average Drift saved in {0} Saved '
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(drifttblname))
-    spirouImage.WriteTable(table, drifttbl, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(drifttblname))
+    spirouImage.WriteTable(p, table, drifttbl, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # End Message

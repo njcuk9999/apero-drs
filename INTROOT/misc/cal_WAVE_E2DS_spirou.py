@@ -54,7 +54,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     if hcfiles is None or fpfile is None:
         names, types = ['fpfile', 'hcfiles'], [str, str]
-        customargs = spirouStartup.GetCustomFromRuntime([0, 1], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(hcfiles=hcfiles, fpfile=fpfile)
@@ -89,7 +89,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         emsg = 'Fiber not matching for {0} and {1}, should be the same'
         eargs = [hcfitsfilename, fpfitsfilename]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     # set the fiber type
     p['FIB_TYP'] = [p['FIBER']]
     p.set_source('FIB_TYP', __NAME__ + '/main()')
@@ -150,7 +150,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # correct the data with the flat
     # TODO: Should this be used?
     # log
-    # WLOG('', p['LOG_OPT'], 'Applying flat correction')
+    # WLOG(p, '', 'Applying flat correction')
     # loc['HCDATA'] = loc['HCDATA']/loc['FLAT']
     # loc['FPDATA'] = loc['FPDATA']/loc['FLAT']
 
@@ -178,7 +178,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
             # log process
             wmsg = ('Doing Instrumental drift computation from previous '
                     'calibration')
-            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+            WLOG(p, '', wmsg)
             # calculate instrument drift
             loc = spirouTHORCA.CalcInstrumentDrift(p, loc)
 
@@ -187,7 +187,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # log message for loop
         wmsg = 'Processing Wavelength Calibration for Fiber {0}'
-        WLOG('info', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+        WLOG(p, 'info', wmsg.format(p['FIBER']))
 
         # ------------------------------------------------------------------
         # Part 1 of cal_HC
@@ -199,7 +199,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # ------------------------------------------------------------------
         # log message
         wmsg = 'Calculating FP wave solution'
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         # calculate FP wave solution
         # spirouTHORCA.FPWaveSolution(p, loc, mode=find_lines_mode)
         spirouTHORCA.FPWaveSolutionNew(p, loc)
@@ -253,7 +253,7 @@ def part2test(p, loc):
     # log message
     wmsg = ('On fiber {0} fitting wavelength solution on identified '
             'lines: (second pass)')
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+    WLOG(p, '', wmsg.format(p['FIBER']))
     # fit lines
     start, end = p['IC_HC_N_ORD_START_2'], p['IC_HC_N_ORD_FINAL_2']
     lls = loc['LITTROW_EXTRAP_SOL_1'][start: end]
@@ -331,14 +331,14 @@ def part2test(p, loc):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'],
+        WLOG(p, 'info',
              'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -351,33 +351,33 @@ def part2test(p, loc):
     # get wave filename
     wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_FP(p)
     wavefitsname = os.path.split(wavefits)[-1]
-    WLOG('', p['LOG_OPT'], wavefits)
+    WLOG(p, '', wavefits)
 
     # log progress
     wargs = [p['FIBER'], wavefitsname]
     wmsg = 'Write wavelength solution for Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
     # write solution to fitsfilename header
     # copy original keys
     hdict = spirouImage.CopyOriginalKeys(loc['HCHDR'], loc['HCCDR'])
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_HCFILE'], value=raw_infile1)
-    hdict = spirouImage.AddKey(hdict, p['kw_FPFILE'], value=raw_infile2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_HCFILE'], value=raw_infile1)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_FPFILE'], value=raw_infile2)
     # add quality control
-    hdict = spirouImage.AddKey(hdict, p['KW_DRS_QC'], value=p['QC'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DRS_QC'], value=p['QC'])
     # add number of orders
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                value=loc['LL_PARAM_FINAL'].shape[0])
     # add degree of fit
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                value=loc['LL_PARAM_FINAL'].shape[1]-1)
     # add wave solution
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
     # write original E2DS file and add header keys (via hdict)
     # spirouImage.WriteImage(p['FITSFILENAME'], loc['HCDATA'], hdict)
@@ -390,10 +390,10 @@ def part2test(p, loc):
 
     wargs = [p['FIBER'], os.path.split(e2dscopy_filename)[-1]]
     wmsg = 'Write reference E2DS spectra for Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # make a copy of the E2DS file for the calibBD
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
     p = spirouImage.WriteImage(p, e2dscopy_filename, loc['HCDATA'], hdict)
 
     # ------------------------------------------------------------------
@@ -418,12 +418,12 @@ def part2test(p, loc):
                     [num_iterations], [err], [sig_littrow[0]],
                     [sig_littrow[1]], [sig_littrow[2]]]
     # make table
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # merge table
     wmsg = 'Global result summary saved in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavetblname))
-    spirouImage.MergeTable(table, wavetbl, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(wavetblname))
+    spirouImage.MergeTable(p, table, wavetbl, fmt='ascii.rst')
 
     # ------------------------------------------------------------------
     # Save line list table file
@@ -449,14 +449,14 @@ def part2test(p, loc):
 
     # log saving
     wmsg = 'List of lines used saved in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wavelltblname))
+    WLOG(p, '', wmsg.format(wavelltblname))
 
     # make table
     columnvalues = np.array(columnvalues).T
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
-    spirouImage.WriteTable(table, wavelltbl, fmt='ascii.rst')
+    spirouImage.WriteTable(p, table, wavelltbl, fmt='ascii.rst')
 
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB

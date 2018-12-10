@@ -49,7 +49,7 @@ def main(night_name=None, files=None):
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
     # get parameters from configuration files and run time arguments
-    customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+    customargs = spirouStartup.GetCustomFromRuntime(p, [0], [str], ['reffile'])
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile',
                                     mainfitsdir='reduced')
@@ -93,7 +93,7 @@ def main(night_name=None, files=None):
     ll_line_cat, ampl_line_cat = spirouImage.ReadLineList(p)
     # construct fitted lines table filename
     wavelltbl = spirouConfig.Constants.WAVE_LINE_FILE(p)
-    WLOG('', p['LOG_OPT'], wavelltbl)
+    WLOG(p, '', wavelltbl)
     # read fitted lines
     ll_ord, ll_line_fit, ampl_line_fit = np.genfromtxt(wavelltbl,
                                                        skip_header=4,

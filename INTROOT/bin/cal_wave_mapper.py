@@ -58,7 +58,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     req, call = [True, True], [flatfile, e2dsprefix]
     call_priority = [True, True]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime([0, 1], [str, str], name,
+    customargs = spirouStartup.GetCustomFromRuntime(p, [0, 1], [str, str], name,
                                                     req, call, call_priority,
                                                     lname)
     # get parameters from configuration files and run time arguments
@@ -109,20 +109,20 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # Resize flat image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    image2 = spirouImage.ConvertToE(spirouImage.FlipImage(image), p=p)
+    image2 = spirouImage.ConvertToE(spirouImage.FlipImage(p, image), p=p)
     # convert NaN to zeros
     image2 = np.where(~np.isfinite(image2), np.zeros_like(image2), image2)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    image2 = spirouImage.ResizeImage(image2, **bkwargs)
+    image2 = spirouImage.ResizeImage(p, image2, **bkwargs)
     # save flat to to loc and set source
     loc['IMAGE'] = image2
     loc.set_sources(['image'], __NAME__ + '/main()')
     # log change in data size
     wmsg = 'Image format changed to {0}x{1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*image2.shape))
+    WLOG(p, '', wmsg.format(*image2.shape))
 
     # ----------------------------------------------------------------------
     # Read shape or tilt slit angle
@@ -132,7 +132,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
 
     if p['IC_EXTRACT_TYPE'] in ['4a', '4b']:
         # log progress
-        WLOG('', p['LOG_OPT'], 'Debananafying (straightening) image')
+        WLOG(p, '', 'Debananafying (straightening) image')
         # get the shape map
         p, loc['SHAPE'] = spirouImage.ReadShapeMap(p, hdr)
         loc.set_source('SHAPE', tsource)
@@ -210,7 +210,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
                 emsg3 = '\tE2DSPREFIX = {0}'
                 emsgs = [emsg1.format(e2dsfile, p['REDUCED_DIR']),
                          emsg2, emsg3.format(p['E2DSPREFIX'])]
-                WLOG('error', p['LOG_OPT'], emsgs)
+                WLOG(p, 'error', emsgs)
         # get data
         e2dsdata, ehdr, ecdr, ny, nx = spirouImage.ReadData(p, e2dsfile)
         # store data
@@ -222,7 +222,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # # ------------------------------------------------------------------
     # # log process
     # wmsg = 'Loading telluric model and locating "good" tranmission'
-    # WLOG('', p['LOG_OPT'], wmsg)
+    # WLOG(p, '', wmsg)
     # # load telluric and get mask (add to loc)
     # loc = spirouExM.get_telluric(p, loc)
 
@@ -230,7 +230,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # Make 2D map of orders
     # ------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], 'Making 2D map of order locations')
+    WLOG(p, '', 'Making 2D map of order locations')
     # make the 2D wave-image
     loc = spirouExM.order_profile(p, loc)
 
@@ -238,7 +238,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # Make 2D map of wavelengths accounting for shape / tilt
     # ------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], 'Mapping pixels on to wavelength grid')
+    WLOG(p, '', 'Mapping pixels on to wavelength grid')
     # make the 2D map of wavelength
     loc = spirouExM.create_wavelength_image(p, loc)
 
@@ -252,7 +252,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # ------------------------------------------------------------------
     if p['EM_FLAT_CORRECTION']:
         # log progress
-        WLOG('', p['LOG_OPT'], 'Correcting for flat={0}'.format(p['FLATFILE']))
+        WLOG(p, '', 'Correcting for flat={0}'.format(p['FLATFILE']))
         # normalise flat
         if p['EM_NORM_FLUX']:
             image2 = image2 / np.median(image2)
@@ -265,29 +265,29 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # ------------------------------------------------------------------
     hdict = OrderedDict()
     # set the version
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # set the input files
     if loc['SHAPE'] is not None:
-        hdict = spirouImage.AddKey(hdict, p['KW_SHAPEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_SHAPEFILE'],
                                    value=p['SHAPFILE'])
     else:
-        hdict = spirouImage.AddKey(hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_TILTFILE'], value=p['TILTFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_LOCOFILE'], value=p['LOCOFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'], value=loc['WAVEFILE'])
     # add input filelist
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_INFILELIST'], dim1name='file',
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_INFILELIST'], dim1name='file',
                                      values=loc['E2DSFILENAMES'])
     # add name of the localisation fits file used
     hfile = os.path.basename(loc['LOCO_CTR_FILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_LOCFILE'], value=hfile)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_EM_LOCFILE'], value=hfile)
     # add the max and min wavelength threshold
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_MINWAVE'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_EM_MINWAVE'],
                                value=p['EM_MIN_LAMBDA'])
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_MAXWAVE'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_EM_MAXWAVE'],
                                value=p['EM_MAX_LAMBDA'])
     # add the transmission cut
-    hdict = spirouImage.AddKey(hdict, p['kw_EM_TRASCUT'],
+    hdict = spirouImage.AddKey(p, hdict, p['kw_EM_TRASCUT'],
                                value=p['EM_TELL_THRESHOLD'])
 
     # ------------------------------------------------------------------
@@ -307,7 +307,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         emsg1 = '"EM_OUTPUT_TYPE" not understood'
         emsg2 = '   must be either "drs", "raw" or "preprocess"'
         emsg3 = '   currently EM_OUTPUT_TYPE="{0}"'.format(p['EM_OUTPUT_TYPE'])
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         outputs = []
     elif p['EM_OUTPUT_TYPE'] != 'all':
         outputs = [str(p['EM_OUTPUT_TYPE'])]
@@ -319,7 +319,7 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
     # ----------------------------------------------------------------------
     for output in outputs:
         # log progress
-        WLOG('', p['LOG_OPT'], 'Processing {0} outputs'.format(output))
+        WLOG(p, '', 'Processing {0} outputs'.format(output))
         # change EM_OUTPUT_TYPE
         p['EM_OUTPUT_TYPE'] = output
         # copy arrays
@@ -329,24 +329,24 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         # change image size if needed
         if output in ["raw", "preprocess"]:
             kk = dict(xsize=image.shape[1], ysize=image.shape[0])
-            WLOG('', p['LOG_OPT'], 'Resizing/Flipping SPE')
+            WLOG(p, '', 'Resizing/Flipping SPE')
             out_spe = spirouExM.unresize(p, out_spe, **kk)
-            WLOG('', p['LOG_OPT'], 'Resizing/Flipping SPE0')
+            WLOG(p, '', 'Resizing/Flipping SPE0')
             out_spe_0 = spirouExM.unresize(p, out_spe_0, **kk)
-            WLOG('', p['LOG_OPT'], 'Resizing/Flipping WAVEIMAGE')
+            WLOG(p, '', 'Resizing/Flipping WAVEIMAGE')
             out_wave = spirouExM.unresize(p, out_wave, **kk)
-            WLOG('', p['LOG_OPT'], 'Rescaling SPE')
+            WLOG(p, '', 'Rescaling SPE')
             out_spe = out_spe / (p['GAIN'] * p['EXPTIME'])
-            WLOG('', p['LOG_OPT'], 'Rescaling SPE0')
+            WLOG(p, '', 'Rescaling SPE0')
             out_spe_0 = out_spe_0 / (p['GAIN'] * p['EXPTIME'])
 
         # if raw need to rotate (undo pre-processing)
         if output == "raw":
-            WLOG('', p['LOG_OPT'], 'Rotating SPE')
+            WLOG(p, '', 'Rotating SPE')
             out_spe = np.rot90(out_spe, 1)
-            WLOG('', p['LOG_OPT'], 'Rotating SPE0')
+            WLOG(p, '', 'Rotating SPE0')
             out_spe_0 = np.rot90(out_spe_0, 1)
-            WLOG('', p['LOG_OPT'], 'Rotating WAVEIMAGE')
+            WLOG(p, '', 'Rotating WAVEIMAGE')
             out_wave = np.rot90(out_wave, 1)
 
         # ----------------------------------------------------------------------
@@ -358,9 +358,9 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
+        WLOG(p, '', wmsg.format(specfilename))
         # write to file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         p = spirouImage.WriteImage(p, specfitsfile, out_spe, hdict=hdict)
         # ----------------------------------------------------------------------
         # save E2DS 0 filled
@@ -368,9 +368,9 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
         specfilename = os.path.split(specfitsfile)[-1]
         # log progress
         wmsg = 'Writing spectrum to file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(specfilename))
+        WLOG(p, '', wmsg.format(specfilename))
         # write to file
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         p = spirouImage.WriteImage(p, specfitsfile, out_spe_0, hdict=hdict)
         # ----------------------------------------------------------------------
         # save wave map
@@ -380,9 +380,9 @@ def main(night_name=None, flatfile=None, e2dsprefix=None):
             wavefilename = os.path.split(wavefitsfile)[-1]
             # log progress
             wmsg = 'Writing wave image to file {0}'
-            WLOG('', p['LOG_OPT'], wmsg.format(wavefilename))
+            WLOG(p, '', wmsg.format(wavefilename))
             # write to file
-            hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+            hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
             p = spirouImage.WriteImage(p, wavefitsfile, out_wave, hdict=hdict)
 
     # ----------------------------------------------------------------------

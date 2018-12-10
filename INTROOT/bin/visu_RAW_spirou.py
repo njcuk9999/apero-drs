@@ -83,7 +83,7 @@ def main(night_name=None, files=None):
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToADU(spirouImage.FlipImage(data), p=p)
+    data = spirouImage.ConvertToADU(spirouImage.FlipImage(p, data), p=p)
     # convert NaN to zeros
     data2 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
@@ -92,7 +92,7 @@ def main(night_name=None, files=None):
     #                   getshape=False)
     #    data2 = spirouImage.ResizeImage(data0, **bkwargs)
     # log change in data size
-    #    WLOG('', p['log_opt'], ('Image format changed to '
+    #    WLOG(p, '', ('Image format changed to '
     #                            '{0}x{1}').format(*data2.shape[::-1]))
 
     # ----------------------------------------------------------------------
@@ -103,7 +103,7 @@ def main(night_name=None, files=None):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     satseuil = 64536.
     col = 2100

@@ -1281,6 +1281,18 @@ qc_tellu_snr_min = 100
 #     tellurics according to TAPAS
 qc_tellu_clean_rms_max = 0.01
 
+
+
+# -----------------------------------------------------------------------------
+#  DB settings
+# -----------------------------------------------------------------------------
+#   the maximum wait time for calibration database file to be            - [all]
+#       in use (locked) after which an error is raised (in seconds)
+db_max_wait = 3600
+
+# file max wait
+fitsopen_max_wait = 3600
+
 # -----------------------------------------------------------------------------
 #  Calibration DB settings
 # -----------------------------------------------------------------------------
@@ -1288,10 +1300,6 @@ qc_tellu_clean_rms_max = 0.01
 #   Define calibd DB master filename                                     - [all]
 #      (formally ic_calib_db_master_file)
 ic_calibDB_filename = 'master_calib_SPIROU.txt'
-
-#   the maximum wait time for calibration database file to be            - [all]
-#       in use (locked) after which an error is raised (in seconds)
-calib_max_wait = 3600
 
 #   Define the match type for calibDB files                              - [all]
 #         match = 'older'  when more than one file for each key will
@@ -1311,10 +1319,6 @@ calib_db_match = 'closest'
 #   Define tellu DB master filename                                     - [all]
 #      (formally ic_tellu_db_master_file)
 ic_telluDB_filename = 'master_tellu_SPIROU.txt'
-
-#   the maximum wait time for telluric database file to be            - [all]
-#       in use (locked) after which an error is raised (in seconds)
-tellu_max_wait = 3600
 
 #   Define the match type for telluDB files                              - [all]
 #         match = 'older'  when more than one file for each key will

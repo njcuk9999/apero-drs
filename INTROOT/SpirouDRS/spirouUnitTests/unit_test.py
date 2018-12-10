@@ -58,9 +58,9 @@ def main(runname=None, quiet=False):
     ckwargs = dict(positions=[0], types=[str], names=['RUNNAME'],
                    calls=[runname], require_night_name=False,
                    required=[False])
-    customargs = spirouStartup.GetCustomFromRuntime(**ckwargs)
+    customargs = spirouStartup.GetCustomFromRuntime(p, **ckwargs)
     # add custom args straight to p
-    p = spirouStartup.LoadMinimum(p, customargs=customargs)
+    p = spirouStartup.LoadMinimum(p, customargs=customargs, quiet=True)
 
     # ----------------------------------------------------------------------
     # Read the run file and extract parameters
@@ -87,7 +87,7 @@ def main(runname=None, quiet=False):
             emsgs.append('\t{0}'.format(rfile))
         emsgs.append('')
         emsgs.append('Located at {0}'.format(UNIT_TEST_PATH))
-        WLOG('error', p['LOG_OPT'], emsgs)
+        WLOG(p, 'error', emsgs)
 
     # get the parameters in the run file
     rparams = spirouConfig.GetConfigParams(p, filename=rfile)
@@ -111,25 +111,30 @@ def main(runname=None, quiet=False):
     spirouUnitTests.unit_log_title(p)
     # loop around runs and process each
     for runn in list(runs.keys()):
-        # try to run
-        try:
+        if p['DRS_DEBUG'] > 0:
             # do run
             rargs = [p, runn, runs[runn], times]
             times = spirouUnitTests.manage_run(*rargs)
-        # Manage unexpected errors
-        except Exception as e:
-            wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
-            for msg in str(e).split('\n'):
-                wmsgs.append('\t' + msg)
-            WLOG('warning', p['LOG_OPT'], wmsgs)
-            errors[runn] = str(e)
-        # Manage expected errors
-        except SystemExit as e:
-            wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
-            for msg in str(e).split('\n'):
-                wmsgs.append('\t' + msg)
-            WLOG('warning', p['LOG_OPT'], wmsgs)
-            errors[runn] = str(e)
+        else:
+            # try to run
+            try:
+                # do run
+                rargs = [p, runn, runs[runn], times]
+                times = spirouUnitTests.manage_run(*rargs)
+            # Manage unexpected errors
+            except Exception as e:
+                wmsgs = ['Run "{0}" had an unexpected error:'.format(runn)]
+                for msg in str(e).split('\n'):
+                    wmsgs.append('\t' + msg)
+                WLOG(p, 'warning', wmsgs)
+                errors[runn] = str(e)
+            # Manage expected errors
+            except SystemExit as e:
+                wmsgs = ['Run "{0}" had an expected error:'.format(runn)]
+                for msg in str(e).split('\n'):
+                    wmsgs.append('\t' + msg)
+                WLOG(p, 'warning', wmsgs)
+                errors[runn] = str(e)
 
     # ----------------------------------------------------------------------
     # Make sure all plots are close
@@ -150,7 +155,7 @@ def main(runname=None, quiet=False):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 

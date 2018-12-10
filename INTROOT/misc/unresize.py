@@ -48,7 +48,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     if ufile is None or xsize is None or ysize is None:
         pos = [0, 1, 2]
         names, types = ['ufile', 'xsize', 'ysize'], [str, int, int]
-        customargs = spirouStartup.GetCustomFromRuntime(pos, types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, pos, types, names,
                                                         last_multi=True)
     else:
         customargs = dict(ufile=ufile, xsize=xsize, ysize=ysize)
@@ -77,7 +77,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     newimage[ylow:yhigh, xlow:xhigh] = image
 
     # rotate the image
-    newimage = spirouImage.FlipImage(newimage)
+    newimage = spirouImage.FlipImage(p, newimage)
 
     # ------------------------------------------------------------------
     # Save rotated image
@@ -86,7 +86,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     outfits = ufile.replace('.fits', '_old.fits')
     outfitsname = os.path.split(outfits)[-1]
     # log that we are saving rotated image
-    WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
+    WLOG(p, '', 'Saving Rotated Image in ' + outfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # write to file
@@ -96,7 +96,7 @@ def main(night_name=None, ufile=None, xsize=None, ysize=None):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
     # return a copy of locally defined variables in the memory
     return dict(locals())
 
