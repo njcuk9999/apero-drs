@@ -114,7 +114,7 @@ def load_lsd_spectral_lines(p, loc):
     # get object temperature from header
     obj_temperature = loc['HDR']['OBJTEMP']
     wmsg = 'Temperature of the object observed: {0} K'
-    WLOG(p, 'info', wmsg.format(obj_temperature))
+    WLOG(p, '', wmsg.format(obj_temperature))
 
     # find out which CCFLINE file is most appropriate for source
     temp_diff_min, loc['SELECTED_FILE_CCFLINES'] = 1.e10, 'marcs_t3000g50_all'
@@ -133,7 +133,7 @@ def load_lsd_spectral_lines(p, loc):
     # if path exists use it
     if os.path.exists(abspath):
         wmsg = 'Line mask used for LSD computation: {0}'
-        WLOG(p, 'info', wmsg.format(abspath))
+        WLOG(p, '', wmsg.format(abspath))
         # load spectral lines data from file
         wlcf, znf, depthf, landef = np.loadtxt(abspath, delimiter='  ',
                                                skiprows=1,
