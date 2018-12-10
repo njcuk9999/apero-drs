@@ -15,7 +15,8 @@ directory = dict(name='directory', dtype='directory',
 #
 # -----------------------------------------------------------------------------
 add_cal = dict(name='--add2calib', dtype='bool',
-               helpstr='[BOOLEAN] Whether to add outputs to calibration database',
+               helpstr=('[BOOLEAN] Whether to add outputs to calibration '
+                        'database'),
                default=True)
 # -----------------------------------------------------------------------------
 dobad = dict(name='--badcorr', dtype='bool', default=True,
