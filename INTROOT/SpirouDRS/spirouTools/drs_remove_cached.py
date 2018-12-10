@@ -19,6 +19,7 @@ from SpirouDRS import spirouConfig
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'drs_remove_cached'
 # define DRS path
 DRSPATH = pkg_resources.resource_filename('SpirouDRS', '')
 PATH = os.path.dirname(DRSPATH)
@@ -26,8 +27,6 @@ PATH = os.path.dirname(DRSPATH)
 WLOG = spirouCore.wlog
 # get print log
 printl = spirouCore.PrintLog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 
 
 # =============================================================================
@@ -51,25 +50,29 @@ def main(return_locals=False):
     spirouStartup.DisplayTitle(' * DRS Dependencies')
     # list the version of python found
     spirouStartup.DisplaySysInfo(logonly=False)
+    # get constants
+    p = spirouStartup.Begin('None', quiet=True)
+    p['PID'] = None
+    p['RECIPE'] = __NAME__
     # get all python files
-    WLOG('', DPROG, 'Getting python cached files')
+    WLOG(p, '', 'Getting python cached files')
     python_files = get_python_cached_files(PATH)
     # get all import statements
     if len(python_files) == 0:
-        WLOG('warning', DPROG, 'No .pyc files found!')
+        WLOG(p, 'warning', 'No .pyc files found!')
     else:
         wmsg = 'Removing python cached files (from {0})'
-        WLOG('warning', DPROG, wmsg.format(PATH))
+        WLOG(p, 'warning', wmsg.format(PATH))
         for python_file in python_files:
             basepath = os.path.relpath(python_file, PATH)
-            WLOG('', DPROG, '\tRemoving {0}'.format(basepath))
+            WLOG(p, '', '\tRemoving {0}'.format(basepath))
             os.remove(python_file)
 
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', DPROG, wmsg.format(DPROG))
+    WLOG(p, 'info', wmsg.format(p['RECIPE']))
     # return a copy of locally defined variables in the memory
     if return_locals:
         return dict(locals())

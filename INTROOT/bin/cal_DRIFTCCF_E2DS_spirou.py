@@ -68,7 +68,8 @@ def main(night_name=None, reffile=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
-        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0], [str],
+                                                        ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
@@ -161,7 +162,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # log that we are performing background correction
     if p['IC_DRIFT_BACK_CORR']:
-        WLOG('', p['LOG_OPT'], 'Perform background correction')
+        WLOG(p, '', 'Perform background correction')
         # get the box size from constants
         bsize = p['DRIFT_PEAK_MINMAX_BOXSIZE']
         # Loop around the orders
@@ -196,7 +197,7 @@ def main(night_name=None, reffile=None):
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
 
     # ------------------------------------------------------------------
     # Reference plots
@@ -246,7 +247,7 @@ def main(night_name=None, reffile=None):
     # normalize the average ccf
     normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
     # get the fit for the normalized average ccf
-    ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
+    ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                        fit_type=1)
     loc['CCF_RES'] = ccf_res
     loc['CCF_FIT'] = ccf_fit
@@ -269,7 +270,7 @@ def main(night_name=None, reffile=None):
     wmsg = ('Correlation: C={0:.1f}[%] RV={1:.5f}[km/s] '
             'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
     wargs = [loc['CONTRAST'], loc['RV'], loc['FWHM'], loc['MAXCPP']]
-    WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, 'info', wmsg.format(*wargs))
 
     # get the reference RV in m/s
     rvref = loc['RV'] * 1000.
@@ -295,7 +296,7 @@ def main(night_name=None, reffile=None):
              '\tExtensions allowed:']
     for listtype in listtypes:
         wmsgs.append('\t\t - {0}'.format(listtype))
-    WLOG('info', p['LOG_OPT'], wmsgs)
+    WLOG(p, 'info', wmsgs)
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -325,7 +326,7 @@ def main(night_name=None, reffile=None):
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading
         wmsg = 'Reading file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(os.path.split(fpfile)[-1]))
+        WLOG(p, '', wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
         # read e2ds files and get timestamp
         # ------------------------------------------------------------------
@@ -383,7 +384,7 @@ def main(night_name=None, reffile=None):
         # normalize the average ccf
         normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
         # get the fit for the normalized average ccf
-        ccf_res, ccf_fit = spirouRV.FitCCF(loc['RV_CCF'], normalized_ccf,
+        ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
                                            fit_type=1)
         # calculate the mean RV
         meanrv = ccf_res[1] * 1000. - rvref
@@ -401,7 +402,7 @@ def main(night_name=None, reffile=None):
                 '- Drift mean= {2:.2f} +- '
                 '{3:.2f} m/s')
         wargs = [deltatime, loc['FLUXRATIO'][i_it], meanrv, merr]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
         # add this iteration to storage
         loc['MDRIFT'][i_it] = meanrv
         loc['MERRDRIFT'][i_it] = merr
@@ -418,7 +419,7 @@ def main(night_name=None, reffile=None):
     wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
             '{2:.2f} hour')
     wargs = [driftptp, driftrms, np.max(loc['DELTATIME'])]
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Plot of mean drift
@@ -439,18 +440,18 @@ def main(night_name=None, reffile=None):
     # driftfitsname = os.path.split(driftfits)[-1]
     # # log that we are saving drift values
     # wmsg = 'Saving drift values of Fiber {0} in {1}'
-    # WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
+    # WLOG(p, '', wmsg.format(p['FIBER'], driftfitsname))
     # # add keys from original header file
     # hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # # add the reference RV
-    # hdict = spirouImage.AddKey(hdict, p['KW_REF_RV'], value=rvref)
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_REF_RV'], value=rvref)
     #
     # # set the version
-    # hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    # hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # # set the input files
-    # hdict = spirouImage.AddKey(hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
-    # hdict = spirouImage.AddKey(hdict, p['KW_REFFILE'], value=raw_infile)
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_FLATFILE'], value=p['FLATFILE'])
+    # hdict = spirouImage.AddKey(p, hdict, p['KW_REFFILE'], value=raw_infile)
     # # save drift values
     # p = spirouImage.WriteImage(p, driftfits, loc['DRIFT'], hdict)
 
@@ -464,12 +465,12 @@ def main(night_name=None, reffile=None):
     columnnames = ['time', 'drift', 'drifterr']
     columnformats = ['7.4f', '6.2f', '6.3f']
     columnvalues = [loc['DELTATIME'], loc['MDRIFT'], loc['MERRDRIFT']]
-    table = spirouImage.MakeTable(columns=columnnames, values=columnvalues,
+    table = spirouImage.MakeTable(p, columns=columnnames, values=columnvalues,
                                   formats=columnformats)
     # write table
     wmsg = 'Average Drift saved in {0} Saved '
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(drifttblname))
-    spirouImage.WriteTable(table, drifttbl, fmt='ascii.rst')
+    WLOG(p, '', wmsg.format(drifttblname))
+    spirouImage.WriteTable(p, table, drifttbl, fmt='ascii.rst')
 
     # ----------------------------------------------------------------------
     # End Message

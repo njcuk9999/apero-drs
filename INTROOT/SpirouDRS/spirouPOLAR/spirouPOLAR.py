@@ -30,8 +30,6 @@ __release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
 # Get Logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get the parameter dictionary class
 ParamDict = spirouConfig.ParamDict
 # get the config error
@@ -78,7 +76,7 @@ def sort_polar_files(p, polardict):
         # check if file exists
         if not os.path.exists(filepath):
             wmsg = 'File {0} does not exist... skipping'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(filepath))
+            WLOG(p, 'warning', wmsg.format(filepath))
             continue
         # ------------------------------------------------------------------
         # Read E2DS input file
@@ -97,7 +95,7 @@ def sort_polar_files(p, polardict):
             wargs = [filename, p['KW_CMMTSEQ'][0], stokes]
 
             # Question: stokes here will be set to the last file value?
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
             expstatus = False
         # ------------------------------------------------------------------
         # deal with fiber type
@@ -133,7 +131,7 @@ def sort_polar_files(p, polardict):
         # log file addition
         wmsg = 'File {0}: fiber={1} Stokes={2} exposure={3}'
         wargs = [filename, fiber, stokes, str(exposure)]
-        WLOG('info', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, 'info', wmsg.format(*wargs))
 
     # return polarDict
     return polardict
@@ -193,7 +191,7 @@ def load_data(p, polardict, loc):
     elif len(stokes_detected) > 1:
         wmsg = ('Identified more than one stokes parameter in the input '
                 'data... exiting')
-        WLOG('error', p['LOG_OPT'], wmsg)
+        WLOG(p, 'error', wmsg)
 
     # set all possible combinations of fiber type and exposure number
     two_exposure_set, four_exposure_set = [], []
@@ -260,12 +258,12 @@ def load_data(p, polardict, loc):
         n_exposures = 2
         wmsg = ('Detected only enough data for 2-exposures calculation'
                 ', polarimetry is less precise than 4-exposures')
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG(p, 'warning', wmsg)
     # else we have insufficient data
     else:
         wmsg = ('Number of exposures in input data is not sufficient'
                 ' for polarimetry calculations... exiting')
-        WLOG('error', p['LOG_OPT'], wmsg)
+        WLOG(p, 'error', wmsg)
 
     # set stokes parameters defined
     loc['STOKES'] = stokes_detected[0]
@@ -303,7 +301,7 @@ def calculate_polarimetry_wrapper(p, loc):
         return polarimetry_ratio_method(p, loc)
     else:
         emsg = 'Method="{0}" not valid for polarimetry calculation'
-        WLOG('error', p['LOG_OPT'], emsg.format(method))
+        WLOG(p, 'error', emsg.format(method))
         return 1
 
 
@@ -437,7 +435,7 @@ def calculate_stokes_i(p, loc):
     name = 'CalculateStokesI'
     # log start of Stokes I calculations
     wmsg = 'Running function {0} to calculate Stokes I total flux'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
     # get parameters from loc
     data = loc['DATA']
     nexp = float(loc['NEXPOSURES'])
@@ -476,7 +474,7 @@ def calculate_stokes_i(p, loc):
 
     # log end of Stokes I intensity calculations
     wmsg = 'Routine {0} run successfully'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
     # return loc
     return loc
 
@@ -507,20 +505,20 @@ def deal_with_fiber(p, filename, expstatus, exposure):
         skip = True
         # log warning
         wmsg = 'File {0} corresponds to fiber "AB"... skipping'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(filename))
+        WLOG(p, 'warning', wmsg.format(filename))
     elif 'C.fits' in basefilename:
         fiber = 'C'
         # set skip
         skip = True
         # log warning
         wmsg = 'File {0} corresponds to fiber "C"... skipping'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(filename))
+        WLOG(p, 'warning', wmsg.format(filename))
     else:
         # set skip
         skip = True
         # log warning
         wmsg = 'File {0} does not match any fiber... skipping'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(filename))
+        WLOG(p, 'warning', wmsg.format(filename))
         fiber = None
 
     # return fiber, expstatus, exposure and skip
@@ -560,7 +558,7 @@ def polarimetry_diff_method(p, loc):
     name = 'polarimetryDiffMethod'
     # log start of polarimetry calculations
     wmsg = 'Running function {0} to calculate polarization'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
     # get parameters from loc
     data = loc['DATA']
     nexp = float(loc['NEXPOSURES'])
@@ -665,14 +663,14 @@ def polarimetry_diff_method(p, loc):
     else:
         wmsg = ('Number of exposures in input data is not sufficient'
                 ' for polarimetry calculations... exiting')
-        WLOG('error', p['LOG_OPT'], wmsg)
+        WLOG(p, 'error', wmsg)
 
     # set the method
     loc['METHOD'] = 'Difference'
     loc.set_source('METHOD', func_name)
     # log end of polarimetry calculations
     wmsg = 'Routine {0} run successfully'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
     # return loc
     return loc
 
@@ -710,7 +708,7 @@ def polarimetry_ratio_method(p, loc):
 
     # log start of polarimetry calculations
     wmsg = 'Running function {0} to calculate polarization'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
     # get parameters from loc
     data = loc['DATA']
     nexp = float(loc['NEXPOSURES'])
@@ -847,14 +845,14 @@ def polarimetry_ratio_method(p, loc):
     else:
         wmsg = ('Number of exposures in input data is not sufficient'
                 ' for polarimetry calculations... exiting')
-        WLOG('error', p['LOG_OPT'], wmsg)
+        WLOG(p, 'error', wmsg)
 
     # set the method
     loc['METHOD'] = 'Ratio'
     loc.set_source('METHOD', func_name)
     # log end of polarimetry calculations
     wmsg = 'Routine {0} run successfully'
-    WLOG('info', p['LOG_OPT'], wmsg.format(name))
+    WLOG(p, 'info', wmsg.format(name))
     # return loc
     return loc
 
@@ -878,16 +876,16 @@ def polar_products_header(p, loc, polardict):
     # add keys from original header of base file
     hdict = spirouImage.CopyOriginalKeys(loc['HDR'], loc['CDR'])
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
     # add in file
     rawfile = os.path.basename(p['FITSFILENAME'])
-    hdict = spirouImage.AddKey(hdict, p['KW_INFILE'], value=rawfile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_INFILE'], value=rawfile)
     # add stokes parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_STOKES'], value=loc['STOKES'])
     # add number of exposures parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_NEXP'], value=loc['NEXPOSURES'])
     # add the polarimetry method parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_METHOD'], value=loc['METHOD'])
     
     mjd_first, mjd_last = 0.0, 0.0
     meanbjd, tot_exptime = 0.0, 0.0
@@ -918,52 +916,52 @@ def polar_products_header(p, loc, polardict):
             meanbjd += hdr[p['KW_BJD'][0]]
             # add exposure file name
             fileexp = p['kw_POL_FILENAM{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, fileexp, value=hdr['FILENAME'])
+            hdict = spirouImage.AddKey(p, hdict, fileexp, value=hdr['FILENAME'])
             # add EXPTIME for each exposure
             exptimeexp = p['kw_POL_EXPTIME{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, exptimeexp,
+            hdict = spirouImage.AddKey(p, hdict, exptimeexp,
                                        value=hdr[p['KW_EXPTIME'][0]])
             # add MJDATE for each exposure
             mjdexp = p['kw_POL_MJDATE{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, mjdexp,
+            hdict = spirouImage.AddKey(p, hdict, mjdexp,
                                        value=hdr[p['KW_ACQTIME_KEY_JUL'][0]])
             # add MJDEND for each exposure
             mjdendexp = p['kw_POL_MJDEND{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, mjdendexp,
+            hdict = spirouImage.AddKey(p, hdict, mjdendexp,
                                        value=hdr[p['KW_MJDEND'][0]])
             # add BJD for each exposure
             bjdexp = p['kw_POL_BJD{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, bjdexp,
+            hdict = spirouImage.AddKey(p, hdict, bjdexp,
                                        value=hdr[p['KW_BJD'][0]])
             # add BERV for each exposure
             bervexp = p['kw_POL_BERV{0}'.format(expnum)]
-            hdict = spirouImage.AddKey(hdict, bervexp,
+            hdict = spirouImage.AddKey(p, hdict, bervexp,
                                        value=hdr[p['KW_BERV'][0]])
             # append BERVMAX value of each exposure
             bervmaxs.append(hdr[p['KW_BERV_MAX'][0]])
 
     # add total exposure time parameter keyword to header
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_EXPTIME'], value=tot_exptime)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_POL_EXPTIME'], value=tot_exptime)
     # update existing EXPTIME keyword
-    hdict = spirouImage.AddKey(hdict, p['KW_EXPTIME'], value=tot_exptime)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_EXPTIME'], value=tot_exptime)
 
     # add elapsed time parameter keyword to header
     elapsed_time = (bjd_last - bjd_first) * 86400. + exptime_last
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_ELAPTIME'], value=elapsed_time)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_POL_ELAPTIME'], value=elapsed_time)
 
     # calculate MJD at center of polarimetric sequence
     mjdcen = mjd_first + (mjd_last - mjd_first + exptime_last/86400.)/2.0
     # add central MJD
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_MJDCEN'], value=mjdcen)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_POL_MJDCEN'], value=mjdcen)
     # update existing MJD keyword
-    hdict = spirouImage.AddKey(hdict, p['KW_ACQTIME_KEY_JUL'], value=mjdcen)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_ACQTIME_KEY_JUL'], value=mjdcen)
 
     # calculate BJD at center of polarimetric sequence
     bjdcen = bjd_first + (bjd_last - bjd_first + exptime_last/86400.)/2.0
     # add central BJD
-    hdict = spirouImage.AddKey(hdict, p['KW_POL_BJDCEN'], value=bjdcen)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_POL_BJDCEN'], value=bjdcen)
     # update existing BJD keyword
-    hdict = spirouImage.AddKey(hdict, p['KW_BJD'], value=bjdcen)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BJD'], value=bjdcen)
 
     # calculate BERV at center by linear interpolation
     berv_slope = (berv_last - berv_first) / (bjd_last - bjd_first)
@@ -971,18 +969,18 @@ def polar_products_header(p, loc, polardict):
     loc['BERVCEN'] = berv_intercept + berv_slope * bjdcen
     
     # add central BERV
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_BERVCEN'], value=loc['BERVCEN'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_BERVCEN'], value=loc['BERVCEN'])
     # update existing BERV keyword
-    hdict = spirouImage.AddKey(hdict, p['kw_BERV'], value=loc['BERVCEN'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_BERV'], value=loc['BERVCEN'])
     
     # calculate maximum bervmax
     bervmax = np.max(bervmaxs)
     # update existing BERVMAX keyword
-    hdict = spirouImage.AddKey(hdict, p['kw_BERV_MAX'], value=bervmax)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_BERV_MAX'], value=bervmax)
 
     # add mean BJD
     meanbjd = meanbjd / loc['NEXPOSURES']
-    hdict = spirouImage.AddKey(hdict, p['kw_POL_MEANBJD'], value=meanbjd)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_POL_MEANBJD'], value=meanbjd)
 
     return hdict, loc
 

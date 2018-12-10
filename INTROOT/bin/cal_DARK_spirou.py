@@ -96,11 +96,11 @@ def main(night_name=None, files=None):
     # Dark exposure time check
     # ----------------------------------------------------------------------
     # log the Dark exposure time
-    WLOG('info', p['LOG_OPT'], 'Dark Time = {0:.3f} s'.format(p['EXPTIME']))
+    WLOG(p, 'info', 'Dark Time = {0:.3f} s'.format(p['EXPTIME']))
     # Quality control: make sure the exposure time is longer than qc_dark_time
     if p['EXPTIME'] < p['QC_DARK_TIME']:
         emsg = 'Dark exposure time too short (< {0:.1f} s)'
-        WLOG('error', p['LOG_OPT'], emsg.format(p['QC_DARK_TIME']))
+        WLOG(p, 'error', emsg.format(p['QC_DARK_TIME']))
 
     # ----------------------------------------------------------------------
     # Resize image
@@ -113,25 +113,25 @@ def main(night_name=None, files=None):
     # resize blue image
     bkwargs = dict(xlow=p['IC_CCDX_BLUE_LOW'], xhigh=p['IC_CCDX_BLUE_HIGH'],
                    ylow=p['IC_CCDY_BLUE_LOW'], yhigh=p['IC_CCDY_BLUE_HIGH'])
-    datablue, nx2, ny2 = spirouImage.ResizeImage(data, **bkwargs)
+    datablue, nx2, ny2 = spirouImage.ResizeImage(p, data, **bkwargs)
     # Make sure we have data in the blue image
     if nx2 == 0 or ny2 == 0:
-        WLOG('error', p['LOG_OPT'], ('IC_CCD(X/Y)_BLUE_(LOW/HIGH) remove '
+        WLOG(p, 'error', ('IC_CCD(X/Y)_BLUE_(LOW/HIGH) remove '
                                      'all pixels from image.'))
     # resize red image
     rkwargs = dict(xlow=p['IC_CCDX_RED_LOW'], xhigh=p['IC_CCDX_RED_HIGH'],
                    ylow=p['IC_CCDY_RED_LOW'], yhigh=p['IC_CCDY_RED_HIGH'])
-    datared, nx3, ny3 = spirouImage.ResizeImage(data, **rkwargs)
+    datared, nx3, ny3 = spirouImage.ResizeImage(p, data, **rkwargs)
     # Make sure we have data in the red image
     if nx3 == 0 or ny3 == 0:
-        WLOG('error', p['LOG_OPT'], ('IC_CCD(X/Y)_RED_(LOW/HIGH) remove '
+        WLOG(p, 'error', ('IC_CCD(X/Y)_RED_(LOW/HIGH) remove '
                                      'all pixels from image.'))
 
     # ----------------------------------------------------------------------
     # Dark Measurement
     # ----------------------------------------------------------------------
     # Log that we are doing dark measurement
-    WLOG('', p['LOG_OPT'], 'Doing Dark measurement')
+    WLOG(p, '', 'Doing Dark measurement')
     # measure dark for whole frame
     p = spirouImage.MeasureDark(p, data, 'Whole det', 'full')
     # measure dark for blue part
@@ -148,12 +148,12 @@ def main(night_name=None, files=None):
         baddark /= np.product(data0.shape)
     # log the fraction of bad dark pixels
     wmsg = 'Frac pixels with DARK > {0:.2f} ADU/s = {1:.3f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DARK_CUTLIMIT'], baddark))
+    WLOG(p, 'info', wmsg.format(p['DARK_CUTLIMIT'], baddark))
 
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
         datacutmask = ~((data0 > p['DARK_CUTLIMIT']) | (~np.isfinite(data)))
-    spirouCore.spirouLog.warninglogger(w)
+    spirouCore.spirouLog.warninglogger(p, w)
     # get number of pixels above cut limit or NaN
     n_bad_pix = np.product(data.shape) - np.sum(datacutmask)
     # work out fraction of dead pixels + dark > cut, as percentage
@@ -161,7 +161,7 @@ def main(night_name=None, files=None):
     p.set_source('DADEADALL', __NAME__ + '/main()')
     # log fraction of dead pixels + dark > cut
     logargs = [p['DARK_CUTLIMIT'], p['DADEADALL']]
-    WLOG('info', p['LOG_OPT'], ('Total Frac dead pixels (N.A.N) + DARK > '
+    WLOG(p, 'info', ('Total Frac dead pixels (N.A.N) + DARK > '
                                 '{0:.2f} ADU/s = {1:.3f} %').format(*logargs))
 
     # ----------------------------------------------------------------------
@@ -207,13 +207,13 @@ def main(night_name=None, files=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -226,22 +226,22 @@ def main(night_name=None, files=None):
     darkfits, tag = spirouConfig.Constants.DARK_FILE(p)
     darkfitsname = os.path.split(darkfits)[-1]
     # log saving dark frame
-    WLOG('', p['LOG_OPT'], 'Saving Dark frame in ' + darkfitsname)
+    WLOG(p, '', 'Saving Dark frame in ' + darkfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=rawdarkfile)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_DEAD'], value=p['DADEAD_FULL'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_MED'], value=p['MED_FULL'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_B_DEAD'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=rawdarkfile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_DEAD'], value=p['DADEAD_FULL'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_MED'], value=p['MED_FULL'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_DEAD'],
                                value=p['DADEAD_BLUE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_B_MED'], value=p['MED_BLUE'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_R_DEAD'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_B_MED'], value=p['MED_BLUE'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_DEAD'],
                                value=p['DADEAD_RED'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_R_MED'], value=p['MED_RED'])
-    hdict = spirouImage.AddKey(hdict, p['KW_DARK_CUT'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_R_MED'], value=p['MED_RED'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARK_CUT'],
                                value=p['DARK_CUTLIMIT'])
     # Set to zero dark value > dark_cutlimit
     cutmask = data0 > p['DARK_CUTLIMIT']
@@ -256,13 +256,13 @@ def main(night_name=None, files=None):
     badpixelfits, tag = spirouConfig.Constants.DARK_BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
-    WLOG('', p['LOG_OPT'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
+    WLOG(p, '', 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # define new keys to add
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(hdict, p['KW_DARKFILE'], value=rawdarkfile)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_DARKFILE'], value=rawdarkfile)
     hdict['DACUT'] = (p['DARK_CUTLIMIT'],
                       'Threshold of dark level retain [ADU/s]')
     # write to file

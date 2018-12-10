@@ -79,6 +79,8 @@ LOG_LEVEL = 'all'
 #   Coloured logging to standard output (console)
 COLOURED_LOG = True
 
+#   Theme (DARK or LIGHT)
+THEME = 'DARK'
 
 # -----------------------------------------------------------------------------
 # config file locations

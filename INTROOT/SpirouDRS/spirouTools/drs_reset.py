@@ -36,18 +36,16 @@ __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 printc = spirouCore.PrintColour
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def reset_confirmation(name, called=False):
+def reset_confirmation(p, name, called=False):
 
     # get the warning and error colours
-    w1, w2 = printc('warning')
-    e1, e2 = printc('error')
+    w1, w2 = printc(p, 'warning')
+    e1, e2 = printc(p, 'error')
     # confirm reset
     wargs = [w1, name, w2]
     print('{0}\nAre you sure you wish to reset the {1} directory?{2}'
@@ -73,12 +71,12 @@ def reset_confirmation(name, called=False):
         return False
 
 
-def custom_confirmation(messages, inputmessage, response='Y'):
+def custom_confirmation(p, messages, inputmessage, response='Y'):
     # line break
     print('\n')
     # get the warning and error colours
-    w1, w2 = printc('warning')
-    e1, e2 = printc('error')
+    w1, w2 = printc(p, 'warning')
+    e1, e2 = printc(p, 'error')
     # confirm reset
     for message in messages:
         print('{0}{1}{2}'.format(w1, message, w2))
@@ -102,21 +100,21 @@ def custom_confirmation(messages, inputmessage, response='Y'):
 def reset_reduced_folders(p, log=True):
 
     # log progress
-    WLOG('', DPROG, 'Resetting reduced directory')
+    WLOG(p, '', 'Resetting reduced directory')
     # remove files from reduced folder
     red_dir = p['DRS_DATA_REDUC']
     # loop around files and folders in calib_dir
-    remove_all(red_dir, log)
+    remove_all(p, red_dir, log)
 
 
 def reset_calibdb(p, log=True):
     # log progress
-    WLOG('', DPROG, 'Resetting calibration database')
+    WLOG(p, '', 'Resetting calibration database')
 
     # remove files currently in calibDB
     calib_dir = p['DRS_CALIB_DB']
     # loop around files and folders in calib_dir
-    remove_all(calib_dir, log)
+    remove_all(p, calib_dir, log)
 
     # -------------------------------------------------------------------------
     # get reset directory location
@@ -128,7 +126,7 @@ def reset_calibdb(p, log=True):
     # check that absfolder exists
     if not os.path.exists(absfolder):
         emsg = 'Error {0} directory does not exist'
-        WLOG('error', DPROG, emsg.format(absfolder))
+        WLOG(p, 'error', emsg.format(absfolder))
     # -------------------------------------------------------------------------
     # define needed files:
     files = os.listdir(absfolder)
@@ -143,7 +141,7 @@ def reset_calibdb(p, log=True):
             # log progress
             if log:
                 wmsg = 'Adding file: {0} to {1}'
-                WLOG('', DPROG, wmsg.format(f, p['DRS_CALIB_DB']))
+                WLOG(p, '', wmsg.format(f, p['DRS_CALIB_DB']))
             # remove the old file
             if os.path.exists(newpath):
                 os.remove(newpath)
@@ -152,18 +150,18 @@ def reset_calibdb(p, log=True):
         else:
             if log:
                 wmsg = 'File {0} does not exists in {1} - cannot add'
-                WLOG('warning', DPROG, wmsg.format(f, absfolder))
+                WLOG(p, 'warning', wmsg.format(f, absfolder))
 
 
 def reset_telludb(p, log=True):
     # log progress
-    WLOG('', DPROG, 'Resetting telluric database')
+    WLOG(p, '', 'Resetting telluric database')
 
     # remove files currently in telluDB
     tellu_dir = p['DRS_TELLU_DB']
 
     # loop around files and folders in tellu_dir
-    remove_all(tellu_dir, log)
+    remove_all(p, tellu_dir, log)
 
     # -------------------------------------------------------------------------
     # get reset directory location
@@ -175,7 +173,7 @@ def reset_telludb(p, log=True):
     # check that absfolder exists
     if not os.path.exists(absfolder):
         emsg = 'Error {0} directory does not exist'
-        WLOG('error', DPROG, emsg.format(absfolder))
+        WLOG(p, 'error', emsg.format(absfolder))
     # -------------------------------------------------------------------------
     # define needed files:
     files = os.listdir(absfolder)
@@ -190,7 +188,7 @@ def reset_telludb(p, log=True):
             # log progress
             if log:
                 wmsg = 'Adding file: {0} to {1}'
-                WLOG('', DPROG, wmsg.format(f, p['DRS_TELLU_DB']))
+                WLOG(p, '', wmsg.format(f, p['DRS_TELLU_DB']))
             # remove the old file
             if os.path.exists(newpath):
                 os.remove(newpath)
@@ -199,24 +197,24 @@ def reset_telludb(p, log=True):
         else:
             if log:
                 wmsg = 'File {0} does not exists in {1} - cannot add'
-                WLOG('warning', DPROG, wmsg.format(f, absfolder))
+                WLOG(p, 'warning', wmsg.format(f, absfolder))
 
 
 def reset_log(p):
     # log progress
-    WLOG('', DPROG, 'Resetting log directory')
+    WLOG(p, '', 'Resetting log directory')
     # remove files from reduced folder
     log_dir = p['DRS_DATA_MSG']
     # loop around files and folders in reduced dir
-    remove_all(log_dir)
+    remove_all(p, log_dir)
 
 
-def remove_all(path, log=True):
+def remove_all(p, path, log=True):
 
     # Check that directory exists
     if not os.path.exists(path):
         # get the warning and error colours
-        e1, e2 = printc('error')
+        e1, e2 = printc(p, 'error')
         eargs = [e1, path, e2]
         # display error and ask to create directory
         print('{0}\nError {0} directory does not exist. Should we create it?{2}'
@@ -233,18 +231,18 @@ def remove_all(path, log=True):
             os.makedirs(path)
         else:
             emsg = 'Error {0} directory does not exist'
-            WLOG('error', DPROG, emsg.format(path))
+            WLOG(p, 'error', emsg.format(path))
 
     # loop around files and folders in calib_dir
     files = glob.glob(path + '/*')
     # loop around all files (adding all files from sub directories
     while len(files) > 0:
         f = files[0]
-        files = remove(f, files, log)
+        files = remove(p, f, files, log)
         files.remove(f)
 
 
-def remove(path, list_of_files, log=True):
+def remove(p, path, list_of_files, log=True):
     """
     Remove a file or add files to list_of_files
     :param path: string, the path to remove (file or directory)
@@ -261,7 +259,7 @@ def remove(path, list_of_files, log=True):
     else:
         # log removal
         if log:
-            WLOG('', DPROG, '    Removing file: {0}'.format(path))
+            WLOG(p, '', '\tRemoving file: {0}'.format(path))
         # remove
         os.remove(path)
     # return list of files
@@ -282,35 +280,35 @@ def main(return_locals=False, warn=True, log=True, called=False):
     # ----------------------------------------------------------------------
     reset1, reset2, reset3, reset4 = True, True, True, True
     if warn:
-        reset1 = reset_confirmation('Reduced', called=called)
+        reset1 = reset_confirmation(p, 'Reduced', called=called)
     if reset1:
         reset_reduced_folders(p, log)
     else:
-        WLOG('', p['LOG_OPT'], 'Not resetting reduced folders.')
+        WLOG(p, '', 'Not resetting reduced folders.')
     if warn:
-        reset2 = reset_confirmation('CalibDB', called=called)
+        reset2 = reset_confirmation(p, 'CalibDB', called=called)
     if reset2:
         reset_calibdb(p, log)
     else:
-        WLOG('', p['LOG_OPT'], 'Not resetting CalibDB files.')
+        WLOG(p, '', 'Not resetting CalibDB files.')
     if warn:
-        reset3 = reset_confirmation('TelluDB', called=called)
+        reset3 = reset_confirmation(p, 'TelluDB', called=called)
     if reset3:
         reset_telludb(p, log)
     else:
-        WLOG('', p['LOG_OPT'], 'Not resetting TelluDB files.')
+        WLOG(p, '', 'Not resetting TelluDB files.')
     if warn:
-        reset4 = reset_confirmation('Log', called=called)
+        reset4 = reset_confirmation(p, 'Log', called=called)
     if reset4:
         reset_log(p)
     else:
-        WLOG('', p['LOG_OPT'], 'Not resetting Log files.')
+        WLOG(p, '', 'Not resetting Log files.')
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     if log:
         wmsg = 'Recipe {0} has been successfully completed'
-        WLOG('info', __NAME__, wmsg.format(__NAME__))
+        WLOG(p, 'info', wmsg.format(__NAME__))
     # return a copy of locally defined variables in the memory
     if return_locals:
         return dict(locals())

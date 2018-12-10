@@ -47,7 +47,8 @@ def main(night_name=None, reffile=None):
     p = spirouStartup.Begin(recipe=__NAME__)
     # deal with reference file being None (i.e. get from sys.argv)
     if reffile is None:
-        customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'])
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0], [str],
+                                                        ['reffile'])
     else:
         customargs = dict(reffile=reffile)
     # get parameters from configuration files and run time arguments
@@ -74,10 +75,10 @@ def main(night_name=None, reffile=None):
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # set the version
-    hdict = spirouImage.AddKey(hdict, HEADER_KEY, value=HEADER_VALUE)
+    hdict = spirouImage.AddKey(p, hdict, HEADER_KEY, value=HEADER_VALUE)
     # log saving
     wmsg = 'Writing file {0} to {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(newfilename, p['ARG_FILE_DIR']))
+    WLOG(p, '', wmsg.format(newfilename, p['ARG_FILE_DIR']))
     # save drift values
     p = spirouImage.WriteImage(p, newpath, data, hdict)
     # ----------------------------------------------------------------------

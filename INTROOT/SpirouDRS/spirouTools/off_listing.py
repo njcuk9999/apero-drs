@@ -52,7 +52,8 @@ def main(directory=None):
     names = ['directory']
     call = [directory]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call,
+    customargs = spirouStartup.GetCustomFromRuntime(p, pos, fmt, names,
+                                                    calls=call,
                                                     require_night_name=False)
     p = spirouStartup.LoadArguments(p, customargs=customargs,
                                     require_night_name=False)
@@ -70,12 +71,12 @@ def main(directory=None):
     loc = OrderedDict()
     # if file exists then we have some indexed files
     if os.path.exists(index_path):
-        rawloc = spirouImage.ReadFitsTable(index_path)
+        rawloc = spirouImage.ReadFitsTable(p, index_path)
         loc['FILENAME'] = list(rawloc['FILENAME'])
         loc['LAST_MODIFIED'] = list(rawloc['LAST_MODIFIED'])
         for col in columns:
             if col not in rawloc.keys():
-                WLOG('', p['LOG_OPT'], '\t- Skipping column {0}'.format(col))
+                WLOG(p, '', '\t- Skipping column {0}'.format(col))
                 loc[col] = list(np.repeat([''], len(loc['FILENAME'])))
             else:
                 loc[col] = list(rawloc[col])
@@ -99,7 +100,7 @@ def main(directory=None):
     # Loop around all files and extract required header keys
     # ----------------------------------------------------------------------
     # log progress
-    WLOG('', p['LOG_OPT'], 'Analysing {0} files'.format(len(files)))
+    WLOG(p, '', 'Analysing {0} files'.format(len(files)))
     # loop around files and extract properties
     for filename in files:
         # skip any non-fits file files
@@ -134,7 +135,7 @@ def main(directory=None):
     # Make sure we have some files
     if len(loc['FILENAME']) == 0:
         wmsg = 'No pre-processed (*{0}) files present.'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(p['PROCESSED_SUFFIX']))
+        WLOG(p, 'warning', wmsg.format(p['PROCESSED_SUFFIX']))
 
     # ----------------------------------------------------------------------
     # archive to table
@@ -143,7 +144,7 @@ def main(directory=None):
         # construct table filename
         outfile = spirouConfig.Constants.OFF_LISTING_RAW_FILE(p)
         # log progress
-        WLOG('', p['LOG_OPT'], 'Creating ascii file for listing.')
+        WLOG(p, '', 'Creating ascii file for listing.')
         # get column names
         colnames = ['FILENAME', 'LAST_MODIFIED'] + list(columns)
         # define the format for each column
@@ -153,11 +154,11 @@ def main(directory=None):
         for col in colnames:
             values.append(loc[col])
         # construct astropy table from column names, values and formats
-        table = spirouImage.MakeTable(colnames, values, formats)
+        table = spirouImage.MakeTable(p, colnames, values, formats)
 
         # log saving of file
         wmsg = 'Listing of directory on file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(outfile))
+        WLOG(p, '', wmsg.format(outfile))
 
         # print out to screen
         WLOG('', '', '')
@@ -175,11 +176,11 @@ def main(directory=None):
     if cond:
         # log writing index file
         wmsg = 'Writing index to file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(index_path))
+        WLOG(p, '', wmsg.format(index_path))
         # update index
-        spirouStartup.SortSaveOutputs(loc, index_path)
+        spirouStartup.SortSaveOutputs(p, loc, index_path)
     else:
-        WLOG('warning', p['LOG_OPT'], 'Skipped writing to index file')
+        WLOG(p, 'warning', 'Skipped writing to index file')
 
     # ----------------------------------------------------------------------
     # End Message

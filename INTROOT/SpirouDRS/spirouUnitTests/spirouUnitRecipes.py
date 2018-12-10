@@ -37,7 +37,6 @@ import cal_HC_E2DS_EA_spirou
 import cal_loc_RAW_spirou
 import cal_SLIT_spirou
 import cal_SHAPE_spirou
-import cal_SHAPE_spirou2
 # import cal_WAVE_E2DS_spirou
 import cal_WAVE_E2DS_EA_spirou
 # import cal_WAVE_NEW_E2DS_spirou
@@ -66,8 +65,6 @@ __date__ = Constants.LATEST_EDIT()
 __release__ = Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # define valid recipes
 VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_CCF_E2DS_spirou',
@@ -85,7 +82,6 @@ VALID_RECIPES = ['cal_BADPIX_spirou',
                  'cal_loc_RAW_spirou',
                  'cal_SLIT_spirou',
                  'cal_SHAPE_spirou',
-                 'cal_SHAPE_spirou2',
                  'cal_WAVE_E2DS_spirou',
                  'cal_WAVE_E2DS_EA_spirou',
                  'cal_WAVE_NEW_E2DS_spirou',
@@ -130,7 +126,6 @@ def get_versions():
     vv[cal_loc_RAW_spirou.__NAME__] = cal_loc_RAW_spirou.__version__
     vv[cal_SLIT_spirou.__NAME__] = cal_SLIT_spirou.__version__
     vv[cal_SHAPE_spirou.__NAME__] = cal_SHAPE_spirou.__version__
-    vv[cal_SHAPE_spirou2.__NAME__] = cal_SHAPE_spirou2.__version__
     # vv[cal_WAVE_E2DS_spirou.__NAME__] = cal_WAVE_E2DS_spirou.__version__
     vv[cal_WAVE_E2DS_EA_spirou.__NAME__] = cal_WAVE_E2DS_EA_spirou.__version__
     # vv[cal_WAVE_NEW_E2DS_spirou.__NAME__] = cal_WAVE_NEW_E2DS_spirou
@@ -151,12 +146,12 @@ def wrapper(p, rname, inputs=None):
     if name not in VALID_RECIPES:
         emsg1 = "{0} is not a valid DRS recipe".format(name)
         emsg2 = "    run = {0}".format(rname)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # deal with no input or outputs
     if inputs is None:
-        WLOG('error', p['LOG_OPT'], 'Must define inputs')
+        WLOG(p, 'error', 'Must define inputs')
     # if we don't have outputs then we require inputs only
-    strarg = 'rname, inputs'
+    strarg = 'p, rname, inputs'
     # link to the recipe function
     recipe_function = 'unit_test_{0}({1})'.format(name.lower(), strarg)
     # return the evaulated unit test function
@@ -165,7 +160,7 @@ def wrapper(p, rname, inputs=None):
     except NameError as e:
         emsg1 = 'NameError: Cannot run {0}'.format(recipe_function)
         emsg2 = '\tError reads: {0}'.format(e)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         varbs = []
     # return recipe inputs (or outputs)
     return varbs, name
@@ -176,11 +171,13 @@ def run_main(p, name, args):
     # set the program name
     command = '{0}.main(**args)'.format(name)
     ll = eval(command)
+    # print pid
+    WLOG(p, 'info', 'PID = {0}'.format(ll['p']['PID']))
     # return locals
     return ll
 
 
-def unit_test_cal_badpix_spirou(rname, inputs):
+def unit_test_cal_badpix_spirou(p, rname, inputs):
 
     """
     cal_BADPIX_spirou
@@ -200,11 +197,11 @@ def unit_test_cal_badpix_spirou(rname, inputs):
     arg_types = [str, str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_dark_spirou(rname, inputs):
+def unit_test_cal_dark_spirou(p, rname, inputs):
 
     """
     cal_DARK_spirou
@@ -224,11 +221,11 @@ def unit_test_cal_dark_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_loc_raw_spirou(rname, inputs):
+def unit_test_cal_loc_raw_spirou(p, rname, inputs):
 
     """
     unit_test_cal_loc_raw_spirou
@@ -249,11 +246,11 @@ def unit_test_cal_loc_raw_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_slit_spirou(rname, inputs):
+def unit_test_cal_slit_spirou(p, rname, inputs):
     """
     unit_test_cal_slit_spirou
 
@@ -273,11 +270,11 @@ def unit_test_cal_slit_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_shape_spirou(rname, inputs):
+def unit_test_cal_shape_spirou(p, rname, inputs):
     """
     unit_test_cal_shape_spirou
 
@@ -293,39 +290,15 @@ def unit_test_cal_shape_spirou(rname, inputs):
     """
     # define name and arguments
     name = 'cal_SHAPE_spirou'
-    arg_names = ['night_name', 'files']
-    arg_types = [str, list]
-
-    # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
-    return args, name
-
-
-def unit_test_cal_shape_spirou2(rname, inputs):
-    """
-    unit_test_cal_shape_spirou
-
-    input = night_name files
-    output = SLIT_SHAPE_FILE
-
-    :param rname: string, identifier for this run
-    :param inputs: list of objects, raw parameters to pass to run, if outputs
-                   is None returns parameters to pass to file
-
-
-    :return args: dict, the parameters to pass to the run
-    """
-    # define name and arguments
-    name = 'cal_SHAPE_spirou2'
     arg_names = ['night_name', 'hcfile', 'fpfiles']
     arg_types = [str, str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_ff_raw_spirou(rname, inputs):
+def unit_test_cal_ff_raw_spirou(p, rname, inputs):
     """
     unit_test_cal_ff_raw_spirou
 
@@ -344,11 +317,11 @@ def unit_test_cal_ff_raw_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_extract_raw_spirou(rname, inputs):
+def unit_test_cal_extract_raw_spirou(p, rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -367,7 +340,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
@@ -390,7 +363,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs):
 #     arg_types = [str, list]
 #
 #     # get arguments
-#     args = get_args(name, rname, inputs, arg_names, arg_types)
+#     args = get_args(p, name, rname, inputs, arg_names, arg_types)
 #     # return args
 #     return args, name
 #
@@ -414,7 +387,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs):
 #     arg_types = [str, list]
 #
 #     # get arguments
-#     args = get_args(name, rname, inputs, arg_names, arg_types)
+#     args = get_args(p, name, rname, inputs, arg_names, arg_types)
 #     # return args
 #     return args, name
 
@@ -445,7 +418,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs):
 #     # get the inputs (if outputs is None)
 #     if outputs is None:
 #         # get arguments
-#         args = get_args(name, rname, inputs, arg_names, arg_types)
+#         args = get_args(p, name, rname, inputs, arg_names, arg_types)
 #         return args, name
 #     # else define the outputs
 #     else:
@@ -454,7 +427,7 @@ def unit_test_cal_extract_raw_spirou(rname, inputs):
 #         return outs, name
 
 
-def unit_test_cal_drift_e2ds_spirou(rname, inputs):
+def unit_test_cal_drift_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_drift_e2ds_spirou
 
@@ -473,11 +446,11 @@ def unit_test_cal_drift_e2ds_spirou(rname, inputs):
     arg_types = [str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs):
+def unit_test_cal_driftpeak_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -496,11 +469,11 @@ def unit_test_cal_driftpeak_e2ds_spirou(rname, inputs):
     arg_types = [str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_driftccf_e2ds_spirou(rname, inputs):
+def unit_test_cal_driftccf_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_driftccf_e2ds_spirou
 
@@ -519,11 +492,11 @@ def unit_test_cal_driftccf_e2ds_spirou(rname, inputs):
     arg_types = [str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_ccf_e2ds_spirou(rname, inputs):
+def unit_test_cal_ccf_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_ccf_e2ds_spirou
 
@@ -542,11 +515,11 @@ def unit_test_cal_ccf_e2ds_spirou(rname, inputs):
     arg_types = [str, str, str, float, int, float]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_ccf_e2ds_fp_spirou(rname, inputs):
+def unit_test_cal_ccf_e2ds_fp_spirou(p, rname, inputs):
     """
     unit_test_cal_ccf_e2ds_spirou
 
@@ -565,11 +538,11 @@ def unit_test_cal_ccf_e2ds_fp_spirou(rname, inputs):
     arg_types = [str, str, str, float, int, float]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_hc_e2ds_spirou(rname, inputs):
+def unit_test_cal_hc_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -588,12 +561,12 @@ def unit_test_cal_hc_e2ds_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
 
-def unit_test_cal_hc_e2ds_ea_spirou(rname, inputs):
+def unit_test_cal_hc_e2ds_ea_spirou(p, rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -612,12 +585,12 @@ def unit_test_cal_hc_e2ds_ea_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
 
-def unit_test_cal_wave_new_e2ds_spirou(rname, inputs):
+def unit_test_cal_wave_new_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -636,12 +609,12 @@ def unit_test_cal_wave_new_e2ds_spirou(rname, inputs):
     arg_types = [str, str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
 
-def unit_test_cal_wave_e2ds_spirou(rname, inputs):
+def unit_test_cal_wave_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -661,12 +634,12 @@ def unit_test_cal_wave_e2ds_spirou(rname, inputs):
     arg_types = [str, str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
 
-def unit_test_cal_wave_e2ds_ea_spirou(rname, inputs):
+def unit_test_cal_wave_e2ds_ea_spirou(p, rname, inputs):
     """
     unit_test_cal_extract_raw_spirou
 
@@ -686,12 +659,12 @@ def unit_test_cal_wave_e2ds_ea_spirou(rname, inputs):
     arg_types = [str, str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     # return args
     return args, name
 
 
-def unit_test_cal_exposure_meter(rname, inputs):
+def unit_test_cal_exposure_meter(p, rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -711,11 +684,11 @@ def unit_test_cal_exposure_meter(rname, inputs):
     arg_types = [str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_wave_mapper(rname, inputs):
+def unit_test_cal_wave_mapper(p, rname, inputs):
     """
     unit_test_cal_wave_mapper
 
@@ -735,11 +708,11 @@ def unit_test_cal_wave_mapper(rname, inputs):
     arg_types = [str, str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_cal_preprocess_spirou(rname, inputs):
+def unit_test_cal_preprocess_spirou(p, rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -758,11 +731,11 @@ def unit_test_cal_preprocess_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_off_listing_raw_spirou(rname, inputs):
+def unit_test_off_listing_raw_spirou(p, rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -782,11 +755,11 @@ def unit_test_off_listing_raw_spirou(rname, inputs):
     arg_types = [str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_off_listing_reduc_spirou(rname, inputs):
+def unit_test_off_listing_reduc_spirou(p, rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -807,11 +780,11 @@ def unit_test_off_listing_reduc_spirou(rname, inputs):
     arg_types = [str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_obj_mk_tellu(rname, inputs):
+def unit_test_obj_mk_tellu(p, rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -831,11 +804,11 @@ def unit_test_obj_mk_tellu(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_obj_fit_tellu(rname, inputs):
+def unit_test_obj_fit_tellu(p, rname, inputs):
     """
     unit_test_cal_exposure_meter
 
@@ -855,11 +828,11 @@ def unit_test_obj_fit_tellu(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_obj_mk_obj_template(rname, inputs):
+def unit_test_obj_mk_obj_template(p, rname, inputs):
     """
     unit_test_obj_mk_obj_template
 
@@ -877,11 +850,11 @@ def unit_test_obj_mk_obj_template(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_visu_raw_spirou(rname, inputs):
+def unit_test_visu_raw_spirou(p, rname, inputs):
     """
     unit_test_cal_ff_raw_spirou
 
@@ -900,11 +873,11 @@ def unit_test_visu_raw_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_visu_e2ds_spirou(rname, inputs):
+def unit_test_visu_e2ds_spirou(p, rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -923,11 +896,11 @@ def unit_test_visu_e2ds_spirou(rname, inputs):
     arg_types = [str, str]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def unit_test_pol_spirou(rname, inputs):
+def unit_test_pol_spirou(p, rname, inputs):
     """
     unit_test_cal_driftpeak_e2ds_spirou
 
@@ -947,18 +920,18 @@ def unit_test_pol_spirou(rname, inputs):
     arg_types = [str, list]
 
     # get arguments
-    args = get_args(name, rname, inputs, arg_names, arg_types)
+    args = get_args(p, name, rname, inputs, arg_names, arg_types)
     return args, name
 
 
-def get_args(name, rname, iargs, arg_names, arg_types):
+def get_args(p, name, rname, iargs, arg_names, arg_types):
 
     # we should at least have enough inputs for the arg names given
     if len(iargs) < (len(arg_names) + 1):
         emsg1 = '{0} has invalid number of arguments for {1}'
         eargs = [len(arg_names), len(iargs)]
         emsg2 = '   expected (at least) {0} got {1}'.format(*eargs)
-        WLOG('error', DPROG, [emsg1.format(rname, name), emsg2])
+        WLOG(p, 'error', [emsg1.format(rname, name), emsg2])
     # set up storage
     args = OrderedDict()
     # set up counter
@@ -983,7 +956,7 @@ def get_args(name, rname, iargs, arg_names, arg_types):
                 eargs = [rname, pos, arg_name, arg_types[pos]]
                 emsg1 = '{0}: Argument {1} ({2}) should be type={3}'
                 emsg2 = '    got type={0}'.format(type(value))
-                WLOG('error', DPROG, [emsg1.format(*eargs), emsg2])
+                WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
         # add to counter
         pos += 1
     # deal with the fact we may have more arguments than arg_names

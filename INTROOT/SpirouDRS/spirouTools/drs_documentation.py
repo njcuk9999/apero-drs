@@ -30,8 +30,6 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
-# get the default log_opt
-DPROG = 'drs_doc'
 # get package name
 PACKAGE = spirouConfig.Constants.PACKAGE()
 # -----------------------------------------------------------------------------
@@ -57,20 +55,20 @@ def list_modules(return_values=False):
     # get files
     files = os.listdir(MOD_PATH)
     # log progress
-    WLOG('', p['LOG_OPT'], 'Modules described in tex:')
+    WLOG(p, '', 'Modules described in tex:')
     # print modules from tex files
     files = np.sort(files)
     mods = []
     for f in files:
         modname = f.split('.tex')[0]
-        WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(modname))
+        WLOG(p, '', '\t\t- {0}'.format(modname))
         mods.append(modname)
     # log progress
-    WLOG('', p['LOG_OPT'], 'Modules in {0}'.format(PACKAGE))
+    WLOG(p, '', 'Modules in {0}'.format(PACKAGE))
     # get modules from package
     imp = __import__(PACKAGE)
     for f in imp.__all__:
-        WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(f))
+        WLOG(p, '', '\t\t- {0}'.format(f))
 
     if return_values:
         return mods
@@ -87,17 +85,17 @@ def list_recipes():
     # get files
     files = os.listdir(CAL_PATH)
     # log progress
-    WLOG('', p['LOG_OPT'], 'Recipes described in tex:')
+    WLOG(p, '', 'Recipes described in tex:')
     # print modules from tex files
     files = np.sort(files)
     for f in files:
-        WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(f.split('.tex')[0]))
+        WLOG(p, '', '\t\t- {0}'.format(f.split('.tex')[0]))
     # get recipes path
     package_path = __import__(PACKAGE).__file__
     root = os.path.dirname(os.path.dirname(package_path))
     binfolder = os.path.join(root, 'bin')
     # log progress
-    WLOG('', p['LOG_OPT'], 'Recipes in {0}'.format(binfolder))
+    WLOG(p, '', 'Recipes in {0}'.format(binfolder))
     # get recipes from bin folder
     if os.path.exists(binfolder):
         files = np.sort(os.listdir(binfolder))
@@ -107,9 +105,9 @@ def list_recipes():
                 continue
             # only count .py files
             if '.py' in f:
-                WLOG('', p['LOG_OPT'], '\t\t- {0}'.format(f))
+                WLOG(p, '', '\t\t- {0}'.format(f))
     else:
-        WLOG('error', p['LOG_OPT'], 'Bin folder = {0} does not exist'
+        WLOG(p, 'error', 'Bin folder = {0} does not exist'
                                     ''.format(binfolder))
 
 
@@ -122,10 +120,10 @@ def list_variables():
     # setup
     p = set_up()
     # read file
-    lines = read_file(VARB_PATH)
+    lines = read_file(p, VARB_PATH)
     # log progress
-    WLOG('', p['LOG_OPT'], 'Finding missing variables')
-    WLOG('', p['LOG_OPT'], '    from {0}'.format(VARB_PATH))
+    WLOG(p, '', 'Finding missing variables')
+    WLOG(p, '', '    from {0}'.format(VARB_PATH))
     # get text variables from latex file
     text_variables = tex_id_variables(lines)
     # compare text_variables to p
@@ -137,26 +135,26 @@ def list_variables():
         else:
             found_variables.append(const.upper())
     # print table
-    WLOG('', p['LOG_OPT'], 'Variables: ')
+    WLOG(p, '', 'Variables: ')
     fmt = '{0:5s}{1:40s}{2:10s}{3:10s}'
-    WLOG('', p['LOG_OPT'], '=' * 80)
+    WLOG(p, '', '=' * 80)
     args = ['NUM', 'NAME', 'In .py', 'In .tex']
-    WLOG('', p['LOG_OPT'], fmt.format(*args) + 'Where')
-    WLOG('', p['LOG_OPT'], '=' * 80)
+    WLOG(p, '', fmt.format(*args) + 'Where')
+    WLOG(p, '', '=' * 80)
     count = 1
     for var in found_variables:
         if p.sources[var] is None:
             f = 'None'
         else:
             f = os.path.basename(p.sources[var])
-        WLOG('', p['LOG_OPT'], fmt.format(str(count), var, 'x', 'x') + f)
+        WLOG(p, '', fmt.format(str(count), var, 'x', 'x') + f)
         count += 1
     for var in missing_variables:
         if p.sources[var] is None:
             f = 'None'
         else:
             f = os.path.basename(p.sources[var])
-        WLOG('warning', p['LOG_OPT'], fmt.format(str(count), var, 'x', '') + f)
+        WLOG(p, 'warning', fmt.format(str(count), var, 'x', '') + f)
         count += 1
 
     # print end
@@ -164,6 +162,9 @@ def list_variables():
 
 
 def find_all_missing_modules():
+
+    # setup
+    p = set_up()
 
     ll = list_modules(return_values=True)
 
@@ -177,15 +178,15 @@ def find_all_missing_modules():
             print('Skipping {0}'.format(mod))
 
     # print all missing
-    WLOG('', DPROG, '')
-    WLOG('', DPROG, 'List of all missing: ')
-    WLOG('', DPROG, '')
+    WLOG(p, '', '')
+    WLOG(p, '', 'List of all missing: ')
+    WLOG(p, '', '')
     for mod in missing:
         if len(missing[mod]) == 0:
             continue
-        WLOG('', DPROG, '\t{0}'.format(mod))
+        WLOG(p, '', '\t{0}'.format(mod))
         for mll in missing[mod]:
-            WLOG('', DPROG, '\t\t- {0}'.format(mll))
+            WLOG(p, '', '\t\t- {0}'.format(mll))
 
 
 def find_missing_module_functions(module_name, return_values=False):
@@ -203,16 +204,16 @@ def find_missing_module_functions(module_name, return_values=False):
     p = set_up()
     # read file
     filename = MOD_PATH + '/{0}.tex'.format(module_name)
-    lines = read_file(filename)
+    lines = read_file(p, filename)
     # get functions from latex file
-    WLOG('', p['LOG_OPT'], 'Finding missing functions in {0}'
+    WLOG(p, '', 'Finding missing functions in {0}'
                            ''.format(module_name))
-    WLOG('', p['LOG_OPT'], '    from {0}'.format(filename))
+    WLOG(p, '', '    from {0}'.format(filename))
     functions = tex_id_functions(lines)
     # get functions from __init__ file
-    WLOG('', p['LOG_OPT'], 'Finding functions in {0}.__init__.py'
+    WLOG(p, '', 'Finding functions in {0}.__init__.py'
                            ''.format(module_name))
-    dfunctions = init_id_functions(module_name).__all__
+    dfunctions = init_id_functions(p, module_name).__all__
     # compare functions to dfunctions
     missing_funcs = []
     for func in dfunctions:
@@ -220,23 +221,23 @@ def find_missing_module_functions(module_name, return_values=False):
             missing_funcs.append(func)
     # print results
     if len(missing_funcs) == 0:
-        WLOG('', p['LOG_OPT'], 'Congratulations there are no missing functions '
+        WLOG(p, '', 'Congratulations there are no missing functions '
                                'in {0}'.format(module_name))
     else:
         if len(missing_funcs) > 1:
             wmsg = 'There are {0} missing function in {1}'
             wargs = [module_name, len(missing_funcs)]
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
         else:
             wmsg = 'There is 1 missing variable in {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(module_name))
+            WLOG(p, 'warning', wmsg.format(module_name))
 
-        WLOG('warning', p['LOG_OPT'], 'Missing functions(s) are as follows:')
+        WLOG(p, 'warning', 'Missing functions(s) are as follows:')
         for missing_varb in missing_funcs:
-            WLOG('warning', p['LOG_OPT'], '\t{0}'.format(missing_varb))
+            WLOG(p, 'warning', '\t{0}'.format(missing_varb))
 
         wmsg = 'Please add to "{0}.tex"'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(module_name))
+        WLOG(p, 'warning', wmsg.format(module_name))
     # print end
     end(p)
 
@@ -257,10 +258,10 @@ def find_missing_variables():
     # setup
     p = set_up()
     # read file
-    lines = read_file(VARB_PATH)
+    lines = read_file(p, VARB_PATH)
     # log progress
-    WLOG('', p['LOG_OPT'], 'Finding missing variables')
-    WLOG('', p['LOG_OPT'], '    from {0}'.format(VARB_PATH))
+    WLOG(p, '', 'Finding missing variables')
+    WLOG(p, '', '    from {0}'.format(VARB_PATH))
     # get text variables from latex file
     text_variables = tex_id_variables(lines)
 
@@ -272,18 +273,18 @@ def find_missing_variables():
 
     # print results
     if len(missing_variables) == 0:
-        WLOG('', p['LOG_OPT'], 'Congratulations there are no missing variables')
+        WLOG(p, '', 'Congratulations there are no missing variables')
     else:
         if len(missing_variables) > 1:
-            WLOG('warning', p['LOG_OPT'], 'There are {0} missing variables'
+            WLOG(p, 'warning', 'There are {0} missing variables'
                  ''.format(len(missing_variables)))
         else:
-            WLOG('warning', p['LOG_OPT'], 'There is 1 missing variable')
+            WLOG(p, 'warning', 'There is 1 missing variable')
 
-        WLOG('warning', p['LOG_OPT'], 'Missing variable(s) are as follows:')
+        WLOG(p, 'warning', 'Missing variable(s) are as follows:')
         for missing_varb in missing_variables:
-            WLOG('warning', p['LOG_OPT'], '\t{0}'.format(missing_varb))
-        WLOG('warning', p['LOG_OPT'], 'Please add to "Variables.tex"')
+            WLOG(p, 'warning', '\t{0}'.format(missing_varb))
+        WLOG(p, 'warning', 'Please add to "Variables.tex"')
 
     # print end
     end(p)
@@ -300,9 +301,9 @@ def print_docstrings(module_name):
     # setup
     p = set_up()
     # log progress
-    WLOG('', DPROG, 'Finding functions in {0}.__init__.py'.format(module_name))
+    WLOG(p, '', 'Finding functions in {0}.__init__.py'.format(module_name))
     # get functions from __init__ file
-    imp = init_id_functions(module_name)
+    imp = init_id_functions(p, module_name)
 
     # list modules
     fullpath = '{0}.{1}'.format(PACKAGE, module_name)
@@ -338,7 +339,8 @@ def set_up():
     # need custom args (to accept full path or wild card
     args, kwargs = [p, 'ICDP_NAME'], dict(required=True, logthis=False)
     p = spirouStartup.LoadOtherConfig(*args, **kwargs)
-    p['LOG_OPT'], p['PROGRAM'] = DPROG, DPROG
+    p['RECIPE'] = __NAME__
+    p['LOG_OPT'], p['PROGRAM'] = p['RECIPE'], p['RECIPE']
     # return p
     return p
 
@@ -355,10 +357,10 @@ def end(p):
     """
     # End Message
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['LOG_OPT']))
+    WLOG(p, 'info', wmsg.format(p['LOG_OPT']))
 
 
-def read_file(filename):
+def read_file(p, filename):
     """
     Read a text (or latex) file using open and readlines
 
@@ -374,7 +376,7 @@ def read_file(filename):
     except:
         emsg1 = 'Cannot open filename={0}'.format(filename)
         emsg2 = '    function={0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         f = None
     # read lines
     lines = f.readlines()
@@ -443,7 +445,7 @@ def tex_id_functions(lines):
     return functions
 
 
-def init_id_functions(module_name):
+def init_id_functions(p, module_name):
     """
     Import the string "module_name" from pacakge PACKAGE
     (i.e. same as import PACKAGE.module_name
@@ -458,12 +460,12 @@ def init_id_functions(module_name):
     try:
         imp = __import__(fullpath, fromlist=[''])
     except:
-        WLOG('error', 'Module = {0} not found'.format(fullpath))
+        WLOG(p, 'error', 'Module = {0} not found'.format(fullpath))
         imp = None
     if hasattr(imp, '__all__'):
         return imp
     else:
-        WLOG('error', 'Module = {0} does not have __ALL__ property and '
+        WLOG(p, 'error', 'Module = {0} does not have __ALL__ property and '
                       'cannot be checked for functions')
 
 
