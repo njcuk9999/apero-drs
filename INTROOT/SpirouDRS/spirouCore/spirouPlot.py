@@ -2294,7 +2294,7 @@ def wave_ea_plot_single_order(p, loc):
                label='HC spectrum - order ' + str(plot_order))
     # plot found lines
     # first line separate for labelling purposes
-    x0 = loc['ALL_LINES_1'][plot_order_line][0][0]
+    x0 = loc['ALL_LINES_1'][plot_order_line][0][0] + loc['ALL_LINES_1'][plot_order_line][0][3]
     ymax0 = loc['ALL_LINES_1'][plot_order_line][0][2]
     frame.vlines(x0, 0, ymax0, color='m', label='fitted lines')
     # plot lines to the top of the figure
@@ -2303,7 +2303,7 @@ def wave_ea_plot_single_order(p, loc):
     # rest of lines
     for i in range(1, len(loc['ALL_LINES_1'][plot_order_line])):
         # get x and y
-        x = loc['ALL_LINES_1'][plot_order_line][i][0]
+        x = loc['ALL_LINES_1'][plot_order_line][i][0] + loc['ALL_LINES_1'][plot_order_line][i][3]
         ymaxi = loc['ALL_LINES_1'][plot_order_line][i][2]
         # plot lines to their corresponding amplitude
         frame.vlines(x, 0, ymaxi, color='m')
