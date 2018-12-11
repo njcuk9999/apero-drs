@@ -347,6 +347,8 @@ def read_fits_table(p, filename, return_dict=False):
     # read data
     try:
         astropy_table = Table.read(filename)
+    except OSError as e:
+        astropy_table = deal_with_missing_end_card(p, filename, e, func_name)
     except Exception as e:
         emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
         emsg2 = '\tError was: {0}'.format(e)
@@ -391,6 +393,73 @@ def write_fits_table(p, astropy_table, output_filename):
         emsg2 = '\tError was: {0}'.format(e)
         emsg3 = '\tfunction = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2, emsg3])
+
+
+# TODO: Find cause of this problem and fix properly
+def deal_with_missing_end_card(p, filename, e, func_name):
+    """
+    This is specifically to fix a unidentfied error that causes fits table
+    to be saved without END card.
+
+    Generated with call to fits file:
+        data = Table.read(fits_file)
+
+    Error generated without this:
+        OSError: Header missing END card.
+
+    Solution is to read with fits (astropy.io.fits)
+    --> also saves over old index file so this problem doesn't persist
+
+    :param p: parameter dictionary
+    :param filename: string, the full path and filename to open the file
+    :param e: exception return, the error to print
+    :param func_name: string, the function this was called for
+                      (for error reporting)
+    :return astropy_table: astropy.table.Table containing the fits file
+    """
+    hdu = fits.open(filename, ignore_missing_end=True)
+    ext = None
+    if hdu.data[0] is not None:
+        data = hdu[0].data
+        ext = 0
+    elif hdu.data[1] is not None:
+        data = hdu[1].data
+        ext = 1
+    else:
+        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
+        emsg2 = '\tError was: {0}'.format(e)
+        emsg3 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
+        data = None
+    # test that we have columns and names
+    if not hasattr(data, 'columns'):
+        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
+        emsg2 = '\tError was: data cannot read "columns"'
+        emsg3 = '\tError was: {0}'.format(e)
+        emsg4 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
+        data = None
+    if not hasattr(data.columns, 'names'):
+        emsg1 = 'Error cannot open {0} as a fits table'.format(filename)
+        emsg2 = '\tError was: data cannot read "columns.names"'
+        emsg3 = '\tError was: {0}'.format(e)
+        emsg4 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
+        data = None
+    # print warning
+    wmsg1 = 'Error found = {0}'.format(e)
+    wmsg2 = '\tCorrected by manually reading extension {0} as table'.format(ext)
+    wmsg3 = '\tSaving over file "{0}"'.format(filename)
+    wmsg4 = '\tfunction = {0}'.format(func_name)
+    WLOG(p, 'warning', [wmsg1, wmsg2, wmsg3, wmsg4])
+    # convert data to astropy table
+    astropy_table = Table()
+    for col in data.columns.names:
+        astropy_table[col] = np.array(data[col])
+    # save table for next time
+    astropy_table.write(filename, format='fits', overwrite=True)
+    # return table
+    return astropy_table
 
 
 # =============================================================================
