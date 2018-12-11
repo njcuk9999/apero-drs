@@ -43,7 +43,7 @@ sPlt = spirouCore.sPlt
 ParamDict = spirouConfig.ParamDict
 
 # test run
-TEST_RUN = True
+TEST_RUN = False
 TEST_STORE = []
 
 # define run number
@@ -61,23 +61,23 @@ RUN_EXTRACT_TELLU = True
 RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_ALL = True
 RUN_HC_WAVE = True
-RUN_WAVE_WAVE = True
+RUN_WAVE_WAVE = False
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = False
-SKIP_DONE_HC_WAVE = False
-SKIP_DONE_WAVE_WAVE = False
-SKIP_DONE_MK_TELLU = False
-SKIP_DONE_FIT_TELLU = False
+SKIP_DONE_EXTRACT = True
+SKIP_DONE_HC_WAVE = True
+SKIP_DONE_WAVE_WAVE = True
+SKIP_DONE_MK_TELLU = True
+SKIP_DONE_FIT_TELLU = True
 
 # turn on parallelisation
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 10
+MAX_PROCESSES = 12
 
 # -----------------------------------------------------------------------------
 # allowed files

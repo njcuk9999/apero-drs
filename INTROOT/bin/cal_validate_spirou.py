@@ -318,6 +318,8 @@ def main(check=1, debug_mode=0):
     # Get config parameters
     cparams, _ = spirouConfig.ReadConfigFile()
     # get drs_name and drs_version
+    cparams['PID'] = Startup.assign_pid()
+    cparams['RECIPE'] = __NAME__.replace('.py', '')
     cparams['DRS_NAME'] = spirouConfig.Constants.NAME()
     cparams['DRS_VERSION'] = spirouConfig.Constants.VERSION()
     cparams.set_sources(['DRS_NAME', 'DRS_VERSION'], 'spirouConfig.Constants')
@@ -332,8 +334,8 @@ def main(check=1, debug_mode=0):
         print('\n')
         print('Validation successful. DRS installed corrected.')
     else:
-        wlog('', __NAME__, '')
-        wlog('', __NAME__, 'Validation successful. DRS installed corrected.')
+        wlog(cparams, '', '')
+        wlog(cparams, '', 'Validation successful. DRS installed corrected.')
 
     # -------------------------------------------------------------------------
     # Currently some files are required to run the DRS (calibDB setup)
@@ -349,11 +351,11 @@ def main(check=1, debug_mode=0):
         # add calibDB files
         if uinput:
             drs_reset.reset_calibdb(cparams, log=True)
-            wlog('', __NAME__, 'Calibration database setup correctly.')
+            wlog(cparams, '', 'Calibration database setup correctly.')
             drs_reset.reset_telludb(cparams, log=True)
-            wlog('', __NAME__, 'Telluric database setup correctly.')
+            wlog(cparams, '', 'Telluric database setup correctly.')
         else:
-            wlog('', __NAME__, 'Assuming files setup correctly.')
+            wlog(cparams, '', 'Assuming files setup correctly.')
 
     # -------------------------------------------------------------------------
     # return a copy of locally defined variables in the memory

@@ -1,77 +1,45 @@
-Update Note Summary - Version 0.3.050 (Since 0.3.027)
+Update Note Summary - Version 0.4.005 (Since 0.3.050)
 
 Done:
 
-- added and integrated cal_CCF_E2DS_FP_spirou.py to the DRS
-    - Works on E2DS, E2DSFF, TELLU_CORRECTED, POL_ for fibers [AB, A, B]
-      requires FP in fiber C but not currently checked
-    - Adds a new set of header keys for FP
-    - Now FP analysis kept separate from first CCF analysis
 
-- updated exposure meter and wave mapper to use SHAPE instead of TILT if
-  available (and extraction mode 4a or 4b)
+- updates to cal_WAVE (NEW and E2DS_EA) to try to improve littrow and
+     at the very least give more output to user (NOT WORKING FULLY)
 
-- extra fixes/refinements to obj_mk_tellu, obj_fit_tellu, obj_mk_obj_template
+- re-working of cal_SHAPE
+    - new code for cal_SHAPE that now requires the following input:
+           cal_SHAPE_spirou.py HC_FILE FP_FILE1 FP_FILE2 ...
 
-- updated master wavelength solution AB and C (used in calibDB and telluDB)
+- parallisation updates:
+    - major redo of WLOG to handle multiple instances of the DRS running at once
+    - updated the calibDB and telluDB reading/writing to handle multiple
+      reads at once
+    - updated the fits file and fits table file reading to handle multiple reads
+      at once
+    - updated unit_test and extract_trigger to be parallisable
 
-- added simplified trigger, and advances in unit_testing
-  (Error catching + handling)
+- obj_mk_obj_template.py now lists wave solution in header (as well as BERV
+    and filename)
 
-- unit test updates
+- fixed bug in spirouBERV - should not be calculated for non-science OBJECTS
 
-- new recipe cal_DRIFTCCF_E2DS_spirou - input same as cal_DRIFT_E2DS_spirou
-    - uses CCF of the FP_FP / OBJ_FP / DARK_FP with a cross-correlation to
-      calculate drift
-    - added fp.mas to CCF masks for this recipe
+- fixed format of LSD table in pol table - now is a fits table
+        Note to open fits tables in IDL see here:
+        https://idlastro.gsfc.nasa.gov/ftp/pro/fits_table/aaareadme.txt
 
-- update to cal_WAVE_E2DS_EA_spirou (FP jump analysis now more stable)
-    However still problems with quality control criteria
+        lookup:
+            ftab_print, 'file.fits'
+        read:
+            tab = readfits('file.fits', hdr, /EXTEN)
+            col1 = tbget(hdr, tab, 'COLUMN1')
 
-- telluric update:
-    - will reject objects from mk_tellu if SNR > 100 in order 35 (these can be
-      changed using "qc_tellu_snr_order" and "qc_tellu_snr_min"
-	- will now only use most recent obj template
-	- will now only use unique TELL_OBJ filenames
+- extract_trigger.py written to reprocess data based on night/recipes required
+      (currently located in SpirouDRS/spirouUnitTests/)
 
-- constaints on extraction that extraction type is the same as for FLAT file
-  (i.e. 4a and 4b are compatible, mode 3d and 4b are not)
+- pep8 clean up of all codes + some clean-up of which log messages are "info"
+   as opposed to "general"
 
-- added ability to use tellurics from multiple wavelength solutions in:
-    - obj_mk_tellu.py
-    - obj_fit_tellu.py
-    - obj_mk_obj_template.py
-
-- updated obj_mk_obj_template.py (was out of date for the DRS + untests + bugs)
-
-- made cal_HC_E2DS_EA_spirou.py more stable (added additional sigma clipping)
-
-- fixed bug in getting wave parameters from header
-
-- added Eder's changes for pol_spirou
-
-- fixed major bug with extraction methods 4a and 4b
-    - methods 4a and 4b are now the default setting (change with
-      ic_extract_type and ic_ff_extract_type)
-
-- moved cal_WAVE_E2DS_spirou and cal_HC_E2DS_spirou to misc folder
-
-- force fiber A and fiber B to use wavelength solution from fiber AB
-
-- added a "un-summed" [E2DSLL] output from extraction to view how the image
-  looks after localisation + shape correction (before flattening/cosmic correction)
-
-- DARK_FP is now available for use on drift recipes
-
-- OBJ_DARK (Sky) is now available for use on cal_DARK_spirou.py
-    - will add "SKYDARK" to calibDB
-    - change "use_skydark_correction = True" to use sky darks in calibDB if
-      available - note if set to True will ALWAYS use SKYDARK over DARK to use
-      DARK again must set "use_skydark_correction = False"
-
-- Fixed bug with cal_HC_E2DS_EA_spirou not saving parameters to header
-
-- Added feature for cal_HC_E2DS_EA_spirou to update input file header
+- many smaller bug fixes (see CHANGELOG.md)
 
 
 
