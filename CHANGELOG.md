@@ -5581,6 +5581,14 @@
 	- cal_WAVE_NEW_E2DS_EA update (calculates wave sol, does Littrow) (rev.0cbd9a55)
 	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
 
+
+================================================================================
+* Mon Dec 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.074
+
+================================================================================
+	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
+
+
 ================================================================================
 * Tue Dec 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.075
 
@@ -5671,3 +5679,21 @@
 	- spirouRV.py - change an info log message to general log message (too many for CCF) (rev.8e990df7)
 	- spirouLSD.py - remove some of the info logs and make them general logs (rev.42142016)
 	- pol_spirou.py - remove some of the info logs and make them general logs (rev.56fb9972)
+
+
+================================================================================
+* Mon Dec 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.004
+
+================================================================================
+	- spirouConst.py - undo change to global file (rev.2ddb2b7c)
+	- spirouFITS.py - fix for lock file on non-fits files (rev.1c7fe0ae)
+
+
+
+================================================================================
+* Tue Dec 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.005
+
+================================================================================
+	- spirouTable.py - fix an error with missing end card (rev.6eb263e0)
+	- update extraction_trigger.py run time parameters (rev.775066b2)
+	- cal_validate_spirou.py - correct cal_validate for new wlog (rev.678f0b30)
