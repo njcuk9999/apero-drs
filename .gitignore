@@ -168,5 +168,8 @@ fabric.properties
 # Editor-based Rest Client
 .idea/httpRequests
 
+# ignore whole .idea folder
+.idea
+
 # Ignore config.py
 #/INTROOT/misc/
