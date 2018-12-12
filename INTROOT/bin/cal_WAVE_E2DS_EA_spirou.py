@@ -585,9 +585,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         p['OBJNAME']='FP'
         sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
 
-
     #TODO : Add QC of the FP CCF
-
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -734,9 +732,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
 
-
     # add FP CCF drift
-
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
                                value=loc['RV_CCF'][0])
@@ -744,16 +740,16 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
     # add ccf stats
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'], value=loc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'],
+                               value=loc['CCF_RES'][1])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=loc['FWHM'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
                                value=loc['CONTRAST'])
-    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'], value=loc['MAXCPP'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'],
+                               value=loc['MAXCPP'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=p['CCF_MASK'])
     hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
                                value=np.sum(loc['TOT_LINE']))
-
-
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
