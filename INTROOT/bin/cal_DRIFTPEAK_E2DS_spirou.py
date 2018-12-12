@@ -337,10 +337,8 @@ def main(night_name=None, reffile=None):
             # work out mean drift across all orders
             loc = spirouRV.DriftAllOrders(p, loc, i_it, nomin, nomax)
             # log the mean drift
-            wmsg = ('Time from ref= {0:.2f} h '
-                    '- Flux Ratio= {1:.3f} '
-                    '- Drift mean= {2:.2f} +- '
-                    '{3:.2f} m/s')
+            wmsg = ('Time from ref= {0:.2f} h - Flux Ratio= {1:.3f} '
+                    '- Drift mean= {2:.2f} +- {3:.2f} m/s')
             wargs = [loc['DELTATIME'][i_it], loc['FLUXRATIO'][i_it],
                      loc['MEANRV'][i_it], loc['MERRDRIFT'][i_it]]
             WLOG(p, 'info', wmsg.format(*wargs))
