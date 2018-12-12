@@ -18,6 +18,7 @@ from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS import spirouImage
 from SpirouDRS import spirouStartup
+from SpirouDRS import spirouRV
 from SpirouDRS import spirouTHORCA
 from SpirouDRS.spirouTHORCA import spirouWAVE
 
@@ -492,6 +493,103 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         sPlt.wave_ea_plot_single_order(p, loc)
 
     # ----------------------------------------------------------------------
+    # Do correlation on FP spectra
+    # ----------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # Compute photon noise uncertainty for FP
+    # ------------------------------------------------------------------
+    # set up the arguments for DeltaVrms2D
+    dargs = [loc['FPDATA'], loc['LL_FINAL']]
+    dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'], size=p['IC_DRIFT_BOXSIZE'],
+                   threshold=p['IC_DRIFT_MAXFLUX'])
+    # run DeltaVrms2D
+    dvrmsref, wmeanref = spirouRV.DeltaVrms2D(*dargs, **dkwargs)
+    # save to loc
+    loc['DVRMSREF'], loc['WMEANREF'] = dvrmsref, wmeanref
+    loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/main()()')
+    # log the estimated RV uncertainty
+    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
+
+    # Use CCF Mask function with drift constants
+    p['CCF_MASK'] = p['DRIFT_CCF_MASK']
+    p['TARGET_RV'] = p['DRIFT_TARGET_RV']
+    p['CCF_WIDTH'] = p['DRIFT_CCF_WIDTH']
+    p['CCF_STEP'] = p['DRIFT_CCF_STEP']
+    p['RVMIN'] = p['TARGET_RV'] - p['CCF_WIDTH']
+    p['RVMAX'] = p['TARGET_RV'] + p['CCF_WIDTH'] + p['CCF_STEP']
+
+    # get the CCF mask from file (check location of mask)
+    loc = spirouRV.GetCCFMask(p, loc)
+
+    # TODO Check why Blaze makes bugs in correlbin
+    loc['BLAZE'] = np.ones((loc['NBO'],loc['NBPIX']))
+    # set sources
+    # loc.set_sources(['flat', 'blaze'], __NAME__ + '/main()')
+    loc.set_source('blaze', __NAME__ + '/main()')
+
+    # ----------------------------------------------------------------------
+    # Do correlation on FP
+    # ----------------------------------------------------------------------
+    # calculate and fit the CCF
+    loc['E2DSFF'] = np.array(loc['FPDATA'])
+    loc.set_source('E2DSFF', __NAME__ + '/main()')
+    p['CCF_FIT_TYPE'] = 1
+    loc['BERV'] = 0.0
+    loc['BERV_MAX'] = 0.0
+    loc['BJD'] = 0.0
+
+    # run the RV coravelation function with these parameters
+    loc['WAVE_LL'] = np.array(loc['LL_FINAL'])
+    loc['PARAM_LL'] = np.array(loc['LL_PARAM_FINAL'])
+    loc = spirouRV.Coravelation(p, loc)
+
+    # ----------------------------------------------------------------------
+    # Update the Correlation stats with values using fiber C (FP) drift
+    # ----------------------------------------------------------------------
+    # get the maximum number of orders to use
+    nbmax = p['CCF_NUM_ORDERS_MAX']
+    # get the average ccf
+    loc['AVERAGE_CCF'] = np.sum(loc['CCF'][: nbmax], axis=0)
+    # normalize the average ccf
+    normalized_ccf = loc['AVERAGE_CCF'] / np.max(loc['AVERAGE_CCF'])
+    # get the fit for the normalized average ccf
+    ccf_res, ccf_fit = spirouRV.FitCCF(p, loc['RV_CCF'], normalized_ccf,
+                                       fit_type=1)
+    loc['CCF_RES'] = ccf_res
+    loc['CCF_FIT'] = ccf_fit
+    # get the max cpp
+    loc['MAXCPP'] = np.sum(loc['CCF_MAX']) / np.sum(loc['PIX_PASSED_ALL'])
+    # get the RV value from the normalised average ccf fit center location
+    loc['RV'] = float(ccf_res[1])
+    # get the contrast (ccf fit amplitude)
+    loc['CONTRAST'] = np.abs(100 * ccf_res[0])
+    # get the FWHM value
+    loc['FWHM'] = ccf_res[2] * spirouCore.spirouMath.fwhm()
+    # set the source
+    keys = ['AVERAGE_CCF', 'MAXCPP', 'RV', 'CONTRAST', 'FWHM',
+            'CCF_RES', 'CCF_FIT']
+    loc.set_sources(keys, __NAME__ + '/main()')
+    # ----------------------------------------------------------------------
+    # log the stats
+    wmsg = ('FP Correlation: C={0:.1f}[%] DRIFT={1:.5f}[km/s] '
+            'FWHM={2:.4f}[km/s] maxcpp={3:.1f}')
+    wargs = [loc['CONTRAST'], float(ccf_res[1]), loc['FWHM'], loc['MAXCPP']]
+    WLOG(p, 'info', wmsg.format(*wargs))
+    # ----------------------------------------------------------------------
+    # rv ccf plot
+    # ----------------------------------------------------------------------
+    if p['DRS_PLOT']:
+        # Plot rv vs ccf (and rv vs ccf_fit)
+        p['OBJNAME']='FP'
+        sPlt.ccf_rv_ccf_plot(p, loc['RV_CCF'], normalized_ccf, ccf_fit)
+
+
+    #TODO : Add QC of the FP CCF
+
+
+    # ----------------------------------------------------------------------
     # Quality control
     # ----------------------------------------------------------------------
     # get parameters ffrom p
@@ -635,6 +733,27 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # add wave solution
     hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['LL_PARAM_FINAL'])
+
+
+    # add FP CCF drift
+
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CTYPE1'], value='km/s')
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CRVAL1'],
+                               value=loc['RV_CCF'][0])
+    # the rv step
+    rvstep = np.abs(loc['RV_CCF'][0] - loc['RV_CCF'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CDELT1'], value=rvstep)
+    # add ccf stats
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_RV1'], value=loc['CCF_RES'][1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_FWHM1'], value=loc['FWHM'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_CONTRAST1'],
+                               value=loc['CONTRAST'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MAXCPP1'], value=loc['MAXCPP'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_MASK1'], value=p['CCF_MASK'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_CCF_LINES1'],
+                               value=np.sum(loc['TOT_LINE']))
+
+
 
     # write the wave "spectrum"
     hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
