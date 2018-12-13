@@ -5697,3 +5697,35 @@
 	- spirouTable.py - fix an error with missing end card (rev.6eb263e0)
 	- update extraction_trigger.py run time parameters (rev.775066b2)
 	- cal_validate_spirou.py - correct cal_validate for new wlog (rev.678f0b30)
+
+
+
+================================================================================
+* Wed Dec 12 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.006
+
+================================================================================
+	- add .idea to .gitignore (rev.9a0fd322)
+	- cal_WAVE_E2DS_EA_spirou.py - pep8 clean up of Francois branch (rev.d9583cb0)
+	- cal_DRIFTPEAK_E2DS_spirou.py - pep8 clean up of Francois branch (rev.be5cbc4e)
+	- cal_CCF_E2DS_FP_spirou.py - pep8 clean up of Francois branch (rev.07660540)
+	- code to check the telluric corrections (rev.9e56bd98)
+	- update requirements (barycorrpy required) (rev.91b15f56)
+	- Update README.md (rev.c8d7624a)
+	- add a minimum requirements and current requirements (as .txt files) (rev.3463fd8a)
+	- re-do requirements files (rev.9f3487b1)
+
+
+================================================================================
+* Wed Dec 12 2018 FrancoisBouchy <francois.bouchy@unige.ch> - 0.4.006
+
+================================================================================
+	- Format of flux ratio set to .3f (rev.2831f5fb)
+	- Compute the absolute CCF drift of the FP and save it in the wavelength solution file as CCFRV2. (rev.3df4cea9)
+	- Absolute CCF drift of FP is read from the wavelength solution file. The relative CCF drift takes into account this Absolute drift. (rev.68e9fd5f)
+
+
+================================================================================
+* Thu Dec 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.007
+
+================================================================================
+	- extract_trigger.py - changes to reprocessing code (correct order) (rev.7529390b)
