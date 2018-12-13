@@ -24,7 +24,6 @@ from SpirouDRS import spirouStartup
 from SpirouDRS.spirouUnitTests import spirouUnitRecipes
 from SpirouDRS.spirouUnitTests import spirouUnitTests
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -57,27 +56,36 @@ RUN_SLIT = True
 RUN_SHAPE = True
 RUN_FLAT = True
 RUN_EXTRACT_HCFP = True
-RUN_EXTRACT_TELLU = True
-RUN_EXTRACT_OBJ = True
-RUN_EXTRACT_ALL = True
 RUN_HC_WAVE = True
 RUN_WAVE_WAVE = False
+RUN_EXTRACT_TELLU = True
+RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_ALL = True
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
 
 # skip found files
 SKIP_DONE_PP = True
-SKIP_DONE_EXTRACT = True
-SKIP_DONE_HC_WAVE = True
-SKIP_DONE_WAVE_WAVE = True
-SKIP_DONE_MK_TELLU = True
-SKIP_DONE_FIT_TELLU = True
+SKIP_DONE_EXTRACT = False
+SKIP_DONE_HC_WAVE = False
+SKIP_DONE_WAVE_WAVE = False
+SKIP_DONE_MK_TELLU = False
+SKIP_DONE_FIT_TELLU = False
 
 # turn on parallelisation
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 12
+MAX_PROCESSES = 20
+
+# inputs
+INPUT_HC_AB = '_e2dsff_AB.fits'
+INPUT_HC_C = '_e2dsff_C.fits'
+INPUT_WAVE_AB = '_e2dsff_AB.fits'
+INPUT_WAVE_C = '_e2dsff_C.fits'
+
+INPUT_MK_TELLU = '_e2dsff_AB.fits'
+INPUT_FIT_TELLU = '_e2dsff_AB.fits'
 
 # -----------------------------------------------------------------------------
 # allowed files
@@ -100,7 +108,8 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
          '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
          '2018-10-26', '2018-10-27']
-DATES = None
+# DATES = None
+
 
 # =============================================================================
 # Define functions
@@ -626,17 +635,17 @@ def trigger_preprocess(p, filelist):
             # run preprocess
             try:
                 args = [night_names[it], rawfilename]
-                ll = cal_preprocess_spirou.main(*args)
+                llrun = cal_preprocess_spirou.main(*args)
                 # keep only some parameters
                 pp = ParamDict()
                 pp['RECIPE'] = recipe
                 pp['NIGHT_NAME'] = night_names[it]
                 pp['ARGS'] = rawfilename
-                pp['ERROR'] = list(ll['p']['LOGGER_ERROR'])
-                pp['WARNING'] = list(ll['p']['LOGGER_WARNING'])
-                pp['OUTPUTS'] = dict(ll['p']['OUTPUTS'])
+                pp['ERROR'] = list(llrun['p']['LOGGER_ERROR'])
+                pp['WARNING'] = list(llrun['p']['LOGGER_WARNING'])
+                pp['OUTPUTS'] = dict(llrun['p']['OUTPUTS'])
                 lls.append(pp)
-                del ll
+                del llrun
             # Manage unexpected errors
             except Exception as e:
                 wmsgs = ['PPRun "{0}" had an unexpected error:'.format(it)]
@@ -768,7 +777,7 @@ def trigger_runs(p, recipe, night_name, control, vindex):
         return cal_hc_e2ds_ea_spirou(p, night_name, vindex, groups)
 
     if recipe == 'cal_WAVE_E2DS_spirou':
-        return cal_wave_e2ds_ea_spirou(p,night_name, vindex, groups)
+        return cal_wave_e2ds_ea_spirou(p, night_name, vindex, groups)
 
     if recipe == 'obj_mk_tellu':
         return obj_mk_tellu(p, night_name, vindex, groups)
@@ -1091,8 +1100,8 @@ def cal_hc_e2ds_ea_spirou(p, night_name, vindex, groups):
             hc_hc_files = get_group_skip(hc_hc_files, path, '.fits',
                                          '_wave_ea_C.fits')
         num_hc_hc_groups = len(hc_hc_files)
-        hc_EAB_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_AB.fits')
-        hc_EC_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_C.fits')
+        hc_EAB_files = get_group_replace(hc_hc_files, '.fits', INPUT_HC_AB)
+        hc_EC_files = get_group_replace(hc_hc_files, '.fits', INPUT_HC_C)
     else:
         WLOG(p, 'warning', 'HCONE_HCONE not in groups')
         return []
@@ -1127,14 +1136,15 @@ def cal_wave_e2ds_ea_spirou(p, night_name, vindex, groups):
         fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
         if SKIP_DONE_WAVE_WAVE:
             path = os.path.join(p['DRS_DATA_REDUC'], night_name)
-            fout = get_group_skip(fp_fp_files, path, '.fits', '_wave_ea_AB.fits',
+            fout = get_group_skip(fp_fp_files, path, '.fits',
+                                  '_wave_ea_AB.fits',
                                   fp_fp_groups)
             fp_fp_groups, fp_fp_files = fout
         fp_fp_dates = get_group_vindex(vindex, fp_fp_groups, DATECOL)
         num_fp_fp_groups = len(fp_fp_files)
         mean_fp_fp_dates = get_group_mean(fp_fp_dates)
-        fp_EAB_files = get_group_replace(fp_fp_files, '.fits', '_e2ds_AB.fits')
-        fp_EC_files = get_group_replace(fp_fp_files, '.fits', '_e2ds_C.fits')
+        fp_EAB_files = get_group_replace(fp_fp_files, '.fits', INPUT_WAVE_AB)
+        fp_EC_files = get_group_replace(fp_fp_files, '.fits', INPUT_WAVE_C)
     else:
         WLOG(p, 'warning', 'FP_FP not in groups')
         return []
@@ -1150,8 +1160,8 @@ def cal_wave_e2ds_ea_spirou(p, night_name, vindex, groups):
         hc_hc_dates = get_group_vindex(vindex, hc_hc_groups, DATECOL)
         num_hc_hc_groups = len(hc_hc_files)
         mean_hc_hc_dates = get_group_mean(hc_hc_dates)
-        hc_EAB_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_AB.fits')
-        hc_EC_files = get_group_replace(hc_hc_files, '.fits', '_e2ds_C.fits')
+        hc_EAB_files = get_group_replace(hc_hc_files, '.fits', INPUT_WAVE_AB)
+        hc_EC_files = get_group_replace(hc_hc_files, '.fits', INPUT_WAVE_C)
 
     else:
         WLOG(p, 'warning', 'HCONE_HCONE not in groups')
@@ -1211,7 +1221,7 @@ def obj_fit_tellu(p, night_name, vindex, groups):
         if 'sky' in objnamelist2[num]:
             continue
         else:
-            filename3 = filelist2[num].replace('.fits', '_e2dsff_AB.fits')
+            filename3 = filelist2[num].replace('.fits', INPUT_FIT_TELLU)
             filelist3.append(filename3)
     # runs
     runs = []
@@ -1261,7 +1271,7 @@ def obj_mk_tellu(p, night_name, vindex, groups):
         if objnamelist2[num] not in TELL_WHITELIST:
             continue
         else:
-            filename3 = filelist2[num].replace('.fits', '_e2dsff_AB.fits')
+            filename3 = filelist2[num].replace('.fits', INPUT_MK_TELLU)
             filelist3.append(filename3)
     # runs
     runs = []
@@ -1366,7 +1376,6 @@ def strip_names(innames):
     for inname in innames:
         outnames.append(inname.strip())
     return outnames
-
 
 
 # =============================================================================
@@ -1476,43 +1485,37 @@ def main(night_name=None):
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['HCONE_HCONE', 'FP_FP'])
         all_lls['cal_extract_RAW_spirou (HC/FP)'] = lls
-    # 8. extract tellurics
+    # 8. get cal hc wave solutions
+    if RUN_HC_WAVE:
+        lls = trigger_main(p, loc, recipe='cal_HC_E2DS_spirou')
+    # 9. get cal hc wave solutions
+    if RUN_WAVE_WAVE:
+        lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_spirou')
+    # 10. extract tellurics
     if RUN_EXTRACT_TELLU:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['OBJ_FP', 'OBJ_DARK'],
                            fobjnames=TELL_WHITELIST)
         all_lls['cal_extract_RAW_spirou (TELLU)'] = lls
-    # 9. extract objects
+    # 11. extract objects
     if RUN_EXTRACT_OBJ:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['OBJ_FP', 'OBJ_DARK'],
                            fobjnames=['Gl699', 'Gl15A'])
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
-
-    # 9. extract objects
+    # 12. extract objects
     if RUN_EXTRACT_ALL:
         lls = trigger_main(p, loc, recipe='cal_extract_RAW_spirou',
                            fdprtypes=['OBJ_FP', 'OBJ_DARK'])
         all_lls['cal_extract_RAW_spirou (OBJ)'] = lls
-
-    # 10. get cal hc wave solutions
-    if RUN_HC_WAVE:
-        lls = trigger_main(p, loc, recipe='cal_HC_E2DS_spirou')
-
-    # 11. get cal hc wave solutions
-    if RUN_WAVE_WAVE:
-        lls = trigger_main(p, loc, recipe='cal_WAVE_E2DS_spirou')
-
-    # 12. get cal hc wave solutions
+    # 13. get cal hc wave solutions
     if RUN_OBJ_MK_TELLU:
         lls = trigger_main(p, loc, recipe='obj_mk_tellu',
                            fobjnames=TELL_WHITELIST)
-
-    # 13. get cal hc wave solutions
+    # 14. get cal hc wave solutions
     if RUN_OBJ_FIT_TELLU:
         lls = trigger_main(p, loc, recipe='obj_fit_tellu',
                            fobjnames=['Gl699', 'Gl15A'])
-
     # if test run print report
     if TEST_RUN:
         print('\n\n')
@@ -1545,7 +1548,6 @@ if __name__ == "__main__":
     ll = main()
     # exit message if in debug mode
     spirouStartup.Exit(ll, has_plots=False)
-
 
 # =============================================================================
 # End of code
