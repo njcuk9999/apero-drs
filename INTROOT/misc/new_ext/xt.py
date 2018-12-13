@@ -84,12 +84,12 @@ p = spirouImage.GetExpTime(p, hdr, name='exptime')
 # get gain
 p = spirouImage.GetGain(p, hdr, name='gain')
 
-data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
+data = spirouImage.ConvertToE(spirouImage.FlipImage(p, datac), p=p)
 # convert NaN to zeros
 data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
 # resize image
 bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],getshape=False)
-data1 = spirouImage.ResizeImage(data0, **bkwargs)
+data1 = spirouImage.ResizeImage(p, data0, **bkwargs)
 
 
 
@@ -97,11 +97,11 @@ data1 = spirouImage.ResizeImage(data0, **bkwargs)
 ###################### reading and handling the 2D HC image ############
 data_hc = (pyfits.getdata(hc_file))
 
-data_hc = spirouImage.ConvertToE(spirouImage.FlipImage(data_hc), p=p)
+data_hc = spirouImage.ConvertToE(spirouImage.FlipImage(p, data_hc), p=p)
 # convert NaN to zeros
 data0_hc = np.where(~np.isfinite(data_hc), np.zeros_like(data_hc), data_hc)
 # resize image
-data1_hc = spirouImage.ResizeImage(data0_hc, **bkwargs)
+data1_hc = spirouImage.ResizeImage(p, data0_hc, **bkwargs)
 ########################################################################
 
 

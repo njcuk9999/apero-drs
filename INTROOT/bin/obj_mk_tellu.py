@@ -130,7 +130,7 @@ def main(night_name=None, files=None):
     # log process
     wmsg1 = 'Shifting transmission map on to master wavelength grid'
     wmsg2 = '\tFile = {0}'.format(os.path.basename(masterwavefile))
-    WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+    WLOG(p, '', [wmsg1, wmsg2])
     # Force A and B to AB solution
     if p['FIBER'] in ['A', 'B']:
         wave_fiber = 'AB'
@@ -183,7 +183,7 @@ def main(night_name=None, files=None):
         # Shift data to master wave file
         # ------------------------------------------------------------------
         # shift map
-        wargs = [sp, loc['WAVE_IT'], masterwave]
+        wargs = [p, sp, loc['WAVE_IT'], masterwave]
         sp = spirouTelluric.Wave2Wave(*wargs)
         loc['SP'] = np.array(sp)
         loc.set_source('SP', main_name)
@@ -197,12 +197,12 @@ def main(night_name=None, files=None):
         # if we already have the file skip it
         if outfile in tellu_db_files:
             wmsg = 'File {0} exists in telluDB, skipping'
-            WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
+            WLOG(p, '', wmsg.format(outfilename))
             continue
         else:
             # log processing file
             wmsg = 'Processing file {0}'
-            WLOG('', p['LOG_OPT'], wmsg.format(outfilename))
+            WLOG(p, '', wmsg.format(outfilename))
 
         # Get object name and airmass
         loc['OBJNAME'] = spirouImage.GetObjName(p, shdr)
@@ -219,7 +219,7 @@ def main(night_name=None, files=None):
             # log black list file found
             wmsg = 'File {0} is blacklisted (OBJNAME={1}). Skipping'
             wargs = [basefilename, loc['OBJNAME']]
-            WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, 'warning', wmsg.format(*wargs))
             # skip this file
             continue
 
@@ -309,7 +309,7 @@ def main(night_name=None, files=None):
             # log the rms
             wmsg = 'Order {0}: Fractional RMS in telluric free domain = {1:.3f}'
             wargs = [order_num, ec_rms]
-            WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
 
         # ------------------------------------------------------------------
         # Save transmission map to file
@@ -319,27 +319,27 @@ def main(night_name=None, files=None):
         # copy original keys
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
-        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag1)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag1)
         # set the input files
-        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                    value=os.path.basename(masterwavefile))
 
         # add wave solution date
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME1'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME1'],
                                    value=master_acqtimes[0])
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_TIME2'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_TIME2'],
                                    value=master_acqtimes[1])
         # add wave solution number of orders
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_ORD_N'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_ORD_N'],
                                    value=masterwavep.shape[0])
         # add wave solution degree of fit
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVE_LL_DEG'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVE_LL_DEG'],
                                    value=masterwavep.shape[1] - 1)
         # add wave solution coefficients
-        hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+        hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                          values=masterwavep)
         # write to file
         p = spirouImage.WriteImage(p, outfile, transmission_map, hdict)
@@ -399,14 +399,14 @@ def main(night_name=None, files=None):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if passed:
-            WLOG('info', p['LOG_OPT'],
+            WLOG(p, 'info',
                  'QUALITY CONTROL SUCCESSFUL - Well Done -')
             p['QC'] = 1
             p.set_source('QC', __NAME__ + '/main()')
         else:
             for farg in fail_msg:
                 wmsg = 'QUALITY CONTROL FAILED: {0}'
-                WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+                WLOG(p, 'warning', wmsg.format(farg))
             p['QC'] = 0
             p.set_source('QC', __NAME__ + '/main()')
 
@@ -454,12 +454,12 @@ def main(night_name=None, files=None):
         # write the map to file
         hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
         # add version number
-        hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag2)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag2)
         # set the input files
-        hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-        hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
-        hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+        hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+        hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                    value=loc['WAVEFILE'])
 
         # write to file
@@ -503,12 +503,12 @@ def main(night_name=None, files=None):
 
         # save the median absorption map to file
         abso_med_file, tag3 = spirouConfig.Constants.TELLU_ABSO_MEDIAN_FILE(p)
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag3)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag3)
         p = spirouImage.WriteImage(p, abso_med_file, abso_med_out, hdict)
 
         # save the normalized absorption map to file
         abso_map_file, tag4 = spirouConfig.Constants.TELLU_ABSO_NORM_MAP_FILE(p)
-        hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag4)
+        hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag4)
         p = spirouImage.WriteImage(p, abso_map_file, abso_map_n, hdict)
 
         # ------------------------------------------------------------------
@@ -549,7 +549,7 @@ def main(night_name=None, files=None):
             dvpix = -0.5 * (cfit[1] / cfit[0])
             # log stats
             wmsg = 'File: "{0}", dv={1}'
-            WLOG('', p['LOG_OPT'], wmsg.format(filename, dvpix))
+            WLOG(p, '', wmsg.format(filename, dvpix))
 
     # ----------------------------------------------------------------------
     # End Message

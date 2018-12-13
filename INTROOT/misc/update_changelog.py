@@ -43,7 +43,7 @@ TMPFILENAME = 'CHANGELOG.tmp'
 # =============================================================================
 # Define functions
 # =============================================================================
-def update(filename, path1, kind='rpm', version=None, since=None):
+def update(p, filename, path1, kind='rpm', version=None, since=None):
     # get default run
     cargs = [path1, filename]
     command = 'gcg -p {0} -o {1} -x -t'.format(*cargs)
@@ -61,7 +61,7 @@ def update(filename, path1, kind='rpm', version=None, since=None):
     os.system(command)
     # check that file created
     if not os.path.exists(filename):
-        WLOG('error', __NAME__.split('.py')[0], 'Error with gcg (see above)')
+        WLOG(p, 'error', 'Error with gcg (see above)')
 
 
 def get_last_entry(filename):
@@ -137,7 +137,8 @@ if __name__ == "__main__":
     last_entry = get_last_entry(FILENAME)
     # get the change log
     WLOG('', p['RECIPE'], 'Creating changelog')
-    update(TMPFILENAME, path, kind='rpm', version=drs_version, since=last_entry)
+    update(p, TMPFILENAME, path, kind='rpm', version=drs_version,
+           since=last_entry)
     # now append to full changelog (do not overwrite contents)
     WLOG('', p['RECIPE'], 'Saving change log to file {0}'.format(FILENAME))
     add_to_full(FILENAME, TMPFILENAME)

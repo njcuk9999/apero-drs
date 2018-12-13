@@ -32,8 +32,6 @@ WLOG = spirouCore.wlog
 sPlt = spirouCore.sPlt
 # Get Config error
 ConfigError = spirouConfig.ConfigError
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 
 
 # =============================================================================
@@ -76,7 +74,7 @@ def measure_blaze_for_order(p, y):
     return blaze
 
 
-def get_flat(p=None, loc=None, hdr=None, filename=None):
+def get_flat(p, loc, hdr=None, filename=None):
     """
     Attempts to read the flat and if it fails uses a constant flat
 
@@ -105,11 +103,10 @@ def get_flat(p=None, loc=None, hdr=None, filename=None):
     func_name = __NAME__ + '.correct_flat()'
 
     # deal with no p and no filename
-    if p is None and filename is None:
-        emsg1 = ('Error either "p" (ParamDict) or "filename" (string) must '
-                 'be defined')
-        emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+    if filename is None:
+        emsg1 = 'Error "filename" (string) must be defined'
+        emsg2 = '\tfunction = {0}'.format(func_name)
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # get flat from file
     try:
@@ -121,7 +118,7 @@ def get_flat(p=None, loc=None, hdr=None, filename=None):
     except ConfigError as e:
         # log warning
         wmsg = [e.message, '    Using constant flat instead.']
-        WLOG('warning', p['LOG_OPT'], wmsg)
+        WLOG(p, 'warning', wmsg)
         # flat set to ones
         flat = np.ones_like(loc['HCDATA'])
         p['FLATFILE'] = 'NONE'
@@ -171,7 +168,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'FF_START_ORDER = {0}'.format(order_range_lower)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         orl = 0
     # check that order_range_upper is valid
     try:
@@ -182,7 +179,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'FF_END_ORDER = {0}'.format(order_range_upper)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         oru = 0
     # return the range of the orders
     return range(orl, oru)

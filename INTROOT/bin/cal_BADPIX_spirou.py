@@ -69,7 +69,8 @@ def main(night_name=None, flatfile=None, darkfile=None):
     names = ['flatfile', 'darkfile']
     call = [flatfile, darkfile]
     # now get custom arguments
-    customargs = spirouStartup.GetCustomFromRuntime(pos, fmt, names, calls=call)
+    customargs = spirouStartup.GetCustomFromRuntime(p, pos, fmt, names,
+                                                    calls=call)
     # get parameters from configuration files and run time arguments
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='flatfile')
@@ -122,7 +123,7 @@ def main(night_name=None, flatfile=None, darkfile=None):
     btotal = (np.sum(bad_pixel_map) / bad_pixel_map.size) * 100
     # log result
     text = 'Fraction of total bad pixels {0:.4f} %'
-    WLOG('', p['LOG_OPT'], text.format(btotal))
+    WLOG(p, '', text.format(btotal))
 
     # ----------------------------------------------------------------------
     # Plots
@@ -139,15 +140,15 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    badpixelmap = spirouImage.FlipImage(bad_pixel_map)
+    badpixelmap = spirouImage.FlipImage(p, bad_pixel_map)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    badpixelmap = spirouImage.ResizeImage(badpixelmap, **bkwargs)
+    badpixelmap = spirouImage.ResizeImage(p, badpixelmap, **bkwargs)
     # log change in data size
     wmsg = 'Image format changed to {1}x{0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(*badpixelmap.shape))
+    WLOG(p, '', wmsg.format(*badpixelmap.shape))
 
     # ----------------------------------------------------------------------
     # Quality control
@@ -158,13 +159,13 @@ def main(night_name=None, flatfile=None, darkfile=None):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if passed:
-        WLOG('info', p['LOG_OPT'], 'QUALITY CONTROL SUCCESSFUL - Well Done -')
+        WLOG(p, 'info', 'QUALITY CONTROL SUCCESSFUL - Well Done -')
         p['QC'] = 1
         p.set_source('QC', __NAME__ + '/main()')
     else:
         for farg in fail_msg:
             wmsg = 'QUALITY CONTROL FAILED: {0}'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(farg))
+            WLOG(p, 'warning', wmsg.format(farg))
         p['QC'] = 0
         p.set_source('QC', __NAME__ + '/main()')
 
@@ -178,23 +179,23 @@ def main(night_name=None, flatfile=None, darkfile=None):
     badpixelfits, tag = spirouConfig.Constants.BADPIX_FILE(p)
     badpixelfitsname = os.path.split(badpixelfits)[-1]
     # log that we are saving bad pixel map in dir
-    WLOG('', p['LOG_OPT'], 'Saving Bad Pixel Map in ' + badpixelfitsname)
+    WLOG(p, '', 'Saving Bad Pixel Map in ' + badpixelfitsname)
     # add keys from original header files
     # Question Why only the keys from the flat file?
     # hdict = spirouImage.CopyOriginalKeys(dhdr, dcmt)
     hdict = spirouImage.CopyOriginalKeys(fhdr, fcmt)
     # add new keys
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE1'], value=raw_badp_file1)
-    hdict = spirouImage.AddKey(hdict, p['KW_BADPFILE2'], value=raw_badp_file2)
-    hdict = spirouImage.AddKey(hdict, p['KW_BHOT'], value=bstats1[0])
-    hdict = spirouImage.AddKey(hdict, p['KW_BBFLAT'], value=bstats1[1])
-    hdict = spirouImage.AddKey(hdict, p['KW_BNDARK'], value=bstats1[2])
-    hdict = spirouImage.AddKey(hdict, p['KW_BNFLAT'], value=bstats1[3])
-    hdict = spirouImage.AddKey(hdict, p['KW_BBAD'], value=bstats1[4])
-    hdict = spirouImage.AddKey(hdict, p['kw_BNILUM'], value=bstats2)
-    hdict = spirouImage.AddKey(hdict, p['kw_BTOT'], value=btotal)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE1'], value=raw_badp_file1)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BADPFILE2'], value=raw_badp_file2)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BHOT'], value=bstats1[0])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BBFLAT'], value=bstats1[1])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BNDARK'], value=bstats1[2])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BNFLAT'], value=bstats1[3])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BBAD'], value=bstats1[4])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_BNILUM'], value=bstats2)
+    hdict = spirouImage.AddKey(p, hdict, p['kw_BTOT'], value=btotal)
 
     # write to file
     badpixelmap = np.array(badpixelmap, dtype=int)

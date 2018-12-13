@@ -32,7 +32,6 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # -----------------------------------------------------------------------------
 # Get constant parameters
-CPARAMS, _ = spirouConfig.ReadConfigFile()
 TRIG_KEY = spirouConfig.Constants.LOG_TRIG_KEYS()
 WRITE_LEVEL = spirouConfig.Constants.WRITE_LEVEL()
 EXIT_TYPE = spirouConfig.Constants.EXIT()
@@ -70,7 +69,7 @@ class Logger:
         # add tdata_warning key
         self.pout['TDATA_WARNING'] = 1
 
-    def __call__(self, key='', option='', message='', printonly=False,
+    def __call__(self, p=None, key='', message='', printonly=False,
                  logonly=False, wrap=True):
         """
         Function-like cal to instance of logger (i.e. WLOG)
@@ -82,6 +81,7 @@ class Logger:
         printing to log file is controlled by "LOG_LEVEL" constant (config.py)
         based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
 
+        :param
         :param key: string, either "error" or "warning" or "info" or graph,
                     this gives a character code in output
         :param option: string, option code
@@ -98,6 +98,29 @@ class Logger:
 
         :return None:
         """
+        func_name = __NAME__ + '.Logger.__call__()'
+        # ---------------------------------------------------------------------
+        # deal with p
+        if p is None:
+            p = spirouConfig.ParamDict()
+            p['PID'] = None
+            p.set_source('PID', func_name)
+        # TODO: Remove deprecation warning (once all code changed)
+        if type(p) is str:
+            emsg = ('Need to update WLOG function call. New format required:'
+                    '\n\n\tNew format: WLOG(p, level_key, message)'
+                    '\n\n\tOld format: WLOG(level_key, option, message)')
+            raise DeprecationWarning(emsg)
+
+        # ---------------------------------------------------------------------
+        # deal with option
+        if 'RECIPE' in p:
+            option = p['RECIPE']
+        elif 'LOG_OPT' in p:
+            option = p['LOG_OPT']
+        else:
+            option = ''
+        # ---------------------------------------------------------------------
         # if key is '' then set it to all
         if len(key) == 0:
             key = 'all'
@@ -156,7 +179,7 @@ class Logger:
                     self.logger_storage(key, human_time, new_message, printonly)
                     # print to stdout
                     if not logonly:
-                        printlog(cmd, key)
+                        printlog(p, cmd, key)
             else:
                 cmdargs = [human_time, dsec, code, option, mess]
                 cmd = '{0}.{1:02d} - {2} |{3}|{4}'.format(*cmdargs)
@@ -166,14 +189,14 @@ class Logger:
                 self.logger_storage(key, human_time, mess, printonly)
                 # print to stdout
                 if not logonly:
-                    printlog(cmd, key)
+                    printlog(p, cmd, key)
             # get logfilepath
             try:
-                logfilepath, warning = get_logfilepath(unix_time)
+                logfilepath, warning = get_logfilepath(p)
                 # write to log file
                 if not printonly:
                     for cmd in cmds:
-                        writelog(cmd, key, logfilepath)
+                        writelog(p, cmd, key, logfilepath)
             except ConfigError as e:
                 if not logonly:
                     errors.append([e.message, e.level, human_time, dsec,
@@ -184,7 +207,7 @@ class Logger:
                 wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
                         'path "TDATA"={0}')
                 if not logonly:
-                    wmsgf = wmsg.format(CPARAMS.get('TDATA', ''))
+                    wmsgf = wmsg.format(p.get('TDATA', ''))
                     errors.append([wmsgf, 'warning', human_time, dsec, option])
                 self.pout['TDATA_WARNING'] = 0
 
@@ -194,7 +217,7 @@ class Logger:
             key = 'error'
             if error[0] not in used:
                 self.logger_storage(key, error[2], error[0])
-                printlogandcmd(*error, wrap=wrap)
+                printlogandcmd(p, *error, wrap=wrap)
                 used.append(error[0])
 
         # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
@@ -246,13 +269,15 @@ class Logger:
         # add to full log
         self.pout['LOGGER_FULL'].append([[ttime, mess]])
 
-    def clean_log(self):
+    def clean_log(self, processid):
         # get log storage keys
         storekey = spirouConfig.Constants.LOG_STORAGE_KEYS()
-
+        # clean out for this ID
+        self.pout[processid] = spirouConfig.ParamDict()
+        # populate log keys
         for key in storekey:
-            self.pout[storekey[key]] = []
-        self.pout['LOGGER_FULL'] = []
+            self.pout[processid][storekey[key]] = []
+        self.pout[processid]['LOGGER_FULL'] = []
 
 
 # =============================================================================
@@ -265,7 +290,7 @@ wlog = Logger()
 # =============================================================================
 # Define functions
 # =============================================================================
-def printlogandcmd(message, key, human_time, dsec, option, wrap):
+def printlogandcmd(p, message, key, human_time, dsec, option, wrap):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -302,11 +327,11 @@ def printlogandcmd(message, key, human_time, dsec, option, wrap):
             for new_message in new_messages:
                 cmdargs = [human_time, dsec, code, option, new_message]
                 cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-                printlog(cmd, key)
+                printlog(p, cmd, key)
         else:
             cmdargs = [human_time, dsec, code, option, mess]
             cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-            printlog(cmd, key)
+            printlog(p, cmd, key)
 
 
 def debug_start(errorstring):
@@ -391,7 +416,7 @@ def debug_start(errorstring):
         EXIT_TYPE(errorstring)
 
 
-def warninglogger(w, funcname=None):
+def warninglogger(p, w, funcname=None):
     """
     Warning logger - takes "w" - a list of caught warnings and pipes them on
     to the log functions. If "funcname" is not None then t "funcname" is
@@ -430,11 +455,11 @@ def warninglogger(w, funcname=None):
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog('warning', '', wmsg)
+                wlog(p, 'warning', wmsg)
                 displayed_warnings.append(wmsg)
 
 
-def get_logfilepath(utime):
+def get_logfilepath(p):
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG" but
     if this is not defined/not found then defaults to "TDATA"/msg or generates
@@ -442,39 +467,37 @@ def get_logfilepath(utime):
 
     "DRS_DATA_MSG" and "TDATA" are defined in "config.py"
 
-    :param utime: float, the unix time to add to the log file filename.
-
     :return lpath: string, the path and filename for the log file to be used
     :return warning: bool, if True then "TDATA" was used instead of "DRS_DATA
     """
     msgkey, tkey = 'DRS_DATA_MSG', 'TDATA'
     # -------------------------------------------------------------------------
     # Get DRS_DATA_MSG folder directory
-    dir_data_msg = CPARAMS.get(msgkey, None)
+    dir_data_msg = p.get(msgkey, None)
     # if None use "TDATA"
     if dir_data_msg is None:
         warning = True
-        dir_data_msg = CPARAMS.get(tkey, None)
+        dir_data_msg = p.get(tkey, None)
         # check that it exists
         if not os.path.exists(dir_data_msg):
             emsg1 = 'Fatal error: Cannot write to log file.'
             emsg2 = (' "{0}" missing from config AND "{1}" directory'
                      ' does not exist.').format(msgkey, tkey)
-            emsg3 = '    "{0}" = {1}'.format(msgkey, CPARAMS.get(msgkey, ''))
-            emsg4 = '    "{0}" = {1}'.format(tkey, CPARAMS.get(tkey, ''))
+            emsg3 = '    "{0}" = {1}'.format(msgkey, p.get(msgkey, ''))
+            emsg4 = '    "{0}" = {1}'.format(tkey, p.get(tkey, ''))
             raise ConfigError(message=[emsg1, emsg2, emsg3, emsg4],
                               level='error')
     # if it doesn't exist also set to TDATA
     elif not os.path.exists(dir_data_msg):
         warning = True
-        dir_data_msg = CPARAMS.get(tkey, None)
+        dir_data_msg = p.get(tkey, None)
         # check that it exists
         if not os.path.exists(dir_data_msg):
             emsg1 = 'Fatal error: Cannot write to log file.'
             emsg2 = (' "{0}" AND "{1}" directories'
                      ' do not exist.').format(msgkey, tkey)
-            emsg3 = '    "{0}" = {1}'.format(msgkey, CPARAMS.get(msgkey, ''))
-            emsg4 = '    "{0}" = {1}'.format(tkey, CPARAMS.get(tkey, ''))
+            emsg3 = '    "{0}" = {1}'.format(msgkey, p.get(msgkey, ''))
+            emsg4 = '    "{0}" = {1}'.format(tkey, p.get(tkey, ''))
             raise ConfigError(message=[emsg1, emsg2, emsg3, emsg4],
                               level='error')
     else:
@@ -485,8 +508,8 @@ def get_logfilepath(utime):
         emsg1 = 'Fatal error: Cannot write to log file.'
         emsg2 = ('   "{0}" and "{1}" are missing from the config file'
                  '').format(msgkey, tkey)
-        emsg3 = '    "{0}" = {1}'.format(msgkey, CPARAMS.get(msgkey, ''))
-        emsg4 = '    "{0}" = {1}'.format(tkey, CPARAMS.get(tkey, ''))
+        emsg3 = '    "{0}" = {1}'.format(msgkey, p.get(msgkey, ''))
+        emsg4 = '    "{0}" = {1}'.format(tkey, p.get(tkey, ''))
         raise ConfigError(message=[emsg1, emsg2, emsg3, emsg4], level='error')
     # if we are using TDATA need to create msg folder
     elif warning:
@@ -499,7 +522,7 @@ def get_logfilepath(utime):
             raise ConfigError(message=emsg.format(dir_data_msg, type(e), e),
                               level='error')
 
-    lpath = spirouConfig.Constants.LOG_FILE_NAME(CPARAMS, dir_data_msg, utime)
+    lpath = spirouConfig.Constants.LOG_FILE_NAME(p, dir_data_msg)
     # return the logpath and the warning
     return lpath, warning
 
@@ -548,7 +571,7 @@ def correct_level(key, level):
     return thislevel >= outlevel
 
 
-def printlog(message, key='all'):
+def printlog(p, message, key='all'):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
     is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
@@ -561,7 +584,7 @@ def printlog(message, key='all'):
     """
     func_name = __NAME__ + '.printlog()'
     # get the colours for the "key"
-    c1, c2 = printcolour(key, func_name=func_name)
+    c1, c2 = printcolour(p, key, func_name=func_name)
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
@@ -594,7 +617,7 @@ def textwrap(input_string, length):
     return new_string2
 
 
-def printcolour(key='all', func_name=None):
+def printcolour(p, key='all', func_name=None):
     """
     Get the print colour (start and end) based on "key".
     This should be used as follows:
@@ -615,7 +638,7 @@ def printcolour(key='all', func_name=None):
     if func_name is None:
         func_name = __NAME__ + '.printcolour()'
     # get out level key
-    level = CPARAMS.get('PRINT_LEVEL', 'all')
+    level = p.get('PRINT_LEVEL', 'all')
     # get the colours
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
@@ -638,7 +661,7 @@ def printcolour(key='all', func_name=None):
     return colour1, colour2
 
 
-def writelog(message, key, logfilepath):
+def writelog(p, message, key, logfilepath):
     """
     write message to log file (if level is correct - set by LOG_LEVEL)
 
@@ -653,7 +676,7 @@ def writelog(message, key, logfilepath):
     func_name = __NAME__ + '.writelog()'
     # -------------------------------------------------------------------------
     # get out level key
-    level = CPARAMS.get('LOG_LEVEL', 'all')
+    level = p.get('LOG_LEVEL', 'all')
     # if this level is less than out level then do not log
     if not correct_level(key, level):
         return 0
@@ -697,20 +720,23 @@ def writelog(message, key, logfilepath):
 # Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    dprog = spirouConfig.Constants.DEFAULT_LOG_OPT()
+    # get fake p
+    p = spirouConfig.ParamDict()
+    p['PID'] = None
+    p['RECIPE'] = ''
 
     # Get Logging function
     WLOG = wlog
     # Title test
-    WLOG('', '', ' *****************************************')
-    WLOG('', '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
-    WLOG('', '', ' *****************************************')
+    WLOG(p, '', ' *****************************************')
+    WLOG(p, '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
+    WLOG(p, '', ' *****************************************')
     # info log
-    WLOG("info", dprog, "This is an info test")
+    WLOG(p, 'info', "This is an info test")
     # warning log
-    WLOG("warning", dprog, "This is a warning test")
+    WLOG(p, 'warning', "This is a warning test")
     # error log
-    WLOG("error", dprog, "This is an error test")
+    WLOG(p, 'error', "This is an error test")
 
 # =============================================================================
 # End of code

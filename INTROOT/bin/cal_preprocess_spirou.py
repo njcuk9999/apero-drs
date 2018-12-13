@@ -62,7 +62,7 @@ def main(night_name=None, ufiles=None):
     # need custom args (to accept full path or wild card
     if ufiles is None:
         names, types = ['ufiles'], [str]
-        customargs = spirouStartup.GetCustomFromRuntime([0], types, names,
+        customargs = spirouStartup.GetCustomFromRuntime(p, [0], types, names,
                                                         last_multi=True)
     else:
         customargs = dict(ufiles=ufiles)
@@ -78,11 +78,11 @@ def main(night_name=None, ufiles=None):
     try:
         ufiles = spirouFile.Paths(p['UFILES'], root=rawdir).abs_paths
     except PathException as e:
-        WLOG('error', p['LOG_OPT'], e)
+        WLOG(p, 'error', e)
 
     # log how many files were found
     wmsg = '{0} files found'
-    WLOG('', p['LOG_OPT'], wmsg.format(len(ufiles)))
+    WLOG(p, '', wmsg.format(len(ufiles)))
 
     # storage for output files
     p['OUTPUT_NAMES'] = []
@@ -92,10 +92,10 @@ def main(night_name=None, ufiles=None):
     for u_it, ufile in enumerate(ufiles):
         # log the file process
         wmsg = 'Processing file {0} ({1} of {2})'
-        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+        WLOG(p, '', spirouStartup.spirouStartup.HEADER)
         bfilename = os.path.basename(ufile)
-        WLOG('', p['LOG_OPT'], wmsg.format(bfilename, u_it+1, len(ufiles)))
-        WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+        WLOG(p, 'info', wmsg.format(bfilename, u_it+1, len(ufiles)))
+        WLOG(p, '', spirouStartup.spirouStartup.HEADER)
 
         # ------------------------------------------------------------------
         # Check that we can process file
@@ -103,22 +103,22 @@ def main(night_name=None, ufiles=None):
         # check if ufile exists
         if not os.path.exists(ufile):
             wmsg = 'File {0} does not exist... skipping'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
+            WLOG(p, 'warning', wmsg.format(ufile))
             continue
         # skip processed files
         elif p['PROCESSED_SUFFIX'] in bfilename:
             wmsg = 'File {0} has been processed... skipping'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
+            WLOG(p, 'warning', wmsg.format(ufile))
             continue
         # skip non-fits files
         elif '.fits' not in bfilename:
             wmsg = 'File {0} not a fits file... skipping'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
+            WLOG(p, 'warning', wmsg.format(ufile))
             continue
         # skip index file
         elif bfilename == spirouConfig.Constants.INDEX_OUTPUT_FILENAME():
             wmsg = 'Skipping index fits file'
-            WLOG('warning', p['LOG_OPT'], wmsg.format(ufile))
+            WLOG(p, 'warning', wmsg.format(ufile))
             continue
 
         # ------------------------------------------------------------------
@@ -137,17 +137,17 @@ def main(night_name=None, ufiles=None):
         # correct image
         # ------------------------------------------------------------------
         # correct for the top and bottom reference pixels
-        WLOG('', p['LOG_OPT'], 'Correcting for top and bottom pixels')
+        WLOG(p, '', 'Correcting for top and bottom pixels')
         image = spirouImage.PPCorrectTopBottom(p, image)
 
         # correct by a median filter from the dark amplifiers
         wmsg = 'Correcting by the median filter from dark amplifiers'
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         image = spirouImage.PPMedianFilterDarkAmps(p, image)
 
         # correct for the 1/f noise
         wmsg = 'Correcting for the 1/f noise'
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         image = spirouImage.PPMedianOneOverfNoise2(p, image)
 
         # ------------------------------------------------------------------
@@ -164,12 +164,12 @@ def main(night_name=None, ufiles=None):
         save_dir = spirouConfig.Constants.TMP_DIR(p)
         outfits = os.path.join(save_dir, outfitsname)
         # log that we are saving rotated image
-        WLOG('', p['LOG_OPT'], 'Saving Rotated Image in ' + outfitsname)
+        WLOG(p, '', 'Saving Rotated Image in ' + outfitsname)
         # add keys from original header file
         hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
 
         # set the version
-        hdict = spirouImage.AddKey(hdict, p['KW_PPVERSION'])
+        hdict = spirouImage.AddKey(p, hdict, p['KW_PPVERSION'])
 
         # set the DRS type (for file indexing)
         p['DRS_TYPE'] = 'RAW'

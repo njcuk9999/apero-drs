@@ -47,7 +47,7 @@ def main(night_name=None, reffile=None):
     # ----------------------------------------------------------------------
     # get parameters from config files/run time args/load paths + calibdb
     p = spirouStartup.Begin(recipe=__NAME__)
-    customargs = spirouStartup.GetCustomFromRuntime([0], [str], ['reffile'],
+    customargs = spirouStartup.GetCustomFromRuntime(p, [0], [str], ['reffile'],
                                                     [True], [reffile])
     p = spirouStartup.LoadArguments(p, night_name, customargs=customargs,
                                     mainfitsfile='reffile',

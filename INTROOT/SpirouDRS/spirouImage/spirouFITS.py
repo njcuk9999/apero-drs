@@ -19,6 +19,7 @@ import string
 import os
 import warnings
 from collections import OrderedDict
+import time
 
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
@@ -45,8 +46,6 @@ __date__ = spirouConfig.Constants.LATEST_EDIT()
 __release__ = spirouConfig.Constants.RELEASE()
 # get the parameter dictionary object
 ParamDict = spirouConfig.ParamDict
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 FORBIDDEN_COPY_KEY = spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
 # object name bad characters
@@ -88,8 +87,6 @@ def readimage(p, filename=None, log=True, kind=None):
         kind = 'Image'
     else:
         kind += ' Image'
-    # set up frequently used variables
-    log_opt = p['LOG_OPT']
     # get file name
     if filename is None:
         try:
@@ -97,18 +94,18 @@ def readimage(p, filename=None, log=True, kind=None):
         except KeyError:
             emsg1 = '"fitsfilename" is not defined in parameter dictionary'
             emsg2 = '   function = {0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
             fitsfilename = ''
     else:
         fitsfilename = filename
     # log that we are reading the image
     if log:
-        WLOG('', log_opt, 'Reading {0} '.format(kind) + fitsfilename)
+        WLOG(p, '', 'Reading {0} '.format(kind) + fitsfilename)
     # read image from fits file
-    image, imageheader, nx, ny = read_raw_data(fitsfilename)
+    image, imageheader, nx, ny = read_raw_data(p, fitsfilename)
     # log that we have loaded the image
     if log:
-        WLOG('', log_opt, '{0} {1} x {2} loaded'.format(kind, nx, ny))
+        WLOG(p, '', '{0} {1} x {2} loaded'.format(kind, nx, ny))
     # convert header to python dictionary
     header = OrderedDict(zip(imageheader.keys(), imageheader.values()))
     comments = OrderedDict(zip(imageheader.keys(), imageheader.comments))
@@ -157,9 +154,9 @@ def readdata(p, filename, log=True, return_header=True, return_shape=True):
     log_opt = p['LOG_OPT']
     # log that we are reading the image
     if log:
-        WLOG('', log_opt, 'Reading File: {0} '.format(filename))
+        WLOG(p, '', 'Reading File: {0} '.format(filename))
     # read image from fits file
-    rdata = read_raw_data(filename, getheader=return_header,
+    rdata = read_raw_data(p, filename, getheader=return_header,
                           getshape=return_shape)
     # if we are returnning header then add some keys
     if return_header:
@@ -222,8 +219,6 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     :return ny: int, the shape in the second dimension, i.e. data.shape[1]
     """
     func_name = __NAME__ + '.readimage_and_combine()'
-    # set up frequently used variables
-    log_opt = p['LOG_OPT']
     # -------------------------------------------------------------------------
     # get file name
     if filename is None:
@@ -233,7 +228,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
             emsg1 = ('"filename" is not defined and "fitsfilename" is not '
                      'defined in parameter dictionary')
             emsg2 = '    function={0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     else:
         p['FITSFILENAME'] = filename
         p.append_source('FITSFILENAME', func_name)
@@ -247,7 +242,7 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
             emsg1 = ('"filenames" is not defined and "arg_file_names" is not in'
                      ' parameter dictionary')
             emsg2 = '    function={0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     else:
         p['NBFRAMES'] = len(filenames) + 1
         p.set_source('NBFRAMES', func_name)
@@ -255,12 +250,12 @@ def readimage_and_combine(p, framemath='+', filename=None, filenames=None,
     # -------------------------------------------------------------------------
     # log that we are reading the image
     if log:
-        WLOG('', log_opt, 'Reading Image ' + filename)
+        WLOG(p, '', 'Reading Image ' + filename)
     # read image from fits file
-    image, imageheader, nx, ny = read_raw_data(filename)
+    image, imageheader, nx, ny = read_raw_data(p, filename)
     # log that we have loaded the image
     if log:
-        WLOG('', log_opt, 'Image {0} x {1} loaded'.format(nx, ny))
+        WLOG(p, '', 'Image {0} x {1} loaded'.format(nx, ny))
     # if we have more than one frame and add is True then add the rest of the
     #    frames, currently we overwrite p['fitsfilename'] and header with
     #    last entry
@@ -319,7 +314,7 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
             emsg1 = ' File {0} already exists and cannot be overwritten.'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
+            WLOG(p, 'error', [emsg1.format(filename), emsg2, emsg3])
     # create the primary hdu
     try:
         hdu = fits.PrimaryHDU(image)
@@ -327,7 +322,7 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
         emsg1 = 'Cannot open image with astropy.io.fits'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         hdu = None
     # force type
     if dtype is not None:
@@ -336,15 +331,22 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
     if hdict is not None:
         for key in list(hdict.keys()):
             hdu.header[key] = hdict[key]
+    # get and check for file lock file
+    lock, lock_file = check_fits_lock_file(p, filename)
     # write to file
     with warnings.catch_warnings(record=True) as w:
         try:
             hdu.writeto(filename, overwrite=True)
+            # close lock file
+            close_fits_lock_file(p, lock, lock_file, filename)
         except Exception as e:
+            # close lock file
+            close_fits_lock_file(p, lock, lock_file, filename)
+            # log error
             emsg1 = 'Cannot write image to fits file {0}'.format(filename)
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     # ignore truncated comment warning since spirou images have some poorly 
     #   formatted header cards
@@ -354,7 +356,7 @@ def writeimage(p, filename, image, hdict=None, dtype=None):
         if wmsg != str(warning.message):
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
-    spirouCore.spirouLog.warninglogger(w1)
+    spirouCore.spirouLog.warninglogger(p, w1)
     # deal with output dictionary (of required keys)
     p = write_output_dict(p, filename, hdict)
     # return p
@@ -409,13 +411,13 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
             emsg1 = ' File {0} already exists and cannot be overwritten.'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
+            WLOG(p, 'error', [emsg1.format(filename), emsg2, emsg3])
     # ------------------------------------------------------------------------
     # check if image_list is a list
     if type(image_list) not in [np.ndarray, list]:
         emsg1 = '"image_list" must be a list of images (currently type={0})'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1.format(type(image_list)), emsg2])
+        WLOG(p, 'error', [emsg1.format(type(image_list)), emsg2])
     # else we need to check hdict and dtype are lists
     else:
         # handle multiple dtypes
@@ -423,14 +425,14 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
             if len(dtypes) != len(image_list):
                 emsg1 = 'dtypes must be the same length as image_list'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', DPROG, [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
         elif type(dtype) not in [np.ndarray, list]:
             dtypes = [dtype] + [None] * (len(image_list) - 1)
         elif len(dtype) != len(image_list):
             emsg1 = ('If "dtype" is a list it must be the same length as '
                      'image_list')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         else:
             dtypes = dtype
         # handle multiple hdicts
@@ -438,7 +440,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
             if len(hdicts) != len(image_list):
                 emsg1 = 'dtypes must be the same length as image_list'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', DPROG, [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
 
         elif type(hdict) not in [np.ndarray, list]:
             hdicts = [hdict] + [None] * (len(image_list) - 1)
@@ -446,7 +448,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
             emsg1 = ('If "hdict" is a list it must be the same length as '
                      'image_list')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         else:
             hdicts = hdict
     # ------------------------------------------------------------------------
@@ -464,7 +466,7 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
         emsg1 = 'Cannot open image with astropy.io.fits'
         emsg2 = '    Error {0}: {1}'.format(type(e), e)
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         hdu = None
     # force type
     if dtypes is not None:
@@ -481,15 +483,22 @@ def write_image_multi(p, filename, image_list, hdict=None, dtype=None,
     # close hdu we are finished
     if hdu is not None:
         hdu.close()
+    # get and check for file lock file
+    lock, lock_file = check_fits_lock_file(p, filename)
     # write to file
     with warnings.catch_warnings(record=True) as _:
         try:
             hdu.writeto(filename, overwrite=True)
+            # close lock file
+            close_fits_lock_file(p, lock, lock_file, filename)
         except Exception as e:
+            # close lock file
+            close_fits_lock_file(p, lock, lock_file, filename)
+            # log error
             emsg1 = 'Cannot write image to fits file {0}'.format(filename)
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     # deal with output dictionary (of required keys)
     # noinspection PyTypeChecker
@@ -561,7 +570,7 @@ def read_tilt_file(p, hdr=None, filename=None, key=None, return_filename=False,
         return read_file
     # log tilt file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    WLOG(p, '', wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     image, hdict, _, nx, ny = rout
@@ -622,7 +631,7 @@ def read_shape_file(p, hdr=None, filename=None, key=None, return_filename=False,
         return read_file
     # log tilt file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    WLOG(p, '', wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     shapemap, hdict, _, nx, ny = rout
@@ -697,7 +706,7 @@ def read_wavefile(p, hdr=None, filename=None, key=None, return_header=False,
     # log wave file used
     if not quiet:
         wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     wave, hdict, _, nx, ny = rout
@@ -721,7 +730,7 @@ def read_waveparams(p, hdr):
     else:
         emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim1)'
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(dim1key), emsg2])
+        WLOG(p, 'error', [emsg1.format(dim1key), emsg2])
         dim1 = None
     # get dim2 value
     if dim2key in hdr:
@@ -729,7 +738,7 @@ def read_waveparams(p, hdr):
     else:
         emsg1 = 'key = "{0}" not found in WAVE HEADER (for dim2)'
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(dim2key), emsg2])
+        WLOG(p, 'error', [emsg1.format(dim2key), emsg2])
         dim2 = None
     # get wave params from header
     wave_params = read_key_2d_list(p, hdr, key, dim1, dim2)
@@ -759,7 +768,7 @@ def get_wave_solution_old(p, image=None, hdr=None):
                      'number of orders in image ({2}')
             eargs = [dim1key, dim1, image.shape[0]]
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+            WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
         # define empty wave solution
         wave = np.zeros_like(image)
         xpixels = np.arange(image.shape[1])
@@ -785,7 +794,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
     if image is None and (nbo is None or nbx is None):
         emsg = ('Need to define an "image" or ("nbo" and "nbx") in order to '
                 'produce wavemap from wave parameteres')
-        WLOG('error', p['LOG_OPT'], emsg)
+        WLOG(p, 'error', emsg)
     # get the required dimensions of the wavemap
     if image is None:
         dim1req = nbo
@@ -800,7 +809,7 @@ def create_wavemap_from_waveparam(p, hdr, waveparams, image=None, nbo=None,
             'number of orders in image ({2})')
         eargs = [dim1key, dim1, dim1req]
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1.format(*eargs), emsg2])
+        WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
     # define empty wave solution
     wavemap = np.zeros((nbo, nbx))
     xpixels = np.arange(nbx)
@@ -876,14 +885,14 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
             emsg1 = ('Cannot identify number of orders (no image defined, and'
                      'NAXIS2 not in header)')
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         if (nbx is None) and 'NAXIS1' in hdr:
             nbx = hdr['NAXIS1']
         else:
             emsg1 = ('Cannot identify number of x-pixels (no image defined, and'
                      'NAXIS1 not in header)')
             emsg2 = '\tfunction = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
 
     # -------------------------------------------------------------------------
     # deal with where to get wave solution from
@@ -924,7 +933,7 @@ def get_wave_solution(p, image=None, hdr=None, filename=None,
     if not quiet:
         wmsg1 = 'Wavelength solution read from {0}'.format(obtain.upper())
         wmsg2 = '\tWave file = {0}'.format(os.path.basename(filename))
-        WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+        WLOG(p, '', [wmsg1, wmsg2])
 
     # -------------------------------------------------------------------------
     # deal with returns
@@ -955,14 +964,14 @@ def check_wave_sol_consistency(p, loc):
         # log progress
         wmsg = 'Number of coefficients ({0}) consistent with requirements'
         wargs = [required_ncoeffs]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
     # else fix inconsistency
     else:
         # log warning
         wmsg = ('Inconsistent number of coefficients ({0}) expected {1}. '
                 'Re-mapping onto expected number of coefficients')
         wargs = [ncoeffs, required_ncoeffs]
-        WLOG('warning', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, 'warning', wmsg.format(*wargs))
         # set up output storage
         output_coeffs = np.zeros_like(input_coeffs)
         output_map = np.zeros_like(input_map)
@@ -1100,7 +1109,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
         except spirouConfig.ConfigError as _:
             emsg1 = 'Parameter "fiber" not found in parameter dictionary'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # get filename
     if filename is None:
         read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
@@ -1108,7 +1117,7 @@ def read_flat_file(p, hdr=None, filename=None, key=None, required=True,
         read_file = filename
     # log flat file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    WLOG(p, '', wmsg)
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     flat, hdict, _, nx, ny = rout
@@ -1157,7 +1166,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
         except spirouConfig.ConfigError as _:
             emsg1 = 'Parameter "fiber" not found in parameter dictionary'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # get filename
     if filename is None:
         read_file = spirouDB.GetCalibFile(p, key, hdr, required=required)
@@ -1165,7 +1174,7 @@ def read_blaze_file(p, hdr=None, filename=None, key=None, required=True):
         read_file = filename
     # log blaze file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    WLOG(p, '', wmsg)
     # read read_file
     rout = readdata(p, filename=read_file, log=False)
     blaze, hdict, _, nx, ny = rout
@@ -1211,7 +1220,7 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
     func_name = __NAME__ + '.read_order_profile_superposition()'
     # Log that we are reading the order profile
     wmsg = 'Reading order profile of Fiber {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+    WLOG(p, '', wmsg.format(p['FIBER']))
     # construct key
     # get loc file
     if filename is not None:
@@ -1224,7 +1233,7 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
         emsg1 = ('Cannot open the order profile: Parameter dictionary '
                  'does not contain key "ORDERP_FILE" or "FIBER"')
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         key = None
     # construct read filename from calibDB or from "filename"
     if filename is None:
@@ -1233,11 +1242,90 @@ def read_order_profile_superposition(p, hdr=None, filename=None,
         read_file = filename
     # log order profile file used
     wmsg = 'Using {0} file: "{1}"'.format(key, read_file)
-    WLOG('', p['LOG_OPT'], wmsg)
+    WLOG(p, '', wmsg)
     # read read_file
     rout = readimage(p, filename=read_file, log=False)
     # return order profile (via readimage = image, hdict, commments, nx, ny
     return rout
+
+
+def check_fits_lock_file(p, filename):
+    # create lock file (to make sure database is only open once at a time)
+    # construct lock file name
+    max_wait_time = p['DB_MAX_WAIT']
+    # get lock file name
+    if '.fits' in filename:
+        lock_file = filename.replace('.fits', '.lock')
+    else:
+        lock_file = filename + '.lock'
+
+    # check if lock file already exists
+    if os.path.exists(lock_file):
+        WLOG(p, 'warning', '{0} locked. Waiting...'.format(filename))
+    # wait until lock_file does not exist or we have exceeded max wait time
+    wait_time = 0
+    while os.path.exists(lock_file) or wait_time > max_wait_time:
+        time.sleep(1)
+        wait_time += 1
+    if wait_time > max_wait_time:
+        emsg1 = ('{0} can not be accessed (file locked and max wait time '
+                 'exceeded.'.format(filename))
+        emsg2 = ('\tPlease make sure {0} is not being used and '
+                 'manually delete {1}').format(filename, lock_file)
+        WLOG(p, 'error', [emsg1, emsg2])
+    # try to open the lock file
+    # wait until lock_file does not exist or we have exceeded max wait time
+    lock = open_fits_lock_file(p, lock_file, filename)
+    # return lock file and name
+    return lock, lock_file
+
+
+def open_fits_lock_file(p, lock_file, filename):
+    # try to open the lock file
+    # wait until lock_file does not exist or we have exceeded max wait time
+    wait_time = 0
+    open_file = True
+    lock = None
+    while open_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+        try:
+            lock = open(lock_file, 'w')
+            open_file = False
+        except Exception as e:
+            if wait_time == 0:
+                WLOG(p, 'warning', 'Waiting to open fits lock')
+            time.sleep(1)
+            wait_time += 1
+    if wait_time > p['FITSOPEN_MAX_WAIT']:
+        emsg1 = ('File Error: {0}. Cannot close lock file and max '
+                 'wait time exceeded.'.format(filename))
+        emsg2 = ('\tPlease make sure fits file is not being used and '
+                 'manually delete {0}').format(lock_file)
+        WLOG(p, 'error', [emsg1, emsg2])
+    return lock
+
+
+def close_fits_lock_file(p, lock, lock_file, filename):
+    # try to open the lock file
+    # wait until lock_file does not exist or we have exceeded max wait time
+    wait_time = 0
+    close_file = True
+    while close_file and wait_time < p['FITSOPEN_MAX_WAIT']:
+        try:
+            lock.close()
+            if os.path.exists(lock_file):
+                os.remove(lock_file)
+            close_file = False
+        except Exception as e:
+            if wait_time == 0:
+                WLOG(p, 'warning', 'Waiting to close fits lock')
+            time.sleep(1)
+            wait_time += 1
+    if wait_time > p['FITSOPEN_MAX_WAIT']:
+        emsg1 = ('File Error: {0}. Cannot close lock file and max '
+                 'wait time exceeded.'.format(filename))
+        emsg2 = ('\tPlease make sure fits file is not being used and '
+                 'manually delete {0}').format(lock_file)
+        WLOG(p, 'error', [emsg1, emsg2])
 
 
 # =============================================================================
@@ -1274,7 +1362,7 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
         name = 'd'
     # deal with no key
     if key is None:
-        WLOG('error', p['LOG_OPT'], 'Must define key')
+        WLOG(p, 'error', 'Must define key')
     # if we have default value use get else try standard call or log if error
     value = None
     if has_default:
@@ -1288,7 +1376,7 @@ def keylookup(p, d=None, key=None, has_default=False, default=None,
             else:
                 emsg1 = 'Key "{0}" not found in "{1}"'.format(key, name)
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
 
     return value
 
@@ -1320,7 +1408,7 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
     except TypeError:
         emsg1 = '"keys" must be a valid python list'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # if defaults is None --> list of Nones else make sure defaults is a list
     if defaults is None:
@@ -1331,11 +1419,11 @@ def keyslookup(p, d=None, keys=None, has_default=False, defaults=None):
             if len(defaults) != len(keys):
                 emsg1 = '"defaults" must be same length as "keys"'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
         except TypeError:
             emsg1 = '"defaults" must be a valid python list'
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
 
     # loop around keys and look up each key
     values = []
@@ -1396,7 +1484,7 @@ def copy_original_keys(header, comments, hdict=None, forbid_keys=True):
     return hdict
 
 
-def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
+def copy_root_keys(p, hdict=None, filename=None, root=None, ext=0):
     """
     Copy keys from a filename to hdict
 
@@ -1420,9 +1508,9 @@ def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
     if filename is None:
         emsg1 = 'No filename defined (Filename is required)'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # read header file
-    hdr, cmts = read_raw_header(filename=filename, headerext=ext)
+    hdr, cmts = read_raw_header(p, filename=filename, headerext=ext)
     # loop around header keys
     for key in list(hdr.keys()):
         # if we have a root only copy those keys that start with root
@@ -1435,7 +1523,7 @@ def copy_root_keys(hdict=None, filename=None, root=None, ext=0):
     return hdict
 
 
-def add_new_key(hdict=None, keywordstore=None, value=None):
+def add_new_key(p, hdict=None, keywordstore=None, value=None):
     """
     Add a new key to hdict from keywordstore, if value is not None then the
     keywordstore value is updated. Each keywordstore is in form:
@@ -1459,10 +1547,10 @@ def add_new_key(hdict=None, keywordstore=None, value=None):
     if keywordstore is None:
         emsg1 = '"keywordstore" must be defined.'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
     # extract keyword, value and comment and put it into hdict
-    key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
+    key, dvalue, comment = extract_key_word_store(p, keywordstore, func_name)
 
     # set the value to default value if value is None
     if value is None:
@@ -1473,7 +1561,7 @@ def add_new_key(hdict=None, keywordstore=None, value=None):
     return hdict
 
 
-def add_new_keys(hdict=None, keywordstores=None, values=None):
+def add_new_keys(p, hdict=None, keywordstores=None, values=None):
     """
     Add a set of new key to hdict from keywordstores, if values is not None,
     then all values are set to None, keywordstores is a list of keywordstore
@@ -1503,7 +1591,7 @@ def add_new_keys(hdict=None, keywordstores=None, values=None):
         emsg2 = ('   keywordstore must be [name, value, comment] = '
                  '[string, object, string]')
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
     # deal with no values
     if values is None:
@@ -1515,7 +1603,7 @@ def add_new_keys(hdict=None, keywordstores=None, values=None):
     return hdict
 
 
-def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
+def add_key_1d_list(p, hdict, keywordstore, values=None, dim1name='order'):
     """
     Add a new 1d list to key using the keywordstorage[0] as prefix in form
     keyword = kewordstoreage + row number
@@ -1539,7 +1627,7 @@ def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
     """
     func_name = __NAME__ + '.add_key_1d_list()'
     # extract keyword, value and comment and put it into hdict
-    key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
+    key, dvalue, comment = extract_key_word_store(p, keywordstore, func_name)
     # set the value to default value if value is None
     if values is None:
         values = [dvalue]
@@ -1560,7 +1648,7 @@ def add_key_1d_list(hdict, keywordstore, values=None, dim1name='order'):
     return hdict
 
 
-def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
+def add_key_2d_list(p, hdict, keywordstore, values=None, dim1name='order',
                     dim2name='coeff'):
     """
     Add a new 2d list to key using the keywordstorage[0] as prefix in form
@@ -1590,7 +1678,7 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
     """
     func_name = __NAME__ + '.add_key_2d_list()'
     # extract keyword, value and comment and put it into hdict
-    key, dvalue, comment = extract_key_word_store(keywordstore, func_name)
+    key, dvalue, comment = extract_key_word_store(p, keywordstore, func_name)
     # set the value to default value if value is None
     if values is None:
         values = [[dvalue]]
@@ -1613,7 +1701,7 @@ def add_key_2d_list(hdict, keywordstore, values=None, dim1name='order',
     return hdict
 
 
-def extract_key_word_store(keywordstore=None, func_name=None):
+def extract_key_word_store(p, keywordstore=None, func_name=None):
     """
     Deal with extraction of key, value and comment from keywordstore
     the keywordstore should be a list in the following form:
@@ -1648,7 +1736,7 @@ def extract_key_word_store(keywordstore=None, func_name=None):
         emsg7 = '   keywordstore currently is "{0}"'.format(keywordstore)
         emsg8 = '   function = {0}'.format(func_name)
         emsgs = [emsg1, emsg2, emsg3, emsg4, emsg5, emsg6, emsg7, emsg8]
-        WLOG('error', DPROG, emsgs)
+        WLOG(p, 'error', emsgs)
         key, dvalue, comment = None, None, None
     # return values
     return key, dvalue, comment
@@ -1681,8 +1769,6 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
                    file) if undefined set to 'UNKNOWN'
     """
     func_name = __NAME__ + '.get_type_from_header()'
-    # set up frequently used variables
-    log_opt = p['LOG_OPT']
     # if we don't have the hdict then we need to load the header from file
     if hdict is None:
         # get file name
@@ -1692,18 +1778,18 @@ def get_type_from_header(p, keywordstore, hdict=None, filename=None):
             except KeyError:
                 emsg1 = '"fitsfilename" is not defined in parameter dictionary'
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', log_opt, [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
                 fitsfilename = ''
         else:
             fitsfilename = filename
         # get the hdict
-        hdict, _ = read_raw_header(fitsfilename, headerext=0)
+        hdict, _ = read_raw_header(p, fitsfilename, headerext=0)
     else:
         if type(hdict) not in [dict, OrderedDict, ParamDict]:
             emsg1 = ('"hdict" must be None or a valid python dictionary or '
                      'Parameter Dictionary')
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # get the key from header dictionary
     if keywordstore[0] in hdict:
         return hdict[keywordstore[0]]
@@ -1735,14 +1821,14 @@ def read_header(p=None, filepath=None, ext=0, return_comments=False):
     if filepath is None:
         emsg1 = 'Error "filepath" is required'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', log_opt, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # try to get header from filepath
     try:
         header = fits.getheader(filepath, ext=ext)
     except IOError:
         emsg1 = 'Cannot open header of file {0}'.format(filepath)
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', log_opt, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         header = None
     # load in to dictionary
     hdict = OrderedDict(zip(header.keys(), header.values()))
@@ -1775,7 +1861,7 @@ def read_key(p, hdict=None, key=None):
     if key is None:
         emsg1 = 'Error "key" must be defined'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # return the value of the key
     return keylookup(p, hdict, key=key)
 
@@ -1796,7 +1882,7 @@ def read_key_1d_list(p, hdict, key, dim):
             emsg1 = ('Cannot find key "{0}" with dim={1} in "hdict"'
                      '').format(keyname, dim)
             emsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
     # return values
     return values
 
@@ -1841,7 +1927,7 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
                 emsg1 = ('Cannot find key "{0}" with dim1={1} dim2={2} in '
                          '"hdict"').format(keyname, dim1, dim2)
                 emsg2 = '    function = {0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
     # return values
     return values
 
@@ -1849,7 +1935,7 @@ def read_key_2d_list(p, hdict, key, dim1, dim2):
 # =============================================================================
 # Define pyfits worker functions
 # =============================================================================
-def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
+def read_raw_data(p, filename, getheader=True, getshape=True, headerext=0):
     """
     Reads the raw data and possibly header using astropy.io.fits
 
@@ -1894,7 +1980,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         emsg1 = 'File "{0}" cannot be opened by astropy.io.fits'
         emsg2 = '   Error {0}: {1}'.format(type(e), e)
         emsg3 = '   function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
+        WLOG(p, 'error', [emsg1.format(filename), emsg2, emsg3])
         hdu = None
     # get the number of fits files in filename
     try:
@@ -1902,13 +1988,13 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
     except Exception as e:
         wmsg1 = 'Problem with one of the extensions'
         wmsg2 = '    Error reads: {0}'.format(e)
-        WLOG('warning', DPROG, [wmsg1, wmsg2])
+        WLOG(p, 'warning', [wmsg1, wmsg2])
         ext = None
 
     # deal with unknown ext
     if ext is None:
         hdu = fits.open(filename)
-        data, header = deal_with_bad_header(hdu)
+        data, header = deal_with_bad_header(p, hdu)
 
     # Get the data and header based on how many extensions there are
     else:
@@ -1923,8 +2009,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
             emsg1 = 'Could not open data for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                                  emsg3])
+            WLOG(p, 'error', [emsg1.format(filename, openext), emsg2, emsg3])
             data = None
         # get the header (if header extension is available else default to zero)
         if headerext <= ext:
@@ -1934,8 +2019,8 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
                 emsg1 = 'Could not open header for file "{0}" extension={1}'
                 emsg2 = '    Error {0}: {1}'.format(type(e), e)
                 emsg3 = '    function = {0}'.format(func_name)
-                WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                                      emsg3])
+                WLOG(p, 'error', [emsg1.format(filename, openext), emsg2,
+                                  emsg3])
                 header = None
         else:
             header = hdu[0]
@@ -1961,7 +2046,7 @@ def read_raw_data(filename, getheader=True, getshape=True, headerext=0):
         return data
 
 
-def deal_with_bad_header(hdu):
+def deal_with_bad_header(p, hdu):
     """
     Deal with bad headers by iterating through good hdu's until we hit a
     problem
@@ -1990,8 +2075,8 @@ def deal_with_bad_header(hdu):
         it += 1
     # print message
     if len(datastore) > 0:
-        WLOG('warning', DPROG, '    Partially recovered fits file')
-        WLOG('warning', DPROG, '    Problem with ext={0}'.format(it - 1))
+        WLOG(p, 'warning', '    Partially recovered fits file')
+        WLOG(p, 'warning', '    Problem with ext={0}'.format(it - 1))
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -2000,7 +2085,7 @@ def deal_with_bad_header(hdu):
     # if valid is empty we have a problem
     if len(valid) == 0:
         emsg = 'Recovery failed: Fatal I/O Error cannot load file.'
-        WLOG('error', DPROG, emsg)
+        WLOG(p, 'error', emsg)
         data, header = None, None
     else:
         data = datastore[valid[0]]
@@ -2009,7 +2094,7 @@ def deal_with_bad_header(hdu):
     return data, header
 
 
-def read_raw_header(filename, headerext=0):
+def read_raw_header(p, filename, headerext=0):
     """
     Reads the header of a fits file using astropy.io.fits
 
@@ -2031,7 +2116,7 @@ def read_raw_header(filename, headerext=0):
         emsg1 = 'File "{0}" cannot be opened by astropy.io.fits'
         emsg2 = '   Error {0}: {1}'.format(type(e), e)
         emsg3 = '   function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1.format(filename), emsg2, emsg3])
+        WLOG(p, 'error', [emsg1.format(filename), emsg2, emsg3])
         hdu = None
     # get the number of fits files in filename
     ext = len(hdu)
@@ -2048,8 +2133,7 @@ def read_raw_header(filename, headerext=0):
             emsg1 = 'Could not open header for file "{0}" extension={1}'
             emsg2 = '    Error {0}: {1}'.format(type(e), e)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', DPROG, [emsg1.format(filename, openext), emsg2,
-                                  emsg3])
+            WLOG(p, 'error', [emsg1.format(filename, openext), emsg2, emsg3])
             header = None
     else:
         header = hdu[0]
@@ -2096,8 +2180,6 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
     # deal with no framemath
     if framemath is None:
         return p, data, header
-    # set up frequently used variables
-    log_opt = p['LOG_OPT']
     # get math type
     kind, op = math_type(p, framemath)
     # if we have no math don't continue
@@ -2107,7 +2189,7 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
     if len(filenames) < 1:
         return p, data, header
     # log that we are adding frames
-    WLOG('info', log_opt, '{0} {1} frame(s)'.format(kind, len(filenames)))
+    WLOG(p, 'info', '{0} {1} frame(s)'.format(kind, len(filenames)))
     # chosen dir (if filenames is not an absolute path)
     if directory is None:
         directory = p['ARG_FILE_DIR']
@@ -2122,12 +2204,12 @@ def math_controller(p, data, header, filenames, framemath=None, directory=None):
         if not os.path.exists(framefilename):
             emsg1 = 'File "{0}" does not exist'.format(framefilename)
             emsg2 = '    function {0}'.format(func_name)
-            WLOG('error', log_opt, [emsg1, emsg2])
+            WLOG(p, 'error', [emsg1, emsg2])
         else:
             # load that we are reading this file
-            WLOG('', log_opt, 'Reading File: ' + framefilename)
+            WLOG(p, '', 'Reading File: ' + framefilename)
             # get tmp data and tmp header
-            dtmp, htmp = read_raw_data(framefilename, True, False)
+            dtmp, htmp = read_raw_data(p, framefilename, True, False)
             # finally add/subtract/multiple/divide data
             if op in ['+', 'mean']:
                 data += dtmp
@@ -2177,7 +2259,7 @@ def math_type(p, framemath):
             a_math = acceptable_math[a_it: a_it + 3]
             emsgs.append('\t "{0}", "{1}", "{2}"'.format(*a_math))
         emsgs.append('    Error raised in function = {0}'.format(func_name))
-        WLOG('error', p['LOG_OPT'], emsgs)
+        WLOG(p, 'error', emsgs)
     # select text for logging
     if fm in ['ADD', '+']:
         kind, op = 'Adding', '+'

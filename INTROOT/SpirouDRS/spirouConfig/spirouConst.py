@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.3.069'
+__version__ = '0.4.005'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2018-11-26'
+__date__ = '2018-12-11'
 
 
 # =============================================================================
@@ -2507,7 +2507,7 @@ def TIME_FORMAT_DEFAULT():
 # Define logger functions
 # =============================================================================
 # noinspection PyPep8Naming
-def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
+def LOG_FILE_NAME(p, dir_data_msg=None):
     """
     Define the log filename and full path.
 
@@ -2535,21 +2535,24 @@ def LOG_FILE_NAME(p, dir_data_msg=None, utime=None):
     # deal with no dir_data_msg
     if dir_data_msg is None:
         dir_data_msg = p.get('DRS_DATA_MSG', None)
-    # deal with no utime (set it to the time now)
-    if utime is None:
-        utime = time.time()
-    # Get the used date if it is not None
-    p['DRS_USED_DATE'] = p.get('DRS_USED_DATE', 'None').upper()
-    udate = p['DRS_USED_DATE']
-    # if we don't have a udate use the date
-    if udate == 'undefined' or udate == 'NONE':
-        date = time.strftime('%Y-%m-%d', time.gmtime(utime))
+
+    # deal with no PID
+    if 'PID' not in p:
+        pid = 'UNKNOWN-PID'
     else:
-        date = p['DRS_USED_DATE']
+        pid = p['PID']
+
+    # deal with no recipe
+    if 'RECIPE' not in p:
+        recipe = 'UNKNOWN-RECIPE'
+    else:
+        recipe = p['RECIPE'].replace('.py', '')
+
     # Get the HOST name (if it does not exist host = 'HOST')
     host = os.environ.get('HOST', 'HOST')
     # construct the logfile path
-    lpath = os.path.join(dir_data_msg, 'DRS-{0}.{1}'.format(host, date))
+    largs = [host, pid, recipe]
+    lpath = os.path.join(dir_data_msg, 'DRS-{0}_{1}_{2}'.format(*largs))
     # return lpath
     return lpath
 
@@ -2616,7 +2619,7 @@ def LOG_TRIG_KEYS():
     if the following is defined:
     >> trig_key[error] = '!'
     and the following log is used:
-    >> WLOG('error', 'program', 'message')
+    >> WLOG(p, 'error', 'message')
     the output is:
     >> print("TIMESTAMP - ! |program|message")
 
@@ -2702,7 +2705,7 @@ def COLOUREDLEVELS():
     # http://ozzmaker.com/add-colour-to-text-in-python/
     clevels = dict(error=BColors.FAIL,  # red
                    warning=BColors.WARNING,  # yellow
-                   info=BColors.OKGREEN,  # green
+                   info=BColors.OKBLUE,  # green
                    graph=BColors.OKBLUE,  # green
                    all=BColors.OKGREEN)  # green
     return clevels
@@ -2710,15 +2713,30 @@ def COLOUREDLEVELS():
 
 # defines the colours
 class BColors:
-    HEADER = '\033[95;1m'
-    OKBLUE = '\033[94;1m'
-    OKGREEN = '\033[92;1m'
-    WARNING = '\033[93;1m'
-    FAIL = '\033[91;1m'
-    ENDC = '\033[0;0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
+    if 'THEME' not in pp:
+        theme = 'DARK'
+    else:
+        theme = pp['THEME']
+
+    if theme == 'DARK':
+        HEADER = '\033[95;1m'
+        OKBLUE = '\033[94;1m'
+        OKGREEN = '\033[92;1m'
+        WARNING = '\033[1;93;1m'
+        FAIL = '\033[1;91;1m'
+        ENDC = '\033[0;0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
+    else:
+        HEADER = '\033[95;1m'
+        OKBLUE = '\033[1;36m'
+        OKGREEN = '\033[1;32m'
+        WARNING = '\033[1;34m'
+        FAIL = '\033[1;31m'
+        ENDC = '\033[0;0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
 
 # noinspection PyPep8Naming
 def COLOURED_LOG(p=None):

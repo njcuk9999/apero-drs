@@ -128,7 +128,7 @@ def get_molecular_tell_lines(p, loc):
             tapas_all_species = np.load(convolve_file)
             # log loading
             wmsg = 'Loading Tapas convolve file: {0}'
-            WLOG('', p['LOG_OPT'], wmsg.format(convolve_file_name))
+            WLOG(p, '', wmsg.format(convolve_file_name))
             # add name to loc
             loc['TAPAS_FNAME'], loc['TAPAS_ABSNAME'] = None, None
             generate = False
@@ -143,7 +143,7 @@ def get_molecular_tell_lines(p, loc):
         for n_species, molecule in enumerate(p['TELLU_ABSORBERS']):
             # log process
             wmsg = 'Processing molecule: {0}'
-            WLOG('', p['LOG_OPT'], wmsg.format(molecule))
+            WLOG(p, '', wmsg.format(molecule))
             # get wavelengths
             lam = tapas['wavelength']
             # get molecule transmission
@@ -152,7 +152,7 @@ def get_molecular_tell_lines(p, loc):
             tapas_spline = IUVSpline(lam, trans)
             # log the mean transmission level
             wmsg = '\tMean Trans level: {0:.3f}'.format(np.mean(trans))
-            WLOG('', p['LOG_OPT'], wmsg)
+            WLOG(p, '', wmsg)
             # convolve all tapas absorption to the SPIRou approximate resolution
             for iord in range(49):
                 # get the order position
@@ -259,7 +259,7 @@ def get_berv_value(p, hdr, filename=None):
     if p['KW_BERV'][0] not in hdr:
         emsg = 'HEADER error, file="{0}". Keyword {1} not found'
         eargs = [filename, p['KW_BERV'][0]]
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
         dv, bjd, bvmax = 0.0, -9999, 0.0
     else:
         # Get the Barycentric correction from header
@@ -331,7 +331,7 @@ def calc_recon_abso(p, loc):
     for ite in range(p['TELLU_FIT_NITER']):
         # log progress
         wmsg = 'Iteration {0} of {1}'.format(ite + 1, p['TELLU_FIT_NITER'])
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
 
         # --------------------------------------------------------------
         # if we don't have a template construct one
@@ -368,9 +368,9 @@ def calc_recon_abso(p, loc):
             wmsg1 = '\tShifting template on to master wavelength grid'
             wargs = [os.path.basename(loc['MASTERWAVEFILE'])]
             wmsg2 = '\t\tFile = {0}'.format(*wargs)
-            WLOG('', p['LOG_OPT'], [wmsg1, wmsg2])
+            WLOG(p, '', [wmsg1, wmsg2])
             # shift template
-            wargs = [template2, loc['MASTERWAVE'], loc['WAVE_IT']]
+            wargs = [p, template2, loc['MASTERWAVE'], loc['WAVE_IT']]
             template2 = wave2wave(*wargs, reshape=True).reshape(template2.shape)
         # --------------------------------------------------------------
         # get residual spectrum
@@ -434,7 +434,7 @@ def calc_recon_abso(p, loc):
         keep &= np.sum(np.isfinite(loc['FIT_PC']), axis=1) == loc['NPC']
         # log number of kept pixels
         wmsg = '\tNumber to keep total = {0}'.format(np.sum(keep))
-        WLOG('', p['LOG_OPT'], wmsg)
+        WLOG(p, '', wmsg)
         # --------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
         largs = [fit_dd[keep], loc['FIT_PC'][keep, :]]
@@ -538,7 +538,7 @@ def lin_mini(vector, sample):
     return spirouMath.linear_minimization(vector, sample)
 
 
-def wave2wave(spectrum, wave1, wave2, reshape=False):
+def wave2wave(p, spectrum, wave1, wave2, reshape=False):
     """
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
@@ -558,10 +558,11 @@ def wave2wave(spectrum, wave1, wave2, reshape=False):
         try:
             spectrum = spectrum.reshape(wave2.shape)
         except ValueError:
-            emsg = ('Spectrum (shape = {0}) cannot be reshaped to'
+            emsg1 = ('Spectrum (shape = {0}) cannot be reshaped to'
                     ' shape = {1}')
+            emsg2 = '\tfunction = {0}'.format(func_name)
             eargs = [spectrum.shape, wave2.shape]
-            WLOG('error', func_name, emsg.format(*eargs))
+            WLOG(p, 'error', [emsg1.format(*eargs), emsg2])
 
     # if they are the same
     if np.sum(wave1 != wave2) == 0:

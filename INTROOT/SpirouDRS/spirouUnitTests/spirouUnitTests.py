@@ -79,20 +79,20 @@ def get_runs(p, rparams, rfile):
             if type(run_i) != list:
                 emsg1 = '"{0}" is not a valid python list'.format(key)
                 emsg2 = '   {0}={1}'.format(key, run_i)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
             # check that first entry is a valid recipe
             if run_i[0] not in VALID:
                 emsg1 = ('"{0}" does not start with a valid DRS recipe'
                          '').format(key)
                 emsg2 = '   {0}[0]={1}'.format(key, run_i[0])
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
             # append to runs
             runs[key] = run_i
     # make sure we have some runs
     if len(runs) == 0:
         eargs = [RUN_KEY, rfile]
         emsg = 'No runs ("{0}## = ") found in file {1}'
-        WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+        WLOG(p, 'error', emsg.format(*eargs))
     # sort into order
     unsorted_arr = np.array(list(runs.keys()))
     sorted_arr = np.sort(unsorted_arr)
@@ -106,11 +106,11 @@ def get_runs(p, rparams, rfile):
 
 
 def unit_log_title(p, title=' START OF UNIT TESTS'):
-    WLOG('', p['LOG_OPT'], '')
-    WLOG('warning', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
-    WLOG('warning', p['LOG_OPT'], title)
-    WLOG('warning', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['LOG_OPT'], '')
+    WLOG(p, '', '')
+    WLOG(p, 'warning', spirouStartup.spirouStartup.HEADER)
+    WLOG(p, 'warning', title)
+    WLOG(p, 'warning', spirouStartup.spirouStartup.HEADER)
+    WLOG(p, '', '')
 
 
 def log_timings(p, times):
@@ -118,33 +118,33 @@ def log_timings(p, times):
     # add times together
     times['Total'] = np.sum(list(times.values()))
     # log the times
-    WLOG('', p['LOG_OPT'], '')
-    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG(p, '', '')
+    WLOG(p, '', spirouStartup.spirouStartup.HEADER)
     title = ' TIMING STATS: {RUNNAME} (V{DRS_VERSION})'.format(**p)
-    WLOG('', p['LOG_OPT'], title)
-    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['LOG_OPT'], '')
+    WLOG(p, '', title)
+    WLOG(p, '', spirouStartup.spirouStartup.HEADER)
+    WLOG(p, '', '')
     # Now print the stats for this test:
     for key in list(times.keys()):
         msg = '  {0:35s} Time taken = {1:.3f} s'.format(key, times[key])
-        WLOG('', p['LOG_OPT'], msg)
-    WLOG('', p['LOG_OPT'], '')
+        WLOG(p, '', msg)
+    WLOG(p, '', '')
 
 
 def log_errors(p, errors):
     # log the times
-    WLOG('', p['LOG_OPT'], '')
-    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
+    WLOG(p, '', '')
+    WLOG(p, '', spirouStartup.spirouStartup.HEADER)
     title = ' ERRORS: {RUNNAME} (V{DRS_VERSION})'.format(**p)
-    WLOG('', p['LOG_OPT'], title)
-    WLOG('', p['LOG_OPT'], spirouStartup.spirouStartup.HEADER)
-    WLOG('', p['LOG_OPT'], '')
+    WLOG(p, '', title)
+    WLOG(p, '', spirouStartup.spirouStartup.HEADER)
+    WLOG(p, '', '')
 
     for error in errors:
         emsgs = ['Run {0}:'.format(error)]
         for error_it in str(errors[error]).split('\n'):
             emsgs.append('\t' + error_it)
-        WLOG('warning', p['LOG_OPT'], emsgs)
+        WLOG(p, 'warning', emsgs)
 
 
 def manage_run(p, runname, run_i, timing):
