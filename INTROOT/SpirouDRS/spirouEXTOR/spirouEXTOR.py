@@ -85,7 +85,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
     # make sure mode is a string
     mode = str(mode)
     # check for an image
-    check_for_none(image, 'image')
+    check_for_none(p, image, 'image')
     # check and get localisation position "ACC" from loc
     posall = kwargs.get('posall', loc.get('ACC', None))
     pos = get_check_for_orderlist_none(p, posall, 'ACC', rnum)
@@ -93,7 +93,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
     pos = kwargs.get('pos', pos)
     # get gain
     gain = kwargs.get('gain', p.get('GAIN', None))
-    check_for_none(gain, 'gain')
+    check_for_none(p, gain, 'gain')
     # get sigdet (but don't test until used)
     sigdet = kwargs.get('sigdet', p.get('SIGDET', None))
     # get tilt (but don't test until used)
@@ -107,7 +107,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
     if mode == '0':
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
-        check_for_none(range1, 'range1')
+        check_for_none(p, range1, 'range1')
         # run extraction function
         ext_func = extract_const_range
         return ext_func(image=image, pos=pos, gain=gain,
@@ -119,9 +119,9 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
         # run extraction function
         ext_func = extract_weight
         return ext_func(image=image, pos=pos, gain=gain,
@@ -133,10 +133,10 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
         tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_tilt
         return ext_func(image=image, pos=pos, gain=gain,
@@ -149,12 +149,12 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
-        check_for_none(sigdet, 'SIGDET')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
+        check_for_none(p, sigdet, 'SIGDET')
         tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_tilt_weight
         return ext_func(image=image, pos=pos, gain=gain,
@@ -168,12 +168,12 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
-        check_for_none(sigdet, 'SIGDET')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
+        check_for_none(p, sigdet, 'SIGDET')
         tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_tilt_weight_old2
         return ext_func(image=image, pos=pos, gain=gain,
@@ -187,12 +187,12 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
-        check_for_none(sigdet, 'SIGDET')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
+        check_for_none(p, sigdet, 'SIGDET')
         tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_tilt_weight2
         return ext_func(image=image, pos=pos, gain=gain,
@@ -208,12 +208,12 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
         cosmic_sigcut = kwargs.get('csigcut', p['IC_COSMIC_SIGCUT'])
         cosmic_threshold = kwargs.get('cthres', p['IC_COSMIC_THRESH'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
-        check_for_none(sigdet, 'SIGDET')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
+        check_for_none(p, sigdet, 'SIGDET')
         tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_tilt_weight2cosm
         return ext_func(image=image, pos=pos, gain=gain,
@@ -228,12 +228,12 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         # get and check values
         range1 = kwargs.get('range1', p['IC_EXT_RANGE1'])
         range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
-        check_for_none(sigdet, 'SIGDET')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
+        check_for_none(p, sigdet, 'SIGDET')
         # tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_shape_weight
         return ext_func(simage=image, pos=pos, gain=gain,
@@ -248,12 +248,12 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
         range2 = kwargs.get('range2', p['IC_EXT_RANGE2'])
         cosmic_sigcut = kwargs.get('csigcut', p['IC_COSMIC_SIGCUT'])
         cosmic_threshold = kwargs.get('cthres', p['IC_COSMIC_THRESH'])
-        check_for_none(range1, 'range1')
-        check_for_none(range2, 'range2')
-        check_for_none(order_profile, 'Order Profile Image')
-        check_for_none(sigdet, 'SIGDET')
+        check_for_none(p, range1, 'range1')
+        check_for_none(p, range2, 'range2')
+        check_for_none(p, order_profile, 'Order Profile Image')
+        check_for_none(p, sigdet, 'SIGDET')
         # tilt = get_check_for_orderlist_none(p, tiltall, 'TILT', rnum)
-        check_for_none(tiltborder, 'Tilt Pixel Border')
+        check_for_none(p, tiltborder, 'Tilt Pixel Border')
         # run extraction function
         ext_func = extract_shape_weight_cosm
         return ext_func(simage=image, pos=pos, gain=gain,
@@ -277,7 +277,7 @@ def extraction_wrapper(p, loc, image, rnum, mode=0, order_profile=None,
                  '     4a - shape map + weight extraction',
                  '     4b - shape map + weight extraction (cosmic correction)',
                  '  Please check constants_SPIROU file.']
-        WLOG('error', p['LOG_OPT'], emsgs)
+        WLOG(p, 'error', emsgs)
 
 
 def debananafication(image, dx):
@@ -480,7 +480,7 @@ def get_extraction_method(p, mode):
     else:
         emsg1 = 'Extraction methods "modes" not up-to-date.'
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
 
 
 def compare_extraction_modes(p, mode1, mode2, name1=None, name2=None):
@@ -503,12 +503,12 @@ def compare_extraction_modes(p, mode1, mode2, name1=None, name2=None):
     if mode1 != mode2:
         wmsg = ('Incompatible extraction modes for {0} (mode={1}) and {2} '
                 '(mode={3})')
-        WLOG('error', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, 'error', wmsg.format(*wargs))
         return 0
     else:
         wmsg = ('Extraction modes compatible for {0} (mode={1}) and {2} '
                 '(mode={3})')
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
 
 
 # =============================================================================
@@ -1536,7 +1536,7 @@ def get_valid_orders(p, loc):
         emsg1 = 'EXT_START_ORDER = {0}'.format(order_range_lower)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         orl = 0
     # check that order_range_upper is valid
     try:
@@ -1547,13 +1547,13 @@ def get_valid_orders(p, loc):
         emsg1 = 'EXT_END_ORDER = {0}'.format(order_range_upper)
         emsg2 = '    must be "None" or a valid positive integer'
         emsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
         oru = 0
     # return the range of the orders
     return list(range(orl, oru))
 
 
-def check_for_none(value, name, fname=None):
+def check_for_none(p, value, name, fname=None):
     """
     Checks is value is None, if it is an error is generated
     For specific use in spirouEXTOR.extract_wrapper() but can be used elsewhere
@@ -1574,7 +1574,7 @@ def check_for_none(value, name, fname=None):
         fname = __NAME__ + '.extraction_wrapper()'
     if value is None:
         emsg = 'Extraction Wrapper Error: Keyword "{0}" is not defined for {1}'
-        WLOG('error', '', emsg.format(name, fname))
+        WLOG(p, 'error', emsg.format(name, fname))
 
 
 def get_check_for_orderlist_none(p, value, name, order_num):
@@ -1582,12 +1582,12 @@ def get_check_for_orderlist_none(p, value, name, order_num):
         order_value = value[order_num]
     except TypeError:
         emsg = '{0} not defined in arguments or ParamDict.'.format(name)
-        WLOG('error', p['LOG_OPT'], emsg)
+        WLOG(p, 'error', emsg)
         order_value = None
     except IndexError:
         emsg1 = '{0} has incorrect number of orders'.format(name)
         emsg2 = '\tExpected at least {0} got {1}'.format(order_num, len(value))
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         order_value = None
     return order_value
 

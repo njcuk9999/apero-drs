@@ -123,12 +123,12 @@ def get_loc_coefficients(p, hdr=None, loc=None):
         emsg2 = ('    requires key="{0}" in calibDB file (with time < {1}).'
                  '').format(loc_file, acqtime)
         emsg3 = '    Unable to complete the recipe, FATAL'
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # construct the localization file name
     loco_file = os.path.join(reduced_dir, c_database[loc_file][1])
     # log that we are reading localization parameters
     wmsg = 'Reading localization parameters of Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], c_database[loc_file][1]))
+    WLOG(p, '', wmsg.format(p['FIBER'], c_database[loc_file][1]))
     # get header for loco file
     hdict = spirouImage.ReadHeader(p, loco_file)
     # Get number of orders from header
@@ -375,7 +375,7 @@ def initial_order_fit(pp, loc, mask, onum, rnum, kind, fig=None, frame=None):
     # deal with kind
     if kind not in ['center', 'fwhm']:
         emsg = 'Error: sigma_clip "kind" must be either "center" or "fwhm"'
-        WLOG('error', pp['LOG_OPT'], emsg)
+        WLOG(pp, 'error', emsg)
     # get variables that are independent of kind
     x = loc['X']
     # get variables dependent on kind
@@ -509,7 +509,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
     func_name = __NAME__ + '.sigmaclip_order_fit()'
     # deal with kind
     if kind not in ['center', 'fwhm']:
-        WLOG('error', pp['LOG_OPT'], ('Error: sigma_clip "kind" must be '
+        WLOG(pp, 'error', ('Error: sigma_clip "kind" must be '
                                       'either "center" or "fwhm"'))
     # extract constants from fitdata
     acoeffs = fitdata['a']
@@ -560,7 +560,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
     while cond:
         # Log that we are clipping the fit
         wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
-        WLOG('', pp['LOG_OPT'], ('      {0} fit converging with rms/ptp/{1}:'
+        WLOG(pp, '', ('      {0} fit converging with rms/ptp/{1}:'
                                  ' {2:.3f}/{3:.3f}/{4:.3f}').format(*wargs))
         # add residuals to loc
         loc['RES'] = res
@@ -593,7 +593,7 @@ def sigmaclip_order_fit(pp, loc, fitdata, mask, onum, rnum, kind):
         wmask = wmask[wmask]
     else:
         wargs = [kind2, ptpfrackind, rms, max_ptp, max_ptp_frac, int(max_rmpts)]
-        WLOG('', pp['LOG_OPT'], (' - {0} fit rms/ptp/{1}: {2:.3f}/{3:.3f}/'
+        WLOG(pp, '', (' - {0} fit rms/ptp/{1}: {2:.3f}/{3:.3f}/'
                                  '{4:.3f} with {5} rejected points'
                                  '').format(*wargs))
     # if max_rmpts > 50:

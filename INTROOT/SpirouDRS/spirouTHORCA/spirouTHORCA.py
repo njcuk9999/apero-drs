@@ -36,8 +36,6 @@ ParamDict = spirouConfig.ParamDict
 ConfigError = spirouConfig.ConfigError
 # Get Logging function
 WLOG = spirouCore.wlog
-# get default program
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # Get plotting functions
 sPlt = spirouCore.sPlt
 plt = sPlt.plt
@@ -86,7 +84,7 @@ def get_lamp_parameters(p, header, filename=None, kind=None):
         emsg1 = ('Fiber position cannot be identified for fiber={0}'
                  .format(p['FIB_TYP']))
         emsg2 = '    function={0}'.format(__NAME__)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     # set the source of fib_pos
     p.set_sources(['FIB_POS', 'FIB_POS_ID'], func_name)
 
@@ -180,7 +178,7 @@ def first_guess_at_wave_solution(p, loc, mode='0'):
 
     # log wave file name
     wmsg = 'Reading initial wavelength solution in {0}'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(wave_file))
+    WLOG(p, '', wmsg.format(wave_file))
 
     # only perform fit on orders 0 to p['IC_HC_N_ORD_FINAL']
     loc['LL_INIT'] = ll_init[n_order_start:n_order_final]
@@ -193,7 +191,7 @@ def first_guess_at_wave_solution(p, loc, mode='0'):
 
     # log that we are attempting to find ll on spectrum
     wmsg = 'On fiber {0} trying to identify lines using guess solution'
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(p['FIBER']))
+    WLOG(p, '', wmsg.format(p['FIBER']))
 
     # find the lines
     fargs = [p, loc['LL_INIT'], loc['LL_LINE'], loc['AMPL_LINE'],
@@ -274,7 +272,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         pass
     else:
         emsg = 'key = "{0}" not defined in "loc"'
-        WLOG('error', p['LOG_OPT'], emsg.format(key))
+        WLOG(p, 'error', emsg.format(key))
         key = None
 
     # good lines count
@@ -336,7 +334,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
                      num_badfit]
             wmsg = ('In Order {0:3} ({1:2}) keep {2} lines / ({3}/{4}/{5}) '
                     'lines [beyond (sig/ampl/err) limits]')
-            WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg.format(*wargs))
+            WLOG(p, '', wmsg.format(*wargs))
         # ---------------------------------------------------------------------
         # Remove infinities
         # ---------------------------------------------------------------------
@@ -350,7 +348,7 @@ def detect_bad_lines(p, loc, key=None, iteration=0):
         loc[key][order_num] = lines
     # print total of good lines
     wargs = [good_lines_total]
-    WLOG('', p['LOG_OPT'] + p['FIBER'], 'Total good lines: {0}'.format(*wargs))
+    WLOG(p, '', 'Total good lines: {0}'.format(*wargs))
 
     # return loc
     return loc
@@ -462,7 +460,7 @@ def fit_1d_solution(p, loc, ll, iteration=0):
     loc.set_source('DLL_OUT_{0}'.format(iteration), func_name)
     # log message
     wmsg = 'On fiber {0} mean pixel scale at center: {1:.4f} [km/s/pixel]'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], meanpixscale))
+    WLOG(p, 'info', wmsg.format(p['FIBER'], meanpixscale))
     # return loc
     return loc
 
@@ -556,7 +554,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
         wmsg2 = '    Please check constants file'
         wmsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
+        WLOG(p, 'error', [wmsg1, wmsg2, wmsg3])
     # test if n_order_init is in remove_orders
     if n_order_final in remove_orders:
         wargs = ["IC_HC_N_ORD_FINAL", p['IC_HC_N_ORD_FINAL'],
@@ -564,7 +562,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
         wmsg2 = '    Please check constants file'
         wmsg3 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2, wmsg3])
+        WLOG(p, 'error', [wmsg1, wmsg2, wmsg3])
     # check that all remove orders exist
     for remove_order in remove_orders:
         if remove_order not in np.arange(n_order_final):
@@ -573,12 +571,12 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
             wmsg1 = (' Invalid order number={0} in {1} must be between'
                      '{2} and {3}'.format(*wargs1))
             wmsg2 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [wmsg1, wmsg2])
+            WLOG(p, 'error', [wmsg1, wmsg2])
 
     # check to make sure we have some orders left
     if len(np.unique(remove_orders)) == n_order_final - n_order_start:
         wmsg = 'Cannot remove all orders. Check IC_LITTROW_REMOVE_ORDERS'
-        WLOG('error', p['LOG_OPT'], wmsg)
+        WLOG(p, 'error', wmsg)
     # get the total number of orders to fit
     num_orders = len(loc['ECHELLE_ORDERS'])
     # get the dimensions of the data
@@ -662,7 +660,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
                      mindev/rms, maxdev/rms]
             emsg2 = ('    mean:{0:.3f}[m/s] rms:{1:.2f}[m/s] min/max:{2:.2f}/'
                      '{3:.2f}[m/s] (frac:{4:.1f}/{5:.1f})'.format(*eargs))
-            WLOG('info', p['LOG_OPT'] + p['FIBER'], [emsg1, emsg2])
+            WLOG(p, '', [emsg1, emsg2])
 
     # return loc
     return loc
@@ -865,7 +863,7 @@ def second_guess_at_wave_solution(p, loc, mode='0'):
     # log second pass
     wmsg = ('On fiber {0} trying to identify lines using guess solution '
             '(second pass)'.format(p['FIBER']))
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    WLOG(p, '', wmsg)
 
     # find the lines
     ll = loc['LITTROW_EXTRAP_SOL_1'][n_ord_start_2:n_ord_final_2]
@@ -993,7 +991,7 @@ def decide_on_lamp_type(p, filename):
                     emsg1 = ('Multiple lamp types found for fiber pos={0}, '
                              'lamp type is ambiguous'.format(fib_pos))
                     emsg2 = '    function={0}'.format(func_name)
-                    WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                    WLOG(p, 'error', [emsg1, emsg2])
                 else:
                     lamp_type = lamp
     # check that lamp is defined
@@ -1004,7 +1002,7 @@ def decide_on_lamp_type(p, filename):
         emsg3 = ('\tMust be one of the following: {0}'
                  ''.format(', '.join(p['IC_LAMPS'])))
         emsg4 = '\t\tfunction={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
     # finally return lamp type
     return lamp_type
 
@@ -1036,7 +1034,7 @@ def decide_on_lamp_type_old(p, filename):
                     emsg1 = ('Multiple lamp types found in file={0}, '
                              'lamp type is ambiguous'.format(filename))
                     emsg2 = '    function={0}'.format(func_name)
-                    WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                    WLOG(p, 'error', [emsg1, emsg2])
                 else:
                     lamp_type = lamp
     # check that lamp is defined
@@ -1045,7 +1043,7 @@ def decide_on_lamp_type_old(p, filename):
         emsg2 = ('    Must be one of the following: {0}'
                  ''.format(', '.join(p['IC_LAMPS'])))
         emsg3 = '    function={0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # finally return lamp type
     return lamp_type
 
@@ -1129,7 +1127,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
             emsg4 = '   Line interval: [{0:6.1f}-{1:6.1f}]'.format(*emsg4args)
             emsg5 = '       function={0}'.format(func_name)
             emsg6 = ' Unable to reduce, check guess solution'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4,
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4,
                                          emsg5, emsg6])
         gauss_fit = []
         # loop around the lines in kept line list
@@ -1154,7 +1152,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
                 # make sure we have more than 4 data points to fit a gaussian
                 if len(sxpos) < 4:
                     wmsg = 'Resolution or ll_span are too small'
-                    WLOG('', p['LOG_OPT'], wmsg)
+                    WLOG(p, '', wmsg)
                 # work out a pixel weighting
                 line_weight = 1.0/(sdata + image_ron**2)
                 # check that the sum of the weighted flux is not zero
@@ -1178,7 +1176,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
                 # TODO:  2 fitgaus.fitgaus routine (in py3) does not give
                 # TODO:    same result as AT4-V48 version (py2 old)
                 # TODO:  3 scipy.optimize.curve_fit is slower
-                gau_param = fit_emi_line(sll, sxpos, sdata, line_weight,
+                gau_param = fit_emi_line(p, sll, sxpos, sdata, line_weight,
                                          mode=mode)
             # check if gau_param[7] is positive
             if gau_param[7] > 0:
@@ -1201,7 +1199,7 @@ def find_lines(p, ll, ll_line, ampl_line, datax, torder, freespan, mode='new'):
         wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
         wargs = [torder[order_num], t_ord_start - torder[order_num],
                  min_ll, max_ll, nlines_valid, nlines_total, percentage_vlines]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
         all_cal_line_fit.append(gauss_fit)
     # return all lines found (36 x number of lines found for order)
     return all_cal_line_fit
@@ -1280,7 +1278,7 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
             emsg4 = '   Line interval: [{0:6.1f}-{1:6.1f}]'.format(*emsg4args)
             emsg5 = '       function={0}'.format(func_name)
             emsg6 = ' Unable to reduce, check guess solution'
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4,
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4,
                                          emsg5, emsg6])
         gauss_fit = []
 
@@ -1367,14 +1365,14 @@ def find_lines2(p, ll, ll_line, ampl_line, datax, torder):
         wmsg += ' ({4:3}/{5:3})={6:3.1f}% lines identified'
         wargs = [torder[order_num], order_num, min_ll, max_ll,
                  nlines_valid, nlines_total, percentage_vlines]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
         all_cal_line_fit.append(gauss_fit)
 
     # return all lines found (36 x number of lines found for order)
     return all_cal_line_fit
 
 
-def fit_emi_line(sll, sxpos, sdata, weight, mode=0):
+def fit_emi_line(p, sll, sxpos, sdata, weight, mode=0):
     """
     Fit emission line
 
@@ -1423,7 +1421,7 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode=0):
             # fit the lsdata with a weighted polyfit
             with warnings.catch_warnings(record=True) as w:
                 coeffs = np.polyfit(slln, lsdata, fitdegree, w=weights)[::-1]
-            spirouCore.WarnLog(w, funcname=func_name)
+            spirouCore.WarnLog(p, w, funcname=func_name)
 
     # perform a gaussian fit
     gparams = np.zeros(8, dtype='float')
@@ -1444,7 +1442,7 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode=0):
         # fit a gaussian
         try:
             # choose between fit gaussian types
-            ag, siga, cfit = fitgaus_wrapper(slln, sdata, invsig, gcoeffs,
+            ag, siga, cfit = fitgaus_wrapper(p, slln, sdata, invsig, gcoeffs,
                                              mode=mode)
             # copy the gaussian fit coefficients into params
             params[0] = ag[1]
@@ -1496,7 +1494,7 @@ def fit_emi_line(sll, sxpos, sdata, weight, mode=0):
     return gparams
 
 
-def fitgaus_wrapper(x, y, invsig, guess, mode=0):
+def fitgaus_wrapper(p, x, y, invsig, guess, mode=0):
     """
     Fits a guassian to "y" (at positions "x") with weights "invsig" based on an
     initial "guess" - fit process method depends on "mode" selected
@@ -1539,7 +1537,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg2 = '   Please install in .../SpirouDRS/fortran/'
             emsg3 = '   i.e. use: '
             emsg4 = '      f2py -c -m fitgaus --noopt --quiet fitgaus.f'
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
             fitgaus = None
         cfit = np.zeros_like(y)
         siga = np.zeros_like(guess)
@@ -1562,7 +1560,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg2 = '    located in .../SpirouDRS/fortran/'
             emsg3 = '    error reads:'
             emsg4 = '        {0}'.format(e)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
             gfit = None
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=0)
     elif mode == 4:
@@ -1574,7 +1572,7 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg2 = '    located in .../SpirouDRS/fortran/'
             emsg3 = '    error reads:'
             emsg4 = '        {0}'.format(e)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
             gfit = None
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=1)
     elif mode == 5:
@@ -1586,13 +1584,13 @@ def fitgaus_wrapper(x, y, invsig, guess, mode=0):
             emsg2 = '    located in .../SpirouDRS/fortran/'
             emsg3 = '    error reads:'
             emsg4 = '        {0}'.format(e)
-            WLOG('error', DPROG, [emsg1, emsg2, emsg3, emsg4])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
             gfit = None
         ag, siga, cfit = gfit.fitgaus(x, y, invsig, guess, mode=2)
     else:
         emsg1 = 'Mode not understood. Must be 0, 1, 2, 3, 4 or 5'
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', DPROG, [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         ag, siga, cfit = None, None, None
 
     # return outputs
@@ -1751,7 +1749,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
                 emsg2 = ('\tRMS > MAX_RMS={0}'
                          ''.format(max_ll_fit_rms))
                 emsg3 = '\tfunction = {0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+                WLOG(p, 'error', [emsg1, emsg2, emsg3])
             else:
                 lines = lines[goodmask]
                 x_fit = x_fit[goodmask]
@@ -1766,7 +1764,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
         wargs2 = [wmean * 1000, np.sqrt(var) * 1000, len(iter0),
                   len(details[0][1]), len(details[-1][1])]
         wmsgs = [wmsg1.format(*wargs1), wmsg2.format(*wargs2)]
-        WLOG('', p['LOG_OPT'] + p['FIBER'], wmsgs)
+        WLOG(p, '', wmsgs)
         # ---------------------------------------------------------------------
         # append to all storage
         # ---------------------------------------------------------------------
@@ -1809,7 +1807,7 @@ def fit_1d_ll_solution(p, loc, ll, iteration):
               total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
     wmsg2 = ('\tmean={0:.3f}[m/s] rms={1:.1f} {2} lines (error on mean '
              'value:{3:.2f}[m/s])'.format(*wargs2))
-    WLOG('info', p['LOG_OPT'] + p['FIBER'], [wmsg1, wmsg2])
+    WLOG(p, 'info', [wmsg1, wmsg2])
     # save outputs to loc
     loc['X_MEAN_{0}'.format(iteration)] = final_mean
     loc['X_VAR_{0}'.format(iteration)] = final_var
@@ -1881,7 +1879,7 @@ def invert_1ds_ll_solution(p, loc, ll, iteration=0):
              1000.0 * np.sqrt(final_var / total_lines)]
     wmsg = ('Inversion noise ==> mean={0:.3f}[m/s] rms={1:.1f}'
             '(error on mean value:{2:.2f}[m/s])'.format(*wargs))
-    WLOG('', p['LOG_OPT'] + p['FIBER'], wmsg)
+    WLOG(p, '', wmsg)
     # save outputs to loc
     loc['LL_MEAN_{0}'.format(iteration)] = final_mean
     loc['LL_VAR_{0}'.format(iteration)] = final_var

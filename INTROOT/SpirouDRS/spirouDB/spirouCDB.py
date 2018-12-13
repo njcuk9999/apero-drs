@@ -21,6 +21,7 @@ import time
 from SpirouDRS import spirouConfig
 from SpirouDRS import spirouCore
 from SpirouDRS.spirouCore import spirouMath
+from . import spirouDB
 
 # =============================================================================
 # Define variables
@@ -91,7 +92,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     if kwacqkey not in p:
         emsg = ('Key {0} not defined in ParamDict (or SpirouKeywords.py)'
                 ' - function = {1}')
-        WLOG('error', p['LOG_OPT'], emsg.format(kwacqkey, funcname))
+        WLOG(p, 'error', emsg.format(kwacqkey, funcname))
         acqtime_key = None
     else:
         acqtime_key = p[kwacqkey][0]
@@ -105,11 +106,11 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     if len(filenames) != len(keys) or len(hdrs) != len(keys):
         emsg = ('"filenames" and "hdrs" must be the same length as "keys"'
                 ' - function = {0}')
-        WLOG('error', p['LOG_OPT'], emsg.format(funcname))
+        WLOG(p, 'error', emsg.format(funcname))
 
     # get and check the lock file (Any errors must close and remove lock file
     #     after this point)
-    lock, lock_file = get_check_lock_file(p)
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # construct lines for each key in keys
     lines = []
     for k_it in range(len(keys)):
@@ -132,9 +133,8 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
         else:
             emsg = 'File {0} has no HEADER keyword {1} - function = {2}'
             eargs = [hdr['@@@hname'], acqtime_key, funcname]
-            lock.close()
-            os.remove(lock_file)
-            WLOG('error', p['LOG_OPT'], emsg.format(*eargs))
+            spirouDB.close_lock_file(p, lock, lock_file)
+            WLOG(p, 'error', emsg.format(*eargs))
 
         # construct database line entry
         lineargs = [key, p['ARG_NIGHT_NAME'], filename, t_fmt, t]
@@ -144,8 +144,7 @@ def update_datebase(p, keys, filenames, hdrs, timekey=None):
     # write lines to master
     write_files_to_master(p, lines, keys, lock, lock_file)
     # finally close the lock file and remove it for next access
-    lock.close()
-    os.remove(lock_file)
+    spirouDB.close_lock_file(p, lock, lock_file)
 
 
 def get_acquisition_time(p, header=None, kind='human', filename=None):
@@ -184,7 +183,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     else:
         emsg1 = 'Acquisition "kind" not supported'
         emsg2 = '    function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
         kwakey = None
         dtype = None
 
@@ -192,7 +191,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     if kwakey not in p and kind == 'human':
         emsg = ('Error "{0}" not defined in keyword config files'
                 ' - function = {1}')
-        WLOG('error', p['LOG_OPT'], emsg.format(kwakey, func_name))
+        WLOG(p, 'error', emsg.format(kwakey, func_name))
         acqtime_key = None
     else:
         acqtime_key = p[kwakey][0]
@@ -210,7 +209,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
                 emsg1 = '"header" and "filename" not defined in {0}'
                 emsg2 = '   AND "arg_file_names" not defined in ParamDict'
                 eargs = func_name
-                WLOG('error', p['LOG_OPT'], [emsg1.format(eargs), emsg2])
+                WLOG(p, 'error', [emsg1.format(eargs), emsg2])
         # else we have a filename defined
         else:
             rfile = filename
@@ -218,14 +217,14 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
             if not os.path.exists(rfile):
                 emsg = ('"header" not defined in {0} and "filename" '
                         'path not found.')
-                WLOG('error', p['LOG_OPT'], emsg.format(func_name))
+                WLOG(p, 'error', emsg.format(func_name))
         # get file
         header = fits.getheader(rfile, ext=0)
 
     # get max_time from file
     if acqtime_key not in header:
         eargs = [acqtime_key, p['ARG_FILE_NAMES'][0], func_name]
-        WLOG('error', p['LOG_OPT'], ('Key {0} not in HEADER file of {1}'
+        WLOG(p, 'error', ('Key {0} not in HEADER file of {1}'
                                      ' for function {2}'.format(*eargs)))
     # else get acqtime from header key
     else:
@@ -277,12 +276,12 @@ def get_database(p, max_time=None, update=False):
         max_time = spirouMath.stringtime2unixtime(max_time, header_fmt)
     except ValueError:
         emsg = 'max_time {0} is not a valid float - function {1}'
-        WLOG('error', p['LOG_OPT'], emsg.format(max_time, func_name))
+        WLOG(p, 'error', emsg.format(max_time, func_name))
     # add max_time to p
     p['MAX_TIME_UNIX'] = max_time
     p.set_source('MAX_TIME_UNIX', func_name)
     # get and check the lock file
-    lock, lock_file = get_check_lock_file(p)
+    lock, lock_file = spirouDB.get_check_lock_file(p, 'Calibration')
     # try to open the master file
     lines = read_master_file(p, lock, lock_file)
     # store all lines that have unix time <= max_time
@@ -302,12 +301,11 @@ def get_database(p, max_time=None, update=False):
         # will crash if we don't have 5 variables --> thus log and exit
         except ValueError:
             # Must close and remove lock file before exiting
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             emsg1 = 'Incorrectly formatted line in calibDB - function = {0}'
             lineedit = line.replace('\n', '')
             emsg2 = '   Line {0}: "{1}"'.format(l_it + 1, lineedit)
-            WLOG('error', p['LOG_OPT'], [emsg1.format(func_name), emsg2])
+            WLOG(p, 'error', [emsg1.format(func_name), emsg2])
             key, dirname, filename, t_fmt, t = None, None, None, None, None
 
         # Make sure unix time and t_fmt agree
@@ -317,24 +315,22 @@ def get_database(p, max_time=None, update=False):
         # get human time in UTC/GMT
         t_human = spirouMath.unixtime2stringtime(t, calibdb_fmt)
         if t_fmt_unix != t:
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             emsg1 = 'Times do not match in calibDB'
             emsg2 = '\tHuman time = {0}'.format(t_fmt)
             emsg3 = '\tUnix time = {0}'.format(t_human)
             emsg4 = ' - function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3, emsg4])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3, emsg4])
         # t must be a float here --> exception
         try:
             t = float(t)
         except ValueError:
             # Must close and remove lock file before exiting
-            lock.close()
-            os.remove(lock_file)
+            spirouDB.close_lock_file(p, lock, lock_file)
             emsg1 = 'unix time="{0}" is not a valid float'.format(t)
             emsg2 = '    for key {0}="{1}"'.format(key, line)
             emsg3 = '    function = {0}'.format(func_name)
-            WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+            WLOG(p, 'error', [emsg1, emsg2, emsg3])
         # append all database elements to lists
         utimes.append(t)
         keys.append(key)
@@ -348,14 +344,13 @@ def get_database(p, max_time=None, update=False):
     # Need to check if lists are empty after loop
     # Must close and remove lock file before exiting
     if len(keys) == 0:
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         calibdb_file = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg1 = 'There are no entries in calibDB'
         emsg2 = '   Please check CalibDB file at {0}'.format(calibdb_file)
         emsg3 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+        WLOG(p, 'error', [emsg1, emsg2, emsg3])
     # Finally we only want to keep one calibDB file for each key
     #     This depends on 'calib_db_match'
     #     If calib_db_match = 'older' - select the newest file that is older
@@ -365,15 +360,13 @@ def get_database(p, max_time=None, update=False):
     try:
         c_database = choose_keys(p, utimes, keys, dirnames, filenames)
     except ConfigError as e:
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log error in standard way
         WLOG(e.level, p['LOG_OPT'], e.msg)
         c_database = None
 
     # Must close and remove lock file before continuing
-    lock.close()
-    os.remove(lock_file)
+    spirouDB.close_lock_file(p, lock, lock_file)
     # return calibDB dictionary
     return c_database, p
 
@@ -413,13 +406,13 @@ def choose_keys(p, utimes, keys, dirnames, filenames):
     match = p['CALIB_DB_MATCH']
     # log calibDB match method
     wmsg = 'CalibDB loaded with method "{0}"'
-    WLOG('', p['LOG_OPT'], wmsg.format(match))
+    WLOG(p, '', wmsg.format(match))
     # get max time unix and human
     maxtime_u = p['MAX_TIME_UNIX']
     maxtime_h = p['MAX_TIME_HUMAN']
     # display max time
     wmsg = '\tMax time used = {0} ({1})'
-    WLOG('', p['LOG_OPT'], wmsg.format(maxtime_h, maxtime_u))
+    WLOG(p, '', wmsg.format(maxtime_h, maxtime_u))
     # get unique keys
     ukeys = np.unique(keys)
     # loop around unique keys
@@ -490,11 +483,11 @@ def put_file(p, inputfile):
     except IOError:
         emsg1 = 'I/O problem on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     except OSError:
         emsg1 = 'Unable to chmod on {0}'.format(outputfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, '', [emsg1, emsg2])
 
 
 def copy_files(p, header=None):
@@ -545,7 +538,7 @@ def copy_files(p, header=None):
             # check if it is the same
             if filecmp.cmp(newloc, oldloc):
                 wmsg = 'Cal. file: {0} already exists - not copied'
-                WLOG('', p['LOG_OPT'], wmsg.format(filename))
+                WLOG(p, '', wmsg.format(filename))
             # if it isn't then copy over it
             else:
                 # Make sure old path exists
@@ -553,30 +546,30 @@ def copy_files(p, header=None):
                     emsg1 = ('Error file {0} define in calibDB (key={1}) '
                              'does not exist').format(oldloc, key)
                     emsg2 = '    function = {0}'.format(func_name)
-                    WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                    WLOG(p, 'error', [emsg1, emsg2])
                 # try to copy --> if not raise an error and log it
                 try:
                     shutil.copyfile(oldloc, newloc)
                     wmsg = 'Cal. file: {0} copied in dir {1}'
-                    WLOG('', p['LOG_OPT'], wmsg.format(filename, reduced_dir))
+                    WLOG(p, '', wmsg.format(filename, reduced_dir))
                 except IOError:
                     emsg1 = ('I/O problem on input file from calibDB: {0}'
                              '').format(oldloc)
                     emsg2 = ('   or problem on writing to outfile file: {0}'
                              '').format(newloc)
                     emsg3 = '    function = {0}'.format(func_name)
-                    WLOG('error', p['LOG_OPT'], [emsg1, emsg2, emsg3])
+                    WLOG(p, 'error', [emsg1, emsg2, emsg3])
         # else if the file doesn't exist
         else:
             # try to copy --> if not raise an error and log it
             try:
                 shutil.copyfile(oldloc, newloc)
                 wmsg = 'Calib file: {0} copied in dir {1}'
-                WLOG('', p['LOG_OPT'], wmsg.format(filename, reduced_dir))
+                WLOG(p, '', wmsg.format(filename, reduced_dir))
             except IOError:
                 emsg1 = 'I/O problem on {0} or {1}'.format(oldloc, newloc)
                 emsg2 = '   function = {0}'.format(func_name)
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
 
 
 def get_file_name(p, key, hdr=None, filename=None, required=True):
@@ -628,7 +621,7 @@ def get_file_name(p, key, hdr=None, filename=None, required=True):
                      'for time={1}').format(key, p['MAX_TIME_HUMAN'])
             emsg2 = '   function = {0}'.format(func_name)
             if required:
-                WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+                WLOG(p, 'error', [emsg1, emsg2])
             else:
                 raise ConfigError(level='error', message=emsg1)
             rawfilename = ''
@@ -641,44 +634,6 @@ def get_file_name(p, key, hdr=None, filename=None, required=True):
 # =============================================================================
 # Worker functions
 # =============================================================================
-def get_check_lock_file(p):
-    """
-    Creates a lock_file if it doesn't exist, if it does waits for it to not
-    exist - acts to stop calibDB being open multiple times at once
-
-    :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                log_opt: string, log option, normally the program name
-                CALIB_MAX_WAIT: float, the maximum wait time (in seconds)
-                                for calibration database file to be in
-                                use (locked) after which an error is raised
-
-    :return lock: file, the opened lock_file (using open(lockfile, 'w'))
-    :return lockfile: string, the opened lock file name
-    """
-    # create lock file (to make sure database is only open once at a time)
-    # construct lock file name
-    lock_file = spirouConfig.Constants.CALIBDB_LOCKFILE(p)
-    # check if lock file already exists
-    if os.path.exists(lock_file):
-        WLOG('warning', p['LOG_OPT'], 'CalibDB locked. Waiting...')
-    # wait until lock_file does not exist or we have exceeded max wait time
-    wait_time = 0
-    while os.path.exists(lock_file) or wait_time > p['CALIB_MAX_WAIT']:
-        time.sleep(1)
-        wait_time += 1
-    if wait_time > p['CALIB_MAX_WAIT']:
-        emsg1 = ('CalibDB can not be accessed (file locked and max wait time '
-                 'exceeded.')
-        emsg2 = ('Please make sure CalibDB is not being used and '
-                 'manually delete {0}').format(lock_file)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
-    # open the lock file
-    lock = open(lock_file, 'w')
-    # return lock file and name
-    return lock, lock_file
-
-
 def write_files_to_master(p, lines, keys, lock, lock_file):
     """
     writes database entries to master file
@@ -704,18 +659,17 @@ def write_files_to_master(p, lines, keys, lock, lock_file):
         f = open(masterfile, 'a')
     except IOError:
         # Must close and delete lock file
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         emsg1 = 'I/O Error on file: {0}'.format(masterfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     else:
         # write database line entry to file
         f.writelines(lines)
         f.close()
         wmsg = 'Updating Calib Data Base with {0}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(', '.join(keys)))
+        WLOG(p, 'info', wmsg.format(', '.join(keys)))
         try:
             os.chmod(masterfile, 0o666)
         except OSError:
@@ -745,12 +699,11 @@ def read_master_file(p, lock, lock_file):
         f = open(masterfile, 'r')
     except IOError:
         # Must close and delete lock file
-        lock.close()
-        os.remove(lock_file)
+        spirouDB.close_lock_file(p, lock, lock_file)
         # log and exit
         emsg1 = 'CalibDB master file: {0} can not be found!'.format(masterfile)
         emsg2 = '   function = {0}'.format(func_name)
-        WLOG('error', p['LOG_OPT'], [emsg1, emsg2])
+        WLOG(p, 'error', [emsg1, emsg2])
     else:
         # write database line entry to file
         lines = list(f.readlines())

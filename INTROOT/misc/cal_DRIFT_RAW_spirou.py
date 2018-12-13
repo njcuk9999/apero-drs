@@ -80,7 +80,7 @@ def main(night_name=None, files=None, fiber='AB'):
     p['DPRTYPE'] = spirouImage.GetTypeFromHeader(p, p['KW_DPRTYPE'])
     p.set_source('DPRTYPE', __NAME__ + '/__main__')
     wmsg = 'Now processing Image TYPE {0} with {1} recipe'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['DPRTYPE'], p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['DPRTYPE'], p['PROGRAM']))
 
     # ----------------------------------------------------------------------
     # Read image file
@@ -114,16 +114,16 @@ def main(night_name=None, files=None, fiber='AB'):
     # Resize image
     # ----------------------------------------------------------------------
     # rotate the image and convert from ADU/s to e-
-    data = spirouImage.ConvertToADU(spirouImage.FlipImage(datac), p=p)
+    data = spirouImage.ConvertToADU(spirouImage.FlipImage(p, datac), p=p)
     # convert NaN to zeros
     data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
     # resize image
     bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                    ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'],
                    getshape=False)
-    data2 = spirouImage.ResizeImage(data0, **bkwargs)
+    data2 = spirouImage.ResizeImage(p, data0, **bkwargs)
     # log change in data size
-    WLOG('', p['LOG_OPT'], ('Image format changed to '
+    WLOG(p, '', ('Image format changed to '
                             '{0}x{1}').format(*data2.shape[::-1]))
 
     # ----------------------------------------------------------------------
@@ -134,7 +134,7 @@ def main(night_name=None, files=None, fiber='AB'):
     n_bad_pix_frac = n_bad_pix * 100 / np.product(data2.shape)
     # Log number
     wmsg = 'Nb dead pixels = {0} / {1:.2f} %'
-    WLOG('info', p['LOG_OPT'], wmsg.format(int(n_bad_pix), n_bad_pix_frac))
+    WLOG(p, 'info', wmsg.format(int(n_bad_pix), n_bad_pix_frac))
 
     # ----------------------------------------------------------------------
     # Get localisation coefficients
@@ -195,7 +195,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # ------------------------------------------------------------------
     # Log that we are extracting reference file
     wmsg = 'Extraction Reference file {0}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FITSFILENAME']))
+    WLOG(p, '', wmsg.format(p['FITSFILENAME']))
 
     # loop around each order
     for order_num in range(loc['NUMBER_ORDERS']):
@@ -217,7 +217,7 @@ def main(night_name=None, files=None, fiber='AB'):
         # log the SNR RMS
         wmsg = 'On fiber {0} order {1}: S/N= {2:.1f}'
         wargs = [p['FIBER'], order_num, snr]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -233,7 +233,7 @@ def main(night_name=None, files=None, fiber='AB'):
     loc.set_sources(['dvrmsref', 'wmeanref'], __NAME__ + '/__main__()')
     # log the estimated RV uncertainty
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f} m/s'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['FIBER'], wmeanref))
+    WLOG(p, 'info', wmsg.format(p['FIBER'], wmeanref))
 
     # ------------------------------------------------------------------
     # Reference plots
@@ -261,17 +261,17 @@ def main(night_name=None, files=None, fiber='AB'):
         listfiles.remove(reffilename)
     except ValueError:
         emsg = 'File {0} not found in {1}'
-        WLOG('error', p['LOG_OPT'], emsg.format(reffilename, rfolder))
+        WLOG(p, 'error', emsg.format(reffilename, rfolder))
     # get length of files
     nfiles = len(listfiles)
     # make sure we have some files
     if nfiles == 0:
         emsg = 'No additional {0}*{1} files found in {2}'
-        WLOG('error', p['LOG_OPT'], emsg.format(prefix, suffix, rfolder))
+        WLOG(p, 'error', emsg.format(prefix, suffix, rfolder))
     else:
         # else Log the number of files found
         wmsg = 'Number of fp_fp files found on directory = {0}'
-        WLOG('info', p['LOG_OPT'], wmsg.format(nfiles))
+        WLOG(p, 'info', wmsg.format(nfiles))
 
     # ------------------------------------------------------------------
     # Set up Extract storage for all files
@@ -300,7 +300,7 @@ def main(night_name=None, files=None, fiber='AB'):
         fpfile = listfiles[::skip][i_it]
         # Log the file we are reading
         wmsg = 'Reading file {0}'
-        WLOG('', p['LOG_OPT'], wmsg.format(os.path.split(fpfile)[-1]))
+        WLOG(p, '', wmsg.format(os.path.split(fpfile)[-1]))
         # ------------------------------------------------------------------
         # read, correct for dark and reshape iteration file
         # ------------------------------------------------------------------
@@ -313,11 +313,11 @@ def main(night_name=None, files=None, fiber='AB'):
         # correct for dark (using dark from reference file)
         dataci = datai - dark
         # rotate the image and convert from ADU/s to e-
-        datai = spirouImage.ConvertToADU(spirouImage.FlipImage(dataci), p=p)
+        datai = spirouImage.ConvertToADU(spirouImage.FlipImage(p, dataci), p=p)
         # convert NaN to zeros
         data0i = np.where(~np.isfinite(datai), np.zeros_like(datai), datai)
         # resize image (using bkwargs from reference)
-        data2i = spirouImage.ResizeImage(data0i, **bkwargs)
+        data2i = spirouImage.ResizeImage(p, data0i, **bkwargs)
         # ------------------------------------------------------------------
         # Extract iteration file
         # ------------------------------------------------------------------
@@ -349,7 +349,7 @@ def main(night_name=None, files=None, fiber='AB'):
         # ------------------------------------------------------------------
         # correction of the cosmics and renomalisation by comparison with
         #   the reference spectrum
-        dargs = [loc['SPEREF'], loc['SPE']]
+        dargs = [p, loc['SPEREF'], loc['SPE']]
         dkwargs = dict(threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'],
                        cut=p['IC_DRIFT_CUT_RAW'])
@@ -358,7 +358,7 @@ def main(night_name=None, files=None, fiber='AB'):
         # ------------------------------------------------------------------
         # Calculate the RV drift
         # ------------------------------------------------------------------
-        dargs = [loc['SPEREF'], spen, loc['WAVE']]
+        dargs = [p, loc['SPEREF'], spen, loc['WAVE']]
         dkwargs = dict(sigdet=p['IC_DRIFT_NOISE'],
                        threshold=p['IC_DRIFT_MAXFLUX'],
                        size=p['IC_DRIFT_BOXSIZE'])
@@ -378,7 +378,7 @@ def main(night_name=None, files=None, fiber='AB'):
         # Log the RV properties
         wmsg = ('Time from ref={0:.2f} h  - Drift mean={1:.2f} m/s - Flux '
                 'ratio={2:.2f} = Nb Comsic={3}')
-        WLOG('', p['LOG_OPT'], wmsg.format(deltatime, meanrv, meanfratio, cpt))
+        WLOG(p, '', wmsg.format(deltatime, meanrv, meanfratio, cpt))
         # add this iteration to storage
         loc['DRIFT'][i_it] = rv
         loc['ERRDRIFT'][i_it] = err_meanrv
@@ -417,7 +417,7 @@ def main(night_name=None, files=None, fiber='AB'):
     wmsg = ('Total drift Peak-to-Peak={0:.3f} m/s RMS={1:.3f} m/s in '
             '{2:.2f} hour')
     wargs = [driftptp, driftrms, np.max(loc['DELTATIME'])]
-    WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+    WLOG(p, '', wmsg.format(*wargs))
 
     # ------------------------------------------------------------------
     # Plot of mean drift
@@ -436,7 +436,7 @@ def main(night_name=None, files=None, fiber='AB'):
     driftfitsname = os.path.split(driftfits)[-1]
     # log that we are saving drift values
     wmsg = 'Saving drift values of Fiber {0} in {1}'
-    WLOG('', p['LOG_OPT'], wmsg.format(p['FIBER'], driftfitsname))
+    WLOG(p, '', wmsg.format(p['FIBER'], driftfitsname))
     # add keys from original header file
     hdict = spirouImage.CopyOriginalKeys(hdr, cdr)
     # save drift values
@@ -446,7 +446,7 @@ def main(night_name=None, files=None, fiber='AB'):
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+    WLOG(p, 'info', wmsg.format(p['PROGRAM']))
 
     # return a copy of locally defined variables in the memory
     return dict(locals())

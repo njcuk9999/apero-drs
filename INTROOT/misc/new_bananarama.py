@@ -56,13 +56,13 @@ p = spirouImage.GetExpTime(p, hdr, name='exptime')
 # get gain
 p = spirouImage.GetGain(p, hdr, name='gain')
 
-data = spirouImage.ConvertToE(spirouImage.FlipImage(datac), p=p)
+data = spirouImage.ConvertToE(spirouImage.FlipImage(p, datac), p=p)
 # convert NaN to zeros
 data0 = np.where(~np.isfinite(data), np.zeros_like(data), data)
 # resize image
 bkwargs = dict(xlow=p['IC_CCDX_LOW'], xhigh=p['IC_CCDX_HIGH'],
                ylow=p['IC_CCDY_LOW'], yhigh=p['IC_CCDY_HIGH'], getshape=False)
-data1 = spirouImage.ResizeImage(data0, **bkwargs)
+data1 = spirouImage.ResizeImage(p, data0, **bkwargs)
 
 # dxmap that will contain the dx per pixel
 # if the file does not exist, we fill the map

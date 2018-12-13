@@ -21,6 +21,7 @@ from SpirouDRS import spirouConfig
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'drs_dependencies.py'
 # define DRS path
 DRSPATH = pkg_resources.resource_filename('SpirouDRS', '')
 PATH = os.path.dirname(DRSPATH)
@@ -30,8 +31,6 @@ if PATH == '':
 WLOG = spirouCore.wlog
 # get print log
 printl = spirouCore.PrintLog
-# get the default log_opt
-DPROG = spirouConfig.Constants.DEFAULT_LOG_OPT()
 # -----------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = ['/spirouUnitTests/', '/documentation/', '/man/',
@@ -186,33 +185,36 @@ def main(return_locals=False):
     spirouStartup.DisplayTitle(' * DRS Dependencies')
     # list the version of python found
     spirouStartup.DisplaySysInfo(logonly=False)
+    # get p
+    p = spirouStartup.Begin('None')
+    p['RECIPE'] = __NAME__
     # get all python files
-    WLOG('', DPROG, 'Getting python files')
+    WLOG(p, '', 'Getting python files')
     python_files = get_python_files(PATH)
     # get all import statements
-    WLOG('', DPROG, 'Getting import statements')
+    WLOG(p, '', 'Getting import statements')
     rimports, stats, info = get_import_statements(python_files)
     # clean imports
     imports = clean_imports(rimports)
     # get versions
     versions = get_current_versions(imports)
     # print total number of lines
-    WLOG('', DPROG, 'Stats:')
+    WLOG(p, '', 'Stats:')
     for stat in stats:
-        WLOG('', DPROG, '\t{0}: {1}'.format(stat, stats[stat]))
+        WLOG(p, '', '\t{0}: {1}'.format(stat, stats[stat]))
     # print import statements
-    WLOG('', DPROG, 'Import statements found are:')
+    WLOG(p, '', 'Import statements found are:')
     for it in range(len(imports)):
         args = [imports[it], versions[it]]
         if versions[it] is not None:
-            WLOG('', DPROG, '\t{0: <16}({1})'.format(*args))
+            WLOG(p, '', '\t{0: <16}({1})'.format(*args))
         else:
-            WLOG('', DPROG, '\t{0}'.format(*args))
+            WLOG(p, '', '\t{0}'.format(*args))
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
     wmsg = 'Recipe {0} has been successfully completed'
-    WLOG('info', DPROG, wmsg.format(DPROG))
+    WLOG(p, 'info', wmsg.format(p['RECIPE']))
     # return a copy of locally defined variables in the memory
     if return_locals:
         return dict(locals())

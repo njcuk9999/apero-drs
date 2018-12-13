@@ -98,16 +98,16 @@ def main(night_name=None, files=None):
     # log if we have no files
     if len(use_files) == 0:
         wmsg = 'No files found for OUTPUT ="{0}" skipping'
-        WLOG('warning', p['LOG_OPT'], wmsg.format(loc['KW_OUTPUT']))
+        WLOG(p, 'warning', wmsg.format(loc['KW_OUTPUT']))
         # End Message
         wmsg = 'Recipe {0} has been successfully completed'
-        WLOG('info', p['LOG_OPT'], wmsg.format(p['PROGRAM']))
+        WLOG(p, 'info', wmsg.format(p['PROGRAM']))
         # return a copy of locally defined variables in the memory
         return dict(locals())
     else:
         # log how many found
         wmsg = 'N={0} files found for OUTPUT="{1}"'
-        WLOG('', p['LOG_OPT'], wmsg.format(len(use_files), loc['OUTPUT']))
+        WLOG(p, '', wmsg.format(len(use_files), loc['OUTPUT']))
 
     # ----------------------------------------------------------------------
     # Set up storage for cubes (NaN arrays)
@@ -151,7 +151,7 @@ def main(night_name=None, files=None):
         # log stats
         wmsg = 'Processing file {0} of {1} file={2}'
         wargs = [it + 1, len(use_files), basefilename]
-        WLOG('', p['LOG_OPT'], wmsg.format(*wargs))
+        WLOG(p, '', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # add to cube storage
         big_cube0[:, :, it] = tdata
@@ -170,20 +170,20 @@ def main(night_name=None, files=None):
     # hdict is first file keys
     hdict = spirouImage.CopyOriginalKeys(loc['DATAHDR'], loc['DATACDR'])
     # add version number
-    hdict = spirouImage.AddKey(hdict, p['KW_VERSION'])
-    hdict = spirouImage.AddKey(hdict, p['KW_OUTPUT'], value=tag)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_VERSION'])
+    hdict = spirouImage.AddKey(p, hdict, p['KW_OUTPUT'], value=tag)
     # set the input files
-    hdict = spirouImage.AddKey(hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
-    hdict = spirouImage.AddKey(hdict, p['kw_INFILE'], value=raw_in_file)
-    hdict = spirouImage.AddKey(hdict, p['KW_WAVEFILE'],
+    hdict = spirouImage.AddKey(p, hdict, p['KW_BLAZFILE'], value=p['BLAZFILE'])
+    hdict = spirouImage.AddKey(p, hdict, p['kw_INFILE'], value=raw_in_file)
+    hdict = spirouImage.AddKey(p, hdict, p['KW_WAVEFILE'],
                                value=loc['MASTERWAVEFILE'])
     # add file list to header
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJFILELIST'],
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJFILELIST'],
                                      values=base_filelist)
-    hdict = spirouImage.AddKey1DList(hdict, p['KW_OBJBERVLIST'],
+    hdict = spirouImage.AddKey1DList(p, hdict, p['KW_OBJBERVLIST'],
                                      values=berv_list)
     # add wave solution coefficients
-    hdict = spirouImage.AddKey2DList(hdict, p['KW_WAVE_PARAM'],
+    hdict = spirouImage.AddKey2DList(p, hdict, p['KW_WAVE_PARAM'],
                                      values=loc['MASTERWAVEPARAMS'])
     # log big cube 0
     wmsg = 'Saving bigcube0 to file {0}'.format(os.path.basename(outfile))

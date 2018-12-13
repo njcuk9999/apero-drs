@@ -5494,3 +5494,206 @@
 	- run_off_listing.py - code to redo indexing (rev.801bc170)
 	- spirouStartup.py - fix error with change to indexing (and old index files) (rev.898a8382)
 	- spirouConst.py - change func_name for REDUC_OUTPUT_COLUMNS (rev.a58fba12)
+
+
+
+================================================================================
+* Mon Nov 26 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.070
+
+================================================================================
+	- update test.run (rev.2fe5d94c)
+	- run_off_listing.py - fix errors in code (rev.9c9b8b2c)
+
+
+
+================================================================================
+* Tue Nov 27 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.071
+
+================================================================================
+	- extract_trigger.py - correct problems with pre-processing automation (rev.8db96a67)
+	- recipe_control.txt - add some more options for POL_STOKES_I (rev.f39841c9)
+
+
+
+================================================================================
+* Wed Nov 28 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.072
+
+================================================================================
+	- changes to parallelisation (test) (rev.3064be67)
+	- extract_trigger.py - updates to extraction trigger (rev.bc91d1f0)
+	- tellu_whitelist.txt - a white list of telluric stars (rev.412bbbc6)
+
+
+
+================================================================================
+* Fri Nov 30 2018 njcuk9999 <neil.james.cook@gmail.com> - 0.3.073
+
+================================================================================
+	- update test.run (rev.f51360fd)
+
+
+
+================================================================================
+* Mon Dec 03 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.074
+
+================================================================================
+	- spirouConst.py - modify colour for white screen people (rev.83479b2b)
+	- spirouKeywords.py - update keys (must be shorter with addition of numbers) (rev.6a86af56)
+	- spirouKeywords.py - update keys (must be shorter) (rev.bb59520b)
+	- spirouUnitRecipes.py - remove cal_SHAPE_spirou2 (rev.f286c920)
+	- extract_trigger.py - update run arguments (rev.d88bdf11)
+	- unit_tests - update test.run and Pol_Test.run (rev.41d60edd)
+	- spirouStartup.py - add functionality to assign process id (on begin) --> timestamp (rev.cf65f584)
+	- spirouTable.py - update comment to give some idea of the IDL command to open table (rev.a574089c)
+	- spirouLog.py - start process of having individual logs for each instance (rev.97b0af0b)
+	- recipe control - adjust inputs to cal_SHAPE_spirou (rev.ea84d8fd)
+	- cal_SHAPE_spirou.py - change name of cal_SHAPE_spirou2.py --> cal_SHAPE_spirou.py (rev.3cb553ae)
+	- spirouLSD.py - modify output of LSD table to be a FIT BINARY Table. (rev.875836e4)
+	- extract_trigger.py - update extract_trigger run constants (rev.66e47fd4)
+	- spirouLSD.py - change format of output to FITS table (rev.8e55bbe5)
+	- spirouTable.py - add option in write_table to accept header (hdict) (rev.01d1b0f7)
+	- spirouUnitRecipes.py - remove reference to cal_SHAPE_spirou2.py (rev.8ee9fe6a)
+	- extract_trigger.py - update run parameters (and slightly change order of constants) (rev.1ddfcb45)
+	- cal_SHAPE_spirou.py - change reference to GetShapeMap2 --> GetShapeMap (rev.515233e7)
+	- spirouImage.py - change get_shape_map2 --> get_shape_map (change old get_shape_map --> get_shape_map_old) (rev.ad1ce473)
+	- recipe_control.txt - change cal_SHAPE_spirou2 --> cal_SHAPE_spirou (remove old one) (rev.6f25b15c)
+	- cal_SHAPE_spirou.py - renamed from cal_SHAPE_spirou2.py (old code moved to ./misc) (rev.e82e71a1)
+
+
+================================================================================
+* Mon Dec 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.074
+
+================================================================================
+	- improvements to fp_wavelength_sol_new fp m value determination (rev.630b4d1c)
+	- Littrow: get total orders from echelle_orders, not all_lines; (rev.caacdbb9)
+	- spirouMath: calculates wave coeff from chebyshev polynomials (rev.c9e38fcb)
+	- cal_WAVE_NEW_E2DS_EA update (calculates wave sol, does Littrow) (rev.0cbd9a55)
+	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
+
+
+================================================================================
+* Mon Dec 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.074
+
+================================================================================
+	- improvements to fp_wavelength_sol_new fp m value determination (rev.630b4d1c)
+	- Littrow: get total orders from echelle_orders, not all_lines; (rev.caacdbb9)
+	- spirouMath: calculates wave coeff from chebyshev polynomials (rev.c9e38fcb)
+	- cal_WAVE_NEW_E2DS_EA update (calculates wave sol, does Littrow) (rev.0cbd9a55)
+	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
+
+
+================================================================================
+* Mon Dec 03 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.074
+
+================================================================================
+	- cal_WAVE_EA order information on Littrow QC fail (rev.23992b18)
+
+
+================================================================================
+* Tue Dec 04 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.075
+
+================================================================================
+	- spirouImage.py - adjust warning for getting unix_time from string (where time is not valid) - warning or error? (rev.3259a87c)
+
+
+================================================================================
+* Tue Dec 04 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.3.075
+
+================================================================================
+	- Remove hard-coded initial wavelenth solution (rev.19a390c7)
+
+
+================================================================================
+* Wed Dec 05 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.076
+
+================================================================================
+	- SpirouDRS/spirouUnitTest folder - major redo of logging system (to allow passing of process-id) (rev.1ddc7ce8)
+	- SpirouDRS/spirouUnitTest folder - major redo of logging system (to allow passing of process-id) (rev.63d77a70)
+	- SpirouDRS/spirouTools folder - major redo of logging system (to allow passing of process-id) (rev.60eb724b)
+	- SpirouDRS/spirouTHORCA folder - major redo of logging system (to allow passing of process-id) (rev.b1296a33)
+	- SpirouDRS/spirouTelluric folder - major redo of logging system (to allow passing of process-id) (rev.95e899de)
+	- SpirouDRS/spirouStartup folder - major redo of logging system (to allow passing of process-id) (rev.40e34a32)
+	- SpirouDRS/spirouRV folder - major redo of logging system (to allow passing of process-id) (rev.a7af7572)
+	- SpirouDRS/spirouPOLAR folder - major redo of logging system (to allow passing of process-id) (rev.3f31fae2)
+	- SpirouDRS/spirouLOCOR folder - major redo of logging system (to allow passing of process-id) (rev.9ac8a178)
+	- SpirouDRS/spirouImage folder - major redo of logging system (to allow passing of process-id) (rev.988e61c8)
+	- SpirouDRS/spirouFLAT folder - major redo of logging system (to allow passing of process-id) (rev.a3e6e679)
+	- SpirouDRS/spirouEXTOR folder - major redo of logging system (to allow passing of process-id) (rev.208b2185)
+	- SpirouDRS/spirouDB folder - major redo of logging system (to allow passing of process-id) (rev.185b997d)
+	- SpirouDRS/spirouCore folder - major redo of logging system (to allow passing of process-id) (rev.46e4ac00)
+	- SpirouDRS/spirouConfig folder - major redo of logging system (to allow passing of process-id) (rev.b9c4c9b7)
+	- SpirouDRS/spirouBACK folder - major redo of logging system (to allow passing of process-id) (rev.e62cb4ae)
+	- spirou_drs/misc folder - major redo of logging system (to allow passing of process-id) (rev.5c500a2d)
+	- spirou_drs/bin folder - major redo of logging system (to allow passing of process-id) (rev.e13ced1e)
+	- spirou_drs/bin folder - major redo of logging system (to allow passing of process-id) (rev.1f5eb344)
+	- cal_extract_RAW_spirou.py - remove the need to a TILT file is mode == '4a' or '4b' (rev.a350cc64)
+	- cal_extract_RAW_spirou.py - remove the need to a TILT file is mode == '4a' or '4b' (rev.5c691af3)
+	- spirouConfigFile.py - update comment to make it clear why two tests are needed (rev.16a34834)
+
+
+
+================================================================================
+* Fri Dec 07 2018 Neil Cook <neil.james.cook@gmail.com> - 0.3.077
+
+================================================================================
+	- spirouTable.py - add lock files around writing to fits file (avoids writing at the same time) (rev.e3f2ada7)
+	- spirouImage.__init__.py - add links to check/close/open fits lock file (rev.1cd383ab)
+	- spirouFITS.py - add fits file lock file (to avoid writing to same fits file at same time) (rev.341852d3)
+	- spirouDB.py - edit message and sleep time for waiting lock file (rev.397681b6)
+	- extract_trigger - update to allow skipping of mk_tellu and fit_tellu files (rev.61ec0ff4)
+	- obj_fit_tellu.py - fix problems with WLOG update (rev.3c9fcf89)
+	- spirouStartup.py - add telluDB info to the start up printout/log (rev.9df24d42)
+
+
+================================================================================
+* Sat Dec 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.000
+
+================================================================================
+    - confirmation of parallisation (log/fits/databases)
+
+================================================================================
+* Sat Dec 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.001
+
+================================================================================
+	- unit_Test runs - update test for run (rev.789dff2e)
+	- extract_trigger.py - update values for run time (rev.2ed5440a)
+	- spirouStartup.py - define initial values for log_opt and program in Begin() (rev.0d016ad7)
+	- constants_SPIROU_H4RG.py - add "fitsopen_max_wait" time (rev.b1d766bd)
+	- cal_reset.py - fix fake p (with real p) (rev.bbbe93c7)
+
+
+================================================================================
+* Sat Dec 08 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.002
+
+================================================================================
+	- constants_SPIROU_H4RG.py - add "fitsopen_max_wait" time (rev.b1d766bd)
+
+
+================================================================================
+* Mon Dec 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.003
+
+================================================================================
+	- cal_WAVE_E2DS_EA_spirou.py - correct pep8 and add TODO's for problems (rev.b4e5a6f3)
+	- cal_WAVE_NEW_E2DS_spirou.py - correct pep8 and WLOG changes (rev.9bfbdf50)
+	- update timings for V0.4.001 (rev.89c6b2c1)
+	- spirouRV.py - change an info log message to general log message (too many for CCF) (rev.8e990df7)
+	- spirouLSD.py - remove some of the info logs and make them general logs (rev.42142016)
+	- pol_spirou.py - remove some of the info logs and make them general logs (rev.56fb9972)
+
+
+================================================================================
+* Mon Dec 10 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.004
+
+================================================================================
+	- spirouConst.py - undo change to global file (rev.2ddb2b7c)
+	- spirouFITS.py - fix for lock file on non-fits files (rev.1c7fe0ae)
+
+
+
+================================================================================
+* Tue Dec 11 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.005
+
+================================================================================
+	- spirouTable.py - fix an error with missing end card (rev.6eb263e0)
+	- update extraction_trigger.py run time parameters (rev.775066b2)
+	- cal_validate_spirou.py - correct cal_validate for new wlog (rev.678f0b30)
