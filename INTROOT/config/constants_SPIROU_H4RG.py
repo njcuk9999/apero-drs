@@ -891,8 +891,12 @@ ic_Littrow_cut_step_1 = 250
 ic_Littrow_cut_step_2 = 500
 
 #  Define the order to start the Littrow fit from           - [cal_HC, cal_wave]
-#  (ends at ic_hc_n_ord_final)
-ic_Littrow_order_init = 0
+ic_Littrow_order_init_1 = 0
+ic_Littrow_order_init_2 = 1
+
+#  Define the order to end the Littrow fit at	            - [cal_HC, cal_wave]
+ic_Littrow_order_final_1 = 46
+ic_Littrow_order_final_2 = 47
 
 #  Define orders to ignore in Littrow fit                   - [cal_HC, cal_wave]
 ic_Littrow_remove_orders = []
