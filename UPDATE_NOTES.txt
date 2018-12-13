@@ -1,4 +1,4 @@
-Update Note Summary - Version 0.4.005 (Since 0.3.050)
+Update Note Summary - Version 0.4.007 (Since 0.3.050)
 
 Done:
 
@@ -9,6 +9,8 @@ Done:
 - re-working of cal_SHAPE
     - new code for cal_SHAPE that now requires the following input:
            cal_SHAPE_spirou.py HC_FILE FP_FILE1 FP_FILE2 ...
+
+- Francois/Melissa changes to cal_wave/cal_CCF_E2DS_FP_spirou
 
 - parallisation updates:
     - major redo of WLOG to handle multiple instances of the DRS running at once
