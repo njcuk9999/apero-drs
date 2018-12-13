@@ -1272,6 +1272,7 @@ class DrsRecipe(object):
                 return False, None, error
             else:
                 return False, None
+        # TODO: Finish this
         # ---------------------------------------------------------------------
         # Step 3: Check file header is valid
         # ---------------------------------------------------------------------
