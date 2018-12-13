@@ -713,7 +713,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
     # get parameters from p
     fit_degree = p['IC_LITTROW_ORDER_FIT_DEG']
     t_order_start = p['IC_HC_T_ORDER_START']
-    n_order_init = p['IC_LITTROW_ORDER_INIT']
+    n_order_init = p['IC_LITTROW_ORDER_INIT_{0}'.format(iteration)]
 
     # get parameters from loc
     litt_param = loc['LITTROW_PARAM_{0}'.format(iteration)]
@@ -739,7 +739,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
 
     # loop around the x cut points
     for it in range(len(x_cut_points)):
-        # evaluate the fit for this order
+        # evaluate the fit for this x cut (fractional wavelength contrib.)
         cfit = np.polyval(litt_param[it][::-1], inv_echelle_order_nums)
         # evaluate littrow fit for x_cut_points on each order (in wavelength)
         litt_extrap_o = cfit * ll_cut_points[it]
