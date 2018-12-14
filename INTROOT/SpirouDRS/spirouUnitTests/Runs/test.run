@@ -2,6 +2,23 @@
 #    (Format = [recipe, night_name, argument1, argument2, argument3, ...])
 # runs must start with runXXX where XXX is a number (no more than 999 runs else XXXX)
 
+run008a = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits', '2295680c_pp_e2ds_AB.fits']
+run008b = ['cal_WAVE_E2DS_EA_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_C.fits', '2295680c_pp_e2ds_C.fits']
+
+# Extract the FPs/HCs
+run009a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run009b = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295526a_pp.fits']
+run009c = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295527a_pp.fits']
+run009d = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295528a_pp.fits']
+run009e = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295529a_pp.fits']
+run009f = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295680c_pp.fits']
+run009g = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295532c_pp.fits']
+
+# Extract a single science (to test)
+run010a = ['cal_extract_RAW_spirou', 'TEST1/20180805', '2295545o_pp.fits']
+
+# Run drift analysis
+run011a = ['cal_DRIFT_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 run011b = ['cal_DRIFTPEAK_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 run011c = ['cal_DRIFTCCF_E2DS_spirou', 'TEST1/20180805', '2295525a_pp_e2ds_AB.fits']
 
