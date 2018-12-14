@@ -204,9 +204,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         wave_fiber = p['FIBER']
     # get wave image
+    # wavefile = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
-                                       return_filename=True, fiber=wave_fiber)#,
-                                       #filename='/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits')
+                                       return_filename=True, fiber=wave_fiber)
+                                       #, filename=wavefile)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
@@ -385,8 +386,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['IC_LITTROW_FIT_DEG_1'] = 7
 
     # Do Littrow check
-    ckwargs = dict(ll=loc['LL_OUT_1'][start:end, :],
-                   iteration=1, log=True)
+    ckwargs = dict(ll=loc['LL_OUT_1'][start:end, :], iteration=1, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
@@ -464,7 +464,6 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Repeat Littrow test
     # ------------------------------------------------------------------
-
     start = p['IC_LITTROW_ORDER_INIT_2']
     end = p['IC_LITTROW_ORDER_FINAL_2']
     # recalculate echelle orders for Littrow check
@@ -648,31 +647,35 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+
             # if sig was out of bounds, recalculate
             if sig_littrow > rms_littrow_max:
+                # conditions
+                check1 = min_littrow > dev_littrow_max
+                check2 = max_littrow > dev_littrow_max
                 # get the residuals
                 respix = loc['LITTROW_YY_' + str(lit_it)][x_it]
+                # check if both are out of bounds
+                if check1 and check2:
+                    # remove respective orders
+                    worst_order = (min_littrow_ord, max_littrow_ord)
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
                 # check if min is out of bounds
-                if min_littrow > dev_littrow_max:
+                elif check1:
                     # remove respective order
                     worst_order = min_littrow_ord
                     respix_2 = np.delete(respix, worst_order)
                     redo_sigma = True
                 # check if max is out of bounds
-                elif max_littrow > dev_littrow_max:
+                elif check2:
                     # remove respective order
                     worst_order = max_littrow_ord
                     respix_2 = np.delete(respix, max_littrow_ord)
                     redo_sigma = True
-                # check if both are out of bounds
-                elif min_littrow > dev_littrow_max & max_littrow > dev_littrow_max:
-                    # remove respective orders
-                    worst_order = (min_littrow_ord, max_littrow_ord)
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
                 # else do not recalculate sigma
                 else:
-                    redo_sigma = False
+                    redo_sigma, respix_2, worst_order = False, None, None
                     wmsg = 'No outlying orders, sig littrow not recalculated'
                     fail_msg.append(wmsg.format())
                 # if outlying order, recalculate stats
