@@ -366,7 +366,7 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
         wmsg = ('Absolute drift of FP used for wavelength solution on '
                 'fiber {0} is {1:.2f} m/s')
         WLOG(p, 'info', wmsg.format(cp['FIBER'], cp['DRIFT0'] * 1000.))
-    except Exception as _:
+    except SystemExit as _:
         cp['DRIFT0'] = 0.
         wmsg = ('Absolute drift of the FP used for the wavelength solution '
                 'unknown, set to 0')
