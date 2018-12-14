@@ -3012,7 +3012,7 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
     # get type casted value
     try:
         if rawvalue is None:
-            pass
+            value = None
         elif dtype is None:
             dtype = float
             value = float(rawvalue)
