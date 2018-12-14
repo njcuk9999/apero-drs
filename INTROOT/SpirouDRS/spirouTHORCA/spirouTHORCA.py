@@ -539,7 +539,7 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     func_name = __NAME__ + '.calculate_littrow_sol()'
     # get parameters from p
     remove_orders = p['IC_LITTROW_REMOVE_ORDERS']
-    n_order_init = p['IC_LITTROW_ORDER_INIT_{0}'.format(iteration)]
+    n_order_init = p['IC_LITTROW_ORDER_INIT_{0}'.format(1)]
     n_order_final = p['IC_HC_N_ORD_FINAL']
     n_order_start = p['IC_HC_N_ORD_START']
     x_cut_step = p['IC_LITTROW_CUT_STEP_{0}'.format(iteration)]
@@ -549,8 +549,8 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     ll_out = ll
     # test if n_order_init is in remove_orders
     if n_order_init in remove_orders:
-        wargs = ['IC_LITTROW_ORDER_INIT_{0}'.format(iteration),
-                 p['IC_LITTROW_ORDER_INIT_{0}'.format(iteration)],
+        wargs = ['IC_LITTROW_ORDER_INIT_{0}'.format(1),
+                 p['IC_LITTROW_ORDER_INIT_{0}'.format(1)],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
         wmsg2 = '    Please check constants file'
