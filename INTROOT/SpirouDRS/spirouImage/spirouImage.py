@@ -3011,7 +3011,9 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
     rawvalue = spirouFITS.keylookup(p, hdr, key, required=required)
     # get type casted value
     try:
-        if dtype is None:
+        if rawvalue is None:
+            pass
+        elif dtype is None:
             dtype = float
             value = float(rawvalue)
         elif type(dtype) == type:
@@ -3030,6 +3032,13 @@ def get_param(p, hdr, keyword, name=None, return_value=False, dtype=None,
             emsg2 = '    function = {0}'.format(func_name)
             WLOG(p, 'error', [emsg1, emsg2])
             value = None
+    except TypeError:
+        if not required:
+            value = None
+        else:
+            emsg = 'Cannot convert "{0}" to type "{1}"'.format(rawvalue, dtype)
+            WLOG(p, 'error', emsg)
+
 
     # deal with return value
     if return_value:
