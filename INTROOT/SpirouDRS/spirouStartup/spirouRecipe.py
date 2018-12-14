@@ -539,10 +539,10 @@ class CheckFiles(argparse.Action):
         # check if files are valid
         out = self.recipe.valid_files(argname, value, directory,
                                       return_error=True)
-        cond, newvalue, emsgs = out
+        cond, files, types, emsgs = out
         # if they are return files
         if cond:
-            return newvalue
+            return files, types
         # else deal with errors
         else:
             WLOG(self.recipe.drs_params, 'error', emsgs)
@@ -557,13 +557,16 @@ class CheckFiles(argparse.Action):
         if skip:
             return 0
         if type(values) in [list, np.ndarray]:
-            newvalues = []
+            files, types = [], []
             for value in values:
-                newvalues += self.check_files(value)
+                filelist, typelist = self.check_files(value)
+                files.append(filelist)
+                types.append(typelist)
         else:
-            newvalues = self.check_files(values)
+            filelist, typelist = self.check_files(values)
+            files, types = [filelist], [typelist]
         # Add the attribute
-        setattr(namespace, self.dest, newvalues)
+        setattr(namespace, self.dest, [files, types])
 
 
 class CheckBool(argparse.Action):
@@ -1219,24 +1222,26 @@ class DrsRecipe(object):
             files = [files]
         # loop around files
         all_files = []
+        all_types = []
         for filename in files:
             # check single file
             out = self.valid_file(argname, filename, directory, True)
-            file_valid, filelist, error = out
+            file_valid, filelist, typelist, error = out
             # if single file is not valid return the error (and False)
             if not file_valid:
                 if return_error:
-                    return False, None, error
+                    return False, None, None, error
                 else:
-                    return False, None
+                    return False, None, None
             # else we append filelist to all_files
             else:
                 all_files += filelist
+                all_types += typelist
         # if we are at this point everything passed and file is valid
         if return_error:
-            return True, all_files, []
+            return True, all_files, all_types, []
         else:
-            return True, all_files
+            return True, all_files, all_types, []
 
 
     def valid_file(self, argname, filename, directory=None, return_error=False):
@@ -1252,7 +1257,10 @@ class DrsRecipe(object):
                        and return_error=True, return a list of strings
                        describing the error
         """
-        ftypes = [self]
+        # get the argument that we are checking the file of
+        arg = get_arg(self, argname)
+        # storage of errors
+        errors = []
         # ---------------------------------------------------------------------
         # Step 1: Check file location is valid
         # ---------------------------------------------------------------------
@@ -1260,42 +1268,64 @@ class DrsRecipe(object):
         valid, files, error = out
         if not valid:
             if return_error:
-                return False, None, error
+                return False, None, None, error
             else:
-                return False, None
+                return False, None, None
+        errors += error
         # ---------------------------------------------------------------------
-        # Step 2: Check DRS extension is valid
+        # The next steps are different depending on the DRS file and
+        # we may have multiple files
+        out_files = []
+        out_types = []
+        # loop around filename
+        for filename in files:
+            # loop around file types
+            for drs_file in arg.files:
+                # -------------------------------------------------------------
+                # Step 2: Check extension
+                # -------------------------------------------------------------
+                # get extension
+                ext = drs_file.ext
+                # check the extension
+                valid, error = check_file_extension(argname, filename, ext=ext)
+                errors += error
+                # -------------------------------------------------------------
+                # Step 3: Check file header is valid
+                # -------------------------------------------------------------
+                # this step is just for 'fits' files, if not fits
+                #    files we can return here
+                if '.fits' in ext:
+                    out = check_file_header(self, argname, drs_file, filename)
+                    valid, filetype, error = out
+                    errors += error
+                else:
+                    filetype = None
+                # -------------------------------------------------------------
+                # Step 4: Check exclusivity
+                # -------------------------------------------------------------
+                valid, error = check_file_exclusivity(self, files)
+                errors += error
+                # -------------------------------------------------------------
+                # Step 5: Check exclusivity
+                # -------------------------------------------------------------
+                # check validity and append if valid
+                if valid:
+                    out_files.append(filename)
+                    out_types.append(filetype)
+                    # break out the inner loop if valid (we don't need to
+                    #    check other drs_files)
+                    break
         # ---------------------------------------------------------------------
-        valid, error = check_file_extension(self, argname, files)
-        if not valid:
-            if return_error:
-                return False, None, error
-            else:
-                return False, None
-        # TODO: Finish this
-        # ---------------------------------------------------------------------
-        # Step 3: Check file header is valid
-        # ---------------------------------------------------------------------
-        # valid, error = check_file_header(self, files)
-        # if not valid:
-        #     if return_error:
-        #         return False, None, error
-        #     else:
-        #         return False, None
-        # ---------------------------------------------------------------------
-        # Step 4: Check exclusivity
-        # ---------------------------------------------------------------------
-        # valid, error = check_file_exclusivity(self, files)
-        # if not valid:
-        #     if return_error:
-        #         return False, None, error
-        #     else:
-        #         return False, None
-        # if we are at this point everything passed and file is valid
-        if return_error:
-            return True, [files, ftypes], []
+        # deal with return types:
+        # a. if we don't have the right number of files then we failed
+        if len(out_files) != len(files):
+            return False, None, None, errors
+        # b. if we did but expect an error returned return True with an error
+        elif return_error:
+            return True, out_files, out_types, []
+        # c. if we did and don't expect an error return True without an error
         else:
-            return True, [files, ftypes]
+            return True, out_files, out_types
 
     def __error__(self):
         """
@@ -1476,67 +1506,96 @@ def check_file_location(recipe, argname, directory, filename):
     return False, None, emsgs
 
 
-def check_file_extension(recipe, argname, files):
+def check_file_extension(argname, filename, ext=None):
+    """
+    If '.fits' file checks the file extension is valid.
 
+    :param argname: string, the argument name (for error reporting)
+    :param files: list of strings, the files to check
+    :param ext: string or None, the extension to check, if None skips
 
-    # get arg from recipe
-    arg = get_arg(recipe, argname)
-
-    out_files = []
-    errors = []
-
-    for filename in files:
-        # ---------------------------------------------------------------------
-        # Step 1: check if .fits (if not do not continue
-        if not filename.endswith('.fits'):
-            if DEBUG:
-                dmsg = ('\tArgument {0}: File="{0}" does not end with .fits '
-                        'skipping')
-                dargs = [argname, filename]
-                print(dmsg.format(*dargs))
-            out_files.append(filename)
-        # ---------------------------------------------------------------------
-        # Step 2: Get extension
-        valid = False
-        valid_exts = []
-        # loop around valid drs_files types (for this arg)
-        for drs_file in arg.files:
-            # check extension (for thie drs_file and this arg)
-            if filename.endswith(drs_file.ext):
-                valid |= True
-            # append valid extensions
-            valid_exts.append(drs_file.ext)
-        # if valid return True and no error
-        if valid:
-            if DEBUG:
-                dmsg = '\tArgument {0}: Valid file extension for file "{1}"'
-                dargs = [argname, filename]
-                print(dmsg.format(*dargs))
-            out_files.append(filename)
-        # if False generate error and return it
-        else:
-            emsgs = ['\tArgument {0}: Extension of file {1} not valid']
-            eargs = [','.join(set(valid_exts))]
-            emsgs.append('\t\tValid extensions are: {0}'.format(*eargs))
-            errors += emsgs
-
-    # deal with out_files
-    if len(out_files) == 0:
-        return False, errors
-    else:
+    :return cond: bool, True if extension valid
+    :return errors: list of strings, the errors that occurred if cond=False
+    """
+    # deal with no extension (ext = None)
+    if ext is None:
         return True, []
+    # ---------------------------------------------------------------------
+    # Check extension
+    valid = filename.endswith(ext)
+    # if valid return True and no error
+    if valid:
+        if DEBUG:
+            dmsg = '\tArgument {0}: Valid file extension for file "{1}"'
+            dargs = [argname, filename]
+            print(dmsg.format(*dargs))
+        return True, []
+    # if False generate error and return it
+    else:
+        emsgs = ['\tArgument {0}: Extension of file {1} not valid',
+                 '\t\tRequired extension = {0}'.format(ext)]
+        return False, emsgs
 
 
-def check_file_header(recipe, filename):
-    return True, []
+def check_file_header(recipe, argname, drs_file, filename):
+
+    # get recipe parameters
+    params = recipe.drs_params
+    # -----------------------------------------------------------------
+    # create an instance of this drs_file with the filename set
+    file_instance = drs_file.new(filename=filename, recipe=recipe)
+    file_instance.read()
+    # -----------------------------------------------------------------
+    # get required header keys
+    rkeys = drs_file.required_header_keys
+    # -----------------------------------------------------------------
+    # Step 1: Check that required keys are in header
+    for drskey in rkeys:
+        # check whether header key is in param dict (i.e. from a
+        #    keywordstore) or whether we have to use the key as is
+        if drskey in params:
+            key = params[drskey][0]
+        else:
+            key = drskey
+        # check if key is in header
+        if key not in drs_file.header:
+            eargs = [argname, key, filename]
+            emsgs = ['\tArgument {0}: Header key "{1}" not found for '
+                     'file "{2}"'.format(*eargs)]
+            return False, None, emsgs
+        elif DEBUG:
+            dmsg = '\tArgument {0}: Header key {1} found for {2}'
+            dargs = [argname, key, filename]
+            print(dmsg.format(*dargs))
+    # -----------------------------------------------------------------
+    # Step 2: search for correct value for each header key
+    # loop around required keys
+    for drskey in rkeys:
+        # check whether header key is in param dict (i.e. from a
+        #    keywordstore) or whether we have to use the key as is
+        if drskey in params:
+            key = params[drskey][0]
+        else:
+            key = drskey
+        # get value and required value
+        value = drs_file.header[key].strip()
+        rvalue = rkeys[drskey].strip()
+        # check if key is valid
+        if rvalue != value:
+            emsg1 = '\tArgument {0}: Header key {1} value is incorrect'
+            emsg2 = '\t\tvalue = {2}   required = {3}'
+            eargs = [argname, key, value, rvalue]
+            return False, None, [emsg1.format(*eargs), emsg2.format(*eargs)]
+        elif DEBUG:
+            dmsg = '\tArgument {0}: Header key {1} value is correct ({2})'
+            dargs = [argname, key, rvalue]
+            print(dmsg.format(*dargs))
+    # else file is valid
+    return True, file_instance, []
 
 
 def check_file_exclusivity(recipe, filename):
     return True, []
-
-
-
-
 
 
 # =============================================================================

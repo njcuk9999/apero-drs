@@ -322,6 +322,10 @@ def find_recipe(name):
     for recipe in RECIPES:
         if recipe.name == name:
             found_recipe = recipe
+        elif recipe.name + '.py' == name:
+            found_recipe = recipe
+        elif recipe.name.strip('.py') == name:
+            found_recipe = recipe
     if found_recipe is None:
         raise ValueError('No recipe named {0}'.format(name))
     # return
