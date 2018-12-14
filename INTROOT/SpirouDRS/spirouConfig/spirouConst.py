@@ -1735,8 +1735,9 @@ def WAVE_FILE_EA(p):
     # return filename and tag
     return wavefile, tag
 
-# noinspection PyPep8Naming
+
 #add fp filename if it exists
+# noinspection PyPep8Naming
 def WAVE_FILE_EA_2(p):
     func_name = 'WAVE_FILE_EA'
     # set reduced folder name
@@ -1752,7 +1753,7 @@ def WAVE_FILE_EA_2(p):
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
     # check if FP
-    if p.get('FPFILE'):
+    if 'FPFILE' in p:
         #get filename
         raw_infile2 = os.path.basename(p['FPFILE'])
         # we shouldn't mix ed2s w e2dsff so can use same extension
@@ -1766,6 +1767,7 @@ def WAVE_FILE_EA_2(p):
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
     # return filename and tag
     return wavefile, tag
+
 
 # noinspection PyPep8Naming
 def WAVE_TBL_FILE(p):
