@@ -49,10 +49,10 @@ TEST_STORE = []
 RUNNUMBER = 0
 
 # switches
-RUN_BADPIX = True
-RUN_DARK = True
-RUN_LOC = True
-RUN_SLIT = True
+RUN_BADPIX = False
+RUN_DARK = False
+RUN_LOC = False
+RUN_SLIT = False
 RUN_SHAPE = True
 RUN_FLAT = True
 RUN_EXTRACT_HCFP = True
@@ -76,7 +76,7 @@ SKIP_DONE_FIT_TELLU = False
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 20
+MAX_PROCESSES = 10
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -941,32 +941,6 @@ def cal_slit_spirou(p, night_name, vindex, groups):
 
 def cal_shape_spirou(p, night_name, vindex, groups):
     """
-    for cal_shape_spirou we use all the fp_fp files except the first (unless
-    there is only one fp_fp file)
-    """
-    # get the dark_dark files
-    if 'FP_FP' in groups:
-        fp_fp_groups = groups['FP_FP']
-        fp_fp_files = get_group_vindex(vindex, fp_fp_groups, 'FILENAME')
-        num_fp_fp_groups = len(fp_fp_files)
-    else:
-        WLOG(p, 'warning', 'FP_FP not in groups')
-        return []
-    # runs
-    runs = []
-    # push all from group into file
-    for num in range(num_fp_fp_groups):
-        if len(fp_fp_files[num]) == 1:
-            myrun = [night_name] + fp_fp_files[num]
-        else:
-            myrun = [night_name] + fp_fp_files[num][1:]
-        runs.append(myrun)
-    # return runs
-    return runs
-
-
-def cal_shape_spirou2(p, night_name, vindex, groups):
-    """
     for cal_shape_spirou2 we need to match hc groups to fp groups
     we need to use the last hc of a group and all but the first fp_fp in a
     sequence (unless there is only fp_fp file)
@@ -1474,8 +1448,8 @@ def main(night_name=None):
         all_lls['cal_SLIT_spirou'] = lls
     # 5. cal_SHAPE_spirou.py
     if RUN_SHAPE:
-        lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou2')
-        all_lls['cal_SHAPE_spirou2'] = lls
+        lls = trigger_main(p, loc, recipe='cal_SHAPE_spirou')
+        all_lls['cal_SHAPE_spirou'] = lls
     # 6. cal_FF_RAW_spirou.py
     if RUN_FLAT:
         lls = trigger_main(p, loc, recipe='cal_FF_RAW_spirou')
