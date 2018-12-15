@@ -361,13 +361,14 @@ def main(night_name=None, e2dsfile=None, mask=None, rv=None, width=None,
     cloc.set_sources(['WAVE_LL', 'PARAM_LL', 'WAVEFILE', 'WHDR'], source)
 
     # Read the CCFRV2 FP Drift value on the wavefile of fiber C
-    try:
-        cp = spirouImage.ReadParam(cp, whdr, 'KW_CCF_RV1', name='DRIFT0')
+    cp = spirouImage.ReadParam(cp, whdr, 'KW_CCF_RV1', name='DRIFT0',
+                               required=False)
+    if cp['DRIFT0'] is not None:
         wmsg = ('Absolute drift of FP used for wavelength solution on '
                 'fiber {0} is {1:.2f} m/s')
         WLOG(p, 'info', wmsg.format(cp['FIBER'], cp['DRIFT0'] * 1000.))
-    except Exception as _:
-        cp['DRIFT0'] = 0.
+    else:
+        cp['DRIFT0'] = 0.0
         wmsg = ('Absolute drift of the FP used for the wavelength solution '
                 'unknown, set to 0')
         WLOG(p, 'warning', wmsg)

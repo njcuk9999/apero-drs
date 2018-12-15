@@ -1,10 +1,11 @@
-Update Note Summary - Version 0.4.007 (Since 0.3.050)
+Update Note Summary - Version 0.4.009 (Since 0.3.050)
 
 Done:
 
 
-- updates to cal_WAVE (NEW and E2DS_EA) to try to improve littrow and
-     at the very least give more output to user (NOT WORKING FULLY)
+- updates to cal_WAVE (NEW and E2DS_EA) skipping order 0 to improve number of
+  files that pass Littrow test (UNTESTED on full set of data but definitely
+  passing more frequently)
 
 - re-working of cal_SHAPE
     - new code for cal_SHAPE that now requires the following input:

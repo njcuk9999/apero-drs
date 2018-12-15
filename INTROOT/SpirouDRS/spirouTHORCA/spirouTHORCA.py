@@ -539,7 +539,8 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     func_name = __NAME__ + '.calculate_littrow_sol()'
     # get parameters from p
     remove_orders = p['IC_LITTROW_REMOVE_ORDERS']
-    n_order_init = p['IC_LITTROW_ORDER_INIT']
+    # TODO: Fudge factor - Melissa will fix this :)
+    n_order_init = p['IC_LITTROW_ORDER_INIT_{0}'.format(1)]
     n_order_final = p['IC_HC_N_ORD_FINAL']
     n_order_start = p['IC_HC_N_ORD_START']
     x_cut_step = p['IC_LITTROW_CUT_STEP_{0}'.format(iteration)]
@@ -549,7 +550,9 @@ def calculate_littrow_sol(p, loc, ll, iteration=0, log=False):
     ll_out = ll
     # test if n_order_init is in remove_orders
     if n_order_init in remove_orders:
-        wargs = ["IC_LITTROW_ORDER_INIT", p['IC_LITTROW_ORDER_INIT'],
+        # TODO: Fudge factor - Melissa will fix this
+        wargs = ['IC_LITTROW_ORDER_INIT_{0}'.format(1),
+                 p['IC_LITTROW_ORDER_INIT_{0}'.format(1)],
                  "IC_LITTROW_REMOVE_ORDERS"]
         wmsg1 = 'Warning {0}={1} in {2}'.format(*wargs)
         wmsg2 = '    Please check constants file'
@@ -713,7 +716,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
     # get parameters from p
     fit_degree = p['IC_LITTROW_ORDER_FIT_DEG']
     t_order_start = p['IC_HC_T_ORDER_START']
-    n_order_init = p['IC_LITTROW_ORDER_INIT']
+    n_order_init = p['IC_LITTROW_ORDER_INIT_{0}'.format(iteration)]
 
     # get parameters from loc
     litt_param = loc['LITTROW_PARAM_{0}'.format(iteration)]
@@ -739,7 +742,7 @@ def extrapolate_littrow_sol(p, loc, ll, iteration=0):
 
     # loop around the x cut points
     for it in range(len(x_cut_points)):
-        # evaluate the fit for this order
+        # evaluate the fit for this x cut (fractional wavelength contrib.)
         cfit = np.polyval(litt_param[it][::-1], inv_echelle_order_nums)
         # evaluate littrow fit for x_cut_points on each order (in wavelength)
         litt_extrap_o = cfit * ll_cut_points[it]
