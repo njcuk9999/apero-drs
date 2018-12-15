@@ -646,11 +646,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         # get new FP line wavelengths for the order
         fp_ll_new_ord = np.asarray(fp_ll_new)[ord_mask]
         # plot old-new wavelengths
-        plt.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.0 * ind_ord, '.',
+        plt.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord, '.',
                  label='order ' + str(ind_ord), color=col[ind_ord])
     plt.xlabel('FP peak position [pix]')
-    plt.ylabel(
-        'FP old-new wavelength difference [nm] (shifted +0.01 per order)')
+    ylabel = 'FP old-new wavelength difference [nm] (shifted +0.001 per order)'
+    plt.ylabel(ylabel)
     plt.legend(loc='best')
 
     # ----------------------------------------------------------------------
