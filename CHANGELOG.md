@@ -5729,3 +5729,46 @@
 
 ================================================================================
 	- extract_trigger.py - changes to reprocessing code (correct order) (rev.7529390b)
+
+
+
+================================================================================
+* Thu Dec 13 2018 melissa-hobson <34136975+melissa-hobson@users.noreply.github.com> - 0.4.008
+
+================================================================================
+	- constants_SPIROU_H4RG: new constants for start/end littrow orders (rev.3f494eb6)
+	- cal_WAVE_E2DS_EA: littrow can now start and end at any order. (rev.ce2da33d)
+	- extrapolate_littrow_sol: correct initial littrow order (rev.4c101d66)
+	- WAVE_FILE_EA_2 function adds fp filename to wavefilename (rev.f5f8d42b)
+	- cal_WAVE_NEW shifted plots (rev.481ec09c)
+
+
+
+================================================================================
+* Thu Dec 13 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.008
+
+================================================================================
+	- update date/version/changelog (rev.0580ec32)
+
+
+
+================================================================================
+* Fri Dec 14 2018 Neil Cook <neil.james.cook@gmail.com> - 0.4.009
+
+================================================================================
+	- cal_CCF_E2DS_FP_spirou.py - fix if CCF_RV2 not in whdr (rev.097f46e6)
+	- cal_CCF_E2DS_FP_spirou.py - fix if CCF_RV2 not in whdr (rev.2189d76f)
+	- cal_CCF_E2DS_FP_spirou.py - fix if CCF_RV2 not in whdr (rev.3f7ff4a2)
+	- test.run - update for current testing (rev.a42191d8)
+	- cal_CCF_E2DS_FP_spirou.py - fix crash bug Exception --> SystemExit (rev.dace47b0)
+	- test.run - change for continued test (rev.10582fa0)
+	- test.run - change for continued test (rev.77a69aa6)
+	- spirouTHORCA.py - fudge factor fix --> n_order_init = p['IC_LITTROW_ORDER_INIT_{0}'.format(1)] (rev.b3c58d8a)
+	- spirouTHORCA.py - test fix (rev.4e0ad479)
+	- spirouTHORCA.py - fix for n_order_init (from init --> init_1/init_2) (rev.57f7978c)
+	- update test.run - cal_test.run (from cal_WAVE) onwards (rev.80044088)
+	- spirouConst.py - pep8 changes to WAVE_FILE_EA_2 (rev.ceb49645)
+	- cal_WAVE_NEW_E2DS_spirou.py - pep8 changes (rev.e7b111d2)
+	- cal_WAVE_E2DS_EA_spirou.py - few logic checks and pep8 changes (rev.cc8c4969)
+	- extract_trigger.py - update run time parameters (rev.e7a3d9af)
+	- extract_trigger.py - fix incompatible version of cal_shape in reprocessing code (rev.b796998b)
