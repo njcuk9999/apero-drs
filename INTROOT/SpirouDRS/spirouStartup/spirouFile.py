@@ -12,6 +12,7 @@ import numpy as np
 from astropy.io import fits
 from astropy import version as av
 import os
+import glob
 import warnings
 from collections import OrderedDict
 
@@ -66,6 +67,8 @@ class DrsInputFile:
         self.filename = None
         self.directory = None
         self.basename = None
+        self.data = None
+        self.header = None
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
 
@@ -87,14 +90,6 @@ class DrsInputFile:
         self.filename = str(filename)
         self.basename = os.path.basename(filename)
         self.directory = os.path.dirname(filename)
-        # check
-        if check:
-            # check file exists
-            self.check_file_exists(quiet=quiet)
-            # check extension
-            self.check_file_extension(quiet=quiet)
-            # check header
-            self.check_file_header(quiet=quiet)
 
     def check_filename(self):
         # check that filename isn't None
@@ -337,87 +332,77 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file checking
     # -------------------------------------------------------------------------
-    def check_file_header(self, quiet=False):
+    def check_file_header(self, quiet=False, argname=None, debug=False):
         """
         Check file header has all required header keys
         :param quiet:
         :return:
         """
+        # deal with no argument name
+        if argname is None:
+            argstring = ''
+        else:
+            argstring = 'Argument {0}:'.format(argname)
+        # -----------------------------------------------------------------
         # check file has been read
         self.read()
-        header = self.header
         # check recipe has been set
         self.check_recipe()
         params = self.recipe.drs_params
-        # get required header keys
-        rkeys = self.required_header_keys
 
-        if len(rkeys) == 0:
-            if not quiet:
-                wmsg = 'File "{0}" is valid. (Not checked)'
-                wargs = [self.basename]
-                self.__message__(wmsg.format(*wargs))
-                return True, None, ''
-            else:
-                return True, None, ''
-        # ----------------------------------------------------------------
-        # loop around keys and check that they are in
+        rkeys = self.required_header_keys
+        # -----------------------------------------------------------------
+        # Step 1: Check that required keys are in header
         for drskey in rkeys:
-            # get key from drs_params
+            # check whether header key is in param dict (i.e. from a
+            #    keywordstore) or whether we have to use the key as is
             if drskey in params:
                 key = params[drskey][0]
             else:
                 key = drskey
-            # find if key found in header
-            if key not in header:
-                emsg = 'Key {0} not found in header'.format(key)
-                # deal with a quiet return (for passing on errors)
-                if not quiet:
-                    self.__error__(emsg)
-                    return False
-                else:
-                    return False, 'HEADER', emsg
-        # ----------------------------------------------------------------
-        # start by assuming we have found the value
-        found = True
-        # get error storage
-        keys, rvalues, values = [], [], []
-        # search for errors in file type
+            # check if key is in header
+            if key not in self.header:
+                eargs = [argstring, key, self.filename]
+                emsgs = ['\t{0} Header key "{1}" not found for '
+                         'file "{2}"'.format(*eargs)]
+                return False, None, emsgs
+            elif debug:
+                dmsg = '\t{0} Header key {1} found for {2}'
+                dargs = [argstring, key, self.filename]
+                print(dmsg.format(*dargs))
+        # -----------------------------------------------------------------
+        # Step 2: search for correct value for each header key
+        # loop around required keys
         for drskey in rkeys:
-            # get key from drs_params
+            # check whether header key is in param dict (i.e. from a
+            #    keywordstore) or whether we have to use the key as is
             if drskey in params:
                 key = params[drskey][0]
             else:
                 key = drskey
             # get value and required value
-            value = header[key].strip()
+            value = self.header[key].strip()
             rvalue = rkeys[drskey].strip()
-            # add to error storage
-            keys.append(key)
-            values.append(value)
-            rvalues.append(rvalue)
-            # check if key is in file header
-            if key in header:
-                # check if key is correct
-                if rvalue != value:
-                    found = False
+            # check if key is valid
+            if rvalue != value:
+                emsg1 = '\t{0} Header key {1} value is incorrect'
+                emsg2 = '\t\tvalue = {2}   required = {3}'
+                emsg3 = '\t\tfile = {4}'
+                eargs = [argstring, key, value, rvalue, self.filename]
+                emsgs = [emsg1.format(*eargs), emsg2.format(*eargs),
+                         emsg3.format(*eargs)]
+                return False, None, emsgs
+            elif debug:
+                dmsg = '\t{0} Header key {1} value is correct ({2})'
+                dargs = [argstring, key, rvalue]
+                print(dmsg.format(*dargs))
             else:
-                found = False
-        # reconstruct error array
-        errors = [keys, rvalues, values]
-        # ----------------------------------------------------------------
-        # deal with a quiet return (for passing on errors)
-        if not quiet:
-            emsgs = construct_header_error(errors, params, [self], '')
-            if not found:
-                self.__error__(emsgs)
-            else:
-                wmsg = 'File "{0}" is valid. (Identified as "{1}")'
-                wargs = [self.basename, self.name]
-                self.__message__(wmsg.format(*wargs))
-        else:
-            # return found and the error array
-            return found, 'KEYMATCH', errors
+                wmsg = '{0} File "{1}" valid for recipe {2}="{3}"'
+                wargs = [argstring, self.basename, key, value]
+                WLOG(params, '', wmsg.format(*wargs))
+        # else file is valid
+        return True, self, []
+
 
     def check_excluivity(self, drs_file, logic, quiet=False):
         if drs_file is None:
@@ -464,7 +449,9 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + '.DrsFitsFile.read()'
         # check if we have data set
         if check:
-            if self.data is not None:
+            cond1 = self.data is not None
+            cond2 = self.header is not None
+            if cond1 and cond2:
                 return True
         # get params
         params = self.recipe.drs_params
