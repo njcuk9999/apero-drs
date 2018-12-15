@@ -187,6 +187,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # get tilts
     p, loc['BLAZE'] = spirouImage.ReadBlazeFile(p, hchdr)
     loc.set_source('BLAZE', __NAME__ + '/main() + /spirouImage.ReadBlazeFile')
+    # make copy of blaze (as it's overwritten later)
+    loc['BLAZE2'] = np.copy(loc['BLAZE'])
 
     # ----------------------------------------------------------------------
     # Read wave solution
@@ -202,8 +204,10 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     else:
         wave_fiber = p['FIBER']
     # get wave image
+    # wavefile = '/data/CFHT/calibDB_1/2018-07-30_MASTER_wave_ea_AB.fits'
     wout = spirouImage.GetWaveSolution(p, hdr=hchdr, return_wavemap=True,
                                        return_filename=True, fiber=wave_fiber)
+                                       #, filename=wavefile)
     loc['WAVEPARAMS'], loc['WAVE_INIT'], loc['WAVEFILE'] = wout
     loc.set_sources(['WAVE_INIT', 'WAVEFILE', 'WAVEPARAMS'], wsource)
     poly_wave_sol = loc['WAVEPARAMS']
@@ -369,8 +373,11 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # Littrow test
     # ------------------------------------------------------------------
 
+    start = p['IC_LITTROW_ORDER_INIT_1']
+    end = p['IC_LITTROW_ORDER_FINAL_1']
+
     # calculate echelle orders
-    o_orders = np.arange(n_ord_start, n_ord_final)
+    o_orders = np.arange(start, end)
     echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
     loc['ECHELLE_ORDERS'] = echelle_order
     loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
@@ -379,8 +386,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     p['IC_LITTROW_FIT_DEG_1'] = 7
 
     # Do Littrow check
-    ckwargs = dict(ll=loc['LL_OUT_1'][n_ord_start:n_ord_final, :],
-                   iteration=1, log=True)
+    ckwargs = dict(ll=loc['LL_OUT_1'][start:end, :], iteration=1, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
 
     # Plot wave solution littrow check
@@ -458,6 +464,14 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     # ------------------------------------------------------------------
     # Repeat Littrow test
     # ------------------------------------------------------------------
+    start = p['IC_LITTROW_ORDER_INIT_2']
+    end = p['IC_LITTROW_ORDER_FINAL_2']
+    # recalculate echelle orders for Littrow check
+    o_orders = np.arange(start, end)
+    echelle_order = p['IC_HC_T_ORDER_START'] - o_orders
+    loc['ECHELLE_ORDERS'] = echelle_order
+    loc.set_source('ECHELLE_ORDERS', __NAME__ + '/main()')
+
     # Do Littrow check
     ckwargs = dict(ll=loc['LL_OUT_2'][start:end, :], iteration=2, log=True)
     loc = spirouTHORCA.CalcLittrowSolution(p, loc, **ckwargs)
@@ -614,8 +628,8 @@ def main(night_name=None, fpfile=None, hcfiles=None):
         min_littrow = abs(loc['LITTROW_MINDEV_' + str(lit_it)][x_it])
         max_littrow = abs(loc['LITTROW_MAXDEV_' + str(lit_it)][x_it])
         # get the corresponding order
-        min_littrow_ord = abs(loc['LITTROW_MINDEVORD_' + str(lit_it)][x_it])
-        max_littrow_ord = abs(loc['LITTROW_MAXDEVORD_' + str(lit_it)][x_it])
+        min_littrow_ord = loc['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
+        max_littrow_ord = loc['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
         # check if sig littrow is above maximum
         rms_littrow_max = p['QC_RMS_LITTROW_MAX']
         dev_littrow_max = p['QC_DEV_LITTROW_MAX']
@@ -633,43 +647,52 @@ def main(night_name=None, fpfile=None, hcfiles=None):
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(fmsg.format(*fargs))
             passed = False
+
             # if sig was out of bounds, recalculate
             if sig_littrow > rms_littrow_max:
+                # conditions
+                check1 = min_littrow > dev_littrow_max
+                check2 = max_littrow > dev_littrow_max
                 # get the residuals
                 respix = loc['LITTROW_YY_' + str(lit_it)][x_it]
+                # check if both are out of bounds
+                if check1 and check2:
+                    # remove respective orders
+                    worst_order = (min_littrow_ord, max_littrow_ord)
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
                 # check if min is out of bounds
-                if min_littrow > dev_littrow_max:
+                elif check1:
                     # remove respective order
-                    respix_2 = np.delete(respix, min_littrow_ord)
                     worst_order = min_littrow_ord
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
                 # check if max is out of bounds
-                elif max_littrow > dev_littrow_max:
+                elif check2:
                     # remove respective order
-                    respix_2 = np.delete(respix, max_littrow_ord)
                     worst_order = max_littrow_ord
-                # else break?
+                    respix_2 = np.delete(respix, max_littrow_ord)
+                    redo_sigma = True
+                # else do not recalculate sigma
                 else:
-                    # TODO: What if min_littrow and max_littrow tests
-                    # TODO:     both are not met --> crash as respix_2
-                    # TODO:     not defined
-                    emsg = 'Undefined condition (min/max Littrow) ask Melissa'
-                    WLOG(p, 'error', emsg)
-                    respix_2, worst_order = None, None
-
-                # calculate stats
-                mean = np.sum(respix_2) / len(respix_2)
-                mean2 = np.sum(respix_2 ** 2) / len(respix_2)
-                rms = np.sqrt(mean2 - mean ** 2)
-                if rms > rms_littrow_max:
-                    fmsg = ('Littrow test (x={0}) failed (sig littrow = '
-                            '{1:.2f} > {2:.2f} removing order {3})')
-                    fargs = [x_cut_point, rms, rms_littrow_max, worst_order]
-                    fail_msg.append(fmsg.format(*fargs))
-                else:
-                    wargs = [x_cut_point, rms, rms_littrow_max, worst_order]
-                    wmsg = ('Littrow test (x={0}) passed (sig littrow = '
-                            '{1:.2f} > {2:.2f} removing order {3})')
-                    fail_msg.append(wmsg.format(*wargs))
+                    redo_sigma, respix_2, worst_order = False, None, None
+                    wmsg = 'No outlying orders, sig littrow not recalculated'
+                    fail_msg.append(wmsg.format())
+                # if outlying order, recalculate stats
+                if redo_sigma:
+                    mean = np.sum(respix_2) / len(respix_2)
+                    mean2 = np.sum(respix_2 ** 2) / len(respix_2)
+                    rms = np.sqrt(mean2 - mean ** 2)
+                    if rms > rms_littrow_max:
+                        fmsg = ('Littrow test (x={0}) failed (sig littrow = '
+                                '{1:.2f} > {2:.2f} removing order {3})')
+                        fargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                        fail_msg.append(fmsg.format(*fargs))
+                    else:
+                        wargs = [x_cut_point, rms, rms_littrow_max, worst_order]
+                        wmsg = ('Littrow test (x={0}) passed (sig littrow = '
+                                '{1:.2f} > {2:.2f} removing order {3})')
+                        fail_msg.append(wmsg.format(*wargs))
 
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -694,9 +717,7 @@ def main(night_name=None, fpfile=None, hcfiles=None):
     tag0a = loc['HCHDR'][p['KW_OUTPUT'][0]]
     tag0b = loc['FPHDR'][p['KW_OUTPUT'][0]]
     # get wave filename
-    # TODO: file was set to WAVE_FILE_EA_2... does not exist
-    # TODO:       - set to WAVE_FILE_EA
-    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA(p)
+    wavefits, tag1 = spirouConfig.Constants.WAVE_FILE_EA_2(p)
     wavefitsname = os.path.split(wavefits)[-1]
     # log progress
     wargs = [p['FIBER'], wavefits]

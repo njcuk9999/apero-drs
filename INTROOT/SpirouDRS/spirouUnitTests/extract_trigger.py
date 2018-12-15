@@ -49,9 +49,9 @@ TEST_STORE = []
 RUNNUMBER = 0
 
 # switches
-RUN_BADPIX = False
-RUN_DARK = False
-RUN_LOC = False
+RUN_BADPIX = True
+RUN_DARK = True
+RUN_LOC = True
 RUN_SLIT = False
 RUN_SHAPE = True
 RUN_FLAT = True
@@ -59,7 +59,7 @@ RUN_EXTRACT_HCFP = True
 RUN_HC_WAVE = True
 RUN_WAVE_WAVE = False
 RUN_EXTRACT_TELLU = True
-RUN_EXTRACT_OBJ = False
+RUN_EXTRACT_OBJ = True
 RUN_EXTRACT_ALL = True
 RUN_OBJ_MK_TELLU = True
 RUN_OBJ_FIT_TELLU = True
@@ -76,7 +76,7 @@ SKIP_DONE_FIT_TELLU = False
 PARALLEL = True
 
 # Max Processes
-MAX_PROCESSES = 10
+MAX_PROCESSES = 5
 
 # inputs
 INPUT_HC_AB = '_e2dsff_AB.fits'
@@ -108,7 +108,7 @@ DATES = ['2018-05-22', '2018-05-23', '2018-05-24', '2018-05-25', '2018-05-26',
          '2018-09-22', '2018-09-23', '2018-09-24', '2018-09-25', '2018-09-26',
          '2018-09-27', '2018-10-22', '2018-10-23', '2018-10-24', '2018-10-25',
          '2018-10-26', '2018-10-27']
-# DATES = None
+DATES = None
 
 
 # =============================================================================

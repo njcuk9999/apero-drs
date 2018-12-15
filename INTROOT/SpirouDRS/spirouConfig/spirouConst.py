@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.007'
+__version__ = '0.4.009'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2018-12-13'
+__date__ = '2018-12-14'
 
 
 # =============================================================================
@@ -1737,6 +1737,39 @@ def WAVE_FILE_EA(p):
     calibprefix = CALIB_PREFIX(p)
     wavefn = filename.replace(old_ext, waveext)
     wavefilename = calibprefix + wavefn
+    wavefile = os.path.join(reducedfolder, wavefilename)
+    # get tag
+    tag = tags[func_name] + '_{0}'.format(p['FIBER'])
+    # return filename and tag
+    return wavefile, tag
+
+
+#add fp filename if it exists
+# noinspection PyPep8Naming
+def WAVE_FILE_EA_2(p):
+    func_name = 'WAVE_FILE_EA'
+    # set reduced folder name
+    reducedfolder = p['REDUCED_DIR']
+    # get filename
+    filename = p['ARG_FILE_NAMES'][0]
+    # deal with E2DS files and E2DSFF files
+    if 'e2dsff' in filename:
+        old_ext = '_e2dsff_{0}.fits'.format(p['FIBER'])
+    else:
+        old_ext = '_e2ds_{0}.fits'.format(p['FIBER'])
+    waveext = '_wave_ea_{0}.fits'.format(p['FIBER'])
+    calibprefix = CALIB_PREFIX(p)
+    wavefn = filename.replace(old_ext, waveext)
+    # check if FP
+    if 'FPFILE' in p:
+        #get filename
+        raw_infile2 = os.path.basename(p['FPFILE'])
+        # we shouldn't mix ed2s w e2dsff so can use same extension
+        wavefn2 = raw_infile2.replace(old_ext, '_'
+                                               '')
+        wavefilename = calibprefix + wavefn2 + wavefn
+    else:
+        wavefilename = calibprefix + wavefn
     wavefile = os.path.join(reducedfolder, wavefilename)
     # get tag
     tag = tags[func_name] + '_{0}'.format(p['FIBER'])
