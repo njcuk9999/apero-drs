@@ -46,7 +46,7 @@ STRTYPE[list] = 'list'
 STRTYPE[np.ndarray] = 'np.ndarray'
 
 
-DEBUG = True
+DEBUG = False
 # -----------------------------------------------------------------------------
 
 
@@ -1202,7 +1202,7 @@ class DrsRecipe(object):
                 return False, directory
         # ---------------------------------------------------------------------
         # step 2: check if directory is in input directory
-        input_dir = get_input_dir(self)
+        input_dir = self.get_input_dir()
         test_path = os.path.join(input_dir, directory)
         if os.path.exists(test_path):
             if return_error:
@@ -1242,7 +1242,6 @@ class DrsRecipe(object):
             return True, all_files, all_types, []
         else:
             return True, all_files, all_types, []
-
 
     def valid_file(self, argname, filename, directory=None, return_error=False):
         """
@@ -1287,7 +1286,7 @@ class DrsRecipe(object):
                 # get extension
                 ext = drs_file.ext
                 # check the extension
-                valid, error = check_file_extension(argname, filename, ext=ext)
+                valid1, error = check_file_extension(argname, filename, ext=ext)
                 errors += error
                 # -------------------------------------------------------------
                 # Step 3: Check file header is valid
@@ -1296,18 +1295,23 @@ class DrsRecipe(object):
                 #    files we can return here
                 if '.fits' in ext:
                     out = check_file_header(self, argname, drs_file, filename)
-                    valid, filetype, error = out
+                    valid2, filetype, error = out
                     errors += error
                 else:
+                    valid2 = True
                     filetype = None
                 # -------------------------------------------------------------
                 # Step 4: Check exclusivity
                 # -------------------------------------------------------------
-                valid, error = check_file_exclusivity(self, files)
+
+                # TODO: WORK STARTS HERE
+                valid3, error = check_file_exclusivity(self, files)
                 errors += error
+
                 # -------------------------------------------------------------
                 # Step 5: Check exclusivity
                 # -------------------------------------------------------------
+                valid = valid1 and valid2 and valid3
                 # check validity and append if valid
                 if valid:
                     out_files.append(filename)
@@ -1326,6 +1330,28 @@ class DrsRecipe(object):
         # c. if we did and don't expect an error return True without an error
         else:
             return True, out_files, out_types
+
+    def get_input_dir(self):
+        # check if "input_dir" is in namespace
+        input_dir_pick = self.inputdir.upper()
+        # get parameters from recipe call
+        params = self.drs_params
+        # get the input directory from recipe.inputdir keyword
+        if input_dir_pick == 'RAW':
+            input_dir = self.drs_params['DRS_DATA_RAW']
+        elif input_dir_pick == 'TMP':
+            input_dir = self.drs_params['DRS_DATA_WORKING']
+        elif input_dir_pick == 'REDUCED':
+            input_dir = self.drs_params['DRS_DATA_REDUC']
+        # if not found produce error
+        else:
+            emsg1 = ('Recipe definition error: "inputdir" must be either'
+                     ' "RAW", "REDUCED" or "TMP".')
+            emsg2 = '\tCurrently has value="{0}"'.format(input_dir_pick)
+            WLOG(params, 'error', [emsg1, emsg2])
+            input_dir = None
+        # return input_dir
+        return input_dir
 
     def __error__(self):
         """
@@ -1435,7 +1461,7 @@ def check_file_location(recipe, argname, directory, filename):
     if directory is not None:
         input_dir = str(directory)
     else:
-        input_dir = get_input_dir(recipe)
+        input_dir = recipe.get_input_dir()
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
@@ -1538,62 +1564,15 @@ def check_file_extension(argname, filename, ext=None):
 
 
 def check_file_header(recipe, argname, drs_file, filename):
-
-    # get recipe parameters
-    params = recipe.drs_params
-    # -----------------------------------------------------------------
     # create an instance of this drs_file with the filename set
     file_instance = drs_file.new(filename=filename, recipe=recipe)
     file_instance.read()
     # -----------------------------------------------------------------
-    # get required header keys
-    rkeys = drs_file.required_header_keys
-    # -----------------------------------------------------------------
-    # Step 1: Check that required keys are in header
-    for drskey in rkeys:
-        # check whether header key is in param dict (i.e. from a
-        #    keywordstore) or whether we have to use the key as is
-        if drskey in params:
-            key = params[drskey][0]
-        else:
-            key = drskey
-        # check if key is in header
-        if key not in drs_file.header:
-            eargs = [argname, key, filename]
-            emsgs = ['\tArgument {0}: Header key "{1}" not found for '
-                     'file "{2}"'.format(*eargs)]
-            return False, None, emsgs
-        elif DEBUG:
-            dmsg = '\tArgument {0}: Header key {1} found for {2}'
-            dargs = [argname, key, filename]
-            print(dmsg.format(*dargs))
-    # -----------------------------------------------------------------
-    # Step 2: search for correct value for each header key
-    # loop around required keys
-    for drskey in rkeys:
-        # check whether header key is in param dict (i.e. from a
-        #    keywordstore) or whether we have to use the key as is
-        if drskey in params:
-            key = params[drskey][0]
-        else:
-            key = drskey
-        # get value and required value
-        value = drs_file.header[key].strip()
-        rvalue = rkeys[drskey].strip()
-        # check if key is valid
-        if rvalue != value:
-            emsg1 = '\tArgument {0}: Header key {1} value is incorrect'
-            emsg2 = '\t\tvalue = {2}   required = {3}'
-            eargs = [argname, key, value, rvalue]
-            return False, None, [emsg1.format(*eargs), emsg2.format(*eargs)]
-        elif DEBUG:
-            dmsg = '\tArgument {0}: Header key {1} value is correct ({2})'
-            dargs = [argname, key, rvalue]
-            print(dmsg.format(*dargs))
-    # else file is valid
-    return True, file_instance, []
+    # use file_instances check file header method
+    return file_instance.check_file_header(argname=argname, debug=DEBUG)
 
 
+# TODO: Fill out
 def check_file_exclusivity(recipe, filename):
     return True, []
 
@@ -1817,30 +1796,6 @@ def get_file_list(path, limit=None, ext=None, recursive=False):
     return file_list
 
 
-def get_input_dir(recipe):
-    # check if "input_dir" is in namespace
-    input_dir_pick = recipe.inputdir.upper()
-    # get parameters from recipe call
-    params = recipe.drs_params
-    # get the input directory from recipe.inputdir keyword
-    if input_dir_pick == 'RAW':
-        input_dir = recipe.drs_params['DRS_DATA_RAW']
-    elif input_dir_pick == 'TMP':
-        input_dir = recipe.drs_params['DRS_DATA_WORKING']
-    elif input_dir_pick == 'REDUCED':
-        input_dir = recipe.drs_params['DRS_DATA_REDUC']
-    # if not found produce error
-    else:
-        emsg1 = ('Recipe definition error: "inputdir" must be either'
-                 ' "RAW", "REDUCED" or "TMP".')
-        emsg2 = '\tCurrently has value="{0}"'.format(input_dir_pick)
-        WLOG(params, 'error', [emsg1, emsg2])
-        input_dir = None
-    # return input_dir
-    return input_dir
-
-
-
 def get_arg(recipe, argname):
     if argname in recipe.args:
         arg = recipe.args[argname]
@@ -1850,6 +1805,7 @@ def get_arg(recipe, argname):
         arg = None
     # return arg
     return arg
+
 
 def make_listing():
     """
