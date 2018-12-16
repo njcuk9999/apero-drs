@@ -233,7 +233,7 @@ def get_acquisition_time(p, header=None, kind='human', filename=None):
     return acqtime
 
 
-def get_database(p, max_time=None, update=False):
+def get_database(p, max_time=None, update=False, header=None):
     """
     Gets all entries from calibDB where unix time <= max_time. If update is
     False then will first search for and use 'calibDB' in p (if it exists)
@@ -264,7 +264,7 @@ def get_database(p, max_time=None, update=False):
         return p['CALIBDB'], p
 
     if max_time is None:
-        max_time = get_acquisition_time(p)
+        max_time = get_acquisition_time(p, header=header)
     # add max_time to p
     p['MAX_TIME_HUMAN'] = max_time
     p.set_source('MAX_TIME_HUMAN', func_name)

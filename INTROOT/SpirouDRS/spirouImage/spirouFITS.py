@@ -520,7 +520,12 @@ def write_output_dict(p, filename, hdict):
             if key in hdict:
                 p['OUTPUTS'][bfilename][key] = str(hdict[key][0])
     # add DRS_TYPE
-    p['OUTPUTS'][bfilename]['DRS_TYPE'] = p['DRS_TYPE']
+    if 'DRS_TYPE' not in p:
+        emsg1 = 'Dev Error: DRS_TYPE not in "p". Incorrect setup to recipe.'
+        emsg2 = '\tDRS_TYPE must be set to "RAW" or "REDUCED"'
+        WLOG(p, 'error', [emsg1, emsg2])
+    else:
+        p['OUTPUTS'][bfilename]['DRS_TYPE'] = p['DRS_TYPE']
     # return p
     return p
 
