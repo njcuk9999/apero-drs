@@ -460,7 +460,7 @@ def multi_file_setup(p, files=None, log=True, skipcheck=False):
     return p, locations
 
 
-def load_calibdb(p, calibdb=True):
+def load_calibdb(p, calibdb=True, header=None):
     """
     Load calibration (on startup) this is loaded by default when
     spirouStartup.spirouStartup.initial_file_setup
@@ -483,7 +483,12 @@ def load_calibdb(p, calibdb=True):
                 if calibdb is True:
                     calibDB: dictionary, the calibration database dictionary
     """
-    if calibdb:
+    if header is not None:
+        spirouDB.CopyCDBfiles(p, header=header)
+        calib_db, p = spirouDB.GetCalibDatabase(p, header=header)
+        p['CALIBDB'] = calib_db
+        p.set_source('CALIBDB', __NAME__ + '/run_startup()')
+    elif calibdb:
         if not os.path.exists(p['DRS_CALIB_DB']):
             WLOG(p, 'error',
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
