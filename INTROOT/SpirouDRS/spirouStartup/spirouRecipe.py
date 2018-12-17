@@ -10,6 +10,7 @@ Created on 2018-09-14 at 18:19
 @author: cook
 """
 import numpy as np
+from astropy.table import Table
 import argparse
 import sys
 import os
@@ -45,6 +46,8 @@ STRTYPE[complex] = 'complex'
 STRTYPE[list] = 'list'
 STRTYPE[np.ndarray] = 'np.ndarray'
 
+INDEX_FILE = 'index.fits'
+INDEX_FILE_NAME_COL = 'FILENAME'
 
 DEBUG = True
 # -----------------------------------------------------------------------------
@@ -334,7 +337,7 @@ class MakeListing(argparse.Action):
 
     def display_listing(self, namespace):
         # get input dir
-        input_dir = get_input_dir(self.recipe)
+        input_dir = self.recipe.get_input_dir()
         # check if "directory" is in namespace
         directory = getattr(namespace, 'directory', '')
         # deal with non set directory
@@ -470,6 +473,7 @@ class DrsArgument(object):
 
         # set empty
         self.props = dict()
+        self.value = None
 
     def make_properties(self):
         """
@@ -611,6 +615,124 @@ class DrsRecipe(object):
         self.str_arg_list = None
         # get drs parameters
         self.drs_params = ParamDict()
+        self.input_params = dict()
+
+    def recipe_setup(self, fkwargs):
+        """
+        Interface between "recipe", inputs to function ("fkwargs") and argparse
+        parser (inputs from command line)
+
+        :param recipe: DrsRecipe instance, the Drs Recipe object
+        :param fkwargs: dictionary, a dictionary where the keys match
+                        arguments/keyword arguments in recipe (without -/--), and
+                        the values are those to set in the output
+                        (set to None for not value set)
+
+        :return params:  dictionary, a dictionary where the keys match arguments/
+                         keywords (without -/--) and values are the values to be
+                         used for this recipe
+        """
+        # set up storage for arguments
+        desc = self.description
+        parser = DRSArgumentParser(self, description=desc)
+        # deal with function call
+        self.parse_args(fkwargs)
+        # ---------------------------------------------------------------------
+        # add arguments from recipe
+        for rarg in self.args:
+            # extract out name and kwargs from rarg
+            rname = self.args[rarg].names
+            rkwargs = self.args[rarg].props
+            # parse into parser
+            parser.add_argument(*rname, **rkwargs)
+        # ---------------------------------------------------------------------
+        # add keyword arguments
+        for rarg in self.kwargs:
+            # extract out name and kwargs from rarg
+            rname = self.kwargs[rarg].names
+            rkwargs = self.kwargs[rarg].props
+            # parse into parser
+            parser.add_argument(*rname, **rkwargs)
+        # add special arguments
+        for rarg in self.specialargs:
+            # extract out name and kwargs from rarg
+            rname = self.specialargs[rarg].names
+            rkwargs = self.specialargs[rarg].props
+            # parse into parser
+            parser.add_argument(*rname, **rkwargs)
+        # get params
+        params = vars(parser.parse_args(args=self.str_arg_list))
+        del parser
+        # update params
+        self.input_params = params
+
+    def option_manager(self):
+        """
+        Takes all the optional parameters and deals with them.
+
+        :param recipe:
+        :param input_parameters:
+        :return:
+        """
+        func_name = __NAME__ + '.DrsRecipe.option_manager()'
+        # get drs params
+        params = self.drs_params
+        input_parameters = self.input_params
+        # loop around options
+        for key in self.kwargs:
+            # get keyword argument
+            kwarg = self.kwargs[key]
+            # make sure kind == 'kwarg
+            if kwarg.kind != 'kwarg':
+                continue
+            # check that kwarg is in input_parameters
+            if kwarg.name not in input_parameters:
+                eargs = [kwarg.name, self.name]
+                emsg = 'Cannot find input "{0}" for recipe "{1}"'
+                kwarg.exception(emsg.format(*eargs))
+            # check that kwarg is None (should be None if we need to change it)
+            if input_parameters[kwarg.name] is not None:
+                # if we have the value we should pipe it into default_ref
+                #  i.e. the value in the parameters file
+                if kwarg.default_ref is not None:
+                    param_key = kwarg.default_ref
+                    value = input_parameters[kwarg.name]
+                else:
+                    continue
+            # check that default is None
+            elif kwarg.default is not None:
+                value, param_key = kwarg.default, None
+            # else check that we have default_ref
+            elif kwarg.default_ref is None:
+                eargs = [kwarg.name, self.name]
+                emsg = '"default_ref" is unset for "{0}" for recipe "{1}"'
+                kwarg.exception(emsg.format(*eargs))
+                value, param_key = None, None
+            # else check that default_ref is in drs_params (i.e. defined in a
+            #   constant file)
+            elif kwarg.default_ref not in params:
+                eargs = [kwarg.default_ref, kwarg.name, self.name]
+                emsg = ('"default_ref"="{0}" not found in constant params for '
+                        ' "{1}" for recipe "{2}"')
+                kwarg.exception(emsg.format(*eargs))
+                value, param_key = None, None
+            # else we have all we need to reset the value
+            else:
+                value = params[kwarg.default_ref]
+                param_key = kwarg.default_ref
+            # if we have reached this point then set value
+            input_parameters[kwarg.name] = value
+            if param_key is not None:
+                input_parameters[kwarg.default_ref] = value
+        # ---------------------------------------------------------------------
+        # add to DRS parameters
+        self.drs_params['INPUT'] = input_parameters
+        self.drs_params.set_source('INPUT', func_name)
+        # push values of keys matched in input_parameters into drs_parameters
+        for key in input_parameters.keys():
+            if key in self.drs_params:
+                self.drs_params[key] = input_parameters[key]
+                self.drs_params.set_source(key, func_name)
 
     def arg(self, name=None, **kwargs):
         """
@@ -979,7 +1101,129 @@ class DrsRecipe(object):
         else:
             return True, out_files, out_types
 
+    def generate_runs_from_filelist(self, __list__, __filters__, **kwargs):
+        """
+        Generates a run instance (or set of run instances) based on the
+        "__list__". Each file must be a absolute path. The directory (night name
+        is taken from the absolute path minus the input directory given).
+        Any additional non-file keyword arguments should be given after the
+        file list, their names MUST match the name of that argument for correct
+        assignment.
+
+        :param __list__: list of string, absolute paths to all files to be
+                         considered, non valid files will be skipped, if there
+                         are no valid files the return will be empty
+
+        :param __filters__: dictionary, keys are fits HEADER KEYS to search
+                            and values are lists of strings that these HEADER
+                            KEYS should have i.e.
+
+                            __filters__ = {'DPRTYPE': ['DARK_DARK']}
+
+                            or
+
+                            __filters__ = {'OBJNAME': ['Gl699', 'Gl15A']}
+
+                            or both
+
+                            __filters__ = {'DPRTYPE': ['OBJ_FP'],
+                                           'OBJNAME': ['Gl699', 'Gl15A']}
+
+        :param kwargs: keyword arguments to pass to the function, each value
+                       must match the name of that argument i.e. if the recipe
+                       expects "x" as an argument
+        :return:
+        """
+        func_name = __NAME__ + '.DrsRecipe.generate_runs_from_filelist()'
+        # get input directory
+        input_dir = self.get_input_dir()
+        # get directories and filter out unusable file (due to wrong location)
+        filelist = dir_file_filter(input_dir, __list__)
+        # from the unique directory list search for index files (should be one
+        #   per file)
+        dir_list = list(filelist.keys())
+        index_files = get_index_files(input_dir, dir_list)
+        # loop around arguments
+        for argname in self.args:
+            # get instance from self.args
+            arg = self.args[argname]
+            # -----------------------------------------------------------------
+            # if argument is of dtype "files" or "file" then we need to
+            # look for it in the index file else we need to look in
+            # **kwargs
+            if arg.dtype not in ['files', 'file']:
+                # check that argname is defined
+                if argname in kwargs:
+                    # copy value from kwargs (as deep copy)
+                    value = type(kwargs[argname])(kwargs[argname])
+                    # update self.args
+                    self.args[argname].value = [value]
+                    # then continue
+                    continue
+                else:
+                    emsg = ('DevError: Argument {0} is not defined in call to'
+                            ' {1}'.format(argname, func_name))
+                    WLOG(self.drs_params, 'error', emsg)
+                    continue
+            # -----------------------------------------------------------------
+            # else we are dealing with a set of files
+            self.args[argname].value = dict()
+            # for each index file find all valid files (for this argument)
+            for it, index_file in index_files:
+                # get directory
+                directory = dir_list[it]
+                dir_filelist = filelist[directory]
+                # get index
+                index = get_index_data(self.drs_params, index_file, directory)
+                # deal with no index
+                if index is None:
+                    continue
+                # else get list of valid files for this argument
+                gargs = [arg, index, directory, dir_filelist]
+                valid_file_list = self.get_arg_files(*gargs)
+                # append to the value list (by arg.files name as key)
+                for key in valid_file_list.keys():
+                    if key not in self.args[argname].value:
+                        self.args[argname].value[key] = valid_file_list[key]
+                    else:
+                        self.args[argname].value[key] += valid_file_list[key]
+        # ---------------------------------------------------------------------
+        # from the above process we now have the following:
+        #    self.args[ARG].value = [argument value]
+        #    self.args[ARG].value = dictionary[DrsFitsFile]
+        #
+        #    where ARG is for each argument in recipe
+        #    where value is either a list with a single entry (for non-file
+        #        arguments) or a dictionary for file arguments
+        #    where each dictionary is a list of DrsFitsFile instances for all
+        #        the files found in filelist
+        # ---------------------------------------------------------------------
+        # next we need to turn this into a set of runs
+        # each run should be in the form:
+        # run[it] = [recipe, arg1, arg2, arg3, ...]
+        runs = self.generate_runs_from_arg_list()
+
+
+    def generate_runs_from_arg_list(self):
+
+        args = self.args
+
+        # TODO: Contnue from here!!!!!
+
+        # return in form
+
+
     def get_input_dir(self):
+        """
+        Get the input directory for this recipe based on what was set in
+        initialisation (construction)
+
+        if RAW uses DRS_DATA_RAW from drs_params
+        if TMP uses DRS_DATA_WORKING from drs_params
+        if REDUCED uses DRS_DATA_REDUC from drs_params
+
+        :return input_dir: string, the input directory
+        """
         # check if "input_dir" is in namespace
         input_dir_pick = self.inputdir.upper()
         # get parameters from recipe call
@@ -1000,6 +1244,96 @@ class DrsRecipe(object):
             input_dir = None
         # return input_dir
         return input_dir
+
+    def get_arg_files(self, arg, index, directory, filelist):
+        """
+        Gets all files in filelist that are in "index" that meet the
+        requirements of "arg.files"
+
+        :param arg: DrsArgument, an instance of spirouRecipe.DrsArgument
+        :param index: astropy.table, Table from the INDEX_FILE for this
+                      directory
+        :param directory: string, the sub-directory tree (night name) under
+                          the input_dir
+        :param filelist: list of strings, the base filenames of the files
+                         in "directory" that we want to filter from
+
+        :return valid_files: dictionary, the files (from "filelist" that are
+                             in each arg.files. keys are the names of the
+                             arg.files values are lists of the files found.
+        """
+        # convert filelist to a numpy array
+        filelist = np.array(filelist, dtype=str)
+        # get this directories index file name
+        ifile = os.path.join(directory, INDEX_FILE)
+        icol = INDEX_FILE_NAME_COL
+        # get input directory
+        input_dir = self.get_input_dir()
+        # get path of directory
+        path = os.path.join(input_dir, input_dir)
+        # get params from recipe
+        params = self.drs_params
+        # ---------------------------------------------------------------------
+        # step 1: find all filelist entries in filelist
+        # ---------------------------------------------------------------------
+        mask = np.in1d(index['FILENAME'], filelist)
+        # deal with no entries
+        if np.sum(mask) == 0:
+            if DEBUG:
+                wmsg = 'No matching files for index_file "{0}"'.format(ifile)
+                WLOG(params, '', wmsg.format(index))
+            return []
+        else:
+            if DEBUG:
+                wargs = [np.sum(mask), ifile]
+                wmsg = 'Found {0} files for index_file "{1}"'
+                WLOG(params, '', wmsg.format(*wargs))
+        # apply mask to index data
+        indexdata = index[mask]
+        # ---------------------------------------------------------------------
+        # step 2: find all files that have the correct header keys
+        # ---------------------------------------------------------------------
+        # storage of valid files
+        valid_files = dict()
+        # loop around required file types
+        for drs_file in arg.files:
+            # get argument drs_file.name
+            name = drs_file.name
+            # storage for masks
+            mask = np.ones(len(indexdata), dtype=bool)
+            # get required keyword arguments
+            rkeys = drs_file.required_header_keys
+            # loop around these keys
+            for rkey in rkeys:
+                # deal with rkey not in indexdata
+                if rkey not in indexdata.colnames:
+                    emsg = 'DevError: Key "{0}" not in index file {1}'
+                    eargs = [rkey, ifile]
+                    WLOG(params, 'error', emsg.format(*eargs))
+                # mask by rkey value
+                mask &= indexdata[rkey] == rkeys[rkey]
+            # once all are done add to valid entries list in the form of a
+            #   drs_file for each, adding attributes:
+            #          - path, basename
+            #          - inputdir, directory
+            #          - header (from indexdata[mask][it])
+            #                 where it is the row number after masking
+            valid_entries = []
+            for v_it, valid_file in indexdata[icol][mask]:
+                # make new drs_file instances
+                tmp_file = drs_file.new()
+                # get path of file
+                tmp_path = os.path.join(path, tmp_file)
+                # set filename
+                tmp_file.set_filename(tmp_path, check=False)
+                tmp_file.directory = directory
+                tmp_file.inputdir = input_dir
+                tmp_file.header = indexdata[mask][v_it]
+                # append to list
+                valid_entries.append(tmp_file)
+            valid_files[name] = valid_entries
+        # return valid files
+        return valid_files
 
     def __error__(self):
         """
@@ -1029,59 +1363,6 @@ class DrsRecipe(object):
                      i.e. DrsRecipe[name]
         """
         return 'DrsRecipe[{0}]'.format(self.name)
-
-
-# =============================================================================
-# Define parser functions (to link from classes to argparse
-# =============================================================================
-def recipe_setup(recipe, fkwargs):
-    """
-    Interface between "recipe", inputs to function ("fkwargs") and argparse
-    parser (inputs from command line)
-
-    :param recipe: DrsRecipe instance, the Drs Recipe object
-    :param fkwargs: dictionary, a dictionary where the keys match
-                    arguments/keyword arguments in recipe (without -/--), and
-                    the values are those to set in the output
-                    (set to None for not value set)
-
-    :return params:  dictionary, a dictionary where the keys match arguments/
-                     keywords (without -/--) and values are the values to be
-                     used for this recipe
-    """
-    # set up storage for arguments
-    desc = recipe.description
-    parser = DRSArgumentParser(recipe, description=desc)
-    # deal with function call
-    recipe.parse_args(fkwargs)
-    # -------------------------------------------------------------------------
-    # add arguments from recipe
-    for rarg in recipe.args:
-        # extract out name and kwargs from rarg
-        rname = recipe.args[rarg].names
-        rkwargs = recipe.args[rarg].props
-        # parse into parser
-        parser.add_argument(*rname, **rkwargs)
-    # -------------------------------------------------------------------------
-    # add keyword arguments
-    for rarg in recipe.kwargs:
-        # extract out name and kwargs from rarg
-        rname = recipe.kwargs[rarg].names
-        rkwargs = recipe.kwargs[rarg].props
-        # parse into parser
-        parser.add_argument(*rname, **rkwargs)
-    # add special arguments
-    for rarg in recipe.specialargs:
-        # extract out name and kwargs from rarg
-        rname = recipe.specialargs[rarg].names
-        rkwargs = recipe.specialargs[rarg].props
-        # parse into parser
-        parser.add_argument(*rname, **rkwargs)
-    # get params
-    params = vars(parser.parse_args(args=recipe.str_arg_list))
-    del parser
-    # return parameters
-    return params
 
 
 # =============================================================================
@@ -1309,160 +1590,87 @@ def check_file_exclusivity(recipe, filename, argname, drs_file, logic,
 
 
 # =============================================================================
-# Define check functions
+# Define run making functions
 # =============================================================================
-def check_for_file(p, argname, idnum, path, kind=None):
-    if kind is not None:
-        kindstr = ' ({0})'.format(kind)
-    else:
-        kindstr = ''
+def dir_file_filter(inputdir, infilelist):
+    """
+    Take an input directory "inputdir" and a file list "infilelist" and only
+    keep those files that are within "inputdir" also extract the sub-directory
+    tree for these files.
 
-    # get glob list of files using glob
-    raw_files = glob.glob(path)
+    :param inputdir: string, the input directory (root drs directory)
+    :param infilelist: list of strings, the absolute paths of the files
 
-    # if we cannot find file return
-    if len(raw_files) == 0:
-        # return False and no filename
-        return False, None
-
-    # if we find just one file
-    elif len(raw_files) == 1:
-        # get filename
-        filename = os.path.basename(raw_files[0])
-        # get directory
-        directory = os.path.dirname(raw_files[0])
-        # log message
-        wmsg = 'Arg "{0}"[{1}]: File "{2}" exists in directory "{3}"' + kindstr
-        WLOG(p, '', wmsg.format(argname, idnum, filename, directory))
-        # return True and filename
-        return True, os.path.realpath(raw_files[0])
-
-    # else we have multiple files (from wild cards)
-    else:
-        # set up storage
-        files = []
-        directory = None
-        # loop around raw files
-        for raw_file in raw_files:
-            # get directory
-            directory_it = os.path.dirname(raw_file)
-            # check that we don't have multiple directories
-            # if directory is not None:
-            #     if directory_it != directory:
-            #         emsg = ('Wildcard Error: Can only have files from one '
-            #                 'directory. Multiple found')
-            #         WLOG(p, 'error', emsg)
-            # else:
-            #     directory = str(directory_it)
-            directory = str(directory_it)
-            # add to list of files (removing relative paths)
-            files.append(os.path.realpath(raw_file))
-        # log message
-        wmsgs = ['Arg "{0}"[{1}]: Files found to exist (Abs. path + wildcard):'
-                 ''.format(argname, idnum)]
-        for raw_file in raw_files:
-            wmsgs.append('\t' + os.path.realpath(raw_file))
-        WLOG(p, '', wmsgs)
-        # return True, filename and new idnum
-        return True, files
-
-
-def check_file_extension_old(filename, ext):
-    # set error messages empty
-    emsgs = []
-    # check if we have an extension
-    if ext is None:
-        return emsgs
-    # check file extension
-    if not filename.endswith(ext):
-        # add why it failed
-        emsgs.append('\tFile must end with "{0}"'.format(ext))
-    # return error messages
-    return emsgs
-
-
-def check_file_header_old(drs_file, errors, argname, idnum, recipe, value):
-    # get recipe
-    params = recipe.drs_params
-    recipename = recipe.name
-    # get required keys
-    rkeys = drs_file.required_header_keys
-    # loop around keys and check that they are in
-    emsgs = []
-    for drskey in rkeys:
-        # get key from drs_params
-        if drskey in params:
-            key = params[drskey][0]
+    :return out_dict: dictionary, keys are the directory and values are the
+                      valid input files in that directory (base filenames)
+    """
+    # define storage
+    out_dict = dict()
+    # loop around files
+    for filename in infilelist:
+        # remove those filenames that do not contain inputdir
+        if inputdir not in filename:
+            continue
+        # for those that are left check that they exist
+        if not os.path.exists(filename):
+            continue
+        # for those that exist get the directory name
+        basename = os.path.basename(filename)
+        dirname = os.path.dirname(filename)
+        directory = dirname.split(inputdir)[-1]
+        # append outfilelist and outfdict
+        if directory not in out_dict:
+            out_dict[directory] = [basename]
         else:
-            key = drskey
-        # find if key found in header
-        if key not in drs_file.header:
-            emsgs.append('Key {0} not found in header'.format(key))
+            out_dict[directory].append(basename)
+    # return all outputs
+    return out_dict
 
-    # if we found errors in header key print these errors
-    if len(emsgs) > 0:
-        print_check_error(params, argname, idnum, drs_file.filename,
-                          recipename, errors, value)
-    # get error storage
-    if len(errors) == 3:
-        keys, rvalues, values = errors
-    else:
-        keys, rvalues, values = [], [], []
-    # assume we have found the value
-    found = True
-    # search for errors in file type
-    for drskey in rkeys:
-        # get key from drs_params
-        if drskey in params:
-            key = params[drskey][0]
+
+def get_index_files(inputdir, outudirlist):
+    """
+    From a list of directories "outudirlist" and an input directory root
+    "inputdir" find all the current "INDEX_FILE" files, if they don't exist
+    then put the entry to None
+
+    :param inputdir: string, the root input directory
+    :param outudirlist: list of strings, the unique directories (night name)
+
+    :return index_list: list of strings, the abs path to each index file. If
+                        index file does not exist value is None
+    """
+    index_list = []
+    # loop around directories
+    for directory in outudirlist:
+        # construct the link to the index file
+        abspath = os.path.join(inputdir, directory, INDEX_FILE)
+        # test whether it exists
+        if os.path.exists(abspath):
+            index_list.append(abspath)
         else:
-            key = drskey
-        # get value and required value
-        value = drs_file.header[key].strip()
-        rvalue = rkeys[drskey].strip()
-        # add to error storage
-        keys.append(key)
-        values.append(value)
-        rvalues.append(rvalue)
-
-        # check if key is in file header
-        if key in drs_file.header:
-            # check if key is correct
-            if rvalue != value:
-                found = False
-        else:
-            found = False
-    # reconstruct error array
-    errors = [keys, rvalues, values]
-    # return found and the error array
-    return found, errors
+            index_list.append(None)
+    # return index_list
+    return index_list
 
 
-def check_exclusivity_old(drs_file, correct_file, logic, idtype):
-    # set up empty error messages
-    emsgs = []
-    # skip blank ftype
-    if idtype is None:
-        return correct_file, emsgs
-    # if we have a ftype and our file type must be exclusive
-    # then we must match the filetype
-    if logic == 'exclusive':
-        # match by name of file
-        cond = drs_file.name == idtype.name
-        correct_file = correct_file and cond
-        if not cond:
-            emsgs.append('File identified as "{0}" however first file '
-                         'identified as "{1}" - files must match'
-                         ''.format(drs_file.name, idtype.name))
-    elif logic == 'inclusive':
-        pass
-    else:
-        correct_file = False
-        emsgs.append('logic = "{0}" is not understood must be "exclusive" or'
-                     ' "inclusive".'.format(logic))
+def get_index_data(p, index_file, directory):
+    # deal with no directory
+    if index_file is None:
+        wmsg = ('Warning. No index file for {0}. Please run '
+                'off_listing on directory'.format(directory))
+        WLOG(p, 'warning', wmsg)
+        return None
 
-    # return check value and error messages
-    return correct_file, emsgs
+    # load index file
+    try:
+        indexdata = Table.read(index_file)
+    except Exception as e:
+        emsg1 = 'Error opening index file: "{0}"'.format(directory)
+        emsg2 = '\tError was {0}: {1}'.format(type(e), e)
+        WLOG(p, 'error', [emsg1, emsg2])
+        indexdata = None
+    # return index data
+    return indexdata
 
 
 # =============================================================================
