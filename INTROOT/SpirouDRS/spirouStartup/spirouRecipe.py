@@ -46,7 +46,7 @@ STRTYPE[list] = 'list'
 STRTYPE[np.ndarray] = 'np.ndarray'
 
 
-DEBUG = False
+DEBUG = True
 # -----------------------------------------------------------------------------
 
 
@@ -117,383 +117,6 @@ class DRSArgumentParser(argparse.ArgumentParser):
             return False
 
 
-# class CheckDirectory(argparse.Action):
-#     def __init__(self, *args, **kwargs):
-#         self.recipe = None
-#         # force super initialisation
-#         argparse.Action.__init__(self, *args, **kwargs)
-#
-#     def check_directory(self, directory):
-#
-#         # get parameterse from drs_params
-#         params = self.recipe.drs_params
-#         limit = self.recipe.drs_params['DRS_NIGHT_NAME_DISPLAY_LIMIT']
-#         # get the input directory from recipe.inputdir keyword
-#         input_dir = get_input_dir(self.recipe)
-#         # step 1 check if directory is full absolute path
-#         if os.path.exists(directory):
-#             wmsg = 'Directory found (Absolute path)'
-#             WLOG(params, '', wmsg)
-#             return '', directory
-#         # step 2 check if directory is in input directory
-#         elif os.path.exists(os.path.join(input_dir, directory)):
-#             wmsg = 'Directory found (Found in {0})'.format(input_dir)
-#             WLOG(params, '', wmsg)
-#             return input_dir, directory
-#         # step 3: fail if neither step1 or step2 is True
-#         else:
-#             emsgs = ['Argument Error: "{0}" is not a valid DRS directory'
-#                      ''.format(directory),
-#                      '\tSome available [FOLDER]s are as follows:']
-#             # get some available directories
-#             dirlist = get_dir_list(input_dir, limit)
-#             # loop around night names and add to message
-#             for dir_it in dirlist:
-#                 emsgs.append('\t\t {0}'.format(dir_it))
-#             WLOG(params, 'error', emsgs)
-#
-#     def __call__(self, parser, namespace, values, option_string=None):
-#         # check for help
-#         skip = parser.has_help()
-#         if skip:
-#             return 0
-#         # get drs parameters
-#         self.recipe = parser.recipe
-#         # check value
-#         if type(values) == list:
-#             root, directory = self.check_directory(values[0])
-#         else:
-#             root, directory = self.check_directory(values)
-#         # Add the attributes
-#         setattr(namespace, self.dest, directory)
-#
-#
-# class CheckFiles(argparse.Action):
-#     def __init__(self, *args, **kwargs):
-#         self.recipe = None
-#         self.namespace = None
-#         self.id_num = 0
-#         self.id_type = None
-#         # force super initialisation
-#         argparse.Action.__init__(self, *args, **kwargs)
-#
-#     def check_file_location(self, filename):
-#         # check if "input_dir" is in namespace
-#         input_dir = get_input_dir(self.recipe)
-#         # check if "directory" is in namespace
-#         directory = getattr(self.namespace, 'directory', '')
-#         # get argument/keyword argument
-#         if self.dest in self.recipe.args:
-#             arg = self.recipe.args[self.dest]
-#         elif self.dest in self.recipe.kwargs:
-#             arg = self.recipe.kwargs[self.dest]
-#         else:
-#             arg = None
-#         # get display limit
-#         limit = self.recipe.drs_params['DRS_NIGHT_NAME_DISPLAY_LIMIT']
-#         # check if arg extension is in recipe (by looking at arg.files)
-#         ext = ''
-#         if len(arg.files) > 0:
-#             if arg.files[0].ext != '':
-#                 ext = '.' + arg.files[0].ext
-#         # get parameterse from drs_params
-#         params = self.recipe.drs_params
-#         # ---------------------------------------------------------------------
-#         # step 1: check for wildcards and absolute path
-#         cout1 = check_for_file(params, self.dest, self.id_num, filename,
-#                                kind='ABSPATH')
-#         cond1, newfilename = cout1
-#         if cond1:
-#             return newfilename
-#         # ---------------------------------------------------------------------
-#         # step 2: check if file is in input_dir
-#         input_dir_full = os.path.join(input_dir, directory)
-#         input_path = os.path.join(input_dir_full, filename)
-#         cout2 = check_for_file(params, self.dest, self.id_num, input_path,
-#                                kind='INPUTDIR')
-#         cond2, newfilename = cout2
-#         if cond2:
-#             return newfilename
-#         # ---------------------------------------------------------------------
-#         # step 3: check if file is valid if we add ".fits"
-#         filename1 = filename + ext
-#         input_dir_full = os.path.join(input_dir, directory)
-#         input_path1 = os.path.join(input_dir_full, filename1)
-#         cout3 = check_for_file(params, self.dest, self.id_num, input_path1,
-#                                kind='ADDFITS')
-#         cond3, newfilename = cout3
-#         if cond3:
-#             return newfilename
-#         # ---------------------------------------------------------------------
-#         # step 4: return error message
-#         emsgs = ['Argument Error: File was not found.'
-#                  ''.format(filename), '\tTried:', '\t\t ' + filename]
-#         path1 = os.path.realpath(os.path.join(input_dir_full, filename))
-#         emsgs.append('\t\t ' + path1)
-#         path2 = os.path.realpath(os.path.join(input_dir_full, filename1))
-#         emsgs.append('\t\t ' + path2)
-#         # generate error message
-#         emsgs.append('\tSome available files are as follows:')
-#         # get some available directories
-#         filelist = get_file_list(input_dir_full, limit, ext)
-#         # loop around night names and add to message
-#         for file_it in filelist:
-#             emsgs.append('\t\t {0}'.format(file_it))
-#         WLOG(params, 'error', emsgs, wrap=False)
-#
-#     def check_drs_filetype(self, files, value):
-#         """
-#
-#         :param files:
-#         :param value:
-#         :return:
-#         """
-#         # func_name = __NAME__ + '.CheckFiles.check_drs_file()'
-#         # get argument/keyword argument
-#         if self.dest in self.recipe.args:
-#             arg = self.recipe.args[self.dest]
-#         elif self.dest in self.recipe.kwargs:
-#             arg = self.recipe.kwargs[self.dest]
-#         else:
-#             arg = None
-#         # if not a list make a list (for ease of use)
-#         if type(files) is not list:
-#             files = [files]
-#         # valid files
-#         valid_files, valid_ftypes = [], []
-#         # loop around each file
-#         for it, filename in enumerate(files):
-#             # get extension for the first file (Assume all the same)
-#             ext = ''
-#             if len(arg.files) > 0:
-#                 if arg.files[0].ext != '':
-#                     ext = arg.files[0].ext
-#             # if file is not a fits file do not check it
-#             if ext != 'fits':
-#                 valid_files.append(filename)
-#                 valid_ftypes.append(None)
-#             # if fits file use fits file checked
-#             else:
-#                 vfile, vtype = self.check_drs_fits_file(filename, arg, value)
-#                 # append filenames
-#                 valid_files.append(vfile)
-#                 # append valid file types
-#                 valid_ftypes.append(vtype)
-#                 self.id_type = vtype
-#         # return valid files
-#         return valid_files, valid_ftypes
-#
-#     def check_drs_fits_file(self, filepath, arg, value):
-#         # func_name = __NAME__ + '.CheckFiles.check_drs_fits_file()'
-#         # get parameters from recipe call
-#         params = self.recipe.drs_params
-#         recipename = self.recipe.name
-#         # get directory and filename from filepath
-#         # path = os.path.dirname(filepath)
-#         filename = os.path.basename(filepath)
-#         # ---------------------------------------------------------------------
-#         # check file extension (fits)
-#         emsgs = check_file_extension(filename, '.fits')
-#         if len(emsgs) > 0:
-#             print_check_error(params, self.dest, self.id_num, filename,
-#                               recipename, emsgs, value)
-#         # ---------------------------------------------------------------------
-#         # storage for correct
-#         correct_drsfile = None
-#         # get exclusive/inclusive argument
-#         logic = arg.filelogic
-#         # ---------------------------------------------------------------------
-#         herrors = []
-#         # try to check header for keys and values
-#         for drs_file in arg.files:
-#             # get drs check_ext
-#             check_ext = drs_file.check_ext
-#             # -----------------------------------------------------------------
-#             # check ext "check_ext"
-#             errors = check_file_extension(filename, check_ext)
-#             if len(errors) > 0:
-#                 print_check_error(params, self.dest, self.id_num, filename,
-#                                   recipename, errors, value)
-#
-#             # -----------------------------------------------------------------
-#             # create an instance of this drs_file with the filename set
-#             file_instance = drs_file.new(filename=filepath, recipe=self.recipe)
-#             file_instance.read()
-#             # -----------------------------------------------------------------
-#             # check header
-#             cfargs = [file_instance, herrors, self.dest, self.id_num,
-#                       self.recipe, value]
-#             correct_file, herrors = check_file_header(*cfargs)
-#             # -----------------------------------------------------------------
-#             # if logic is exclusive must match current file types
-#             if self.id_type is not None:
-#                 c_args = [file_instance, correct_file, logic, self.id_type]
-#                 correct_file, errors = check_exclusivity(*c_args)
-#             if len(errors) > 0:
-#                 print_check_error(params, self.dest, self.id_num, filename,
-#                                   recipename, errors, value)
-#             # -----------------------------------------------------------------
-#             # if this is the correct file store the drsfile
-#             if correct_file:
-#                 correct_drsfile = file_instance
-#                 break
-#         # ---------------------------------------------------------------------
-#         # construct errors from header loop
-#         che_args = [herrors, self.recipe.drs_params, arg.files, logic]
-#         errors = spirouFile.construct_header_error(*che_args)
-#         # ---------------------------------------------------------------------
-#         # if we have a correct drs file then display passed message
-#         if correct_drsfile is not None:
-#             # log correct
-#             wmsg = ('Arg "{0}"[{1}]: File "{2}" (identified as "{3}") '
-#                     'valid for recipe "{4}"')
-#             wargs = [self.dest, self.id_num, filename, correct_drsfile.name,
-#                      self.recipe.name]
-#             WLOG(params, '', wmsg.format(*wargs))
-#         # else we have an incorrect file
-#         else:
-#             print_check_error(params, self.dest, self.id_num, filename,
-#                               recipename, errors, value)
-#         # ---------------------------------------------------------------------
-#         # return filename and drs file type
-#         return filepath, correct_drsfile
-#
-#     def check_file_types(self, files, value):
-#         # get the recipe arguments
-#         recipe_args = self.get_recipe_arguments()
-#         # if None then skip
-#         if recipe_args is not None:
-#             recipe_file_types = recipe_args.files
-#         else:
-#             return [], []
-#         # set up storage for valid files
-#         valid_files, valid_file_types = [], []
-#         # TODO: Needs finishing
-#         # loop around filenames in argument
-#         for it, filename in enumerate(files):
-#             self.check_file_type(it, filename, value)
-#
-#
-#     def check_file_type(self, filename, value):
-#         # get the recipe arguments
-#         recipe_args = self.get_recipe_arguments()
-#         recipe_file_types = recipe_args.files
-#         recipe_logic = recipe_args.filelogic
-#         # storage for error messages
-#         msgs = []
-#         # set up placeholder for correct_Drsfile
-#         correct_drsfile = None
-#         # loop around valid file types
-#         for file_type in recipe_file_types:
-#             # set up a new file
-#             file_instance = file_type.new(filename=filename,
-#                                           recipe=self.recipe)
-#             file_instance.read()
-#             # now check file
-#             check1, msg1 = file_instance.check_file_exists(quiet=True)
-#             # check extension
-#             check2, msg2 = file_instance.check_file_extension(quiet=True)
-#             # check file header
-#             check3, msgtype, msg3 = file_instance.check_file_header(quiet=True)
-#             # check exclusivity
-#             check4, msg4 = file_instance.check_exclusivity(self.id_type,
-#                                                            quiet=True)
-#             # check conditions and report appropriate error
-#             if not check1:
-#                 self.print_error(filename, msg1)
-#             elif not check2:
-#                 self.print_error(filename, msg2)
-#             elif not check3:
-#                 msgs.append(msg3)
-#             elif not check4:
-#                 self.print_error(filename, msg4)
-#             else:
-#                 correct_drsfile = file_instance
-#                 break
-#         # ---------------------------------------------------------------------
-#         # construct errors from header loop
-#         che_args = [msgs, self.recipe.drs_params, recipe_file_types,
-#                     recipe_logic]
-#         errors = spirouFile.construct_header_error(*che_args)
-#         # ---------------------------------------------------------------------
-#         # if we have a correct drs file then display passed message
-#         if correct_drsfile is not None:
-#             self.print_success(filename, correct_drsfile)
-#         # else we have an error
-#         else:
-#             self.print_error(self, filename, errors)
-#
-#     def print_error(self, filename, messages):
-#         # get parameters from recipe call
-#         params = self.recipe.drs_params
-#         # construct main error message
-#         eargs = [self.dest, self.id_num, filename, self.recipe.name]
-#         emsgs = ['Arg "{0}"[{1}]: File "{2}" not valid for recipe "{3}"'
-#                  ''.format(*eargs)]
-#         # loop around error messages and append
-#         for message in messages:
-#             emsgs.append(message)
-#         # print and log
-#         WLOG(params, 'error', emsgs)
-#
-#     def print_success(self, filename, correct_drsfile):
-#         # get parameters from recipe call
-#         params = self.recipe.drs_params
-#         # log correct
-#         wmsg = ('Arg "{0}"[{1}]: File "{2}" (identified as "{3}") '
-#                 'valid for recipe "{4}"')
-#         wargs = [self.dest, self.id_num, filename, correct_drsfile.name,
-#                  self.recipe.name]
-#         # print and log
-#         WLOG(params, '', wmsg.format(*wargs))
-#
-#     def get_recipe_arguments(self):
-#         # get argument/keyword argument
-#         if self.dest in self.recipe.args:
-#             arg = self.recipe.args[self.dest]
-#         elif self.dest in self.recipe.kwargs:
-#             arg = self.recipe.kwargs[self.dest]
-#         else:
-#             arg = None
-#         return arg
-#
-#     def __call__(self, parser, namespace, values, option_string=None):
-#         # check for help
-#         skip = parser.has_help()
-#         if skip:
-#             return 0
-#         # reset id parameters
-#         self.id_num = 0
-#         self.id_type = None
-#         # get drs parameters
-#         self.recipe = parser.recipe
-#         # get the namespace
-#         self.namespace = namespace
-#         # get the input values
-#         if type(values) == list:
-#             files, ftypes = [], []
-#             # must loop around values
-#             for value in values:
-#                 self.id_num += 1
-#                 # check file could return list or string
-#                 file_it = self.check_file_location(value)
-#                 file_it, ftype = self.check_drs_filetype(file_it, value)
-#                 # must add to files depending on whether list or string
-#                 if type(file_it) is list:
-#                     files += file_it
-#                     ftypes += ftype
-#                     self.id_type = ftype[0]
-#                 else:
-#                     files.append(file_it)
-#                     ftypes.append(ftype)
-#                     self.id_type = ftype
-#         else:
-#             files = self.check_file_location(values)
-#             files, ftypes = self.check_drs_filetype(files, values)
-#         # Add the attribute
-#         setattr(namespace, self.dest, [files, ftypes])
-
-
 class CheckDirectory(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
@@ -531,14 +154,15 @@ class CheckFiles(argparse.Action):
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def check_files(self, value):
+    def check_files(self, value, current_typelist=None):
         # check if "directory" is in namespace
         directory = getattr(self.namespace, 'directory', '')
         # get the argument name
         argname = self.dest
         # check if files are valid
         out = self.recipe.valid_files(argname, value, directory,
-                                      return_error=True)
+                                      return_error=True,
+                                      alltypelist=current_typelist)
         cond, files, types, emsgs = out
         # if they are return files
         if cond:
@@ -559,12 +183,12 @@ class CheckFiles(argparse.Action):
         if type(values) in [list, np.ndarray]:
             files, types = [], []
             for value in values:
-                filelist, typelist = self.check_files(value)
-                files.append(filelist)
-                types.append(typelist)
+                filelist, typelist = self.check_files(value, types)
+                files += filelist
+                types += typelist
         else:
-            filelist, typelist = self.check_files(values)
-            files, types = [filelist], [typelist]
+            filelist, typelist = self.check_files(values, [])
+            files, types = filelist, typelist
         # Add the attribute
         setattr(namespace, self.dest, [files, types])
 
@@ -1216,7 +840,11 @@ class DrsRecipe(object):
                  '\t\t{0}'.format(test_path)]
         return False, None, emsgs
 
-    def valid_files(self, argname, files, directory=None, return_error=False):
+    def valid_files(self, argname, files, directory=None, return_error=False,
+                    alltypelist=None):
+        # deal with no current typelist (alltypelist=None)
+        if alltypelist is None:
+            alltypelist = []
         # deal with non-lists
         if type(files) not in [list, np.ndarray]:
             files = [files]
@@ -1225,7 +853,8 @@ class DrsRecipe(object):
         all_types = []
         for filename in files:
             # check single file
-            out = self.valid_file(argname, filename, directory, True)
+            out = self.valid_file(argname, filename, directory, True,
+                                  alltypelist=alltypelist)
             file_valid, filelist, typelist, error = out
             # if single file is not valid return the error (and False)
             if not file_valid:
@@ -1243,7 +872,8 @@ class DrsRecipe(object):
         else:
             return True, all_files, all_types, []
 
-    def valid_file(self, argname, filename, directory=None, return_error=False):
+    def valid_file(self, argname, filename, directory=None, return_error=False,
+                   alltypelist=None):
         """
         Test for whether a file is valid for this recipe
 
@@ -1256,13 +886,25 @@ class DrsRecipe(object):
                        and return_error=True, return a list of strings
                        describing the error
         """
+        # get drs parameters
+        params = self.drs_params
+        # deal with no current typelist (alltypelist=None)
+        if alltypelist is None:
+            alltypelist = []
         # get the argument that we are checking the file of
         arg = get_arg(self, argname)
+        drs_files = arg.files
+        drs_logic = arg.filelogic
         # storage of errors
         errors = []
         # ---------------------------------------------------------------------
         # Step 1: Check file location is valid
         # ---------------------------------------------------------------------
+        # if debug mode print progress
+        if DEBUG:
+            dmsg = 'DEBUG: Checking file locations for "{0}"'
+            WLOG(params, 'info', dmsg.format(filename))
+        # perform check
         out = check_file_location(self, argname, directory, filename)
         valid, files, error = out
         if not valid:
@@ -1279,14 +921,20 @@ class DrsRecipe(object):
         # loop around filename
         for filename in files:
             # loop around file types
-            for drs_file in arg.files:
+            for drs_file in drs_files:
+                # if in debug mode print progres
+                if DEBUG:
+                    dmsg = 'DEBUG: Checking drs_file="{0}" filename="{1}"'
+                    dargs = [drs_file.name, os.path.basename(filename)]
+                    WLOG(params, 'info', dmsg.format(*dargs))
                 # -------------------------------------------------------------
                 # Step 2: Check extension
                 # -------------------------------------------------------------
                 # get extension
                 ext = drs_file.ext
                 # check the extension
-                valid1, error = check_file_extension(argname, filename, ext=ext)
+                exargs = [self, argname, filename]
+                valid1, error = check_file_extension(*exargs, ext=ext)
                 errors += error
                 # -------------------------------------------------------------
                 # Step 3: Check file header is valid
@@ -1303,9 +951,9 @@ class DrsRecipe(object):
                 # -------------------------------------------------------------
                 # Step 4: Check exclusivity
                 # -------------------------------------------------------------
-
-                # TODO: WORK STARTS HERE
-                valid3, error = check_file_exclusivity(self, files)
+                exargs = [self, filename, argname, drs_file, drs_logic,
+                          out_types, alltypelist]
+                valid3, error = check_file_exclusivity(*exargs)
                 errors += error
 
                 # -------------------------------------------------------------
@@ -1457,21 +1105,30 @@ def check_file_location(recipe, argname, directory, filename):
                    describing the error
     """
     output_files = []
+    # get drs parameters
+    params = recipe.drs_params
     # get input directory
     if directory is not None:
         input_dir = str(directory)
     else:
         input_dir = recipe.get_input_dir()
+    # define storage for things we tried
+    tries = []
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
     # get glob list of files using glob
     raw_files = glob.glob(filename)
+    # debug output
+    if DEBUG and len(raw_files) == 0:
+        dmsg = 'Argument {0}: File not found: "{1}"'
+        dargs = [argname, filename]
+        WLOG(params, '', dmsg.format(*dargs))
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
         if DEBUG:
-            dmsg = '\tArgument {0}: Full file path, path="{1}"'
-            print(dmsg.format(argname, raw_file))
+            dmsg = 'Argument {0}: File found (Full file path): "{1}"'
+            WLOG(params, '', dmsg.format(argname, raw_file))
         output_files.append(raw_file)
     # check if we are finished here
     if len(output_files) > 0:
@@ -1481,39 +1138,62 @@ def check_file_location(recipe, argname, directory, filename):
     # -------------------------------------------------------------------------
     # get glob list of files using glob
     raw_files = glob.glob(os.path.join(input_dir, filename))
+    # debug output
+    if DEBUG and len(raw_files) == 0:
+        dmsg = 'Argument {0}: File not found: "{1}"'
+        dargs = [argname, os.path.join(input_dir, filename)]
+        WLOG(params, '', dmsg.format(*dargs))
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
         if DEBUG:
-            dmsg = '\tArgument {0}: Input file path, path="{1}"'
-            print(dmsg.format(argname, raw_file))
+            dmsg = 'Argument {0}: File found (Input file path): "{1}"'
+            WLOG(params, '', dmsg.format(argname, raw_file))
         output_files.append(raw_file)
     # check if we are finished here
     if len(output_files) > 0:
         return True, output_files, []
     # -------------------------------------------------------------------------
-    # Step 3: recipe.inputdir.upper() (including wildcards)
+    # Step 3: check "filename" as full link to file (including wildcards)
+    #         + .fits
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(os.path.join(input_dir, filename))
+    raw_files = glob.glob(filename + '.fits')
+    # debug output
+    if DEBUG and len(raw_files) == 0 and not filename.endswith('.fits'):
+        dmsg = 'Argument {0}: File not found: "{1}"'
+        dargs = [argname, filename + '.fits']
+        WLOG(params, '', dmsg.format(*dargs))
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
+        # skip files with .fits at the end already
+        if raw_file.endswith('.fits'):
+            continue
         if DEBUG:
-            dmsg = '\tArgument {0}: Full file path + ".fits", path="{1}"'
-            print(dmsg.format(argname, raw_file))
+            dmsg = 'Argument {0}: File found (Full file path + ".fits"): "{1}"'
+            WLOG(params, '', dmsg.format(argname, raw_file + '.fits'))
         output_files.append(raw_file)
     # check if we are finished here
     if len(output_files) > 0:
         return True, output_files, []
     # -------------------------------------------------------------------------
     # Step 4: recipe.inputdir.upper() (including wildcards)
+    #         + .fits
     # -------------------------------------------------------------------------
     # get glob list of files using glob
     raw_files = glob.glob(os.path.join(input_dir, filename + '.fits'))
+    # debug output
+    if DEBUG and len(raw_files) == 0 and not filename.endswith('.fits'):
+        dmsg = 'Argument {0}: File not found: "{1}"'
+        dargs = [argname, os.path.join(input_dir, filename + '.fits')]
+        WLOG(params, '', dmsg.format(*dargs))
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
+        # skip files with .fits at the end already
+        if raw_file.endswith('.fits'):
+            continue
         if DEBUG:
-            dmsg = '\tArgument {0}: Input file path + ".fits", path="{1}"'
-            print(dmsg.format(argname, raw_file))
+            dmsg = 'Argument {0}: File found (Input file path + ".fits"): "{1}"'
+            WLOG(params, '', dmsg.format(argname, raw_file + '.fits'))
         output_files.append(raw_file)
     # check if we are finished here
     if len(output_files) > 0:
@@ -1522,17 +1202,19 @@ def check_file_location(recipe, argname, directory, filename):
     # Deal with cases where we didn't find file
     # -------------------------------------------------------------------------
     eargs = [argname, filename]
-    emsgs = ['\tArgument {0}: File = "{0}" was not found'.format(*eargs),
+    emsgs = ['Argument {0}: File = "{1}" was not found'.format(*eargs),
              '\tTried:',
-             '\t\t{0}'.format(filename),
-             '\t\t{0}'.format(os.path.join(input_dir, filename)),
-             '\t\t{0}'.format(filename + '.fits'),
-             '\t\t{0}'.format(os.path.join(input_dir, filename + '.fits'))]
+             '\t\t"{0}"'.format(filename),
+             '\t\t"{0}"'.format(os.path.join(input_dir, filename))]
+    if not filename.endswith('.fits'):
+        fitsfile = filename + '.fits'
+        emsgs.append('\t\t"{0}"'.format(fitsfile))
+        emsgs.append('\t\t"{0}"'.format(os.path.join(input_dir, fitsfile)))
     # return False, no files and error messages
     return False, None, emsgs
 
 
-def check_file_extension(argname, filename, ext=None):
+def check_file_extension(recipe, argname, filename, ext=None):
     """
     If '.fits' file checks the file extension is valid.
 
@@ -1543,6 +1225,8 @@ def check_file_extension(argname, filename, ext=None):
     :return cond: bool, True if extension valid
     :return errors: list of strings, the errors that occurred if cond=False
     """
+    # get drs parameters
+    params = recipe.drs_params
     # deal with no extension (ext = None)
     if ext is None:
         return True, []
@@ -1552,13 +1236,13 @@ def check_file_extension(argname, filename, ext=None):
     # if valid return True and no error
     if valid:
         if DEBUG:
-            dmsg = '\tArgument {0}: Valid file extension for file "{1}"'
+            dmsg = 'Argument {0}: Valid file extension for file "{1}"'
             dargs = [argname, filename]
-            print(dmsg.format(*dargs))
+            WLOG(params, '', dmsg.format(*dargs))
         return True, []
     # if False generate error and return it
     else:
-        emsgs = ['\tArgument {0}: Extension of file {1} not valid',
+        emsgs = ['Argument {0}: Extension of file {1} not valid',
                  '\t\tRequired extension = {0}'.format(ext)]
         return False, emsgs
 
@@ -1572,9 +1256,56 @@ def check_file_header(recipe, argname, drs_file, filename):
     return file_instance.check_file_header(argname=argname, debug=DEBUG)
 
 
-# TODO: Fill out
-def check_file_exclusivity(recipe, filename):
-    return True, []
+def check_file_exclusivity(recipe, filename, argname, drs_file, logic,
+                           outtypes, alltypelist=None):
+    # get drs parameters
+    params = recipe.drs_params
+    # deal with no alltypelist
+    if alltypelist is None:
+        alltypelist = outtypes
+    else:
+        alltypelist += outtypes
+
+    # if we have no files yet we don't need to check exclusivity
+    if len(alltypelist) == 0:
+        if DEBUG:
+            dmsg = ('Argument {0}: Exclusivity check skipped for first file.'
+                    '(type="{1}")')
+            WLOG(params, '', dmsg.format(argname, drs_file.name))
+        return True, []
+    # if argument logic is set to "exclusive" we need to check that the
+    #   drs_file.name is the same for this as the last file in outtypes
+    if logic == 'exclusive':
+        # match by name of drs_file
+        cond = drs_file.name == alltypelist[-1].name
+        # if condition not met return False and error
+        if not cond:
+            eargs = [argname, drs_file.name, alltypelist[-1].name]
+            emsgs = ['Argument {0}: File identified as "{1}" however other'
+                     ' files identified as "{2}"'.format(*eargs),
+                     '\t\tFiles must match',
+                     '\t\tFilename = {0}'.format(filename)]
+            return False, emsgs
+        # if condition is met return True and empty error
+        else:
+            if DEBUG:
+                dmsg = ('Argument {0}: File exclusivity maintained. ("{1}"'
+                        '== "{2}")')
+                dargs = [argname, drs_file.name, alltypelist[-1].name]
+                WLOG(params, '', dmsg.format(*dargs))
+            return True, []
+
+    # if logic is 'inclusive' we just need to return True
+    if logic == 'inclusive':
+        if DEBUG:
+            dmsg = 'Argument {0}: File logic is "inclusive" skipping check.'
+            WLOG(params, '', dmsg.format(argname))
+        return True, []
+    # else logic is wrong
+    else:
+        emsgs = ['Dev Error: logic was wrong for argument {0}',
+                 '\tMust be "exclusive" or "inclusive"']
+        return False, emsgs
 
 
 # =============================================================================
