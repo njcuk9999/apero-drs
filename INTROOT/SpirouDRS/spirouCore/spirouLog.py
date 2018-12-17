@@ -16,6 +16,7 @@ Version 0.0.1
 from __future__ import division
 import os
 import sys
+import warnings
 
 from SpirouDRS import spirouConfig
 from . import spirouMath
@@ -70,7 +71,7 @@ class Logger:
         self.pout['TDATA_WARNING'] = 1
 
     def __call__(self, p=None, key='', message='', printonly=False,
-                 logonly=False, wrap=True):
+                 logonly=False, wrap=True, option=None):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -81,7 +82,9 @@ class Logger:
         printing to log file is controlled by "LOG_LEVEL" constant (config.py)
         based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
 
-        :param
+        :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+
         :param key: string, either "error" or "warning" or "info" or graph,
                     this gives a character code in output
         :param option: string, option code
@@ -100,21 +103,29 @@ class Logger:
         """
         func_name = __NAME__ + '.Logger.__call__()'
         # ---------------------------------------------------------------------
-        # deal with p
+        # deal with no p and pid
         if p is None:
             p = spirouConfig.ParamDict()
             p['PID'] = None
             p.set_source('PID', func_name)
+            wmsg = 'Dev: Undefined PID not recommended (p is None)'
+            warnings.warn(wmsg, Warning)
+        # deal with no PID
+        if 'PID' not in p:
+            p['PID'] = None
+            wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
+            warnings.warn(wmsg, Warning)
         # TODO: Remove deprecation warning (once all code changed)
         if type(p) is str:
             emsg = ('Need to update WLOG function call. New format required:'
                     '\n\n\tNew format: WLOG(p, level_key, message)'
                     '\n\n\tOld format: WLOG(level_key, option, message)')
             raise DeprecationWarning(emsg)
-
         # ---------------------------------------------------------------------
         # deal with option
-        if 'RECIPE' in p:
+        if option is not None:
+            option = option
+        elif 'RECIPE' in p:
             option = p['RECIPE']
         elif 'LOG_OPT' in p:
             option = p['LOG_OPT']
