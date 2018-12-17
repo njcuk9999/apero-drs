@@ -184,6 +184,8 @@ def main(night_name=None, files=None):
             wave_fiber = p['FIBER']
         # need to reload calibDB
         # as we have custom arguments need to load the calibration database
+        calib_db = dict(p['CALIBDB'])
+        del p['CALIBDB']
         p = spirouStartup.LoadCalibDB(p, header=thdr)
         # get wave solution
         wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
@@ -195,6 +197,9 @@ def main(night_name=None, files=None):
 
         # add wave to wave list
         wave_list.append(loc['WAVEFILE'])
+
+        # readd original calibDB to p
+        p['CALIBDB'] = dict(calib_db)
 
         # ------------------------------------------------------------------
         # Get the Barycentric correction from header
