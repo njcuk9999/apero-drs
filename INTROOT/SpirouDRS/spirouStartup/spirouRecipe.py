@@ -1143,50 +1143,35 @@ class DrsRecipe(object):
         #   per file)
         dir_list = list(filelist.keys())
         index_files = get_index_files(input_dir, dir_list)
+        # ---------------------------------------------------------------------
         # loop around arguments
         for argname in self.args:
-            # get instance from self.args
-            arg = self.args[argname]
             # -----------------------------------------------------------------
             # if argument is of dtype "files" or "file" then we need to
             # look for it in the index file else we need to look in
             # **kwargs
-            if arg.dtype not in ['files', 'file']:
-                # check that argname is defined
-                if argname in kwargs:
-                    # copy value from kwargs (as deep copy)
-                    value = type(kwargs[argname])(kwargs[argname])
-                    # update self.args
-                    self.args[argname].value = [value]
-                    # then continue
-                    continue
-                else:
-                    emsg = ('DevError: Argument {0} is not defined in call to'
-                            ' {1}'.format(argname, func_name))
-                    WLOG(self.drs_params, 'error', emsg)
-                    continue
+            if self.args[argname].dtype not in ['files', 'file']:
+                self.get_non_file_arg(argname, kwargs, kind='arg')
             # -----------------------------------------------------------------
             # else we are dealing with a set of files
-            self.args[argname].value = dict()
-            # for each index file find all valid files (for this argument)
-            for it, index_file in index_files:
-                # get directory
-                directory = dir_list[it]
-                dir_filelist = filelist[directory]
-                # get index
-                index = get_index_data(self.drs_params, index_file, directory)
-                # deal with no index
-                if index is None:
-                    continue
-                # else get list of valid files for this argument
-                gargs = [arg, index, directory, dir_filelist]
-                valid_file_list = self.get_arg_files(*gargs)
-                # append to the value list (by arg.files name as key)
-                for key in valid_file_list.keys():
-                    if key not in self.args[argname].value:
-                        self.args[argname].value[key] = valid_file_list[key]
-                    else:
-                        self.args[argname].value[key] += valid_file_list[key]
+            else:
+                self.get_file_arg(argname, index_files, filelist, dir_list,
+                                  kind='kwarg')
+        # ---------------------------------------------------------------------
+        # loop around keyword arguments
+        for kwargname in self.kwargs:
+            # -----------------------------------------------------------------
+            # if argument is of dtype "files" or "file" then we need to
+            # look for it in the index file else we need to look in
+            # **kwargs
+            if self.kwargs[kwargname].dtype not in ['files', 'file']:
+                self.get_non_file_arg(kwargname, kwargs, kind='kwarg')
+            # ------------------------------------------------------------
+            # else we are dealing with a set of files
+            else:
+                self.get_file_arg(kwargname, index_files, filelist, dir_list,
+                                  kind='kwarg')
+
         # ---------------------------------------------------------------------
         # from the above process we now have the following:
         #    self.args[ARG].value = [argument value]
@@ -1200,18 +1185,99 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # next we need to turn this into a set of runs
         # each run should be in the form:
-        # run[it] = [recipe, arg1, arg2, arg3, ...]
+        #       run[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
         runs = self.generate_runs_from_arg_list()
-
+        # return runs
+        return runs
 
     def generate_runs_from_arg_list(self):
-
+        # get the arguments
         args = self.args
+        kwargs = self.kwargs
 
         # TODO: Contnue from here!!!!!
 
         # return in form
 
+    def get_non_file_arg(self, argname, kwargs, kind='arg'):
+        """
+        Deal with obtaining and setting the values for non file arguments
+
+        :param argname: string, the argument name
+        :param kwargs: dictionary, the keyword arguments from call (must
+                       contain "argname")
+
+        :return None:
+        """
+        func_name = __NAME__ + '.DrsRecipe.get_non_file_arg()'
+        # get instance from self.args
+        if kind == 'arg':
+            arg = self.args[argname]
+            arg_string = 'Argument'
+        else:
+            arg = self.kwargs[argname]
+            arg_string = 'Keyword Argument'
+        # check that argname is defined
+        if argname in kwargs:
+            # copy value from kwargs (as deep copy)
+            value = type(kwargs[argname])(kwargs[argname])
+            # update self.args
+            arg.value = [value]
+        elif kind == 'arg':
+            emsg = ('DevError: {0} {1} is not defined in call to {2}'
+                    ''.format(arg_string, argname, func_name))
+            WLOG(self.drs_params, 'error', emsg)
+        # update self
+        if kind == 'arg':
+            self.args[argname] = arg
+        else:
+            self.kwargs[argname] = arg
+
+    def get_file_arg(self, argname, index_files, filelist, dir_list,
+                     kind='arg'):
+        """
+        Deal with obtaining and sorting the values for file arguments
+
+        :param argname: string, the argument name
+        :param index_files: list of strings, the absolute paths to the index
+                            files
+        :param filelist: list of strings, the basenames for all the files
+        :param dir_list: list of strings, the sub-directory tree names for
+                         each file in "filelist"
+
+        :return None:
+        """
+        # get instance from self.args
+        if kind == 'arg':
+            arg = self.args[argname]
+        else:
+            arg = self.kwargs[argname]
+        # set up the value of arg
+        arg.value = dict()
+        # for each index file find all valid files (for this argument)
+        for it, index_file in index_files:
+            # get directory
+            directory = dir_list[it]
+            dir_filelist = filelist[directory]
+            # get index
+            index = get_index_data(self.drs_params, index_file, directory)
+            # deal with no index
+            if index is None:
+                continue
+            # else get list of valid files for this argument
+            gargs = [arg, index, directory, dir_filelist]
+            valid_file_list = self.get_arg_files(*gargs)
+            # append to the value list (by arg.files name as key)
+            for key in valid_file_list.keys():
+                if key not in self.args[argname].value:
+                    arg.value[key] = valid_file_list[key]
+                else:
+                    arg.value[key] += valid_file_list[key]
+        # update self
+        if kind == 'arg':
+            self.args[argname] = arg
+        else:
+            self.kwargs[argname] = arg
 
     def get_input_dir(self):
         """
