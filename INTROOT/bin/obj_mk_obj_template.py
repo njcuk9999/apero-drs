@@ -182,6 +182,9 @@ def main(night_name=None, files=None):
             wave_fiber = 'AB'
         else:
             wave_fiber = p['FIBER']
+        # need to remove calibDB from p
+        calibDB = dict(p['CALIBDB'])
+        del p['CALIBDB']
         # get wave solution
         wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
                                            return_wavemap=True,
@@ -191,7 +194,10 @@ def main(night_name=None, files=None):
         loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
 
         # add wave to wave list
-        wave_list.append('{0}'.format(loc['WAVEFILE']))
+        wave_list.append(loc['WAVEFILE'])
+
+        # add calibDB back to p
+        p['CALIBDB'] = dict(calibDB)
 
         # ------------------------------------------------------------------
         # Get the Barycentric correction from header
