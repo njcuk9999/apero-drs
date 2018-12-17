@@ -70,88 +70,14 @@ def input_setup(name, fkwargs=None, quiet=False):
         display_system_info(recipe.drs_params)
     # -------------------------------------------------------------------------
     # interface between "recipe", "fkwargs" and command line (via argparse)
-    input_parameters = spirouRecipe.recipe_setup(recipe, fkwargs)
+    recipe.recipe_setup(fkwargs)
     # -------------------------------------------------------------------------
     # deal with options from input_parameters
-    input_parameters = option_manager(recipe, input_parameters)
-    # -------------------------------------------------------------------------
-    # add to DRS parameters
-    drs_params = recipe.drs_params
-    drs_params['INPUT'] = input_parameters
-    drs_params.set_source('INPUT', func_name)
-    # push values of keys matched in input_parameters into drs_parameters
-    for key in input_parameters.keys():
-        if key in drs_params:
-            drs_params[key] = input_parameters[key]
-            drs_params.set_source(key, func_name)
+    recipe.option_manager()
     # update default params
-    spirouConfig.Constants.UPDATE_PP(drs_params)
+    spirouConfig.Constants.UPDATE_PP(recipe.drs_params)
     # return arguments
-    return drs_params
-
-
-# =============================================================================
-# option arguments
-# =============================================================================
-def option_manager(recipe, input_parameters):
-    """
-    Takes all the optional parameters and deals with them.
-
-    :param recipe:
-    :param input_parameters:
-    :return:
-    """
-    # get drs params
-    params = recipe.drs_params
-    # loop around options
-    for key in recipe.kwargs:
-        # get keyword argument
-        kwarg = recipe.kwargs[key]
-        # make sure kind == 'kwarg
-        if kwarg.kind != 'kwarg':
-            continue
-        # check that kwarg is in input_parameters
-        if kwarg.name not in input_parameters:
-            eargs = [kwarg.name, recipe.name]
-            emsg = 'Cannot find input "{0}" for recipe "{1}"'
-            kwarg.exception(emsg.format(*eargs))
-        # check that kwarg is None (should be None if we need to change it)
-        if input_parameters[kwarg.name] is not None:
-            # if we have the value we should pipe it into default_ref
-            #  i.e. the value in the parameters file
-            if kwarg.default_ref is not None:
-                param_key = kwarg.default_ref
-                value = input_parameters[kwarg.name]
-            else:
-                continue
-        # check that default is None
-        elif kwarg.default is not None:
-            value, param_key = kwarg.default, None
-        # else check that we have default_ref
-        elif kwarg.default_ref is None:
-            eargs = [kwarg.name, recipe.name]
-            emsg = '"default_ref" is unset for "{0}" for recipe "{1}"'
-            kwarg.exception(emsg.format(*eargs))
-            value, param_key = None, None
-        # else check that default_ref is in drs_params (i.e. defined in a
-        #   constant file)
-        elif kwarg.default_ref not in params:
-            eargs = [kwarg.default_ref, kwarg.name, recipe.name]
-            emsg = ('"default_ref"="{0}" not found in constant params for '
-                    ' "{1}" for recipe "{2}"')
-            kwarg.exception(emsg.format(*eargs))
-            value, param_key = None, None
-        # else we have all we need to reset the value
-        else:
-            value = params[kwarg.default_ref]
-            param_key = kwarg.default_ref
-        # if we have reached this point then set value
-        input_parameters[kwarg.name] = value
-        if param_key is not None:
-            input_parameters[kwarg.default_ref] = value
-
-    # return the parameters
-    return input_parameters
+    return recipe, recipe.drs_params
 
 
 # =============================================================================
