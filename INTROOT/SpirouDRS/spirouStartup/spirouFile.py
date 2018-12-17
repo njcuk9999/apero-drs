@@ -363,13 +363,13 @@ class DrsFitsFile(DrsInputFile):
             # check if key is in header
             if key not in self.header:
                 eargs = [argstring, key, self.filename]
-                emsgs = ['\t{0} Header key "{1}" not found for '
+                emsgs = ['{0} Header key "{1}" not found for '
                          'file "{2}"'.format(*eargs)]
                 return False, None, emsgs
             elif debug:
-                dmsg = '\t{0} Header key {1} found for {2}'
+                dmsg = '{0} Header key {1} found for {2}'
                 dargs = [argstring, key, self.filename]
-                print(dmsg.format(*dargs))
+                WLOG(params, '', dmsg.format(*dargs))
         # -----------------------------------------------------------------
         # Step 2: search for correct value for each header key
         # loop around required keys
@@ -385,17 +385,22 @@ class DrsFitsFile(DrsInputFile):
             rvalue = rkeys[drskey].strip()
             # check if key is valid
             if rvalue != value:
-                emsg1 = '\t{0} Header key {1} value is incorrect'
-                emsg2 = '\t\tvalue = {2}   required = {3}'
-                emsg3 = '\t\tfile = {4}'
+                if debug:
+                    dmsg = '{0} Header key {1} value is incorrect ({2})'
+                    dargs = [argstring, key, rvalue]
+                    WLOG(params, '', dmsg.format(*dargs))
+
+                emsg1 = '{0} Header key {1} value is incorrect'
+                emsg2 = '\tvalue = {2}   required = {3}'
+                emsg3 = '\tfile = {4}'
                 eargs = [argstring, key, value, rvalue, self.filename]
                 emsgs = [emsg1.format(*eargs), emsg2.format(*eargs),
                          emsg3.format(*eargs)]
                 return False, None, emsgs
             elif debug:
-                dmsg = '\t{0} Header key {1} value is correct ({2})'
+                dmsg = '{0} Header key {1} value is correct ({2})'
                 dargs = [argstring, key, rvalue]
-                print(dmsg.format(*dargs))
+                WLOG(params, '', dmsg.format(*dargs))
             else:
                 wmsg = '{0} File "{1}" valid for recipe {2}="{3}"'
                 wargs = [argstring, self.basename, key, value]
