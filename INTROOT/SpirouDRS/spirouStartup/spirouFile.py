@@ -65,8 +65,10 @@ class DrsInputFile:
         self.recipe = kwargs.get('recipe', None)
         # set empty file attributes
         self.filename = None
-        self.directory = None
+        self.path = None
         self.basename = None
+        self.inputdir = None
+        self.directory = None
         self.data = None
         self.header = None
         # allow instance to be associated with a filename
@@ -89,7 +91,8 @@ class DrsInputFile:
         # set filename, basename and directory name
         self.filename = str(filename)
         self.basename = os.path.basename(filename)
-        self.directory = os.path.dirname(filename)
+        self.path = os.path.dirname(filename)
+
 
     def check_filename(self):
         # check that filename isn't None
@@ -179,10 +182,10 @@ class DrsInputFile:
         cond = os.path.exists(self.filename)
         if cond:
             msg = 'File "{0}" found in directory "{1}"'
-            args = [self.basename, self.directory]
+            args = [self.basename, self.path]
         else:
             msg = 'File "{0}" does not exist in directory "{1}".'
-            args = [self.basename, self.directory]
+            args = [self.basename, self.path]
 
         # deal with printout and return
         if (not cond) and (not quiet):
