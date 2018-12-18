@@ -256,7 +256,7 @@ class Logger:
                 # noinspection PyTypeChecker
                 errorstring += error[0] + '\n'
             # deal with debugging
-            if spirouConfig.Constants.DEBUG():
+            if p['DRS_DEBUG']:
                 debug_start(errorstring)
             else:
                 EXIT_TYPE(errorstring)
@@ -387,7 +387,7 @@ def debug_start(errorstring):
     # get colour
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.BColors.ENDC
+    nocol = spirouConfig.Constants.Colors.ENDC
     if addcolour:
         cc = clevels['error']
     else:
@@ -687,9 +687,9 @@ def printcolour(p, key='all', func_name=None, colour=None):
         if colour1 is not None:
             return colour1, colour2
     # get the colours
-    clevels = spirouConfig.Constants.COLOUREDLEVELS()
-    addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.BColors.ENDC
+    clevels = spirouConfig.Constants.COLOUREDLEVELS(p)
+    addcolour = spirouConfig.Constants.COLOURED_LOG(p)
+    nocol = spirouConfig.Constants.Colors.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
         emsg1 = 'key={0} not in spirouConfig.Constants.COLOUREDLEVELS()'
@@ -725,7 +725,6 @@ def override_colour(p, colour):
 
     # get the colour codes
     codes = spirouConfig.Constants.Colors
-    bcodes = spirouConfig.Constants.BColors
     # get theme
     if 'THEME' not in p:
         theme = 'DARK'
@@ -774,7 +773,7 @@ def override_colour(p, colour):
         else:
             colour1 = None
     # last code should be the end
-    colour2 = bcodes.ENDC
+    colour2 = codes.ENDC
     # return colour1 and colour2
     return colour1, colour2
 
