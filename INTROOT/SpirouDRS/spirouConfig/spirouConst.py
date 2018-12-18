@@ -2720,13 +2720,13 @@ def LOG_CAUGHT_WARNINGS():
 
 
 # noinspection PyPep8Naming
-def COLOUREDLEVELS():
+def COLOUREDLEVELS(p=None):
     """
     Defines the colours if using coloured log.
     Allowed colour strings are found here:
             see here:
             http://ozzmaker.com/add-colour-to-text-in-python/
-            or in spirouConst.bcolors (colour class):
+            or in spirouConst.colors (colour class):
                 HEADER, OKBLUE, OKGREEN, WARNING, FAIL,
                 BOLD, UNDERLINE
 
@@ -2737,13 +2737,17 @@ def COLOUREDLEVELS():
                          http://ozzmaker.com/add-colour-to-text-in-python/
     """
     # reference:
+    colors = Colors()
+    if p is not None:
+        if 'THEME' in p:
+            colors.update_theme(p['THEME'])
     # http://ozzmaker.com/add-colour-to-text-in-python/
-    clevels = dict(error=BColors.FAIL,       # red
-                   warning=BColors.WARNING,  # yellow
-                   info=BColors.OKBLUE,      # blue
-                   graph=BColors.OKBLUE,     # blue
-                   all=BColors.OKGREEN,      # green
-                   debug=BColors.DEBUG)    # green
+    clevels = dict(error=colors.fail,       # red
+                   warning=colors.warning,  # yellow
+                   info=colors.okblue,      # blue
+                   graph=colors.ok,         # magenta
+                   all=colors.okgreen,      # green
+                   debug=colors.debug)      # green
     return clevels
 
 # defines the colours
@@ -2756,7 +2760,6 @@ class Colors:
     MAGENTA1 = '\033[1;95;1m'
     CYAN1 = '\033[1;96;1m'
     WHITE1 = '\033[97;1m'
-
     BLACK2 = '\033[1;30m'
     RED2 = '\033[1;31m'
     GREEN2 = '\033[1;32m'
@@ -2765,38 +2768,39 @@ class Colors:
     MAGENTA2 = '\033[1;35m'
     CYAN2 = '\033[1;36m'
     WHITE2 = '\033[1;37m'
+    ENDC = '\033[0;0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
+    def __init__(self):
+        if 'THEME' not in pp:
+            self.theme = 'DARK'
+        else:
+            self.theme = pp['THEME']
+        self.endc = self.ENDC
+        self.bold = self.BOLD
+        self.underline = self.UNDERLINE
+        self.update_theme()
 
-# defines the level colours
-class BColors:
-
-    if 'THEME' not in pp:
-        theme = 'DARK'
-    else:
-        theme = pp['THEME']
-
-    if theme == 'DARK':
-        HEADER = Colors.MAGENTA1
-        OKBLUE = Colors.BLUE1
-        OKGREEN = Colors.GREEN1
-        WARNING = Colors.YELLOW1
-        FAIL = Colors.RED1
-        DEBUG = Colors.CYAN1
-        ENDC = '\033[0;0m'
-        BOLD = '\033[1m'
-        UNDERLINE = '\033[4m'
-    else:
-        HEADER = Colors.MAGENTA2
-        OKBLUE = Colors.CYAN2
-        OKGREEN = Colors.GREEN2
-        WARNING = Colors.BLUE2
-        FAIL = Colors.RED2
-        DEBUG = Colors.MAGENTA2
-        ENDC = '\033[0;0m'
-        BOLD = '\033[1m'
-        UNDERLINE = '\033[4m'
-
-
+    def update_theme(self, theme=None):
+        if theme is not None:
+            self.theme = theme
+        if self.theme == 'DARK':
+            self.header = self.MAGENTA1
+            self.okblue = self.BLUE1
+            self.okgreen = self.GREEN1
+            self.ok = self.MAGENTA2
+            self.warning = self.YELLOW1
+            self.fail = self.RED1
+            self.debug = self.BLACK1
+        else:
+            self.header = self.MAGENTA2
+            self.okblue = self.MAGENTA2
+            self.okgreen = self.BLACK2
+            self.ok = self.MAGENTA2
+            self.warning = self.BLUE2
+            self.fail = self.RED2
+            self.debug = self.GREEN2
 
 
 # noinspection PyPep8Naming
@@ -2816,7 +2820,7 @@ def COLOURED_LOG(p=None):
     elif 'COLOURED_LOG' not in p:
         clog = pp['COLOURED_LOG']
     else:
-        clog = True
+        clog = p['COLOURED_LOG']
     return clog
 
 
