@@ -211,7 +211,7 @@ def main(night_name=None, files=None):
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
         wargs = [it + 1, len(tell_files), basefilename, dv]
-        WLOG(p, '', wmsg.format(*wargs))
+        WLOG(p, 'info', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # shift to correct berv
         dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')
