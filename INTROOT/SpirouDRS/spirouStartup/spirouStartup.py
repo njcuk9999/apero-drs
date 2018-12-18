@@ -47,7 +47,7 @@ ConfigError = spirouConfig.ConfigError
 TYPENAMES = {int: 'integer', float: 'float', list: 'list',
              bool: 'bool', str: 'str'}
 # define the print/log header divider
-HEADER = ' *****************************************'
+HEADER = ' ' + '*' * 65
 
 
 # =============================================================================
@@ -1860,8 +1860,15 @@ def display_drs_title(p):
 
     :return None:
     """
+    # get colours
+    colors = spirouConfig.Constants.Colors()
+
     # create title
-    title = ' * {DRS_NAME} @{PID} ({DRS_VERSION})'.format(**p)
+    title = ' * '
+    title += colors.RED1 + ' {DRS_NAME} ' + colors.okgreen + '@{PID}'
+    title += ' (' + colors.BLUE1 + 'V{DRS_VERSION}' + colors.okgreen + ')'
+    title += colors.ENDC
+    title = title.format(**p)
 
     # Log title
     display_title(p, title)
@@ -1880,13 +1887,13 @@ def display_title(p, title):
     """
     # Log title
     WLOG(p, '', HEADER)
-    WLOG(p, '', '{0}'.format(title))
+    WLOG(p, '', '{0}'.format(title), wrap=False)
     WLOG(p, '', HEADER)
 
 
 def display_ee(p):
-    bcolors = spirouConfig.Constants.BColors
-
+    # get colours
+    colors = spirouConfig.Constants.Colors()
     # noinspection PyPep8
     logo = ['',
             '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
@@ -1902,10 +1909,9 @@ def display_ee(p):
             ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
             '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
             '']
-
     for line in logo:
-        WLOG(p, '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
-
+        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
+    WLOG(p, '', HEADER)
 
 def display_initial_parameterisation(p):
     """
@@ -1976,6 +1982,7 @@ def display_initial_parameterisation(p):
     if p['DRS_DEBUG'] > 0:
         WLOG(p, '', ('                    DRS_DEBUG is set, debug mode level'
                      ':{DRS_DEBUG}').format(**p))
+    WLOG(p, '', HEADER)
 
 
 def display_run_files(p):
