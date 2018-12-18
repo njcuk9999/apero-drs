@@ -206,10 +206,8 @@ def sort_by_name(filelist):
         baselist.append(basename)
     # get sorted base file list
     indices = np.argsort(baselist)
-    # apply sorted base file list to file list
-    sorted_filelist = np.array(filelist)[indices]
     # return sorted filelist
-    return sorted_filelist
+    return indices
 
 
 # =============================================================================
