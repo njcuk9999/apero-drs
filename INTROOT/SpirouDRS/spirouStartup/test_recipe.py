@@ -37,27 +37,16 @@ def main(directory=None, filelist=None, **kwargs):
     # assign function calls
     fkwargs = dict(directory=directory, filelist=filelist, **kwargs)
     # deal with command line inputs / function call inputs
-    p = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
+    recipe, p = spirouStartup.spirouStartup2.input_setup(__NAME__, fkwargs)
     # display everything that comes from "INPUT"
-    print_input(p)
+    for i in range(10):
+        WLOG(p, '', 'Line {0} of code'.format(i+1))
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    p = spirouStartup.End(p, outputs=None)
     # return a copy of locally defined variables in the memory
     return dict(locals())
-
-
-def print_input(params):
-    for param in params['INPUT']:
-        value = params['INPUT'][param]
-        pargs = dict(name=param, value=value, kind=type(value))
-
-        is_list = type(value) in [list, np.ndarray]
-
-        if is_list:
-            print('{name} ({kind})'.format(**pargs))
-            for it in range(len(value[0])):
-                args = [it, value[0][it], value[1][it]]
-                print('\t[{0}]: {1} {2}'.format(*args))
-        else:
-            print('{name} = {value}\t({kind})'.format(**pargs))
 
 
 # =============================================================================
