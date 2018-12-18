@@ -30,7 +30,7 @@ WLOG = spirouCore.wlog
 # get constants
 CONSTANTS = spirouConfig.Constants
 # get print colours
-BCOLOR = CONSTANTS.BColors
+COLOR = CONSTANTS.Colors()
 # get param dict
 ParamDict = spirouConfig.ParamDict
 # get the config error
@@ -49,7 +49,7 @@ STRTYPE[np.ndarray] = 'np.ndarray'
 INDEX_FILE = 'index.fits'
 INDEX_FILE_NAME_COL = 'FILENAME'
 
-DEBUG = True
+DEBUG = False
 # -----------------------------------------------------------------------------
 
 
@@ -69,18 +69,18 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # get parameters from drs_params
         params = self.recipe.drs_params
         # construct error message
-        underline = BCOLOR.UNDERLINE
+        underline = COLOR.UNDERLINE
         if self.recipe.drs_params['COLOURED_LOG']:
-            red, end = BCOLOR.FAIL, BCOLOR.ENDC
-            yellow, blue = BCOLOR.WARNING, BCOLOR.OKBLUE
+            red, end = COLOR.RED1, COLOR.ENDC
+            yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
-            red, end = BCOLOR.ENDC, BCOLOR.ENDC
-            yellow, blue = BCOLOR.ENDC, BCOLOR.ENDC
+            red, end = COLOR.ENDC, COLOR.ENDC
+            yellow, blue = COLOR.ENDC, COLOR.ENDC
         # Manually print error message (with help)
         print()
         print(red + underline + 'Argument Error:' + end)
         print()
-        print(BCOLOR.WARNING + message + end)
+        print(COLOR.warning + message + end)
         print()
         print(blue + self.format_help() + end)
         # log message (without print)
@@ -898,7 +898,10 @@ class DrsRecipe(object):
         self.drs_params.set_sources(['DRS_NAME', 'DRS_VERSION'], const_name)
         # get program name
         self.drs_params['PROGRAM'] = CONSTANTS.PROGRAM(self.drs_params)
-        self.drs_params.set_source('program', func_name)
+        self.drs_params.set_source('PROGRAM', func_name)
+        # TODO: Phase out use of LOG_OPT
+        self.drs_params['LOG_OPT'] = self.drs_params['PROGRAM']
+        self.drs_params.set_source('LOG_OPT', func_name)
         # check input parameters
         self.drs_params = spirouConfig.CheckCparams(self.drs_params)
         # ---------------------------------------------------------------------
@@ -1609,9 +1612,9 @@ def check_file_exclusivity(recipe, filename, argname, drs_file, logic,
     params = recipe.drs_params
     # deal with no alltypelist
     if alltypelist is None:
-        alltypelist = outtypes
+        alltypelist = list(outtypes)
     else:
-        alltypelist += outtypes
+        alltypelist = list(alltypelist) + list(outtypes)
 
     # if we have no files yet we don't need to check exclusivity
     if len(alltypelist) == 0:
