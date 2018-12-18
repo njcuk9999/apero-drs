@@ -47,7 +47,7 @@ ConfigError = spirouConfig.ConfigError
 TYPENAMES = {int: 'integer', float: 'float', list: 'list',
              bool: 'bool', str: 'str'}
 # define the print/log header divider
-HEADER = ' *****************************************'
+HEADER = ' ' + '*' * 65
 
 
 # =============================================================================
@@ -460,7 +460,7 @@ def multi_file_setup(p, files=None, log=True, skipcheck=False):
     return p, locations
 
 
-def load_calibdb(p, calibdb=True):
+def load_calibdb(p, calibdb=True, header=None):
     """
     Load calibration (on startup) this is loaded by default when
     spirouStartup.spirouStartup.initial_file_setup
@@ -483,7 +483,12 @@ def load_calibdb(p, calibdb=True):
                 if calibdb is True:
                     calibDB: dictionary, the calibration database dictionary
     """
-    if calibdb:
+    if header is not None:
+        spirouDB.CopyCDBfiles(p, header=header)
+        calib_db, p = spirouDB.GetCalibDatabase(p, header=header)
+        p['CALIBDB'] = calib_db
+        p.set_source('CALIBDB', __NAME__ + '/run_startup()')
+    elif calibdb:
         if not os.path.exists(p['DRS_CALIB_DB']):
             WLOG(p, 'error',
                  'CalibDB: {0} does not exist'.format(p['DRS_CALIB_DB']))
@@ -1855,8 +1860,15 @@ def display_drs_title(p):
 
     :return None:
     """
+    # get colours
+    colors = spirouConfig.Constants.Colors()
+
     # create title
-    title = ' * {DRS_NAME} @{PID} ({DRS_VERSION})'.format(**p)
+    title = ' * '
+    title += colors.RED1 + ' {DRS_NAME} ' + colors.okgreen + '@{PID}'
+    title += ' (' + colors.BLUE1 + 'V{DRS_VERSION}' + colors.okgreen + ')'
+    title += colors.ENDC
+    title = title.format(**p)
 
     # Log title
     display_title(p, title)
@@ -1875,13 +1887,13 @@ def display_title(p, title):
     """
     # Log title
     WLOG(p, '', HEADER)
-    WLOG(p, '', '{0}'.format(title))
+    WLOG(p, '', '{0}'.format(title), wrap=False)
     WLOG(p, '', HEADER)
 
 
 def display_ee(p):
-    bcolors = spirouConfig.Constants.BColors
-
+    # get colours
+    colors = spirouConfig.Constants.Colors()
     # noinspection PyPep8
     logo = ['',
             '      `-+syyyso:.   -/+oossssso+:-`   `.-:-`  `...------.``                                 ',
@@ -1897,10 +1909,9 @@ def display_ee(p):
             ' -sdmmmmmmmmmmmmdo`  -mmmmmm/        hmmmmm:   smmmmm-  -osssss/`-osssssso/.  -sssssosssss+ ',
             '    ./osyhhhyo+-`    .mmmddh/        sddhhy-   /mdddh-    -//::-`  `----.      `.---.``.--. ',
             '']
-
     for line in logo:
-        WLOG(p, '', bcolors.FAIL + line + bcolors.ENDC, wrap=False)
-
+        WLOG(p, '', colors.RED1 + line + colors.ENDC, wrap=False)
+    WLOG(p, '', HEADER)
 
 def display_initial_parameterisation(p):
     """
@@ -1971,6 +1982,7 @@ def display_initial_parameterisation(p):
     if p['DRS_DEBUG'] > 0:
         WLOG(p, '', ('                    DRS_DEBUG is set, debug mode level'
                      ':{DRS_DEBUG}').format(**p))
+    WLOG(p, '', HEADER)
 
 
 def display_run_files(p):
