@@ -95,11 +95,13 @@ def main(night_name=None, files=None):
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
 
     # sort files by name
-    tellu_db_files = spirouImage.SortByName(tellu_db_files)
+    sortmask = spirouImage.SortByName(tellu_db_files)
+    tellu_db_files = np.array(tellu_db_files)[sortmask]
+    tellu_db_names = np.array(tellu_db_names)[sortmask]
 
     # filter by object name (only keep OBJNAME objects) and only keep
     #   unique filenames
-    tell_files = []
+    tell_files, tell_names = [], []
     for it in range(len(tellu_db_files)):
         # check that objname is correct
         cond1 = loc['OBJNAME'] in tellu_db_names[it]
@@ -108,6 +110,7 @@ def main(night_name=None, files=None):
         # append to file list if criteria correct
         if cond1 and cond2:
             tell_files.append(tellu_db_files[it])
+            tell_names.append(tellu_db_names[it])
 
     # log if we have no files
     if len(tell_files) == 0:
