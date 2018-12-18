@@ -28,8 +28,6 @@ __NAME__ = 'spirouFile.py'
 WLOG = spirouCore.wlog
 # Get constants
 CONSTANTS = spirouConfig.Constants
-# get print colours
-BCOLOR = CONSTANTS.BColors
 # get the default log_opt
 DPROG = CONSTANTS.DEFAULT_LOG_OPT()
 # get forbidden key list from constants
@@ -401,13 +399,9 @@ class DrsFitsFile(DrsInputFile):
                          emsg3.format(*eargs)]
                 return False, None, emsgs
             elif debug:
-                dmsg = '{0} Header key {1} value is correct ({2})'
-                dargs = [argstring, key, rvalue]
+                dmsg = '{0} File "{1}" valid for recipe {2}="{3}"'
+                dargs = [argstring, self.basename, key, value]
                 WLOG(params, '', dmsg.format(*dargs))
-            else:
-                wmsg = '{0} File "{1}" valid for recipe {2}="{3}"'
-                wargs = [argstring, self.basename, key, value]
-                WLOG(params, '', wmsg.format(*wargs))
         # else file is valid
         return True, self, []
 
