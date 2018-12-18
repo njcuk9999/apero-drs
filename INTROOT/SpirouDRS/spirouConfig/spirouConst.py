@@ -2567,7 +2567,7 @@ def LOG_FILE_NAME(p, dir_data_msg=None):
     """
     # deal with no dir_data_msg
     if dir_data_msg is None:
-        dir_data_msg = p.get('DRS_DATA_MSG', None)
+        dir_data_msg = p.get('DRS_DATA_MSG', './')
 
     # deal with no PID
     if 'PID' not in p:
@@ -2661,7 +2661,8 @@ def LOG_TRIG_KEYS():
                       same as spirouConst.WRITE_LEVELS()
     """
     # The trigger character to display for each
-    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
+    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~',
+                    debug='+')
     return trig_key
 
 
@@ -2689,7 +2690,8 @@ def WRITE_LEVEL():
                          of each trigger level. Keys must be the same as
                          spirouConst.LOG_TRIG_KEYS()
     """
-    write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
+    write_level = dict(error=3, warning=2, info=1, graph=0, all=0,
+                       debug=0)
     return write_level
 
 
@@ -2698,7 +2700,7 @@ def LOG_STORAGE_KEYS():
     # The storage key to use for each key
     storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
                     warning='LOGGER_WARNING', info='LOGGER_INFO',
-                    graph='LOGGER_ALL')
+                    graph='LOGGER_ALL', debug='LOGGER_DEBUG')
     return storekey
 
 
@@ -2736,15 +2738,36 @@ def COLOUREDLEVELS():
     """
     # reference:
     # http://ozzmaker.com/add-colour-to-text-in-python/
-    clevels = dict(error=BColors.FAIL,  # red
+    clevels = dict(error=BColors.FAIL,       # red
                    warning=BColors.WARNING,  # yellow
-                   info=BColors.OKBLUE,  # green
-                   graph=BColors.OKBLUE,  # green
-                   all=BColors.OKGREEN)  # green
+                   info=BColors.OKBLUE,      # blue
+                   graph=BColors.OKBLUE,     # blue
+                   all=BColors.OKGREEN,      # green
+                   debug=BColors.DEBUG)    # green
     return clevels
 
-
 # defines the colours
+class Colors:
+    BLACK1 = '\033[90;1m'
+    RED1 = '\033[1;91;1m'
+    GREEN1 = '\033[92;1m'
+    YELLOW1 = '\033[1;93;1m'
+    BLUE1 = '\033[94;1m'
+    MAGENTA1 = '\033[1;95;1m'
+    CYAN1 = '\033[1;96;1m'
+    WHITE1 = '\033[97;1m'
+
+    BLACK2 = '\033[1;30m'
+    RED2 = '\033[1;31m'
+    GREEN2 = '\033[1;32m'
+    YELLOW2 = '\033[1;33m'
+    BLUE2 = '\033[1;34m'
+    MAGENTA2 = '\033[1;35m'
+    CYAN2 = '\033[1;36m'
+    WHITE2 = '\033[1;37m'
+
+
+# defines the level colours
 class BColors:
 
     if 'THEME' not in pp:
@@ -2753,23 +2776,28 @@ class BColors:
         theme = pp['THEME']
 
     if theme == 'DARK':
-        HEADER = '\033[95;1m'
-        OKBLUE = '\033[94;1m'
-        OKGREEN = '\033[92;1m'
-        WARNING = '\033[1;93;1m'
-        FAIL = '\033[1;91;1m'
+        HEADER = Colors.MAGENTA1
+        OKBLUE = Colors.BLUE1
+        OKGREEN = Colors.GREEN1
+        WARNING = Colors.YELLOW1
+        FAIL = Colors.RED1
+        DEBUG = Colors.CYAN1
         ENDC = '\033[0;0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
     else:
-        HEADER = '\033[95;1m'
-        OKBLUE = '\033[1;36m'
-        OKGREEN = '\033[1;32m'
-        WARNING = '\033[1;34m'
-        FAIL = '\033[1;31m'
+        HEADER = Colors.MAGENTA2
+        OKBLUE = Colors.CYAN2
+        OKGREEN = Colors.GREEN2
+        WARNING = Colors.BLUE2
+        FAIL = Colors.RED2
+        DEBUG = Colors.MAGENTA2
         ENDC = '\033[0;0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
+
+
+
 
 # noinspection PyPep8Naming
 def COLOURED_LOG(p=None):
