@@ -417,6 +417,8 @@ def debug_start(errorstring):
 
             # noinspection PyBroadException
             try:
+                from IPython import embed
+                embed()
                 import ipdb
                 ipdb.set_trace()
             except:
