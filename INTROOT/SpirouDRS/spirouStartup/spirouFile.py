@@ -69,6 +69,8 @@ class DrsInputFile:
         self.directory = None
         self.data = None
         self.header = None
+        self.comments = None
+        self.index = None
         # allow instance to be associated with a filename
         self.set_filename(kwargs.get('filename', None))
 
@@ -256,6 +258,7 @@ class DrsFitsFile(DrsInputFile):
         self.data = None
         self.header = None
         self.comments = None
+        self.index = None
         # set additional attributes
         self.shape = None
         self.hdict = OrderedDict()
