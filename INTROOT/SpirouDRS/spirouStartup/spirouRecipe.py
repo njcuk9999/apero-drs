@@ -38,7 +38,7 @@ ConfigError = spirouConfig.ConfigError
 # define hard display limit
 HARD_DISPLAY_LIMIT = 99
 # define display strings for types
-STRTYPE = dict()
+STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
 STRTYPE[float] = 'float'
 STRTYPE[str] = 'str'
@@ -49,7 +49,7 @@ STRTYPE[np.ndarray] = 'np.ndarray'
 INDEX_FILE = 'index.fits'
 INDEX_FILE_NAME_COL = 'FILENAME'
 
-DEBUG = False
+DEBUG = True
 # -----------------------------------------------------------------------------
 
 
@@ -92,13 +92,13 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # get parameterse from drs_params
         program = self.recipe.drs_params['RECIPE']
         # construct error message
-        underline = BCOLOR.UNDERLINE
+        underline = COLOR.UNDERLINE
         if self.recipe.drs_params['COLOURED_LOG']:
-            green, end = BCOLOR.OKGREEN, BCOLOR.ENDC
-            yellow, blue = BCOLOR.WARNING, BCOLOR.OKBLUE
+            green, end = COLOR.GREEN1, COLOR.ENDC
+            yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
-            green, end = BCOLOR.ENDC, BCOLOR.ENDC
-            yellow, blue = BCOLOR.ENDC, BCOLOR.ENDC
+            green, end = COLOR.ENDC, COLOR.ENDC
+            yellow, blue = COLOR.ENDC, COLOR.ENDC
         # Manually print error message (with help)
         print()
         print(green + underline + 'Help for: {0}.py'.format(program) + end)
@@ -453,6 +453,8 @@ class DrsArgument(object):
         self.helpstr = kwargs.get('helpstr', '')
         # get files
         self.files = kwargs.get('files', [])
+        # get limit
+        self.limit = kwargs.get('limit', None)
         # get file logic
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
@@ -472,7 +474,7 @@ class DrsArgument(object):
         self.default_ref = kwargs.get('default_ref', None)
 
         # set empty
-        self.props = dict()
+        self.props = OrderedDict()
         self.value = None
 
     def make_properties(self):
@@ -605,9 +607,9 @@ class DrsRecipe(object):
         # run order
         self.run_order = None
         # define sets of arguments
-        self.args = dict()
-        self.kwargs = dict()
-        self.specialargs = dict()
+        self.args = OrderedDict()
+        self.kwargs = OrderedDict()
+        self.specialargs = OrderedDict()
         # make special arguments
         self.make_specials()
         # define arg list
@@ -615,7 +617,7 @@ class DrsRecipe(object):
         self.str_arg_list = None
         # get drs parameters
         self.drs_params = ParamDict()
-        self.input_params = dict()
+        self.input_params = OrderedDict()
 
     def recipe_setup(self, fkwargs):
         """
@@ -960,7 +962,8 @@ class DrsRecipe(object):
                 return True, test_path
         # ---------------------------------------------------------------------
         # else deal with errors
-        emsgs = ['Directory = "{0}" not found', '\tTried:',
+        emsgs = ['Directory = "{0}" not found'.format(directory),
+                 '\tTried:',
                  '\t\t{0}'.format(directory),
                  '\t\t{0}'.format(test_path)]
         return False, None, emsgs
@@ -1038,6 +1041,7 @@ class DrsRecipe(object):
             else:
                 return False, None, None
         errors += error
+
         # ---------------------------------------------------------------------
         # The next steps are different depending on the DRS file and
         # we may have multiple files
@@ -1067,7 +1071,8 @@ class DrsRecipe(object):
                 # this step is just for 'fits' files, if not fits
                 #    files we can return here
                 if '.fits' in ext:
-                    out = check_file_header(self, argname, drs_file, filename)
+                    out = check_file_header(self, argname, drs_file, filename,
+                                            directory)
                     valid2, filetype, error = out
                     errors += error
                 else:
@@ -1104,7 +1109,8 @@ class DrsRecipe(object):
         else:
             return True, out_files, out_types
 
-    def generate_runs_from_filelist(self, __list__, __filters__, **kwargs):
+    def generate_runs_from_filelist(self, __list__, __filters__=None,
+                                    **kwargs):
         """
         Generates a run instance (or set of run instances) based on the
         "__list__". Each file must be a absolute path. The directory (night name
@@ -1145,35 +1151,35 @@ class DrsRecipe(object):
         # from the unique directory list search for index files (should be one
         #   per file)
         dir_list = list(filelist.keys())
-        index_files = get_index_files(input_dir, dir_list)
+        index_files = get_index_files(self, input_dir, dir_list)
         # ---------------------------------------------------------------------
         # loop around arguments
         for argname in self.args:
+            # get dtype for arg
+            dtype = self.args[argname].dtype
+            # -----------------------------------------------------------------
+            # deal with directory (If not defined set to None)
+            if ('directory' not in kwargs) and (dtype == 'directory'):
+                self.args[argname].value = None
             # -----------------------------------------------------------------
             # if argument is of dtype "files" or "file" then we need to
             # look for it in the index file else we need to look in
             # **kwargs
-            if self.args[argname].dtype not in ['files', 'file']:
+            elif dtype not in ['files', 'file']:
                 self.get_non_file_arg(argname, kwargs, kind='arg')
             # -----------------------------------------------------------------
             # else we are dealing with a set of files
             else:
                 self.get_file_arg(argname, index_files, filelist, dir_list,
-                                  kind='kwarg')
+                                  kind='arg', filters=__filters__)
         # ---------------------------------------------------------------------
         # loop around keyword arguments
         for kwargname in self.kwargs:
+            # get dtype for arg
+            dtype = self.kwargs[kwargname].dtype
             # -----------------------------------------------------------------
-            # if argument is of dtype "files" or "file" then we need to
-            # look for it in the index file else we need to look in
-            # **kwargs
-            if self.kwargs[kwargname].dtype not in ['files', 'file']:
-                self.get_non_file_arg(kwargname, kwargs, kind='kwarg')
-            # ------------------------------------------------------------
-            # else we are dealing with a set of files
-            else:
-                self.get_file_arg(kwargname, index_files, filelist, dir_list,
-                                  kind='kwarg')
+            # just get arg from kwargs
+            self.get_non_file_arg(kwargname, kwargs, kind='kwarg')
 
         # ---------------------------------------------------------------------
         # from the above process we now have the following:
@@ -1189,18 +1195,135 @@ class DrsRecipe(object):
         # next we need to turn this into a set of runs
         # each run should be in the form:
         #       run[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
-        runs = self.generate_runs_from_arg_list()
-        # return runs
+        # define control string
+        cmd = '{0}.py'.format(self.name)
+        # ---------------------------------------------------------------------
+        # first deal with positional arguments
+        cmd_args_groups = self.generate_arg_groups()
+        # ---------------------------------------------------------------------
+        # now deal with keyword arguments
+        cmd_kwargs = ''
+        for kwarg in self.kwargs:
+            # get kwarg value
+            value = self.kwargs[kwarg].value
+            # construct command
+            if value is not None:
+                cmd_kwargs += '--{0}={1} '.format(kwarg, value)
+        # ---------------------------------------------------------------------
+        runs = []
+        for cmd_args in cmd_args_groups:
+            # generate command
+            run_it = '{0} {1} {2}'.format(cmd, cmd_args, cmd_kwargs)
+            # append to runs
+            runs.append(run_it)
+        # return in form:
+        #       runs[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
         return runs
 
-    def generate_runs_from_arg_list(self):
-        # get the arguments
-        args = self.args
-        kwargs = self.kwargs
+    def generate_arg_groups(self):
+        """
+        Generate argument runs from self.args[ARG].value
+        (For use after self.get_file_arg and self.get_non_file_arg for
+         kind='arg')
 
-        # TODO: Contnue from here!!!!!
+        Expects one and only one argument with dtype "file" or "files"
+        Will also deal with argument "directory being set"
 
-        # return in form
+        :return runs: list of runs in form:
+               runs[it] = "recipe arg1 arg2 ... kwarg1= kwarg2="
+        """
+        # get parameters
+        params = self.drs_params
+        # set up filearg
+        filearg, dirarg = None, None
+
+        # storage
+        cmd_args_groups = []
+
+        # find file args (use last)
+        for argname in self.args:
+            # get this instances arg
+            arg = self.args[argname]
+            # deal with directory arg
+            if argname == 'directory':
+                dirarg = arg.value
+            # deal with files
+            elif arg.dtype in ['file', 'files']:
+                filearg = argname
+
+            # TODO: Got to here:
+            # TODO:     Only works currently for 1 argument
+            # TODO:     Need to extend this to have multiple file arguments
+            # TODO:     Or have a different mechanism
+            # TODO:   e.g. cannot work on cal_badpix currently
+
+        # ---------------------------------------------------------------------
+        # Now only deal with file arg
+        arg = self.args[filearg]
+        # ---------------------------------------------------------------------
+        # storage
+        directories, filenames = [], []
+        exp_nums, nexps = [], []
+        # loop around files in arg and get lists of parameters
+        for value in arg.value:
+            directories.append(value.directory)
+            filenames.append(value.index['FILENAME'])
+            exp_nums.append(value.index[params['KW_CMPLTEXP'][0]])
+            nexps.append(value.index[params['KW_NEXP'][0]])
+        # ---------------------------------------------------------------------
+        # group by exposure sets  i.e. if we have 1,2,3,4,1,2,3,1,1,1,2,3,4
+        #                     group as following: 1,2,2,2,3,3,3,4,5,6,6,6,6
+        exp_sets = get_exposure_set(exp_nums)
+        # ---------------------------------------------------------------------
+        # group by directory
+        groups = OrderedDict()
+        for group_dir in np.unique(directories):
+            # each exposure set goes into a directory key/value pair
+            groups[group_dir] = []
+            # group by exposure set
+            for group_exp in set(exp_sets):
+                # loop around files in arg
+                for it, filename in enumerate(filenames):
+                    # get this iterations values
+                    dir_it = directories[it]
+                    exp_set = exp_sets[it]
+                    # deal with bad group
+                    if exp_set != -1:
+                        # get group condition
+                        cond1 = dir_it == group_dir
+                        cond2 = exp_set == group_exp
+                        # add to group if conditions met
+                        if cond1 and cond2:
+                            groups[group_dir].append(filename)
+        # ---------------------------------------------------------------------
+        # now we have the groups we can create the runs
+
+        # loop around group directories
+        for key in list(groups.keys()):
+            # deal with overriding the directory (from kwargs input)
+            if dirarg is not None:
+                directory = str(dirarg)
+            else:
+                directory = str(key)
+            # deal with no files
+            if len(groups[key]) == 0:
+                continue
+            # deal with individual files
+            if arg.limit == 1:
+                for filename in groups[key]:
+                    cmd_args_group = '{0} {1}'.format(directory, filename)
+                    # append to cmd_arg_groups
+                    cmd_args_groups.append(cmd_args_group)
+            else:
+                # deal with files in groups
+                files = ' '.join(groups[key])
+                # construct cmd arg group
+                cmd_args_group = '{0} {1}'.format(directory, files)
+                # append to cmd_arg_groups
+                cmd_args_groups.append(cmd_args_group)
+        # ---------------------------------------------------------------------
+        # return cmd_args_groups
+        return cmd_args_groups
 
     def get_non_file_arg(self, argname, kwargs, kind='arg'):
         """
@@ -1227,7 +1350,7 @@ class DrsRecipe(object):
             # update self.args
             arg.value = [value]
         elif kind == 'arg':
-            emsg = ('DevError: {0} {1} is not defined in call to {2}'
+            emsg = ('DevError: {0} "{1}" is not defined in call to {2}'
                     ''.format(arg_string, argname, func_name))
             WLOG(self.drs_params, 'error', emsg)
         # update self
@@ -1237,7 +1360,7 @@ class DrsRecipe(object):
             self.kwargs[argname] = arg
 
     def get_file_arg(self, argname, index_files, filelist, dir_list,
-                     kind='arg'):
+                     kind='arg', filters=None):
         """
         Deal with obtaining and sorting the values for file arguments
 
@@ -1256,26 +1379,22 @@ class DrsRecipe(object):
         else:
             arg = self.kwargs[argname]
         # set up the value of arg
-        arg.value = dict()
+        arg.value = []
         # for each index file find all valid files (for this argument)
-        for it, index_file in index_files:
+        for it, index_file in enumerate(index_files):
             # get directory
             directory = dir_list[it]
             dir_filelist = filelist[directory]
             # get index
             index = get_index_data(self.drs_params, index_file, directory)
+            # apply filters
+            index = filter_index(self.drs_params, index, filters)
             # deal with no index
             if index is None:
                 continue
             # else get list of valid files for this argument
             gargs = [arg, index, directory, dir_filelist]
-            valid_file_list = self.get_arg_files(*gargs)
-            # append to the value list (by arg.files name as key)
-            for key in valid_file_list.keys():
-                if key not in self.args[argname].value:
-                    arg.value[key] = valid_file_list[key]
-                else:
-                    arg.value[key] += valid_file_list[key]
+            arg.value += self.get_files_valid_for_arg(*gargs)
         # update self
         if kind == 'arg':
             self.args[argname] = arg
@@ -1314,7 +1433,7 @@ class DrsRecipe(object):
         # return input_dir
         return input_dir
 
-    def get_arg_files(self, arg, index, directory, filelist):
+    def get_files_valid_for_arg(self, arg, index, directory, dfilelist):
         """
         Gets all files in filelist that are in "index" that meet the
         requirements of "arg.files"
@@ -1332,20 +1451,21 @@ class DrsRecipe(object):
                              arg.files values are lists of the files found.
         """
         # convert filelist to a numpy array
-        filelist = np.array(filelist, dtype=str)
+        dfilelist = np.array(dfilelist, dtype=str)
+        ifilelist = np.array(index['FILENAME'], dtype=str)
         # get this directories index file name
         ifile = os.path.join(directory, INDEX_FILE)
         icol = INDEX_FILE_NAME_COL
         # get input directory
         input_dir = self.get_input_dir()
         # get path of directory
-        path = os.path.join(input_dir, input_dir)
+        path = os.path.join(input_dir, directory)
         # get params from recipe
         params = self.drs_params
         # ---------------------------------------------------------------------
         # step 1: find all filelist entries in filelist
         # ---------------------------------------------------------------------
-        mask = np.in1d(index['FILENAME'], filelist)
+        mask = np.in1d(ifilelist, dfilelist)
         # deal with no entries
         if np.sum(mask) == 0:
             if DEBUG:
@@ -1363,24 +1483,27 @@ class DrsRecipe(object):
         # step 2: find all files that have the correct header keys
         # ---------------------------------------------------------------------
         # storage of valid files
-        valid_files = dict()
+        valid_files = []
         # loop around required file types
         for drs_file in arg.files:
-            # get argument drs_file.name
-            name = drs_file.name
             # storage for masks
             mask = np.ones(len(indexdata), dtype=bool)
             # get required keyword arguments
             rkeys = drs_file.required_header_keys
             # loop around these keys
             for rkey in rkeys:
+                # get the key
+                if rkey in params:
+                    key = params[rkey][0]
+                else:
+                    key = str(rkey)
                 # deal with rkey not in indexdata
-                if rkey not in indexdata.colnames:
+                if key not in indexdata.colnames:
                     emsg = 'DevError: Key "{0}" not in index file {1}'
-                    eargs = [rkey, ifile]
+                    eargs = [key, ifile]
                     WLOG(params, 'error', emsg.format(*eargs))
                 # mask by rkey value
-                mask &= indexdata[rkey] == rkeys[rkey]
+                mask &= indexdata[key] == rkeys[rkey]
             # once all are done add to valid entries list in the form of a
             #   drs_file for each, adding attributes:
             #          - path, basename
@@ -1388,19 +1511,33 @@ class DrsRecipe(object):
             #          - header (from indexdata[mask][it])
             #                 where it is the row number after masking
             valid_entries = []
-            for v_it, valid_file in indexdata[icol][mask]:
+            used_filenames = []
+            for v_it, valid_file in enumerate(indexdata[icol][mask]):
+                # check that we haven't used this file already
+                if valid_file in used_filenames:
+                    continue
+                # else add this file to valid files
+                else:
+                    used_filenames.append(valid_file)
                 # make new drs_file instances
                 tmp_file = drs_file.new()
                 # get path of file
-                tmp_path = os.path.join(path, tmp_file)
+                tmp_path = os.path.join(path, directory, valid_file)
                 # set filename
                 tmp_file.set_filename(tmp_path, check=False)
                 tmp_file.directory = directory
                 tmp_file.inputdir = input_dir
-                tmp_file.header = indexdata[mask][v_it]
+                # make a header from index data table
+                tmp_file.index = make_dict_from_table(indexdata[mask][v_it])
                 # append to list
                 valid_entries.append(tmp_file)
-            valid_files[name] = valid_entries
+            valid_files += valid_entries
+
+            if DEBUG:
+                wargs = [len(valid_files), drs_file.name]
+                wmsg = '\t - Found {0} valid files for DrsFileType "{1}"'
+                WLOG(params, '', wmsg.format(*wargs))
+
         # return valid files
         return valid_files
 
@@ -1462,8 +1599,6 @@ def check_file_location(recipe, argname, directory, filename):
         input_dir = str(directory)
     else:
         input_dir = recipe.get_input_dir()
-    # define storage for things we tried
-    tries = []
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
@@ -1515,12 +1650,9 @@ def check_file_location(recipe, argname, directory, filename):
         WLOG(params, '', dmsg.format(*dargs))
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
-        # skip files with .fits at the end already
-        if raw_file.endswith('.fits'):
-            continue
         if DEBUG:
             dmsg = 'Argument {0}: File found (Full file path + ".fits"): "{1}"'
-            WLOG(params, '', dmsg.format(argname, raw_file + '.fits'))
+            WLOG(params, '', dmsg.format(argname, raw_file))
         output_files.append(raw_file)
     # check if we are finished here
     if len(output_files) > 0:
@@ -1538,12 +1670,9 @@ def check_file_location(recipe, argname, directory, filename):
         WLOG(params, '', dmsg.format(*dargs))
     # if we have file(s) then add them to output files
     for raw_file in raw_files:
-        # skip files with .fits at the end already
-        if raw_file.endswith('.fits'):
-            continue
         if DEBUG:
             dmsg = 'Argument {0}: File found (Input file path + ".fits"): "{1}"'
-            WLOG(params, '', dmsg.format(argname, raw_file + '.fits'))
+            WLOG(params, '', dmsg.format(argname, raw_file))
         output_files.append(raw_file)
     # check if we are finished here
     if len(output_files) > 0:
@@ -1597,10 +1726,14 @@ def check_file_extension(recipe, argname, filename, ext=None):
         return False, emsgs
 
 
-def check_file_header(recipe, argname, drs_file, filename):
+def check_file_header(recipe, argname, drs_file, filename, directory):
+    # get the input directory
+    inputdir = recipe.get_input_dir()
     # create an instance of this drs_file with the filename set
     file_instance = drs_file.new(filename=filename, recipe=recipe)
     file_instance.read()
+    # set the directory
+    file_instance.directory = get_uncommon_path(directory, inputdir)
     # -----------------------------------------------------------------
     # use file_instances check file header method
     return file_instance.check_file_header(argname=argname, debug=DEBUG)
@@ -1633,7 +1766,7 @@ def check_file_exclusivity(recipe, filename, argname, drs_file, logic,
             eargs = [argname, drs_file.name, alltypelist[-1].name]
             emsgs = ['Argument {0}: File identified as "{1}" however other'
                      ' files identified as "{2}"'.format(*eargs),
-                     '\t\tFiles must match',
+                     '\t\tFiles must match (logic set to "exclusive")',
                      '\t\tFilename = {0}'.format(filename)]
             return False, emsgs
         # if condition is met return True and empty error
@@ -1674,7 +1807,7 @@ def dir_file_filter(inputdir, infilelist):
                       valid input files in that directory (base filenames)
     """
     # define storage
-    out_dict = dict()
+    out_dict = OrderedDict()
     # loop around files
     for filename in infilelist:
         # remove those filenames that do not contain inputdir
@@ -1687,6 +1820,9 @@ def dir_file_filter(inputdir, infilelist):
         basename = os.path.basename(filename)
         dirname = os.path.dirname(filename)
         directory = dirname.split(inputdir)[-1]
+        # make sure directory does not start with a separator
+        while directory.startswith(os.sep):
+            directory = directory[1:]
         # append outfilelist and outfdict
         if directory not in out_dict:
             out_dict[directory] = [basename]
@@ -1696,7 +1832,7 @@ def dir_file_filter(inputdir, infilelist):
     return out_dict
 
 
-def get_index_files(inputdir, outudirlist):
+def get_index_files(recipe, inputdir, outudirlist):
     """
     From a list of directories "outudirlist" and an input directory root
     "inputdir" find all the current "INDEX_FILE" files, if they don't exist
@@ -1708,6 +1844,9 @@ def get_index_files(inputdir, outudirlist):
     :return index_list: list of strings, the abs path to each index file. If
                         index file does not exist value is None
     """
+    # get params from recipe
+    params = recipe.drs_params
+    # storage for index list
     index_list = []
     # loop around directories
     for directory in outudirlist:
@@ -1715,8 +1854,14 @@ def get_index_files(inputdir, outudirlist):
         abspath = os.path.join(inputdir, directory, INDEX_FILE)
         # test whether it exists
         if os.path.exists(abspath):
+            if DEBUG:
+                dmsg = 'Found index file at {0}'
+                WLOG(params, '', dmsg.format(abspath))
             index_list.append(abspath)
         else:
+            if DEBUG:
+                dmsg = 'Index file not found at {0}'
+                WLOG(params, '', dmsg.format(abspath))
             index_list.append(None)
     # return index_list
     return index_list
@@ -1742,6 +1887,55 @@ def get_index_data(p, index_file, directory):
     return indexdata
 
 
+def filter_index(p, index, filters=None):
+    """
+    Filters index by filters. Filters are expected to be in a dictionary format
+    in the form:
+        filters = {KEY1:[VALUE1, VALUE2], KEY2:[VALUE3]}
+
+        where KEY1 and KEY2 are string and must be in index.colnames (the
+        column values of index)
+
+        where VALUE1, VALUE2 and VALUE3 are the values allowed for each key
+
+    :param index: astropy.table, index table containing KEY1, KEY2, ... columns
+                  to be masked by filters
+    :param filters: dictionary, keys are columns in index, values are the
+                    values allowed for that column
+
+    :return index_masked: astropy.table, the masked index table (using filters)
+    """
+    # deal with no filters
+    if filters is None:
+        return index
+    # define mask
+    mask = np.ones(len(index), dtype=bool)
+    # loop around filter sets
+    for rkey in filters:
+        # get key and values from filter set
+        values = filters[rkey]
+        # if rkey is in params use this value
+        if rkey in p and 'KW_' in rkey.upper():
+            key = p[rkey][0]
+        else:
+            key = str(rkey)
+        # define a mask set
+        mask_set = np.zeros(len(index), dtype=bool)
+        # check we have key in index columns
+        if key in index.colnames:
+            # debug message
+            if DEBUG:
+                dmsg = 'Filtering by "{0}" for values "{1}"'
+                WLOG(p, '', dmsg.format(key, ' or '.join(values)))
+            # loop around allowed values for filter
+            for value in values:
+                mask_set |= (index[key] == value)
+            # apply mask_set to full mask
+            mask &= mask_set
+    # finally apply mask to index
+    return index[mask]
+
+
 # =============================================================================
 # Define worker functions
 # =============================================================================
@@ -1756,8 +1950,7 @@ def get_dir_list(dirroot, limit):
             dir_list.append('...')
             return dir_list
         # find the relative root of directories compared to ARG_FILE_DIR
-        common = os.path.commonpath([dirroot, root]) + '/'
-        relroot = root.split(common)[-1]
+        relroot = get_uncommon_path(root, dirroot)
         # append relative roots
         dir_list.append(relroot)
     # if empty list add none found
@@ -1765,6 +1958,11 @@ def get_dir_list(dirroot, limit):
         dir_list = ['No valid directories found.']
     # return night_dirs
     return dir_list
+
+
+def get_uncommon_path(path1, path2):
+    common = os.path.commonpath([path2, path1]) + os.sep
+    return path1.split(common)[-1]
 
 
 def get_file_list(path, limit=None, ext=None, recursive=False):
@@ -1815,13 +2013,70 @@ def get_arg(recipe, argname):
     return arg
 
 
+def get_exposure_set(nums):
+    """
+    Take a set of number that are assumed to represent sequences and group
+    the by sequence set
+        i.e. if we have 1,2,3,4,1,2,3,1,1,1,2,3,4
+
+        group as following: 1,2,2,2,3,3,3,4,5,6,6,6,6
+
+    :param exp_nums: list of int/str, it integers will group the numbers
+                     else will ignore and set the group to -1
+    :return sequence_num: list of int, the group number (starts at 1) bad values
+                          in "exp_nums" set to a value of -1
+    """
+    # set iterables
+    sequence, group = 1, 0
+    # set storage
+    group_numbers = []
+    # loop around exposure numbers
+    for num in nums:
+        # test that exp_num is an integer, if it is not then set to group
+        # -1 and continue to next one
+        if not str(num).isdigit():
+            group_numbers.append(-1)
+        else:
+            # if number is less than or equal to n then set the
+            #    value of sequence to 1, also add one to the group number
+            #    --> we have a new group
+            if num <= sequence:
+                sequence, group = 1, group + 1
+            # if number is larger then we set sequence to this value
+            #    --> we are still in the same group
+            else:
+                sequence = num
+            group_numbers.append(group)
+    # return group number
+    return group_numbers
+
+
+def make_dict_from_table(itable):
+    """
+    Make dictionary from table evaluating the
+    :param itable:
+    :return:
+    """
+    ikeys = list(itable.colnames)
+    ivalues = []
+    for value in list(itable):
+        try:
+            if '.' in str(value):
+                ivalues.append(float(value))
+            else:
+                ivalues.append(int(value))
+        except ValueError:
+            ivalues.append(value)
+    return dict(zip(ikeys, ivalues))
+
+
 def make_listing():
     """
     Make a custom special argument that lists the files in the given
     input directory
     :return props: dictionary for argparser
     """
-    props = dict()
+    props = OrderedDict()
     props['name'] = '--listing'
     props['altnames'] = ['--list']
     props['action'] = MakeListing
