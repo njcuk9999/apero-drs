@@ -163,7 +163,7 @@ test.description = 'Test recipe - used to test the argument parser of the DRS'
 test.arg(pos=0, **directory)
 test.arg(pos=1, name='filelist', dtype='files',
          files=[sf.pp_dark_dark, sf.pp_flat_flat],
-         filelogic='exclusive',
+         filelogic='inclusive',
          helpstr='A list of fits files to use, separated by spaces')
 test.kwarg(**plot)
 test.kwarg(**add_cal)
@@ -201,8 +201,10 @@ cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
 cal_badpix.run_order = 1
 cal_badpix.arg(name='directory', dtype='directory', pos=0)
-cal_badpix.arg(name='flatfile', dtype='files', files=[sf.pp_flat_flat], pos=1)
-cal_badpix.arg(name='darkfile', dtype='files', files=[sf.pp_dark_dark], pos=2)
+cal_badpix.arg(name='flatfile', dtype='files', files=[sf.pp_flat_flat], pos=1,
+               limit=1)
+cal_badpix.arg(name='darkfile', dtype='files', files=[sf.pp_dark_dark], pos=2,
+               limit=1)
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
@@ -340,7 +342,8 @@ cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
 cal_extract.run_order = 6
 cal_extract.arg(name='directory', dtype='directory', pos=0)
-cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file])
+cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
+                limit=1)
 cal_extract.kwarg(**add_cal)
 cal_extract.kwarg(**badfile)
 cal_extract.kwarg(**dobad)
