@@ -24,7 +24,7 @@ import glob
 # =============================================================================
 PATH = '/scratch/Projects/spirou/data_dev/tmp/*/*/*'
 RECIPES = recipes_spirou.recipes
-
+DEBUG = True
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -42,8 +42,12 @@ def trigger(__recipe__, __files__, __filters__=None, **kwargs):
     recipe.get_drs_params(quiet=True, pid=pid)
     # generate runs
     runs = recipe.generate_runs_from_filelist(__files__, __filters__, **kwargs)
+
+    if DEBUG:
+        for run_it in runs:
+            print(run_it)
     # return the runs
-    return runs
+    return runs, recipe
 
 
 # =============================================================================
@@ -57,20 +61,29 @@ if __name__ == "__main__":
     # get list of files to test
     files = glob.glob(PATH)
 
-    # TODO: options adding in list --> shouldn't do this!
-
     # ----------------------------------------------------------------------
     # log
     WLOG(p, 'info', 'Test for cal_dark')
     # trigger
-    dark_runs = trigger('cal_DARK_spirou.py', files, plot=1)
+    dark_runs, dark_recipe = trigger('cal_DARK_spirou.py', files, plot=1)
+    # ----------------------------------------------------------------------
+    # log
+    WLOG(p, 'info', 'Test for cal_badpix')
+    # trigger
+    badpix_runs, badpix_recipe = trigger('cal_BADPIX_spirou.py', files, plot=1)
+    # ----------------------------------------------------------------------
+    # log
+    WLOG(p, 'info', 'Test for cal_loc')
+    # trigger
+    loc_runs, loc_recipe = trigger('cal_loc_RAW_spirou.py', files, plot=1)
     # ----------------------------------------------------------------------
     # log
     WLOG(p, 'info', 'Test for cal_extract')
     # define filters
     filters = dict(DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
     # trigger
-    ext_runs = trigger('cal_extract_RAW_spirou.py', files, add2calib=False)
+    ext_runs, ext_recipe = trigger('cal_extract_RAW_spirou.py', files, filters,
+                                   add2calib=False)
 
 
 
