@@ -161,7 +161,7 @@ test.inputtype = 'pp'
 test.extension = 'fits'
 test.description = 'Test recipe - used to test the argument parser of the DRS'
 test.arg(pos=0, **directory)
-test.arg(pos=1, name='filelist', dtype='files',
+test.arg(pos='1+', name='filelist', dtype='files',
          files=[sf.pp_dark_dark, sf.pp_flat_flat],
          filelogic='inclusive',
          helpstr='A list of fits files to use, separated by spaces')
@@ -187,7 +187,7 @@ cal_pp.inputtype = 'raw'
 cal_pp.description = 'Pre-processing recipe'
 cal_pp.arg(name='directory', dtype='directory', pos=0,
            helpstr='- The "night_name" or absolute directory path')
-cal_pp.arg(name='ufiles', dtype='files', pos=1, files=[sf.raw_file],
+cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
            helpstr='- The fits files to use, separated by spaces')
 cal_pp.kwarg(**debug)
 cal_pp.kwarg(**plot)
@@ -195,16 +195,16 @@ cal_pp.kwarg(**plot)
 # -----------------------------------------------------------------------------
 # cal_badpix_spirou
 # -----------------------------------------------------------------------------
-cal_badpix.name = 'cal_badpix_spirou.py'
+cal_badpix.name = 'cal_BADPIX_spirou.py'
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
 cal_badpix.run_order = 1
 cal_badpix.arg(name='directory', dtype='directory', pos=0)
-cal_badpix.arg(name='flatfile', dtype='files', files=[sf.pp_flat_flat], pos=1,
-               limit=1)
-cal_badpix.arg(name='darkfile', dtype='files', files=[sf.pp_dark_dark], pos=2,
-               limit=1)
+cal_badpix.arg(name='flatfile', dtype='file', files=[sf.pp_flat_flat], pos=1,
+               filelogic='exclusive')
+cal_badpix.arg(name='darkfile', dtype='file', files=[sf.pp_dark_dark], pos=2,
+               filelogic='exclusive')
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
