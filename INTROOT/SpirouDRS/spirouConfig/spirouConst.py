@@ -2182,7 +2182,7 @@ def OUTPUT_FILE_HEADER_KEYS(p):
     # Get required header keys from spirouKeywords.py (via p)
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2204,7 +2204,7 @@ def RAW_OUTPUT_COLUMNS(p):
     # define selected keys
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2231,7 +2231,7 @@ def REDUC_OUTPUT_COLUMNS(p):
 
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0]]
@@ -2250,7 +2250,7 @@ def REDUC_OUTPUT_COLUMNS(p):
 def GEN_OUTPUT_COLUMNS(p):
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2421,6 +2421,10 @@ def DATE_FMT_HEADER():
 
     return date_fmt_header
 
+
+def ASTROPY_DATE_FMT_CALIBDB():
+    date_fmt = 'iso'
+    return date_fmt
 
 # noinspection PyPep8Naming
 def DATE_FMT_CALIBDB():
