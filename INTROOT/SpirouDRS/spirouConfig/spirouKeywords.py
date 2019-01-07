@@ -46,8 +46,8 @@ p = spirouConfig.check_params(p)
 #     to test which variables are not currently in below list
 # ---------------------------------------------------------------
 # MUST UPDATE THIS IF VARIABLES ADDED
-USE_KEYS = ['KW_ACQTIME_KEY',
-            'KW_ACQTIME_KEY_JUL',
+USE_KEYS = ['KW_ACQTIME',
+            'KW_ACQTIME_FMT',
             'KW_AIRMASS',
             'KW_BADPFILE1',
             'KW_BADPFILE2',
@@ -295,13 +295,17 @@ spirouConfig.check_config(p, USE_PARAMS)
 # -----------------------------------------------------------------------------
 # Required header keys (main fits file)
 # -----------------------------------------------------------------------------
-# define the HEADER key for acquisition time (used to get value only)
-#   in format YYYY-mm-dd-HH-MM-SS.ss
-KW_ACQTIME_KEY = ['DATE', None, '']
+# define the HEADER key for acquisition time
+#     Note must set the date format in KW_ACQTIME_FMT
+KW_ACQTIME = ['MJDATE', None, '']
 
-# define the HEADER key for acquisition time (used to get value only)
-#   in unix time format (time since 1970-01-01-00-00-00)
-KW_ACQTIME_KEY_JUL = ['MJDATE', None, '']
+# the format of ACQTIME as required by astropy.time
+#  options are:
+#          "mjd": mean julian date
+#          "iso": YYYY-MM-DD HH:MM:SS.S
+#          "unix": seconds since 1970-01-01 00:00:00
+#          "jyear": year as a decimal number
+KW_ACQTIME_FMT = ['mjd', None, '']
 
 # define the observation date HEADER key
 KW_DATE_OBS = ['DATE-OBS', None, '']
