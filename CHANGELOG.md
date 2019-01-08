@@ -5829,3 +5829,15 @@
 	- spirouKeywords.py - removed KW_ACQTIME_KEY and KW_ACQTIME_KEY_JUL in place of KW_ACQTIME (which is the modified julian date) - with supporting format in case of change (uses astropy.time) (rev.b7e0890f)
 	- spirouConst.py - removed the use of ACQTIME_KEY_JUL now uses KW_ACQTIME (which is the modified julian date by definition) (rev.0c4488f9)
 	- cal_HC_E2DS_EA_spirou.py - changed acqtime to ACQTIME (for consistency) (rev.6c6f3a42)
+	- updated version/date/changelog (rev.958cf147)
+
+
+
+================================================================================
+* Tue Jan 08 2019 Neil Cook <neil.james.cook@gmail.com> - 0.4.015
+
+================================================================================
+	- spirouPOLAR.py - fix dependence on KW_ACQTIME_KEY_JUL --> KW_ACQTIME (rev.82ad0648)
+	- spirouCDB.py/spirouDB.py - change all human times to be in format YYYY-mm-dd_HH:MM:SS.f for consistency (rev.3667e33b)
+	- test.run - update test.run to finish testing (start before last failure) (rev.9bf132d5)
+	- spirouDB.py - fix database definitions in modified "get_database" function (rev.0e06e038)
