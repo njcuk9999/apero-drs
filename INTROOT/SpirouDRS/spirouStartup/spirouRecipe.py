@@ -42,6 +42,8 @@ ParamDict = spirouConfig.ParamDict
 ConfigError = spirouConfig.ConfigError
 # define hard display limit
 HARD_DISPLAY_LIMIT = spirouConfig.Constants.MAX_DISPLAY_LIMIT()
+# define the print/log header divider
+HEADER = spirouConfig.Constants.HEADER()
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -108,7 +110,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
             yellow, blue = COLOR.ENDC, COLOR.ENDC
         # Manually print error message (with help)
         print()
-        print(green + underline + 'Help for: {0}.py'.format(program) + end)
+        print(green + HEADER + end)
+        print(green + ' Help for: {0}.py'.format(program) + end)
+        print(green + HEADER + end)
         print(green + '\tVERSION: {0}'.format(__version__) + end)
         print(green + '\tAUTHORS: {0}'.format(__author__) + end)
         print(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
@@ -2592,8 +2596,9 @@ def print_listing_message(parser, recipe, fulldir, dircond=False,
     pmsgs = ['']
 
     if not return_string:
-        pmsgs.append(green + underline + 'Listing for: {0}.py'.format(program)
-                     + end)
+        pmsgs.append(green + HEADER + end)
+        pmsgs.append(green + ' Listing for: {0}.py'.format(program) + end)
+        pmsgs.append(green + HEADER + end)
         pmsgs.append(green + '\tVERSION: {0}'.format(__version__) + end)
         pmsgs.append(green + '\tAUTHORS: {0}'.format(__author__) + end)
         pmsgs.append(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
