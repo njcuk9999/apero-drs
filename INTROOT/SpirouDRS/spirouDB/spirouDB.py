@@ -83,7 +83,6 @@ def get_database(p, update=False, dbkind=None):
     lock, lock_file = get_check_lock_file(p, dbkind)
     # try to open the master file
     lines = read_master_file(p, lock, lock_file, dbkind)
-
     # store into dictionary of keys
     t_database = OrderedDict()
     # loop around lines in file
@@ -121,9 +120,14 @@ def get_database(p, update=False, dbkind=None):
     if len(t_database) == 0:
         close_lock_file(p, lock, lock_file)
         # log and exit
-        telludb_file = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+
+        # deal with dbkind
+        if 'Telluric' in dbkind:
+            masterfile = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+        elif 'Calibration' in dbkind:
+            masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg1 = 'There are no entries in {0}'.format(dbkind)
-        emsg2 = '   Please check {0} file at {1}'.format(dbkind, telludb_file)
+        emsg2 = '   Please check {0} file at {1}'.format(dbkind, masterfile)
         emsg3 = '   function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
@@ -138,7 +142,8 @@ def get_acqtime(p, header, kind='human'):
     htime, utime = get_times_from_header(p, header=header)
     # deal with kind
     if kind == 'human':
-        return htime
+        # htime here should have a space instead of "_"
+        return htime.replace('_', ' ')
     elif kind == 'unix':
         return utime
     elif kind == 'julian' or kind == 'mjd':
@@ -213,6 +218,9 @@ def get_times_from_header(p, header=None, filename=None):
         emsg = 'Key {0} not in HEADER file of {1} for function {2}'
         WLOG(p, 'error', emsg.format(*eargs))
         human_time, unix_time = None, None
+
+    # lastly we need to remove spaces in the human time
+    human_time = human_time.replace(' ', '_')
     # return human time and unix time
     return human_time, unix_time
 
@@ -296,6 +304,7 @@ def get_check_lock_file(p, dbkind):
                  '\tdbkind = "{0}"'.format(dbkind)]
         WLOG(p, 'error', emsgs)
         lock_file = None
+        name = None
 
     # check if lock file already exists
     if os.path.exists(lock_file):

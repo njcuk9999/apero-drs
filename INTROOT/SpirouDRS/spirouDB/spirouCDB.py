@@ -103,8 +103,6 @@ def update_datebase(p, keys, filenames, hdrs):
         key, filename, hdr = keys[k_it], filenames[k_it], hdrs[k_it]
         # get h_time and u_time
         h_time, u_time = spirouDB.get_times_from_header(p, hdr)
-        # need to replace spaces in h_time with underscore
-        h_time = h_time.replace(' ', '_')
         # construct database line entry
         lineargs = [key, p['ARG_NIGHT_NAME'], filename, h_time, u_time]
         line = '\n{0} {1} {2} {3} {4}'.format(*lineargs)
@@ -147,6 +145,9 @@ def get_database(p, max_time=None, update=False, header=None):
     if max_time is None:
         # get h_time and u_time
         h_time, u_time = spirouDB.get_times_from_header(p, header)
+        # htime here should have a space instead of "_"
+        h_time = h_time.replace('_', ' ')
+        # set max human/unix time
         max_time_human = h_time
         max_time_unix = u_time
     else:
@@ -400,6 +401,8 @@ def copy_files(p, header=None):
     if 'calibDB' not in p:
         # get acquisition time
         htime, utime = spirouDB.get_times_from_header(p, header)
+        # htime here should have a space instead of "_"
+        htime = htime.replace('_', ' ')
         # get calibDB
         c_database, p = get_database(p, htime)
     else:
