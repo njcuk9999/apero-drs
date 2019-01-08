@@ -1,11 +1,22 @@
 from . import spirouRecipe
 from . import files_spirou as sf
+from . import recipe_descriptions as rd
+from SpirouDRS import spirouConfig
+
+# =============================================================================
+# Define variables
+# =============================================================================
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
 directory = dict(name='directory', dtype='directory',
-                 helpstr='The "night_name" or absolute path of the directory')
+                 helpstr=rd.General.directory_help)
 
 # =============================================================================
 # Option definitions
@@ -14,23 +25,18 @@ directory = dict(name='directory', dtype='directory',
 # Note for these to work MUST add to spirouStartup.spirou_options_manager
 #
 # -----------------------------------------------------------------------------
-add_cal = dict(name='--add2calib', dtype='bool',
-               helpstr=('[BOOLEAN] Whether to add outputs to calibration '
-                        'database'),
-               default=True)
+add_cal = dict(name='--add2calib', dtype='bool', default=True,
+               helpstr=rd.General.add_cal_help)
 # -----------------------------------------------------------------------------
 dobad = dict(name='--badcorr', dtype='bool', default=True,
-             helpstr='[BOOLEAN] Whether to correct for the bad pixel file')
+             helpstr=rd.General.dobad_help)
 # -----------------------------------------------------------------------------
 badfile = dict(name='--badpixfile', dtype='file', default='None',
                files=[sf.out_badpix],
-               helpstr='[STRING] Define a custom file to use for bad pixel '
-                       'correction. Checks for an absolute path and then '
-                       'checks "directory".')
+               helpstr=rd.General.badfile_help)
 # -----------------------------------------------------------------------------
 backsub = dict(name='--backsub', dtype='bool', default=True,
-               helpstr='[BOOLEAN] Whether to do background subtraction',
-               default_ref='option_backsub')
+               helpstr=rd.General.backsub_help, default_ref='option_backsub')
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
@@ -159,12 +165,11 @@ test.outputdir = 'tmp'
 test.inputdir = 'tmp'
 test.inputtype = 'pp'
 test.extension = 'fits'
-test.description = 'Test recipe - used to test the argument parser of the DRS'
+test.description = rd.Test.description
+test.epilog = rd.Test.example
 test.arg(pos=0, **directory)
-test.arg(pos='1+', name='filelist', dtype='files',
-         files=[sf.pp_dark_dark, sf.pp_flat_flat],
-         filelogic='inclusive',
-         helpstr='A list of fits files to use, separated by spaces')
+test.arg(pos='1+', name='filelist', dtype='files', helpstr=rd.Test.help,
+         files=[sf.pp_dark_dark, sf.pp_flat_flat], filelogic='inclusive')
 test.kwarg(**plot)
 test.kwarg(**add_cal)
 test.kwarg(**dobad)
@@ -184,9 +189,8 @@ cal_pp.name = 'cal_preprocess_spirou.py'
 cal_pp.outputdir = 'tmp'
 cal_pp.inputdir = 'raw'
 cal_pp.inputtype = 'raw'
-cal_pp.description = 'Pre-processing recipe'
-cal_pp.arg(name='directory', dtype='directory', pos=0,
-           helpstr='- The "night_name" or absolute directory path')
+cal_pp.description = 'Pre-processing recipe for SPIRou @ CFHT'
+cal_pp.arg(pos=0, **directory)
 cal_pp.arg(name='ufiles', dtype='files', pos='1+', files=[sf.raw_file],
            helpstr='- The fits files to use, separated by spaces')
 cal_pp.kwarg(**debug)
@@ -199,12 +203,15 @@ cal_badpix.name = 'cal_BADPIX_spirou.py'
 cal_badpix.outputdir = 'reduced'
 cal_badpix.inputdir = 'tmp'
 cal_badpix.inputtype = 'pp'
+cal_badpix.description = 'Bad pixel finding recipe for SPIRou @ CFHT'
 cal_badpix.run_order = 1
-cal_badpix.arg(name='directory', dtype='directory', pos=0)
+cal_badpix.arg(pos=0, **directory)
 cal_badpix.arg(name='flatfile', dtype='file', files=[sf.pp_flat_flat], pos=1,
-               filelogic='exclusive')
+               filelogic='exclusive',
+               helpstr=rd.General.file_help + 'Current allowed types: FLAT_FLAT')
 cal_badpix.arg(name='darkfile', dtype='file', files=[sf.pp_dark_dark], pos=2,
-               filelogic='exclusive')
+               filelogic='exclusive',
+               helpstr=rd.General.file_help + 'Current allowed types: DARK_DARK')
 cal_badpix.kwarg(**add_cal)
 cal_badpix.kwarg(**badfile)
 cal_badpix.kwarg(**dobad)
@@ -224,9 +231,11 @@ cal_dark.name = 'cal_DARK_spirou.py'
 cal_dark.outputdir = 'reduced'
 cal_dark.inputdir = 'tmp'
 cal_dark.intputtype = 'pp'
+cal_dark.description = 'Dark finding recipe for SPIRou @ CFHT'
 cal_dark.run_order = 2
-cal_dark.arg(name='directory', dtype='directory', pos=0)
-cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+')
+cal_dark.arg(pos=0, **directory)
+cal_dark.arg(name='files', dtype='files', files=[sf.pp_dark_dark], pos='1+',
+             helpstr=rd.General.files_help + 'Current allowed types: DARK_DARK')
 cal_dark.kwarg(**add_cal)
 cal_dark.kwarg(default=True, **combine)
 cal_dark.kwarg(**debug)
@@ -242,10 +251,13 @@ cal_loc.name = 'cal_loc_RAW_spirou.py'
 cal_loc.outputdir = 'reduced'
 cal_loc.inputdir = 'tmp'
 cal_loc.inputtype = 'pp'
+cal_loc.description = 'Localisation finding recipe for SPIRou @ CFHT'
 cal_loc.run_order = 3
-cal_loc.arg(name='directory', dtype='directory', pos=0)
+cal_loc.arg(pos=0, **directory)
 cal_loc.arg(name='files', dtype='files', filelogic='exclusive',
-            files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+')
+            files=[sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
+            helpstr=rd.General.files_help + ('Current allowed types: DARK_FLAT OR FLAT_DARK'
+                                ' but not both (exlusive)'))
 cal_loc.kwarg(**add_cal)
 cal_loc.kwarg(**badfile)
 cal_loc.kwarg(**dobad)
@@ -266,9 +278,12 @@ cal_slit.name = 'cal_SLIT_spirou.py'
 cal_slit.outputdir = 'reduced'
 cal_slit.inputdir = 'tmp'
 cal_slit.inputtype = 'pp'
+cal_slit.description = ('Tilt finding recipe for SPIRou @ CFHT'
+                        '\nOLD - use cal_SHAPE_spirou.py instead')
 cal_slit.run_order = 4
-cal_slit.arg(name='directory', dtype='directory', pos=0)
-cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+')
+cal_slit.arg(pos=0, **directory)
+cal_slit.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+', 
+             helpstr=rd.General.files_help + 'Current allowed types: FP_FP')
 cal_slit.kwarg(**add_cal)
 cal_slit.kwarg(**badfile)
 cal_slit.kwarg(**dobad)
@@ -289,9 +304,13 @@ cal_shape.name = 'cal_SHAPE_spirou.py'
 cal_shape.outputdir = 'reduced'
 cal_shape.inputdir = 'tmp'
 cal_shape.inputtype = 'pp'
+cal_shape.description = 'Shape finding recipe for SPIRou @ CFHT'
 cal_shape.run_order = 4
-cal_shape.arg(name='directory', dtype='directory', pos=0)
-cal_shape.arg(name='files', dtype='files', files=[sf.pp_fp_fp], pos='1+')
+cal_shape.arg(pos=0, **directory)
+cal_shape.arg(name='hcfile', dtype='file', files=[sf.pp_hc1_hc1], pos='1', 
+             helpstr=rd.General.file_help + 'Current allowed type: HCONE_HCONE')
+cal_shape.arg(name='fpfiles', dtype='files', files=[sf.pp_fp_fp], pos='2+', 
+             helpstr=rd.General.files_help + 'Current allowed types: FP_FP')
 cal_shape.kwarg(**add_cal)
 cal_shape.kwarg(**badfile)
 cal_shape.kwarg(**dobad)
@@ -312,10 +331,13 @@ cal_ff.name = 'cal_FF_RAW_spirou.py'
 cal_ff.outputdir = 'reduced'
 cal_ff.inputdir = 'tmp'
 cal_ff.inputtype = 'pp'
+cal_ff.description = 'Flat/Blaze finding recipe for SPIRou @ CFHT'
 cal_ff.run_order = 5
-cal_ff.arg(name='directory', dtype='directory', pos=0)
+cal_ff.arg(pos=0, **directory)
 cal_ff.arg(name='files', dtype='files', filelogic='exclusive',
-           files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark], pos='1+')
+           files=[sf.pp_flat_flat, sf.pp_dark_flat, sf.pp_flat_dark], pos='1+',
+           helpstr=rd.General.files_help + ('Current allowed types: FLAT_FLAT OR DARK_FLAT '
+                                'OR FLAT_DARK but not a mixture (exlusive)'))
 cal_ff.kwarg(**add_cal)
 cal_ff.kwarg(**badfile)
 cal_ff.kwarg(**dobad)
@@ -340,10 +362,13 @@ cal_extract.name = 'cal_extract_RAW_spirou.py'
 cal_extract.outputdir = 'reduced'
 cal_extract.inputdir = 'tmp'
 cal_extract.inputtype = 'pp'
+cal_extract.description = 'Extraction recipe for SPIRou @ CFHT'
 cal_extract.run_order = 6
-cal_extract.arg(name='directory', dtype='directory', pos=0)
+cal_extract.arg(pos=0, **directory)
 cal_extract.arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
-                limit=1)
+                limit=1,
+                helpstr=rd.General.files_help + ('All files used will be combined into a '
+                                     'single frame.'))
 cal_extract.kwarg(**add_cal)
 cal_extract.kwarg(**badfile)
 cal_extract.kwarg(**dobad)
