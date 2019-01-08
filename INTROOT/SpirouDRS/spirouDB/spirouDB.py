@@ -285,12 +285,17 @@ def get_check_lock_file(p, dbkind):
     # construct lock file name
     max_wait_time = p['DB_MAX_WAIT']
     # deal with dbkind
-    if dbkind == 'Telluric':
+    if 'Telluric' in dbkind:
         name = 'TelluDB'
         lock_file = spirouConfig.Constants.TELLUDB_LOCKFILE(p)
-    else:
+    elif 'Calibration' in dbkind:
         name = 'CalibDB'
         lock_file = spirouConfig.Constants.CALIBDB_LOCKFILE(p)
+    else:
+        emsgs = ['Dev Error: "dbkind" not understood',
+                 '\tdbkind = "{0}"'.format(dbkind)]
+        WLOG(p, 'error', emsgs)
+        lock_file = None
 
     # check if lock file already exists
     if os.path.exists(lock_file):
