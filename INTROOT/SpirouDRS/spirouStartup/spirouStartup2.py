@@ -64,6 +64,8 @@ def input_setup(name=None, fkwargs=None, quiet=False):
     recipe = find_recipe(name)
     # quietly load DRS parameters (for setup)
     recipe.get_drs_params(quiet=True, pid=pid)
+    # do not need to display if we have special keywords
+    quiet = special_keys_present(recipe, quiet, fkwargs)
     # display
     if not quiet:
         # display title
@@ -215,6 +217,28 @@ def exit_script(ll, has_plots=True):
 # =============================================================================
 # Define display functions
 # =============================================================================
+def special_keys_present(recipe, quiet, fkwargs):
+    """
+    Decides whether displaying is necessary based on whether we have special
+    keys in fkwargs or sys.argv (input from command line)
+
+    :param recipe: DrsRecipe instance, the recipe to act on
+    :param fkwargs: dictionary, the input keywords from python call to recipe
+    :param quiet: bool, the current status of quiet flag (True or False)
+
+    :return quiet: bool, the updated status of quiet flag
+    """
+    skeys = list(recipe.specialargs.keys()) + ['--help', '-h']
+    if len(skeys) > 0:
+        for skey in skeys:
+            cond1 = skey in fkwargs.keys()
+            cond2 = skey in sys.argv
+            if cond1 | cond2:
+                quiet = True
+    # return the updated quiet flag
+    return quiet
+
+
 def display_drs_title(p):
     """
     Display title for this execution
