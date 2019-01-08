@@ -35,8 +35,6 @@ __all__ = ['CopyCDBfiles', 'GetAcqTime', 'GetCalibDatabase', 'GetCalibFile',
 # =============================================================================
 CopyCDBfiles = spirouCDB.copy_files
 
-GetAcqTime = spirouCDB.get_acquisition_time
-
 GetCalibDatabase = spirouCDB.get_database
 
 GetCalibFile = spirouCDB.get_file_name
@@ -44,6 +42,8 @@ GetCalibFile = spirouCDB.get_file_name
 PutCalibFile = spirouCDB.put_file
 
 UpdateCalibMaster = spirouCDB.update_datebase
+
+GetAcqTime = spirouDB.get_acqtime
 
 GetTimes = spirouDB.get_times_from_header
 

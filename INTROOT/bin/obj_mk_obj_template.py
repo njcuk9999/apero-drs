@@ -95,11 +95,13 @@ def main(night_name=None, files=None):
     tellu_db_files, tellu_db_names = tellu_db_data[0], tellu_db_data[1]
 
     # sort files by name
-    tellu_db_files = spirouImage.SortByName(tellu_db_files)
+    sortmask = spirouImage.SortByName(tellu_db_files)
+    tellu_db_files = np.array(tellu_db_files)[sortmask]
+    tellu_db_names = np.array(tellu_db_names)[sortmask]
 
     # filter by object name (only keep OBJNAME objects) and only keep
     #   unique filenames
-    tell_files = []
+    tell_files, tell_names = [], []
     for it in range(len(tellu_db_files)):
         # check that objname is correct
         cond1 = loc['OBJNAME'] in tellu_db_names[it]
@@ -108,6 +110,7 @@ def main(night_name=None, files=None):
         # append to file list if criteria correct
         if cond1 and cond2:
             tell_files.append(tellu_db_files[it])
+            tell_names.append(tellu_db_names[it])
 
     # log if we have no files
     if len(tell_files) == 0:
@@ -182,6 +185,11 @@ def main(night_name=None, files=None):
             wave_fiber = 'AB'
         else:
             wave_fiber = p['FIBER']
+        # need to reload calibDB
+        # as we have custom arguments need to load the calibration database
+        calib_db = dict(p['CALIBDB'])
+        del p['CALIBDB']
+        p = spirouStartup.LoadCalibDB(p, header=thdr)
         # get wave solution
         wout = spirouImage.GetWaveSolution(p, image=tdata, hdr=thdr,
                                            return_wavemap=True,
@@ -191,7 +199,10 @@ def main(night_name=None, files=None):
         loc.set_sources(['WAVE', 'WAVEFILE'], main_name)
 
         # add wave to wave list
-        wave_list.append('{0}'.format(loc['WAVEFILE']))
+        wave_list.append(loc['WAVEFILE'])
+
+        # readd original calibDB to p
+        p['CALIBDB'] = dict(calib_db)
 
         # ------------------------------------------------------------------
         # Get the Barycentric correction from header
@@ -200,7 +211,7 @@ def main(night_name=None, files=None):
         # log stats
         wmsg = 'Processing file {0} of {1} file={2} dv={3}'
         wargs = [it + 1, len(tell_files), basefilename, dv]
-        WLOG(p, '', wmsg.format(*wargs))
+        WLOG(p, 'info', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # shift to correct berv
         dvshift = spirouMath.relativistic_waveshift(dv, units='km/s')

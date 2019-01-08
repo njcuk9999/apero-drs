@@ -11,6 +11,7 @@ Version 0.0.1
 from __future__ import division
 import numpy as np
 from astropy.io import fits
+from astropy.time import Time
 import os
 import time
 from collections import OrderedDict
@@ -82,7 +83,6 @@ def get_database(p, update=False, dbkind=None):
     lock, lock_file = get_check_lock_file(p, dbkind)
     # try to open the master file
     lines = read_master_file(p, lock, lock_file, dbkind)
-
     # store into dictionary of keys
     t_database = OrderedDict()
     # loop around lines in file
@@ -120,9 +120,14 @@ def get_database(p, update=False, dbkind=None):
     if len(t_database) == 0:
         close_lock_file(p, lock, lock_file)
         # log and exit
-        telludb_file = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+
+        # deal with dbkind
+        if 'Telluric' in dbkind:
+            masterfile = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+        elif 'Calibration' in dbkind:
+            masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
         emsg1 = 'There are no entries in {0}'.format(dbkind)
-        emsg2 = '   Please check {0} file at {1}'.format(dbkind, telludb_file)
+        emsg2 = '   Please check {0} file at {1}'.format(dbkind, masterfile)
         emsg3 = '   function = {0}'.format(func_name)
         WLOG(p, 'error', [emsg1, emsg2, emsg3])
 
@@ -130,6 +135,23 @@ def get_database(p, update=False, dbkind=None):
     close_lock_file(p, lock, lock_file)
     # return telluDB dictionary
     return t_database
+
+
+def get_acqtime(p, header, kind='human'):
+    # get time from header
+    htime, utime = get_times_from_header(p, header=header)
+    # deal with kind
+    if kind == 'human':
+        # htime here should have a space instead of "_"
+        return htime.replace('_', ' ')
+    elif kind == 'unix':
+        return utime
+    elif kind == 'julian' or kind == 'mjd':
+        t_time = Time(float(utime), format='unix')
+        return t_time.mjd
+    else:
+        t_time = Time(float(utime), format='unix')
+        return t_time
 
 
 # TODO: Write this function based on "get acquisition time
@@ -168,18 +190,37 @@ def get_times_from_header(p, header=None, filename=None):
         else:
             headerfile = 'UNKNOWN'
 
+    # make sure keywords are in header
+    if 'KW_ACQTIME' not in p:
+        emsgs = ['Key "{0}" not defined in ParamDict (or SpirouKeywords.py)'
+                 ''.format('KW_ACQTIME')]
+        emsgs.append('\tfunction = {0}'.format(func_name))
+        WLOG(p, 'error', emsgs)
+    if 'KW_ACQTIME_FMT' not in p:
+        emsgs = ['Key "{0}" not defined in ParamDict (or SpirouKeywords.py)'
+                ''.format('KW_ACQTIME')]
+        emsgs.append('\tfunction = {0}'.format(func_name))
+        WLOG(p, 'error', emsgs)
+
     # try getting unix time
-    if p['KW_ACQTIME_KEY'][0] in header:
-        human_time = header[p['KW_ACQTIME_KEY'][0]]
-        header_fmt = spirouConfig.Constants.DATE_FMT_HEADER()
-        unix_time = spirouMath.stringtime2unixtime(human_time, header_fmt)
+    if p['KW_ACQTIME'][0] in header:
+        # get header keys
+        raw_time = header[p['KW_ACQTIME'][0]]
+        raw_fmt = p['KW_ACQTIME_FMT'][0]
+        # get astropy time
+        a_time = Time(raw_time, format=raw_fmt)
+        # get human time and unix time
+        human_time = a_time.iso
+        unix_time = float(a_time.unix)
     # else raise error
     else:
-        eargs = [p['KW_ACQTIME_KEY'][0], p['KW_ACQTIME_KEY_UNIX'][0],
-                 headerfile, func_name]
-        WLOG(p, 'error', ('Keys {0} or {1} not in HEADER file of {1}'
-                                     ' for function {2}'.format(*eargs)))
+        eargs = [p['KW_ACQTIME'][0], headerfile, func_name]
+        emsg = 'Key {0} not in HEADER file of {1} for function {2}'
+        WLOG(p, 'error', emsg.format(*eargs))
         human_time, unix_time = None, None
+
+    # lastly we need to remove spaces in the human time
+    human_time = human_time.replace(' ', '_')
     # return human time and unix time
     return human_time, unix_time
 
@@ -252,12 +293,18 @@ def get_check_lock_file(p, dbkind):
     # construct lock file name
     max_wait_time = p['DB_MAX_WAIT']
     # deal with dbkind
-    if dbkind == 'Telluric':
+    if 'Telluric' in dbkind:
         name = 'TelluDB'
         lock_file = spirouConfig.Constants.TELLUDB_LOCKFILE(p)
-    else:
+    elif 'Calibration' in dbkind:
         name = 'CalibDB'
         lock_file = spirouConfig.Constants.CALIBDB_LOCKFILE(p)
+    else:
+        emsgs = ['Dev Error: "dbkind" not understood',
+                 '\tdbkind = "{0}"'.format(dbkind)]
+        WLOG(p, 'error', emsgs)
+        lock_file = None
+        name = None
 
     # check if lock file already exists
     if os.path.exists(lock_file):
@@ -326,7 +373,6 @@ def close_lock_file(p, lock, lock_file):
         emsg2 = ('Please make sure DB is not being used and '
                  'manually delete {0}').format(lock_file)
         WLOG(p, 'error', [emsg1, emsg2])
-
 
 
 def write_files_to_master(p, lines, keys, lock, lock_file, dbkind):
@@ -401,9 +447,18 @@ def read_master_file(p, lock, lock_file, dbkind):
                       spirouConfig.Constants.TELLUDB_MASTERFILE)
     """
     func_name = __NAME__ + '.read_master_file()'
-
     # construct master filename
-    masterfile = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+    if 'Telluric'in dbkind:
+        masterfile = spirouConfig.Constants.TELLUDB_MASTERFILE(p)
+    elif 'Calibration' in dbkind:
+        masterfile = spirouConfig.Constants.CALIBDB_MASTERFILE(p)
+    else:
+        emsgs = ['Dev Error: Wrong "dbkind" in call to function {0}'
+                 ''.format(func_name)]
+        emsgs.append('\t"dbkind"="{0}" (Must be "Telluric" or "Calibration")'
+                     ''.format(dbkind))
+        WLOG(p, 'error', emsgs)
+        masterfile = None
     # try to
     try:
         f = open(masterfile, 'r')

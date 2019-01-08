@@ -24,14 +24,14 @@ from . import spirouConfigFile
 # Name of program
 __NAME__ = 'spirouConst.py'
 # Define version
-__version__ = '0.4.009'
+__version__ = '0.4.014'
 # Define Authors
 # noinspection PyPep8
 __author__ = 'N. Cook, F. Bouchy, E. Artigau, , M. Hobson, C. Moutou, I. Boisse, E. Martioli'
 # Define release type
 __release__ = 'alpha pre-release'
 # Define date of last edit
-__date__ = '2018-12-14'
+__date__ = '2019-01-07'
 
 
 # =============================================================================
@@ -2182,7 +2182,7 @@ def OUTPUT_FILE_HEADER_KEYS(p):
     # Get required header keys from spirouKeywords.py (via p)
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2204,7 +2204,7 @@ def RAW_OUTPUT_COLUMNS(p):
     # define selected keys
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2231,7 +2231,7 @@ def REDUC_OUTPUT_COLUMNS(p):
 
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OUTPUT'][0],
                    p['KW_EXT_TYPE'][0]]
@@ -2250,7 +2250,7 @@ def REDUC_OUTPUT_COLUMNS(p):
 def GEN_OUTPUT_COLUMNS(p):
     output_keys = [p['KW_DATE_OBS'][0],
                    p['KW_UTC_OBS'][0],
-                   p['KW_ACQTIME_KEY_JUL'][0],
+                   p['KW_ACQTIME'][0],
                    p['KW_OBJNAME'][0],
                    p['KW_OBSTYPE'][0],
                    p['KW_EXPTIME'][0],
@@ -2422,6 +2422,10 @@ def DATE_FMT_HEADER():
     return date_fmt_header
 
 
+def ASTROPY_DATE_FMT_CALIBDB():
+    date_fmt = 'iso'
+    return date_fmt
+
 # noinspection PyPep8Naming
 def DATE_FMT_CALIBDB():
     """
@@ -2567,7 +2571,7 @@ def LOG_FILE_NAME(p, dir_data_msg=None):
     """
     # deal with no dir_data_msg
     if dir_data_msg is None:
-        dir_data_msg = p.get('DRS_DATA_MSG', None)
+        dir_data_msg = p.get('DRS_DATA_MSG', './')
 
     # deal with no PID
     if 'PID' not in p:
@@ -2661,7 +2665,8 @@ def LOG_TRIG_KEYS():
                       same as spirouConst.WRITE_LEVELS()
     """
     # The trigger character to display for each
-    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~')
+    trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~',
+                    debug='+')
     return trig_key
 
 
@@ -2689,7 +2694,8 @@ def WRITE_LEVEL():
                          of each trigger level. Keys must be the same as
                          spirouConst.LOG_TRIG_KEYS()
     """
-    write_level = dict(error=3, warning=2, info=1, graph=0, all=0)
+    write_level = dict(error=3, warning=2, info=1, graph=0, all=0,
+                       debug=0)
     return write_level
 
 
@@ -2698,7 +2704,7 @@ def LOG_STORAGE_KEYS():
     # The storage key to use for each key
     storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
                     warning='LOGGER_WARNING', info='LOGGER_INFO',
-                    graph='LOGGER_ALL')
+                    graph='LOGGER_ALL', debug='LOGGER_DEBUG')
     return storekey
 
 
@@ -2718,13 +2724,13 @@ def LOG_CAUGHT_WARNINGS():
 
 
 # noinspection PyPep8Naming
-def COLOUREDLEVELS():
+def COLOUREDLEVELS(p=None):
     """
     Defines the colours if using coloured log.
     Allowed colour strings are found here:
             see here:
             http://ozzmaker.com/add-colour-to-text-in-python/
-            or in spirouConst.bcolors (colour class):
+            or in spirouConst.colors (colour class):
                 HEADER, OKBLUE, OKGREEN, WARNING, FAIL,
                 BOLD, UNDERLINE
 
@@ -2735,41 +2741,71 @@ def COLOUREDLEVELS():
                          http://ozzmaker.com/add-colour-to-text-in-python/
     """
     # reference:
+    colors = Colors()
+    if p is not None:
+        if 'THEME' in p:
+            colors.update_theme(p['THEME'])
     # http://ozzmaker.com/add-colour-to-text-in-python/
-    clevels = dict(error=BColors.FAIL,  # red
-                   warning=BColors.WARNING,  # yellow
-                   info=BColors.OKBLUE,  # green
-                   graph=BColors.OKBLUE,  # green
-                   all=BColors.OKGREEN)  # green
+    clevels = dict(error=colors.fail,       # red
+                   warning=colors.warning,  # yellow
+                   info=colors.okblue,      # blue
+                   graph=colors.ok,         # magenta
+                   all=colors.okgreen,      # green
+                   debug=colors.debug)      # green
     return clevels
 
-
 # defines the colours
-class BColors:
+class Colors:
+    BLACK1 = '\033[90;1m'
+    RED1 = '\033[1;91;1m'
+    GREEN1 = '\033[92;1m'
+    YELLOW1 = '\033[1;93;1m'
+    BLUE1 = '\033[94;1m'
+    MAGENTA1 = '\033[1;95;1m'
+    CYAN1 = '\033[1;96;1m'
+    WHITE1 = '\033[97;1m'
+    BLACK2 = '\033[1;30m'
+    RED2 = '\033[1;31m'
+    GREEN2 = '\033[1;32m'
+    YELLOW2 = '\033[1;33m'
+    BLUE2 = '\033[1;34m'
+    MAGENTA2 = '\033[1;35m'
+    CYAN2 = '\033[1;36m'
+    WHITE2 = '\033[1;37m'
+    ENDC = '\033[0;0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
-    if 'THEME' not in pp:
-        theme = 'DARK'
-    else:
-        theme = pp['THEME']
+    def __init__(self):
+        if 'THEME' not in pp:
+            self.theme = 'DARK'
+        else:
+            self.theme = pp['THEME']
+        self.endc = self.ENDC
+        self.bold = self.BOLD
+        self.underline = self.UNDERLINE
+        self.update_theme()
 
-    if theme == 'DARK':
-        HEADER = '\033[95;1m'
-        OKBLUE = '\033[94;1m'
-        OKGREEN = '\033[92;1m'
-        WARNING = '\033[1;93;1m'
-        FAIL = '\033[1;91;1m'
-        ENDC = '\033[0;0m'
-        BOLD = '\033[1m'
-        UNDERLINE = '\033[4m'
-    else:
-        HEADER = '\033[95;1m'
-        OKBLUE = '\033[1;36m'
-        OKGREEN = '\033[1;32m'
-        WARNING = '\033[1;34m'
-        FAIL = '\033[1;31m'
-        ENDC = '\033[0;0m'
-        BOLD = '\033[1m'
-        UNDERLINE = '\033[4m'
+    def update_theme(self, theme=None):
+        if theme is not None:
+            self.theme = theme
+        if self.theme == 'DARK':
+            self.header = self.MAGENTA1
+            self.okblue = self.BLUE1
+            self.okgreen = self.GREEN1
+            self.ok = self.MAGENTA2
+            self.warning = self.YELLOW1
+            self.fail = self.RED1
+            self.debug = self.BLACK1
+        else:
+            self.header = self.MAGENTA2
+            self.okblue = self.MAGENTA2
+            self.okgreen = self.BLACK2
+            self.ok = self.MAGENTA2
+            self.warning = self.BLUE2
+            self.fail = self.RED2
+            self.debug = self.GREEN2
+
 
 # noinspection PyPep8Naming
 def COLOURED_LOG(p=None):
@@ -2788,7 +2824,7 @@ def COLOURED_LOG(p=None):
     elif 'COLOURED_LOG' not in p:
         clog = pp['COLOURED_LOG']
     else:
-        clog = True
+        clog = p['COLOURED_LOG']
     return clog
 
 
