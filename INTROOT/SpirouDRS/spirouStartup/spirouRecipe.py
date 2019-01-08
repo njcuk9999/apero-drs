@@ -25,6 +25,11 @@ from . import spirouFile
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_recipe.py'
+# Get version and author
+__version__ = spirouConfig.Constants.VERSION()
+__author__ = spirouConfig.Constants.AUTHORS()
+__date__ = spirouConfig.Constants.LATEST_EDIT()
+__release__ = spirouConfig.Constants.RELEASE()
 # Get Logging function
 WLOG = spirouCore.wlog
 # get constants
@@ -36,7 +41,7 @@ ParamDict = spirouConfig.ParamDict
 # get the config error
 ConfigError = spirouConfig.ConfigError
 # define hard display limit
-HARD_DISPLAY_LIMIT = 99
+HARD_DISPLAY_LIMIT = spirouConfig.Constants.MAX_DISPLAY_LIMIT()
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -65,7 +70,8 @@ class DRSArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         # self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
-
+        # get parameterse from drs_params
+        program = self.recipe.drs_params['RECIPE']
         # get parameters from drs_params
         params = self.recipe.drs_params
         # construct error message
@@ -82,7 +88,8 @@ class DRSArgumentParser(argparse.ArgumentParser):
         print()
         print(COLOR.warning + message + end)
         print()
-        print(blue + self.format_help() + end)
+        print(blue + self.format_usage() + end)
+        print(yellow + 'Use: "{0}.py --help" for help'.format(program))
         # log message (without print)
         emsg1 = '\nArgument Error:'
         emsg2 = '\t {0}'.format(message)
@@ -102,6 +109,10 @@ class DRSArgumentParser(argparse.ArgumentParser):
         # Manually print error message (with help)
         print()
         print(green + underline + 'Help for: {0}.py'.format(program) + end)
+        print(green + '\tVERSION: {0}'.format(__version__) + end)
+        print(green + '\tAUTHORS: {0}'.format(__author__) + end)
+        print(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
+        print(green + '\tRELEASE STATUS: {0}'.format(__release__) + end)
         print()
         print(blue + self.format_help() + end)
 
@@ -123,6 +134,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
 class CheckDirectory(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
+        self.parser = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
@@ -132,16 +144,20 @@ class CheckDirectory(argparse.Action):
         if cond:
             return directory
         else:
-            WLOG(self.recipe.drs_params, 'error', emsgs)
-
+            # get input dir
+            input_dir = self.recipe.get_input_dir()
+            # get listing message
+            lmsgs = print_listing_message(self.parser, self.recipe, input_dir,
+                                          dircond=True, return_string=True)
+            # log messages
+            WLOG(self.recipe.drs_params, 'error', emsgs + lmsgs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        self.parser = parser
         # check for help
-        skip = parser.has_help()
-        if skip:
-            return 0
+        parser.has_help()
         if type(values) == list:
             value = list(map(self.check_directory, values))[0]
         else:
@@ -172,11 +188,19 @@ class CheckFiles(argparse.Action):
             return files, types
         # else deal with errors
         else:
-            WLOG(self.recipe.drs_params, 'error', emsgs)
+            # get input dir
+            input_dir = self.recipe.get_input_dir()
+            fullpath = os.path.join(input_dir, directory)
+            # get listing message
+            lmsgs = print_listing_message(self.parser, self.recipe, fullpath,
+                                          dircond=False, return_string=True)
+            # log messages
+            WLOG(self.recipe.drs_params, 'error', emsgs + lmsgs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        self.parser = parser
         # store the namespace
         self.namespace = namespace
         # check for help
@@ -332,6 +356,7 @@ class MakeListing(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
         self.namespace = None
+        self.parser = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
@@ -339,28 +364,67 @@ class MakeListing(argparse.Action):
         # get input dir
         input_dir = self.recipe.get_input_dir()
         # check if "directory" is in namespace
-        directory = getattr(namespace, 'directory', '')
+        directory = getattr(namespace, 'directory', None)
         # deal with non set directory
         if directory is None:
-            directory = ''
-        # create full dir path
-        fulldir = os.path.join(input_dir, directory)
-        # generate a file list
-        filelist = get_file_list(fulldir, recursive=True)
-        # construct log message
-        wmsg = 'Displaying first {0} files in directory="{1}"'
-        wmsgs = ['', wmsg.format(HARD_DISPLAY_LIMIT, fulldir), '']
-        for filename in filelist:
-            wmsgs.append('\t' + filename)
-        WLOG(self.recipe.drs_params, '', wmsgs)
+            # path is just the input directory
+            fulldir = input_dir
+            # whether to list only directories
+            dircond = True
+        else:
+            # create full dir path
+            fulldir = os.path.join(input_dir, directory)
+            # whether to list only directories
+            dircond = False
+        # ---------------------------------------------------------------------
+        # construct listing message
+        # ---------------------------------------------------------------------
+        print_listing_message(self.parser, self.recipe, fulldir, dircond)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # check for help
         parser.has_help()
+        # store parser
+        self.parser = parser
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
         self.display_listing(namespace)
+        # quit after call
+        parser.exit()
+
+
+class DisplayVersion(argparse.Action):
+
+    def display_version(self, recipe):
+        # get params
+        params = recipe.drs_params
+        # get version
+        if 'DRS_VERSION' in params:
+            version = params['DRS_VERSION']
+        else:
+            version = __version__
+        # get parameterse from drs_params
+        program = recipe.drs_params['RECIPE']
+        # construct error message
+        underline = COLOR.UNDERLINE
+        # get colours
+        if recipe.drs_params['COLOURED_LOG']:
+            green, end = COLOR.GREEN1, COLOR.ENDC
+            yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
+        else:
+            green, end = COLOR.ENDC, COLOR.ENDC
+            yellow, blue = COLOR.ENDC, COLOR.ENDC
+        # print message
+        wargs = [green, blue, yellow, program, version, end]
+        wmsg = '{0} Version for {1} {3}.py {0} = V{2} {4} {5}'.format(*wargs)
+        print(wmsg.format(*wargs))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # check for help
+        parser.has_help()
+        # display version
+        self.display_version(parser.recipe)
         # quit after call
         parser.exit()
 
@@ -602,8 +666,9 @@ class DrsRecipe(object):
         self.inputdir = 'tmp'
         # input type (RAW/REDUCED)
         self.inputtype = 'raw'
-        # recipe description
+        # recipe description/epilog
         self.description = 'No description defined'
+        self.epilog = ''
         # run order
         self.run_order = None
         # define sets of arguments
@@ -635,8 +700,10 @@ class DrsRecipe(object):
                          used for this recipe
         """
         # set up storage for arguments
-        desc = self.description
-        parser = DRSArgumentParser(self, description=desc)
+        fmt_class = argparse.RawDescriptionHelpFormatter
+        desc, epilog = self.description, self.epilog
+        parser = DRSArgumentParser(self, description=desc, epilog=epilog,
+                                   formatter_class=fmt_class)
         # deal with function call
         self.parse_args(fkwargs)
         # ---------------------------------------------------------------------
@@ -868,6 +935,14 @@ class DrsRecipe(object):
                               altnames=listingprops['altnames'])
         listing.assign_properties(listingprops)
         self.specialargs[name] = listing
+
+        # make version functionality
+        versionprops = make_version()
+        name = versionprops['name']
+        version = DrsArgument(name, kind='special',
+                              altnames=versionprops['altnames'])
+        version.assign_properties(versionprops)
+        self.specialargs[name] = version
 
     def get_drs_params(self, quiet=False, **kwargs):
         func_name = __NAME__ + '.DrsRecipe.get_drs_params()'
@@ -1993,7 +2068,8 @@ def get_uncommon_path(path1, path2):
     return path1.split(common)[-1]
 
 
-def get_file_list(path, limit=None, ext=None, recursive=False):
+def get_file_list(path, limit=None, ext=None, recursive=False,
+                  dir_only=False):
     """
     Get a list of files in a path
 
@@ -2015,6 +2091,8 @@ def get_file_list(path, limit=None, ext=None, recursive=False):
         ext = ''
     # set up file list storage
     file_list = []
+    # set up test of limit being reached
+    limit_reached = False
     # walk through directories
     for root, dirs, files in os.walk(path):
         if len(file_list) > limit:
@@ -2023,24 +2101,28 @@ def get_file_list(path, limit=None, ext=None, recursive=False):
         if not recursive and root != path:
             continue
         if len(files) > 0 and recursive:
-            # add root to file list
-            file_list.append('\t' + root)
             limit += 1
-        for filename in files:
-            # do not display all (if limit reached)
-            if len(file_list) > limit:
-                file_list.append('...')
-                return file_list
-            # do not display if extension is true
-            if not filename.endswith(ext):
-                continue
-            # add to file list
-            file_list.append('\t\t' + filename)
+        if not dir_only:
+            for filename in files:
+                # do not display all (if limit reached)
+                if len(file_list) > limit:
+                    file_list.append('...')
+                    limit_reached = True
+                    return file_list, limit_reached
+                # do not display if extension is true
+                if not filename.endswith(ext):
+                    continue
+                # add to file list
+                file_list.append('\t\t' + filename)
+        elif len(files) > 0 and recursive:
+            # add root to file list (minus path)
+            directory = get_uncommon_path(root, path)
+            file_list.append('\t' + directory)
     # if empty list add none found
     if len(file_list) == 0:
         file_list = ['No valid files found.']
     # return file_list
-    return file_list
+    return file_list, limit_reached
 
 
 def get_arg(recipe, argname):
@@ -2382,7 +2464,23 @@ def make_listing():
     props['altnames'] = ['--list']
     props['action'] = MakeListing
     props['nargs'] = 0
-    props['help'] = 'List the files in the given input directory'
+    props['help'] = ('Lists the night name directories in the input directory '
+                     'if used without a "directory" argument or lists the '
+                     'files in the given "directory" (if defined)')
+    return props
+
+
+def make_version():
+    """
+    Make a custom special argument that lists the version number
+    :return props: dictionary for argparser
+    """
+    props = OrderedDict()
+    props['name'] = '--version'
+    props['altnames'] = ['--v']
+    props['action'] = DisplayVersion
+    props['nargs'] = 0
+    props['help'] = 'Displays the current version of this recipe.'
     return props
 
 
@@ -2438,6 +2536,84 @@ def print_check_error(p, argname, idnum, filename, recipename, errors,
     # log error
     WLOG(p, 'error', emsgs, wrap=False)
 
+
+def print_listing_message(parser, recipe, fulldir, dircond=False,
+                          return_string=False):
+    # generate a file list
+    filelist, limitreached = get_file_list(fulldir, recursive=True,
+                                           dir_only=dircond)
+    # get parameterse from drs_params
+    program = recipe.drs_params['RECIPE']
+    # construct error message
+    underline = COLOR.UNDERLINE
+
+    if return_string:
+        green, end = '', ''
+        yellow, blue = '', ''
+    elif recipe.drs_params['COLOURED_LOG']:
+        green, end = COLOR.GREEN1, COLOR.ENDC
+        yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
+    else:
+        green, end = COLOR.ENDC, COLOR.ENDC
+        yellow, blue = COLOR.ENDC, COLOR.ENDC
+    # get the argument list (for use below)
+    largs = list(recipe.args.keys())
+    strlargs = []
+    for larg in largs:
+        strlargs.append('"{0}"'.format(larg))
+    # get the arguments to format "wmsg"
+    wargs = [HARD_DISPLAY_LIMIT, fulldir, ' or '.join(strlargs[1:])]
+    # deal with different usages (before directory defined and after)
+    #   and with/without limit reached
+    wmsgs = []
+    if limitreached:
+        if dircond:
+            wmsgs.append('Options for "directory"')
+            wmsgs.append('\tdisplaying first {0} directories in '
+                         'location="{1}"'.format(*wargs))
+        else:
+            wmsgs.append('Options for {2}'.format(*wargs))
+            wmsgs.append('\tdisplaying first {0} files in '
+                         'directory="{1}"'.format(*wargs))
+    else:
+        if dircond:
+            wmsgs.append('Options for: "directory"')
+            wmsgs.append('\tdisplaying all directories in '
+                         'location="{1}"'.format(*wargs))
+        else:
+            wmsgs.append('Options for: {2}'.format(*wargs))
+            wmsgs.append('\tdisplaying all files in '
+                         'directory="{1}"'.format(*wargs))
+    # loop around files and add to list
+    for filename in filelist:
+        wmsgs.append('\t' + filename)
+
+    # construct print error message (with usage help)
+    pmsgs = ['']
+
+    if not return_string:
+        pmsgs.append(green + underline + 'Listing for: {0}.py'.format(program)
+                     + end)
+        pmsgs.append(green + '\tVERSION: {0}'.format(__version__) + end)
+        pmsgs.append(green + '\tAUTHORS: {0}'.format(__author__) + end)
+        pmsgs.append(green + '\tLAST UPDATED: {0}'.format(__date__) + end)
+        pmsgs.append(green + '\tRELEASE STATUS: {0}'.format(__release__) + end)
+        pmsgs.append('')
+        pmsgs.append(blue + parser.format_usage() + end)
+        pmsgs.append('')
+    for wmsg in wmsgs:
+        pmsgs.append(green + wmsg + end)
+    # deal with returning/printing
+    if return_string:
+        return pmsgs
+    else:
+        for pmsg in pmsgs:
+            print(pmsg)
+
+
 # =============================================================================
 # End of code
 # =============================================================================
+
+
+
