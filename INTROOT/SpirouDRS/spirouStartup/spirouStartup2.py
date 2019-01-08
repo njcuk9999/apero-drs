@@ -46,7 +46,7 @@ ConfigError = spirouConfig.ConfigError
 RECIPES = recipes_spirou.recipes
 # -----------------------------------------------------------------------------
 # define the print/log header divider
-HEADER = ' ' + '*' * 65
+HEADER = spirouConfig.Constants.HEADER()
 
 
 # =============================================================================
