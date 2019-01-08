@@ -16,6 +16,7 @@ Version 0.0.1
 from __future__ import division
 import os
 import sys
+import warnings
 
 from SpirouDRS import spirouConfig
 from . import spirouMath
@@ -70,7 +71,7 @@ class Logger:
         self.pout['TDATA_WARNING'] = 1
 
     def __call__(self, p=None, key='', message='', printonly=False,
-                 logonly=False, wrap=True):
+                 logonly=False, wrap=True, option=None, colour=None):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -81,14 +82,23 @@ class Logger:
         printing to log file is controlled by "LOG_LEVEL" constant (config.py)
         based on the levels described in "spirouConfig.Constants.WRITE_LEVEL"
 
-        :param
+        :param p: parameter dictionary, ParamDict containing constants
+            Must contain at least:
+
         :param key: string, either "error" or "warning" or "info" or graph,
                     this gives a character code in output
-        :param option: string, option code
         :param message: string or list of strings, message to display or
                         messages to display (1 line for each message in list)
         :param printonly: bool, print only do not save to log (default = False)
         :param logonly: bool, log only do not save to log (default = False)
+        :param wrap: bool, if True wraps text at
+                                 spirouConfig.Constants.CHARACTER_LOG_LENGTH()
+        :param option: string, option code, overwrites the default (of using
+                       p['RECIPE'] or p['LOG_OPT']
+        :param colour: string, colour of the message wanted (overrides default)
+                       currently supported colours are:
+                       "red", "green", "blue", "yellow", "cyan", "magenta",
+                       "black", "white"
 
         output to stdout/log is as follows:
 
@@ -100,11 +110,18 @@ class Logger:
         """
         func_name = __NAME__ + '.Logger.__call__()'
         # ---------------------------------------------------------------------
-        # deal with p
+        # deal with no p and pid
         if p is None:
             p = spirouConfig.ParamDict()
             p['PID'] = None
             p.set_source('PID', func_name)
+            wmsg = 'Dev: Undefined PID not recommended (p is None)'
+            warnings.warn(wmsg, Warning)
+        # deal with no PID
+        if 'PID' not in p:
+            p['PID'] = None
+            wmsg = 'Dev: Undefined PID not recommended (PID is missing)'
+            warnings.warn(wmsg, Warning)
         # TODO: Remove deprecation warning (once all code changed)
         if type(p) is str:
             emsg = ('Need to update WLOG function call. New format required:'
@@ -113,8 +130,17 @@ class Logger:
             raise DeprecationWarning(emsg)
 
         # ---------------------------------------------------------------------
+        # deal with debug mode. If DRS_DEBUG is zero do not print these
+        #     messages
+        debug = p.get('DRS_DEBUG', 1)
+        if key == 'debug' and debug == 0:
+            return
+
+        # ---------------------------------------------------------------------
         # deal with option
-        if 'RECIPE' in p:
+        if option is not None:
+            option = option
+        elif 'RECIPE' in p:
             option = p['RECIPE']
         elif 'LOG_OPT' in p:
             option = p['LOG_OPT']
@@ -163,7 +189,6 @@ class Logger:
             dsec = int((unix_time - int(unix_time)) * 100)
             # Get the key code (default is a whitespace)
             code = TRIG_KEY.get(key, ' ')
-
             # storage for cmds
             cmds = []
             # check if line is over 80 chars
@@ -179,7 +204,7 @@ class Logger:
                     self.logger_storage(key, human_time, new_message, printonly)
                     # print to stdout
                     if not logonly:
-                        printlog(p, cmd, key)
+                        printlog(p, cmd, key, colour)
             else:
                 cmdargs = [human_time, dsec, code, option, mess]
                 cmd = '{0}.{1:02d} - {2} |{3}|{4}'.format(*cmdargs)
@@ -189,7 +214,7 @@ class Logger:
                 self.logger_storage(key, human_time, mess, printonly)
                 # print to stdout
                 if not logonly:
-                    printlog(p, cmd, key)
+                    printlog(p, cmd, key, colour)
             # get logfilepath
             try:
                 logfilepath, warning = get_logfilepath(p)
@@ -205,19 +230,20 @@ class Logger:
             # if warning is True then we used TDATA and should report that
             if warning and self.pout['TDATA_WARNING']:
                 wmsg = ('Warning "DRS_DATA_MSG" path was not found, using '
-                        'path "TDATA"={0}')
+                        'path "TDATA"="{0}"')
                 if not logonly:
-                    wmsgf = wmsg.format(p.get('TDATA', ''))
+                    wmsgf = wmsg.format(p.get('TDATA', './'))
                     errors.append([wmsgf, 'warning', human_time, dsec, option])
                 self.pout['TDATA_WARNING'] = 0
 
         # print any errors caused above (and set key to error to exit after)
         used = []
         for error in errors:
-            key = 'error'
+            if error[1] == 'error':
+                key = 'error'
             if error[0] not in used:
                 self.logger_storage(key, error[2], error[0])
-                printlogandcmd(p, *error, wrap=wrap)
+                printlogandcmd(p, *error, wrap=wrap, colour=colour)
                 used.append(error[0])
 
         # deal with errors (if key is in EXIT_LEVELS) then exit after log/print
@@ -228,9 +254,9 @@ class Logger:
                 errorstring += mess + '\n'
             for error in errors:
                 # noinspection PyTypeChecker
-                errorstring += error + '\n'
+                errorstring += error[0] + '\n'
             # deal with debugging
-            if spirouConfig.Constants.DEBUG():
+            if p['DRS_DEBUG']:
                 debug_start(errorstring)
             else:
                 EXIT_TYPE(errorstring)
@@ -290,7 +316,8 @@ wlog = Logger()
 # =============================================================================
 # Define functions
 # =============================================================================
-def printlogandcmd(p, message, key, human_time, dsec, option, wrap):
+def printlogandcmd(p, message, key, human_time, dsec, option, wrap,
+                   colour):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -306,6 +333,10 @@ def printlogandcmd(p, message, key, human_time, dsec, option, wrap):
     :param option: string, the option of the output
     :param wrap: bool, if True wraps tet to CHAR_LEN (defined in
                  spirouConfig.Constants.CHARACTER_LOG_LENGTH())
+    :param colour: string, colour of the message wanted (overrides default)
+                   currently supported colours are:
+                   "red", "green", "blue", "yellow", "cyan", "magenta",
+                   "black", "white"
 
     :return None:
     """
@@ -327,11 +358,11 @@ def printlogandcmd(p, message, key, human_time, dsec, option, wrap):
             for new_message in new_messages:
                 cmdargs = [human_time, dsec, code, option, new_message]
                 cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-                printlog(p, cmd, key)
+                printlog(p, cmd, key, colour)
         else:
             cmdargs = [human_time, dsec, code, option, mess]
             cmd = '{0}.{1:1d} - {2} |{3}|{4}'.format(*cmdargs)
-            printlog(p, cmd, key)
+            printlog(p, cmd, key, colour)
 
 
 def debug_start(errorstring):
@@ -356,7 +387,7 @@ def debug_start(errorstring):
     # get colour
     clevels = spirouConfig.Constants.COLOUREDLEVELS()
     addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.BColors.ENDC
+    nocol = spirouConfig.Constants.Colors.ENDC
     if addcolour:
         cc = clevels['error']
     else:
@@ -386,6 +417,8 @@ def debug_start(errorstring):
 
             # noinspection PyBroadException
             try:
+                from IPython import embed
+                embed()
                 import ipdb
                 ipdb.set_trace()
             except:
@@ -474,12 +507,14 @@ def get_logfilepath(p):
     # -------------------------------------------------------------------------
     # Get DRS_DATA_MSG folder directory
     dir_data_msg = p.get(msgkey, None)
+    # first check for TDATA in p
+    tdata = p.get(tkey, './')
     # if None use "TDATA"
     if dir_data_msg is None:
         warning = True
-        dir_data_msg = p.get(tkey, None)
+        dir_data_msg = str(tdata)
         # check that it exists
-        if not os.path.exists(dir_data_msg):
+        if not os.path.exists(tdata):
             emsg1 = 'Fatal error: Cannot write to log file.'
             emsg2 = (' "{0}" missing from config AND "{1}" directory'
                      ' does not exist.').format(msgkey, tkey)
@@ -571,7 +606,7 @@ def correct_level(key, level):
     return thislevel >= outlevel
 
 
-def printlog(p, message, key='all'):
+def printlog(p, message, key='all', colour=None):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
     is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
@@ -579,12 +614,16 @@ def printlog(p, message, key='all'):
     :param message: string, the formatted log line to write to stdout
     :param key: string, either "error" or "warning" or "info" or "graph" or
                 "all", this gives a character code in output
+    :param colour: string, colour of the message wanted (overrides default)
+                   currently supported colours are:
+                   "red", "green", "blue", "yellow", "cyan", "magenta",
+                   "black", "white"
 
     :return None:
     """
     func_name = __NAME__ + '.printlog()'
     # get the colours for the "key"
-    c1, c2 = printcolour(p, key, func_name=func_name)
+    c1, c2 = printcolour(p, key, func_name=func_name, colour=colour)
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
@@ -617,7 +656,7 @@ def textwrap(input_string, length):
     return new_string2
 
 
-def printcolour(p, key='all', func_name=None):
+def printcolour(p, key='all', func_name=None, colour=None):
     """
     Get the print colour (start and end) based on "key".
     This should be used as follows:
@@ -628,6 +667,11 @@ def printcolour(p, key='all', func_name=None):
                 "all", this gives a character code in output
     :param func_name: string or None, if not None then defines the function to
                       report in the error
+    :param colour: string, colour of the message wanted (overrides default)
+                   currently supported colours are:
+                   "red", "green", "blue", "yellow", "cyan", "magenta",
+                   "black", "white"
+
     :return colour1: string or None, if key is found and we are using coloured
                      log returns the starting colour, if not returns empty
                      string if key is not accepted does not print
@@ -639,10 +683,15 @@ def printcolour(p, key='all', func_name=None):
         func_name = __NAME__ + '.printcolour()'
     # get out level key
     level = p.get('PRINT_LEVEL', 'all')
+    # deal with overriding coloured text
+    if colour is not None:
+        colour1, colour2 = override_colour(p, colour)
+        if colour1 is not None:
+            return colour1, colour2
     # get the colours
-    clevels = spirouConfig.Constants.COLOUREDLEVELS()
-    addcolour = spirouConfig.Constants.COLOURED_LOG()
-    nocol = spirouConfig.Constants.BColors.ENDC
+    clevels = spirouConfig.Constants.COLOUREDLEVELS(p)
+    addcolour = spirouConfig.Constants.COLOURED_LOG(p)
+    nocol = spirouConfig.Constants.Colors.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
         emsg1 = 'key={0} not in spirouConfig.Constants.COLOUREDLEVELS()'
@@ -657,6 +706,76 @@ def printcolour(p, key='all', func_name=None):
         colour2 = ''
     else:
         colour1, colour2 = None, None
+    # return colour1 and colour2
+    return colour1, colour2
+
+
+def override_colour(p, colour):
+    """
+
+    :param colour: string, colour of the message wanted (overrides default)
+                   currently supported colours are:
+                   "red", "green", "blue", "yellow", "cyan", "magenta",
+                   "black", "white"
+    :return colour1: string or None, if key is found and we are using coloured
+                     log returns the starting colour, if not returns empty
+                     string if key is not accepted does not print
+    :return colour2: string or None, if key is found and we are using coloured
+                     log returns the ending colour, if not returns empty
+                     string if key is not accepted does not print
+    """
+
+    # get the colour codes
+    codes = spirouConfig.Constants.Colors
+    # get theme
+    if 'THEME' not in p:
+        theme = 'DARK'
+    else:
+        theme = p['THEME']
+    # get colour 1
+    if theme == 'DARK':
+        # find colour 1 in colour
+        if colour.lower() == "red":
+            colour1 = codes.RED1
+        elif colour.lower() == "green":
+            colour1 = codes.GREEN1
+        elif colour.lower() == "blue":
+            colour1 = codes.BLUE1
+        elif colour.lower() == "yellow":
+            colour1 = codes.YELLOW1
+        elif colour.lower() == "cyan":
+            colour1 = codes.CYAN1
+        elif colour.lower() == "magenta":
+            colour1 = codes.MAGENTA1
+        elif colour.lower() == 'black':
+            colour1 = codes.BLACK1
+        elif colour.lower() == 'white':
+            colour1 = codes.WHITE1
+        else:
+            colour1 = None
+    # get colour 1
+    else:
+        # find colour 1 in colour
+        if colour.lower() == "red":
+            colour1 = codes.RED2
+        elif colour.lower() == "green":
+            colour1 = codes.GREEN2
+        elif colour.lower() == "blue":
+            colour1 = codes.BLUE2
+        elif colour.lower() == "yellow":
+            colour1 = codes.YELLOW2
+        elif colour.lower() == "cyan":
+            colour1 = codes.CYAN2
+        elif colour.lower() == "magenta":
+            colour1 = codes.MAGENTA2
+        elif colour.lower() == 'black':
+            colour1 = codes.BLACK2
+        elif colour.lower() == 'white':
+            colour1 = codes.WHITE2
+        else:
+            colour1 = None
+    # last code should be the end
+    colour2 = codes.ENDC
     # return colour1 and colour2
     return colour1, colour2
 
